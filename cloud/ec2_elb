@@ -17,9 +17,9 @@
 DOCUMENTATION = """
 ---
 module: ec2_elb
-short_description: Registers and Deregisters instances from EC2 ELB(s)
+short_description: De-registers or registers instances from EC2 ELB(s)
 description:
-  - This module deregisters or registers an AWS EC2 instance from the ELB(s)
+  - This module de-registers or registers an AWS EC2 instance from the ELB(s)
     that it belongs to.
     Returns fact "elb_ec2" which is a list of elbs attached the instance
     if deregister is called.
@@ -35,10 +35,11 @@ options:
   instance_id:
     description:
       - EC2 Instance ID
+    required: true
 
   elb_names:
     description:
-      - List of ELB names, required for registration
+      - List of ELB names, required for registration. The elb_ec2 fact should be used if there was a previous de-register.
     required: false
     default: None
   ec2_secret_key:
@@ -87,7 +88,7 @@ except ImportError:
 
 
 class ElbManager:
-    """Handles EC2 instance ELB registration and deregistration"""
+    """Handles EC2 instance ELB registration and de-registration"""
 
     def __init__(self, module, instance_id=None, elb_names=None,
                  ec2_access_key=None, ec2_secret_key=None):
@@ -96,9 +97,15 @@ class ElbManager:
         self.module = module
         self.instance_id = instance_id
         self.lbs = self._get_instance_lbs(elb_names)
+        # if there are no ELBs to operate on
+        # there will be no changes made
+        if len(self.lbs) > 0:
+            self.changed = True
+        else:
+            self.changed = False
 
     def deregister(self):
-        """Deregister the instance from all ELBs and wait for the ELB
+        """De-register the instance from all ELBs and wait for the ELB
         to report it out-of-service"""
 
         for lb in self.lbs:
@@ -180,7 +187,7 @@ def main():
         elb_man.deregister()
 
     ansible_facts = {'ec2_elbs': [lb.name for lb in elb_man.lbs]}
-    ec2_facts_result = dict(changed=False, ansible_facts=ansible_facts)
+    ec2_facts_result = dict(changed=elb_man.changed, ansible_facts=ansible_facts)
 
     module.exit_json(**ec2_facts_result)
 
