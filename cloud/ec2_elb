@@ -21,8 +21,9 @@ short_description: De-registers or registers instances from EC2 ELB(s)
 description:
   - This module de-registers or registers an AWS EC2 instance from the ELB(s)
     that it belongs to.
-    Returns fact "elb_ec2" which is a list of elbs attached the instance
+  - Returns fact "elb_ec2" which is a list of elbs attached the instance
     if deregister is called.
+  - Will be marked changed when called only if there are ELBs found to operate on.
 version_added: "1.2"
 requirements: [ "boto" ]
 author: John Jarvis
