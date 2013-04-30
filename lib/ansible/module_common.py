@@ -820,11 +820,9 @@ class AnsibleModule(object):
                     raise
             if self.selinux_enabled():
                 context = self.selinux_context(dest)
-                self.set_context_if_different(src, context, False)
         else:
             if self.selinux_enabled():
                 context = self.selinux_default_context(dest)
-                self.set_context_if_different(src, context, False)
         # Ensure file is on same partition to make replacement atomic
         dest_dir = os.path.dirname(dest)
         dest_file = os.path.basename(dest)
@@ -839,6 +837,8 @@ class AnsibleModule(object):
 
         try:
             shutil.move(src, tmp_dest)
+            if self.selinux_enabled():
+                self.set_context_if_different(tmp_dest, context, False)
             os.rename(tmp_dest, dest)
             rc = True
         except (shutil.Error, OSError, IOError), e:
