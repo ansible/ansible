@@ -498,10 +498,11 @@ class LinuxService(Service):
                 return
 
         if self.svc_system == "SysV" and self.enable_cmd.endswith("update-rc.d"):
+            # check that at least one start file exists in /etc/rc*.d/
             sysv_startfiles_count = len(glob.glob('/etc/rc*.d/S*%s' % self.name))
-            if self.enable and sysv_startfiles_count >= 4:
+            if self.enable and sysv_startfiles_count >= 1:
                 return
-            elif not self.enable and sysv_startfiles_count < 4:
+            elif not self.enable and sysv_startfiles_count < 1:
                 return
 
         if self.enable_cmd.endswith("systemctl"):
