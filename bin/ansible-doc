@@ -155,6 +155,8 @@ def main():
                 continue
 
             filename = utils.plugins.module_finder.find_plugin(module)
+            if os.path.isdir(filename):
+                continue
             try:
                 doc, plainexamples = module_docs.get_docstring(filename)
                 desc = tty_ify(doc.get('short_description', '?'))
