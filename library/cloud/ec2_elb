@@ -1,0 +1,190 @@
+#!/usr/bin/python
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = """
+---
+module: ec2_elb
+short_description: Registers and Deregisters instances from EC2 ELB(s)
+description:
+  - This module deregisters or registers an AWS EC2 instance from the ELB(s)
+    that it belongs to.
+    Returns fact "elb_ec2" which is a list of elbs attached the instance
+    if deregister is called.
+version_added: "1.2"
+requirements: [ "boto" ]
+author: John Jarvis
+options:
+  action:
+    description:
+      - register or deregister the instance
+    required: true
+
+  instance_id:
+    description:
+      - EC2 Instance ID
+
+  elb_names:
+    description:
+      - List of ELB names, required for registration
+    required: false
+    default: None
+  ec2_secret_key:
+    description:
+      - AWS Secret API key
+    required: false
+    default: None
+  ec2_access_key:
+    description:
+      - AWS Access API key
+    required: false
+    default: None
+
+"""
+
+EXAMPLES = """
+# basic pre_task and post_task example
+pre_tasks:
+  - name: Gathering ec2 facts
+    ec2_facts:
+  - name: Instance De-register
+    local_action: ec2_elb
+    args:
+      instance_id: "{{ ansible_ec2_instance_id }}"
+      action: 'deregister'
+roles:
+  - myrole
+post_tasks:
+  - name: Instance Register
+    local_action: ec2_elb
+    args:
+      instance_id: "{{ ansible_ec2_instance_id }}"
+      elb_names: "{{ ec2_elbs }}"
+      action: 'register'
+"""
+
+import time
+import sys
+import os
+
+try:
+    import boto
+except ImportError:
+    print "failed=True msg='boto required for this module'"
+    sys.exit(1)
+
+
+class ElbManager:
+    """Handles EC2 instance ELB registration and deregistration"""
+
+    def __init__(self, module, instance_id=None, elb_names=None,
+                 ec2_access_key=None, ec2_secret_key=None):
+        self.ec2_access_key = ec2_access_key
+        self.ec2_secret_key = ec2_secret_key
+        self.module = module
+        self.instance_id = instance_id
+        self.lbs = self._get_instance_lbs(elb_names)
+
+    def deregister(self):
+        """Deregister the instance from all ELBs and wait for the ELB
+        to report it out-of-service"""
+
+        for lb in self.lbs:
+            lb.deregister_instances([self.instance_id])
+            self._await_elb_instance_state(lb, 'OutOfService')
+
+    def register(self):
+        """Register the instance for all ELBs and wait for the ELB
+        to report the instance in-service"""
+
+        for lb in self.lbs:
+            lb.register_instances([self.instance_id])
+            self._await_elb_instance_state(lb, 'InService')
+
+    def _await_elb_instance_state(self, lb, awaited_state):
+        """Wait for an ELB to change state
+        lb: load balancer
+        awaited_state : state to poll for (string)"""
+
+        while True:
+            state = lb.get_instance_health([self.instance_id])[0].state
+            if state == awaited_state:
+                break
+            else:
+                time.sleep(1)
+
+    def _get_instance_lbs(self, elb_names=None):
+        """Returns a list of ELBs attached to self.instance_id"""
+
+        try:
+            elb = boto.connect_elb(self.ec2_access_key, self.ec2_secret_key)
+        except boto.exception.NoAuthHandlerFound, e:
+            self.module.fail_json(msg=str(e))
+        elbs = elb.get_all_load_balancers()
+
+        if elb_names:
+            lbs = sorted(lb for lb in elbs if lb.name in elb_names)
+        else:
+            lbs = []
+            for lb in elbs:
+                for info in lb.instances:
+                    if self.instance_id == info.id:
+                        lbs.append(lb)
+        return lbs
+
+
+def main():
+
+    module = AnsibleModule(
+        argument_spec=dict(
+            action={'required': True,
+                    'choices': ['register', 'deregister']},
+            instance_id={'required': True},
+            elb_names={'default': None, 'required': False},
+            ec2_secret_key={'default': None, 'aliases': ['EC2_SECRET_KEY']},
+            ec2_access_key={'default': None, 'aliases': ['EC2_ACCESS_KEY']}
+        )
+    )
+
+    ec2_secret_key = module.params['ec2_secret_key']
+    ec2_access_key = module.params['ec2_access_key']
+    elb_names = module.params['elb_names']
+
+    if module.params['action'] == 'register' and 'elb_names' not in module.params:
+        module.fail_json(msg="ELBs are required for registration")
+
+    if not ec2_secret_key and 'EC2_SECRET_KEY' in os.environ:
+        ec2_secret_key = os.environ['EC2_SECRET_KEY']
+    if not ec2_access_key and 'EC2_ACCESS_KEY' in os.environ:
+        ec2_access_key = os.environ['EC2_ACCESS_KEY']
+
+    instance_id = module.params['instance_id']
+    elb_man = ElbManager(module, instance_id, elb_names, ec2_access_key,
+                         ec2_secret_key)
+
+    if module.params['action'] == 'register':
+        elb_man.register()
+    elif module.params['action'] == 'deregister':
+        elb_man.deregister()
+
+    ansible_facts = {'ec2_elbs': [lb.name for lb in elb_man.lbs]}
+    ec2_facts_result = dict(changed=False, ansible_facts=ansible_facts)
+
+    module.exit_json(**ec2_facts_result)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+main()
