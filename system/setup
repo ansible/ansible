@@ -1096,7 +1096,9 @@ class LinuxNetwork(Network):
                 primary = open(os.path.join(path, 'bonding', 'primary')).read()
                 if primary:
                     interfaces[device]['primary'] = primary
-                    interfaces[device]['all_slaves_active'] = open(os.path.join(path, 'bonding', 'all_slaves_active')).read() == '1'
+                    path = os.path.join(path, 'bonding', 'all_slaves_active')
+                    if os.path.exists(path):
+                        interfaces[device]['all_slaves_active'] = open(path).read() == '1'
             output = subprocess.Popen(['/sbin/ip', 'addr', 'show', device], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
             for line in output.split('\n'):
 
