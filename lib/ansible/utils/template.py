@@ -142,6 +142,11 @@ def _legacy_varFind(basedir, text, vars, lookup_fatal, depth, expand_lists):
     original data in the caller.
     '''
 
+    # short circuit this whole function if we have specified we don't want
+    # legacy var replacement
+    if C.DEFAULT_VAR_REPLACE_BEHAVIOR == 'jinja2':
+        return None
+
     start = text.find("$")
     if start == -1:
         return None
