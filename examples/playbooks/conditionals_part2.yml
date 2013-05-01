@@ -11,7 +11,7 @@
      cat: "whiskers"
      ssn: 8675309
 
-# These are the types of when statemnets available
+# These are the types of when statements available
 #     when_set: $variable_name
 #     when_unset: $variable_name
 #     when_str: $x == "test"
