@@ -41,7 +41,7 @@ you'll turn to stone.  Nobody ever executes async_wrapper directly.
 
 Ok, let's get going with an example.  We'll use Python.  For starters, save this as a file named `time`::
 
-    #!/usr/bin/python
+    #!/usr/bin/env python
 
     import datetime
     import json
@@ -93,7 +93,7 @@ Let's look at the code.  Read the comments as we'll explain as we go.  Note that
 is highly verbose because it's intended as an educational example.  You can write modules
 a lot shorter than this::
 
-    #!/usr/bin/python
+    #!/usr/bin/env python
 
     # import some python modules that we'll use.  These are all
     # available in Python's core
