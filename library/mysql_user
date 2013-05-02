@@ -233,9 +233,9 @@ def privileges_unpack(priv):
     return output
 
 def privileges_revoke(cursor, user,host,db_table):
-    query = "REVOKE ALL PRIVILEGES ON %s FROM '%s'@'%s'" % (db_table,user,host)
+    query = "REVOKE ALL PRIVILEGES ON `%s` FROM '%s'@'%s'" % (db_table,user,host)
     cursor.execute(query)
-    query = "REVOKE GRANT OPTION ON %s FROM '%s'@'%s'" % (db_table,user,host)
+    query = "REVOKE GRANT OPTION ON `%s` FROM '%s'@'%s'" % (db_table,user,host)
     try:
         cursor.execute(query)
     except MySQLdb.OperationalError, e:
