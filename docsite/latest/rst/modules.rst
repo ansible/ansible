@@ -6,7 +6,7 @@ Ansible Modules
    :target: http://ansibleworks.com/fest
 
 .. contents::
-   :depth: 2
+   :depth: 3
    :backlinks: top
 
 Introduction
