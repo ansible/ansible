@@ -358,7 +358,7 @@ def main():
                          incfile.write("\n\n")
                          incfile.write(category)
                          incfile.write("\n")
-                         incfile.write('=' * len(category))
+                         incfile.write('`' * len(category))
                          incfile.write("\n\n")
                          last_category = category
 
