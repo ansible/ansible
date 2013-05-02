@@ -288,7 +288,7 @@ there will be accessible to future tasks::
           action: site_facts
         - action: command echo {{ my_custom_fact_can_be_used_now }}
 
-One common useful trick with only_if is to key off the changed result of a last command.  As an example::
+One common useful trick with *when* is to key off the changed result of a last command.  As an example::
 
     tasks:
         - action: template src=/templates/foo.j2 dest=/etc/foo.conf
@@ -700,7 +700,7 @@ Often in a playbook it may be useful to store the result of a given command in a
 it later.  Use of the command module in this way can in many ways eliminate the need to write site specific facts, for
 instance, you could test for the existance of a particular program.
 
-The 'register' keyword decides what variable to save a result in.  The resulting variables can be used in templates, action lines, or only_if statements.  It looks like this (in an obviously trivial example)::
+The 'register' keyword decides what variable to save a result in.  The resulting variables can be used in templates, action lines, or *when* statements.  It looks like this (in an obviously trivial example)::
 
     - name: test play
       hosts: all

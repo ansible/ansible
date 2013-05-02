@@ -430,7 +430,7 @@ inside another.
    this, consider how you can restructure your playbook to be more
    class/role oriented.  This is to say you cannot use a 'fact' to
    decide what include file to use.  All hosts contained within the
-   play are going to get the same tasks.  ('only_if' provides some
+   play are going to get the same tasks.  ('*when*' provides some
    ability for hosts to conditionally skip tasks).
 
 Roles
