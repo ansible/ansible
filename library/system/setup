@@ -1157,7 +1157,7 @@ class LinuxNetwork(Network):
                         default_ipv6['scope']      = scope
                         default_ipv6['macaddress'] = macaddress
                         default_ipv6['mtu']        = interfaces[device]['mtu']
-                        default_ipv6['type']       = interfaces[device]['type']
+                        default_ipv6['type']       = interfaces[device].get("type", "unknown")
 
                     if not address == '::1':
                         ips['all_ipv6_addresses'].append(address)
