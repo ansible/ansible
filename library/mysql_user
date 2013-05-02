@@ -247,7 +247,7 @@ def privileges_revoke(cursor, user,host,db_table):
 def privileges_grant(cursor, user,host,db_table,priv):
 
     priv_string = ",".join(filter(lambda x: x != 'GRANT', priv))
-    query = "GRANT %s ON %s TO '%s'@'%s'" % (priv_string,db_table,user,host)
+    query = "GRANT %s ON `%s` TO '%s'@'%s'" % (priv_string,db_table,user,host)
     if 'GRANT' in priv:
         query = query + " WITH GRANT OPTION"
     cursor.execute(query)
