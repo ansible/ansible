@@ -49,8 +49,11 @@ author: Sebastien Bocahu
 
 EXAMPLES = '''
 # Set default locale to fr_FR.UTF-8, and generate en_US.UTF-8 as well:
-dpkg_reconfigure: pkg=locales answers="locales/default_environment_locale fr_FR.UTF-8\n
-                                    locales/locales_to_be_generated en_US.UTF-8 UTF-8, fr_FR.UTF-8 UTF-8"
+dpkg_reconfigure:
+   pkg: locales
+   answers:
+       locales/default_environment_locale: fr_FR.UTF-8
+       locales/locales_to_be_generated: en_US.UTF-8 UTF-8, fr_FR.UTF-8 UTF-8
 
 # Reconfigure roundcube, using configuration answers stored in a file:
 dpkg_reconfigure: pkg=roundcube answers='$FILE(/path/dpkg-reconfigure/roundcube)'"
@@ -109,12 +112,16 @@ def enforce_state(module, params):
     answers  = params["answers"]
 
     wanted_config = {}
-    for answer in answers.split('\n'):
-        item = re.findall(r"[^\s]+", answer)
-        if len(item) > 1:
-             wanted_config[ item[0].strip() ] = ' '.join(item[1:])
-        else:
-             wanted_config[ item[0].strip() ] = ''
+
+    if type(answers) is dict:
+        wanted_config = answers
+    else:
+        for answer in answers.split('\n'):
+            item = re.findall(r"[^\s]+", answer)
+            if len(item) > 1:
+                 wanted_config[ item[0].strip() ] = ' '.join(item[1:])
+            else:
+                 wanted_config[ item[0].strip() ] = ''
 
     current_config = get_selections(module, params["pkg"])
 
