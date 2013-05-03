@@ -103,7 +103,7 @@ def main():
     state = module.params['state']
 
     repo_url = repo
-    if 'ppa' in repo_url:
+    if 'ppa:' in repo_url and not 'http://' in repo_url:
         # looks like ppa:nginx/stable
         repo_url = repo.split(':')[1]
     elif len(repo_url.split(' ')) > 1:
