@@ -298,7 +298,7 @@ class AnsibleModule(object):
         context = ret[1].split(':')
         return context
 
-    def selinux_context(self, path)
+    def selinux_context(self, path):
         context = self.selinux_initial_context()
         if not HAVE_SELINUX or not self.selinux_enabled():
             return context
@@ -843,7 +843,7 @@ class AnsibleModule(object):
             os.rename(tmp_dest, dest)
             if self.selinux_enabled():
                 # rename might not preserve context
-                self.set_context_if_different(tmp_dest, context, False)
+                self.set_context_if_different(dest, context, False)
             rc = True
         except (shutil.Error, OSError, IOError), e:
             cleanup()
