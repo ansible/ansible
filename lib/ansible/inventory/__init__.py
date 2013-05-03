@@ -250,6 +250,10 @@ class Inventory(object):
             for host in group.get_hosts():
                 if hostname == host.name:
                     return host
+        if hostname in ['localhost', '127.0.0.1']:
+            for host in self.get_group('all').get_hosts():
+                if host.name in ['localhost', '127.0.0.1']:
+                    return host
         return None
 
     def get_group(self, groupname):
