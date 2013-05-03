@@ -224,6 +224,7 @@ postgresql_privs: >
 
 try:
     import psycopg2
+    import psycopg2.extensions
 except ImportError:
     psycopg2 = None
 
@@ -266,7 +267,8 @@ class Connection(object):
 
     @property
     def encoding(self):
-        return self.connection.encoding
+        """Connection encoding in Python-compatible form"""
+        return psycopg2.extensions.encodings[self.connection.encoding]
 
 
     ### Methods for querying database objects
