@@ -21,8 +21,8 @@ short_description: De-registers or registers instances from EC2 ELB(s)
 description:
   - This module de-registers or registers an AWS EC2 instance from the ELB(s)
     that it belongs to.
-  - Returns fact "elb_ec2" which is a list of elbs attached the instance
-    if deregister is called.
+  - Returns fact "ec2_elbs" which is a list of elbs attached to the instance
+    if state=absent is passed as an argument.
   - Will be marked changed when called only if there are ELBs found to operate on.
 version_added: "1.2"
 requirements: [ "boto" ]
@@ -40,7 +40,7 @@ options:
 
   ec2_elbs:
     description:
-      - List of ELB names, required for registration. The elb_ec2 fact should be used if there was a previous de-register.
+      - List of ELB names, required for registration. The ec2_elbs fact should be used if there was a previous de-register.
     required: false
     default: None
   ec2_secret_key:
@@ -134,7 +134,10 @@ class ElbManager:
                 time.sleep(1)
 
     def _get_instance_lbs(self, ec2_elbs=None):
-        """Returns a list of ELBs attached to self.instance_id"""
+        """Returns a list of ELBs attached to self.instance_id
+        ec2_elbs: an optional list of elb names that will be used
+                  for elb lookup instead of returning what elbs
+                  are attached to self.instance_id"""
 
         try:
             elb = boto.connect_elb(self.ec2_access_key, self.ec2_secret_key)
@@ -170,7 +173,7 @@ def main():
     ec2_access_key = module.params['ec2_access_key']
     ec2_elbs = module.params['ec2_elbs']
 
-    if module.params['state'] == 'register' and 'ec2_elbs' not in module.params:
+    if module.params['state'] == 'present' and 'ec2_elbs' not in module.params:
         module.fail_json(msg="ELBs are required for registration")
 
     if not ec2_secret_key and 'EC2_SECRET_KEY' in os.environ:
@@ -182,9 +185,9 @@ def main():
     elb_man = ElbManager(module, instance_id, ec2_elbs, ec2_access_key,
                          ec2_secret_key)
 
-    if module.params['state'] == 'register':
+    if module.params['state'] == 'present':
         elb_man.register()
-    elif module.params['state'] == 'deregister':
+    elif module.params['state'] == 'absent':
         elb_man.deregister()
 
     ansible_facts = {'ec2_elbs': [lb.name for lb in elb_man.lbs]}
