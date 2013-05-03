@@ -298,7 +298,7 @@ class AnsibleModule(object):
         context = ret[1].split(':')
         return context
 
-    def selinux_context(self, path):
+    def selinux_context(self, path)
         context = self.selinux_initial_context()
         if not HAVE_SELINUX or not self.selinux_enabled():
             return context
@@ -810,6 +810,7 @@ class AnsibleModule(object):
     def atomic_move(self, src, dest):
         '''atomically move src to dest, copying attributes from dest, returns true on success'''
         rc = False
+        context = None
         if os.path.exists(dest):
             st = os.stat(dest)
             os.chmod(src, st.st_mode & 07777)
@@ -840,6 +841,9 @@ class AnsibleModule(object):
             if self.selinux_enabled():
                 self.set_context_if_different(tmp_dest, context, False)
             os.rename(tmp_dest, dest)
+            if self.selinux_enabled():
+                # rename might not preserve context
+                self.set_context_if_different(tmp_dest, context, False)
             rc = True
         except (shutil.Error, OSError, IOError), e:
             cleanup()
