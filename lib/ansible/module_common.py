@@ -812,9 +812,9 @@ class AnsibleModule(object):
         rc = False
         context = None
         if os.path.exists(dest):
-            st = os.stat(dest)
-            os.chmod(src, st.st_mode & 07777)
             try:
+                st = os.stat(dest)
+                os.chmod(src, st.st_mode & 07777)
                 os.chown(src, st.st_uid, st.st_gid)
             except OSError, e:
                 if e.errno != errno.EPERM:
@@ -838,6 +838,7 @@ class AnsibleModule(object):
 
         try: # leaves tmp file behind when sudo and  not root
             if os.getenv("SUDO_USER") and os.getuid() != 0:
+               # cleanup will happen by 'rm' of tempdir
                shutil.copy(src, tmp_dest)
             else:
                shutil.move(src, tmp_dest)
