@@ -61,7 +61,7 @@ options:
     type: 'bool'
   wait_for_ring:
     description:
-      - Waits for all nodes to agreee on the status of the ring
+      - Waits for all nodes to agree on the status of the ring
     required: false
     default: null
     aliases: []
@@ -107,6 +107,7 @@ def ring_check():
 
 def status_to_json():
     # remove all unnecessary symbols and whitespace
+    stats = ''
     rc, out, err = module.run_command("riak-admin status 2> /dev/null")
     if rc == 0:
         raw_stats = out
@@ -248,7 +249,7 @@ def main():
         rc, out, err = module.run_command('riak-admin cluster commit %s' % target_node)
         if rc == 0:
             result['commit'] = out
-            changed = True
+            result['changed'] = True
         else:
             module.fail_json(msg=out)
 
