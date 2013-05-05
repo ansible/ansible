@@ -13,7 +13,7 @@
   tasks:
 
   - name: Create a group of all hosts by operating system
-    action: group_by key=${ansible_distribution}-${ansible_distribution_version}
+    action: group_by key={{ansible_distribution}}-{{ansible_distribution_version}}
 
 # the following host group does not exist in inventory and was created by the group_by
 # module.
