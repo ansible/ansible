@@ -14,7 +14,7 @@
 
     - file: dest=/etc/fooapp state=directory
 
-    - copy: src=$item dest=/etc/fooapp/ owner=root mode=600
+    - copy: src={{ item }} dest=/etc/fooapp/ owner=root mode=600
       with_fileglob: /playbooks/files/fooapp/* 
 
 
