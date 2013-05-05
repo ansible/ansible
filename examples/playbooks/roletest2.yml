@@ -43,7 +43,7 @@
 
     # add as many roles as you like, roles takes a list of roles names
     # these paths can be qualified, but if bare, it will look from them in
-    # roles/$rolename relative to the playbook
+    # roles/{{rolename}} relative to the playbook
 
     # explicit tasks and handlers can be used, but are not required.
     # they will run after the roles if present.
