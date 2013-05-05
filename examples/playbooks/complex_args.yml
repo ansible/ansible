@@ -42,11 +42,6 @@
       action: ping
       args: { data: $complex }
 
-    - name: or if you prefer... this is equivalent
-      action: ping
-      args: 
-          data: $complex
-
     - name: here is an example of how it works with defaults, notice the key=value format wins
       action: service name=httpd state=running
       args: $defaults

@@ -43,7 +43,7 @@
       action: yum pkg=ansible state=installed
 
     - name: Create local directory to work from
-      action: file path=$workdir state=directory owner=root group=root mode=0751
+      action: file path={{workdir}} state=directory owner=root group=root mode=0751
 
     - name: Copy ansible inventory file to client
       action: copy src=/etc/ansible/hosts dest=/etc/ansible/hosts
