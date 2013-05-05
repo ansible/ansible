@@ -8,20 +8,20 @@
 
   tasks:
 
-  - name: install $item
-    action: yum pkg=$item state=installed
+  - name: install packages
+    action: yum name={{ item }} state=installed
     with_items:
        - cobbler
        - httpd
 
-  - name: configure user $item
-    action: user name=$item state=present groups=wheel
+  - name: configure users
+    action: user name={{ item }} state=present groups=wheel
     with_items:
        - testuser1
        - testuser2
 
-  - name: remove user $item
-    action: user name=$item state=absent
+  - name: remove users
+    action: user name={{ item }} state=absent
     with_items:
         - testuser1
         - testuser2
