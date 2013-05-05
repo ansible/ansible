@@ -3,7 +3,7 @@
 
 - hosts: all
   tasks:
-    - shell: echo "nested test a=${item[0]} b=${item[1]} c=${item[2]}"
+    - shell: echo "nested test a={{ item[0] }} b={{ item[1] }} c={{ item[2] }}"
       with_nested:
         - [ 'red', 'blue', 'green' ]
         - [ 1, 2, 3 ]
