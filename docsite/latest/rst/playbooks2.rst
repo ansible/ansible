@@ -279,6 +279,19 @@ As a reminder, to see what derived variables are available, you can do::
 
 Variables defined in the playbooks or inventory can also be used.
 
+If a required variable has not been set, you can skip or fail using Jinja2's 
+`defined` test. For example::
+
+    tasks:
+        - shell: echo "I've got '{{ foo }}' and am not afraid to use it!"
+          when: foo is defined
+
+        - fail: msg="Bailing out: this play requires 'bar'"
+          when: bar is not defined
+
+This is especially useful in combination with the conditional import of vars 
+files (see below).
+
 It's also easy to provide your own facts if you want, which is covered in :doc:`moduledev`.  To run them, just
 make a call to your own custom fact gathering module at the top of your list of tasks, and variables returned
 there will be accessible to future tasks::
@@ -288,7 +301,7 @@ there will be accessible to future tasks::
           action: site_facts
         - action: command echo {{ my_custom_fact_can_be_used_now }}
 
-One common useful trick with *when* is to key off the changed result of a last command.  As an example::
+One useful trick with *when* is to key off the changed result of a last command.  As an example::
 
     tasks:
         - action: template src=/templates/foo.j2 dest=/etc/foo.conf
