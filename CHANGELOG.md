@@ -27,6 +27,8 @@ Modules added:
 * npm: node.js package management
 * postgresql_priv: manages postgresql priveledges
 * set_fact: sets a variable, which can be the result of a template evaluation
+* hipchat: send notification events to hipchat
+* ec2_elb: add and remove machines from ec2 elastic load balancers
 
 Modules removed
 
@@ -70,6 +72,12 @@ Bugfixes and Misc Changes:
 * fix for upstart handling when toggling the enablement and running bits at the same time
 * when registering a task with a conditional attached, and the task is skipped by the conditional,
 the variable is still registered for the host, with the attribute skipped: True.
+* delegate_to tasks can look up ansible_ssh_private_key_file variable from inventory correctly now
+* s3 module takes a 'dest' parameter to change the destination for uploads
+* apt module gets a cache_valid_time option to avoid redundant cache updates
+* ec2 module better understands security groups
+* fix for postgresql codec usage
+* setup module now tolerant of OpenVZ interfaces
 
 1.1 "Mean Street" -- 4/2/2013
 
