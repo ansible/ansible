@@ -489,7 +489,7 @@ class Runner(object):
                 actual_port = delegate_info.get('ansible_ssh_port', port)
                 actual_user = delegate_info.get('ansible_ssh_user', actual_user)
                 actual_pass = delegate_info.get('ansible_ssh_pass', actual_pass)
-                actual_private_key_file = delegate_info.get('private_key_file', self.private_key_file)
+                actual_private_key_file = delegate_info.get('ansible_ssh_private_key_file', self.private_key_file)
                 actual_transport = delegate_info.get('ansible_connection', self.transport)
                 for i in delegate_info:
                     if i.startswith("ansible_") and i.endswith("_interpreter"):
