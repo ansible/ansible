@@ -39,6 +39,12 @@ options:
     required: false
     default: null
     aliases: []
+  dest:
+    description:
+      - the destination in s3, if different from path
+    required: false
+    default: null
+    aliases: []
   expiry:
     description:
       - expiry period (in seconds) for returned download URL.
@@ -52,7 +58,7 @@ options:
     default: false
     version_added: "1.2"
 requirements: [ "boto" ]
-author: Lester Wade
+author: Lester Wade, Ralph Tice
 '''
 
 EXAMPLES = '''
@@ -95,6 +101,7 @@ def main():
         argument_spec = dict(
             bucket = dict(),
             path = dict(),
+            dest = dict(),
             state  = dict(choices=['present', 'absent']),
             expiry = dict(default=600),
             s3_url = dict(aliases=['S3_URL']),
@@ -107,6 +114,7 @@ def main():
 
     bucket_name = module.params.get('bucket')
     path = os.path.expanduser(module.params['path'])
+    dest = module.params.get('dest')
     state = module.params.get('state')
     expiry = int(module.params['expiry'])
     s3_url = module.params.get('s3_url')
@@ -159,9 +167,12 @@ def main():
             module.fail_json(msg="Source %s cannot be found" % (path), failed=failed)
             sys.exit(0)
 
-    # Default to setting the key to the same as the filename if not downloading. Adding custom key would be trivial.
-    key_name = os.path.basename(path)
-   
+    # Default to setting the key to the same as the filename if dest is not provided.
+    if dest is None:
+        key_name = os.path.basename(path)
+    else:
+        key_name = dest
+
     # Check to see if the key already exists 
     if bucket_exists is True:
         try:
