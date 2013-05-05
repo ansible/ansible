@@ -807,9 +807,15 @@ class AnsibleModule(object):
             self.fail_json(msg='Could not make backup of %s to %s: %s' % (fn, backupdest, e))
         return backupdest
 
+    def cleanup(tmpfile):
+        if os.path.exists(tmpfile):
+            try:
+                os.unlink(tmpfile)
+            except OSError, e:
+                sys.stderr.write("could not cleanup %s: %s" % (tmpfile, e))
+
     def atomic_move(self, src, dest):
         '''atomically move src to dest, copying attributes from dest, returns true on success'''
-        rc = False
         context = None
         if os.path.exists(dest):
             try:
@@ -829,13 +835,6 @@ class AnsibleModule(object):
         dest_file = os.path.basename(dest)
         tmp_dest = "%s/.%s.%s.%s" % (dest_dir,dest_file,os.getpid(),time.time())
 
-        def cleanup():
-            if os.path.exists(tmp_dest):
-                try:
-                    os.unlink(tmp_dest)
-                except OSError, e:
-                    sys.stderr.write("could not cleanup %s: %s" % (tmp_dest, e))
-
         try: # leaves tmp file behind when sudo and  not root
             if os.getenv("SUDO_USER") and os.getuid() != 0:
                # cleanup will happen by 'rm' of tempdir
@@ -848,11 +847,9 @@ class AnsibleModule(object):
             if self.selinux_enabled():
                 # rename might not preserve context
                 self.set_context_if_different(dest, context, False)
-            rc = True
         except (shutil.Error, OSError, IOError), e:
-            cleanup()
+            cleanup(tmp_dest)
             self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
-        return rc
 
     def run_command(self, args, check_rc=False, close_fds=False, executable=None, data=None):
         '''
