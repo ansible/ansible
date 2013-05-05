@@ -98,6 +98,16 @@ Support for running things from sudo is also available::
       user: yourname
       sudo: yes
 
+You can also use sudo on a particular task instead of the whole play::
+
+    ---
+    - hosts: webservers
+      user: yourname
+      tasks:
+        - service: name=nginx state=started
+          sudo: yes
+
+
 You can also login as you, and then sudo to different users than root::
 
     ---
@@ -263,8 +273,8 @@ It is also possible to say:
 
     template: src=templates/foo.j2 dest=/etc/foo.conf
 
-The name of the module is simply followed by a colon and the arguments to that module.  We think this is a lot more intuitive.  
-Our documentation has not converted over to this new format just yet as many users may still be using older versions.  
+The name of the module is simply followed by a colon and the arguments to that module.  We think this is a lot more intuitive.
+Our documentation has not converted over to this new format just yet as many users may still be using older versions.
 You'll be able to use both formats forever.
 
 Running Operations On Change
@@ -275,10 +285,10 @@ they have made a change on the remote system.   Playbooks recognize this and
 have a basic event system that can be used to respond to change.
 
 These 'notify' actions are triggered at the end of each block of tasks in a playbook, and will only be
-triggered once even if notified by multiple different tasks.  
+triggered once even if notified by multiple different tasks.
 
 For instance, multiple resources may indicate
-that apache needs to be restarted because they have changed a config file, 
+that apache needs to be restarted because they have changed a config file,
 but apache will only be bounced once to avoid unneccessary restarts.
 
 Here's an example of restarting two services when the contents of a file
@@ -374,7 +384,7 @@ which also supports structured variables::
       - include: wordpress.yml
         vars:
             user: timmy
-            some_list_variable: 
+            some_list_variable:
               - alpha
               - beta
               - gamma
@@ -500,13 +510,13 @@ While it's probably not something you should do often, you can also conditionall
     - hosts: webservers
       roles:
         - { role: some_role, when: "ansible_os_family == 'RedHat'" }
-   
+
 This works by applying the conditional to every task in the role.  Conditionals are covered later on in
-the documentation.    
+the documentation.
 
 If the play still has a 'tasks' section, those tasks are executed after roles are applied.
 
-If you want to define certain tasks to happen before AND after roles are applied, you can do this::    
+If you want to define certain tasks to happen before AND after roles are applied, you can do this::
 
     ---
     - hosts: webservers
@@ -516,7 +526,7 @@ If you want to define certain tasks to happen before AND after roles are applied
         - { role: some_role }
       post_tasks:
         - shell: echo 'goodbye'
-    
+
 Executing A Playbook
 ````````````````````
 
