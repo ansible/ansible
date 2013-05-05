@@ -554,6 +554,7 @@ class PlaybookCallbacks(object):
             else:
                 self.skip_task = True
         else:
+            self.skip_task = False
             display(banner(msg))
 
         call_callback_module('playbook_on_task_start', name, is_conditional)
