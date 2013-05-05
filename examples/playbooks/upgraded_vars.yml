@@ -1,7 +1,4 @@
-# in Ansible 1.2 and later, the $foo variable syntax, which is friendly enough for simple things
-# has been upgraded to allow Jinja2 substitiutions as well, which is now the preferred Syntax.
-# here is an example.  Note that Jinja2 conditionals belong only in templates.  Use ansible conditionals
-# in playbooks.
+# this just shows some tricks possible with variables in Ansible 1.2 and later.
 
 ---
 
