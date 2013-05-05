@@ -155,19 +155,19 @@ These variables can be used later in the playbook like this::
 
     $varname or ${varname} or {{ varname }}
 
-If you ever want to do anything complex, {{ varname }} is best, as it uses the Jinja2 templating engine.  It is a good idea to get
-in the habit of using this form.
+If you ever want to do anything complex like uppercasing a string, {{ varname }} is best, as it uses the Jinja2 templating engine.  It is a good idea to get in the habit of using this form most of the time when the output is to be a string.  
 
-To learn more about Jinja2, you can optionally see the `Jinja2 docs <http://jinja.pocoo.org/docs/>`_ - though remember that Jinja2 loops and conditionals are only for 'templates' in Ansible, in playbooks, ansible has the 'when' and 'with' keywords for conditionals and loops.
+If just referencing the value of another simple variable though, it's fine to say $x or ${x}.  This is common for when a datastructure has a member that is the value of another datastructure.
+
+To learn more about Jinja2, you can optionally see the `Jinja2 docs <http://jinja.pocoo.org/docs/>`_ - though remember that Jinja2 loops and conditionals are only for 'templates' in Ansible, in playbooks, ansible has the 'when' and 'with' keywords for conditionals and loops. 
 
 If there are discovered variables about the system, called 'facts', these variables bubble up back into the
 playbook, and can be used on each system just like explicitly set variables.  Ansible provides several
 of these, prefixed with 'ansible', and are documented under 'setup' in the module documentation.  Additionally,
-facts can be gathered by ohai and facter if they are installed.  Facter variables are prefixed with ``facter_`` and Ohai
-variables are prefixed with ``ohai_``.
+facts can be gathered by ohai and facter if they are installed.  Facter variables are prefixed with ``facter_`` and Ohai variables are prefixed with ``ohai_``.  These add extra dependencies and are only there for ease of users
+porting over from those other configuration systems.
 
-So for instance, if I wanted
-to write the hostname into the /etc/motd file, I could say::
+How about an example.  If I wanted to write the hostname into the /etc/motd file, I could say::
 
    - name: write the motd
      action: template src=/srv/templates/motd.j2 dest=/etc/motd
@@ -176,7 +176,7 @@ And in /srv/templates/motd.j2::
 
    You are logged into {{ facter_hostname }}
 
-But we're getting ahead of ourselves.  Let's talk about tasks.
+But we're getting ahead of ourselves, as that just showed a task in a playbook.  Let's talk about tasks.
 
 Tasks list
 ++++++++++
