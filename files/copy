@@ -147,11 +147,7 @@ def main():
                (rc,out,err) = module.run_command(validate % src)
                if rc != 0:
                  module.fail_json(msg="failed to validate: rc:%s error:%s" % (rc,err))
-            if not module.atomic_move(src, dest):
-                try:
-                    os.unlink(src) # cleanup tmp files on failure
-                except OSError, e:
-                    sys.stderr.write("failed to clean up tmp file %s: %s\n" % (src, e))
+            module.atomic_move(src, dest):
         except IOError:
             module.fail_json(msg="failed to copy: %s to %s" % (src, dest))
         changed = True
