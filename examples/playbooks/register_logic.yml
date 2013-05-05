@@ -23,6 +23,11 @@
       # here we run the next action only if the previous grep returned true
 
       - action: shell echo "motd contains the word hi"
-        only_if: "${motd_result.rc} == 0"
+        when: motd_result.rc == 0
+
+      # alternatively:
+
+      - action: shell echo "motd contains the word hi"
+        when: motd_result.stdout.find('hi') != -1
 
 
