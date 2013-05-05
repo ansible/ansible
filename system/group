@@ -103,7 +103,7 @@ class Group(object):
             if key == 'gid' and kwargs[key] is not None:
                 cmd.append('-g')
                 cmd.append(kwargs[key])
-            elif key == 'system' and kwargs[key] == 'yes':
+            elif key == 'system' and kwargs[key] == True:
                 cmd.append('-r')
         cmd.append(self.name)
         return self.execute_command(cmd)
@@ -189,7 +189,7 @@ class AIX(Group):
         for key in kwargs:
             if key == 'gid' and kwargs[key] is not None:
                 cmd.append('id='+kwargs[key])
-            elif key == 'system' and kwargs[key] == 'yes':
+            elif key == 'system' and kwargs[key] == True:
                 cmd.append('-a')
         cmd.append(self.name)
         return self.execute_command(cmd)
