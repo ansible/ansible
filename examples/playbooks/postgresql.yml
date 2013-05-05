@@ -14,7 +14,7 @@
   - name: ensure apt cache is up to date
     action: apt update_cache=yes
   - name: ensure packages are installed
-    action: apt pkg=$item
+    action: apt name={{item}}
     with_items:
         - postgresql
         - libpq-dev
@@ -32,10 +32,10 @@
 
   tasks:
   - name: ensure database is created
-    action: postgresql_db db=$dbname
+    action: postgresql_db db={{dbname}}
 
   - name: ensure user has access to database
-    action: postgresql_user db=$dbname user=$dbuser password=$dbpassword priv=ALL
+    action: postgresql_user db={{dbname}} user={{dbuser}} password={{dbpassword}} priv=ALL
 
   - name: ensure user does not have unnecessary privilege
-    action: postgresql_user user=$dbuser role_attr_flags=NOSUPERUSER,NOCREATEDB
+    action: postgresql_user user={{dbuser}} role_attr_flags=NOSUPERUSER,NOCREATEDB
