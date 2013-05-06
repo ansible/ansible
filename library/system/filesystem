@@ -21,7 +21,7 @@
 DOCUMENTATION = '''
 ---
 author: Alexander Bulimov
-module: mkfs
+module: filesystem
 short_description: Makes file system on block device
 description:
   - This module creates file system.
@@ -46,9 +46,9 @@ options:
     - List of options to be passed to mkfs command.
 examples:
   - description: Create a ext2 filesystem on /dev/sdb1.
-    code: mkfs fstype=ext2 dev=/dev/sdb1
+    code: filesystem fstype=ext2 dev=/dev/sdb1
   - description: Create a ext4 filesystem on /dev/sdb1 and check disk blocks.
-    code: mkfs fstype=ext4 dev=/dev/sdb1 opts="-cc"
+    code: filesystem fstype=ext4 dev=/dev/sdb1 opts="-cc"
 notes:
   - uses mkfs command
 '''
