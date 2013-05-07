@@ -121,7 +121,7 @@ You can do combinations::
 
 You can also use variables::
 
-    webservers:!$excluded:&$required
+    webservers:!{{excluded}}:&{{required}}
 
 Individual host names, IPs and groups, can also be referenced using
 wildcards::
@@ -133,6 +133,9 @@ It's also ok to mix wildcard patterns and groups at the same time::
 
     one*.com:dbservers
 
+And if the pattern starts with a '~' it is treated as a regular expression::
+
+    ~(web|db).*\.example\.com
 
 Easy enough.  See :doc:`examples` and then :doc:`playbooks` for how to do things to selected hosts.
 

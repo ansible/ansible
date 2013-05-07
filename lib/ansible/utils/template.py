@@ -49,6 +49,23 @@ def _get_filters():
  
    return Globals.FILTERS
 
+def _get_extensions():
+    ''' return jinja2 extensions to load '''
+
+    '''
+    if some extensions are set via jinja_extensions in ansible.cfg, we try
+    to load them with the jinja environment
+    '''
+    jinja_exts = []
+    if C.DEFAULT_JINJA2_EXTENSIONS:
+        '''
+        Let's make sure the configuration directive doesn't contain spaces
+        and split extensions in an array
+        '''
+        jinja_exts = C.DEFAULT_JINJA2_EXTENSIONS.replace(" ", "").split(',')
+
+    return jinja_exts
+
 class Flags:
     LEGACY_TEMPLATE_WARNING = False
 
@@ -266,8 +283,15 @@ def legacy_varReplace(basedir, raw, vars, lookup_fatal=True, depth=0, expand_lis
 
     return ''.join(done)
 
-def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=True):
+# TODO: varname is misnamed here
+
+def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=True, convert_bare=False):
     ''' templates a data structure by traversing it and substituting for other data structures '''
+
+    if convert_bare and isinstance(varname, basestring):
+        first_part = varname.split(".")[0].split("[")[0]
+        if first_part in vars and '{{' not in varname and '$' not in varname:
+            varname = "{{%s}}" % varname
 
     if isinstance(varname, basestring):
         if '{{' in varname or '{%' in varname:
@@ -368,22 +392,10 @@ def template_from_file(basedir, path, vars):
     realpath = utils.path_dwim(basedir, path)
     loader=jinja2.FileSystemLoader([basedir,os.path.dirname(realpath)])
 
-    '''
-    if some extensions are set via jinja_extensions in ansible.cfg, we try
-    to load them with the jinja environment
-    '''
-    jinja_exts = []
-    if C.DEFAULT_JINJA2_EXTENSIONS:
-        '''
-        Let's make sure the configuration directive doesn't contain spaces
-        and split extensions in an array
-        '''
-        jinja_exts = C.DEFAULT_JINJA2_EXTENSIONS.replace(" ", "").split(',')
-
     def my_lookup(*args, **kwargs):
         return lookup(*args, basedir=basedir, **kwargs)
 
-    environment = jinja2.Environment(loader=loader, trim_blocks=True, extensions=jinja_exts)
+    environment = jinja2.Environment(loader=loader, trim_blocks=True, extensions=_get_extensions())
     environment.filters.update(_get_filters())
     environment.globals['lookup'] = my_lookup
 
@@ -437,23 +449,13 @@ def template_from_file(basedir, path, vars):
         res = res + '\n'
     return template(basedir, res, vars)
 
-def _smush_braces(data):
-    ''' smush Jinaj2 braces so unresolved templates like {{ foo }} don't get parsed weird by key=value code '''
-    while data.find('{{ ') != -1:
-        data = data.replace('{{ ', '{{')
-    while data.find(' }}') != -1:
-        data = data.replace(' }}', '}}')
-    return data
-
 def template_from_string(basedir, data, vars):
-    ''' run a file through the (Jinja2) templating engine '''
-
-    data = _smush_braces(data)
-
+    ''' run a string through the (Jinja2) templating engine '''
+    
     try:
         if type(data) == str:
             data = unicode(data, 'utf-8')
-        environment = jinja2.Environment(trim_blocks=True, undefined=StrictUndefined) 
+        environment = jinja2.Environment(trim_blocks=True, undefined=StrictUndefined, extensions=_get_extensions())
         environment.filters.update(_get_filters())
         environment.template_class = J2Template
 
@@ -462,8 +464,8 @@ def template_from_string(basedir, data, vars):
 
         try:
             t = environment.from_string(data)
-        except RuntimeError, re:
-            if 'recursion' in str(re):
+        except Exception, e:
+            if 'recursion' in str(e):
                 raise errors.AnsibleError("recursive loop detected in template string: %s" % data)
             else:
                 return data

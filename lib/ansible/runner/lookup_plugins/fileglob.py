@@ -34,6 +34,6 @@ class LookupModule(object):
 
             dwimmed = utils.path_dwim(self.basedir, term)
             globbed = glob.glob(dwimmed)
-            ret.extend(os.path.basename(g) for g in globbed if os.path.isfile(g))
+            ret.extend(g for g in globbed if os.path.isfile(g))
 
         return ret

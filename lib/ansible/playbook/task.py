@@ -17,6 +17,7 @@
 
 from ansible import errors
 from ansible import utils
+import os
 import ansible.utils.template as template
 
 class Task(object):
@@ -53,10 +54,16 @@ class Task(object):
         else:
             self.meta = None
 
+
+        library = os.path.join(play.basedir, 'library')
+        if os.path.exists(library):
+            utils.plugins.module_finder.add_directory(library)
+
         for x in ds.keys():
 
             # code to allow for saying "modulename: args" versus "action: modulename args"
             if x in utils.plugins.module_finder:
+
                 if 'action' in ds:
                     raise errors.AnsibleError("multiple actions specified in task %s" % (ds.get('name', ds['action'])))
                 if isinstance(ds[x], dict):

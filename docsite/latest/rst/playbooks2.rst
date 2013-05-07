@@ -90,7 +90,8 @@ Magic Variables, and How To Access Information About Other Hosts
 ````````````````````````````````````````````````````````````````
 
 Even if you didn't define them yourself, ansible provides a few variables for you, automatically.
-The most important of these are 'hostvars', 'group_names', and 'groups'.
+The most important of these are 'hostvars', 'group_names', and 'groups'.  Users should not use
+these names themselves as they are reserved.  'environment' is also reserved.
 
 Hostvars lets you ask about the variables of another host, including facts that have been gathered
 about that host.  If, at this point, you haven't talked to that host yet in any play in the playbook
@@ -278,6 +279,19 @@ As a reminder, to see what derived variables are available, you can do::
 
 Variables defined in the playbooks or inventory can also be used.
 
+If a required variable has not been set, you can skip or fail using Jinja2's 
+`defined` test. For example::
+
+    tasks:
+        - shell: echo "I've got '{{ foo }}' and am not afraid to use it!"
+          when: foo is defined
+
+        - fail: msg="Bailing out: this play requires 'bar'"
+          when: bar is not defined
+
+This is especially useful in combination with the conditional import of vars 
+files (see below).
+
 It's also easy to provide your own facts if you want, which is covered in :doc:`moduledev`.  To run them, just
 make a call to your own custom fact gathering module at the top of your list of tasks, and variables returned
 there will be accessible to future tasks::
@@ -287,7 +301,7 @@ there will be accessible to future tasks::
           action: site_facts
         - action: command echo {{ my_custom_fact_can_be_used_now }}
 
-One common useful trick with only_if is to key off the changed result of a last command.  As an example::
+One useful trick with *when* is to key off the changed result of a last command.  As an example::
 
     tasks:
         - action: template src=/templates/foo.j2 dest=/etc/foo.conf
@@ -432,30 +446,19 @@ Many new lookup abilities were added in 0.9.  Remeber lookup plugins are run on 
 
       tasks:
 
-         - action: debug msg="{{ item }} is an environment variable"
-           with_env:
-             - HOME
-             - LANG
+         - action: debug msg="{{ lookup('env','HOME') }} is an environment variable"
 
          - action: debug msg="{{ item }} is a line from the result of this command"
            with_lines:
              - cat /etc/motd
 
-         - action: debug msg="{{ item }} is the raw result of running this command"
-           with_pipe:
-              - date
+         - action: debug msg="{{ lookup('pipe','date') }} is the raw result of running this command"
 
-         - action: debug msg="{{ item }} is value in Redis for somekey"
-           with_redis_kv:
-             - redis://localhost:6379,somekey
+         - action: debug msg="{{ lookup('redis_kv', 'redis://localhost:6379,somekey') }} is value in Redis for somekey"
 
-         - action: debug msg="{{ item }} is a DNS TXT record for example.com"
-           with_dnstxt:
-             - example.com
+         - action: debug msg="{{ lookup('dnstxt', 'example.com') }} is a DNS TXT record for example.com"
 
-         - action: debug msg="{{ item }} is a value from evaluation of this template"
-           with_template:
-              - ./some_template.j2
+         - action: debug msg="{{ lookup('template', './some_template.j2') }} is a value from evaluation of this template"
 
 As an alternative you can also assign lookup plugins to variables or use them
 elsewhere.  This macros are evaluated each time they are used in a task (or
@@ -710,7 +713,7 @@ Often in a playbook it may be useful to store the result of a given command in a
 it later.  Use of the command module in this way can in many ways eliminate the need to write site specific facts, for
 instance, you could test for the existance of a particular program.
 
-The 'register' keyword decides what variable to save a result in.  The resulting variables can be used in templates, action lines, or only_if statements.  It looks like this (in an obviously trivial example)::
+The 'register' keyword decides what variable to save a result in.  The resulting variables can be used in templates, action lines, or *when* statements.  It looks like this (in an obviously trivial example)::
 
     - name: test play
       hosts: all

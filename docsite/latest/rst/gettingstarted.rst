@@ -133,7 +133,12 @@ Via RPM
 
 RPMs for the last Ansible release are available for `EPEL
 <http://fedoraproject.org/wiki/EPEL>`_ 6 and currently supported
-Fedora distributions.  Ansible itself can manage earlier operating
+Fedora distributions. RPMs for openSUSE can be found via the 
+`openSUSE Software Portal <http://software.opensuse.org/package/ansible>`_ 
+(in the systemsmanagement Project) for all currently supported 
+openSUSE and SLES distributions.
+
+Ansible itself can manage earlier operating
 systems that contain python 2.4 or higher.
 
 If you are using RHEL or CentOS and have not already done so, `configure EPEL <http://fedoraproject.org/wiki/EPEL>`_
@@ -142,6 +147,15 @@ If you are using RHEL or CentOS and have not already done so, `configure EPEL <h
 
     # install the epel-release RPM if needed on CentOS, RHEL, or Scientific Linux
     $ sudo yum install ansible
+
+For openSUSE and SUSE Linux Enterprise, add the `systemsmanagement repository <http://download.opensuse.org/repositories/systemsmanagement/>`_ 
+for your distribution:
+
+.. code-block:: bash
+
+    # replace $dist with the correct distribution found here: http://download.opensuse.org/repositories/systemsmanagement/
+    $ sudo zypper ar -f http://download.opensuse.org/repositories/systemsmanagement/$dist/systemsmanagement.repo
+    $ sudo zypper install ansible
 
 You can also use the ``make rpm`` command to build an RPM you can distribute and install. 
 Make sure you have ``rpm-build``, ``make``, and ``python2-devel`` installed.

@@ -17,7 +17,7 @@
 
 #############################################
 
-from ansible.utils import template
+from ansible.utils.template import template
 from ansible import utils
 from ansible import errors
 from ansible.playbook.task import Task
@@ -59,6 +59,14 @@ class Play(object):
         self.vars             = self._get_vars()
         self.basedir          = basedir
         self.roles            = ds.get('roles', None)
+        self.tags             = ds.get('tags', None)
+
+        if self.tags is None:
+            self.tags = []
+        elif type(self.tags) in [ str, unicode ]:
+            self.tags = self.tags.split(",")
+        elif type(self.tags) != list:
+            self.tags = []
 
         ds = self._load_roles(self.roles, ds)
         self.vars_files       = ds.get('vars_files', [])
@@ -69,7 +77,7 @@ class Play(object):
         # tasks/handlers as they may have inventory scope overrides
         _tasks    = ds.pop('tasks', [])
         _handlers = ds.pop('handlers', [])
-        ds = template.template(basedir, ds, self.vars) 
+        ds = template(basedir, ds, self.vars) 
         ds['tasks'] = _tasks
         ds['handlers'] = _handlers
 
@@ -91,7 +99,6 @@ class Play(object):
         self.sudo             = ds.get('sudo', self.playbook.sudo)
         self.sudo_user        = ds.get('sudo_user', self.playbook.sudo_user)
         self.transport        = ds.get('connection', self.playbook.transport)
-        self.tags             = ds.get('tags', None)
         self.gather_facts     = ds.get('gather_facts', None)
         self.serial           = int(ds.get('serial', 0))
         self.remote_port      = self.remote_port
@@ -104,12 +111,6 @@ class Play(object):
         self._tasks      = self._load_tasks(self._ds.get('tasks', []), load_vars)
         self._handlers   = self._load_tasks(self._ds.get('handlers', []), load_vars)
 
-        if self.tags is None:
-            self.tags = []
-        elif type(self.tags) in [ str, unicode ]:
-            self.tags = [ self.tags ]
-        elif type(self.tags) != list:
-            self.tags = []
 
         if self.sudo_user != 'root':
             self.sudo = True
@@ -124,7 +125,8 @@ class Play(object):
         #    <rolename>/tasks/main.yml
         #    <rolename>/handlers/main.yml
         #    <rolename>/vars/main.yml
-        # and it auto-extends tasks/handlers/vars_files as appropriate if found
+        #    <rolename>/library
+        # and it auto-extends tasks/handlers/vars_files/module paths as appropriate if found
 
         if roles is None:
             roles = []
@@ -140,6 +142,8 @@ class Play(object):
             pre_tasks = []
         for x in pre_tasks:
             new_tasks.append(x)
+
+        # flush handlers after pre_tasks
         new_tasks.append(dict(meta='flush_handlers'))
 
         # variables if the role was parameterized (i.e. given as a hash) 
@@ -158,9 +162,9 @@ class Play(object):
             with_items = has_dict.get('with_items', None)
             when       = has_dict.get('when', None)
 
-            path = utils.path_dwim(self.basedir, orig_path)
+            path = utils.path_dwim(self.basedir, os.path.join('roles', orig_path))
             if not os.path.isdir(path) and not orig_path.startswith(".") and not orig_path.startswith("/"):
-                path2 = utils.path_dwim(self.basedir, os.path.join('roles', orig_path))
+                path2 = utils.path_dwim(self.basedir, orig_path)
                 if not os.path.isdir(path2):
                     raise errors.AnsibleError("cannot find role in %s or %s" % (path, path2))
                 path = path2
@@ -169,6 +173,9 @@ class Play(object):
             task      = utils.path_dwim(self.basedir, os.path.join(path, 'tasks', 'main.yml'))
             handler   = utils.path_dwim(self.basedir, os.path.join(path, 'handlers', 'main.yml'))
             vars_file = utils.path_dwim(self.basedir, os.path.join(path, 'vars', 'main.yml'))
+            library   = utils.path_dwim(self.basedir, os.path.join(path, 'library'))
+            if not os.path.isfile(task) and not os.path.isfile(handler) and not os.path.isfile(vars_file) and not os.path.isdir(library):
+                raise errors.AnsibleError("found role at %s, but cannot find %s or %s or %s or %s" % (path, task, handler, vars_file, library))
             if os.path.isfile(task):
                 nt = dict(include=task, vars=has_dict)
                 if when: 
@@ -185,6 +192,8 @@ class Play(object):
                 new_handlers.append(nt)
             if os.path.isfile(vars_file):
                 new_vars_files.append(vars_file)
+            if os.path.isdir(library):
+                utils.plugins.module_finder.add_directory(library)
 
         tasks = ds.get('tasks', None)
         post_tasks = ds.get('post_tasks', None)
@@ -201,10 +210,11 @@ class Play(object):
         if type(post_tasks) != list:
             post_tasks = []
 
-        new_tasks.append(dict(meta='flush_handlers'))
         new_tasks.extend(tasks)
+        # flush handlers after tasks + role tasks
         new_tasks.append(dict(meta='flush_handlers'))
         new_tasks.extend(post_tasks)
+        # flush handlers after post tasks
         new_tasks.append(dict(meta='flush_handlers'))
         new_handlers.extend(handlers)
         new_vars_files.extend(vars_files)
@@ -247,7 +257,7 @@ class Play(object):
                         plugin_name = k[5:]
                         if plugin_name not in utils.plugins.lookup_loader:
                             raise errors.AnsibleError("cannot find lookup plugin named %s for usage in with_%s" % (plugin_name, plugin_name))
-                        terms = template.template(self.basedir, x[k], task_vars)
+                        terms = template(self.basedir, x[k], task_vars)
                         items = utils.plugins.lookup_loader.get(plugin_name, basedir=self.basedir, runner=None).run(terms, inject=task_vars)
                     elif k.startswith("when_"):
                         included_additional_conditions.append(utils.compile_when_to_only_if("%s %s" % (k[5:], x[k])))
@@ -268,11 +278,11 @@ class Play(object):
                     mv['item'] = item
                     for t in tokens[1:]:
                         (k,v) = t.split("=", 1)
-                        mv[k] = template.template(self.basedir, v, mv)
+                        mv[k] = template(self.basedir, v, mv)
                     dirname = self.basedir
                     if original_file:
                         dirname = os.path.dirname(original_file)     
-                    include_file = template.template(dirname, tokens[0], mv)
+                    include_file = template(dirname, tokens[0], mv)
                     include_filename = utils.path_dwim(dirname, include_file)
                     data = utils.parse_yaml_from_file(include_filename)
                     results += self._load_tasks(data, mv, included_additional_conditions, original_file=include_filename)
@@ -415,10 +425,10 @@ class Play(object):
                 found = False
                 sequence = []
                 for real_filename in filename:
-                    filename2 = template.template(self.basedir, real_filename, self.vars)
+                    filename2 = template(self.basedir, real_filename, self.vars)
                     filename3 = filename2
                     if host is not None:
-                        filename3 = template.template(self.basedir, filename2, inject)
+                        filename3 = template(self.basedir, filename2, inject)
                     filename4 = utils.path_dwim(self.basedir, filename3)
                     sequence.append(filename4)
                     if os.path.exists(filename4):
@@ -448,10 +458,10 @@ class Play(object):
             else:
                 # just one filename supplied, load it!
 
-                filename2 = template.template(self.basedir, filename, self.vars)
+                filename2 = template(self.basedir, filename, self.vars)
                 filename3 = filename2
                 if host is not None:
-                    filename3 = template.template(self.basedir, filename2, inject)
+                    filename3 = template(self.basedir, filename2, inject)
                 filename4 = utils.path_dwim(self.basedir, filename3)
                 if self._has_vars_in(filename4):
                     continue

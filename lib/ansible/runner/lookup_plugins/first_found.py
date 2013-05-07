@@ -152,7 +152,7 @@ class LookupModule(object):
                     else:
                         for path in pathlist:
                             for fn in filelist:
-                                f = path + '/' + fn
+                                os.path.join(path, fn)
                                 total_search.append(f)
                 else:
                     total_search = [term]

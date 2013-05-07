@@ -42,11 +42,21 @@ class LookupModule(object):
     def __init__(self, basedir=None, **kwargs):
         self.basedir = basedir
 
+    def __lookup_injects(self, terms, inject):
+        results = []
+        for x in terms:
+           if isinstance(x, basestring) and x in inject:
+               results.append(inject[x])
+           else:
+               results.append(x)
+        return results
+
     def run(self, terms, inject=None, **kwargs):
 
         # this code is common with 'items.py' consider moving to utils if we need it again
 
         terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
+        terms = self.__lookup_injects(terms, inject)
 
         my_list = terms[:]
         my_list.reverse()

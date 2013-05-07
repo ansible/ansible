@@ -239,7 +239,8 @@ class Runner(object):
 
         if not self.environment:
             return ""
-        enviro = template.template(self.basedir, self.environment, inject)
+        enviro = template.template(self.basedir, self.environment, inject, convert_bare=True)
+        enviro = utils.safe_eval(enviro)
         if type(enviro) != dict:
             raise errors.AnsibleError("environment must be a dictionary, received %s" % enviro)
         result = ""
@@ -260,7 +261,7 @@ class Runner(object):
             if 'port' not in args:
                 args += " port=%s" % C.ZEROMQ_PORT
 
-        (remote_module_path, is_new_style, shebang) = self._copy_module(conn, tmp, module_name, args, inject, complex_args)
+        (remote_module_path, module_style, shebang) = self._copy_module(conn, tmp, module_name, args, inject, complex_args)
 
         environment_string = self._compute_environment_string(inject)
 
@@ -271,14 +272,26 @@ class Runner(object):
             self._low_level_exec_command(conn, cmd_chmod, tmp, sudoable=False)
 
         cmd = ""
-        if not is_new_style:
+        if module_style != 'new':
             if 'CHECKMODE=True' in args:
                 # if module isn't using AnsibleModuleCommon infrastructure we can't be certain it knows how to
                 # do --check mode, so to be safe we will not run it.
-                return ReturnData(conn=conn, result=dict(skippped=True, msg="cannot run check mode against old-style modules"))
+                return ReturnData(conn=conn, result=dict(skippped=True, msg="cannot yet run check mode against old-style modules"))
 
             args = template.template(self.basedir, args, inject)
-            argsfile = self._transfer_str(conn, tmp, 'arguments', args)
+
+            # decide whether we need to transfer JSON or key=value
+            argsfile = None
+            if module_style == 'non_native_want_json':
+                if complex_args:
+                    complex_args.update(utils.parse_kv(args))
+                    argsfile = self._transfer_str(conn, tmp, 'arguments', utils.jsonify(complex_args))
+                else:
+                    argsfile = self._transfer_str(conn, tmp, 'arguments', utils.jsonify(utils.parse_kv(args)))
+
+            else:
+                argsfile = self._transfer_str(conn, tmp, 'arguments', args)
+
             if async_jid is None:
                 cmd = "%s %s" % (remote_module_path, argsfile)
             else:
@@ -292,12 +305,22 @@ class Runner(object):
         if not shebang:
             raise errors.AnsibleError("module is missing interpreter line")
 
-        cmd = " ".join([environment_string, shebang.replace("#!",""), cmd])
+        cmd = " ".join([environment_string.strip(), shebang.replace("#!","").strip(), cmd])
         cmd = cmd.strip()
 
         if tmp.find("tmp") != -1 and C.DEFAULT_KEEP_REMOTE_FILES != '1' and not persist_files:
-            cmd = cmd + "; rm -rf %s >/dev/null 2>&1" % tmp
+            if not self.sudo or self.sudo_user == 'root':
+                # not sudoing or sudoing to root, so can cleanup files in the same step
+                cmd = cmd + "; rm -rf %s >/dev/null 2>&1" % tmp
         res = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
+
+        if self.sudo and self.sudo_user != 'root':
+            # not sudoing to root, so maybe can't delete files as that other user
+            # have to clean up temp files as original user in a second step
+            if tmp.find("tmp") != -1 and C.DEFAULT_KEEP_REMOTE_FILES != '1' and not persist_files:
+                cmd2 = "rm -rf %s >/dev/null 2>&1" % tmp
+                self._low_level_exec_command(conn, cmd2, tmp, sudoable=False)
+
         data = utils.parse_json(res['stdout'])
         if 'parsed' in data and data['parsed'] == False:
             data['msg'] += res['stderr']
@@ -380,10 +403,17 @@ class Runner(object):
                 inject['item'] = ",".join(items)
                 items = None
 
-        # logic to decide how to run things depends on whether with_items is used
+        # logic to replace complex args if possible
+        complex_args = self.complex_args
 
+        # logic to decide how to run things depends on whether with_items is used
         if items is None:
-            return self._executor_internal_inner(host, self.module_name, self.module_args, inject, port, complex_args=self.complex_args)
+            if isinstance(complex_args, basestring):
+                complex_args = template.template(self.basedir, complex_args, inject, convert_bare=True)
+                complex_args = utils.safe_eval(complex_args)
+                if type(complex_args) != dict:
+                    raise errors.AnsibleError("args must be a dictionary, received %s" % complex_args)
+            return self._executor_internal_inner(host, self.module_name, self.module_args, inject, port, complex_args=complex_args)
         elif len(items) > 0:
 
             # executing using with_items, so make multiple calls
@@ -396,13 +426,21 @@ class Runner(object):
             results = []
             for x in items:
                 inject['item'] = x
+
+                # TODO: this idiom should be replaced with an up-conversion to a Jinja2 template evaluation
+                if isinstance(complex_args, basestring):
+                    complex_args = template.template(self.basedir, complex_args, inject, convert_bare=True)
+                    complex_args = utils.safe_eval(complex_args)
+                    if type(complex_args) != dict:
+                        raise errors.AnsibleError("args must be a dictionary, received %s" % complex_args)
+
                 result = self._executor_internal_inner(
                      host, 
                      self.module_name, 
                      self.module_args, 
                      inject, 
                      port, 
-                     complex_args=self.complex_args
+                     complex_args=complex_args
                 )
                 results.append(result.result)
                 if result.comm_ok == False:
@@ -424,7 +462,7 @@ class Runner(object):
             return ReturnData(host=host, comm_ok=all_comm_ok, result=rd_result)
         else:
             self.callbacks.on_skipped(host, None)
-            return ReturnData(host=host, comm_ok=True, result=dict(skipped=True))
+            return ReturnData(host=host, comm_ok=True, result=dict(changed=False, skipped=True))
 
     # *****************************************************
 
@@ -456,7 +494,7 @@ class Runner(object):
         conditional = template.template(self.basedir, self.conditional, inject, expand_lists=False)
 
         if not utils.check_conditional(conditional):
-            result = utils.jsonify(dict(skipped=True))
+            result = utils.jsonify(dict(changed=False, skipped=True))
             self.callbacks.on_skipped(host, inject.get('item',None))
             return ReturnData(host=host, result=result)
 
@@ -489,7 +527,7 @@ class Runner(object):
                 actual_port = delegate_info.get('ansible_ssh_port', port)
                 actual_user = delegate_info.get('ansible_ssh_user', actual_user)
                 actual_pass = delegate_info.get('ansible_ssh_pass', actual_pass)
-                actual_private_key_file = delegate_info.get('private_key_file', self.private_key_file)
+                actual_private_key_file = delegate_info.get('ansible_ssh_private_key_file', self.private_key_file)
                 actual_transport = delegate_info.get('ansible_connection', self.transport)
                 for i in delegate_info:
                     if i.startswith("ansible_") and i.endswith("_interpreter"):
@@ -586,11 +624,9 @@ class Runner(object):
         ''' takes a remote md5sum without requiring python, and returns 0 if no file '''
 
         path = pipes.quote(path)
-        test = ('if [ ! -e \"%s\" ]; then rc=0;'
-                'elif [ -d \"%s\" ]; then rc=3;'
-                'elif [ ! -f \"%s\" ]; then rc=1;'
-                'elif [ ! -r \"%s\" ]; then rc=2;'
-                'else rc=0; fi') % ((path,) * 4)
+        # The following test needs to be SH-compliant.  BASH-isms will
+        # not work if /bin/sh points to a non-BASH shell.
+        test = "rc=0; [ -r \"%s\" ] || rc=2; [ -f \"%s\" ] || rc=1; [ -d \"%s\" ] && rc=3" % ((path,) * 3) 
         md5s = [
             "(/usr/bin/md5sum %s 2>/dev/null)" % path,  # Linux
             "(/sbin/md5sum -q %s 2>/dev/null)" % path,  # ?
@@ -653,12 +689,14 @@ class Runner(object):
         out_path = os.path.join(tmp, module_name)
 
         module_data = ""
-        is_new_style=False
+        module_style = 'old'
 
         with open(in_path) as f:
             module_data = f.read()
             if module_common.REPLACER in module_data:
-                is_new_style=True
+                module_style = 'new'
+            if 'WANT_JSON' in module_data:
+                module_style = 'non_native_want_json'
 
             complex_args_json = utils.jsonify(complex_args)
             encoded_args = "\"\"\"%s\"\"\"" % module_args.replace("\"","\\\"")
@@ -670,7 +708,7 @@ class Runner(object):
             module_data = module_data.replace(module_common.REPLACER_LANG, encoded_lang)
             module_data = module_data.replace(module_common.REPLACER_COMPLEX, encoded_complex)
 
-            if is_new_style:
+            if module_style == 'new':
                 facility = C.DEFAULT_SYSLOG_FACILITY
                 if 'ansible_syslog_facility' in inject:
                     facility = inject['ansible_syslog_facility']
@@ -690,7 +728,7 @@ class Runner(object):
 
         self._transfer_str(conn, tmp, module_name, module_data)
 
-        return (out_path, is_new_style, shebang)
+        return (out_path, module_style, shebang)
 
     # *****************************************************
 

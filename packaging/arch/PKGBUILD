@@ -1,6 +1,6 @@
 #Maintainer: Michel Blanc <mblanc@erasme.org>
 pkgname=ansible-git
-pkgver=20130311
+pkgver=20130430
 pkgrel=1
 pkgdesc="A radically simple deployment, model-driven configuration management, and command execution framework"
 arch=('any')
@@ -38,7 +38,7 @@ package() {
   cd "$srcdir/$_gitname"
 
   mkdir -p ${pkgdir}/usr/share/ansible
-  cp ./library/* ${pkgdir}/usr/share/ansible/
+  cp -r ./library/* ${pkgdir}/usr/share/ansible/
   cp -r ./examples ${pkgdir}/usr/share/ansible
 
   python2 setup.py install -O1 --root=${pkgdir}

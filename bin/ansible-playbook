@@ -19,7 +19,6 @@
 #######################################################
 
 import sys
-import getpass
 import os
 
 import ansible.playbook
@@ -29,16 +28,17 @@ from ansible import errors
 from ansible import callbacks
 from ansible import utils
 from ansible.color import ANSIBLE_COLOR, stringc
+from ansible.callbacks import display
 
 def colorize(lead, num, color):
     """ Print 'lead' = 'num' in 'color' """
-    if num != 0 and ANSIBLE_COLOR:
+    if num != 0 and ANSIBLE_COLOR and color is not None:
         return "%s%s%-15s" % (stringc(lead, color), stringc("=", color), stringc(str(num), color))
     else:
         return "%s=%-4s" % (lead, str(num))
 
-def hostcolor(host, stats):
-    if ANSIBLE_COLOR:
+def hostcolor(host, stats, color=True):
+    if ANSIBLE_COLOR and color:
         if stats['failures'] != 0 or stats['unreachable'] != 0:
             return "%-37s" % stringc(host, 'red')
         elif stats['changed'] != 0:
@@ -93,13 +93,9 @@ def main(args):
     sudopass = None
     if not options.listhosts and not options.syntax and not options.listtasks:
         options.ask_pass = options.ask_pass or C.DEFAULT_ASK_PASS
-        if options.ask_pass:
-            sshpass = getpass.getpass(prompt="SSH password: ")
         options.ask_sudo_pass = options.ask_sudo_pass or C.DEFAULT_ASK_SUDO_PASS
-        if options.ask_sudo_pass:
-            sudopass = getpass.getpass(prompt="sudo password: ")
-            options.sudo = True
-        if options.sudo_user:
+        ( sshpass, sudopass ) = utils.ask_passwords(ask_pass=options.ask_pass, ask_sudo_pass=options.ask_sudo_pass)
+        if options.sudo_user or options.ask_sudo_pass:
             options.sudo = True
         options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
     extra_vars = utils.parse_kv(options.extra_vars)
@@ -163,14 +159,13 @@ def main(args):
                     unmatched_tags.discard('all')
                     unknown_tags = set(pb.only_tags) - (matched_tags | unmatched_tags)
                     if unknown_tags:
-                        msg = 'tag(s) not found in playbook: %s.  possible values: %s'
-                        unknown = ','.join(sorted(unknown_tags))
-                        unmatched = ','.join(sorted(unmatched_tags))
-                        raise errors.AnsibleError(msg % (unknown, unmatched))
+                        continue
                     print '  play #%d (%s): task count=%d' % (playnum, label, len(play.tasks()))
                     for task in play.tasks():
                         if set(task.tags).intersection(pb.only_tags):
-                            print '    %s' % task.name
+                            if getattr(task, 'name', None) is not None:
+                                # meta tasks have no names
+                                print '    %s' % task.name
                 print ''
             continue
 
@@ -186,7 +181,7 @@ def main(args):
             pb.run()
 
             hosts = sorted(pb.stats.processed.keys())
-            print callbacks.banner("PLAY RECAP")
+            display(callbacks.banner("PLAY RECAP"))
             playbook_cb.on_stats(pb.stats)
 
             for h in hosts:
@@ -197,16 +192,28 @@ def main(args):
             if len(failed_hosts) > 0:
                 filename = pb.generate_retry_inventory(failed_hosts)
                 if filename:
-                    print "           to retry, use: --limit @%s\n" % filename
+                    display("           to retry, use: --limit @%s\n" % filename)
 
             for h in hosts:
                 t = pb.stats.summarize(h)
-                print "%s : %s %s %s %s" % (
+
+                display("%s : %s %s %s %s" % (
                     hostcolor(h, t),
                     colorize('ok', t['ok'], 'green'),
                     colorize('changed', t['changed'], 'yellow'),
                     colorize('unreachable', t['unreachable'], 'red'),
-                    colorize('failed', t['failures'], 'red'))
+                    colorize('failed', t['failures'], 'red')), 
+                    screen_only=True
+                )
+
+                display("%s : %s %s %s %s" % (
+                    hostcolor(h, t, False),
+                    colorize('ok', t['ok'], None),
+                    colorize('changed', t['changed'], None),
+                    colorize('unreachable', t['unreachable'], None),
+                    colorize('failed', t['failures'], None)), 
+                    log_only=True
+                )
 
  
             print ""
@@ -214,16 +221,19 @@ def main(args):
                 return 2
 
         except errors.AnsibleError, e:
-            print >>sys.stderr, "ERROR: %s" % e
+            display("ERROR: %s" % e, color='red')
             return 1
 
     return 0
 
 
 if __name__ == "__main__":
+    display(" ", log_only=True)
+    display(" ".join(sys.argv), log_only=True)
+    display(" ", log_only=True)
     try:
         sys.exit(main(sys.argv[1:]))
     except errors.AnsibleError, e:
-        print >>sys.stderr, "ERROR: %s" % e
+        display("ERROR: %s" % e, color='red', stderr=True)
         sys.exit(1)
 

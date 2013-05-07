@@ -50,7 +50,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General substitutions.
-project = 'Ansible Documentation'
+project = 'Ansible 1.2 Documentation'
 copyright = "2013 AnsibleWorks"
 
 # The default replacements for |version| and |release|, also used in various
@@ -102,7 +102,7 @@ pygments_style = 'sphinx'
 
 html_theme_path = ['_themes']
 html_theme = 'bootstrap'
-html_short_title = 'Ansible Documentation'
+html_short_title = 'Ansible 1.2 Documentation'
 
 # The style sheet to use for HTML and HTML Help pages. A file of that name
 # must exist either in Sphinx' static/ path, or in one of the custom paths
@@ -111,7 +111,7 @@ html_style = 'default.css'
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-html_title = 'Ansible Documentation'
+html_title = 'Ansible 1.2 Documentation'
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 #html_short_title = None
@@ -182,7 +182,7 @@ htmlhelp_basename = 'Poseidodoc'
 # (source start file, target name, title, author, document class
 # [howto/manual]).
 latex_documents = [
-  ('index', 'ansible.tex', 'Ansible Documentation',
+  ('index', 'ansible.tex', 'Ansible 1.2 Documentation',
    AUTHOR, 'manual'),
 ]
 

@@ -319,15 +319,7 @@ class AnsibleModule(object):
         st = os.stat(filename)
         uid = st.st_uid
         gid = st.st_gid
-        try:
-            user = pwd.getpwuid(uid)[0]
-        except KeyError:
-            user = str(uid)
-        try:
-            group = grp.getgrgid(gid)[0]
-        except KeyError:
-            group = str(gid)
-        return (user, group)
+        return (uid, gid)
 
     def set_default_selinux_context(self, path, changed):
         if not HAVE_SELINUX or not self.selinux_enabled():
@@ -366,14 +358,17 @@ class AnsibleModule(object):
         path = os.path.expanduser(path)
         if owner is None:
             return changed
-        user, group = self.user_and_group(path)
-        if owner != user:
+        orig_uid, orig_gid = self.user_and_group(path)
+        try:
+            uid = int(owner)
+        except ValueError:
             try:
                 uid = pwd.getpwnam(owner).pw_uid
             except KeyError:
                 self.fail_json(path=path, msg='chown failed: failed to look up user %s' % owner)
-            if self.check_mode:
-                return True
+        if self.check_mode:
+            return True
+        if orig_uid != uid:
             try:
                 os.chown(path, uid, -1)
             except OSError:
@@ -385,14 +380,17 @@ class AnsibleModule(object):
         path = os.path.expanduser(path)
         if group is None:
             return changed
-        old_user, old_group = self.user_and_group(path)
-        if old_group != group:
-            if self.check_mode:
-                return True
+        orig_uid, orig_gid = self.user_and_group(path)
+        try:
+            gid = int(group)
+        except ValueError:
             try:
                 gid = grp.getgrnam(group).gr_gid
             except KeyError:
                 self.fail_json(path=path, msg='chgrp failed: failed to look up group %s' % group)
+        if self.check_mode:
+            return True
+        if orig_gid != gid:
             try:
                 os.chown(path, -1, gid)
             except OSError:
@@ -472,8 +470,18 @@ class AnsibleModule(object):
         if path is None:
             return kwargs
         if os.path.exists(path):
-            (user, group) = self.user_and_group(path)
-            kwargs['owner']  = user
+            (uid, gid) = self.user_and_group(path)
+            kwargs['uid'] = uid
+            kwargs['gid'] = gid
+            try:
+                user = pwd.getpwuid(uid)[0]
+            except KeyError:
+                user = str(uid)
+            try:
+                group = grp.getgrgid(gid)[0]
+            except KeyError:
+                group = str(gid)
+            kwargs['owner'] = user
             kwargs['group'] = group
             st = os.stat(path)
             kwargs['mode']  = oct(stat.S_IMODE(st[stat.ST_MODE]))
@@ -692,7 +700,12 @@ class AnsibleModule(object):
             journal_args.append("MODULE=%s" % os.path.basename(__file__))
             for arg in log_args:
                 journal_args.append(arg.upper() + "=" + str(log_args[arg]))
-            journal.sendv(*journal_args)
+            try:
+                journal.sendv(*journal_args)
+            except IOError, e:
+                # fall back to syslog since logging to journal failed
+                syslog.openlog(module, 0, syslog.LOG_USER)
+                syslog.syslog(syslog.LOG_NOTICE, msg)
         else:
             syslog.openlog(module, 0, syslog.LOG_USER)
             syslog.syslog(syslog.LOG_NOTICE, msg)
@@ -794,24 +807,49 @@ class AnsibleModule(object):
             self.fail_json(msg='Could not make backup of %s to %s: %s' % (fn, backupdest, e))
         return backupdest
 
-    def atomic_replace(self, src, dest):
-        '''atomically replace dest with src, copying attributes from dest'''
-        if os.path.exists(dest):
-            st = os.stat(dest)
-            os.chmod(src, st.st_mode & 07777)
+    def cleanup(tmpfile):
+        if os.path.exists(tmpfile):
             try:
+                os.unlink(tmpfile)
+            except OSError, e:
+                sys.stderr.write("could not cleanup %s: %s" % (tmpfile, e))
+
+    def atomic_move(self, src, dest):
+        '''atomically move src to dest, copying attributes from dest, returns true on success'''
+        context = None
+        if os.path.exists(dest):
+            try:
+                st = os.stat(dest)
+                os.chmod(src, st.st_mode & 07777)
                 os.chown(src, st.st_uid, st.st_gid)
             except OSError, e:
                 if e.errno != errno.EPERM:
                     raise
             if self.selinux_enabled():
                 context = self.selinux_context(dest)
-                self.set_context_if_different(src, context, False)
         else:
             if self.selinux_enabled():
                 context = self.selinux_default_context(dest)
-                self.set_context_if_different(src, context, False)
-        os.rename(src, dest)
+        # Ensure file is on same partition to make replacement atomic
+        dest_dir = os.path.dirname(dest)
+        dest_file = os.path.basename(dest)
+        tmp_dest = "%s/.%s.%s.%s" % (dest_dir,dest_file,os.getpid(),time.time())
+
+        try: # leaves tmp file behind when sudo and  not root
+            if os.getenv("SUDO_USER") and os.getuid() != 0:
+               # cleanup will happen by 'rm' of tempdir
+               shutil.copy(src, tmp_dest)
+            else:
+               shutil.move(src, tmp_dest)
+            if self.selinux_enabled():
+                self.set_context_if_different(tmp_dest, context, False)
+            os.rename(tmp_dest, dest)
+            if self.selinux_enabled():
+                # rename might not preserve context
+                self.set_context_if_different(dest, context, False)
+        except (shutil.Error, OSError, IOError), e:
+            cleanup(tmp_dest)
+            self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
 
     def run_command(self, args, check_rc=False, close_fds=False, executable=None, data=None):
         '''

@@ -27,5 +27,6 @@ docsite/latest/*.html
 docsite/latest/_static/*.gif
 docsite/latest/_static/*.png
 docsite/latest/_static/websupport.js
+docsite/latest/searchindex.js
 # deb building stuff...
 debian/

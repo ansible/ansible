@@ -115,6 +115,7 @@ import re
 from time import time
 import boto
 from boto import ec2
+from boto import rds
 import ConfigParser
 
 try:
@@ -227,6 +228,7 @@ class Ec2Inventory(object):
 
         for region in self.regions:
             self.get_instances_by_region(region)
+            self.get_rds_instances_by_region(region)
 
         self.write_to_cache(self.inventory, self.cache_path_cache)
         self.write_to_cache(self.index, self.cache_path_index)
@@ -254,6 +256,20 @@ class Ec2Inventory(object):
             print e
             sys.exit(1)
 
+    def get_rds_instances_by_region(self, region):
+	''' Makes an AWS API call to the list of RDS instances in a particular
+        region '''
+
+        try:
+            conn = rds.connect_to_region(region)
+            if conn:
+                instances = conn.get_all_dbinstances()
+                for instance in instances:
+                    self.add_rds_instance(instance, region)
+        except boto.exception.BotoServerError as e:
+            print "Looks like AWS RDS is down: "
+            print e
+            sys.exit(1)
 
     def get_instance(self, region, instance_id):
         ''' Gets details about a specific instance '''
@@ -320,6 +336,56 @@ class Ec2Inventory(object):
         for k, v in instance.tags.iteritems():
             key = self.to_safe("tag_" + k + "=" + v)
             self.push(self.inventory, key, dest)
+
+
+    def add_rds_instance(self, instance, region):
+        ''' Adds an RDS instance to the inventory and index, as long as it is
+        addressable '''
+
+        # Only want available instances
+        if instance.status != 'available':
+            return
+
+        # Select the best destination address
+        #if instance.subnet_id:
+            #dest = getattr(instance, self.vpc_destination_variable)
+        #else:
+            #dest =  getattr(instance, self.destination_variable)
+        dest = instance.endpoint[0]
+
+        if not dest:
+            # Skip instances we cannot address (e.g. private VPC subnet)
+            return
+
+        # Add to index
+        self.index[dest] = [region, instance.id]
+
+        # Inventory: Group by instance ID (always a group of 1)
+        self.inventory[instance.id] = [dest]
+
+        # Inventory: Group by region
+        self.push(self.inventory, region, dest)
+
+        # Inventory: Group by availability zone
+        self.push(self.inventory, instance.availability_zone, dest)
+        
+        # Inventory: Group by instance type
+        self.push(self.inventory, self.to_safe('type_' + instance.instance_class), dest)
+        
+        # Inventory: Group by security group
+        try:
+            key = self.to_safe("security_group_" + instance.security_group.name)
+            self.push(self.inventory, key, dest)
+        except AttributeError:
+            print 'Package boto seems a bit older.'
+            print 'Please upgrade boto >= 2.3.0.'
+            sys.exit(1)
+
+        # Inventory: Group by engine
+        self.push(self.inventory, self.to_safe("rds_" + instance.engine), dest)
+
+        # Inventory: Group by parameter group
+        self.push(self.inventory, self.to_safe("rds_parameter_group_" + instance.parameter_group.name), dest)
 
 
     def get_host_info(self):
