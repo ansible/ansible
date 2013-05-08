@@ -846,6 +846,87 @@ class SunOSService(Service):
 
         return self.execute_command("%s %s %s" % (self.svcadm_cmd, subcmd, self.name))
 
+# ===========================================
+# Subclass: AIX
+
+class AIX(Service):
+    """
+    This is the AIX Service (SRC) manipulation class - it uses lssrc, startsrc, stopsrc
+    and refresh for service control. Enabling a service is currently not supported.
+    Would require to add an entry in the /etc/inittab file (mkitab, chitab and rmitab
+    commands)
+    """
+
+    platform = 'AIX'
+    distribution = None
+
+    def get_service_tools(self):
+        self.lssrc_cmd = self.module.get_bin_path('lssrc', True)
+
+        if not self.lssrc_cmd:
+            self.module.fail_json(msg='unable to find lssrc binary')
+
+        self.startsrc_cmd = self.module.get_bin_path('startsrc', True)
+
+        if not self.startsrc_cmd:
+            self.module.fail_json(msg='unable to find startsrc binary')
+
+        self.stopsrc_cmd = self.module.get_bin_path('stopsrc', True)
+
+        if not self.stopsrc_cmd:
+            self.module.fail_json(msg='unable to find stopsrc binary')
+
+        self.refresh_cmd = self.module.get_bin_path('refresh', True)
+
+        if not self.refresh_cmd:
+            self.module.fail_json(msg='unable to find refresh binary')
+
+
+    def get_service_status(self):
+        rc, stdout, stderr = self.execute_command("%s -s %s" % (self.lssrc_cmd, self.name))
+        if rc == 1:
+            self.running = False
+        elif rc == 0:
+            self.running = True
+
+    def get_service_status(self):
+        status = self.get_aix_src_status()
+        # Only 'active' is considered properly running. Everything else is off
+        # or has some sort of problem.
+        if status == 'active':
+            self.running = True
+        else:
+            self.running = False
+
+    def get_aix_src_status(self):
+        rc, stdout, stderr = self.execute_command("%s -s %s" % (self.lssrc_cmd, self.name))
+        if rc == 1:
+            if stderr:
+                self.module.fail_json(msg=stderr)
+            else:
+                self.module.fail_json(msg=stdout)
+
+        lines = stdout.rstrip("\n").split("\n")
+        status = lines[-1].split(" ")[-1]
+        # status is one of: active, inoperative
+        return status
+
+    def service_control(self):
+        if self.action == 'start':
+            srccmd = self.startsrc_cmd
+        elif self.action == 'stop':
+            srccmd = self.stopsrc_cmd
+        elif self.action == 'reload':
+            srccmd = self.refresh_cmd
+        elif self.action == 'restart':
+            self.execute_command("%s -s %s" % (self.stopsrc_cmd, self.name))
+            srccmd = self.startsrc_cmd
+
+        if self.arguments and self.action == 'start':
+            return self.execute_command("%s -a \"%s\" -s %s" % (srccmd, self.arguments, self.name))
+        else:
+            return self.execute_command("%s -s %s" % (srccmd, self.name))
+
 
 # ===========================================
 # Main control flow
