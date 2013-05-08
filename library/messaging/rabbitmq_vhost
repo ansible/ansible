@@ -60,7 +60,7 @@ class RabbitMqVhost(object):
         self.module = module
         self.name = name
         self.tracing = tracing
-	self.node = node
+        self.node = node
 
         self._tracing = False
         self._rabbitmqctl = module.get_bin_path('rabbitmqctl', True)

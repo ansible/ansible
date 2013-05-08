@@ -96,7 +96,7 @@ class RabbitMqUser(object):
         self.module = module
         self.username = username
         self.password = password
-	self.node = node
+        self.node = node
         if tags is None:
             self.tags = list()
         else:
