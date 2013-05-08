@@ -72,12 +72,12 @@ class RabbitMqParameter(object):
         self.name = name
         self.value = value
         self.vhost = vhost
-	self.node = node
+        self.node = node
 
         self._value = None
 
         self._rabbitmqctl = module.get_bin_path('rabbitmqctl', True)
-	self._env = module.get_bin_path('env', True)
+        self._env = module.get_bin_path('env', True)
 
     def _exec(self, args, run_in_check_mode=False):
         if not self.module.check_mode or (self.module.check_mode and run_in_check_mode):
