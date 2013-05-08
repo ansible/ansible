@@ -442,10 +442,10 @@ def template_from_file(basedir, path, vars):
     )
 
     # Ensure all template variables are defined
-    template_vars=list(jinja2.meta.find_undeclared_variables(jinja2.Environment().parse(open(realpath).read().encode("string-escape"))))
+    template_vars=list(jinja2.meta.find_undeclared_variables(jinja2.Environment().parse(unicode(open(realpath).read(), "utf8"))))
     undeclared_vars = []
     for varname in template_vars:
-        if varname not in vars:
+        if varname not in vars and varname not in t.globals:
             undeclared_vars.append(varname)
     if undeclared_vars:
         raise KeyError("undeclared variable(s) in template: %s" % ', '.join(undeclared_vars))
