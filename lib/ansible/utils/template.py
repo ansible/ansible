@@ -20,6 +20,7 @@ import re
 import codecs
 import jinja2
 from jinja2.runtime import StrictUndefined
+from jinja2 import meta
 import yaml
 import json
 from ansible import errors
@@ -439,6 +440,15 @@ def template_from_file(basedir, path, vars):
         managed_str,
         time.localtime(os.path.getmtime(realpath))
     )
+
+    # Ensure all template variables are defined
+    template_vars=list(jinja2.meta.find_undeclared_variables(jinja2.Environment().parse(open(realpath).read())))
+    undeclared_vars = []
+    for varname in template_vars:
+        if varname not in vars:
+            undeclared_vars.append(varname)
+    if undeclared_vars:
+        raise KeyError("undeclared variable(s) in template: %s" % ', '.join(undeclared_vars))
 
     # This line performs deep Jinja2 magic that uses the _jinja2_vars object for vars
     # Ideally, this could use some API where setting shared=True and the object won't get
