@@ -20,6 +20,7 @@
 
 import re
 import os
+import tempfile
 
 DOCUMENTATION = """
 ---
@@ -128,6 +129,14 @@ EXAMPLES = r"""
    lineinfile: dest=/opt/jboss-as/bin/standalone.conf regexp='^(.*)Xms(\d+)m(.*)$' line='\\1Xms${xms}m\\3' backrefs=yes
 """
 
+def write_changes(module,lines,dest):
+
+    tmpfd, tmpfile = tempfile.mkstemp()
+    f = os.fdopen(tmpfd,'wb')
+    f.writelines(lines)
+    f.close()
+
+    module.atomic_move(tmpfile, dest)
 
 def check_file_attrs(module, changed, message):
 
@@ -145,9 +154,7 @@ def check_file_attrs(module, changed, message):
 def present(module, dest, regexp, line, insertafter, insertbefore, create,
             backup, backrefs):
 
-    if os.path.isdir(dest):
-        module.fail_json(rc=256, msg='Destination %s is a directory !' % dest)
-    elif not os.path.exists(dest):
+    if not os.path.exists(dest):
         if not create:
             module.fail_json(rc=257, msg='Destination %s does not exist !' % dest)
         destpath = os.path.dirname(dest)
@@ -229,9 +236,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
     if changed and not module.check_mode:
         if backup and os.path.exists(dest):
             module.backup_local(dest)
-        f = open(dest, 'wb')
-        f.writelines(lines)
-        f.close()
+        write_changes(module, lines, dest)
 
     msg, changed = check_file_attrs(module, changed, msg)
     module.exit_json(changed=changed, msg=msg)
@@ -239,9 +244,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
 
 def absent(module, dest, regexp, backup):
 
-    if os.path.isdir(dest):
-        module.fail_json(rc=256, msg='Destination %s is a directory !' % dest)
-    elif not os.path.exists(dest):
+    if not os.path.exists(dest):
         module.exit_json(changed=False, msg="file not present")
 
     msg = ""
@@ -264,9 +267,7 @@ def absent(module, dest, regexp, backup):
     if changed and not module.check_mode:
         if backup:
             module.backup_local(dest)
-        f = open(dest, 'wb')
-        f.writelines(lines)
-        f.close()
+        write_changes(module, lines, dest)
 
     if changed:
         msg = "%s line(s) removed" % len(found)
@@ -298,6 +299,10 @@ def main():
     backup = module.params['backup']
     backrefs = module.params['backrefs']
     dest = os.path.expanduser(params['dest'])
+
+
+    if os.path.isdir(dest):
+        module.fail_json(rc=256, msg='Destination %s is a directory !' % dest)
 
     if params['state'] == 'present':
         if 'line' not in params:
