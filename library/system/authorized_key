@@ -140,8 +140,12 @@ def keyfile(module, user, write=False, path=None, manage_dir=True):
         if module.selinux_enabled():
             module.set_default_selinux_context(keysfile, False)
 
-    os.chown(keysfile, uid, gid)
-    os.chmod(keysfile, 0600)
+    try:
+        os.chown(keysfile, uid, gid)
+        os.chmod(keysfile, 0600)
+    except OSError:
+        pass
+
     return keysfile
 
 def readkeys(filename):
