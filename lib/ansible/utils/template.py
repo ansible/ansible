@@ -442,7 +442,7 @@ def template_from_file(basedir, path, vars):
     )
 
     # Ensure all template variables are defined
-    template_vars=list(jinja2.meta.find_undeclared_variables(jinja2.Environment().parse(open(realpath).read())))
+    template_vars=list(jinja2.meta.find_undeclared_variables(jinja2.Environment().parse(open(realpath).read().encode("string-escape"))))
     undeclared_vars = []
     for varname in template_vars:
         if varname not in vars:
