@@ -26,12 +26,13 @@ DOCUMENTATION = '''
 module: pip
 short_description: Manages Python library dependencies.
 description:
-     - Manage Python library dependencies.
+     - Manage Python library dependencies. To use this module, one of the following keys is required: C(name)
+       or C(requirements).
 version_added: "0.7"
 options:
   name:
     description:
-      - The name of a Python library to install
+      - The name of a Python library to install or the url of the remote package. 
     required: false
     default: null
   version:
@@ -93,6 +94,8 @@ examples:
      description: Install I(flask) python package.
    - code: "pip: name=flask version=0.8"
      description: Install I(flask) python package on version 0.8.
+   - code: "pip: name='svn+http://myrepo/svn/MyApp#egg=MyApp'"
+     description: Install I(MyApp) using one of the remote protocols (bzr,hg,git,svn) C(pip) supports. You do not have to supply '-e' option in extra_args.
    - code: "pip: name=flask virtualenv=/my_app/venv"
      description: "Install I(Flask) (U(http://flask.pocoo.org/)) into the specified I(virtualenv), inheriting none of the globally installed modules"
    - code: "pip: name=flask virtualenv=/my_app/venv virtualenv_site_packages=yes"
@@ -180,9 +183,18 @@ def main():
 
     if state == 'latest' and version is not None:
         module.fail_json(msg='version is incompatible with state=latest')
-    if name and '=' in name:
-        module.fail_json(msg='version must be specified in the version parameter')
 
+    # before we move on, check if name is #egg (remote repository/package)
+    # if it is, mark it as package so we can skip --use-mirrors and skip
+    # version arg checks
+    is_package = False
+    if '#egg=' in name:
+        is_package = True
+    else:
+        # we have to handle the case when version is required for non-remote package
+        if name and '=' in name:
+            module.fail_json(msg='version must be specified in the version parameter')
+    
     err = ''
     out = ''
 
@@ -208,7 +220,19 @@ def main():
     pip = _get_pip(module, env)
 
     cmd = '%s %s' % (pip, state_map[state])
-    if state != 'absent' and use_mirrors:
+
+    # If is_package is True, we must not add --use-mirrors option.
+    # Also, if -e option is not added by the user via extra_args, 
+    # we must add -e ourselves. 
+    if is_package:
+        args_list = []  # used if extra_args is not used at all
+        if extra_args:
+            args_list = extra_args.split(' ')            
+        if '-e' not in args_list:
+            args_list.append('-e')
+            # Ok, we will reconstruct the option string
+            extra_args = ' '.join(args_list)
+    if not is_package or state != 'absent' and use_mirrors:
         cmd += ' --use-mirrors'
     if extra_args:
         cmd += ' %s' % extra_args
@@ -216,7 +240,7 @@ def main():
         cmd += ' %s' % _get_full_name(name, version)
     elif requirements:
         cmd += ' -r %s' % requirements
-
+    
     if module.check_mode:
         module.exit_json(changed=True)
     os.chdir(tempfile.gettempdir())
