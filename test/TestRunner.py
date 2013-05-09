@@ -230,6 +230,14 @@ class TestRunner(unittest.TestCase):
         assert self._run('file', ['dest=' + filedemo, 'state=absent'])['changed']
         assert not os.path.exists(filedemo)
         assert not self._run('file', ['dest=' + filedemo, 'state=absent'])['changed']
+
+        # Make sure that we can deal safely with bad symlinks
+        os.symlink('/tmp/non_existent_target', filedemo)
+        assert self._run('file', ['dest=' + tmp_dir, 'state=directory recurse=yes mode=701'])['changed']
+        assert not self._run('file', ['dest=' + tmp_dir, 'state=directory', 'recurse=yes', 'owner=' + str(os.getuid())])['changed']
+        assert os.path.islink(filedemo)
+        assert self._run('file', ['dest=' + filedemo, 'state=absent'])['changed']
+        assert not os.path.exists(filedemo)
         os.rmdir(tmp_dir)
 
     def test_large_output(self):
