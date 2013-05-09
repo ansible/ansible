@@ -441,14 +441,15 @@ def template_from_file(basedir, path, vars):
         time.localtime(os.path.getmtime(realpath))
     )
 
-    # Ensure all template variables are defined
-    template_vars=list(jinja2.meta.find_undeclared_variables(jinja2.Environment().parse(unicode(open(realpath).read(), "utf8"))))
-    undeclared_vars = []
-    for varname in template_vars:
-        if varname not in vars and varname not in t.globals:
-            undeclared_vars.append(varname)
-    if undeclared_vars:
-        raise KeyError("undeclared variable(s) in template: %s" % ', '.join(undeclared_vars))
+    # Ensure all template variables are defined if enabled
+    if C.ANSIBLE_VALIDATE_TEMPLATE_VARS is not None:
+        template_vars=list(jinja2.meta.find_undeclared_variables(jinja2.Environment().parse(unicode(open(realpath).read(), "utf8"))))
+        undeclared_vars = []
+        for varname in template_vars:
+            if varname not in vars and varname not in t.globals:
+                undeclared_vars.append(varname)
+        if undeclared_vars:
+            raise KeyError("undeclared variable(s) in template: %s" % ', '.join(undeclared_vars))
 
     # This line performs deep Jinja2 magic that uses the _jinja2_vars object for vars
     # Ideally, this could use some API where setting shared=True and the object won't get
