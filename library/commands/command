@@ -97,35 +97,55 @@ def main():
     if chdir:
         os.chdir(os.path.expanduser(chdir))
 
+    # default true if creates or removes exists
+    should_be_skipped = creates or removes
+    skip_messages = []
+
     if creates:
         # do not run the command if the line contains creates=filename
         # and the filename already exists.  This allows idempotence
         # of command executions.
-        v = os.path.expanduser(creates)
-        if os.path.exists(v):
-            module.exit_json(
-                cmd=args,
-                stdout="skipped, since %s exists" % v,
-                skipped=True,
-                changed=False,
-                stderr=False,
-                rc=0
-            )
+
+        #check if 'creates' is not array
+        if isinstance(creates, basestring):
+            creates = [creates]
+
+        should_be_skipped = True
+        for created_entity in creates:
+            v = os.path.expanduser(created_entity)
+            if not os.path.exists(v):
+                should_be_skipped = False
+                break
+
+        if should_be_skipped:
+            skip_messages.append("since %s exists" % ', '.join(creates))
+
 
     if removes:
-    # do not run the command if the line contains removes=filename
-    # and the filename does not exist.  This allows idempotence
-    # of command executions.
-        v = os.path.expanduser(removes)
-        if not os.path.exists(v):
-            module.exit_json(
-                cmd=args,
-                stdout="skipped, since %s does not exist" % v,
-                skipped=True,
-                changed=False,
-                stderr=False,
-                rc=0
-            )
+        # do not run the command if the line contains removes=filename
+        # and the filename does not exist.  This allows idempotence
+        # of command executions.
+
+        #check if 'removes' is not array
+        if isinstance(removes, basestring):
+            removes = [removes]
+
+        for removed_entity in removes:
+            v = os.path.expanduser(removed_entity)
+            if os.path.exists(v):
+                should_be_skipped = False
+
+        if should_be_skipped:
+            skip_messages.append("since %s does not exist" % ', '.join(removes))
+
+    if should_be_skipped:
+        module.exit_json(
+            cmd=args,
+            stdout="skipped, %s" % (' and '.join(skip_messages)),
+            skipped=True,
+            changed=False,
+            stderr=False,
+            rc=0)
 
     if not shell:
         args = shlex.split(args)
@@ -202,6 +222,7 @@ class CommandModule(AnsibleModule):
                 params['executable'] = v
         args = r.sub("", args)
         params['args'] = args
-        return (params, params['args'])
+        params.update(json.loads(MODULE_COMPLEX_ARGS))
+        return params, params['args']
 
 main()
