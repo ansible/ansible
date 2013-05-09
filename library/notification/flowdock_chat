@@ -1,0 +1,113 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# Copyright 2013 Matt Coddington <coddington@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: flowdock_chat
+author: Matt Coddington
+short_description: Send a message to flowdock chat
+description:
+   - Send a message to flowdock chat using the push API (https://www.flowdock.com/api/chat)
+options:
+  token:
+    description:
+      - API token.
+    required: true
+  msg:
+    description:
+      - content of the message
+    required: true
+  external_user_name:
+    description:
+      - Name of the "user" sending the message
+    required: true
+  tags:
+    description:
+      - tags of the message, separated by commas
+    required: false
+
+# informational: requirements for nodes
+requirements: [ urllib, urllib2 ]
+'''
+
+EXAMPLES = '''
+action: flowdock_chat token=AAAAAA external_user_name=testuser msg='test from ansible' tags=tag1,tag2,tag3
+'''
+
+HAS_URLLIB = True
+try:
+    import urllib
+except ImportError:
+    HAS_URLLIB = False
+
+HAS_URLLIB2 = True
+try:
+    import urllib2
+except ImportError:
+    HAS_URLLIB2 = False
+
+
+
+# ===========================================
+# Module execution.
+#
+
+def main():
+
+    if not HAS_URLLIB:
+        module.fail_json(msg="urllib is not installed")
+    if not HAS_URLLIB2:
+        module.fail_json(msg="urllib2 is not installed")
+
+    module = AnsibleModule(
+        argument_spec=dict(
+            token=dict(required=True),
+            msg=dict(required=True),
+            external_user_name=dict(required=True),
+            tags=dict(required=False),
+        ),
+        supports_check_mode=True
+    )
+
+    # Set up the url and the content of the POST
+    token = module.params["token"]
+    url = "https://api.flowdock.com/v1/messages/chat/%s" % (token)
+    params = {}
+    params['content'] = module.params["msg"]
+    params['external_user_name'] = module.params["external_user_name"]
+    if module.params["tags"]:
+        params['tags'] = module.params["tags"]
+
+    # If we're in check mode, just exit pretending like we succeeded
+    if module.check_mode:
+        module.exit_json(changed=True)
+
+    # Send the data to Flowdock
+    try:
+        response = urllib2.urlopen(url, urllib.urlencode(params))
+    except Exception, e:
+        module.fail_json(msg="unable to send msg: %s" % e)
+
+    module.exit_json(changed=True, msg=module.params["msg"])
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
+

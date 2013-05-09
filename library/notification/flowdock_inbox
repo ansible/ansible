@@ -1,0 +1,165 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# Copyright 2013 Matt Coddington <coddington@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: flowdock_inbox
+author: Matt Coddington
+short_description: Send a message to a flowdock inbox
+description:
+   - Send a message to a flowdock team inbox using the push API (https://www.flowdock.com/api/team-inbox)
+options:
+  token:
+    description:
+      - API token.
+    required: true
+  from_address:
+    description:
+      - Email address of the message sender
+    required: true
+  source:
+    description:
+      - Human readable identifier of the application that uses the Flowdock API
+    required: true
+  subject:
+    description:
+      - Subject line of the message
+    required: true
+  msg:
+    description:
+      - Content of the message
+    default: $subject
+    required: false
+  from_name:
+    description:
+      - Name of the message sender
+    required: false
+  reply_to:
+    description:
+      - Email address for replies
+    required: false
+  project:
+    description:
+      - Human readable identifier for more detailed message categorization
+    required: false
+  tags:
+    description:
+      - tags of the message, separated by commas
+    required: false
+  link:
+    description:
+      - Link associated with the message. This will be used to link the message subject in Team Inbox.
+    required: false
+
+# informational: requirements for nodes
+requirements: [ urllib, urllib2 ]
+'''
+
+EXAMPLES = '''
+action: flowdock_inbox token=AAAAAA from_address=user@example.com source='my cool app' msg='test from ansible' subject='test subject'
+'''
+
+HAS_URLLIB = True
+try:
+    import urllib
+except ImportError:
+    HAS_URLLIB = False
+
+HAS_URLLIB2 = True
+try:
+    import urllib2
+except ImportError:
+    HAS_URLLIB2 = False
+
+
+
+# ===========================================
+# Module execution.
+#
+
+def main():
+
+    if not HAS_URLLIB:
+        module.fail_json(msg="urllib is not installed")
+    if not HAS_URLLIB2:
+        module.fail_json(msg="urllib2 is not installed")
+
+    module = AnsibleModule(
+        argument_spec=dict(
+            token=dict(required=True),
+            from_address=dict(required=True),
+            source=dict(required=True),
+            subject=dict(required=True),
+            msg=dict(required=False),
+            from_name=dict(required=False),
+            reply_to=dict(required=False),
+            project=dict(required=False),
+            tags=dict(required=False),
+            link=dict(required=False),
+        ),
+        supports_check_mode=True
+    )
+
+    token = module.params["token"]
+    url = "https://api.flowdock.com/v1/messages/team_inbox/%s" % (token)
+    params = {}
+
+    # Set the required params
+    params['from_address'] = module.params["from_address"]
+    params['source'] = module.params["source"]
+    params['subject'] = module.params["subject"]
+
+    # Set the optional params
+    if module.params["msg"]:
+        params['content'] = module.params["msg"]
+    else:
+        params['content'] = module.params["subject"]
+
+    if module.params["from_name"]:
+        params['from_name'] = module.params["from_name"]
+
+    if module.params["reply_to"]:
+        params['reply_to'] = module.params["reply_to"]
+
+    if module.params["project"]:
+        params['project'] = module.params["project"]
+
+    if module.params["tags"]:
+        params['tags'] = module.params["tags"]
+
+    if module.params["link"]:
+        params['link'] = module.params["link"]
+
+    # If we're in check mode, just exit pretending like we succeeded
+    if module.check_mode:
+        module.exit_json(changed=True)
+
+    # Send the data to Flowdock
+    try:
+        response = urllib2.urlopen(url, urllib.urlencode(params))
+    except Exception, e:
+        module.fail_json(msg="unable to send msg: %s" % e)
+
+    module.exit_json(changed=True, msg=module.params["msg"])
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
+
