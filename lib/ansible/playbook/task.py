@@ -226,6 +226,12 @@ class Task(object):
                 self.tags.extend(apply_tags)
         self.tags.extend(import_tags)
 
+        # remove all tag if a task has specific demands
+        for tag in self.tags:
+            if tag.find("&") != -1 or tag.find("!") != -1:
+                self.tags.remove("all")
+                break
+
         if self.when is not None:
             if self.only_if != 'True':
                 raise errors.AnsibleError('when obsoletes only_if, only use one or the other')
