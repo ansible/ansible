@@ -93,7 +93,7 @@ def main():
         argument_spec = dict(
             src               = dict(required=False),
             original_basename = dict(required=False), # used to handle 'dest is a directory' via template, a slight hack 
-            content           = dict(required=False),
+            content           = dict(required=False, no_log=True),
             dest              = dict(required=True),
             backup            = dict(default=False, type='bool'),
             force             = dict(default=True, aliases=['thirsty'], type='bool'),
