@@ -47,7 +47,7 @@ class VarsModule(object):
             p = os.path.join(basedir, "group_vars/%s" % x)
             paths = [p, '.'.join([p, 'yml']), '.'.join([p, 'yaml'])]
             for path in paths:
-                if os.path.exists(path):
+                if os.path.exists(path) and not os.path.isdir(path):
                     data = utils.parse_yaml_from_file(path)
                     if type(data) != dict:
                         raise errors.AnsibleError("%s must be stored as a dictionary/hash" % path)
@@ -57,7 +57,7 @@ class VarsModule(object):
         p = os.path.join(basedir, "host_vars/%s" % host.name)
         paths = [p, '.'.join([p, 'yml']), '.'.join([p, 'yaml'])]
         for path in paths:
-            if os.path.exists(path):
+            if os.path.exists(path) and not os.path.isdir(path):
                 data = utils.parse_yaml_from_file(path)
                 if type(data) != dict:
                     raise errors.AnsibleError("%s must be stored as a dictionary/hash" % path)
