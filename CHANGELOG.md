@@ -8,8 +8,9 @@ Core Features:
 * capability to set 'all_errors_fatal: True' in a playbook to force any error to stop execution versus
   a whole group or serial block needing to fail
   usable, without breaking the ability to override in ansible
-* ability to use variables from {{ }} syntax in mainline playbooks, new 'when' conditional,
-  see examples/playbooks/upgraded_vars.yml
+* ability to use variables from {{ }} syntax in mainline playbooks, new 'when' conditional, as detailed
+  in documentation.  Can disable old style replacements in ansible.cfg if so desired, but are still active
+  by default.
 * can set ansible_private_key_file as an inventory variable (similar to ansible_ssh_host, etc)
 * 'when' statement can be affixed to task includes to auto-affix the conditional to each task therein
 * cosmetic: "*****" banners in ansible-playbook output are now constant width
@@ -29,6 +30,15 @@ Modules added:
 * set_fact: sets a variable, which can be the result of a template evaluation
 * hipchat: send notification events to hipchat
 * ec2_elb: add and remove machines from ec2 elastic load balancers
+* flowdock: send messages to flowdock during playbook runs
+* pkgng: next-gen package manager for FreeBSD
+* bigip_pool: load balancing with F5s
+* newrelic_deployment: notifies newrelic of new deployments
+* campfire: send messages to campfire during playbook runs
+* mqtt: send messages to the Mosquitto message bus
+* irc: send messages to IRC channels
+* filesystem - a wrapper around mkfs
+* jabber: send jabber chat messages
 
 Modules removed
 
@@ -78,6 +88,14 @@ the variable is still registered for the host, with the attribute skipped: True.
 * ec2 module better understands security groups
 * fix for postgresql codec usage
 * setup module now tolerant of OpenVZ interfaces
+* check mode reporting improved for files and directories
+* doc system now reports on module requirements
+* group_by module can now also make use of globally scoped variables
+* localhost and 127.0.0.1 are now fuzzy matched in inventory (are now more or less interchangeable)
+* AIX improvements/fixes for users, groups, facts
+* lineinfile now does atomic file replacements
+* fix to not pass PasswordAuthentication=no in the config file unneccessarily for SSH connection type
+* for for authorized_key on Debian Squeeze
 
 1.1 "Mean Street" -- 4/2/2013
 
