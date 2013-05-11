@@ -86,6 +86,11 @@ def print_man(doc):
                             subsequent_indent=opt_indent)
 
 
+    if 'requirements' in doc and len(doc['requirements']) > 0:
+        req = ", ".join(doc['requirements'])
+        print "Requirements:%s\n" % textwrap.fill(tty_ify(req), initial_indent="  ",
+                            subsequent_indent=opt_indent)
+
     if 'examples' in doc and len(doc['examples']) > 0:
         print "Example%s:\n" % ('' if len(doc['examples']) < 2 else 's')
         for ex in doc['examples']:
@@ -93,6 +98,7 @@ def print_man(doc):
 
     if 'plainexamples' in doc and doc['plainexamples'] is not None:
         print doc['plainexamples']
+
 
 def print_snippet(doc):
 
