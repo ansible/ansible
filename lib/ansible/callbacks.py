@@ -25,7 +25,6 @@ import fnmatch
 import tempfile
 import fcntl
 import constants
-import getpass
 from ansible.color import stringc
 
 import logging
