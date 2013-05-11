@@ -27,7 +27,3 @@ options:
         choices: [list, of, choices]
         aliases: [list, of, aliases]
         version_added: 0.X
-examples:
-# One or more of the following:
-    - code: modulename opt1=arg1 opt2=arg2
-      description: Optional words describing this example
