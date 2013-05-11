@@ -45,10 +45,10 @@ class LookupModule(object):
     def __lookup_injects(self, terms, inject):
         results = []
         for x in terms:
-           if isinstance(x, basestring) and x in inject:
-               results.append(inject[x])
-           else:
-               results.append(x)
+            if isinstance(x, basestring) and x in inject:
+                results.append(inject[x])
+            else:
+                results.append(x)
         return results
 
     def run(self, terms, inject=None, **kwargs):
