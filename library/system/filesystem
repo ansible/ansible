@@ -81,7 +81,7 @@ def main():
     if fs == fstype:
         module.exit_json(changed=False)
     elif fs and not force:
-        module.fail_json(msg="'%s' is already used as %s, use force=yes to ignore"%(dev,fs), rc=rc, err=err)
+        module.fail_json(msg="'%s' is already used as %s, use force=yes to overwrite"%(dev,fs), rc=rc, err=err)
 
     ### create fs
 
