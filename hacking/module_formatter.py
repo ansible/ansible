@@ -136,7 +136,10 @@ def return_data(text, options, outputname, module):
 def boilerplate():
     if not os.path.exists(EXAMPLE_YAML):
         print >>sys.stderr, "Missing example boiler plate: %S" % EXAMPLE_YAML
+    print "DOCUMENTATION = '''"
     print file(EXAMPLE_YAML).read()
+    print "'''"
+    print ""
 
 def list_modules(module_dir):
     categories = {}
@@ -217,6 +220,14 @@ def main():
 
     if options.do_boilerplate:
         boilerplate()
+
+        print ""
+        print "EXAMPLES = '''"
+        print "# example of doing ___ from a playbook"
+        print "your_module: some_arg=1 other_arg=2"
+        print "'''"
+        print ""
+
         sys.exit(0)
 
     if not options.module_dir:
