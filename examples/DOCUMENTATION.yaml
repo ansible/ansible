@@ -26,4 +26,4 @@ options:
         default: a string or the word null
         choices: [list, of, choices]
         aliases: [list, of, aliases]
-        version_added: 0.X
+        version_added: 1.X
