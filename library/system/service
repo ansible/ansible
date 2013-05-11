@@ -80,6 +80,7 @@ import os
 import tempfile
 import shlex
 import select
+import glob
 
 class Service(object):
     """
@@ -110,6 +111,7 @@ class Service(object):
         self.changed        = False
         self.running        = None
         self.action         = None
+        self.svc_system     = None
         self.svc_cmd        = None
         self.svc_initscript = None
         self.svc_initctl    = None
@@ -364,12 +366,15 @@ class LinuxService(Service):
         # Locate a tool for enable options
         if location.get('chkconfig', None) and os.path.exists("/etc/init.d/%s" % self.name):
             # we are using a standard SysV service
+            self.svc_system = 'SysV'
             self.enable_cmd = location['chkconfig']
         elif location.get('update-rc.d', None) and os.path.exists("/etc/init/%s.conf" % self.name):
             # service is managed by upstart
+            self.svc_system = 'upstart'
             self.enable_cmd = location['update-rc.d']
         elif location.get('update-rc.d', None) and os.path.exists("/etc/init.d/%s" % self.name):
             # service is managed by with SysV init scripts, but with update-rc.d
+            self.svc_system = 'SysV'
             self.enable_cmd = location['update-rc.d']
         elif location.get('systemctl', None):
 
@@ -386,6 +391,7 @@ class LinuxService(Service):
             look_for = "%s.service" % name
             for line in out.splitlines():
                 if line.startswith(look_for):
+                    self.svc_system = 'systemd'
                     self.enable_cmd = location['systemctl']
                     break
 
@@ -473,9 +479,10 @@ class LinuxService(Service):
         if self.enable_cmd is None:
             self.module.fail_json(msg='service name not recognized')
 
-        # FIXME: we use chkconfig or systemctl
-        # to decide whether to run the command here but need something
-        # similar for upstart
+        # FIXME: To decide whether to run the command here,
+        # we use chkconfig or systemctl or, for SysV services managed with update-rc.d,
+        # the number of start files that exist in /etc/rc*.d/ directories.
+        # But, we need something similar for services managed with upstart
 
         if self.enable_cmd.endswith("chkconfig"):
             (rc, out, err) = self.execute_command("%s --list %s" % (self.enable_cmd, self.name))
@@ -488,6 +495,14 @@ class LinuxService(Service):
             if self.enable and ( "3:on" in out and "5:on" in out ):
                 return
             elif not self.enable and ( "3:off" in out and "5:off" in out ):
+                return
+
+        if self.svc_system == "SysV" and self.enable_cmd.endswith("update-rc.d"):
+            # check that at least one start file exists in /etc/rc*.d/
+            sysv_startfiles_count = len(glob.glob('/etc/rc*.d/S*%s' % self.name))
+            if self.enable and sysv_startfiles_count >= 1:
+                return
+            elif not self.enable and sysv_startfiles_count < 1:
                 return
 
         if self.enable_cmd.endswith("systemctl"):
