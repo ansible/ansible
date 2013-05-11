@@ -39,6 +39,7 @@ Modules added:
 * irc: send messages to IRC channels
 * filesystem - a wrapper around mkfs
 * jabber: send jabber chat messages
+* osx_say: make OS X say things out loud
 
 Modules removed
 
