@@ -24,6 +24,7 @@ along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 DOCUMENTATION = '''
 ---
 module: netscaler
+version_added: "1.1"
 short_description: Manages Citrix NetScaler entities
 description:
      - Manages Citrix NetScaler server and service entities.
