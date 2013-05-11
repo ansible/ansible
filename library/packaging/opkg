@@ -42,11 +42,15 @@ options:
         required: false
         default: "no"
         choices: [ "yes", "no" ]
+    destination:
+        description:
+            - package installation destination
+        required: false
 notes:  []
 '''
 EXAMPLES = '''
 opkg: name=foo state=present
-opkg: name=foo state=present update_cache=yes
+opkg: name=foo state=present update_cache=yes destination=tmp
 opkg: name=foo state=absent
 opkg: name=foo,bar state=absent
 '''
@@ -106,7 +110,12 @@ def install_packages(module, opkg_path, packages):
         if query_package(module, opkg_path, package):
             continue
 
-        rc, out, err = module.run_command("%s install %s" % (opkg_path, package))
+        d = module.params["destination"]
+
+        if d:
+            rc, out, err = module.run_command("%s install -d %s %s" % (opkg_path, d, package))
+        else:
+            rc, out, err = module.run_command("%s install %s" % (opkg_path, package))
 
         if not query_package(module, opkg_path, package):
             module.fail_json(msg="failed to install %s: %s" % (package, out))
@@ -124,7 +133,8 @@ def main():
         argument_spec = dict(
             name = dict(aliases=["pkg"], required=True),
             state = dict(default="present", choices=["present", "installed", "absent", "removed"]),
-            update_cache = dict(default="no", aliases=["update-cache"], type='bool')
+            update_cache = dict(default="no", aliases=["update-cache"], type='bool'),
+            destination = dict(aliases=["dest"], required=False)
         )
     )
 
