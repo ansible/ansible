@@ -66,13 +66,13 @@ def get_cowsay_info():
 cowsay, noncow = get_cowsay_info()
 
 def log_lockfile():
-   tempdir = tempfile.gettempdir() 
-   uid = os.getuid()
-   path = os.path.join(tempdir, ".ansible-lock.%s" % uid)
-   if not os.path.exists(path):
-       fh = open(path, 'w')
-       fh.close()   
-   return path
+    tempdir = tempfile.gettempdir() 
+    uid = os.getuid()
+    path = os.path.join(tempdir, ".ansible-lock.%s" % uid)
+    if not os.path.exists(path):
+        fh = open(path, 'w')
+        fh.close()   
+    return path
 
 LOG_LOCK = open(log_lockfile(), 'r')
 
