@@ -53,7 +53,9 @@ class ActionModule(object):
 
         ### find all groups
         groups = {}
+
         for host in self.runner.host_set:
+
             data = inject['hostvars'][host]
             if not check_conditional(template.template(self.runner.basedir, self.runner.conditional, data)):
                 continue
