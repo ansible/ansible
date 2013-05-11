@@ -227,8 +227,8 @@ def _legacy_varFind(basedir, text, vars, lookup_fatal, depth, expand_lists):
         # args have to be templated
         args = legacy_varReplace(basedir, args, vars, lookup_fatal, depth + 1, True)
         if isinstance(args, basestring) and args.find('$') != -1:
-           # unable to evaluate something like $FILE($item) at this point, try to evaluate later
-           return None
+            # unable to evaluate something like $FILE($item) at this point, try to evaluate later
+            return None
 
 
         instance = utils.plugins.lookup_loader.get(lookup_plugin_name.lower(), basedir=basedir)
