@@ -4,6 +4,7 @@
 DOCUMENTATION = '''
 ---
 module: campfire
+version_added: "1.2"
 short_description: Send a message to Campfire
 description:
    - Send a message to Campfire.

@@ -21,6 +21,7 @@
 DOCUMENTATION = '''
 ---
 module: osx_say
+version_added: "1.2"
 short_description: Makes an OSX computer to speak.
 description:
    - makes an OS computer speak!  Amuse your friends, annoy your coworkers!
