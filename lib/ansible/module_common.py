@@ -316,7 +316,7 @@ class AnsibleModule(object):
 
     def user_and_group(self, filename):
         filename = os.path.expanduser(filename)
-        st = os.stat(filename)
+        st = os.lstat(filename)
         uid = st.st_uid
         gid = st.st_gid
         return (uid, gid)
@@ -370,7 +370,7 @@ class AnsibleModule(object):
             return True
         if orig_uid != uid:
             try:
-                os.chown(path, uid, -1)
+                os.lchown(path, uid, -1)
             except OSError:
                 self.fail_json(path=path, msg='chown failed')
             changed = True
@@ -392,7 +392,7 @@ class AnsibleModule(object):
             return True
         if orig_gid != gid:
             try:
-                os.chown(path, -1, gid)
+                os.lchown(path, -1, gid)
             except OSError:
                 self.fail_json(path=path, msg='chgrp failed')
             changed = True
@@ -409,7 +409,7 @@ class AnsibleModule(object):
         except Exception, e:
             self.fail_json(path=path, msg='mode needs to be something octalish', details=str(e))
 
-        st = os.stat(path)
+        st = os.lstat(path)
         prev_mode = stat.S_IMODE(st[stat.ST_MODE])
 
         if prev_mode != mode:
@@ -418,11 +418,19 @@ class AnsibleModule(object):
             # FIXME: comparison against string above will cause this to be executed
             # every time
             try:
-                os.chmod(path, mode)
+                if 'lchmod' in dir(os):
+                    os.lchmod(path, mode)
+                else:
+                    os.chmod(path, mode)
+            except OSError, e:
+                if e.errno == errno.ENOENT: # Can't set mode on broken symbolic links
+                    pass
+                else:
+                    raise e
             except Exception, e:
                 self.fail_json(path=path, msg='chmod failed', details=str(e))
 
-            st = os.stat(path)
+            st = os.lstat(path)
             new_mode = stat.S_IMODE(st[stat.ST_MODE])
 
             if new_mode != prev_mode:
@@ -483,7 +491,7 @@ class AnsibleModule(object):
                 group = str(gid)
             kwargs['owner'] = user
             kwargs['group'] = group
-            st = os.stat(path)
+            st = os.lstat(path)
             kwargs['mode']  = oct(stat.S_IMODE(st[stat.ST_MODE]))
             # secontext not yet supported
             if os.path.islink(path):
