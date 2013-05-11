@@ -144,9 +144,9 @@ def main():
                 os.unlink(dest)
                 open(dest, 'w').close()
             if validate:
-               (rc,out,err) = module.run_command(validate % src)
-               if rc != 0:
-                 module.fail_json(msg="failed to validate: rc:%s error:%s" % (rc,err))
+                (rc,out,err) = module.run_command(validate % src)
+                if rc != 0:
+                    module.fail_json(msg="failed to validate: rc:%s error:%s" % (rc,err))
             module.atomic_move(src, dest)
         except IOError:
             module.fail_json(msg="failed to copy: %s to %s" % (src, dest))
