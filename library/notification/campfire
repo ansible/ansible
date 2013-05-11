@@ -7,6 +7,7 @@ module: campfire
 short_description: Send a message to Campfire
 description:
    - Send a message to Campfire.
+   - Messages with newlines will result in a "Paste" message being sent.
 version_added: "1.2"
 options:
   subscription:
@@ -42,9 +43,6 @@ author: Adam Garside <adam.garside@gmail.com>
 
 EXAMPLES = '''
 action: campfire subscription=foo token=12345 room=123 msg="Task completed."
-
-action: campfire subscription=foo token=12345 room=123 msg="Messages
-        with\nNewlines will result in a PasteMessage type being sent."
 
 action: campfire subscription=foo token=12345 room=123 notify=loggins
         msg="Task completed ... with feeling."
