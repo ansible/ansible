@@ -4,6 +4,7 @@
 DOCUMENTATION = '''
 ---
 module: hipchat
+version_added: "1.2"
 short_description: Send a message to hipchat
 description:
    - Send a message to hipchat

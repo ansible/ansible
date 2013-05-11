@@ -3,6 +3,7 @@
 
 DOCUMENTATION = '''
 ---
+version_added: "1.2"
 module: jabber
 short_description: Send a message to jabber user or chat room
 description:
