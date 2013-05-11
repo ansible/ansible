@@ -1067,7 +1067,8 @@ class LinuxNetwork(Network):
         )
 
         for path in glob.glob('/sys/class/net/*'):
-            if not os.path.isdir(path): continue
+            if not os.path.isdir(path): 
+                continue
             device = os.path.basename(path)
             interfaces[device] = { 'device': device }
             if os.path.exists(os.path.join(path, 'address')):
