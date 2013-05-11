@@ -246,10 +246,15 @@ class Inventory(object):
         return self._hosts_cache[hostname]
 
     def _get_host(self, hostname):
-        for group in self.groups:
-            for host in group.get_hosts():
-                if hostname == host.name:
+        if hostname in ['localhost','127.0.0.1']:
+            for host in self.get_group('all').get_hosts():
+                if host.name in ['localhost', '127.0.0.1']:
                     return host
+        else:
+            for group in self.groups:
+                for host in group.get_hosts():
+                    if hostname == host.name:
+                        return host
         return None
 
     def get_group(self, groupname):
