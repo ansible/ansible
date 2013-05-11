@@ -52,7 +52,7 @@ author: WAKAYAMA Shirou
 '''
 
 EXAMPLES = '''
-action: hipchat token=AAAAAA room=notify msg=Ansible task finished
+action: hipchat token=AAAAAA room=notify msg="Ansible task finished"
 '''
 
 # ===========================================
