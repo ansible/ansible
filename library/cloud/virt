@@ -106,7 +106,8 @@ VIRT_STATE_NAME_MAP = {
    6 : "crashed"
 }
 
-class VMNotFound(Exception): pass
+class VMNotFound(Exception): 
+    pass
 
 class LibvirtConnection(object):
 
