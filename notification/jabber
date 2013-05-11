@@ -45,14 +45,14 @@ author: Brian Coca
 '''
 
 EXAMPLES = '''
-- description: message to jabber user
-  code: jabber: user=mybot@chatserver.tld password=secret to=friend@chatserver.tld  msg="Ansible task finished"
+# send a message to a user
+jabber: user=mybot@chatserver.tld password=secret to=friend@chatserver.tld  msg="Ansible task finished"
 
-- description: message to jabber room
-  code: jabber: user=mybot@chatserver.tld password=secret to=mychaps@conference.chatserver.tld/ansiblebot  msg="Ansible task finished"
+# send a message to a room
+jabber: user=mybot@chatserver.tld password=secret to=mychaps@conference.chatserver.tld/ansiblebot  msg="Ansible task finished"
 
-- description: message specifying host and port
-  code: jabber user=mybot@chatserver.tld host=talk.chatserver.tld port=5223 password=secret to=mychaps@chatserver.tld  msg="Ansible task finished"
+# send a message, specifying the host and port
+jabber user=mybot@chatserver.tld host=talk.chatserver.tld port=5223 password=secret to=mychaps@chatserver.tld  msg="Ansible task finished"
 '''
 
 import os
