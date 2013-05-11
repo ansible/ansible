@@ -82,8 +82,11 @@ options:
     required: false
     default: "yes"
     choices: [ "yes", "safe", "full", "dist"]
+requirements: [ python-apt, aptitude ]
 author: Matthew Williams
-notes: []
+notes:
+   - Two of the upgrade modes (C(full) and C(dist)) require C(aptitude), otherwise
+     C(apt-get) suffices.
 examples:
     - code: "apt: pkg=foo update_cache=yes"
       description: Update repositories cache and install C(foo) package
@@ -103,7 +106,6 @@ examples:
       description: Run the equivalent of C(apt-get update) as a separate step
     - code: "apt: update_cache=yes cache_valid_time=3600"
       description: Only run C(update_cache=yes) if the last one is more than more than 3600 seconds ago
-requirements: [ python-apt, aptitude ]
 '''
 
 import traceback
