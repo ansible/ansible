@@ -59,7 +59,7 @@ options:
     default: null
     choices: []
     description:
-      - mode the file or directory should be, such as 0644 as would be fed to I(chmod)
+      - mode the file or directory should be, such as 0644 or o=rwx,g=rwx,o=rx as would be fed to I(chmod)
   owner:
     required: false
     default: null

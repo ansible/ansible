@@ -194,6 +194,21 @@ class TestRunner(unittest.TestCase):
         assert res['changed']
         assert os.path.isfile(filedemo) and os.stat(filedemo).st_mode == 0100604
 
+        res = self._run('file', ['dest=' + filedemo, 'mode="u=rwx,g=,o=rxt"', 'state=file'])
+        print res
+        assert res['changed']
+        assert os.path.isfile(filedemo) and os.stat(filedemo).st_mode == 33733
+
+        res = self._run('file', ['dest=' + filedemo, 'mode="u=rwsx,g=,o=rxt"', 'state=file'])
+        print res
+        assert res['changed']
+        assert os.path.isfile(filedemo) and os.stat(filedemo).st_mode == 35781
+
+        res = self._run('file', ['dest=' + filedemo, 'mode="u-x"', 'state=file'])
+        print res
+        assert res['changed']
+        assert os.path.isfile(filedemo) and os.stat(filedemo).st_mode == 35717
+
         assert self._run('file', ['dest=' + filedemo, 'state=absent'])['changed']
         assert not os.path.exists(filedemo)
         assert not self._run('file', ['dest=' + filedemo, 'state=absent'])['changed']
