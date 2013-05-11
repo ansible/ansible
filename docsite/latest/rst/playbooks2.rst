@@ -261,6 +261,10 @@ Example::
 Conditional Execution
 `````````````````````
 
+(Note: this section covers 1.2 conditionals, if you are using a previous version, select
+the previous version of the documentation.  Those conditional forms continue to be operational
+in 1.2, although the new mechanisms are cleaner.)
+
 Sometimes you will want to skip a particular step on a particular host.  This could be something
 as simple as not installing a certain package if the operating system is a particular version,
 or it could be something like performing some cleanup steps if a filesystem is getting full.
