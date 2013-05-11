@@ -646,9 +646,9 @@ def compile_when_to_only_if(expression):
                 #tcopy[i] = "%s('''%s''')" % (cast, t)
             t2 = t.strip()
             if (t2[0].isalpha() or t2[0] == '$') and cast == 'str' and t2 != 'in':
-               tcopy[i] = "'%s'" % (t)
+                tcopy[i] = "'%s'" % (t)
             else:
-               tcopy[i] = t
+                tcopy[i] = t
         result = " ".join(tcopy)
         return result
 
