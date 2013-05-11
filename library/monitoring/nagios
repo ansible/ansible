@@ -42,13 +42,13 @@ options:
   cmdfile:
     description:
       - Path to the nagios I(command file) (FIFO pipe).
-      - Only required if auto-detection fails.
+        Only required if auto-detection fails.
     required: false
     default: auto-detected
   author:
     description:
      - Author to leave downtime comments as.
-      - Only usable with the C(downtime) action.
+       Only usable with the C(downtime) action.
     required: false
     default: Ansible
   minutes:
@@ -60,16 +60,16 @@ options:
   services:
     description:
       - What to manage downtime/alerts for. Separate multiple services with commas.
-      - C(service) is an alias for C(services).
-      - B(Required) option when using the C(downtime), C(enable_alerts), and C(disable_alerts) actions.
+        C(service) is an alias for C(services).
+        B(Required) option when using the C(downtime), C(enable_alerts), and C(disable_alerts) actions.
     aliases: [ "service" ]
     required: true
     default: null
   command:
     description:
-      - raw command to send to nagios
-      - should not include the submitted time header or the line-feed
-      - B(Required) option when using the C(command) action
+      - The raw command to send to nagios, which
+        should not include the submitted time header or the line-feed
+        B(Required) option when using the C(command) action.
     required: true
     default: null
 
