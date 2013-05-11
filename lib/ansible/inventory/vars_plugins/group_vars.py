@@ -51,7 +51,7 @@ class VarsModule(object):
                     data = utils.parse_yaml_from_file(path)
                     if type(data) != dict:
                         raise errors.AnsibleError("%s must be stored as a dictionary/hash" % path)
-                    results = utils.combine_vars(results, data);
+                    results = utils.combine_vars(results, data)
 
         # load vars in inventory_dir/hosts_vars/name_of_host
         p = os.path.join(basedir, "host_vars/%s" % host.name)
@@ -61,7 +61,7 @@ class VarsModule(object):
                 data = utils.parse_yaml_from_file(path)
                 if type(data) != dict:
                     raise errors.AnsibleError("%s must be stored as a dictionary/hash" % path)
-                results = utils.combine_vars(results, data);
+                results = utils.combine_vars(results, data)
 
         return results
 
