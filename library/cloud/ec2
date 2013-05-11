@@ -263,9 +263,9 @@ def main():
     # If we have a region specified, connect to its endpoint.
     if region: 
         try:
-          ec2 = boto.ec2.connect_to_region(region, aws_access_key_id=ec2_access_key, aws_secret_access_key=ec2_secret_key)
+           ec2 = boto.ec2.connect_to_region(region, aws_access_key_id=ec2_access_key, aws_secret_access_key=ec2_secret_key)
         except boto.exception.NoAuthHandlerFound, e:
-          module.fail_json(msg = str(e))
+           module.fail_json(msg = str(e))
     # Otherwise, no region so we fallback to the old connection method
     else: 
         try:
@@ -329,9 +329,9 @@ def main():
                       'user_data': user_data}
 
             if vpc_subnet_id:
-              params['security_group_ids'] = [group_id]
+                params['security_group_ids'] = [group_id]
             else:
-              params['security_groups'] = [group_name]
+                params['security_groups'] = [group_name]
 
             res = ec2.run_instances(**params)
         except boto.exception.BotoServerError, e:
