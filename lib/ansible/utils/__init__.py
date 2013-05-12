@@ -791,21 +791,21 @@ def combine_vars(a, b):
     else:
         return dict(a.items() + b.items())
 
-def evaluatePattern(expr, envs):
-    negationOnly= True
-    anyMatch= False
+def evaluate_tag_pattern(expr, envs):
+    negation_only= True
+    any_match= False
     patterns= expr.split(":")
     for pattern in patterns:
         if pattern[0] != '!':
-            negationOnly= False 
-        interMatch= pattern[0] != '&'
+            negation_only= False 
+        inter_match= pattern[0] != '&'
         for env in envs:
             if pattern[0] == '!' and pattern[1:] == env:
                 return False
             elif pattern[0] == '&' and pattern[1:] == env:
-                interMatch= True
+                inter_match= True
             elif pattern == env:
-                anyMatch= True
-        if not interMatch:
+                any_match= True
+        if not inter_match:
             return False
-    return negationOnly or anyMatch
+    return negation_only or any_match

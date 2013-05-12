@@ -521,7 +521,7 @@ class PlayBook(object):
                 # only run the task if the requested tags match
                 should_run = False
                 for x in task.tags:
-                    if utils.evaluatePattern(x,self.only_tags):
+                    if utils.evaluate_tag_pattern(x,self.only_tags):
                         should_run = True
                         break
 
