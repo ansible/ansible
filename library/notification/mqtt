@@ -119,6 +119,9 @@ def publish(module, topic, payload, server='localhost', port='1883', qos='0',
         module.fail_json(msg="unable to connect to MQTT broker")
 
     mqttc.publish(topic, payload, int(qos), retain)
+    rc = mqttc.loop()
+    if rc != 0:
+        module.fail_json(msg="unable to send to MQTT broker")
 
     mqttc.disconnect()
 
