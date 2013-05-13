@@ -99,6 +99,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/ansible/*/[a-eg-z]*
 %{_datadir}/ansible/*/f[a-hj-z]*
 %{_datadir}/ansible/*/file
+%{_datadir}/ansible/*/filesystem
 %config(noreplace) %{_sysconfdir}/ansible
 %doc README.md PKG-INFO COPYING
 %doc %{_mandir}/man1/ansible*
@@ -131,7 +132,7 @@ rm -rf $RPM_BUILD_ROOT
 * Fri Oct 19 2012 Michael DeHaan <michael.dehaan@gmail.com> - 0.8-0
 - Release of 0.8
 
-* Thu Aug 6 2012 Michael DeHaan <michael.dehaan@gmail.com> - 0.7-0
+* Mon Aug 6 2012 Michael DeHaan <michael.dehaan@gmail.com> - 0.7-0
 - Release of 0.7
 
 * Mon Aug 6 2012 Michael DeHaan <michael.dehaan@gmail.com> - 0.6-0
