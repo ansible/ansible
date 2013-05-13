@@ -153,7 +153,7 @@ class PlayBook(object):
         utils.plugins.push_basedir(basedir)
         for play in playbook_data:
             if type(play) != dict:
-                raise errors.AnsibleError("parse error: each play in a playbook must a YAML dictionary (hash), recieved: %s" % play)
+                raise errors.AnsibleError("parse error: each play in a playbook must be a YAML dictionary (hash), recieved: %s" % play)
 
             if 'include' in play:
                 # a playbook (list of plays) decided to include some other list of plays
