@@ -99,6 +99,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/ansible/*/[a-eg-z]*
 %{_datadir}/ansible/*/f[a-hj-z]*
 %{_datadir}/ansible/*/file
+%{_datadir}/ansible/*/filesystem
 %config(noreplace) %{_sysconfdir}/ansible
 %doc README.md PKG-INFO COPYING
 %doc %{_mandir}/man1/ansible*
