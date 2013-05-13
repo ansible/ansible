@@ -131,7 +131,7 @@ rm -rf $RPM_BUILD_ROOT
 * Fri Oct 19 2012 Michael DeHaan <michael.dehaan@gmail.com> - 0.8-0
 - Release of 0.8
 
-* Thu Aug 6 2012 Michael DeHaan <michael.dehaan@gmail.com> - 0.7-0
+* Mon Aug 6 2012 Michael DeHaan <michael.dehaan@gmail.com> - 0.7-0
 - Release of 0.7
 
 * Mon Aug 6 2012 Michael DeHaan <michael.dehaan@gmail.com> - 0.6-0
