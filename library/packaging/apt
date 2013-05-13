@@ -115,6 +115,7 @@ warnings.filterwarnings('ignore', "apt API not stable yet", FutureWarning)
 
 import os
 import datetime
+import fnmatch
 
 # APT related constants
 APTITUDE_CMD = "aptitude"
@@ -143,10 +144,10 @@ def package_status(m, pkgname, version, cache, state):
             return False, False
     if version:
         try :
-            return pkg.is_installed and pkg.installed.version == version, False
+            return pkg.is_installed and fnmatch.fnmatch(pkg.installed.version, version), False
         except AttributeError:
             #assume older version of python-apt is installed
-            return pkg.isInstalled and pkg.installedVersion == version, False
+            return pkg.isInstalled and fnmatch.fnmatch(pkg.installedVersion, version), False
     else:
         try :
             return pkg.is_installed, pkg.is_upgradable
