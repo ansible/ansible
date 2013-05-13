@@ -353,15 +353,10 @@ syntax highlighting before you include it in your Python file.
 Example
 +++++++
 
-Here's a correctly formatted YAML document we could use for a
-``DOCUMENTATION`` string:
+To print a basic documentation string, run ``./hacking/module_formatter.py -G``. 
 
-.. literalinclude:: ../../examples/DOCUMENTATION.yaml
-
-This is available in the 'examples/' directory of the of the Ansible
-github repository, and you can have that generated with
-``./hacking/module_formatter.py -G``. You can copy it into your module and use
-it as a starting point when writing your own docs.
+You can copy it into your module and use it as a starting point 
+when writing your own docs.
 
 Include it in your module file like this::
 
@@ -445,7 +440,7 @@ the program.   Stop by the mailing list to inquire about requirements.
 
    :doc:`modules`
        Learn about available modules
-   `Ansible Resources <https://github.com/ansible/ansible/tree/devel/contrib>`_
+   :doc:`contrib`
        User contributed playbooks, modules, and articles
    `Github modules directory <https://github.com/ansible/ansible/tree/devel/library>`_
        Browse source of core modules

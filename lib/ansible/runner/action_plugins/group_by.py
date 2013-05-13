@@ -53,11 +53,11 @@ class ActionModule(object):
 
         ### find all groups
         groups = {}
+
         for host in self.runner.host_set:
-            data = inject['hostvars'][host]
-            if not check_conditional(template.template(self.runner.basedir, self.runner.conditional, data)):
+            if not check_conditional(template.template(self.runner.basedir, self.runner.conditional, inject)):
                 continue
-            group_name = template.template(self.runner.basedir, args['key'], data)
+            group_name = template.template(self.runner.basedir, args['key'], inject)
             group_name = group_name.replace(' ','-')
             if group_name not in groups:
                 groups[group_name] = []

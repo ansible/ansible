@@ -63,6 +63,8 @@ class InventoryScript(object):
 
             if not isinstance(data, dict):
                 data = {'hosts': data}
+            elif not any(k in data for k in ('hosts','vars')):
+                data = {'hosts': [group_name], 'vars': data}
 
             if 'hosts' in data:
 

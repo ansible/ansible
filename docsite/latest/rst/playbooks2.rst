@@ -261,6 +261,10 @@ Example::
 Conditional Execution
 `````````````````````
 
+(Note: this section covers 1.2 conditionals, if you are using a previous version, select
+the previous version of the documentation.  Those conditional forms continue to be operational
+in 1.2, although the new mechanisms are cleaner.)
+
 Sometimes you will want to skip a particular step on a particular host.  This could be something
 as simple as not installing a certain package if the operating system is a particular version,
 or it could be something like performing some cleanup steps if a filesystem is getting full.
@@ -279,6 +283,19 @@ As a reminder, to see what derived variables are available, you can do::
 
 Variables defined in the playbooks or inventory can also be used.
 
+If a required variable has not been set, you can skip or fail using Jinja2's 
+`defined` test. For example::
+
+    tasks:
+        - shell: echo "I've got '{{ foo }}' and am not afraid to use it!"
+          when: foo is defined
+
+        - fail: msg="Bailing out: this play requires 'bar'"
+          when: bar is not defined
+
+This is especially useful in combination with the conditional import of vars 
+files (see below).
+
 It's also easy to provide your own facts if you want, which is covered in :doc:`moduledev`.  To run them, just
 make a call to your own custom fact gathering module at the top of your list of tasks, and variables returned
 there will be accessible to future tasks::
@@ -288,7 +305,7 @@ there will be accessible to future tasks::
           action: site_facts
         - action: command echo {{ my_custom_fact_can_be_used_now }}
 
-One common useful trick with only_if is to key off the changed result of a last command.  As an example::
+One useful trick with *when* is to key off the changed result of a last command.  As an example::
 
     tasks:
         - action: template src=/templates/foo.j2 dest=/etc/foo.conf
@@ -700,7 +717,7 @@ Often in a playbook it may be useful to store the result of a given command in a
 it later.  Use of the command module in this way can in many ways eliminate the need to write site specific facts, for
 instance, you could test for the existance of a particular program.
 
-The 'register' keyword decides what variable to save a result in.  The resulting variables can be used in templates, action lines, or only_if statements.  It looks like this (in an obviously trivial example)::
+The 'register' keyword decides what variable to save a result in.  The resulting variables can be used in templates, action lines, or *when* statements.  It looks like this (in an obviously trivial example)::
 
     - name: test play
       hosts: all

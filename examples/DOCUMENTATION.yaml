@@ -7,7 +7,7 @@ short_description: This is a sentence describing the module
 description:
     - Longer description of the module
     - You might include instructions
-version_added: X.Y
+version_added: "X.Y"
 author: Your AWESOME name here
 notes:
     - Other things consumers of your module should know
@@ -26,8 +26,4 @@ options:
         default: a string or the word null
         choices: [list, of, choices]
         aliases: [list, of, aliases]
-        version_added: 0.X
-examples:
-# One or more of the following:
-    - code: modulename opt1=arg1 opt2=arg2
-      description: Optional words describing this example
+        version_added: 1.X

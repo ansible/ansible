@@ -6,7 +6,7 @@ Ansible Modules
    :target: http://ansibleworks.com/fest
 
 .. contents::
-   :depth: 2
+   :depth: 3
    :backlinks: top
 
 Introduction
@@ -62,7 +62,7 @@ Let's see what's available in the Ansible module library, out of the box:
 
 
 Writing your own modules
-========================
+````````````````````````
 
 See :doc:`moduledev`.
 

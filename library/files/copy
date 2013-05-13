@@ -93,7 +93,7 @@ def main():
         argument_spec = dict(
             src               = dict(required=False),
             original_basename = dict(required=False), # used to handle 'dest is a directory' via template, a slight hack 
-            content           = dict(required=False),
+            content           = dict(required=False, no_log=True),
             dest              = dict(required=True),
             backup            = dict(default=False, type='bool'),
             force             = dict(default=True, aliases=['thirsty'], type='bool'),
@@ -144,14 +144,10 @@ def main():
                 os.unlink(dest)
                 open(dest, 'w').close()
             if validate:
-               (rc,out,err) = module.run_command(validate % src)
-               if rc != 0:
-                 module.fail_json(msg="failed to validate: rc:%s error:%s" % (rc,err))
-            if not module.atomic_move(src, dest):
-                try:
-                    os.unlink(src) # cleanup tmp files on failure
-                except OSError, e:
-                    sys.stderr.write("failed to clean up tmp file %s: %s\n" % (src, e))
+                (rc,out,err) = module.run_command(validate % src)
+                if rc != 0:
+                    module.fail_json(msg="failed to validate: rc:%s error:%s" % (rc,err))
+            module.atomic_move(src, dest)
         except IOError:
             module.fail_json(msg="failed to copy: %s to %s" % (src, dest))
         changed = True

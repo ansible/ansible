@@ -1,0 +1,245 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# (c) 2013, Matt Hite <mhite@hotmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: bigip_pool
+short_description: "Manages F5 BIG-IP LTM pool members"
+description:
+    - "Manages F5 BIG-IP LTM pool members via iControl SOAP API"
+version_added: "1.2"
+author: Matt Hite
+notes:
+    - "Requires BIG-IP software version >= 11"
+    - "F5 developed module 'bigsuds' required (see http://devcentral.f5.com)"
+    - "Best run as a local_action in your playbook"
+    - "If pool member IP address is no longer referenced by another pool when running with state=absent, the node IP will also be deleted from the F5 configuration."
+requirements:
+    - bigsuds
+options:
+    server:
+        description:
+            - "BIG-IP host"
+        required: true
+        default: null
+        choices: []
+        aliases: []
+    user:
+        description:
+            - "BIG-IP username"
+        required: true
+        default: null
+        choices: []
+        aliases: []
+    password:
+        description:
+            - "BIG-IP password"
+        required: true
+        default: null
+        choices: []
+        aliases: []
+    state:
+        description:
+            - "Pool member state"
+        required: false
+        default: present
+        choices: ['present', 'absent']
+        aliases: []
+    name:
+        description:
+            - "BIG-IP pool name"
+        required: true
+        default: null
+        choices: []
+        aliases: ['pool']
+    partition:
+        description:
+            - "BIG-IP partition"
+        required: false
+        default: 'Common'
+        choices: []
+        aliases: []
+    host:
+        description:
+            - "BIG-IP pool member"
+        required: true
+        default: null
+        choices: []
+        aliases: []
+    port:
+        description:
+            - "BIG-IP pool member port"
+        required: true
+        default: null
+        choices: []
+        aliases: []
+'''
+
+EXAMPLES = '''
+
+### Examples assume [localhost] is defined in inventory file
+
+## ad-hoc ansible CLI example
+
+# ensures 1.1.1.1:80 is present in pool /matthite/matthite-pool on load balancer lb.mydomain.com
+ansible -c local localhost -m bigip_pool -a "server=lb.mydomain.com user=admin password=mysecret state=present name=matthite-pool partition=matthite host=1.1.1.1 port=80"
+
+# ensures 1.1.1.1:80 is absent from pool /matthite/matthite-pool on load balancer lb.mydomain.com
+ansible -c local localhost -m bigip_pool -a "server=lb.mydomain.com user=admin password=mysecret state=absent name=matthite-pool partition=matthite host=1.1.1.1 port=80"
+
+## playbook task example:
+
+---
+# file bigip-test.yml
+# ...
+  tasks:
+  - name: Register current node to load balancer pool
+    local_action: bigip_pool server=lb.mydomain.com user=admin password=mysecret state=present name=matthite-pool partition=matthite host={{ ansible_default_ipv4.address }} port=80
+'''
+
+try:
+    import bigsuds
+except ImportError:
+    bigsuds_found = False
+else:
+    bigsuds_found = True
+
+# ===========================================
+# bigip_pool module specific support methods.
+#
+
+def bigip_api(bigip, user, password):
+    api = bigsuds.BIGIP(hostname=bigip, username=user, password=password)
+    return api
+
+def pool_exists(api, pool):
+    # hack to determine if pool exists
+    result = False
+    try:
+        api.LocalLB.Pool.get_object_status(pool_names=[pool])
+        result = True
+    except bigsuds.OperationFailed, e:
+        if "was not found" in str(e):
+            result = False
+        else:
+            # genuine exception
+            raise
+    return result
+
+def member_exists(api, pool, address, port):
+    # hack to determine if member exists
+    result = False
+    try:
+        members = [{'address': address, 'port': port}]
+        api.LocalLB.Pool.get_member_object_status(pool_names=[pool],
+                                                  members=[members])
+        result = True
+    except bigsuds.OperationFailed, e:
+        if "was not found" in str(e):
+            result = False
+        else:
+            # genuine exception
+            raise
+    return result
+
+def delete_node_address(api, address):
+    result = False
+    try:
+        api.LocalLB.NodeAddressV2.delete_node_address(nodes=[address])
+        result = True
+    except bigsuds.OperationFailed, e:
+        if "is referenced by a member of pool" in str(e):
+            result = False
+        else:
+            # genuine exception
+            raise
+    return result
+
+def remove_pool_member(api, pool, address, port):
+    members = [{'address': address, 'port': port}]
+    api.LocalLB.Pool.remove_member_v2(pool_names=[pool], members=[members])
+    return True
+
+def add_pool_member(api, pool, address, port):
+    members = [{'address': address, 'port': port}]
+    api.LocalLB.Pool.add_member_v2(pool_names=[pool], members=[members])
+    return True
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            server    = dict(required=True),
+            user      = dict(required=True),
+            password  = dict(required=True),
+            state     = dict(default='present', choices=['present', 'absent']),
+            name      = dict(required=True, aliases=['pool']),
+            partition = dict(default='Common'),
+            host      = dict(required=True),
+            port      = dict(required=True)
+        ),
+        supports_check_mode=True
+    )
+
+    if not bigsuds_found:
+        module.fail_json(msg="the python bigsuds module is required")
+
+    server = module.params['server']
+    user = module.params['user']
+    password = module.params['password']
+    state = module.params['state']
+    name = module.params['name']
+    partition = module.params['partition']
+    host = module.params['host']
+    port = module.params['port']
+    address = "/%s/%s" % (partition, host)
+    pool = "/%s/%s" % (partition, name)
+
+    try:
+        api = bigip_api(server, user, password)
+        if not pool_exists(api, pool):
+            module.fail_json(msg="non-existent pool: %s" % pool)
+        if state == 'absent':
+            if member_exists(api, pool, address, port):
+                if module.check_mode:
+                    result = {'changed': True}
+                else:
+                    changed = remove_pool_member(api, pool, address, port)
+                    deleted = delete_node_address(api, address)
+                    result = {'changed': changed, 'deleted': deleted}
+            else:
+                result = {'changed': False}
+        elif state == 'present':
+            if not member_exists(api, pool, address, port):
+                if module.check_mode:
+                    result = {'changed': True}
+                else:
+                    changed = add_pool_member(api, pool, address, port)
+                    result = {'changed': changed}
+            else:
+                result = {'changed': False}
+    except Exception, e:
+        module.fail_json(msg="received exception: %s" % e)
+
+    module.exit_json(**result)
+
+# include magic from lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
+

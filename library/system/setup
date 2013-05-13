@@ -870,19 +870,29 @@ class AIX(Hardware):
 
     def get_cpu_facts(self):
         self.facts['processor'] = []
-        rc, out, err = module.run_command("/usr/sbin/lsattr -El proc0 -a type")
-        data = out.split(' ')
-        self.facts['processor'] = data[1]
-        rc, out, err = module.run_command("/usr/sbin/lsattr -El proc0 -a smt_threads")
-        data = out.split(' ')
-        self.facts['processor_cores'] = int(data[1])
+
+
         rc, out, err = module.run_command("/usr/sbin/lsdev -Cc processor")
         i = 0
         for line in out.split('\n'):
-            data = line.split(':')
+
             if 'Available' in line:
+                if i == 0:
+                    data = line.split(' ')
+                    cpudev = data[0]
+
                 i += 1
         self.facts['processor_count'] = int(i)
+
+        rc, out, err = module.run_command("/usr/sbin/lsattr -El " + cpudev + " -a type")
+
+        data = out.split(' ')
+        self.facts['processor'] = data[1]
+
+        rc, out, err = module.run_command("/usr/sbin/lsattr -El " + cpudev + " -a smt_threads")
+
+        data = out.split(' ')
+        self.facts['processor_cores'] = int(data[1])
 
     def get_memory_facts(self):
         pagesize = 4096
@@ -1057,7 +1067,8 @@ class LinuxNetwork(Network):
         )
 
         for path in glob.glob('/sys/class/net/*'):
-            if not os.path.isdir(path): continue
+            if not os.path.isdir(path): 
+                continue
             device = os.path.basename(path)
             interfaces[device] = { 'device': device }
             if os.path.exists(os.path.join(path, 'address')):
@@ -1157,7 +1168,7 @@ class LinuxNetwork(Network):
                         default_ipv6['scope']      = scope
                         default_ipv6['macaddress'] = macaddress
                         default_ipv6['mtu']        = interfaces[device]['mtu']
-                        default_ipv6['type']       = interfaces[device]['type']
+                        default_ipv6['type']       = interfaces[device].get("type", "unknown")
 
                     if not address == '::1':
                         ips['all_ipv6_addresses'].append(address)

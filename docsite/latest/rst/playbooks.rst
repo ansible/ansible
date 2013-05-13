@@ -98,6 +98,16 @@ Support for running things from sudo is also available::
       user: yourname
       sudo: yes
 
+You can also use sudo on a particular task instead of the whole play::
+
+    ---
+    - hosts: webservers
+      user: yourname
+      tasks:
+        - service: name=nginx state=started
+          sudo: yes
+
+
 You can also login as you, and then sudo to different users than root::
 
     ---
@@ -145,19 +155,19 @@ These variables can be used later in the playbook like this::
 
     $varname or ${varname} or {{ varname }}
 
-If you ever want to do anything complex, {{ varname }} is best, as it uses the Jinja2 templating engine.  It is a good idea to get
-in the habit of using this form.
+If you ever want to do anything complex like uppercasing a string, {{ varname }} is best, as it uses the Jinja2 templating engine.  It is a good idea to get in the habit of using this form most of the time when the output is to be a string.  
 
-To learn more about Jinja2, you can optionally see the `Jinja2 docs <http://jinja.pocoo.org/docs/>`_ - though remember that Jinja2 loops and conditionals are only for 'templates' in Ansible, in playbooks, ansible has the 'when' and 'with' keywords for conditionals and loops.
+If just referencing the value of another simple variable though, it's fine to say $x or ${x}.  This is common for when a datastructure has a member that is the value of another datastructure.
+
+To learn more about Jinja2, you can optionally see the `Jinja2 docs <http://jinja.pocoo.org/docs/>`_ - though remember that Jinja2 loops and conditionals are only for 'templates' in Ansible, in playbooks, ansible has the 'when' and 'with' keywords for conditionals and loops. 
 
 If there are discovered variables about the system, called 'facts', these variables bubble up back into the
 playbook, and can be used on each system just like explicitly set variables.  Ansible provides several
 of these, prefixed with 'ansible', and are documented under 'setup' in the module documentation.  Additionally,
-facts can be gathered by ohai and facter if they are installed.  Facter variables are prefixed with ``facter_`` and Ohai
-variables are prefixed with ``ohai_``.
+facts can be gathered by ohai and facter if they are installed.  Facter variables are prefixed with ``facter_`` and Ohai variables are prefixed with ``ohai_``.  These add extra dependencies and are only there for ease of users
+porting over from those other configuration systems.
 
-So for instance, if I wanted
-to write the hostname into the /etc/motd file, I could say::
+How about an example.  If I wanted to write the hostname into the /etc/motd file, I could say::
 
    - name: write the motd
      action: template src=/srv/templates/motd.j2 dest=/etc/motd
@@ -166,7 +176,7 @@ And in /srv/templates/motd.j2::
 
    You are logged into {{ facter_hostname }}
 
-But we're getting ahead of ourselves.  Let's talk about tasks.
+But we're getting ahead of ourselves, as that just showed a task in a playbook.  Let's talk about tasks.
 
 Tasks list
 ++++++++++
@@ -263,8 +273,8 @@ It is also possible to say:
 
     template: src=templates/foo.j2 dest=/etc/foo.conf
 
-The name of the module is simply followed by a colon and the arguments to that module.  We think this is a lot more intuitive.  
-Our documentation has not converted over to this new format just yet as many users may still be using older versions.  
+The name of the module is simply followed by a colon and the arguments to that module.  We think this is a lot more intuitive.
+Our documentation has not converted over to this new format just yet as many users may still be using older versions.
 You'll be able to use both formats forever.
 
 Running Operations On Change
@@ -275,10 +285,10 @@ they have made a change on the remote system.   Playbooks recognize this and
 have a basic event system that can be used to respond to change.
 
 These 'notify' actions are triggered at the end of each block of tasks in a playbook, and will only be
-triggered once even if notified by multiple different tasks.  
+triggered once even if notified by multiple different tasks.
 
 For instance, multiple resources may indicate
-that apache needs to be restarted because they have changed a config file, 
+that apache needs to be restarted because they have changed a config file,
 but apache will only be bounced once to avoid unneccessary restarts.
 
 Here's an example of restarting two services when the contents of a file
@@ -374,7 +384,7 @@ which also supports structured variables::
       - include: wordpress.yml
         vars:
             user: timmy
-            some_list_variable: 
+            some_list_variable:
               - alpha
               - beta
               - gamma
@@ -430,11 +440,13 @@ inside another.
    this, consider how you can restructure your playbook to be more
    class/role oriented.  This is to say you cannot use a 'fact' to
    decide what include file to use.  All hosts contained within the
-   play are going to get the same tasks.  ('only_if' provides some
+   play are going to get the same tasks.  ('*when*' provides some
    ability for hosts to conditionally skip tasks).
 
 Roles
 `````
+
+.. versionadded: 1.2
 
 Now that you have learned about vars_files, tasks, and handlers, what is the best way to organize your playbooks?
 The short answer is to use roles!  Roles are automatic ways of automatically loading certain vars_files, tasks, and
@@ -500,13 +512,13 @@ While it's probably not something you should do often, you can also conditionall
     - hosts: webservers
       roles:
         - { role: some_role, when: "ansible_os_family == 'RedHat'" }
-   
+
 This works by applying the conditional to every task in the role.  Conditionals are covered later on in
-the documentation.    
+the documentation.
 
 If the play still has a 'tasks' section, those tasks are executed after roles are applied.
 
-If you want to define certain tasks to happen before AND after roles are applied, you can do this::    
+If you want to define certain tasks to happen before AND after roles are applied, you can do this::
 
     ---
     - hosts: webservers
@@ -516,7 +528,7 @@ If you want to define certain tasks to happen before AND after roles are applied
         - { role: some_role }
       post_tasks:
         - shell: echo 'goodbye'
-    
+
 Executing A Playbook
 ````````````````````
 

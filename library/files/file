@@ -196,12 +196,14 @@ def main():
     if prev_state != 'absent' and state == 'absent':
         try:
             if prev_state == 'directory':
-                if module.check_mode:
-                    module.exit_json(changed=True)
                 if os.path.islink(path):
+                    if module.check_mode:
+                        module.exit_json(changed=True)
                     os.unlink(path)
                 else:
                     try:
+                        if module.check_mode:
+                            module.exit_json(changed=True)
                         shutil.rmtree(path, ignore_errors=False)
                     except:
                         module.exit_json(msg="rmtree failed")

@@ -44,6 +44,11 @@ options:
     required: false
     default: "no"
     choices: [ "yes", "no" ]
+  cache_valid_time:
+    description:
+      - If C(update_cache) is specified and the last run is less or equal than I(cache_valid_time) seconds ago, the C(update_cache) gets skipped.
+    required: false
+    default: "no"
   purge:
     description:
      - Will force purging of configuration files if the module state is set to I(absent).
@@ -77,8 +82,11 @@ options:
     required: false
     default: "yes"
     choices: [ "yes", "safe", "full", "dist"]
+requirements: [ python-apt, aptitude ]
 author: Matthew Williams
-notes: []
+notes:
+   - Two of the upgrade modes (C(full) and C(dist)) require C(aptitude), otherwise
+     C(apt-get) suffices.
 examples:
     - code: "apt: pkg=foo update_cache=yes"
       description: Update repositories cache and install C(foo) package
@@ -96,13 +104,17 @@ examples:
       description: Update all packages to the latest version
     - code: "apt: update_cache=yes"
       description: Run the equivalent of C(apt-get update) as a separate step
-requirements: [ python-apt, aptitude ]
+    - code: "apt: update_cache=yes cache_valid_time=3600"
+      description: Only run C(update_cache=yes) if the last one is more than more than 3600 seconds ago
 '''
 
 import traceback
 # added to stave off future warnings about apt api
 import warnings
 warnings.filterwarnings('ignore', "apt API not stable yet", FutureWarning)
+
+import os
+import datetime
 
 # APT related constants
 APTITUDE_CMD = "aptitude"
@@ -111,6 +123,8 @@ APT_ENVVARS = "DEBIAN_FRONTEND=noninteractive DEBIAN_PRIORITY=critical"
 DPKG_OPTIONS = '-o "Dpkg::Options::=--force-confdef" -o "Dpkg::Options::=--force-confold"'
 APT_GET_ZERO = "0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded."
 APTITUDE_ZERO = "0 packages upgraded, 0 newly installed, 0 to remove and 0 not upgraded."
+APT_LISTS_PATH = "/var/lib/apt/lists"
+APT_UPDATE_SUCCESS_STAMP_PATH = "/var/lib/apt/periodic/update-success-stamp"
 
 def package_split(pkgspec):
     parts = pkgspec.split('=')
@@ -232,6 +246,7 @@ def main():
         argument_spec = dict(
             state = dict(default='installed', choices=['installed', 'latest', 'removed', 'absent', 'present']),
             update_cache = dict(aliases=['update-cache'], type='bool'),
+            cache_valid_time = dict(type='int'),
             purge = dict(default='no', type='bool'),
             package = dict(default=None, aliases=['pkg', 'name']),
             default_release = dict(default=None, aliases=['default-release']),
@@ -261,8 +276,35 @@ def main():
             cache.open(progress=None)
 
         if p['update_cache']:
-            cache.update()
-            cache.open(progress=None)
+            # Default is: always update the cache
+            cache_valid = False
+            if p['cache_valid_time']:
+                tdelta = datetime.timedelta(seconds=p['cache_valid_time'])
+                try:
+                    mtime = os.stat(APT_UPDATE_SUCCESS_STAMP_PATH).st_mtime
+                except:
+                    mtime = False
+                if mtime is False:
+                    # Looks like the update-success-stamp is not available
+                    # Fallback: Checking the mtime of the lists
+                    try:
+                        mtime = os.stat(APT_LISTS_PATH).st_mtime
+                    except:
+                        mtime = False
+                if mtime is False:
+                    # No mtime could be read - looks like lists are not there
+                    # We update the cache to be safe
+                    cache_valid = False
+                else:
+                    mtimestamp = datetime.datetime.fromtimestamp(mtime)
+                    if mtimestamp + tdelta >= datetime.datetime.now():
+                        # dont update the cache
+                        # the old cache is less than cache_valid_time seconds old - so still valid
+                        cache_valid = True
+
+            if cache_valid is not True:
+                cache.update()
+                cache.open(progress=None)
             if not p['package'] and not p['upgrade']:
                 module.exit_json(changed=False)
 

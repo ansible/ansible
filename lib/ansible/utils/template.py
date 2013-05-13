@@ -30,24 +30,26 @@ import datetime
 import pwd
 
 class Globals(object):
+
     FILTERS = None
+
     def __init__(self):
         pass    
 
 def _get_filters():
-   ''' return filter plugin instances '''
+    ''' return filter plugin instances '''
 
-   if Globals.FILTERS is not None:
-       return Globals.FILTERS
+    if Globals.FILTERS is not None:
+        return Globals.FILTERS
 
-   from ansible import utils
-   plugins = [ x for x in utils.plugins.filter_loader.all()]
-   filters = {}
-   for fp in plugins:
-       filters.update(fp.filters())
-   Globals.FILTERS = filters
+    from ansible import utils
+    plugins = [ x for x in utils.plugins.filter_loader.all()]
+    filters = {}
+    for fp in plugins:
+        filters.update(fp.filters())
+    Globals.FILTERS = filters
  
-   return Globals.FILTERS
+    return Globals.FILTERS
 
 def _get_extensions():
     ''' return jinja2 extensions to load '''
@@ -142,6 +144,11 @@ def _legacy_varFind(basedir, text, vars, lookup_fatal, depth, expand_lists):
     original data in the caller.
     '''
 
+    # short circuit this whole function if we have specified we don't want
+    # legacy var replacement
+    if C.DEFAULT_LEGACY_PLAYBOOK_VARIABLES == 'no':
+        return None
+
     start = text.find("$")
     if start == -1:
         return None
@@ -220,8 +227,8 @@ def _legacy_varFind(basedir, text, vars, lookup_fatal, depth, expand_lists):
         # args have to be templated
         args = legacy_varReplace(basedir, args, vars, lookup_fatal, depth + 1, True)
         if isinstance(args, basestring) and args.find('$') != -1:
-           # unable to evaluate something like $FILE($item) at this point, try to evaluate later
-           return None
+            # unable to evaluate something like $FILE($item) at this point, try to evaluate later
+            return None
 
 
         instance = utils.plugins.lookup_loader.get(lookup_plugin_name.lower(), basedir=basedir)

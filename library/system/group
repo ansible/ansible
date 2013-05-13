@@ -103,7 +103,7 @@ class Group(object):
             if key == 'gid' and kwargs[key] is not None:
                 cmd.append('-g')
                 cmd.append(kwargs[key])
-            elif key == 'system' and kwargs[key] == 'yes':
+            elif key == 'system' and kwargs[key] == True:
                 cmd.append('-r')
         cmd.append(self.name)
         return self.execute_command(cmd)
@@ -189,7 +189,7 @@ class AIX(Group):
         for key in kwargs:
             if key == 'gid' and kwargs[key] is not None:
                 cmd.append('id='+kwargs[key])
-            elif key == 'system' and kwargs[key] == 'yes':
+            elif key == 'system' and kwargs[key] == True:
                 cmd.append('-a')
         cmd.append(self.name)
         return self.execute_command(cmd)
@@ -207,6 +207,43 @@ class AIX(Group):
             return (True, '', '')
         cmd.append(self.name)
         return self.execute_command(cmd)
+
+# ===========================================
+
+class FreeBsdGroup(Group):
+    """
+    This is a FreeBSD Group manipulation class.
+
+    This overrides the following methods from the generic class:-
+      - group_del()
+      - group_add()
+      - group_mod()
+    """
+
+    platform = 'FreeBSD'
+    distribution = None
+    GROUPFILE = '/etc/group'
+
+    def group_del(self):
+        cmd = [self.module.get_bin_path('pw', True), 'groupdel', self.name]
+        return self.execute_command(cmd)
+
+    def group_add(self,**kwargs):
+        cmd = [self.module.get_bin_path('pw', True), 'groupadd', self.name]
+        if self.gid is not None:
+                cmd.append('-g %d' % int(self.gid))
+        return self.execute_command(cmd)
+
+    def group_mod(self,**kwargs):
+        cmd = [self.module.get_bin_path('pw', True), 'groupmod', self.name]
+        info = self.group_info()
+        cmd_len = len(cmd)
+        if self.gid is not None and int(self.gid) != info[2]:
+                cmd.append('-g %d' % int(self.gid))
+        # modify the group if cmd will do anything
+        if cmd_len != len(cmd):
+            return self.execute_command(cmd)
+        return (None, '', '')
 
 # ===========================================
 

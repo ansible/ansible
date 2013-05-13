@@ -1,7 +1,7 @@
 .. _@{ module }@:
 
 @{ module }@
-``````````````````````````````
+++++++++++++++++++++++++++++++++++++++
 
 {# ------------------------------------------
  #
@@ -42,6 +42,18 @@
     </table>
 {% endif %}
 
+{% if requirements %}
+.. raw:: html
+
+    <p>
+    <b>Requirements:</b> 
+    {% for req in requirements %}
+    @{ req | html_ify }@
+    {% endfor %}
+    </p>
+
+{% endif %}
+
 .. raw:: html
 
 {% for example in examples %}
@@ -61,6 +73,7 @@
 @{ plainexamples | escape | indent(4, True) }@
     </pre>
 {% endif %}
+
 
 {% if notes %}
 .. raw:: html

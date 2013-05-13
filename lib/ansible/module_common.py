@@ -316,7 +316,7 @@ class AnsibleModule(object):
 
     def user_and_group(self, filename):
         filename = os.path.expanduser(filename)
-        st = os.stat(filename)
+        st = os.lstat(filename)
         uid = st.st_uid
         gid = st.st_gid
         return (uid, gid)
@@ -366,11 +366,11 @@ class AnsibleModule(object):
                 uid = pwd.getpwnam(owner).pw_uid
             except KeyError:
                 self.fail_json(path=path, msg='chown failed: failed to look up user %s' % owner)
-        if self.check_mode:
-            return True
         if orig_uid != uid:
+            if self.check_mode:
+                return True
             try:
-                os.chown(path, uid, -1)
+                os.lchown(path, uid, -1)
             except OSError:
                 self.fail_json(path=path, msg='chown failed')
             changed = True
@@ -388,11 +388,11 @@ class AnsibleModule(object):
                 gid = grp.getgrnam(group).gr_gid
             except KeyError:
                 self.fail_json(path=path, msg='chgrp failed: failed to look up group %s' % group)
-        if self.check_mode:
-            return True
         if orig_gid != gid:
+            if self.check_mode:
+                return True
             try:
-                os.chown(path, -1, gid)
+                os.lchown(path, -1, gid)
             except OSError:
                 self.fail_json(path=path, msg='chgrp failed')
             changed = True
@@ -409,7 +409,7 @@ class AnsibleModule(object):
         except Exception, e:
             self.fail_json(path=path, msg='mode needs to be something octalish', details=str(e))
 
-        st = os.stat(path)
+        st = os.lstat(path)
         prev_mode = stat.S_IMODE(st[stat.ST_MODE])
 
         if prev_mode != mode:
@@ -418,11 +418,19 @@ class AnsibleModule(object):
             # FIXME: comparison against string above will cause this to be executed
             # every time
             try:
-                os.chmod(path, mode)
+                if 'lchmod' in dir(os):
+                    os.lchmod(path, mode)
+                else:
+                    os.chmod(path, mode)
+            except OSError, e:
+                if e.errno == errno.ENOENT: # Can't set mode on broken symbolic links
+                    pass
+                else:
+                    raise e
             except Exception, e:
                 self.fail_json(path=path, msg='chmod failed', details=str(e))
 
-            st = os.stat(path)
+            st = os.lstat(path)
             new_mode = stat.S_IMODE(st[stat.ST_MODE])
 
             if new_mode != prev_mode:
@@ -483,7 +491,7 @@ class AnsibleModule(object):
                 group = str(gid)
             kwargs['owner'] = user
             kwargs['group'] = group
-            st = os.stat(path)
+            st = os.lstat(path)
             kwargs['mode']  = oct(stat.S_IMODE(st[stat.ST_MODE]))
             # secontext not yet supported
             if os.path.islink(path):
@@ -807,44 +815,49 @@ class AnsibleModule(object):
             self.fail_json(msg='Could not make backup of %s to %s: %s' % (fn, backupdest, e))
         return backupdest
 
+    def cleanup(tmpfile):
+        if os.path.exists(tmpfile):
+            try:
+                os.unlink(tmpfile)
+            except OSError, e:
+                sys.stderr.write("could not cleanup %s: %s" % (tmpfile, e))
+
     def atomic_move(self, src, dest):
         '''atomically move src to dest, copying attributes from dest, returns true on success'''
-        rc = False
+        context = None
         if os.path.exists(dest):
-            st = os.stat(dest)
-            os.chmod(src, st.st_mode & 07777)
             try:
+                st = os.stat(dest)
+                os.chmod(src, st.st_mode & 07777)
                 os.chown(src, st.st_uid, st.st_gid)
             except OSError, e:
                 if e.errno != errno.EPERM:
                     raise
             if self.selinux_enabled():
                 context = self.selinux_context(dest)
-                self.set_context_if_different(src, context, False)
         else:
             if self.selinux_enabled():
                 context = self.selinux_default_context(dest)
-                self.set_context_if_different(src, context, False)
         # Ensure file is on same partition to make replacement atomic
         dest_dir = os.path.dirname(dest)
         dest_file = os.path.basename(dest)
         tmp_dest = "%s/.%s.%s.%s" % (dest_dir,dest_file,os.getpid(),time.time())
 
-        def cleanup():
-            if os.path.exists(tmp_dest):
-                try:
-                    os.unlink(tmp_dest)
-                except OSError, e:
-                    sys.stderr.write("could not cleanup %s: %s" % (tmp_dest, e))
-
-        try:
-            shutil.move(src, tmp_dest)
+        try: # leaves tmp file behind when sudo and  not root
+            if os.getenv("SUDO_USER") and os.getuid() != 0:
+               # cleanup will happen by 'rm' of tempdir
+               shutil.copy(src, tmp_dest)
+            else:
+               shutil.move(src, tmp_dest)
+            if self.selinux_enabled():
+                self.set_context_if_different(tmp_dest, context, False)
             os.rename(tmp_dest, dest)
-            rc = True
+            if self.selinux_enabled():
+                # rename might not preserve context
+                self.set_context_if_different(dest, context, False)
         except (shutil.Error, OSError, IOError), e:
-            cleanup()
+            cleanup(tmp_dest)
             self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
-        return rc
 
     def run_command(self, args, check_rc=False, close_fds=False, executable=None, data=None):
         '''
