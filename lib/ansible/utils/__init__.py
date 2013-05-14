@@ -764,7 +764,10 @@ def listify_lookup_plugin_terms(terms, basedir, inject):
         # OR
         #    with_items: {{ alist }}
 
-        if not '{' in terms and not '[' in terms and not terms.strip().startswith("/"):
+        stripped = terms.strip()
+        if not (stripped.startswith('{') or stripped.startswith('[')) and not stripped.startswith("/"):
+            # if not already a list, get ready to evaluate with Jinja2
+            # not sure why the "/" is in above code :)
             try:
                 new_terms = template.template(basedir, "{{ %s }}" % terms, inject)
                 if isinstance(new_terms, basestring) and new_terms.find("{{") != -1:
