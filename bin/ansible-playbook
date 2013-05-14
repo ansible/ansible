@@ -77,6 +77,8 @@ def main(args):
         help="one-step-at-a-time: confirm each task before running")
     parser.add_option('--start-at-task', dest='start_at', 
         help="start the playbook with a task matching this name")
+    parser.add_option('--pause-at-task', dest='pause_at',
+        help="pause the playbook with a task matching this name")
 
     options, args = parser.parse_args(args)
 
@@ -116,6 +118,8 @@ def main(args):
             playbook_cb.step = options.step
         if options.start_at:
             playbook_cb.start_at = options.start_at
+        if options.pause_at:
+            playbook_cb.pause_at = options.pause_at
         runner_cb = callbacks.PlaybookRunnerCallbacks(stats, verbose=utils.VERBOSITY)
 
         pb = ansible.playbook.PlayBook(
