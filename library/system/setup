@@ -627,6 +627,8 @@ class LinuxHardware(Hardware):
 
             d['holders'] = []
             for folder in os.listdir(sysdir + "/holders"):
+                if not folder:
+                    continue
                 if not folder.startswith("dm-"):
                     continue
                 name = get_file_content(sysdir + "/holders/" + folder + "/dm/name")
