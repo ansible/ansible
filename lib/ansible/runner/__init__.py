@@ -638,7 +638,7 @@ class Runner(object):
 
         cmd = " || ".join(md5s)
         cmd = "%s; %s || (echo \"${rc}  %s\")" % (test, cmd, path)
-        data = self._low_level_exec_command(conn, cmd, tmp, sudoable=False)
+        data = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
         data2 = utils.last_non_blank_line(data['stdout'])
         try:
             return data2.split()[0]
