@@ -138,8 +138,7 @@ def main():
     except Exception, e:
         module.fail_json(msg="unable to send to IRC: %s" % e)
 
-    changed = True
-    module.exit_json(changed=changed, channel=channel, nick=nick,
+    module.exit_json(changed=False, channel=channel, nick=nick,
                      msg=msg)
 
 # this is magic, see lib/ansible/module_common.py
