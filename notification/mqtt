@@ -173,7 +173,7 @@ def main():
     except Exception, e:
         module.fail_json(msg="unable to publish to MQTT broker %s" % (e))
 
-    module.exit_json(changed=True, topic=topic)
+    module.exit_json(changed=False, topic=topic)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
