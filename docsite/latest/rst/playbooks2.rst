@@ -728,7 +728,7 @@ The 'register' keyword decides what variable to save a result in.  The resulting
             register: motd_contents
 
           - action: shell echo "motd contains the word hi"
-            when: motd_contents.find('hi') != -1
+            when: motd_contents.stdout.find('hi') != -1
 
 
 Rolling Updates
