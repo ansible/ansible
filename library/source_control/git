@@ -64,11 +64,22 @@ options:
             - Create a shallow clone with a history truncated to the specified
               number or revisions. The minimum possible value is C(1), otherwise
               ignored.
-examples:
+    update:
+        required: false
+        default: "yes"
+        choices: [ "yes", "no" ]
+        version_added: "1.2"
+        description:
+            - If C(yes), repository will be updated using the supplied
+              remote.  Otherwise the repo will be left untouched.
+              Prior to 1.2, this was always 'yes' and could not be disabled.
+ examples:
     - code: "git: repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout version=release-0.22"
       description: Example git checkout from Ansible Playbooks
     - code: "git: repo=ssh://git@github.com/mylogin/hello.git dest=/home/mylogin/hello"
       description: Example read-write git checkout from github
+    - code: "git: repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout update=no"
+      description: Example just ensuring the repo checkout exists
 '''
 
 import re
@@ -264,6 +275,7 @@ def main():
             remote=dict(default='origin'),
             force=dict(default='yes', type='bool'),
             depth=dict(default=None, type='int'),
+            update=dict(default='yes', type='bool'),
         ),
         supports_check_mode=True
     )
@@ -274,6 +286,7 @@ def main():
     remote  = module.params['remote']
     force   = module.params['force']
     depth   = module.params['depth']
+    update  = module.params['update']
 
     gitconfig = os.path.join(dest, '.git', 'config')
 
@@ -287,6 +300,12 @@ def main():
         if module.check_mode:
             module.exit_json(changed=True)
         (rc, out, err) = clone(module, repo, dest, remote, depth)
+    elif not update:
+        # Just return having found a repo already in the dest path
+        # this does no checking that the repo is the actual repo
+        # requested.
+        before = get_version(dest)
+        module.exit_json(changed=False, before=before, after=before)
     else:
         # else do a pull
         local_mods = has_local_mods(dest)
