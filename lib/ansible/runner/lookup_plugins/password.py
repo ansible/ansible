@@ -1,5 +1,5 @@
 # (c) 2012, Daniel Hokka Zakrisson <daniel@hozac.com>
-# (c) 2013, Javie Candeira <javier@candeira.com>
+# (c) 2013, Javier Candeira <javier@candeira.com>
 # (c) 2013, Maykel Moya <mmoya@speedyrails.com>
 #
 # This file is part of Ansible
