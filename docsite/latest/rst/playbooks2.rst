@@ -537,6 +537,15 @@ This length can be changed by passing an extra parameter::
                     target=/tmp/{{ client }}_{{ tier }}_{{ role }}_backup.sql
           with_password: credentials/{{ client }}/{{ tier }}/{{ role }}/mysqlpassword length=15
 
+        (...)
+
+        # create an user with a given password
+        - user: name=guestuser
+                state=present
+                uid=5000
+                password={{ item }}
+          with_password: credentials/{{ hostname }}/userpassword encrypt=sha256_crypt
+
 Setting the Environment (and Working With Proxies)
 ``````````````````````````````````````````````````
 
