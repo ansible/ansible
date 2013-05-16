@@ -64,7 +64,7 @@ examples:
    - code: "wait_for: port=8000 delay=10"
      description: "Example from Ansible Playbooks"
 notes: []
-requirements: null
+requirements: []
 author: Jeroen Hoekx
 '''
 

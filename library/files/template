@@ -53,7 +53,7 @@ examples:
 notes:
   - Since Ansible version 0.9, templates are loaded with C(trim_blocks=True).
   - 'You can override jinja2 settings by adding a special header to template file. 
-    i.e. c(#jinja2: trim_blocks: False)'
-requirements: null
+    i.e. C(#jinja2: trim_blocks: False)'
+requirements: []
 author: Michael DeHaan
 '''
