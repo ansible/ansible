@@ -55,9 +55,12 @@ class ActionModule(object):
         groups = {}
 
         for host in self.runner.host_set:
-            if not check_conditional(template.template(self.runner.basedir, self.runner.conditional, inject)):
+            data = {}
+            data.update(inject)
+            data.update(inject['hostvars'][host])
+            if not check_conditional(template.template(self.runner.basedir, self.runner.conditional, data)):
                 continue
-            group_name = template.template(self.runner.basedir, args['key'], inject)
+            group_name = template.template(self.runner.basedir, args['key'], data)
             group_name = group_name.replace(' ','-')
             if group_name not in groups:
                 groups[group_name] = []
