@@ -16,6 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import sys
 import re
 import codecs
 import jinja2
@@ -485,5 +486,7 @@ def template_from_string(basedir, data, vars):
         res = jinja2.utils.concat(t.root_render_func(t.new_context(_jinja2_vars(basedir, vars, t.globals), shared=True)))
         return res
     except jinja2.exceptions.UndefinedError, e:
-        raise errors.AnsibleError(str(e))
+        if C.DEFAULT_JINJA2_UNDEFINED == 'strict':
+            raise errors.AnsibleError(str(e)), None, sys.exc_info()[2]
+        return data
 
