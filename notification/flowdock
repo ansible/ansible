@@ -175,7 +175,7 @@ def main():
 
     # If we're in check mode, just exit pretending like we succeeded
     if module.check_mode:
-        module.exit_json(changed=True)
+        module.exit_json(changed=False)
 
     # Send the data to Flowdock
     try:
@@ -183,7 +183,7 @@ def main():
     except Exception, e:
         module.fail_json(msg="unable to send msg: %s" % e)
 
-    module.exit_json(changed=True, msg=module.params["msg"])
+    module.exit_json(changed=False, msg=module.params["msg"])
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
