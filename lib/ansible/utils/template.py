@@ -484,7 +484,6 @@ def template_from_string(basedir, data, vars):
  
         res = jinja2.utils.concat(t.root_render_func(t.new_context(_jinja2_vars(basedir, vars, t.globals), shared=True)))
         return res
-    except jinja2.exceptions.UndefinedError:
-        # this shouldn't happen due to undeclared check above
-        return data
+    except jinja2.exceptions.UndefinedError, e:
+        raise errors.AnsibleError(str(e))
 
