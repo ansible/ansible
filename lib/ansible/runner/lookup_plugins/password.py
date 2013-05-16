@@ -1,5 +1,6 @@
 # (c) 2012, Daniel Hokka Zakrisson <daniel@hozac.com>
 # (c) 2013, Javie Candeira <javier@candeira.com>
+# (c) 2013, Maykel Moya <mmoya@speedyrails.com>
 #
 # This file is part of Ansible
 #
@@ -20,15 +21,22 @@ from ansible import utils, errors
 import os
 import errno
 import random
-from string import ascii_uppercase, ascii_lowercase, digits
+from string import ascii_letters, digits
 
 
 class LookupModule(object):
 
     LENGTH = 20
 
-    def __init__(self, length=None, basedir=None, **kwargs):
+    def __init__(self, length=None, encrypt=None, basedir=None, **kwargs):
         self.basedir = basedir
+
+    def random_salt(self):
+        salt_chars = ascii_letters + digits + './'
+        salt = []
+        for _ in range(8):
+            salt.append(random.choice(salt_chars))
+        return ''.join(salt)
 
     def run(self, terms, inject=None, **kwargs):
 
@@ -40,16 +48,26 @@ class LookupModule(object):
             # you can't have escaped spaces in yor pathname
             params = term.split()
             relpath = params[0]
-            length = LookupModule.LENGTH
 
-            # get non-default length parameter if specified
-            if len(params) > 1:
-                try:
-                    name, length = params[1].split('=')
-                    assert(name.startswith("length"))
-                    length = int(length)
-                except (ValueError, AssertionError) as e:
-                    raise errors.AnsibleError(e)
+            paramvals = {
+                'length': LookupModule.LENGTH,
+                'encrypt': None,
+            }
+
+            # get non-default parameters if specified
+            try:
+                for param in params[1:]:
+                    name, value = param.split('=')
+                    assert(name in paramvals)
+                    if name == 'length':
+                        paramvals[name] = int(value)
+                    else:
+                        paramvals[name] = value
+            except (ValueError, AssertionError) as e:
+                raise errors.AnsibleError(e)
+
+            length  = paramvals['length']
+            encrypt = paramvals['encrypt']
 
             # get password or create it if file doesn't exist
             path = utils.path_dwim(self.basedir, relpath)
@@ -57,11 +75,41 @@ class LookupModule(object):
                 pathdir = os.path.dirname(path)
                 if not os.path.isdir(pathdir):
                     os.makedirs(pathdir)
-                chars = ascii_uppercase + ascii_lowercase + digits + ".,:-_"
+                chars = ascii_letters + digits + ".,:-_"
                 password = ''.join(random.choice(chars) for _ in range(length))
+                if encrypt is not None:
+                    salt = self.random_salt()
+                    content = '%s salt=%s' % (password, salt)
+                else:
+                    content = password
                 with open(path, 'w') as f:
-                    f.write(password)
-            ret.append(open(path).read().rstrip())
+                    f.write(content + '\n')
+            else:
+                content = open(path).read().rstrip()
+                sep = content.find(' ')
+
+                if sep >= 0:
+                    password = content[:sep]
+                    salt = content[sep+1:].split('=')[1]
+                else:
+                    password = content
+                    salt = None
+
+                # crypt requested, add salt if missing
+                if (encrypt is not None and not salt):
+                    salt = self.random_salt()
+                    content = '%s salt=%s' % (password, salt)
+                    with open(path, 'w') as f:
+                        f.write(content + '\n')
+                # crypt not requested, remove salt if present
+                elif (encrypt is None and salt):
+                    with open(path, 'w') as f:
+                        f.write(password + '\n')
+
+            if encrypt:
+                password = utils.do_encrypt(password, encrypt, salt=salt)
+
+            ret.append(password)
 
         return ret
 
