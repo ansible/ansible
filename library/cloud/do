@@ -1,0 +1,268 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+DOCUMENTATION = '''
+---
+module: do
+short_description: Manages DigitalOcean machines supported by dop
+description:
+     - Manages DigitalOcean machines supported by dop.
+version_added: "0.1"
+options:
+  action:
+    description:
+     - Actions you want to execute on your Droplet virtual servers.
+    required: true
+    default: null
+    choices: ["add_ssh_key", "all_ssh_keys", "create_droplet", "destroy_droplet", "destroy_image", "destroy_ssh_key", "disable_backups_droplet", "edit_ssh_key", "enable_backups_droplet", "images", "power_cycle_droplet", "power_off_droplet", "power_on_droplet", "reboot_droplet", "rebuild_droplet", "regions", "reset_root_password", "resize_droplet", "restore_droplet", "show_active_droplets", "show_droplet", "show_image", "show_ssh_key", "shutdown_droplet", "sizes", "snapshot_droplet"]
+  client_id:
+    description:
+     - Your client id
+    required: true
+    default: null
+  api_key:
+    description:
+     - Your api key
+    required: true
+    default: null
+  show_all_images:
+    description:
+     - Whether to show all of your images or not.
+    default: true
+    choices: [ "true", "false" ]
+  droplet_id:
+    description:
+     - Numeric, this is the id of your droplet.
+    default: null
+  droplet_name:
+    description:
+     - String, this is the name of the droplet - must be formatted by hostname rules.
+    default: null
+  size_id:
+    description:
+     - Numeric, this is the id of the size you would like the droplet created at or resized to.
+    default: null
+  image_id:
+    description:
+     - Numeric, this is the id of the image you would like the droplet created with.
+    default: null
+  region_id:
+    description:
+     - Numeric, this is the id of the region you would like your server in IE: US/Amsterdam.
+    default: null
+  virtio:
+    description:
+     - This toggles whether to enable or disable virtio during creation
+    default: true
+    choices: [ "true", "false" ]
+  ssh_key_ids:
+    description:
+     - Comma separated list of ssh_key_ids that you would like to be added to the server.
+    default: null
+  snapshot_name:
+    description:
+     - String, this is the name of the new snapshot you want to create. If not set, the snapshot name will default to date/time.
+    default: null
+
+notes:
+  - Two environment variables can be used, CLIENT_ID and API_KEY.
+'''
+
+
+EXAMPLES = '''
+# a playbook task line:
+tasks:
+  - do: action=show_active_droplets client_id=XXX api_key=XXX
+
+# /usr/bin/ansible invocations
+ansible -i host -m do -a "action=show_active_droplets client_id=XXX api_key=XXX"
+'''
+
+import sys
+import time
+import os
+
+try:
+    from dop.client import Client
+except ImportError:
+    print "failed=True msg='python module dop unavailable'"
+    sys.exit(1)
+
+def cloudservers(module, state, name, flavor, image, meta, key_name, files,
+                 wait, wait_timeout):
+    # Check our args (this could be done better)
+    for arg in (state, name, flavor, image):
+        if not arg:
+            module.fail_json(msg='%s is required for cloudservers' % arg)
+
+    instances = []
+    changed = False
+    servers = []
+    # See if we can find servers that match our options
+    for server in pyrax.cloudservers.list():
+        if  name != server.name:
+            continue
+        if int(flavor) != int(server.flavor['id']):
+            continue
+        if image != server.image['id']:
+            continue
+        if meta != server.metadata:
+            continue
+        # Nothing else ruled us not a match, so consider it a winner
+        servers.append(server)
+
+    # act on the state
+    if state in ('active', 'present'):
+        if not servers:
+            # Handle the file contents
+            for rpath in files.keys():
+                lpath = os.path.expanduser(files[rpath])
+                try:
+                    fileobj = open(lpath, 'r')
+                    files[rpath] = fileobj
+                except Exception, e:
+                    module.fail_json(msg = 'Failed to load %s' % lpath)
+            try:
+                servers = [pyrax.cloudservers.servers.create(name=name,
+                                                             image=image,
+                                                             flavor=flavor,
+                                                             key_name=key_name,
+                                                             meta=meta,
+                                                             files=files)]
+                changed = True
+            except Exception, e:
+                module.fail_json(msg = '%s' % e.message)
+
+        for server in servers:
+            # wait here until the instances are up
+            wait_timeout = time.time() + wait_timeout
+            while wait and wait_timeout > time.time():
+                # refresh the server details
+                server.get()
+                if server.status in ('ACTIVE', 'ERROR'):
+                    break
+                time.sleep(5)
+            if wait and wait_timeout <= time.time():
+                # waiting took too long
+                module.fail_json(msg = 'Timeout waiting on %s' % server.id)
+            # Get a fresh copy of the server details
+            server.get()
+            if server.status == 'ERROR':
+                module.fail_json(msg = '%s failed to build' % server.id)
+            instance = {'id': server.id,
+                        'accessIPv4': server.accessIPv4,
+                        'name': server.name,
+                        'status': server.status}
+            instances.append(instance)
+
+    elif state in ('absent', 'deleted'):
+        deleted = []
+        # See if we can find a server that matches our credentials
+        for server in servers:
+            if server.name == name:
+                if server.flavor['id'] == flavor and \
+                server.image['id'] == image and \
+                server.metadata == meta:
+                    try:
+                        server.delete()
+                        deleted.append(server)
+                    except Exception, e:
+                        module.fail_json(msg = e.message)
+                    instance = {'id': server.id,
+                                'accessIPv4': server.accessIPv4,
+                                'name': server.name,
+                                'status': 'DELETING'}
+                    instances.append(instance)
+                    changed = True
+
+    module.exit_json(changed=changed, instances=instances)
+
+ALL_COMMANDS = ["add_ssh_key", "all_ssh_keys", "create_droplet", "destroy_droplet", "destroy_image", "destroy_ssh_key", "disable_backups_droplet", "edit_ssh_key", "enable_backups_droplet", "images", "power_cycle_droplet", "power_off_droplet", "power_on_droplet", "reboot_droplet", "rebuild_droplet", "regions", "reset_root_password", "resize_droplet", "restore_droplet", "show_active_droplets", "show_droplet", "show_image", "show_ssh_key", "shutdown_droplet", "sizes", "snapshot_droplet"]
+
+params_of _func = {
+"add_ssh_key":, "all_ssh_keys", "create_droplet", "destroy_droplet", "destroy_image", "destroy_ssh_key", "disable_backups_droplet", "edit_ssh_key", "enable_backups_droplet", "images", "power_cycle_droplet", "power_off_droplet", "power_on_droplet", "reboot_droplet", "rebuild_droplet", "regions", "reset_root_password", "resize_droplet", "restore_droplet", "show_active_droplets", "show_droplet", "show_image", "show_ssh_key", "shutdown_droplet", "sizes", "snapshot_droplet"}
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            action = dict(required=True, choices=ALL_COMMANDS),
+            client_id = dict(),
+            api_key = dict(),
+            show_all_images = dict(choices=BOOLEANS),
+            droplet_id = dict(),
+            droplet_name = dict(),
+            size_id = dict(),
+            image_id = dict(),
+            region_id = dict(),
+            virtio = dict(default=True, choices=ALL_COMMANDS)),
+            ssh_key_ids = dict(),
+            snapshot_name = dict(),
+        )
+    )
+
+    def params_of_func(fn):
+        params_of _func_table = {
+                "add_ssh_key": {'id': module['droplet_id']},
+                "all_ssh_keys": {},
+                "create_droplet": {'name': module['name'], 'size_id': module['size_id'], 'image_id': module['image_id'], 'region_id': module['region_id'], 'ssh_key_ids': module.get('ssh_key_ids', []).split(','), 'virtio': module.get('virtio', True)},
+                "destroy_droplet": {'id': module['droplet_id']},
+                "destroy_image": {'image_id': module['image_id']},
+                # TODO: droplet_id?
+                "destroy_ssh_key": {'id': module['droplet_id']},
+                "disable_backups_droplet": {'id': module['droplet_id']},
+                "edit_ssh_key": {'id': module['ssh_key_id']},
+                "enable_backups_droplet": {'id': module['droplet_id']},
+                "images": {'show_all': module['show_all_images']},
+                "power_cycle_droplet": {'id': module['droplet_id']},
+                "power_off_droplet": {'id': module['droplet_id']},
+                "power_on_droplet": {'id': module['droplet_id']},
+                "reboot_droplet": {'id': module['droplet_id']},
+                "rebuild_droplet": {'id': module['droplet_id'], 'image_id': module['image_id']},
+                "regions": {},
+                "reset_root_password": {'id': module['droplet_id']},
+                "resize_droplet": {'id': module['droplet_id'], 'size_id': module['size_id']},
+                "restore_droplet": {'id': module['droplet_id'], 'image_id': module['image_id']},
+                "show_active_droplets": {},
+                "show_droplet": {'id': module['droplet_id']},
+                "show_image": {'image_id': module['image_id']},
+                "show_ssh_key": {'id': module['ssh_key_id']},
+                "shutdown_droplet": {'id': module['droplet_id']},
+                "sizes": {},
+                "snapshot_droplet": {'id': module['droplet_id'], 'name': module['snapshot_name']}
+            }
+        return params_of_func_table[fn]
+
+    params = module.params
+    # setup the auth
+    try:
+        client_id = params.get('client_id') or os.environ['CLIENT_ID ']
+        api_key = params.get('api_key') or os.environ('API_KEY')
+    except KeyError, e:
+        module.fail_json(msg='Unable to load %s' % e.message)
+
+    client = Client(client_id, api_key)
+    try:
+        param_dict = params_of_func(module['action'])
+        getattr(client, module['action'])(**param_dict)
+    except KeyError, e:
+        module.fail_json(msg='Unable to load %s' % e.message)
+
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+main()
