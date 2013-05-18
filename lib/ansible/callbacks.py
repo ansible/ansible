@@ -530,6 +530,10 @@ class PlaybookCallbacks(object):
         msg = "TASK: [%s]" % name
         if is_conditional:
             msg = "NOTIFIED: [%s]" % name
+
+        if hasattr(self, 'pause_at'): #wait for user input
+            if name == self.pause_at or fnmatch.fnmatch(name, self.pause_at):
+                raw_input('Paused at task "%s", press enter to continue: ' % name)
         
         if hasattr(self, 'start_at'):
             if name == self.start_at or fnmatch.fnmatch(name, self.start_at):
