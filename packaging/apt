@@ -118,8 +118,6 @@ import datetime
 import fnmatch
 
 # APT related constants
-APTITUDE_CMD = "aptitude"
-APT_GET_CMD = "apt-get"
 APT_ENVVARS = "DEBIAN_FRONTEND=noninteractive DEBIAN_PRIORITY=critical"
 DPKG_OPTIONS = '-o "Dpkg::Options::=--force-confdef" -o "Dpkg::Options::=--force-confold"'
 APT_GET_ZERO = "0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded."
@@ -265,6 +263,9 @@ def main():
         import apt_pkg
     except:
         module.fail_json(msg="Could not import python modules: apt, apt_pkg. Please install python-apt package.")
+
+    global APTITUDE_CMD = module.get_bin_path("aptitude", False)
+    global APT_GET_CMD = module.get_bin_path("apt-get")
 
     p = module.params
     install_recommends = p['install_recommends']
