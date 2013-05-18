@@ -1,6 +1,10 @@
 #Maintainer: Michel Blanc <mblanc@erasme.org>
 pkgname=ansible-git
-pkgver=20130430
+pkgver=1.1.568.gd29d142
+pkgver(){
+	cd "$srcdir/$pkgname"
+	git describe --tags --long | sed 's/^v//;s/-/./g'
+}
 pkgrel=1
 pkgdesc="A radically simple deployment, model-driven configuration management, and command execution framework"
 arch=('any')
@@ -9,47 +13,35 @@ license=('GPL3')
 depends=('python2' 'python2-paramiko' 'python2-jinja' 'python2-yaml')
 makedepends=('git' 'asciidoc' 'fakeroot')
 conflicts=('ansible')
-source=("python-binary.diff")
-md5sums=("ab81876d8d4c86c27d137e3d86c25a3a")
+source=("$pkgname::git://github.com/ansible/ansible.git"
+		"python-binary.diff")
+md5sums=("SKIP" "ab81876d8d4c86c27d137e3d86c25a3a")
 
-_gitroot="https://github.com/ansible/ansible"
-_gitname="ansible"
-
+prepare(){
+  cd "$srcdir/$pkgname"
+  patch -p1 -i "$srcdir/python-binary.diff"
+}
 build() {
-  cd "$srcdir"
-  msg "Connecting to GIT server...."
-
-  if [ -d $_gitname ] ; then
-    cd $_gitname && git pull origin
-    msg "The local files are updated."
-  else
-    git clone $_gitroot $_gitname
-  fi
-
-  msg "GIT checkout done or server timeout"
-
-
-  cd "$srcdir/$_gitname"
-  patch -p1 -i $srcdir/python-binary.diff
+  cd "$srcdir/$pkgname"
   make
 }
 
 package() {
-  cd "$srcdir/$_gitname"
+  cd "$srcdir/$pkgname"
 
-  mkdir -p ${pkgdir}/usr/share/ansible
-  cp -r ./library/* ${pkgdir}/usr/share/ansible/
-  cp -r ./examples ${pkgdir}/usr/share/ansible
+  mkdir -p "${pkgdir}/usr/share/ansible"
+  cp -dpr --no-preserve=ownership ./library/* "${pkgdir}/usr/share/ansible/"
+  cp -dpr --no-preserve=ownership ./examples "${pkgdir}/usr/share/ansible"
 
-  python2 setup.py install -O1 --root=${pkgdir}
+  python2 setup.py install -O1 --root="$pkgdir"
 
-  install -D docs/man/man1/ansible.1 ${pkgdir}/usr/share/man/man1/ansible.1
-  install -D docs/man/man1/ansible-playbook.1 ${pkgdir}/usr/share/man/man1/ansible-playbook.1
-  install -D docs/man/man1/ansible-pull.1 ${pkgdir}/usr/share/man/man1/ansible-pull.1
-  install -D docs/man/man1/ansible-doc.1 ${pkgdir}/usr/share/man/man1/ansible-doc.1
+  install -D docs/man/man1/ansible.1 "${pkgdir}/usr/share/man/man1/ansible.1"
+  install -D docs/man/man1/ansible-playbook.1 "${pkgdir}/usr/share/man/man1/ansible-playbook.1"
+  install -D docs/man/man1/ansible-pull.1 "${pkgdir}/usr/share/man/man1/ansible-pull.1"
+  install -D docs/man/man1/ansible-doc.1 "${pkgdir}/usr/share/man/man1/ansible-doc.1"
 
-  gzip -9 ${pkgdir}/usr/share/man/man1/ansible.1
-  gzip -9 ${pkgdir}/usr/share/man/man1/ansible-playbook.1
-  gzip -9 ${pkgdir}/usr/share/man/man1/ansible-pull.1
-  gzip -9 ${pkgdir}/usr/share/man/man1/ansible-doc.1
+  gzip -9 "${pkgdir}/usr/share/man/man1/ansible.1"
+  gzip -9 "${pkgdir}/usr/share/man/man1/ansible-playbook.1"
+  gzip -9 "${pkgdir}/usr/share/man/man1/ansible-pull.1"
+  gzip -9 "${pkgdir}/usr/share/man/man1/ansible-doc.1"
 }
