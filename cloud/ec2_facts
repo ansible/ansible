@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-DOCUMENTATION="""
+DOCUMENTATION = '''
 ---
 module: ec2_facts
 short_description: Gathers facts about remote hosts within ec2 (aws)
@@ -28,12 +28,19 @@ description:
        work this cloud provider as well.
 notes:
     - Parameters to filter on ec2_facts may be added later.
-examples:
-    - code: ansible all -m ec2_facts
-      description: Obtain facts from ec2 metatdata servers. You will need to run an instance within ec2.
 author: "Silviu Dicu <silviudicu@gmail.com>"
-"""
+'''
 
+EXAMPLES = '''
+# Conditional example
+- name: Gather facts
+  action: ec2_facts
+
+- name: Conditional
+  action: debug msg="This instance is a t1.micro"
+  when: ansible_ec2_instance_type == "t1.micro"
+'''
+   
 import urllib2
 import socket
 import re
