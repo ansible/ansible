@@ -1111,7 +1111,8 @@ class LinuxNetwork(Network):
                     path = os.path.join(path, 'bonding', 'all_slaves_active')
                     if os.path.exists(path):
                         interfaces[device]['all_slaves_active'] = open(path).read() == '1'
-            output = subprocess.Popen(['/sbin/ip', 'addr', 'show', device], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
+            ip_path = module.get_bin_path("ip")
+            output = subprocess.Popen([ip_path, 'addr', 'show', device], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
             for line in output.split('\n'):
 
                 if not line: 
