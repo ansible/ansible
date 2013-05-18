@@ -520,12 +520,10 @@ class PlayBook(object):
 
                 # only run the task if the requested tags match
                 should_run = False
-                for x in self.only_tags:
-
-                    for y in task.tags:
-                        if (x==y):
-                            should_run = True
-                            break
+                for x in task.tags:
+                    if utils.evaluate_tag_pattern(x,self.only_tags):
+                        should_run = True
+                        break
 
                 if should_run:
                     if not self._run_task(play, task, False):

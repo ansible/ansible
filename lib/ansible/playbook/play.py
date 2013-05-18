@@ -390,7 +390,13 @@ class Play(object):
         all_tags = []
         for task in self._tasks:
             if not task.meta:
-                all_tags.extend(task.tags)
+                for tag in task.tags:
+                    patterns= tag.split(":")
+                    for pattern in patterns:
+                        if pattern[0] == "!" or pattern[0] == "&":
+                            all_tags.append(pattern[3:])
+                        else:
+                            all_tags.append(pattern)
 
         # compare the lists of tags using sets and return the matched and unmatched
         all_tags_set = set(all_tags)
