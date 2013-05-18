@@ -3,7 +3,12 @@
   connection: local
   gather_facts: no
   vars:
-  - internal: xyz
+  - var0: a
+  - var1: covered
+  - var2: c
 
   tasks:
-  - include: task-included.yml internal=$internal
+  - include: task-included.yml var1=b var2=$var2
+    vars:
+      var3: d
+
