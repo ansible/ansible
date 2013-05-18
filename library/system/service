@@ -390,7 +390,6 @@ class LinuxService(Service):
                     break
 
         # Locate a tool for runtime service management (start, stop etc.)
-        self.svc_cmd = None
         if location.get('service', None) and os.path.exists("/etc/init.d/%s" % self.name):
             # SysV init script
             self.svc_cmd = location['service']
