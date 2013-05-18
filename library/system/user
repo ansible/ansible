@@ -894,9 +894,6 @@ class AIX(User):
             cmd.append('-u')
             cmd.append(self.uid)
 
-        if self.non_unique:
-            cmd.append('-o')
-
         if self.group is not None:
             if not self.group_exists(self.group):
                 self.module.fail_json(msg="Group %s does not exist" % self.group)
@@ -925,9 +922,6 @@ class AIX(User):
         if self.createhome:
             cmd.append('-m')
 
-        if self.system:
-            cmd.append('-r')
-
         cmd.append(self.name)
         (rc, out, err) = self.execute_command(cmd)
 
@@ -949,9 +943,6 @@ class AIX(User):
         if self.uid is not None and info[2] != int(self.uid):
             cmd.append('-u')
             cmd.append(self.uid)
-
-        if self.non_unique:
-            cmd.append('-o')
 
         if self.group is not None:
             if not self.group_exists(self.group):
