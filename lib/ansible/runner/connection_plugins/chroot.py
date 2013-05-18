@@ -19,11 +19,8 @@
 import distutils.spawn
 import traceback
 import os
-import pipes
 import shutil
 import subprocess
-import select
-import fcntl
 from ansible import errors
 from ansible import utils
 from ansible.callbacks import vvv
