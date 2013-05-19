@@ -20,6 +20,7 @@
 #
 
 import tempfile
+import os
 
 DOCUMENTATION = '''
 ---
@@ -32,7 +33,7 @@ version_added: "0.7"
 options:
   name:
     description:
-      - The name of a Python library to install or the url of the remote package. 
+      - The name of a Python library to install or the url of the remote package.
     required: false
     default: null
   version:
@@ -184,22 +185,6 @@ def main():
     if state == 'latest' and version is not None:
         module.fail_json(msg='version is incompatible with state=latest')
 
-    # pip can accept a path to a local project or a VCS url beginning
-    # with svn+, git+, hg+, or bz+ and these sources usually do not qualify
-    # --use-mirrors. Furthermore, the -e option is applied only when
-    # source is a VCS url. Therefore, we will have branch cases for each
-    # type of sources.
-    #
-    # is_vcs includes those begin with svn+, git+, hg+ or bzr+
-    # is_tar ends with .zip, .tar.gz, or .tar.bz2
-    is_vcs = False
-    is_tar = False
-    if name.endswith('.tar.gz') or name.endswith('.tar.bz2') or name.endswith('.zip'):
-        is_tar = True
-    elif name.startswith('svn+') or name.startswith('git+') or \
-       name.startswith('hg+') or name.startswith('bzr+'):
-        is_vcs = True
-       
     err = ''
     out = ''
 
@@ -226,27 +211,41 @@ def main():
 
     cmd = '%s %s' % (pip, state_map[state])
 
-
-    # If is_vcs=True, we must add -e option (we assume users won't add that to extra_args). 
-    if is_vcs:
-        args_list = []  # used if extra_args is not used at all
-        if extra_args:
-            args_list = extra_args.split(' ')            
-        if '-e' not in args_list:
-            args_list.append('-e')
-            # Ok, we will reconstruct the option string
-            extra_args = ' '.join(args_list)
-    # for tarball or vcs source, applying --use-mirrors doesn't really make sense
-    is_package = is_vcs or is_tar       # just a shortcut for bool
-    if not is_package and state != 'absent' and use_mirrors:
-        cmd += ' --use-mirrors'
     if extra_args:
         cmd += ' %s' % extra_args
     if name:
+        # pip can accept a path to a local project or a VCS url beginning
+        # with svn+, git+, hg+, or bz+ and these sources usually do not qualify
+        # --use-mirrors. Furthermore, the -e option is applied only when
+        # source is a VCS url. Therefore, we will have branch cases for each
+        # type of sources.
+        #
+        # is_vcs includes those begin with svn+, git+, hg+ or bzr+
+        # is_tar ends with .zip, .tar.gz, or .tar.bz2
+        is_vcs = False
+        is_tar = False
+        if name.endswith('.tar.gz') or name.endswith('.tar.bz2') or name.endswith('.zip'):
+            is_tar = True
+        elif name.startswith('svn+') or name.startswith('git+') or \
+                name.startswith('hg+') or name.startswith('bzr+'):
+            is_vcs = True
+        # If is_vcs=True, we must add -e option (we assume users won't add that to extra_args).
+        if is_vcs:
+            args_list = []  # used if extra_args is not used at all
+            if extra_args:
+                args_list = extra_args.split(' ')
+            if '-e' not in args_list:
+                args_list.append('-e')
+                # Ok, we will reconstruct the option string
+                extra_args = ' '.join(args_list)
+        # for tarball or vcs source, applying --use-mirrors doesn't really make sense
+        is_package = is_vcs or is_tar       # just a shortcut for bool
+        if not is_package and state != 'absent' and use_mirrors:
+            cmd += ' --use-mirrors'
         cmd += ' %s' % _get_full_name(name, version)
     elif requirements:
         cmd += ' -r %s' % requirements
-    
+
     if module.check_mode:
         module.exit_json(changed=True)
     os.chdir(tempfile.gettempdir())
