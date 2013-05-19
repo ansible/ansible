@@ -80,8 +80,10 @@ JINJA2_OVERRIDE='#jinja2:'
 def lookup(name, *args, **kwargs):
     from ansible import utils
     instance = utils.plugins.lookup_loader.get(name.lower(), basedir=kwargs.get('basedir',None))
+    vars = kwargs.get('vars', None)
     if instance is not None:
-        return ",".join(instance.run(*args, inject=vars, **kwargs))
+        ran = instance.run(*args, inject=vars, **kwargs)
+        return ",".join(ran)
     else:
         raise errors.AnsibleError("lookup plugin (%s) not found" % name)
 
@@ -400,6 +402,7 @@ def template_from_file(basedir, path, vars):
     loader=jinja2.FileSystemLoader([basedir,os.path.dirname(realpath)])
 
     def my_lookup(*args, **kwargs):
+        kwargs['vars'] = vars
         return lookup(*args, basedir=basedir, **kwargs)
 
     environment = jinja2.Environment(loader=loader, trim_blocks=True, extensions=_get_extensions())
@@ -413,7 +416,8 @@ def template_from_file(basedir, path, vars):
     except:
         raise errors.AnsibleError("unable to read %s" % realpath)
 
-    # Get jinja env overrides from template
+   
+# Get jinja env overrides from template
     if data.startswith(JINJA2_OVERRIDE):
         eol = data.find('\n')
         line = data[len(JINJA2_OVERRIDE):eol]
