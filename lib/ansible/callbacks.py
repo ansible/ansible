@@ -29,7 +29,14 @@ from ansible.color import stringc
 
 import logging
 if constants.DEFAULT_LOG_PATH != '':
-    logging.basicConfig(filename=constants.DEFAULT_LOG_PATH, level=logging.DEBUG, format='%(asctime)s %(name)s %(message)s')
+    path = constants.DEFAULT_LOG_PATH
+
+    if (os.path.exists(path) and not os.access(path, os.W_OK)) or not os.access(os.path.dirname(path), os.W_OK):
+        sys.stderr.write("log file at %s is not writeable, aborting\n" % path)
+        sys.exit(1)
+
+
+    logging.basicConfig(filename=path, level=logging.DEBUG, format='%(asctime)s %(name)s %(message)s')
     mypid = str(os.getpid())
     user = getpass.getuser()
     logger = logging.getLogger("p=%s u=%s | " % (mypid, user))

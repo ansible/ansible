@@ -247,14 +247,14 @@ def _legacy_varFind(basedir, text, vars, lookup_fatal, depth, expand_lists):
 
         else:
             replacement = None
-        return {'replacement': replacement, 'start': start, 'end': end}
+        return dict(replacement=replacement, start=start, end=end)
 
     if is_complex:
         var_end -= 1
         if text[var_end] != '}' or brace_level != 0:
             return None
     space = _legacy_varFindLimitSpace(basedir, vars, space, text[part_start:var_end], lookup_fatal, depth, expand_lists)
-    return {'replacement': space, 'start': start, 'end': end}
+    return dict(replacement=space, start=start, end=end)
 
 def legacy_varReplace(basedir, raw, vars, lookup_fatal=True, depth=0, expand_lists=False):
     ''' Perform variable replacement of $variables in string raw using vars dictionary '''
