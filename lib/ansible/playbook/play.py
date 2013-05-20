@@ -31,7 +31,8 @@ class Play(object):
        'handlers', 'remote_user', 'remote_port',
        'sudo', 'sudo_user', 'transport', 'playbook',
        'tags', 'gather_facts', 'serial', '_ds', '_handlers', '_tasks',
-       'basedir', 'any_errors_fatal', 'roles'
+       'basedir', 'any_errors_fatal', 'roles',
+       'start_timers', 'end_timers'
     ]
 
     # to catch typos and so forth -- these are userland names
@@ -40,7 +41,8 @@ class Play(object):
        'hosts', 'name', 'vars', 'vars_prompt', 'vars_files',
        'tasks', 'handlers', 'user', 'port', 'include',
        'sudo', 'sudo_user', 'connection', 'tags', 'gather_facts', 'serial',
-       'any_errors_fatal', 'roles', 'pre_tasks', 'post_tasks'
+       'any_errors_fatal', 'roles', 'pre_tasks', 'post_tasks',
+       'start_timers', 'end_timers'
     ]
 
     # *************************************************
@@ -115,6 +117,12 @@ class Play(object):
         if self.sudo_user != 'root':
             self.sudo = True
         
+        self.start_timers = ds.get('start_timers', [])
+        if type(self.start_timers) != list:
+            raise errors.AnsibleError("value of 'start_timers:' must be a list")
+        self.end_timers = ds.get('end_timers', [])
+        if type(self.end_timers) != list:
+            raise errors.AnsibleError("value of 'end_timers:' must be a list")
 
     # *************************************************
 

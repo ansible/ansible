@@ -116,6 +116,10 @@ and 'local'.  'local' is mostly useful for crontab or kickstarts.
 
 Further limits the selected host/group patterns.
 
+*-r*, *--report-times*::
+
+After the run is complete, report on total elapsed time and any timers set in plays.
+
 
 ENVIRONMENT
 -----------
