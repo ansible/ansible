@@ -28,6 +28,7 @@ import collections
 from play import Play
 import StringIO
 import pipes
+from datetime import datetime
 
 SETUP_CACHE = collections.defaultdict(dict)
 
@@ -134,6 +135,8 @@ class PlayBook(object):
             vars['inventory_dir'] = self.inventory.basedir()
         self.filename = playbook
         (self.playbook, self.play_basedirs) = self._load_playbook_from_file(playbook, vars)
+        self.timers = {}
+        self.start_time = datetime.now()
 
     # *****************************************************
 
@@ -464,6 +467,11 @@ class PlayBook(object):
     def _run_play(self, play):
         ''' run a list of tasks for a given pattern, in order '''
 
+        if len(play.start_timers) > 0:
+            start = datetime.now()
+            for t in play.start_timers:
+                self.timers[t] = dict(start=start)
+
         self.callbacks.on_play_start(play.name)
         # if no hosts matches this play, drop out
         if not self.inventory.list_hosts(play.hosts):
@@ -554,6 +562,16 @@ class PlayBook(object):
             #    handler.notified_by = []
 
             self.inventory.lift_also_restriction()
+
+        if len(play.end_timers) > 0:
+            finish = datetime.now()
+            for t in play.end_timers:
+                if t in self.timers:
+                    start = self.timers[t]['start']
+                else:
+                    start = self.start_time
+                self.timers[t] = dict(elapsed=int((finish - start).total_seconds()))
+
 
         return True
 

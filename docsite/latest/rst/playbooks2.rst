@@ -974,6 +974,53 @@ Which of course means, though more verbose, this is also technically legal synta
     - name: foo
       template: { src: '/templates/motd.j2', dest: '/etc/motd' }
 
+Timers
+``````
+
+.. versionadded:: 1.2
+
+You can set timers throughout playbooks to start and/or end on particular plays. These times will then be reported at the end of the playbook execution, after the play recap
+if you specify the --report-times option. Timers begin just before the execution of the play they are started on and end just after completion of the play, like this::
+
+    hosts: all
+    start_timers:
+        - My first timer
+        - Another timer
+    end_timers:
+        - My first timer
+    tasks:
+        - name: ensure the cobbler package is installed
+          yum: name=cobbler state=installed
+
+If you do not specify a play to end a timer, like this::
+
+    hosts: all
+    start_timers:
+        - My first timer
+        - Another timer
+    tasks:
+        - name: ensure the cobbler package is installed
+          yum: name=cobbler state=installed
+
+it will end at the completion of the playbook. Similarly, if you do not specify the start of a timer the begininning of the execution of the playbook will be used.
+
+    hosts: all
+    end_timers:
+        - My first timer
+        - Another timer
+    tasks:
+        - name: ensure the cobbler package is installed
+          yum: name=cobbler state=installed
+
+The output at the play recap time looks like this::
+
+    PLAYBOOK TIMES **************************************************************** 
+    Total elapsed time: 0m 13s
+    Another timer: 0m 13s
+    My first timer: 0m 13s
+
+The total elapsed time is always reported first, followed by any other timers, in sorted order.
+
 Style Points
 ````````````
 

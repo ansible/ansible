@@ -20,6 +20,7 @@
 
 import sys
 import os
+from datetime import datetime
 
 import ansible.playbook
 import ansible.constants as C
@@ -77,6 +78,8 @@ def main(args):
         help="one-step-at-a-time: confirm each task before running")
     parser.add_option('--start-at-task', dest='start_at', 
         help="start the playbook with a task matching this name")
+    parser.add_option('-r', '--report-times', dest='timers', default=False, action='store_true',
+        help="record playbook and play timings")
 
     options, args = parser.parse_args(args)
 
@@ -177,9 +180,10 @@ def main(args):
         failed_hosts = []
 
         try:
-
+            pb.start_time = datetime.now()
             pb.run()
-
+            pb.finish_time = datetime.now()
+            pb.run_timer = int((pb.finish_time - pb.start_time).total_seconds())
             hosts = sorted(pb.stats.processed.keys())
             display(callbacks.banner("PLAY RECAP"))
             playbook_cb.on_stats(pb.stats)
@@ -215,7 +219,15 @@ def main(args):
                     log_only=True
                 )
 
- 
+            if options.timers:
+                display(callbacks.banner("PLAYBOOK TIMES"))
+                display("Total elapsed time: %sm %ss" % (repr(pb.run_timer / 60), repr(pb.run_timer % 60)))
+                for t in sorted(pb.timers.keys()):
+                    if 'elapsed' in pb.timers[t]:
+                        elapsed = pb.timers[t]['elapsed']
+                    else:
+                        elapsed = int((pb.finish_time - pb.timers[t]['start']).total_seconds())
+                    display("%s: %sm %ss" % (t, repr(elapsed / 60), repr(elapsed % 60)))
             print ""
             if len(failed_hosts) > 0:
                 return 2
