@@ -89,7 +89,7 @@ def get_version(dest):
     ''' samples the version of the git repo '''
     os.chdir(dest)
     cmd = "git show --abbrev-commit"
-    sha = os.popen(cmd).read().split("\n")
+    sha = os.popen(cmd).readline().split("\n")
     sha = sha[0].split()[1]
     return sha
 
