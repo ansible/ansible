@@ -18,69 +18,51 @@
 DOCUMENTATION = '''
 ---
 module: do
-short_description: Manages DigitalOcean machines supported by dop
+short_description: Create/delete an instance in DigitalOcean
 description:
-     - Manages DigitalOcean machines supported by dop.
+     - Create/delete an instance in DigitalOcean and optionally waits for it to be 'running'.
 version_added: "0.1"
 options:
-  action:
+  state:
     description:
-     - Actions you want to execute on your Droplet virtual servers.
+     - Indicate desired state of the resource.
     required: true
-    default: null
-    choices: ["add_ssh_key", "all_ssh_keys", "create_droplet", "destroy_droplet", "destroy_image", "destroy_ssh_key", "disable_backups_droplet", "edit_ssh_key", "enable_backups_droplet", "images", "power_cycle_droplet", "power_off_droplet", "power_on_droplet", "reboot_droplet", "rebuild_droplet", "regions", "reset_root_password", "resize_droplet", "restore_droplet", "show_active_droplets", "show_droplet", "show_image", "show_ssh_key", "shutdown_droplet", "sizes", "snapshot_droplet"]
-  client_id:
-    description:
-     - Your client id
+    choices: ['present', 'active', 'absent', 'deleted']
+  client_id: description:
+     - Your client id.
     required: true
-    default: null
   api_key:
     description:
-     - Your api key
+     - Your api key.
     required: true
-    default: null
-  show_all_images:
-    description:
-     - Whether to show all of your images or not.
-    default: true
-    choices: [ "true", "false" ]
-  droplet_id:
-    description:
-     - Numeric, this is the id of your droplet.
-    default: null
-  droplet_name:
+  name:
     description:
      - String, this is the name of the droplet - must be formatted by hostname rules.
-    default: null
   size_id:
     description:
-     - Numeric, this is the id of the size you would like the droplet created at or resized to.
-    default: null
+     - Numeric, this is the id of the size you would like the droplet created at.
   image_id:
     description:
      - Numeric, this is the id of the image you would like the droplet created with.
-    default: null
   region_id:
     description:
      - Numeric, this is the id of the region you would like your server in IE: US/Amsterdam.
-    default: null
   virtio:
     description:
-     - This toggles whether to enable or disable virtio during creation
-    default: true
+     - Optional, default: true, this toggles whether to enable or disable virtio during creation.
     choices: [ "true", "false" ]
   ssh_key_ids:
     description:
-     - Comma separated list of ssh_key_ids that you would like to be added to the server.
-    default: null
-  ssh_key_id:
+     - Optional, comma separated list of ssh_key_ids that you would like to be added to the server
+  wait:
+    description: 
+     - Wait for the instance to be in state 'running' before returning, this is the recommended way since currently we can do nothing on event_id.
+    default: "yes"
+    choices: [ "yes", "no" ]
+  wait_timeout:
     description:
-     - SSH key id.
-    default: null
-  snapshot_name:
-    description:
-     - String, this is the name of the new snapshot you want to create. If not set, the snapshot name will default to date/time.
-    default: null
+     - How long before wait gives up, in seconds.
+    default: 300
 
 notes:
   - Two environment variables can be used, CLIENT_ID and API_KEY.
@@ -90,14 +72,15 @@ notes:
 EXAMPLES = '''
 # a playbook task line:
 tasks:
-  - do: action=show_active_droplets client_id=XXX api_key=XXX
+  - do: start=active client_id=XXX api_key=XXX id=33
 
 # /usr/bin/ansible invocations
-ansible -i host -m do -a "action=show_active_droplets client_id=XXX api_key=XXX"
+ansible -i host -m do -a "start=active client_id=XXX api_key=XXX id=3"
 '''
 
 import sys
 import os
+import time
 
 try:
     from dop.client import Client
@@ -105,83 +88,152 @@ except ImportError:
     print "failed=True msg='python module dop unavailable'"
     sys.exit(1)
 
-ALL_COMMANDS = ['destroy_ssh_key', 'restore_droplet', 'create_droplet', 'images', 'destroy_droplet', 'disable_backups_droplet', 'rebuild_droplet', 'all_ssh_keys', 'edit_ssh_key', 'reboot_droplet', 'regions', 'reset_root_password', 'resize_droplet', 'shutdown_droplet', 'show_droplet', 'add_ssh_key', 'power_off_droplet', 'show_ssh_key', 'show_active_droplets', 'sizes', 'destroy_image', 'power_cycle_droplet', 'show_image', 'enable_backups_droplet', 'power_on_droplet', 'snapshot_droplet']
-ALL_COMMANDS = ['create', 'stop', 'reboot', ]
+# TODO, fix the dop library
+AuthError = Exception
 
-def getkey(d, k):
-    v = d[k]
-    if v is None:
-        raise KeyError(k)
-    return v
+class DopProxy(object):
 
-def core(module):
-    params = module.params
-    # setup the auth
-    try:
-        client_id = params.get('client_id') or os.environ['CLIENT_ID']
-        api_key = params.get('api_key') or os.environ['API_KEY']
-    except KeyError, e:
-        module.fail_json(msg='Unable to load %s' % e.message)
+    def __init__(self, module):
+        self.params = module.params
+        self.fail_json = module.fail_json
+        self.exit_json = module.exit_json
+        self.types = {k: v.get('type') for k, v in module.argument_spec.iteritems()}
+        # setup the auth
+        try:
+            # params['client_id'] will be None even if client_id is not passed in
+            client_id = self.params['client_id'] or os.environ['CLIENT_ID']
+            api_key = self.params['api_key'] or os.environ['API_KEY']
+        except KeyError, e:
+            self.fail_json(msg='Unable to load %s' % e.message.lower())
+        self.client = Client(client_id, api_key, True)
 
-    client = Client(client_id, api_key)
+    def handle(self):
+        state = self.getkeyordie('state')
+        try:
+            if state == 'present':
+                if self.find_droplet():
+                    return {'changed': False, 'droplet': self.droplet.to_json()}
+                droplet = self.create_droplet()
+                return {'changed': True, 'droplet': droplet.to_json()}
 
-    action = params['action']
-    if action=='create':
-        name = getkey(params, 'name')
-        size_id = getkey(params, 'size_id')
-        image_id = getkey(params, 'image_id')
-        region_id = getkey(params, 'region_id')
-        virtio = getkey(params, 'virtio')
-        ssh_key_ids = getkey(params, 'ssh_key_ids').split(',')
-        droplet = client.create_droplet(name, size_id, image_id, region_id, ssh_key_ids, virtio)
-        return droplet.to_json()
+            elif state == 'active':
+                if self.find_active_droplet():
+                    return {'changed': False, 'droplet': self.droplet.to_json()}
+                elif self.find_droplet():  # which means powered off
+                    if self.power_on_droplet():
+                        return {'changed': True, 'droplet': self.droplet.to_json()}
+                    elif not self.params['wait']:
+                        return {'changed': True, 'event_id': self.event_id}
+                    self.fail_json(msg='Timeout waiting on %s' % self.getkeyordie('id'))
+                else:  # not exist
+                    self.fail_json(msg='Server %s not found in your account' % self.getkeyordie('id'))
 
-    elif action=='stop'
+            elif state == 'deleted':
+                if self.destroy_droplet():
+                    return {'changed': True, 'event_id': self.event_id}
+                raise AuthError('XXX')
 
+            elif state == 'absent':
+                if self.shutdown_droplet():
+                    return {'changed': True, 'event_id': self.event_id}
+                raise AuthError('XXX')
+
+        except AuthError, e:
+            self.fail_json(msg=e.message)
+            
+
+    def getkeyordie(self, k):
+        v = self.params[k]
+        if v is None:
+            self.fail_json(msg='Unable to load %s' % k)
+        return v
+
+    def create_droplet(self):
+        try:
+            return self.client.create_droplet(
+                    name = self.getkeyordie('name'),
+                    size_id = self.getkeyordie('size_id'),
+                    image_id = self.getkeyordie('image_id'),
+                    region_id = self.getkeyordie('region_id'),
+                    virtio = self.params['virtio'],
+                    ssh_key_ids = self.params.get('ssh_key_ids', '').split(','),
+                    )
+        except AttributeError, e:
+            self.module.fail_json(msg=str(e))
+
+    def find_droplet(self):
+        """Return True if find a droplet by the given id, which is stored in
+        self.droplet, else return False"""
+        # id is an aliase of id, here for readability.
+        id = self.getkeyordie('id')
+        try:
+            self.droplet = self.client.show_droplet(id)
+            return True
+        except:
+            return False
+
+    def find_active_droplet(self):
+        id = self.getkeyordie('id')
+        droplets = self.client.show_active_droplets()
+        for d in droplets:
+            if id == d.id:
+                self.droplet = d
+                return True
+        return False
+
+    def power_on_droplet(self):
+        id = self.getkeyordie('id')
+        self.event_id = self.client.power_on_droplet(id)
+        if self.params['wait']:
+            end_time = time.time()+self.params['wait_timeout']
+            while time.time()<end_time:
+                if self.find_active_droplet():
+                    return True
+                time.sleep(min(5, end_time-time.time()))
+            return False
+        return None
+
+    def destroy_droplet(self):
+        id = self.getkeyordie('id')
+        try:
+            self.event_id = self.client.destroy_droplet(id)
+            return True
+        except:
+            return False
+
+    def shutdown_droplet(self):
+        id = self.getkeyordie('id')
+        try:
+            self.event_id = self.client.shutdown_droplet(id)
+            return True
+        except:
+            return False
 
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            action = dict(required=True, choices=ALL_COMMANDS),
-            client_id = dict(aliases=['CLIENT_ID']),
-            api_key = dict(aliases=['API_KEY']),
+            state = dict(required=True, choices=['active', 'present', 'deleted', 'absent']),
+            client_id = dict(aliases=['CLIENT_ID'], no_log=True),
+            api_key = dict(aliases=['API_KEY'], no_log=True),
             name = dict(),
             size_id = dict(),
             image_id = dict(),
             region_id = dict(),
             virtio = dict(choices=BOOLEANS, default=True),
             ssh_key_ids = dict(default=''),
-
-            show_all_images = dict(choices=BOOLEANS),
-            droplet_id = dict(),
-            droplet_name = dict(),
-            snapshot_name = dict(),
+            id = dict(aliases=['droplet_id']),
+            wait = dict(choices=BOOLEANS, default='yes'),
+            wait_timeout = dict(default=300),
+        ),
+        required_together = (
+            # use list here because str-format treats tuple specially
+            ['name', 'size_id', 'image_id', 'region_id'],
         )
     )
 
-    try:
-        result = core(module)
-    except KeyError, ke:
-        module.fail_json(msg='Unable to load %s' % ke.message)
-    except Exception, e:
-        module.fail_json(msg=str(e))
-
+    proxy = DopProxy(module)
+    result = proxy.handle()
     module.exit_json(**result)
-
-
-    # try:
-    #     param_dict, changed = params_of_func(params['action'])
-    #     for k, v in param_dict.iteritems():
-    #         if v is None:
-    #             module.fail_json(msg='Unable to load %s' % k)
-    #     getattr(client, params['action'])(**param_dict)
-    # except KeyError, e:
-    #     module.fail_json(msg='Unable to load %s' % e.message)
-    # except AttributeError, e:
-    #     module.fail_json(msg='Unexpected action %s' % e.message)
-    # else:
-    #     module.exit_json(changed=changed)
-
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
