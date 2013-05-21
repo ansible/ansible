@@ -60,7 +60,7 @@ if not os.path.exists(SW_REPORT):
 # Pre-startup work
 if not os.path.exists(CACHE_DIR):
     os.mkdir(CACHE_DIR)
-    os.chmod(CACHE_DIR, 0775)
+    os.chmod(CACHE_DIR, 2775)
 
 # Helper functions
 #------------------------------
@@ -77,7 +77,6 @@ def spacewalk_report(name):
         p = subprocess.Popen([SW_REPORT, name], stdout=fh)
         p.wait()
         fh.close()
-        os.chmod(cache_filename, 0664)
 
     lines = open(cache_filename, 'r').readlines()
     keys = lines[0].strip().split(',')
