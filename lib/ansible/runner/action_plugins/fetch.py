@@ -92,13 +92,22 @@ class ActionModule(object):
             if not os.path.isdir(os.path.dirname(dest)):
                 os.makedirs(os.path.dirname(dest))
 
-            # fetch the file and check for changes
             if remote_data is None:
-                conn.fetch_file(source, dest)
-            else:
-                f = open(dest, 'w')
-                f.write(remote_data)
-                f.close()
+                # We have not fetched the file yet, do it now
+                slurpres = self.runner._execute_module(conn, tmp, 'slurp', 'src=%s' % source, inject=inject)
+                if slurpres.is_successful():
+                    if slurpres.result['encoding'] == 'base64':
+                        remote_data = base64.b64decode(slurpres.result['content'])
+                    else:
+                        result = dict(failed=True, md5sum=local_md5, msg="unknown remote file encoding", file=source, dest=dest)
+                        return ReturnData(conn=conn, result=result)
+                else:
+                    result = dict(failed=True, md5sum=local_md5, msg="unable to fetch the remote file", file=source, dest=dest)
+                    return ReturnData(conn=conn, result=result)
+
+            f = open(dest, 'w')
+            f.write(remote_data)
+            f.close()
             new_md5 = utils.md5(dest)
             if new_md5 != remote_md5:
                 result = dict(failed=True, md5sum=new_md5, msg="md5 mismatch", file=source, dest=dest)
