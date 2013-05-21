@@ -88,9 +88,9 @@ import tempfile
 def get_version(dest):
     ''' samples the version of the git repo '''
     os.chdir(dest)
-    cmd = "git show --abbrev-commit"
-    sha = os.popen(cmd).readline().split("\n")
-    sha = sha[0].split()[1]
+    cmd = "git log -1 --format='%h'"
+    sha = os.popen(cmd).read().split("\n")
+    sha = sha[0]
     return sha
 
 def clone(module, repo, dest, remote, depth):
@@ -323,7 +323,8 @@ def main():
             if remote_head == version:
                 # get_remote_head returned version as-is
                 # were given a sha1 object, see if it is present
-                (rc, out, err) = module.run_command("git show %s" % version)
+                cmd = "git log -1 --format='%%H' %s" % version
+                (rc, out, err) = module.run_command(cmd)
                 if version in out:
                     changed = False
                 else:
