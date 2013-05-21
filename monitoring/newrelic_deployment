@@ -134,13 +134,24 @@ def main():
     try:
         req = urllib2.Request("https://rpm.newrelic.com/deployments.xml", urllib.urlencode(params))
         req.add_header('x-api-key',module.params["token"])
-        urllib2.urlopen(req)
+        result=urllib2.urlopen(req)
+        # urlopen behaves differently in python 2.4 and 2.6 so we handle
+        # both cases here.  In python 2.4 it throws an exception if the
+        # return code is anything other than a 200.  In python 2.6 it
+        # doesn't throw an exception for any 2xx return codes.  In both
+        # cases we expect newrelic should return a 201 on success. So 
+        # to handle both cases, both the except & else cases below are
+        # effectively identical.
     except Exception, e:
-        # 201 is an ok response from this service
         if e.code == 201:
             module.exit_json(changed=True)
         else:
             module.fail_json(msg="unable to update newrelic: %s" % e)
+    else:
+        if result.code == 201:
+            module.exit_json(changed=True)
+        else:
+            module.fail_json(msg="result code: %d" % result.code)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
