@@ -847,6 +847,81 @@ class FreeBSDHardware(Hardware):
                 if s:
                     self.facts['devices'][d.group(1)].append(s.group(1))
 
+class NetBSDHardware(Hardware):
+    """
+    NetBSD-specific subclass of Hardware.  Defines memory and CPU facts:
+    - memfree_mb
+    - memtotal_mb
+    - swapfree_mb
+    - swaptotal_mb
+    - processor (a list)
+    - processor_cores
+    - processor_count
+    - devices
+    """
+    platform = 'NetBSD'
+    MEMORY_FACTS = ['MemTotal', 'SwapTotal', 'MemFree', 'SwapFree']
+
+    def __init__(self):
+        Hardware.__init__(self)
+
+    def populate(self):
+        self.get_cpu_facts()
+        self.get_memory_facts()
+        self.get_mount_facts()
+        return self.facts
+
+    def get_cpu_facts(self):
+
+        i = 0
+        physid = 0
+        sockets = {}
+        if not os.access("/proc/cpuinfo", os.R_OK):
+            return
+        self.facts['processor'] = []
+        for line in open("/proc/cpuinfo").readlines():
+            data = line.split(":", 1)
+            key = data[0].strip()
+            # model name is for Intel arch, Processor (mind the uppercase P)
+            # works for some ARM devices, like the Sheevaplug.
+            if key == 'model name' or key == 'Processor':
+                if 'processor' not in self.facts:
+                    self.facts['processor'] = []
+                self.facts['processor'].append(data[1].strip())
+                i += 1
+            elif key == 'physical id':
+                physid = data[1].strip()
+                if physid not in sockets:
+                    sockets[physid] = 1
+            elif key == 'cpu cores':
+                sockets[physid] = int(data[1].strip())
+        if len(sockets) > 0:
+            self.facts['processor_count'] = len(sockets)
+            self.facts['processor_cores'] = reduce(lambda x, y: x + y, sockets.values())
+        else:
+            self.facts['processor_count'] = i
+            self.facts['processor_cores'] = 'NA'
+
+    def get_memory_facts(self):
+        if not os.access("/proc/meminfo", os.R_OK):
+            return
+        for line in open("/proc/meminfo").readlines():
+            data = line.split(":", 1)
+            key = data[0]
+            if key in NetBSDHardware.MEMORY_FACTS:
+                val = data[1].strip().split(' ')[0]
+                self.facts["%s_mb" % key.lower()] = long(val) / 1024
+
+    def get_mount_facts(self):
+        self.facts['mounts'] = []
+        fstab = get_file_content('/etc/fstab')
+        if fstab:
+            for line in fstab.split('\n'):
+                if line.startswith('#') or line.strip() == '':
+                    continue
+                fields = re.sub(r'\s+',' ',line.rstrip('\n')).split()
+                self.facts['mounts'].append({'mount': fields[1] , 'device': fields[0], 'fstype' : fields[2], 'options': fields[3]})
+
 class AIX(Hardware):
     """
     AIX-specific subclass of Hardware.  Defines memory and CPU facts:
