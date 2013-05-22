@@ -27,8 +27,8 @@ DOCUMENTATION = '''
 module: pip
 short_description: Manages Python library dependencies.
 description:
-     - Manage Python library dependencies. To use this module, one of the following keys is required: C(name)
-       or C(requirements).
+     - "Manage Python library dependencies. To use this module, one of the following keys is required: C(name)
+       or C(requirements)."
 version_added: "0.7"
 options:
   name:
