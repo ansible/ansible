@@ -32,13 +32,14 @@ from ansible import utils
 class Connection(object):
     ''' ssh based connections '''
 
-    def __init__(self, runner, host, port, user, password, private_key_file, *args, **kwargs):
+    def __init__(self, runner, host, port, user, password, private_key_file, ssh_proxy_cmd, *args, **kwargs):
         self.runner = runner
         self.host = host
         self.port = port
         self.user = user
         self.password = password
         self.private_key_file = private_key_file
+        self.ssh_proxy_cmd = ssh_proxy_cmd
 
     def connect(self):
         ''' connect to the remote host '''
@@ -69,7 +70,6 @@ class Connection(object):
         if self.user != pwd.getpwuid(os.geteuid())[0]:
             self.common_args += ["-o", "User="+self.user]
         self.common_args += ["-o", "ConnectTimeout=%d" % self.runner.timeout]
-
         return self
 
     def _password_cmd(self):
@@ -94,7 +94,11 @@ class Connection(object):
         ''' run a command on the remote host '''
 
         ssh_cmd = self._password_cmd()
-        ssh_cmd += ["ssh", "-tt", "-q"] + self.common_args + [self.host]
+        ssh_cmd += ["ssh", "-tt", "-q"]
+        ssh_cmd += self.common_args
+        if self.ssh_proxy_cmd:
+            ssh_cmd += ['-o', 'ProxyCommand {}'.format(self.ssh_proxy_cmd)]
+        ssh_cmd += [self.host]
 
         if not self.runner.sudo or not sudoable:
             if executable:
@@ -173,10 +177,15 @@ class Connection(object):
 
         if C.DEFAULT_SCP_IF_SSH:
             cmd += ["scp"] + self.common_args
+            if self.ssh_proxy_cmd:
+                cmd += ['-o', 'ProxyCommand {}'.format(self.ssh_proxy_cmd)]
             cmd += [in_path,self.host + ":" + out_path]
             indata = None
         else:
-            cmd += ["sftp"] + self.common_args + [self.host]
+            cmd += ["sftp"] + self.common_args
+            if self.ssh_proxy_cmd:
+                cmd += ['-o', 'ProxyCommand {}'.format(self.ssh_proxy_cmd)]
+            cmd += [self.host]
             indata = "put %s %s\n" % (in_path, out_path)
 
         p = subprocess.Popen(cmd, stdin=subprocess.PIPE,
@@ -194,10 +203,15 @@ class Connection(object):
 
         if C.DEFAULT_SCP_IF_SSH:
             cmd += ["scp"] + self.common_args
+            if self.ssh_proxy_cmd:
+                cmd += ['-o', 'ProxyCommand {}'.format(self.ssh_proxy_cmd)]
             cmd += [self.host + ":" + in_path, out_path]
             indata = None
         else:
-            cmd += ["sftp"] + self.common_args + [self.host]
+            cmd += ["sftp"] + self.common_args
+            if self.ssh_proxy_cmd:
+                cmd += ['-o', 'ProxyCommand {}'.format(self.ssh_proxy_cmd)]
+            cmd += [self.host]
             indata = "get %s %s\n" % (in_path, out_path)
 
         p = subprocess.Popen(cmd, stdin=subprocess.PIPE,
