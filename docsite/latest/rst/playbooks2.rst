@@ -281,6 +281,15 @@ As a reminder, to see what derived variables are available, you can do::
 
     ansible hostname.example.com -m setup
 
+When using these variables, remember that their values are always strings. Therefore, you may
+have to cast them to an appropiate type before using them in comparisons::
+
+    tasks:
+      - shell: echo "comparisons with derived may have to be casted"
+        when: ansible_lsb.major_version|int >= 5
+
+The available types are `int` and `float`.
+
 Variables defined in the playbooks or inventory can also be used.
 
 If a required variable has not been set, you can skip or fail using Jinja2's 
