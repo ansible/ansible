@@ -620,7 +620,7 @@ class Runner(object):
 
     # *****************************************************
 
-    def _remote_md5(self, conn, tmp, path):
+    def _remote_md5(self, conn, tmp, path, sudoable=True):
         ''' takes a remote md5sum without requiring python, and returns 0 if no file '''
 
         path = pipes.quote(path)
@@ -638,7 +638,7 @@ class Runner(object):
 
         cmd = " || ".join(md5s)
         cmd = "%s; %s || (echo \"${rc}  %s\")" % (test, cmd, path)
-        data = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
+        data = self._low_level_exec_command(conn, cmd, tmp, sudoable=sudoable)
         data2 = utils.last_non_blank_line(data['stdout'])
         try:
             return data2.split()[0]

@@ -56,18 +56,14 @@ class ActionModule(object):
         dest   = "%s/%s/%s" % (utils.path_dwim(self.runner.basedir, dest), conn.host, source)
         dest   = dest.replace("//","/")
 
-        # calculate md5 sum for the remote file
-        remote_md5 = self.runner._remote_md5(conn, tmp, source)
+        # try to calculate md5 sum of the remote file without sudoing
+        remote_md5 = self.runner._remote_md5(conn, tmp, source, sudoable=False)
 
-        # use slurp if sudo and permissions are lacking
-        remote_data = None
+        # ff that failed, try again by sudoing
+        must_sudo = False
         if remote_md5 in ('1', '2') and self.runner.sudo:
-            slurpres = self.runner._execute_module(conn, tmp, 'slurp', 'src=%s' % source, inject=inject)
-            if slurpres.is_successful():
-                if slurpres.result['encoding'] == 'base64':
-                    remote_data = base64.b64decode(slurpres.result['content'])
-                if remote_data is not None:
-                    remote_md5 = utils.md5s(remote_data)
+            remote_md5 = self.runner._remote_md5(conn, tmp, source, sudoable=True)
+            must_sudo = True
 
         # these don't fail because you may want to transfer a log file that possibly MAY exist
         # but keep going to fetch other log files
@@ -92,13 +88,27 @@ class ActionModule(object):
             if not os.path.isdir(os.path.dirname(dest)):
                 os.makedirs(os.path.dirname(dest))
 
-            # fetch the file and check for changes
-            if remote_data is None:
-                conn.fetch_file(source, dest)
+            if must_sudo:
+                # must sudo, so fetch the file through slurp
+                slurpres = self.runner._execute_module(conn, tmp, 'slurp', 'src=%s' % source, inject=inject)
+                if slurpres.is_successful():
+                    if slurpres.result['encoding'] == 'base64':
+                        remote_data = base64.b64decode(slurpres.result['content'])
+                    else:
+                        result = dict(failed=True, md5sum=local_md5, msg="unknown slurp file encoding", file=source, changed=False)
+                        return ReturnData(conn=conn, result=result)
+
+                    f = open(dest, 'w')
+                    f.write(remote_data)
+                    f.close()
+                else:
+                    result = dict(failed=True, md5sum=local_md5, msg="slurp failed to fetch the remote file", file=source, changed=False)
+                    return ReturnData(conn=conn, result=result)
+
             else:
-                f = open(dest, 'w')
-                f.write(remote_data)
-                f.close()
+                # the file can be fetched directly
+                conn.fetch_file(source, dest)
+
             new_md5 = utils.md5(dest)
             if new_md5 != remote_md5:
                 result = dict(failed=True, md5sum=new_md5, msg="md5 mismatch", file=source, dest=dest)
