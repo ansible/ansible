@@ -111,7 +111,7 @@ def main():
         # http://myserver/path/to/repo free non-free
         # deb http://myserver/path/to/repo free non-free
         for i in repo_url.split():
-            if 'http' in i:
+            if any(prot in i for prot in ['http', 'file', 'ftp']):
                 repo_url = i
     exists = repo_exists(module, repo_url)
 
