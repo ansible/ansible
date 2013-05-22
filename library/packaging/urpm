@@ -1,0 +1,163 @@
+#!/usr/bin/python -tt
+# -*- coding: utf-8 -*-
+
+# (c) 2013, Philippe Makowski
+# Written by Philippe Makowski <philippem@mageia.org> 
+# Based on apt module written by Matthew Williams <matthew@flowroute.com>
+#
+# This module is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+
+
+DOCUMENTATION = '''
+---
+module: urpm
+short_description: Urpm manager for Mageia
+description:
+    - Manages Mageia packages
+
+version_added: "1.0"
+options:
+    name:
+        description:
+            - name of package to install, upgrade or remove.
+        required: true
+
+    state:
+        description:
+            - state of the package (installed or absent).
+        required: false
+
+    update_cache:
+        description:
+            - update the package database first (urpmi.update -a).
+        required: false
+        default: "no"
+        choices: [ "yes", "no" ]
+
+author: Philippe Makowski
+notes:  []
+examples:
+    - code: "urpm: name=foo state=installed"
+      description: install package foo
+    - code: "urpm: name=foo state=absent"
+      description: remove package foo
+    - code: "urpm: name=foo,bar state=absent"
+      description: remove packages foo and bar 
+    - code: "urpm: name=bar, state=installed, update_cache=yes"
+      description: update the package database (urpmi --auto-update) and install bar (bar will be the updated if a newer version exists) 
+      
+'''
+
+
+import json
+import shlex
+import os
+import sys
+
+URPMI_PATH = "/sbin/urpmi"
+
+def query_package(module, name, state="installed"):
+
+    # rpm -q returns 0 if the package is installed,
+    # 1 if it is not installed
+    if state == "installed":
+        rc = os.system("rpm -q %s" % (name))
+
+        if rc == 0:
+            return True
+
+        return False
+
+
+def update_package_db(module):
+    rc = os.system("urpmi --auto-update --quiet")
+
+    if rc != 0:
+        module.fail_json(msg="could not update package db")
+         
+
+def remove_packages(module, packages):
+    
+    remove_c = 0
+    # Using a for loop incase of error, we can report the package that failed
+    for package in packages:
+        # Query the package first, to see if we even need to remove
+        if not query_package(module, package):
+            continue
+
+        rc = os.system("urpme --auto %s > /dev/null" % (package))
+
+        if rc != 0:
+            module.fail_json(msg="failed to remove %s" % (package))
+    
+        remove_c += 1
+
+    if remove_c > 0:
+
+        module.exit_json(changed=True, msg="removed %s package(s)" % remove_c)
+
+    module.exit_json(changed=False, msg="package(s) already absent")
+
+
+def install_packages(module, packages):
+
+    install_c = 0
+
+    for package in packages:
+        if query_package(module, package):
+            continue
+
+        rc = os.system("urpmi --auto --force --quiet --no-suggests %s > /dev/null" % (package))
+
+        if rc != 0:
+            module.fail_json(msg="failed to install %s" % (package))
+
+        install_c += 1
+    
+    if install_c > 0:
+        module.exit_json(changed=True, msg="installed %s package(s)" % (install_c))
+
+    module.exit_json(changed=False, msg="package(s) already installed")
+
+
+
+def main():
+    module = AnsibleModule(
+            argument_spec    = dict(
+                state        = dict(default="installed", choices=["installed","absent"]),
+                update_cache = dict(default="no", aliases=["update-cache"], type='bool'),
+                name         = dict(aliases=["pkg"], required=True)))
+                
+
+    if not os.path.exists(URPMI_PATH):
+        module.fail_json(msg="cannot find urpmi, looking for %s" % (URPMI_PATH))
+
+    p = module.params
+
+
+    if p["update_cache"]:
+        update_package_db(module)
+
+    pkgs = p["name"].split(",")
+
+    if p["state"] == "installed":
+        install_packages(module, pkgs)
+
+    elif p["state"] == "absent":
+        remove_packages(module, pkgs)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+    
+main()        
