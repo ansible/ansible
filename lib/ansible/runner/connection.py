@@ -31,9 +31,9 @@ class Connection(object):
     def __init__(self, runner):
         self.runner = runner
 
-    def connect(self, host, port, user, password, transport, private_key_file):
+    def connect(self, host, port, user, password, transport, private_key_file, ssh_proxy_cmd):
         conn = None
-        conn = utils.plugins.connection_loader.get(transport, self.runner, host, port, user=user, password=password, private_key_file=private_key_file)
+        conn = utils.plugins.connection_loader.get(transport, self.runner, host, port, user=user, password=password, private_key_file=private_key_file, ssh_proxy_cmd=ssh_proxy_cmd)
         if conn is None:
             raise AnsibleError("unsupported connection type: %s" % transport)
         self.active = conn.connect()

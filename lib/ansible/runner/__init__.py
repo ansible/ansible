@@ -111,6 +111,7 @@ class Runner(object):
         remote_user=C.DEFAULT_REMOTE_USER,  # ex: 'username'
         remote_pass=C.DEFAULT_REMOTE_PASS,  # ex: 'password123' or None if using key
         remote_port=None,                   # if SSH on different ports
+        ssh_proxy_cmd=None,                 # ssh proxy command ( -o ProxyCommand ...' )
         private_key_file=C.DEFAULT_PRIVATE_KEY_FILE, # if not using keys/passwords
         sudo_pass=C.DEFAULT_SUDO_PASS,      # ex: 'password123' or None
         background=0,                       # async poll every X seconds, else 0 for non-async
@@ -155,6 +156,7 @@ class Runner(object):
         self.remote_user      = remote_user
         self.remote_pass      = remote_pass
         self.remote_port      = remote_port
+        self.ssh_proxy_cmd    = ssh_proxy_cmd
         self.private_key_file = private_key_file
         self.background       = background
         self.sudo             = sudo
@@ -501,6 +503,7 @@ class Runner(object):
         conn = None
         actual_host = inject.get('ansible_ssh_host', host)
         actual_port = port
+        actual_ssh_proxy_cmd = inject.get('ansible_ssh_proxy_cmd', self.ssh_proxy_cmd)
         actual_user = inject.get('ansible_ssh_user', self.remote_user)
         actual_pass = inject.get('ansible_ssh_pass', self.remote_pass)
         actual_transport = inject.get('ansible_connection', self.transport)
@@ -527,6 +530,7 @@ class Runner(object):
                 actual_port = delegate_info.get('ansible_ssh_port', port)
                 actual_user = delegate_info.get('ansible_ssh_user', actual_user)
                 actual_pass = delegate_info.get('ansible_ssh_pass', actual_pass)
+                actual_ssh_proxy_cmd = delegate_info.get('ansible_ssh_proxy_cmd', actual_ssh_proxy_cmd)
                 actual_private_key_file = delegate_info.get('ansible_ssh_private_key_file', self.private_key_file)
                 actual_transport = delegate_info.get('ansible_connection', self.transport)
                 for i in delegate_info:
@@ -547,7 +551,7 @@ class Runner(object):
             return ReturnData(host=host, comm_ok=False, result=result)
 
         try:
-            conn = self.connector.connect(actual_host, actual_port, actual_user, actual_pass, actual_transport, actual_private_key_file)
+            conn = self.connector.connect(actual_host, actual_port, actual_user, actual_pass, actual_transport, actual_private_key_file, actual_ssh_proxy_cmd)
             if delegate_to or host != actual_host:
                 conn.delegate = host
 
