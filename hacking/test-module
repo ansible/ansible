@@ -85,10 +85,10 @@ def boilerplate_module(modfile, args):
     if included_boilerplate:
 
         module_data = module_data.replace(module_common.REPLACER, module_common.MODULE_COMMON)
-        encoded_args = "\"\"\"%s\"\"\"" % args.replace("\"","\\\"")
+        encoded_args = repr(str(args))
         module_data = module_data.replace(module_common.REPLACER_ARGS, encoded_args)
-        encoded_lang = "\"\"\"%s\"\"\"" % C.DEFAULT_MODULE_LANG
-        empty_complex = "\"\"\"%s\"\"\"" % "{}"
+        encoded_lang = repr(C.DEFAULT_MODULE_LANG)
+        empty_complex = repr("{}")
         module_data = module_data.replace(module_common.REPLACER_LANG, encoded_lang)
         module_data = module_data.replace('syslog.LOG_USER', "syslog.%s" % C.DEFAULT_SYSLOG_FACILITY)
         module_data = module_data.replace(module_common.REPLACER_COMPLEX, empty_complex)
