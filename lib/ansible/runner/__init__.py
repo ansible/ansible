@@ -433,7 +433,6 @@ class Runner(object):
                     complex_args = utils.safe_eval(complex_args)
                     if type(complex_args) != dict:
                         raise errors.AnsibleError("args must be a dictionary, received %s" % complex_args)
-
                 result = self._executor_internal_inner(
                      host, 
                      self.module_name, 
@@ -478,9 +477,8 @@ class Runner(object):
                 new_args = new_args + "%s='%s' " % (k,v)
             module_args = new_args
 
+        # module_name may be dynamic (but cannot contain {{ ansible_ssh_user }})
         module_name  = template.template(self.basedir, module_name, inject)
-        module_args  = template.template(self.basedir, module_args, inject)
-        complex_args = template.template(self.basedir, complex_args, inject)
 
         if module_name in utils.plugins.action_loader:
             if self.background != 0:
@@ -536,8 +534,12 @@ class Runner(object):
                 actual_host = delegate_to
                 actual_port = port
 
+        # user/pass may still contain variables at this stage
         actual_user = template.template(self.basedir, actual_user, inject)
         actual_pass = template.template(self.basedir, actual_pass, inject)
+
+        # make actual_user available as __magic__ ansible_ssh_user variable
+        inject['ansible_ssh_user'] = actual_user
 
         try:
             if actual_port is not None:
@@ -560,6 +562,10 @@ class Runner(object):
         # all modules get a tempdir, action plugins get one unless they have NEEDS_TMPPATH set to False
         if getattr(handler, 'NEEDS_TMPPATH', True):
             tmp = self._make_tmp_path(conn)
+
+        # render module_args and complex_args templates
+        module_args = template.template(self.basedir, module_args, inject)
+        complex_args = template.template(self.basedir, complex_args, inject)
 
         result = handler.run(conn, tmp, module_name, module_args, inject, complex_args)
 
