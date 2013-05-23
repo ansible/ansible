@@ -662,7 +662,7 @@ class Runner(object):
             basetmp = os.path.join('/tmp', basefile)
 
         cmd = 'mkdir -p %s' % basetmp
-        if self.remote_user != 'root':
+        if self.remote_user != 'root' or (self.sudo and self.sudo_user != 'root'):
             cmd += ' && chmod a+rx %s' % basetmp
         cmd += ' && echo %s' % basetmp
 
