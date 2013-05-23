@@ -177,7 +177,10 @@ if len(sys.argv) == 2 and (sys.argv[1] == '--list'):
 
     # Cycle on servers
     for f in client.servers.list():
-        # Define group (or set to empty string)
+	private = [ x['addr'] for x in getattr(f, 'addresses').itervalues().next() if x['OS-EXT-IPS:type'] == 'fixed']
+	public  = [ x['addr'] for x in getattr(f, 'addresses').itervalues().next() if x['OS-EXT-IPS:type'] == 'floating']
+	    
+	# Define group (or set to empty string)
         group = f.metadata['group'] if f.metadata.has_key('group') else 'undefined'
 
         # Create group if not exist
@@ -185,7 +188,15 @@ if len(sys.argv) == 2 and (sys.argv[1] == '--list'):
             groups[group] = []
 
         # Append group to list
-        groups[group].append(f.accessIPv4)
+	if f.accessIPv4:
+        	groups[group].append(f.accessIPv4)
+		continue
+	if public:
+        	groups[group].append(''.join(public))
+		continue
+	if private:
+        	groups[group].append(''.join(private))
+		continue
 
     # Return server list
     print json.dumps(groups)
@@ -197,8 +208,14 @@ if len(sys.argv) == 2 and (sys.argv[1] == '--list'):
 
 elif len(sys.argv) == 3 and (sys.argv[1] == '--host'):
     results = {}
+    ips = []
     for instance in client.servers.list():
-        if instance.accessIPv4 == sys.argv[2]:
+	private = [ x['addr'] for x in getattr(instance, 'addresses').itervalues().next() if x['OS-EXT-IPS:type'] == 'fixed']
+	public =  [ x['addr'] for x in getattr(instance, 'addresses').itervalues().next() if x['OS-EXT-IPS:type'] == 'floating']
+        ips.append( instance.accessIPv4)
+	ips.append(''.join(private))
+	ips.append(''.join(public))
+	if sys.argv[2] in ips:
             for key in vars(instance):
                 # Extract value
                 value = getattr(instance, key)
