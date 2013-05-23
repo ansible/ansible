@@ -43,7 +43,7 @@ options:
     required: false
     default: null
   global:
-    descrition:
+    description:
       - Install the node.js library globally
     required: false
     default: no
