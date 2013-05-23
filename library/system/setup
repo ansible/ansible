@@ -1638,11 +1638,25 @@ def run_setup(module):
     for (k, v) in facts.items():
         setup_options["ansible_%s" % k.replace('-', '_')] = v
 
+    # Look for the path to the facter and ohai binary and set
+    # the variable to that path.
+
+    facter_path = None
+    ohai_path = None
+
+    for dir in os.environ['PATH'].split(':'):
+        facter = os.path.join(dir, 'facter')
+        if os.path.exists(facter):
+            facter_path = facter
+        ohai = os.path.join(dir, 'ohai')
+        if os.path.exists(ohai):
+            ohai_path = ohai
+
     # if facter is installed, and we can use --json because
     # ruby-json is ALSO installed, include facter data in the JSON
 
-    if os.path.exists("/usr/bin/facter"):
-        rc, out, err = module.run_command("/usr/bin/facter --json")
+    if facter_path is not None:
+        rc, out, err = module.run_command(facter_path + " --json")
         facter = True
         try:
             facter_ds = json.loads(out)
@@ -1656,8 +1670,8 @@ def run_setup(module):
     # because it contains a lot of nested stuff we can't use for
     # templating w/o making a nicer key for it (TODO)
 
-    if os.path.exists("/usr/bin/ohai"):
-        rc, out, err = module.run_command("/usr/bin/ohai")
+    if ohai_path is not None:
+        rc, out, err = module.run_command(ohai_path)
         ohai = True
         try:
             ohai_ds = json.loads(out)
