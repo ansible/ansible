@@ -67,22 +67,18 @@ author: Stephen Fromm
 '''
 
 # ===========================================
-# Support methods
+# Support method
 
-def assemble_from_fragments(path):
+def assemble_from_fragments(src_path):
     ''' assemble a file from a directory of fragments '''
-    assembled = []
-    for f in sorted(os.listdir(path)):
-        fragment = "%s/%s" % (path, f)
+    tmpfd, temp_path = tempfile.mkstemp()
+    tmp = os.fdopen(tmpfd,'w')
+    for f in sorted(os.listdir(src_path)):
+        fragment = "%s/%s" % (src_path, f)
         if os.path.isfile(fragment):
-            assembled.append(file(fragment).read())
-    return "".join(assembled)
-
-def write_temp_file(data):
-    fd, path = tempfile.mkstemp()
-    os.write(fd, data)
-    os.close(fd)
-    return path
+            tmp.write(file(fragment).read())
+    tmp.close()
+    return temp_path
 
 # ==============================================================
 # main
@@ -112,7 +108,7 @@ def main():
     if not os.path.isdir(src):
         module.fail_json(msg="Source (%s) is not a directory" % src)
 
-    path = write_temp_file(assemble_from_fragments(src))
+    path = assemble_from_fragments(src)
     pathmd5 = module.md5(path)
 
     if os.path.exists(dest):
