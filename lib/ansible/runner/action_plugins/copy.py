@@ -106,8 +106,8 @@ class ActionModule(object):
             dest = os.path.join(dest, os.path.basename(source))
             remote_md5 = self.runner._remote_md5(conn, tmp, dest)
 
-        # remote_md5 == '0' would mean that the file does not exist.
-        if remote_md5 != '0' and not force:
+        # remote_md5 == '1' would mean that the file does not exist.
+        if remote_md5 != '1' and not force:
             return ReturnData(conn=conn, result=dict(changed=False))
 
         exec_rc = None
