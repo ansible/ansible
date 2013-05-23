@@ -115,9 +115,7 @@ class Task(object):
         self.args         = ds.get('args', {})
 
         if self.sudo:
-            # this extra template call shouldn't be needed due to play template
-            # TODO: verify that this is true
-            self.sudo_user    = template.template(play.basedir, ds.get('sudo_user', play.sudo_user), play.vars)
+            self.sudo_user    = template.template(play.basedir, ds.get('sudo_user', play.sudo_user), module_vars)
             self.sudo_pass    = ds.get('sudo_pass', play.playbook.sudo_pass)
         else:
             self.sudo_user    = None
