@@ -63,7 +63,7 @@ class Inventory(object):
         self._subset = None
 
         if isinstance(host_list, basestring):
-            if host_list.find(",") != -1:
+            if "," in host_list:
                 host_list = host_list.split(",")
                 host_list = [ h for h in host_list if h and h.strip() ]
 
@@ -72,8 +72,8 @@ class Inventory(object):
             all = Group('all')
             self.groups = [ all ]
             for x in host_list:
-                if x.find(":") != -1:
-                    tokens = x.split(":",1)
+                if ":" in x:
+                    tokens = x.split(":", 1)
                     all.add_host(Host(tokens[0], tokens[1]))
                 else:
                     all.add_host(Host(x))
