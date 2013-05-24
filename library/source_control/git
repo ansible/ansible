@@ -94,9 +94,8 @@ import tempfile
 def get_version(git_path, dest):
     ''' samples the version of the git repo '''
     os.chdir(dest)
-    cmd = "%s show --abbrev-commit" % (git_path,)
-    sha = os.popen(cmd).read().split("\n")
-    sha = sha[0].split()[1]
+    cmd = "%s rev-parse HEAD" % (git_path,)
+    sha = os.popen(cmd).read().strip()
     return sha
 
 def clone(git_path, module, repo, dest, remote, depth):
@@ -347,7 +346,6 @@ def main():
                 else:
                     changed = True
             else:
-                remote_head = remote_head[0:7]
                 if before != remote_head:
                     changed = True
                 else:
