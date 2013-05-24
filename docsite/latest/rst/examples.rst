@@ -135,8 +135,9 @@ Ensure a package is not installed::
 
     $ ansible webservers -m yum -a "name=acme state=removed"
 
-Currently Ansible only has modules for managing packages with yum and apt.  You can install
-for other packages for now using the command module or (better!) contribute a module
+Ansible has modules for managing packages under many platforms.  If your package manager
+does not have a module available for it, you can install
+for other packages using the command module or (better!) contribute a module
 for other package managers.  Stop by the mailing list for info/details.
 
 Users and Groups
