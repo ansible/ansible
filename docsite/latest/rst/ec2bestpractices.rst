@@ -104,19 +104,25 @@ This section covers some usage examples built around a specific use case.
 Example 1
 +++++++++
 
-.. code-block:: bash
+.. note::
 
     I'm using CloudFormation to deploy a specific infrastructure stack.  I'd like to manage configuration of the instances with Ansible.
 
-Provision instances with your tool of choice and consider using the inventory plugin to group hosts based on particular tags or security group. Consider tagging instances you wish to managed with Ansible with a suitably unique key=value tag. 
+Provision instances with your tool of choice and consider using the inventory plugin to group hosts based on particular tags or security group. Consider tagging instances you wish to managed with Ansible with a suitably unique key=value tag.
 
-.. code-block:: bash
+Example 2
++++++++++
+
+.. note::
     
     I'm using AutoScaling to dynamically scale up and scale down the number of instances. This means the number of hosts is constantly fluctuatingi but I'm letting EC2 automatically handle the provisioning of these instances.  I don't want to fully bake a machine image, I'd like to use Ansible to configure the hosts.
 
 There are two approaches to this use case.  The first is to use the inventory plugin to regularly refresh host information and then target hosts based on the latest inventory data.  The second is to use ansible-pull triggered by a user-data script (specified in the launch configuration) which would then mean that each instance would fetch Ansible and the latest playbook from a git repository and run locally to configure itself.
 
-.. code-block:: bash
+Example 3
++++++++++
+
+.. note:: 
 
     I don't want to use Ansible to manage my instances but I'd like to consider using Ansible to build my fully-baked machine images.
 
