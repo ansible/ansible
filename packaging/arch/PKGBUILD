@@ -43,9 +43,4 @@ package() {
   install -D docs/man/man1/ansible-playbook.1 "${pkgdir}/usr/share/man/man1/ansible-playbook.1"
   install -D docs/man/man1/ansible-pull.1 "${pkgdir}/usr/share/man/man1/ansible-pull.1"
   install -D docs/man/man1/ansible-doc.1 "${pkgdir}/usr/share/man/man1/ansible-doc.1"
-
-  gzip -9 "${pkgdir}/usr/share/man/man1/ansible.1"
-  gzip -9 "${pkgdir}/usr/share/man/man1/ansible-playbook.1"
-  gzip -9 "${pkgdir}/usr/share/man/man1/ansible-pull.1"
-  gzip -9 "${pkgdir}/usr/share/man/man1/ansible-doc.1"
 }
