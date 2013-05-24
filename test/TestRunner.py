@@ -27,6 +27,7 @@ class TestRunner(unittest.TestCase):
     def setUp(self):
         self.user = getpass.getuser()
         self.runner = ansible.runner.Runner(
+            basedir='test/',
             module_name='ping',
             module_path='library/',
             module_args='',
@@ -76,6 +77,12 @@ class TestRunner(unittest.TestCase):
         print "RESULTS=%s" % results
         assert "localhost" in results['contacted']
         return results['contacted']['localhost']
+
+    def test_action_plugins(self):
+        result = self._run("uncategorized_plugin", [])
+        assert result.get("msg") == "uncategorized"
+        result = self._run("categorized_plugin", [])
+        assert result.get("msg") == "categorized"
 
     def test_ping(self):
         result = self._run('ping', [])
