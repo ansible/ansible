@@ -154,10 +154,7 @@ def is_remote_tag(git_path, module, dest, remote, version):
     os.chdir(dest)
     cmd = '%s ls-remote %s -t refs/tags/%s' % (git_path, remote, version)
     (rc, out, err) = module.run_command(cmd)
-    if version in out:
-        return True
-    else:
-        return False
+    return version in out
 
 def get_branches(git_path, module, dest):
     os.chdir(dest)
@@ -173,20 +170,12 @@ def get_branches(git_path, module, dest):
 def is_remote_branch(git_path, module, dest, remote, branch):
     branches = get_branches(git_path, module, dest)
     rbranch = 'remotes/%s/%s' % (remote, branch)
-    if rbranch in branches:
-        return True
-    else:
-        return False
+    return rbranch in branches
 
 def is_local_branch(git_path, module, dest, branch):
     branches = get_branches(git_path, module, dest)
     lbranch = '%s' % branch
-    if lbranch in branches:
-        return True
-    elif '* %s' % branch in branches:
-        return True
-    else:
-        return False
+    return (lbranch in branches) or ('* %s' % branch in branches)
 
 def is_not_a_branch(git_path, module, dest):
     branches = get_branches(git_path, module, dest)
@@ -341,15 +330,9 @@ def main():
                 # get_remote_head returned version as-is
                 # were given a sha1 object, see if it is present
                 (rc, out, err) = module.run_command("%s show %s" % (git_path, version))
-                if version in out:
-                    changed = False
-                else:
-                    changed = True
+                changed = version not in out
             else:
-                if before != remote_head:
-                    changed = True
-                else:
-                    changed = False
+                changed = before != remote_head
             module.exit_json(changed=changed, before=before, after=remote_head)
         (rc, out, err) = fetch(git_path, module, repo, dest, version, remote)
         if rc != 0:
@@ -363,10 +346,7 @@ def main():
 
     # determine if we changed anything
     after = get_version(git_path, dest)
-    changed = False
-
-    if before != after or local_mods:
-        changed = True
+    changed = before != after or local_mods
 
     module.exit_json(changed=changed, before=before, after=after)
 
