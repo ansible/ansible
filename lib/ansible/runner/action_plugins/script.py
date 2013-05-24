@@ -41,7 +41,10 @@ class ActionModule(object):
         # FIXME: error handling
         args    = " ".join(tokens[1:])
         source  = template.template(self.runner.basedir, source, inject)
-        source  = utils.path_dwim(self.runner.basedir, source)
+        if '_original_file' in inject:
+            source = utils.path_dwim_relative(inject['_original_file'], 'scripts', source, self.runner.basedir)
+        else:
+            source = utils.path_dwim(self.runner.basedir, source)
 
         # transfer the file to a remote tmp location
         source  = source.replace('\x00','') # why does this happen here?
