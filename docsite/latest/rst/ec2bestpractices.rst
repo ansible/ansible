@@ -96,6 +96,33 @@ For some the delay between refreshing host information and acting on that host i
 
 More information on pull-mode playbooks can be found `here <http://ansible.cc/docs/playbooks2.html#pull-mode-playbooks>`_.
 
+Use Cases
+`````````
+
+This section covers some usage examples built around a specific use case.
+
+Example 1
++++++++++
+
+.. code-block:: bash
+
+    I'm using CloudFormation to deploy a specific infrastructure stack.  I'd like to manage configuration of the instances with Ansible.
+
+Provision instances with your tool of choice and consider using the inventory plugin to group hosts based on particular tags or security group. Consider tagging instances you wish to managed with Ansible with a suitably unique key=value tag. 
+
+.. code-block:: bash
+    
+    I'm using AutoScaling to dynamically scale up and scale down the number of instances. This means the number of hosts is constantly fluctuatingi but I'm letting EC2 automatically handle the provisioning of these instances.  I don't want to fully bake a machine image, I'd like to use Ansible to configure the hosts.
+
+There are two approaches to this use case.  The first is to use the inventory plugin to regularly refresh host information and then target hosts based on the latest inventory data.  The second is to use ansible-pull triggered by a user-data script (specified in the launch configuration) which would then mean that each instance would fetch Ansible and the latest playbook from a git repository and run locally to configure itself.
+
+.. code-block:: bash
+
+    I don't want to use Ansible to manage my instances but I'd like to consider using Ansible to build my fully-baked machine images.
+
+There's nothing to stop you doing this. If you like working with Ansible's playbook format then writing a playbook to create an image; create an image file with dd, give it a filesystem and then install packages and finally chroot into it for further configuration.
+
+
 .. seealso::
 
    :doc:`examples`
