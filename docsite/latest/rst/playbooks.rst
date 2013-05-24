@@ -463,12 +463,14 @@ Example project structure::
     roles/
        common/
          files/
+         scripts/
          templates/
          tasks/
          handlers/
          vars/
        webservers/
          files/
+         scripts/
          templates/
          tasks/
          handlers/
@@ -488,6 +490,7 @@ This designates the following behaviors, for each role 'x':
 - If roles/x/handlers/main.yml exists, handlers listed therein will be added to the play
 - If roles/x/vars/main.yml exists, variables listed therein will be added to the play
 - Any copy tasks can reference files in roles/x/files/ without having to path them relatively or absolutely
+- Any script tasks can reference scripts in roles/x/sripts/ without having to path them relatively or absolutely
 - Any template tasks can reference files in roles/x/templates/ without having to path them relatively or absolutely
 
 If any files are not present, they are just ignored.  So it's ok to not have a 'vars/' subdirectory for the role,
@@ -526,6 +529,8 @@ If you want to define certain tasks to happen before AND after roles are applied
         - shell: echo 'hello'
       roles:
         - { role: some_role }
+      tasks:
+        - shell: echo 'still busy'
       post_tasks:
         - shell: echo 'goodbye'
 
