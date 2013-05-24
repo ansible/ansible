@@ -434,6 +434,7 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
 
         host_result2 = host_result.copy()
         host_result2.pop('invocation', None)
+        verbose_always = host_result2.pop('verbose_always', None)
         changed = host_result.get('changed', False)
         ok_or_changed = 'ok'
         if changed:
@@ -441,7 +442,8 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
 
         # show verbose output for non-setup module results if --verbose is used
         msg = ''
-        if not self.verbose or host_result2.get("verbose_override",None) is not None:
+        if (not self.verbose or host_result2.get("verbose_override",None) is not
+                None) and verbose_always is None:
             if item:
                 msg = "%s: [%s] => (item=%s)" % (ok_or_changed, host, item)
             else:
