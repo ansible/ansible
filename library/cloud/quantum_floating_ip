@@ -107,7 +107,7 @@ def _get_quantum_client(module, kwargs):
             'endpoint_url': endpoint
     }
     try:
-        quantum =  client.Client('2.0', **kwargs)
+        quantum = client.Client('2.0', **kwargs)
     except Exception as e:
         module.fail_json(msg = "Error in connecting to quantum: %s " % e.message)
     return quantum       
@@ -214,7 +214,7 @@ def main():
     fixed_ip, port_id = _get_port_info(quantum, module, server_info['id'])
     if not port_id:
         module.fail_json(msg = "Cannot find a port for this instance, maybe fixed ip is not assigned")
-    floating_id, floating_ip =  _get_floating_ip(module, quantum, fixed_ip)
+    floating_id, floating_ip = _get_floating_ip(module, quantum, fixed_ip)
     if module.params['state'] == 'present':
         if floating_ip:
             module.exit_json(changed = False, public_ip=floating_ip)
