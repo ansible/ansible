@@ -319,8 +319,8 @@ def main():
         if rc != 0:
             module.fail_json(msg=err)
         # check or get changes from remote
-        remote_head = get_remote_head(git_path, module, dest, version, remote)
         if module.check_mode:
+            remote_head = get_remote_head(git_path, module, dest, version, remote)
             changed = False
             if remote_head == version:
                 # get_remote_head returned version as-is
