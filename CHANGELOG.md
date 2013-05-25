@@ -51,6 +51,7 @@ Modules added:
 * openstack: quantum_network
 * openstack: quantum_router
 * openstack: quantum_router_gateway
+* openstack: quantum_router_interface
 * openstack: quantum_subnet
 * airbrake_deployment - notify airbrake of new deployments
 
