@@ -46,4 +46,7 @@ class ActionModule(object):
         else:
             result = dict(msg=args['msg'])
 
+        # force flag to make debug output module always verbose
+        result['verbose_always'] = True
+
         return ReturnData(conn=conn, result=result)
