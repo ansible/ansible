@@ -972,7 +972,8 @@ def main():
     # Collect service status
     if service.pattern:
         service.check_ps()
-    service.get_service_status()
+    else:
+        service.get_service_status()
 
     # Calculate if request will change service state
     service.check_service_changed()
