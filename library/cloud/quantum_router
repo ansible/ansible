@@ -109,10 +109,10 @@ def _get_quantum_client(module, kwargs):
     endpoint = _get_endpoint(module, _ksclient)
     kwargs = {
             'token': token,
-	    'endpoint_url': endpoint
+            'endpoint_url': endpoint
     }
     try:
-    	quantum =  client.Client('2.0', **kwargs)
+        quantum =  client.Client('2.0', **kwargs)
     except Exception as e:
         module.fail_json(msg = "Error in connecting to quantum: %s " % e.message)
     return quantum
@@ -134,68 +134,68 @@ def _set_tenant_id(module):
 
 def _get_router_id(module, quantum):
     kwargs = {
-	    'name': module.params['name'],
-	    'tenant_id': _os_tenant_id,
+            'name': module.params['name'],
+            'tenant_id': _os_tenant_id,
     }
     try:
-	routers = quantum.list_routers(**kwargs)
+        routers = quantum.list_routers(**kwargs)
     except Exception as e:
-	module.fail_json(msg = "Error in getting the router list: %s " % e.message)
+        module.fail_json(msg = "Error in getting the router list: %s " % e.message)
     if not routers['routers']:
-	return None
+        return None
     return routers['routers'][0]['id']
 
 def _create_router(module, quantum):
     router = {
-	    'name': module.params['name'],
-	    'tenant_id': _os_tenant_id,
-	    'admin_state_up': module.params['admin_state_up'],
+            'name': module.params['name'],
+            'tenant_id': _os_tenant_id,
+            'admin_state_up': module.params['admin_state_up'],
     }
     try:
-	    new_router = quantum.create_router({'router': router })
+            new_router = quantum.create_router({'router': router })
     except Exception as e:
-	    module.fail_json( msg = "Error in creating router: %s" % e.message)
+            module.fail_json( msg = "Error in creating router: %s" % e.message)
     return new_router['router']['id']
 
 def _delete_router(module, quantum, router_id):
     try:
-	quantum.delete_router(router_id)
+        quantum.delete_router(router_id)
     except:
-	module.fail_json("Error in deleting the router")
+        module.fail_json("Error in deleting the router")
     return True
-		
+                
 def main():
     module = AnsibleModule(
-        argument_spec        		= dict(
-        login_username         		= dict(default='admin'),
-        login_password         		= dict(required=True),
-        login_tenant_name      		= dict(required='True'),
-        auth_url         		= dict(default='http://127.0.0.1:35357/v2.0/'),
-        region_name      		= dict(default=None),
-        name             		= dict(required=True),
+        argument_spec                   = dict(
+        login_username                  = dict(default='admin'),
+        login_password                  = dict(required=True),
+        login_tenant_name               = dict(required='True'),
+        auth_url                        = dict(default='http://127.0.0.1:35357/v2.0/'),
+        region_name                     = dict(default=None),
+        name                            = dict(required=True),
         tenant_name                     = dict(default=None),
-	state	         		= dict(default='present', choices=['absent', 'present']),
-	admin_state_up                  = dict(default='true', choices=BOOLEANS),
+        state                           = dict(default='present', choices=['absent', 'present']),
+        admin_state_up                  = dict(default='true', choices=BOOLEANS),
         ),
     )
-   		
+                
     quantum = _get_quantum_client(module, module.params)
     _set_tenant_id(module)
     if module.params['state'] == 'present':
-	router_id = _get_router_id(module, quantum)
-	if not router_id:
-	    router_id = _create_router(module, quantum)
-	    module.exit_json(changed = True, result = "Created" , id = router_id)
-	else:
-	    module.exit_json(changed = False, result = "success" , id = router_id)
+        router_id = _get_router_id(module, quantum)
+        if not router_id:
+            router_id = _create_router(module, quantum)
+            module.exit_json(changed = True, result = "Created" , id = router_id)
+        else:
+            module.exit_json(changed = False, result = "success" , id = router_id)
     else:
-	router_id = _get_router_id(module, quantum)
-	if not router_id:
-	    module.exit_json(changed = False, result = "success" )
-	else:
-	    _delete_router(module, quantum, router_id)
-	    module.exit_json(changed = True, result = "deleted" )
-		
+        router_id = _get_router_id(module, quantum)
+        if not router_id:
+            module.exit_json(changed = False, result = "success" )
+        else:
+            _delete_router(module, quantum, router_id)
+            module.exit_json(changed = True, result = "deleted" )
+                
 
  
 
