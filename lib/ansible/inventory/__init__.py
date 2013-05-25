@@ -62,18 +62,18 @@ class Inventory(object):
         self._also_restriction = None
         self._subset = None
 
-        if type(host_list) in [ str, unicode ]:
-            if host_list.find(",") != -1:
+        if isinstance(host_list, basestring):
+            if "," in host_list:
                 host_list = host_list.split(",")
                 host_list = [ h for h in host_list if h and h.strip() ]
 
-        if type(host_list) == list:
+        if isinstance(host_list, list):
             self.parser = None
             all = Group('all')
             self.groups = [ all ]
             for x in host_list:
-                if x.find(":") != -1:
-                    tokens = x.split(":",1)
+                if ":" in x:
+                    tokens = x.split(":", 1)
                     all.add_host(Host(tokens[0], tokens[1]))
                 else:
                     all.add_host(Host(x))
@@ -316,7 +316,7 @@ class Inventory(object):
         to exclude failed hosts in main playbook code, don't use this for other
         reasons.
         """
-        if type(restriction) != list:
+        if not isinstance(restriction, list):
             restriction = [ restriction ]
         self._restriction = restriction
 
@@ -325,7 +325,7 @@ class Inventory(object):
         Works like restict_to but offers an additional restriction.  Playbooks use this
         to implement serial behavior.
         """
-        if type(restriction) != list:
+        if not isinstance(restriction, list):
             restriction = [ restriction ]
         self._also_restriction = restriction
     
