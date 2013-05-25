@@ -152,7 +152,7 @@ def _create_server(module, nova):
     if not module.params['key_name']:
         del bootkwargs['key_name']
     try:
-        server = nova.servers.create(*bootargs, **bootkwargs )
+        server = nova.servers.create(*bootargs, **bootkwargs)
         server = nova.servers.get(server.id)
     except Exception as e:
             module.fail_json( msg = "Error in creating instance: %s " % e.message)

@@ -64,8 +64,8 @@ class ActionModule(object):
                 # if dest does not start with "/", we'll assume a relative path
                 dest = utils.path_dwim(self.runner.basedir, dest)
         else:
-           # files are saved in dest dir, with a subdir for each host, then the filename
-           dest   = "%s/%s/%s" % (utils.path_dwim(self.runner.basedir, dest), conn.host, source)
+            # files are saved in dest dir, with a subdir for each host, then the filename
+            dest = "%s/%s/%s" % (utils.path_dwim(self.runner.basedir, dest), conn.host, source)
         dest   = dest.replace("//","/")
 
         # calculate md5 sum for the remote file
