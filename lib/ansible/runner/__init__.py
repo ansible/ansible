@@ -398,8 +398,8 @@ class Runner(object):
             if type(items) != list:
                 raise errors.AnsibleError("lookup plugins have to return a list: %r" % items)
 
-            if len(items) and utils.is_list_of_strings(items) and self.module_name in [ 'apt', 'yum' ]:
-                # hack for apt and soon yum, with_items maps back into a single module call
+            if len(items) and utils.is_list_of_strings(items) and self.module_name in [ 'apt', 'yum', 'pkgng' ]:
+                # hack for apt, yum, and pkgng so that with_items maps back into a single module call
                 inject['item'] = ",".join(items)
                 items = None
 
@@ -662,7 +662,7 @@ class Runner(object):
             basetmp = os.path.join('/tmp', basefile)
 
         cmd = 'mkdir -p %s' % basetmp
-        if self.remote_user != 'root':
+        if self.remote_user != 'root' or (self.sudo and self.sudo_user != 'root'):
             cmd += ' && chmod a+rx %s' % basetmp
         cmd += ' && echo %s' % basetmp
 
