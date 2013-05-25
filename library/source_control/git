@@ -158,14 +158,11 @@ def is_remote_tag(git_path, module, dest, remote, version):
 
 def get_branches(git_path, module, dest):
     os.chdir(dest)
-    branches = []
     cmd = '%s branch -a' % (git_path,)
     (rc, out, err) = module.run_command(cmd)
     if rc != 0:
         module.fail_json(msg="Could not determine branch data - received %s" % out)
-    for line in out.split('\n'):
-        branches.append(line.strip())
-    return branches
+    return [line.strip() for line in out.split('\n')]
 
 def is_remote_branch(git_path, module, dest, remote, branch):
     branches = get_branches(git_path, module, dest)
