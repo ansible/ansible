@@ -321,7 +321,6 @@ def main():
         # check or get changes from remote
         if module.check_mode:
             remote_head = get_remote_head(git_path, module, dest, version, remote)
-            changed = False
             if remote_head == version:
                 # get_remote_head returned version as-is
                 # were given a sha1 object, see if it is present
