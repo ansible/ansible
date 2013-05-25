@@ -7,7 +7,7 @@ short_description: Fetches a file from remote nodes
 description:
      - This module works like M(copy), but in reverse. It is used for fetching
        files from remote machines and storing them locally in a file tree,
-       organized by hostname. Note that this module is written to transfer 
+       organized by hostname. Note that this module is written to transfer
        log files that might not be present, so a missing remote file won't
        be an error unless fail_on_missing is set to 'yes'.
 version_added: "0.2"
@@ -34,9 +34,22 @@ options:
     required: false
     choices: [ "yes", "no" ]
     default: "no"
+  flat:
+    version_added: "1.2"
+    description:
+      Allows you to override the default behavior of prepending hostname/path/to/file to
+      the destination.  If dest ends with '/', it will use the basename of the source
+      file, similar to the copy module.  Obvioiusly this is only handy if the filenames
+      are unqiue.
 examples:
    - code: "fetch: src=/var/log/messages dest=/home/logtree"
      description: "Example from Ansible Playbooks"
+   - code: "fetch: src=/tmp/somefile dest="/tmp/beefcake-{{ ansible_hostname }}" flat=yes"
+     description: "Copies a file from remote machine and stores it at the absolute path /tmp/beefcake-{{ ansible_hostname }}"
+   - code: "fetch: src=/tmp/uniquefile dest="/tmp/special/" flat=yes"
+     description: "Copies a file from remote machine and stores it at the absolute path /tmp/special"
+   - code: "fetch: src=/tmp/uniquefile dest="special/" flat=yes"
+     description: "Copies a file from remote machine and stores it in special/uniquefile relative to the playbook"
 requirements: []
 author: Michael DeHaan
 '''
