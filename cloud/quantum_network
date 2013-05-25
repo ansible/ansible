@@ -136,10 +136,10 @@ def _get_quantum_client(module, kwargs):
     endpoint = _get_endpoint(module, _ksclient)
     kwargs = {
             'token': token,
-	    'endpoint_url': endpoint
+            'endpoint_url': endpoint
     }
     try:
-    	quantum =  client.Client('2.0', **kwargs)
+        quantum =  client.Client('2.0', **kwargs)
     except Exception as e:
         module.fail_json(msg = " Error in connecting to quantum: %s " %e.message)
     return quantum
@@ -147,106 +147,106 @@ def _get_quantum_client(module, kwargs):
 def _set_tenant_id(module):
     global _os_tenant_id
     if not module.params['tenant_name']:
-	tenant_name = module.params['login_tenant_name']
+        tenant_name = module.params['login_tenant_name']
     else:
-	tenant_name = module.params['tenant_name']
-	
+        tenant_name = module.params['tenant_name']
+        
     for tenant in _os_keystone.tenants.list():
         if tenant.name == tenant_name:
             _os_tenant_id = tenant.id
             break;
     if not _os_tenant_id:
-	module.fail_json(msg = "The tenant id cannot be found, please check the paramters")
+        module.fail_json(msg = "The tenant id cannot be found, please check the paramters")
 
 
 def _get_net_id(quantum, module):
     kwargs = {
-	    'tenant_id': _os_tenant_id,
-	    'name': module.params['name'],
+            'tenant_id': _os_tenant_id,
+            'name': module.params['name'],
     }
     try:
-	networks = quantum.list_networks(**kwargs)
+        networks = quantum.list_networks(**kwargs)
     except Exception as e:
-	module.fail_json("Error in listing quantum networks: %s" % e.message)
-    if not networks['networks']:	
-	return None
+        module.fail_json("Error in listing quantum networks: %s" % e.message)
+    if not networks['networks']:        
+        return None
     return networks['networks'][0]['id']
 
 def _create_network(module, quantum):
     quantum.format = 'json'
     network = {
-	    'name': 	module.params.get('name'),
-	    'tenant_id': 	_os_tenant_id,
-	    'provider:network_type': module.params.get('provider_network_type'),
-	    'provider:physical_network': module.params.get('provider_physical_network'),
+            'name':     module.params.get('name'),
+            'tenant_id':        _os_tenant_id,
+            'provider:network_type': module.params.get('provider_network_type'),
+            'provider:physical_network': module.params.get('provider_physical_network'),
             'provider:segmentation_id': module.params.get('provider_segmentation_id'),
-	    'router:external': module.params.get('router_external'),
-	    'shared': module.params.get('shared'),
-	    'admin_state_up': module.params.get('admin_state_up'),
+            'router:external': module.params.get('router_external'),
+            'shared': module.params.get('shared'),
+            'admin_state_up': module.params.get('admin_state_up'),
     }
     if module.params['provider_network_type'] == 'local':
-	network.pop('provider:physical_network', None)
-	network.pop('provider:segmentation_id', None)
+        network.pop('provider:physical_network', None)
+        network.pop('provider:segmentation_id', None)
     if module.params['provider_network_type'] == 'flat':
-	network.pop('provider:segmentation_id', None)
+        network.pop('provider:segmentation_id', None)
     if module.params['provider_network_type'] == 'gre':
-	network.pop('provider:physical_network', None)
-		
+        network.pop('provider:physical_network', None)
+                
     try:
-	net = quantum.create_network({'network':network})
+        net = quantum.create_network({'network':network})
     except Exception as e:
-	module.fail_json(msg = "Error in creating network: %s" % e.message)
+        module.fail_json(msg = "Error in creating network: %s" % e.message)
     return net['network']['id']
-		
+                
 def _delete_network(module, net_id, quantum):
     try:
-	id = quantum.delete_network(net_id)
+        id = quantum.delete_network(net_id)
     except Exception as e: 
-	module.fail_json(msg = "Error in deleting the network: %s" % e.message)
+        module.fail_json(msg = "Error in deleting the network: %s" % e.message)
     return True
 
 def main():
     
     module = AnsibleModule(
-        argument_spec        		= dict(
-        login_username         		= dict(default='admin'),
-        login_password         		= dict(required=True),
-        login_tenant_name      		= dict(required='True'),
-        auth_url         		= dict(default='http://127.0.0.1:35357/v2.0/'),
-        region_name      		= dict(default=None),
-        name             		= dict(required=True),
+        argument_spec                   = dict(
+        login_username                  = dict(default='admin'),
+        login_password                  = dict(required=True),
+        login_tenant_name               = dict(required='True'),
+        auth_url                        = dict(default='http://127.0.0.1:35357/v2.0/'),
+        region_name                     = dict(default=None),
+        name                            = dict(required=True),
         tenant_name                     = dict(default=None),
-	provider_network_type           = dict(default='local', choices=['local', 'vlan', 'flat', 'gre']), 
-	provider_physical_network       = dict(default=None), 
-	provider_segmentation_id        = dict(default=None), 
-        router_external			= dict(default='false', choices=BOOLEANS),
-        shared				= dict(default='false', choices=BOOLEANS),
-        admin_state_up			= dict(default='true', choices=BOOLEANS),
-	state	         		= dict(default='present', choices=['absent', 'present'])
+        provider_network_type           = dict(default='local', choices=['local', 'vlan', 'flat', 'gre']), 
+        provider_physical_network       = dict(default=None), 
+        provider_segmentation_id        = dict(default=None), 
+        router_external                 = dict(default='false', choices=BOOLEANS),
+        shared                          = dict(default='false', choices=BOOLEANS),
+        admin_state_up                  = dict(default='true', choices=BOOLEANS),
+        state                           = dict(default='present', choices=['absent', 'present'])
         ),
     )
     if module.params['provider_network_type'] in ['vlan' , 'flat']:
-	    if not module.params['provider_physical_network']:
-		module.fail_json(msg = " for vlan and flat networks, variable provider_physical_network should be set.")
+            if not module.params['provider_physical_network']:
+                module.fail_json(msg = " for vlan and flat networks, variable provider_physical_network should be set.")
     if module.params['provider_network_type']  in ['vlan', 'gre']:
-	    if not module.params['provider_segmentation_id']:
-		module.fail_json(msg = " for vlan & gre networks, variable provider_segmentation_id should be set.")
+            if not module.params['provider_segmentation_id']:
+                module.fail_json(msg = " for vlan & gre networks, variable provider_segmentation_id should be set.")
     quantum = _get_quantum_client(module, module.params)
-    _set_tenant_id(module)	
-    if module.params['state'] == 'present':	
-       	network_id = _get_net_id(quantum, module)
-	if not network_id:
-	    network_id = _create_network(module, quantum)
-	    module.exit_json(changed = True, result = "Created", id = network_id)
-	else:
-	    module.exit_json(changed = False, result = "Success", id = network_id)
+    _set_tenant_id(module)      
+    if module.params['state'] == 'present':     
+        network_id = _get_net_id(quantum, module)
+        if not network_id:
+            network_id = _create_network(module, quantum)
+            module.exit_json(changed = True, result = "Created", id = network_id)
+        else:
+            module.exit_json(changed = False, result = "Success", id = network_id)
     if module.params['state'] == 'absent':
-       	network_id = _get_net_id(quantum, module)
-	if not network_id:
-	    module.exit_json(changed = False, result = "Success")
-	else:
-	    _delete_network(module, network_id, quantum)
-	    module.exit_json(changed = True, result = "Deleted")
+        network_id = _get_net_id(quantum, module)
+        if not network_id:
+            module.exit_json(changed = False, result = "Success")
+        else:
+            _delete_network(module, network_id, quantum)
+            module.exit_json(changed = True, result = "Deleted")
 
 
  

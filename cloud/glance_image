@@ -152,48 +152,48 @@ def _get_glance_client(module, kwargs):
 def _glance_image_present(module, params, client):
     try:
         for image in client.images.list():
-	    if image.name == params['name']:
-		return image.id 
-	return None 
+            if image.name == params['name']:
+                return image.id 
+        return None 
     except Exception as e:
-  	module.fail_json(msg = "Error in fetching image list: %s" %e.message)
+        module.fail_json(msg = "Error in fetching image list: %s" %e.message)
 
 def _glance_image_create(module, params, client):
     kwargs = {
-		'name':             params.get('name'),
-  		'disk_format':      params.get('disk_format'),
-  		'container_format': params.get('container_format'),
-		'owner':            params.get('owner'),
-  		'is_public':        params.get('is_public'),
-  		'copy_from':        params.get('copy_from'),
+                'name':             params.get('name'),
+                'disk_format':      params.get('disk_format'),
+                'container_format': params.get('container_format'),
+                'owner':            params.get('owner'),
+                'is_public':        params.get('is_public'),
+                'copy_from':        params.get('copy_from'),
     }
-    try:	 	
+    try:                
         timeout = params.get('timeout')
-       	expire = time.time() + timeout
-	image = client.images.create(**kwargs)
-	if not params['copy_from']:
-	    image.update(data=open(params['file'], 'rb'))
-	while time.time() < expire:
-	    image = client.images.get(image.id)
-	    if image.status == 'active':
-		break
-	    time.sleep(5)
-    except Exception as e:		
-	module.fail_json(msg = "Error in creating image: %s" %e.message )		 
+        expire = time.time() + timeout
+        image = client.images.create(**kwargs)
+        if not params['copy_from']:
+            image.update(data=open(params['file'], 'rb'))
+        while time.time() < expire:
+            image = client.images.get(image.id)
+            if image.status == 'active':
+                break
+            time.sleep(5)
+    except Exception as e:              
+        module.fail_json(msg = "Error in creating image: %s" %e.message )                
     if image.status == 'active':
-	module.exit_json(changed = True, result = image.status, id=image.id)
+        module.exit_json(changed = True, result = image.status, id=image.id)
     else:
-	module.fail_json(msg = " The module timed out, please check manually " + image.status) 
+        module.fail_json(msg = " The module timed out, please check manually " + image.status) 
 
 def _glance_delete_image(module, params, client):
-    try:		
+    try:                
         for image in client.images.list():
-	    if image.name == params['name']:
-		client.images.delete(image)
+            if image.name == params['name']:
+                client.images.delete(image)
     except Exception as e:
-	module.fail_json(msg = "Error in deleting image: %s" %e.message)
+        module.fail_json(msg = "Error in deleting image: %s" %e.message)
     module.exit_json(changed = True, result = "Deleted")
-	
+        
 def main():
     
     module = AnsibleModule(
@@ -211,28 +211,28 @@ def main():
         min_ram          = dict(default=None),
         is_public        = dict(default=True),
         copy_from        = dict(default= None),
-	timeout          = dict(default=180), 
-	file             = dict(default=None), 
-        state	         = dict(default='present', choices=['absent', 'present'])
+        timeout          = dict(default=180), 
+        file             = dict(default=None), 
+        state            = dict(default='present', choices=['absent', 'present'])
         ),
-	    mutually_exclusive = [['file','copy_from']],
+            mutually_exclusive = [['file','copy_from']],
     )
     if module.params['state'] == 'present':
-	if not module.params['file'] and not module.params['copy_from']:
- 	    module.fail_json(msg = "Either file or copy_from variable should be set to create the image")
-	client = _get_glance_client(module, module.params)
+        if not module.params['file'] and not module.params['copy_from']:
+            module.fail_json(msg = "Either file or copy_from variable should be set to create the image")
+        client = _get_glance_client(module, module.params)
         id =  _glance_image_present(module, module.params, client)
-	if not id:
-	    _glance_image_create(module, module.params, client)
-	module.exit_json(changed = False, id = id, result = "success")
+        if not id:
+            _glance_image_create(module, module.params, client)
+        module.exit_json(changed = False, id = id, result = "success")
 
     if module.params['state'] == 'absent':
-	client = _get_glance_client(module, module.params)
+        client = _get_glance_client(module, module.params)
         id =  _glance_image_present(module, module.params, client)
-	if not id:	
-	    module.exit_json(changed = False, result = "Success")
-	else:
-	    _glance_delete_image(module, module.params, client)
+        if not id:      
+            module.exit_json(changed = False, result = "Success")
+        else:
+            _glance_delete_image(module, module.params, client)
 
 # this is magic, see lib/ansible/module.params['common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
