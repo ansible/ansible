@@ -21,6 +21,8 @@ Core Features:
 * "meta: flush_handler" task capability added for when you really need to force handlers to run
 * new --start-at-task option to ansible playbook allows starting at a specific task name in a long playbook
 * added a log file for ansible/ansible-playbook, set 'log_path' in the configuration file or ANSIBLE_LOG_PATH in environment
+* debug mode always outputs debug in playbooks, without needing to specify -v
+* external inventory script added for Spacewalk / Red Hat Satellite servers
 
 Modules added:
 
@@ -40,6 +42,17 @@ Modules added:
 * filesystem - a wrapper around mkfs
 * jabber: send jabber chat messages
 * osx_say: make OS X say things out loud
+* openstack: keystone_user
+* openstack: glance_image
+* openstack: nova_compute
+* openstack: nova_keypair
+* openstack: quantum_floating_ip
+* openstack: quantum_floating_ip_associate
+* openstack: quantum_network
+* openstack: quantum_router
+* openstack: quantum_router_gateway
+* openstack: quantum_subnet
+* airbrake_deployment - notify airbrake of new deployments
 
 Modules removed
 
@@ -97,6 +110,15 @@ the variable is still registered for the host, with the attribute skipped: True.
 * lineinfile now does atomic file replacements
 * fix to not pass PasswordAuthentication=no in the config file unneccessarily for SSH connection type
 * for for authorized_key on Debian Squeeze
+* fixes for apt_repository module reporting changed incorrectly on certain repository types
+* allow the virtualenv argument to the pip module to be a pathname
+* service pattern argument now correctly read for BSD services
+* fetch location can now be controlled more directly via the 'flat' parameter.
+* added basename and dirname as Jinja2 filters available to all templates
+* pip works better when sudoing from unpriveledged users
+* fix for user creation with groups specification reporting 'changed' incorrectly in some cases
+* fix for some unicode encoding errors in outputing some data in verbose mode
+* 
 
 1.1 "Mean Street" -- 4/2/2013
 
