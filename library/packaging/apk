@@ -1,0 +1,139 @@
+#!/usr/bin/python -tt
+# -*- coding: utf-8 -*-
+
+# (c) Bartłomiej Piotrowski <bpiotrowski@alpinelinux.org>
+#
+# This module is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+
+
+DOCUMENTATION = '''
+---
+module: apk
+short_description: Package manager for Alpine Linux
+description:
+    - Manages Alpine Linux packages (*.apk)
+author: Bartłomiej Piotrowski
+
+options:
+    pkg:
+        description:
+            - A package name or package specifier with version
+        required: true
+        default: null
+
+    state:
+        description:
+            - Indicates the desired package state
+        required: false
+        default: "no"
+        choices: [ "absent", "latest", "present" , "purge" ]
+
+    update:
+        description:
+            - Update the package database before the operation
+        required: false
+        default: "no"
+        choices: [ "yes", "no" ]
+
+    force:
+        description:
+            - Do what was asked even if it looks dangerous
+        required: false
+        default: "no"
+        choices: [ "yes", "no" ]
+
+notes: []
+examples:
+    - code: "apk: pkg=foo"
+      description: Install package foo
+    - code: "apk: pkg=foo state=purge"
+      description: Remove package foo and delete modified configuration files
+    - code: "apk: pkg=foo state=latest"
+      description: Update package foo to newest available version
+'''
+
+import json
+import shlex
+import os
+import sys
+
+def update(module):
+    rc = os.system("apk -q update")
+
+    if rc != 0:
+        module.fail_json(msg="failed to update package database")
+
+def remove(module, pkgs, opts):
+    removed = 0
+
+    for pkg in pkgs:
+        rc = os.system("apk -q del %s %s" % (opts, pkg))
+
+        if rc == 0:
+            removed += 1
+        else:
+            module.fail_json(msg="failed to remove %s" % pkg)
+
+    if removed > 0:
+        module.exit_json(changed=True, msg="removed %s package(s) (or already absent)" % removed)
+    module.exit_json(changed=False, msg="failed to remove specified packages")
+
+def install(module, pkgs, opts):
+    installed = 0
+
+    for pkg in pkgs:
+        rc = os.system("apk -q add %s %s" % (opts, pkg))
+
+        if rc == 0:
+            installed += 1
+        else:
+            module.fail_json(msg="failed to install %s" % pkg)
+
+    if installed >= 1:
+        module.exit_json(changed=True, msg="installed %s package(s) (or already present)" % installed)
+    module.exit_json(changed=False, msg="failed to install specified packages")
+
+def main():
+    module = AnsibleModule(
+            argument_spec   = dict(
+                pkg         = dict(aliases=["name"], required=False),
+                state       = dict(default="present", choices=["absent","latest","present","purge"]),
+                update      = dict(default="no", type="bool"),
+                force       = dict(default="no", type="bool")))
+
+    if not os.path.exists("/sbin/apk"):
+        module.fail_json(msg="unable to find apk executable")
+
+    p = module.params
+
+    if p["update"]:
+        update(module)
+
+    pkgs = p["pkg"].split(",")
+
+    opts = ''
+    if p["force"]:
+        opts += " --force"
+    if p["state"] == "latest":
+        opts += " --upgrade"
+    if p["state"] == "purge":
+        opts += " --purge"
+
+    if p["state"] in [ "present", "latest" ]:
+        install(module, pkgs, opts)
+    else:
+        remove(module, pkgs, opts)
+
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
