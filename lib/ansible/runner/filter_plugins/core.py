@@ -17,6 +17,7 @@
 
 import base64
 import json
+import os.path
 import yaml
 
 def to_nice_yaml(*a, **kw):
@@ -45,5 +46,9 @@ class FilterModule(object):
             'to_yaml': yaml.safe_dump,
             'to_nice_yaml': to_nice_yaml,
             'from_yaml': yaml.safe_load,
+
+            # path
+            'basename': os.path.basename,
+            'dirname': os.path.dirname,
         }
     
