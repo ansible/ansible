@@ -112,7 +112,7 @@ def _get_quantum_client(module, kwargs):
             'endpoint_url': endpoint
     }
     try:
-        quantum =  client.Client('2.0', **kwargs)
+        quantum = client.Client('2.0', **kwargs)
     except Exception as e:
         module.fail_json(msg = "Error in connecting to quantum: %s " % e.message)
     return quantum
@@ -126,15 +126,15 @@ def _set_tenant_id(module):
 
     for tenant in _os_keystone.tenants.list():
         if tenant.name == login_tenant_name:
-                _os_tenant_id = tenant.id
-                break;
+            _os_tenant_id = tenant.id
+            break
     if not _os_tenant_id:
         module.fail_json(msg = "The tenant id cannot be found, please check the paramters")
 
 
 def _get_router_id(module, quantum):
     kwargs = {
-            'name': module.params['router_name'],
+        'name': module.params['router_name'],
     }
     try:
         routers = quantum.list_routers(**kwargs)
