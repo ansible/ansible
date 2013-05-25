@@ -61,7 +61,8 @@ Execute the module called 'NAME'.
 *-M* 'DIRECTORY', *--module-path=*'DIRECTORY'::
 
 The 'DIRECTORY' search path to load modules from. The default is
-'/usr/share/ansible'. See also the ANSIBLE_LIBRARY environment variable.
+'/usr/share/ansible'. This can also be set with the ANSIBLE_LIBRARY
+environment variable.
 
 *-a* \'_ARGUMENTS_', *--args=*\'_ARGUMENTS_'::
 
