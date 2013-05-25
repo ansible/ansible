@@ -275,13 +275,18 @@ class Virt(object):
         }
         return info
 
-    def list_vms(self):
+    def list_vms(self, state=None):
         self.conn = self.__get_conn()
         vms = self.conn.find_vm(-1)
         results = []
         for x in vms:
             try:
-                results.append(x.name())
+		if state:
+	    	    vmstate = self.conn.get_status2(x)
+		    if vmstate == state:
+		        results.append(x.name())
+		else:
+                    results.append(x.name())
             except:
                 pass
         return results
@@ -395,6 +400,11 @@ def core(module):
     v = Virt(uri)
     res = {}
 
+    if state and command=='list_vms':
+        res = v.list_vms(state=state)
+        if type(res) != dict:
+            res = { command: res }
+        return VIRT_SUCCESS, res
 
     if state:
         if not guest:
