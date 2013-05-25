@@ -201,6 +201,7 @@ def main():
                 cmd = '%s --system-site-packages %s' % (virtualenv, env)
             else:
                 cmd = '%s %s' % (virtualenv, env)
+            os.chdir(tempfile.gettempdir())
             rc, out_venv, err_venv = module.run_command(cmd)
             out += out_venv
             err += err_venv
