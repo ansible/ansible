@@ -281,11 +281,11 @@ class Virt(object):
         results = []
         for x in vms:
             try:
-		if state:
-	    	    vmstate = self.conn.get_status2(x)
-		    if vmstate == state:
-		        results.append(x.name())
-		else:
+                if state:
+                    vmstate = self.conn.get_status2(x)
+                    if vmstate == state:
+                        results.append(x.name())
+                else:
                     results.append(x.name())
             except:
                 pass
