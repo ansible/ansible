@@ -127,9 +127,8 @@ def main():
             dest = os.path.join(dest, basename)
         if os.access(dest, os.R_OK):
             md5sum_dest = module.md5(dest)
-    else:
-        if not os.path.exists(os.path.dirname(dest)):
-            module.fail_json(msg="Destination directory %s does not exist" % (os.path.dirname(dest)))
+    elif not os.path.exists(os.path.dirname(dest)):
+        os.makedirs(os.path.dirname(dest))
     if not os.access(os.path.dirname(dest), os.W_OK):
         module.fail_json(msg="Destination %s not writable" % (os.path.dirname(dest)))
 

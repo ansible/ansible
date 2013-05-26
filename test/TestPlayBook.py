@@ -5,12 +5,14 @@
 
 import unittest
 import getpass
+import subprocess
 import ansible.playbook
 import ansible.utils as utils
 import ansible.callbacks as ans_callbacks
 import os
 import shutil
 import ansible.constants as C
+import sys
 
 EVENTS = []
 
@@ -117,17 +119,16 @@ class TestPlaybook(unittest.TestCase):
        filename = os.path.join(self.stage_dir, filename)
        return filename
 
-   def _run(self, test_playbook, host_list='test/ansible_hosts'):
+   def _run(self, test_playbook, **kwargs):
        ''' run a module and get the localhost results '''
        # This ensures tests are independent of eachother
        global EVENTS
        ansible.playbook.SETUP_CACHE.clear()
        EVENTS = []
-
        self.test_callbacks = TestCallbacks()
-       self.playbook = ansible.playbook.PlayBook(
+       args = dict(
            playbook     = test_playbook,
-           host_list    = host_list,
+           host_list    = 'test/ansible_hosts',
            module_path  = 'library/',
            forks        = 1,
            timeout      = 5,
@@ -137,6 +138,9 @@ class TestPlaybook(unittest.TestCase):
            callbacks        = self.test_callbacks,
            runner_callbacks = self.test_callbacks
        )
+       args.update(kwargs)
+
+       self.playbook = ansible.playbook.PlayBook(**args)
        result = self.playbook.run()
        print EVENTS
        return result
@@ -355,3 +359,16 @@ class TestPlaybook(unittest.TestCase):
 
       # restore default hash behavior
       C.DEFAULT_HASH_BEHAVIOUR = saved_hash_behavior
+
+   def test_with_tree(self):
+       srcdir = self.test_dir
+       tgtdir = os.path.join('/tmp', 'ansible_with_tree')
+       shutil.rmtree(tgtdir, ignore_errors=True)
+       # Run local because it's faster than SSH
+       actual = self._run('test/test_with_tree.yml', transport='local', extra_vars={'ansible_python_interpreter': sys.executable})
+       expected = {"localhost": {"unreachable": 0, "skipped": 0, "ok": 1, "changed": 1, "failures": 0}}
+       self.assertEqual(actual, expected)
+       # copy with_tree does NOT copy empty dirs, so we copy them over manually so we can use diff
+       self.assertEquals(subprocess.call(['find', srcdir, '-type', 'd', '-empty', '-exec', 'cp', '-r', '{}', tgtdir, ';']), 0)
+       self.assertEquals(subprocess.call(['diff', '-qr', srcdir, tgtdir]), 0)
+       shutil.rmtree(tgtdir, ignore_errors=True)
