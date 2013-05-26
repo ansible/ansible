@@ -77,11 +77,10 @@ class RabbitMqParameter(object):
         self._value = None
 
         self._rabbitmqctl = module.get_bin_path('rabbitmqctl', True)
-        self._env = module.get_bin_path('env', True)
 
     def _exec(self, args, run_in_check_mode=False):
         if not self.module.check_mode or (self.module.check_mode and run_in_check_mode):
-            cmd = [self._env, 'RABBITMQ_NODENAME=%s' % self.node, self._rabbitmqctl, '-q']
+            cmd = [self._rabbitmqctl, '-q', '-n', self.node]
             rc, out, err = self.module.run_command(cmd + args, check_rc=True)
             return out.splitlines()
         return list()
