@@ -7,7 +7,64 @@ DOCUMENTATION = '''
 ---
 module: keystone_user
 short_description: Manage OpenStack Identity (keystone) users, tenants and roles
-requirements: [ python-keystoneclient ]
+description:
+   - Manage users,tenants, roles from OpenStack.
+options:
+   login_user:
+     description:
+        - login username to authenticate to keystone
+     required: false
+     default: admin
+   login_password:
+     description:
+        - Password of login user
+     required: false
+     default: True
+   token:
+     description:
+        - The token to be uses in case the password is not specified
+     required: false
+     default: None
+   endpoint:
+     description:
+        - The keystone url for authentication
+     required: false
+     default: 'http://127.0.0.1:35357/v2.0/'
+   user:
+     description:
+        - The name of the user that has to added/removed from openstack
+     required: false
+     default: None
+   password:
+     description:
+        - The password to be assigned to the user
+     required: false
+     default: None
+   tenant:
+     description:
+        - The tenant name that has be added/removed
+     required: false
+     default: None
+   description:
+     description:
+        - A description for the tenant
+     required: false
+     default: None
+   email:
+     description:
+        - An email address for the user
+     required: false
+     default: None
+   role:
+     description:
+        - The name of the role to be assigned or created
+     required: false
+     default: None
+   state:
+     description:
+        - Indicate desired state of the resource
+     choices: ['present', 'absent']
+     default: present
 examples:
    - code: 'keystone_user: tenant=demo tenant_description="Default Tenant"'
      description: Create a tenant
@@ -15,6 +72,7 @@ examples:
      description: Create a user
    - code: 'keystone_user: role=admin user=john tenant=demo'
      description: Apply the admin role to the john user in the demo tenant
+requirements: [ python-keystoneclient ]
 author: Lorin Hochstein
 '''
 
