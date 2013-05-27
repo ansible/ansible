@@ -54,18 +54,18 @@ options:
     aliases: []
   wait_for_handoffs:
     description:
-      - Waits for handoffs to complete before continuing.  This can take awhile and should generally be used with async mode.
+      - Number of seconds to wait for handoffs to complete.
     required: false
     default: null
     aliases: []
-    type: 'bool'
+    type: 'int'
   wait_for_ring:
     description:
-      - Waits for all nodes to agree on the status of the ring
+      - Number of seconds to wait for all nodes to agree on the ring.
     required: false
     default: null
     aliases: []
-    type: 'bool'
+    type: 'int'
   wait_for_service:
     description:
       - Waits for a riak service to come online before continuing.
@@ -107,8 +107,8 @@ def main():
         config_dir=dict(default='/etc/riak'),
         http_conn=dict(required=False, default='127.0.0.1:8098'),
         target_node=dict(default='riak@127.0.0.1', required=False),
-        wait_for_handoffs=dict(default=None, type='bool'),
-        wait_for_ring=dict(default=None, type='bool'),
+        wait_for_handoffs=dict(default=False, type='int'),
+        wait_for_ring=dict(default=False, type='int'),
         wait_for_service=dict(
             required=False, default=None, choices=['kv'])
     )
@@ -156,6 +156,7 @@ def main():
             time.sleep(5)
         except Exception, e:
             module.fail_json(msg='Could not fetch Riak stats: %s' % e)
+
 
 # here we attempt to load those stats,
     try:
@@ -219,16 +220,18 @@ def main():
     rc = 0
     err = ''
     out = ''
-    wait = 0
 
 # this could take a while, recommend to run in async mode
     if wait_for_handoffs:
-        while wait == 0:
+        timeout = time.time() + wait_for_handoffs
+        while True:
             rc, out, err = module.run_command('riak-admin transfers 2> /dev/null')
             if out.find('No transfers active') != -1:
                 result['handoffs'] = 'No transfers active.'
                 break
             time.sleep(10)
+            if time.time () > timeout:
+                module.fail_json(msg='Timeout waiting for handoffs.')
 
 # this could take a while, recommend to run in async mode
     if wait_for_service:
@@ -238,10 +241,14 @@ def main():
 
 
     if wait_for_ring:
-        while wait == 0:
+        timeout = time.time() + wait_for_ring
+        while True:
             if ring_check():
                 break
             time.sleep(10)
+            wait += 10
+        if time.time () > timeout:
+            module.fail_json(msg='Timeout waiting for nodes to agree on ring.')
 
     result['ring_ready'] = ring_check()
 
