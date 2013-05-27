@@ -8,6 +8,9 @@ DOCUMENTATION = '''
 module: keystone_user
 short_description: Manage OpenStack Identity (keystone) users, tenants and roles
 requirements: [ python-keystoneclient ]
+options:
+    tenant:
+        default: null
 examples:
    - code: 'keystone_user: tenant=demo tenant_description="Default Tenant"'
      description: Create a tenant
