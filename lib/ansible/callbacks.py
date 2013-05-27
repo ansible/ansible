@@ -322,6 +322,10 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
         super(CliRunnerCallbacks, self).on_failed(host, res, ignore_errors=ignore_errors)
 
     def on_ok(self, host, res):
+        # hide magic variables used for ansible-playbook
+        res.pop('verbose_override', None)
+        res.pop('verbose_always', None)
+
         self._on_any(host,res)
         super(CliRunnerCallbacks, self).on_ok(host, res)
 
