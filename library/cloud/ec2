@@ -19,7 +19,8 @@ DOCUMENTATION = '''
 module: ec2
 short_description: create an instance in ec2, return instanceid
 description:
-     - creates ec2 instances and optionally waits for it to be 'running'. This module has a dependency on python-boto >= 2.5
+     - Creates ec2 instances and optionally waits for it to be 'running'. This module has a dependency on python-boto >= 2.5
+     - See an example of how to start and provision servers on EC2 using Ansible and this module at https://github.com/ansible/ansible/blob/devel/plugins/inventory/ec2.py
 version_added: "0.9"
 options:
   key_name:
