@@ -120,7 +120,7 @@ class Facts(object):
                  { 'path' : '/bin/opkg',            'name' : 'opkg' },
                  { 'path' : '/opt/local/bin/pkgin', 'name' : 'pkgin' },
                  { 'path' : '/opt/local/bin/port',  'name' : 'macports' },
-                 { 'path' : '/sbin/apk',            'name' : 'apk' }, 
+                 { 'path' : '/sbin/apk',            'name' : 'apk' },
     ]
 
     def __init__(self):
@@ -1068,7 +1068,7 @@ class LinuxNetwork(Network):
         )
 
         for path in glob.glob('/sys/class/net/*'):
-            if not os.path.isdir(path): 
+            if not os.path.isdir(path):
                 continue
             device = os.path.basename(path)
             interfaces[device] = { 'device': device }
@@ -1115,7 +1115,7 @@ class LinuxNetwork(Network):
             output = subprocess.Popen([ip_path, 'addr', 'show', device], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
             for line in output.split('\n'):
 
-                if not line: 
+                if not line:
                     continue
                 words = line.split()
                 if words[0] == 'inet':
@@ -1184,7 +1184,7 @@ class GenericBsdIfconfigNetwork(Network):
     - interfaces (a list of interface names)
     - interface_<name> dictionary of ipv4, ipv6, and mac address information.
     - all_ipv4_addresses and all_ipv6_addresses: lists of all configured addresses.
-    It currently does not define 
+    It currently does not define
     - default_ipv4 and default_ipv6
     - type, mtu and network on interfaces
     """
@@ -1240,7 +1240,7 @@ class GenericBsdIfconfigNetwork(Network):
                 continue
             rc, out, err = module.run_command(command[v])
             if not out:
-                # v6 routing may result in 
+                # v6 routing may result in
                 #   RTNETLINK answers: Invalid argument
                 continue
             lines = out.split('\n')
@@ -1641,16 +1641,8 @@ def run_setup(module):
     # Look for the path to the facter and ohai binary and set
     # the variable to that path.
 
-    facter_path = None
-    ohai_path = None
-
-    for dir in os.environ['PATH'].split(':'):
-        facter = os.path.join(dir, 'facter')
-        if os.path.exists(facter):
-            facter_path = facter
-        ohai = os.path.join(dir, 'ohai')
-        if os.path.exists(ohai):
-            ohai_path = ohai
+    facter_path = module.get_bin_path('facter')
+    ohai_path = module.get_bin_path('ohai')
 
     # if facter is installed, and we can use --json because
     # ruby-json is ALSO installed, include facter data in the JSON
