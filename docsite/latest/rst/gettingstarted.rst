@@ -204,15 +204,19 @@ further information on using Portfiles with MacPorts.
 Ubuntu and Debian
 +++++++++++++++++
 
-Ubuntu builds are available `in a PPA here <https://launchpad.net/~rquillo/+archive/ansible>`_ and in 13.04 via 
+Ubuntu builds are available `in a PPA here <https://launchpad.net/~rquillo/+archive/ansible>`_.
+
+In Ubuntu 13.04 (raring) its part of the backports repository:
+
 .. code-block:: bash
 
- $ sudo apt-get install ansible/raring-backports
+    $ sudo apt-get install ansible/raring-backports
 
 In Debian testing/unstable and Ubntu 13.10+ it is available via
+
 .. code-block:: bash
 
- $ sudo apt-get install ansible
+    $ sudo apt-get install ansible
 
 Debian/Ubuntu package recipes can also be built from the source checkout, run:
 
