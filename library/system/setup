@@ -655,7 +655,7 @@ class SunOSHardware(Hardware):
         return self.facts
 
     def get_cpu_facts(self):
-        rc, out, err = module.run_command("/usr/sbin/kstat cpu_info")
+        rc, out, err = module.run_command("/usr/bin/kstat cpu_info")
         self.facts['processor'] = []
         for line in out.split('\n'):
             if len(line) < 1:
