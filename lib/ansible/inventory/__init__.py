@@ -233,7 +233,8 @@ class Inventory(object):
                 groups[g.name] = [h.name for h in g.get_hosts()]
                 ancestors = g.get_ancestors()
                 for a in ancestors:
-                    groups[a.name] = [h.name for h in a.get_hosts()]
+                    if a.name not in groups:
+                        groups[a.name] = [h.name for h in a.get_hosts()]
             self._groups_list = groups
         return self._groups_list
 
