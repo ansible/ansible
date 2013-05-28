@@ -210,7 +210,7 @@ Ubuntu builds are available `in a PPA here <https://launchpad.net/~rquillo/+arch
  $ sudo apt-get install ansible/raring-backports
 
 In Debian testing/unstable and Ubntu 13.10+ it is available via
-.. code-block:: bach
+.. code-block:: bash
 
  $ sudo apt-get install ansible
 
