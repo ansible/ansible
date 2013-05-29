@@ -52,6 +52,7 @@ The top level of the directory would contain files and directories like so::
                 ntp.conf.j2   #  <------- templates end in .j2
             files/            #
                 bar.txt       #  <-- files for use with the copy resource
+                foo.sh        #  <-- script files for use with the script resource
 
         webtier/              # same kind of structure as "common" was above, done for the webtier role
         monitoring/           # ""
