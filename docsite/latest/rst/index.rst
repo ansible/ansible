@@ -59,6 +59,9 @@ Specific Solutions
 
 A chance to dive into some more topics in depth:
 
+.. toctree::
+   :maxdepth: 1
+
    amazon_web_services
 
 Developer Information
