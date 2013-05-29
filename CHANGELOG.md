@@ -26,22 +26,20 @@ Core Features:
 
 Modules added:
 
-* rax: module for creating instances in the rackspace cloud (uses pyrax)
-* npm: node.js package management
-* postgresql_priv: manages postgresql priveledges
-* set_fact: sets a variable, which can be the result of a template evaluation
-* hipchat: send notification events to hipchat
-* ec2_elb: add and remove machines from ec2 elastic load balancers
-* flowdock: send messages to flowdock during playbook runs
-* pkgng: next-gen package manager for FreeBSD
-* bigip_pool: load balancing with F5s
-* newrelic_deployment: notifies newrelic of new deployments
-* campfire: send messages to campfire during playbook runs
-* mqtt: send messages to the Mosquitto message bus
-* irc: send messages to IRC channels
-* filesystem - a wrapper around mkfs
-* jabber: send jabber chat messages
-* osx_say: make OS X say things out loud
+* cloud: rax: module for creating instances in the rackspace cloud (uses pyrax)
+* packages: npm: node.js package management
+* packages: pkgng: next-gen package manager for FreeBSD
+* database: postgresql_priv: manages postgresql priveledges
+* networking: bigip_pool: load balancing with F5s
+* networking: ec2_elb: add and remove machines from ec2 elastic load balancers
+* notification: hipchat: send notification events to hipchat
+* notification: flowdock: send messages to flowdock during playbook runs
+* notification: campfire: send messages to campfire during playbook runs
+* notification: mqtt: send messages to the Mosquitto message bus
+* notification: irc: send messages to IRC channels
+* notification: filesystem - a wrapper around mkfs
+* notification: jabber: send jabber chat messages
+* notification: osx_say: make OS X say things out loud
 * openstack: keystone_user
 * openstack: glance_image
 * openstack: nova_compute
@@ -53,7 +51,12 @@ Modules added:
 * openstack: quantum_router_gateway
 * openstack: quantum_router_interface
 * openstack: quantum_subnet
-* airbrake_deployment - notify airbrake of new deployments
+* monitoring: newrelic_deployment: notifies newrelic of new deployments
+* monitoring: airbrake_deployment - notify airbrake of new deployments
+* monitoring: pingdom
+* monitoring: pagerduty
+* monitoring: monit
+* utility: set_fact: sets a variable, which can be the result of a template evaluation
 
 Modules removed
 
@@ -119,7 +122,8 @@ the variable is still registered for the host, with the attribute skipped: True.
 * pip works better when sudoing from unpriveledged users
 * fix for user creation with groups specification reporting 'changed' incorrectly in some cases
 * fix for some unicode encoding errors in outputing some data in verbose mode
-* 
+* improved NetBSD and Solaris facts
+* debug module always outputs data without having to specify -v
 
 1.1 "Mean Street" -- 4/2/2013
 
