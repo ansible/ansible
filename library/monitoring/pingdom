@@ -53,13 +53,16 @@ options:
         choices: []
         aliases: []
         version_added: 0.1
-examples:
-    - code: pingdom uid=example@example.com passwd=password123 key=apipassword123 checkid=12345 state=paused
-      description: Pause the check with the ID of 12345.
-    - code: pingdom uid=example@example.com passwd=password123 key=apipassword123 checkid=12345 state=running
-      description: Unpause the check with the ID of 12345.
 notes:
     - This module does not yet have support to add/remove checks.
+'''
+
+EXAMPLES = '''
+# Pause the check with the ID of 12345.
+pingdom: uid=example@example.com passwd=password123 key=apipassword123 checkid=12345 state=paused
+
+# Unpause the check with the ID of 12345.
+pingdom: uid=example@example.com passwd=password123 key=apipassword123 checkid=12345 state=running
 '''
 
 import pingdom
