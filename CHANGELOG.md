@@ -122,7 +122,7 @@ the variable is still registered for the host, with the attribute skipped: True.
 * pip works better when sudoing from unpriveledged users
 * fix for user creation with groups specification reporting 'changed' incorrectly in some cases
 * fix for some unicode encoding errors in outputing some data in verbose mode
-* improved NetBSD and Solaris facts
+* improved FreeBSD, NetBSD and Solaris facts
 * debug module always outputs data without having to specify -v
 
 1.1 "Mean Street" -- 4/2/2013
