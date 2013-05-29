@@ -177,7 +177,7 @@ deb: debian
 # for arch or gentoo, read instructions in the appropriate 'packaging' subdirectory directory
 
 modulepages:
-	PYTHONPATH=./lib $(PYTHON) hacking/module_formatter.py -A $(VERSION) -t man -o docs/man/man3/ --module-dir=library --template-dir=hacking/templates
+	PYTHONPATH=./lib $(PYTHON) hacking/module_formatter.py -A $(VERSION) -t man -o docs/man/man3/ --module-dir=library --template-dir=hacking/templates --verbose
 
 # because this requires Sphinx it is not run as part of every build, those building the RPM and so on can ignore this
 

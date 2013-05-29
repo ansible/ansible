@@ -27,9 +27,9 @@ except ImportError:
 DOCUMENTATION = '''
 ---
 module: quantum_floating_ip_associate
-short_description: Associate/Disassociate a particular floating ip with an instance
+short_description: Associate or disassociate a particular floating ip with an instance
 description:
-   - Associates or disassociate's a specific floating ip with a particular instance
+   - Associates or disassociates a specific floating ip with a particular instance
 options:
    login_username:
      description:
@@ -38,44 +38,45 @@ options:
      default: admin
    login_password:
      description:
-        - Password of login user
+        - password of login user
      required: true
      default: True
    login_tenant_name:
      description:
-        - The tenant name of the login user
+        - the tenant name of the login user
      required: true
-     default: True
+     default: true
    auth_url:
      description:
-        - The keystone url for authentication
+        - the keystone url for authentication
      required: false
      default: 'http://127.0.0.1:35357/v2.0/'
    region_name:
      description:
-        - Name of the region
+        - name of the region
      required: false
      default: None
    state:
      description:
-        - Indicate desired state of the resource
+        - indicates the desired state of the resource
      choices: ['present', 'absent']
      default: present
    instance_name:
      description:
-        - Name of the instance to which the public ip should be assigned
+        - name of the instance to which the public ip should be assigned
      required: true
      default: None
    ip_address:
      description:
-        - Floating ip that should be assigned to the instance
+        - floating ip that should be assigned to the instance
      required: true
      default: None
-examples:
-  - code: "quantum_floating_ip_associate: state=present login_username=admin login_password=admin login_tenant_name=admin
-                                          ip_address=1.1.1.1 instance_name=vm1"
-    description: "Associate a specific floating ip with an Instance"
 requirements: ["quantumclient", "keystoneclient"]
+'''
+
+EXAMPLES = '''
+# Associate a specific floating ip with an Instance
+quantum_floating_ip_associate: state=present login_username=admin login_password=admin login_tenant_name=admin ip_address=1.1.1.1 instance_name=vm1
 '''
 
 def _get_ksclient(module, kwargs):
