@@ -67,15 +67,19 @@ options:
         choices: []
         aliases: []
         version_added: 0.1
-examples:
-    - code: pagerduty name=companyabc user=example@example.com passwd=password123 state=ongoing"
-      description: List ongoing maintenance windows.
-    - code: pagerduty name=companyabc user=example@example.com passwd=password123 state=running service=FOO123"
-      description: Create a 1 hour maintenance window for service FOO123.
-    - code: pagerduty name=companyabc user=example@example.com passwd=password123 state=running service=FOO123 hours=4 desc=deployment"
-      description: Create a 4 hour maintenance window for service FOO123 with the description "deployment".
 notes:
     - This module does not yet have support to end maintenance windows.
+'''
+
+EXAMPLES='''
+# List ongoing maintenance windows.
+pagerduty: name=companyabc user=example@example.com passwd=password123 state=ongoing
+
+# Create a 1 hour maintenance window for service FOO123.
+pagerduty: name=companyabc user=example@example.com passwd=password123 state=running service=FOO123"
+
+# Create a 4 hour maintenance window for service FOO123 with the description "deployment".
+pagerduty: name=companyabc user=example@example.com passwd=password123 state=running service=FOO123 hours=4 desc=deployment"
 '''
 
 import json
