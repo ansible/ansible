@@ -6,7 +6,7 @@ module: pagerduty
 short_description: Create PagerDuty maintenance windows
 description:
     - This module will let you create PagerDuty maintenance windows
-version_added: 0.1
+version_added: "1.2"
 author: Justin Johns
 requirements:
     - PagerDuty API access
@@ -18,7 +18,6 @@ options:
         default: null
         choices: [ "running", "started", "ongoing" ]
         aliases: []
-        version_added: 0.1
     name:
         description:
             - PagerDuty unique subdomain.
@@ -26,7 +25,6 @@ options:
         default: null
         choices: []
         aliases: []
-        version_added: 0.1
     user:
         description:
             - PagerDuty user ID.
@@ -34,7 +32,6 @@ options:
         default: null
         choices: []
         aliases: []
-        version_added: 0.1
     passwd:
         description:
             - PagerDuty user password.
@@ -42,7 +39,6 @@ options:
         default: null
         choices: []
         aliases: []
-        version_added: 0.1
     service:
         description:
             - PagerDuty service ID.
@@ -50,7 +46,6 @@ options:
         default: null
         choices: []
         aliases: []
-        version_added: 0.1
     hours:
         description:
             - Length of maintenance window in hours.
@@ -58,7 +53,6 @@ options:
         default: 1
         choices: []
         aliases: []
-        version_added: 0.1
     desc:
         description:
             - Short description of maintenance window.
@@ -66,7 +60,6 @@ options:
         default: Created by Ansible
         choices: []
         aliases: []
-        version_added: 0.1
 notes:
     - This module does not yet have support to end maintenance windows.
 '''
