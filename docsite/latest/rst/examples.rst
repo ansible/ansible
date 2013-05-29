@@ -216,11 +216,12 @@ shell commands or software upgrades only.  Backgrounding the copy module does no
 Gathering Facts
 ```````````````
 
-For each system facts are gathered. These can be used to implement conditional execution of tasks but also just to get ad-hoc information about your system. You can see all facts via::
+Facts are described in the playbooks section and represent discovered variables about a
+system.  These can be used to implement conditional execution of tasks but also just to get ad-hoc information about your system. You can see all facts via::
 
     $ ansible all -m setup
 
-Its also possible to filter via and export the facts, see the "setup" module documentation for details how to do that.
+Its also possible to filter this output to just export certain facts, see the "setup" module documentation for details.
 
 
 Limiting Selected Hosts
