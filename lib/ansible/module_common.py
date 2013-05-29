@@ -815,7 +815,7 @@ class AnsibleModule(object):
             self.fail_json(msg='Could not make backup of %s to %s: %s' % (fn, backupdest, e))
         return backupdest
 
-    def cleanup(tmpfile):
+    def cleanup(self,tmpfile):
         if os.path.exists(tmpfile):
             try:
                 os.unlink(tmpfile)
@@ -856,7 +856,7 @@ class AnsibleModule(object):
                 # rename might not preserve context
                 self.set_context_if_different(dest, context, False)
         except (shutil.Error, OSError, IOError), e:
-            cleanup(tmp_dest)
+            self.cleanup(tmp_dest)
             self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
 
     def run_command(self, args, check_rc=False, close_fds=False, executable=None, data=None):
