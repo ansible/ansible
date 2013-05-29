@@ -621,7 +621,7 @@ class Runner(object):
     # *****************************************************
 
     def _remote_md5(self, conn, tmp, path):
-        ''' takes a remote md5sum without requiring python, and returns 0 if no file '''
+        ''' takes a remote md5sum without requiring python, and returns 1 if no file '''
 
         path = pipes.quote(path)
         # The following test needs to be SH-compliant.  BASH-isms will
