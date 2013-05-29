@@ -281,6 +281,12 @@ As a reminder, to see what derived variables are available, you can do::
 
     ansible hostname.example.com -m setup
 
+Tip: Sometimes you'll get back a variable that's a string and you'll want to do a comparison on it.  You can do this like so:
+
+    tasks:
+      - shell: echo "only on Red Hat 6, derivatives, and later"
+        when: ansible_os_family == "RedHat" and ansible_lsb.major_version|int >= 6
+
 Variables defined in the playbooks or inventory can also be used.
 
 If a required variable has not been set, you can skip or fail using Jinja2's 
