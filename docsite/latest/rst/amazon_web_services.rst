@@ -52,7 +52,7 @@ By registering the return its then possible to dynamically create a host group c
     tasks:
     - name: Add all instance public IPs to host group
       local_action: add_host hostname={{ item.public_ip }} groupname=ec2hosts
-      with_items: '{{ ec2.instances }}'
+      with_items: ec2.instances
 
 With the host group now created, the second play in your provision playbook might now have some configuration steps::
 
@@ -129,16 +129,22 @@ And in your playbook::
 Pending Information
 ===================
 
-In the future look here for more topics on:
+In the future look here for more topics.
 
-Using Ansible's S3 modules
---------------------------
+Using Ansible's S3 module
+`````````````````````````
+
+these modules are documented on the module page, more walk throughs coming soon
 
 Using Ansible's Elastic Load Balancer Support
----------------------------------------------
+`````````````````````````````````````````````
+
+these modules are documented on the module page, more walk throughs coming soon
 
 Using Ansible's Cloud Formation Module
---------------------------------------
+``````````````````````````````````````
+
+these modules are documented on the module page, more walk throughs coming soon
 
 .. seealso::
 
