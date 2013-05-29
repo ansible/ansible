@@ -6,7 +6,7 @@ module: pingdom
 short_description: Pause/unpause Pingdom alerts
 description:
     - This module will let you pause/unpause Pingdom alerts
-version_added: 0.1
+version_added: "1.2"
 author: Justin Johns
 requirements:
     - "pingdom python library"
@@ -18,7 +18,6 @@ options:
         default: null
         choices: [ "running", "paused" ]
         aliases: []
-        version_added: 0.1
     checkid:
         description:
             - Pingdom ID of the check.
@@ -26,7 +25,6 @@ options:
         default: null
         choices: []
         aliases: []
-        version_added: 0.1
     uid:
         description:
             - Pingdom user ID.
@@ -34,7 +32,6 @@ options:
         default: null
         choices: []
         aliases: []
-        version_added: 0.1
     passwd:
         description:
             - Pingdom user password.
@@ -42,7 +39,6 @@ options:
         default: null
         choices: []
         aliases: []
-        version_added: 0.1
     key:
         description:
             - Pingdom API key.
@@ -50,7 +46,6 @@ options:
         default: null
         choices: []
         aliases: []
-        version_added: 0.1
 notes:
     - This module does not yet have support to add/remove checks.
 '''
