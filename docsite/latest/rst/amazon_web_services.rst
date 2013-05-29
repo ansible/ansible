@@ -1,10 +1,5 @@
-Getting Started in EC2
-======================
-
-.. image:: http://ansible.cc/docs/_static/ansible_fest_2013.png
-   :alt: ansiblefest 2013
-   :target: http://ansibleworks.com/fest
-
+Amazon Web Services
+===================
 
 .. contents::
    :depth: 2
@@ -13,9 +8,9 @@ Getting Started in EC2
 Introduction
 ````````````
 
-Ansible contains a number of core modules for interacting with Amazon Web Services (AWS) and other API compatible private clouds, such as Eucalyptus.  This page illustrates some use cases for provisioning and managing hosts EC2 resources.
+Ansible contains a number of core modules for interacting with Amazon Web Services (AWS) and other API compatible private clouds, such as Eucalyptus.  (There are other supported cloud systems, but this documentation is about AWS ones).  This page illustrates some use cases for provisioning and managing hosts EC2 resources.
 
-Requirements for the AWS modules are minimal.  All of the modules require and are tested against boto 2.5 or higher. You'll need this Python module installed on the execution host. `Use EPEL <http://fedoraproject.org/wiki/EPEL>``_ and install as follows under RHEL/CentOS:
+Requirements for the AWS modules are minimal.  All of the modules require and are tested against boto 2.5 or higher. You'll need this Python module installed on the execution host. If you are using Red Hat Enterprise Linux or CentOS, install boto from `EPEL <http://fedoraproject.org/wiki/EPEL>`_:
 
 .. code-block:: bash
 
@@ -24,7 +19,7 @@ Requirements for the AWS modules are minimal.  All of the modules require and ar
 Provisioning
 ````````````
 
-The ec2 module provides the ability to provision instance(s) within EC2.  You may wish to use Ansible in task-execution mode or create a simple provisioning playbook. Typically the provisioning task will be performed against your Ansible master server as a local_action.  
+The ec2 module provides the ability to provision instance(s) within EC2.  Typically the provisioning task will be performed against your Ansible master server as a local_action.  
 
 .. note::
 
@@ -36,9 +31,10 @@ The ec2 module provides the ability to provision instance(s) within EC2.  You ma
 
    To talk to specific endpoints, the environmental variable EC2_URL
    can be set.  This is useful if using a private cloud like Eucalyptus, 
-   exporting the variable as EC2_URL=https://myhost:8773/services/Eucalyptus
+   exporting the variable as EC2_URL=https://myhost:8773/services/Eucalyptus.
+   This can be set using the 'environment' keyword in Ansible if you like.
 
-Provisioning a number of instances in task execution mode:
+Provisioning a number of instances in ad-hoc mode mode:
 
 .. code-block:: bash
 
@@ -48,10 +44,10 @@ In a play, this might look like (assuming the parameters are held as vars)::
 
     tasks:
     - name: Provision a set of instances
-      local_action: ec2 keypair=$mykeypair group=$security_group instance_type=$instance_type image=$image wait=true count=$number
+      local_action: ec2 keypair={{mykeypair}} group={{security_group}} instance_type={{instance_type}} image={{image}} wait=true count={{number}}
       register: ec2
                   
-By registering the return its then possible to dynamically create a host group consisting of these new instances.  This facilitates performing configuration actions on the hosts in a subsequent play::
+By registering the return its then possible to dynamically create a host group consisting of these new instances.  This facilitates performing configuration actions on the hosts immediately in a subsequent play::
 
     tasks:
     - name: Add all instance public IPs to host group
@@ -77,9 +73,9 @@ Advanced Usage
 Host Inventory
 ++++++++++++++
 
-How can provisioning be decoupled from typical management of the hosts? 
+Once your nodes are spun up, you'll probably want to talk to them again.  The best way to handle his is to use the ec2 inventory plugin.
 
-For larger environments and those looking toward production use, you may wish to use provisioning playbooks utilizing the various AWS-related modules, or use your own favourite tool (perhaps basic CloudFormation templates) to create resources in EC2. Once these are created and you wish to configure them, the EC2 API can be used to return system grouping with the help of the EC2 inventory script. This script can be used to group resources by their security group or tags. Tagging is highly recommended in EC2 and can provide an easy way to sort between host groups and roles. The inventory script is documented `here <http://ansible.cc/docs/api.html#external-inventory-scripts>`_.
+Even for larger environments, you might have nodes spun up from Cloud Formations or other tooling.  You don't have to use Ansible to spin up guests.  Once these are created and you wish to configure them, the EC2 API can be used to return system grouping with the help of the EC2 inventory script. This script can be used to group resources by their security group or tags. Tagging is highly recommended in EC2 and can provide an easy way to sort between host groups and roles. The inventory script is documented `here <http://ansible.cc/docs/api.html#external-inventory-scripts>`_.
 
 You may wish to schedule a regular refresh of the inventory cache to accomodate for frequent changes in resources:
 
@@ -96,6 +92,8 @@ For some the delay between refreshing host information and acting on that host i
 
 More information on pull-mode playbooks can be found `here <http://ansible.cc/docs/playbooks2.html#pull-mode-playbooks>`_.
 
+(Various developments around Ansible are also going to make this easier in the near future.  Stay tuned!)
+
 Use Cases
 `````````
 
@@ -111,7 +109,7 @@ Provision instances with your tool of choice and consider using the inventory pl
 Example 2
 +++++++++
 
-    Example 2: I'm using AutoScaling to dynamically scale up and scale down the number of instances. This means the number of hosts is constantly fluctuatingi but I'm letting EC2 automatically handle the provisioning of these instances.  I don't want to fully bake a machine image, I'd like to use Ansible to configure the hosts.
+    Example 2: I'm using AutoScaling to dynamically scale up and scale down the number of instances. This means the number of hosts is constantly fluctuating but I'm letting EC2 automatically handle the provisioning of these instances.  I don't want to fully bake a machine image, I'd like to use Ansible to configure the hosts.
 
 There are two approaches to this use case.  The first is to use the inventory plugin to regularly refresh host information and then target hosts based on the latest inventory data.  The second is to use ansible-pull triggered by a user-data script (specified in the launch configuration) which would then mean that each instance would fetch Ansible and the latest playbook from a git repository and run locally to configure itself.
 
@@ -120,8 +118,27 @@ Example 3
 
     Example 3: I don't want to use Ansible to manage my instances but I'd like to consider using Ansible to build my fully-baked machine images.
 
-There's nothing to stop you doing this. If you like working with Ansible's playbook format then writing a playbook to create an image; create an image file with dd, give it a filesystem and then install packages and finally chroot into it for further configuration.
+There's nothing to stop you doing this. If you like working with Ansible's playbook format then writing a playbook to create an image; create an image file with dd, give it a filesystem and then install packages and finally chroot into it for further configuration.  Ansible has the 'chroot' plugin for this purpose, just add the following to your inventory file::
 
+    /chroot/path ansible_connection=chroot
+
+And in your playbook::
+
+    hosts: /chroot/path
+
+Pending Information
+===================
+
+In the future look here for more topics on:
+
+Using Ansible's S3 modules
+--------------------------
+
+Using Ansible's Elastic Load Balancer Support
+---------------------------------------------
+
+Using Ansible's Cloud Formation Module
+--------------------------------------
 
 .. seealso::
 
