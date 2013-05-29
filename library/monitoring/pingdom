@@ -9,9 +9,7 @@ description:
 version_added: 0.1
 author: Justin Johns
 requirements:
-    - pingdom Python library. Install using either of the following:
-    - pip install pingdom
-    - easy_install pingdom
+    - "pingdom python library"
 options:
     state:
         description:
