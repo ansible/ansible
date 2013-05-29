@@ -414,7 +414,11 @@ The yum and apt modules use with_items to execute fewer package manager transact
 Note that the types of items you iterate over with 'with_items' do not have to be simple lists of strings.
 If you have a list of hashes, you can reference subkeys using things like::
 
-    {{ item.subKeyName }}
+    - name: add several users
+      action: user name={{ item.name }} state=present groups={{ item.groups }}
+      with_items:
+        - { name: 'testuser1', groups: 'wheel' }
+        - { name: 'testuser2', groups: 'root' }
 
 Lookup Plugins - Accessing Outside Data
 ```````````````````````````````````````
