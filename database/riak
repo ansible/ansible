@@ -54,18 +54,18 @@ options:
     aliases: []
   wait_for_handoffs:
     description:
-      - Waits for handoffs to complete before continuing.  This can take awhile and should generally be used with async mode.
+      - Number of seconds to wait for handoffs to complete.
     required: false
     default: null
     aliases: []
-    type: 'bool'
+    type: 'int'
   wait_for_ring:
     description:
-      - Waits for all nodes to agree on the status of the ring
+      - Number of seconds to wait for all nodes to agree on the ring.
     required: false
     default: null
     aliases: []
-    type: 'bool'
+    type: 'int'
   wait_for_service:
     description:
       - Waits for a riak service to come online before continuing.
@@ -91,58 +91,12 @@ import json
 import time
 
 
-def is_number(s):
-    try:
-        float(s)
-        return True
-    except ValueError:
-        return False
-
 def ring_check():
     rc, out, err = module.run_command('riak-admin ringready 2> /dev/null')
     if rc == 0 and out.find('TRUE All nodes agree on the ring') != -1:
         return True
     else:
         return False
-
-def status_to_json():
-    # remove all unnecessary symbols and whitespace
-    stats = ''
-    rc, out, err = module.run_command("riak-admin status 2> /dev/null")
-    if rc == 0:
-        raw_stats = out
-    else:
-        module.fail_json(msg="Could not properly gather stats")
-
-    for line in raw_stats.splitlines():
-        stats += line.strip() + '\n'
-
-    stats = stats.replace('<<', '').replace('>>', '')
-    stats = stats.replace('\\n', '').replace(',\n', ',')
-    stats = stats.replace(": '", ': ').replace("'\n", "\n")
-    stats = stats.replace(': "[', ': [').replace(']"\n', "]\n")
-
-    stats = stats.replace('"', "'")
-
-    matchObj = re.compile(r"^(.*) : (.*)", re.M | re.I)
-
-    json_stats = '{'
-
-    for match in matchObj.finditer(stats):
-        key, value = match.groups()
-
-        if (value[0] == "'"):
-            value = value[1:-1]
-
-        if not is_number(value):
-            value = '"' + value + '"'
-        json_stats += '"' + key + '":' + value + ','
-
-    json_stats = json_stats[0:-1]
-    json_stats += '}'
-
-    return json_stats
-
 
 def main():
 
@@ -153,8 +107,8 @@ def main():
         config_dir=dict(default='/etc/riak'),
         http_conn=dict(required=False, default='127.0.0.1:8098'),
         target_node=dict(default='riak@127.0.0.1', required=False),
-        wait_for_handoffs=dict(default=False, type='bool'),
-        wait_for_ring=dict(default=False, type='bool'),
+        wait_for_handoffs=dict(default=False, type='int'),
+        wait_for_ring=dict(default=False, type='int'),
         wait_for_service=dict(
             required=False, default=None, choices=['kv'])
     )
@@ -187,22 +141,32 @@ def main():
     else:
         module.fail_json(msg='Could not determine Riak version')
 
-    try:
-        stats_raw = urllib2.urlopen(
-            'http://%s/stats' % (http_conn), None, 5).read()
-    except urllib2.HTTPError, e:
-        stats_raw = status_to_json()
-    except urllib2.URLError, e:
-        stats_raw = status_to_json()
-    except Exception, e:
-        stats_raw = status_to_json()
+# here we attempt to get stats from the http stats interface for 120 seconds.
+    timeout = time.time() + 120
+    while True:
+        if time.time () > timeout:
+            module.fail_json(msg='Timeout, could not fetch Riak stats.')
+        try:
+            stats_raw = urllib2.urlopen(
+                'http://%s/stats' % (http_conn), None, 5).read()
+            break
+        except urllib2.HTTPError, e:
+            time.sleep(5)
+        except urllib2.URLError, e:
+            time.sleep(5)
+        except Exception, e:
+            module.fail_json(msg='Could not fetch Riak stats: %s' % e)
 
-    stats = json.loads(stats_raw)
+
+# here we attempt to load those stats,
+    try:
+        stats = json.loads(stats_raw)
+    except:
+        module.fail_json(msg='Timeout, could not parse Riak stats.')
 
     node_name = stats['nodename']
     nodes = stats['ring_members']
     ring_size = stats['ring_creation_size']
-
 
 
     result = {'node_name': node_name,
@@ -256,16 +220,18 @@ def main():
     rc = 0
     err = ''
     out = ''
-    wait = 0
 
 # this could take a while, recommend to run in async mode
     if wait_for_handoffs:
-        while wait == 0:
+        timeout = time.time() + wait_for_handoffs
+        while True:
             rc, out, err = module.run_command('riak-admin transfers 2> /dev/null')
             if out.find('No transfers active') != -1:
                 result['handoffs'] = 'No transfers active.'
                 break
             time.sleep(10)
+            if time.time () > timeout:
+                module.fail_json(msg='Timeout waiting for handoffs.')
 
 # this could take a while, recommend to run in async mode
     if wait_for_service:
@@ -275,10 +241,14 @@ def main():
 
 
     if wait_for_ring:
-        while wait == 0:
+        timeout = time.time() + wait_for_ring
+        while True:
             if ring_check():
                 break
             time.sleep(10)
+            wait += 10
+        if time.time () > timeout:
+            module.fail_json(msg='Timeout waiting for nodes to agree on ring.')
 
     result['ring_ready'] = ring_check()
 
