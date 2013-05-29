@@ -176,7 +176,7 @@ And in /srv/templates/motd.j2::
 
    You are logged into {{ facter_hostname }}
 
-But we're getting ahead of ourselves, as that just showed a task in a playbook.  Let's talk about tasks.
+But we're getting ahead of ourselves, as that just showed a task in a playbook ahead of schedule.  Let's talk about tasks.
 
 Tasks list
 ++++++++++
