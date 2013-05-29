@@ -54,6 +54,13 @@ ways to organize playbooks and the files they include, and we'll offer up some s
    YAMLSyntax
    Example Playbooks <https://github.com/ansible/ansible-examples>
 
+Specific Solutions
+``````````````````
+
+A chance to dive into some more topics in depth:
+
+   amazon_web_services
+
 Developer Information
 `````````````````````
 
