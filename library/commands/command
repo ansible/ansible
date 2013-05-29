@@ -95,7 +95,7 @@ def main():
         module.fail_json(rc=256, msg="no command given")
 
     if chdir:
-        os.chdir(os.path.expanduser(chdir))
+        os.chdir(chdir)
 
     if creates:
         # do not run the command if the line contains creates=filename
