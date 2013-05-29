@@ -669,8 +669,13 @@ class SunOSHardware(Hardware):
                 brand = ''
             elif key == 'brand':
                 brand = data[1].strip()
+            elif key == 'clock_MHz':
+                clock_mhz = data[1].strip()
             elif key == 'implementation':
                 processor = brand or data[1].strip()
+                # Add clock speed to description for SPARC CPU
+                if self.facts['machine'] != 'i86pc':
+                    processor += " @ " + clock_mhz + "MHz"
                 if 'processor' not in self.facts:
                     self.facts['processor'] = []
                 self.facts['processor'].append(processor)
