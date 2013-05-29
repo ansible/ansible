@@ -22,7 +22,7 @@ try:
     from keystoneclient.v2_0 import client as ksclient
     import time
 except ImportError:
-    print("failed=True msg='glanceclient,novaclient and keystone client are required'")
+    print "failed=True msg='glanceclient,novaclient and keystone client are required'"
 
 DOCUMENTATION = '''
 ---
@@ -130,9 +130,7 @@ def _get_server_state(module, nova):
     return server_info, server          
                                  
 def _get_port_id(quantum, module, instance_id):
-    kwargs = {
-        device_id': instance_id,
-    }
+    kwargs = dict(device_id = instance_id)
     try:
         ports = quantum.list_ports(**kwargs)
     except Exception as e:
