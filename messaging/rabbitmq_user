@@ -48,6 +48,11 @@ options:
       - vhost to apply access privileges.
     required: false
     default: /
+  node:
+    description:
+      - erlang node name of the rabbit we wish to configure
+    required: false
+    default: rabbit
   configure_priv:
     description:
       - Regular expression to restrict configure actions on a resource
@@ -87,10 +92,11 @@ examples:
 '''
 
 class RabbitMqUser(object):
-    def __init__(self, module, username, password, tags, vhost, configure_priv, write_priv, read_priv):
+    def __init__(self, module, username, password, tags, vhost, configure_priv, write_priv, read_priv, node):
         self.module = module
         self.username = username
         self.password = password
+        self.node = node
         if tags is None:
             self.tags = list()
         else:
@@ -110,7 +116,7 @@ class RabbitMqUser(object):
 
     def _exec(self, args, run_in_check_mode=False):
         if not self.module.check_mode or (self.module.check_mode and run_in_check_mode):
-            cmd = [self._rabbitmqctl, '-q']
+            cmd = [self._rabbitmqctl, '-q', '-n', self.node]
             rc, out, err = self.module.run_command(cmd + args, check_rc=True)
             return out.splitlines()
         return list()
@@ -179,7 +185,8 @@ def main():
         write_priv=dict(default='^$'),
         read_priv=dict(default='^$'),
         force=dict(default='no', type='bool'),
-        state=dict(default='present', choices=['present', 'absent'])
+        state=dict(default='present', choices=['present', 'absent']),
+        node=dict(default='rabbit')
     )
     module = AnsibleModule(
         argument_spec=arg_spec,
@@ -195,8 +202,9 @@ def main():
     read_priv = module.params['read_priv']
     force = module.params['force']
     state = module.params['state']
+    node = module.params['node']
 
-    rabbitmq_user = RabbitMqUser(module, username, password, tags, vhost, configure_priv, write_priv, read_priv)
+    rabbitmq_user = RabbitMqUser(module, username, password, tags, vhost, configure_priv, write_priv, read_priv, node)
 
     changed = False
     if rabbitmq_user.get():
