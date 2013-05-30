@@ -88,11 +88,12 @@ def main():
     if module.check_mode:
         changed = True
     else:
+        mkfs = module.get_bin_path('mkfs', required=True)
         cmd = None
         if opts is None:
-            cmd = "mkfs -t %s '%s'"%(fstype, dev)
+            cmd = "%s -t %s '%s'" % (mkfs, fstype, dev)
         else:
-            cmd = "mkfs -t %s %s '%s'"%(fstype, opts, dev)
+            cmd = "%s -t %s %s '%s'" % (mkfs, fstype, opts, dev)
         rc,_,err = module.run_command(cmd)
         if rc == 0:
             changed = True
