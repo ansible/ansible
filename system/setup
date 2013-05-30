@@ -1259,6 +1259,9 @@ class GenericBsdIfconfigNetwork(Network):
             all_ipv4_addresses = [],
             all_ipv6_addresses = [],
         )
+        # FreeBSD, DragonflyBSD, NetBSD, OpenBSD and OS X all implicitly add '-a'
+        # when running the command 'ifconfig'.
+        # Solaris must explicitly run the command 'ifconfig -a'.
         rc, out, err = module.run_command([ifconfig_path, '-a'])
 
         for line in out.split('\n'):
@@ -1355,7 +1358,8 @@ class GenericBsdIfconfigNetwork(Network):
             address['prefix'] = words[3]
         if (len(words) >= 6) and (words[4] == 'scopeid'):
             address['scope'] = words[5]
-        if not address['address'] == '::1' and not address['address'] == 'fe80::1%lo0':
+        localhost6 = ['::1', '::1/128', 'fe80::1%lo0']
+        if address['address'] not in localhost6:
             ips['all_ipv6_addresses'].append(address['address'])
         current_if['ipv6'].append(address)
 
@@ -1406,7 +1410,7 @@ class DarwinNetwork(GenericBsdIfconfigNetwork, Network):
 class FreeBSDNetwork(GenericBsdIfconfigNetwork, Network):
     """
     This is the FreeBSD Network Class.
-    It uses the GenericBsdIfconfigNetwork unchanged
+    It uses the GenericBsdIfconfigNetwork unchanged.
     """
     platform = 'FreeBSD'
 
@@ -1424,16 +1428,78 @@ class OpenBSDNetwork(GenericBsdIfconfigNetwork, Network):
 class SunOSNetwork(GenericBsdIfconfigNetwork, Network):
     """
     This is the SunOS Network Class.
-    It uses the GenericBsdIfconfigNetwork unchanged
+    It uses the GenericBsdIfconfigNetwork.
+
+    Solaris can have different FLAGS and MTU for IPv4 and IPv6 on the same interface
+    so these facts have been moved inside the 'ipv4' and 'ipv6' lists.
     """
     platform = 'SunOS'
 
-    # TODO:
-    # Solaris 10 duplicates entries with 'ifconfig -a' so IPv6 clobbers IPv4.
-    # Override get_interfaces_info() and run it twice for IPv4 and IPv6 like
-    # in get_default_interfaces().
-    # Need to push FLAGS inside ipv4[] and ipv6[] facts as they may differ.
-    # Possibly others too (e.g. mtu).
+    # Solaris 'ifconfig -a' will print interfaces twice, once for IPv4 and again for IPv6.
+    # MTU and FLAGS also may differ between IPv4 and IPv6 on the same interface.
+    # 'parse_interface_line()' checks for previously seen interfaces before defining
+    # 'current_if' so that IPv6 facts don't clobber IPv4 facts (or vice versa).
+    def get_interfaces_info(self, ifconfig_path):
+        interfaces = {}
+        current_if = {}
+        ips = dict(
+            all_ipv4_addresses = [],
+            all_ipv6_addresses = [],
+        )
+        rc, out, err = module.run_command([ifconfig_path, '-a'])
+
+        for line in out.split('\n'):
+
+            if line:
+                words = line.split()
+
+                if re.match('^\S', line) and len(words) > 3:
+                    current_if = self.parse_interface_line(words, current_if, interfaces)
+                    interfaces[ current_if['device'] ] = current_if
+                elif words[0].startswith('options='):
+                    self.parse_options_line(words, current_if, ips)
+                elif words[0] == 'nd6':
+                    self.parse_nd6_line(words, current_if, ips)
+                elif words[0] == 'ether':
+                    self.parse_ether_line(words, current_if, ips)
+                elif words[0] == 'media:':
+                    self.parse_media_line(words, current_if, ips)
+                elif words[0] == 'status:':
+                    self.parse_status_line(words, current_if, ips)
+                elif words[0] == 'lladdr':
+                    self.parse_lladdr_line(words, current_if, ips)
+                elif words[0] == 'inet':
+                    self.parse_inet_line(words, current_if, ips)
+                elif words[0] == 'inet6':
+                    self.parse_inet6_line(words, current_if, ips)
+                else:
+                    self.parse_unknown_line(words, current_if, ips)
+
+        # 'parse_interface_line' and 'parse_inet*_line' leave two dicts in the
+        # ipv4/ipv6 lists which is ugly and hard to read.
+        # This quick hack merges the dictionaries. Purely cosmetic.
+        for iface in interfaces:
+            for v in 'ipv4', 'ipv6':
+                combined_facts = {}
+                for facts in interfaces[iface][v]:
+                    combined_facts.update(facts)
+                if len(combined_facts.keys()) > 0:
+                    interfaces[iface][v] = [combined_facts]
+
+        return interfaces, ips
+
+    def parse_interface_line(self, words, current_if, interfaces):
+        device = words[0][0:-1]
+        if device not in interfaces.keys():
+            current_if = {'device': device, 'ipv4': [], 'ipv6': [], 'type': 'unknown'}
+        else:
+            current_if = interfaces[device]
+        flags = self.get_options(words[1])
+        if 'IPv4' in flags: v = 'ipv4'
+        if 'IPv6' in flags: v = 'ipv6'
+        current_if[v].append({'flags': flags, 'mtu': words[3]})
+        current_if['macaddress'] = 'unknown'    # will be overwritten later
+        return current_if
 
     # Solaris displays single digit octets in MAC addresses e.g. 0:1:2:d:e:f
     # Add leading zero to each octet where needed.
