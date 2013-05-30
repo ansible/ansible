@@ -665,7 +665,7 @@ class SunOSHardware(Hardware):
             data = line.split(None, 1)
             key = data[0].strip()
             # "brand" works on Solaris 10 & 11. "implementation" for Solaris 9.
-            if key == 'module':
+            if key == 'module:':
                 brand = ''
             elif key == 'brand':
                 brand = data[1].strip()
