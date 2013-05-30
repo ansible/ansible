@@ -262,8 +262,8 @@ Conditional Execution
 `````````````````````
 
 (Note: this section covers 1.2 conditionals, if you are using a previous version, select
-the previous version of the documentation.  Those conditional forms continue to be operational
-in 1.2, although the new mechanisms are cleaner.)
+the previous version of the documentation, `Ansible 1.1 Docs <http://ansible.cc/docs/released/1.1>`_ .  
+Those conditional forms continue to be operational in 1.2, although the new mechanisms are cleaner.)
 
 Sometimes you will want to skip a particular step on a particular host.  This could be something
 as simple as not installing a certain package if the operating system is a particular version,
@@ -414,7 +414,11 @@ The yum and apt modules use with_items to execute fewer package manager transact
 Note that the types of items you iterate over with 'with_items' do not have to be simple lists of strings.
 If you have a list of hashes, you can reference subkeys using things like::
 
-    {{ item.subKeyName }}
+    - name: add several users
+      action: user name={{ item.name }} state=present groups={{ item.groups }}
+      with_items:
+        - { name: 'testuser1', groups: 'wheel' }
+        - { name: 'testuser2', groups: 'root' }
 
 Lookup Plugins - Accessing Outside Data
 ```````````````````````````````````````

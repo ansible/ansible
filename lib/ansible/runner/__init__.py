@@ -710,9 +710,11 @@ class Runner(object):
                 module_style = 'non_native_want_json'
 
             complex_args_json = utils.jsonify(complex_args)
-            encoded_args = "\"\"\"%s\"\"\"" % module_args.replace("\"","\\\"")
-            encoded_lang = "\"\"\"%s\"\"\"" % C.DEFAULT_MODULE_LANG
-            encoded_complex = "\"\"\"%s\"\"\"" % complex_args_json.replace("\\", "\\\\")
+            # We force conversion of module_args to str because module_common calls shlex.split,
+            # a standard library function that incorrectly handles Unicode input before Python 2.7.3.
+            encoded_args = repr(str(module_args))
+            encoded_lang = repr(C.DEFAULT_MODULE_LANG)
+            encoded_complex = repr(complex_args_json)
 
             module_data = module_data.replace(module_common.REPLACER, module_common.MODULE_COMMON)
             module_data = module_data.replace(module_common.REPLACER_ARGS, encoded_args)

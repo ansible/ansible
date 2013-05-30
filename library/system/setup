@@ -121,6 +121,7 @@ class Facts(object):
                  { 'path' : '/opt/local/bin/pkgin', 'name' : 'pkgin' },
                  { 'path' : '/opt/local/bin/port',  'name' : 'macports' },
                  { 'path' : '/sbin/apk',            'name' : 'apk' },
+                 { 'path' : '/usr/sbin/pkg',        'name' : 'pkgng' },
     ]
 
     def __init__(self):
@@ -175,7 +176,8 @@ class Facts(object):
             SLED = 'Suse', OpenSuSE = 'Suse', SuSE = 'Suse', Gentoo = 'Gentoo',
             Archlinux = 'Archlinux', Mandriva = 'Mandrake', Mandrake = 'Mandrake',
             Solaris = 'Solaris', Nexenta = 'Solaris', OmniOS = 'Solaris', OpenIndiana = 'Solaris',
-            SmartOS = 'Solaris', AIX = 'AIX', Alpine = 'Alpine', MacOSX = 'Darwin'
+            SmartOS = 'Solaris', AIX = 'AIX', Alpine = 'Alpine', MacOSX = 'Darwin',
+            FreeBSD = 'FreeBSD'
         )
 
         if self.facts['system'] == 'AIX':
@@ -189,6 +191,10 @@ class Facts(object):
             rc, out, err = module.run_command("/usr/bin/sw_vers -productVersion")
             data = out.split()[-1]
             self.facts['distribution_version'] = data
+        elif self.facts['system'] == 'FreeBSD':
+            self.facts['distribution'] = 'FreeBSD'
+            self.facts['distribution_release'] = platform.release()
+            self.facts['distribution_version'] = platform.version()
         else:
             dist = platform.dist()
             self.facts['distribution'] = dist[0].capitalize() or 'NA'
@@ -245,12 +251,15 @@ class Facts(object):
     def get_public_ssh_host_keys(self):
         dsa_filename = '/etc/ssh/ssh_host_dsa_key.pub'
         rsa_filename = '/etc/ssh/ssh_host_rsa_key.pub'
+        ecdsa_filename = '/etc/ssh/ssh_host_ecdsa_key.pub'
 
         if self.facts['system'] == 'Darwin':
             dsa_filename = '/etc/ssh_host_dsa_key.pub'
             rsa_filename = '/etc/ssh_host_rsa_key.pub'
+            ecdsa_filename = '/etc/ssh_host_ecdsa_key.pub'
         dsa = get_file_content(dsa_filename)
         rsa = get_file_content(rsa_filename)
+        ecdsa = get_file_content(ecdsa_filename)
         if dsa is None:
             dsa = 'NA'
         else:
@@ -259,6 +268,10 @@ class Facts(object):
             rsa = 'NA'
         else:
             self.facts['ssh_host_key_rsa_public'] = rsa.split()[1]
+        if ecdsa is None:
+            ecdsa = 'NA'
+        else:
+            self.facts['ssh_host_key_ecdsa_public'] = ecdsa.split()[1]
 
     def get_pkg_mgr_facts(self):
         self.facts['pkg_mgr'] = 'unknown'
@@ -1620,7 +1633,7 @@ class LinuxVirtual(Virtual):
                 return
 
         # Beware that we can have both kvm and virtualbox running on a single system
-        if os.path.exists("/proc/modules"):
+        if os.path.exists("/proc/modules") and os.access('/proc/modules', os.R_OK):
             modules = []
             for line in open("/proc/modules").readlines():
                 data = line.split(" ", 1)

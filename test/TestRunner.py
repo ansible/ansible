@@ -477,7 +477,7 @@ class TestRunner(unittest.TestCase):
         # The order of the test cases is important
 
         # The regexp doesn't match, so the line will not be added anywhere.
-        testline = r'\\1: Line added by default at the end of the file.'
+        testline = r'\1: Line added by default at the end of the file.'
         testcase = ('lineinfile', [
                     "dest=%s" % sample,
                     "regexp='^(First): '",
@@ -492,7 +492,7 @@ class TestRunner(unittest.TestCase):
 
         # insertafter with EOF
         # The regexp doesn't match, so the line will not be added anywhere.
-        testline = r'\\1: Line added with insertafter=EOF'
+        testline = r'\1: Line added with insertafter=EOF'
         testcase = ('lineinfile', [
                     "dest=%s" % sample,
                     "insertafter=EOF",
@@ -508,7 +508,7 @@ class TestRunner(unittest.TestCase):
 
         # with invalid insertafter regex
         # The regexp doesn't match, so do nothing.
-        testline = r'\\1: Line added with an invalid insertafter regex'
+        testline = r'\1: Line added with an invalid insertafter regex'
         testcase = ('lineinfile', [
                     "dest=%s" % sample,
                     "insertafter='^abcdefgh'",
@@ -522,7 +522,7 @@ class TestRunner(unittest.TestCase):
 
         # with an insertafter regex
         # The regexp doesn't match, so do nothing.
-        testline = r'\\1: Line added with a valid insertafter regex'
+        testline = r'\1: Line added with a valid insertafter regex'
         testcase = ('lineinfile', [
                     "dest=%s" % sample,
                     "insertafter='^receive messages to '",
@@ -541,7 +541,7 @@ class TestRunner(unittest.TestCase):
         target_line = 'combination of microphone, speaker, keyboard and display. It can send and'
         idx = artifact.index(target_line)
 
-        testline = r'\\1 of megaphone'
+        testline = r'\1 of megaphone'
         testline_after = 'combination of megaphone'
         testcase = ('lineinfile', [
                     "dest=%s" % sample,
@@ -558,7 +558,7 @@ class TestRunner(unittest.TestCase):
         assert target_line not in artifact
 
         # Go again, should be unchanged now.
-        testline = r'\\1 of megaphone'
+        testline = r'\1 of megaphone'
         testline_after = 'combination of megaphone'
         testcase = ('lineinfile', [
                     "dest=%s" % sample,
@@ -574,11 +574,11 @@ class TestRunner(unittest.TestCase):
         f = open(sample, 'a+')
         f.write("1 + 1 = 3" + os.linesep)
         f.close()
-        testline = r"2 + \\g<num> = 3"
+        testline = r"2 + \g<num> = 3"
         testline_after = "2 + 1 = 3"
         testcase = ('lineinfile', [
                     "dest=%s" % sample,
-                    r"regexp='1 \\+ (?P<num>\\d) = 3'",
+                    r"regexp='1 \+ (?P<num>\d) = 3'",
                     "line='%s'" % testline,
                     "backrefs=yes",
                     ])
