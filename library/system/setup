@@ -1403,22 +1403,6 @@ class DarwinNetwork(GenericBsdIfconfigNetwork, Network):
             current_if['media_options'] = self.get_options(words[3])
 
 
-class SunOSNetwork(GenericBsdIfconfigNetwork, Network):
-    """
-    This is the SunOS Network Class.
-    It uses the GenericBsdIfconfigNetwork unchanged
-    """
-    platform = 'SunOS'
-
-    # Solaris displays single digit octets in MAC addresses e.g. 0:1:2:d:e:f
-    # Add leading zero to each octet where needed.
-    def parse_ether_line(self, words, current_if, ips):
-        macaddress = ''
-        for octet in words[1].split(':'):
-            octet = ('0' + octet)[-2:None]
-            macaddress += (octet + ':')
-        current_if['macaddress'] = macaddress[0:-1]
-
 class FreeBSDNetwork(GenericBsdIfconfigNetwork, Network):
     """
     This is the FreeBSD Network Class.
@@ -1436,6 +1420,29 @@ class OpenBSDNetwork(GenericBsdIfconfigNetwork, Network):
     # Return macaddress instead of lladdr
     def parse_lladdr_line(self, words, current_if, ips):
         current_if['macaddress'] = words[1]
+
+class SunOSNetwork(GenericBsdIfconfigNetwork, Network):
+    """
+    This is the SunOS Network Class.
+    It uses the GenericBsdIfconfigNetwork unchanged
+    """
+    platform = 'SunOS'
+
+    # TODO:
+    # Solaris 10 duplicates entries with 'ifconfig -a' so IPv6 clobbers IPv4.
+    # Override get_interfaces_info() and run it twice for IPv4 and IPv6 like
+    # in get_default_interfaces().
+    # Need to push FLAGS inside ipv4[] and ipv6[] facts as they may differ.
+    # Possibly others too (e.g. mtu).
+
+    # Solaris displays single digit octets in MAC addresses e.g. 0:1:2:d:e:f
+    # Add leading zero to each octet where needed.
+    def parse_ether_line(self, words, current_if, ips):
+        macaddress = ''
+        for octet in words[1].split(':'):
+            octet = ('0' + octet)[-2:None]
+            macaddress += (octet + ':')
+        current_if['macaddress'] = macaddress[0:-1]
 
 class Virtual(Facts):
     """
