@@ -179,8 +179,8 @@ except:
 class User(object):
     """
     This is a generic User manipulation class that is subclassed
-    based on platform.  
-    
+    based on platform.
+
     A subclass may wish to override the following action methods:-
       - create_user()
       - remove_user()
@@ -229,7 +229,7 @@ class User(object):
         # select whether we dump additional debug info through syslog
         self.syslogging = False
 
-    def execute_command(self,cmd):
+    def execute_command(self, cmd):
         if self.syslogging:
             syslog.openlog('ansible-%s' % os.path.basename(__file__))
             syslog.syslog(syslog.LOG_NOTICE, 'Command %s' % '|'.join(cmd))
@@ -263,12 +263,9 @@ class User(object):
             cmd.append(self.group)
 
         if self.groups is not None:
-            if self.groups != '':
-                for g in self.groups.split(','):
-                    if not self.group_exists(g):
-                        self.module.fail_json(msg="Group %s does not exist" % (g))
+            groups = self.get_groups_set()
             cmd.append('-G')
-            cmd.append(self.groups)
+            cmd.append(','.join(groups))
 
         if self.comment is not None:
             cmd.append('-c')
@@ -326,12 +323,8 @@ class User(object):
                 if current_groups and not self.append:
                     groups_need_mod = True
             else:
-                groups = self.groups.split(',')
-                for g in groups:
-                    if not self.group_exists(g):
-                        self.module.fail_json(msg="Group %s does not exist" % (g))
-
-                group_diff = set(sorted(current_groups)).symmetric_difference(set(sorted(groups)))
+                groups = self.get_groups_set()
+                group_diff = set(current_groups).symmetric_difference(groups)
 
                 if group_diff:
                     if self.append:
@@ -370,6 +363,7 @@ class User(object):
             return (0, '', '')
 
         cmd.append(self.name)
+        open("/tmp/xxx.log", "a").write(str(cmd)+"\n")
         return self.execute_command(cmd)
 
     def group_exists(self,group):
@@ -391,11 +385,23 @@ class User(object):
         else:
             return list(grp.getgrnam(group))
 
+    def get_groups_set(self):
+        if self.groups is None:
+            return None
+        info = self.user_info()
+        groups = set(self.groups.split(','))
+        for g in set(groups):
+            if not self.group_exists(g):
+                self.module.fail_json(msg="Group %s does not exist" % (g))
+            if info and self.group_info(g)[2] == info[3]:
+                groups.remove(g)
+        return groups
+
     def user_group_membership(self):
         groups = []
         info = self.get_pwd_info()
         for group in grp.getgrall():
-            if self.name in group.gr_mem and info[3] == group.gr_gid:
+            if self.name in group.gr_mem and not info[3] == group.gr_gid:
                 groups.append(group[0])
         return groups
 
@@ -574,11 +580,9 @@ class FreeBsdUser(User):
             cmd.append(self.group)
 
         if self.groups is not None:
-            for g in self.groups.split(','):
-                if not self.group_exists(g):
-                    self.module.fail_json(msg="Group %s does not exist" % (g))
+            groups = self.get_groups_set()
             cmd.append('-G')
-            cmd.append(self.groups)
+            cmd.append(','.join(groups))
 
         if self.createhome:
             cmd.append('-m')
@@ -641,15 +645,12 @@ class FreeBsdUser(User):
         if self.shell is not None and info[6] != self.shell:
             cmd.append('-s')
             cmd.append(self.shell)
-        
+
         if self.groups is not None:
             current_groups = self.user_group_membership()
-            groups = self.groups.split(',')
-            for g in groups:
-                if not self.group_exists(g):
-                    self.module.fail_json(msg="Group %s does not exist" % (g))
+            groups = self.get_groups_set()
 
-            group_diff = set(sorted(current_groups)).symmetric_difference(set(sorted(groups)))
+            group_diff = set(current_groups).symmetric_difference(groups)
             groups_need_mod = False
 
             if group_diff:
@@ -665,7 +666,7 @@ class FreeBsdUser(User):
                 cmd.append('-G')
                 new_groups = groups
                 if self.append:
-                    new_groups.extend(current_groups)           
+                    new_groups.extend(current_groups)
                 cmd.append(','.join(new_groups))
 
         # modify the user if cmd will do anything
@@ -696,7 +697,7 @@ class SunOS(User):
     this class and the generic user class is that Solaris-type distros
     don't support the concept of a "system" account and we need to 
     edit the /etc/shadow file manually to set a password. (Ugh)
-    
+
     This overrides the following methods from the generic class:-
       - create_user()
       - remove_user()
@@ -732,11 +733,9 @@ class SunOS(User):
             cmd.append(self.group)
 
         if self.groups is not None:
-            for g in self.groups.split(','):
-                if not self.group_exists(g):
-                    self.module.fail_json(msg="Group %s does not exist" % (g))
+            groups = self.get_groups_set()
             cmd.append('-G')
-            cmd.append(self.groups)
+            cmd.append(','.join(groups))
 
         if self.comment is not None:
             cmd.append('-c')
@@ -771,7 +770,7 @@ class SunOS(User):
                     fields[1] = self.password
                     line = ':'.join(fields)
                     lines.append('%s\n' % line)
-                open(self.SHADOWFILE, 'w+').writelines(lines)        
+                open(self.SHADOWFILE, 'w+').writelines(lines)
             except Exception, err:
                 self.module.fail_json(msg="failed to update users password: %s" % str(err))
 
@@ -799,12 +798,8 @@ class SunOS(User):
 
         if self.groups is not None:
             current_groups = self.user_group_membership()
-            groups = self.groups.split(',')
-            for g in groups:
-                if not self.group_exists(g):
-                    self.module.fail_json(msg="Group %s does not exist" % (g))
-
-            group_diff = set(sorted(current_groups)).symmetric_difference(set(sorted(groups)))
+            groups = self.get_groups_set()
+            group_diff = set(current_groups).symmetric_difference(groups)
             groups_need_mod = False
 
             if group_diff:
@@ -820,7 +815,7 @@ class SunOS(User):
                 cmd.append('-G')
                 new_groups = groups
                 if self.append:
-                    new_groups.extend(current_groups)           
+                    new_groups.extend(current_groups)
                 cmd.append(','.join(new_groups))
 
         if self.comment is not None and info[4] != self.comment:
@@ -856,7 +851,7 @@ class SunOS(User):
                     fields[1] = self.password
                     line = ':'.join(fields)
                     lines.append('%s\n' % line)
-                open(self.SHADOWFILE, 'w+').writelines(lines)        
+                open(self.SHADOWFILE, 'w+').writelines(lines)
                 rc = 0
             except Exception, err:
                 self.module.fail_json(msg="failed to update users password: %s" % str(err))
@@ -901,11 +896,9 @@ class AIX(User):
             cmd.append(self.group)
 
         if self.groups is not None:
-            for g in self.groups.split(','):
-                if not self.group_exists(g):
-                    self.module.fail_json(msg="Group %s does not exist" % (g))
+            groups = self.get_groups_set()
             cmd.append('-G')
-            cmd.append(self.groups)
+            cmd.append(','.join(groups))
 
         if self.comment is not None:
             cmd.append('-c')
@@ -954,12 +947,8 @@ class AIX(User):
 
         if self.groups is not None:
             current_groups = self.user_group_membership()
-            groups = self.groups.split(',')
-            for g in groups:
-                if not self.group_exists(g):
-                    self.module.fail_json(msg="Group %s does not exist" % (g))
-
-            group_diff = set(sorted(current_groups)).symmetric_difference(set(sorted(groups)))
+            groups = self.get_groups_set()
+            group_diff = set(current_groups).symmetric_difference(groups)
             groups_need_mod = False
 
             if group_diff:
@@ -1113,7 +1102,6 @@ def main():
         result['comment'] = info[4]
         result['home'] = info[5]
         result['shell'] = info[6]
-        groups = user.user_group_membership()
         result['uid'] = info[2]
         if user.groups is not None:
             result['groups'] = user.groups
