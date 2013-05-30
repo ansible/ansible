@@ -1633,7 +1633,7 @@ class LinuxVirtual(Virtual):
                 return
 
         # Beware that we can have both kvm and virtualbox running on a single system
-        if os.path.exists("/proc/modules"):
+        if os.path.exists("/proc/modules") and os.access('/proc/modules', os.R_OK):
             modules = []
             for line in open("/proc/modules").readlines():
                 data = line.split(" ", 1)
