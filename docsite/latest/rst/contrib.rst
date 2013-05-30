@@ -87,6 +87,7 @@ Blogs, Videos & Articles
 -  `Using Ansible to setup complex networking - <http://exarv.nl/2013/02/using-ansible-to-setup-complex-networking/>`_ - Robert Verspuy
 -  `Video presentation to Montreal Linux <http://www.youtube.com/embed/up3ofvQNm8c>`_ - Alexandre Bourget
 -  `Provisioning CentOS EC2 Instances with Ansible <http://jpmens.net/2012/11/21/provisioning-centos-ec2-instances-with-ansible/>`_ - jp\_mens
+-  `Ansible step-by-step tutorial <https://github.com/leucos/ansible-tuto>`_ - leucos
 
 Disclaimer
 ``````````
