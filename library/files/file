@@ -150,6 +150,7 @@ def main():
             state = dict(choices=['file','directory','link','hard','absent'], default='file'),
             path  = dict(aliases=['dest', 'name'], required=True),
             recurse  = dict(default='no', type='bool'),
+            force = dict(required=False,default=False,type='bool'),
             diff_peek = dict(default=None),
             validate = dict(required=False, default=None),
         ),
@@ -159,6 +160,7 @@ def main():
 
     params = module.params
     state  = params['state']
+    force = params['force']
     params['path'] = path = os.path.expanduser(params['path'])
 
     # short-circuit for diff_peek
@@ -226,7 +228,10 @@ def main():
         module.exit_json(path=path, changed=True)
 
     if prev_state != 'absent' and prev_state != state:
-        module.fail_json(path=path, msg='refusing to convert between %s and %s for %s' % (prev_state, state, src))
+        if force and prev_state == 'file' and state == 'link':
+            pass
+        else:
+            module.fail_json(path=path, msg='refusing to convert between %s and %s for %s' % (prev_state, state, src))
 
     if prev_state == 'absent' and state == 'absent':
         module.exit_json(path=path, changed=False)
@@ -287,7 +292,14 @@ def main():
                 dolink(src, path, state, module)
                 changed = True
         elif prev_state == 'file':
-            module.fail_json(dest=path, src=src, msg='Cannot link, file exists at destination')
+            if not force:
+                module.fail_json(dest=path, src=src, msg='Cannot link, file exists at destination')
+            else:
+                if module.check_mode:
+                    module.exit_json(changed=True)
+                os.unlink(path)
+                dolink(src, path, state, module)
+                changed = True
         else:
             module.fail_json(dest=path, src=src, msg='unexpected position reached')
 
