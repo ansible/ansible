@@ -464,12 +464,9 @@ class LinuxHardware(Hardware):
 
     def get_dmi_facts(self):
 
-        def execute(cmd):
-            p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            (out, err) = p.communicate()
-            if p.returncode or err:
-                return None
-            return out.rstrip()
+        DMI_KEYS = ['bios_date', 'bios_version', 'form_factor',
+                    'product_name', 'product_serial', 'product_uuid',
+                    'product_version', 'system_vendor']
 
         if os.path.exists('/sys/devices/virtual/dmi/id/product_name'):
             # Use kernel DMI info, if available
@@ -484,16 +481,15 @@ class LinuxHardware(Hardware):
                             "Rack Mount Chassis", "Sealed-case PC", "Multi-system",
                             "CompactPCI", "AdvancedTCA", "Blade" ]
 
-            DMI_DICT = dict(
-                bios_date       = '/sys/devices/virtual/dmi/id/bios_date',
-                bios_version    = '/sys/devices/virtual/dmi/id/bios_version',
-                form_factor     = '/sys/devices/virtual/dmi/id/chassis_type',
-                product_name    = '/sys/devices/virtual/dmi/id/product_name',
-                product_serial  = '/sys/devices/virtual/dmi/id/product_serial',
-                product_uuid    = '/sys/devices/virtual/dmi/id/product_uuid',
-                product_version = '/sys/devices/virtual/dmi/id/product_version',
-                system_vendor   = '/sys/devices/virtual/dmi/id/sys_vendor',
-            )
+            DMI_VALS = ['/sys/devices/virtual/dmi/id/bios_date',
+                        '/sys/devices/virtual/dmi/id/bios_version',
+                        '/sys/devices/virtual/dmi/id/chassis_type',
+                        '/sys/devices/virtual/dmi/id/product_name',
+                        '/sys/devices/virtual/dmi/id/product_serial',
+                        '/sys/devices/virtual/dmi/id/product_uuid',
+                        '/sys/devices/virtual/dmi/id/product_version',
+                        '/sys/devices/virtual/dmi/id/sys_vendor']
+            DMI_DICT = dict(zip(DMI_KEYS, DMI_VALS))
 
             for (key,path) in DMI_DICT.items():
                 data = get_file_content(path)
@@ -511,16 +507,15 @@ class LinuxHardware(Hardware):
         elif 'dmidecode' in sys.modules.keys():
             # Use python dmidecode, if available
 
-            DMI_DICT = dict(
-                bios_date       = '/dmidecode/BIOSinfo/ReleaseDate',
-                bios_version    = '/dmidecode/BIOSinfo/BIOSrevision',
-                form_factor     = '/dmidecode/ChassisInfo/ChassisType',
-                product_name    = '/dmidecode/SystemInfo/ProductName',
-                product_serial  = '/dmidecode/SystemInfo/SerialNumber',
-                product_uuid    = '/dmidecode/SystemInfo/SystemUUID',
-                product_version = '/dmidecode/SystemInfo/Version',
-                system_vendor   = '/dmidecode/SystemInfo/Manufacturer',
-            )
+            DMI_VALS = ['/dmidecode/BIOSinfo/ReleaseDate',
+                        '/dmidecode/BIOSinfo/BIOSrevision',
+                        '/dmidecode/ChassisInfo/ChassisType',
+                        '/dmidecode/SystemInfo/ProductName',
+                        '/dmidecode/SystemInfo/SerialNumber',
+                        '/dmidecode/SystemInfo/SystemUUID',
+                        '/dmidecode/SystemInfo/Version',
+                        '/dmidecode/SystemInfo/Manufacturer']
+            DMI_DICT = dict(zip(DMI_KEYS, DMI_VALS))
 
             dmixml = dmidecode.dmidecodeXML()
             dmixml.SetResultType(dmidecode.DMIXML_DOC)
@@ -539,15 +534,20 @@ class LinuxHardware(Hardware):
 
         else:
             # Fall back to using dmidecode, if available
-
-            self.facts['bios_date'] = execute('dmidecode -s bios-release-date') or 'NA'
-            self.facts['bios_version'] = execute('dmidecode -s bios-version') or 'NA'
-            self.facts['form_factor'] = execute('dmidecode -s chassis-type') or 'NA'
-            self.facts['product_name'] = execute('dmidecode -s system-product-name') or 'NA'
-            self.facts['product_serial'] = execute('dmidecode -s system-serial-number') or 'NA'
-            self.facts['product_uuid'] = execute('dmidecode -s system-uuid') or 'NA'
-            self.facts['product_version'] = execute('dmidecode -s system-version') or 'NA'
-            self.facts['system_vendor'] = execute('dmidecode -s system-manufacturer') or 'NA'
+            dmi_bin = module.get_bin_path('dmidecode')
+            DMI_VALS = ['bios-release-date', 'bios-version', 'chassis-type',
+                        'system-product-name', 'system-serial-number',
+                        'system-uuid', 'system-version', 'system-manufacturer']
+            DMI_DICT = dict(zip(DMI_KEYS, DMI_VALS))
+            for (k, v) in DMI_DICT.items():
+                if dmi_bin is not None:
+                    (rc, out, err) = module.run_command('%s -s %s' % (dmi_bin, v))
+                    if rc == 0:
+                        self.facts[k] = out.rstrip()
+                    else:
+                        self.facts[k] = 'NA'
+                else:
+                    self.facts[k] = 'NA'
 
     def get_mount_facts(self):
         self.facts['mounts'] = []
