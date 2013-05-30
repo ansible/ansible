@@ -59,7 +59,7 @@ options:
     required: false
     choices: [ "present", "absent" ]
     default: "present"
-description: 
+description:
     - "adds or removes authorized keys for particular user accounts"
 author: Brad Olson
 '''
@@ -215,7 +215,7 @@ def main():
            user       = dict(required=True, type='str'),
            key        = dict(required=True, type='str'),
            path       = dict(required=False, type='str'),
-           manage_dir = dict(required=False, type='bool'),
+           manage_dir = dict(required=False, type='bool', default=True),
            state      = dict(default='present', choices=['absent','present'])
         )
     )
