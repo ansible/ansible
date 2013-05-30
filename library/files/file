@@ -273,7 +273,8 @@ def main():
             abs_src = src
         else:
             module.fail_json(msg="absolute paths are required")
-        if not os.path.exists(abs_src):
+
+        if not os.path.exists(abs_src) and not force:
             module.fail_json(path=path, src=src, msg='src file does not exist')
 
         if prev_state == 'absent':
