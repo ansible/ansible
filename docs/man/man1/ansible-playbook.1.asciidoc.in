@@ -54,7 +54,7 @@ environment variable.
 *-e* 'VARS', *--extra-vars=*'VARS'::
 
 Extra variables to inject into a playbook, in key=value key=value format or
-as JSON (objects and arrays).
+as quoted JSON (hashes and arrays).
 
 *-f* 'NUM', *--forks=*'NUM'::
 
