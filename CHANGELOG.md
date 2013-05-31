@@ -23,6 +23,7 @@ Core Features:
 * added a log file for ansible/ansible-playbook, set 'log_path' in the configuration file or ANSIBLE_LOG_PATH in environment
 * debug mode always outputs debug in playbooks, without needing to specify -v
 * external inventory script added for Spacewalk / Red Hat Satellite servers
+* It is now possible to feed JSON structures to --extra-vars.  Pass in a JSON dictionary/hash to feed in complex data.
 
 Modules added:
 
