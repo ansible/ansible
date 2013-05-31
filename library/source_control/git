@@ -183,16 +183,6 @@ def is_local_branch(git_path, module, dest, branch):
     else:
         return False
 
-def is_current_branch(git_path, module, dest, branch):
-    branches = get_branches(git_path, module, dest)
-    for b in branches:
-        if b.startswith('* '):
-            cur_branch = b
-    if branch == cur_branch or '* %s' % branch == cur_branch:
-        return True
-    else:
-        return True
-
 def is_not_a_branch(git_path, module, dest):
     branches = get_branches(git_path, module, dest)
     for b in branches:
