@@ -561,9 +561,9 @@ class LinuxHardware(Hardware):
                      'device':fields[0],
                      'fstype': fields[2],
                      'options': fields[3],
-                     # statvfs
+                     # statvfs data
                      'size_total': statvfs_result.f_bsize * statvfs_result.f_blocks,
-                     'size_free': statvfs_result.f_bsize * statvfs_result.f_bfree,
+                     'size_available': statvfs_result.f_bsize * (statvfs_result.f_bavail),
                      })
 
     def get_device_facts(self):
