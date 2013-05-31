@@ -144,10 +144,20 @@ class Facts(object):
         self.facts['fqdn'] = socket.getfqdn()
         self.facts['hostname'] = platform.node().split('.')[0]
         self.facts['domain'] = '.'.join(self.facts['fqdn'].split('.')[1:])
+        arch_bits = platform.architecture()[0]
+        self.facts['userspace_bits'] = arch_bits.replace('bit', '')
         if self.facts['machine'] == 'x86_64':
             self.facts['architecture'] = self.facts['machine']
+            if self.facts['userspace_bits'] == '64':
+                self.facts['userspace_architecture'] = 'x86_64'
+            elif self.facts['userspace_bits'] == '32':
+                self.facts['userspace_architecture'] = 'i386'
         elif Facts._I386RE.search(self.facts['machine']):
             self.facts['architecture'] = 'i386'
+            if self.facts['userspace_bits'] == '64':
+                self.facts['userspace_architecture'] = 'x86_64'
+            elif self.facts['userspace_bits'] == '32':
+                self.facts['userspace_architecture'] = 'i386'
         else:
             self.facts['architecture'] = self.facts['machine']
         if self.facts['system'] == 'Linux':
