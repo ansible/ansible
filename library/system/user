@@ -363,7 +363,6 @@ class User(object):
             return (0, '', '')
 
         cmd.append(self.name)
-        open("/tmp/xxx.log", "a").write(str(cmd)+"\n")
         return self.execute_command(cmd)
 
     def group_exists(self,group):
