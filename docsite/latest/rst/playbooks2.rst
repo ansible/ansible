@@ -258,6 +258,13 @@ Example::
 
     ansible-playbook release.yml --extra-vars "hosts=vipers user=starbuck"
 
+As of Ansible 1.2, you can also pass in extra vars as quoted JSON, like so::
+
+    --extra-vars "{'pacman':'mrs','ghosts':['inky','pinky','clyde','sue']}"
+
+The key=value form is obviously simpler, but it's there if you need it!
+
+
 Conditional Execution
 `````````````````````
 
