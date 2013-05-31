@@ -173,7 +173,8 @@ def main():
     else:
         key_name = dest
 
-    # Check to see if the key already exists 
+    # Check to see if the key already exists
+    key_exists = False
     if bucket_exists is True:
         try:
             key_check = bucket.get_key(key_name)
