@@ -54,7 +54,7 @@ your webservers in "webservers.yml" and all your database servers in
 "dbservers.yml".  You can create a "site.yml" that would reconfigure
 all of your systems like this::
 
-    ----
+    ---
     - include: playbooks/webservers.yml
     - include: playbooks/dbservers.yml
 
@@ -250,7 +250,7 @@ This is useful, for, among other things, setting the hosts group or the user for
 
 Example::
 
-    -----
+    ---
     - user: '{{ user }}'
       hosts: '{{ hosts }}'
       tasks:
@@ -432,7 +432,7 @@ can accept more than one parameter.
 ``with_fileglob`` matches all files in a single directory, non-recursively, that match a pattern.  It can
 be used like this::
 
-    ----
+    ---
     - hosts: all
 
       tasks:
@@ -592,7 +592,7 @@ The environment can also be stored in a variable, and accessed like so::
 While just proxy settings were shown above, any number of settings can be supplied.  The most logical place
 to define an environment hash might be a group_vars file, like so::
 
-    ----
+    ---
     # file: group_vars/boston
 
     ntp_server: ntp.bos.example.com
