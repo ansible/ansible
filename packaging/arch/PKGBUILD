@@ -12,6 +12,10 @@ url="http://ansible.cc"
 license=('GPL3')
 depends=('python2' 'python2-paramiko' 'python2-jinja' 'python2-yaml')
 makedepends=('git' 'asciidoc' 'fakeroot')
+optdepends=('python2-pyzmq: needed for fireball mode'
+	'python2-pyasn1: needed for fireball mode'
+	'python2-crypto: needed for fireball mode'
+	'python2-keyczar: needed for fireball mode')
 conflicts=('ansible')
 source=("$pkgname::git://github.com/ansible/ansible.git"
 		"python-binary.diff")
