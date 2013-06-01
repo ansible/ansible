@@ -42,24 +42,27 @@ options:
         this number of minutes before turning itself off.
     required: false
     default: 30
-# WARNING: very careful when moving space around, below
-examples:
-   - code: |
-           - hosts: devservers
-                 gather_facts: false
-                 connection: ssh
-                 sudo: yes
-                 tasks:
-                     - action: fireball
-           - hosts: devservers
-                 connection: fireball
-                 tasks:
-                     - command: /usr/bin/anything
-     description: "This example playbook has two plays: the first launches I(fireball) mode on all hosts via SSH, and the second actually starts using I(fireball) node for subsequent management over the fireball interface"
 notes:
     - See the advanced playbooks chapter for more about using fireball mode.
 requirements: [ "zmq", "keyczar" ]
 author: Michael DeHaan
+'''
+
+EXAMPLES = '''
+# This example playbook has two plays: the first launches 'fireball' mode on all hosts via SSH, and 
+# the second actually starts using it for subsequent management over the fireball connection
+
+- hosts: devservers
+  gather_facts: false
+  connection: ssh
+  sudo: yes
+  tasks:
+      - action: fireball
+
+- hosts: devservers
+  connection: fireball
+  tasks:
+      - command: /usr/bin/anything
 '''
 
 import os
