@@ -48,7 +48,7 @@ options:
         description:
             - if C(checks)=I(none) no smart/facultative checks will be made
             - if C(checks)=I(before) some checks performed before any update (ie. does the sysctl key is writable ?)
-            - if C(checks)=I(after) some checks performed after an update (ie. does kernel give back the setted value ?)
+            - if C(checks)=I(after) some checks performed after an update (ie. does kernel give back the set value ?)
             - if C(checks)=I(both) all the smart checks I(before and after) are performed
         choices: [ "none", "before", "after", "both" ]
         default: both
@@ -139,6 +139,15 @@ def sysctl_args_collapse(**sysctl_args):
 # ==============================================================
 
 def sysctl_check(current_step, **sysctl_args):
+    
+    # no smart checks at this step ?
+    if sysctl_args['checks'] == 'none':
+        return 0, ''
+    if current_step == 'before' and sysctl_args['checks'] not in ['before', 'both']:
+        return 0, ''
+    if current_step == 'after' and sysctl_args['checks'] not in ['after', 'both']:
+        return 0, ''
+
     # checking coherence
     if sysctl_args['state'] == 'absent' and sysctl_args['value'] is not None:
         return 1, 'value=x must not be supplied when state=absent'
@@ -154,14 +163,6 @@ def sysctl_check(current_step, **sysctl_args):
         return 1, 'key_path is not an existing file, key seems invalid'
     if not os.access(sysctl_args['key_path'], os.R_OK):
         return 1, 'key_path is not a readable file, key seems to be uncheckable'
-    
-    # no smart checks at this step ?
-    if sysctl_args['checks'] == 'none':
-        return 0, ''
-    if current_step == 'before' and sysctl_args['checks'] not in ['before', 'both']:
-        return 0, ''
-    if current_step == 'after' and sysctl_args['checks'] not in ['after', 'both']:
-        return 0, ''
 
     # checks before
     if current_step == 'before' and sysctl_args['checks'] in ['before', 'both']:
