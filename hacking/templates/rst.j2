@@ -35,7 +35,11 @@
     <td>@{ k }@</td>
     <td>{% if v.get('required', False) %}yes{% else %}no{% endif %}</td>
     <td>{% if v['default'] %}@{ v['default'] }@{% endif %}</td>
+    {% if v.get('type', 'not_bool') == 'bool' %}
+    <td><ul><li>yes</li><li>no</li></ul></td>
+    {% else %}
     <td><ul>{% for choice in v.get('choices',[]) -%}<li>@{ choice }@</li>{% endfor -%}</ul></td>
+    {% endif %}
     <td>{% for desc in v.description -%}@{ desc | html_ify }@{% endfor -%}{% if v['version_added'] %} (added in Ansible @{v['version_added']}@){% endif %}</td>
     </tr>
     {% endfor %}
