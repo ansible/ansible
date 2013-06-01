@@ -75,7 +75,7 @@ Host Inventory
 
 Once your nodes are spun up, you'll probably want to talk to them again.  The best way to handle his is to use the ec2 inventory plugin.
 
-Even for larger environments, you might have nodes spun up from Cloud Formations or other tooling.  You don't have to use Ansible to spin up guests.  Once these are created and you wish to configure them, the EC2 API can be used to return system grouping with the help of the EC2 inventory script. This script can be used to group resources by their security group or tags. Tagging is highly recommended in EC2 and can provide an easy way to sort between host groups and roles. The inventory script is documented `here <http://ansible.cc/docs/api.html#external-inventory-scripts>`_.
+Even for larger environments, you might have nodes spun up from Cloud Formations or other tooling.  You don't have to use Ansible to spin up guests.  Once these are created and you wish to configure them, the EC2 API can be used to return system grouping with the help of the EC2 inventory script. This script can be used to group resources by their security group or tags. Tagging is highly recommended in EC2 and can provide an easy way to sort between host groups and roles. The inventory script is documented `in the API chapter <http://ansible.cc/docs/api.html#external-inventory-scripts>`_.
 
 You may wish to schedule a regular refresh of the inventory cache to accomodate for frequent changes in resources:
 
