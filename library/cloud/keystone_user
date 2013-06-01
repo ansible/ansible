@@ -19,7 +19,7 @@ options:
      description:
         - Password of login user
      required: false
-     default: yes
+     default: 'yes'
    token:
      description:
         - The token to be uses in case the password is not specified

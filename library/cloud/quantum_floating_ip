@@ -40,12 +40,12 @@ options:
      description:
         - Password of login user
      required: true
-     default: True
+     default: 'yes'
    login_tenant_name:
      description:
         - The tenant name of the login user
      required: true
-     default: True
+     default: 'yes'
    auth_url:
      description:
         - The keystone url for authentication
@@ -160,12 +160,12 @@ def _create_floating_ip(quantum, module, port_id, net_id):
     try:
         result = quantum.create_floatingip({'floatingip': kwargs})
     except Exception as e:
-        module.fail_json( msg = "There was an error in updating the floating ip address: %s" % e.message)
-    module.exit_json( changed = True, result = result, public_ip=result['floatingip']['floating_ip_address'] )
+        module.fail_json(msg = "There was an error in updating the floating ip address: %s" % e.message)
+    module.exit_json(changed = True, result = result, public_ip=result['floatingip']['floating_ip_address'] )
 
 def _get_net_id(quantum, module):
     kwargs = {
-            'name': module.params['network_name'],
+        'name': module.params['network_name'],
     }
     try:
         networks = quantum.list_networks(**kwargs)
