@@ -234,6 +234,7 @@ def main():
         )
     )
 
+
     changed = False
     rc = 0
     args = {
@@ -245,6 +246,8 @@ def main():
         args['passno'] = module.params['passno']
     if module.params['opts'] is not None:
         args['opts'] = module.params['opts']
+        if ' ' in args['opts']:
+            module.fail_json(msg="unexpected space in 'opts' parameter")
     if module.params['dump'] is not None:
         args['dump'] = module.params['dump']
     if module.params['fstab'] is not None:
