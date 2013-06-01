@@ -46,7 +46,7 @@ options:
     force:
         required: false
         default: "yes"
-        choices: [ yes, no ]
+        choices: [ 'yes', 'no' ]
         description:
             - If C(yes), any modified files in the working
               tree will be discarded.
