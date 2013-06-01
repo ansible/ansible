@@ -44,8 +44,8 @@ options:
     description:
       - notify or not (change the tab color, play a sound, etc)
     required: false
-    default: true
-    choices: [ "true", "false" ]
+    default: 'yes'
+    choices: [ "yes", "no" ]
 
 # informational: requirements for nodes
 requirements: [ urllib, urllib2 ]
@@ -116,7 +116,7 @@ def main():
             color=dict(default="yellow", choices=["yellow", "red", "green",
                                                   "purple", "gray", "random"]),
             msg_format=dict(default="text", choices=["text", "html"]),
-            notify=dict(default=True, choices=BOOLEANS),
+            notify=dict(default=True, type='bool'),
         ),
         supports_check_mode=True
     )
