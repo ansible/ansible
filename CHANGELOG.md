@@ -27,6 +27,8 @@ Core Features:
 * group_vars/ and host_vars/ directories can now be kept alongside the playbook as well as inventory (or both!)
 * more filters: ability to say {{ foo|success }} and {{ foo|failed }} and when: foo|success and when: foo|failed
 * more filters: {{ path|basename }} and {{ path|dirname }}
+* lookup plugins now use the basedir of the file they have included from, avoiding needs of ../../../ in places and
+increasing the ease at which things can be reorganized.  
 
 Modules added:
 
@@ -127,6 +129,7 @@ the variable is still registered for the host, with the attribute skipped: True.
 * fix for some unicode encoding errors in outputing some data in verbose mode
 * improved FreeBSD, NetBSD and Solaris facts
 * debug module always outputs data without having to specify -v
+* fix for sysctl module creating new keys (must specify checks=none)
 
 1.1 "Mean Street" -- 4/2/2013
 
