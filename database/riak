@@ -76,7 +76,7 @@ options:
 examples:
    - code: "riak: command=join target_node=riak@10.1.1.1"
      description: "Join's a Riak node to another node"
-   - code: "riak: wait_for_handoffs=true"
+   - code: "riak: wait_for_handoffs=yes"
      description: "Wait for handoffs to finish.  Use with async and poll."
    - code: "riak: wait_for_service=kv"
      description: "Wait for riak_kv service to startup"
