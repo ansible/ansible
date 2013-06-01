@@ -25,6 +25,8 @@ Core Features:
 * external inventory script added for Spacewalk / Red Hat Satellite servers
 * It is now possible to feed JSON structures to --extra-vars.  Pass in a JSON dictionary/hash to feed in complex data.
 * group_vars/ and host_vars/ directories can now be kept alongside the playbook as well as inventory (or both!)
+* more filters: ability to say {{ foo|success }} and {{ foo|failed }} and when: foo|success and when: foo|failed
+* more filters: {{ path|basename }} and {{ path|dirname }}
 
 Modules added:
 
@@ -63,7 +65,6 @@ Modules added:
 Modules removed
 
 * vagrant -- can't be compatible with both versions at once, just run things though the vagrant provisioner in vagrant core
-
 
 Bugfixes and Misc Changes:
 
