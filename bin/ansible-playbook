@@ -98,10 +98,11 @@ def main(args):
         if options.sudo_user or options.ask_sudo_pass:
             options.sudo = True
         options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
-    if options.extra_vars[0] in '[{':
-        extra_vars = utils.json_loads(options.extra_vars)
-    else:
-        extra_vars = utils.parse_kv(options.extra_vars)
+    if options.extra_vars:
+        if options.extra_vars[0] in '[{':
+            extra_vars = utils.json_loads(options.extra_vars)
+        else:
+            extra_vars = utils.parse_kv(options.extra_vars)
     only_tags = options.tags.split(",")
 
     for playbook in args:
