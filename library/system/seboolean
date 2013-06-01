@@ -44,7 +44,7 @@ options:
     choices: [ 'yes', 'no' ]
 examples:
    - code: "seboolean: name=httpd_can_network_connect state=yes persistent=yes"
-     description: Set I(httpd_can_network_connect) SELinux flag to I(true) and I(persistent)
+     description: Set I(httpd_can_network_connect) flag on and keep it persistent across reboots
 notes:
    - Not tested on any debian based system
 requirements: [ ]
