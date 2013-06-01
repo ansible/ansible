@@ -24,7 +24,8 @@ though a few may remain outside of core depending on use cases and implementatio
 -  `additional provisioning-related modules <https://github.com/ansible-provisioning>`_ - jhoekx and dagwieers
 -  `dynamic dns updates <https://github.com/jpmens/ansible-m-dnsupdate>`_ - jp\_mens
 
-All python modules should use the common "AnsibleModule" class to dramatically reduce the amount of boilerplate code required.
+All python modules (especially all submitted to core) should use the common "AnsibleModule" class to dramatically reduce the amount of boilerplate code required.
+
 Not all modules above may take advantage of this feature. See the official documentation for more details.
 
 Selected Playbooks
@@ -32,9 +33,19 @@ Selected Playbooks
 
 `Playbooks <http://ansible.cc/docs/playbooks.html>`_ are Ansible's
 configuration management language. It should be easy to write your own
-from scratch for most applications, but it's always helpful to look at
-what others have done for reference.
+from scratch for most applications (we keep the language simple for EXACTLY that reason), but it can 
+be helpful to look at what others have done for reference and see what is possible.
 
+The ansible-examples repo on github contains some examples of best-practices Ansible content deploying some
+full stack workloads:
+
+- `Ansible-Examples <http://github.com/ansible/ansible-examples>`_
+
+And here are some other community-developed playbooks.  Feel free to submit a pull request to the docs
+to add your own.
+
+-  `edX Online <https://github.com/edx/configuration>`_ - `edX Online <http://edx.org>`_
+-  `Fedora Infrastructure <http://infrastructure.fedoraproject.org/cgit/ansible.git/tree/>`_ - `Fedora <http://fedoraproject.org>`_
 -  `Hadoop <https://github.com/jkleint/ansible-hadoop>`_ - jkleint
 -  `LAMP <https://github.com/fourkitchens/server-playbooks>`_ - `Four Kitchens <http://fourkitchens.com>`_
 -  `LEMP <https://github.com/francisbesset/ansible-playbooks>`_ - francisbesset
@@ -42,7 +53,6 @@ what others have done for reference.
 -  `Nginx <http://www.capsunlock.net/2012/04/ansible-nginx-playbook.html>`_ - cocoy
 -  `OpenStack <http://github.com/lorin/openstack-ansible>`_ - lorin
 -  `Systems Configuration <https://github.com/cegeddin/ansible-contrib>`_ - cegeddin
--  `Fedora Infrastructure <http://infrastructure.fedoraproject.org/cgit/ansible.git/tree/>`_ - `Fedora <http://fedoraproject.org>`_
 
 Callbacks and Plugins
 `````````````````````
