@@ -40,7 +40,7 @@ options:
      description:
         - password of login user
      required: true
-     default: True
+     default: 'yes'
    login_tenant_name:
      description:
         - the tenant name of the login user
@@ -163,21 +163,21 @@ def _update_floating_ip(quantum, module, port_id, floating_ip_id):
     try:
         result = quantum.update_floatingip(floating_ip_id, {'floatingip': kwargs})
     except Exception as e:
-        module.fail_json( msg = "There was an error in updating the floating ip address: %s" % e.message)
-    module.exit_json( changed = True, result = result, public_ip=module.params['ip_address'])
+        module.fail_json(msg = "There was an error in updating the floating ip address: %s" % e.message)
+    module.exit_json(changed = True, result = result, public_ip=module.params['ip_address'])
 
 def main():
     
     module = AnsibleModule(
         argument_spec                   = dict(
-        login_username                  = dict(default='admin'),
-        login_password                  = dict(required=True),
-        login_tenant_name               = dict(required='True'),
-        auth_url                        = dict(default='http://127.0.0.1:35357/v2.0/'),
-        region_name                     = dict(default=None),
-        ip_address                      = dict(required=True),
-        instance_name                   = dict(required=True), 
-        state                           = dict(default='present', choices=['absent', 'present'])
+            login_username                  = dict(default='admin'),
+            login_password                  = dict(required=True),
+            login_tenant_name               = dict(required='True'),
+            auth_url                        = dict(default='http://127.0.0.1:35357/v2.0/'),
+            region_name                     = dict(default=None),
+            ip_address                      = dict(required=True),
+            instance_name                   = dict(required=True), 
+            state                           = dict(default='present', choices=['absent', 'present'])
         ),
     )
         
@@ -192,7 +192,7 @@ def main():
             module.exit_json(changed = False, result = 'attached', public_ip=module.params['ip_address'])
         server_info, server_obj = _get_server_state(module, nova)
         if not server_info:
-            module.fail_json( msg = " The instance name provided cannot be found")
+            module.fail_json(msg = " The instance name provided cannot be found")
         port_id = _get_port_id(quantum, module, server_info['id'])
         if not port_id:
             module.fail_json(msg = "Cannot find a port for this instance, maybe fixed ip is not assigned")
@@ -203,7 +203,8 @@ def main():
             module.exit_json(changed = False, result = 'detached')
         if state == 'attached':
             _update_floating_ip(quantum, module, None, floating_ip_id)
-        module.exit_json( changed = True, result = "detached")
+        module.exit_json(changed = True, result = "detached")
+
 # this is magic, see lib/ansible/module.params['common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
 main()
