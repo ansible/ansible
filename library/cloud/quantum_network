@@ -81,7 +81,7 @@ options:
      default: None
    router_external:
      description:
-        - A value of true specifies that the virtual network is a external network (public).
+        - If 'yes', specifies that the virtual network is a external network (public).
      required: false
      default: false
    shared:
@@ -98,11 +98,11 @@ examples:
   - code: "quantum_network: state=present login_username=admin login_password=admin
                       provider_network_type=gre login_tenant_name=admin
                       provider_segmentation_id=1  tenant_name=tenant1 name=t1network"
-    description: "Create's a GRE nework with tunnel id of 1 for tenant 1"
+    description: "Createss a GRE nework with tunnel id of 1 for tenant 1"
   - code: "quantum_network: state=present login_username=admin login_password=admin
                       provider_network_type=local login_tenant_name=admin
-                      provider_segmentation_id=1   router_external=true name=external_network"
-    description: "Create's an external,public network"
+                      provider_segmentation_id=1   router_external=yes name=external_network"
+    description: "Creates an external,public network"
 requirements: ["quantumclient", "keystoneclient"]
 
 '''
@@ -173,22 +173,27 @@ def _get_net_id(quantum, module):
     return networks['networks'][0]['id']
 
 def _create_network(module, quantum):
+
     quantum.format = 'json'
+
     network = {
-            'name':     module.params.get('name'),
-            'tenant_id':        _os_tenant_id,
-            'provider:network_type': module.params.get('provider_network_type'),
-            'provider:physical_network': module.params.get('provider_physical_network'),
-            'provider:segmentation_id': module.params.get('provider_segmentation_id'),
-            'router:external': module.params.get('router_external'),
-            'shared': module.params.get('shared'),
-            'admin_state_up': module.params.get('admin_state_up'),
+        'name':                      module.params.get('name'),
+        'tenant_id':                 _os_tenant_id,
+        'provider:network_type':     module.params.get('provider_network_type'),
+        'provider:physical_network': module.params.get('provider_physical_network'),
+        'provider:segmentation_id':  module.params.get('provider_segmentation_id'),
+        'router:external':           module.params.get('router_external'),
+        'shared':                    module.params.get('shared'),
+        'admin_state_up':            module.params.get('admin_state_up'),
     }
+
     if module.params['provider_network_type'] == 'local':
         network.pop('provider:physical_network', None)
         network.pop('provider:segmentation_id', None)
+
     if module.params['provider_network_type'] == 'flat':
         network.pop('provider:segmentation_id', None)
+
     if module.params['provider_network_type'] == 'gre':
         network.pop('provider:physical_network', None)
                 
@@ -199,6 +204,7 @@ def _create_network(module, quantum):
     return net['network']['id']
                 
 def _delete_network(module, net_id, quantum):
+
     try:
         id = quantum.delete_network(net_id)
     except Exception as e: 
@@ -219,9 +225,9 @@ def main():
             provider_network_type           = dict(default='local', choices=['local', 'vlan', 'flat', 'gre']), 
             provider_physical_network       = dict(default=None), 
             provider_segmentation_id        = dict(default=None), 
-            router_external                 = dict(default='false', choices=BOOLEANS),
-            shared                          = dict(default='false', choices=BOOLEANS),
-            admin_state_up                  = dict(default='true', choices=BOOLEANS),
+            router_external                 = dict(default=False, type='bool'),
+            shared                          = dict(default=False, type='bool'),
+            admin_state_up                  = dict(default=True, type='bool'),
             state                           = dict(default='present', choices=['absent', 'present'])
         ),
     )
