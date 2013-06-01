@@ -541,7 +541,7 @@ This length can be changed by passing an extra parameter::
 
         # create a mysql user with a random password:
         - mysql_user: name={{ client }}
-                      password="{{ lookup('password', 'credentials/' + client + '/' + tier + '/' + role + '/mysqlpassword') }}"
+                      password="{{ lookup('password', 'credentials/' + client + '/' + tier + '/' + role + '/mysqlpassword length=15') }}"
                       priv={{ client }}_{{ tier }}_{{ role }}.*:ALL
 
         (...)
