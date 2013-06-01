@@ -86,7 +86,7 @@ options:
       - I(grant_option) only has an effect if I(state) is C(present).
       - 'Alias: I(admin_option)'
     required: no
-    choices: [yes, no]
+    choices: ['yes', 'no']
   host:
     description:
       - Database host address. If unspecified, connect via Unix socket.

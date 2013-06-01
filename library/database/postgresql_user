@@ -55,7 +55,7 @@ options:
     description:
       - if C(yes), fail when user can't be removed. Otherwise just log and continue
     required: false
-    default: yes
+    default: 'yes'
     choices: [ "yes", "no" ]
   login_user:
     description:
