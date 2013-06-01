@@ -81,6 +81,7 @@ def lookup(name, *args, **kwargs):
     from ansible import utils
     instance = utils.plugins.lookup_loader.get(name.lower(), basedir=kwargs.get('basedir',None))
     vars = kwargs.get('vars', None)
+
     if instance is not None:
         ran = instance.run(*args, inject=vars, **kwargs)
         return ",".join(ran)
@@ -469,6 +470,12 @@ def template_from_string(basedir, data, vars):
         environment = jinja2.Environment(trim_blocks=True, undefined=StrictUndefined, extensions=_get_extensions())
         environment.filters.update(_get_filters())
         environment.template_class = J2Template
+
+        if '_original_file' in vars:
+            basedir = os.path.dirname(vars['_original_file'])
+            filesdir = os.path.join(basedir, '..', 'files')
+            if os.path.exists(filesdir):
+                basedir = filesdir
 
         # TODO: may need some way of using lookup plugins here seeing we aren't calling
         # the legacy engine, lookup() as a function, perhaps?
