@@ -32,12 +32,12 @@ options:
      description:
         - Password of login user
      required: true
-     default: True
+     default: yes
    login_tenant_name:
      description:
         - The tenant name of the login user
      required: true
-     default: True
+     default: yes
    auth_url:
      description:
         - The keystone url for authentication
