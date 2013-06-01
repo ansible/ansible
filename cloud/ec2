@@ -181,7 +181,7 @@ local_action:
     wait: yes 
     wait_timeout: 500 
     count: 5 
-    instance_tags: '{"db":"postgres"}' monitoring=true'
+    instance_tags: '{"db":"postgres"}' monitoring=yes'
 
 # VPC example
 local_action: 
