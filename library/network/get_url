@@ -67,8 +67,8 @@ options:
       - if C(no), it will not use a proxy, even if one is defined by
         in an environment variable on the target hosts.
     required: false
-    default: yes
-    choices: [yes, no]
+    default: 'yes'
+    choices: ['yes', 'no']
   others:
     description:
       - all arguments accepted by the M(file) module also work here
