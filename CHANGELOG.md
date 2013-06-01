@@ -24,6 +24,7 @@ Core Features:
 * debug mode always outputs debug in playbooks, without needing to specify -v
 * external inventory script added for Spacewalk / Red Hat Satellite servers
 * It is now possible to feed JSON structures to --extra-vars.  Pass in a JSON dictionary/hash to feed in complex data.
+* group_vars/ and host_vars/ directories can now be kept alongside the playbook as well as inventory (or both!)
 
 Modules added:
 
