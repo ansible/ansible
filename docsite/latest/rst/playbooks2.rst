@@ -284,6 +284,20 @@ Don't panic -- it's actually pretty simple::
         action: command /sbin/shutdown -t now
         when: ansible_os_family == "Debian"
 
+A number of Jinja2 "filters" can also be used in when statements, some of which are unique
+and provided by ansible.  Suppose we want to ignore the error of one statement and then
+decide to do something conditionally based on success or failure::
+
+    tasks:
+      - action: command /bin/false
+        register: result
+        ignore_errors: True
+      - action: command /bin/something
+        when: result|failed
+      - action: command /bin/something_else
+        when: result|sucess 
+
+
 As a reminder, to see what derived variables are available, you can do::
 
     ansible hostname.example.com -m setup
