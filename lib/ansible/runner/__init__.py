@@ -847,7 +847,7 @@ class Runner(object):
                 print ie.errno
                 if ie.errno == 32:
                     # broken pipe from Ctrl+C
-                    raise errors.AnsibleError("interupted")
+                    raise errors.AnsibleError("interrupted")
                 raise
         else:
             results = [ self._executor(h) for h in hosts ]
