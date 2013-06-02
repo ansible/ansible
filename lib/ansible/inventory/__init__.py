@@ -374,7 +374,11 @@ class Inventory(object):
         """ if inventory came from a file, what's the directory? """
         if not self.is_file():
             return None
-        return os.path.dirname(self.host_list)
+        dname = os.path.dirname(self.host_list)
+        if dname is None or dname == '':
+            cwd = os.getcwd()
+            return cwd 
+        return dname
 
     def playbook_basedir(self):
         """ returns the directory of the current playbook """
