@@ -12,7 +12,7 @@ ansible-pull - set up a remote copy of ansible on each managed node
 
 SYNOPSIS
 --------
-ansible -d DEST -U URL [ -C CHECKOUT ]
+ansible -d DEST -U URL [ -C CHECKOUT ] [ -i INVENTORY ] [ <filename.yml> ]
 
 
 DESCRIPTION
@@ -35,6 +35,17 @@ ansible-pull runs would be an excellent way to gather and analyze
 remote logs from ansible-pull.
 
 
+OPTIONAL ARGUMENT
+-----------------
+
+*filename.yml*::
+
+The name of one the YAML format files to run as an ansible playbook.  This can
+be a relative path within the git checkout.  If not provided, ansible-pull
+will look for a playbook based on the host's fully-qualified domain name and
+finally a playbook named *local.yml*.
+
+
 OPTIONS
 -------
 
@@ -50,6 +61,14 @@ URL of git repository to clone.
 
 Branch/Tag/Commit to checkout.  Defaults to 'HEAD'.
 
+*-i* 'PATH', *--inventory=*'PATH'::
+
+The 'PATH' to the inventory hosts file.  This can be a relative path within
+the git checkout.
+
+*--purge*::
+
+Purge the git checkout after the playbook is run.
 
 
 AUTHOR
