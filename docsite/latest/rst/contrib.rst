@@ -63,6 +63,7 @@ storage. Talk to Cobbler and EC2, tweak the way things are logged, or
 even add sound effects.
 
 -  `Ansible-Plugins <https://github.com/ansible/ansible/tree/devel/plugins>`_
+-  `Various modules, plugins, and scripts <https://github.com/ginsys/ansible-plugins>`_ sergevanginderachter
 
 Scripts And Misc
 ````````````````
