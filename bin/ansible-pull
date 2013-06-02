@@ -44,8 +44,6 @@ import datetime
 import socket
 from optparse import OptionParser
 
-import ansible.constants as C
-
 DEFAULT_PLAYBOOK = 'local.yml'
 PLAYBOOK_ERRORS = { 1: 'File does not exist',
                     2: 'File is not readable' }
