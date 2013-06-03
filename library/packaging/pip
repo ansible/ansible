@@ -91,6 +91,13 @@ options:
     required: false
     default: null
     version_added: "1.0"
+  chdir:
+    description:
+      - cd into this directory before running the command
+    version_added: "1.3"
+    required: false
+    default: null
+
 examples:
    - code: "pip: name=flask"
      description: Install I(flask) python package.
@@ -170,6 +177,7 @@ def main():
             virtualenv_command=dict(default='virtualenv', required=False),
             use_mirrors=dict(default='yes', type='bool'),
             extra_args=dict(default=None, required=False),
+            chdir=dict(default=None, required=False),
         ),
         required_one_of=[['name', 'requirements']],
         mutually_exclusive=[['name', 'requirements']],
@@ -182,6 +190,7 @@ def main():
     requirements = module.params['requirements']
     use_mirrors = module.params['use_mirrors']
     extra_args = module.params['extra_args']
+    chdir = module.params['chdir']
 
     if state == 'latest' and version is not None:
         module.fail_json(msg='version is incompatible with state=latest')
@@ -205,6 +214,8 @@ def main():
             else:
                 cmd = '%s %s' % (virtualenv, env)
             os.chdir(tempfile.gettempdir())
+            if chdir:
+                os.chdir(chdir)
             rc, out_venv, err_venv = module.run_command(cmd)
             out += out_venv
             err += err_venv
@@ -253,6 +264,8 @@ def main():
     if module.check_mode:
         module.exit_json(changed=True)
     os.chdir(tempfile.gettempdir())
+    if chdir:
+        os.chdir(chdir)
     rc, out_pip, err_pip = module.run_command(cmd)
     out += out_pip
     err += err_pip
