@@ -65,7 +65,7 @@ class InventoryParser(object):
 
         for line in self.lines:
             if line.startswith("["):
-                active_group_name = line.replace("[","").replace("]","").strip()
+                active_group_name = line.split(" #")[0].replace("[","").replace("]","").strip()
                 if line.find(":vars") != -1 or line.find(":children") != -1:
                     active_group_name = active_group_name.rsplit(":", 1)[0]
                     if active_group_name not in self.groups:
@@ -78,7 +78,7 @@ class InventoryParser(object):
             elif line.startswith("#") or line == '':
                 pass
             elif active_group_name:
-                tokens = shlex.split(line)
+                tokens = shlex.split(line.split(" #")[0])
                 if len(tokens) == 0:
                     continue
                 hostname = tokens[0]

@@ -29,12 +29,7 @@ import socket
 import struct
 import datetime
 import getpass
-
-if not os.path.exists('/sys/devices/virtual/dmi/id/product_name'):
-    try:
-        import dmidecode
-    except ImportError:
-        import subprocess
+import subprocess
 
 DOCUMENTATION = '''
 ---
@@ -120,7 +115,8 @@ class Facts(object):
                  { 'path' : '/bin/opkg',            'name' : 'opkg' },
                  { 'path' : '/opt/local/bin/pkgin', 'name' : 'pkgin' },
                  { 'path' : '/opt/local/bin/port',  'name' : 'macports' },
-                 { 'path' : '/sbin/apk',            'name' : 'apk' }, 
+                 { 'path' : '/sbin/apk',            'name' : 'apk' },
+                 { 'path' : '/usr/sbin/pkg',        'name' : 'pkgng' },
     ]
 
     def __init__(self):
@@ -148,10 +144,20 @@ class Facts(object):
         self.facts['fqdn'] = socket.getfqdn()
         self.facts['hostname'] = platform.node().split('.')[0]
         self.facts['domain'] = '.'.join(self.facts['fqdn'].split('.')[1:])
+        arch_bits = platform.architecture()[0]
+        self.facts['userspace_bits'] = arch_bits.replace('bit', '')
         if self.facts['machine'] == 'x86_64':
             self.facts['architecture'] = self.facts['machine']
+            if self.facts['userspace_bits'] == '64':
+                self.facts['userspace_architecture'] = 'x86_64'
+            elif self.facts['userspace_bits'] == '32':
+                self.facts['userspace_architecture'] = 'i386'
         elif Facts._I386RE.search(self.facts['machine']):
             self.facts['architecture'] = 'i386'
+            if self.facts['userspace_bits'] == '64':
+                self.facts['userspace_architecture'] = 'x86_64'
+            elif self.facts['userspace_bits'] == '32':
+                self.facts['userspace_architecture'] = 'i386'
         else:
             self.facts['architecture'] = self.facts['machine']
         if self.facts['system'] == 'Linux':
@@ -175,7 +181,8 @@ class Facts(object):
             SLED = 'Suse', OpenSuSE = 'Suse', SuSE = 'Suse', Gentoo = 'Gentoo',
             Archlinux = 'Archlinux', Mandriva = 'Mandrake', Mandrake = 'Mandrake',
             Solaris = 'Solaris', Nexenta = 'Solaris', OmniOS = 'Solaris', OpenIndiana = 'Solaris',
-            SmartOS = 'Solaris', AIX = 'AIX', Alpine = 'Alpine', MacOSX = 'Darwin'
+            SmartOS = 'Solaris', AIX = 'AIX', Alpine = 'Alpine', MacOSX = 'Darwin',
+            FreeBSD = 'FreeBSD'
         )
 
         if self.facts['system'] == 'AIX':
@@ -189,6 +196,10 @@ class Facts(object):
             rc, out, err = module.run_command("/usr/bin/sw_vers -productVersion")
             data = out.split()[-1]
             self.facts['distribution_version'] = data
+        elif self.facts['system'] == 'FreeBSD':
+            self.facts['distribution'] = 'FreeBSD'
+            self.facts['distribution_release'] = platform.release()
+            self.facts['distribution_version'] = platform.version()
         else:
             dist = platform.dist()
             self.facts['distribution'] = dist[0].capitalize() or 'NA'
@@ -245,12 +256,15 @@ class Facts(object):
     def get_public_ssh_host_keys(self):
         dsa_filename = '/etc/ssh/ssh_host_dsa_key.pub'
         rsa_filename = '/etc/ssh/ssh_host_rsa_key.pub'
+        ecdsa_filename = '/etc/ssh/ssh_host_ecdsa_key.pub'
 
         if self.facts['system'] == 'Darwin':
             dsa_filename = '/etc/ssh_host_dsa_key.pub'
             rsa_filename = '/etc/ssh_host_rsa_key.pub'
+            ecdsa_filename = '/etc/ssh_host_ecdsa_key.pub'
         dsa = get_file_content(dsa_filename)
         rsa = get_file_content(rsa_filename)
+        ecdsa = get_file_content(ecdsa_filename)
         if dsa is None:
             dsa = 'NA'
         else:
@@ -259,6 +273,10 @@ class Facts(object):
             rsa = 'NA'
         else:
             self.facts['ssh_host_key_rsa_public'] = rsa.split()[1]
+        if ecdsa is None:
+            ecdsa = 'NA'
+        else:
+            self.facts['ssh_host_key_ecdsa_public'] = ecdsa.split()[1]
 
     def get_pkg_mgr_facts(self):
         self.facts['pkg_mgr'] = 'unknown'
@@ -450,13 +468,10 @@ class LinuxHardware(Hardware):
             self.facts['processor_cores'] = 'NA'
 
     def get_dmi_facts(self):
+        ''' learn dmi facts from system
 
-        def execute(cmd):
-            p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            (out, err) = p.communicate()
-            if p.returncode or err:
-                return None
-            return out.rstrip()
+        Try /sys first for dmi related facts.
+        If that is not available, fall back to dmidecode executable '''
 
         if os.path.exists('/sys/devices/virtual/dmi/id/product_name'):
             # Use kernel DMI info, if available
@@ -471,16 +486,16 @@ class LinuxHardware(Hardware):
                             "Rack Mount Chassis", "Sealed-case PC", "Multi-system",
                             "CompactPCI", "AdvancedTCA", "Blade" ]
 
-            DMI_DICT = dict(
-                bios_date       = '/sys/devices/virtual/dmi/id/bios_date',
-                bios_version    = '/sys/devices/virtual/dmi/id/bios_version',
-                form_factor     = '/sys/devices/virtual/dmi/id/chassis_type',
-                product_name    = '/sys/devices/virtual/dmi/id/product_name',
-                product_serial  = '/sys/devices/virtual/dmi/id/product_serial',
-                product_uuid    = '/sys/devices/virtual/dmi/id/product_uuid',
-                product_version = '/sys/devices/virtual/dmi/id/product_version',
-                system_vendor   = '/sys/devices/virtual/dmi/id/sys_vendor',
-            )
+            DMI_DICT = {
+                    'bios_date': '/sys/devices/virtual/dmi/id/bios_date',
+                    'bios_version': '/sys/devices/virtual/dmi/id/bios_version',
+                    'form_factor': '/sys/devices/virtual/dmi/id/chassis_type',
+                    'product_name': '/sys/devices/virtual/dmi/id/product_name',
+                    'product_serial': '/sys/devices/virtual/dmi/id/product_serial',
+                    'product_uuid': '/sys/devices/virtual/dmi/id/product_uuid',
+                    'product_version': '/sys/devices/virtual/dmi/id/product_version',
+                    'system_vendor': '/sys/devices/virtual/dmi/id/sys_vendor'
+                    }
 
             for (key,path) in DMI_DICT.items():
                 data = get_file_content(path)
@@ -495,46 +510,28 @@ class LinuxHardware(Hardware):
                 else:
                     self.facts[key] = 'NA'
 
-        elif 'dmidecode' in sys.modules.keys():
-            # Use python dmidecode, if available
-
-            DMI_DICT = dict(
-                bios_date       = '/dmidecode/BIOSinfo/ReleaseDate',
-                bios_version    = '/dmidecode/BIOSinfo/BIOSrevision',
-                form_factor     = '/dmidecode/ChassisInfo/ChassisType',
-                product_name    = '/dmidecode/SystemInfo/ProductName',
-                product_serial  = '/dmidecode/SystemInfo/SerialNumber',
-                product_uuid    = '/dmidecode/SystemInfo/SystemUUID',
-                product_version = '/dmidecode/SystemInfo/Version',
-                system_vendor   = '/dmidecode/SystemInfo/Manufacturer',
-            )
-
-            dmixml = dmidecode.dmidecodeXML()
-            dmixml.SetResultType(dmidecode.DMIXML_DOC)
-            xmldoc = dmixml.QuerySection('all')
-            dmixp = xmldoc.xpathNewContext()
-
-            for (key,path) in DMI_DICT.items():
-                try:
-                    data = dmixp.xpathEval(path)
-                    if len(data) > 0:
-                        self.facts[key] = data[0].get_content()
-                    else:
-                        self.facts[key] = 'Error'
-                except:
-                    self.facts[key] = 'NA'
-
         else:
             # Fall back to using dmidecode, if available
-
-            self.facts['bios_date'] = execute('dmidecode -s bios-release-date') or 'NA'
-            self.facts['bios_version'] = execute('dmidecode -s bios-version') or 'NA'
-            self.facts['form_factor'] = execute('dmidecode -s chassis-type') or 'NA'
-            self.facts['product_name'] = execute('dmidecode -s system-product-name') or 'NA'
-            self.facts['product_serial'] = execute('dmidecode -s system-serial-number') or 'NA'
-            self.facts['product_uuid'] = execute('dmidecode -s system-uuid') or 'NA'
-            self.facts['product_version'] = execute('dmidecode -s system-version') or 'NA'
-            self.facts['system_vendor'] = execute('dmidecode -s system-manufacturer') or 'NA'
+            dmi_bin = module.get_bin_path('dmidecode')
+            DMI_DICT = {
+                    'bios_date': 'bios-release-date',
+                    'bios_version': 'bios-version',
+                    'form_factor': 'chassis-type',
+                    'product_name': 'system-product-name',
+                    'product_serial': 'system-serial-number',
+                    'product_uuid': 'system-uuid',
+                    'product_version': 'system-version',
+                    'system_vendor': 'system-manufacturer'
+                    }
+            for (k, v) in DMI_DICT.items():
+                if dmi_bin is not None:
+                    (rc, out, err) = module.run_command('%s -s %s' % (dmi_bin, v))
+                    if rc == 0:
+                        self.facts[k] = out.rstrip()
+                    else:
+                        self.facts[k] = 'NA'
+                else:
+                    self.facts[k] = 'NA'
 
     def get_mount_facts(self):
         self.facts['mounts'] = []
@@ -542,7 +539,16 @@ class LinuxHardware(Hardware):
         for line in mtab.split('\n'):
             if line.startswith('/'):
                 fields = line.rstrip('\n').split()
-                self.facts['mounts'].append({'mount': fields[1], 'device':fields[0], 'fstype': fields[2], 'options': fields[3]})
+                statvfs_result = os.statvfs(fields[1])
+                self.facts['mounts'].append(
+                    {'mount': fields[1],
+                     'device':fields[0],
+                     'fstype': fields[2],
+                     'options': fields[3],
+                     # statvfs data
+                     'size_total': statvfs_result.f_bsize * statvfs_result.f_blocks,
+                     'size_available': statvfs_result.f_bsize * (statvfs_result.f_bavail),
+                     })
 
     def get_device_facts(self):
         self.facts['devices'] = {}
@@ -655,15 +661,47 @@ class SunOSHardware(Hardware):
         return self.facts
 
     def get_cpu_facts(self):
-        rc, out, err = module.run_command("/usr/sbin/psrinfo -v")
+        physid = 0
+        sockets = {}
+        rc, out, err = module.run_command("/usr/bin/kstat cpu_info")
         self.facts['processor'] = []
         for line in out.split('\n'):
-            if 'processor operates' in line:
+            if len(line) < 1:
+                continue
+            data = line.split(None, 1)
+            key = data[0].strip()
+            # "brand" works on Solaris 10 & 11. "implementation" for Solaris 9.
+            if key == 'module:':
+                brand = ''
+            elif key == 'brand':
+                brand = data[1].strip()
+            elif key == 'clock_MHz':
+                clock_mhz = data[1].strip()
+            elif key == 'implementation':
+                processor = brand or data[1].strip()
+                # Add clock speed to description for SPARC CPU
+                if self.facts['machine'] != 'i86pc':
+                    processor += " @ " + clock_mhz + "MHz"
                 if 'processor' not in self.facts:
                     self.facts['processor'] = []
-                self.facts['processor'].append(line.strip())
-        self.facts['processor_cores'] = 'NA'
-        self.facts['processor_count'] = len(self.facts['processor'])
+                self.facts['processor'].append(processor)
+            elif key == 'chip_id':
+                physid = data[1].strip()
+                if physid not in sockets:
+                    sockets[physid] = 1
+                else:
+                    sockets[physid] += 1
+        # Counting cores on Solaris can be complicated.
+        # https://blogs.oracle.com/mandalika/entry/solaris_show_me_the_cpu
+        # Treat 'processor_count' as physical sockets and 'processor_cores' as
+        # virtual CPUs visisble to Solaris. Not a true count of cores for modern SPARC as
+        # these processors have: sockets -> cores -> threads/virtual CPU.
+        if len(sockets) > 0:
+            self.facts['processor_count'] = len(sockets)
+            self.facts['processor_cores'] = reduce(lambda x, y: x + y, sockets.values())
+        else:
+            self.facts['processor_cores'] = 'NA'
+            self.facts['processor_count'] = len(self.facts['processor'])
 
     def get_memory_facts(self):
         rc, out, err = module.run_command(["/usr/sbin/prtconf"])
@@ -846,6 +884,81 @@ class FreeBSDHardware(Hardware):
                 s = slices.match(device)
                 if s:
                     self.facts['devices'][d.group(1)].append(s.group(1))
+
+class NetBSDHardware(Hardware):
+    """
+    NetBSD-specific subclass of Hardware.  Defines memory and CPU facts:
+    - memfree_mb
+    - memtotal_mb
+    - swapfree_mb
+    - swaptotal_mb
+    - processor (a list)
+    - processor_cores
+    - processor_count
+    - devices
+    """
+    platform = 'NetBSD'
+    MEMORY_FACTS = ['MemTotal', 'SwapTotal', 'MemFree', 'SwapFree']
+
+    def __init__(self):
+        Hardware.__init__(self)
+
+    def populate(self):
+        self.get_cpu_facts()
+        self.get_memory_facts()
+        self.get_mount_facts()
+        return self.facts
+
+    def get_cpu_facts(self):
+
+        i = 0
+        physid = 0
+        sockets = {}
+        if not os.access("/proc/cpuinfo", os.R_OK):
+            return
+        self.facts['processor'] = []
+        for line in open("/proc/cpuinfo").readlines():
+            data = line.split(":", 1)
+            key = data[0].strip()
+            # model name is for Intel arch, Processor (mind the uppercase P)
+            # works for some ARM devices, like the Sheevaplug.
+            if key == 'model name' or key == 'Processor':
+                if 'processor' not in self.facts:
+                    self.facts['processor'] = []
+                self.facts['processor'].append(data[1].strip())
+                i += 1
+            elif key == 'physical id':
+                physid = data[1].strip()
+                if physid not in sockets:
+                    sockets[physid] = 1
+            elif key == 'cpu cores':
+                sockets[physid] = int(data[1].strip())
+        if len(sockets) > 0:
+            self.facts['processor_count'] = len(sockets)
+            self.facts['processor_cores'] = reduce(lambda x, y: x + y, sockets.values())
+        else:
+            self.facts['processor_count'] = i
+            self.facts['processor_cores'] = 'NA'
+
+    def get_memory_facts(self):
+        if not os.access("/proc/meminfo", os.R_OK):
+            return
+        for line in open("/proc/meminfo").readlines():
+            data = line.split(":", 1)
+            key = data[0]
+            if key in NetBSDHardware.MEMORY_FACTS:
+                val = data[1].strip().split(' ')[0]
+                self.facts["%s_mb" % key.lower()] = long(val) / 1024
+
+    def get_mount_facts(self):
+        self.facts['mounts'] = []
+        fstab = get_file_content('/etc/fstab')
+        if fstab:
+            for line in fstab.split('\n'):
+                if line.startswith('#') or line.strip() == '':
+                    continue
+                fields = re.sub(r'\s+',' ',line.rstrip('\n')).split()
+                self.facts['mounts'].append({'mount': fields[1] , 'device': fields[0], 'fstype' : fields[2], 'options': fields[3]})
 
 class AIX(Hardware):
     """
@@ -1068,7 +1181,7 @@ class LinuxNetwork(Network):
         )
 
         for path in glob.glob('/sys/class/net/*'):
-            if not os.path.isdir(path): 
+            if not os.path.isdir(path):
                 continue
             device = os.path.basename(path)
             interfaces[device] = { 'device': device }
@@ -1115,7 +1228,7 @@ class LinuxNetwork(Network):
             output = subprocess.Popen([ip_path, 'addr', 'show', device], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
             for line in output.split('\n'):
 
-                if not line: 
+                if not line:
                     continue
                 words = line.split()
                 if words[0] == 'inet':
@@ -1184,7 +1297,7 @@ class GenericBsdIfconfigNetwork(Network):
     - interfaces (a list of interface names)
     - interface_<name> dictionary of ipv4, ipv6, and mac address information.
     - all_ipv4_addresses and all_ipv6_addresses: lists of all configured addresses.
-    It currently does not define 
+    It currently does not define
     - default_ipv4 and default_ipv6
     - type, mtu and network on interfaces
     """
@@ -1240,7 +1353,7 @@ class GenericBsdIfconfigNetwork(Network):
                 continue
             rc, out, err = module.run_command(command[v])
             if not out:
-                # v6 routing may result in 
+                # v6 routing may result in
                 #   RTNETLINK answers: Invalid argument
                 continue
             lines = out.split('\n')
@@ -1259,7 +1372,10 @@ class GenericBsdIfconfigNetwork(Network):
             all_ipv4_addresses = [],
             all_ipv6_addresses = [],
         )
-        rc, out, err = module.run_command([ifconfig_path])
+        # FreeBSD, DragonflyBSD, NetBSD, OpenBSD and OS X all implicitly add '-a'
+        # when running the command 'ifconfig'.
+        # Solaris must explicitly run the command 'ifconfig -a'.
+        rc, out, err = module.run_command([ifconfig_path, '-a'])
 
         for line in out.split('\n'):
 
@@ -1328,6 +1444,8 @@ class GenericBsdIfconfigNetwork(Network):
     def parse_inet_line(self, words, current_if, ips):
         address = {'address': words[1]}
         # deal with hex netmask
+        if re.match('([0-9a-f]){8}', words[3]) and len(words[3]) == 8:
+            words[3] = '0x' + words[3]
         if words[3].startswith('0x'):
             address['netmask'] = socket.inet_ntoa(struct.pack('!L', int(words[3], base=16)))
         else:
@@ -1353,7 +1471,8 @@ class GenericBsdIfconfigNetwork(Network):
             address['prefix'] = words[3]
         if (len(words) >= 6) and (words[4] == 'scopeid'):
             address['scope'] = words[5]
-        if not address['address'] == '::1' and not address['address'] == 'fe80::1%lo0':
+        localhost6 = ['::1', '::1/128', 'fe80::1%lo0']
+        if address['address'] not in localhost6:
             ips['all_ipv6_addresses'].append(address['address'])
         current_if['ipv6'].append(address)
 
@@ -1404,7 +1523,7 @@ class DarwinNetwork(GenericBsdIfconfigNetwork, Network):
 class FreeBSDNetwork(GenericBsdIfconfigNetwork, Network):
     """
     This is the FreeBSD Network Class.
-    It uses the GenericBsdIfconfigNetwork unchanged
+    It uses the GenericBsdIfconfigNetwork unchanged.
     """
     platform = 'FreeBSD'
 
@@ -1418,6 +1537,93 @@ class OpenBSDNetwork(GenericBsdIfconfigNetwork, Network):
     # Return macaddress instead of lladdr
     def parse_lladdr_line(self, words, current_if, ips):
         current_if['macaddress'] = words[1]
+
+class SunOSNetwork(GenericBsdIfconfigNetwork, Network):
+    """
+    This is the SunOS Network Class.
+    It uses the GenericBsdIfconfigNetwork.
+
+    Solaris can have different FLAGS and MTU for IPv4 and IPv6 on the same interface
+    so these facts have been moved inside the 'ipv4' and 'ipv6' lists.
+    """
+    platform = 'SunOS'
+
+    # Solaris 'ifconfig -a' will print interfaces twice, once for IPv4 and again for IPv6.
+    # MTU and FLAGS also may differ between IPv4 and IPv6 on the same interface.
+    # 'parse_interface_line()' checks for previously seen interfaces before defining
+    # 'current_if' so that IPv6 facts don't clobber IPv4 facts (or vice versa).
+    def get_interfaces_info(self, ifconfig_path):
+        interfaces = {}
+        current_if = {}
+        ips = dict(
+            all_ipv4_addresses = [],
+            all_ipv6_addresses = [],
+        )
+        rc, out, err = module.run_command([ifconfig_path, '-a'])
+
+        for line in out.split('\n'):
+
+            if line:
+                words = line.split()
+
+                if re.match('^\S', line) and len(words) > 3:
+                    current_if = self.parse_interface_line(words, current_if, interfaces)
+                    interfaces[ current_if['device'] ] = current_if
+                elif words[0].startswith('options='):
+                    self.parse_options_line(words, current_if, ips)
+                elif words[0] == 'nd6':
+                    self.parse_nd6_line(words, current_if, ips)
+                elif words[0] == 'ether':
+                    self.parse_ether_line(words, current_if, ips)
+                elif words[0] == 'media:':
+                    self.parse_media_line(words, current_if, ips)
+                elif words[0] == 'status:':
+                    self.parse_status_line(words, current_if, ips)
+                elif words[0] == 'lladdr':
+                    self.parse_lladdr_line(words, current_if, ips)
+                elif words[0] == 'inet':
+                    self.parse_inet_line(words, current_if, ips)
+                elif words[0] == 'inet6':
+                    self.parse_inet6_line(words, current_if, ips)
+                else:
+                    self.parse_unknown_line(words, current_if, ips)
+
+        # 'parse_interface_line' and 'parse_inet*_line' leave two dicts in the
+        # ipv4/ipv6 lists which is ugly and hard to read.
+        # This quick hack merges the dictionaries. Purely cosmetic.
+        for iface in interfaces:
+            for v in 'ipv4', 'ipv6':
+                combined_facts = {}
+                for facts in interfaces[iface][v]:
+                    combined_facts.update(facts)
+                if len(combined_facts.keys()) > 0:
+                    interfaces[iface][v] = [combined_facts]
+
+        return interfaces, ips
+
+    def parse_interface_line(self, words, current_if, interfaces):
+        device = words[0][0:-1]
+        if device not in interfaces.keys():
+            current_if = {'device': device, 'ipv4': [], 'ipv6': [], 'type': 'unknown'}
+        else:
+            current_if = interfaces[device]
+        flags = self.get_options(words[1])
+        if 'IPv4' in flags: 
+            v = 'ipv4'
+        if 'IPv6' in flags: 
+            v = 'ipv6'
+        current_if[v].append({'flags': flags, 'mtu': words[3]})
+        current_if['macaddress'] = 'unknown'    # will be overwritten later
+        return current_if
+
+    # Solaris displays single digit octets in MAC addresses e.g. 0:1:2:d:e:f
+    # Add leading zero to each octet where needed.
+    def parse_ether_line(self, words, current_if, ips):
+        macaddress = ''
+        for octet in words[1].split(':'):
+            octet = ('0' + octet)[-2:None]
+            macaddress += (octet + ':')
+        current_if['macaddress'] = macaddress[0:-1]
 
 class Virtual(Facts):
     """
@@ -1545,7 +1751,7 @@ class LinuxVirtual(Virtual):
                 return
 
         # Beware that we can have both kvm and virtualbox running on a single system
-        if os.path.exists("/proc/modules"):
+        if os.path.exists("/proc/modules") and os.access('/proc/modules', os.R_OK):
             modules = []
             for line in open("/proc/modules").readlines():
                 data = line.split(" ", 1)
@@ -1638,11 +1844,17 @@ def run_setup(module):
     for (k, v) in facts.items():
         setup_options["ansible_%s" % k.replace('-', '_')] = v
 
+    # Look for the path to the facter and ohai binary and set
+    # the variable to that path.
+
+    facter_path = module.get_bin_path('facter')
+    ohai_path = module.get_bin_path('ohai')
+
     # if facter is installed, and we can use --json because
     # ruby-json is ALSO installed, include facter data in the JSON
 
-    if os.path.exists("/usr/bin/facter"):
-        rc, out, err = module.run_command("/usr/bin/facter --json")
+    if facter_path is not None:
+        rc, out, err = module.run_command(facter_path + " --json")
         facter = True
         try:
             facter_ds = json.loads(out)
@@ -1656,8 +1868,8 @@ def run_setup(module):
     # because it contains a lot of nested stuff we can't use for
     # templating w/o making a nicer key for it (TODO)
 
-    if os.path.exists("/usr/bin/ohai"):
-        rc, out, err = module.run_command("/usr/bin/ohai")
+    if ohai_path is not None:
+        rc, out, err = module.run_command(ohai_path)
         ohai = True
         try:
             ohai_ds = json.loads(out)

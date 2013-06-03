@@ -62,15 +62,22 @@ class InventoryDirectory(object):
             # This takes a lot of code because we can't directly use any of the objects, as they have to blend
             for name, group in parser.groups.iteritems():
                 if name not in self.groups:
-                    self.groups[name] = Group(name)
-                for k, v in group.get_variables().iteritems():
-                    self.groups[name].set_variable(k, v)
+                    self.groups[name] = group
+                else:
+                    # group is already there, copy variables
+                    # note: depth numbers on duplicates may be bogus
+                    for k, v in group.get_variables().iteritems():
+                        self.groups[name].set_variable(k, v)
                 for host in group.get_hosts():
                     if host.name not in self.hosts:
-                        self.hosts[host.name] = Host(host.name)
-                    for k, v in host.vars.iteritems():
-                        self.hosts[host.name].set_variable(k, v)
+                        self.hosts[host.name] = host
+                    else:
+                        # host is already there, copy variables
+                        # note: depth numbers on duplicates may be bogus
+                        for k, v in host.vars.iteritems():
+                            self.hosts[host.name].set_variable(k, v)
                     self.groups[name].add_host(self.hosts[host.name])
+
             # This needs to be a second loop to ensure all the parent groups exist
             for name, group in parser.groups.iteritems():
                 for ancestor in group.get_ancestors():

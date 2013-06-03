@@ -17,7 +17,9 @@
 
 import base64
 import json
+import os.path
 import yaml
+from ansible import errors
 
 def to_nice_yaml(*a, **kw):
     '''Make verbose, human readable yaml'''
@@ -26,6 +28,20 @@ def to_nice_yaml(*a, **kw):
 def to_nice_json(*a, **kw):
     '''Make verbose, human readable JSON'''
     return json.dumps(*a, indent=4, sort_keys=True, **kw)
+
+def failed(*a, **kw):
+    item = a[0] 
+    if type(item) != dict:
+       raise errors.AnsibleError("|failed expects a dictionary")
+    rc = item.get('rc',0)
+    failed = item.get('failed',False)
+    if rc != 0 or failed:
+       return True
+    else:
+       return False
+
+def success(*a, **kw):
+    return not failed(*a, **kw)
 
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
@@ -45,5 +61,14 @@ class FilterModule(object):
             'to_yaml': yaml.safe_dump,
             'to_nice_yaml': to_nice_yaml,
             'from_yaml': yaml.safe_load,
+
+            # path
+            'basename': os.path.basename,
+            'dirname': os.path.dirname,
+
+            # failure testing
+            'failed'  : failed,
+            'success' : success,
+
         }
     

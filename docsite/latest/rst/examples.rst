@@ -213,6 +213,17 @@ the remote nodes will be terminated.
 Typically you'll be only be backgrounding long-running
 shell commands or software upgrades only.  Backgrounding the copy module does not do a background file transfer.  :doc:`playbooks` also support polling, and have a simplified syntax for this.
 
+Gathering Facts
+```````````````
+
+Facts are described in the playbooks section and represent discovered variables about a
+system.  These can be used to implement conditional execution of tasks but also just to get ad-hoc information about your system. You can see all facts via::
+
+    $ ansible all -m setup
+
+Its also possible to filter this output to just export certain facts, see the "setup" module documentation for details.
+
+
 Limiting Selected Hosts
 ```````````````````````
 

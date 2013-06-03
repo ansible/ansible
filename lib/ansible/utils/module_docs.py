@@ -49,6 +49,7 @@ def get_docstring(filename, verbose=False):
                 if 'EXAMPLES' in (t.id for t in child.targets):
                     plainexamples = child.value.s[1:]  # Skip first empty line
     except:
+        traceback.print_exc() # temp
         if verbose == True:
             traceback.print_exc()
             print "unable to parse %s" % filename

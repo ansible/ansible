@@ -38,7 +38,7 @@ class Inventory(object):
 
     __slots__ = [ 'host_list', 'groups', '_restriction', '_also_restriction', '_subset', 
                   'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache', '_groups_list',
-                  '_vars_plugins']
+                  '_vars_plugins', '_playbook_basedir']
 
     def __init__(self, host_list=C.DEFAULT_HOST_LIST):
 
@@ -54,6 +54,9 @@ class Inventory(object):
         self._hosts_cache    = {}
         self._groups_list    = {} 
 
+        # to be set by calling set_playbook_basedir by ansible-playbook
+        self._playbook_basedir = None
+
         # the inventory object holds a list of groups
         self.groups = []
 
@@ -62,18 +65,18 @@ class Inventory(object):
         self._also_restriction = None
         self._subset = None
 
-        if type(host_list) in [ str, unicode ]:
-            if host_list.find(",") != -1:
+        if isinstance(host_list, basestring):
+            if "," in host_list:
                 host_list = host_list.split(",")
                 host_list = [ h for h in host_list if h and h.strip() ]
 
-        if type(host_list) == list:
+        if isinstance(host_list, list):
             self.parser = None
             all = Group('all')
             self.groups = [ all ]
             for x in host_list:
-                if x.find(":") != -1:
-                    tokens = x.split(":",1)
+                if ":" in x:
+                    tokens = x.split(":", 1)
                     all.add_host(Host(tokens[0], tokens[1]))
                 else:
                     all.add_host(Host(x))
@@ -233,7 +236,8 @@ class Inventory(object):
                 groups[g.name] = [h.name for h in g.get_hosts()]
                 ancestors = g.get_ancestors()
                 for a in ancestors:
-                    groups[a.name] = [h.name for h in a.get_hosts()]
+                    if a.name not in groups:
+                        groups[a.name] = [h.name for h in a.get_hosts()]
             self._groups_list = groups
         return self._groups_list
 
@@ -316,7 +320,7 @@ class Inventory(object):
         to exclude failed hosts in main playbook code, don't use this for other
         reasons.
         """
-        if type(restriction) != list:
+        if not isinstance(restriction, list):
             restriction = [ restriction ]
         self._restriction = restriction
 
@@ -325,7 +329,7 @@ class Inventory(object):
         Works like restict_to but offers an additional restriction.  Playbooks use this
         to implement serial behavior.
         """
-        if type(restriction) != list:
+        if not isinstance(restriction, list):
             restriction = [ restriction ]
         self._also_restriction = restriction
     
@@ -370,4 +374,21 @@ class Inventory(object):
         """ if inventory came from a file, what's the directory? """
         if not self.is_file():
             return None
-        return os.path.dirname(self.host_list)
+        dname = os.path.dirname(self.host_list)
+        if dname is None or dname == '':
+            cwd = os.getcwd()
+            return cwd 
+        return dname
+
+    def playbook_basedir(self):
+        """ returns the directory of the current playbook """
+        return self._playbook_basedir
+
+    def set_playbook_basedir(self, dir):
+        """ 
+        sets the base directory of the playbook so inventory plugins can use it to find
+        variable files and other things. 
+        """
+        self._playbook_basedir = dir
+
+

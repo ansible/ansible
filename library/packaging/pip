@@ -27,8 +27,8 @@ DOCUMENTATION = '''
 module: pip
 short_description: Manages Python library dependencies.
 description:
-     - Manage Python library dependencies. To use this module, one of the following keys is required: C(name)
-       or C(requirements).
+     - "Manage Python library dependencies. To use this module, one of the following keys is required: C(name)
+       or C(requirements)."
 version_added: "0.7"
 options:
   name:
@@ -65,8 +65,9 @@ options:
   virtualenv_command:
     version_aded: "1.1"
     description:
-      - The command to create the virtual environment with. For example
-        C(pyvenv), C(virtualenv), C(virtualenv2).
+      - The command or a pathname to the command to create the virtual
+        environment with. For example C(pyvenv), C(virtualenv),
+        C(virtualenv2), C(~/bin/virtualenv), C(/usr/local/bin/virtualenv).
     required: false
     default: virtualenv
   use_mirrors:
@@ -193,7 +194,9 @@ def main():
 
     if env:
         env = os.path.expanduser(env)
-        virtualenv = module.get_bin_path(virtualenv_command, True)
+        virtualenv = os.path.expanduser(virtualenv_command)
+        if os.path.basename(virtualenv) == virtualenv:
+            virtualenv = module.get_bin_path(virtualenv_command, True)
         if not os.path.exists(os.path.join(env, 'bin', 'activate')):
             if module.check_mode:
                 module.exit_json(changed=True)
@@ -201,6 +204,7 @@ def main():
                 cmd = '%s --system-site-packages %s' % (virtualenv, env)
             else:
                 cmd = '%s %s' % (virtualenv, env)
+            os.chdir(tempfile.gettempdir())
             rc, out_venv, err_venv = module.run_command(cmd)
             out += out_venv
             err += err_venv
