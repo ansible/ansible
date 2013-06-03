@@ -238,13 +238,13 @@ class Facts(object):
                         self.facts['distribution_version'] = data
                     elif name == 'Solaris':
                         data = get_file_content(path).split('\n')[0]
+                        ora_prefix = ''
                         if 'Oracle Solaris' in data:
-                           data = " ".join(data.split()[1:None])
+                            data = data.replace('Oracle ','')
+                            ora_prefix = 'Oracle '
                         self.facts['distribution'] = data.split()[0]
                         self.facts['distribution_version'] = data.split()[1]
-                        distribution_release = " ".join(data.split()[2:None])
-                        if distribution_release != 'X86' and distribution_release != 'SPARC':
-                            self.facts['distribution_release'] = distribution_release
+                        self.facts['distribution_release'] = ora_prefix + data
                     else:
                         self.facts['distribution'] = name
 
