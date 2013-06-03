@@ -53,7 +53,7 @@ options:
     aliases: []
   overwrite:
     description:
-      - force overwrite if a file with the same name already exists, values true/false/yes/no. Does not support files uploaded to s3 with multipart upload.
+      - force overwrite if a file with the same name already exists. Does not support files uploaded to s3 with multipart upload.
     required: false
     default: false
     version_added: "1.2"
@@ -99,15 +99,15 @@ def upload_s3file(module, s3, bucket, key_name, path, expiry):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            bucket = dict(),
-            path = dict(),
-            dest = dict(),
-            state  = dict(choices=['present', 'absent']),
-            expiry = dict(default=600),
-            s3_url = dict(aliases=['S3_URL']),
+            bucket         = dict(),
+            path           = dict(),
+            dest           = dict(),
+            state          = dict(choices=['present', 'absent']),
+            expiry         = dict(default=600, aliases=['expiration']),
+            s3_url         = dict(aliases=['S3_URL']),
             ec2_secret_key = dict(aliases=['EC2_SECRET_KEY']),
             ec2_access_key = dict(aliases=['EC2_ACCESS_KEY']),
-            overwrite = dict(default="false", choices=BOOLEANS),
+            overwrite      = dict(default=False, type='bool'),
         ),
         required_together=[ ['bucket', 'path', 'state'] ],
     )
@@ -120,7 +120,7 @@ def main():
     s3_url = module.params.get('s3_url')
     ec2_secret_key = module.params.get('ec2_secret_key')
     ec2_access_key = module.params.get('ec2_access_key')
-    overwrite = module.boolean( module.params.get('overwrite') )
+    overwrite = module.params.get('overwrite')
 
     # allow eucarc environment variables to be used if ansible vars aren't set
     if not s3_url and 'S3_URL' in os.environ:
@@ -173,7 +173,8 @@ def main():
     else:
         key_name = dest
 
-    # Check to see if the key already exists 
+    # Check to see if the key already exists
+    key_exists = False
     if bucket_exists is True:
         try:
             key_check = bucket.get_key(key_name)
@@ -184,7 +185,7 @@ def main():
         except s3.provider.storage_response_error, e:
             module.fail_json(msg= str(e))
 
-    if key_exists is True and overwrite is True: 
+    if key_exists is True and overwrite:
         # Retrieve MD5 Checksums.
         md5_remote = key_check.etag[1:-1]           # Strip Quotation marks from etag: https://code.google.com/p/boto/issues/detail?id=391
         etag_multipart = md5_remote.find('-')!=-1   # Find out if this is a multipart upload -> etag is not md5: https://forums.aws.amazon.com/message.jspa?messageID=222158

@@ -302,4 +302,4 @@ class TestInventory(unittest.TestCase):
         assert vars == {'inventory_hostname': 'zeus',
                         'inventory_hostname_short': 'zeus',
                         'group_names': ['greek', 'major-god', 'ungrouped'],
-                        'var_a': '1'}
+                        'var_a': '1#2'}

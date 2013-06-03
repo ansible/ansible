@@ -204,27 +204,37 @@ def regular_generic_msg(hostname, result, oneline, caption):
         return "%s | %s >> %s\n" % (hostname, caption, utils.jsonify(result))
 
 
-def banner(msg):
+def banner_cowsay(msg):
 
+    if msg.find(": [") != -1:
+        msg = msg.replace("[","")
+        if msg.endswith("]"):
+            msg = msg[:-1]
+    runcmd = [cowsay,"-W", "60"]
+    if noncow:
+        runcmd.append('-f')
+        runcmd.append(noncow)
+    runcmd.append(msg)
+    cmd = subprocess.Popen(runcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out, err) = cmd.communicate()
+    return "%s\n" % out
+
+def banner_normal(msg):
+
+    width = 78 - len(msg)
+    if width < 3:
+        width = 3
+    filler = "*" * width
+    return "\n%s %s " % (msg, filler)
+
+def banner(msg):
     if cowsay:
-        if msg.find(": [") != -1:
-            msg = msg.replace("[","")
-            if msg.endswith("]"):
-                msg = msg[:-1]
-        runcmd = [cowsay,"-W", "60"]
-        if noncow:
-            runcmd.append('-f')
-            runcmd.append(noncow)
-        runcmd.append(msg)
-        cmd = subprocess.Popen(runcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        (out, err) = cmd.communicate()
-        return "%s\n" % out
-    else:
-        width = 78 - len(msg)
-        if width < 3:
-            width = 3
-        filler = "*" * width
-        return "\n%s %s " % (msg, filler)
+        try:
+            return banner_cowsay(msg)
+        except OSError:
+            # somebody cleverly deleted cowsay or something during the PB run.  heh.
+            return banner_normal(msg)
+    return banner_normal(msg)
 
 def command_generic_msg(hostname, result, oneline, caption):
     ''' output the result of a command run '''
@@ -552,7 +562,8 @@ class PlaybookCallbacks(object):
         if hasattr(self, 'start_at'): # we still have start_at so skip the task
             self.skip_task = True
         elif hasattr(self, 'step') and self.step:
-            resp = raw_input('Perform task: %s (y/n/c): ' % name)
+            msg = ('Perform task: %s (y/n/c): ' % name).encode(sys.stdout.encoding)
+            resp = raw_input(msg)
             if resp.lower() in ['y','yes']:
                 self.skip_task = False
                 display(banner(msg))
