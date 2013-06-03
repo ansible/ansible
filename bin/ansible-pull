@@ -102,6 +102,8 @@ def main(args):
     parser.add_option('-C', '--checkout', dest='checkout',
                       default="HEAD",
                       help='Branch/Tag/Commit to checkout.  Defaults to HEAD.')
+    parser.add_option('-i', '--inventory-file', dest='inventory',
+                      help="specify inventory host file")
     options, args = parser.parse_args(args)
 
     if not options.dest:
@@ -115,9 +117,12 @@ def main(args):
     now = datetime.datetime.now()
     print >>sys.stderr, now.strftime("Starting ansible-pull at %F %T")
 
+    inv_opts = 'localhost,'
     limit_opts = 'localhost:%s:127.0.0.1' % socket.getfqdn()
     git_opts = "repo=%s dest=%s version=%s" % (options.url, options.dest, options.checkout)
-    cmd = 'ansible all -c local --limit "%s" -m git -a "%s"' % (limit_opts, git_opts)
+    cmd = 'ansible all -c local -i "%s" --limit "%s" -m git -a "%s"' % (
+            inv_opts, limit_opts, git_opts
+            )
     rc = _run(cmd)
     if rc != 0:
         return rc
@@ -129,6 +134,8 @@ def main(args):
         return 1
 
     cmd = 'ansible-playbook -c local --limit "%s" %s' % (limit_opts, playbook)
+    if options.inventory:
+        cmd += ' -i "%s"' % options.inventory
     os.chdir(options.dest)
     rc = _run(cmd)
 
