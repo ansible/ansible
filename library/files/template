@@ -16,6 +16,7 @@ description:
        the template's machine, C(template_uid) the owner, C(template_path) the
        relative path of the template, C(template_fullpath) is the absolute path of the 
        template, and C(template_run_date) is the date that the template was rendered."
+     - The file permission is set to 0644 when the C(mode) option is not specified.
 options:
   src:
     description:
