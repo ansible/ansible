@@ -60,7 +60,7 @@ class ActionModule(object):
                 fnt = template.template(self.runner.basedir, fn, inject)
                 fnd = utils.path_dwim(self.runner.basedir, fnt)
                 if not os.path.exists(fnd) and '_original_file' in inject:
-                    fnd = utils.path_dwim_relative(inject['_original_file'], 'templates', fn_orig, self.runner.basedir, check=False)
+                    fnd = utils.path_dwim_relative(inject['_original_file'], 'templates', fnt, self.runner.basedir, check=False)
                 if os.path.exists(fnd):
                     source = fnd
                     found = True
