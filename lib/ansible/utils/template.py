@@ -473,7 +473,7 @@ def template_from_string(basedir, data, vars):
 
         if '_original_file' in vars:
             basedir = os.path.dirname(vars['_original_file'])
-            filesdir = os.path.join(basedir, '..', 'files')
+            filesdir = os.path.abspath(os.path.join(basedir, '..', 'files'))
             if os.path.exists(filesdir):
                 basedir = filesdir
 
