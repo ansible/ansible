@@ -21,6 +21,7 @@ import os.path
 from ansible import utils
 from ansible.runner.return_data import ReturnData
 
+
 class ActionModule(object):
 
     def __init__(self, runner):
@@ -61,18 +62,16 @@ class ActionModule(object):
         dest = options.get('dest', None)
 
         try:
-          options['local_rsync_path'] = inject['ansible_rsync_path']
+            options['local_rsync_path'] = inject['ansible_rsync_path']
         except KeyError:
-          pass
-        # options['tmp_dir'] = tmp
+            pass
 
-        delegate = inject.get('delegate_to', inject['inventory_hostname'
-                              ])
-        if delegate in ['localhost', '127.0.0.1']:
+        dest_host = inject.get('delegate_to',
+                               inject.get('ansible_ssh_user',
+                               inject['inventory_hostname']))
+        if dest_host in ['localhost', '127.0.0.1']:
             dest_host = '127.0.0.1'
-        else:
-            dest_host = inject.get('ansible_ssh_host', delegate)
-        src_host = '127.0.0.1'  # the localhost is the inventory_hostname when transport is not local
+        src_host = '127.0.0.1'  # inventory_hostname is localhost when transport not local
         if options.get('mode', 'push') == 'pull':
             (dest_host, src_host) = (src_host, dest_host)
         if not dest_host is src_host:
@@ -100,5 +99,4 @@ class ActionModule(object):
                 v) in options.items()])
         return self.runner._execute_module(conn, tmp, 'synchronize',
                 self.runner.module_args, inject=inject)
-
 

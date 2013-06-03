@@ -60,12 +60,16 @@ examples:
      description: Synchronization of src path to dest path on the localhost
    - code: 'synchronize: mode=pull src=some/relative/path dest=/some/absolute/path'
      description: Synchronization of src on the inventory host to the dest on the localhost.
-   - code: 'synchronize: src=some/relative/path dest=/some/absolute/path'
+   - code: |
+       synchronize: src=some/relative/path dest=/some/absolute/path
+         delegate_to: delegate.host
      description: Synchronization of src on delegate to dest on the current inventory host
    - code: 'synchronize: src=some/relative/path dest=/some/absolute/path delete=yes'
      description: 'Synchronize and delete files in dest on inventory host not found in src of localhost.'
    - code: 'synchronize: src=some/relative/path dest=/some/absolute/path verbosity=1'
      description: 'Synchronize and return verbose information from the rsync transfer.'
+   - code: 'synchronize: src=some/relative/path dest=/some/absolute/path rsync_path="sudo rsync"'
+     description: 'Synchronize with using an alternate rsync command. See --rsync-path on the rsync man page.'
 author: Timothy Appnel
 '''
 
