@@ -34,7 +34,7 @@ class Globals(object):
     FILTERS = None
 
     def __init__(self):
-        pass    
+        pass
 
 def _get_filters():
     ''' return filter plugin instances '''
@@ -48,7 +48,7 @@ def _get_filters():
     for fp in plugins:
         filters.update(fp.filters())
     Globals.FILTERS = filters
- 
+
     return Globals.FILTERS
 
 def _get_extensions():
@@ -90,7 +90,7 @@ def lookup(name, *args, **kwargs):
 
 def _legacy_varFindLimitSpace(basedir, vars, space, part, lookup_fatal, depth, expand_lists):
     ''' limits the search space of space to part
-    
+
     basically does space.get(part, None), but with
     templating for part and a few more things
     '''
@@ -341,7 +341,7 @@ class _jinja2_vars(object):
     is avoiding duplicating the large hashes that inject tends to be.
     To facilitate using builtin jinja2 things like range, globals are handled
     here.
-    extras is a list of locals to also search for variables. 
+    extras is a list of locals to also search for variables.
     '''
 
     def __init__(self, basedir, vars, globals, *extras):
@@ -417,7 +417,7 @@ def template_from_file(basedir, path, vars):
     except:
         raise errors.AnsibleError("unable to read %s" % realpath)
 
-   
+
 # Get jinja env overrides from template
     if data.startswith(JINJA2_OVERRIDE):
         eol = data.find('\n')
@@ -463,7 +463,7 @@ def template_from_file(basedir, path, vars):
 
 def template_from_string(basedir, data, vars):
     ''' run a string through the (Jinja2) templating engine '''
-    
+
     try:
         if type(data) == str:
             data = unicode(data, 'utf-8')
@@ -487,15 +487,16 @@ def template_from_string(basedir, data, vars):
                 raise errors.AnsibleError("recursive loop detected in template string: %s" % data)
             else:
                 return data
-         
+
         def my_lookup(*args, **kwargs):
             return lookup(*args, basedir=basedir, **kwargs)
- 
+
         t.globals['lookup'] = my_lookup
- 
+
         res = jinja2.utils.concat(t.root_render_func(t.new_context(_jinja2_vars(basedir, vars, t.globals), shared=True)))
         return res
     except jinja2.exceptions.UndefinedError:
+        raise
         # this shouldn't happen due to undeclared check above
-        return data
+        # return data
 

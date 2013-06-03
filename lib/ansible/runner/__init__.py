@@ -31,6 +31,7 @@ import sys
 import shlex
 import pipes
 import re
+import jinja2
 
 import ansible.constants as C
 import ansible.inventory
@@ -574,8 +575,12 @@ class Runner(object):
             tmp = self._make_tmp_path(conn)
 
         # render module_args and complex_args templates
-        module_args = template.template(self.basedir, module_args, inject)
-        complex_args = template.template(self.basedir, complex_args, inject)
+        try:
+            module_args = template.template(self.basedir, module_args, inject)
+            complex_args = template.template(self.basedir, complex_args, inject)
+        except jinja2.exceptions.UndefinedError, e:
+            raise errors.AnsibleUndefinedVariable("Undefined variables: %s" % str(e))
+
 
         result = handler.run(conn, tmp, module_name, module_args, inject, complex_args)
 
