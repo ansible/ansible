@@ -34,12 +34,12 @@ class LookupModule(object):
 
     def __init__(self, basedir=None, **kwargs):
         self.basedir = basedir
+        self.host_list = kwargs['runner'].inventory.host_list
 
     def run(self, terms, inject=None, **kwargs):
         terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
 
         if not isinstance(terms, list):
             raise errors.AnsibleError("with_inventory_hostnames expects a list")
-
-        return flatten(inventory.Inventory().list_hosts(terms))
+        return flatten(inventory.Inventory(self.host_list).list_hosts(terms))
 
