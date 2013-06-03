@@ -562,7 +562,8 @@ class PlaybookCallbacks(object):
         if hasattr(self, 'start_at'): # we still have start_at so skip the task
             self.skip_task = True
         elif hasattr(self, 'step') and self.step:
-            resp = raw_input('Perform task: %s (y/n/c): ' % name)
+            msg = ('Perform task: %s (y/n/c): ' % name).encode(sys.stdout.encoding)
+            resp = raw_input(msg)
             if resp.lower() in ['y','yes']:
                 self.skip_task = False
                 display(banner(msg))
