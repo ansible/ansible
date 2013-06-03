@@ -53,6 +53,11 @@ options:
     choices: [ 'yes', 'no' ]
     default: 'no'
     required: false
+  rsync_path:
+    description:
+      - Specify rsync to run on the remote machine. See C(--rsync-path) on the rsync man page.
+    required: false
+    default: null
 examples:
    - code: 'synchronize: src=some/relative/path dest=/some/absolute/path'
      description: Synchronization of src on the localhost to dest on the current inventory host
@@ -69,7 +74,7 @@ examples:
    - code: 'synchronize: src=some/relative/path dest=/some/absolute/path verbosity=1'
      description: 'Synchronize and return verbose information from the rsync transfer.'
    - code: 'synchronize: src=some/relative/path dest=/some/absolute/path rsync_path="sudo rsync"'
-     description: 'Synchronize with using an alternate rsync command. See --rsync-path on the rsync man page.'
+     description: 'Synchronize with using an alternate rsync command.'
 author: Timothy Appnel
 '''
 
