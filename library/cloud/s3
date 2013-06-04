@@ -41,7 +41,7 @@ options:
     aliases: []
   dest:
     description:
-      - the destination in s3, if different from path
+      - the destination in s3, if different from path. Used to override the object name, which is normally the same as the filename.
     required: false
     default: null
     aliases: []
@@ -71,6 +71,13 @@ EXAMPLES = '''
    module: s3
    bucket: mybucket
    path: /path/to/file
+   state: present
+   overwrite: yes
+# Override the key / object name
+   module: s3
+   bucket: mybucket
+   path: /path/to/file
+   dest: myfile
    state: present
    overwrite: yes
 '''
