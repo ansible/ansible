@@ -120,10 +120,21 @@ options:
     version_added: "1.1"
     description:
       - recursively set the specified file attributes (applies only to state=directory)
+  force:
+    required: false
+    default: "no"
+    choises: [ "yes", "no" ]
+    description:
+      - force the creation of the symlinks in two cases: the source file does
+        not exist (but will appear later); the destination exists and a file (so, we need to unlink the
+        "path" file and create symlink to the "src" file in place of it).
 examples:
    - code: "file: path=/etc/foo.conf owner=foo group=foo mode=0644"
      description: Example from Ansible Playbooks
    - code: "file: src=/file/to/link/to dest=/path/to/symlink owner=foo group=foo state=link"
+   - code: "action: file state=link path=/etc/localtime src=/usr/share/zoneinfo/Europe/Zurich force=yes"
+     description: Force /etc/locatime be the symbolic link to /usr/share/zoneinfo/Europe/Zurich
+
 notes:
     - See also M(copy), M(template), M(assemble)
 requirements: [ ]
@@ -140,6 +151,7 @@ def main():
             state = dict(choices=['file','directory','link','absent'], default='file'),
             path  = dict(aliases=['dest', 'name'], required=True),
             recurse  = dict(default='no', type='bool'),
+            force = dict(required=False,default=False,type='bool'),
             diff_peek = dict(default=None),
             validate = dict(required=False, default=None),
         ),
@@ -149,6 +161,7 @@ def main():
 
     params = module.params
     state  = params['state']
+    force = params['force']
     params['path'] = path = os.path.expanduser(params['path'])
 
     # short-circuit for diff_peek
@@ -216,7 +229,10 @@ def main():
         module.exit_json(path=path, changed=True)
 
     if prev_state != 'absent' and prev_state != state:
-        module.fail_json(path=path, msg='refusing to convert between %s and %s for %s' % (prev_state, state, src))
+        if force and prev_state == 'file' and state == 'link':
+            pass
+        else:
+            module.fail_json(path=path, msg='refusing to convert between %s and %s for %s' % (prev_state, state, src))
 
     if prev_state == 'absent' and state == 'absent':
         module.exit_json(path=path, changed=False)
@@ -258,7 +274,8 @@ def main():
             abs_src = src
         else:
             module.fail_json(msg="absolute paths are required")
-        if not os.path.exists(abs_src):
+
+        if not os.path.exists(abs_src) and not force:
             module.fail_json(path=path, src=src, msg='src file does not exist')
 
         if prev_state == 'absent':
@@ -276,6 +293,12 @@ def main():
                 os.unlink(path)
                 os.symlink(src, path)
                 changed = True
+        elif prev_state == 'file' and force:
+            if module.check_mode:
+                module.exit_json(changed=True)
+            os.unlink(path)
+            os.symlink(src, path)
+            changed = True
         else:
             module.fail_json(dest=path, src=src, msg='unexpected position reached')
 
