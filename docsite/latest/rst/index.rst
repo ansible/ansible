@@ -3,16 +3,8 @@
 Ansible Documentation Index
 ```````````````````````````
 
-.. image:: http://ansible.cc/docs/_static/ansible_fest_2013.png
-   :alt: ansiblefest 2013
-   :target: http://ansibleworks.com/fest
-
 NOTE: This page contains documentation about how to use `Ansible <http://ansible.cc>`_ and covers the latest DEVELOPMENT version (1.2).  For the current
 released version, see `Ansible 1.1 Docs <http://ansible.cc/docs/released/1.1>`_ instead. You might be one of them.  We hope you find what you are looking for in the documentation, and would like to point out that you may also be interested in taking a class:
-
-.. image:: http://www.ansibleworks.com.s3-website-us-east-1.amazonaws.com/img/banners/training.png
-   :alt: ansibleworks training
-   :target: http://www.ansibleworks.com/training/
 
 Before we dive into playbooks, configuration management, deployment, and orchestration, we'll learn how to get Ansible installed and some
 basic information.  We'll go over how to execute ad-hoc commands in parallel across your nodes using /usr/bin/ansible.  We'll also see

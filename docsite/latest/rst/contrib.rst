@@ -1,11 +1,6 @@
 Ansible Resources
 =================
 
-.. image:: http://ansible.cc/docs/_static/ansible_fest_2013.png
-   :alt: ansiblefest 2013
-   :target: http://ansibleworks.com/fest
-
-
 User contributed playbooks, modules, and articles. This is a small
 curated list, but growing. Everyone is encouraged to add to this
 document, just `edit it on Github <https://github.com/ansible/ansible/blob/devel/docsite/latest/rst/contrib.rst>`_
