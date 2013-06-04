@@ -54,7 +54,7 @@ your webservers in "webservers.yml" and all your database servers in
 "dbservers.yml".  You can create a "site.yml" that would reconfigure
 all of your systems like this::
 
-    ----
+    ---
     - include: playbooks/webservers.yml
     - include: playbooks/dbservers.yml
 
@@ -250,13 +250,20 @@ This is useful, for, among other things, setting the hosts group or the user for
 
 Example::
 
-    -----
+    ---
     - user: '{{ user }}'
       hosts: '{{ hosts }}'
       tasks:
          - ...
 
     ansible-playbook release.yml --extra-vars "hosts=vipers user=starbuck"
+
+As of Ansible 1.2, you can also pass in extra vars as quoted JSON, like so::
+
+    --extra-vars "{'pacman':'mrs','ghosts':['inky','pinky','clyde','sue']}"
+
+The key=value form is obviously simpler, but it's there if you need it!
+
 
 Conditional Execution
 `````````````````````
@@ -276,6 +283,20 @@ Don't panic -- it's actually pretty simple::
       - name: "shutdown Debian flavored systems"
         action: command /sbin/shutdown -t now
         when: ansible_os_family == "Debian"
+
+A number of Jinja2 "filters" can also be used in when statements, some of which are unique
+and provided by ansible.  Suppose we want to ignore the error of one statement and then
+decide to do something conditionally based on success or failure::
+
+    tasks:
+      - action: command /bin/false
+        register: result
+        ignore_errors: True
+      - action: command /bin/something
+        when: result|failed
+      - action: command /bin/something_else
+        when: result|sucess 
+
 
 As a reminder, to see what derived variables are available, you can do::
 
@@ -432,7 +453,7 @@ can accept more than one parameter.
 ``with_fileglob`` matches all files in a single directory, non-recursively, that match a pattern.  It can
 be used like this::
 
-    ----
+    ---
     - hosts: all
 
       tasks:
@@ -534,7 +555,7 @@ This length can be changed by passing an extra parameter::
 
         # create a mysql user with a random password:
         - mysql_user: name={{ client }}
-                      password="{{ lookup('password', 'credentials/' + client + '/' + tier + '/' + role + '/mysqlpassword') }}"
+                      password="{{ lookup('password', 'credentials/' + client + '/' + tier + '/' + role + '/mysqlpassword length=15') }}"
                       priv={{ client }}_{{ tier }}_{{ role }}.*:ALL
 
         (...)
@@ -592,7 +613,7 @@ The environment can also be stored in a variable, and accessed like so::
 While just proxy settings were shown above, any number of settings can be supplied.  The most logical place
 to define an environment hash might be a group_vars file, like so::
 
-    ----
+    ---
     # file: group_vars/boston
 
     ntp_server: ntp.bos.example.com

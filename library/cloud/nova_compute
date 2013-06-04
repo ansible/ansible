@@ -38,12 +38,12 @@ options:
      description:
         - Password of login user
      required: true
-     default: True
+     default: 'yes'
    login_tenant_name:
      description:
         - The tenant name of the login user
      required: true
-     default: True
+     default: 'yes'
    auth_url:
      description:
         - The keystone url for authentication
@@ -126,7 +126,7 @@ requirements: ["novaclient"]
 def _delete_server(module, nova):
     name = None
     try:
-        server = nova.servers.list({'name': module.params['name']}).pop()
+        server = nova.servers.list(True, {'name': module.params['name']}).pop()
         nova.servers.delete(server)
     except Exception as e:
         module.fail_json( msg = "Error in deleting vm: %s" % e.message)
@@ -134,7 +134,7 @@ def _delete_server(module, nova):
         module.exit_json(changed = True, result = "deleted")
     expire = time.time() + module.params['wait_for']
     while time.time() < expire:
-        name = nova.servers.list({'name': module.params['name']})
+        name = nova.servers.list(True, {'name': module.params['name']})
         if not name:
             module.exit_json(changed = True, result = "deleted")
         time.sleep(5)
@@ -182,7 +182,7 @@ def _create_server(module, nova):
 def _get_server_state(module, nova):
     server = None
     try:
-        servers = nova.servers.list({'name': module.params['name']})
+        servers = nova.servers.list(True, {'name': module.params['name']})
         if servers:
             server = servers.pop()
     except Exception as e:

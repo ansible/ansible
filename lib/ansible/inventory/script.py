@@ -76,8 +76,12 @@ class InventoryScript(object):
 
             if 'vars' in data:
                 for k, v in data['vars'].iteritems():
-                    group.set_variable(k, v)
-            all.add_child_group(group)
+                    if group.name == all.name:
+                        all.set_variable(k, v)
+                    else:
+                        group.set_variable(k, v)
+            if group.name != all.name:
+                all.add_child_group(group)
 
         # Separate loop to ensure all groups are defined
         for (group_name, data) in self.raw.items():

@@ -38,11 +38,13 @@ options:
     required: true
     default: null
     choices: [ "present", "started", "stopped", "restarted" ]
-examples:
-   - code: "supervisorctl: name=my_app state=started"
-     description: Manage the state of program I(my_app) to be in I(started) state.
 requirements: [ ]
 author: Matt Wright
+'''
+
+EXAMPLES = '''
+# Manage the state of program to be in 'started' state.
+supervisorctl: name=my_app state=started
 '''
 
 def main():

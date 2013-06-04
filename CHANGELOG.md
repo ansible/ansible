@@ -23,6 +23,12 @@ Core Features:
 * added a log file for ansible/ansible-playbook, set 'log_path' in the configuration file or ANSIBLE_LOG_PATH in environment
 * debug mode always outputs debug in playbooks, without needing to specify -v
 * external inventory script added for Spacewalk / Red Hat Satellite servers
+* It is now possible to feed JSON structures to --extra-vars.  Pass in a JSON dictionary/hash to feed in complex data.
+* group_vars/ and host_vars/ directories can now be kept alongside the playbook as well as inventory (or both!)
+* more filters: ability to say {{ foo|success }} and {{ foo|failed }} and when: foo|success and when: foo|failed
+* more filters: {{ path|basename }} and {{ path|dirname }}
+* lookup plugins now use the basedir of the file they have included from, avoiding needs of ../../../ in places and
+increasing the ease at which things can be reorganized.  
 
 Modules added:
 
@@ -61,7 +67,6 @@ Modules added:
 Modules removed
 
 * vagrant -- can't be compatible with both versions at once, just run things though the vagrant provisioner in vagrant core
-
 
 Bugfixes and Misc Changes:
 
@@ -124,6 +129,8 @@ the variable is still registered for the host, with the attribute skipped: True.
 * fix for some unicode encoding errors in outputing some data in verbose mode
 * improved FreeBSD, NetBSD and Solaris facts
 * debug module always outputs data without having to specify -v
+* fix for sysctl module creating new keys (must specify checks=none)
+* NetBSD and OpenBSD support for the user and groups modules
 
 1.1 "Mean Street" -- 4/2/2013
 

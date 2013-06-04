@@ -32,12 +32,12 @@ options:
      description:
         - Password of login user
      required: true
-     default: True
+     default: 'yes'
    login_tenant_name:
      description:
         - The tenant name of the login user
      required: true
-     default: True
+     default: 'yes'
    auth_url:
      description:
         - The keystone url for authentication
@@ -87,7 +87,7 @@ options:
      description:
         - Wether the image can be accesed publically
      required: false
-     default: yes
+     default: 'yes'
    copy_from:
      description:
         - A url from where the image can be downloaded, mutually exculsive with file parameter

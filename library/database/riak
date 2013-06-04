@@ -76,7 +76,7 @@ options:
 examples:
    - code: "riak: command=join target_node=riak@10.1.1.1"
      description: "Join's a Riak node to another node"
-   - code: "riak: wait_for_handoffs=true"
+   - code: "riak: wait_for_handoffs=yes"
      description: "Wait for handoffs to finish.  Use with async and poll."
    - code: "riak: wait_for_service=kv"
      description: "Wait for riak_kv service to startup"
@@ -144,7 +144,7 @@ def main():
 # here we attempt to get stats from the http stats interface for 120 seconds.
     timeout = time.time() + 120
     while True:
-        if time.time () > timeout:
+        if time.time() > timeout:
             module.fail_json(msg='Timeout, could not fetch Riak stats.')
         try:
             stats_raw = urllib2.urlopen(
@@ -230,7 +230,7 @@ def main():
                 result['handoffs'] = 'No transfers active.'
                 break
             time.sleep(10)
-            if time.time () > timeout:
+            if time.time() > timeout:
                 module.fail_json(msg='Timeout waiting for handoffs.')
 
 # this could take a while, recommend to run in async mode
@@ -247,7 +247,7 @@ def main():
                 break
             time.sleep(10)
             wait += 10
-        if time.time () > timeout:
+        if time.time() > timeout:
             module.fail_json(msg='Timeout waiting for nodes to agree on ring.')
 
     result['ring_ready'] = ring_check()

@@ -392,9 +392,16 @@ class Runner(object):
 
         if items_plugin is not None and items_plugin in utils.plugins.lookup_loader:
 
+            basedir = self.basedir
+            if '_original_file' in inject:
+                basedir = os.path.dirname(inject['_original_file'])
+                filesdir = os.path.join(basedir, '..', 'files')
+                if os.path.exists(filesdir):
+                    basedir = filesdir
+
             items_terms = self.module_vars.get('items_lookup_terms', '')
-            items_terms = template.template(self.basedir, items_terms, inject)
-            items = utils.plugins.lookup_loader.get(items_plugin, runner=self, basedir=self.basedir).run(items_terms, inject=inject)
+            items_terms = template.template(basedir, items_terms, inject)
+            items = utils.plugins.lookup_loader.get(items_plugin, runner=self, basedir=basedir).run(items_terms, inject=inject)
             if type(items) != list:
                 raise errors.AnsibleError("lookup plugins have to return a list: %r" % items)
 
@@ -433,7 +440,6 @@ class Runner(object):
                     complex_args = utils.safe_eval(complex_args)
                     if type(complex_args) != dict:
                         raise errors.AnsibleError("args must be a dictionary, received %s" % complex_args)
-
                 result = self._executor_internal_inner(
                      host, 
                      self.module_name, 
@@ -478,9 +484,8 @@ class Runner(object):
                 new_args = new_args + "%s='%s' " % (k,v)
             module_args = new_args
 
+        # module_name may be dynamic (but cannot contain {{ ansible_ssh_user }})
         module_name  = template.template(self.basedir, module_name, inject)
-        module_args  = template.template(self.basedir, module_args, inject)
-        complex_args = template.template(self.basedir, complex_args, inject)
 
         if module_name in utils.plugins.action_loader:
             if self.background != 0:
@@ -536,8 +541,12 @@ class Runner(object):
                 actual_host = delegate_to
                 actual_port = port
 
+        # user/pass may still contain variables at this stage
         actual_user = template.template(self.basedir, actual_user, inject)
         actual_pass = template.template(self.basedir, actual_pass, inject)
+
+        # make actual_user available as __magic__ ansible_ssh_user variable
+        inject['ansible_ssh_user'] = actual_user
 
         try:
             if actual_port is not None:
@@ -560,6 +569,10 @@ class Runner(object):
         # all modules get a tempdir, action plugins get one unless they have NEEDS_TMPPATH set to False
         if getattr(handler, 'NEEDS_TMPPATH', True):
             tmp = self._make_tmp_path(conn)
+
+        # render module_args and complex_args templates
+        module_args = template.template(self.basedir, module_args, inject)
+        complex_args = template.template(self.basedir, complex_args, inject)
 
         result = handler.run(conn, tmp, module_name, module_args, inject, complex_args)
 
@@ -834,7 +847,7 @@ class Runner(object):
                 print ie.errno
                 if ie.errno == 32:
                     # broken pipe from Ctrl+C
-                    raise errors.AnsibleError("interupted")
+                    raise errors.AnsibleError("interrupted")
                 raise
         else:
             results = [ self._executor(h) for h in hosts ]
