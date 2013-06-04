@@ -120,6 +120,20 @@ options:
     version_added: "1.1"
     description:
       - recursively set the specified file attributes (applies only to state=directory)
+  force:
+    required: false
+    default: "no"
+    choises: [ "yes", "no" ]
+    description:
+      - force the creation of the symlinks in two cases: the source file does
+        not exist (but will appear later); the destination exists and a file (so, we need to unlink the
+        "path" file and create symlink to the "src" file in place of it).
+examples:
+   - code: "file: path=/etc/foo.conf owner=foo group=foo mode=0644"
+     description: Example from Ansible Playbooks
+   - code: "file: src=/file/to/link/to dest=/path/to/symlink owner=foo group=foo state=link"
+   - code: "action: file state=link path=/etc/localtime src=/usr/share/zoneinfo/Europe/Zurich force=yes"
+     description: Force /etc/locatime be the symbolic link to /usr/share/zoneinfo/Europe/Zurich
 notes:
     - See also M(copy), M(template), M(assemble)
 requirements: [ ]
