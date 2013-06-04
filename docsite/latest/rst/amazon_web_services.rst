@@ -127,22 +127,22 @@ And in your playbook::
     hosts: /chroot/path
 
 Pending Information
-===================
+```````````````````
 
 In the future look here for more topics.
 
 Using Ansible's S3 module
-`````````````````````````
++++++++++++++++++++++++++
 
 these modules are documented on the module page, more walk throughs coming soon
 
 Using Ansible's Elastic Load Balancer Support
-`````````````````````````````````````````````
++++++++++++++++++++++++++++++++++++++++++++++
 
 these modules are documented on the module page, more walk throughs coming soon
 
 Using Ansible's Cloud Formation Module
-``````````````````````````````````````
+++++++++++++++++++++++++++++++++++++++
 
 these modules are documented on the module page, more walk throughs coming soon
 
