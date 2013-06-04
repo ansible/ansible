@@ -65,6 +65,12 @@ options:
     required: false
     default: null
     version_added: "0.9"
+  json:
+    description:
+      - attempts to parse stdout as json into a data structure as to expose it via the register statement a la ${command_output_register.json}
+    required: false
+    default: false
+    version_added: "???" # place holder
 examples:
    - code: "command: /sbin/shutdown -t now"
      description: "Example from Ansible Playbooks"
@@ -90,6 +96,7 @@ def main():
     args  = module.params['args']
     creates  = module.params['creates']
     removes  = module.params['removes']
+    do_json  = module.params['json']
 
     if args.strip() == '':
         module.fail_json(rc=256, msg="no command given")
@@ -141,16 +148,26 @@ def main():
     if err is None:
         err = ''
 
-    module.exit_json(
-        cmd     = args,
-        stdout  = out.rstrip("\r\n"),
-        stderr  = err.rstrip("\r\n"),
-        rc      = rc,
-        start   = str(startd),
-        end     = str(endd),
-        delta   = str(delta),
-        changed = True
-    )
+    exit_kwargs = {
+        'cmd'     : args,
+        'stdout'  : out.rstrip("\r\n"),
+        'stderr'  : err.rstrip("\r\n"),
+        'rc'      : rc,
+        'start'   : str(startd),
+        'end'     : str(endd),
+        'delta'   : str(delta),
+        'changed' : True
+    }
+
+    if do_json:
+        try:
+            json_out = json.loads(out)
+        except ValueError:
+            # Try to give a clear error in this case.
+            raise Exception('stdout was not valid json')
+        exit_kwargs['json'] = json_out
+
+    module.exit_json(**exit_kwargs)
 
 # include magic from lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
@@ -175,11 +192,12 @@ class CommandModule(AnsibleModule):
         params['removes'] = None
         params['shell'] = False
         params['executable'] = None
+        params['json'] = False
         if args.find("#USE_SHELL") != -1:
             args = args.replace("#USE_SHELL", "")
             params['shell'] = True
 
-        r = re.compile(r'(^|\s)(creates|removes|chdir|executable)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)')
+        r = re.compile(r'(^|\s)(creates|removes|chdir|executable|json)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)')
         for m in r.finditer(args):
             v = m.group(4).replace("\\", "")
             if m.group(2) == "creates":
@@ -200,6 +218,8 @@ class CommandModule(AnsibleModule):
                 elif v[0] != '/':
                     self.fail_json(rc=259, msg="the path for 'executable' argument must be fully qualified")
                 params['executable'] = v
+            elif m.group(2) == 'json' and m.group(4) == 'true':
+                params['json'] = True
         args = r.sub("", args)
         params['args'] = args
         return (params, params['args'])
