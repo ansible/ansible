@@ -239,6 +239,7 @@ def main():
         # is_tar ends with .zip, .tar.gz, or .tar.bz2
         is_vcs = False
         is_tar = False
+        is_local_path = False
         if name.endswith('.tar.gz') or name.endswith('.tar.bz2') or name.endswith('.zip'):
             is_tar = True
         elif name.startswith('svn+') or name.startswith('git+') or \
@@ -253,8 +254,11 @@ def main():
                 args_list.append('-e')
                 # Ok, we will reconstruct the option string
                 extra_args = ' '.join(args_list)
+
+        if name.startswith(('.','/')):
+            is_local_path = True
         # for tarball or vcs source, applying --use-mirrors doesn't really make sense
-        is_package = is_vcs or is_tar       # just a shortcut for bool
+        is_package = is_vcs or is_tar or is_local_path       # just a shortcut for bool
         if not is_package and state != 'absent' and use_mirrors:
             cmd += ' --use-mirrors'
         cmd += ' %s' % _get_full_name(name, version)
