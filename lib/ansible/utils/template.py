@@ -295,7 +295,7 @@ def legacy_varReplace(basedir, raw, vars, lookup_fatal=True, depth=0, expand_lis
 
 # TODO: varname is misnamed here
 
-def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=True, convert_bare=False):
+def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=True, convert_bare=False, fail_on_undefined=False):
     ''' templates a data structure by traversing it and substituting for other data structures '''
 
     if convert_bare and isinstance(varname, basestring):
@@ -305,7 +305,7 @@ def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=Tr
 
     if isinstance(varname, basestring):
         if '{{' in varname or '{%' in varname:
-            varname = template_from_string(basedir, varname, vars)
+            varname = template_from_string(basedir, varname, vars, fail_on_undefined)
         if not '$' in varname:
             return varname
 
@@ -461,7 +461,7 @@ def template_from_file(basedir, path, vars):
         res = res + '\n'
     return template(basedir, res, vars)
 
-def template_from_string(basedir, data, vars):
+def template_from_string(basedir, data, vars, fail_on_undefined=False):
     ''' run a string through the (Jinja2) templating engine '''
 
     try:
@@ -496,7 +496,9 @@ def template_from_string(basedir, data, vars):
         res = jinja2.utils.concat(t.root_render_func(t.new_context(_jinja2_vars(basedir, vars, t.globals), shared=True)))
         return res
     except jinja2.exceptions.UndefinedError:
-        raise
+        if fail_on_undefined:
+            raise
+        else:
         # this shouldn't happen due to undeclared check above
-        # return data
+            return data
 

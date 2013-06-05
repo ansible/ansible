@@ -30,7 +30,6 @@ import base64
 import sys
 import shlex
 import pipes
-import re
 import jinja2
 
 import ansible.constants as C
@@ -576,8 +575,8 @@ class Runner(object):
 
         # render module_args and complex_args templates
         try:
-            module_args = template.template(self.basedir, module_args, inject)
-            complex_args = template.template(self.basedir, complex_args, inject)
+            module_args = template.template(self.basedir, module_args, inject, fail_on_undefined=self.error_on_undefined_vars)
+            complex_args = template.template(self.basedir, complex_args, inject, fail_on_undefined=self.error_on_undefined_vars)
         except jinja2.exceptions.UndefinedError, e:
             raise errors.AnsibleUndefinedVariable("Undefined variables: %s" % str(e))
 
@@ -694,16 +693,8 @@ class Runner(object):
 
     # *****************************************************
 
-    def _contains_undefined_vars(self, module_args):
-        ''' return true if there are undefined variables '''
-        return '{{' in module_args
-
     def _copy_module(self, conn, tmp, module_name, module_args, inject, complex_args=None):
         ''' transfer a module over SFTP, does not run it '''
-        if self.error_on_undefined_vars and self._contains_undefined_vars(module_args):
-            vars = re.findall(r'{{(.*?)}}', module_args)
-            raise errors.AnsibleUndefinedVariable("Undefined variables: %s" %
-                ', '.join(vars))
 
         # FIXME if complex args is none, set to {}
 
