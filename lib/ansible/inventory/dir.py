@@ -49,7 +49,7 @@ class InventoryDirectory(object):
                 # used when run specifically
                 continue
             # Skip hidden files
-            if i.startswith('.'):
+            if i.startswith('.') and not i.startswith('./'):
                 continue
             # These are things inside of an inventory basedir
             if i in ("host_vars", "group_vars", "vars_plugins"):
