@@ -48,6 +48,9 @@ class InventoryDirectory(object):
                 # this file is generated on a failed playbook and should only be
                 # used when run specifically
                 continue
+            # Skip hidden files
+            if i.startswith('.'):
+                continue
             # These are things inside of an inventory basedir
             if i in ("host_vars", "group_vars", "vars_plugins"):
                 continue
