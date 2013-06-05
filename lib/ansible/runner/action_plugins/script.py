@@ -61,7 +61,8 @@ class ActionModule(object):
             prepcmd = 'chmod +x %s' % tmp_src
 
         # add preparation steps to one ssh roundtrip executing the script
-        module_args = prepcmd + '; ' + tmp_src + ' ' + args
+        env_string = self.runner._compute_environment_string(inject)
+        module_args = prepcmd + '; ' + env_string + tmp_src + ' ' + args
 
         handler = utils.plugins.action_loader.get('raw', self.runner)
         result = handler.run(conn, tmp, 'raw', module_args, inject)
