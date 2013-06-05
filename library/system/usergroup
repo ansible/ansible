@@ -136,7 +136,7 @@ class UserGroup(object):
 
     def do_state_present(self):
         if len(self.groups) == 0:
-            self.module.fail_json(msg="group variable could nt be empty when state=absent")
+            self.module.fail_json(msg="group variable could nt be empty when state=present")
         changed = False
         groups_cmd = self.groups.split(",")
         groups_user = self.user_group_membership()
