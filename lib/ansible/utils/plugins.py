@@ -28,7 +28,8 @@ PLUGIN_PATH_CACHE = {}
 _basedirs = []
 
 def push_basedir(basedir):
-    _basedirs.insert(0, basedir)
+    if basedir not in _basedirs:
+        _basedirs.insert(0, basedir)
 
 class PluginLoader(object):
 
