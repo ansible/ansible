@@ -1,0 +1,275 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2012, Stephen Fromm <sfromm@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: user
+author: Peter Hudec
+version_added: "0.1"
+short_description: Manage user additional groups
+requirements: [ usermod ]
+description:
+    - Manage user supplementary groups.
+options:
+    user:
+        required: true
+        description:
+            - Name of the user to modify groups.
+    groups:
+        required: true
+        description:
+            - Puts the user in this comma-delimited list of groups. 
+              When state=exact, the elpty string ('groups=') is allowed and 
+              the user will be removed from all supplementary groups
+    state:
+        required: false
+        default: "present"
+        choices: [ present, absent, exact ]
+        description:
+            - Whether the user account should be in the groups. When  C(absent), removes
+              the user account from the groups. When C(exact), set user acount groups to these groups (special case groups='')
+examples:
+    - code: 'usergroups: user=johnd groups="users,sudo"
+      description: "Add the user 'johnd' with to the supplementary groups 'users' and 'sudo'"
+    - code: "user: user=johnd state=absent groups=wheel
+      description: "Remove the user 'johnd' from group 'wheel' if present"
+    - code: "user: user=johnd state=exact groups=wheel,ssh
+      description: "set the supplementery groups to 'wheel' and 'ssh' for 'johnd'. All others groups will be removed"
+    - code: "user: user=johnd state=exact groups=
+      description: "removes all supplementary groups for user 'johnd'"
+'''
+
+import os
+import pwd
+import grp
+import syslog
+import platform
+
+class UserGroup(object):
+    """
+    This is a generic UserGroup manipulation class that is subclassed
+    based on platform.
+
+    A subclass may wish to override the following action methods:-
+      - compile_command()
+
+    All subclasses MUST define platform and distribution (which may be None).
+    """
+
+    platform = 'Generic'
+    distribution = None
+
+    def __new__(cls, *args, **kwargs):
+        return load_platform_subclass(UserGroup, args, kwargs)
+
+    def __init__(self, module):
+        self.module     = module
+        self.state      = module.params['state'].strip()
+        self.user       = module.params['user'].strip()
+        self.groups     = module.params['groups'].strip()
+
+        # select whether we dump additional debug info through syslog
+        self.syslogging = True
+
+    def execute_command(self, cmd):
+        if self.syslogging:
+            syslog.openlog('ansible-%s' % os.path.basename(__file__))
+            syslog.syslog(syslog.LOG_NOTICE, 'Command %s' % '|'.join(cmd))
+
+        return self.module.run_command(cmd)
+
+    def compile_command(self, add=None, remove=None, current=None):
+        if current is None:
+            return(None, "", "")
+        cmd = [self.module.get_bin_path('usermod', True)]
+        cmd.append("-G")
+        cmd.append(",".join(current))
+        cmd.append(self.user)
+        return self.execute_command(cmd)
+    
+    def group_exists(self,group):
+        try:
+            if group.isdigit():
+                if grp.getgrgid(group):
+                    return True
+            else:
+                if grp.getgrnam(group):
+                    return True
+        except KeyError:
+            return False
+
+    def user_exists(self):
+        try:
+            if self.user.isdigit():
+                if pwd.getpwuid(self.user):
+                    return True
+            else:
+                if pwd.getpwnam(self.user):
+                    return True
+        except KeyError:
+            return False
+
+
+    def user_group_membership(self):
+        groups = []
+        for g in grp.getgrall():
+            if self.user in g.gr_mem:
+                groups.append(g.gr_name)
+        return groups
+
+    def do_state_present(self):
+        if len(self.groups) == 0:
+            self.module.fail_json(msg="group variable could nt be empty when state=absent")
+        changed = False
+        groups_cmd = self.groups.split(",")
+        groups_user = self.user_group_membership()
+	groups_change = {
+		"add": [],
+		"remove": [],
+		"current": list(groups_user),
+	}
+
+        for g in groups_cmd:
+            if not self.group_exists(g):
+                self.module.fail_json(msg="groupname %s do not exists" % g) 
+        for g in groups_cmd:
+            if not g in groups_user:
+                groups_change["add"].append(g)
+                groups_change["current"].append(g)
+                changed = True
+
+        if self.module.check_mode:
+            self.module.exit_json(changed=changed) 
+        if not changed:
+             return(None, '', '')
+        return self.compile_command(**groups_change);
+
+    def do_state_absent(self):
+        if len(self.groups) == 0:
+            self.module.fail_json(msg="group variable could nt be empty when state=absent")
+        changed = False
+        groups_cmd = self.groups.split(",")
+        groups_user = self.user_group_membership()
+	groups_change = {
+		"add": [],
+		"remove": [],
+		"current": [],
+	}
+        for g in groups_cmd:
+            if not self.group_exists(g):
+                self.module.fail_json(msg="groupname %s do not exists" % g) 
+        for g in groups_user:
+            if not g in groups_cmd:
+                groups_change["current"].append(g)
+            else:
+                groups_change["remove"].append(g)
+                changed = True
+
+        if self.module.check_mode:
+            self.module.exit_json(changed=changed)
+        if not changed:
+             return(None, '', '')
+
+        return self.compile_command(**groups_change);
+ 
+    def do_state_exact(self):
+        # this is small tweak how to remove the user from all supplementary grous
+	# 1) get user primary group id
+	# 2) get the group name for user primary group
+	# 3) run usermod -G <primary group name>  <username>
+        changed = False
+        groups_cmd = []
+        if len(self.groups) == 0:
+            try:
+                groups_cmd.append(grp.getgrgid(pwd.getpwname(self.user)).gr_name)
+            except:
+                self.module.fail_json(msg="cannot get user primary group")
+        else:
+            groups_cmd = self.groups.split(",")
+        groups_user = self.user_group_membership()
+	groups_change = {
+		"add": [],
+		"remove": [],
+		"current": list(groups_cmd),
+	}
+        for g in groups_cmd:
+            if not self.group_exists(g):
+                self.module.fail_json(msg="groupname %s do not exists" % g)
+        for g in groups_user:
+            if not g in groups_cmd:
+                groups_change["remove"].append(g)
+                changed = True
+        for g in groups_cmd:
+            if not g in groups_user:
+                groups_change["add"].append(g)
+                changed = True
+
+        if self.module.check_mode:
+            self.module.exit_json(changed=changed) 
+        if not changed:
+             return(None, '', '')
+        return self.compile_command(**groups_change);
+ 
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            state=dict(default='present', choices=['present', 'absent', 'exact'], type='str'),
+            user=dict(required=True, type='str'),
+            groups=dict(required=True, default=None, type='str'),
+        ),
+        supports_check_mode=True
+    )
+
+    usergroup = UserGroup(module)
+
+    if usergroup.syslogging:
+        syslog.openlog('ansible-%s' % os.path.basename(__file__))
+        syslog.syslog(syslog.LOG_NOTICE, 'UserGroup instantiated - platform %s' % usergroup.platform)
+        if usergroup.distribution:
+            syslog.syslog(syslog.LOG_NOTICE, 'UserGroup instantiated - distribution %s' % usergroup.distribution)
+
+    result = {}
+    result['user'] = usergroup.user
+    result['state'] = usergroup.state
+    result['groups'] = usergroup.groups
+    rc = None
+    cmd_out = ''
+    cmd_err = '';
+ 
+    if not  usergroup.user_exists():
+        result['msg'] = "Username %s do not exists" % usergroup.user
+        module.fail_json(msg="Username %s do not exists" % usergroup.user)
+    if usergroup.state == 'absent':
+       (rc, cmd_out, cmd_err) = usergroup.do_state_absent()
+    elif usergroup.state == 'present':
+       (rc, cmd_out, cmd_err) = usergroup.do_state_present()
+    elif usergroup.state == 'exact':
+       (rc, cmd_out, cmd_err) = usergroup.do_state_exact()
+
+    if rc is None:
+        result["changed"] = False
+    else:
+        result["changed"] = True
+ 
+    module.exit_json(**result)
+
+# include magic from lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
