@@ -398,6 +398,8 @@ class J2Template(jinja2.environment.Template):
 def template_from_file(basedir, path, vars):
     ''' run a file through the templating engine '''
 
+    fail_on_undefined = C.DEFAULT_UNDEFINED_VAR_BEHAVIOR
+
     from ansible import utils
     realpath = utils.path_dwim(basedir, path)
     loader=jinja2.FileSystemLoader([basedir,os.path.dirname(realpath)])
@@ -409,6 +411,8 @@ def template_from_file(basedir, path, vars):
     environment = jinja2.Environment(loader=loader, trim_blocks=True, extensions=_get_extensions())
     environment.filters.update(_get_filters())
     environment.globals['lookup'] = my_lookup
+    if fail_on_undefined:
+        environment.undefined = StrictUndefined
 
     try:
         data = codecs.open(realpath, encoding="utf8").read()
@@ -455,7 +459,10 @@ def template_from_file(basedir, path, vars):
     # This line performs deep Jinja2 magic that uses the _jinja2_vars object for vars
     # Ideally, this could use some API where setting shared=True and the object won't get
     # passed through dict(o), but I have not found that yet.
-    res = jinja2.utils.concat(t.root_render_func(t.new_context(_jinja2_vars(basedir, vars, t.globals), shared=True)))
+    try:
+        res = jinja2.utils.concat(t.root_render_func(t.new_context(_jinja2_vars(basedir, vars, t.globals), shared=True)))
+    except jinja2.exceptions.UndefinedError, e:
+        raise errors.AnsibleUndefinedVariable("Undefined variables: %s" % str(e))
 
     if data.endswith('\n') and not res.endswith('\n'):
         res = res + '\n'
