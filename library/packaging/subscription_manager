@@ -3,45 +3,52 @@
 DOCUMENTATION = '''
 ---
 module: subscription-manager
-short_description: Define interface to subscription-manager
+short_description: Manage Red Hat Network registration and subscriptions using the C(subscription-manager) command
 description:
-    - Adds or removes Red Hat software channels on a system
-version_added: 1.0
+    - Manage registration and subscription to the Red Hat Network entitlement platform.
+version_added: 1.2
 author: James Laska
 notes:
-    - this module fetches the systemid from rhn. A function
-      to use the local systemid is provided (get_localsystem)
-      but not integrated
+    - In order to register a system, subscription-manager requires either a
+    username and password, or an activationkey.
 requirements:
-    - none
+    - subscription-manager
 options:
+    state:
+        description:
+          - whether to register and subscribe (C(present)), or unregister (C(absent)) a system
+        required: false
+        choices: [ "present", "absent" ]
+        default: "present"
     username:
         description
-            - RHN username
+            - Red Hat Network username
         required: false
         default: null
     password:
         description:
-            - RHN password
+            - Red Hat Network password
         required: false
         default: null
     server_hostname:
         description:
-            - Specify an alternative RHN server
+            - Specify an alternative Red Hat Network server
         required: false
+        default: Current value from C(/etc/rhsm/rhsm.conf) is the default
     server_insecure:
         description:
-            - Allow RHN traffic over insecure http
+            - Allow traffic over insecure http
         required: false
-        default: false
+        default: Current value from C(/etc/rhsm/rhsm.conf) is the default
     rhsm_baseurl:
         description:
             - Specify CDN baseurl
         required: false
-        default: false
+        default: Current value from C(/etc/rhsm/rhsm.conf) is the default
     autosubscribe:
         description:
-            - Upon successful registration, auto-consume available subscriptions
+            - Upon successful registration, auto-consume available
+            subscriptions
         required: false
         default: false
     activationkey:
@@ -51,11 +58,15 @@ options:
         default: null
     pool:
         description:
-            - A pool to subscribe to (accepts regular expression syntax)
+            - Specify a subscription pool name to consume.  Regular expressions
+            accepted.
         required: false
         default: '^$'
 examples:
-    - code: subscription_manager action=register username=rhsm_user password=somepass autosubscribe=true
+    - code: subscription_manager action=register username=joe_user password=somepass autosubscribe=true
+    - description: Register as user I(joe_user) with password I(somepass) and auto-subscribe to available content.
+    - code: subscription_manager action=register activationkey=1-222333444 pool='^(Red Hat Enterprise Server|Red Hat Virtualization)$'
+    - description: Register with activationkey I(1-222333444) and consume subscriptions matching the names I(Red hat Enterprise Server) and I(Red Hat Virtualization)
 '''
 
 import os
