@@ -23,6 +23,7 @@ though a few may remain outside of core depending on use cases and implementatio
 -  `zypper (bash module example) <https://github.com/jpmens/ansible-zypp>`_ - jp\_mens
 -  `additional provisioning-related modules <https://github.com/ansible-provisioning>`_ - jhoekx and dagwieers
 -  `dynamic dns updates <https://github.com/jpmens/ansible-m-dnsupdate>`_ - jp\_mens
+-  `apk-tools <http://git.alpinelinux.org/cgit/bpiotrowski/ansible-apk>`_ - Bartłomiej Piotrowski
 
 All python modules (especially all submitted to core) should use the common "AnsibleModule" class to dramatically reduce the amount of boilerplate code required.
 
