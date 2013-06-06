@@ -34,7 +34,7 @@ class Globals(object):
     FILTERS = None
 
     def __init__(self):
-        pass    
+        pass
 
 def _get_filters():
     ''' return filter plugin instances '''
@@ -48,7 +48,7 @@ def _get_filters():
     for fp in plugins:
         filters.update(fp.filters())
     Globals.FILTERS = filters
- 
+
     return Globals.FILTERS
 
 def _get_extensions():
@@ -90,7 +90,7 @@ def lookup(name, *args, **kwargs):
 
 def _legacy_varFindLimitSpace(basedir, vars, space, part, lookup_fatal, depth, expand_lists):
     ''' limits the search space of space to part
-    
+
     basically does space.get(part, None), but with
     templating for part and a few more things
     '''
@@ -295,7 +295,7 @@ def legacy_varReplace(basedir, raw, vars, lookup_fatal=True, depth=0, expand_lis
 
 # TODO: varname is misnamed here
 
-def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=True, convert_bare=False):
+def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=True, convert_bare=False, fail_on_undefined=False):
     ''' templates a data structure by traversing it and substituting for other data structures '''
 
     if convert_bare and isinstance(varname, basestring):
@@ -305,7 +305,7 @@ def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=Tr
 
     if isinstance(varname, basestring):
         if '{{' in varname or '{%' in varname:
-            varname = template_from_string(basedir, varname, vars)
+            varname = template_from_string(basedir, varname, vars, fail_on_undefined)
         if not '$' in varname:
             return varname
 
@@ -341,7 +341,7 @@ class _jinja2_vars(object):
     is avoiding duplicating the large hashes that inject tends to be.
     To facilitate using builtin jinja2 things like range, globals are handled
     here.
-    extras is a list of locals to also search for variables. 
+    extras is a list of locals to also search for variables.
     '''
 
     def __init__(self, basedir, vars, globals, *extras):
@@ -398,6 +398,8 @@ class J2Template(jinja2.environment.Template):
 def template_from_file(basedir, path, vars):
     ''' run a file through the templating engine '''
 
+    fail_on_undefined = C.DEFAULT_UNDEFINED_VAR_BEHAVIOR
+
     from ansible import utils
     realpath = utils.path_dwim(basedir, path)
     loader=jinja2.FileSystemLoader([basedir,os.path.dirname(realpath)])
@@ -409,6 +411,8 @@ def template_from_file(basedir, path, vars):
     environment = jinja2.Environment(loader=loader, trim_blocks=True, extensions=_get_extensions())
     environment.filters.update(_get_filters())
     environment.globals['lookup'] = my_lookup
+    if fail_on_undefined:
+        environment.undefined = StrictUndefined
 
     try:
         data = codecs.open(realpath, encoding="utf8").read()
@@ -417,7 +421,7 @@ def template_from_file(basedir, path, vars):
     except:
         raise errors.AnsibleError("unable to read %s" % realpath)
 
-   
+
 # Get jinja env overrides from template
     if data.startswith(JINJA2_OVERRIDE):
         eol = data.find('\n')
@@ -455,15 +459,18 @@ def template_from_file(basedir, path, vars):
     # This line performs deep Jinja2 magic that uses the _jinja2_vars object for vars
     # Ideally, this could use some API where setting shared=True and the object won't get
     # passed through dict(o), but I have not found that yet.
-    res = jinja2.utils.concat(t.root_render_func(t.new_context(_jinja2_vars(basedir, vars, t.globals), shared=True)))
+    try:
+        res = jinja2.utils.concat(t.root_render_func(t.new_context(_jinja2_vars(basedir, vars, t.globals), shared=True)))
+    except jinja2.exceptions.UndefinedError, e:
+        raise errors.AnsibleUndefinedVariable("Undefined variables: %s" % str(e))
 
     if data.endswith('\n') and not res.endswith('\n'):
         res = res + '\n'
     return template(basedir, res, vars)
 
-def template_from_string(basedir, data, vars):
+def template_from_string(basedir, data, vars, fail_on_undefined=False):
     ''' run a string through the (Jinja2) templating engine '''
-    
+
     try:
         if type(data) == str:
             data = unicode(data, 'utf-8')
@@ -487,15 +494,18 @@ def template_from_string(basedir, data, vars):
                 raise errors.AnsibleError("recursive loop detected in template string: %s" % data)
             else:
                 return data
-         
+
         def my_lookup(*args, **kwargs):
             return lookup(*args, basedir=basedir, **kwargs)
- 
+
         t.globals['lookup'] = my_lookup
- 
+
         res = jinja2.utils.concat(t.root_render_func(t.new_context(_jinja2_vars(basedir, vars, t.globals), shared=True)))
         return res
     except jinja2.exceptions.UndefinedError:
+        if fail_on_undefined:
+            raise
+        else:
         # this shouldn't happen due to undeclared check above
-        return data
+            return data
 
