@@ -35,6 +35,7 @@ Modules added:
 * cloud: rax: module for creating instances in the rackspace cloud (uses pyrax)
 * packages: npm: node.js package management
 * packages: pkgng: next-gen package manager for FreeBSD
+* packages: subscription-manager: manage Red Hat subscription usage
 * database: postgresql_priv: manages postgresql priveledges
 * networking: bigip_pool: load balancing with F5s
 * networking: ec2_elb: add and remove machines from ec2 elastic load balancers
