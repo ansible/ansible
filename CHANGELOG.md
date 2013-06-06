@@ -131,6 +131,7 @@ the variable is still registered for the host, with the attribute skipped: True.
 * debug module always outputs data without having to specify -v
 * fix for sysctl module creating new keys (must specify checks=none)
 * NetBSD and OpenBSD support for the user and groups modules
+* Add encrypted password support to password lookup
 
 1.1 "Mean Street" -- 4/2/2013
 
