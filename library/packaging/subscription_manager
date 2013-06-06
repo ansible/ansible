@@ -6,11 +6,10 @@ module: subscription-manager
 short_description: Manage Red Hat Network registration and subscriptions using the C(subscription-manager) command
 description:
     - Manage registration and subscription to the Red Hat Network entitlement platform.
-version_added: 1.2
+version_added: "1.2"
 author: James Laska
 notes:
-    - In order to register a system, subscription-manager requires either a
-    username and password, or an activationkey.
+    - In order to register a system, subscription-manager requires either a username and password, or an activationkey.
 requirements:
     - subscription-manager
 options:
@@ -21,52 +20,50 @@ options:
         choices: [ "present", "absent" ]
         default: "present"
     username:
-        description
+        description:
             - Red Hat Network username
-        required: false
+        required: False
         default: null
     password:
         description:
             - Red Hat Network password
-        required: false
+        required: False
         default: null
     server_hostname:
         description:
             - Specify an alternative Red Hat Network server
-        required: false
+        required: False
         default: Current value from C(/etc/rhsm/rhsm.conf) is the default
     server_insecure:
         description:
             - Allow traffic over insecure http
-        required: false
+        required: False
         default: Current value from C(/etc/rhsm/rhsm.conf) is the default
     rhsm_baseurl:
         description:
             - Specify CDN baseurl
-        required: false
+        required: False
         default: Current value from C(/etc/rhsm/rhsm.conf) is the default
     autosubscribe:
         description:
-            - Upon successful registration, auto-consume available
-            subscriptions
-        required: false
-        default: false
+            - Upon successful registration, auto-consume available subscriptions
+        required: False
+        default: False
     activationkey:
         description:
             - supply an activation key for use with registration
-        required: false
+        required: False
         default: null
     pool:
         description:
-            - Specify a subscription pool name to consume.  Regular expressions
-            accepted.
-        required: false
+            - Specify a subscription pool name to consume.  Regular expressions accepted.
+        required: False
         default: '^$'
 examples:
     - code: subscription_manager action=register username=joe_user password=somepass autosubscribe=true
-    - description: Register as user I(joe_user) with password I(somepass) and auto-subscribe to available content.
+      description: Register as user I(joe_user) with password I(somepass) and auto-subscribe to available content.
     - code: subscription_manager action=register activationkey=1-222333444 pool='^(Red Hat Enterprise Server|Red Hat Virtualization)$'
-    - description: Register with activationkey I(1-222333444) and consume subscriptions matching the names I(Red hat Enterprise Server) and I(Red Hat Virtualization)
+      description: Register with activationkey I(1-222333444) and consume subscriptions matching the names I(Red hat Enterprise Server) and I(Red Hat Virtualization)
 '''
 
 import os
