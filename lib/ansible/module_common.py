@@ -86,10 +86,17 @@ try:
 except ImportError:
     pass
 
+HAVE_HASHLIB=False
 try:
     from hashlib import md5 as _md5
+    HAVE_HASHLIB=True
 except ImportError:
     from md5 import md5 as _md5
+
+try:
+    from hashlib import sha256 as _sha256
+except ImportError:
+    pass
 
 try:
   from systemd import journal
@@ -787,13 +794,13 @@ class AnsibleModule(object):
                 or stat.S_IXGRP & os.stat(path)[stat.ST_MODE]
                 or stat.S_IXOTH & os.stat(path)[stat.ST_MODE])
 
-    def md5(self, filename):
-        ''' Return MD5 hex digest of local file, or None if file is not present. '''
+    def digest_from_file(self, filename, digest_method):
+        ''' Return hex digest of local file for a given digest_method, or None if file is not present. '''
         if not os.path.exists(filename):
             return None
         if os.path.isdir(filename):
-            self.fail_json(msg="attempted to take md5sum of directory: %s" % filename)
-        digest = _md5()
+            self.fail_json(msg="attempted to take checksum of directory: %s" % filename)
+        digest = digest_method
         blocksize = 64 * 1024
         infile = open(filename, 'rb')
         block = infile.read(blocksize)
@@ -802,6 +809,16 @@ class AnsibleModule(object):
             block = infile.read(blocksize)
         infile.close()
         return digest.hexdigest()
+
+    def md5(self, filename):
+        ''' Return MD5 hex digest of local file using digest_from_file(). '''
+        return self.digest_from_file(filename, _md5())
+
+    def sha256(self, filename):
+        ''' Return SHA-256 hex digest of local file using digest_from_file(). '''
+        if not HAVE_HASHLIB:
+            self.fail_json(msg="SHA-256 checksums require hashlib, which is available in Python 2.5 and higher")
+        return self.digest_from_file(filename, _sha256())
 
     def backup_local(self, fn):
         '''make a date-marked backup of the specified file, return True or False on success or failure'''
