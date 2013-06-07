@@ -22,10 +22,8 @@ what sort of modules are available in Ansible's core (though you can also write 
 Overview
 ````````
 
-.. image:: http://ansible.cc/img/ansible_arch.png
+.. image:: http://www.ansibleworks.com/wp-content/uploads/2013/04/Ansible_Arch_Simplified1.png
    :alt: ansible architecture diagram
-   :width: 566px
-   :height: 439px
 
 
 Playbooks
