@@ -244,7 +244,11 @@ class Ec2Inventory(object):
                 conn.APIVersion = '2010-08-31'
             else:
                 conn = ec2.connect_to_region(region)
-            
+
+            if conn is None:
+               print("AWS is down or region name: %s likely not supported.  connection to region failed." % region)
+               sys.exit(1)
+ 
             reservations = conn.get_all_instances()
             for reservation in reservations:
                 for instance in reservation.instances:
@@ -278,6 +282,10 @@ class Ec2Inventory(object):
             conn.APIVersion = '2010-08-31'
         else:
             conn = ec2.connect_to_region(region)
+
+        if conn is None:
+           print("AWS is down or region name: %s likely not supported.  connection to region failed." % region)
+           sys.exit(1)
 
         reservations = conn.get_all_instances([instance_id])
         for reservation in reservations:
