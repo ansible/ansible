@@ -41,7 +41,7 @@ options:
     aliases: []
   dest:
     description:
-      - the destination in s3, if different from path
+      - the destination in s3, if different from path. Used to override the object name, which is normally the same as the filename.
     required: false
     default: null
     aliases: []
@@ -63,16 +63,13 @@ author: Lester Wade, Ralph Tice
 
 EXAMPLES = '''
 # Simple PUT operation
-   module: s3 
-   bucket: mybucket 
-   path: /path/to/file 
-   state: present
+- action: s3 bucket=mybucket path=/usr/local/file state=present
+
 # Force and overwrite if checksums don't match
-   module: s3
-   bucket: mybucket
-   path: /path/to/file
-   state: present
-   overwrite: yes
+- action: s3 bucket=mybucket path=/usr/local/file state=present overwrite=yes
+
+# Override the key / object name in S3
+- action: s3 bucket=mybucket path=/usr/local/file dest=newfile state=present overwrite=yes
 '''
 
 import sys
