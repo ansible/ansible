@@ -83,7 +83,7 @@ import os
 import time
 
 try:
-    import DigitalOcean
+    from dopy.client import Client
 except ImportError as e:
     print "failed=True msg='%s'" % e
     sys.exit(1)
@@ -101,7 +101,7 @@ class DoProxy(object):
             api_key = self.params['api_key'] or os.environ['API_KEY']
         except KeyError, e:
             self.fail_json(msg='Unable to load %s' % e.message.lower())
-        self.client = DigitalOcean.DigitalOcean(client_id, api_key)
+        self.client = Client(client_id, api_key)
 
     def process(self):
         """
