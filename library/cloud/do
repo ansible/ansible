@@ -83,21 +83,17 @@ import os
 import time
 
 try:
-    from dop.client import Client
-except ImportError:
-    print "failed=True msg='python module dop unavailable'"
+    import DigitalOcean
+except ImportError as e:
+    print "failed=True msg='%s'" % e
     sys.exit(1)
 
-# TODO, fix the dop library
-AuthError = Exception
-
-class DopProxy(object):
+class DoProxy(object):
 
     def __init__(self, module):
         self.params = module.params
         self.fail_json = module.fail_json
         self.exit_json = module.exit_json
-        self.types = {k: v.get('type') for k, v in module.argument_spec.iteritems()}
         # setup the auth
         try:
             # params['client_id'] will be None even if client_id is not passed in
@@ -105,42 +101,31 @@ class DopProxy(object):
             api_key = self.params['api_key'] or os.environ['API_KEY']
         except KeyError, e:
             self.fail_json(msg='Unable to load %s' % e.message.lower())
-        self.client = Client(client_id, api_key, True)
+        self.client = DigitalOcean.DigitalOcean(client_id, api_key)
 
-    def handle(self):
+    def process(self):
+        """
+        Returns a dict of the executed result.
+        Or causing the whole program to exit by using fail_json.
+        """
         state = self.getkeyordie('state')
-        try:
-            if state == 'present':
-                if self.find_droplet():
-                    return {'changed': False, 'droplet': self.droplet.to_json()}
+        # is_powered_on= lambda d: d.get('status')=='active'
+        if state in ('active', 'present'):
+            if self.params['id'] is not None:
+                droplet = self.find_droplet()
+                if droplet:  # already exist
+                    id = droplet['id']
+            if 'id' not in locals():
                 droplet = self.create_droplet()
-                return {'changed': True, 'droplet': droplet.to_json()}
+                id = droplet['id']
+            return {'changed': True, 'droplet': self.ensure_powered_on(id)}
 
-            elif state == 'active':
-                if self.find_active_droplet():
-                    return {'changed': False, 'droplet': self.droplet.to_json()}
-                elif self.find_droplet():  # which means powered off
-                    if self.power_on_droplet():
-                        return {'changed': True, 'droplet': self.droplet.to_json()}
-                    elif not self.params['wait']:
-                        return {'changed': True, 'event_id': self.event_id}
-                    self.fail_json(msg='Timeout waiting on %s' % self.getkeyordie('id'))
-                else:  # not exist
-                    self.fail_json(msg='Server %s not found in your account' % self.getkeyordie('id'))
+        elif state in ('absent', 'deleted'):
+            droplet = self.find_droplet()
+            if droplet:
+                return {'changed': True, 'event_id': self.destroy_droplet()}
+            return {'changed': False, 'msg': 'The droplet is not found.'}
 
-            elif state == 'deleted':
-                if self.destroy_droplet():
-                    return {'changed': True, 'event_id': self.event_id}
-                raise AuthError('XXX')
-
-            elif state == 'absent':
-                if self.shutdown_droplet():
-                    return {'changed': True, 'event_id': self.event_id}
-                raise AuthError('XXX')
-
-        except AuthError, e:
-            self.fail_json(msg=e.message)
-            
 
     def getkeyordie(self, k):
         v = self.params[k]
@@ -149,81 +134,90 @@ class DopProxy(object):
         return v
 
     def create_droplet(self):
-        try:
-            return self.client.create_droplet(
+        """
+        Returns the created droplet info or exit the whole program.
+        """
+        result = self.client.create(
                     name = self.getkeyordie('name'),
                     size_id = self.getkeyordie('size_id'),
                     image_id = self.getkeyordie('image_id'),
                     region_id = self.getkeyordie('region_id'),
-                    virtio = self.params['virtio'],
-                    ssh_key_ids = self.params.get('ssh_key_ids', '').split(','),
-                    )
-        except AttributeError, e:
-            self.module.fail_json(msg=str(e))
+                    ssh_key_ids = self.params.get('ssh_key_ids'),
+                )
+        if result.get('status')=='OK':
+            return result['droplet']
+        self.fail_json(msg=result['error_message'])
 
-    def find_droplet(self):
-        """Return True if find a droplet by the given id, which is stored in
-        self.droplet, else return False"""
-        # id is an aliase of id, here for readability.
-        id = self.getkeyordie('id')
-        try:
-            self.droplet = self.client.show_droplet(id)
-            return True
-        except:
-            return False
+    def show_droplet_info(self, id=None, times=5):
+        id = id or self.getkeyordie('id')
+        result = self.client.show(id)
+        if result.get('status')=='OK':
+            if not result['droplet']['ip_address'] and times>0:
+                time.sleep(2)
+                return self.show_droplet_info(id, times-1)
+            return result['droplet']
+        self.fail_json(msg=result['error_message'])
 
-    def find_active_droplet(self):
-        id = self.getkeyordie('id')
-        droplets = self.client.show_active_droplets()
-        for d in droplets:
-            if id == d.id:
-                self.droplet = d
-                return True
+    def destroy_droplet(self, id=None):
+        id = id or self.getkeyordie('id')
+        result = self.client.destroy(id)
+        if result.get('status')=='OK':
+            return result['event_id']
+        self.fail_json(msg=result['error_message'])
+
+    def find_droplet(self, id=None):
+        id = id or self.getkeyordie('id')
+        result = self.client.show_active()
+        for droplet in result['droplets']:
+            if droplet['id']==id:
+                return droplet
         return False
 
-    def power_on_droplet(self):
-        id = self.getkeyordie('id')
-        self.event_id = self.client.power_on_droplet(id)
-        if self.params['wait']:
-            end_time = time.time()+self.params['wait_timeout']
+    def ensure_powered_on(self, id=None):
+        id = id or self.getkeyordie('id')
+        is_powered_on= lambda d: d.get('status')=='active'
+
+        def wait_for_running():
+            end_time = time.time()+int(self.params['wait_timeout'])
             while time.time()<end_time:
-                if self.find_active_droplet():
-                    return True
-                time.sleep(min(5, end_time-time.time()))
-            return False
-        return None
+                time.sleep(min(20, end_time-time.time()))
+                droplet = self.show_droplet_info(id)
+                if is_powered_on(droplet):
+                    return droplet
+            self.fail_json(msg=
+                    'wait for droplet running timeout on id:%s' % id, id=id)
 
-    def destroy_droplet(self):
-        id = self.getkeyordie('id')
-        try:
-            self.event_id = self.client.destroy_droplet(id)
-            return True
-        except:
-            return False
+        droplet = self.show_droplet_info(id)
+        if is_powered_on(droplet):
+            return droplet
+        should_wait = self.params['wait']
+        if droplet['status']=='new':  # just created
+            if should_wait:
+                return wait_for_running()
+            return droplet
+        elif droplet['status']=='off':  # powered off
+            result = self.client.power_on(id)
+            if result.get('status')=='OK':
+                if should_wait:
+                    return wait_for_running()
+                return self.show_droplet_info()
+            self.fail_json(msg=result['error_message'])
 
-    def shutdown_droplet(self):
-        id = self.getkeyordie('id')
-        try:
-            self.event_id = self.client.shutdown_droplet(id)
-            return True
-        except:
-            return False
 
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            state = dict(required=True, choices=['active', 'present', 'deleted', 'absent']),
+            state = dict(required=True, choices=['active', 'present', 'absent', 'deleted']),
             client_id = dict(aliases=['CLIENT_ID'], no_log=True),
             api_key = dict(aliases=['API_KEY'], no_log=True),
             name = dict(),
             size_id = dict(),
             image_id = dict(),
             region_id = dict(),
-            virtio = dict(choices=BOOLEANS, default=True),
             ssh_key_ids = dict(default=''),
-            id = dict(aliases=['droplet_id']),
-            wait = dict(choices=BOOLEANS, default='yes'),
-            wait_timeout = dict(default=300),
+            id = dict(aliases=['droplet_id'], type='int'),
+            wait = dict(type='bool', choices=BOOLEANS, default='yes'),
+            wait_timeout = dict(default=360),
         ),
         required_together = (
             # use list here because str-format treats tuple specially
@@ -231,8 +225,10 @@ def main():
         )
     )
 
-    proxy = DopProxy(module)
-    result = proxy.handle()
+    try:
+        result = DoProxy(module).process()
+    except Exception as e:
+        module.fail_json(msg=str(e))
     module.exit_json(**result)
 
 # this is magic, see lib/ansible/module_common.py
