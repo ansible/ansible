@@ -67,6 +67,7 @@ options:
       - If a SHA-256 checksum is passed to this parameter, the digest of the
         destination file will be calculated after it is downloaded to ensure
         its integrity and verify that the transfer completed successfully.
+    version_added: "1.3"
     required: false
     default: null
   use_proxy:
