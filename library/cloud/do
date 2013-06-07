@@ -25,16 +25,17 @@ version_added: "0.1"
 options:
   state:
     description:
-     - Indicate desired state of the resource.
+     - Indicate desired state of the droplet.
     required: true
     choices: ['present', 'active', 'absent', 'deleted']
   client_id: description:
-     - Your client id.
-    required: true
+     - Digital Ocean client id.
   api_key:
     description:
-     - Your api key.
-    required: true
+     - Digital Ocean api key.
+  id:
+    description:
+     - Numeric, the droplet id you want to operate on.
   name:
     description:
      - String, this is the name of the droplet - must be formatted by hostname rules.
@@ -47,35 +48,31 @@ options:
   region_id:
     description:
      - Numeric, this is the id of the region you would like your server in IE: US/Amsterdam.
-  virtio:
-    description:
-     - Optional, default: true, this toggles whether to enable or disable virtio during creation.
-    choices: [ "true", "false" ]
   ssh_key_ids:
     description:
      - Optional, comma separated list of ssh_key_ids that you would like to be added to the server
   wait:
     description: 
-     - Wait for the instance to be in state 'running' before returning, this is the recommended way since currently we can do nothing on event_id.
+     - Wait for the droplet to be in state 'running' before returning.
     default: "yes"
     choices: [ "yes", "no" ]
   wait_timeout:
     description:
      - How long before wait gives up, in seconds.
-    default: 300
+    default: 360
 
 notes:
-  - Two environment variables can be used, CLIENT_ID and API_KEY.
+  - Two environment variables can be used, DO_CLIENT_ID and DO_API_KEY.
 '''
 
 
 EXAMPLES = '''
 # a playbook task line:
 tasks:
-  - do: start=active client_id=XXX api_key=XXX id=33
+  - do: state=active client_id=XXX api_key=XXX id=33
 
 # /usr/bin/ansible invocations
-ansible -i host -m do -a "start=active client_id=XXX api_key=XXX id=3"
+ansible -i host -m do -a "state=active client_id=XXX api_key=XXX id=3"
 '''
 
 import sys
@@ -85,7 +82,7 @@ import time
 try:
     from dopy.client import Client
 except ImportError as e:
-    print "failed=True msg='%s'" % e
+    print "failed=True msg='dopy required for this module'"
     sys.exit(1)
 
 class DoProxy(object):
@@ -97,10 +94,10 @@ class DoProxy(object):
         # setup the auth
         try:
             # params['client_id'] will be None even if client_id is not passed in
-            client_id = self.params['client_id'] or os.environ['CLIENT_ID']
-            api_key = self.params['api_key'] or os.environ['API_KEY']
+            client_id = self.params['client_id'] or os.environ['DO_CLIENT_ID']
+            api_key = self.params['api_key'] or os.environ['DO_API_KEY']
         except KeyError, e:
-            self.fail_json(msg='Unable to load %s' % e.message.lower())
+            self.fail_json(msg='Unable to load %s' % e.message)
         self.client = Client(client_id, api_key)
 
     def process(self):
@@ -109,7 +106,6 @@ class DoProxy(object):
         Or causing the whole program to exit by using fail_json.
         """
         state = self.getkeyordie('state')
-        # is_powered_on= lambda d: d.get('status')=='active'
         if state in ('active', 'present'):
             if self.params['id'] is not None:
                 droplet = self.find_droplet()
@@ -144,14 +140,14 @@ class DoProxy(object):
                     region_id = self.getkeyordie('region_id'),
                     ssh_key_ids = self.params.get('ssh_key_ids'),
                 )
-        if result.get('status')=='OK':
+        if result.get('status') == 'OK':
             return result['droplet']
         self.fail_json(msg=result['error_message'])
 
     def show_droplet_info(self, id=None, times=5):
         id = id or self.getkeyordie('id')
         result = self.client.show(id)
-        if result.get('status')=='OK':
+        if result.get('status') == 'OK':
             if not result['droplet']['ip_address'] and times>0:
                 time.sleep(2)
                 return self.show_droplet_info(id, times-1)
@@ -161,7 +157,7 @@ class DoProxy(object):
     def destroy_droplet(self, id=None):
         id = id or self.getkeyordie('id')
         result = self.client.destroy(id)
-        if result.get('status')=='OK':
+        if result.get('status') == 'OK':
             return result['event_id']
         self.fail_json(msg=result['error_message'])
 
@@ -169,13 +165,13 @@ class DoProxy(object):
         id = id or self.getkeyordie('id')
         result = self.client.show_active()
         for droplet in result['droplets']:
-            if droplet['id']==id:
+            if droplet['id'] == id:
                 return droplet
         return False
 
     def ensure_powered_on(self, id=None):
         id = id or self.getkeyordie('id')
-        is_powered_on= lambda d: d.get('status')=='active'
+        is_powered_on = lambda d: d.get('status') == 'active'
 
         def wait_for_running():
             end_time = time.time()+int(self.params['wait_timeout'])
@@ -191,13 +187,13 @@ class DoProxy(object):
         if is_powered_on(droplet):
             return droplet
         should_wait = self.params['wait']
-        if droplet['status']=='new':  # just created
+        if droplet['status'] == 'new':  # just created
             if should_wait:
                 return wait_for_running()
             return droplet
-        elif droplet['status']=='off':  # powered off
+        elif droplet['status'] == 'off':  # powered off
             result = self.client.power_on(id)
-            if result.get('status')=='OK':
+            if result.get('status') == 'OK':
                 if should_wait:
                     return wait_for_running()
                 return self.show_droplet_info()
@@ -220,7 +216,6 @@ def main():
             wait_timeout = dict(default=360),
         ),
         required_together = (
-            # use list here because str-format treats tuple specially
             ['name', 'size_id', 'image_id', 'region_id'],
         )
     )
