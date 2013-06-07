@@ -245,9 +245,10 @@ class Ec2Inventory(object):
             else:
                 conn = ec2.connect_to_region(region)
 
-            if conn is None:
-               print("AWS is down or region name: %s likely not supported.  connection to region failed." % region)
-               sys.exit(1)
+        # connect_to_region will fail "silently" by returning None if the region name is wrong or not supported
+        if conn is None:
+            print("region name: %s likely not supported, or AWS is down.  connection to region failed." % region)
+            sys.exit(1)
  
             reservations = conn.get_all_instances()
             for reservation in reservations:
@@ -283,9 +284,10 @@ class Ec2Inventory(object):
         else:
             conn = ec2.connect_to_region(region)
 
+        # connect_to_region will fail "silently" by returning None if the region name is wrong or not supported
         if conn is None:
-           print("AWS is down or region name: %s likely not supported.  connection to region failed." % region)
-           sys.exit(1)
+            print("region name: %s likely not supported, or AWS is down.  connection to region failed." % region)
+            sys.exit(1)
 
         reservations = conn.get_all_instances([instance_id])
         for reservation in reservations:
