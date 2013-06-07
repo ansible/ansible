@@ -145,7 +145,7 @@ class Rhsm(RegistrationBase):
         RegistrationBase.__init__(self, username, password)
         self.config = self._read_config()
 
-    def _read_config(rhsm_conf='/etc/rhsm/rhsm.conf'):
+    def _read_config(self, rhsm_conf='/etc/rhsm/rhsm.conf'):
         '''
             Load RHSM configuration from /etc/rhsm/rhsm.conf.
             Returns:
@@ -154,8 +154,7 @@ class Rhsm(RegistrationBase):
 
         # Read RHSM defaults ...
         cp = ConfigParser.ConfigParser()
-        if os.path.isfile(rhsm_conf):
-            cp.read(rhsm_conf)
+        cp.read(rhsm_conf)
 
         # Add support for specifying a default value w/o having to standup some configuration
         # Yeah, I know this should be subclassed ... but, oh well
