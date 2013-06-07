@@ -45,7 +45,7 @@ class SphinxBuilder(object):
         try:
             buildername = 'html'
 
-            outdir = os.path.abspath(os.getcwd())
+            outdir = os.path.abspath(os.path.join(os.getcwd(), "htmlout"))
             # Create the output directory if it doesn't exist
             if not os.access(outdir, os.F_OK):
                 os.mkdir(outdir)
