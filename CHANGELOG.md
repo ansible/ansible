@@ -36,6 +36,7 @@ Modules added:
 * packages: npm: node.js package management
 * packages: pkgng: next-gen package manager for FreeBSD
 * packages: subscription-manager: manage Red Hat subscription usage
+* packages: rhnreg_ks: basic RHN registration
 * packages: zypper (SuSE)
 * database: postgresql_priv: manages postgresql priveledges
 * networking: bigip_pool: load balancing with F5s
