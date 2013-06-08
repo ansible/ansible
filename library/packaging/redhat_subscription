@@ -2,7 +2,7 @@
 
 DOCUMENTATION = '''
 ---
-module: subscription-manager
+module: redhat_subscription
 short_description: Manage Red Hat Network registration and subscriptions using the C(subscription-manager) command
 description:
     - Manage registration and subscription to the Red Hat Network entitlement platform.
@@ -60,9 +60,9 @@ options:
         required: False
         default: '^$'
 examples:
-    - code: subscription_manager action=register username=joe_user password=somepass autosubscribe=true
+    - code: redhat_subscription action=register username=joe_user password=somepass autosubscribe=true
       description: Register as user I(joe_user) with password I(somepass) and auto-subscribe to available content.
-    - code: subscription_manager action=register activationkey=1-222333444 pool='^(Red Hat Enterprise Server|Red Hat Virtualization)$'
+    - code: redhat_subscription action=register activationkey=1-222333444 pool='^(Red Hat Enterprise Server|Red Hat Virtualization)$'
       description: Register with activationkey I(1-222333444) and consume subscriptions matching the names I(Red hat Enterprise Server) and I(Red Hat Virtualization)
 '''
 
