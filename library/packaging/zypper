@@ -73,7 +73,7 @@ author: Patrick Callahan
 # Function used for getting the name of a currently installed package.
 def get_current_name(m, name):
     cmd = '/bin/rpm -q --qf \'%{NAME}-%{VERSION}\''
-    (rc, stdout, stderr) = m.run_command("%s" % (cmd))
+    (rc, stdout, stderr) = m.run_command("%s %s" % (cmd, name))
 
     if rc != 0:
         return (rc, stdout, stderr)
