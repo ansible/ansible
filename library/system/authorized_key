@@ -31,13 +31,13 @@ version_added: "0.5"
 options:
   user:
     description:
-      - Name of the user who should have access to the remote host
+      - The username on the remote host whose authorized_keys file will be modified
     required: true
     default: null
     aliases: []
   key:
     description:
-      - the SSH public key, as a string
+      - The SSH public key, as a string
     required: true
     default: null
   path:
@@ -55,12 +55,12 @@ options:
     version_added: "1.2"
   state:
     description:
-      - whether the given key should or should not be in the file
+      - Whether the given key should or should not be in the file
     required: false
     choices: [ "present", "absent" ]
     default: "present"
 description:
-    - "adds or removes authorized keys for particular user accounts"
+    - "Adds or removes authorized keys for particular user accounts"
 author: Brad Olson
 '''
 
@@ -69,7 +69,7 @@ EXAMPLES = '''
 authorized_key: user=charlie key="{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
 
 # Using alternate directory locations:
-authorized_key: user=charlie key="{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"  sshdir='/etc/ssh/authorized_keys/charlie' manage_dir=no
+authorized_key: user=charlie key="{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}" path='/etc/ssh/authorized_keys/charlie' manage_dir=no
 '''
 
 # Makes sure the public key line is present or absent in the user's .ssh/authorized_keys.
