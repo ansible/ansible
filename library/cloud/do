@@ -123,9 +123,12 @@ class DoProxy(object):
                 if droplet:
                     return {'changed': True, 'event_id': self.destroy_droplet()}
                 return {'changed': False, 'msg': 'The droplet is not found.'}
-        elif command == 'SSH':
+        elif command == 'ssh':
             if state in ('active', 'present'):
-                return self.add_ssh_key(self.getkeyordie('key_name'), self.getkeyordie('ssh_pub_key'))
+                name = self.getkeyordie('key_name')
+                if self.find_ssh_key(name):
+                    return {'changed': False, 'msg': 'SSH key with the name of %s already exists.' % name}
+                return {'changed': True, 'ssh_keys': self.add_ssh_key(self.getkeyordie('key_name'), self.getkeyordie('ssh_pub_key'))}
 
 
     def getkeyordie(self, k):
@@ -204,6 +207,15 @@ class DoProxy(object):
                 return self.show_droplet_info()
             self.fail_json(msg=result['error_message'])
 
+    def find_ssh_key(self, name):  # currently ssh_keys are identified by name
+        result = self.client.all_ssh_keys()
+        if result.get('status') != 'OK':
+            self.fail_json(msg=result['error_message'])
+        for keys in result['ssh_keys']:
+            if keys['name'] == name:
+                return keys
+        return False
+
     def add_ssh_key(self, name, key_pub):
         result = self.client.add_ssh_key(name, key_pub)
         if result.get('status') == 'OK':
@@ -214,7 +226,7 @@ class DoProxy(object):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            command = dict(required=True, choices=['droplet', 'SSH']),
+            command = dict(required=True, choices=['droplet', 'ssh']),
             state = dict(required=True, choices=['active', 'present', 'absent', 'deleted']),
             client_id = dict(aliases=['CLIENT_ID'], no_log=True),
             api_key = dict(aliases=['API_KEY'], no_log=True),
@@ -229,9 +241,9 @@ def main():
             wait = dict(type='bool', choices=BOOLEANS, default='yes'),
             wait_timeout = dict(default=360),
         ),
-        required_together = (
-            ['name', 'size_id', 'image_id', 'region_id'],
-        )
+        # required_together = (
+        #     ['name', 'size_id', 'image_id', 'region_id'],
+        # )
     )
 
     try:
