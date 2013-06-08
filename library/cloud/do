@@ -105,22 +105,27 @@ class DoProxy(object):
         Returns a dict of the executed result.
         Or causing the whole program to exit by using fail_json.
         """
+        command = self.getkeyordie('command')
         state = self.getkeyordie('state')
-        if state in ('active', 'present'):
-            if self.params['id'] is not None:
-                droplet = self.find_droplet()
-                if droplet:  # already exist
+        if command == 'droplet':
+            if state in ('active', 'present'):
+                if self.params['id'] is not None:
+                    droplet = self.find_droplet()
+                    if droplet:  # already exist
+                        id = droplet['id']
+                if 'id' not in locals():
+                    droplet = self.create_droplet()
                     id = droplet['id']
-            if 'id' not in locals():
-                droplet = self.create_droplet()
-                id = droplet['id']
-            return {'changed': True, 'droplet': self.ensure_powered_on(id)}
+                return {'changed': True, 'droplet': self.ensure_powered_on(id)}
 
-        elif state in ('absent', 'deleted'):
-            droplet = self.find_droplet()
-            if droplet:
-                return {'changed': True, 'event_id': self.destroy_droplet()}
-            return {'changed': False, 'msg': 'The droplet is not found.'}
+            elif state in ('absent', 'deleted'):
+                droplet = self.find_droplet()
+                if droplet:
+                    return {'changed': True, 'event_id': self.destroy_droplet()}
+                return {'changed': False, 'msg': 'The droplet is not found.'}
+        elif command == 'SSH':
+            if state in ('active', 'present'):
+                return self.add_ssh_key(self.getkeyordie('key_name'), self.getkeyordie('ssh_pub_key'))
 
 
     def getkeyordie(self, k):
@@ -199,10 +204,17 @@ class DoProxy(object):
                 return self.show_droplet_info()
             self.fail_json(msg=result['error_message'])
 
+    def add_ssh_key(self, name, key_pub):
+        result = self.client.add_ssh_key(name, key_pub)
+        if result.get('status') == 'OK':
+            return result['ssh_key']
+        self.fail_json(msg=result['error_message'])
+
 
 def main():
     module = AnsibleModule(
         argument_spec = dict(
+            command = dict(required=True, choices=['droplet', 'SSH']),
             state = dict(required=True, choices=['active', 'present', 'absent', 'deleted']),
             client_id = dict(aliases=['CLIENT_ID'], no_log=True),
             api_key = dict(aliases=['API_KEY'], no_log=True),
@@ -212,6 +224,8 @@ def main():
             region_id = dict(),
             ssh_key_ids = dict(default=''),
             id = dict(aliases=['droplet_id'], type='int'),
+            key_name = dict(),
+            ssh_pub_key = dict(),
             wait = dict(type='bool', choices=BOOLEANS, default='yes'),
             wait_timeout = dict(default=360),
         ),
