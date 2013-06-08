@@ -100,7 +100,183 @@ def run_command(args):
     return (stdout, stderr, returncode)
 
 
+class RegistrationBase (object):
+    def __init__(self, username=None, password=None):
+        self.username = username
+        self.password = password
+
+    def configure(self):
+        raise NotImplementedError("Must be implemented by a sub-class")
+
+    def enable(self):
+        # Remove any existing redhat.repo
+        redhat_repo = '/etc/yum.repos.d/redhat.repo'
+        if os.path.isfile(redhat_repo):
+            os.unlink(redhat_repo)
+
+    def register(self):
+        raise NotImplementedError("Must be implemented by a sub-class")
+
+    def unregister(self):
+        raise NotImplementedError("Must be implemented by a sub-class")
+
+    def unsubscribe(self):
+        raise NotImplementedError("Must be implemented by a sub-class")
+
+    def update_plugin_conf(self, plugin, enabled=True):
+        plugin_conf = '/etc/yum/pluginconf.d/%s.conf' % plugin
+        if os.path.isfile(plugin_conf):
+            cfg = ConfigParser.ConfigParser()
+            cfg.read([plugin_conf])
+            if enabled:
+                cfg.set('main', 'enabled', 1)
+            else:
+                cfg.set('main', 'enabled', 0)
+            fd = open(plugin_conf, 'rwa+')
+            cfg.write(fd)
+            fd.close()
+
+    def subscribe(self, **kwargs):
+        raise NotImplementedError("Must be implemented by a sub-class")
+
+
+class Rhsm(RegistrationBase):
+    def __init__(self, username=None, password=None):
+        RegistrationBase.__init__(self, username, password)
+        self.config = self._read_config()
+
+    def _read_config(self, rhsm_conf='/etc/rhsm/rhsm.conf'):
+        '''
+            Load RHSM configuration from /etc/rhsm/rhsm.conf.
+            Returns:
+             * ConfigParser object
+        '''
+
+        # Read RHSM defaults ...
+        cp = ConfigParser.ConfigParser()
+        cp.read(rhsm_conf)
+
+        # Add support for specifying a default value w/o having to standup some configuration
+        # Yeah, I know this should be subclassed ... but, oh well
+        def get_option_default(self, key, default=''):
+            sect, opt = key.split('.', 1)
+            if self.has_section(sect) and self.has_option(sect, opt):
+                return self.get(sect, opt)
+            else:
+                return default
+
+        cp.get_option = types.MethodType(get_option_default, cp, ConfigParser.ConfigParser)
+
+        return cp
+
+    def enable(self):
+        '''
+            Enable the system to receive updates from subscription-manager.
+            This involves updating affected yum plugins and removing any
+            conflicting yum repositories.
+        '''
+        RegistrationBase.enable(self)
+        self.update_plugin_conf('rhnplugin', False)
+        self.update_plugin_conf('subscription-manager', True)
+
+    def configure(self, **kwargs):
+        '''
+            Configure the system as directed for registration with RHN
+            Raises:
+              * Exception - if error occurs while running command
+        '''
+        args = ['subscription-manager', 'config']
+
+        # Pass supplied **kwargs as parameters to subscription-manager.  Ignore
+        # non-configuration parameters and replace '_' with '.'.  For example,
+        # 'server_hostname' becomes '--system.hostname'.
+        for k,v in kwargs.items():
+            if re.search(r'^(system|rhsm)_', k):
+                args.append('--%s=%s' % (k.replace('_','.'), v))
+
+        run_command(args)
+
+    @property
+    def is_registered(self):
+        '''
+            Determine whether the current system
+            Returns:
+              * Boolean - whether the current system is currently registered to
+                          RHN.
+        '''
+        # Quick version...
+        if False:
+            return os.path.isfile('/etc/pki/consumer/cert.pem') and \
+                   os.path.isfile('/etc/pki/consumer/key.pem')
+
+        args = ['subscription-manager', 'identity']
+        try:
+            (stdout, stderr, retcode) =  run_command(args)
+        except CommandException, e:
+            return False
+        else:
+            # Display some debug output
+            return True
+
+    def register(self, username, password, autosubscribe, activationkey):
+        '''
+            Register the current system to the provided RHN server
+            Raises:
+              * Exception - if error occurs while running command
+        '''
+        args = ['subscription-manager', 'register']
+
+        # Generate command arguments
+        if activationkey:
+            args.append('--activationkey "%s"' % activationkey)
+        else:
+            if autosubscribe:
+                args.append('--autosubscribe')
+            if username:
+                args.extend(['--username', username])
+            if password:
+                args.extend(['--password', password])
+
+        # Do the needful...
+        run_command(args)
+
+    def unsubscribe(self):
+        '''
+            Unsubscribe a system from all subscribed channels
+            Raises:
+              * Exception - if error occurs while running command
+        '''
+        args = ['subscription-manager', 'unsubscribe', '--all']
+        run_command(args)
+
+    def unregister(self):
+        '''
+            Unregister a currently registered system
+            Raises:
+              * Exception - if error occurs while running command
+        '''
+        args = ['subscription-manager', 'unregister']
+        run_command(args)
+
+    def subscribe(self, regexp):
+        '''
+            Subscribe current system to available pools matching the specified
+            regular expression
+            Raises:
+              * Exception - if error occurs while running command
+        '''
+
+        # Available pools ready for subscription
+        available_pools = RhsmPools()
+
+        for pool in available_pools.filter(regexp):
+            pool.subscribe()
+
+
 class RhsmPool(object):
+    '''
+        Convenience class for housing subscription information
+    '''
     def __init__(self, **kwargs):
         for k,v in kwargs.items():
             setattr(self, k, v)
@@ -160,133 +336,19 @@ class RhsmPools(object):
                 yield product
 
 
-def read_rhsm_config(rhsm_conf='/etc/rhsm/rhsm.conf'):
-    '''
-        Load RHSM configuration from /etc/rhsm/rhsm.conf.
-        Returns:
-         * ConfigParser object
-    '''
-
-    # Read RHSM defaults ...
-    cp = ConfigParser.ConfigParser()
-    if os.path.isfile(rhsm_conf):
-        cp.read(rhsm_conf)
-
-    # Add support for specifying a default value w/o having to standup some configuration
-    # Yeah, I know this should be subclassed ... but, oh well
-    def get_option_default(self, key, default=''):
-        sect, opt = key.split('.', 1)
-        if self.has_section(sect) and self.has_option(sect, opt):
-            return self.get(sect, opt)
-        else:
-            return default
-
-    cp.get_option = types.MethodType(get_option_default, cp, ConfigParser.ConfigParser)
-
-    return cp
-
-
-def is_registered():
-    '''
-        Determine whether the current system
-        Returns:
-          * Boolean - whether the current system is currently registered to
-                      RHN.
-    '''
-    # Quick version...
-    if False:
-        return os.path.isfile('/etc/pki/consumer/cert.pem') and \
-               os.path.isfile('/etc/pki/consumer/key.pem')
-
-    args = ['subscription-manager', 'identity']
-    try:
-        (stdout, stderr, retcode) =  run_command(args)
-    except CommandException, e:
-        return False
-    else:
-        # Display some debug output
-        return True
-
-
-def configure(**kwargs):
-    '''
-        Configure the system as directed for registration with RHN
-        Raises:
-          * Exception - if error occurs while running command
-    '''
-    args = ['subscription-manager', 'config']
-
-    # Pass supplied **kwargs as parameters to subscription-manager.  Ignore
-    # non-configuration parameters and replace '_' with '.'.  For example,
-    # 'server_hostname' becomes '--system.hostname'.
-    for k,v in kwargs.items():
-        if re.search(r'^(system|rhsm)_', k):
-            args.append('--%s=%s' % (k.replace('_','.'), v))
-
-    run_command(args)
-
-
-def register(username, password, autosubscribe, activationkey):
-    '''
-        Register the current system to the provided RHN server
-        Raises:
-          * Exception - if error occurs while running command
-    '''
-    args = ['subscription-manager', 'register']
-
-    # Generate command arguments
-    if activationkey:
-        args.append('--activationkey "%s"' % activationkey)
-    else:
-        if autosubscribe:
-            args.append('--autosubscribe')
-        if username:
-            args.extend(['--username', username])
-        if password:
-            args.extend(['--password', password])
-
-    # Do the needful...
-    run_command(args)
-
-
-def subscribe(regexp):
-    '''
-        Subscribe current system to available pools matching the specified
-        regular expression
-        Raises:
-          * Exception - if error occurs while running command
-    '''
-
-    # Available pools ready for subscription
-    available_pools = RhsmPools()
-
-    for pool in available_pools.filter(regexp):
-        pool.subscribe()
-
-
-def unregister():
-    '''
-        Unregister a currently registered system
-        Raises:
-          * Exception - if error occurs while running command
-    '''
-    args = ['subscription-manager', 'unregister']
-    return run_command(args)
-
-
 def main():
 
     # Load RHSM configuration from file
-    cp = read_rhsm_config()
+    rhn = Rhsm()
 
     module = AnsibleModule(
                 argument_spec = dict(
                     state = dict(default='present', choices=['present', 'absent']),
                     username = dict(default=None, required=False),
                     password = dict(default=None, required=False),
-                    server_hostname = dict(default=cp.get_option('server.hostname'), required=False),
-                    server_insecure = dict(default=cp.get_option('server.insecure'), required=False),
-                    rhsm_baseurl = dict(default=cp.get_option('rhsm.baseurl'), required=False),
+                    server_hostname = dict(default=rhn.config.get_option('server.hostname'), required=False),
+                    server_insecure = dict(default=rhn.config.get_option('server.insecure'), required=False),
+                    rhsm_baseurl = dict(default=rhn.config.get_option('rhsm.baseurl'), required=False),
                     autosubscribe = dict(default=False, type='bool'),
                     activationkey = dict(default=None, required=False),
                     pool = dict(default='^$', required=False, type='str'),
@@ -313,13 +375,14 @@ def main():
             module.fail_json(msg="Missing arguments, If registering without an activationkey, must supply username or password")
 
         # Register system
-        if is_registered():
+        if rhn.is_registered:
             module.exit_json(changed=False, msg="System already registered.")
         else:
             try:
-                configure(**module.params)
-                register(username, password, autosubscribe, activationkey)
-                subscribe(pool)
+                rhn.enable()
+                rhn.configure(**module.params)
+                rhn.register(username, password, autosubscribe, activationkey)
+                rhn.subscribe(pool)
             except CommandException, e:
                 module.fail_json(msg="Failed to register with '%s': %s" % (server_hostname, e))
             else:
@@ -327,11 +390,12 @@ def main():
 
     # Ensure system is *not* registered
     if state == 'absent':
-        if not is_registered():
+        if not rhn.is_registered:
             module.exit_json(changed=False, msg="System already unregistered.")
         else:
             try:
-                unregister()
+                rhn.unsubscribe()
+                rhn.unregister()
             except CommandException, e:
                 module.fail_json(msg="Failed to unregister: %s" % e)
             else:
