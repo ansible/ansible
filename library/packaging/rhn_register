@@ -2,7 +2,7 @@
 
 DOCUMENTATION = '''
 ---
-module: rhnreg_ks
+module: rhn_register
 short_description: Manage Red Hat Network registration using the C(rhnreg_ks) command
 description:
     - Manage registration to the Red Hat Network.
