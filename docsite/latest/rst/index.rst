@@ -7,7 +7,9 @@ Ansible Documentation Index
    :alt: ansiblefest 2013
    :target: http://ansibleworks.com/fest
 
-Welcome to the Ansible documentation.
+Welcome to the Ansible documentation.  This documentation covers the current released
+version of Ansible (1.2) and may also reference some development version features (and if so,
+such sections will be noted).
 
 Before we dive into playbooks, configuration management, deployment, and orchestration, we'll learn how to get Ansible installed and some
 basic information.  We'll go over how to execute ad-hoc commands in parallel across your nodes using /usr/bin/ansible.  We'll also see
