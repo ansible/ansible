@@ -13,8 +13,11 @@ get_header();
 <div id="left-sidebar" class="span3 sidebar">
     <div class="side-nav sidebar-block left-side-nav">
       <ul><li><a href="/docs/"><strong>Documentation Home</strong></a></li></ul>
-        {{ toc }}
-
+        {% if title == "Ansible Documentation Index" %}
+                {{ toctree(maxdepth=1) }}
+        {% else %}
+                {{ toc }}
+        {% endif %}
       <hr />
       <div class="qsButton pagination-centered" />
         <a href="/quickstart"><button class="btn btn-primary" type="button">Quick Start Video</button></a>
