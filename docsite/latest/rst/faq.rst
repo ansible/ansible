@@ -1,10 +1,6 @@
 Frequently Asked Questions
 ==========================
 
-.. image:: http://ansible.cc/docs/_static/ansible_fest_2013.png
-   :alt: ansiblefest 2013
-   :target: http://ansibleworks.com/fest
-
 Here are some commonly-asked questions and their answers.
 
 .. contents::

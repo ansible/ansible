@@ -11,9 +11,10 @@ viewdocs: clean
 	./build-site.py view
 
 htmldocs:
-	 ./build-site.py rst
+	./build-site.py rst
 
 clean:
+	-rm -rf htmlout
 	-rm -f .buildinfo
 	-rm -f *.inv
 	-rm -rf *.doctrees
