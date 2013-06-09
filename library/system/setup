@@ -562,7 +562,7 @@ class LinuxHardware(Hardware):
         self.facts['devices'] = {}
         lspci = module.get_bin_path('lspci')
         if lspci:
-            rc, pcidata, err = module.run_command(lspci)
+            rc, pcidata, err = module.run_command([lspci, '-D'])
         else:
             pcidata = None
 
@@ -632,7 +632,7 @@ class LinuxHardware(Hardware):
             d['size'] = module.pretty_bytes(float(d['sectors']) * float(d['sectorsize']))
 
             d['host'] = ""
-            m = re.match(".+/[a-f0-9]+:([a-f0-9]+:[a-f0-9]+\.[a-f0-9]+)/host\d+/", sysdir)
+            m = re.match(".+/([a-f0-9]+:[a-f0-9]+:[a-f0-9]+\.[a-f0-9]+)/host\d+/", sysdir)
             if m and pcidata:
                 pciid = m.group(1)
                 did = re.escape(pciid)
