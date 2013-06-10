@@ -213,10 +213,7 @@ class PlayBook(object):
         self.callbacks.on_start()
         for (play_ds, play_basedir) in zip(self.playbook, self.play_basedirs):
             play = Play(self, play_ds, play_basedir)
-
             assert play is not None
-            ansible.callbacks.set_play(self.callbacks, play)
-            ansible.callbacks.set_play(self.runner_callbacks, play)
             
             matched_tags, unmatched_tags = play.compare_tags(self.only_tags)
             matched_tags_all = matched_tags_all | matched_tags
@@ -242,8 +239,12 @@ class PlayBook(object):
             raise errors.AnsibleError(msg % (unknown, unmatched))
 
         for play in plays:
+            ansible.callbacks.set_play(self.callbacks, play)
+            ansible.callbacks.set_play(self.runner_callbacks, play)
             if not self._run_play(play):
                 break
+            ansible.callbacks.set_play(self.callbacks, None)
+            ansible.callbacks.set_play(self.runner_callbacks, None)
 
         # summarize the results
         results = {}
@@ -325,6 +326,8 @@ class PlayBook(object):
 
         self.callbacks.on_task_start(template(play.basedir, task.name, task.module_vars, lookup_fatal=False), is_handler)
         if hasattr(self.callbacks, 'skip_task') and self.callbacks.skip_task:
+            ansible.callbacks.set_task(self.callbacks, None)
+            ansible.callbacks.set_task(self.runner_callbacks, None)
             return True
         
         # load up an appropriate ansible runner to run the task in parallel
@@ -365,6 +368,8 @@ class PlayBook(object):
                     for handler_name in task.notify:
                         self._flag_handler(play, template(play.basedir, handler_name, task.module_vars), host)
 
+        ansible.callbacks.set_task(self.callbacks, None)
+        ansible.callbacks.set_task(self.runner_callbacks, None)
         return hosts_remaining
 
     # *****************************************************
