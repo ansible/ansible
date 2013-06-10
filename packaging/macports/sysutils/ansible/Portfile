@@ -11,12 +11,12 @@ supported_archs noarch
 
 maintainers     nomaintainer
 
-homepage        http://ansible.cc/
+homepage        http://ansibleworks.com/
 description     SSH-based configuration management and deployment system
 long_description \
     Ansible is a radically simple model-driven configuration \
-    management, multi-node deployment, and remote task execution \
-    system.  Ansible works over SSH and does not require any software \
+    management, multi-node deployment, and orchestration \
+    engine.  Ansible works over SSH and does not require any software \
     or daemons to be installed on remote nodes.  Extension modules can \
     be written in any language and are transferred to managed machines \
     automatically.

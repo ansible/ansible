@@ -1,7 +1,7 @@
 Ansible Changes By Release
 ==========================
 
-1.2 "Right Now" -- release pending
+1.2 "Right Now" -- June 10, 2013
 
 Core Features:
 
