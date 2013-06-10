@@ -33,11 +33,11 @@ class InventoryParser(object):
 
     def __init__(self, filename=C.DEFAULT_HOST_LIST):
 
-        fh = open(filename)
-        self.lines = fh.readlines()
-        self.groups = {}
-        self.hosts = {}
-        self._parse()
+        with open(filename) as fh:
+            self.lines = fh.readlines()
+            self.groups = {}
+            self.hosts = {}
+            self._parse()
 
     def _parse(self):
 
