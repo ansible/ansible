@@ -339,6 +339,13 @@ to 'root' if not already set to root, or set the mode to '0644' if not already s
 are 'idempotent' meaning change commands are not run unless needed, and ansible will bring the system back to a desired
 state regardless of the actual state -- rather than you having to tell it how to get to the state.
 
+Roles
++++++
+
+Roles are units of organization in ansible.  Assigning a role to a group of hosts (or a set of groups, or host patterns, etc) implies that they should implement a specific behavior.  A role
+may include applying certain variable values, certain tasks, and certain handlers -- or just one or more of these things.  Because of the file structure associated with a role, roles become
+units of redistributablity for sharing behavior among playbooks -- or even with other users.
+
 Rolling Update
 ++++++++++++++
 
