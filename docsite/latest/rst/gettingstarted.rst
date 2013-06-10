@@ -45,7 +45,7 @@ also need:
    Ansible) are not
    switching over yet.  However, some Linux distributions (Gentoo, Arch) may not have a 
    Python 2.X interpreter installed by default.  On those systems, you should install one, and set
-   the 'ansible_python_interpreter' variable in inventory to point at your 2.X python.  Distributions
+   the 'ansible_python_interpreter' variable in inventory (see :doc:`patterns`) to point at your 2.X python.  Distributions
    like Red Hat Enterprise Linux, CentOS, Fedora, and Ubuntu all have a 2.X interpreter installed
    by default and this does not apply to those distributions.  This is also true of nearly all
    Unix systems.  If you need to bootstrap these remote systems by installing Python 2.X, 
@@ -236,7 +236,7 @@ If you have python3 installed on Arch, you probably want to symlink python to py
 
     $ sudo ln -sf /usr/bin/python2 /usr/bin/python
 
-You should also set a 'ansible_python_interpreter' inventory variable for hosts that have python 
+You should also set a 'ansible_python_interpreter' inventory variable (see :doc:`patterns`) for hosts that have python 
 pointing to python3, so the right python can be found on the managed nodes.
 
 Tagged Releases
