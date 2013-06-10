@@ -423,6 +423,9 @@ def main():
             if snapshot:
                 params["skip_final_snapshot"] = False
                 params["final_snapshot_id"] = snapshot
+            else:
+                params["skip_final_snapshot"] = True
+
             db = conn.delete_dbinstance(instance_name, **params)
 
     except boto.exception.BotoServerError, e:
