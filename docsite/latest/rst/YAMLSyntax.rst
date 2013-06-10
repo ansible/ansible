@@ -95,6 +95,12 @@ You will want to quote any hash values using colons, like so:
 
 And then the colon will be preserved.
 
+Further, Ansible uses "{{ var }}" for variables.  If a value after a colon starts
+with a "{", YAML will think it a dictionary, so you must quote it, like so::
+
+    foo: "{{ variable }}"
+
+
 .. seealso::
 
    :doc:`playbooks`
