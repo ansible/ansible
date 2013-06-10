@@ -56,8 +56,8 @@ notes:
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            fstype=dict(required=True),
-            dev=dict(required=True),
+            fstype=dict(required=True, aliases=['type']),
+            dev=dict(required=True, aliases=['device']),
             opts=dict(),
             force=dict(type='bool', default='no'),
         ),
@@ -74,7 +74,9 @@ def main():
     if not os.path.exists(dev):
         module.fail_json(msg="Device %s not found."%dev)
 
-    rc,raw_fs,err = module.run_command("blkid -o value -s TYPE %s"%(dev))
+    cmd = module.get_bin_path('blkid', required=True)
+
+    rc,raw_fs,err = module.run_command("%s -o value -s TYPE %s" % (cmd, dev))
     fs = raw_fs.strip()
 
 
