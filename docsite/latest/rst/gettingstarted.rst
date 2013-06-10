@@ -10,10 +10,10 @@ Requirements
 
 Requirements for Ansible are extremely minimal.
 
-Ansible is written for Python 2.6+.  If you are running Python 2.5 on an "Enterprise Linux" variant, we'll show you how to add
-2.6.  Newer versions of Linux and OS X should already have 2.6 or higher.
+On the central Ansible machine, you will need Python 2.6+.  If you are running Python 2.5 on an "Enterprise Linux" variant, we'll show you how to add
+2.6 to your distribution.
 
-In additon to Python 2.6+, you will want the following Python modules (installed via pip or perhaps via your OS package manager via slightly different names):
+You will also want the following Python modules (installed via pip or perhaps via your OS package manager via slightly different names):
 
 * ``paramiko``
 * ``PyYAML``
@@ -24,7 +24,6 @@ If you are using RHEL or CentOS 5 , python is version 2.4 by default, but you ca
 .. code-block:: bash
 
    $ yum install python26 python26-PyYAML python26-paramiko python26-jinja2
-
 
 On the managed nodes, you only need Python 2.4 or later, but if you are are running less than Python 2.6 on them, you will
 also need:
@@ -60,8 +59,8 @@ back to the project.
 
 Instructions for installing from source are below.
 
-Ansible's release cycles are about one month long.  Due to this
-short release cycle, any bugs will generally be fixed in the next release versus maintaining 
+Ansible's release cycles are usually about two months long.  Due to this
+short release cycle, minor bugs will generally be fixed in the next release versus maintaining 
 backports on the stable branch.
 
 You may also wish to follow the `Github project <https://github.com/ansible/ansible>`_ if
@@ -109,13 +108,19 @@ using "make install".  This is done through `python-distutils`:
     $ cd ./ansible
     $ sudo make install
 
+Release Tarballs
+++++++++++++++++
+
+For those that do not want to use git or a package manager, (or for packagers themselves), 
+tarballs of past Ansible releases are available at `http://ansibleworks.com/releases/ <http://ansibleworks.com/releases>`_.
+
 Via Pip
 +++++++
 
 Are you a python developer?
 
 Ansible can be installed via Pip, but when you do so, it will ask to install other dependencies used for
-optional modes::
+things like 'fireball' mode that you might not need::
 
    $ sudo easy_install pip
    $ sudo pip install ansible
