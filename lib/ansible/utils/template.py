@@ -489,6 +489,7 @@ def template_from_string(basedir, data, vars):
                 return data
          
         def my_lookup(*args, **kwargs):
+            kwargs['vars'] = vars
             return lookup(*args, basedir=basedir, **kwargs)
  
         t.globals['lookup'] = my_lookup
