@@ -1,6 +1,10 @@
 Ansible Changes By Release
 ==========================
 
+1.3 "Top of the World" - Release pending!
+
+* This is the active development release, right now!
+
 1.2 "Right Now" -- June 10, 2013
 
 Core Features:
