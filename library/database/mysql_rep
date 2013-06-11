@@ -19,8 +19,14 @@ def get_master_status(cursor):
   for row in results:
     File = row[0]
     Position = row[1]
-    #print "%s %d" %  (File, Position)
     return (File, Position)
+
+def get_slave_status(cursor):
+  cursor.execute("SHOW SLAVE STATUS")
+  row = cursor.fetchone()
+  io_running=row[10]
+  seconds_behind_master=row[32]
+  return (io_running, seconds_behind_master)
 
 def strip_quotes(s):
     """ Remove surrounding single or double quotes
@@ -87,7 +93,7 @@ def main():
             login_password=dict(default=None),
             login_host=dict(default="localhost"),
             login_unix_socket=dict(default=None),
-            mode=dict(default="getmaster", choices=["getmaster", "slave", "setmaster"])
+            mode=dict(default="getmaster", choices=["getmaster", "getslave", "setmaster"])
         )
     )
     user = module.params["login_user"]
@@ -126,6 +132,9 @@ def main():
     if mode in "getmaster":
       File, Position = get_master_status(cursor)
       module.exit_json(log_file=File, log_pos=Position) 
+    elif mode in "getslave":
+      io_running, seconds_behind_master=get_slave_status(cursor)
+      module.exit_json(io_running=io_running, seconds_behind_master=seconds_behind_master) 
 
 
 # this is magic, see lib/ansible/module_common.py
