@@ -1,0 +1,133 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+
+import ConfigParser
+import os
+
+try:
+    import MySQLdb
+except ImportError:
+    mysqldb_found = False
+else:
+    mysqldb_found = True
+
+
+def get_master_status(cursor):
+  cursor.execute("SHOW MASTER STATUS")
+  results = cursor.fetchall()
+  for row in results:
+    File = row[0]
+    Position = row[1]
+    #print "%s %d" %  (File, Position)
+    return (File, Position)
+
+def strip_quotes(s):
+    """ Remove surrounding single or double quotes
+
+    >>> print strip_quotes('hello')
+    hello
+    >>> print strip_quotes('"hello"')
+    hello
+    >>> print strip_quotes("'hello'")
+    hello
+    >>> print strip_quotes("'hello")
+    'hello
+
+    """
+    single_quote = "'"
+    double_quote = '"'
+
+    if s.startswith(single_quote) and s.endswith(single_quote):
+        s = s.strip(single_quote)
+    elif s.startswith(double_quote) and s.endswith(double_quote):
+        s = s.strip(double_quote)
+    return s
+
+
+def config_get(config, section, option):
+    """ Calls ConfigParser.get and strips quotes
+
+    See: http://dev.mysql.com/doc/refman/5.0/en/option-files.html
+    """
+    return strip_quotes(config.get(section, option))
+
+
+def load_mycnf():
+    config = ConfigParser.RawConfigParser()
+    mycnf = os.path.expanduser('~/.my.cnf')
+    if not os.path.exists(mycnf):
+        return False
+    try:
+        config.readfp(open(mycnf))
+    except (IOError):
+        return False
+    # We support two forms of passwords in .my.cnf, both pass= and password=,
+    # as these are both supported by MySQL.
+    try:
+        passwd = config_get(config, 'client', 'password')
+    except (ConfigParser.NoOptionError):
+        try:
+            passwd = config_get(config, 'client', 'pass')
+        except (ConfigParser.NoOptionError):
+            return False
+
+    # If .my.cnf doesn't specify a user, default to user login name
+    try:
+        user = config_get(config, 'client', 'user')
+    except (ConfigParser.NoOptionError):
+        user = getpass.getuser()
+    creds = dict(user=user, passwd=passwd)
+    return creds
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            login_user=dict(default=None),
+            login_password=dict(default=None),
+            login_host=dict(default="localhost"),
+            login_unix_socket=dict(default=None),
+            mode=dict(default="getmaster", choices=["getmaster", "slave", "setmaster"])
+        )
+    )
+    user = module.params["login_user"]
+    password = module.params["login_password"]
+    host = module.params["login_host"]
+    mode = module.params["mode"]
+
+    if not mysqldb_found:
+        module.fail_json(msg="the python mysqldb module is required")
+
+    # Either the caller passes both a username and password with which to connect to
+    # mysql, or they pass neither and allow this module to read the credentials from
+    # ~/.my.cnf.
+    login_password = module.params["login_password"]
+    login_user = module.params["login_user"]
+    if login_user is None and login_password is None:
+        mycnf_creds = load_mycnf()
+        if mycnf_creds is False:
+            login_user = "root"
+            login_password = ""
+        else:
+            login_user = mycnf_creds["user"]
+            login_password = mycnf_creds["passwd"]
+    elif login_password is None or login_user is None:
+        module.fail_json(msg="when supplying login arguments, both login_user and login_password must be provided")
+
+    try:
+        if module.params["login_unix_socket"]:
+            db_connection = MySQLdb.connect(host=module.params["login_host"], unix_socket=module.params["login_unix_socket"], user=login_user, passwd=login_password, db="mysql")
+        else:
+            db_connection = MySQLdb.connect(host=module.params["login_host"], user=login_user, passwd=login_password, db="mysql")
+        cursor = db_connection.cursor()
+    except Exception, e:
+        module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or ~/.my.cnf has the credentials")
+
+    if mode in "getmaster":
+      File, Position = get_master_status(cursor)
+      module.exit_json(log_file=File, log_pos=Position) 
+
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
