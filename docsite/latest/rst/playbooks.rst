@@ -37,7 +37,7 @@ Playbooks are expressed in YAML format and have a minimum of syntax.
 Each playbook is composed of one or more 'plays' in a list.
 
 The goal of a play is to map a group of hosts to some well defined roles, represented by
-things ansible called tasks.  At the basic level, a task is nothing more than a call
+things ansible calls tasks.  At a basic level, a task is nothing more than a call
 to an ansible module, which you should have learned about in earlier chapters.
 
 By composing a playbook of multiple 'plays', it is possible to
