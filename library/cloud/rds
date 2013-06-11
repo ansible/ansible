@@ -23,7 +23,7 @@ description:
 options:
   action:
     description:
-      - Specifies the action to take.  Must be one of: create | replicate | delete | facts
+      - Specifies the action to take.  Must be one of: create | replicate | delete | facts | modify
     required: true
     default: null
     aliases: []
@@ -47,13 +47,13 @@ options:
     aliases: []
   size:
     description:
-      - Size in gigabytes of the initial storage for the DB instance. Used only when action=create.
+      - Size in gigabytes of the initial storage for the DB instance. Used only when action=create or action=modify.
     required: false
     default: null
     aliases: []
   instance_type:
     description:
-      - The instance type of the database.  Must be specified when action=create. Optional when action=replicate. If not specified then the replica inherits the same instance type as the source instance. Must be one of: db.t1.micro | db.m1.small | db.m1.medium | db.m1.large | db.m1.xlarge | db.m2.xlarge | db.m2.2xlarge | db.m2.4xlarge
+      - The instance type of the database.  Must be specified when action=create. Optional when action=replicate or action=modify. If not specified then the replica inherits the same instance type as the source instance. Must be one of: db.t1.micro | db.m1.small | db.m1.medium | db.m1.large | db.m1.xlarge | db.m2.xlarge | db.m2.2xlarge | db.m2.4xlarge
     required: false
     default: null
     aliases: []
@@ -65,7 +65,7 @@ options:
     aliases: []
   password:
     description:
-      - Password for the master database username. Used only when action=create.
+      - Password for the master database username. Used only when action=create or action=modify.
     required: false
     default: null
     aliases: []
@@ -89,7 +89,7 @@ options:
     aliases: []
   parameter_group:
     description:
-      - Name of the DB parameter group to associate with this instance.  If omitted then the RDS default DBParameterGroup will be used. Used only when action=create.
+      - Name of the DB parameter group to associate with this instance.  If omitted then the RDS default DBParameterGroup will be used. Used only when action=create or action=modify.
     required: false
     default: null
     aliases: []
@@ -101,19 +101,19 @@ options:
     aliases: []
   multi_zone:
     description:
-      - Specifies if this is a Multi-availability-zone deployment. Can not be used in conjunction with zone parameter. Used only when action=create. Valid values: true | false
+      - Specifies if this is a Multi-availability-zone deployment. Can not be used in conjunction with zone parameter. Used only when action=create or action=modify. Valid values: true | false
     required: false
     default: null
     aliases: []
   iops:
     description:
-      - Specifies the number of IOPS for the instance.  Used only when action=create. Must be an integer greater than 1000.
+      - Specifies the number of IOPS for the instance.  Used only when action=create or action=modify. Must be an integer greater than 1000.
     required: false
     default: null
     aliases: []
   security_groups:
     description:
-      - Comma separated list of one or more security groups.  Used only when action=create. If a subnet is specified then this is treated as a list of VPC security groups.
+      - Comma separated list of one or more security groups.  Used only when action=create or action=modify. If a subnet is specified then this is treated as a list of VPC security groups.
     required: false
     default: null
     aliases: []
@@ -138,19 +138,19 @@ options:
     aliases: []
   maint_window:
     description:
-      - Maintenance window in format of ddd:hh24:mi-ddd:hh24:mi.  (Example: Mon:22:00-Mon:23:15) If not specified then a random maintenance window is assigned. Used only when action=create.
+      - Maintenance window in format of ddd:hh24:mi-ddd:hh24:mi.  (Example: Mon:22:00-Mon:23:15) If not specified then a random maintenance window is assigned. Used only when action=create or action=modify.
     required: false
     default: null
     aliases: []
   backup_window:
     description:
-      - Backup window in format of hh24:mi-hh24:mi.  If not specified then a random backup window is assigned. Used only when action=create.
+      - Backup window in format of hh24:mi-hh24:mi.  If not specified then a random backup window is assigned. Used only when action=create or action=modify.
     required: false
     default: null
     aliases: []
   backup_retention:
     description:
-      - Number of days backups are retained.  Set to 0 to disable backups.  Default is 1 day.  Valid range: 0-35. Used only when action=create.
+      - Number of days backups are retained.  Set to 0 to disable backups.  Default is 1 day.  Valid range: 0-35. Used only when action=create or action=modify.
     required: false
     default: null
     aliases: []
@@ -186,7 +186,7 @@ options:
     aliases: []
   wait:
     description:
-      - When action=create or action=replicate, wait for the database to enter the 'available' state.  When action=delete wait for the database to be terminated.
+      - When action=create, replicate, or modify then wait for the database to enter the 'available' state.  When action=delete wait for the database to be terminated.
     required: false
     default: "no"
     choices: [ "yes", "no" ]
@@ -195,6 +195,12 @@ options:
     description:
       - how long before wait gives up, in seconds
     default: 300
+    aliases: []
+  apply_immediately:
+    description:
+      - Used only when action=modify.  If enabled, the modifications will be applied as soon as possible rather than waiting for the next preferred maintenance window.
+    default: no
+    choices: [ "yes", "no" ]
     aliases: []
 requirements: [ "boto" ]
 author: Bruce Pennypacker
@@ -260,7 +266,7 @@ except ImportError:
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            action = dict(choices=['create', 'replicate', 'delete', 'facts'], required=True),
+            action = dict(choices=['create', 'replicate', 'delete', 'facts', 'modify'], required=True),
             instance_name = dict(required=True),
             source_instance = dict(required=False),
             db_engine = dict(choices=['MySQL', 'oracle-se1', 'oracle-se', 'oracle-ee', 'sqlserver-ee', 'sqlserver-se', 'sqlserver-ex', 'sqlserver-web'], required=False),
@@ -289,6 +295,7 @@ def main():
             wait = dict(choices=BOOLEANS, default=False),
             wait_timeout = dict(default=300),
             snapshot = dict(required=False),
+            apply_immediately = dict(choices=BOOLEANS, default=False),
         )
     )
 
@@ -321,6 +328,7 @@ def main():
     wait = module.params.get('wait')
     wait_timeout = int(module.params.get('wait_timeout'))
     snapshot = module.params.get('snapshot')
+    apply_immediately = module.params.get('apply_immediately')
 
     # allow environment variables to be used if ansible vars aren't set
     if not ec2_secret_key and 'EC2_SECRET_KEY' in os.environ:
@@ -352,16 +360,19 @@ def main():
     # Validate parameters for each action
     if action == 'create':
         required_vars = [ 'instance_name', 'db_engine', 'size', 'instance_type', 'username', 'password' ]
-        invalid_vars = [ 'source_instance', 'snapshot' ]
+        invalid_vars = [ 'source_instance', 'snapshot', 'apply_immediately' ]
     elif action == 'replicate':
         required_vars = [ 'instance_name', 'source_instance' ]
-        invalid_vars = [ 'db_engine', 'size', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'security_groups', 'option_group', 'maint_window', 'backup_window', 'backup_retention', 'subnet', 'snapshot']
+        invalid_vars = [ 'db_engine', 'size', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'security_groups', 'option_group', 'maint_window', 'backup_window', 'backup_retention', 'subnet', 'snapshot', 'apply_immediately' ]
     elif action == 'delete':
         required_vars = [ 'instance_name' ]
-        invalid_vars = [ 'db_engine', 'size', 'instance_type', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'security_groups', 'option_group', 'maint_window', 'backup_window', 'backup_retention', 'port', 'upgrade', 'subnet', 'zone' , 'source_instance']
+        invalid_vars = [ 'db_engine', 'size', 'instance_type', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'security_groups', 'option_group', 'maint_window', 'backup_window', 'backup_retention', 'port', 'upgrade', 'subnet', 'zone' , 'source_instance', 'apply_immediately' ]
     elif action == 'facts':
         required_vars = [ 'instance_name' ]
-        invalid_vars = [ 'db_engine', 'size', 'instance_type', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'security_groups', 'option_group', 'maint_window', 'backup_window', 'backup_retention', 'port', 'upgrade', 'subnet', 'zone', 'wait', 'source_instance' ]
+        invalid_vars = [ 'db_engine', 'size', 'instance_type', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'security_groups', 'option_group', 'maint_window', 'backup_window', 'backup_retention', 'port', 'upgrade', 'subnet', 'zone', 'wait', 'source_instance' 'apply_immediately' ]
+    elif action == 'modify':
+        required_vars = [ 'instance_name' ]
+        invalid_vars = [ 'db_engine', 'username', 'db_name', 'engine_version',  'license_model', 'option_group', 'port', 'upgrade', 'subnet', 'zone', 'source_instance' ]
  
     for v in required_vars:
         if not module.params.get(v):
@@ -437,6 +448,9 @@ def main():
                 params["skip_final_snapshot"] = True
 
             db = conn.delete_dbinstance(instance_name, **params)
+        elif action == 'modify':
+            params["apply_immediately"] = apply_immediately
+            db = conn.modify_dbinstance(instance_name, **params)
 
     # Don't do anything for the 'facts' action since we'll just drop down
     # to get_all_dbinstances below to collect the facts
