@@ -23,7 +23,7 @@ description:
 options:
   action:
     description:
-      - Specifies the action to take.  Must be one of: create | replicate | delete
+      - Specifies the action to take.  Must be one of: create | replicate | delete | facts
     required: true
     default: null
     aliases: []
@@ -224,6 +224,13 @@ EXAMPLES = '''
         action=delete
         instance_name=new_database
         snapshot=new_database_snapshot
+
+# Get facts about an instance
+    action: rds
+        action=facts
+        instance_name=new_database
+    register: new_database_facts
+    
 '''
 
 import sys
@@ -253,7 +260,7 @@ except ImportError:
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            action = dict(choices=['create', 'replicate', 'delete'], required=True),
+            action = dict(choices=['create', 'replicate', 'delete', 'facts'], required=True),
             instance_name = dict(required=True),
             source_instance = dict(required=False),
             db_engine = dict(choices=['MySQL', 'oracle-se1', 'oracle-se', 'oracle-ee', 'sqlserver-ee', 'sqlserver-se', 'sqlserver-ex', 'sqlserver-web'], required=False),
@@ -351,7 +358,10 @@ def main():
         invalid_vars = [ 'db_engine', 'size', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'security_groups', 'option_group', 'maint_window', 'backup_window', 'backup_retention', 'subnet', 'snapshot']
     elif action == 'delete':
         required_vars = [ 'instance_name' ]
-        invalid_vars = [ 'db_engine', 'size', 'instance_type', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'security_groups', 'option_group', 'maint_window', 'backup_window', 'backup_retention', 'port', 'upgrade', 'subnet', 'zone' ]
+        invalid_vars = [ 'db_engine', 'size', 'instance_type', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'security_groups', 'option_group', 'maint_window', 'backup_window', 'backup_retention', 'port', 'upgrade', 'subnet', 'zone' , 'source_instance']
+    elif action == 'facts':
+        required_vars = [ 'instance_name' ]
+        invalid_vars = [ 'db_engine', 'size', 'instance_type', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'security_groups', 'option_group', 'maint_window', 'backup_window', 'backup_retention', 'port', 'upgrade', 'subnet', 'zone', 'wait', 'source_instance' ]
  
     for v in required_vars:
         if not module.params.get(v):
@@ -428,6 +438,9 @@ def main():
 
             db = conn.delete_dbinstance(instance_name, **params)
 
+    # Don't do anything for the 'facts' action since we'll just drop down
+    # to get_all_dbinstances below to collect the facts
+
     except boto.exception.BotoServerError, e:
         module.fail_json(msg = e.error_message)
 
@@ -442,7 +455,7 @@ def main():
     # Wait for the instance to be available if requested
     if wait:
         try: 
-            wait_timeout = time.time() + wait_timeout 
+            wait_timeout = time.time() + wait_timeout
             time.sleep(5)
 
             while wait_timeout > time.time() and my_inst.status != 'available':
