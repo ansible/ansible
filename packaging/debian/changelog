@@ -1,14 +1,14 @@
 ansible (1.2) unstable; urgency=low
 
-  * release pending
+  * 1.2 release
 
- -- Michael DeHaan <michael.dehaan@gmail.com>  Tue, 02 Mar 2014 20:38:01 -0500
+ -- Michael DeHaan <michael.dehaan@gmail.com>  Mon, 10 June 2013 15:00:00 -0500
 
 ansible (1.1) unstable; urgency=low
 
   * 1.1 release
 
- -- Michael DeHaan <michael.dehaan@gmail.com>  Tue, 02 Mar 2014 20:38:00 -0500
+ -- Michael DeHaan <michael.dehaan@gmail.com>  Tue, 02 Mar 2013 20:38:00 -0500
 
 ansible (1.0) unstable; urgency=low
   
