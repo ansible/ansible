@@ -153,8 +153,9 @@ def user_mod(cursor, user, host, password, new_priv):
         # the new specification, then revoke all privileges on it.
         for db_table, priv in curr_priv.iteritems():
             if db_table not in new_priv:
-                privileges_revoke(cursor, user,host,db_table)
-                changed = True
+                if user != "root" and "PROXY" not in priv:
+                    privileges_revoke(cursor, user,host,db_table)
+                    changed = True
 
         # If the user doesn't currently have any privileges on a db.table, then
         # we can perform a straight grant operation.
