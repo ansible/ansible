@@ -23,7 +23,7 @@ import os
 
 import ansible.playbook
 import ansible.constants as C
-import ansible.utils.template 
+import ansible.utils.template
 from ansible import errors
 from ansible import callbacks
 from ansible import utils
@@ -54,11 +54,11 @@ def main(args):
     # create parser for CLI options
     usage = "%prog playbook.yml"
     parser = utils.base_parser(
-        constants=C, 
-        usage=usage, 
-        connect_opts=True, 
-        runas_opts=True, 
-        subset_opts=True, 
+        constants=C,
+        usage=usage,
+        connect_opts=True,
+        runas_opts=True,
+        subset_opts=True,
         check_opts=True,
         diff_opts=True
     )
@@ -179,7 +179,7 @@ def main(args):
             # if we've not exited by now then we are fine.
             print 'Playbook Syntax is fine'
             return 0
-            
+
         failed_hosts = []
 
         try:
@@ -221,7 +221,7 @@ def main(args):
                     log_only=True
                 )
 
- 
+
             print ""
             if len(failed_hosts) > 0:
                 return 2
