@@ -281,19 +281,27 @@ def main():
             state = dict(required=True, choices=['active', 'present', 'absent', 'deleted']),
             client_id = dict(aliases=['CLIENT_ID'], no_log=True),
             api_key = dict(aliases=['API_KEY'], no_log=True),
-            name = dict(),
-            size_id = dict(),
-            image_id = dict(),
-            region_id = dict(),
+            name = dict(type='str'),
+            size_id = dict(type='int'),
+            image_id = dict(type='int'),
+            region_id = dict(type='int'),
             ssh_key_ids = dict(default=''),
             id = dict(aliases=['droplet_id'], type='int'),
             wait = dict(type='bool', choices=BOOLEANS, default='yes'),
             wait_timeout = dict(default=300, type='int'),
-            ssh_pub_key = dict(),
+            ssh_pub_key = dict(type='str'),
         ),
         required_together = (
             ['size_id', 'image_id', 'region_id'],
-        )
+        ),
+        mutually_exclusive = (
+            ['size_id', 'ssh_pub_key'],
+            ['image_id', 'ssh_pub_key'],
+            ['region_id', 'ssh_pub_key'],
+        ),
+        required_one_of = (
+            ['id', 'name'],
+        ),
     )
 
     try:
