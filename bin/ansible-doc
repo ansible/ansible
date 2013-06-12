@@ -58,7 +58,7 @@ def print_man(doc):
     desc = "".join(doc['description'])
 
     print "%s\n" % textwrap.fill(tty_ify(desc), initial_indent="  ", subsequent_indent="  ")
-    
+
     if 'option_keys' in doc and len(doc['option_keys']) > 0:
         print "Options (= is mandatory):\n"
 
@@ -178,7 +178,7 @@ def main():
 
     if len(args) == 0:
         p.print_help()
-   
+
     def print_paths(finder):
         ''' Returns a string suitable for printing of the search path '''
 
@@ -188,7 +188,7 @@ def main():
             if i not in ret:
                 ret.append(i)
         return os.pathsep.join(ret)
- 
+
     for module in args:
 
         filename = utils.plugins.module_finder.find_plugin(module)

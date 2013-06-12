@@ -44,12 +44,12 @@ class Cli(object):
         ''' create an options parser for bin/ansible '''
 
         parser = utils.base_parser(
-            constants=C, 
-            runas_opts=True, 
-            subset_opts=True, 
+            constants=C,
+            runas_opts=True,
+            subset_opts=True,
             async_opts=True,
-            output_opts=True, 
-            connect_opts=True, 
+            output_opts=True,
+            connect_opts=True,
             check_opts=True,
             diff_opts=False,
             usage='%prog <host-pattern> [options]'
