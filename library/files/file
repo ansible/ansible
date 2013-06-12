@@ -123,7 +123,7 @@ options:
   force:
     required: false
     default: "no"
-    choises: [ "yes", "no" ]
+    choices: [ "yes", "no" ]
     description:
       - force the creation of the symlinks in two cases: the source file does
         not exist (but will appear later); the destination exists and a file (so, we need to unlink the
