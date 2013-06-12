@@ -511,7 +511,12 @@ def main():
         d["endpoint"] = None
         d["port"] = None
 
-     
+    # ReadReplicaSourceDBInstanceIdentifier may or may not exist
+    try:
+        d["replication_source"] = my_inst.ReadReplicaSourceDBInstanceIdentifier
+    except Exception, e:
+        d["replication_source"] = None
+
     module.exit_json(changed=True, instance=d)
 
 # this is magic, see lib/ansible/module_common.py
