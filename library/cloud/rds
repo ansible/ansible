@@ -493,13 +493,24 @@ def main():
         'id': my_inst.id,
         'create_time': my_inst.create_time,
         'status': my_inst.status,
-        'endpoint': my_inst.endpoint[0],
-        'port': my_inst.endpoint[1],
         'availability_zone': my_inst.availability_zone,
         'backup_retention': my_inst.backup_retention_period,
         'backup_window': my_inst.preferred_backup_window,
         'maintenance_window': my_inst.preferred_maintenance_window,
+        'multi_zone': my_inst.multi_az,
+        'instance_type': my_inst.instance_class,
+        'username': my_inst.master_username,
+        'iops': my_inst.iops
         }
+
+    # Endpoint exists only if the instance is available
+    if my_inst.status == 'available':
+        d["endpoint"] = my_inst.endpoint[0]
+        d["port"] = my_inst.endpoint[1]
+    else:
+        d["endpoint"] = None
+        d["port"] = None
+
      
     module.exit_json(changed=True, instance=d)
 
