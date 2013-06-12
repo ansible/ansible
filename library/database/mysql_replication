@@ -1,6 +1,104 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+"""
+
+Ansible module to manage mysql replication
+(c) 2013, Balazs Pocze <banyek@gmail.com>
+Certain parts are taken from Mark Theunissen's mysqldb module
+
+This file is part of Ansible
+
+Ansible is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+ 
+Ansible is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+DOCUMENTATION = '''
+---
+module: mysql_replication
+
+short_description: Manage MySQL replication
+description: 
+    - Manages MySQL server replication, slave, master status get and change master host. 
+options:
+    mode:
+        description:
+            - module operating mode. Could be getslave (SHOW SLAVE STATUS), getmaster (SHOW MASTER STATUS), changemaster (CHANGE MASTER TO)
+        required: False
+        possible vaules: getslave, getmaster, changemaster
+        default: getslave
+    login_user:
+        description:
+            - username to connect mysql host, if defined login_password also needed.
+        required: False
+    login_password:
+        description:
+            - password to connect mysql host, if defined login_user also needed.
+        required: False
+    login_host:
+        description:
+            - mysql host to connect
+        required: False
+    login_unix_socket:
+        description:
+            - unix socket to connect mysql server
+    master_host:
+        description:
+            - same as mysql variable
+    master_user:
+        description:
+            - same as mysql variable
+    master_password:
+        description:
+            - same as mysql variable
+    master_port:
+        description:
+            - same as mysql variable
+    master_connect_retry:
+        description:
+            - same as mysql variable
+    master_log_file:
+        description:
+            - same as mysql variable
+    master_log_pos:
+        description:
+            - same as mysql variable
+    relay_log_file:
+        description:
+            - same as mysql variable
+    relay_log_pos:
+        description:
+            - same as mysql variable
+    master_ssl:
+        description:
+            - same as mysql variable
+        possible values: 0,1
+    master_ssl_ca:
+        description:
+            - same as mysql variable
+    master_ssl_capath:
+        description:
+            - same as mysql variable
+    master_ssl_cert:
+        description:
+            - same as mysql variable
+    master_ssl_key:
+        description:
+            - same as mysql variable
+     master_ssl_cipher:
+        description:
+            - same as mysql variable
+
+'''
 
 import ConfigParser
 import os
@@ -95,7 +193,7 @@ def main():
             login_password=dict(default=None),
             login_host=dict(default="localhost"),
             login_unix_socket=dict(default=None),
-            mode=dict(default="getmaster", choices=["getmaster", "getslave", "changemaster"]),
+            mode=dict(default="getslave", choices=["getmaster", "getslave", "changemaster"]),
             master_host=dict(default=None),
             master_user=dict(default=None),
             master_password=dict(default=None),
