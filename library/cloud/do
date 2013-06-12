@@ -18,18 +18,23 @@
 DOCUMENTATION = '''
 ---
 module: do
-short_description: Create/delete an instance in DigitalOcean
+short_description: Create/delete a droplet/SSH_key in DigitalOcean
 description:
-     - Create/delete an instance in DigitalOcean and optionally waits for it to be 'running'.
+     - Create/delete a droplet in DigitalOcean and optionally waits for it to be 'running', or deploy an SSH key.
 version_added: "0.1"
 options:
+  command:
+    description:
+     - Which target you want to operate on.
+    required: true
+    choices: ['droplet', 'ssh']
   state:
     description:
-     - Indicate desired state of the droplet.
+     - Indicate desired state of the target.
     required: true
     choices: ['present', 'active', 'absent', 'deleted']
   client_id: description:
-     - Digital Ocean client id.
+     - Digital Ocean manager id.
   api_key:
     description:
      - Digital Ocean api key.
@@ -38,7 +43,7 @@ options:
      - Numeric, the droplet id you want to operate on.
   name:
     description:
-     - String, this is the name of the droplet - must be formatted by hostname rules.
+     - String, this is the name of the droplet - must be formatted by hostname rules, or the name of a SSH key.
   size_id:
     description:
      - Numeric, this is the id of the size you would like the droplet created at.
@@ -59,7 +64,10 @@ options:
   wait_timeout:
     description:
      - How long before wait gives up, in seconds.
-    default: 360
+    default: 300
+  ssh_pub_key:
+    description:
+     - The public SSH key you want to add to your account.
 
 notes:
   - Two environment variables can be used, DO_CLIENT_ID and DO_API_KEY.
@@ -69,10 +77,10 @@ notes:
 EXAMPLES = '''
 # a playbook task line:
 tasks:
-  - do: state=active client_id=XXX api_key=XXX id=33
+  - do: state=present client_id=XXX api_key=XXX id=33
 
 # /usr/bin/ansible invocations
-ansible -i host -m do -a "state=active client_id=XXX api_key=XXX id=3"
+ansible -i host -m do -a "state=present client_id=XXX api_key=XXX id=3"
 '''
 
 import sys
@@ -80,147 +88,190 @@ import os
 import time
 
 try:
-    from dopy.client import Client
+    from dopy.manager import DoError, DoManager
 except ImportError as e:
     print "failed=True msg='dopy required for this module'"
     sys.exit(1)
 
-class DoProxy(object):
+class TimeoutError(DoError):
+    def __init__(self, msg, id):
+        super(TimeoutError, self).__init__(msg)
+        self.id = id
 
-    def __init__(self, module):
-        self.params = module.params
-        self.fail_json = module.fail_json
-        self.exit_json = module.exit_json
-        # setup the auth
-        try:
-            # params['client_id'] will be None even if client_id is not passed in
-            client_id = self.params['client_id'] or os.environ['DO_CLIENT_ID']
-            api_key = self.params['api_key'] or os.environ['DO_API_KEY']
-        except KeyError, e:
-            self.fail_json(msg='Unable to load %s' % e.message)
-        self.client = Client(client_id, api_key)
+class JsonfyMixIn(object):
+    def to_json(self):
+        return self.__dict__
 
-    def process(self):
-        """
-        Returns a dict of the executed result.
-        Or causing the whole program to exit by using fail_json.
-        """
-        command = self.getkeyordie('command')
-        state = self.getkeyordie('state')
-        if command == 'droplet':
-            if state in ('active', 'present'):
-                if self.params['id'] is not None:
-                    droplet = self.find_droplet()
-                    if droplet:  # already exist
-                        id = droplet['id']
-                if 'id' not in locals():
-                    droplet = self.create_droplet()
-                    id = droplet['id']
-                return {'changed': True, 'droplet': self.ensure_powered_on(id)}
+class Droplet(JsonfyMixIn):
+    manager = None
 
-            elif state in ('absent', 'deleted'):
-                droplet = self.find_droplet()
-                if droplet:
-                    return {'changed': True, 'event_id': self.destroy_droplet()}
-                return {'changed': False, 'msg': 'The droplet is not found.'}
-        elif command == 'ssh':
-            if state in ('active', 'present'):
-                name = self.getkeyordie('key_name')
-                if self.find_ssh_key(name):
-                    return {'changed': False, 'msg': 'SSH key with the name of %s already exists.' % name}
-                return {'changed': True, 'ssh_keys': self.add_ssh_key(self.getkeyordie('key_name'), self.getkeyordie('ssh_pub_key'))}
+    def __init__(self, droplet_json):
+        self.status = 'new'
+        self.__dict__.update(droplet_json)
 
+    def is_powered_on(self):
+        return self.status == 'active'
 
-    def getkeyordie(self, k):
-        v = self.params[k]
-        if v is None:
-            self.fail_json(msg='Unable to load %s' % k)
-        return v
+    def update_attr(self, attrs=None, times=5):
+        if attrs:
+            for k, v in attrs.iteritems():
+                setattr(self, k, v)
+        else:
+            json = self.manager.show_droplet(self.id)
+            if not json['ip_address']:
+                if times > 0:
+                    time.sleep(2)
+                    self.update_attr(times=times-1)
+                else:
+                    raise TimeoutError('No ip is found.', self.id)
+            else:
+                self.update_attr(json)
 
-    def create_droplet(self):
-        """
-        Returns the created droplet info or exit the whole program.
-        """
-        result = self.client.create(
-                    name = self.getkeyordie('name'),
-                    size_id = self.getkeyordie('size_id'),
-                    image_id = self.getkeyordie('image_id'),
-                    region_id = self.getkeyordie('region_id'),
-                    ssh_key_ids = self.params.get('ssh_key_ids'),
-                )
-        if result.get('status') == 'OK':
-            return result['droplet']
-        self.fail_json(msg=result['error_message'])
+    def power_on(self):
+        assert self.status == 'off', 'Can only power on a closed one.'
+        json = self.manager.power_on_droplet(self.id)
+        self.update_attr(json)
 
-    def show_droplet_info(self, id=None, times=5):
-        id = id or self.getkeyordie('id')
-        result = self.client.show(id)
-        if result.get('status') == 'OK':
-            if not result['droplet']['ip_address'] and times>0:
-                time.sleep(2)
-                return self.show_droplet_info(id, times-1)
-            return result['droplet']
-        self.fail_json(msg=result['error_message'])
+    def ensure_powered_on(self, wait=True, wait_timeout=300):
+        if self.is_powered_on():
+            return
+        if self.status == 'off':  # powered off
+            self.power_on()
 
-    def destroy_droplet(self, id=None):
-        id = id or self.getkeyordie('id')
-        result = self.client.destroy(id)
-        if result.get('status') == 'OK':
-            return result['event_id']
-        self.fail_json(msg=result['error_message'])
+        if wait:
+            end_time = time.time()+wait_timeout
+            while time.time() < end_time:
+                time.sleep(min(20, end_time-time.time()))
+                self.update_attr()
+                if self.is_powered_on():
+                    return
+            raise TimeoutError('Wait for droplet running timeout', self.id)
 
-    def find_droplet(self, id=None):
-        id = id or self.getkeyordie('id')
-        result = self.client.show_active()
-        for droplet in result['droplets']:
-            if droplet['id'] == id:
+    def destroy(self):
+        return self.manager.destroy_droplet(self.id)
+    
+    @classmethod
+    def setup(cls, client_id, api_key):
+        cls.manager = DoManager(client_id, api_key)
+
+    @classmethod
+    def add(cls, name, size_id, image_id, region_id, ssh_key_ids=None):
+        json = cls.manager.new_droplet(name, size_id, image_id, region_id, ssh_key_ids)
+        droplet = cls(json)
+        droplet.update_attr()
+        return droplet
+
+    @classmethod
+    def find(cls, id):
+        if not id:
+            return False
+        droplets = cls.list_all()
+        for droplet in droplets:
+            if droplet.id == id:
                 return droplet
         return False
 
-    def ensure_powered_on(self, id=None):
-        id = id or self.getkeyordie('id')
-        is_powered_on = lambda d: d.get('status') == 'active'
+    @classmethod
+    def list_all(cls):
+        json = cls.manager.all_active_droplets()
+        return map(cls, json)
 
-        def wait_for_running():
-            end_time = time.time()+int(self.params['wait_timeout'])
-            while time.time()<end_time:
-                time.sleep(min(20, end_time-time.time()))
-                droplet = self.show_droplet_info(id)
-                if is_powered_on(droplet):
-                    return droplet
-            self.fail_json(msg=
-                    'wait for droplet running timeout on id:%s' % id, id=id)
+class SSH(JsonfyMixIn):
+    manager = None
 
-        droplet = self.show_droplet_info(id)
-        if is_powered_on(droplet):
-            return droplet
-        should_wait = self.params['wait']
-        if droplet['status'] == 'new':  # just created
-            if should_wait:
-                return wait_for_running()
-            return droplet
-        elif droplet['status'] == 'off':  # powered off
-            result = self.client.power_on(id)
-            if result.get('status') == 'OK':
-                if should_wait:
-                    return wait_for_running()
-                return self.show_droplet_info()
-            self.fail_json(msg=result['error_message'])
+    def __init__(self, ssh_key_json):
+        self.__dict__.update(ssh_key_json)
+    update_attr = __init__
 
-    def find_ssh_key(self, name):  # currently ssh_keys are identified by name
-        result = self.client.all_ssh_keys()
-        if result.get('status') != 'OK':
-            self.fail_json(msg=result['error_message'])
-        for keys in result['ssh_keys']:
-            if keys['name'] == name:
-                return keys
+    def destroy(self):
+        self.manager.destroy_ssh_key(self.id)
+        return True
+
+    @classmethod
+    def setup(cls, client_id, api_key):
+        cls.manager = DoManager(client_id, api_key)
+
+    @classmethod
+    def find(cls, name):
+        if not name:
+            return False
+        keys = cls.list_all()
+        for key in keys:
+            if key.name == name:
+                return key
         return False
 
-    def add_ssh_key(self, name, key_pub):
-        result = self.client.add_ssh_key(name, key_pub)
-        if result.get('status') == 'OK':
-            return result['ssh_key']
-        self.fail_json(msg=result['error_message'])
+    @classmethod
+    def list_all(cls):
+        json = cls.manager.all_ssh_keys()
+        return map(cls, json)
+
+    @classmethod
+    def add(cls, name, key_pub):
+        json = cls.manager.new_ssh_key(name, key_pub)
+        return cls(json)
+
+def core(module):
+    def getkeyordie(k):
+        v = module.params[k]
+        if v is None:
+            module.fail_json(msg='Unable to load %s' % k)
+        return v
+
+    try:
+        # params['client_id'] will be None even if client_id is not passed in
+        client_id = module.params['client_id'] or os.environ['DO_CLIENT_ID']
+        api_key = module.params['api_key'] or os.environ['DO_API_KEY']
+    except KeyError, e:
+        module.fail_json(msg='Unable to load %s' % e.message)
+
+    changed = True
+    command = module.params['command']
+    state = module.params['state']
+
+    if command == 'droplet':
+        Droplet.setup(client_id, api_key)
+        if state in ('active', 'present'):
+            droplet = Droplet.find(module.params['id'])
+            if not droplet:
+                droplet = Droplet.add(
+                        name=getkeyordie('name'), 
+                        size_id=getkeyordie('size_id'), 
+                        image_id=getkeyordie('image_id'), 
+                        region_id=getkeyordie('region_id'), 
+                        ssh_key_ids=module.params['ssh_key_ids']
+                    )
+            if droplet.is_powered_on():
+                changed = False
+            droplet.ensure_powered_on(
+                        wait=getkeyordie('wait'),
+                        wait_timeout=getkeyordie('wait_timeout')
+                    )
+            module.exit_json(changed=changed, droplet=droplet.to_json())
+       
+        elif state in ('absent', 'deleted'):
+            droplet = Droplet.find(getkeyordie('id'))
+            if not droplet:
+                module.exit_json(changed=False, msg='The droplet is not found.')
+            event_json = droplet.destroy()
+            module.exit_json(changed=True, event_id=event_json['event_id'])
+
+    elif command == 'ssh':
+        SSH.setup(client_id, api_key)
+        name = getkeyordie('name')
+        if state in ('active', 'present'):
+            key = SSH.find(name)
+            if key:
+                module.exit_json(changed=False, msg='SSH key with the name of %s already exists.' % name)
+            key = SSH.add(name, getkeyordie('ssh_pub_key'))
+            module.exit_json(changed=True, ssh_key=key.to_json())
+
+        elif state in ('absent', 'deleted'):
+            key = SSH.find(name)
+            if not key:
+                module.exit_json(changed=False, msg='SSH key with the name of %s is not found.' % name)
+            key.destroy()
+            module.exit_json(changed=True)
 
 
 def main():
@@ -236,21 +287,21 @@ def main():
             region_id = dict(),
             ssh_key_ids = dict(default=''),
             id = dict(aliases=['droplet_id'], type='int'),
-            key_name = dict(),
-            ssh_pub_key = dict(),
             wait = dict(type='bool', choices=BOOLEANS, default='yes'),
-            wait_timeout = dict(default=360),
+            wait_timeout = dict(default=300, type='int'),
+            ssh_pub_key = dict(),
         ),
-        # required_together = (
-        #     ['name', 'size_id', 'image_id', 'region_id'],
-        # )
+        required_together = (
+            ['size_id', 'image_id', 'region_id'],
+        )
     )
 
     try:
-        result = DoProxy(module).process()
-    except Exception as e:
+        core(module)
+    except TimeoutError as e:
+        module.fail_json(msg=str(e), id=e.id)
+    except (DoError, Exception) as e:
         module.fail_json(msg=str(e))
-    module.exit_json(**result)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
