@@ -71,7 +71,7 @@ options:
       - A space-delimited list of fixture file names to load in the database. B(Required) by the 'loaddata' command.
     required: false
 notes:
-   - U(http://www.virtualenv.org/, virtualenv) must be installed on the remote host if the virtualenv parameter is specified.
+   - I(virtualenv) (U(http://www.virtualenv.org)) must be installed on the remote host if the virtualenv parameter is specified.
    - This module will create a virtualenv if the virtualenv parameter is specified and a virtualenv does not already exist at the given location.
    - This module assumes English error messages for the 'createcachetable' command to detect table existence, unfortunately.
 requirements: [ "virtualenv", "django" ]
@@ -87,11 +87,11 @@ django_manage: command=loaddata app_path=$django_dir fixtures=$initial_data
 
 #Run syncdb on the application
 django_manage: >
-    command=syncdb 
-    app_path=$django_dir 
-    settings=$settings_app_name 
-    pythonpath=$settings_dir 
-    virtualenv=$virtualenv_dir 
+    command=syncdb
+    app_path=$django_dir
+    settings=$settings_app_name
+    pythonpath=$settings_dir
+    virtualenv=$virtualenv_dir
     database=$mydb
 
 #Run the SmokeTest test case from the main app. Useful for testing deploys.
