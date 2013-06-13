@@ -1,7 +1,11 @@
 Ansible Changes By Release
 ==========================
 
-1.2 "Right Now" -- release pending
+1.3 "Top of the World" - Release pending!
+
+* This is the active development release, right now!
+
+1.2 "Right Now" -- June 10, 2013
 
 Core Features:
 
@@ -21,30 +25,55 @@ Core Features:
 * "meta: flush_handler" task capability added for when you really need to force handlers to run
 * new --start-at-task option to ansible playbook allows starting at a specific task name in a long playbook
 * added a log file for ansible/ansible-playbook, set 'log_path' in the configuration file or ANSIBLE_LOG_PATH in environment
+* debug mode always outputs debug in playbooks, without needing to specify -v
+* external inventory script added for Spacewalk / Red Hat Satellite servers
+* It is now possible to feed JSON structures to --extra-vars.  Pass in a JSON dictionary/hash to feed in complex data.
+* group_vars/ and host_vars/ directories can now be kept alongside the playbook as well as inventory (or both!)
+* more filters: ability to say {{ foo|success }} and {{ foo|failed }} and when: foo|success and when: foo|failed
+* more filters: {{ path|basename }} and {{ path|dirname }}
+* lookup plugins now use the basedir of the file they have included from, avoiding needs of ../../../ in places and
+increasing the ease at which things can be reorganized.  
 
 Modules added:
 
-* rax: module for creating instances in the rackspace cloud (uses pyrax)
-* npm: node.js package management
-* postgresql_priv: manages postgresql priveledges
-* set_fact: sets a variable, which can be the result of a template evaluation
-* hipchat: send notification events to hipchat
-* ec2_elb: add and remove machines from ec2 elastic load balancers
-* flowdock: send messages to flowdock during playbook runs
-* pkgng: next-gen package manager for FreeBSD
-* bigip_pool: load balancing with F5s
-* newrelic_deployment: notifies newrelic of new deployments
-* campfire: send messages to campfire during playbook runs
-* mqtt: send messages to the Mosquitto message bus
-* irc: send messages to IRC channels
-* filesystem - a wrapper around mkfs
-* jabber: send jabber chat messages
-* osx_say: make OS X say things out loud
+* cloud: rax: module for creating instances in the rackspace cloud (uses pyrax)
+* packages: npm: node.js package management
+* packages: pkgng: next-gen package manager for FreeBSD
+* packages: redhat_subscription: manage Red Hat subscription usage
+* packages: rhn_register: basic RHN registration
+* packages: zypper (SuSE)
+* database: postgresql_priv: manages postgresql priveledges
+* networking: bigip_pool: load balancing with F5s
+* networking: ec2_elb: add and remove machines from ec2 elastic load balancers
+* notification: hipchat: send notification events to hipchat
+* notification: flowdock: send messages to flowdock during playbook runs
+* notification: campfire: send messages to campfire during playbook runs
+* notification: mqtt: send messages to the Mosquitto message bus
+* notification: irc: send messages to IRC channels
+* notification: filesystem - a wrapper around mkfs
+* notification: jabber: send jabber chat messages
+* notification: osx_say: make OS X say things out loud
+* openstack: keystone_user
+* openstack: glance_image
+* openstack: nova_compute
+* openstack: nova_keypair
+* openstack: quantum_floating_ip
+* openstack: quantum_floating_ip_associate
+* openstack: quantum_network
+* openstack: quantum_router
+* openstack: quantum_router_gateway
+* openstack: quantum_router_interface
+* openstack: quantum_subnet
+* monitoring: newrelic_deployment: notifies newrelic of new deployments
+* monitoring: airbrake_deployment - notify airbrake of new deployments
+* monitoring: pingdom
+* monitoring: pagerduty
+* monitoring: monit
+* utility: set_fact: sets a variable, which can be the result of a template evaluation
 
 Modules removed
 
 * vagrant -- can't be compatible with both versions at once, just run things though the vagrant provisioner in vagrant core
-
 
 Bugfixes and Misc Changes:
 
@@ -97,6 +126,19 @@ the variable is still registered for the host, with the attribute skipped: True.
 * lineinfile now does atomic file replacements
 * fix to not pass PasswordAuthentication=no in the config file unneccessarily for SSH connection type
 * for for authorized_key on Debian Squeeze
+* fixes for apt_repository module reporting changed incorrectly on certain repository types
+* allow the virtualenv argument to the pip module to be a pathname
+* service pattern argument now correctly read for BSD services
+* fetch location can now be controlled more directly via the 'flat' parameter.
+* added basename and dirname as Jinja2 filters available to all templates
+* pip works better when sudoing from unpriveledged users
+* fix for user creation with groups specification reporting 'changed' incorrectly in some cases
+* fix for some unicode encoding errors in outputing some data in verbose mode
+* improved FreeBSD, NetBSD and Solaris facts
+* debug module always outputs data without having to specify -v
+* fix for sysctl module creating new keys (must specify checks=none)
+* NetBSD and OpenBSD support for the user and groups modules
+* Add encrypted password support to password lookup
 
 1.1 "Mean Street" -- 4/2/2013
 

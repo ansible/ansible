@@ -1,11 +1,6 @@
 API & Integrations
 ==================
 
-.. image:: http://ansible.cc/docs/_static/ansible_fest_2013.png
-   :alt: ansiblefest 2013
-   :target: http://ansibleworks.com/fest
-
-
 There are several interesting ways to use Ansible from an API perspective.   You can use
 the Ansible python API to control nodes, you can extend Ansible to respond to various python events,
 and you can plug in inventory data from external data sources.  Ansible is written in its own
@@ -306,7 +301,8 @@ To see the complete list of variables available for an instance, run the script 
 Example: OpenStack Inventory Script
 ```````````````````````````````````
 
-Though not detailed here in as much depth as the EC2 module, there's also a OpenStack Nova external inventory source in the plugins directory.  See the inline comments in the module source for how to use it.
+Though not detailed here in as much depth as the EC2 module, there's also a OpenStack Compute external inventory source in the plugins directory. It requires the Grizzly release of OpenStack or
+later. See the inline comments in the module source for how to use it.
 
 Callback Plugins
 ----------------

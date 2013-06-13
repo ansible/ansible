@@ -57,12 +57,12 @@ class ActionModule(object):
             found = False
             for fn in inject.get('first_available_file'):
                 fn_orig = fn
-                fn = template.template(self.runner.basedir, fn, inject)
-                fn = utils.path_dwim(self.runner.basedir, fn)
-                if not os.path.exists(fn) and '_original_file' in inject:
-                    fn = utils.path_dwim_relative(inject['_original_file'], 'files', fn_orig, self.runner.basedir, check=False)
-                if os.path.exists(fn):
-                    source = fn
+                fnt = template.template(self.runner.basedir, fn, inject)
+                fnd = utils.path_dwim(self.runner.basedir, fnt)
+                if not os.path.exists(fnd) and '_original_file' in inject:
+                    fnd = utils.path_dwim_relative(inject['_original_file'], 'files', fnt, self.runner.basedir, check=False)
+                if os.path.exists(fnd):
+                    source = fnd
                     found = True
                     break
             if not found:
@@ -106,8 +106,8 @@ class ActionModule(object):
             dest = os.path.join(dest, os.path.basename(source))
             remote_md5 = self.runner._remote_md5(conn, tmp, dest)
 
-        # remote_md5 == '0' would mean that the file does not exist.
-        if remote_md5 != '0' and not force:
+        # remote_md5 == '1' would mean that the file does not exist.
+        if remote_md5 != '1' and not force:
             return ReturnData(conn=conn, result=dict(changed=False))
 
         exec_rc = None

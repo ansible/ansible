@@ -20,6 +20,7 @@ import os
 import pipes
 import socket
 import random
+import logging
 from ansible.callbacks import vvv
 from ansible import errors
 from ansible import utils
@@ -31,6 +32,7 @@ with warnings.catch_warnings():
     try:
         import paramiko
         HAVE_PARAMIKO=True
+        logging.getLogger("paramiko").setLevel(logging.WARNING)
     except ImportError:
         pass
 

@@ -76,6 +76,7 @@ local_action: irc port=6669
 # IRC module support methods.
 #
 
+from time import sleep
 import socket
 
 def send_msg(channel, msg, server='localhost', port='6667',
@@ -101,10 +102,13 @@ def send_msg(channel, msg, server='localhost', port='6667',
     irc.connect( ( server, int(port) ) )
     irc.send( 'NICK %s\r\n' % nick )
     irc.send( 'USER %s %s %s :ansible IRC\r\n' % (nick, nick, nick))
-    irc.send( 'JOIN #%s\r\n' % channel )
+    time.sleep(1)
+    irc.send( 'JOIN %s\r\n' % channel )
     irc.send( 'PRIVMSG %s :%s\r\n' % (channel, message))
+    time.sleep(1)
     irc.send( 'PART %s\r\n' % channel)
     irc.send( 'QUIT\r\n' )
+    time.sleep(1)
     irc.close()
 
 # ===========================================
@@ -138,8 +142,7 @@ def main():
     except Exception, e:
         module.fail_json(msg="unable to send to IRC: %s" % e)
 
-    changed = True
-    module.exit_json(changed=changed, channel=channel, nick=nick,
+    module.exit_json(changed=False, channel=channel, nick=nick,
                      msg=msg)
 
 # this is magic, see lib/ansible/module_common.py

@@ -86,7 +86,7 @@ def print_man(doc):
                             subsequent_indent=opt_indent)
 
 
-    if 'requirements' in doc and len(doc['requirements']) > 0:
+    if 'requirements' in doc and doc['requirements'] is not None and len(doc['requirements']) > 0:
         req = ", ".join(doc['requirements'])
         print "Requirements:%s\n" % textwrap.fill(tty_ify(req), initial_indent="  ",
                             subsequent_indent=opt_indent)

@@ -390,7 +390,6 @@ class LinuxService(Service):
                     break
 
         # Locate a tool for runtime service management (start, stop etc.)
-        self.svc_cmd = ''
         if location.get('service', None) and os.path.exists("/etc/init.d/%s" % self.name):
             # SysV init script
             self.svc_cmd = location['service']
@@ -405,12 +404,12 @@ class LinuxService(Service):
                     self.svc_initscript = initscript
 
         # couldn't find anything yet, assume systemd
-        if self.svc_initscript is None:
+        if self.svc_cmd is None and self.svc_initscript is None:
             if location.get('systemctl'):
                 self.svc_cmd = location['systemctl']
 
         if self.svc_cmd is None and not self.svc_initscript:
-            self.module.fail_json(msg='cannot find \'service\' binary or init script for service, aborting')
+            self.module.fail_json(msg='cannot find \'service\' binary or init script for service,  possible typo in service name?, aborting')
 
         if location.get('initctl', None):
             self.svc_initctl = location['initctl']
@@ -972,7 +971,8 @@ def main():
     # Collect service status
     if service.pattern:
         service.check_ps()
-    service.get_service_status()
+    else:
+        service.get_service_status()
 
     # Calculate if request will change service state
     service.check_service_changed()

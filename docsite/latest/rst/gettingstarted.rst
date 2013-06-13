@@ -1,11 +1,6 @@
 Getting Started
 ===============
 
-.. image:: http://ansible.cc/docs/_static/ansible_fest_2013.png
-   :alt: ansiblefest 2013
-   :target: http://ansibleworks.com/fest
-
-
 .. contents::
    :depth: 2
    :backlinks: top
@@ -15,10 +10,10 @@ Requirements
 
 Requirements for Ansible are extremely minimal.
 
-Ansible is written for Python 2.6+.  If you are running Python 2.5 on an "Enterprise Linux" variant, we'll show you how to add
-2.6.  Newer versions of Linux and OS X should already have 2.6 or higher.
+On the central Ansible machine, you will need Python 2.6+.  If you are running Python 2.5 on an "Enterprise Linux" variant, we'll show you how to add
+2.6 to your distribution.
 
-In additon to Python 2.6+, you will want the following Python modules (installed via pip or perhaps via your OS package manager via slightly different names):
+You will also want the following Python modules (installed via pip or perhaps via your OS package manager via slightly different names):
 
 * ``paramiko``
 * ``PyYAML``
@@ -29,7 +24,6 @@ If you are using RHEL or CentOS 5 , python is version 2.4 by default, but you ca
 .. code-block:: bash
 
    $ yum install python26 python26-PyYAML python26-paramiko python26-jinja2
-
 
 On the managed nodes, you only need Python 2.4 or later, but if you are are running less than Python 2.6 on them, you will
 also need:
@@ -50,7 +44,7 @@ also need:
    Ansible) are not
    switching over yet.  However, some Linux distributions (Gentoo, Arch) may not have a 
    Python 2.X interpreter installed by default.  On those systems, you should install one, and set
-   the 'ansible_python_interpreter' variable in inventory to point at your 2.X python.  Distributions
+   the 'ansible_python_interpreter' variable in inventory (see :doc:`patterns`) to point at your 2.X python.  Distributions
    like Red Hat Enterprise Linux, CentOS, Fedora, and Ubuntu all have a 2.X interpreter installed
    by default and this does not apply to those distributions.  This is also true of nearly all
    Unix systems.  If you need to bootstrap these remote systems by installing Python 2.X, 
@@ -65,8 +59,8 @@ back to the project.
 
 Instructions for installing from source are below.
 
-Ansible's release cycles are about one month long.  Due to this
-short release cycle, any bugs will generally be fixed in the next release versus maintaining 
+Ansible's release cycles are usually about two months long.  Due to this
+short release cycle, minor bugs will generally be fixed in the next release versus maintaining 
 backports on the stable branch.
 
 You may also wish to follow the `Github project <https://github.com/ansible/ansible>`_ if
@@ -114,13 +108,19 @@ using "make install".  This is done through `python-distutils`:
     $ cd ./ansible
     $ sudo make install
 
+Release Tarballs
+++++++++++++++++
+
+For those that do not want to use git or a package manager, (or for packagers themselves), 
+tarballs of past Ansible releases are available at `http://ansibleworks.com/releases/ <http://ansibleworks.com/releases>`_.
+
 Via Pip
 +++++++
 
 Are you a python developer?
 
 Ansible can be installed via Pip, but when you do so, it will ask to install other dependencies used for
-optional modes::
+things like 'fireball' mode that you might not need::
 
    $ sudo easy_install pip
    $ sudo pip install ansible
@@ -204,7 +204,19 @@ further information on using Portfiles with MacPorts.
 Ubuntu and Debian
 +++++++++++++++++
 
-Ubuntu builds are available `in a PPA here <https://launchpad.net/~rquillo/+archive/ansible>`_
+Ubuntu builds are available `in a PPA here <https://launchpad.net/~rquillo/+archive/ansible>`_.
+
+In Ubuntu 13.04 (raring) its part of the backports repository:
+
+.. code-block:: bash
+
+    $ sudo apt-get install ansible/raring-backports
+
+In Debian testing/unstable and Ubntu 13.10+ it is available via
+
+.. code-block:: bash
+
+    $ sudo apt-get install ansible
 
 Debian/Ubuntu package recipes can also be built from the source checkout, run:
 
@@ -229,7 +241,7 @@ If you have python3 installed on Arch, you probably want to symlink python to py
 
     $ sudo ln -sf /usr/bin/python2 /usr/bin/python
 
-You should also set a 'ansible_python_interpreter' inventory variable for hosts that have python 
+You should also set a 'ansible_python_interpreter' inventory variable (see :doc:`patterns`) for hosts that have python 
 pointing to python3, so the right python can be found on the managed nodes.
 
 Tagged Releases

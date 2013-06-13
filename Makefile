@@ -52,7 +52,7 @@ endif
 # RPM build parameters
 RPMSPECDIR= packaging/rpm
 RPMSPEC = $(RPMSPECDIR)/ansible.spec
-RPMDIST = $(shell rpm --eval '%dist')
+RPMDIST = $(shell rpm --eval '%{?dist}')
 RPMRELEASE = 1
 ifeq ($(OFFICIAL),)
     RPMRELEASE = 0.git$(DATE)
@@ -177,7 +177,7 @@ deb: debian
 # for arch or gentoo, read instructions in the appropriate 'packaging' subdirectory directory
 
 modulepages:
-	PYTHONPATH=./lib $(PYTHON) hacking/module_formatter.py -A $(VERSION) -t man -o docs/man/man3/ --module-dir=library --template-dir=hacking/templates
+	PYTHONPATH=./lib $(PYTHON) hacking/module_formatter.py -A $(VERSION) -t man -o docs/man/man3/ --module-dir=library --template-dir=hacking/templates # --verbose
 
 # because this requires Sphinx it is not run as part of every build, those building the RPM and so on can ignore this
 

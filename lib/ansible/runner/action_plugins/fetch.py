@@ -46,14 +46,26 @@ class ActionModule(object):
         options.update(utils.parse_kv(module_args))
         source = options.get('src', None)
         dest = options.get('dest', None)
+        flat = options.get('flat', False)
+        flat = utils.boolean(flat)
         fail_on_missing = options.get('fail_on_missing', False)
         fail_on_missing = utils.boolean(fail_on_missing)
         if source is None or dest is None:
             results = dict(failed=True, msg="src and dest are required")
             return ReturnData(conn=conn, result=results)
 
-        # files are saved in dest dir, with a subdir for each host, then the filename
-        dest   = "%s/%s/%s" % (utils.path_dwim(self.runner.basedir, dest), conn.host, source)
+        if flat:
+            if dest.endswith("/"):
+                # if the path ends with "/", we'll use the source filename as the
+                # destination filename
+                base = os.path.basename(source)
+                dest = os.path.join(dest, base)
+            if not dest.startswith("/"):
+                # if dest does not start with "/", we'll assume a relative path
+                dest = utils.path_dwim(self.runner.basedir, dest)
+        else:
+            # files are saved in dest dir, with a subdir for each host, then the filename
+            dest = "%s/%s/%s" % (utils.path_dwim(self.runner.basedir, dest), conn.host, source)
         dest   = dest.replace("//","/")
 
         # calculate md5 sum for the remote file

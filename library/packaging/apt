@@ -85,19 +85,19 @@ options:
 requirements: [ python-apt, aptitude ]
 author: Matthew Williams
 notes:
-   - Two of the upgrade modes (C(full) and C(dist)) require C(aptitude), otherwise
+   - Three of the upgrade modes (C(full), C(safe) and its alias C(yes)) require C(aptitude), otherwise
      C(apt-get) suffices.
 examples:
     - code: "apt: pkg=foo update_cache=yes"
       description: Update repositories cache and install C(foo) package
-    - code: "apt: pkg=foo state=removed"
+    - code: "apt: pkg=foo state=absent"
       description: Remove C(foo) package
-    - code: "apt: pkg=foo state=installed"
+    - code: "apt: pkg=foo state=present"
       description: Install the package C(foo)
-    - code: "apt: pkg=foo=1.00 state=installed"
+    - code: "apt: pkg=foo=1.00 state=present"
       description: Install the version '1.00' of package C(foo)
     - code: "apt: pkg=nginx state=latest default_release=squeeze-backports update_cache=yes"
-      description: Update the repository cache and update package C(ngnix) to latest version using default release C(squeeze-backport)
+      description: Update the repository cache and update package C(nginx) to latest version using default release C(squeeze-backport)
     - code: "apt: pkg=openjdk-6-jdk state=latest install_recommends=no"
       description: Install latest version of C(openjdk-6-jdk) ignoring C(install-reccomends)
     - code: "apt: upgrade=dist"
@@ -115,10 +115,9 @@ warnings.filterwarnings('ignore', "apt API not stable yet", FutureWarning)
 
 import os
 import datetime
+import fnmatch
 
 # APT related constants
-APTITUDE_CMD = "aptitude"
-APT_GET_CMD = "apt-get"
 APT_ENVVARS = "DEBIAN_FRONTEND=noninteractive DEBIAN_PRIORITY=critical"
 DPKG_OPTIONS = '-o "Dpkg::Options::=--force-confdef" -o "Dpkg::Options::=--force-confold"'
 APT_GET_ZERO = "0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded."
@@ -143,10 +142,10 @@ def package_status(m, pkgname, version, cache, state):
             return False, False
     if version:
         try :
-            return pkg.is_installed and pkg.installed.version == version, False
+            return pkg.is_installed and fnmatch.fnmatch(pkg.installed.version, version), False
         except AttributeError:
             #assume older version of python-apt is installed
-            return pkg.isInstalled and pkg.installedVersion == version, False
+            return pkg.isInstalled and fnmatch.fnmatch(pkg.installedVersion, version), False
     else:
         try :
             return pkg.is_installed, pkg.is_upgradable
@@ -264,6 +263,11 @@ def main():
         import apt_pkg
     except:
         module.fail_json(msg="Could not import python modules: apt, apt_pkg. Please install python-apt package.")
+
+    global APTITUDE_CMD
+    APTITUDE_CMD = module.get_bin_path("aptitude", False)
+    global APT_GET_CMD
+    APT_GET_CMD = module.get_bin_path("apt-get")
 
     p = module.params
     install_recommends = p['install_recommends']

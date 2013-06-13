@@ -29,7 +29,14 @@ from ansible.color import stringc
 
 import logging
 if constants.DEFAULT_LOG_PATH != '':
-    logging.basicConfig(filename=constants.DEFAULT_LOG_PATH, level=logging.DEBUG, format='%(asctime)s %(name)s %(message)s')
+    path = constants.DEFAULT_LOG_PATH
+
+    if (os.path.exists(path) and not os.access(path, os.W_OK)) or not os.access(os.path.dirname(path), os.W_OK):
+        sys.stderr.write("log file at %s is not writeable, aborting\n" % path)
+        sys.exit(1)
+
+
+    logging.basicConfig(filename=path, level=logging.DEBUG, format='%(asctime)s %(name)s %(message)s')
     mypid = str(os.getpid())
     user = getpass.getuser()
     logger = logging.getLogger("p=%s u=%s | " % (mypid, user))
@@ -197,27 +204,37 @@ def regular_generic_msg(hostname, result, oneline, caption):
         return "%s | %s >> %s\n" % (hostname, caption, utils.jsonify(result))
 
 
-def banner(msg):
+def banner_cowsay(msg):
 
+    if msg.find(": [") != -1:
+        msg = msg.replace("[","")
+        if msg.endswith("]"):
+            msg = msg[:-1]
+    runcmd = [cowsay,"-W", "60"]
+    if noncow:
+        runcmd.append('-f')
+        runcmd.append(noncow)
+    runcmd.append(msg)
+    cmd = subprocess.Popen(runcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out, err) = cmd.communicate()
+    return "%s\n" % out
+
+def banner_normal(msg):
+
+    width = 78 - len(msg)
+    if width < 3:
+        width = 3
+    filler = "*" * width
+    return "\n%s %s " % (msg, filler)
+
+def banner(msg):
     if cowsay:
-        if msg.find(": [") != -1:
-            msg = msg.replace("[","")
-            if msg.endswith("]"):
-                msg = msg[:-1]
-        runcmd = [cowsay,"-W", "60"]
-        if noncow:
-            runcmd.append('-f')
-            runcmd.append(noncow)
-        runcmd.append(msg)
-        cmd = subprocess.Popen(runcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        (out, err) = cmd.communicate()
-        return "%s\n" % out
-    else:
-        width = 78 - len(msg)
-        if width < 3:
-            width = 3
-        filler = "*" * width
-        return "\n%s %s " % (msg, filler)
+        try:
+            return banner_cowsay(msg)
+        except OSError:
+            # somebody cleverly deleted cowsay or something during the PB run.  heh.
+            return banner_normal(msg)
+    return banner_normal(msg)
 
 def command_generic_msg(hostname, result, oneline, caption):
     ''' output the result of a command run '''
@@ -315,6 +332,10 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
         super(CliRunnerCallbacks, self).on_failed(host, res, ignore_errors=ignore_errors)
 
     def on_ok(self, host, res):
+        # hide magic variables used for ansible-playbook
+        res.pop('verbose_override', None)
+        res.pop('verbose_always', None)
+
         self._on_any(host,res)
         super(CliRunnerCallbacks, self).on_ok(host, res)
 
@@ -427,6 +448,7 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
 
         host_result2 = host_result.copy()
         host_result2.pop('invocation', None)
+        verbose_always = host_result2.pop('verbose_always', None)
         changed = host_result.get('changed', False)
         ok_or_changed = 'ok'
         if changed:
@@ -434,7 +456,8 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
 
         # show verbose output for non-setup module results if --verbose is used
         msg = ''
-        if not self.verbose or host_result2.get("verbose_override",None) is not None:
+        if (not self.verbose or host_result2.get("verbose_override",None) is not
+                None) and verbose_always is None:
             if item:
                 msg = "%s: [%s] => (item=%s)" % (ok_or_changed, host, item)
             else:
@@ -539,7 +562,8 @@ class PlaybookCallbacks(object):
         if hasattr(self, 'start_at'): # we still have start_at so skip the task
             self.skip_task = True
         elif hasattr(self, 'step') and self.step:
-            resp = raw_input('Perform task: %s (y/n/c): ' % name)
+            msg = ('Perform task: %s (y/n/c): ' % name).encode(sys.stdout.encoding)
+            resp = raw_input(msg)
             if resp.lower() in ['y','yes']:
                 self.skip_task = False
                 display(banner(msg))

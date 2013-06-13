@@ -3,16 +3,11 @@
 Inventory & Patterns
 ====================
 
-.. image:: http://ansible.cc/docs/_static/ansible_fest_2013.png
-   :alt: ansiblefest 2013
-   :target: http://ansibleworks.com/fest
-
-
 Ansible works against multiple systems in your infrastructure at the
 same time.  It does this by selecting portions of systems listed in
 Ansible's inventory file, which defaults to /etc/ansible/hosts.
 
-.. contents:: `Table of contents`
+.. contents::
    :depth: 2
    :backlinks: top
 
@@ -225,6 +220,10 @@ the 'raleigh' group might look like::
     database_server: storage.example.org
 
 It is ok if these files do not exist, this is an optional feature.
+
+Tip: In Ansible 1.2 or later the group_vars/ and host_vars/ directories can exist in either 
+the playbook directory OR the inventory directory. If both paths exist, variables in the playbook
+directory will be loaded second.
 
 Tip: Keeping your inventory file and variables in a git repo (or other version control)
 is an excellent way to track changes to your inventory and host variables.

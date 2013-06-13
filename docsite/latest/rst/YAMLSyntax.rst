@@ -1,10 +1,6 @@
 YAML Syntax
 ===========
 
-.. image:: http://ansible.cc/docs/_static/ansible_fest_2013.png
-   :alt: ansiblefest 2013
-   :target: http://ansibleworks.com/fest
-
 This page provides a basic overview of correct YAML syntax, which is how Ansible
 playbooks (our configuration management language) are expressed.  
 
@@ -98,6 +94,12 @@ You will want to quote any hash values using colons, like so:
     foo: "somebody said I should put a colon here: so I did"
 
 And then the colon will be preserved.
+
+Further, Ansible uses "{{ var }}" for variables.  If a value after a colon starts
+with a "{", YAML will think it a dictionary, so you must quote it, like so::
+
+    foo: "{{ variable }}"
+
 
 .. seealso::
 

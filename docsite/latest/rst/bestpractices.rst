@@ -1,11 +1,6 @@
 Best Practices
 ==============
 
-.. image:: http://ansible.cc/docs/_static/ansible_fest_2013.png
-   :alt: ansiblefest 2013
-   :target: http://ansibleworks.com/fest/
-
-
 Here are some tips for making the most of Ansible.
 
 You can find some example playbooks illustrating these best practices in our `ansible-examples repository <https://github.com/ansible/ansible-examples>`_.  (NOTE: These may not use all of the features in the latest release just yet).
@@ -52,6 +47,7 @@ The top level of the directory would contain files and directories like so::
                 ntp.conf.j2   #  <------- templates end in .j2
             files/            #
                 bar.txt       #  <-- files for use with the copy resource
+                foo.sh        #  <-- script files for use with the script resource
 
         webtier/              # same kind of structure as "common" was above, done for the webtier role
         monitoring/           # ""

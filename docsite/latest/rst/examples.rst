@@ -1,10 +1,6 @@
 Command Line Examples And Next Steps
 ====================================
 
-.. image:: http://ansible.cc/docs/_static/ansible_fest_2013.png
-   :alt: ansiblefest 2013
-   :target: http://ansibleworks.com/fest
-
 .. highlight:: bash
 
 The following examples show how to use `/usr/bin/ansible` for running
@@ -139,8 +135,9 @@ Ensure a package is not installed::
 
     $ ansible webservers -m yum -a "name=acme state=removed"
 
-Currently Ansible only has modules for managing packages with yum and apt.  You can install
-for other packages for now using the command module or (better!) contribute a module
+Ansible has modules for managing packages under many platforms.  If your package manager
+does not have a module available for it, you can install
+for other packages using the command module or (better!) contribute a module
 for other package managers.  Stop by the mailing list for info/details.
 
 Users and Groups
@@ -212,6 +209,17 @@ the remote nodes will be terminated.
 
 Typically you'll be only be backgrounding long-running
 shell commands or software upgrades only.  Backgrounding the copy module does not do a background file transfer.  :doc:`playbooks` also support polling, and have a simplified syntax for this.
+
+Gathering Facts
+```````````````
+
+Facts are described in the playbooks section and represent discovered variables about a
+system.  These can be used to implement conditional execution of tasks but also just to get ad-hoc information about your system. You can see all facts via::
+
+    $ ansible all -m setup
+
+Its also possible to filter this output to just export certain facts, see the "setup" module documentation for details.
+
 
 Limiting Selected Hosts
 ```````````````````````

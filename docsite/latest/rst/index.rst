@@ -3,21 +3,14 @@
 Ansible Documentation Index
 ```````````````````````````
 
-.. image:: http://ansible.cc/docs/_static/ansible_fest_2013.png
-   :alt: ansiblefest 2013
-   :target: http://ansibleworks.com/fest
+Welcome to the Ansible documentation.  This documentation covers the current released
+version of Ansible (1.2) and may also reference some development version features.
 
-NOTE: This page contains documentation about how to use `Ansible <http://ansible.cc>`_ and covers the latest DEVELOPMENT version (1.2).  For the current
-released version, see `Ansible 1.1 Docs <http://ansible.cc/docs/released/1.1>`_ instead. You might be one of them.  We hope you find what you are looking for in the documentation, and would like to point out that you may also be interested in taking a class:
-
-.. image:: http://www.ansibleworks.com.s3-website-us-east-1.amazonaws.com/img/banners/training.png
-   :alt: ansibleworks training
-   :target: http://www.ansibleworks.com/training/
+For the previous released version, see `Ansible 1.1 Docs <http://ansibleworks.com/docs/released/1.1>`_ instead. 
 
 Before we dive into playbooks, configuration management, deployment, and orchestration, we'll learn how to get Ansible installed and some
 basic information.  We'll go over how to execute ad-hoc commands in parallel across your nodes using /usr/bin/ansible.  We'll also see
 what sort of modules are available in Ansible's core (though you can also write your own, which we'll also show later).
-
 
 .. toctree::
    :maxdepth: 1
@@ -30,10 +23,10 @@ what sort of modules are available in Ansible's core (though you can also write 
 Overview
 ````````
 
-.. image:: http://ansible.cc/img/ansible_arch.png
+.. image:: http://www.ansibleworks.com/wp-content/uploads/2013/06/ANSIBLE_DIAGRAM.jpg
    :alt: ansible architecture diagram
-   :width: 566px
-   :height: 439px
+   :width: 788px
+   :height: 436px
 
 
 Playbooks
@@ -53,6 +46,16 @@ ways to organize playbooks and the files they include, and we'll offer up some s
    bestpractices
    YAMLSyntax
    Example Playbooks <https://github.com/ansible/ansible-examples>
+
+Specific Solutions
+``````````````````
+
+A chance to dive into some more topics in depth:
+
+.. toctree::
+   :maxdepth: 1
+
+   amazon_web_services
 
 Developer Information
 `````````````````````

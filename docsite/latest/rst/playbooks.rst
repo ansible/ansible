@@ -1,11 +1,6 @@
 Playbooks
 =========
 
-.. image:: http://ansible.cc/docs/_static/ansible_fest_2013.png
-   :alt: ansiblefest 2013
-   :target: http://ansibleworks.com/fest
-
-
 .. contents::
    :depth: 2
    :backlinks: top
@@ -176,7 +171,7 @@ And in /srv/templates/motd.j2::
 
    You are logged into {{ facter_hostname }}
 
-But we're getting ahead of ourselves, as that just showed a task in a playbook.  Let's talk about tasks.
+But we're getting ahead of ourselves, as that just showed a task in a playbook ahead of schedule.  Let's talk about tasks.
 
 Tasks list
 ++++++++++
@@ -449,7 +444,7 @@ Roles
 .. versionadded: 1.2
 
 Now that you have learned about vars_files, tasks, and handlers, what is the best way to organize your playbooks?
-The short answer is to use roles!  Roles are automatic ways of automatically loading certain vars_files, tasks, and
+The short answer is to use roles!  Roles are ways of automatically loading certain vars_files, tasks, and
 handlers based on a known file structure.  Grouping content by roles also allows easy sharing of roles with other users.
 
 Roles are just automation around 'include' directives as redescribed above, and really don't contain much
@@ -488,6 +483,7 @@ This designates the following behaviors, for each role 'x':
 - If roles/x/handlers/main.yml exists, handlers listed therein will be added to the play
 - If roles/x/vars/main.yml exists, variables listed therein will be added to the play
 - Any copy tasks can reference files in roles/x/files/ without having to path them relatively or absolutely
+- Any script tasks can reference scripts in roles/x/files/ without having to path them relatively or absolutely
 - Any template tasks can reference files in roles/x/templates/ without having to path them relatively or absolutely
 
 If any files are not present, they are just ignored.  So it's ok to not have a 'vars/' subdirectory for the role,
@@ -526,6 +522,8 @@ If you want to define certain tasks to happen before AND after roles are applied
         - shell: echo 'hello'
       roles:
         - { role: some_role }
+      tasks:
+        - shell: echo 'still busy'
       post_tasks:
         - shell: echo 'goodbye'
 

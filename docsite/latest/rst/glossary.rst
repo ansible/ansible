@@ -1,11 +1,6 @@
 Glossary
 ========
 
-.. image:: http://ansible.cc/docs/_static/ansible_fest_2013.png
-   :alt: ansiblefest 2013
-   :target: http://ansibleworks.com/fest
-
-
 The following is a list (and re-explanation) of term definitions used elsewhere in the Ansible documentation.
 
 Consult the documentation home page for the full documentation and to see this in context, but this should be a good resource
@@ -343,6 +338,13 @@ and ensure that attributes of that resource match a particular model, for instan
 to 'root' if not already set to root, or set the mode to '0644' if not already set to '0644'.  The resource models
 are 'idempotent' meaning change commands are not run unless needed, and ansible will bring the system back to a desired
 state regardless of the actual state -- rather than you having to tell it how to get to the state.
+
+Roles
++++++
+
+Roles are units of organization in ansible.  Assigning a role to a group of hosts (or a set of groups, or host patterns, etc) implies that they should implement a specific behavior.  A role
+may include applying certain variable values, certain tasks, and certain handlers -- or just one or more of these things.  Because of the file structure associated with a role, roles become
+units of redistributablity for sharing behavior among playbooks -- or even with other users.
 
 Rolling Update
 ++++++++++++++

@@ -5,8 +5,8 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 
 Name: ansible
 Release: 1%{?dist}
-Summary: SSH-based configuration management, deployment, and task execution system
-Version: 1.2
+Summary: SSH-based configuration management, deployment, and orchestration engine
+Version: 1.3
 
 Group: Development/Libraries
 License: GPLv3
@@ -31,7 +31,7 @@ Requires: python-jinja2
 %description
 
 Ansible is a radically simple model-driven configuration management,
-multi-node deployment, and remote task execution system. Ansible works
+multi-node deployment, and orchestration engine. Ansible works
 over SSH and does not require any software or daemons to be installed
 on remote nodes. Extension modules can be written in any language and
 are transferred to managed machines automatically.
@@ -96,15 +96,15 @@ rm -rf $RPM_BUILD_ROOT
 %{python_sitelib}/ansible*
 %{_bindir}/ansible*
 %dir %{_datadir}/ansible
-%{_datadir}/ansible/*/[a-eg-z]*
-%{_datadir}/ansible/*/f[a-hj-z]*
-%{_datadir}/ansible/*/file
+%{_datadir}/ansible/*/*
+#%{_datadir}/ansible/*/f[a-hj-z]*
+#%{_datadir}/ansible/*/file
 %config(noreplace) %{_sysconfdir}/ansible
 %doc README.md PKG-INFO COPYING
 %doc %{_mandir}/man1/ansible*
-%doc %{_mandir}/man3/ansible.[a-eg-z]*
-%doc %{_mandir}/man3/ansible.f[a-hj-z]*
-%doc %{_mandir}/man3/ansible.file*
+%doc %{_mandir}/man3/ansible.*
+#%doc %{_mandir}/man3/ansible.f[a-hj-z]*
+#%doc %{_mandir}/man3/ansible.file*
 %doc examples/playbooks
 
 %files fireball
@@ -116,8 +116,11 @@ rm -rf $RPM_BUILD_ROOT
 
 %changelog
 
-* Tue Apr 2 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.2-0
-* release pending
+* Mon Jun 10 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.3-0
+* (release pending)
+
+* Mon Jun 10 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.2-0
+* Release 1.2
 
 * Tue Apr 2 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.1-0
 * Release 1.1

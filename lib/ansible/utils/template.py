@@ -80,8 +80,11 @@ JINJA2_OVERRIDE='#jinja2:'
 def lookup(name, *args, **kwargs):
     from ansible import utils
     instance = utils.plugins.lookup_loader.get(name.lower(), basedir=kwargs.get('basedir',None))
+    vars = kwargs.get('vars', None)
+
     if instance is not None:
-        return ",".join(instance.run(*args, inject=vars, **kwargs))
+        ran = instance.run(*args, inject=vars, **kwargs)
+        return ",".join(ran)
     else:
         raise errors.AnsibleError("lookup plugin (%s) not found" % name)
 
@@ -245,14 +248,14 @@ def _legacy_varFind(basedir, text, vars, lookup_fatal, depth, expand_lists):
 
         else:
             replacement = None
-        return {'replacement': replacement, 'start': start, 'end': end}
+        return dict(replacement=replacement, start=start, end=end)
 
     if is_complex:
         var_end -= 1
         if text[var_end] != '}' or brace_level != 0:
             return None
     space = _legacy_varFindLimitSpace(basedir, vars, space, text[part_start:var_end], lookup_fatal, depth, expand_lists)
-    return {'replacement': space, 'start': start, 'end': end}
+    return dict(replacement=space, start=start, end=end)
 
 def legacy_varReplace(basedir, raw, vars, lookup_fatal=True, depth=0, expand_lists=False):
     ''' Perform variable replacement of $variables in string raw using vars dictionary '''
@@ -400,6 +403,7 @@ def template_from_file(basedir, path, vars):
     loader=jinja2.FileSystemLoader([basedir,os.path.dirname(realpath)])
 
     def my_lookup(*args, **kwargs):
+        kwargs['vars'] = vars
         return lookup(*args, basedir=basedir, **kwargs)
 
     environment = jinja2.Environment(loader=loader, trim_blocks=True, extensions=_get_extensions())
@@ -413,7 +417,8 @@ def template_from_file(basedir, path, vars):
     except:
         raise errors.AnsibleError("unable to read %s" % realpath)
 
-    # Get jinja env overrides from template
+   
+# Get jinja env overrides from template
     if data.startswith(JINJA2_OVERRIDE):
         eol = data.find('\n')
         line = data[len(JINJA2_OVERRIDE):eol]
@@ -466,6 +471,12 @@ def template_from_string(basedir, data, vars):
         environment.filters.update(_get_filters())
         environment.template_class = J2Template
 
+        if '_original_file' in vars:
+            basedir = os.path.dirname(vars['_original_file'])
+            filesdir = os.path.abspath(os.path.join(basedir, '..', 'files'))
+            if os.path.exists(filesdir):
+                basedir = filesdir
+
         # TODO: may need some way of using lookup plugins here seeing we aren't calling
         # the legacy engine, lookup() as a function, perhaps?
 
@@ -478,6 +489,7 @@ def template_from_string(basedir, data, vars):
                 return data
          
         def my_lookup(*args, **kwargs):
+            kwargs['vars'] = vars
             return lookup(*args, basedir=basedir, **kwargs)
  
         t.globals['lookup'] = my_lookup

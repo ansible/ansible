@@ -100,19 +100,18 @@ class PluginLoader(object):
                 files = glob.glob("%s/*" % fullpath)
                 for file in files:
                     if os.path.isdir(file) and file not in ret:
-                        ret.append(file)    
-            else:
+                        ret.append(file)
                 if fullpath not in ret:
                     ret.append(fullpath)
-        
+
         # look in any configured plugin paths, allow one level deep for subcategories 
         configured_paths = self.config.split(os.pathsep)
         for path in configured_paths:
-            ret.append(path)
             contents = glob.glob("%s/*" % path)
             for c in contents:
                 if os.path.isdir(c):
                     ret.append(c)       
+            ret.append(path)
 
         # look for any plugins installed in the package subtree
         ret.extend(self._get_package_paths())
