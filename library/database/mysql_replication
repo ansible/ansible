@@ -102,6 +102,7 @@ options:
 
 import ConfigParser
 import os
+import warnings
 
 try:
     import MySQLdb
@@ -143,10 +144,6 @@ def start_slave(cursor):
 
 def changemaster(cursor, chm):
     SQLPARAM = ",".join(chm)
-    try:
-                cursor.execute("STOP SLAVE")
-    except:
-                print "slave already stopped"
     cursor.execute("CHANGE MASTER TO " + SQLPARAM)
 
 
@@ -256,6 +253,8 @@ def main():
 
     if not mysqldb_found:
         module.fail_json(msg="the python mysqldb module is required")
+    else:
+        warnings.filterwarnings('error', category=MySQLdb.Warning)
 
     # Either the caller passes both a username and password with which to connect to
     # mysql, or they pass neither and allow this module to read the credentials from
@@ -277,7 +276,7 @@ def main():
         if module.params["login_unix_socket"]:
             db_connection = MySQLdb.connect(host=module.params["login_host"], unix_socket=module.params["login_unix_socket"], user=login_user, passwd=login_password, db="mysql")
         else:
-            db_connection = MySQLdb.connect(host=module.params["login_host"], user=login_user, passwd=login_password, db="mysql")
+            db_connection = MySQLdb.connect(host=module.params["login_host"], user=login_user, passwd=login_password, db="mysql")            
         cursor = db_connection.cursor()
     except Exception, e:
         module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or ~/.my.cnf has the credentials")
@@ -380,15 +379,15 @@ def main():
     elif mode in "startslave":
         started = start_slave(cursor)
         if started is True:
-            module.exit_json(msg="Slave started", changed=True)
+            module.exit_json(msg="Slave started ", changed=True)
         else:
-            module.fail_json(msg="Slave not started", changed=False)
+            module.exit_json(msg="Slave already started (Or cannot be started)", changed=False)
     elif mode in "stopslave":
         stopped = stop_slave(cursor)
         if stopped is True:
             module.exit_json(msg="Slave stopped", changed=True)
         else:
-            module.fail_json(msd="Slave is not stopped", changed=False)
+            module.exit_json(msg="Slave already stopped", changed=False)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
