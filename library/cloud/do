@@ -21,7 +21,7 @@ module: do
 short_description: Create/delete a droplet/SSH_key in DigitalOcean
 description:
      - Create/delete a droplet in DigitalOcean and optionally waits for it to be 'running', or deploy an SSH key.
-version_added: "0.1"
+version_added: "1.2"
 options:
   command:
     description:
