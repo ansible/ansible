@@ -53,7 +53,7 @@ options:
       - The executable location for npm.
       - This is useful if you are using a version manager, such as nvm
     required: false
-    default: nvm
+    default: null
   production:
     description:
       - Install dependencies in production mode, excluding devDependencies
