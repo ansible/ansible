@@ -4,7 +4,7 @@
 """
 
 Ansible module to manage mysql replication
-(c) 2013, Balazs Pocze <banyek@gmail.com>
+(c) 2013, Balazs Pocze <banyek@gawker.com>
 Certain parts are taken from Mark Theunissen's mysqldb module
 
 This file is part of Ansible
@@ -261,16 +261,20 @@ def main():
 
     if mode in "getmaster":
         masterstatus = get_master_status(cursor)
-        module.exit_json(   
+        try:
+            module.exit_json(   
                             File=masterstatus[0],
                             Position=masterstatus[1],
                             Binlog_Do_DB=masterstatus[2],
                             Binlog_Ignore_DB=masterstatus[3]
                         )
+        except TypeError:
+            module.fail_json(msg="Server is not configured as mysql master")
 
     elif mode in "getslave":
         slavestatus = get_slave_status(cursor)
-        module.exit_json(   
+        try:
+            module.exit_json(   
                             Slave_IO_State=slavestatus[0],
                             Master_Host=slavestatus[1],
                             Master_User=slavestatus[2],
@@ -312,8 +316,9 @@ def main():
                             Replicate_Ignore_Server_Ids=slavestatus[38],
                             Master_Server_Id=slavestatus[39]
                          )
-
-        
+        except TypeError:
+            module.fail_json(msg="Server is not configured as mysql slave")
+       
     elif mode in "changemaster":
         print "Change master"
         chm=[]
