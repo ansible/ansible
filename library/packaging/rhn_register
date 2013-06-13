@@ -181,7 +181,7 @@ class Rhn(RegistrationBase):
             Returns: str
         '''
         url = urlparse.urlparse(self.config['serverURL'])
-        return url.netloc.replace('xmlrpc.','')
+        return url[1].replace('xmlrpc.','')
 
     @property
     def systemid(self):
