@@ -122,6 +122,25 @@ def get_slave_status(cursor):
     slavestatus = cursor.fetchone()
     return slavestatus
 
+
+def stop_slave(cursor):
+    try:
+        cursor.execute("STOP SLAVE")
+        stopped = True
+    except:
+        stopped = False
+    return stopped
+
+
+def start_slave(cursor):
+    try: 
+        cursor.execute("START SLAVE")
+        started = True
+    except:
+        started = False
+    return started
+
+
 def changemaster(cursor, chm):
     SQLPARAM = ",".join(chm)
     try:
@@ -129,7 +148,7 @@ def changemaster(cursor, chm):
     except:
                 print "slave already stopped"
     cursor.execute("CHANGE MASTER TO " + SQLPARAM + "; START SLAVE")
-    
+
 
 def strip_quotes(s):
     """ Remove surrounding single or double quotes
@@ -197,7 +216,7 @@ def main():
             login_password=dict(default=None),
             login_host=dict(default="localhost"),
             login_unix_socket=dict(default=None),
-            mode=dict(default="getslave", choices=["getmaster", "getslave", "changemaster"]),
+            mode=dict(default="getslave", choices=["getmaster", "getslave", "changemaster", "stopslave", "startslave"]),
             master_host=dict(default=None),
             master_user=dict(default=None),
             master_password=dict(default=None),
@@ -358,6 +377,18 @@ def main():
              chm.append("MASTER_SSL_CIPTHER='" + master_ssl_cipher + "'")
         changemaster(cursor,chm)
         module.exit_json(changed=True)
+    elif mode in "startslave":
+        started = start_slave(cursor)
+        if started is True:
+            module.exit_json(msg="Slave started", changed=True)
+        else:
+            module.fail_json(msg="Slave not started", changed=False)
+    elif mode in "stopslave":
+        stopped = stop_slave(cursor)
+        if stopped is True:
+            module.exit_json(msg="Slave stopped", changed=True)
+        else:
+            module.fail_json(msd="Slave is not stopped", changed=False)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
