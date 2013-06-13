@@ -147,7 +147,7 @@ def changemaster(cursor, chm):
                 cursor.execute("STOP SLAVE")
     except:
                 print "slave already stopped"
-    cursor.execute("CHANGE MASTER TO " + SQLPARAM + "; START SLAVE")
+    cursor.execute("CHANGE MASTER TO " + SQLPARAM)
 
 
 def strip_quotes(s):
