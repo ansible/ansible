@@ -124,8 +124,12 @@ def get_slave_status(cursor):
 
 def changemaster(cursor, chm):
     SQLPARAM = ",".join(chm)
-    cursor.execute("STOP SLAVE; CHANGE MASTER TO " + SQLPARAM + "; START SLAVE")
-
+    try:
+                cursor.execute("STOP SLAVE")
+    except:
+                print "slave already stopped"
+    cursor.execute("CHANGE MASTER TO " + SQLPARAM + "; START SLAVE")
+    
 
 def strip_quotes(s):
     """ Remove surrounding single or double quotes
