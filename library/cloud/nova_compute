@@ -25,7 +25,7 @@ except ImportError:
 DOCUMENTATION = '''
 ---
 module: nova_compute
-short_description: Create/Delete VM's from OpenStack
+short_description: Create/Delete VMs from OpenStack
 description:
    - Create or Remove virtual machines from Openstack.
 options:
@@ -71,41 +71,46 @@ options:
      default: None
    flavor_id:
      description:
-        - The id of the flavor in which the new vm has to be created
+        - The id of the flavor in which the new VM has to be created
      required: false
      default: 1
    key_name:
      description:
-        - The keypair name to be used when creating a vm
+        - The key pair name to be used when creating a VM
      required: false
      default: None
    security_groups:
      description:
-        - The name of the security group to which the vm should be added
+        - The name of the security group to which the VM should be added
      required: false
      default: None
    nics:
      description:
-        - A list of network id's to which the vm's interface should be attached 
+        - A list of network id's to which the VM's interface should be attached 
      required: false
      default: None
    meta:
      description:
-        - A list of key value pairs that should be provided as a metadata to the new vm
+        - A list of key value pairs that should be provided as a metadata to the new VM
      required: false
      default: None
    wait:
      description:
-        - If the module should wait for the vm to be created.
+        - If the module should wait for the VM to be created.
      required: false
      default: 'yes'
    wait_for:
      description:
-        - The amount of time the module should wait for the vm to get into active state
+        - The amount of time the module should wait for the VM to get into active state
      required: false
      default: 180
-examples:
-   - code: "nova_compute:
+requirements: ["novaclient"]
+'''
+
+EXAMPLES = '''
+# Creates a new VM and attaches to a network and passes metadata to the instance
+
+- nova_compute:
        state: present
        login_username: admin
        login_password: admin
@@ -119,10 +124,9 @@ examples:
          - net-id: 34605f38-e52a-25d2-b6ec-754a13ffb723
        meta:
          hostname: test1
-         group: uge_master"
-     description: "Creates a new VM and attaches to a network and passes metadata to the instance"
-requirements: ["novaclient"]
+         group: uge_master
 '''
+
 def _delete_server(module, nova):
     name = None
     try:
