@@ -27,9 +27,9 @@ except ImportError:
 DOCUMENTATION = '''
 ---
 module: quantum_floating_ip_associate
-short_description: Associate or disassociate a particular floating ip with an instance
+short_description: Associate or disassociate a particular floating IP with an instance
 description:
-   - Associates or disassociates a specific floating ip with a particular instance
+   - Associates or disassociates a specific floating IP with a particular instance
 options:
    login_username:
      description:
@@ -63,7 +63,7 @@ options:
      default: present
    instance_name:
      description:
-        - name of the instance to which the public ip should be assigned
+        - name of the instance to which the public IP should be assigned
      required: true
      default: None
    ip_address:
@@ -75,8 +75,14 @@ requirements: ["quantumclient", "keystoneclient"]
 '''
 
 EXAMPLES = '''
-# Associate a specific floating ip with an Instance
-quantum_floating_ip_associate: state=present login_username=admin login_password=admin login_tenant_name=admin ip_address=1.1.1.1 instance_name=vm1
+# Associate a specific floating IP with an Instance
+quantum_floating_ip_associate:
+           state=present
+           login_username=admin
+           login_password=admin
+           login_tenant_name=admin
+           ip_address=1.1.1.1
+           instance_name=vm1
 '''
 
 def _get_ksclient(module, kwargs):

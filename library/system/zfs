@@ -206,17 +206,24 @@ options:
       - The zoned property.
     required: False
     choices: ['on','off']
-examples:
-  - code: zfs name=rpool/myfs state=present
-    description: Create a new file system called myfs in pool rpool
-  - code: zfs name=rpool/myvol state=present volsize=10M
-    description: Create a new volume called myvol in pool rpool. 
-  - code: zfs name=rpool/myfs@mysnapshot state=present
-    description: Create a snapshot of rpool/myfs file system.
-  - code: zfs name=rpool/myfs2 state=present snapdir=enabled
-    description: Create a new file system called myfs2 with snapdir enabled
 author: Johan Wiren
 '''
+
+EXAMPLES = '''
+# Create a new file system called myfs in pool rpool
+- zfs: name=rpool/myfs state=present
+
+# Create a new volume called myvol in pool rpool. 
+- zfs: name=rpool/myvol state=present volsize=10M
+
+# Create a snapshot of rpool/myfs file system.
+- zfs: name=rpool/myfs@mysnapshot state=present
+
+# Create a new file system called myfs2 with snapdir enabled
+- zfs: name=rpool/myfs2 state=present snapdir=enabled
+'''
+
+
 import os
 
 class Zfs(object):

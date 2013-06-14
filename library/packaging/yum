@@ -86,15 +86,16 @@ options:
     default: "no"
     choices: ["yes", "no"]
     aliases: []
-
-examples:
-   - code: yum name=httpd state=latest
-   - code: yum name=httpd state=removed
-   - code: yum name=httpd enablerepo=testing state=installed
 notes: []
 # informational: requirements for nodes
 requirements: [ yum, rpm ]
 author: Seth Vidal
+'''
+
+EXAMPLES = '''
+- yum: name=httpd state=latest
+- yum :name=httpd state=removed
+- yum n:ame=httpd enablerepo=testing state=installed
 '''
 
 def_qf = "%{name}-%{version}-%{release}.%{arch}"

@@ -94,17 +94,22 @@ options:
         - Wether the state should be marked as up or down
      required: false
      default: true
-examples:
-  - code: "quantum_network: state=present login_username=admin login_password=admin
-                      provider_network_type=gre login_tenant_name=admin
-                      provider_segmentation_id=1  tenant_name=tenant1 name=t1network"
-    description: "Createss a GRE nework with tunnel id of 1 for tenant 1"
-  - code: "quantum_network: state=present login_username=admin login_password=admin
-                      provider_network_type=local login_tenant_name=admin
-                      provider_segmentation_id=1   router_external=yes name=external_network"
-    description: "Creates an external,public network"
 requirements: ["quantumclient", "keystoneclient"]
 
+'''
+
+EXAMPLES = '''
+# Creates an external,public network
+
+- quantum_network: state=present login_username=admin login_password=admin
+                   provider_network_type=gre login_tenant_name=admin
+                   provider_segmentation_id=1  tenant_name=tenant1 name=t1network"
+
+# Createss a GRE nework with tunnel id of 1 for tenant 1
+
+- quantum_network: state=present login_username=admin login_password=admin
+                   provider_network_type=local login_tenant_name=admin
+                   provider_segmentation_id=1   router_external=yes name=external_network
 '''
 
 _os_keystone = None

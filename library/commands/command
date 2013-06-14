@@ -65,17 +65,23 @@ options:
     required: false
     default: null
     version_added: "0.9"
-examples:
-   - code: "command: /sbin/shutdown -t now"
-     description: "Example from Ansible Playbooks"
-   - code: "command: /usr/bin/make_database.sh arg1 arg2 creates=/path/to/database"
-     description: "C(creates), C(removes), and C(chdir) can be specified after the command. For instance, if you only want to run a command if a certain file does not exist, use this."
 notes:
     -  If you want to run a command through the shell (say you are using C(<),
        C(>), C(|), etc), you actually want the M(shell) module instead. The
        M(command) module is much more secure as it's not affected by the user's
        environment.
+    -  " C(creates), C(removes), and C(chdir) can be specified after the command. For instance, if you only want to run a command if a certain file does not exist, use this."
 author: Michael DeHaan
+'''
+
+EXAMPLES = '''
+# Example from Ansible Playbooks
+
+- command: /sbin/shutdown -t now
+
+# Run the command if the specified file does not exist
+
+- command: /usr/bin/make_database.sh arg1 arg2 creates=/path/to/database
 '''
 
 def main():

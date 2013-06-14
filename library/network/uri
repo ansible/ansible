@@ -120,40 +120,41 @@ options:
     description:
       - all arguments accepted by the M(file) module also work here
     required: false
-examples:
-   - code: "uri: url=http://www.awesome.com"
-     description: "Check that you can connect (GET) to a page and it returns a status 200"
-
-   - code: | 
-           action: uri url=http://www.awesome.com return_content=yes
-           register: webpage
-
-           action: fail
-           when_string: '"AWESOME" not in "${webpage.content}"'
-
-     description: Check that a page returns a status 200 and fail if the word AWESOME is not in the page contents.
-
-   - code: |
-           action: >
-                   uri url=https://your.jira.server.com/rest/api/2/issue/ 
-                   method=POST user=your_username password=your_pass 
-                   body='$FILE(issue.json)' force_basic_auth=yes 
-                   status_code=201 HEADER_Content-Type="application/json"  
-     description: "Create a JIRA issue."
-
-   - code: |
-           action: > 
-                   uri url=https://your.form.based.auth.app.com/index.php 
-                   method=POST body="name=your_username&password=your_password&enter=Sign%20in" 
-                   status_code=302 HEADER_Content-Type="application/x-www-form-urlencoded"
-           register: login
-
-           action: uri url=https://your.form.based.auth.app.com/dashboard.php method=GET return_content=yes HEADER_Cookie="${login.set_cookie}"
-     description: "Login to a form based webpage, then use the cookie that got returned to access the app in later tasks."
 
 # informational: requirements for nodes
 requirements: [ urlparse, httplib2 ]
 author: Romeo Theriault
+'''
+
+EXAMPLES = '''
+# Check that you can connect (GET) to a page and it returns a status 200
+- uri: url=http://www.example.com
+
+# Check that a page returns a status 200 and fail if the word AWESOME is not in the page contents.
+- action: uri url=http://www.example.com return_content=yes
+  register: webpage
+
+  action: fail
+  when_string: '"AWESOME" not in "${webpage.content}"'
+
+
+# Create a JIRA issue.
+action: >
+        uri url=https://your.jira.example.com/rest/api/2/issue/ 
+        method=POST user=your_username password=your_pass 
+        body='$FILE(issue.json)' force_basic_auth=yes 
+        status_code=201 HEADER_Content-Type="application/json"  
+
+action: > 
+        uri url=https://your.form.based.auth.examle.com/index.php 
+        method=POST body="name=your_username&password=your_password&enter=Sign%20in" 
+        status_code=302 HEADER_Content-Type="application/x-www-form-urlencoded"
+register: login
+
+# Login to a form based webpage, then use the returned cookie to
+# access the app in later tasks.
+action: uri url=https://your.form.based.auth.example.com/dashboard.php
+            method=GET return_content=yes HEADER_Cookie="${login.set_cookie}"
 '''
 
 HAS_HTTPLIB2 = True

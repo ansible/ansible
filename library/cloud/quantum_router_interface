@@ -45,7 +45,7 @@ options:
      default: 'yes'
    auth_url:
      description:
-        - The keystone url for authentication
+        - The keystone URL for authentication
      required: false
      default: 'http://127.0.0.1:35357/v2.0/'
    region_name:
@@ -73,12 +73,17 @@ options:
         - Name of the tenant whose subnet has to be attached.
      required: false
      default: None
-examples:
-  - code: "quantum_router_interface: state=present login_username=admin login_password=admin login_tenant_name=admin 
-                                     tenant_name=tenant1 router_name=external_route subnet_name=t1subnet"
-    description: "Attach tenant1's subnet to the external router"
 requirements: ["quantumclient", "keystoneclient"]
 '''
+
+EXAMPLES = '''
+# Attach tenant1's subnet to the external router
+
+- quantum_router_interface: state=present login_username=admin
+                            login_password=admin login_tenant_name=admin 
+                            tenant_name=tenant1 router_name=external_route subnet_name=t1subnet
+'''
+
 
 _os_keystone = None
 _os_tenant_id = None

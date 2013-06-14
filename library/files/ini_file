@@ -62,15 +62,6 @@ options:
      description:
        - all arguments accepted by the M(file) module also work here
      required: false
-examples:
-   - code: "ini_file: dest=/etc/conf section=drinks option=fav value=lemonade mode=0600 backup=yes"
-     description: Ensure C(fav=lemonade) is in section C([drinks]) in said file
-   - code: |
-           ini_file: dest=/etc/anotherconf
-                     section=drinks
-                     option=temperature
-                     value=cold
-                     backup=yes
 notes:
    - While it is possible to add an I(option) without specifying a I(value), this makes
      no sense.
@@ -82,6 +73,16 @@ requirements: [ ConfigParser ]
 author: Jan-Piet Mens
 '''
 
+EXAMPLES = '''
+# Ensure "fav=lemonade is in section "[drinks]" in specified file
+- ini_file: dest=/etc/conf section=drinks option=fav value=lemonade mode=0600 backup=yes
+
+- ini_file: dest=/etc/anotherconf
+            section=drinks
+            option=temperature
+            value=cold
+            backup=yes
+'''
 
 import ConfigParser
 

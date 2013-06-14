@@ -48,16 +48,22 @@ options:
         default: present
         description:
             - used to specify if key is being added or revoked
-examples:
-    - code: "apt_key: url=https://ftp-master.debian.org/keys/archive-key-6.0.asc state=present"
-      description: Add an Apt signing key, uses whichever key is at the URL
-    - code: "apt_key: id=473041FA url=https://ftp-master.debian.org/keys/archive-key-6.0.asc state=present"
-      description: Add an Apt signing key, will not download if present
-    - code: "apt_key: url=https://ftp-master.debian.org/keys/archive-key-6.0.asc state=absent"
-      description: Remove an Apt signing key, uses whichever key is at the URL
-    - code: "apt_key: id=473041FA state=absent"
-      description: Remove a Apt specific signing key
 '''
+
+EXAMPLES = '''
+# Add an Apt signing key, uses whichever key is at the URL
+- apt_key: url=https://ftp-master.debian.org/keys/archive-key-6.0.asc state=present
+
+# Add an Apt signing key, will not download if present
+- apt_key: id=473041FA url=https://ftp-master.debian.org/keys/archive-key-6.0.asc state=present
+
+# Remove an Apt signing key, uses whichever key is at the URL
+- apt_key: url=https://ftp-master.debian.org/keys/archive-key-6.0.asc state=absent
+
+# Remove a Apt specific signing key
+- apt_key: id=473041FA state=absent
+'''
+
 
 # FIXME: standardize into module_common
 from urllib2 import urlopen, URLError

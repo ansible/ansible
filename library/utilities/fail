@@ -33,12 +33,12 @@ options:
         fail will simple bail out with a generic message.
     required: false
     default: "'Failed as requested from task'"
-examples:
-    - code: |
-        fail: msg="The system may not be provisioned according to the CMDB status."
-            only_if: "'$cmdb_status' != 'to-be-staged'"
-
-      description: "Example playbook using fail and only_if together"
 
 author: Dag Wieers
+'''
+
+EXAMPLES = '''
+# Example playbook using fail and only_if together
+- fail: msg="The system may not be provisioned according to the CMDB status."
+  only_if: "'$cmdb_status' != 'to-be-staged'"
 '''
