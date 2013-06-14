@@ -37,6 +37,11 @@ options:
         default: none
         description:
             - identifier of key
+    file:
+        required: false
+        default: none
+        description:
+            - keyfile path
     url:
         required: false
         default: none
@@ -110,9 +115,9 @@ def download_key(module, url):
         module.fail_json(msg="error getting key id from url", traceback=format_exc())
 
 
-def add_key(module, key):
-    cmd = "apt-key add -"
-    (rc, out, err) = module.run_command(cmd, data=key, check_rc=True)
+def add_key(module, key, data=None):
+    cmd = "apt-key add %s" % (key)
+    (rc, out, err) = module.run_command(cmd, data=data, check_rc=True)
     return True
 
 def remove_key(module, key_id):
@@ -127,6 +132,7 @@ def main():
             id=dict(required=False, default=None),
             url=dict(required=False),
             data=dict(required=False),
+            file=dict(required=False),
             key=dict(required=False),
             state=dict(required=False, choices=['present', 'absent'], default='present')
         ),
@@ -136,6 +142,7 @@ def main():
     key_id          = module.params['id']
     url             = module.params['url']
     data            = module.params['data']
+    file            = module.params['file']
     state           = module.params['state']
     changed         = False
     
@@ -149,14 +156,14 @@ def main():
         if key_id and key_id in keys:
             module.exit_json(changed=False)
         else:
-            if not data:
+            if not file and not data:
                 data = download_key(module, url)
             if key_id and key_id in keys:
                 module.exit_json(changed=False)
             else:
                 if module.check_mode:
                     module.exit_json(changed=True)
-                add_key(module, data)
+                add_key(module, (file if file else "-"), data)
                 changed=False
                 keys2 = all_keys(module)
                 if len(keys) != len(keys2):
