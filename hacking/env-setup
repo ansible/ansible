@@ -1,4 +1,3 @@
-#!/bin/bash
 # usage: source env-setup [-q]
 #        source hacking/env-setup [-q]
 #        . ./env-setup [-q]
