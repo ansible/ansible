@@ -262,7 +262,7 @@ def core(module):
         if state in ('active', 'present'):
             key = SSH.find(name)
             if key:
-                module.exit_json(changed=False, msg='SSH key with the name of %s already exists.' % name)
+                module.exit_json(changed=False, ssh_key=key.to_json())
             key = SSH.add(name, getkeyordie('ssh_pub_key'))
             module.exit_json(changed=True, ssh_key=key.to_json())
 
