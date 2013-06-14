@@ -28,10 +28,12 @@ description:
      contact. It does not make sense in playbooks, but it is useful from
      C(/usr/bin/ansible)
 options: {}
-examples:
-   - code: ansible webservers -m ping
-     description: Test 'webservers' status
 author: Michael DeHaan
+'''
+
+EXAMPLES = '''
+# Test 'webservers' status
+ansible webservers -m ping
 '''
 
 def main():

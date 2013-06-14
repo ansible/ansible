@@ -90,17 +90,6 @@ options:
     required: false
     default: present
     choices: [ "present", "absent" ]
-examples:
-   - code: "postgresql_user: db=acme user=django password=ceec4eif7ya priv=CONNECT/products:ALL"
-     description: Create django user and grant access to database and products table
-   - code: "postgresql_user: user=rails password=secret role_attr_flags=CREATEDB,NOSUPERUSER"
-     description: Create rails user, grant privilege to create other databases and demote rails from super user status
-   - code: "postgresql_user: db=acme user=test priv=ALL/products:ALL state=absent fail_on_user=no"
-     description: Remove test user privileges from acme
-   - code: "postgresql_user: db=test user=test priv=ALL state=absent"
-     description: Remove test user from test database and the cluster
-   - code: INSERT,UPDATE/table:SELECT/anothertable:ALL
-     description: Example privileges string format
 notes:
    - The default authentication assumes that you are either logging in as or
      sudo'ing to the postgres account on the host.
@@ -115,6 +104,23 @@ notes:
      PUBLIC user is specified.
 requirements: [ psycopg2 ]
 author: Lorin Hochstein
+'''
+
+EXAMPLES = '''
+# Create django user and grant access to database and products table
+- postgresql_user: db=acme user=django password=ceec4eif7ya priv=CONNECT/products:ALL
+
+# Create rails user, grant privilege to create other databases and demote rails from super user status
+- postgresql_user: user=rails password=secret role_attr_flags=CREATEDB,NOSUPERUSER
+
+# Remove test user privileges from acme
+- postgresql_user: db=acme user=test priv=ALL/products:ALL state=absent fail_on_user=no
+
+# Remove test user from test database and the cluster
+- postgresql_user: db=test user=test priv=ALL state=absent
+
+# Example privileges string format
+INSERT,UPDATE/table:SELECT/anothertable:ALL
 '''
 
 import re

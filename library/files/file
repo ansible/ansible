@@ -120,14 +120,15 @@ options:
     version_added: "1.1"
     description:
       - recursively set the specified file attributes (applies only to state=directory)
-examples:
-   - code: "file: path=/etc/foo.conf owner=foo group=foo mode=0644"
-     description: Example from Ansible Playbooks
-   - code: "file: src=/file/to/link/to dest=/path/to/symlink owner=foo group=foo state=link"
 notes:
     - See also M(copy), M(template), M(assemble)
 requirements: [ ]
 author: Michael DeHaan
+'''
+
+EXAMPLES = '''
+- file: path=/etc/foo.conf owner=foo group=foo mode=0644
+- file: src=/file/to/link/to dest=/path/to/symlink owner=foo group=foo state=link
 '''
 
 def main():

@@ -17,9 +17,9 @@
 DOCUMENTATION = '''
 ---
 module: s3
-short_description: idempotent s3 module putting a file into S3. 
+short_description: idempotent S3 module putting a file into S3. 
 description:
-    - This module allows the user to dictate the presence of a given file in an S3 bucket. If or once the key (file) exists in the bucket, it returns a time-expired download url. This module has a dependency on python-boto.
+    - This module allows the user to dictate the presence of a given file in an S3 bucket. If or once the key (file) exists in the bucket, it returns a time-expired download URL. This module has a dependency on python-boto.
 version_added: "1.1"
 options:
   bucket:
@@ -41,7 +41,7 @@ options:
     aliases: []
   dest:
     description:
-      - the destination in s3, if different from path
+      - the destination in S3, if different from path
     required: false
     default: null
     aliases: []
@@ -53,7 +53,7 @@ options:
     aliases: []
   overwrite:
     description:
-      - force overwrite if a file with the same name already exists. Does not support files uploaded to s3 with multipart upload.
+      - force overwrite if a file with the same name already exists. Does not support files uploaded to S3 with multipart upload.
     required: false
     default: false
     version_added: "1.2"
@@ -63,13 +63,11 @@ author: Lester Wade, Ralph Tice
 
 EXAMPLES = '''
 # Simple PUT operation
-   module: s3 
-   bucket: mybucket 
+- s3: bucket: mybucket 
    path: /path/to/file 
    state: present
 # Force and overwrite if checksums don't match
-   module: s3
-   bucket: mybucket
+- s3: bucket: mybucket
    path: /path/to/file
    state: present
    overwrite: yes

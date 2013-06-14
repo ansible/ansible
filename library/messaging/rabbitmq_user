@@ -86,9 +86,17 @@ options:
     required: false
     default: present
     choices: [present, absent]
-examples:
-  - code: rabbitmq_user user=joe password=changeme vhost=/ configure_priv=.* read_priv=.* write_priv=.* state=present
-    description: Add user to server and assign full access control
+'''
+
+EXAMPLES = '''
+# Add user to server and assign full access control
+- rabbitmq_user: user=joe
+                 password=changeme
+                 vhost=/
+                 configure_priv=.*
+                 read_priv=.*
+                 write_priv=.*
+                 state=present
 '''
 
 class RabbitMqUser(object):

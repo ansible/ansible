@@ -27,9 +27,6 @@ description:
        available. There is no change handler support for this module.
      - This module does not require python on the remote system, much like
        the M(script) module.
-examples:
-    - description: Example from C(/usr/bin/ansible) to bootstrap a legacy python 2.4 host
-      code: "action: raw yum -y install python-simplejson"
 notes:
    -  If you want to execute a command securely and predictably, it may be
       better to use the M(command) module instead. Best practices when writing
@@ -37,4 +34,9 @@ notes:
       explicitly required. When running ad-hoc commands, use your best
       judgement.
 author: Michael DeHaan
+'''
+
+EXAMPLES = '''
+# Bootstrap a legacy python 2.4 host
+- raw: yum -y install python-simplejson
 '''

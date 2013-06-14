@@ -60,14 +60,18 @@ options:
         choices: [ "yes", "no" ]
         aliases: []
 
-examples:
-    - code: "zypper: name=nmap state=present"
-    - code: "zypper: name=nmap state=latest"
-    - code: "zypper: name=nmap state=absent"
 notes: []
 # informational: requirements for nodes
 requirements: [ zypper, rpm ]
 author: Patrick Callahan
+'''
+
+EXAMPLES = '''
+# Install "nmap"
+- zypper: name=nmap state=present
+
+# Remove the "nmap" package
+- zypper: name=nmap state=absent
 '''
 
 # Function used for getting the name of a currently installed package.

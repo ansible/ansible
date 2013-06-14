@@ -158,13 +158,17 @@ options:
             - Set a passphrase for the SSH key.  If no
               passphrase is provided, the SSH key will default to
               having no passphrase.
-examples:
-    - code: 'user: name=johnd comment="John Doe" uid=1040'
-      description: "Add the user 'johnd' with a specific uid and a primary group of 'admin'"
-    - code: "user: name=johnd state=absent remove=yes"
-      description: "Remove the user 'johnd'"
-    - code: 'user: name=jsmith generate_ssh_key=yes ssh_key_bits=2048'
-      description: "Create a 2048-bit SSH key for user jsmith"
+'''
+
+EXAMPLES = '''
+# Add the user 'johnd' with a specific uid and a primary group of 'admin'
+- user: name=johnd comment="John Doe" uid=1040
+
+# Remove the user 'johnd'
+- user: name=johnd state=absent remove=yes
+
+# Create a 2048-bit SSH key for user jsmith
+- user: name=jsmith generate_ssh_key=yes ssh_key_bits=2048
 '''
 
 import os
