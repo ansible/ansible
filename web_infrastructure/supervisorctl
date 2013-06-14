@@ -44,7 +44,7 @@ author: Matt Wright
 
 EXAMPLES = '''
 # Manage the state of program to be in 'started' state.
-supervisorctl: name=my_app state=started
+- supervisorctl: name=my_app state=started
 '''
 
 def main():

@@ -25,9 +25,9 @@ except ImportError:
 DOCUMENTATION = '''
 ---
 module: nova_keypair
-short_description: Add/Delete keypair from nova
+short_description: Add/Delete key pair from nova
 description:
-   - Add or Remove keypair from nova .
+   - Add or Remove key pair from nova .
 options:
    login_username:
      description:
@@ -61,7 +61,7 @@ options:
      default: present
    name:
      description:
-        - Name that has to be given to the keypair
+        - Name that has to be given to the key pair
      required: true
      default: None
    public_key:
@@ -70,13 +70,17 @@ options:
      required: false
      default: None
 
-examples:
-   - code: "nova_keypair: state=present login_username=admin login_password=admin login_tenant_name=admin name=ansible_key
-                          public_key={{ lookup('file','~/.ssh/id_rsa.pub') }}"
-     description: "Creates a keypair with the running users public key"
-   - code: "nova_keypair: state=present login_username=admin login_password=admin login_tenant_name=admin name=ansible_key"
-     description: "Creates a new keypair and the private key returned after the run."
 requirements: ["novaclient"]
+'''
+EXAMPLES = '''
+# Creates a key pair with the running users public key
+- nova_keypair: state=present login_username=admin
+                login_password=admin login_tenant_name=admin name=ansible_key
+                public_key={{ lookup('file','~/.ssh/id_rsa.pub') }}
+
+# Creates a new key pair and the private key returned after the run.
+- nova_keypair: state=present login_username=admin login_password=admin
+                login_tenant_name=admin name=ansible_key
 '''
 
 def main():
