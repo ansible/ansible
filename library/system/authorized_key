@@ -66,10 +66,13 @@ author: Brad Olson
 
 EXAMPLES = '''
 # Example using key data from a local file on the management machine
-authorized_key: user=charlie key="{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
+- authorized_key: user=charlie key="{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
 
 # Using alternate directory locations:
-authorized_key: user=charlie key="{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}" path='/etc/ssh/authorized_keys/charlie' manage_dir=no
+- authorized_key: user=charlie
+                  key="{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
+                  path='/etc/ssh/authorized_keys/charlie'
+                  manage_dir=no
 '''
 
 # Makes sure the public key line is present or absent in the user's .ssh/authorized_keys.

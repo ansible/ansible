@@ -54,13 +54,14 @@ options:
 author: bleader
 notes:
     - When using pkgsite, be careful that already in cache packages won't be downloaded again.
-examples:
-    - code: "pkgng: name=foo state=present"
-      description: install package foo"
-    - code: "pkgng: name=foo state=absent"
-      description: remove package foo
-    - code: "pkgng: name=foo,bar state=absent"
-      description: remove packages foo and bar 
+'''
+
+EXAMPLES = '''
+# Install package foo
+- pkgng: name=foo state=present
+
+# Remove packages foo and bar 
+- pkgng: name=foo,bar state=absent
 '''
 
 

@@ -40,13 +40,17 @@ options:
           - C(present) will make sure the package is installed.
             C(latest) will make sure the latest version of the package is installed.
             C(absent) will make sure the specified package is not installed.
-examples:
-    - description: Make sure nmap is installed
-      code: "openbsd_pkg: name=nmap state=present"
-    - description: Make sure nmap is the latest version
-      code: "openbsd_pkg: name=nmap state=latest"
-    - description: Make sure nmap is not installed
-      code: "openbsd_pkg: name=nmap state=absent"
+'''
+
+EXAMPLES = '''
+# Make sure nmap is installed
+- openbsd_pkg: name=nmap state=present
+
+# Make sure nmap is the latest version
+- openbsd_pkg: name=nmap state=latest
+
+# Make sure nmap is not installed
+- openbsd_pkg: name=nmap state=absent
 '''
 
 # select whether we dump additional debug info through syslog

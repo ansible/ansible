@@ -44,13 +44,16 @@ options:
   opts:
     description:
     - List of options to be passed to mkfs command.
-examples:
-  - description: Create a ext2 filesystem on /dev/sdb1.
-    code: filesystem fstype=ext2 dev=/dev/sdb1
-  - description: Create a ext4 filesystem on /dev/sdb1 and check disk blocks.
-    code: filesystem fstype=ext4 dev=/dev/sdb1 opts="-cc"
 notes:
   - uses mkfs command
+'''
+
+EXAMPLES = '''
+# Create a ext2 filesystem on /dev/sdb1.
+- filesystem: fstype=ext2 dev=/dev/sdb1
+
+# Create a ext4 filesystem on /dev/sdb1 and check disk blocks.
+- filesystem: fstype=ext4 dev=/dev/sdb1 opts="-cc"
 '''
 
 def main():

@@ -46,9 +46,11 @@ options:
     required: false
     default: enabled
     choices: [enabled, disabled]
-examples:
-  - code: rabbitmq_plugin names=rabbitmq_management state=enabled
-    description: Enables the rabbitmq_management plugin
+'''
+
+EXAMPLES = '''
+# Enables the rabbitmq_management plugin
+- rabbitmq_plugin: names=rabbitmq_management state=enabled
 '''
 
 class RabbitMqPlugins(object):
