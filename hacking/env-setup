@@ -14,7 +14,7 @@ esac
 # The below is an alternative to readlink -fn which doesn't exist on OS X
 # Source: http://stackoverflow.com/a/1678636
 FULL_PATH=`python -c "import os; print(os.path.realpath('$HACKING_DIR'))"`
-ANSIBLE_HOME=`dirname "$FULL_PATH"`
+ANSIBLE_HOME=${FULL_PATH%/*}
 
 PREFIX_PYTHONPATH="$ANSIBLE_HOME/lib"
 PREFIX_PATH="$ANSIBLE_HOME/bin"
