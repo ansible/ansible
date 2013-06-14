@@ -1,5 +1,8 @@
 #!/bin/bash
-# usage: source ./hacking/env-setup [-q]
+# usage: source env-setup [-q]
+#        source hacking/env-setup [-q]
+#        . ./env-setup [-q]
+#        . ./hacking/env-setup [q]
 #    modifies environment for running Ansible from checkout
 
 # When run using source as directed, $0 gets set to bash, so we must use $BASH_SOURCE
