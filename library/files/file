@@ -42,7 +42,7 @@ options:
       - defines the file being managed, unless when used with C(state=link), and then sets the destination to create a symbolic link to using I(src)
     required: true
     default: []
-    aliases: []
+    aliases: ['dest', 'name'] 
   state:
     description:
       - If C(directory), all immediate subdirectories will be created if they
