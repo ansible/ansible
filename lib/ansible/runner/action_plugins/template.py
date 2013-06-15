@@ -22,6 +22,7 @@ from ansible import utils
 from ansible import errors
 from ansible.runner.return_data import ReturnData
 import base64
+import re
 
 class ActionModule(object):
 
@@ -45,6 +46,10 @@ class ActionModule(object):
 
         source   = options.get('src', None)
         dest     = options.get('dest', None)
+        strict     = options.pop('strict',False) == 'yes'
+
+        # module_args gets passed on to copy module, strip illegal arg
+        module_args = re.sub("strict=(yes|no)","",module_args)
 
         if (source is None and 'first_available_file' not in inject) or dest is None:
             result = dict(failed=True, msg="src and dest are required")
@@ -83,7 +88,7 @@ class ActionModule(object):
 
         # template the source data locally & get ready to transfer
         try:
-            resultant = template.template_from_file(self.runner.basedir, source, inject)
+            resultant = template.template_from_file(self.runner.basedir, source, inject, strict=strict)
         except Exception, e:
             result = dict(failed=True, msg=str(e))
             return ReturnData(conn=conn, comm_ok=False, result=result)
