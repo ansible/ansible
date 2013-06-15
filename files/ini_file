@@ -107,12 +107,21 @@ def do_ini(module, filename, section=None, option=None, value=None, state='prese
                 changed = True
         else:
             if option is not None:
-                try:
-                    if cp.get(section, option):
-                        cp.remove_option(section, option)
-                        changed = True
-                except:
-                    pass
+                if type(option) == str:
+                    try:
+                        if cp.get(section, option):
+                            cp.remove_option(section, option)
+                            changed = True
+                    except:
+                        pass
+                else:
+                    for o in option:
+                        try:
+                            if cp.get(section, o):
+                                cp.remove_option(section, o)
+                                changed = True
+                        except:
+                            pass
 
     if state == 'present':
         if cp.has_section(section) == False:
@@ -123,17 +132,31 @@ def do_ini(module, filename, section=None, option=None, value=None, state='prese
             changed = True
 
         if option is not None and value is not None:
-            try:
-                oldvalue = cp.get(section, option)
-                if str(value) != str(oldvalue):
+            olist = []
+            vlist = []
+            if type(option) == str and type(value) == str:
+                olist.append(option)
+                vlist.append(value)
+            else:
+                olist = list(option)
+                vlist = list(value)
+                if len(olist) != len(vlist):
+                    module.fail_json(msg="Option and value lists must be of same lengths")
+            n = 0
+            for option in olist:
+                value = vlist[n]
+                n = n + 1
+                try:
+                    oldvalue = cp.get(section, option)
+                    if str(value) != str(oldvalue):
+                        cp.set(section, option, value)
+                        changed = True
+                except ConfigParser.NoSectionError:
                     cp.set(section, option, value)
                     changed = True
-            except ConfigParser.NoSectionError:
-                cp.set(section, option, value)
-                changed = True
-            except ConfigParser.NoOptionError:
-                cp.set(section, option, value)
-                changed = True
+                except ConfigParser.NoOptionError:
+                    cp.set(section, option, value)
+                    changed = True
 
     if changed:
         if backup:
@@ -156,8 +179,8 @@ def main():
         argument_spec = dict(
             dest = dict(required=True),
             section = dict(required=True),
-            option = dict(required=False),
-            value = dict(required=False),
+            option = dict(required=False, type='list'),
+            value = dict(required=False, type='list'),
             backup = dict(default='no', type='bool'),
             state = dict(default='present', choices=['present', 'absent'])
         ),
