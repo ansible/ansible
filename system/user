@@ -158,6 +158,18 @@ options:
             - Set a passphrase for the SSH key.  If no
               passphrase is provided, the SSH key will default to
               having no passphrase.
+    update_password:
+        required: false
+        default: always
+        choices: ['always', 'on_creation']
+        version_added: "1.3"
+        description:
+            - Control when does ansible update passwords.
+            C(always) will update if they differ.
+            C(on_creation) will only update the password if user is being created.
+examples:
+    - code: 'user: name=johnd comment="John Doe" uid=1040'
+      description: "Add the user 'johnd' with a specific uid and a primary group of 'admin'"
 examples:
     - code: 'user: name=johnd comment="John Doe" uid=1040'
       description: "Add the user 'johnd' with a specific uid and a primary group of 'admin'"
@@ -226,6 +238,7 @@ class User(object):
         self.ssh_type   = module.params['ssh_key_type']
         self.ssh_comment = module.params['ssh_key_comment']
         self.ssh_passphrase = module.params['ssh_key_passphrase']
+        self.update_password = module.params['update_password']
         if module.params['ssh_key_file'] is not None:
             self.ssh_file = module.params['ssh_key_file']
         else:
@@ -357,7 +370,7 @@ class User(object):
             cmd.append('-s')
             cmd.append(self.shell)
 
-        if self.password is not None and info[1] != self.password:
+        if self.update_password == 'always' and self.password is not None and info[1] != self.password:
             cmd.append('-p')
             cmd.append(self.password)
 
@@ -690,7 +703,7 @@ class FreeBsdUser(User):
             (rc, out, err) = (None, '', '')
 
         # we have to set the password in a second command
-        if self.password is not None and info[1] != self.password:
+        if self.update_password == 'always' and self.password is not None and info[1] != self.password:
             cmd = [
                 self.module.get_bin_path('chpass', True),
                 '-p',
@@ -836,7 +849,7 @@ class OpenBSDUser(User):
             cmd.append('-L')
             cmd.append(self.login_class)
 
-        if self.password is not None and info[1] != self.password:
+        if self.update_password == 'always' and self.password is not None and info[1] != self.password:
             cmd.append('-p')
             cmd.append(self.password)
 
@@ -989,7 +1002,7 @@ class NetBSDUser(User):
             cmd.append('-L')
             cmd.append(self.login_class)
 
-        if self.password is not None and info[1] != self.password:
+        if self.update_password == 'always' and self.password is not None and info[1] != self.password:
             cmd.append('-p')
             cmd.append(self.password)
 
@@ -1154,7 +1167,7 @@ class SunOS(User):
             (rc, out, err) = (None, '', '')
 
         # we have to set the password by editing the /etc/shadow file 
-        if self.password is not None and info[1] != self.password:
+        if self.update_password == 'always' and self.password is not None and info[1] != self.password:
             try:
                 lines = []
                 for line in open(self.SHADOWFILE, 'rb').readlines():
@@ -1303,7 +1316,7 @@ class AIX(User):
             (rc, out, err) = self.execute_command(cmd)
 
         # set password with chpasswd
-        if self.password is not None and info[1] != self.password:
+        if self.update_password == 'always' and self.password is not None and info[1] != self.password:
             cmd = []
             cmd.append('echo "'+self.name+':'+self.password+'" |')
             cmd.append(self.module.get_bin_path('chpasswd', True))
@@ -1354,7 +1367,8 @@ def main():
             ssh_key_type=dict(default=ssh_defaults['type'], type='str'),
             ssh_key_file=dict(default=None, type='str'),
             ssh_key_comment=dict(default=ssh_defaults['comment'], type='str'),
-            ssh_key_passphrase=dict(default=None, type='str')
+            ssh_key_passphrase=dict(default=None, type='str'),
+            update_password=dict(default='always',choices=['always','on_create'],type='str')
         ),
         supports_check_mode=True
     )
