@@ -86,12 +86,12 @@ options:
      default: false
    shared:
      description:
-        - Wether this network is shared or not
+        - Whether this network is shared or not
      required: false
      default: false
    admin_state_up:
      description:
-        - Wether the state should be marked as up or down
+        - Whether the state should be marked as up or down
      required: false
      default: true
 requirements: ["quantumclient", "keystoneclient"]
