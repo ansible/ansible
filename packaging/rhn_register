@@ -48,13 +48,13 @@ options:
 
 EXAMPLES = '''
 # Unregister system from RHN.
-- code: rhn_register state=absent username=joe_user password=somepass
+- rhn_register: state=absent username=joe_user password=somepass
 
 # Register as user (joe_user) with password (somepass) and auto-subscribe to available content.
-- code: rhn_register state=present username=joe_user password=somepass
+- rhn_register: state=present username=joe_user password=somepass
 
 # Register with activationkey (1-222333444) and enable extended update support.
-- code: rhn_register state=present activationkey=1-222333444 enable_eus=true
+- rhn_register: state=present activationkey=1-222333444 enable_eus=true
 
 # Register as user (joe_user) with password (somepass) against a satellite
 # server specified by (server_url).
