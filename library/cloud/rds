@@ -21,7 +21,7 @@ short_description: create or delete an Amazon rds instance
 description:
      - Creates or deletes rds instances.  When creating an instance it can be either a new instance or a read-only replica of an existing instance. This module has a dependency on python-boto >= 2.5.
 options:
-  action:
+  command:
     description:
       - Specifies the action to take.  Must be one of: create | replicate | delete | facts | modify
     required: true
@@ -35,37 +35,37 @@ options:
     aliases: []
   source_instance:
     description:
-      - Name of the database to replicate. Used only when action=replicate.
+      - Name of the database to replicate. Used only when command=replicate.
     required: false
     default: null
     aliases: []
   db_engine:
     description:
-      - The type of database.  Used only when action=create. Must be one of: MySQL | oracle-se1 | oracle-se | oracle-ee | sqlserver-ee | sqlserver-se | sqlserver-ex | sqlserver-web
+      - The type of database.  Used only when command=create. Must be one of: MySQL | oracle-se1 | oracle-se | oracle-ee | sqlserver-ee | sqlserver-se | sqlserver-ex | sqlserver-web
     required: false
     default: null
     aliases: []
   size:
     description:
-      - Size in gigabytes of the initial storage for the DB instance. Used only when action=create or action=modify.
+      - Size in gigabytes of the initial storage for the DB instance. Used only when command=create or command=modify.
     required: false
     default: null
     aliases: []
   instance_type:
     description:
-      - The instance type of the database.  Must be specified when action=create. Optional when action=replicate or action=modify. If not specified then the replica inherits the same instance type as the source instance. Must be one of: db.t1.micro | db.m1.small | db.m1.medium | db.m1.large | db.m1.xlarge | db.m2.xlarge | db.m2.2xlarge | db.m2.4xlarge
+      - The instance type of the database.  Must be specified when command=create. Optional when command=replicate or command=modify. If not specified then the replica inherits the same instance type as the source instance. Must be one of: db.t1.micro | db.m1.small | db.m1.medium | db.m1.large | db.m1.xlarge | db.m2.xlarge | db.m2.2xlarge | db.m2.4xlarge
     required: false
     default: null
     aliases: []
   username:
     description:
-      - Master database username. Used only when action=create.
+      - Master database username. Used only when command=create.
     required: false
     default: null
     aliases: []
   password:
     description:
-      - Password for the master database username. Used only when action=create or action=modify.
+      - Password for the master database username. Used only when command=create or command=modify.
     required: false
     default: null
     aliases: []
@@ -77,98 +77,98 @@ options:
     aliases: []
   db_name:
     description:
-      - Name of a database to create within the instance.  If not specified then no database is created. Used only when action=create.
+      - Name of a database to create within the instance.  If not specified then no database is created. Used only when command=create.
     required: false
     default: null
     aliases: []
   engine_version:
     description:
-      - Version number of the database engine to use. Used only when action=create. If not specified then the current Amazon RDS default engine version is used.
+      - Version number of the database engine to use. Used only when command=create. If not specified then the current Amazon RDS default engine version is used.
     required: false
     default: null
     aliases: []
   parameter_group:
     description:
-      - Name of the DB parameter group to associate with this instance.  If omitted then the RDS default DBParameterGroup will be used. Used only when action=create or action=modify.
+      - Name of the DB parameter group to associate with this instance.  If omitted then the RDS default DBParameterGroup will be used. Used only when command=create or command=modify.
     required: false
     default: null
     aliases: []
   license_model:
     description:
-      - The license model for this DB instance. Used only when action=create. Must be one of: license-included | bring-your-own-license | general-public-license
+      - The license model for this DB instance. Used only when command=create. Must be one of: license-included | bring-your-own-license | general-public-license
     required: false
     default: null
     aliases: []
   multi_zone:
     description:
-      - Specifies if this is a Multi-availability-zone deployment. Can not be used in conjunction with zone parameter. Used only when action=create or action=modify. Valid values: true | false
+      - Specifies if this is a Multi-availability-zone deployment. Can not be used in conjunction with zone parameter. Used only when command=create or command=modify. Valid values: true | false
     required: false
     default: null
     aliases: []
   iops:
     description:
-      - Specifies the number of IOPS for the instance.  Used only when action=create or action=modify. Must be an integer greater than 1000.
+      - Specifies the number of IOPS for the instance.  Used only when command=create or command=modify. Must be an integer greater than 1000.
     required: false
     default: null
     aliases: []
   security_groups:
     description:
-      - Comma separated list of one or more security groups.  Used only when action=create or action=modify. If a subnet is specified then this is treated as a list of VPC security groups.
+      - Comma separated list of one or more security groups.  Used only when command=create or command=modify. If a subnet is specified then this is treated as a list of VPC security groups.
     required: false
     default: null
     aliases: []
   port:
     description:
-      - Port number that the DB instance uses for connections.  Defaults to 3306 for mysql, 1521 for Oracle, 1443 for SQL Server. Used only when action=create or action=replicate.
+      - Port number that the DB instance uses for connections.  Defaults to 3306 for mysql, 1521 for Oracle, 1443 for SQL Server. Used only when command=create or command=replicate.
     required: false
     default: null
     aliases: []
   upgrade:
     description:
-      - Indicates that minor version upgrades should be applied automatically. Used only when action=create or action=replicate. 
+      - Indicates that minor version upgrades should be applied automatically. Used only when command=create or command=replicate. 
     required: false
     default: no
     choices: [ "yes", "no" ]
     aliases: []
   option_group:
     description:
-      - The name of the option group to use.  If not specified then the default option group is used. Used only when action=create.
+      - The name of the option group to use.  If not specified then the default option group is used. Used only when command=create.
     required: false
     default: null
     aliases: []
   maint_window:
     description:
-      - Maintenance window in format of ddd:hh24:mi-ddd:hh24:mi.  (Example: Mon:22:00-Mon:23:15) If not specified then a random maintenance window is assigned. Used only when action=create or action=modify.
+      - Maintenance window in format of ddd:hh24:mi-ddd:hh24:mi.  (Example: Mon:22:00-Mon:23:15) If not specified then a random maintenance window is assigned. Used only when command=create or command=modify.
     required: false
     default: null
     aliases: []
   backup_window:
     description:
-      - Backup window in format of hh24:mi-hh24:mi.  If not specified then a random backup window is assigned. Used only when action=create or action=modify.
+      - Backup window in format of hh24:mi-hh24:mi.  If not specified then a random backup window is assigned. Used only when command=create or command=modify.
     required: false
     default: null
     aliases: []
   backup_retention:
     description:
-      - Number of days backups are retained.  Set to 0 to disable backups.  Default is 1 day.  Valid range: 0-35. Used only when action=create or action=modify.
+      - Number of days backups are retained.  Set to 0 to disable backups.  Default is 1 day.  Valid range: 0-35. Used only when command=create or command=modify.
     required: false
     default: null
     aliases: []
   zone:
     description:
-      - availability zone in which to launch the instance. Used only when action=create or action=replicate.
+      - availability zone in which to launch the instance. Used only when command=create or command=replicate.
     required: false
     default: null
     aliases: []
   subnet:
     description:
-      - VPC subnet group.  If specified then a VPC instance is created. Used only when action=create.
+      - VPC subnet group.  If specified then a VPC instance is created. Used only when command=create.
     required: false
     default: null
     aliases: []
   snapshot:
     description:
-      - Name of final snapshot to take when deleting an instance.  If no snapshot name is provided then no snapshot is taken. Used only when action=delete.
+      - Name of final snapshot to take when deleting an instance.  If no snapshot name is provided then no snapshot is taken. Used only when command=delete.
     required: false
     default: null
     aliases: []
@@ -186,7 +186,7 @@ options:
     aliases: []
   wait:
     description:
-      - When action=create, replicate, or modify then wait for the database to enter the 'available' state.  When action=delete wait for the database to be terminated.
+      - When command=create, replicate, or modify then wait for the database to enter the 'available' state.  When command=delete wait for the database to be terminated.
     required: false
     default: "no"
     choices: [ "yes", "no" ]
@@ -198,7 +198,7 @@ options:
     aliases: []
   apply_immediately:
     description:
-      - Used only when action=modify.  If enabled, the modifications will be applied as soon as possible rather than waiting for the next preferred maintenance window.
+      - Used only when command=modify.  If enabled, the modifications will be applied as soon as possible rather than waiting for the next preferred maintenance window.
     default: no
     choices: [ "yes", "no" ]
     aliases: []
@@ -209,7 +209,7 @@ author: Bruce Pennypacker
 EXAMPLES = '''
 # Basic mysql provisioning example
     action: rds
-        action=create
+        command=create
         instance_name=new_database
         db_engine=MySQL
         size=10
@@ -219,7 +219,7 @@ EXAMPLES = '''
 
 # Create a read-only replica and wait for it to become available
     action: rds
-        action=replicate
+        command=replicate
         instance_name=new_database_replica
         source_instance=new_database
         wait=yes
@@ -227,13 +227,13 @@ EXAMPLES = '''
 
 # Delete an instance, but create a snapshot before doing so
     action: rds
-        action=delete
+        command=delete
         instance_name=new_database
         snapshot=new_database_snapshot
 
 # Get facts about an instance
     action: rds
-        action=facts
+        command=facts
         instance_name=new_database
     register: new_database_facts
     
@@ -266,7 +266,7 @@ except ImportError:
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            action = dict(choices=['create', 'replicate', 'delete', 'facts', 'modify'], required=True),
+            command = dict(choices=['create', 'replicate', 'delete', 'facts', 'modify'], required=True),
             instance_name = dict(required=True),
             source_instance = dict(required=False),
             db_engine = dict(choices=['MySQL', 'oracle-se1', 'oracle-se', 'oracle-ee', 'sqlserver-ee', 'sqlserver-se', 'sqlserver-ex', 'sqlserver-web'], required=False),
@@ -281,7 +281,7 @@ def main():
             multi_zone = dict(choices=BOOLEANS, default=False),
             iops = dict(required=False), 
             security_groups = dict(required=False),
-	    port = dict(required=False),
+            port = dict(required=False),
             upgrade = dict(choices=BOOLEANS, default=False),
             option_group = dict(required=False),
             maint_window = dict(required=False),
@@ -299,7 +299,7 @@ def main():
         )
     )
 
-    action = module.params.get('action')
+    command = module.params.get('command')
     instance_name = module.params.get('instance_name');
     source_instance = module.params.get('source_instance');
     db_engine = module.params.get('db_engine');
@@ -357,30 +357,30 @@ def main():
     except boto.exception.BotoServerError, e:
         module.fail_json(msg = e.error_message)
 
-    # Validate parameters for each action
-    if action == 'create':
+    # Validate parameters for each command
+    if command == 'create':
         required_vars = [ 'instance_name', 'db_engine', 'size', 'instance_type', 'username', 'password' ]
         invalid_vars = [ 'source_instance', 'snapshot', 'apply_immediately' ]
-    elif action == 'replicate':
+    elif command == 'replicate':
         required_vars = [ 'instance_name', 'source_instance' ]
         invalid_vars = [ 'db_engine', 'size', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'security_groups', 'option_group', 'maint_window', 'backup_window', 'backup_retention', 'subnet', 'snapshot', 'apply_immediately' ]
-    elif action == 'delete':
+    elif command == 'delete':
         required_vars = [ 'instance_name' ]
         invalid_vars = [ 'db_engine', 'size', 'instance_type', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'security_groups', 'option_group', 'maint_window', 'backup_window', 'backup_retention', 'port', 'upgrade', 'subnet', 'zone' , 'source_instance', 'apply_immediately' ]
-    elif action == 'facts':
+    elif command == 'facts':
         required_vars = [ 'instance_name' ]
         invalid_vars = [ 'db_engine', 'size', 'instance_type', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'security_groups', 'option_group', 'maint_window', 'backup_window', 'backup_retention', 'port', 'upgrade', 'subnet', 'zone', 'wait', 'source_instance' 'apply_immediately' ]
-    elif action == 'modify':
+    elif command == 'modify':
         required_vars = [ 'instance_name' ]
         invalid_vars = [ 'db_engine', 'username', 'db_name', 'engine_version',  'license_model', 'option_group', 'port', 'upgrade', 'subnet', 'zone', 'source_instance' ]
  
     for v in required_vars:
         if not module.params.get(v):
-            module.fail_json(msg = str("Variable %s required for %s action" % (v, action)))
+            module.fail_json(msg = str("Variable %s required for %s command" % (v, command)))
             
     for v in invalid_vars:
         if module.params.get(v):
-            module.fail_json(msg = str("Variable %s invalid for %s action" % (v, action)))
+            module.fail_json(msg = str("Variable %s invalid for %s command" % (v, command)))
 
     # Package up the optional parameters
     params = {}
@@ -434,13 +434,13 @@ def main():
         params["security_groups"] = security_groups.split(',')
 
     try: 
-        if action == 'create':
+        if command == 'create':
             db = conn.create_dbinstance(instance_name, size, instance_type, username, password, **params)
-        elif action == 'replicate':
+        elif command == 'replicate':
             if instance_type:
               params["instance_class"] = instance_type
             db = conn.create_dbinstance_read_replica(instance_name, source_instance, **params)
-        elif action == 'delete':
+        elif command == 'delete':
             if snapshot:
                 params["skip_final_snapshot"] = False
                 params["final_snapshot_id"] = snapshot
@@ -448,11 +448,11 @@ def main():
                 params["skip_final_snapshot"] = True
 
             db = conn.delete_dbinstance(instance_name, **params)
-        elif action == 'modify':
+        elif command == 'modify':
             params["apply_immediately"] = apply_immediately
             db = conn.modify_dbinstance(instance_name, **params)
 
-    # Don't do anything for the 'facts' action since we'll just drop down
+    # Don't do anything for the 'facts' command since we'll just drop down
     # to get_all_dbinstances below to collect the facts
 
     except boto.exception.BotoServerError, e:
@@ -460,7 +460,7 @@ def main():
 
     # If we're not waiting for a delete to complete then we're all done
     # so just return
-    if action == 'delete' and not wait:
+    if command == 'delete' and not wait:
         module.exit_json(changed=True)
 
     instances = conn.get_all_dbinstances(instance_name)
@@ -482,7 +482,7 @@ def main():
             # If we're waiting for an instance to be deleted then
             # get_all_dbinstances will eventually throw a 
             # DBInstanceNotFound error.
-            if action == 'delete' and e.error_code == 'DBInstanceNotFound':
+            if command == 'delete' and e.error_code == 'DBInstanceNotFound':
                 module.exit_json(changed=True)                
             else:
                 module.fail_json(msg = e.error_message)
