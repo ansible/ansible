@@ -90,12 +90,8 @@ class Inventory(object):
                 self.parser = InventoryScript(filename=host_list)
                 self.groups = self.parser.groups.values()
             else:
-                data = file(host_list).read()
-                if not data.startswith("---"):
-                    self.parser = InventoryParser(filename=host_list)
-                    self.groups = self.parser.groups.values()
-                else:
-                    raise errors.AnsibleError("YAML inventory support is deprecated in 0.6 and removed in 0.7, see the migration script in examples/scripts in the git checkout")
+                self.parser = InventoryParser(filename=host_list)
+                self.groups = self.parser.groups.values()
 
             utils.plugins.vars_loader.add_directory(self.basedir(), with_subdir=True)
         else:
