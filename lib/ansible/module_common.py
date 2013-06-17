@@ -859,7 +859,7 @@ class AnsibleModule(object):
             self.cleanup(tmp_dest)
             self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
 
-    def run_command(self, args, check_rc=False, close_fds=False, executable=None, data=None):
+    def run_command(self, args, check_rc=False, close_fds=False, executable=None, data=None, binary_data=False):
         '''
         Execute a command, returns rc, stdout, and stderr.
         args is the command to run
@@ -895,7 +895,8 @@ class AnsibleModule(object):
                                    stderr=subprocess.PIPE)
             if data:
                 cmd.stdin.write(data)
-                cmd.stdin.write('\\n')
+                if not binary_data:
+                    cmd.stdin.write('\\n')
             out, err = cmd.communicate()
             rc = cmd.returncode
         except (OSError, IOError), e:
