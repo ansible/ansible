@@ -259,8 +259,8 @@ Ansible has an optional configuration file that can be used to tune settings and
 the first config file it finds present:
 
 1. File specified by the ``ANSIBLE_CONFIG`` environment variable
-2. ``ansible.cfg`` in the current working directory. (version 0.8 and up)
-3. ``~/.ansible.cfg``
+2. ``~/.ansible.cfg``
+3. ``ansible.cfg`` in the current working directory. (version 0.8 and up)
 4. ``/etc/ansible/ansible.cfg``
 
 For those running from source, a sample configuration file lives in the examples/ directory.  The RPM will install configuration into /etc/ansible/ansible.cfg automatically.
