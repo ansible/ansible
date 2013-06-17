@@ -85,7 +85,7 @@ options:
      default: None
    is_public:
      description:
-        - Wether the image can be accessed publicly
+        - Whether the image can be accessed publicly
      required: false
      default: 'yes'
    copy_from:
