@@ -114,7 +114,8 @@ class Facts(object):
                     '/etc/vmware-release': 'VMwareESX',
                     '/etc/openwrt_release': 'OpenWrt',
                     '/etc/system-release': 'OtherLinux',
-                    '/etc/alpine-release': 'Alpine' }
+                    '/etc/alpine-release': 'Alpine',
+                    '/etc/release': 'Solaris' }
     SELINUX_MODE_DICT = { 1: 'enforcing', 0: 'permissive', -1: 'disabled' }
 
     # A list of dicts.  If there is a platform with more than one
@@ -149,7 +150,7 @@ class Facts(object):
         return self.facts
 
     # Platform
-    # patform.system() can be Linux, Darwin, Java, or Windows
+    # platform.system() can be Linux, Darwin, Java, or Windows
     def get_platform_facts(self):
         self.facts['system'] = platform.system()
         self.facts['kernel'] = platform.release()
@@ -301,6 +302,15 @@ class Facts(object):
                         data = get_file_content(path)
                         self.facts['distribution'] = 'Alpine'
                         self.facts['distribution_version'] = data
+                    elif name == 'Solaris':
+                        data = get_file_content(path).split('\n')[0]
+                        ora_prefix = ''
+                        if 'Oracle Solaris' in data:
+                            data = data.replace('Oracle ','')
+                            ora_prefix = 'Oracle '
+                        self.facts['distribution'] = data.split()[0]
+                        self.facts['distribution_version'] = data.split()[1]
+                        self.facts['distribution_release'] = ora_prefix + data
                     else:
                         self.facts['distribution'] = name
 
