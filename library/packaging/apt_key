@@ -37,6 +37,11 @@ options:
         default: none
         description:
             - identifier of key
+    data:
+        required: false
+        default: none
+        description:
+            - keyfile contents
     url:
         required: false
         default: none
