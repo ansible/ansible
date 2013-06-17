@@ -163,6 +163,7 @@ class Runner(object):
         self.is_playbook      = is_playbook
         self.environment      = environment
         self.complex_args     = complex_args
+        self.module_with_list = False
 
         self.callbacks.runner = self
 
@@ -405,8 +406,8 @@ class Runner(object):
             if type(items) != list:
                 raise errors.AnsibleError("lookup plugins have to return a list: %r" % items)
 
-            if len(items) and utils.is_list_of_strings(items) and self.module_name in [ 'apt', 'yum', 'pkgng' ]:
-                # hack for apt, yum, and pkgng so that with_items maps back into a single module call
+            if len(items) and utils.is_list_of_strings(items) and self.module_with_list:
+                # with_items maps back into a single module call, making modules that support this more efficient
                 inject['item'] = ",".join(items)
                 items = None
 
@@ -710,6 +711,9 @@ class Runner(object):
                 module_style = 'new'
             if 'WANT_JSON' in module_data:
                 module_style = 'non_native_want_json'
+
+            if 'WITH_ITEMS_USES_LIST' in module_data:
+                self.module_with_list = True
 
             complex_args_json = utils.jsonify(complex_args)
             # We force conversion of module_args to str because module_common calls shlex.split,
