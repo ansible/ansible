@@ -81,7 +81,7 @@ options:
      default: 4
    enable_dhcp:
      description:
-        - Wether DHCP should be enabled for this subnet.
+        - Whether DHCP should be enabled for this subnet.
      required: false
      default: true
    gateway_ip:
