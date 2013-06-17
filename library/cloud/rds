@@ -463,8 +463,12 @@ def main():
     if command == 'delete' and not wait:
         module.exit_json(changed=True)
 
-    instances = conn.get_all_dbinstances(instance_name)
-    my_inst = instances[0]
+    try: 
+        instances = conn.get_all_dbinstances(instance_name)
+        my_inst = instances[0]
+    except boto.exception.BotoServerError, e:
+        module.fail_json(msg = e.error_message)
+
 
     # Wait for the instance to be available if requested
     if wait:
