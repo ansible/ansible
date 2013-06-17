@@ -22,6 +22,14 @@ PREFIX_MANPATH="$ANSIBLE_HOME/docs/man"
 export ANSIBLE_LIBRARY="$ANSIBLE_HOME/library"
 [[ $MANPATH != ${PREFIX_MANPATH}* ]] && export MANPATH=$PREFIX_MANPATH:$MANPATH
 
+for i in hosts inventory; do
+    hostsfile=$HACKING_DIR/$i
+    if [ -r "$hostsfile" ]; then
+        export ANSIBLE_HOSTS=$hostsfile
+        break
+    fi
+done
+
 # Print out values unless -q is set
 
 if [ $# -eq 0 -o "$1" != "-q" ] ; then
@@ -32,9 +40,13 @@ if [ $# -eq 0 -o "$1" != "-q" ] ; then
     echo "PYTHONPATH=$PYTHONPATH"
     echo "ANSIBLE_LIBRARY=$ANSIBLE_LIBRARY"
     echo "MANPATH=$MANPATH"
-    echo ""
-    
-    echo "Remember, you may wish to specify your host file with -i"
+    if [ -n "$ANSIBLE_HOSTS" ]; then
+        echo "ANSIBLE_HOSTS=$ANSIBLE_HOSTS"
+        echo "(you can override this and specify a different host file with -i)"
+    else
+        echo ""
+        echo "Remember, you may wish to specify your host file with -i"
+    fi
     echo ""
     echo "Done!"
     echo ""
