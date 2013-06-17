@@ -1,0 +1,7 @@
+---
+- hosts: all
+  gather_facts: False
+
+  tasks:
+  - copy: src=$item dest=/tmp/ansible_with_tree/$item
+    with_tree: .
