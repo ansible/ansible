@@ -395,7 +395,7 @@ class J2Template(jinja2.environment.Template):
     def new_context(self, vars=None, shared=False, locals=None):
         return jinja2.runtime.Context(self.environment, vars.add_locals(locals), self.name, self.blocks)
 
-def template_from_file(basedir, path, vars):
+def template_from_file(basedir, path, vars, strict=False):
     ''' run a file through the templating engine '''
 
     from ansible import utils
@@ -409,6 +409,9 @@ def template_from_file(basedir, path, vars):
     environment = jinja2.Environment(loader=loader, trim_blocks=True, extensions=_get_extensions())
     environment.filters.update(_get_filters())
     environment.globals['lookup'] = my_lookup
+
+    if strict:
+        environment.undefined = jinja2.StrictUndefined
 
     try:
         data = codecs.open(realpath, encoding="utf8").read()

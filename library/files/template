@@ -41,6 +41,13 @@ options:
     required: false
     default: ""
     version_added: "1.2"
+  strict:
+    description:
+      - is set to "yes", use of undefined variables in the template will raise an error.
+    choices: [ "yes", "no" ]
+    required: false
+    default: "no"
+    version_added: "1.3"
   others:
     description:
       - all arguments accepted by the M(file) module also work here
