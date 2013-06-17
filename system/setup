@@ -365,6 +365,8 @@ class Facts(object):
         self.facts['date_time']['minute'] = now.strftime('%M')
         self.facts['date_time']['second'] = now.strftime('%S')
         self.facts['date_time']['epoch'] = now.strftime('%s')
+        if self.facts['date_time']['epoch'][0] == '%':
+            self.facts['date_time']['epoch'] = str(int(time.time()))
         self.facts['date_time']['date'] = now.strftime('%Y-%m-%d')
         self.facts['date_time']['time'] = now.strftime('%H:%M:%S')
         self.facts['date_time']['iso8601_micro'] = now.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
