@@ -164,9 +164,7 @@ options:
         choices: ['always', 'on_creation']
         version_added: "1.3"
         description:
-            - Control when does ansible update passwords.
-            C(always) will update if they differ.
-            C(on_creation) will only update the password if user is being created.
+            - C(always) will update passwords if they differ.  C(on_creation) will only set the password for newly created users.
 '''
 
 EXAMPLES = '''
