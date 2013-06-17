@@ -63,16 +63,22 @@ options:
             - specifies the absolute path to C(sysctl.conf), if not /etc/sysctl.conf
         required: false
         default: /etc/sysctl.conf
-examples:
-    - code: "sysctl: name=vm.swappiness value=5 state=present"
-      description: "Set vm.swappiness to 5 in /etc/sysctl.conf"
-    - code: "sysctl: name=kernel.panic state=absent sysctl_file=/etc/sysctl.conf"
-      description: "Remove kernel.panic entry from /etc/sysctl.conf"
-    - code: "sysctl: name=kernel.panic value=3 sysctl_file=/tmp/test_sysctl.conf check=before reload=no"
-      description: Set kernel.panic to 3 in /tmp/test_sysctl.conf, check if the sysctl key seems writable, but do not reload sysctl, and do not check kernel value after (not needed, because not the real /etc/sysctl.conf updated)
 notes: []
 requirements: []
 author: David "DaviXX" CHANIAL <david.chanial@gmail.com>
+'''
+
+EXAMPLES = '''
+# Set vm.swappiness to 5 in /etc/sysctl.conf
+- sysctl: name=vm.swappiness value=5 state=present
+
+# Remove kernel.panic entry from /etc/sysctl.conf
+- sysctl: name=kernel.panic state=absent sysctl_file=/etc/sysctl.conf
+
+# Set kernel.panic to 3 in /tmp/test_sysctl.conf, check if the sysctl key
+# seems writable, but do not reload sysctl, and do not check kernel value
+# after (not needed, because not the real /etc/sysctl.conf updated)
+- sysctl: name=kernel.panic value=3 sysctl_file=/tmp/test_sysctl.conf check=before reload=no
 '''
 
 # ==============================================================

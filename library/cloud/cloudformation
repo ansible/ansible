@@ -72,19 +72,19 @@ author: James S. Martin
 '''
 
 EXAMPLES = '''
-  # Basic task example
-  tasks:
-  - name: launch ansible cloudformation example
-    action: cloudformation >
-      stack_name="ansible-cloudformation" state=present
-      region=us-east-1 disable_rollback=yes
-      template=files/cloudformation-example.json
-    args:
-      template_parameters:
-        KeyName: jmartin
-        DiskType: ephemeral
-        InstanceType: m1.small
-        ClusterSize: 3
+# Basic task example
+tasks:
+- name: launch ansible cloudformation example
+  action: cloudformation >
+    stack_name="ansible-cloudformation" state=present
+    region=us-east-1 disable_rollback=yes
+    template=files/cloudformation-example.json
+  args:
+    template_parameters:
+      KeyName: jmartin
+      DiskType: ephemeral
+      InstanceType: m1.small
+      ClusterSize: 3
 '''
 
 import boto.cloudformation.connection

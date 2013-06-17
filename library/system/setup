@@ -619,9 +619,10 @@ class LinuxHardware(Hardware):
             d['rotational'] = get_file_content(sysdir + "/queue/rotational")
             d['scheduler_mode'] = ""
             scheduler = get_file_content(sysdir + "/queue/scheduler")
-            m = re.match(".*?(\[(.*)\])", scheduler)
-            if m:
-                d['scheduler_mode'] = m.group(2)
+            if scheduler is not None:
+                m = re.match(".*?(\[(.*)\])", scheduler)
+                if m:
+                    d['scheduler_mode'] = m.group(2)
 
             d['sectors'] = get_file_content(sysdir + "/size")
             if not d['sectors']:

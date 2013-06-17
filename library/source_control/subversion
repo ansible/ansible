@@ -61,9 +61,11 @@ options:
       - --password parameter passed to svn.
     required: false
     default: null
-examples:
-   - code: "subversion: repo=svn+ssh://an.example.org/path/to/repo dest=/src/checkout"
-     description: Checkout subversion repository to specified folder.
+'''
+
+EXAMPLES = '''
+# Checkout subversion repository to specified folder.
+- subversion: repo=svn+ssh://an.example.org/path/to/repo dest=/src/checkout
 '''
 
 import re

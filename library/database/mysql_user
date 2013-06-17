@@ -72,15 +72,6 @@ options:
     required: false
     default: present
     choices: [ "present", "absent" ]
-examples:
-   - code: "mysql_user: name=bob password=12345 priv=*.*:ALL state=present"
-     description: Create database user with name 'bob' and password '12345' with all database privileges
-   - code: "mysql_user: login_user=root login_password=123456 name=sally state=absent"
-     description: Ensure no user named 'sally' exists, also passing in the auth credentials.
-   - code: mydb.*:INSERT,UPDATE/anotherdb.*:SELECT/yetanotherdb.*:ALL
-     description: Example privileges string format
-   - code: "mysql_user: name=root password=abc123 login_unix_socket=/var/run/mysqld/mysqld.sock"
-     description: Example using login_unix_socket to connect to server
 notes:
    - Requires the MySQLdb Python package on the remote host. For Ubuntu, this
      is as easy as apt-get install python-mysqldb.
@@ -99,9 +90,22 @@ author: Mark Theunissen
 '''
 
 EXAMPLES = """
+# Create database user with name 'bob' and password '12345' with all database privileges
+- mysql_user: name=bob password=12345 priv=*.*:ALL state=present
+
+# Ensure no user named 'sally' exists, also passing in the auth credentials.
+- mysql_user: login_user=root login_password=123456 name=sally state=absent
+
+# Example privileges string format
+mydb.*:INSERT,UPDATE/anotherdb.*:SELECT/yetanotherdb.*:ALL
+
+# Example using login_unix_socket to connect to server
+- mysql_user: name=root password=abc123 login_unix_socket=/var/run/mysqld/mysqld.sock
+
 # Example .my.cnf file for setting the root password
 # Note: don't use quotes around the password, because the mysql_user module
 # will include them in the password but the mysql client will not
+
 [client]
 user=root
 password=n<_665{vS43y

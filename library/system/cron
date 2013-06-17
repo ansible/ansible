@@ -114,21 +114,28 @@ options:
     default: "no"
     choices: [ "yes", "no" ]
     aliases: []
-
-examples:
-   - code: 'cron: name="check dirs" hour="5,2" job="ls -alh > /dev/null"'
-     description: Ensure a job that runs at 2 and 5 exists. Creates an entry like "* 5,2 * * ls -alh > /dev/null"
-   - code: 'cron: name="an old job" cron job="/some/dir/job.sh" state=absent'
-     description: 'Ensure an old job is no longer present. Removes any job that is preceded by "#Ansible: an old job" in the crontab'
-   - code: 'cron: name="a job for reboot" reboot=yes job="/some/job.sh"'
-     description: 'Creates an entry like "@reboot /some/job.sh"'
-   - code: 'cron: name="yum autoupdate" weekday="2" minute=0 hour=12 user="root" job="YUMINTERACTIVE=0 /usr/sbin/yum-autoupdate" cron_file=ansible_yum-autoupdate'
-
 requirements:
   - cron
 author: Dane Summers
 updates: Mike Grozak
 """
+
+EXAMPLES = '''
+# Ensure a job that runs at 2 and 5 exists.
+# Creates an entry like "* 5,2 * * ls -alh > /dev/null"
+- cron: name="check dirs" hour="5,2" job="ls -alh > /dev/null"
+
+# Ensure an old job is no longer present. Removes any job that is prefixed
+# by "#Ansible: an old job" from the crontab
+- cron: name="an old job" cron job="/some/dir/job.sh" state=absent
+
+# Creates an entry like "@reboot /some/job.sh"
+- cron: name="a job for reboot" reboot=yes job="/some/job.sh"
+
+- cron: name="yum autoupdate" weekday="2" minute=0 hour=12
+        user="root" job="YUMINTERACTIVE=0 /usr/sbin/yum-autoupdate"
+        cron_file=ansible_yum-autoupdate
+'''
 
 import re
 import tempfile

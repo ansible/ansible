@@ -73,16 +73,19 @@ options:
     default: server
     choices: ["server", "service"]
     aliases: []
-
-examples:
-   - code: ansible host -m netscaler -a "nsc_host=nsc.example.com user=apiuser password=apipass"
-     description: "Disable the server"
-   - code: ansible host -m netscaler -a "nsc_host=nsc.example.com user=apiuser password=apipass action=enable"
-     description: "Enable the server"
-   - code: ansible host -m netscaler -a "nsc_host=nsc.example.com user=apiuser password=apipass name=local:8080 type=service action=disable"
-     description: "Disable the service local:8080"
 requirements: [ "urllib", "urllib2" ]
 author: Nandor Sivok
+'''
+
+EXAMPLES = '''
+# Disable the server
+ansible host -m netscaler -a "nsc_host=nsc.example.com user=apiuser password=apipass"
+
+# Enable the server
+ansible host -m netscaler -a "nsc_host=nsc.example.com user=apiuser password=apipass action=enable"
+
+# Disable the service local:8080
+ansible host -m netscaler -a "nsc_host=nsc.example.com user=apiuser password=apipass name=local:8080 type=service action=disable"
 '''
 
 

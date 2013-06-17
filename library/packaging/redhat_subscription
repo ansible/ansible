@@ -59,11 +59,17 @@ options:
             - Specify a subscription pool name to consume.  Regular expressions accepted.
         required: False
         default: '^$'
-examples:
-    - code: redhat_subscription action=register username=joe_user password=somepass autosubscribe=true
-      description: Register as user I(joe_user) with password I(somepass) and auto-subscribe to available content.
-    - code: redhat_subscription action=register activationkey=1-222333444 pool='^(Red Hat Enterprise Server|Red Hat Virtualization)$'
-      description: Register with activationkey I(1-222333444) and consume subscriptions matching the names I(Red hat Enterprise Server) and I(Red Hat Virtualization)
+'''
+
+EXAMPLES = '''
+# Register as user (joe_user) with password (somepass) and auto-subscribe to available content.
+- redhat_subscription: action=register username=joe_user password=somepass autosubscribe=true
+
+# Register with activationkey (1-222333444) and consume subscriptions matching
+# the names (Red hat Enterprise Server) and (Red Hat Virtualization)
+- redhat_subscription: action=register
+                       activationkey=1-222333444
+                       pool='^(Red Hat Enterprise Server|Red Hat Virtualization)$'
 '''
 
 import os

@@ -85,12 +85,12 @@ options:
      default: None
    is_public:
      description:
-        - Wether the image can be accesed publically
+        - Wether the image can be accessed publicly
      required: false
      default: 'yes'
    copy_from:
      description:
-        - A url from where the image can be downloaded, mutually exculsive with file parameter
+        - A url from where the image can be downloaded, mutually exclusive with file parameter
      required: false
      default: None
    timeout:
@@ -103,12 +103,20 @@ options:
         - The path to the file which has to be uploaded, mutually exclusive with copy_from
      required: false
      default: None
-examples:
-  - code: "glance_image: login_username=admin login_password=passme login_tenant_name=admin name=cirros container_format=bare 
-           disk_format=qcow2 state=present copy_from=http:launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img"
-    description: "Uploads an image from an http url"
 requirements: ["glanceclient", "keystoneclient"]
 
+'''
+
+EXAMPLES = '''
+# Upload an image from an HTTP URL
+- glance_image: login_username=admin
+                login_password=passme
+                login_tenant_name=admin
+                name=cirros
+                container_format=bare 
+                disk_format=qcow2
+                state=present
+                copy_from=http:launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img
 '''
 
 import time

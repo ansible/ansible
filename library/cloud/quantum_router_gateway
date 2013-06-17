@@ -45,7 +45,7 @@ options:
      default: 'yes'
    auth_url:
      description:
-        - The keystone url for authentication
+        - The keystone URL for authentication
      required: false
      default: 'http://127.0.0.1:35357/v2.0/'
    region_name:
@@ -68,11 +68,14 @@ options:
         - Name of the external network which should be attached to the router.
      required: true
      default: None
-examples:
-   - code: "quantum_router_gateway: state=present login_username=admin login_password=admin
-                          login_tenant_name=admin router_name=external_router network_name=external_network"
-     description: "Attaches an external network with a router to allow flow of external traffic"
 requirements: ["quantumclient", "keystoneclient"]
+'''
+
+EXAMPLES = '''
+# Attach an external network with a router to allow flow of external traffic
+- quantum_router_gateway: state=present login_username=admin login_password=admin
+                          login_tenant_name=admin router_name=external_router
+                          network_name=external_network
 '''
 
 _os_keystone = None

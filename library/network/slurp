@@ -33,18 +33,18 @@ options:
     required: true
     default: null
     aliases: []
-examples:
-   - code: |
-           ansible host -m slurp -a 'src=/tmp/xx'
-               host | success >> {
-                  "content": "aGVsbG8gQW5zaWJsZSB3b3JsZAo=", 
-                  "encoding": "base64"
-               }
-     description: "Example using C(/usr/bin/ansible)"
 notes:
    - "See also: M(fetch)"
 requirements: []
 author: Michael DeHaan
+'''
+
+EXAMPLES = '''
+ansible host -m slurp -a 'src=/tmp/xx'
+   host | success >> {
+      "content": "aGVsbG8gQW5zaWJsZSB3b3JsZAo=", 
+      "encoding": "base64"
+   }
 '''
 
 import base64
