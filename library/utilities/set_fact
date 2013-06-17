@@ -36,8 +36,6 @@ options:
     required: true
     default: null
 version_added: "1.2"
-notes:
-    - You can set play variables using the C(set_var) module.
 '''
 
 EXAMPLES = '''
