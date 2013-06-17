@@ -36,7 +36,7 @@ options:
     aliases: []
   group:
     description:
-      - security group to use with the instance
+      - security group (or list of groups) to use with the instance
     required: false
     default: null 
     aliases: []
@@ -183,6 +183,18 @@ local_action:
     count: 5 
     instance_tags: '{"db":"postgres"}' monitoring=yes'
 
+# Multiple groups example
+local_action: 
+    module: ec2 
+    keypair: mykey 
+    group: [databases, internal-services, sshable, and-so-forth]
+    instance_type: m1.large 
+    image: ami-6e649707 
+    wait: yes 
+    wait_timeout: 500 
+    count: 5 
+    instance_tags: '{"db":"postgres"}' monitoring=yes'
+
 # VPC example
 local_action: 
     module: ec2 
@@ -208,7 +220,7 @@ def main():
         argument_spec = dict(
             key_name = dict(required=True, aliases = ['keypair']),
             id = dict(),
-            group = dict(),
+            group = dict(type='list'),
             group_id = dict(),
             region = dict(choices=['eu-west-1', 'sa-east-1', 'us-east-1', 'ap-northeast-1', 'us-west-2', 'us-west-1', 'ap-southeast-1', 'ap-southeast-2']),
             zone = dict(),
@@ -285,14 +297,18 @@ def main():
         # Here we try to lookup the group id from the security group name - if group is set.
         if group_name:
             grp_details = ec2.get_all_security_groups()
-            for grp in grp_details:
-                if str(group_name) in str(grp):
-                    group_id = str(grp.id)
+            if type(group_name) == list:
+                group_id = list(filter(lambda grp: str(grp.id) if str(tmp) in str(grp) else None, grp_details) for tmp in group_name)
+            elif type(group_name) == str:
+                for grp in grp_details:
+                    if str(group_name) in str(grp):
+                        group_id = [str(grp.id)]
+                group_name = [group_name]
         # Now we try to lookup the group id testing if group exists.
         elif group_id:
             grp_details = ec2.get_all_security_groups(group_ids=group_id)
             grp_item = grp_details[0]
-            group_name = grp_item.name 
+            group_name = [grp_item.name ]
     except boto.exception.NoAuthHandlerFound, e:
             module.fail_json(msg = str(e))
 
@@ -329,9 +345,9 @@ def main():
                       'user_data': user_data}
 
             if vpc_subnet_id:
-                params['security_group_ids'] = [group_id]
+                params['security_group_ids'] = group_id
             else:
-                params['security_groups'] = [group_name]
+                params['security_groups'] = group_name
 
             res = ec2.run_instances(**params)
         except boto.exception.BotoServerError, e:
