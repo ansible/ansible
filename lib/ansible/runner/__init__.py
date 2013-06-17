@@ -387,6 +387,10 @@ class Runner(object):
         if self.inventory.basedir() is not None:
             inject['inventory_dir'] = self.inventory.basedir()
 
+        # late processing of parameterized sudo_user
+        if self.sudo_user is not None:
+            self.sudo_user = template.template(self.basedir, self.sudo_user, inject)
+
         # allow with_foo to work in playbooks...
         items = None
         items_plugin = self.module_vars.get('items_lookup_plugin', None)
