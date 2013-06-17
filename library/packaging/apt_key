@@ -58,6 +58,10 @@ examples:
       description: Add an Apt signing key, uses whichever key is at the URL
     - code: "apt_key: id=473041FA url=https://ftp-master.debian.org/keys/archive-key-6.0.asc state=present"
       description: Add an Apt signing key, will not download if present
+    - code: "apt_key: file=/tmp/apt.gpg state=present"
+      description: Add an Apt signing key from the specified file
+    - code: "apt_key: data='{{ lookup('file', 'apt.gpg') }}' state=present"
+      description: Add an Apt signing key from a local file
     - code: "apt_key: url=https://ftp-master.debian.org/keys/archive-key-6.0.asc state=absent"
       description: Remove an Apt signing key, uses whichever key is at the URL
     - code: "apt_key: id=473041FA state=absent"
