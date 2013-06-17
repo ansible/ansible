@@ -109,6 +109,7 @@ Security groups are comma-separated in 'ec2_security_group_ids' and
 ######################################################################
 
 import sys
+import io
 import os
 import argparse
 import re
@@ -174,9 +175,19 @@ class Ec2Inventory(object):
 
     def read_settings(self):
         ''' Reads the settings from the ec2.ini file '''
-
         config = ConfigParser.SafeConfigParser()
-        config.read(os.path.dirname(os.path.realpath(__file__)) + '/ec2.ini')
+        path = os.path.dirname(os.path.realpath(__file__)) + '/ec2.ini'
+        if os.access(path, os.F_OK):
+            config.read(path)
+        else:
+            conf = '\n'.join([ s.strip() for s in '''
+                [ec2]
+                destination_variable = public_dns_name
+                vpc_destination_variable = ip_address
+                cache_path = /tmp
+                cache_max_age = 300
+            '''.splitlines() ])
+            config.readfp(io.BytesIO(conf))
 
         # is eucalyptus?
         self.eucalyptus_host = None
@@ -188,7 +199,10 @@ class Ec2Inventory(object):
 
         # Regions
         self.regions = []
-        configRegions = config.get('ec2', 'regions')
+        if config.has_option('ec2', 'regions'):
+            configRegions = config.get('ec2', 'regions')
+        else:
+            configRegions = os.getenv('AWS_REGION') or os.getenv('AWS_DEFAULT_REGION') or 'all'
         if (configRegions == 'all'):
             if self.eucalyptus_host:
                 self.regions.append(boto.connect_euca(host=self.eucalyptus_host).region.name)
@@ -207,7 +221,6 @@ class Ec2Inventory(object):
         self.cache_path_cache = cache_path + "/ansible-ec2.cache"
         self.cache_path_index = cache_path + "/ansible-ec2.index"
         self.cache_max_age = config.getint('ec2', 'cache_max_age')
-        
 
 
     def parse_cli_args(self):
