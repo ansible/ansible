@@ -66,13 +66,23 @@ notes:
 
 EXAMPLES='''
 # List ongoing maintenance windows.
-pagerduty: name=companyabc user=example@example.com passwd=password123 state=ongoing
+- pagerduty: name=companyabc user=example@example.com passwd=password123 state=ongoing
 
 # Create a 1 hour maintenance window for service FOO123.
-pagerduty: name=companyabc user=example@example.com passwd=password123 state=running service=FOO123"
+- pagerduty: name=companyabc
+             user=example@example.com
+             passwd=password123
+             state=running
+             service=FOO123
 
 # Create a 4 hour maintenance window for service FOO123 with the description "deployment".
-pagerduty: name=companyabc user=example@example.com passwd=password123 state=running service=FOO123 hours=4 desc=deployment"
+- pagerduty: name=companyabc
+             user=example@example.com
+             passwd=password123
+             state=running
+             service=FOO123
+             hours=4
+             desc=deployment
 '''
 
 import json

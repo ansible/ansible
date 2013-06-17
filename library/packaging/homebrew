@@ -45,10 +45,10 @@ options:
 notes:  []
 '''
 EXAMPLES = '''
-homebrew: name=foo state=present
-homebrew: name=foo state=present update_homebrew=yes
-homebrew: name=foo state=absent
-homebrew: name=foo,bar state=absent
+- homebrew: name=foo state=present
+- homebrew: name=foo state=present update_homebrew=yes
+- homebrew: name=foo state=absent
+- homebrew: name=foo,bar state=absent
 '''
 
 
