@@ -30,6 +30,7 @@ import base64
 import sys
 import shlex
 import pipes
+import jinja2
 
 import ansible.constants as C
 import ansible.inventory
@@ -128,7 +129,8 @@ class Runner(object):
         check=False,                        # don't make any changes, just try to probe for potential changes
         diff=False,                         # whether to show diffs for template files that change
         environment=None,                   # environment variables (as dict) to use inside the command
-        complex_args=None                   # structured data in addition to module_args, must be a dict
+        complex_args=None,                  # structured data in addition to module_args, must be a dict
+        error_on_undefined_vars=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR # ex. False
         ):
 
         if not complex_args:
@@ -164,6 +166,7 @@ class Runner(object):
         self.environment      = environment
         self.complex_args     = complex_args
         self.module_with_list = False
+        self.error_on_undefined_vars = error_on_undefined_vars
 
         self.callbacks.runner = self
 
@@ -446,11 +449,11 @@ class Runner(object):
                     if type(complex_args) != dict:
                         raise errors.AnsibleError("args must be a dictionary, received %s" % complex_args)
                 result = self._executor_internal_inner(
-                     host, 
-                     self.module_name, 
-                     self.module_args, 
-                     inject, 
-                     port, 
+                     host,
+                     self.module_name,
+                     self.module_args,
+                     inject,
+                     port,
                      complex_args=complex_args
                 )
                 results.append(result.result)
@@ -576,8 +579,12 @@ class Runner(object):
             tmp = self._make_tmp_path(conn)
 
         # render module_args and complex_args templates
-        module_args = template.template(self.basedir, module_args, inject)
-        complex_args = template.template(self.basedir, complex_args, inject)
+        try:
+            module_args = template.template(self.basedir, module_args, inject, fail_on_undefined=self.error_on_undefined_vars)
+            complex_args = template.template(self.basedir, complex_args, inject, fail_on_undefined=self.error_on_undefined_vars)
+        except jinja2.exceptions.UndefinedError, e:
+            raise errors.AnsibleUndefinedVariable("Undefined variables: %s" % str(e))
+
 
         result = handler.run(conn, tmp, module_name, module_args, inject, complex_args)
 
@@ -644,7 +651,7 @@ class Runner(object):
         path = pipes.quote(path)
         # The following test needs to be SH-compliant.  BASH-isms will
         # not work if /bin/sh points to a non-BASH shell.
-        test = "rc=0; [ -r \"%s\" ] || rc=2; [ -f \"%s\" ] || rc=1; [ -d \"%s\" ] && rc=3" % ((path,) * 3) 
+        test = "rc=0; [ -r \"%s\" ] || rc=2; [ -f \"%s\" ] || rc=1; [ -d \"%s\" ] && rc=3" % ((path,) * 3)
         md5s = [
             "(/usr/bin/md5sum %s 2>/dev/null)" % path,  # Linux
             "(/sbin/md5sum -q %s 2>/dev/null)" % path,  # ?
