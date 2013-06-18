@@ -31,7 +31,7 @@ options:
   pkg:
     description:
       - A package name or package specifier with version, like C(foo) or C(foo=1.0)
-    required: true
+    required: false
     default: null
   state:
     description:
