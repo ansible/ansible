@@ -42,6 +42,11 @@ options:
         default: none
         description:
             - keyfile contents
+    file:
+        required: false
+        default: none
+        description:
+            - keyfile path
     url:
         required: false
         default: none
@@ -67,6 +72,9 @@ EXAMPLES = '''
 
 # Remove a Apt specific signing key
 - apt_key: id=473041FA state=absent
+
+# Add a key from a file on the Ansible server    
+- apt_key: data="{{ lookup('file', 'apt.gpg') }}" state=present
 '''
 
 
@@ -121,9 +129,15 @@ def download_key(module, url):
         module.fail_json(msg="error getting key id from url", traceback=format_exc())
 
 
+<<<<<<< HEAD
 def add_key(module, key):
     cmd = "apt-key add -"
     (rc, out, err) = module.run_command(cmd, data=key, check_rc=True, binary_data=True)
+=======
+def add_key(module, key, data=None):
+    cmd = "apt-key add %s" % (key)
+    (rc, out, err) = module.run_command(cmd, data=data, check_rc=True)
+>>>>>>> 77159d21da40f6fcb0bfdcb1886f57acf68ea4f4
     return True
 
 def remove_key(module, key_id):
@@ -138,6 +152,7 @@ def main():
             id=dict(required=False, default=None),
             url=dict(required=False),
             data=dict(required=False),
+            file=dict(required=False),
             key=dict(required=False),
             state=dict(required=False, choices=['present', 'absent'], default='present')
         ),
@@ -147,6 +162,7 @@ def main():
     key_id          = module.params['id']
     url             = module.params['url']
     data            = module.params['data']
+    file            = module.params['file']
     state           = module.params['state']
     changed         = False
     
@@ -160,14 +176,14 @@ def main():
         if key_id and key_id in keys:
             module.exit_json(changed=False)
         else:
-            if not data:
+            if not file and not data:
                 data = download_key(module, url)
             if key_id and key_id in keys:
                 module.exit_json(changed=False)
             else:
                 if module.check_mode:
                     module.exit_json(changed=True)
-                add_key(module, data)
+                add_key(module, (file if file else "-"), data)
                 changed=False
                 keys2 = all_keys(module)
                 if len(keys) != len(keys2):
