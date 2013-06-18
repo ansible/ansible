@@ -167,7 +167,6 @@ class Runner(object):
         self.complex_args     = complex_args
         self.module_with_list = False
         self.error_on_undefined_vars = error_on_undefined_vars
-        print "DEBUG: EOUV: %s" % error_on_undefined_vars
 
         self.callbacks.runner = self
 
