@@ -462,7 +462,7 @@ def template_from_file(basedir, path, vars):
     try:
         res = jinja2.utils.concat(t.root_render_func(t.new_context(_jinja2_vars(basedir, vars, t.globals), shared=True)))
     except jinja2.exceptions.UndefinedError, e:
-        raise errors.AnsibleUndefinedVariable("Undefined variables: %s" % str(e))
+        raise errors.AnsibleUndefinedVariable("One or more undefined variables: %s" % str(e))
 
     if data.endswith('\n') and not res.endswith('\n'):
         res = res + '\n'
