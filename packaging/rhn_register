@@ -44,22 +44,31 @@ options:
             - Optionally specify a list of comma-separated channels to subscribe to upon successful registration.
         required: false
         default: []
+'''
 
-examples:
-    - code: rhn_register state=absent username=joe_user password=somepass
-      description: Unregister system from RHN.
+EXAMPLES = '''
+# Unregister system from RHN.
+- code: rhn_register state=absent username=joe_user password=somepass
 
-    - code: rhn_register state=present username=joe_user password=somepass
-      description: Register as user I(joe_user) with password I(somepass) and auto-subscribe to available content.
+# Register as user (joe_user) with password (somepass) and auto-subscribe to available content.
+- code: rhn_register state=present username=joe_user password=somepass
 
-    - code: rhn_register state=present activationkey=1-222333444 enable_eus=true
-      description: Register with activationkey I(1-222333444) and enable extended update support.
+# Register with activationkey (1-222333444) and enable extended update support.
+- code: rhn_register state=present activationkey=1-222333444 enable_eus=true
 
-    - code: rhn_register state=present username=joe_user password=somepass server_url=https://xmlrpc.my.satellite/XMLRPC
-      description: Register as user I(joe_user) with password I(somepass) against a satellite server specified by I(server_url).
+# Register as user (joe_user) with password (somepass) against a satellite
+# server specified by (server_url).
+- rhn_register:
+    state=present
+    username=joe_user
+    password=somepass
+    server_url=https://xmlrpc.my.satellite/XMLRPC
 
-    - code: rhn_register state=present username=joe_user password=somepass channels=rhel-x86_64-server-6-foo-1,rhel-x86_64-server-6-bar-1
-      description: Register as user I(joe_user) with password I(somepass) and enable channels I(rhel-x86_64-server-6-foo-1) and I(rhel-x86_64-server-6-bar-1).
+# Register as user (joe_user) with password (somepass) and enable
+# channels (rhel-x86_64-server-6-foo-1) and (rhel-x86_64-server-6-bar-1).
+- rhn_register: state=present username=joe_user
+                password=somepass
+                channels=rhel-x86_64-server-6-foo-1,rhel-x86_64-server-6-bar-1
 '''
 
 import sys
@@ -181,7 +190,7 @@ class Rhn(RegistrationBase):
             Returns: str
         '''
         url = urlparse.urlparse(self.config['serverURL'])
-        return url.netloc.replace('xmlrpc.','')
+        return url[1].replace('xmlrpc.','')
 
     @property
     def systemid(self):

@@ -36,16 +36,14 @@ options:
     required: true
     default: null
 version_added: "1.2"
-notes:
-    - You can set play variables using the C(set_var) module.
 '''
 
 EXAMPLES = '''
 # Example setting host facts using key=value pairs
-set_fact: one_fact="something" other_fact="{{ local_var * 2 }}"
+- set_fact: one_fact="something" other_fact="{{ local_var * 2 }}"
 
 # Example setting host facts using complex arguments
-set_fact:
-  one_fact: something
-  other_fact: "{{ local_var * 2 }}"
+- set_fact:
+     one_fact: something
+     other_fact: "{{ local_var * 2 }}"
 '''
