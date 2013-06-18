@@ -20,14 +20,23 @@ PREFIX_PYTHONPATH="$ANSIBLE_HOME/lib"
 PREFIX_PATH="$ANSIBLE_HOME/bin"
 PREFIX_MANPATH="$ANSIBLE_HOME/docs/man"
 
-[[ "$PYTHONPATH" != "${PREFIX_PYTHONPATH}"* ]] && export PYTHONPATH=$"PREFIX_PYTHONPATH:$PYTHONPATH"
-[[ "$PATH" != "${PREFIX_PATH}"* ]] && export PATH="$PREFIX_PATH:$PATH"
+case "$PYTHONPATH" in
+  (*${PREFIX_PYTHONPATH}*) :;;
+  (*) export PYTHONPATH=$"$PREFIX_PYTHONPATH${PYTHONPATH:+:$PYTHONPATH}";;
+esac
+case "$MANPATH" in
+  (*${PREFIX_MANPATH}*) :;;
+  (*) export MANPATH=$"$PREFIX_MANPATH${MANPATH:+:$MANPATH}";;
+esac
+case "$PATH" in
+  (*${PREFIX_PATH}*) :;;
+  (*) export PATH=$"$PREFIX_PATH${PATH:+:$PATH}";;
+esac
 export ANSIBLE_LIBRARY="$ANSIBLE_HOME/library"
-[[ "$MANPATH" != "${PREFIX_MANPATH}"* ]] && export MANPATH="$PREFIX_MANPATH:$MANPATH"
 
 # Print out values unless -q is set
 
-if [ $# -eq 0 -o "$1" != "-q" ] ; then
+if [ $# -eq 0 ] || [ "$1" != "-q" ] ; then
     echo ""
     echo "Setting up Ansible to run out of checkout..."
     echo ""
