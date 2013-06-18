@@ -264,7 +264,7 @@ Conditional Execution
 `````````````````````
 
 (Note: this section covers 1.2 conditionals, if you are using a previous version, select
-the previous version of the documentation, `Ansible 1.1 Docs <http://ansible.cc/docs/released/1.1>`_ .  
+the previous version of the documentation, `Ansible 1.1 Docs <http://ansible.cc/docs/released/1.1>`_ .
 Those conditional forms continue to be operational in 1.2, although the new mechanisms are cleaner.)
 
 Sometimes you will want to skip a particular step on a particular host.  This could be something
@@ -290,7 +290,7 @@ decide to do something conditionally based on success or failure::
       - action: command /bin/something
         when: result|failed
       - action: command /bin/something_else
-        when: result|sucess 
+        when: result|sucess
 
 
 As a reminder, to see what derived variables are available, you can do::
@@ -305,7 +305,7 @@ Tip: Sometimes you'll get back a variable that's a string and you'll want to do 
 
 Variables defined in the playbooks or inventory can also be used.
 
-If a required variable has not been set, you can skip or fail using Jinja2's 
+If a required variable has not been set, you can skip or fail using Jinja2's
 `defined` test. For example::
 
     tasks:
@@ -315,7 +315,7 @@ If a required variable has not been set, you can skip or fail using Jinja2's
         - fail: msg="Bailing out: this play requires 'bar'"
           when: bar is not defined
 
-This is especially useful in combination with the conditional import of vars 
+This is especially useful in combination with the conditional import of vars
 files (see below).
 
 It's also easy to provide your own facts if you want, which is covered in :doc:`moduledev`.  To run them, just
@@ -466,6 +466,12 @@ be used like this::
         - action: authorized_key user=foo key={{ item }}
           with_file:
              - /home/foo/.ssh/id_rsa.pub
+
+.. note::
+
+   When using ``with_fileglob`` or ``with_file`` with :ref:`roles`, if you
+   specify a relative path (e.g., :file:`./foo`), Ansible resolves the path
+   relative to the :file:`roles/<rolename>/files` directory.
 
 .. versionadded: 0.9
 
@@ -809,8 +815,8 @@ a good idea::
         delegate_to: 127.0.0.1
 
 
-These commands will run on 127.0.0.1, which is the machine running Ansible. There is also a shorthand syntax that 
-you can use on a per-task basis: 'local_action'. Here is the same playbook as above, but using the shorthand 
+These commands will run on 127.0.0.1, which is the machine running Ansible. There is also a shorthand syntax that
+you can use on a per-task basis: 'local_action'. Here is the same playbook as above, but using the shorthand
 syntax for delegating to 127.0.0.1::
 
     ---
@@ -904,17 +910,17 @@ event the same variable name occurs in more than one place, what happens?  There
 of precedence, and within those tiers, some minor ordering rules that you probably won't even need to remember.
 We'll explain them anyway though.
 
-Variables that are set during the execution of the play have highest priority. This includes registered 
-variables and facts, which are discovered pieces of information about remote hosts.  
+Variables that are set during the execution of the play have highest priority. This includes registered
+variables and facts, which are discovered pieces of information about remote hosts.
 
 Descending in priority are variables defined in the playbook.  'vars_files' as defined in the playbook are next up,
 followed by variables as passed to ansible-playbook via --extra-vars (-e), then variables defined in the 'vars' section.  These
 should all be taken to be basically the same thing -- good places to define constants about what the play does to all hosts
-in the play. 
+in the play.
 
 Finally, inventory variables have the least priority.  Variables about hosts override those about groups.
-If a variable is defined in multiple groups and one group is a child of the other, the child group variable 
-will override the variable set in the parent.  
+If a variable is defined in multiple groups and one group is a child of the other, the child group variable
+will override the variable set in the parent.
 
 This makes the 'group_vars/all' file the best place to define a default value you wish to override in another
 group, or even in a playbook.  For example, your organization might set a default ntp server in group_vars/all
@@ -922,8 +928,8 @@ and then override it based on a group based on a geographic region.  However if 
 in a vars section of a playbook, you know from reading the playbook that THAT specific value is definitely the one
 that is going to be used.  You won't be fooled by some variable from inventory sneaking up on you.
 
-So, in short, if you want something easy to remember: facts beat playbook definitions, and 
-playbook definitions beat inventory variables.  
+So, in short, if you want something easy to remember: facts beat playbook definitions, and
+playbook definitions beat inventory variables.
 
 
 Check Mode ("Dry Run") --check

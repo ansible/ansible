@@ -61,8 +61,7 @@ author: Michael DeHaan, Seth Vidal
 
 EXAMPLES = '''
 # a playbook task line:
-tasks:
-  - virt: name=alpha state=running
+- virt: name=alpha state=running
 
 # /usr/bin/ansible invocations
 ansible host -m virt -a "name=alpha command=status"

@@ -67,17 +67,20 @@ options:
     required: true
     choices: [ "present", "absent", "mounted", "unmounted" ]
     default: null
-examples:
-   - code: "mount: name=/mnt/dvd src=/dev/sr0 fstype=iso9660 opts=ro state=present"
-     description: "Mount DVD read-only"
-   - code: "mount: name=/srv/disk src='LABEL=SOME_LABEL' state=present"
-     description: "Mount up device by label"
-   - code: "mount: name=/home src='UUID=b3e48f45-f933-4c8e-a700-22a159ec9077' opts=noatime state=present"
-     description: "Mount up device by UUID"
      
 notes: []
 requirements: []
 author: Seth Vidal
+'''
+EXAMPLES = '''
+# Mount DVD read-only
+- mount: name=/mnt/dvd src=/dev/sr0 fstype=iso9660 opts=ro state=present
+
+# Mount up device by label
+- mount: name=/srv/disk src='LABEL=SOME_LABEL' state=present
+
+# Mount up device by UUID
+- mount: name=/home src='UUID=b3e48f45-f933-4c8e-a700-22a159ec9077' opts=noatime state=present
 '''
 
 

@@ -86,25 +86,28 @@ options:
      default: false
    shared:
      description:
-        - Wether this network is shared or not
+        - Whether this network is shared or not
      required: false
      default: false
    admin_state_up:
      description:
-        - Wether the state should be marked as up or down
+        - Whether the state should be marked as up or down
      required: false
      default: true
-examples:
-  - code: "quantum_network: state=present login_username=admin login_password=admin
-                      provider_network_type=gre login_tenant_name=admin
-                      provider_segmentation_id=1  tenant_name=tenant1 name=t1network"
-    description: "Createss a GRE nework with tunnel id of 1 for tenant 1"
-  - code: "quantum_network: state=present login_username=admin login_password=admin
-                      provider_network_type=local login_tenant_name=admin
-                      provider_segmentation_id=1   router_external=yes name=external_network"
-    description: "Creates an external,public network"
 requirements: ["quantumclient", "keystoneclient"]
 
+'''
+
+EXAMPLES = '''
+# Creates an external,public network
+- quantum_network: state=present login_username=admin login_password=admin
+                   provider_network_type=gre login_tenant_name=admin
+                   provider_segmentation_id=1  tenant_name=tenant1 name=t1network"
+
+# Createss a GRE nework with tunnel id of 1 for tenant 1
+- quantum_network: state=present login_username=admin login_password=admin
+                   provider_network_type=local login_tenant_name=admin
+                   provider_segmentation_id=1   router_external=yes name=external_network
 '''
 
 _os_keystone = None
@@ -167,7 +170,7 @@ def _get_net_id(quantum, module):
     try:
         networks = quantum.list_networks(**kwargs)
     except Exception as e:
-        module.fail_json("Error in listing quantum networks: %s" % e.message)
+        module.fail_json(msg = "Error in listing quantum networks: %s" % e.message)
     if not networks['networks']:        
         return None
     return networks['networks'][0]['id']
