@@ -53,7 +53,10 @@ requirements: [ urllib, urllib2 ]
 '''
 
 EXAMPLES = '''
-action: airbrake_deployment token=AAAAAA environment='staging'  user='ansible' revision=4.2
+- airbrake_deployment: token=AAAAAA
+                       environment='staging'
+                       user='ansible'
+                       revision=4.2
 '''
 
 HAS_URLLIB = True
