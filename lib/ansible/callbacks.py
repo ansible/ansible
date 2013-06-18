@@ -581,7 +581,9 @@ class PlaybookCallbacks(object):
 
     def on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
 
-        if prompt:
+        if prompt and default:
+            msg = "%s [%s]: " % (prompt, default)
+        elif prompt:
             msg = "%s: " % prompt
         else:
             msg = 'input for %s: ' % varname
