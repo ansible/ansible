@@ -72,11 +72,13 @@ notes:
       C(StrictHostKeyChecking no) in C(.ssh/config) which will accept and authorize the connection
       on behalf of the user. However, if you run as a different user such as setting sudo to True),
       for example, root will not look at the user .ssh/config setting.
-examples:
-    - code: "hg: repo=https://bitbucket.org/user/repo1 dest=/home/user/repo1 revision=stable purge=yes"
-      description: Ensure the current working copy is inside the stable branch and deletes untracked files if any.
 
 requirements: [ ]
+'''
+
+EXAMPLES = '''
+# Ensure the current working copy is inside the stable branch and deletes untracked files if any.
+- hg: repo=https://bitbucket.org/user/repo1 dest=/home/user/repo1 revision=stable purge=yes
 '''
 
 def _set_hgrc(hgrc, vals):

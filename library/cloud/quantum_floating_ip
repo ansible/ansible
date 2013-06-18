@@ -27,9 +27,9 @@ except ImportError:
 DOCUMENTATION = '''
 ---
 module: quantum_floating_ip
-short_description: Add/Remove floating ip from an instance
+short_description: Add/Remove floating IP from an instance
 description:
-   - Add or Remove a floating ip to an instance
+   - Add or Remove a floating IP to an instance
 options:
    login_username:
      description:
@@ -63,19 +63,22 @@ options:
      default: present
    network_name:
      description:
-        - Name of the nework from which ip has to be assigned to vm. Please make sure the network is an external network 
+        - Name of the network from which IP has to be assigned to VM. Please make sure the network is an external network 
      required: true
      default: None
    instance_name:
      description:
-        - The name of the instance to which the ip address should be assigned
+        - The name of the instance to which the IP address should be assigned
      required: true
      default: None
-examples:
-  - code: "quantum_floating_ip: state=present login_username=admin login_password=admin login_tenant_name=admin 
-                                network_name=external_network instance_name=vm1"
-    description: "Assigns a floating ip to the instance from an external network"
 requirements: ["novaclient", "quantumclient", "keystoneclient"]
+'''
+
+EXAMPLES = '''
+# Assign a floating ip to the instance from an external network
+- quantum_floating_ip: state=present login_username=admin login_password=admin
+                       login_tenant_name=admin network_name=external_network
+                       instance_name=vm1
 '''
 
 def _get_ksclient(module, kwargs):

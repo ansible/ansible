@@ -73,13 +73,19 @@ options:
             - If C(yes), repository will be updated using the supplied
               remote.  Otherwise the repo will be left untouched.
               Prior to 1.2, this was always 'yes' and could not be disabled.
-examples:
-    - code: "git: repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout version=release-0.22"
-      description: Example git checkout from Ansible Playbooks
-    - code: "git: repo=ssh://git@github.com/mylogin/hello.git dest=/home/mylogin/hello"
-      description: Example read-write git checkout from github
-    - code: "git: repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout update=no"
-      description: Example just ensuring the repo checkout exists
+'''
+
+EXAMPLES = '''
+# Example git checkout from Ansible Playbooks
+- git: repo=git://foosball.example.org/path/to/repo.git
+       dest=/srv/checkout
+       version=release-0.22
+
+# Example read-write git checkout from github
+- git: repo=ssh://git@github.com/mylogin/hello.git dest=/home/mylogin/hello
+
+# Example just ensuring the repo checkout exists
+- git: repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout update=no
 '''
 
 import re

@@ -25,9 +25,9 @@ except ImportError:
 DOCUMENTATION = '''
 ---
 module: quantum_subnet
-short_description: Add/Remove floating ip from an instance
+short_description: Add/Remove floating IP from an instance
 description:
-   - Add or Remove a floating ip to an instance
+   - Add or Remove a floating IP to an instance
 options:
    login_username:
      description:
@@ -46,7 +46,7 @@ options:
      default: True
    auth_url:
      description:
-        - The keystone url for authentication
+        - The keystone URL for authentication
      required: false
      default: 'http://127.0.0.1:35357/v2.0/'
    region_name:
@@ -61,12 +61,12 @@ options:
      default: present
    network_name:
      description:
-        - Name of the nework to which the subnet should be attached
+        - Name of the network to which the subnet should be attached
      required: true
      default: None
    cidr:
      description:
-        - The cidr representation of the subnet that should be assigned to the subnet
+        - The CIDR representation of the subnet that should be assigned to the subnet
      required: true
      default: None
    tenant_name:
@@ -81,7 +81,7 @@ options:
      default: 4
    enable_dhcp:
      description:
-        - Wether DHCP should be enabled for this subnet.
+        - Whether DHCP should be enabled for this subnet.
      required: false
      default: true
    gateway_ip:
@@ -91,20 +91,22 @@ options:
      default: None
    allocation_pool_start:
      description:
-        - From the subnet pool the starting address from which the ip should be allocated
+        - From the subnet pool the starting address from which the IP should be allocated
      required: false
      default: None
    allocation_pool_end:
      description:
-        - From the subnet pool the last ip that should be assigned to the virtual machines
+        - From the subnet pool the last IP that should be assigned to the virtual machines
      required: false
      default: None
-examples:
-  - code: "quantum_subnet: state=present login_username=admin login_password=admin login_tenant_name=admin tenant_name=tenant1
-                     network_name=network1 name=net1subnet cidr=192.168.0.0/24"
-    description: "Create a subnet for a tenant with the specified subnet"
-
 requirements: ["quantum", "keystoneclient"]
+'''
+
+EXAMPLES = '''
+# Create a subnet for a tenant with the specified subnet
+- quantum_subnet: state=present login_username=admin login_password=admin
+                  login_tenant_name=admin tenant_name=tenant1
+                  network_name=network1 name=net1subnet cidr=192.168.0.0/24"
 '''
 
 _os_keystone   = None

@@ -30,12 +30,14 @@ description:
        JSON data that can be useful for inventory purposes.
 version_added: "0.2"
 options: {}
-examples:
-   - code: ansible www.example.net -m facter
-     description: "Example command-line invocation"
 notes: []
 requirements: [ "facter", "ruby-json" ]
 author: Michael DeHaan
+'''
+
+EXAMPLES = '''
+# Example command-line invocation
+ansible www.example.net -m facter
 '''
 
 def main():

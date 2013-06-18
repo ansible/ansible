@@ -28,7 +28,7 @@ description:
 version_added: "1.1"
 options:
   command:
-    choices: [ 'cleanup', 'flush', 'loaddata', 'runfcgi', 'syncdb', 'test', 'validate' ]
+    choices: [ 'cleanup', 'flush', 'loaddata', 'runfcgi', 'syncdb', 'test', 'validate', 'migrate', 'collectstatic' ]
     description:
       - The name of the Django management command to run. Allowed commands are cleanup, createcachetable, flush, loaddata, syncdb, test, validate.
     required: true
@@ -70,32 +70,45 @@ options:
     description:
       - A space-delimited list of fixture file names to load in the database. B(Required) by the 'loaddata' command.
     required: false
+  skip:
+    description:
+     - Will skip over out-of-order missing migrations, you can only use this parameter with I(migrate)
+    required: false
+  merge:
+    description:
+     - Will run out-of-order or missing migrations as they are not rollback migrations, you can only use this parameter with 'migrate' command
+    required: false
+  link:
+    description:
+     - Will create links to the files instead of copying them, you can only use this parameter with 'collectstatic' command
+    required: false
 notes:
    - I(virtualenv) (U(http://www.virtualenv.org)) must be installed on the remote host if the virtualenv parameter is specified.
    - This module will create a virtualenv if the virtualenv parameter is specified and a virtualenv does not already exist at the given location.
    - This module assumes English error messages for the 'createcachetable' command to detect table existence, unfortunately.
+   - To be able to use the migrate command, you must have south installed and added as an app in your settings
+   - To be able to use the collectstatic command, you must have enabled staticfiles in your settings
 requirements: [ "virtualenv", "django" ]
 author: Scott Anderson
 '''
 
 EXAMPLES = """
-# Run cleanup on the application installed in '$django_dir'.
-django_manage: command=cleanup app_path=$django_dir
+# Run cleanup on the application installed in 'django_dir'.
+- django_manage: command=cleanup app_path={{ django_dir }}
 
-# Load the $initial_data fixture into the application
-django_manage: command=loaddata app_path=$django_dir fixtures=$initial_data
+# Load the initial_data fixture into the application
+- django_manage: command=loaddata app_path={{ django_dir }} fixtures={{ initial_data }}
 
 #Run syncdb on the application
-django_manage: >
-    command=syncdb
-    app_path=$django_dir
-    settings=$settings_app_name
-    pythonpath=$settings_dir
-    virtualenv=$virtualenv_dir
-    database=$mydb
+- django_manage: >
+      command=syncdb 
+      app_path={{ django_dir }}
+      settings={{ settings_app_name }} 
+      pythonpath={{ settings_dir }}
+      virtualenv={{ virtualenv_dir }}
 
 #Run the SmokeTest test case from the main app. Useful for testing deploys.
-django_manage command=test app_path=django_dir apps=main.SmokeTest
+- django_manage: command=test app_path=django_dir apps=main.SmokeTest
 """
 
 
@@ -151,6 +164,8 @@ def main():
         syncdb=('database', ),
         test=('failfast', 'testrunner', 'liveserver', 'apps', ),
         validate=(),
+        migrate=('apps', 'skip', 'database', 'merge'),
+        collectstatic=('link', ),
         )
 
     command_required_param_map = dict(
@@ -163,6 +178,7 @@ def main():
         'flush',
         'syncdb',
         'test',
+        'collectstatic',
         )
 
     # These params are allowed for certain commands only
@@ -170,7 +186,7 @@ def main():
 
     # These params are automatically added to the command if present
     general_params = ('settings', 'pythonpath', )
-    specific_boolean_params = ('failfast', )
+    specific_boolean_params = ('failfast', 'skip', 'merge', 'link' )
     end_of_command_params = ('apps', 'cache_table', 'fixtures', )
 
     module = AnsibleModule(
@@ -188,6 +204,9 @@ def main():
             fixtures    = dict(default=None, required=False),
             liveserver  = dict(default=None, required=False, aliases=['live_server']),
             testrunner  = dict(default=None, required=False, aliases=['test_runner']),
+            skip        = dict(default=None, required=False, choices=BOOLEANS),
+            merge       = dict(default=None, required=False, choices=BOOLEANS),
+            link        = dict(default=None, required=False, choices=BOOLEANS),
         ),
     )
 

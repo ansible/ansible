@@ -67,11 +67,6 @@ options:
         required: false
         default: present
         choices: [ "present", "absent" ]
-examples:
-    - code: "mongodb_user: database=burgers name=bob password=12345 state=present"
-      description: Create 'burgers' database user with name 'bob' and password '12345'.
-    - code: "mongodb_user: database=burgers name=bob state=absent"
-      description: Delete 'burgers' database user with name 'bob'.
 notes:
     - Requires the pymongo Python package on the remote host, version 2.4.2+. This
       can be installed using pip or the OS package manager. @see http://api.mongodb.org/python/current/installation.html
@@ -79,13 +74,26 @@ requirements: [ "pymongo" ]
 author: Elliott Foster
 '''
 
+EXAMPLES = '''
+# Create 'burgers' database user with name 'bob' and password '12345'.
+- mongodb_user: database=burgers name=bob password=12345 state=present
+
+# Delete 'burgers' database user with name 'bob'.
+- mongodb_user: database=burgers name=bob state=absent
+'''
+
 import ConfigParser
 try:
-    from pymongo import MongoClient
     from pymongo.errors import ConnectionFailure
     from pymongo.errors import OperationFailure
+    from pymongo import MongoClient
 except ImportError:
-    pymongo_found = False
+    try:  # for older PyMongo 2.2
+        from pymongo import Connection as MongoClient
+    except ImportError:
+        pymongo_found = False
+    else:
+        pymongo_found = True
 else:
     pymongo_found = True
 

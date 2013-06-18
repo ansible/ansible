@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# WITH_ITEMS_USES_LIST
 
 # (c) 2012, Flowroute LLC
 # Written by Matthew Williams <matthew@flowroute.com>
@@ -87,26 +88,37 @@ author: Matthew Williams
 notes:
    - Three of the upgrade modes (C(full), C(safe) and its alias C(yes)) require C(aptitude), otherwise
      C(apt-get) suffices.
-examples:
-    - code: "apt: pkg=foo update_cache=yes"
-      description: Update repositories cache and install C(foo) package
-    - code: "apt: pkg=foo state=absent"
-      description: Remove C(foo) package
-    - code: "apt: pkg=foo state=present"
-      description: Install the package C(foo)
-    - code: "apt: pkg=foo=1.00 state=present"
-      description: Install the version '1.00' of package C(foo)
-    - code: "apt: pkg=nginx state=latest default_release=squeeze-backports update_cache=yes"
-      description: Update the repository cache and update package C(nginx) to latest version using default release C(squeeze-backport)
-    - code: "apt: pkg=openjdk-6-jdk state=latest install_recommends=no"
-      description: Install latest version of C(openjdk-6-jdk) ignoring C(install-reccomends)
-    - code: "apt: upgrade=dist"
-      description: Update all packages to the latest version
-    - code: "apt: update_cache=yes"
-      description: Run the equivalent of C(apt-get update) as a separate step
-    - code: "apt: update_cache=yes cache_valid_time=3600"
-      description: Only run C(update_cache=yes) if the last one is more than more than 3600 seconds ago
 '''
+
+EXAMPLES = '''
+# Update repositories cache and install "foo" package
+- apt: pkg=foo update_cache=yes
+
+# Remove "foo" package
+- apt: pkg=foo state=absent
+
+# Install the package "foo"
+- apt: pkg=foo state=present
+
+# Install the version '1.00' of package "foo"
+- apt: pkg=foo=1.00 state=present
+
+# Update the repository cache and update package "nginx" to latest version using default release squeeze-backport
+- apt: pkg=nginx state=latest default_release=squeeze-backports update_cache=yes
+
+# Install latest version of "openjdk-6-jdk" ignoring "install-reccomends"
+- apt: pkg=openjdk-6-jdk state=latest install_recommends=no
+
+# Update all packages to the latest version
+- apt: upgrade=dist
+
+# Run the equivalent of "apt-get update" as a separate step
+- apt: update_cache=yes
+
+# Only run "update_cache=yes" if the last one is more than more than 3600 seconds ago
+- apt: update_cache=yes cache_valid_time=3600
+'''
+
 
 import traceback
 # added to stave off future warnings about apt api

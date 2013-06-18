@@ -48,10 +48,12 @@ options:
         choices: [ "yes", "no" ]
         description:
             - If I(yes), indicates that the group created is a system group.
-examples:
-    - code: "group: name=somegroup state=present"
-      description: Example group command from Ansible Playbooks
 
+'''
+
+EXAMPLES = '''
+# Example group command from Ansible Playbooks
+- group: name=somegroup state=present
 '''
 
 import grp

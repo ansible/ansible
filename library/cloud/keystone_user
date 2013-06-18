@@ -32,7 +32,7 @@ options:
      default: 'http://127.0.0.1:35357/v2.0/'
    user:
      description:
-        - The name of the user that has to added/removed from openstack
+        - The name of the user that has to added/removed from OpenStack
      required: false
      default: None
    password:
@@ -65,15 +65,19 @@ options:
         - Indicate desired state of the resource
      choices: ['present', 'absent']
      default: present
-examples:
-   - code: 'keystone_user: tenant=demo tenant_description="Default Tenant"'
-     description: Create a tenant
-   - code: 'keystone_user: user=john tenant=demo password=secrete'
-     description: Create a user
-   - code: 'keystone_user: role=admin user=john tenant=demo'
-     description: Apply the admin role to the john user in the demo tenant
 requirements: [ python-keystoneclient ]
 author: Lorin Hochstein
+'''
+
+EXAMPLES = '''
+# Create a tenant
+- keystone_user: tenant=demo tenant_description="Default Tenant"
+
+# Create a user
+- keystone_user: user=john tenant=demo password=secrete
+
+# Apply the admin role to the john user in the demo tenant
+- keystone_user: role=admin user=john tenant=demo
 '''
 
 try:
