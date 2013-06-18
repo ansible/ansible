@@ -310,7 +310,7 @@ If you would like to access sudo mode, there are also flags to do that:
     # as bruce, sudoing to batman
     $ ansible all -m ping -u bruce --sudo --sudo-user batman
 
-(The sudo implementation is changeable in ansbile's configuration file if you happen to want to use a sudo
+(The sudo implementation is changeable in ansible's configuration file if you happen to want to use a sudo
 replacement.  Flags passed dot sudo can also be set.)
 
 Now run a live command on all of your nodes:
