@@ -290,7 +290,7 @@ decide to do something conditionally based on success or failure::
       - action: command /bin/something
         when: result|failed
       - action: command /bin/something_else
-        when: result|sucess
+        when: result|success
 
 
 As a reminder, to see what derived variables are available, you can do::
