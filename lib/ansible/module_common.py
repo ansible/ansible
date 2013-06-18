@@ -40,6 +40,8 @@ MODULE_ARGS = <<INCLUDE_ANSIBLE_MODULE_ARGS>>
 MODULE_LANG = <<INCLUDE_ANSIBLE_MODULE_LANG>>
 MODULE_COMPLEX_ARGS = <<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>
 
+LOGGING_DISABLED = False
+
 BOOLEANS_TRUE = ['yes', 'on', '1', 'true', 1]
 BOOLEANS_FALSE = ['no', 'off', '0', 'false', 0]
 BOOLEANS = BOOLEANS_TRUE + BOOLEANS_FALSE
@@ -209,7 +211,8 @@ class AnsibleModule(object):
             self._check_required_one_of(required_one_of)
 
         self._set_defaults(pre=False)
-        if not no_log:
+        # LOGGING_DISABLED would get set in ansible.cfg on the caller system
+        if not (LOGGING_DISABLED or no_log):
             self._log_invocation()
 
     def load_file_common_arguments(self, params):
