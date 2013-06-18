@@ -58,21 +58,21 @@ author: Lester Wade
 
 EXAMPLES = '''
 # Simple attachment action
-local_action: 
+- local_action: 
     module: ec2_vol 
     instance: XXXXXX 
     volume_size: 5 
     device_name: sdd
    
 # Playbook example combined with instance launch 
-local_action: 
+- local_action: 
     module: ec2 
     keypair: $keypair 
     image: $image 
     wait: yes 
     count: 3
     register: ec2
-local_action: 
+- local_action: 
     module: ec2_vol 
     instance: ${item.id} 
     volume_size: 5

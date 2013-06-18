@@ -134,26 +134,26 @@ EXAMPLES = '''
 - action: uri url=http://www.example.com return_content=yes
   register: webpage
 
-  action: fail
+- action: fail
   when_string: '"AWESOME" not in "${webpage.content}"'
 
 
 # Create a JIRA issue.
-action: >
+- action: >
         uri url=https://your.jira.example.com/rest/api/2/issue/ 
         method=POST user=your_username password=your_pass 
         body='$FILE(issue.json)' force_basic_auth=yes 
         status_code=201 HEADER_Content-Type="application/json"  
 
-action: > 
+- action: > 
         uri url=https://your.form.based.auth.examle.com/index.php 
         method=POST body="name=your_username&password=your_password&enter=Sign%20in" 
         status_code=302 HEADER_Content-Type="application/x-www-form-urlencoded"
-register: login
+  register: login
 
 # Login to a form based webpage, then use the returned cookie to
 # access the app in later tasks.
-action: uri url=https://your.form.based.auth.example.com/dashboard.php
+- action: uri url=https://your.form.based.auth.example.com/dashboard.php
             method=GET return_content=yes HEADER_Cookie="${login.set_cookie}"
 '''
 

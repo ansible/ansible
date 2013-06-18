@@ -83,8 +83,8 @@ notes:
 '''
 
 EXAMPLES = '''
-- name: Create a server
-  local_action:
+# Create a server
+- local_action:
      module: rax
      creds_file: ~/.raxpub
      service: cloudservers
