@@ -162,7 +162,7 @@ author: Seth Vidal, Tim Gerla, Lester Wade
 
 EXAMPLES = '''
 # Basic provisioning example
-local_action: 
+- local_action: 
     module: ec2 
     keypair: mykey 
     instance_type: c1.medium 
@@ -172,7 +172,7 @@ local_action:
     count: 3
 
 # Advanced example with tagging and CloudWatch
-local_action: 
+- local_action: 
     module: ec2 
     keypair: mykey 
     group: databases 
@@ -184,7 +184,7 @@ local_action:
     instance_tags: '{"db":"postgres"}' monitoring=yes'
 
 # VPC example
-local_action: 
+- local_action: 
     module: ec2 
     keypair: mykey 
     group_id: sg-1dc53f72 

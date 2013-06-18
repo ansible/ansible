@@ -69,7 +69,10 @@ requirements: [ urllib, urllib2 ]
 '''
 
 EXAMPLES = '''
-action: newrelic_deployment token=AAAAAA app_name=myapp user='ansible deployment' revision=1.0
+- newrelic_deployment: token=AAAAAA
+                       app_name=myapp
+                       user='ansible deployment'
+                       revision=1.0
 '''
 
 HAS_URLLIB = True

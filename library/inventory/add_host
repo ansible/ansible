@@ -26,8 +26,10 @@ EXAMPLES = '''
 - add_host: hostname=${ip_from_ec2} groups=just_created foo=42
 
 # add a host with a non-standard port local to your machines
--  add_host: hostname='${new_ip}:${new_port}' 
+- add_host: hostname='${new_ip}:${new_port}' 
 
 # add a host alias that we reach through a tunnel
--  add_host: hostname=${new_ip} ansible_ssh_host=${inventory_hostname} ansible_ssh_port=${new_port}' 
+- add_host: hostname=${new_ip}
+            ansible_ssh_host=${inventory_hostname}
+            ansible_ssh_port=${new_port}' 
 '''
