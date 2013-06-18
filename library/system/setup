@@ -30,6 +30,9 @@ import struct
 import datetime
 import getpass
 import subprocess
+import ConfigParser
+import StringIO
+
 
 DOCUMENTATION = '''
 ---
@@ -42,6 +45,15 @@ options:
             - if supplied, only return facts that match this shell-style (fnmatch) wildcard.
         required: false
         default: '*'
+    fact_path:
+        version_added: "1.3"
+        description:
+            - path used for local ansible facts (*.fact) - files in this dir
+              will be run (if executable) and their results be added to ansible_local facts
+              if a file is not executable it is read. 
+              File/results format can be json or ini-format
+        required: false
+        default: '/etc/ansible/facts.d'
 description:
      - This module is automatically called by playbooks to gather useful
        variables about remote hosts that can be used in playbooks. It can also be
@@ -102,7 +114,8 @@ class Facts(object):
                     '/etc/vmware-release': 'VMwareESX',
                     '/etc/openwrt_release': 'OpenWrt',
                     '/etc/system-release': 'OtherLinux',
-                    '/etc/alpine-release': 'Alpine' }
+                    '/etc/alpine-release': 'Alpine',
+                    '/etc/release': 'Solaris' }
     SELINUX_MODE_DICT = { 1: 'enforcing', 0: 'permissive', -1: 'disabled' }
 
     # A list of dicts.  If there is a platform with more than one
@@ -131,12 +144,13 @@ class Facts(object):
         self.get_lsb_facts()
         self.get_date_time_facts()
         self.get_user_facts()
+        self.get_local_facts()
 
     def populate(self):
         return self.facts
 
     # Platform
-    # patform.system() can be Linux, Darwin, Java, or Windows
+    # platform.system() can be Linux, Darwin, Java, or Windows
     def get_platform_facts(self):
         self.facts['system'] = platform.system()
         self.facts['kernel'] = platform.release()
@@ -169,6 +183,51 @@ class Facts(object):
             self.facts['architecture'] = data[0]
 
 
+    def get_local_facts(self):
+
+        fact_path = module.params.get('fact_path', None)
+        if not fact_path or not os.path.exists(fact_path):
+            return
+            
+        local = {}
+        for fn in sorted(glob.glob(fact_path + '/*.fact')):
+            # where it will sit under local facts
+            fact_base = os.path.basename(fn).replace('.fact','')
+            if os.access(fn, os.X_OK):
+                # run it
+                # try to read it as json first
+                # if that fails read it with ConfigParser
+                # if that fails, skip it
+                rc, out, err = module.run_command(fn)
+            else:
+                out = open(fn).read()
+            
+            # load raw json
+            fact = 'loading %s' % fact_base
+            try:
+                fact = json.loads(out)
+            except ValueError, e:
+                # load raw ini
+                cp = ConfigParser.ConfigParser()
+                try:
+                    cp.readfp(StringIO.StringIO(out))
+                except ConfigParser.Error, e:
+                    fact="error loading fact - please check content"
+                else:
+                    fact = {}
+                    #print cp.sections()
+                    for sect in cp.sections():
+                        if sect not in fact:
+                            fact[sect] = {}
+                        for opt in cp.options(sect):
+                            val = cp.get(sect, opt)
+                            fact[sect][opt]=val
+
+            local[fact_base] = fact
+        if not local:
+            return
+        self.facts['local'] = local
+            
     # platform.dist() is deprecated in 2.6
     # in 2.6 and newer, you should use platform.linux_distribution()
     def get_distribution_facts(self):
@@ -243,6 +302,15 @@ class Facts(object):
                         data = get_file_content(path)
                         self.facts['distribution'] = 'Alpine'
                         self.facts['distribution_version'] = data
+                    elif name == 'Solaris':
+                        data = get_file_content(path).split('\n')[0]
+                        ora_prefix = ''
+                        if 'Oracle Solaris' in data:
+                            data = data.replace('Oracle ','')
+                            ora_prefix = 'Oracle '
+                        self.facts['distribution'] = data.split()[0]
+                        self.facts['distribution_version'] = data.split()[1]
+                        self.facts['distribution_release'] = ora_prefix + data
                     else:
                         self.facts['distribution'] = name
 
@@ -365,6 +433,8 @@ class Facts(object):
         self.facts['date_time']['minute'] = now.strftime('%M')
         self.facts['date_time']['second'] = now.strftime('%S')
         self.facts['date_time']['epoch'] = now.strftime('%s')
+        if self.facts['date_time']['epoch'][0] == '%':
+            self.facts['date_time']['epoch'] = str(int(time.time()))
         self.facts['date_time']['date'] = now.strftime('%Y-%m-%d')
         self.facts['date_time']['time'] = now.strftime('%H:%M:%S')
         self.facts['date_time']['iso8601_micro'] = now.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
@@ -1874,6 +1944,45 @@ class LinuxVirtual(Virtual):
                 self.facts['virtualization_role'] = 'host'
                 return
 
+class HPUXVirtual(Virtual):
+    """
+    This is a HP-UX specific subclass of Virtual. It defines
+    - virtualization_type
+    - virtualization_role
+    """
+    platform = 'HP-UX'
+
+    def __init__(self):
+        Virtual.__init__(self)
+
+    def populate(self):
+        self.get_virtual_facts()
+        return self.facts
+
+    def get_virtual_facts(self):
+        if os.path.exists('/usr/sbin/vecheck'):
+            rc, out, err = module.run_command("/usr/sbin/vecheck")
+            if rc == 0:
+                self.facts['virtualization_type'] = 'guest'
+                self.facts['virtualization_role'] = 'HP vPar'
+        if os.path.exists('/opt/hpvm/bin/hpvminfo'):
+            rc, out, err = module.run_command("/opt/hpvm/bin/hpvminfo")
+            if rc == 0 and re.match('.*Running.*HPVM vPar.*', out):
+                self.facts['virtualization_type'] = 'guest'
+                self.facts['virtualization_role'] = 'HPVM vPar'
+            elif rc == 0 and re.match('.*Running.*HPVM guest.*', out):
+                self.facts['virtualization_type'] = 'guest'
+                self.facts['virtualization_role'] = 'HPVM IVM'
+            elif rc == 0 and re.match('.*Running.*HPVM host.*', out):
+                self.facts['virtualization_type'] = 'host'
+                self.facts['virtualization_role'] = 'HPVM'
+        if os.path.exists('/usr/sbin/parstatus'):
+            rc, out, err = module.run_command("/usr/sbin/parstatus")
+            if rc == 0:
+                self.facts['virtualization_type'] = 'guest'
+                self.facts['virtualization_role'] = 'HP nPar'
+
+
 class SunOSVirtual(Virtual):
     """
     This is a SunOS-specific subclass of Virtual.  It defines
@@ -2004,6 +2113,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             filter=dict(default="*", required=False),
+            fact_path=dict(default='/etc/ansible/facts.d', required=False),
         ),
         supports_check_mode = True,
     )

@@ -40,13 +40,17 @@ options:
         default: present
 author: Shaun Zinck
 notes:  []
-examples:
-    - code: "pkgin: name=foo state=present"
-      description: install package foo"
-    - code: "pkgin: name=foo state=absent"
-      description: remove package foo
-    - code: "pkgin: name=foo,bar state=absent"
-      description: remove packages foo and bar 
+'''
+
+EXAMPLES = '''
+# install package foo"
+- pkgin: name=foo state=present
+
+# remove package foo
+- pkgin: name=foo state=absent
+
+# remove packages foo and bar 
+- pkgin: name=foo,bar state=absent
 '''
 
 

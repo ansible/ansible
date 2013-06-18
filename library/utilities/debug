@@ -43,13 +43,16 @@ options:
     required: false
     default: "no"
     choices: [ "yes", "no" ]
-examples:
-    - code: |
-        - action: debug msg="System $inventory_hostname has uuid $ansible_product_uuid"
-        - action: debug msg="System $inventory_hostname lacks a gateway" fail=yes
-          only_if: "is_unset('${ansible_default_ipv4.gateway}')"
-        - action: debug msg="System $inventory_hostname has gateway ${ansible_default_ipv4.gateway}"
-          only_if: "is_set('${ansible_default_ipv4.gateway}')"
-      description: "Example that prints the loopback address and gateway for each host"
 author: Dag Wieers
+'''
+
+EXAMPLES = '''
+# Example that prints the loopback address and gateway for each host
+- action: debug msg="System $inventory_hostname has uuid $ansible_product_uuid"
+
+- action: debug msg="System $inventory_hostname lacks a gateway" fail=yes
+  only_if: "is_unset('${ansible_default_ipv4.gateway}')"
+
+- action: debug msg="System $inventory_hostname has gateway ${ansible_default_ipv4.gateway}"
+  only_if: "is_set('${ansible_default_ipv4.gateway}')"
 '''

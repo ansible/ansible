@@ -44,17 +44,22 @@ options:
     description:
     - Control if the logical volume exists.
     required: false
-examples:
-  - description: Create a logical volume of 512m.
-    code: lvol vg=firefly lv=test size=512
-  - description: Extend the logical volume to 1024m.
-    code: lvol vg=firefly lv=test size=1024
-  - description: Reduce the logical volume to 512m
-    code: lvol vg=firefly lv=test size=512
-  - description: Remove the logical volume.
-    code: lvol vg=firefly lv=test state=absent
 notes:
   - Filesystems on top of the volume are not resized.
+'''
+
+EXAMPLES = '''
+# Create a logical volume of 512m.
+- lvol: vg=firefly lv=test size=512
+
+# Extend the logical volume to 1024m.
+- lvol: vg=firefly lv=test size=1024
+
+# Reduce the logical volume to 512m
+- lvol: vg=firefly lv=test size=512
+
+# Remove the logical volume.
+- lvol: vg=firefly lv=test state=absent
 '''
 
 def parse_lvs(data):

@@ -108,12 +108,6 @@ using "make install".  This is done through `python-distutils`:
     $ cd ./ansible
     $ sudo make install
 
-Release Tarballs
-++++++++++++++++
-
-For those that do not want to use git or a package manager, (or for packagers themselves), 
-tarballs of past Ansible releases are available at `http://ansibleworks.com/releases/ <http://ansibleworks.com/releases>`_.
-
 Via Pip
 +++++++
 
@@ -249,7 +243,7 @@ Tagged Releases
 
 Tarballs of releases are available on the ansible.cc page.
 
-* `Ansible/downloads <http://ansible.cc/releases>`_
+* `Ansible/downloads <http://ansibleworks.com/releases>`_
 
 These releases are also tagged in the git repository with the release version.
 
