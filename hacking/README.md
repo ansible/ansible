@@ -45,4 +45,14 @@ Authors
 'authors' is a simple script that generates a list of everyone who has
 contributed code to the ansible repository.
 
+Wrapper
+-------
+'wrapper' is for people who already have a directory like ~/bin in the search
+path and who would like to use Ansible from the Git checkout without much
+shell integration (like having to run env-setup):
 
+    $ for cmd in /path/to/ansible/checkout/bin/*; do
+        ln -s /path/to/ansible/checkout/hacking/wrapper ~/bin/${cmd##*/}
+      done
+
+Now you can just call ansible from anywhere and it'll work.
