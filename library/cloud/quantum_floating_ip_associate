@@ -76,7 +76,7 @@ requirements: ["quantumclient", "keystoneclient"]
 
 EXAMPLES = '''
 # Associate a specific floating IP with an Instance
-quantum_floating_ip_associate:
+- quantum_floating_ip_associate:
            state=present
            login_username=admin
            login_password=admin
