@@ -688,7 +688,10 @@ class AnsibleModule(object):
         # Sanitize possible password argument when logging.
         log_args = dict()
         passwd_keys = ['password', 'login_password']
-        
+        facility = syslog.LOG_USER # Alert! This value may get replaced by the runner
+        if facility is None:       # So this conditional could actually be true!
+            return
+
         for param in self.params:
             canon  = self.aliases.get(param, param)
             arg_opts = self.argument_spec.get(canon, {})
@@ -719,10 +722,10 @@ class AnsibleModule(object):
                 journal.sendv(*journal_args)
             except IOError, e:
                 # fall back to syslog since logging to journal failed
-                syslog.openlog(module, 0, syslog.LOG_USER)
+                syslog.openlog(module, 0, facility)
                 syslog.syslog(syslog.LOG_NOTICE, msg)
         else:
-            syslog.openlog(module, 0, syslog.LOG_USER)
+            syslog.openlog(module, 0, facility)
             syslog.syslog(syslog.LOG_NOTICE, msg)
 
     def get_bin_path(self, arg, required=False, opt_dirs=[]):

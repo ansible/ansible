@@ -742,7 +742,11 @@ class Runner(object):
                 facility = C.DEFAULT_SYSLOG_FACILITY
                 if 'ansible_syslog_facility' in inject:
                     facility = inject['ansible_syslog_facility']
-                module_data = module_data.replace('syslog.LOG_USER', "syslog.%s" % facility)
+                if facility in [ 'off', 'no', 'false', 'False' ]:
+                    facility = 'None'
+                else:
+                    facility = "syslog.%s" % facility
+                module_data = module_data.replace('syslog.LOG_USER', facility)
 
         lines = module_data.split("\n")
         shebang = None
