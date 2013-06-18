@@ -17,6 +17,7 @@ CODE_HACKING_PATH="${COMMAND%/*}"
 ANSIBLE_HOME="${CODE_HACKING_PATH%/*}"
 
 # env-setup must be sourced from parent dir
+OLDPWD="$PWD"
 cd "$ANSIBLE_HOME"
 
 # preserve $PATH
@@ -25,8 +26,11 @@ OLDARGS="$@"
 set +u -- -q
 . ./hacking/env-setup
 set -u
+
+# restore environment
 PATH="$OLDPATH"
 eval set -- "$OLDARGS"
 unset OLDPATH OLDARGS
+cd "$OLDPWD"
 
 exec "./bin/$SELF" "$@"
