@@ -167,6 +167,7 @@ class Runner(object):
         self.complex_args     = complex_args
         self.module_with_list = False
         self.error_on_undefined_vars = error_on_undefined_vars
+        print "DEBUG: EOUV: %s" % error_on_undefined_vars
 
         self.callbacks.runner = self
 
@@ -583,7 +584,7 @@ class Runner(object):
             module_args = template.template(self.basedir, module_args, inject, fail_on_undefined=self.error_on_undefined_vars)
             complex_args = template.template(self.basedir, complex_args, inject, fail_on_undefined=self.error_on_undefined_vars)
         except jinja2.exceptions.UndefinedError, e:
-            raise errors.AnsibleUndefinedVariable("Undefined variables: %s" % str(e))
+            raise errors.AnsibleUndefinedVariable("One or more undefined variables: %s" % str(e))
 
 
         result = handler.run(conn, tmp, module_name, module_args, inject, complex_args)
