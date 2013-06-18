@@ -9,7 +9,8 @@ description:
     Takes variables so you can define the new hosts more fully.
 version_added: "0.9"
 options:
-  name:
+  hostname:
+    aliases: [ 'name' ]
     description:
     - The hostname/ip of the host to add to the inventory, can include a colon and a port number.
     required: true     
@@ -26,7 +27,7 @@ EXAMPLES = '''
 - add_host: hostname=${ip_from_ec2} groups=just_created foo=42
 
 # add a host with a non-standard port local to your machines
-- add_host: hostname='${new_ip}:${new_port}' 
+- add_host: name='${new_ip}:${new_port}' 
 
 # add a host alias that we reach through a tunnel
 - add_host: hostname=${new_ip}
