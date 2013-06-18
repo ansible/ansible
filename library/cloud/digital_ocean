@@ -17,7 +17,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 DOCUMENTATION = '''
 ---
-module: do
+module: digital_ocean
 short_description: Create/delete a droplet/SSH_key in DigitalOcean
 description:
      - Create/delete a droplet in DigitalOcean and optionally waits for it to be 'running', or deploy an SSH key.
@@ -75,12 +75,30 @@ notes:
 
 
 EXAMPLES = '''
-# a playbook task line:
-tasks:
-  - do: state=present client_id=XXX api_key=XXX id=33
+# Ensure a SSH key is present
+- digital_ocean: state=present command=ssh name=my_ssh_key ssh_pub_key='ssh-rsa AAAA...' client_id=XXX api_key=XXX
 
-# /usr/bin/ansible invocations
-ansible -i host -m do -a "state=present client_id=XXX api_key=XXX id=3"
+If a key matches this name, will return the ssh key id and changed = False
+If no existing key matches this name, a new key is created, the ssh key id is returned and changed = False
+
+# Create a new Droplet
+- digital_ocean: state=present command=droplet name=my_new_droplet client_id=XXX api_key=XXX size_id=1 region_id=2 image_id=3 wait_timeout=500
+
+Will return the droplet details including the droplet id (used for idempotence)
+
+# Ensure a droplet is present
+- digital_ocean: state=present command=droplet id=123 name=my_new_droplet client_id=XXX api_key=XXX size_id=1 region_id=2 image_id=3 wait_timeout=500
+
+If droplet id already exist, will return the droplet details and changed = False
+If no droplet matches the id, a new droplet will be created and the droplet details (including the new id) are returned, changed = True.
+
+# Create a droplet with ssh key
+- digital_ocean: state=present ssh_key_ids=id name=my_new_droplet client_id=XXX api_key=XXX size_id=1 region_id=2 image_id=3
+
+The ssh key id can be passed as argument at the creation of a droplet (see ssh_key_ids). 
+Several keys can be added to ssh_key_ids as id1,id2,id3
+
+The keys are used to connect as root to the droplet.
 '''
 
 import sys
@@ -277,8 +295,8 @@ def core(module):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            command = dict(required=True, choices=['droplet', 'ssh']),
-            state = dict(required=True, choices=['active', 'present', 'absent', 'deleted']),
+            command = dict(required=True, choices=['droplet', 'ssh'], default='droplet'),
+            state = dict(required=True, choices=['active', 'present', 'absent', 'deleted'], default='present'),
             client_id = dict(aliases=['CLIENT_ID'], no_log=True),
             api_key = dict(aliases=['API_KEY'], no_log=True),
             name = dict(type='str'),
