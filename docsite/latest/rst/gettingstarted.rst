@@ -10,8 +10,7 @@ Requirements
 
 Requirements for Ansible are extremely minimal.
 
-On the central Ansible machine, you will need Python 2.6+.  If you are running Python 2.5 on an "Enterprise Linux" variant, we'll show you how to add
-2.6 to your distribution.
+For the central Ansible machine, you will need a Linux environment with Python 2.6 or greater installed. If you are running Python 2.5 on an "Enterprise Linux" variant, we'll show you how to add 2.6 to your distribution.
 
 You will also want the following Python modules (installed via pip or perhaps via your OS package manager via slightly different names):
 
@@ -19,7 +18,7 @@ You will also want the following Python modules (installed via pip or perhaps vi
 * ``PyYAML``
 * ``jinja2``
 
-If you are using RHEL or CentOS 5 , python is version 2.4 by default, but you can get python 2.6 installed easily. `Use EPEL <http://fedoraproject.org/wiki/EPEL>`_ and install these dependencies as follows:
+If you are using RHEL or CentOS 5, Python is version 2.4 by default, but you can get Python 2.6 installed easily. `Use EPEL <http://fedoraproject.org/wiki/EPEL>`_ and install these dependencies as follows:
 
 .. code-block:: bash
 
@@ -160,17 +159,6 @@ Make sure you have ``rpm-build``, ``make``, and ``python2-devel`` installed.
     $ cd ./ansible
     $ make rpm
     $ sudo rpm -Uvh ~/rpmbuild/ansible-*.noarch.rpm
-
-Python 2.6 EPEL instructions for RHEL and CentOS 5
-``````````````````````````````````````````````````
-
-These distributions don't have Python 2.6 by default, but it is easily
-installable. 
-
-
-.. code-block:: bash
-
-
 
 Via MacPorts
 ++++++++++++
