@@ -1,0 +1,32 @@
+#!/bin/bash
+# Ansible wrapper
+#
+# If you have a directory like ~/bin that is already in your path, create
+# symlinks to this file in that directory, one for ansible, one for
+# ansible-playbook. That way, no additional integration/setup is required to
+# use ansible from the Git checkout
+#
+# Copyright © 2013 martin f. krafft <madduck@madduck.net
+# Released under the terms of the Artistic Licence 2.0
+#
+set -eu
+
+SELF="${0##*/}"
+COMMAND="$(readlink -f "$0")"
+CODE_HACKING_PATH="${COMMAND%/*}"
+ANSIBLE_HOME="${CODE_HACKING_PATH%/*}"
+
+# env-setup must be sourced from parent dir
+cd "$ANSIBLE_HOME"
+
+# preserve $PATH
+OLDPATH="$PATH"
+OLDARGS="$@"
+set +u -- -q
+. ./hacking/env-setup
+set -u
+PATH="$OLDPATH"
+eval set -- "$OLDARGS"
+unset OLDPATH OLDARGS
+
+exec "./bin/$SELF" "$@"
