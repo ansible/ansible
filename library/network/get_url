@@ -89,7 +89,6 @@ author: Jan-Piet Mens
 '''
 
 EXAMPLES='''
-<<<<<<< HEAD
 - name: download foo.conf
   get_url: url=http://example.com/path/file.conf dest=/etc/foo.conf mode=0440
 
