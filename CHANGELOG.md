@@ -10,7 +10,7 @@ Major new features:
 
 New modules:
 
-* pending!
+* notifications: datadog_event -- send data to datadog
 
 Misc changes:
 
@@ -32,6 +32,7 @@ Misc changes:
 * fix for setup module epoch time in Solaris
 * sudo_user is now expanded later allowing to be set at inventory scope
 * mondodb_user module change to also support MongoDB 2.2
+* new state=hard option to the file module for hardlinks vs softlinks
 
 1.2 "Right Now" -- June 10, 2013
 
