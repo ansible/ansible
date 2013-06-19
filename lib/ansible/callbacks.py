@@ -41,7 +41,11 @@ if constants.DEFAULT_LOG_PATH != '':
     user = getpass.getuser()
     logger = logging.getLogger("p=%s u=%s | " % (mypid, user))
 
-callback_plugins = [x for x in utils.plugins.callback_loader.all()]
+callback_plugins = []
+
+def load_callback_plugins():
+    global callback_plugins
+    callback_plugins = [x for x in utils.plugins.callback_loader.all()]
 
 def get_cowsay_info():
     if constants.ANSIBLE_NOCOWS is not None:
