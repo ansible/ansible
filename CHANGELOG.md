@@ -24,7 +24,7 @@ Misc changes:
 * fixed bug along error path in quantum_network module
 * user password update mode is controllable in user module now (creation vs every time)
 * added check mode support to the OpenBSD package module
-* internal system by which a module can process multiple with_items entries is now streamlined (see yum, apt, etc) so any module can request this behavior. If used, parameter given to {{ item }} will be joined by commas and passed once, rather than invoking the module N times.  Previously this was available to a select few packaging modules only.  Now any module can specify WITH_ITEMS_WANTS_LIST in the source and get this behavior.
+* internal system by which a module can process multiple with_items entries is now streamlined (see yum, apt, etc) so any module can request this behavior. If used, parameter given to {{ item }} will be joined by commas and passed once, rather than invoking the module N times.  Previously this was available to a select few packaging modules only.  Now any module can specify WITH_ITEMS_USES_LIST in the source and get this behavior.
 * Fix for MySQL 5.6 compatibility
 * HP UX virtualization facts
 * fixed some executable bits in git
