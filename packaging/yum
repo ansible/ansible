@@ -1,6 +1,5 @@
 #!/usr/bin/python -tt
 # -*- coding: utf-8 -*-
-# WITH_ITEMS_USES_LIST
 
 # (c) 2012, Red Hat, Inc
 # Written by Seth Vidal <skvidal at fedoraproject.org>
