@@ -10,7 +10,7 @@ Requirements
 
 Requirements for Ansible are extremely minimal.
 
-For the central Ansible machine, you will need a Linux environment with Python 2.6 or greater installed. If you are running Python 2.5 on an "Enterprise Linux" variant, we'll show you how to add 2.6 to your distribution.
+For the central Ansible machine, you will need an environment with Python 2.6 or greater installed. If you are running Python 2.5 on an "Enterprise Linux" variant, we'll show you how to add 2.6 to your distribution. (Windows is not supported as the Ansible control machine.)
 
 You will also want the following Python modules (installed via pip or perhaps via your OS package manager via slightly different names):
 
