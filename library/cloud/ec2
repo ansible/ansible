@@ -30,7 +30,7 @@ options:
     aliases: ['keypair']
   id:
     description:
-      - identifier for this instance or set of instances, so that the module will be idempotent with respect to EC2 instances.
+      - attribute to use as an identifier that defines the set of instances to be created, so that the module will be idempotent with respect to the count parameter. Can be set to 'group', 'group_id', 'tags', or 'image'. If set to any other string, that string will be treated as the ec2 client-token.
     required: false
     default: null
     aliases: []
@@ -190,6 +190,20 @@ EXAMPLES = '''
     count: 5 
     instance_tags: '{"db":"postgres"}' monitoring=yes'
 
+# Idempotent provisioning - if five instances with postgres tags are already up
+#     (with status 'pending' or 'running'), then no more will be provisioned.
+- local_action:
+    module: ec2
+    keypair: mykey
+    group: databases
+    instance_type: m1.large
+    image: ami-6e649707
+    wait: yes
+    count: 5
+    instance_tags: '{"db":"postgres"}' monitoring=yes'
+    id: tags
+
+
 # VPC example
 - local_action: 
     module: ec2 
@@ -310,12 +324,25 @@ def main():
     running_instances = []
     count_remaining = int(count)
         
-    if id != None:
-        filter_dict = {'client-token':id, 'instance-state-name' : 'running'}
+    if not(id is None):
+        if id == "tags":
+            if instance_tags is None:
+                module.fail_json(msg = "If id=tags, then the tags must also be specified using the instance_tags option")
+            filter_dict = dict(("tag:" + tn, tv) for tn, tv in module.from_json(instance_tags).items())
+        elif id == "group":
+            filter_dict = {"group-name": group_name}
+        elif id == "group_id":
+            filter_dict = {"group-id": group_id}
+        elif id == "image":
+            filter_dict = {"image-id": image}
+        else:
+            filter_dict = {'client-token': id}
         previous_reservations = ec2.get_all_instances(None, filter_dict)
         for res in previous_reservations:
             for prev_instance in res.instances:
-                running_instances.append(prev_instance)
+                if prev_instance.state in ("pending", "running"):
+                    running_instances.append(prev_instance)
+
         count_remaining = count_remaining - len(running_instances) 
     
     # Both min_count and max_count equal count parameter. This means the launch request is explicit (we want count, or fail) in how many instances we want.
