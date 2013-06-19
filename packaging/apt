@@ -210,9 +210,10 @@ def remove(m, pkgspec, cache, purge=False):
     if len(packages) == 0:
         m.exit_json(changed=False)
     else:
-        purge = ''
         if purge:
             purge = '--purge'
+        else:
+            purge = ''
         cmd = "%s -q -y %s remove %s" % (APT_GET_CMD, purge,packages)
 
         if m.check_mode:
