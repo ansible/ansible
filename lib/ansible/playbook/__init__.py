@@ -129,11 +129,13 @@ class PlayBook(object):
             self.inventory    = inventory
 
         self.basedir     = os.path.dirname(playbook) or '.'
+        utils.plugins.push_basedir(self.basedir)
         vars = {}
         if self.inventory.basedir() is not None:
             vars['inventory_dir'] = self.inventory.basedir()
         self.filename = playbook
         (self.playbook, self.play_basedirs) = self._load_playbook_from_file(playbook, vars)
+        ansible.callbacks.load_callback_plugins()
 
     # *****************************************************
 
