@@ -32,9 +32,9 @@ description:
 options:
     mode:
         description:
-            - module operating mode. Could be getslave (SHOW SLAVE STATUS), getmaster (SHOW MASTER STATUS), changemaster (CHANGE MASTER TO)
+            - module operating mode. Could be getslave (SHOW SLAVE STATUS), getmaster (SHOW MASTER STATUS), changemaster (CHANGE MASTER TO), startslave (START SLAVE), stopslave (STOP SLAVE)
         required: False
-        possible vaules: getslave, getmaster, changemaster
+        choices: getslave, getmaster, changemaster, stopslave, startslave
         default: getslave
     login_user:
         description:
@@ -94,7 +94,7 @@ options:
     master_ssl_key:
         description:
             - same as mysql variable
-     master_ssl_cipher:
+    master_ssl_cipher:
         description:
             - same as mysql variable
 
