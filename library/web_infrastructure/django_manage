@@ -177,6 +177,7 @@ def main():
     noinput_commands = (
         'flush',
         'syncdb',
+        'migrate',
         'test',
         'collectstatic',
         )
