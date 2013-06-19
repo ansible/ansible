@@ -51,6 +51,8 @@ def is_in_inventory(ctx, list_or_host):
             return True
 
     group_names = ctx['group_names']
+    if not 'all' in group_names:
+        group_names.append('all')
     for item in list_or_host:
         if item in group_names:
             return True
