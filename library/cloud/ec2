@@ -205,7 +205,7 @@ EXAMPLES = '''
     wait: yes 
     count: 5 
     instance_tags: '{"db":"postgres"}' monitoring=yes'
-    idempotence_attribte: instance_tags
+    idempotence_attribute: instance_tags
 
 # VPC example
 - local_action: 
