@@ -372,6 +372,8 @@ def main():
         invalid_vars = [ 'db_engine', 'size', 'instance_type', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'security_groups', 'option_group', 'maint_window', 'backup_window', 'backup_retention', 'port', 'upgrade', 'subnet', 'zone', 'wait', 'source_instance' 'apply_immediately' ]
     elif command == 'modify':
         required_vars = [ 'instance_name' ]
+        if password:
+            params["master_password"] = password
         invalid_vars = [ 'db_engine', 'username', 'db_name', 'engine_version',  'license_model', 'option_group', 'port', 'upgrade', 'subnet', 'zone', 'source_instance' ]
  
     for v in required_vars:
