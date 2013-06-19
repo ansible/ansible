@@ -48,12 +48,12 @@ options:
       - If C(directory), all immediate subdirectories will be created if they
         do not exist. If C(file), the file will NOT be created if it does not
         exist, see the M(copy) or M(template) module if you want that behavior.
-        If C(link), the symbolic link will be created or changed. If C(absent),
-        directories will be recursively deleted, and files or symlinks will be
-        unlinked.
+        If C(link), the symbolic link will be created or changed. Use C(hard)
+        for hardlinks. If C(absent), directories will be recursively deleted,
+        and files or symlinks will be unlinked.
     required: false
     default: file
-    choices: [ file, link, directory, absent ]
+    choices: [ file, link, directory, hard, absent ]
   mode:
     required: false
     default: null
@@ -131,6 +131,15 @@ EXAMPLES = '''
 - file: src=/file/to/link/to dest=/path/to/symlink owner=foo group=foo state=link
 '''
 
+def dolink(src, path, state, module):
+    try:
+        if state == 'hard':
+           os.link(src,path)
+        else:
+           os.symlink(src, path)
+    except OSError, e:
+        module.fail_json(path=path, msg='Error while linking: %s' % str(e))
+
 def main():
 
     # FIXME: pass this around, should not use global
@@ -138,7 +147,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec = dict(
-            state = dict(choices=['file','directory','link','absent'], default='file'),
+            state = dict(choices=['file','directory','link','hard','absent'], default='file'),
             path  = dict(aliases=['dest', 'name'], required=True),
             recurse  = dict(default='no', type='bool'),
             diff_peek = dict(default=None),
@@ -177,8 +186,8 @@ def main():
 
     file_args = module.load_file_common_arguments(params)
 
-    if state == 'link' and (src is None or path is None):
-        module.fail_json(msg='src and dest are required for "link" state')
+    if state in ['link','hard'] and (src is None or path is None):
+        module.fail_json(msg='src and dest are required for creating links')
     elif path is None:
         module.fail_json(msg='path is required')
 
@@ -225,7 +234,7 @@ def main():
     if state == 'file':
 
         if prev_state != 'file':
-            module.fail_json(path=path, msg='file (%s) does not exist, use copy or template module to create' % path) 
+            module.fail_json(path=path, msg='file (%s) does not exist, use copy or template module to create' % path)
 
         changed = module.set_file_attributes_if_different(file_args, changed)
         module.exit_json(path=path, changed=changed)
@@ -253,7 +262,7 @@ def main():
                     changed = module.set_file_attributes_if_different(tmp_file_args, changed)
         module.exit_json(path=path, changed=changed)
 
-    elif state == 'link':
+    elif state in ['link','hard']:
 
         if os.path.isabs(src):
             abs_src = src
@@ -265,7 +274,7 @@ def main():
         if prev_state == 'absent':
             if module.check_mode:
                 module.exit_json(changed=True)
-            os.symlink(src, path)
+            dolink(src, path, state, module)
             changed = True
         elif prev_state == 'link':
             old_src = os.readlink(path)
@@ -275,8 +284,10 @@ def main():
                 if module.check_mode:
                     module.exit_json(changed=True)
                 os.unlink(path)
-                os.symlink(src, path)
+                dolink(src, path, state, module)
                 changed = True
+        elif prev_state == 'file':
+            module.fail_json(dest=path, src=src, msg='Cannot link, file exists at destination')
         else:
             module.fail_json(dest=path, src=src, msg='unexpected position reached')
 
