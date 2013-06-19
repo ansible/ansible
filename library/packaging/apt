@@ -152,7 +152,11 @@ def package_status(m, pkgname, version, cache, state):
             m.fail_json(msg="No package matching '%s' is available" % pkgname)
         else:
             return False, False, False
-    has_files = len(pkg.installed_files) > 0
+    try:
+        has_files = len(pkg.installed_files) > 0
+    except AttributeError:
+        has_files = False  # older python-apt cannot be used to determine non-purged
+
     if version:
         try :
             return pkg.is_installed and fnmatch.fnmatch(pkg.installed.version, version), False, has_files
