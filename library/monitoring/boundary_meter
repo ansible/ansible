@@ -1,0 +1,271 @@
+#!/usr/bin/python
+
+# -*- coding: utf-8 -*-
+
+"""
+Ansible module to add boundary meters.
+
+(c) 2013, curtis <curtis@serverascode.com>
+
+* Module sponsored by Cybera - a non-profit organization providing 
+high-capacity networking and computing solutions to the province 
+of Alberta. 
+* Please note much of this converted from the boundary puppet module!
+
+This file is part of Ansible
+
+Ansible is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Ansible is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+import json
+import datetime
+import urllib2
+import base64
+
+DOCUMENTATION = '''
+
+module: boundary_meter
+short_description: Manage boundary meters
+description:
+    - This module manages boundary meters
+version_added: "1.3"
+author: curtis@serverascode.com
+requirements:
+    - Boundary API access
+    - Boundary client is needed to send data, but not to register meter
+options:
+    name:
+        description:
+            - meter name
+        required: true
+    state:
+        description:
+            - Whether to create or remove the client from boundary
+        required: false
+        default: true
+        choices: ["present", "removed"]
+        aliases: []
+    apiid:
+        description:
+            - Organizations boundary API ID
+        required: true
+        default: null
+        choices: []
+        aliases: []
+    apikey:
+        description:
+            - Organizations boundary API KEY
+        required: true
+        default: null
+        choices: []
+        aliases: []
+
+notes:
+    - This module does not yet support tags.
+
+'''
+
+EXAMPLES='''
+- name: Create meter
+  boundary_meter: apiid=AAAAAA apikey=BBBBBB state=present name={{ inventory_hostname }}"
+
+- name: Delete meter
+  boundary_meter: apiid=AAAAAA apikey=BBBBBB state=removed name={{ inventory_hostname }}"
+
+'''
+
+try:
+    import urllib2
+    HAS_URLLIB2 = True
+except ImportError:
+    HAS_URLLIB2 = False
+
+API_HOST = "api.boundary.com"
+CONFIG_DIRECTORY = "/etc/bprobe"
+
+# "resource" like thing or APIKEY?
+def auth_encode(APIKEY):
+    auth = base64.standard_b64encode(APIKEY)
+    auth.replace("\n", "")
+    return auth
+    
+def build_url(NAME, APIID, action, METER_ID=None, CERT_TYPE=None):
+    if action == "create":
+        return 'https://{API_HOST}/{APIID}/meters'.format(API_HOST=API_HOST, APIID=APIID)
+    elif action == "search":
+        return "https://{API_HOST}/{APIID}/meters?name={NAME}".format(API_HOST=API_HOST, APIID=APIID, NAME=NAME)
+    elif action == "certificates":
+        return "https://{API_HOST}/{APIID}/meters/{METER_ID}/{CERT_TYPE}.pem".format(API_HOST=API_HOST, APIID=APIID, METER_ID=METER_ID, CERT_TYPE=CERT_TYPE)
+    elif action == "tags":
+        return  "https://{API_HOST}/{APIID}/meters/{METER_ID}/tags".format(API_HOST=API_HOST, APIID=APIID, METER_ID=METER_ID)
+    elif action == "delete":
+        return  "https://{API_HOST}/{APIID}/meters/{METER_ID}".format(API_HOST=API_HOST, APIID=APIID, METER_ID=METER_ID)
+
+def http_request(NAME, APIID, APIKEY, action, METER_ID=None, CERT_TYPE=None):
+    
+    if METER_ID is None:
+        url = build_url(NAME, APIID, action)
+    else:
+        if CERT_TYPE is None:
+            url = build_url(NAME, APIID, action, METER_ID)
+        else:
+            url = build_url(NAME, APIID, action, METER_ID, CERT_TYPE)
+
+    auth = auth_encode(APIKEY)
+    request = urllib2.Request(url)
+    request.add_header("Authorization", "Basic {auth}".format(auth=auth)) 
+    request.add_header("Content-Type", "application/json")
+    return request
+
+def create_meter(module, NAME, APIID, APIKEY):
+
+    meters = search_meter(module, NAME, APIID, APIKEY)
+
+    if len(meters) > 0:
+        # If the meter already exists, do nothing
+        module.exit_json(status="Meter " + NAME + " already exists",changed=False)
+    else:
+        # If it doesn't exist, create it
+        request = http_request(NAME, APIID, APIKEY, action="create")
+        # A create request seems to need a json body with the name of the meter in it
+        body = '{"name":"' + NAME + '"}'
+        request.add_data(body)
+
+        try: 
+            result = urllib2.urlopen(request)
+        except urllib2.URLError, e:
+            module.fail_json(msg="Failed to connect to api host to create meter")
+
+        # If the config dirctory doesn't exist, create it
+        if not os.path.exists(CONFIG_DIRECTORY):
+            os.makedirs(CONFIG_DIRECTORY)
+
+        # Download both cert files from the api host
+        types = ['key', 'cert']
+        for cert_type in types:
+            try:
+                # If we can't open the file it's not there, so we should download it
+                cert_file = open('/etc/bprobe/{CERT_TYPE}.pem'.format(CERT_TYPE=cert_type))
+            except IOError:
+                # Now download the file...
+                rc = download_request(module, NAME, APIID, APIKEY, cert_type)
+                if rc == False:
+                    module.fail_json("Download request for " + cert_type + ".pem failed")
+
+        return 0, "Meter " + NAME + " created"
+
+def search_meter(module, NAME, APIID, APIKEY):
+
+    request = http_request(NAME, APIID, APIKEY, action="search")
+
+    try: 
+        result = urllib2.urlopen(request)
+    except urllib2.URLError, e:
+        module.fail_json("Failed to connect to api host for searching")
+
+    # Return meters
+    return json.loads(result.read())
+
+def get_meter_id(module, NAME, APIID, APIKEY):
+    # In order to delete the meter we need its id
+    meters = search_meter(module, NAME, APIID, APIKEY)
+
+    if len(meters) > 0:
+        return meters[0]['id']
+    else:
+        return None
+
+def delete_meter(module, NAME, APIID, APIKEY):
+
+    meter_id = get_meter_id(module, NAME, APIID, APIKEY)
+
+    if meter_id is None:
+        return 1, "Meter does not exist, so can't delete it"
+    else:
+        action = "delete"
+        request = http_request(NAME, APIID, APIKEY, action, meter_id)
+        # See http://stackoverflow.com/questions/4511598/how-to-make-http-delete-method-using-urllib2
+        # urllib2 only does GET or POST I believe, but here we need delete
+        request.get_method = lambda: 'DELETE'
+
+        try: 
+            result = urllib2.urlopen(request)
+        except urllib2.URLError, e:
+            module.fail_json("Failed to connect to api host for deleting")
+
+    return 0, "Meter " + NAME + " deleted"
+
+def download_request(module, NAME, APIID, APIKEY, CERT_TYPE):
+
+    meter_id = get_meter_id(module, NAME, APIID, APIKEY)
+
+    if meter_id is not None:
+        action = "certificates"
+        request = http_request(NAME, APIID, APIKEY, action, meter_id, CERT_TYPE)
+ 
+        try:
+            result = urllib2.urlopen(request)
+        except urllib2.URLError, e:
+            module.fail_json("Failed to connect to api host for certificate download")
+
+        if result:
+            try:
+                cert_file_path = '/{CONFIG_DIR}/{CERT_TYPE}.pem'.format(CONFIG_DIR=CONFIG_DIRECTORY,CERT_TYPE=CERT_TYPE)
+                body = result.read()
+                cert_file = open(cert_file_path, 'w')
+                cert_file.write(body)
+                cert_file.close
+                os.chmod(cert_file_path, 0o600)
+            except: 
+                module.fail_json("Could not write to certificate file")
+
+        return True
+    else:
+        module.fail_json("Could not get meter id")
+
+def main():
+
+    if not HAS_URLLIB2:
+        module.fail_json(msg="urllib2 is not installed")
+
+    module = AnsibleModule(
+        argument_spec=dict(
+        state=dict(required=True, choices=['present', 'removed']),
+        name=dict(required=False),
+        apikey=dict(required=True),
+        apiid=dict(required=True),
+        tags=dict(required=False),
+        )
+    )
+
+    state = module.params['state']
+    NAME= module.params['name']
+    APIKEY = module.params['apikey']
+    APIID = module.params['apiid']
+    TAGS = module.params['tags']
+
+    if state == "present":
+        (rc, result) = create_meter(module, NAME, APIID, APIKEY)
+
+    if state == "removed":
+        (rc, result) = delete_meter(module, NAME, APIID, APIKEY)
+
+    if rc != 0:
+        module.fail_json(msg=result)
+
+    module.exit_json(status=result,changed=True)
+
+# include magic from lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
