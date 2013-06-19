@@ -28,9 +28,14 @@ options:
     required: true
     default: null
     aliases: ['keypair']
+  idempotency_attribute:
+    description:
+      - Enable idempotent mode by specifying an attribute here. Supported attributes: token | instance_tags | group | group_id | image
+    default: null
+    aliases: []
   id:
     description:
-      - identifier for this instance or set of instances, so that the module will be idempotent with respect to EC2 instances.
+      - The value of id is an ec2 client-token. If specified, it is used for idempotent provisioning based on client-token.
     required: false
     default: null
     aliases: []
@@ -190,6 +195,18 @@ EXAMPLES = '''
     count: 5 
     instance_tags: '{"db":"postgres"}' monitoring=yes'
 
+# Example of provisioning instances idempotently based on tags
+- local_action: 
+    module: ec2 
+    keypair: mykey 
+    group: databases 
+    instance_type: m1.large 
+    image: ami-6e649707 
+    wait: yes 
+    count: 5 
+    instance_tags: '{"db":"postgres"}' monitoring=yes'
+    idempotence_attribte: instance_tags
+
 # VPC example
 - local_action: 
     module: ec2 
@@ -215,6 +232,7 @@ def main():
         argument_spec = dict(
             key_name = dict(required=True, aliases = ['keypair']),
             id = dict(),
+            idempotency_attribute = dict(),
             group = dict(),
             group_id = dict(),
             region = dict(choices=['eu-west-1', 'sa-east-1', 'us-east-1', 'ap-northeast-1', 'us-west-2', 'us-west-1', 'ap-southeast-1', 'ap-southeast-2']),
@@ -240,6 +258,7 @@ def main():
 
     key_name = module.params.get('key_name')
     id = module.params.get('id')
+    idempotency_attribute = module.params.get('idempotency_attribute')
     group_name = module.params.get('group')
     group_id = module.params.get('group_id')
     region = module.params.get('region')
@@ -305,18 +324,40 @@ def main():
     except boto.exception.NoAuthHandlerFound, e:
             module.fail_json(msg = str(e))
 
-    # Lookup any instances that much our run id.
-    
+    # If an idempotency_attribtue is specified, look for already running instances in order to not duplicate them
+
     running_instances = []
     count_remaining = int(count)
-        
-    if id != None:
-        filter_dict = {'client-token':id, 'instance-state-name' : 'running'}
+
+    if not(idempotency_attribute is None) or not(id is None):
+        if not(idempotency_attribute is None):
+            if idempotency_attribute == "instance_tags":
+                if instance_tags is None:
+                    module.fail_json(msg = "Idempotency attribute set to id, so a value for the id option must also be provided.")
+                filter_dict = dict(("tag:" + tn, tv) for tn, tv in module.from_json(instance_tags).items())
+            elif idempotency_attribute == "image":
+                filter_dict = {"image-id": image}
+            elif idempotency_attribute == "group":
+                filter_dict = {"group-name": group_name}
+            elif idempotency_attribute == "group_id":
+                filter_dict = {"group-id": group_id}
+            elif idempotency_attribute == "id":
+                if id is None:
+                    module.fail_json(msg = "Idempotency attribute set to id, so a value for the id option must also be provided.")
+                filter_dict = {'client-token':id}
+            else:
+                module.fail_json(msg = "Idempotency attribute '%s' not supported. Supported attribtues: instance_tags, image, group, group_id, and id." % idempotency_attribute)
+        # In order to support backwards compatibility, if the id is specified and the idempotency attribute is not, we still select previous instances based on the id
+        elif not(id is None):
+            filter_dict = {'client-token':id}
+
         previous_reservations = ec2.get_all_instances(None, filter_dict)
         for res in previous_reservations:
             for prev_instance in res.instances:
-                running_instances.append(prev_instance)
-        count_remaining = count_remaining - len(running_instances) 
+                if prev_instance.state in ("pending", "running"): # Ignore terminated instances and those shutting down
+                    running_instances.append(prev_instance)
+    count_remaining = count_remaining - len(running_instances) 
+    
     
     # Both min_count and max_count equal count parameter. This means the launch request is explicit (we want count, or fail) in how many instances we want.
     
@@ -380,7 +421,10 @@ def main():
     
         for inst in this_res.instances:
             running_instances.append(inst)
-        
+        changed = True
+    else:
+        changed = False
+
     instance_dict_array = []
     for inst in running_instances:
         d = {
@@ -408,7 +452,7 @@ def main():
             }
         instance_dict_array.append(d)
 
-    module.exit_json(changed=True, instances=instance_dict_array)
+    module.exit_json(changed=changed, instances=instance_dict_array)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
