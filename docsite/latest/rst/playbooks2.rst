@@ -186,6 +186,15 @@ in a push-script::
 
 There are full examples of both of these items in the github examples/playbooks directory.
 
+If you have a variable that changes infrequently, it might make sense to
+provide a default value that can be overriden.  This can be accomplished using
+the default argument::
+
+   vars_prompt:
+     - name: "release_version"
+       prompt: "Product release version"
+       default: "1.0"
+
 An alternative form of vars_prompt allows for hiding input from the user, and may later support
 some other options, but otherwise works equivalently::
 
@@ -290,7 +299,7 @@ decide to do something conditionally based on success or failure::
       - action: command /bin/something
         when: result|failed
       - action: command /bin/something_else
-        when: result|sucess
+        when: result|success
 
 
 As a reminder, to see what derived variables are available, you can do::

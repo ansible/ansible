@@ -239,7 +239,7 @@ def main():
     if module.params['state'] == 'absent':
         port_id = _get_port_id(quantum, module, router_id, subnet_id)
         if not port_id:
-            module.exit_json(changed = False, result = "Sucess")
+            module.exit_json(changed = False, result = "Success")
         _remove_interface_router(quantum, module, router_id, subnet_id)
         module.exit_json(changed=True, result="Deleted")
                         
