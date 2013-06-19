@@ -3,7 +3,35 @@ Ansible Changes By Release
 
 1.3 "Top of the World" - Release pending!
 
-* This is the active development release, right now!
+Major new features:
+
+* new /etc/ansible/facts.d allows JSON or INI style facts to be provided from the remote node, and supports executable fact programs in this dir. Files must end in *.fact.
+* ability to make undefined template variables raise errors, see ansible.cfg
+
+New modules:
+
+* pending!
+
+Misc changes:
+
+* Added OpenRC support (Gentoo) to the service module
+* ansible_ssh_user value is available to templates
+* added placement_group parameter to ec2 module
+* new sha256 parameter to get_url module for validation
+* search for mount binaries in system path and sbin vs assuming path
+* allowed inventory file to be read from a pipe
+* added Solaris distribution facts
+* fixed bug along error path in quantum_network module
+* user password update mode is controllable in user module now (creation vs every time)
+* added check mode support to the OpenBSD package module
+* internal system by which a module can process multiple with_items entries is now streamlined (see yum, apt, etc) so any module can request this behavior. If used, parameter given to {{ item }} will be joined by commas and passed once, rather than invoking the module N times.  Previously this was available to a select few packaging modules only.  Now any module can specify WITH_ITEMS_WANTS_LIST in the source and get this behavior.
+* Fix for MySQL 5.6 compatibility
+* HP UX virtualization facts
+* fixed some executable bits in git
+* made rhn_register module compatible with EL5
+* fix for setup module epoch time in Solaris
+* sudo_user is now expanded later allowing to be set at inventory scope
+* mondodb_user module change to also support MongoDB 2.2
 
 1.2 "Right Now" -- June 10, 2013
 
