@@ -43,7 +43,7 @@ Core Features:
 * ability to use variables from {{ }} syntax in mainline playbooks, new 'when' conditional, as detailed
   in documentation.  Can disable old style replacements in ansible.cfg if so desired, but are still active
   by default.
-* can set ansible_private_key_file as an inventory variable (similar to ansible_ssh_host, etc)
+* can set ansible_ssh_private_key_file as an inventory variable (similar to ansible_ssh_host, etc)
 * 'when' statement can be affixed to task includes to auto-affix the conditional to each task therein
 * cosmetic: "*****" banners in ansible-playbook output are now constant width
 * --limit can now be given a filename (--limit @filename) to constrain a run to a host list on disk
