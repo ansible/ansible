@@ -9,3 +9,8 @@
   tasks:
     - name: generate messages
       action: template src=message.j2 dest=/tmp/ansible_test_messages.out
+
+  roles:
+    - role: hash_behavior_test_role
+      messages:
+        inside_a_role: "Indeed!"
