@@ -39,7 +39,7 @@ options:
       - security group (or list of groups) to use with the instance
     required: false
     default: null 
-    aliases: []
+    aliases: [ 'groups' ]
   group_id:
     version_added: "1.1"
     description:
@@ -194,7 +194,7 @@ EXAMPLES = '''
 local_action: 
     module: ec2 
     keypair: mykey 
-    group: [databases, internal-services, sshable, and-so-forth]
+    group: ['databases', 'internal-services', 'sshable', 'and-so-forth']
     instance_type: m1.large 
     image: ami-6e649707 
     wait: yes 
