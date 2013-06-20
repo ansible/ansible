@@ -83,6 +83,23 @@
 #  - files: foo.${inventory_hostname}
 #    skip: true
 
+# example a role with default configuration and configuration per host
+# you can set multiple terms with their own files and paths to look through.
+# consider a role that sets some configuration per host falling back on a default config.
+#
+#- name: some configuration template
+#  template: src={{ item }} dest=/etc/file.cfg mode=0444 owner=root group=root
+#  with_first_found:
+#   - files:
+#      - ${inventory_hostname}/etc/file.cfg
+#     paths:
+#      - ../../../templates.overwrites
+#      - ../../../templates
+#   - files:
+#      - etc/file.cfg
+#     paths:
+#      - templates
+
 # the above will return an empty list if the files cannot be found at all
 # if skip is unspecificed or if it is set to false then it will return a list 
 # error which can be caught bye ignore_errors: true for that action.
@@ -99,8 +116,6 @@
 #     - ../files/bar
 #     - ../files/baz
 #    ignore_errors: true
-  
-
 
 
 from ansible import utils, errors
@@ -113,7 +128,7 @@ class LookupModule(object):
 
     def run(self, terms, inject=None, **kwargs):
 
-        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
+        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
 
         result = None
         anydict = False
@@ -122,14 +137,15 @@ class LookupModule(object):
         for term in terms:
             if isinstance(term, dict):
                 anydict = True
-        
+
+        total_search = []
         if anydict:
             for term in terms:
                 if isinstance(term, dict):
                     files = term.get('files', [])
                     paths = term.get('paths', [])
                     skip  = utils.boolean(term.get('skip', False))
-                
+
                     filelist = files
                     if isinstance(files, basestring):
                         files = files.replace(',', ' ')
@@ -143,9 +159,6 @@ class LookupModule(object):
                             paths = paths.replace(':', ' ')
                             paths = paths.replace(';', ' ')
                             pathlist = paths.split(' ')
-                        
-                    total_search = []
-                
 
                     if not pathlist:
                         total_search = filelist
@@ -155,7 +168,7 @@ class LookupModule(object):
                                 f = os.path.join(path, fn)
                                 total_search.append(f)
                 else:
-                    total_search = [term]
+                    total_search.append(term)
         else:
             total_search = terms
 
