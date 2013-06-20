@@ -160,7 +160,7 @@ def main():
             if module in module_docs.BLACKLIST_MODULES:
                 continue
 
-            filename = utils.plugins.module_finder.find_plugin(module)
+            filename = utils.plugins.module_finder.find(module)
             if os.path.isdir(filename):
                 continue
             try:
@@ -191,7 +191,7 @@ def main():
  
     for module in args:
 
-        filename = utils.plugins.module_finder.find_plugin(module)
+        filename = utils.plugins.module_finder.find(module)
         if filename is None:
             sys.stderr.write("module %s not found in %s\n" % (module,
                     print_paths(utils.plugins.module_finder)))
