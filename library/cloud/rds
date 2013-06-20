@@ -17,6 +17,7 @@
 DOCUMENTATION = '''
 ---
 module: rds
+version_added: "1.3"
 short_description: create or delete an Amazon rds instance
 description:
      - Creates or deletes rds instances.  When creating an instance it can be either a new instance or a read-only replica of an existing instance. This module has a dependency on python-boto >= 2.5.
