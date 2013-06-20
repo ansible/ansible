@@ -230,5 +230,6 @@ class Task(object):
             self.only_if = utils.compile_when_to_only_if(self.when)
 
         if additional_conditions:
-            self.only_if = '(' + self.only_if + ') and (' + ' ) and ('.join(additional_conditions) + ')'
+            self.only_if = [ self.only_if ] 
+            self.only_if.extend(additional_conditions)
 
