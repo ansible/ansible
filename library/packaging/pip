@@ -91,6 +91,12 @@ options:
     required: false
     default: null
     version_added: "1.0"
+  chdir:
+    description:
+      - cd into this directory before running the command
+    version_added: "1.3"
+    required: false
+    default: null
 notes:
    - Please note that virtualenv (U(http://www.virtualenv.org/)) must be installed on the remote host if the virtualenv parameter is specified.
 requirements: [ "virtualenv", "pip" ]
@@ -180,6 +186,7 @@ def main():
             virtualenv_command=dict(default='virtualenv', required=False),
             use_mirrors=dict(default='yes', type='bool'),
             extra_args=dict(default=None, required=False),
+            chdir=dict(default=None, required=False),
         ),
         required_one_of=[['name', 'requirements']],
         mutually_exclusive=[['name', 'requirements']],
@@ -192,6 +199,7 @@ def main():
     requirements = module.params['requirements']
     use_mirrors = module.params['use_mirrors']
     extra_args = module.params['extra_args']
+    chdir = module.params['chdir']
 
     if state == 'latest' and version is not None:
         module.fail_json(msg='version is incompatible with state=latest')
@@ -215,6 +223,8 @@ def main():
             else:
                 cmd = '%s %s' % (virtualenv, env)
             os.chdir(tempfile.gettempdir())
+            if chdir:
+                os.chdir(chdir)
             rc, out_venv, err_venv = module.run_command(cmd)
             out += out_venv
             err += err_venv
@@ -238,6 +248,7 @@ def main():
         # is_tar ends with .zip, .tar.gz, or .tar.bz2
         is_vcs = False
         is_tar = False
+        is_local_path = False
         if name.endswith('.tar.gz') or name.endswith('.tar.bz2') or name.endswith('.zip'):
             is_tar = True
         elif name.startswith('svn+') or name.startswith('git+') or \
@@ -252,8 +263,11 @@ def main():
                 args_list.append('-e')
                 # Ok, we will reconstruct the option string
                 extra_args = ' '.join(args_list)
+
+        if name.startswith(('.','/')):
+            is_local_path = True
         # for tarball or vcs source, applying --use-mirrors doesn't really make sense
-        is_package = is_vcs or is_tar       # just a shortcut for bool
+        is_package = is_vcs or is_tar or is_local_path       # just a shortcut for bool
         if not is_package and state != 'absent' and use_mirrors:
             cmd += ' --use-mirrors'
         cmd += ' %s' % _get_full_name(name, version)
@@ -263,6 +277,8 @@ def main():
     if module.check_mode:
         module.exit_json(changed=True)
     os.chdir(tempfile.gettempdir())
+    if chdir:
+        os.chdir(chdir)
     rc, out_pip, err_pip = module.run_command(cmd)
     out += out_pip
     err += err_pip
