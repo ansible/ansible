@@ -23,10 +23,11 @@ description:
 options:
   command:
     description:
-      - Specifies the action to take.  Must be one of: create | replicate | delete | facts | modify
+      - Specifies the action to take.  
     required: true
     default: null
     aliases: []
+    choices: [ 'create', 'replicate', 'delete', 'facts', 'modify' ]
   instance_name:
     description:
       - Database instance identifier.
@@ -142,7 +143,7 @@ options:
     aliases: []
   maint_window:
     description:
-      - Maintenance window in format of ddd:hh24:mi-ddd:hh24:mi.  (Example: Mon:22:00-Mon:23:15) If not specified then a random maintenance window is assigned. Used only when command=create or command=modify.
+      - "Maintenance window in format of ddd:hh24:mi-ddd:hh24:mi.  (Example: Mon:22:00-Mon:23:15) If not specified then a random maintenance window is assigned. Used only when command=create or command=modify."
     required: false
     default: null
     aliases: []
@@ -154,7 +155,7 @@ options:
     aliases: []
   backup_retention:
     description:
-      - Number of days backups are retained.  Set to 0 to disable backups.  Default is 1 day.  Valid range: 0-35. Used only when command=create or command=modify.
+      - "Number of days backups are retained.  Set to 0 to disable backups.  Default is 1 day.  Valid range: 0-35. Used only when command=create or command=modify."
     required: false
     default: null
     aliases: []

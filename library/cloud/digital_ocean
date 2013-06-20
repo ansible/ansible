@@ -53,7 +53,7 @@ options:
      - Numeric, this is the id of the image you would like the droplet created with.
   region_id:
     description:
-     - Numeric, this is the id of the region you would like your server in IE: US/Amsterdam.
+     - "Numeric, this is the id of the region you would like your server"
   ssh_key_ids:
     description:
      - Optional, comma separated list of ssh_key_ids that you would like to be added to the server

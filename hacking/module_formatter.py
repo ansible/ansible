@@ -63,6 +63,8 @@ def latex_ify(text):
 
 def html_ify(text):
 
+    # print "DEBUG: text=%s" % text
+    
     t = cgi.escape(text)
     t = _ITALIC.sub("<em>" + r"\1" + "</em>", t)
     t = _BOLD.sub("<b>" + r"\1" + "</b>", t)
