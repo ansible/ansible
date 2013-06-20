@@ -335,24 +335,23 @@ def parse_kv(args):
     return options
 
 def merge_hash(a, b):
-    ''' merges hash b into a
-    this means that if b has key k, the resulting has will have a key k
-    which value comes from b
-    said differently, all key/value combination from b will override a's '''
+    ''' recursively merges hash b into a
+    keys from b take precedende over keys from a '''
 
-    # and iterate over b keys
+    result = copy.deepcopy(a)
+
+    # next, iterate over b keys and values
     for k, v in b.iteritems():
-        if k in a and isinstance(a[k], dict):
-            # if this key is a hash and exists in a
-            # we recursively call ourselves with
-            # the key value of b
-            a[k] = merge_hash(a[k], v)
+        # if there's already such key in a
+        # and that key contains dict
+        if k in result and isinstance(result[k], dict):
+            # merge those dicts recursively
+            result[k] = merge_hash(a[k], v)
         else:
-            # k is not in a, no need to merge b, we just deecopy
-            # or k is not a dictionnary, no need to merge b either, we just deecopy it
-            a[k] = v
-    # finally, return the resulting hash when we're done iterating keys
-    return a
+            # otherwise, just copy a value from b to a
+            result[k] = v
+
+    return result
 
 def md5s(data):
     ''' Return MD5 hex digest of data. '''
@@ -604,7 +603,7 @@ def compile_when_to_only_if(expression):
     # when: int $x in $alist
     # when: float $x > 2 and $y <= $z
     # when: str $x != $y
-    # when: jinja2_compare asdf  # implies {{ asdf }} 
+    # when: jinja2_compare asdf  # implies {{ asdf }}
 
     if type(expression) not in [ str, unicode ]:
         raise errors.AnsibleError("invalid usage of when_ operator: %s" % expression)
@@ -723,13 +722,13 @@ def get_diff(diff):
         return ">> the files are different, but the diff library cannot compare unicode strings"
 
 def is_list_of_strings(items):
-    for x in items: 
+    for x in items:
         if not isinstance(x, basestring):
             return False
     return True
 
 def safe_eval(str):
-    ''' 
+    '''
     this is intended for allowing things like:
     with_items: {{ a_list_variable }}
     where Jinja2 would return a string
@@ -737,7 +736,7 @@ def safe_eval(str):
     the env is constrained)
     '''
     # FIXME: is there a more native way to do this?
-    
+
     def is_set(var):
         return not var.startswith("$") and not '{{' in var
 
@@ -776,7 +775,7 @@ def listify_lookup_plugin_terms(terms, basedir, inject):
                 if isinstance(new_terms, basestring) and new_terms.find("{{") != -1:
                     pass
                 else:
-                    terms = new_terms  
+                    terms = new_terms
             except:
                 pass
 
