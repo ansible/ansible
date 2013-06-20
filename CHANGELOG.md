@@ -12,6 +12,7 @@ New modules:
 
 * notifications: datadog_event -- send data to datadog
 * cloud: digital_ocean -- module for digital ocean provisioning
+* cloud: rds -- Amazon relational database service
 
 Misc changes:
 
