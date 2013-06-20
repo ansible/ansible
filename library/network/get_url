@@ -35,7 +35,7 @@ description:
        the target host, requests will be sent through that proxy. This
        behaviour can be overridden by setting a variable for this task
        (see `setting the environment
-       <http://ansible.cc/docs/playbooks2.html#setting-the-environment-and-working-with-proxies>`_),
+       <http://www.ansibleworks.com/docs/playbooks2.html#setting-the-environment-and-working-with-proxies>`_),
        or by using the use_proxy option.
 version_added: "0.6"
 options:

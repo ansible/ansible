@@ -229,7 +229,7 @@ pointing to python3, so the right python can be found on the managed nodes.
 Tagged Releases
 +++++++++++++++
 
-Tarballs of releases are available on the ansible.cc page.
+Tarballs of releases are available on the ansibleworks.com page.
 
 * `Ansible/downloads <http://ansibleworks.com/releases>`_
 

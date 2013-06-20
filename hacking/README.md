@@ -19,7 +19,7 @@ can install them from pip
     $ easy_install pip               # if pip is not already available
     $ pip install pyyaml jinja2
 
-From there, follow ansible instructions on ansible.cc/docs as normal.
+From there, follow ansible instructions on ansibleworks.com/docs as normal.
 
 Test-module
 -----------

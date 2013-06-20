@@ -10,8 +10,8 @@ Version: 1.3
 
 Group: Development/Libraries
 License: GPLv3
-Source0: http://ansible.cc/releases/%{name}-%{version}.tar.gz
-Url: http://ansible.cc
+Source0: http://www.ansibleworks.com/releases/%{name}-%{version}.tar.gz
+Url: http://www.ansibleworks.com
 
 BuildArch: noarch
 %if 0%{?rhel} && 0%{?rhel} <= 5
