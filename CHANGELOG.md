@@ -11,6 +11,7 @@ Major new features:
 New modules:
 
 * notifications: datadog_event -- send data to datadog
+* cloud: digital_ocean -- module for digital ocean provisioning
 
 Misc changes:
 
@@ -32,6 +33,8 @@ Misc changes:
 * sudo_user is now expanded later allowing to be set at inventory scope
 * mondodb_user module change to also support MongoDB 2.2
 * new state=hard option to the file module for hardlinks vs softlinks
+* fixes to apt module purging option behavior
+* fixes for device facts with multiple PCI domains
 
 1.2 "Right Now" -- June 10, 2013
 
