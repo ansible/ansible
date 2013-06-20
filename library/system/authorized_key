@@ -59,6 +59,13 @@ options:
     required: false
     choices: [ "present", "absent" ]
     default: "present"
+  remove_other:
+    description:
+      - Whether to remove all other keys in the file
+    required: false
+    choices: [ "yes", "no" ]
+    default: "no"
+    version_added: "1.3"
 description:
     - "Adds or removes authorized keys for particular user accounts"
 author: Brad Olson
@@ -68,11 +75,12 @@ EXAMPLES = '''
 # Example using key data from a local file on the management machine
 - authorized_key: user=charlie key="{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
 
-# Using alternate directory locations:
+# Using alternate directory locations and removing all other keys:
 - authorized_key: user=charlie
                   key="{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
                   path='/etc/ssh/authorized_keys/charlie'
                   manage_dir=no
+                  remove_other=yes
 '''
 
 # Makes sure the public key line is present or absent in the user's .ssh/authorized_keys.
@@ -84,6 +92,7 @@ EXAMPLES = '''
 #    path = path to the user's authorized_keys file (default: ~/.ssh/authorized_keys)
 #    manage_dir = whether to create, and control ownership of the directory (default: true)
 #    state = absent|present (default: present)
+#    remove_other = whether to remove all other keys (default: false)
 #
 # see example in examples/playbooks
 
@@ -176,50 +185,63 @@ def enforce_state(module, params):
     Add or remove key.
     """
 
-    user       = params["user"]
-    key        = params["key"]
-    path       = params.get("path", None)
-    manage_dir = params.get("manage_dir", True)
-    state      = params.get("state", "present")
+    user         = params["user"]
+    key          = params["key"]
+    path         = params.get("path", None)
+    manage_dir   = params.get("manage_dir", True)
+    state        = params.get("state", "present")
+    remove_other = params.get("remove_other", False)
 
     key = key.split('\n')
 
     # check current state -- just get the filename, don't create file
     write = False
     params["keyfile"] = keyfile(module, user, write, path, manage_dir)
-    keys = readkeys(params["keyfile"])
 
-    # Check our new keys, if any of them exist we'll continue.
+    curkeys = set(readkeys(params["keyfile"]))
+    newkeys = set()
+    changed = False
+
     for new_key in key:
-        present = new_key in keys
-        # handle idempotent state=present
+        # add wanted keys to newkeys
         if state=="present":
-            if present:
-                continue
-            keys.append(new_key)
-            write = True
-            writekeys(module, keyfile(module, user, write, path, manage_dir), keys)
-            params['changed'] = True
+            newkeys.add(new_key)
+            changed = new_key not in curkeys
 
+        # and remove unwanted keys from curkeys
         elif state=="absent":
-            if not present:
-                continue
-            keys.remove(new_key)
-            write = True
-            writekeys(module, keyfile(module, user, write, path, manage_dir), keys)
-            params['changed'] = True
+            if new_key in curkeys:
+                curkeys.remove(new_key)
+                changed = True
 
+    if remove_other:
+        # remove_other is essentially the same as "just use the new keys",
+        # so we want the new set to completely replace the old one, and we
+        # report a change only if the sets are different.
+        changed = changed or (curkeys != newkeys)
+        curkeys = newkeys
+    else:
+        # we have curkeys, with all the current keys minus the ones with
+        # state=absent, and we have newkeys with all the keys to be added, so
+        # the union of the two is what we want:
+        curkeys = curkeys.union(newkeys)
+        # changed was already updated in the loop, if anything changed
+
+    write = True
+    writekeys(module, keyfile(module, user, write, path, manage_dir), curkeys)
+    params['changed'] = changed
     return params
 
 def main():
 
     module = AnsibleModule(
         argument_spec = dict(
-           user       = dict(required=True, type='str'),
-           key        = dict(required=True, type='str'),
-           path       = dict(required=False, type='str'),
-           manage_dir = dict(required=False, type='bool', default=True),
-           state      = dict(default='present', choices=['absent','present'])
+           user         = dict(required=True, type='str'),
+           key          = dict(required=True, type='str'),
+           path         = dict(required=False, type='str'),
+           manage_dir   = dict(required=False, type='bool', default=True),
+           state        = dict(default='present', choices=['absent','present']),
+           remove_other = dict(required=False, type='bool', default=False)
         )
     )
 
