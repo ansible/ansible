@@ -504,12 +504,15 @@ class Runner(object):
         else:
             handler = utils.plugins.action_loader.get('async', self)
 
-        conditional = template.template(self.basedir, self.conditional, inject, expand_lists=False)
+        if type(self.conditional) != list:
+            self.conditional = [ self.conditional ]
 
-        if not utils.check_conditional(conditional):
-            result = utils.jsonify(dict(changed=False, skipped=True))
-            self.callbacks.on_skipped(host, inject.get('item',None))
-            return ReturnData(host=host, result=result)
+        for cond in self.conditional:
+            cond = template.template(self.basedir, cond, inject, expand_lists=False)
+            if not utils.check_conditional(cond):
+                result = utils.jsonify(dict(changed=False, skipped=True))
+                self.callbacks.on_skipped(host, inject.get('item',None))
+                return ReturnData(host=host, result=result)
 
         conn = None
         actual_host = inject.get('ansible_ssh_host', host)
