@@ -50,10 +50,11 @@ options:
         exist, see the M(copy) or M(template) module if you want that behavior.
         If C(link), the symbolic link will be created or changed. Use C(hard)
         for hardlinks. If C(absent), directories will be recursively deleted,
-        and files or symlinks will be unlinked.
+        and files or symlinks will be unlinked. C(empty_directory) is like
+        C(directory), except existing files therein are removed, recursively.
     required: false
     default: file
-    choices: [ file, link, directory, hard, absent ]
+    choices: [ file, link, directory, empty_directory, hard, absent ]
   mode:
     required: false
     default: null
@@ -147,7 +148,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec = dict(
-            state = dict(choices=['file','directory','link','hard','absent'], default='file'),
+            state = dict(choices=['file','directory','empty_directory','link','hard','absent'], default='file'),
             path  = dict(aliases=['dest', 'name'], required=True),
             recurse  = dict(default='no', type='bool'),
             diff_peek = dict(default=None),
@@ -199,6 +200,8 @@ def main():
         if os.path.islink(path):
             prev_state = 'link'
         elif os.path.isdir(path):
+            # could test for empty_directory here, but prefer to special-case
+            # later
             prev_state = 'directory'
         else:
             prev_state = 'file'
@@ -225,7 +228,11 @@ def main():
             module.fail_json(path=path, msg=str(e))
         module.exit_json(path=path, changed=True)
 
-    if prev_state != 'absent' and prev_state != state:
+    refuse = prev_state != 'absent' and prev_state != state
+    # but we do allow changing from directory to empty_directory, if it's
+    # a change at all (which we only find out when we enforce the change)
+    refuse &= (prev_state, state) != ('directory', 'empty_directory')
+    if refuse:
         module.fail_json(path=path, msg='refusing to convert between %s and %s for %s' % (prev_state, state, src))
 
     if prev_state == 'absent' and state == 'absent':
@@ -239,7 +246,7 @@ def main():
         changed = module.set_file_attributes_if_different(file_args, changed)
         module.exit_json(path=path, changed=changed)
 
-    elif state == 'directory':
+    elif state in ('directory', 'empty_directory'):
         if prev_state == 'absent':
             if module.check_mode:
                 module.exit_json(changed=True)
@@ -247,6 +254,28 @@ def main():
             changed = True
 
         changed = module.set_directory_attributes_if_different(file_args, changed)
+
+        if state == 'empty_directory':
+            # the directory exists, but we must ensure it's empty
+            children = os.listdir( file_args['path'] )
+            if len(children) > 0:
+                # we get here only if there are children, so there will be
+                # changes:
+                if module.check_mode:
+                    module.exit_json(changed=True)
+                changed = True
+
+                for child in children:
+                    child = os.path.join(path, child)
+                    if os.path.isdir(child):
+                        try:
+                            shutil.rmtree(child, ignore_errors=False)
+                        except:
+                            module.exit_json(msg="rmtree failed on %s" % child)
+                    else:
+                        os.unlink(child)
+            module.exit_json(path=path, changed=changed)
+
         recurse = params['recurse']
         if recurse:
             for root,dirs,files in os.walk( file_args['path'] ):
