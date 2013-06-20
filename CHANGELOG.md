@@ -36,6 +36,7 @@ Misc changes:
 * fixes to apt module purging option behavior
 * fixes for device facts with multiple PCI domains
 * added "with_inventory_hostnames" lookup plugin, which can take a pattern and loop over hostnames matching the pattern and is great for use with delegate_to and so on.
+* ec2 module supports adding to multiple security groups
 
 1.2 "Right Now" -- June 10, 2013
 
