@@ -101,8 +101,8 @@ Disclaimer
 Modules and playbooks here may not be using the latest in Ansible
 features. When in doubt to the features of a particular version of
 Ansible, always consult `ansibleworks.com <http://www.ansibleworks.com/>`_ and in
-particular see `Best Practices <http://www.ansibleworks.com/docs/bestpractices.html>`_
- for some tips and tricks that may be useful.
+particular see `Best Practices <http://www.ansibleworks.com/docs/bestpractices.html>`_ 
+for some tips and tricks that may be useful.
 
 Ansible is (C) 2012, `Michael DeHaan <http://twitter.com/laserllama>`_
 and others and is available under the GPLv3 license. Content here is as
