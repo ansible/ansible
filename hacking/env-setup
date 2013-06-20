@@ -1,13 +1,17 @@
 #!/bin/bash
-# usage: source ./hacking/env-setup [-q]
+# usage: source env-setup [-q]
+#        source hacking/env-setup [-q]
+#        . ./env-setup [-q]
+#        . ./hacking/env-setup [q]
 #    modifies environment for running Ansible from checkout
 
 # When run using source as directed, $0 gets set to bash, so we must use $BASH_SOURCE
-if [ -n "$BASH_SOURCE" ] ; then
-    HACKING_DIR=`dirname $BASH_SOURCE`
-else
-    HACKING_DIR="$PWD/hacking"
-fi
+case "$0" in
+    (bash)
+        HACKING_DIR=${BASH_SOURCE%/*};;
+    (*)
+        HACKING_DIR=${0%/*};;
+esac
 # The below is an alternative to readlink -fn which doesn't exist on OS X
 # Source: http://stackoverflow.com/a/1678636
 FULL_PATH=`python -c "import os; print(os.path.realpath('$HACKING_DIR'))"`
