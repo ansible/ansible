@@ -34,7 +34,7 @@ and /usr/bin/ansible-playbook.
 Callback Plugin
 +++++++++++++++
 
-Refers to some user-written code that can intercept the results from Ansbile and do something with it.  Some supplied examples
+Refers to some user-written code that can intercept the results from Ansible and do something with it.  Some supplied examples
 in the github project perform custom logging, send email, or even play sound effects.
 
 Check Mode
@@ -143,7 +143,7 @@ if they are not to be accessed on the default SSH port.
 Host Specifier
 ++++++++++++++
 
-Each Play in Ansbile maps a series of tasks (which define the role, purpose, or orders of a system) to a set of systems.
+Each Play in Ansible maps a series of tasks (which define the role, purpose, or orders of a system) to a set of systems.
 
 This "hosts:" directive in each play is often called the hosts specifier.
 
@@ -213,7 +213,7 @@ called an "External Nodes Classifier") and works more or less exactly the same w
 Jinja2
 ++++++
 
-Jinja2 is the preferred templating language of Ansbile's template module.  It is a very simple Python template language that is generally
+Jinja2 is the preferred templating language of Ansible's template module.  It is a very simple Python template language that is generally
 readable and easy to write.
 
 JSON
@@ -387,7 +387,7 @@ features, paramiko (the default) is a fine choice.  Ansible will warn you if it 
 Tags
 ++++
 
-Ansbile allows tagging resources in a playbook with arbitrary keywords, and then running only the parts of the playbook that
+Ansible allows tagging resources in a playbook with arbitrary keywords, and then running only the parts of the playbook that
 correspond to those certain keywords.  For instance, it is possible to have an entire OS configuration, and have certain steps
 labelled "ntp", and then run just the "ntp" steps to reconfigure the time server information on a remote server.
 

@@ -143,7 +143,7 @@ The `vars` section contains a list of variables and values that can be used in t
 
 .. note::
    You can also keep variables in separate files and include them alongside inline `vars` with a `vars_files` declaration
-   in the play. See the `Advanced Playbooks chapter <http://ansible.cc/docs/playbooks2.html#variable-file-separation>`_
+   in the play. See the `Advanced Playbooks chapter <http://www.ansibleworks.com/docs/playbooks2.html#variable-file-separation>`_
    for more info.
 
 These variables can be used later in the playbook like this::
