@@ -77,11 +77,11 @@ class Play(object):
         # tasks/handlers as they may have inventory scope overrides
         _tasks    = ds.pop('tasks', [])
         _handlers = ds.pop('handlers', [])
-        ds = template(basedir, ds, self.vars) 
+        ds = template(basedir, ds, self.vars)
         ds['tasks'] = _tasks
         ds['handlers'] = _handlers
 
-        self._ds = ds         
+        self._ds = ds
 
         hosts = ds.get('hosts')
         if hosts is None:
@@ -114,7 +114,7 @@ class Play(object):
 
         if self.sudo_user != 'root':
             self.sudo = True
-        
+
 
     # *************************************************
 
@@ -146,7 +146,7 @@ class Play(object):
         # flush handlers after pre_tasks
         new_tasks.append(dict(meta='flush_handlers'))
 
-        # variables if the role was parameterized (i.e. given as a hash) 
+        # variables if the role was parameterized (i.e. given as a hash)
         has_dict = {}
 
         for orig_path in roles:
@@ -178,14 +178,14 @@ class Play(object):
                 raise errors.AnsibleError("found role at %s, but cannot find %s or %s or %s or %s" % (path, task, handler, vars_file, library))
             if os.path.isfile(task):
                 nt = dict(include=task, vars=has_dict)
-                if when: 
+                if when:
                     nt['when'] = when
                 if with_items:
                     nt['with_items'] = with_items
                 new_tasks.append(nt)
             if os.path.isfile(handler):
                 nt = dict(include=handler, vars=has_dict)
-                if when: 
+                if when:
                     nt['when'] = when
                 if with_items:
                     nt['with_items'] = with_items
@@ -242,7 +242,7 @@ class Play(object):
                 if x['meta'] == 'flush_handlers':
                     results.append(Task(self,x))
                     continue
- 
+
             task_vars = self.vars.copy()
             task_vars.update(vars)
             if original_file:
@@ -269,7 +269,7 @@ class Play(object):
                         raise errors.AnsibleError("parse error: task includes cannot be used with other directives: %s" % k)
 
                 if 'vars' in x:
-                    task_vars.update(x['vars'])
+                    task_vars = utils.combine_vars(task_vars, x['vars'])
                 if 'only_if' in x:
                     included_additional_conditions.append(x['only_if'])
 
@@ -281,7 +281,7 @@ class Play(object):
                         mv[k] = template(self.basedir, v, mv)
                     dirname = self.basedir
                     if original_file:
-                        dirname = os.path.dirname(original_file)     
+                        dirname = os.path.dirname(original_file)
                     include_file = template(dirname, tokens[0], mv)
                     include_filename = utils.path_dwim(dirname, include_file)
                     data = utils.parse_yaml_from_file(include_filename)

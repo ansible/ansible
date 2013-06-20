@@ -96,6 +96,8 @@ class TestPlaybook(unittest.TestCase):
            os.unlink('/tmp/ansible_test_data_template.out')
        if os.path.exists('/tmp/ansible_test_messages.out'):
            os.unlink('/tmp/ansible_test_messages.out')
+       if os.path.exists('/tmp/ansible_test_role_messages.out'):
+           os.unlink('/tmp/ansible_test_role_messages.out')
 
    def _prepare_stage_dir(self):
        stage_path = os.path.join(self.test_dir, 'test_data')
@@ -304,20 +306,17 @@ class TestPlaybook(unittest.TestCase):
       )
       playbook.run()
 
-      with open('/tmp/ansible_test_messages.out') as f:
-        actual = [l.strip() for l in f.readlines()]
-
-      print "**ACTUAL**"
-      print actual
-
-      expected = [
+      filename = '/tmp/ansible_test_messages.out'
+      expected_lines = [
         "goodbye: Goodbye World!"
       ]
+      self._compare_file_output(filename, expected_lines)
 
-      print "**EXPECTED**"
-      print expected
-
-      assert actual == expected
+      filename = '/tmp/ansible_test_role_messages.out'
+      expected_lines = [
+        "inside_a_role: Indeed!"
+      ]
+      self._compare_file_output(filename, expected_lines)
 
       # restore default hash behavior
       C.DEFAULT_HASH_BEHAVIOUR = saved_hash_behavior
@@ -337,21 +336,34 @@ class TestPlaybook(unittest.TestCase):
       )
       playbook.run()
 
-      with open('/tmp/ansible_test_messages.out') as f:
-        actual = [l.strip() for l in f.readlines()]
-
-      print "**ACTUAL**"
-      print actual
-
-      expected = [
-        "hello: Hello World!",
-        "goodbye: Goodbye World!"
+      filename = '/tmp/ansible_test_messages.out'
+      expected_lines = [
+        "goodbye: Goodbye World!",
+        "hello: Hello World!"
       ]
+      self._compare_file_output(filename, expected_lines)
 
-      print "**EXPECTED**"
-      print expected
-
-      assert actual == expected
+      filename = '/tmp/ansible_test_role_messages.out'
+      expected_lines = [
+        "goodbye: Goodbye World!",
+        "hello: Hello World!",
+        "inside_a_role: Indeed!"
+      ]
+      self._compare_file_output(filename, expected_lines)
 
       # restore default hash behavior
       C.DEFAULT_HASH_BEHAVIOUR = saved_hash_behavior
+
+   def _compare_file_output(self, filename, expected_lines):
+      actual_lines = []
+      with open(filename) as f:
+        actual_lines = [l.strip() for l in f.readlines()]
+        actual_lines = sorted(actual_lines)
+
+      print "**ACTUAL**"
+      print actual_lines
+
+      print "**EXPECTED**"
+      print expected_lines
+
+      assert actual_lines == expected_lines
