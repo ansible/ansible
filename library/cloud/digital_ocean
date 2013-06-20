@@ -33,7 +33,8 @@ options:
      - Indicate desired state of the target.
     required: true
     choices: ['present', 'active', 'absent', 'deleted']
-  client_id: description:
+  client_id: 
+     description:
      - Digital Ocean manager id.
   api_key:
     description:
