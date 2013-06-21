@@ -237,18 +237,11 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
         
         # Any create step triggers a job that need to be waited for.
         if not servers:
-            new_server = True
-            # TODO - improve
-            if not name:
-                module.fail_json(msg='%s is required for active state' % 'name')
-            if not plan:
-                module.fail_json(msg='%s is required for active state' % 'plan')
-            if not distribution:
-                module.fail_json(msg='%s is required for active state' % 'distribution')
-            if not datacenter:
-                module.fail_json(msg='%s is required for active state' % 'datacenter')
-
+            for arg in ('name', 'plan', 'distribution', 'datacenter'):
+                if not eval(arg):
+                    module.fail_json(msg='%s is required for active state' % arg)
             # Create linode entity
+            new_server = True
             try:
                 res = api.linode_create(DatacenterID=datacenter, PlanID=plan, 
                                         PaymentTerm=payment_term)
@@ -261,16 +254,11 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
                 module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
 
         if not disks:
-            new_server = True
-            # TODO - improve
-            if not name:
-                module.fail_json(msg='%s is required for active state' % 'name')
-            if not linode_id:
-                module.fail_json(msg='%s is required for active state' % 'linode_id')
-            if not distribution:
-                module.fail_json(msg='%s is required for active state' % 'distribution')
-
+            for arg in ('name', 'linode_id', 'distribution'):
+                if not eval(arg):
+                    module.fail_json(msg='%s is required for active state' % arg)
             # Create disks (1 from distrib, 1 for SWAP)
+            new_server = True
             try:
                 if not password:
                     # Password is required on creation, if not provided generate one
@@ -299,14 +287,9 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
                 module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
 
         if not configs:
-            new_server = True
-            # TODO - improve
-            if not name:
-                module.fail_json(msg='%s is required for active state' % 'name')
-            if not linode_id:
-                module.fail_json(msg='%s is required for active state' % 'linode_id')
-            if not distribution:
-                module.fail_json(msg='%s is required for active state' % 'distribution')
+            for arg in ('name', 'linode_id', 'distribution'):
+                if not eval(arg):
+                    module.fail_json(msg='%s is required for active state' % arg)
 
             # Check architecture
             for distrib in api.avail_distributions():
@@ -337,6 +320,7 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
             disks_list = ','.join(disks_id)
 
             # Create config
+            new_server = True
             try:
                 api.linode_config_create(LinodeId=linode_id, KernelId=kernel_id,
                                          Disklist=disks_list, Label='%s config' % name)
@@ -388,14 +372,15 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
             if new_server and not ssh_pub_key:
                 instance['password'] = password
             instances.append(instance)
+
     elif state in ('stopped'):
-        if not name:
-            module.fail_json(msg='%s is required for stopped state' % 'name')
-        if not linode_id:
-            module.fail_json(msg='%s is required for stopped state' % 'linode_id')
+        for arg in ('name', 'linode_id'):
+            if not eval(arg):
+                module.fail_json(msg='%s is required for active state' % arg)
 
         if not servers:
             module.fail_json(msg = 'Server %s (lid: %s) not found' % (name, linode_id))
+
         for server in servers:
             instance = getInstanceDetails(api, server)
             if server['STATUS'] != 2:
@@ -408,14 +393,15 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
             else:
                 instance['status'] = 'Stopped'
             instances.append(instance)
+
     elif state in ('restarted'):
-        if not name:
-            module.fail_json(msg='%s is required for restarted state' % 'name')
-        if not linode_id:
-            module.fail_json(msg='%s is required for restarted state' % 'linode_id')
+        for arg in ('name', 'linode_id'):
+            if not eval(arg):
+                module.fail_json(msg='%s is required for active state' % arg)
 
         if not servers:
             module.fail_json(msg = 'Server %s (lid: %s) not found' % (name, linode_id))
+
         for server in servers:
             instance = getInstanceDetails(api, server)
             try:
@@ -425,6 +411,7 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
             instance['status'] = 'Restarting'
             changed = True
             instances.append(instance)
+            
     elif state in ('absent', 'deleted'):
         for server in servers:
             instance = getInstanceDetails(api, server)
