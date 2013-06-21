@@ -495,12 +495,14 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         super(PlaybookRunnerCallbacks, self).on_error(host, err)
 
     def on_skipped(self, host, item=None):
-        msg = ''
-        if item:
-            msg = "skipping: [%s] => (item=%s)" % (host, item)
-        else:
-            msg = "skipping: [%s]" % host
-        display(msg, color='cyan')
+        if not constants.HIDE_SKIPPED_TASKS:
+            msg = ''
+            if item:
+                msg = "skipping: [%s] => (item=%s)" % (host, item)
+            else:
+                msg = "skipping: [%s]" % host
+            display(msg, color='cyan')
+
         super(PlaybookRunnerCallbacks, self).on_skipped(host, item)
 
     def on_no_hosts(self):

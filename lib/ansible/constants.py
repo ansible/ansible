@@ -112,6 +112,8 @@ ZEROMQ_PORT                    = int(get_config(p, 'fireball', 'zeromq_port', 'A
 
 DEFAULT_UNDEFINED_VAR_BEHAVIOR = get_config(p, DEFAULTS, 'error_on_undefined_vars', 'ANSIBLE_ERROR_ON_UNDEFINED_VARS', False)
 
+HIDE_SKIPPED_TASKS        = get_config(p, DEFAULTS, 'hide_skipped_tasks', 'HIDE_SKIPPED_TASKS', False)
+
 # non-configurable things
 DEFAULT_SUDO_PASS         = None
 DEFAULT_REMOTE_PASS       = None
