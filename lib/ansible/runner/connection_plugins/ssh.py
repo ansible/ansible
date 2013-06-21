@@ -139,25 +139,27 @@ class Connection(object):
             fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
 
         # We can't use p.communicate here because the ControlMaster may have stdout open as well
-        stdout = ''
-        stderr = ''
+        output = {p.stdout:'', p.stderr:''}
         while True:
             rfd, wfd, efd = select.select([p.stdout, p.stderr], [], [p.stdout, p.stderr], 1)
-            if p.stdout in rfd:
-                dat = os.read(p.stdout.fileno(), 9000)
-                stdout += dat
-                if dat == '':
-                    p.wait()
-                    break
-            elif p.stderr in rfd:
-                dat = os.read(p.stderr.fileno(), 9000)
-                stderr += dat
-                if dat == '':
-                    p.wait()
-                    break
-            elif p.poll() is not None:
+            if len(rfd) == 0 and p.poll() is not None:
+                # the process has ended and there is nothing to read anymore
                 break
+
+            eof_seen = False
+            for fd in rfd:
+                dat = os.read(fd.fileno(), 9000)
+                output[fd] += dat
+                eof_seen = (dat == '')
+
+            if eof_seen:
+                p.wait()
+                break
+
         stdin.close() # close stdin after we read from stdout (see also issue #848)
+
+        stdout = output[p.stdout]
+        stderr = output[p.stderr]
 
         if p.returncode != 0 and stderr.find('Bad configuration option: ControlPersist') != -1:
             raise errors.AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" (or ansible_ssh_args in the config file) before running again')
