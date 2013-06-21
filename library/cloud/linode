@@ -16,25 +16,20 @@
 
 DOCUMENTATION = '''
 ---
-module: rax
-short_description: create / delete an instance in Rackspace Public Cloud
+module: linode
+short_description: create / delete / stop / restart an instance in Linode Public Cloud
 description:
-     - creates / deletes a Rackspace Public Cloud instance and optionally waits for it to be 'running'.
-version_added: "1.2"
+     - creates / deletes a Linode Public Cloud instance and optionally waits for it to be 'running'.
+version_added: "1.3"
 options:
-  service:
-    description:
-     - Cloud service to interact with
-    choices: ['cloudservers']
-    default: cloudservers
   state:
     description:
      - Indicate desired state of the resource
-    choices: ['present', 'active', 'absent', 'deleted']
+    choices: ['present', 'active', 'started', absent', 'deleted', 'stopped', 'restarted']
     default: present
-  creds_file:
+  api_key:
     description:
-     - File to find the Rackspace Public Cloud credentials in
+     - Linode API key
     default: null
   name:
     description:
@@ -42,29 +37,40 @@ options:
     default: null
   flavor:
     description:
-     - flavor to use for the instance
+     - flavor to use for the instance (Linode plan)
     default: null
+    type: integer
+  payment_term:
+    description:
+     - payment term to use for the instance (payment term in months)
+    default: 1
+    type: integer
+    choices: [1, 12, 24]
+  password:
+    description:
+     - root password to apply to a new server (auto generated if missing)
+    default: null
+    type: string
+  ssh_pub_key:
+    description:
+     - SSH public key applied to root user
+    default: null
+    type: string
+  swap:
+    description:
+     - swap size in MB
+    default: 512
+    type: integer
   image:
     description:
-     - image to use for the instance
+     - image to use for the instance (Linode Distribution)
     default: null
-  meta:
-    description:
-     - A hash of metadata to associate with the instance
-    default: null
-  key_name:
-    description:
-     - key pair to use on the instance
-    default: null
-    aliases: ['keypair']
-  files:
-    description:
-     - Files to insert into the instance. remotefilename:localcontent
-    default: null
+    type: integer
   region:
     description:
-     - Region to create an instance in
+     - Region to create an instance in (Linode Datacenter)
     default: null
+    type: integer
   wait:
     description:
      - wait for the instance to be in state 'running' before returning
@@ -74,25 +80,67 @@ options:
     description:
      - how long before wait gives up, in seconds
     default: 300
-requirements: [ "pyrax" ]
-author: Jesse Keating
+requirements: [ "linode-python" ]
+author: Vincent Viallet
 notes:
-  - Two environment variables can be used, RAX_CREDS and RAX_REGION.
-  - RAX_CREDS points to a credentials file appropriate for pyrax
-  - RAX_REGION defines a Rackspace Public Cloud region (DFW, ORD, LON, ...)
+  - LINODE_API_KEY env variable can be used instead
 '''
 
 EXAMPLES = '''
 # Create a server
 - local_action:
-     module: rax
-     creds_file: ~/.raxpub
-     service: cloudservers
-     name: rax-test1
-     flavor: 5
-     image: b11d9567-e412-4255-96b9-bd63ab23bcfe
+     module: linode
+     api_key: 'longStringFromLinodeApi'
+     name: linode-test1
+     flavor: 1
+     region: 2
+     image: 99
+     password: 'superSecureRootPassword'
+     ssh_pub_key: 'ssh-rsa qwerty'
+     swap: 768
      wait: yes
+     wait_timeout: 600
      state: present
+
+# Ensure a running server (create if missing)
+- local_action:
+     module: linode
+     api_key: 'longStringFromLinodeApi'
+     name: linode-test1
+     linode_id: 12345678
+     flavor: 1
+     region: 2
+     image: 99
+     password: 'superSecureRootPassword'
+     ssh_pub_key: 'ssh-rsa qwerty'
+     swap: 768
+     wait: yes
+     wait_timeout: 600
+     state: present
+
+# Delete a server
+- local_action:
+     module: linode
+     api_key: 'longStringFromLinodeApi'
+     name: linode-test1
+     linode_id: 12345678
+     state: absent
+
+# Stop a server
+- local_action:
+     module: linode
+     api_key: 'longStringFromLinodeApi'
+     name: linode-test1
+     linode_id: 12345678
+     state: stopped
+
+# Reboot a server
+- local_action:
+     module: linode
+     api_key: 'longStringFromLinodeApi'
+     name: linode-test1
+     linode_id: 12345678
+     state: restarted
 '''
 
 import sys
@@ -148,11 +196,6 @@ def getInstanceDetails(api, server):
 
 def linodeServers(module, api, state, name, flavor, image, region, linode_id, 
                   payment_term, password, ssh_pub_key, swap, wait, wait_timeout):
-    # Check our args (this could be done better)
-    for arg in (state, name, flavor, image):
-        if not arg:
-            module.fail_json(msg='%s is required for cloudservers' % arg)
-
     instances = []
     changed = False
     new_server = False   
