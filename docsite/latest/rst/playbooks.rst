@@ -501,15 +501,26 @@ Also, should you wish to parameterize roles, by adding variables, you can do so,
     - hosts: webservers
       roles:
         - common
-        - { role: foo_app_instance, dir: '/opt/a',  port: 5000 }
-        - { role: foo_app_instance, dir: '/opt/b',  port: 5001 }
+        - role: foo_app_instance dir='/opt/a' port=5000
+        - role: foo_app_instance dir='/opt/b' port=5001
+
+Note that you may still provide the parameters as a hash, in both forms:
+
+    ---
+    - hosts: webservers
+      roles:
+        - { role: foo_app_instance, dir: '/opt/a', port: 5000 }
+        - role: foo_app_instance
+          dir: '/opt/b'
+          port: 5001
 
 While it's probably not something you should do often, you can also conditionally apply roles like so::
 
     ---
     - hosts: webservers
       roles:
-        - { role: some_role, when: "ansible_os_family == 'RedHat'" }
+        - role: some_role
+          when: "ansible_os_family == 'RedHat'"
 
 This works by applying the conditional to every task in the role.  Conditionals are covered later on in
 the documentation.
@@ -523,7 +534,7 @@ If you want to define certain tasks to happen before AND after roles are applied
       pre_tasks:
         - shell: echo 'hello'
       roles:
-        - { role: some_role }
+        - role: some_role
       tasks:
         - shell: echo 'still busy'
       post_tasks:

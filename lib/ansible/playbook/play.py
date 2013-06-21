@@ -162,6 +162,12 @@ class Play(object):
             with_items = has_dict.get('with_items', None)
             when       = has_dict.get('when', None)
 
+            parts = orig_path.split()
+            if len(parts) > 1 and parts[1].find('=') > 0:
+                orig_path = parts[0]
+                has_dict['role'] = orig_path
+                has_dict.update((k,v) for k,v in map(lambda x: x.split('='), parts[1:]))
+
             path = utils.path_dwim(self.basedir, os.path.join('roles', orig_path))
             if not os.path.isdir(path) and not orig_path.startswith(".") and not orig_path.startswith("/"):
                 path2 = utils.path_dwim(self.basedir, orig_path)
