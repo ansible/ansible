@@ -995,6 +995,9 @@ class AIX(Hardware):
 
 
         rc, out, err = module.run_command("/usr/sbin/lsdev -Cc processor")
+        if not out:
+            # CPU info may not be available (WPAR)
+            return
         i = 0
         for line in out.split('\n'):
 
@@ -1032,6 +1035,9 @@ class AIX(Hardware):
         # /dev/ada0p3        314368        0   314368     0%
         #
         rc, out, err = module.run_command("/usr/sbin/lsps -s")
+        if not out:
+            # swapinfo may not be available (WPAR)
+            return
         lines = out.split('\n')
         data = lines[1].split()
         swaptotal_mb = long(data[0].rstrip('MB'))
