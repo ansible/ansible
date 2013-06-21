@@ -501,19 +501,18 @@ Also, should you wish to parameterize roles, by adding variables, you can do so,
     - hosts: webservers
       roles:
         - common
-        - role: foo_app_instance
-          dir: '/opt/a'
-          port: 5000
-        - role: foo_app_instance
-          dir: '/opt/b'
-          port: 5001
+        - role: foo_app_instance dir='/opt/a' port=5000
+        - role: foo_app_instance dir='/opt/b' port=5001
 
-You may also write it all on a single line, which YAML treats exactly the same:
+Note that you may still provide the parameters as a hash, in both forms:
 
     ---
     - hosts: webservers
       roles:
-        - { role: foo_app_instance, dir: '/opt/a', … }
+        - { role: foo_app_instance, dir: '/opt/a', port: 5000 }
+        - role: foo_app_instance
+          dir: '/opt/b'
+          port: 5001
 
 While it's probably not something you should do often, you can also conditionally apply roles like so::
 
