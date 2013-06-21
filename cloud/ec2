@@ -163,13 +163,21 @@ options:
     required: false
     defualt: null
     aliases: []
-  termination_list:
+  instance_ids:
     version_added: "1.3"
     description:
-      - list of instances to terminate in the form of [{id: <inst-id>}, {id: <inst-id>}].
+      - list of instance ids, currently only used when state='absent'
     required: false
     default: null
     aliases: []
+  state:
+    version_added: "1.3"
+    description:
+      - create or terminate instances
+    required: false
+    default: 'present'
+    aliases: []
+
 
 requirements: [ "boto" ]
 author: Seth Vidal, Tim Gerla, Lester Wade
@@ -260,7 +268,8 @@ local_action:
     - name: Terminate instances that were previously launched
       local_action:
         module: ec2
-        termination_list: ${ec2.instances}
+        state: 'absent'
+        instance_ids: {{ec2.intance_ids}}
 
 '''
 
@@ -439,14 +448,16 @@ def create_instances(module, ec2):
             running_instances.append(inst)
 
     instance_dict_array = []
+    created_instance_ids = []
     for inst in running_instances:
         d = get_instance_info(inst)
+        created_instance_ids.append(inst.id)
         instance_dict_array.append(d)
 
-    return instance_dict_array
+    return (instance_dict_array, created_instance_ids)
 
 
-def terminate_instances(module, ec2, termination_list):
+def terminate_instances(module, ec2, instance_ids):
     """
     Terminates a list of instances
 
@@ -462,13 +473,18 @@ def terminate_instances(module, ec2, termination_list):
     "changed" will be set to False.
 
     """
-    instance_ids = [str(inst['id']) for inst in termination_list]
 
     changed = False
     instance_dict_array = []
+
+    if not isinstance(instance_ids, list) or len(instance_ids) < 1:
+        module.fail_json(msg='instance_ids should be a list of instances, aborting')
+
+    terminated_instance_ids = []
     for res in ec2.get_all_instances(instance_ids):
         for inst in res.instances:
             if inst.state == 'running':
+                terminated_instance_ids.append(inst.id)
                 instance_dict_array.append(get_instance_info(inst))
                 try:
                     ec2.terminate_instances([inst.id])
@@ -476,7 +492,7 @@ def terminate_instances(module, ec2, termination_list):
                     module.fail_json(msg='Unable to terminate instance {0}, error: {1}'.format(inst.id, e))
                 changed = True
 
-    return (changed, instance_dict_array)
+    return (changed, instance_dict_array, terminated_instance_ids)
 
 
 
@@ -505,7 +521,8 @@ def main():
             instance_tags = dict(),
             vpc_subnet_id = dict(),
             private_ip = dict(),
-            termination_list = dict(type='list')
+            instance_ids = dict(type='list'),
+            state = dict(default='present'),
         )
     )
 
@@ -540,23 +557,23 @@ def main():
         except boto.exception.NoAuthHandlerFound, e:
             module.fail_json(msg = str(e))
 
-
-
-    if termination_list:
-        if not isinstance(termination_list, list):
+    if module.params.get('state') == 'absent':
+        instance_ids = module.params.get('instance_ids')
+        if not isinstance(instance_ids, list):
             module.fail_json(msg='termination_list needs to be a list of instances to terminate')
 
-        (changed, instance_dict_array) = terminate_instances(module, ec2, termination_list)
-    else:
+        (changed, instance_dict_array, new_instance_ids) = terminate_instances(module, ec2, instance_ids)
+
+    elif module.params.get('state') == 'present':
         # Changed is always set to true when provisioning new instances
         changed = True
         if not module.params.get('key_name'):
             module.fail_json(msg='key_name parameter is required for new instance')
         if not module.params.get('image'):
             module.fail_json(msg='image parameter is required for new instance')
-        instance_dict_array = create_instances(module, ec2)
+        (instance_dict_array, new_instance_ids) = create_instances(module, ec2)
 
-    module.exit_json(changed=True, instances=instance_dict_array)
+    module.exit_json(changed=True, instance_ids=new_instance_ids, instances=instance_dict_array)
 
 
 # this is magic, see lib/ansible/module_common.py
