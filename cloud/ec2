@@ -269,7 +269,7 @@ local_action:
       local_action:
         module: ec2
         state: 'absent'
-        instance_ids: {{ec2.intance_ids}}
+        instance_ids: {{ec2.instance_ids}}
 
 '''
 
