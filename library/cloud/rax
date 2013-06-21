@@ -113,8 +113,8 @@ SUPPORTEDSERVICES = ['cloudservers']
 def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                  wait, wait_timeout):
     # Check our args (this could be done better)
-    for arg in (state, name, flavor, image):
-        if not arg:
+    for arg in ('state', 'name', 'flavor', 'image'):
+        if not eval(arg):
             module.fail_json(msg='%s is required for cloudservers' % arg)
 
     instances = []
@@ -178,7 +178,6 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
             instances.append(instance)
 
     elif state in ('absent', 'deleted'):
-        deleted = []
         # See if we can find a server that matches our credentials
         for server in servers:
             if server.name == name:
@@ -187,7 +186,6 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                 server.metadata == meta:
                     try:
                         server.delete()
-                        deleted.append(server)
                     except Exception, e:
                         module.fail_json(msg = e.message)
                     instance = {'id': server.id,
