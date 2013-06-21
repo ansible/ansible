@@ -17,9 +17,9 @@
 DOCUMENTATION = '''
 ---
 module: ec2
-short_description: create an instance in ec2, return instanceid
+short_description: create or terminate an instance in ec2, return instanceid
 description:
-     - creates ec2 instances and optionally waits for it to be 'running'. This module has a dependency on python-boto >= 2.5
+     - Creates or terminates ec2 instances. When created optionally waits for it to be 'running'. This module has a dependency on python-boto >= 2.5
 version_added: "0.9"
 options:
   key_name:
@@ -38,12 +38,12 @@ options:
     description:
       - security group (or list of groups) to use with the instance
     required: false
-    default: null 
+    default: null
     aliases: [ 'groups' ]
   group_id:
     version_added: "1.1"
     description:
-      - security group id to use with the instance 
+      - security group id to use with the instance
     required: false
     default: null
     aliases: []
@@ -163,54 +163,105 @@ options:
     required: false
     defualt: null
     aliases: []
+  termination_list:
+    version_added: "1.3"
+    description:
+      - list of instances to terminate in the form of [{id: <inst-id>}, {id: <inst-id>}].
+    required: false
+    default: null
+    aliases: []
+
 requirements: [ "boto" ]
 author: Seth Vidal, Tim Gerla, Lester Wade
 '''
 
 EXAMPLES = '''
 # Basic provisioning example
-- local_action: 
-    module: ec2 
-    keypair: mykey 
-    instance_type: c1.medium 
-    image: emi-40603AD1 
-    wait: yes 
-    group: webserver 
+- local_action:
+    module: ec2
+    keypair: mykey
+    instance_type: c1.medium
+    image: emi-40603AD1
+    wait: yes
+    group: webserver
     count: 3
 
 # Advanced example with tagging and CloudWatch
-- local_action: 
-    module: ec2 
-    keypair: mykey 
-    group: databases 
-    instance_type: m1.large 
-    image: ami-6e649707 
-    wait: yes 
-    wait_timeout: 500 
-    count: 5 
+- local_action:
+    module: ec2
+    keypair: mykey
+    group: databases
+    instance_type: m1.large
+    image: ami-6e649707
+    wait: yes
+    wait_timeout: 500
+    count: 5
     instance_tags: '{"db":"postgres"}' monitoring=yes'
 
 # Multiple groups example
-local_action: 
-    module: ec2 
-    keypair: mykey 
+local_action:
+    module: ec2
+    keypair: mykey
     group: ['databases', 'internal-services', 'sshable', 'and-so-forth']
-    instance_type: m1.large 
-    image: ami-6e649707 
-    wait: yes 
-    wait_timeout: 500 
-    count: 5 
+    instance_type: m1.large
+    image: ami-6e649707
+    wait: yes
+    wait_timeout: 500
+    count: 5
     instance_tags: '{"db":"postgres"}' monitoring=yes'
 
 # VPC example
-- local_action: 
-    module: ec2 
-    keypair: mykey 
-    group_id: sg-1dc53f72 
-    instance_type: m1.small 
-    image: ami-6e649707 
-    wait: yes 
+- local_action:
+    module: ec2
+    keypair: mykey
+    group_id: sg-1dc53f72
+    instance_type: m1.small
+    image: ami-6e649707
+    wait: yes
     vpc_subnet_id: subnet-29e63245'
+
+
+# Launch instances, runs some tasks
+# and then terminate them
+
+
+- name: Create a sandbox instance
+  hosts: localhost
+  gather_facts: False
+  vars:
+    keypair: my_keypair
+    instance_type: m1.small
+    security_group: my_securitygroup
+    image: my_ami_id
+    region: us-east-1
+  tasks:
+    - name: Launch instance
+      local_action: ec2 keypair=$keypair group=$security_group instance_type=$instance_type image=$image wait=true region=$region
+      register: ec2
+    - name: Add new instance to host group
+      local_action: add_host hostname=${item.public_ip} groupname=launched
+      with_items: ${ec2.instances}
+    - name: Wait for SSH to come up
+      local_action: wait_for host=${item.public_dns_name} port=22 delay=60 timeout=320 state=started
+      with_items: ${ec2.instances}
+
+- name: Configure instance(s)
+  hosts: launched
+  sudo: True
+  gather_facts: True
+  roles:
+    - my_awesome_role
+    - my_awesome_test
+
+- name: Terminate instances
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Terminate instances that were previously launched
+      local_action:
+        module: ec2
+        termination_list: ${ec2.instances}
+
 '''
 
 import sys
@@ -218,90 +269,80 @@ import time
 
 try:
     import boto.ec2
+    from boto.exception import EC2ResponseError
 except ImportError:
     print "failed=True msg='boto required for this module'"
     sys.exit(1)
 
-def main():
-    module = AnsibleModule(
-        argument_spec = dict(
-            key_name = dict(required=True, aliases = ['keypair']),
-            id = dict(),
-            group = dict(type='list'),
-            group_id = dict(),
-            region = dict(choices=['eu-west-1', 'sa-east-1', 'us-east-1', 'ap-northeast-1', 'us-west-2', 'us-west-1', 'ap-southeast-1', 'ap-southeast-2']),
-            zone = dict(),
-            instance_type = dict(aliases=['type']),
-            image = dict(required=True),
-            kernel = dict(),
-            count = dict(default='1'), 
-            monitoring = dict(choices=BOOLEANS, default=False),
-            ramdisk = dict(),
-            wait = dict(choices=BOOLEANS, default=False),
-            wait_timeout = dict(default=300),
-            ec2_url = dict(aliases=['EC2_URL']),
-            ec2_secret_key = dict(aliases=['EC2_SECRET_KEY'], no_log=True),
-            ec2_access_key = dict(aliases=['EC2_ACCESS_KEY']),
-            placement_group = dict(),
-            user_data = dict(),
-            instance_tags = dict(),
-            vpc_subnet_id = dict(),
-            private_ip = dict(),
-        )
-    )
+
+def get_instance_info(inst):
+    """
+    Retrieves instance information from an instance
+    ID and returns it as a dictionary
+    """
+
+    return({
+        'id': inst.id,
+        'ami_launch_index': inst.ami_launch_index,
+        'private_ip': inst.private_ip_address,
+        'private_dns_name': inst.private_dns_name,
+        'public_ip': inst.ip_address,
+        'dns_name': inst.dns_name,
+        'public_dns_name': inst.public_dns_name,
+        'state_code': inst.state_code,
+        'architecture': inst.architecture,
+        'image_id': inst.image_id,
+        'key_name': inst.key_name,
+        'virtualization_type': inst.virtualization_type,
+        'placement': inst.placement,
+        'kernel': inst.kernel,
+        'ramdisk': inst.ramdisk,
+        'launch_time': inst.launch_time,
+        'instance_type': inst.instance_type,
+        'root_device_type': inst.root_device_type,
+        'root_device_name': inst.root_device_name,
+        'state': inst.state,
+        'hypervisor': inst.hypervisor
+    })
+
+
+def create_instances(module, ec2):
+    """
+    Creates new instances
+
+    module : AnsbileModule object
+    ec2: authenticated ec2 connection object
+
+    Returns:
+        A list of dictionaries with instance information
+        about the instances that were launched
+    """
 
     key_name = module.params.get('key_name')
     id = module.params.get('id')
     group_name = module.params.get('group')
     group_id = module.params.get('group_id')
-    region = module.params.get('region')
     zone = module.params.get('zone')
     instance_type = module.params.get('instance_type')
     image = module.params.get('image')
-    count = module.params.get('count') 
+    count = module.params.get('count')
     monitoring = module.params.get('monitoring')
     kernel = module.params.get('kernel')
     ramdisk = module.params.get('ramdisk')
     wait = module.params.get('wait')
     wait_timeout = int(module.params.get('wait_timeout'))
-    ec2_url = module.params.get('ec2_url')
-    ec2_secret_key = module.params.get('ec2_secret_key')
-    ec2_access_key = module.params.get('ec2_access_key')
     placement_group = module.params.get('placement_group')
     user_data = module.params.get('user_data')
     instance_tags = module.params.get('instance_tags')
     vpc_subnet_id = module.params.get('vpc_subnet_id')
     private_ip = module.params.get('private_ip')
 
-    # allow eucarc environment variables to be used if ansible vars aren't set
-    if not ec2_url and 'EC2_URL' in os.environ:
-        ec2_url = os.environ['EC2_URL']
-    if not ec2_secret_key and 'EC2_SECRET_KEY' in os.environ:
-        ec2_secret_key = os.environ['EC2_SECRET_KEY']
-    if not ec2_access_key and 'EC2_ACCESS_KEY' in os.environ:
-        ec2_access_key = os.environ['EC2_ACCESS_KEY']
 
-    # If we have a region specified, connect to its endpoint.
-    if region: 
-        try:
-            ec2 = boto.ec2.connect_to_region(region, aws_access_key_id=ec2_access_key, aws_secret_access_key=ec2_secret_key)
-        except boto.exception.NoAuthHandlerFound, e:
-            module.fail_json(msg = str(e))
-    # Otherwise, no region so we fallback to the old connection method
-    else: 
-        try:
-            if ec2_url: # if we have an URL set, connect to the specified endpoint 
-                ec2 = boto.connect_ec2_endpoint(ec2_url, ec2_access_key, ec2_secret_key)
-            else: # otherwise it's Amazon.
-                ec2 = boto.connect_ec2(ec2_access_key, ec2_secret_key)
-        except boto.exception.NoAuthHandlerFound, e:
-            module.fail_json(msg = str(e))
-    
     # Here we try to lookup the group name from the security group id - if group_id is set.
     if group_id and group_name:
         module.fail_json(msg = str("Use only one type of parameter (group_name) or (group_id)"))
         sys.exit(1)
-        
+
     try:
         # Here we try to lookup the group id from the security group name - if group is set.
         if group_name:
@@ -322,30 +363,30 @@ def main():
             module.fail_json(msg = str(e))
 
     # Lookup any instances that much our run id.
-    
+
     running_instances = []
     count_remaining = int(count)
-        
+
     if id != None:
         filter_dict = {'client-token':id, 'instance-state-name' : 'running'}
         previous_reservations = ec2.get_all_instances(None, filter_dict)
         for res in previous_reservations:
             for prev_instance in res.instances:
                 running_instances.append(prev_instance)
-        count_remaining = count_remaining - len(running_instances) 
-    
+        count_remaining = count_remaining - len(running_instances)
+
     # Both min_count and max_count equal count parameter. This means the launch request is explicit (we want count, or fail) in how many instances we want.
-    
+
     if count_remaining > 0:
         try:
-            params = {'image_id': image, 
+            params = {'image_id': image,
                       'key_name': key_name,
                       'client_token': id,
-                      'min_count': count_remaining, 
+                      'min_count': count_remaining,
                       'max_count': count_remaining,
                       'monitoring_enabled': monitoring,
                       'placement': zone,
-                      'placement_group': placement_group, 
+                      'placement_group': placement_group,
                       'instance_type': instance_type,
                       'kernel_id': kernel,
                       'ramdisk_id': ramdisk,
@@ -393,38 +434,130 @@ def main():
         if wait and wait_timeout <= time.time():
             # waiting took too long
             module.fail_json(msg = "wait for instances running timeout on %s" % time.asctime())
-    
+
         for inst in this_res.instances:
             running_instances.append(inst)
-        
+
     instance_dict_array = []
     for inst in running_instances:
-        d = {
-           'id': inst.id,
-           'ami_launch_index': inst.ami_launch_index,
-           'private_ip': inst.private_ip_address,
-           'private_dns_name': inst.private_dns_name,
-           'public_ip': inst.ip_address,
-           'dns_name': inst.dns_name,
-           'public_dns_name': inst.public_dns_name,
-           'state_code': inst.state_code,
-           'architecture': inst.architecture,
-           'image_id': inst.image_id,
-           'key_name': inst.key_name,
-           'virtualization_type': inst.virtualization_type,
-           'placement': inst.placement,
-           'kernel': inst.kernel,
-           'ramdisk': inst.ramdisk,
-           'launch_time': inst.launch_time,
-           'instance_type': inst.instance_type,
-           'root_device_type': inst.root_device_type,
-           'root_device_name': inst.root_device_name,
-           'state': inst.state,
-           'hypervisor': inst.hypervisor
-            }
+        d = get_instance_info(inst)
         instance_dict_array.append(d)
 
+    return instance_dict_array
+
+
+def terminate_instances(module, ec2, termination_list):
+    """
+    Terminates a list of instances
+
+    module: Ansible module object
+    ec2: authenticated ec2 connection object
+    termination_list: a list of instances to terminate in the form of
+      [ {id: <inst-id>}, ..]
+
+    Returns a dictionary of instance information
+    about the instances terminated.
+
+    If the instance to be terminated is running
+    "changed" will be set to False.
+
+    """
+    instance_ids = [str(inst['id']) for inst in termination_list]
+
+    changed = False
+    instance_dict_array = []
+    for res in ec2.get_all_instances(instance_ids):
+        for inst in res.instances:
+            if inst.state == 'running':
+                instance_dict_array.append(get_instance_info(inst))
+                try:
+                    ec2.terminate_instances([inst.id])
+                except EC2ResponseError as e:
+                    module.fail_json(msg='Unable to terminate instance {0}, error: {1}'.format(inst.id, e))
+                changed = True
+
+    return (changed, instance_dict_array)
+
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            key_name = dict(aliases = ['keypair']),
+            id = dict(),
+            group = dict(type='list'),
+            group_id = dict(),
+            region = dict(choices=['eu-west-1', 'sa-east-1', 'us-east-1', 'ap-northeast-1', 'us-west-2', 'us-west-1', 'ap-southeast-1', 'ap-southeast-2']),
+            zone = dict(),
+            instance_type = dict(aliases=['type']),
+            image = dict(),
+            kernel = dict(),
+            count = dict(default='1'),
+            monitoring = dict(choices=BOOLEANS, default=False),
+            ramdisk = dict(),
+            wait = dict(choices=BOOLEANS, default=False),
+            wait_timeout = dict(default=300),
+            ec2_url = dict(aliases=['EC2_URL']),
+            ec2_secret_key = dict(aliases=['EC2_SECRET_KEY'], no_log=True),
+            ec2_access_key = dict(aliases=['EC2_ACCESS_KEY']),
+            placement_group = dict(),
+            user_data = dict(),
+            instance_tags = dict(),
+            vpc_subnet_id = dict(),
+            private_ip = dict(),
+            termination_list = dict(type='list')
+        )
+    )
+
+    ec2_url = module.params.get('ec2_url')
+    ec2_secret_key = module.params.get('ec2_secret_key')
+    ec2_access_key = module.params.get('ec2_access_key')
+    region = module.params.get('region')
+    termination_list = module.params.get('termination_list')
+
+
+        # allow eucarc environment variables to be used if ansible vars aren't set
+    if not ec2_url and 'EC2_URL' in os.environ:
+        ec2_url = os.environ['EC2_URL']
+    if not ec2_secret_key and 'EC2_SECRET_KEY' in os.environ:
+        ec2_secret_key = os.environ['EC2_SECRET_KEY']
+    if not ec2_access_key and 'EC2_ACCESS_KEY' in os.environ:
+        ec2_access_key = os.environ['EC2_ACCESS_KEY']
+
+    # If we have a region specified, connect to its endpoint.
+    if region:
+        try:
+            ec2 = boto.ec2.connect_to_region(region, aws_access_key_id=ec2_access_key, aws_secret_access_key=ec2_secret_key)
+        except boto.exception.NoAuthHandlerFound, e:
+            module.fail_json(msg = str(e))
+    # Otherwise, no region so we fallback to the old connection method
+    else:
+        try:
+            if ec2_url: # if we have an URL set, connect to the specified endpoint
+                ec2 = boto.connect_ec2_endpoint(ec2_url, ec2_access_key, ec2_secret_key)
+            else: # otherwise it's Amazon.
+                ec2 = boto.connect_ec2(ec2_access_key, ec2_secret_key)
+        except boto.exception.NoAuthHandlerFound, e:
+            module.fail_json(msg = str(e))
+
+
+
+    if termination_list:
+        if not isinstance(termination_list, list):
+            module.fail_json(msg='termination_list needs to be a list of instances to terminate')
+
+        (changed, instance_dict_array) = terminate_instances(module, ec2, termination_list)
+    else:
+        # Changed is always set to true when provisioning new instances
+        changed = True
+        if not module.params.get('key_name'):
+            module.fail_json(msg='key_name parameter is required for new instance')
+        if not module.params.get('image'):
+            module.fail_json(msg='image parameter is required for new instance')
+        instance_dict_array = create_instances(module, ec2)
+
     module.exit_json(changed=True, instances=instance_dict_array)
+
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
