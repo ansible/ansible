@@ -162,7 +162,13 @@ class Play(object):
             with_items = has_dict.get('with_items', None)
             when       = has_dict.get('when', None)
 
-            path = utils.path_dwim(self.basedir, os.path.join('roles', orig_path))
+            if orig_path.startswith("."):
+                # a leading dot makes roles be resolved relative to the
+                # playbook directory, not a subdirectory 'roles/'
+                path = utils.path_dwim(self.basedir, orig_path)
+            else:
+                path = utils.path_dwim(self.basedir, os.path.join('roles', orig_path))
+
             if not os.path.isdir(path) and not orig_path.startswith(".") and not orig_path.startswith("/"):
                 path2 = utils.path_dwim(self.basedir, orig_path)
                 if not os.path.isdir(path2):
