@@ -138,6 +138,7 @@ class Facts(object):
         self.get_platform_facts()
         self.get_distribution_facts()
         self.get_cmdline()
+        self.get_ssh_versions()
         self.get_public_ssh_host_keys()
         self.get_selinux_facts()
         self.get_pkg_mgr_facts()
@@ -328,6 +329,45 @@ class Facts(object):
                     self.facts['cmdline'][item[0]] = True
                 else:
                     self.facts['cmdline'][item[0]] = item[1]
+
+    def get_ssh_versions(self):
+
+        def invoke_ssh_command(command):
+            try:
+                p = subprocess.Popen([command, '-v'], stderr=subprocess.PIPE)
+                return p.communicate()[1]
+            except OSError:
+                return ''
+
+        def parse_version_string_openssh(vstring, prefix):
+            openssh_match = re.match('(?P<product>OpenSSH)_(?P<version>\S+)(?: (?P<distro_version>[^,]+))?, OpenSSL (?P<openssl_version>\S+) (?P<build_date>\d{2} \S{3} \d{4})$', line)
+            ret = None
+            if openssh_match:
+                ret = openssh_match.groupdict()
+                # 6.2p2 → ['6', '2', 'p2']
+                ret['version_parts'] = re.match('(?:(\d+)\.)+(\d+)(p\d+)?', ret['version']).groups()
+                return dict([('%s_%s' % (prefix, k), v) for k,v in ret.iteritems()])
+
+        # sshd needs to be run with full path, unfortunately
+        command = '/usr/sbin/sshd'
+        basename = os.path.basename(command)
+        for line in invoke_ssh_command(command).splitlines():
+            openssh = parse_version_string_openssh(line, basename)
+            if openssh:
+                self.facts.update(openssh)
+                break
+        else:
+            self.facts[basename] = '{0} not found'.format(command)
+
+        command = 'ssh'
+        basename = os.path.basename(command)
+        for line in invoke_ssh_command(command).splitlines():
+            openssh = parse_version_string_openssh(line, basename)
+            if openssh:
+                self.facts.update(openssh)
+                break
+        else:
+            self.facts[basename] = '{0} not found'.format(command)
 
     def get_public_ssh_host_keys(self):
         dsa_filename = '/etc/ssh/ssh_host_dsa_key.pub'
