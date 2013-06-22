@@ -26,12 +26,12 @@ options:
   command:
     description:
      - Which target you want to operate on.
-    required: true
+    default: droplet
     choices: ['droplet', 'ssh']
   state:
     description:
      - Indicate desired state of the target.
-    required: true
+    default: present
     choices: ['present', 'active', 'absent', 'deleted']
   client_id: 
      description:
@@ -352,8 +352,8 @@ def core(module):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            command = dict(required=True, choices=['droplet', 'ssh'], default='droplet'),
-            state = dict(required=True, choices=['active', 'present', 'absent', 'deleted'], default='present'),
+            command = dict(choices=['droplet', 'ssh'], default='droplet'),
+            state = dict(choices=['active', 'present', 'absent', 'deleted'], default='present'),
             client_id = dict(aliases=['CLIENT_ID'], no_log=True),
             api_key = dict(aliases=['API_KEY'], no_log=True),
             name = dict(type='str'),
