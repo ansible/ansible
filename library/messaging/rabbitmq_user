@@ -35,7 +35,9 @@ options:
     aliases: [username, name]
   password:
     description:
-      - Password of user to add
+      - Password of user to add.
+      - To change the password of an existing user, you must also specify
+        C(force=yes).
     required: false
     default: null
   tags:
