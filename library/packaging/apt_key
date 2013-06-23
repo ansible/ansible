@@ -129,9 +129,9 @@ def download_key(module, url):
         module.fail_json(msg="error getting key id from url", traceback=format_exc())
 
 
-def add_key(module, key):
-    cmd = "apt-key add -"
-    (rc, out, err) = module.run_command(cmd, data=key, check_rc=True, binary_data=True)
+def add_key(module, key, data=None):
+    cmd = "apt-key add %s" % (key)
+    (rc, out, err) = module.run_command(cmd, data=data, check_rc=True)
     return True
 
 def remove_key(module, key_id):
