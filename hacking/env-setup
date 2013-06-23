@@ -22,15 +22,15 @@ PREFIX_MANPATH="$ANSIBLE_HOME/docs/man"
 
 case "$PYTHONPATH" in
   (*${PREFIX_PYTHONPATH}*) :;;
-  (*) export PYTHONPATH=$"$PREFIX_PYTHONPATH${PYTHONPATH:+:$PYTHONPATH}";;
+  (*) export PYTHONPATH="$PREFIX_PYTHONPATH${PYTHONPATH:+:$PYTHONPATH}";;
 esac
 case "$MANPATH" in
   (*${PREFIX_MANPATH}*) :;;
-  (*) export MANPATH=$"$PREFIX_MANPATH${MANPATH:+:$MANPATH}";;
+  (*) export MANPATH="$PREFIX_MANPATH${MANPATH:+:$MANPATH}";;
 esac
 case "$PATH" in
   (*${PREFIX_PATH}*) :;;
-  (*) export PATH=$"$PREFIX_PATH${PATH:+:$PATH}";;
+  (*) export PATH="$PREFIX_PATH${PATH:+:$PATH}";;
 esac
 export ANSIBLE_LIBRARY="$ANSIBLE_HOME/library"
 
