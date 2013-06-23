@@ -84,13 +84,21 @@ def boilerplate_module(modfile, args):
 
     if included_boilerplate:
 
+        facility = C.DEFAULT_SYSLOG_FACILITY
+        if 'ansible_syslog_facility' in inject:
+            facility = inject['ansible_syslog_facility']
+        if facility in [ 'off', 'no', 'false', 'False' ]:
+            facility = 'None'
+        else:
+            facility = "syslog.%s" % facility
+        module_data = module_data.replace('syslog.LOG_USER', facility)
+
         module_data = module_data.replace(module_common.REPLACER, module_common.MODULE_COMMON)
         encoded_args = repr(str(args))
         module_data = module_data.replace(module_common.REPLACER_ARGS, encoded_args)
         encoded_lang = repr(C.DEFAULT_MODULE_LANG)
         empty_complex = repr("{}")
         module_data = module_data.replace(module_common.REPLACER_LANG, encoded_lang)
-        module_data = module_data.replace('syslog.LOG_USER', "syslog.%s" % C.DEFAULT_SYSLOG_FACILITY)
         module_data = module_data.replace(module_common.REPLACER_COMPLEX, empty_complex)
 
         modfile2_path = os.path.expanduser("~/.ansible_module_generated")
