@@ -548,7 +548,10 @@ class LinuxService(Service):
                     return
 
         if self.enable_cmd.endswith("update-rc.d"):
-            action = 'enable' if self.enable else 'disable'
+            if self.enable:
+                action = 'enable'
+            else:
+                action = 'disable'
             (rc, out, err) = self.execute_command("%s -n %s %s" \
                                                   % (self.enable_cmd, self.name, action))
             self.changed = False
