@@ -28,6 +28,7 @@ import time
 import subprocess
 import datetime
 import pwd
+import socket
 
 class Globals(object):
 
@@ -439,6 +440,10 @@ def template_from_file(basedir, path, vars):
     except:
         template_uid = os.stat(realpath).st_uid
     vars['template_host']   = os.uname()[1]
+    try:
+        vars['template_fqdn'] = socket.getfqdn() or vars['template_host']
+    except:
+        pass
     vars['template_path']   = realpath
     vars['template_mtime']  = datetime.datetime.fromtimestamp(os.path.getmtime(realpath))
     vars['template_uid']    = template_uid
@@ -448,6 +453,7 @@ def template_from_file(basedir, path, vars):
     managed_default = C.DEFAULT_MANAGED_STR
     managed_str = managed_default.format(
         host = vars['template_host'],
+        fqdn = vars['template_fqdn'],
         uid  = vars['template_uid'],
         file = vars['template_path']
     )
