@@ -7,7 +7,7 @@
 
 # When run using source as directed, $0 gets set to bash, so we must use $BASH_SOURCE
 case "$0" in
-    (bash)
+    (*bash)
         HACKING_DIR=${BASH_SOURCE%/*};;
     (*)
         HACKING_DIR=${0%/*};;
