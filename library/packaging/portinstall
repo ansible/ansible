@@ -1,11 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, bleader
-# Written by bleader <bleader@ratonland.org>
-# Based on pkgin module written by Shaun Zinck <shaun.zinck at gmail.com>
-# that was based on pacman module written by Afterburn <http://github.com/afterburn>
-#  that was based on apt module written by Matthew Williams <matthew@flowroute.com>
+# (c) 2013, berenddeboer
+# Written by berenddeboer <berend@pobox.com>
+# Based on pkgng module written by bleader <bleader at ratonland.org>
 #
 # This module is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
