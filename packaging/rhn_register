@@ -158,15 +158,15 @@ class RegistrationBase (object):
 
 class Rhn(RegistrationBase):
 
-    def __init__(self, username=None, password=None, filename=None):
+    def __init__(self, username=None, password=None):
         RegistrationBase.__init__(self, username, password)
-        self.config = self._read_config(filename)
+        self.config = self.load_config()
 
-    def _read_config(self, filename=None):
+    def load_config(self):
         '''
             Read configuration from /etc/sysconfig/rhn/up2date
         '''
-        self.config = up2date_client.config.initUp2dateConfig(filename)
+        self.config = up2date_client.config.initUp2dateConfig()
 
         # Add support for specifying a default value w/o having to standup some
         # configuration.  Yeah, I know this should be subclassed ... but, oh
