@@ -82,6 +82,11 @@ options:
     required: false
     default: "yes"
     choices: [ "yes", "safe", "full", "dist"]
+  requirements:
+    description:
+      - Text file containing names of packages to install, one per line.
+    required: false
+    default: null
 requirements: [ python-apt, aptitude ]
 author: Matthew Williams
 notes:
@@ -237,7 +242,7 @@ def upgrade(m, mode="yes"):
         # apt-get dist-upgrade
         apt_cmd = APT_GET_CMD
         upgrade_command = "dist-upgrade"
-    elif mode == "full": 
+    elif mode == "full":
         # aptitude full-upgrade
         apt_cmd = APTITUDE_CMD
         upgrade_command = "full-upgrade"
@@ -268,10 +273,11 @@ def main():
             default_release = dict(default=None, aliases=['default-release']),
             install_recommends = dict(default='yes', aliases=['install-recommends'], type='bool'),
             force = dict(default='no', type='bool'),
-            upgrade = dict(choices=['yes', 'safe', 'full', 'dist'])
+            upgrade = dict(choices=['yes', 'safe', 'full', 'dist']),
+            requirements = dict(default=None, required=False)
         ),
-        mutually_exclusive = [['package', 'upgrade']],
-        required_one_of = [['package', 'upgrade', 'update_cache']],
+        mutually_exclusive = [['package', 'upgrade', 'requirements']],
+        required_one_of = [['package', 'upgrade', 'update_cache', 'requirements']],
         supports_check_mode = True
     )
 
@@ -334,7 +340,12 @@ def main():
         if p['upgrade']:
             upgrade(module, p['upgrade'])
 
-        packages = p['package'].split(',')
+        if p['requirements']:
+            f = open(p['requirements'])
+            packages = [x.strip() for x in f.readlines()]
+            f.close()
+        else:
+            packages = p['package'].split(',')
         latest = p['state'] == 'latest'
         for package in packages:
             if package.count('=') > 1:
