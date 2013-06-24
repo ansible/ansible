@@ -131,7 +131,7 @@ def download_key(module, url):
 
 def add_key(module, key, data=None):
     cmd = "apt-key add %s" % (key)
-    (rc, out, err) = module.run_command(cmd, data=data, check_rc=True)
+    (rc, out, err) = module.run_command(cmd, data=data, check_rc=True, binary_data=True)
     return True
 
 def remove_key(module, key_id):
