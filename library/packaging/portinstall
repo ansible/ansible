@@ -64,7 +64,11 @@ import sys
 def query_package(module, name):
 
     version=0
-    rc, out, err = module.run_command("pkg_info -E '%s>=%s'" % (name, version))
+    # databases/mysql55-client installs as mysql-client, so try solving
+    # that the ugly way. Pity FreeBSD doesn't have a fool proof way of checking
+    # some package is installed
+    name_without_digits = re.sub('[0-9]', '', name)
+    rc, out, err = module.run_command("pkg_info -E '%s>=%s'" % (name_without_digits, version))
 
     if rc == 0:
         return True
