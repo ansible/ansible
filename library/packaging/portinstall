@@ -80,7 +80,7 @@ def matching_packages(module, name):
     name_without_digits = re.sub('[0-9]', '', name)
     rc, out, err = module.run_command("ports_glob %s | wc" % (name_without_digits))
     parts = out.split()
-    occurrences = parts[0]
+    occurrences = int(parts[0])
     return occurrences
 
 
@@ -124,11 +124,11 @@ def install_packages(module, portinstall_path, packages, use_packages):
         # TODO: check how many match
         matches = matching_packages(module, package)
         if matches == 1:
-            rc, out, err = module.run_command("%s --batch %s %s" % (portinstall_path, portinstall_params, package))
+            rc, out, err = module.run_command("%s --batch %s `ports_glob %s`" % (portinstall_path, portinstall_params, package))
             if not query_package(module, package):
                 module.fail_json(msg="failed to install %s: %s" % (package, out))
         elif matches == 0:
-            module.fail_json(msg="no matches for package %s" % (package, out))
+            module.fail_json(msg="no matches for package %s" % (package))
         else:
             module.fail_json(msg="%s matches found for package name %s" % (matches, package))
 
