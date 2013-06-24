@@ -63,17 +63,25 @@ import sys
 
 def query_package(module, name):
 
-    version=0
     # databases/mysql55-client installs as mysql-client, so try solving
     # that the ugly way. Pity FreeBSD doesn't have a fool proof way of checking
     # some package is installed
     name_without_digits = re.sub('[0-9]', '', name)
-    rc, out, err = module.run_command("pkg_info -E '%s>=%s'" % (name_without_digits, version))
+    rc, out, err = module.run_command("pkg_info -e `pkg_glob %s`" % (name_without_digits))
 
     if rc == 0:
         return True
 
     return False
+
+
+def matching_packages(module, name):
+
+    name_without_digits = re.sub('[0-9]', '', name)
+    rc, out, err = module.run_command("ports_glob %s | wc" % (name_without_digits))
+    parts = out.split()
+    occurrences = parts[0]
+    return occurrences
 
 
 def remove_packages(module, portinstall_path, packages):
@@ -85,7 +93,8 @@ def remove_packages(module, portinstall_path, packages):
         if not query_package(module, package):
             continue
 
-        rc, out, err = module.run_command("%s delete -y %s" % (portinstall_path, package))
+        name_without_digits = re.sub('[0-9]', '', package)
+        rc, out, err = module.run_command("pkg_delete `pkg_glob %s`" % (name_without_digits))
 
         if query_package(module, package):
             module.fail_json(msg="failed to remove %s: %s" % (package, out))
@@ -112,12 +121,16 @@ def install_packages(module, portinstall_path, packages, use_packages):
         if query_package(module, package):
             continue
 
-        s = "%s --batch %s %s" % (portinstall_path, portinstall_params, package)
-        print s
-        rc, out, err = module.run_command("%s --batch %s %s" % (portinstall_path, portinstall_params, package))
-
-        if not query_package(module, package):
-            module.fail_json(msg="failed to install %s: %s" % (package, out))
+        # TODO: check how many match
+        matches = matching_packages(module, package)
+        if matches == 1:
+            rc, out, err = module.run_command("%s --batch %s %s" % (portinstall_path, portinstall_params, package))
+            if not query_package(module, package):
+                module.fail_json(msg="failed to install %s: %s" % (package, out))
+        elif matches == 0:
+            module.fail_json(msg="no matches for package %s" % (package, out))
+        else:
+            module.fail_json(msg="%s matches found for package name %s" % (matches, package))
 
         install_c += 1
 
