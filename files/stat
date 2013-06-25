@@ -91,6 +91,11 @@ def main():
         'isgid'    : bool(mode & stat.S_ISGID),
         }
 
+    if S_ISDIR(mode) and os.path.islink(path):
+        d['isdir'] = False
+        d['islnk'] = True
+        
+
     module.exit_json(changed=False, stat=d)
 
 # this is magic, see lib/ansible/module_common.py
