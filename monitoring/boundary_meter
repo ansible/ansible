@@ -149,7 +149,7 @@ def create_meter(module, name, apiid, apikey):
         for cert_type in types:
             try:
                 # If we can't open the file it's not there, so we should download it
-                cert_file = open('/etc/bprobe/{cert_type}.pem'.format(cert_type=cert_type))
+                cert_file = open('{config_directory}/{cert_type}.pem'.format(config_directory=config_directory,cert_type=cert_type))
             except IOError:
                 # Now download the file...
                 rc = download_request(module, name, apiid, apikey, cert_type)
@@ -201,7 +201,7 @@ def delete_meter(module, name, apiid, apikey):
         types = ['cert', 'key']
         for cert_type in types:
             try:
-                cert_file = '/{config_directory}/{cert_type}.pem'.format(config_directory=config_directory,cert_type=cert_type)
+                cert_file = '{config_directory}/{cert_type}.pem'.format(config_directory=config_directory,cert_type=cert_type)
                 os.remove(cert_file)
             except OSError, e:  ## if failed, report it back to the user ##
                 module.fail_json("Failed to remove " + cert_type + ".pem file")
@@ -223,7 +223,7 @@ def download_request(module, name, apiid, apikey, cert_type):
 
         if result:
             try:
-                cert_file_path = '/{config_directory}/{cert_type}.pem'.format(config_directory=config_directory,cert_type=cert_type)
+                cert_file_path = '{config_directory}/{cert_type}.pem'.format(config_directory=config_directory,cert_type=cert_type)
                 body = result.read()
                 cert_file = open(cert_file_path, 'w')
                 cert_file.write(body)
