@@ -51,6 +51,9 @@ EXAMPLES = '''
 # Install package foo
 - portinstall: name=foo state=present
 
+# Install package security/cyrus-sasl2-saslauthd
+- portinstall: name=security/cyrus-sasl2-saslauthd state=present
+
 # Remove packages foo and bar
 - portinstall: name=foo,bar state=absent
 '''
@@ -63,11 +66,14 @@ import sys
 
 def query_package(module, name):
 
-    # databases/mysql55-client installs as mysql-client, so try solving
-    # that the ugly way. Pity FreeBSD doesn't have a fool proof way of checking
-    # some package is installed
-    name_without_digits = re.sub('[0-9]', '', name)
-    rc, out, err = module.run_command("pkg_info -e `pkg_glob %s`" % (name_without_digits))
+    rc, out, err = module.run_command("pkg_info -e `pkg_glob %s`" % (name))
+    if rc != 0:
+        # databases/mysql55-client installs as mysql-client, so try solving
+        # that the ugly way. Pity FreeBSD doesn't have a fool proof way of checking
+        # some package is installed
+        name_without_digits = re.sub('[0-9]', '', name)
+        if name != name_without_digits:
+            rc, out, err = module.run_command("pkg_info -e `pkg_glob %s`" % (name_without_digits))
 
     if rc == 0:
         return True
@@ -77,10 +83,15 @@ def query_package(module, name):
 
 def matching_packages(module, name):
 
-    name_without_digits = re.sub('[0-9]', '', name)
-    rc, out, err = module.run_command("ports_glob %s | wc" % (name_without_digits))
+    rc, out, err = module.run_command("ports_glob %s | wc" % (name))
     parts = out.split()
     occurrences = int(parts[0])
+    if occurrences == 0:
+        name_without_digits = re.sub('[0-9]', '', name)
+        if name != name_without_digits:
+            rc, out, err = module.run_command("ports_glob %s | wc" % (name_without_digits))
+            parts = out.split()
+            occurrences = int(parts[0])
     return occurrences
 
 
@@ -93,11 +104,13 @@ def remove_packages(module, portinstall_path, packages):
         if not query_package(module, package):
             continue
 
-        name_without_digits = re.sub('[0-9]', '', package)
-        rc, out, err = module.run_command("pkg_delete `pkg_glob %s`" % (name_without_digits))
+        rc, out, err = module.run_command("pkg_delete `pkg_glob %s`" % (name))
 
         if query_package(module, package):
-            module.fail_json(msg="failed to remove %s: %s" % (package, out))
+            name_without_digits = re.sub('[0-9]', '', package)
+            rc, out, err = module.run_command("pkg_delete `pkg_glob %s`" % (name_without_digits))
+            if query_package(module, package):
+                module.fail_json(msg="failed to remove %s: %s" % (package, out))
 
         remove_c += 1
 
@@ -124,7 +137,7 @@ def install_packages(module, portinstall_path, packages, use_packages):
         # TODO: check how many match
         matches = matching_packages(module, package)
         if matches == 1:
-            rc, out, err = module.run_command("%s --batch %s `ports_glob %s`" % (portinstall_path, portinstall_params, package))
+            rc, out, err = module.run_command("%s --batch %s %s" % (portinstall_path, portinstall_params, package))
             if not query_package(module, package):
                 module.fail_json(msg="failed to install %s: %s" % (package, out))
         elif matches == 0:
