@@ -46,7 +46,7 @@ class ActionModule(object):
         if not 'hostname' in args and not 'name' in args:
             raise ae("'name' is a required argument.")
 
-        result = {'changed': True}
+        result = {}
 
         # Parse out any hostname:port patterns
         new_name = args.get('name', args.get('hostname', None))
@@ -69,7 +69,6 @@ class ActionModule(object):
         # add the new host to the 'all' group
         allgroup = inventory.get_group('all')
         allgroup.add_host(new_host)
-        result['changed'] = True
        
         groupnames = args.get('groupname', args.get('groups', '')) 
         # add it to the group if that was specified
