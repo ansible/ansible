@@ -1,0 +1,155 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: redis_flush
+short_description: Flush all the redis keys in memory (Cache clear)
+description:
+   - Flush all the redis keys in memory (Cache clear)
+version_added: "1.3"
+options:
+    login_password:
+        description:
+            - The password used to authenticate with (usually not used)
+        required: false
+        default: null
+    login_host:
+        description:
+            - The host running the database
+        required: false
+        default: localhost
+    login_port:
+        description:
+            - The port to connect to
+        required: false
+        default: 6379
+    db:
+        description:
+            - The database to flush (used in db mode)
+        required: false
+        default: null
+    mode:
+        description:
+            - Type of flush (all the dbs in a redis instance or a specific one)
+        required: false
+        default: all
+        choices: [ "all", "db" ]
+notes:
+   - Requires the redis-py Python package on the remote host. You can
+     install it with pip (pip install redis) or with a package manager.
+     https://github.com/andymccurdy/redis-py
+
+requirements: [ redis ]
+author: Xabier Larrakoetxea
+'''
+
+EXAMPLES = '''
+# Flush all the redis db
+- redis_flush: mode=all
+
+# Flush only one db in a redis instance
+- redis_flush: db=1 mode=db
+'''
+
+try:
+    import redis
+except ImportError:
+    redis_found = False
+else:
+    redis_found = True
+
+
+# ===========================================
+# Redis module specific support methods.
+#
+
+def flush(client, db=None):
+    try:
+        if type(db) != int:
+            return client.flushall()
+        else:
+            # The passed client has been connected to the database already
+            return client.flushdb()
+    except Exception:
+        return False
+
+
+
+# ===========================================
+# Module execution.
+#
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            login_password=dict(default=None),
+            login_host=dict(default='localhost'),
+            login_port=dict(default='6379'),
+            db=dict(default=None),
+            mode=dict(default='all', choices=['all', 'db']),
+        ),
+        supports_check_mode = True
+    )
+
+    if not redis_found:
+        module.fail_json(msg="python redis module is required")
+
+    login_password = module.params['login_password']
+    login_host = module.params['login_host']
+    login_port = int(module.params['login_port'])
+    try:
+        db = int(module.params['db'])
+    except Exception:
+        db = 0
+    mode = module.params['mode']
+
+    #Check if we have all the data
+    if mode == "db":
+        if type(db) != int:
+            module.fail_json(msg="In db mode the db number must be provided")
+
+    #Connect and check
+    r = redis.StrictRedis(host=login_host,
+                          port=login_port,
+                          password=login_password,
+                          db=db)
+    try:
+        r.ping()
+    except Exception, e:
+        module.fail_json(msg="unable to connect to database: %s" % e)
+
+    # Do the stuff
+    # (Check Check_mode before actions so the actions aren't evaluated
+    # if not necesary)
+    if mode == "all":
+        if module.check_mode or flush(r):
+            module.exit_json(changed=True, flushed=True)
+        else:  # Flush never fails :)
+            module.fail_json(msg="Unable to flush all databases")
+
+    else:
+        if module.check_mode or flush(r, db):
+            module.exit_json(changed=True, flushed=True, db=db)
+        else:  # Flush never fails :)
+            module.fail_json(msg="Unable to flush '%d' database" % db)
+
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
