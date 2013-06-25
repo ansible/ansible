@@ -73,7 +73,11 @@ class Connection(object):
         vvv("EXEC COMMAND %s" % cmd)
 
         if self.runner.sudo and sudoable:
-            raise errors.AnsibleError("fireball does not use sudo, but runs as whoever it was initiated as.  (That itself is where to use sudo).")
+            raise errors.AnsibleError(
+                "When using fireball you should not use sudo to run your tasks. " +
+                "Instead please run fireball action with sudo and use 'sudo: no' " +
+                "for the tasks that go via fireball."
+            )
 
         data = dict(
             mode='command',
