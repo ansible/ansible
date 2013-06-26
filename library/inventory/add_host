@@ -32,5 +32,5 @@ EXAMPLES = '''
 # add a host alias that we reach through a tunnel
 - add_host: hostname=${new_ip}
             ansible_ssh_host=${inventory_hostname}
-            ansible_ssh_port=${new_port}' 
+            ansible_ssh_port=${new_port}
 '''
