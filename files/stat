@@ -55,12 +55,17 @@ def main():
     try:
         st = os.stat(path)
     except OSError, e:
+        if e.errno == errno.ENOENT:
+            d = { 'exists' : False }
+            module.exit_json(changed=False, stat=d)
+       
         module.fail_json(msg = e.strerror)
 
     mode = st.st_mode
 
     # back to ansible
     d = {
+        'exists'   : True,
         'mode'     : S_IMODE(mode),
         'isdir'    : S_ISDIR(mode),
         'ischr'    : S_ISCHR(mode),
