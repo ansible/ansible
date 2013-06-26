@@ -120,16 +120,16 @@ def main():
         description='Show Ansible module documentation',
     )
 
-    p.add_option("-M", "--module-path",
-            action="store",
-            dest="module_path",
-            default=MODULEDIR,
-            help="Ansible modules/ directory")
     p.add_option("-l", "--list",
             action="store_true",
             default=False,
             dest='list_dir',
             help='List available modules')
+    p.add_option("-M", "--module-path",
+            action="store",
+            dest="module_path",
+            default=MODULEDIR,
+            help="Ansible modules/ directory")
     p.add_option("-s", "--snippet",
             action="store_true",
             default=False,

@@ -450,36 +450,54 @@ def increment_debug(option, opt, value, parser):
     global VERBOSITY
     VERBOSITY += 1
 
-def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
-    async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, diff_opts=False):
+def base_parser(constants=C, usage="", async_opts=False, check_opts=False, connect_opts=False,
+    diff_opts=False, output_opts=False, runas_opts=False, subset_opts=False):
     ''' create an options parser for any ansible script '''
 
     parser = SortedOptParser(usage, version=version("%prog"))
-    parser.add_option('-v','--verbose', default=False, action="callback",
-        callback=increment_debug, help="verbose mode (-vvv for more)")
 
+    parser.add_option('-k', '--ask-pass', default=False, dest='ask_pass', action='store_true',
+        help='ask for SSH password')
+    parser.add_option('-K', '--ask-sudo-pass', default=False, dest='ask_sudo_pass', action='store_true',
+        help='ask for sudo password')
     parser.add_option('-f','--forks', dest='forks', default=constants.DEFAULT_FORKS, type='int',
         help="specify number of parallel processes to use (default=%s)" % constants.DEFAULT_FORKS)
     parser.add_option('-i', '--inventory-file', dest='inventory',
         help="specify inventory host file (default=%s)" % constants.DEFAULT_HOST_LIST,
         default=constants.DEFAULT_HOST_LIST)
-    parser.add_option('-k', '--ask-pass', default=False, dest='ask_pass', action='store_true',
-        help='ask for SSH password')
-    parser.add_option('--private-key', default=C.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
-        help='use this file to authenticate the connection')
-    parser.add_option('-K', '--ask-sudo-pass', default=False, dest='ask_sudo_pass', action='store_true',
-        help='ask for sudo password')
+    parser.add_option('--list-hosts', dest='listhosts', action='store_true',
+        help="outputs a list of matching hosts; does not execute anything else")
     parser.add_option('-M', '--module-path', dest='module_path',
         help="specify path(s) to module library (default=%s)" % constants.DEFAULT_MODULE_PATH,
         default=None)
-
-    if subset_opts:
-        parser.add_option('-l', '--limit', default=constants.DEFAULT_SUBSET, dest='subset',
-            help='further limit selected hosts to an additional pattern')
-
+    parser.add_option('--private-key', default=C.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
+        help='use this file to authenticate the connection')
     parser.add_option('-T', '--timeout', default=constants.DEFAULT_TIMEOUT, type='int',
         dest='timeout',
         help="override the SSH timeout in seconds (default=%s)" % constants.DEFAULT_TIMEOUT)
+    parser.add_option('-v','--verbose', default=False, action="callback",
+        callback=increment_debug, help="verbose mode (-vvv for more)")
+
+    if async_opts:
+        parser.add_option('-B', '--background', dest='seconds', type='int', default=0,
+            help='run asynchronously, failing after X seconds (default=N/A)')
+        parser.add_option('-P', '--poll', default=constants.DEFAULT_POLL_INTERVAL, type='int',
+            dest='poll_interval',
+            help="set the poll interval if using -B (default=%s)" % constants.DEFAULT_POLL_INTERVAL)
+
+    if check_opts:
+        parser.add_option("-C", "--check", default=False, dest='check', action='store_true',
+            help="don't make any changes; instead, try to predict some of the changes that may occur")
+
+    if connect_opts:
+        parser.add_option('-c', '--connection', dest='connection',
+                          default=C.DEFAULT_TRANSPORT,
+                          help="connection type to use (default=%s)" % C.DEFAULT_TRANSPORT)
+
+    if diff_opts:
+        parser.add_option("-D", "--diff", default=False, dest='diff', action='store_true',
+            help="when changing (small) files and templates, show the differences in those files; works great with --check"
+        )
 
     if output_opts:
         parser.add_option('-o', '--one-line', dest='one_line', action='store_true',
@@ -496,27 +514,9 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
             dest='remote_user',
             help='connect as this user (default=%s)' % constants.DEFAULT_REMOTE_USER)
 
-    if connect_opts:
-        parser.add_option('-c', '--connection', dest='connection',
-                          default=C.DEFAULT_TRANSPORT,
-                          help="connection type to use (default=%s)" % C.DEFAULT_TRANSPORT)
-
-    if async_opts:
-        parser.add_option('-P', '--poll', default=constants.DEFAULT_POLL_INTERVAL, type='int',
-            dest='poll_interval',
-            help="set the poll interval if using -B (default=%s)" % constants.DEFAULT_POLL_INTERVAL)
-        parser.add_option('-B', '--background', dest='seconds', type='int', default=0,
-            help='run asynchronously, failing after X seconds (default=N/A)')
-
-    if check_opts:
-        parser.add_option("-C", "--check", default=False, dest='check', action='store_true',
-            help="don't make any changes, instead try to predict some of the changes that may occur"
-        )
-
-    if diff_opts:
-        parser.add_option("-D", "--diff", default=False, dest='diff', action='store_true',
-            help="when changing (small) files and templates, show the differences in those files, works great with --check"
-        )
+    if subset_opts:
+        parser.add_option('-l', '--limit', default=constants.DEFAULT_SUBSET, dest='subset',
+            help='further limit selected hosts to an additional pattern')
 
 
     return parser
