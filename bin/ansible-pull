@@ -93,17 +93,17 @@ def main(args):
     """ Set up and run a local playbook """
     usage = "%prog [options] [playbook.yml]"
     parser = OptionParser(usage=usage)
-    parser.add_option('--purge', default=False, action='store_true',
-                      help='Purge git checkout after playbook run')
-    parser.add_option('-d', '--directory', dest='dest', default=None,
-                      help='Directory to clone git repository to')
-    parser.add_option('-U', '--url', dest='url', default=None,
-                      help='URL of git repository')
     parser.add_option('-C', '--checkout', dest='checkout',
                       default="HEAD",
-                      help='Branch/Tag/Commit to checkout.  Defaults to HEAD.')
+                      help='branch/tag/commit to checkout; defaults to HEAD')
+    parser.add_option('-d', '--directory', dest='dest', default=None,
+                      help='directory to clone the git repository to')
     parser.add_option('-i', '--inventory-file', dest='inventory',
-                      help="specify inventory host file")
+                      help="location of the inventory host file")
+    parser.add_option('--purge', default=False, action='store_true',
+                      help='purge git checkout after playbook run')
+    parser.add_option('-U', '--url', dest='url', default=None,
+                      help='URL of the git repository')
     options, args = parser.parse_args(args)
 
     if not options.dest:
