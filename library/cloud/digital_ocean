@@ -57,6 +57,11 @@ options:
   ssh_key_ids:
     description:
      - Optional, comma separated list of ssh_key_ids that you would like to be added to the server
+  unique:
+    description:
+     - Optional, when a droplet id is NOT specified, use name/image_id/region_id/size_id to find a matching droplet.
+    default: "yes"
+    choices: [ "yes", "no" ]
   wait:
     description: 
      - Wait for the droplet to be in state 'running' before returning.
@@ -230,7 +235,13 @@ class Droplet(JsonfyMixIn):
         cls.manager = DoManager(client_id, api_key)
 
     @classmethod
-    def add(cls, name, size_id, image_id, region_id, ssh_key_ids=None):
+    def add(cls, name, size_id, image_id, region_id, unique, ssh_key_ids=None):
+        if unique:
+          droplet = cls.get_unique(name, size_id, image_id, region_id)
+          if droplet != None:
+            droplet.update_attr()
+            return droplet
+
         json = cls.manager.new_droplet(name, size_id, image_id, region_id, ssh_key_ids)
         droplet = cls(json)
         droplet.update_attr()
@@ -245,6 +256,15 @@ class Droplet(JsonfyMixIn):
             if droplet.id == id:
                 return droplet
         return False
+
+    @classmethod
+    def get_unique(cls, name, size_id, image_id, region_id):
+        '''Returns the first droplet that matches the supplied critera, or None'''
+        droplets = cls.list_all()
+        for d in droplets:
+          if d.name == name and d.size_id == size_id and d.image_id == d.image_id and d.region_id == region_id:
+            return d
+        return None
 
     @classmethod
     def list_all(cls):
@@ -314,6 +334,7 @@ def core(module):
                         size_id=getkeyordie('size_id'), 
                         image_id=getkeyordie('image_id'), 
                         region_id=getkeyordie('region_id'), 
+                        unique=module.params['unique'],
                         ssh_key_ids=module.params['ssh_key_ids']
                     )
             if droplet.is_powered_on():
@@ -325,7 +346,16 @@ def core(module):
             module.exit_json(changed=changed, droplet=droplet.to_json())
        
         elif state in ('absent', 'deleted'):
-            droplet = Droplet.find(getkeyordie('id'))
+            if module.params['unique'] and module.params['id'] == None:
+                droplet = Droplet.get_unique(
+                        getkeyordie('name'),
+                        getkeyordie('size_id'),
+                        getkeyordie('image_id'),
+                        getkeyordie('region_id')
+                    )
+            else:
+                droplet = Droplet.find(getkeyordie('id'))
+  
             if not droplet:
                 module.exit_json(changed=False, msg='The droplet is not found.')
             event_json = droplet.destroy()
@@ -362,6 +392,7 @@ def main():
             region_id = dict(type='int'),
             ssh_key_ids = dict(default=''),
             id = dict(aliases=['droplet_id'], type='int'),
+            unique = dict(type='bool', choices=BOOLEANS, default='no'),
             wait = dict(type='bool', choices=BOOLEANS, default='yes'),
             wait_timeout = dict(default=300, type='int'),
             ssh_pub_key = dict(type='str'),
