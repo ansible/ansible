@@ -14,6 +14,7 @@ location is /tmp/ansible-digital_ocean.cache).
 
 The --pretty (-p) option pretty-prints the output for better human readability.
 
+----
 Configuration is read from `digital_ocean.ini`, then from environment variables,
 then and command-line arguments.
 
@@ -24,6 +25,12 @@ can be specified in the INI file or with the following environment variables:
 Alternatively, they can be passed on the command-line with --client-id and
 --api-key.
 
+If you specify DigitalOcean credentials in the INI file, a handy way to
+get them into your environment (e.g., to use the digital_ocean module)
+is to use the output of the --env option with export:
+    export $(digital_ocean.py --env)
+
+----
 The following groups are generated from --list:
  - ID    (droplet ID)
  - NAME  (droplet NAME)
@@ -162,6 +169,11 @@ They must be specified via either ini file, command line argument (--client-id a
 or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
             sys.exit(-1)
 
+        # env command, show DigitalOcean credentials
+        if self.args.env:
+            print "DO_CLIENT_ID=%s DO_API_KEY=%s" % (self.client_id, self.api_key)
+            sys.exit(0)
+
         # Manage cache
         self.cache_filename = self.cache_path + "/ansible-digital_ocean.cache"
         self.cache_refreshed = False
@@ -243,6 +255,7 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
         parser.add_argument('--cache-max_age', action='store', help='Maximum age of the cached items (default: 0)')
         parser.add_argument('--refresh-cache', action='store_true', default=False, help='Force refresh of cache by making API requests to DigitalOcean (default: False - use cache files)')
 
+        parser.add_argument('--env','-e', action='store_true', help='Display DO_CLIENT_ID and DO_API_KEY')
         parser.add_argument('--client-id','-c', action='store', help='DigitalOcean Client ID')
         parser.add_argument('--api-key','-a', action='store', help='DigitalOcean API Key')
 
