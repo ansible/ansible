@@ -247,6 +247,7 @@ def main():
 
     # setup the auth
     try:
+        pyrax.set_setting("identity_type", "rackspace")
         pyrax.set_credential_file(creds_file, region=region)
     except Exception, e:
         module.fail_json(msg = '%s' % e.message)
