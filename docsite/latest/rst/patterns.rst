@@ -68,6 +68,41 @@ In 1.1 and later, you can also select the connection type and user on a per host
 All of these variables can of course also be set outside of the inventory file, in 'host_vars' if you wish
 to keep your inventory file simple.
 
+Parameters
+++++++++++
+
+You can set these parameters on each host.
+
+ansible_ssh_host
+  Actual hostname
+ansible_ssh_port
+  ssh port number
+ansible_ssh_user
+  ssh user name
+ansible_ssh_pass
+  ssh password
+ansible_connection
+  Connection type of the host. Candidates are local, ssh or paramiko.
+  Default is paramiko
+ansible_ssh_private_key_file
+  Private key file used by ssh
+ansible_syslog_facility
+  Define syslog facility
+ansible_python_interpreter
+  Define a target host python path. This is userful for systems with more
+  than one Python or not located at "/usr/bin/python" such as \*BSD.
+ansible\_\*\_interpreter
+  \* is anything such as ruby or perl. This replaces shebang of
+  modules which will run on that host.
+
+Examples::
+
+  backdoor_host    ansible_ssh_port=2222     ansible_ssh_user=manager
+  aws_host         ansible_ssh_private_key_file=/home/example/.ssh/aws.pem
+  freebsd_host     ansible_python_interpreter=/usr/local/bin/python
+  ruby_module_host ansible_ruby_interpreter=/usr/bin/ruby.1.9.3
+
+
 Selecting Targets
 +++++++++++++++++
 
