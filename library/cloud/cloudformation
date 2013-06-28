@@ -107,11 +107,8 @@ def boto_exception(err):
             error = err.message
         else:
             error = '%s: %s' % (Exception, err)
-        try:
-            error_msg = json.loads(error)
-        except:
-            error_msg = {'Error': error}
-        return error_msg
+
+        return error
 
 
 def stack_operation(cfn, stack_name, operation):
@@ -197,7 +194,7 @@ def main():
             operation = 'CREATE'
         except Exception, err:
             error_msg = boto_exception(err)
-            if error_msg['Error']['Code'] == 'AlreadyExistsException':
+            if 'AlreadyExistsException' in error_msg:
                 update = True
             else:
                 module.fail_json(msg=error_msg)
@@ -216,8 +213,8 @@ def main():
             operation = 'UPDATE'
         except Exception, err:
             error_msg = boto_exception(err)
-            if error_msg['Error']['Message'] == 'No updates are to be performed.':
-                result = {'changed': False, 'output': 'Stack is already up-to-date.' }
+            if 'No updates are to be performed.' in error_msg:
+                result = {'changed': False, 'output': 'Stack is already up-to-date. %s' }
             else:
                 module.fail_json(msg=error_msg)
 
@@ -244,7 +241,10 @@ def main():
             operation = 'DELETE'
         except Exception, err:
             error_msg = boto_exception(err)
-            module.fail_json(msg=error_msg)
+            if 'Stack:%s does not exist' % stack_name in error_msg:
+                result = {'changed': False, 'output': 'No stack named %s was found.' % stack_name}
+            else:
+                module.fail_json(msg=error_msg)
         if operation == 'DELETE':
             cfn.delete_stack(stack_name)
             result = stack_operation(cfn, stack_name, operation)
