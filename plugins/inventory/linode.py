@@ -15,6 +15,10 @@ installed and has a valid config at ~/.chube. If not, run:
 
 For more details, see: https://github.com/exosite/chube
 
+NOTE: This script also assumes that the Linodes in your account all have
+labels that correspond to hostnames that are in your resolver search path.
+Your resolver search path resides in /etc/hosts.
+
 When run against a specific host, this script returns the following variables:
 
     - api_id
