@@ -92,12 +92,14 @@ import json
 
 
 class Region:
+# connects boto to the region specified in the cloudformation template
     def __init__(self, region):
         self.name = region
         self.endpoint = 'cloudformation.%s.amazonaws.com' % region
 
 
 def boto_exception(err):
+# generic error message handler
 
         if hasattr(err, 'error_message'):
             error = err.error_message
@@ -113,6 +115,7 @@ def boto_exception(err):
 
 
 def stack_operation(cfn, stack_name, operation):
+# gets the status of a stack while it is created/updated/deleted
     existed = []
     result = {}
     operation_complete = False
@@ -167,6 +170,7 @@ def main():
     disable_rollback = module.params['disable_rollback']
     template_parameters = module.params['template_parameters']
 
+#convert the template parameters ansible passes into a tuple for boto
     template_parameters_tup = [(k, v) for k, v in template_parameters.items()]
     stack_outputs = {}
     stack_outputs[module.params['region']] = {}
@@ -181,8 +185,9 @@ def main():
     stack_events = []
     result = {}
     operation = None
-    output = ''
 
+# if state is present we are going to ensure that the stack is either
+# created or updated
     if state == 'present':
         try:
             cfn.create_stack(stack_name, parameters=template_parameters_tup,
@@ -195,10 +200,13 @@ def main():
             if error_msg['Error']['Code'] == 'AlreadyExistsException':
                 update = True
             else:
-                result = {'changed': False, 'output': error_msg}
-                module.fail_json(**result)
+                module.fail_json(msg=error_msg)
         if not update:
             result = stack_operation(cfn, stack_name, operation)
+
+# if the state is present and the stack already exists, we try to update it
+# AWS will tell us if the stack template and parameters are the same and
+# don't need to be updated.
     if update:
         try:
             cfn.update_stack(stack_name, parameters=template_parameters_tup,
@@ -209,10 +217,15 @@ def main():
         except Exception, err:
             error_msg = boto_exception(err)
             if error_msg['Error']['Message'] == 'No updates are to be performed.':
-                output = error_msg['Error']['Message']
-            result = {'changed': False, 'output': output}
+                result = {'changed': False, 'output': 'Stack is already up-to-date.' }
+            else:
+                module.fail_json(msg=error_msg)
+
         if operation == 'UPDATE':
             result = stack_operation(cfn, stack_name, operation)
+
+# check the status of the stack while we are creating/updating it.
+# and get the outputs of the stack
 
     if state == 'present' or update:
         stack = cfn.describe_stacks(stack_name)[0]
@@ -231,8 +244,7 @@ def main():
             operation = 'DELETE'
         except Exception, err:
             error_msg = boto_exception(err)
-            result = {'changed': False, 'output': error_msg}
-            module.fail_json(result)
+            module.fail_json(msg=error_msg)
         if operation == 'DELETE':
             cfn.delete_stack(stack_name)
             result = stack_operation(cfn, stack_name, operation)
