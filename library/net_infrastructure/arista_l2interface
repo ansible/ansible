@@ -31,22 +31,18 @@ options:
         description:
             - the full name of the interface
         required: true
-        default: null
-        aliases: []
     state:
         description:
             - describe the desired state of the interface related to the config
         required: false
         default: 'present'
         choices: [ 'present', 'absent' ]
-        aliases: []
     logging:
         description:
             - enables or disables the syslog facility for this module
         required: false
         default: false
         choices: [ 'true', 'false', 'yes', 'no' ]
-        aliases: []
     vlan_tagging:
         description:
             - specifies whether or not vlan tagging should be enabled for 
@@ -54,26 +50,49 @@ options:
         required: false
         default: true
         choices: [ 'enable', 'disable' ]
-        aliases: []
     tagged_vlans: 
         description:
             - specifies the list of vlans that should be allowed to transit
               this interface
         required: false
-        default: null
-        aliases: []
     untagged_vlan:
         description:
             - specifies the vlan that untagged traffic should be placed in for
               transit across a vlan tagged link
         required: false
         default: 'default'
-        aliases: []
-examples:
-    - code: 'arista_l2interface: interface_id=Ethernet1 vlan_tagging="enable"'
-      description: "Enable vlan tagging for interface Ethernet1"
-    - code: 'arista_l2interface: interface_id=Ethernet4 tagged_vlans=Blue,Red'
-      descripton: "Specifies vlans Blue & Red should be allowed across this interface"
+notes:
+    - Requires EOS 4.10 or later 
+    - The Netdev extension for EOS must be installed and active in the 
+      available extensions (show extensions from the EOS CLI)
+    - See http://eos.aristanetworks.com for details
+'''
+EXAMPLES = '''
+Example playbook entries using the arista_l2interface module to manage resource 
+state. Note that interface names must be the full interface name not shortcut
+names (ie Ethernet, not Et1)
+
+    tasks:
+    - name: create switchport ethernet1 access port 
+      action: arista_l2interface interface_id=Ethernet1 logging=true
+
+    - name: create switchport ethernet2 trunk port
+      action: arista_l2interface interface_id=Ethernet2 vlan_tagging=enable logging=true
+
+    - name: add vlans to red and blue switchport ethernet2
+      action: arista_l2interface interface_id=Ethernet2 tagged_vlans=red,blue logging=true
+
+    - name: set untagged vlan for Ethernet1
+      action: arista_l2interface interface_id=Ethernet1 untagged_vlan=red logging=true
+
+    - name: convert access to trunk
+      action: arista_l2interface interface_id=Ethernet1 vlan_tagging=enable tagged_vlans=red,blue logging=true
+
+    - name: convert trunk to access
+      action: arista_l2interface interface_id=Ethernet2 vlan_tagging=disable untagged_vlan=blue logging=true
+
+    - name: delete switchport ethernet1
+      action: arista_l2interface interface_id=Ethernet1 state=absent logging=true
 '''
 import syslog
 import json
@@ -270,7 +289,7 @@ def main():
             vlan_tagging=dict(default=None, choices=['enable', 'disable']),
             tagged_vlans=dict(default=None, type='str'),
             untagged_vlan=dict(default=None, type='str'),
-            logging=dict(default=False, choices=BOOLEANS)
+            logging=dict(default=False, type='bool')
         ),
         supports_check_mode = True
     )

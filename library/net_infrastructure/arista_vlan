@@ -25,43 +25,51 @@ requirements:
     - Arista EOS 4.10
     - Netdev extension for EOS
 description:
-    - Manage VLAN resources on Arista EOS network devices
+    - Manage VLAN resources on Arista EOS network devices.  This module 
+      requires the Netdev EOS extension to be installed in EOS.  For detailed
+      instructions for installing and using the Netdev module please see 
+      [link]
 options:
     vlan_id:
         description:
             - the vlan id 
         required: true
-        default: null
-        aliases: []
     state:
         description:
             - describe the desired state of the vlan related to the config
         required: false
         default: 'present'
         choices: [ 'present', 'absent' ]
-        aliases: []
     logging:
         description:
             - enables or disables the syslog facility for this module
         required: false
-        default: false
         choices: [ 'true', 'false', 'yes', 'no' ]
-        aliases: []
     name:
         description:
             - a descriptive name for the vlan
         required: false
-        default: null
-        aliases: []
-examples:
-    - code: 'arista_vlan: vlan_id=100 name="Blue"'
-      description: "Creates vlan 100 in the running config"
-    - code: 'arista_vlan: vlan_id=200 state="absent"'
-      descripton: "Ensures vlan 200 is not in the config"
 notes:
     - Requires EOS 4.10 or later 
     - The Netdev extension for EOS must be installed and active in the 
       available extensions (show extensions from the EOS CLI)
+    - See http://eos.aristanetworks.com for details
+'''
+
+EXAMPLES = '''
+Example playbook entries using the arista_vlan module to manage resource 
+state.  
+   
+  tasks:
+  - name: create vlan 999
+    action: arista_vlan vlan_id=999 logging=true
+    
+  - name: create / edit vlan 999
+    action: arista_vlan vlan_id=999 name=test logging=true
+    
+  - name: remove vlan 999
+    action: arista_vlan vlan_id=999 state=absent logging=true
+    
 '''
 import syslog
 import json
@@ -251,7 +259,7 @@ def main():
             vlan_id=dict(default=None, required=True, type='int'),
             name=dict(default=None, type='str'),
             state=dict(default='present', choices=['present', 'absent']),
-            logging=dict(default=False, choices=BOOLEANS)
+            logging=dict(default=False, type='bool')
         ),
         supports_check_mode = True
     )
