@@ -25,50 +25,63 @@ requirements:
     - Arista EOS 4.10
     - Netdev extension for EOS
 description:
-    - Manage port channel (lag) interfaceresources on Arista EOS network devices
+    - Manage port channel interface resources on Arista EOS network 
+      devices
 options:
     interface_id:
         description:
             - the full name of the interface
         required: true
-        default: null
-        aliases: []
     state:
         description:
             - describe the desired state of the interface related to the config
         required: false
         default: 'present'
         choices: [ 'present', 'absent' ]
-        aliases: []
     logging:
         description:
             - enables or disables the syslog facility for this module
         required: false
         default: false
         choices: [ 'true', 'false', 'yes', 'no' ]
-        aliases: []
     links:
         description:
             - array of physical interface links to include in this lag
         required: false
-        default: null
-        aliases: []
     minimum_links:
         description:
             - the minimum number of physical interaces that must be operationally up to consider the lag operationally up
         required: false
-        default: null
-        aliases: []
     lacp:
         description:
             - enables the use of the LACP protocol for managing link bundles
         required: false
         default: 'active',
         choices: [ 'active', 'passive', 'off' ]
-        aliases: []
-examples:
-    - code: 'arista_lag: interface_id=Port-Channel10 links=Ethernet1,Ethernet2'
-      description: "Configure Port-Channel 10 with physical interfaces Ethernet1 and Ethernet2 as members"
+notes:
+    - Requires EOS 4.10 or later 
+    - The Netdev extension for EOS must be installed and active in the 
+      available extensions (show extensions from the EOS CLI)
+    - See http://eos.aristanetworks.com for details
+'''
+
+EXAMPLES = '''
+Example playbook entries using the arista_lag module to manage resource 
+state.  Note that interface names must be the full interface name not shortcut
+names (ie Ethernet, not Et1)
+
+    tasks:
+    - name: create lag interface
+      action: arista_lag interface_id=Port-Channel1 links=Ethernet1,Ethernet2 logging=true
+
+    - name: add member links
+      action: arista_lag interface_id=Port-Channel1 links=Ethernet1,Ethernet2,Ethernet3 logging=true
+
+    - name: remove member links
+      action: arista_lag interface_id=Port-Channel1 links=Ethernet2,Ethernet3 logging=true
+    
+    - name: remove lag interface
+      action: arista_lag interface_id=Port-Channel1 state=absent logging=true
 '''
 import syslog
 import json
@@ -265,7 +278,7 @@ def main():
             links=dict(default=None, type='str'),
             lacp=dict(default=None, choices=['active', 'passive', 'off'], type='str'),
             minimum_links=dict(default=None, type='int'),
-            logging=dict(default=False, choices=BOOLEANS)
+            logging=dict(default=False, type='bool')
         ),
         supports_check_mode = True
     )

@@ -31,53 +31,58 @@ options:
         description:
             - the full name of the interface
         required: true
-        default: null
-        aliases: []
     logging:
         description:
             - enables or disables the syslog facility for this module
         required: false
         default: false
         choices: [ 'true', 'false', 'yes', 'no' ]
-        aliases: []
     admin:
         description:
             - controls the operational state of the interface
         required: false
-        default: null
         choices: [ 'up', 'down' ]
-        aliases: []
     description:
         description:
             - a single line text string describing the interface
         required: false
-        default: null
-        aliases: []
     mtu:
         description:
             - configureds the maximum transmission unit for the interface
         required: false
         default: 1500
-        aliases: []
     speed:
         description:
             - sets the interface speed setting
         required: false
         default: 'auto'
         choices: [ 'auto', '100m', '1g', '10g' ]
-        aliases: []
     duplex:
         description:
             - sets the interface duplex setting
         required: false
         default: 'auto'
         choices: [ 'auto', 'half', 'full' ]
-        aliases: []
-examples:
-    - code: 'arista_interface: interface_id=Ethernet1 admin="up"'
-      description: "Administratively enable the Ethernet1 interface"
-    - code: 'arista_interface: itnerface_id=Ethernet4 state="default"'
-      descripton: "Default interface Ethernet4"
+notes:
+    - Requires EOS 4.10 or later 
+    - The Netdev extension for EOS must be installed and active in the 
+      available extensions (show extensions from the EOS CLI)
+    - See http://eos.aristanetworks.com for details
+'''
+EXAMPLES = '''
+Example playbook entries using the arista_interface module to manage resource 
+state.  Note that interface names must be the full interface name not shortcut
+names (ie Ethernet, not Et1)
+
+    tasks:
+    - name: enable interface Ethernet 1
+      action: arista_interface interface_id=Ethernet1 admin=up speed=10g duplex=full logging=true
+  
+    - name: set mtu on Ethernet 1
+      action: arista_interface interface_id=Ethernet1 mtu=1600 speed=10g duplex=full logging=true
+  
+    - name: reset changes to Ethernet 1
+      action: arista_interface interface_id=Ethernet1 admin=down mtu=1500 speed=10g duplex=full logging=true
 '''
 import syslog
 import json
@@ -220,7 +225,7 @@ def main():
             mtu=dict(default=None, type='int'),
             speed=dict(default=None, choices=['auto', '100m', '1g', '10g']),
             duplex=dict(default=None, choices=['auto', 'half', 'full']),
-            logging=dict(default=False, choices=BOOLEANS)
+            logging=dict(default=False, type='bool')
         ),
         supports_check_mode = True
     )
