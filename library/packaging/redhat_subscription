@@ -217,7 +217,7 @@ class Rhsm(RegistrationBase):
 
         args = ['subscription-manager', 'identity']
         try:
-            (stdout, stderr, retcode) =  run_command(args)
+            (stdout, stderr, retcode) = run_command(args)
         except CommandException, e:
             return False
         else:
@@ -283,11 +283,14 @@ class RhsmPool(object):
     '''
         Convenience class for housing subscription information
     '''
+
     def __init__(self, **kwargs):
         for k,v in kwargs.items():
             setattr(self, k, v)
+
     def __str__(self):
         return str(self.__getattribute__('_name'))
+
     def subscribe(self):
         (stdout, stderr, retcode) = run_command("subscription-manager subscribe --pool %s" % self.PoolId)
         return True
