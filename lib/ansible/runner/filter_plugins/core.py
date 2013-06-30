@@ -43,6 +43,12 @@ def failed(*a, **kw):
 def success(*a, **kw):
     return not failed(*a, **kw)
 
+def mandatory(a):
+    ''' Make a variable mandatory '''
+    if not a:
+        raise errors.AnsibleError('Mandatory variable not defined.')
+    return a
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -70,5 +76,7 @@ class FilterModule(object):
             'failed'  : failed,
             'success' : success,
 
+            # variable existence
+            'mandatory': mandatory,
         }
     
