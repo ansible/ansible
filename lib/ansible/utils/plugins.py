@@ -143,7 +143,6 @@ class PluginLoader(object):
         suffix = ".py"
         if not self.class_name:
             suffix = ""
-        paths = self._get_paths()
 
         for i in self._get_paths():
             path = os.path.join(i, "%s%s" % (name, suffix))
