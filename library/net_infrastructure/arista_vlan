@@ -228,7 +228,7 @@ class AristaVlan(object):
         """
         (rc, out, err) = self.run_command("netdev vlan list")
         collection = json.loads(out)
-        return collection.get('result').has_key(str(self.vlan_id))
+        return str(self.vlan_id) in collection.get('result')
         
     def get(self):
         """ This method will return a dictionary with the attributes of the
