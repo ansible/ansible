@@ -91,8 +91,6 @@ def main(args):
         options.ask_pass = options.ask_pass or C.DEFAULT_ASK_PASS
         options.ask_sudo_pass = options.ask_sudo_pass or C.DEFAULT_ASK_SUDO_PASS
         ( sshpass, sudopass ) = utils.ask_passwords(ask_pass=options.ask_pass, ask_sudo_pass=options.ask_sudo_pass)
-        if options.sudo_user or options.ask_sudo_pass:
-            options.sudo = True
         options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
     if options.extra_vars and options.extra_vars[0] in '[{':
         extra_vars = utils.json_loads(options.extra_vars)
