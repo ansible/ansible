@@ -24,7 +24,7 @@ You can also dictate the connection type to be used, if you want::
     localhost           ansible_connection=local
     /path/to/chroot1    ansible_connection=chroot
     foo.example.com
-    bar.example.com 
+    bar.example.com
 
 You may also wish to keep these in group variables instead, or file in them in a group_vars/<groupname> file.
 See the rest of the documentation for more information about how to organize variables.
@@ -33,12 +33,12 @@ See the rest of the documentation for more information about how to organize var
 How do I get ansible to reuse connections, enable Kerberized SSH, or have Ansible pay attention to my local SSH config file?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Switch your default connectiont type in the configuration file to 'ssh', or use '-c ssh' to use
+Switch your default connection type in the configuration file to 'ssh', or use '-c ssh' to use
 Native OpenSSH for connections instead of the python paramiko library.
 
 Paramiko is great for starting out, but the OpenSSH type offers many advanced options.  You will want to run Ansible
 from a machine new enough to support ControlPersist, if you are using this connection type.  You can still manage
-older clients.  If you are using RHEL 6, CentOS 6, SLES 10 or SLES 11 the version of OpenSSH is still a bit old, so 
+older clients.  If you are using RHEL 6, CentOS 6, SLES 10 or SLES 11 the version of OpenSSH is still a bit old, so
 consider managing from a Fedora or openSUSE client even though you are managing older nodes, or just use paramiko.
 
 We keep paramiko as the default as if you are first installing Ansible on an EL box, it offers a better experience
@@ -61,7 +61,7 @@ By default Ansible assumes it can find a /usr/bin/python on your remote system t
 
 Setting of an inventory variable 'ansible_python_interpreter' on any host will allow Ansible to auto-replace the interpreter
 used when executing python modules.   Thus, you can point to any python you want on the system if /usr/bin/python on your
-system does not point to a Python 2.X interpreter.  
+system does not point to a Python 2.X interpreter.
 
 Some Linux operating systems, such as Arch, may only have Python 3 installed by default.  This is not sufficient and you will
 get syntax errors trying to run modules with Python 3.  Python 3 is essentially not the same
@@ -157,7 +157,7 @@ environment variable on management machine::
 
 If you need to set environment variables, see the Advanced Playbooks section about environments.
 
-Can I get training on Ansible or find commerical support?
+Can I get training on Ansible or find commercial support?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Yes!  See `AnsibleWorks.com <http://ansibleworks.com>`_ or email `info@ansibleworks.com <mailto:info@ansibleworks.com>`_.
@@ -172,6 +172,3 @@ I don't see my question here
 ++++++++++++++++++++++++++++
 
 See the "Resources" section of the documentation for a link to the IRC and Google Group.
-
-
-

@@ -86,7 +86,7 @@ Fireball Mode
 +++++++++++++
 
 By default Ansible uses SSH for connections -- either Paramiko (the actual default) or a common alternative, native Open SSH.  Some users
-may want to execute operations even faster though, and they can if they opt in on running an ephmeral message bus.  What happens is Ansible
+may want to execute operations even faster though, and they can if they opt in on running an ephemeral message bus.  What happens is Ansible
 will start talking to a node over SSH, and then set up a temporary secured message bus good only to talk from one machine, that will
 self destruct after a set period of time.  This means the bus does not allow management of any kind after the time interval has expired.
 
@@ -95,7 +95,7 @@ Forks
 
 Ansible talks to remote nodes in parallel, the level of parallelism can be set either by passing --forks, or editing the default in a configuration
 file.  The default is a very conservative 5 forks, though if you have a lot of RAM, you can easily set this to a value like 50 for increased
-parallelism.  
+parallelism.
 
 Gather Facts (Boolean)
 ++++++++++++++++++++++
@@ -157,7 +157,7 @@ the inventory file, in YAML format.  This provides a convient place to assign va
 them in the inventory file.  The Host Vars file can also be used to define complex datastructures that can't be represented in the
 inventory file.
 
-Lazy Evalution
+Lazy Evaluation
 ++++++++++++++
 
 In general Ansible evaluates any variables in playbook content at the last possible second, which means that if you define a datastructure
@@ -201,7 +201,7 @@ Inventory
 +++++++++
 
 A file (by default, Ansible uses a simple INI format) that describes Hosts and Groups in Ansible.  Inventory can also be provided
-via an "Inventory Script" (sometimes called an "External Inventory Script").  
+via an "Inventory Script" (sometimes called an "External Inventory Script").
 
 Inventory Script
 ++++++++++++++++
@@ -236,7 +236,7 @@ A collection of modules made availabe to /usr/bin/ansible or an ansible playbook
 Limit Groups
 ++++++++++++
 
-By passing "--limit somegroup" to ansible or ansible playbook, the commands can be limited to a subset of hosts.  For instance, 
+By passing "--limit somegroup" to ansible or ansible playbook, the commands can be limited to a subset of hosts.  For instance,
 this can be used to run a playbook that normally targets an entire set of servers to one particular server.
 
 Local Connection
@@ -406,7 +406,7 @@ constructs like loops and if statements.
 Transport
 +++++++++
 
-Ansible uses "Connection Plugins" to define types of available transports.  These are simply how ansible will reach out to managed systems.  Transports included are paramiko (the default SSH transport), SSH (using openssh), fireball (an SSH bootstrapped accelerated connection plugin), and local. 
+Ansible uses "Connection Plugins" to define types of available transports.  These are simply how ansible will reach out to managed systems.  Transports included are paramiko (the default SSH transport), SSH (using openssh), fireball (an SSH bootstrapped accelerated connection plugin), and local.
 
 When
 ++++
@@ -428,5 +428,3 @@ YAML
 
 Ansible does not want to force people to write programming language code to automate infrastructure, so Ansible uses YAML to define playbook configuration languages and also variable files.  YAML is nice because it has a minimum of syntax and is very clean and easy for people to skim.  It is a good data format for configuration files and humans, but also machine readable.  Ansible's usage of YAML stemmed from Michael's first use of it inside of Cobbler around 2006.  YAML is fairly popular in the dynamic language community and the format has libraries available
 for serialization in many different languages (Python, Perl, Ruby, etc).
-
-

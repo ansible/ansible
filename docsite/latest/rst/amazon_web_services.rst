@@ -19,18 +19,18 @@ Requirements for the AWS modules are minimal.  All of the modules require and ar
 Provisioning
 ````````````
 
-The ec2 module provides the ability to provision instance(s) within EC2.  Typically the provisioning task will be performed against your Ansible master server as a local_action.  
+The ec2 module provides the ability to provision instance(s) within EC2.  Typically the provisioning task will be performed against your Ansible master server as a local_action.
 
 .. note::
 
-   Authentication with the AWS-related modules is handled by either 
+   Authentication with the AWS-related modules is handled by either
    specifying your access and secret key as ENV variables or passing
-   them as module arguments. 
+   them as module arguments.
 
 .. note::
 
    To talk to specific endpoints, the environmental variable EC2_URL
-   can be set.  This is useful if using a private cloud like Eucalyptus, 
+   can be set.  This is useful if using a private cloud like Eucalyptus,
    exporting the variable as EC2_URL=https://myhost:8773/services/Eucalyptus.
    This can be set using the 'environment' keyword in Ansible if you like.
 
@@ -46,7 +46,7 @@ In a play, this might look like (assuming the parameters are held as vars)::
     - name: Provision a set of instances
       local_action: ec2 keypair={{mykeypair}} group={{security_group}} instance_type={{instance_type}} image={{image}} wait=true count={{number}}
       register: ec2
-                  
+
 By registering the return its then possible to dynamically create a host group consisting of these new instances.  This facilitates performing configuration actions on the hosts immediately in a subsequent play::
 
     tasks:
@@ -77,18 +77,18 @@ Once your nodes are spun up, you'll probably want to talk to them again.  The be
 
 Even for larger environments, you might have nodes spun up from Cloud Formations or other tooling.  You don't have to use Ansible to spin up guests.  Once these are created and you wish to configure them, the EC2 API can be used to return system grouping with the help of the EC2 inventory script. This script can be used to group resources by their security group or tags. Tagging is highly recommended in EC2 and can provide an easy way to sort between host groups and roles. The inventory script is documented `in the API chapter <http://www.ansibleworks.com/docs/api.html#external-inventory-scripts>`_.
 
-You may wish to schedule a regular refresh of the inventory cache to accomodate for frequent changes in resources:
+You may wish to schedule a regular refresh of the inventory cache to accommodate for frequent changes in resources:
 
 .. code-block:: bash
-   
+
     # ./ec2.py --refresh-cache
 
-Put this into a crontab as appropriate to make calls from your Ansible master server to the EC2 API endpoints and gather host information.  The aim is to keep the view of hosts as up-to-date as possible, so schedule accordingly. Playbook calls could then also be scheduled to act on the refreshed hosts inventory after each refresh.  This approach means that machine images can remain "raw", containing no payload and OS-only.  Configuration of the workload is handled entirely by Ansible.  
+Put this into a crontab as appropriate to make calls from your Ansible master server to the EC2 API endpoints and gather host information.  The aim is to keep the view of hosts as up-to-date as possible, so schedule accordingly. Playbook calls could then also be scheduled to act on the refreshed hosts inventory after each refresh.  This approach means that machine images can remain "raw", containing no payload and OS-only.  Configuration of the workload is handled entirely by Ansible.
 
 Pull Configuration
 ++++++++++++++++++
 
-For some the delay between refreshing host information and acting on that host information (i.e. running Ansible tasks against the hosts) may be too long. This may be the case in such scenarios where EC2 AutoScaling is being used to scale the number of instances as a result of a particular event. Such an event may require that hosts come online and are configured as soon as possible (even a 1 minute delay may be undesirable).  Its possible to pre-bake machine images which contain the necessary ansible-pull script and components to pull and run a playbook via git. The machine images could be configured to run ansible-pull upon boot as part of the bootstrapping procedure. 
+For some the delay between refreshing host information and acting on that host information (i.e. running Ansible tasks against the hosts) may be too long. This may be the case in such scenarios where EC2 AutoScaling is being used to scale the number of instances as a result of a particular event. Such an event may require that hosts come online and are configured as soon as possible (even a 1 minute delay may be undesirable).  Its possible to pre-bake machine images which contain the necessary ansible-pull script and components to pull and run a playbook via git. The machine images could be configured to run ansible-pull upon boot as part of the bootstrapping procedure.
 
 More information on pull-mode playbooks can be found `here <http://www.ansibleworks.com/docs/playbooks2.html#pull-mode-playbooks>`_.
 
@@ -156,4 +156,3 @@ these modules are documented on the module page, more walk throughs coming soon
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-

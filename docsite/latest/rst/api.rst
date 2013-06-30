@@ -92,7 +92,7 @@ External Inventory Scripts
 
 Often a user of a configuration management system will want to keep inventory
 in a different system.  Frequent examples include LDAP, `Cobbler <http://cobbler.github.com>`_,
-or a piece of expensive enterprisey CMDB software.   Ansible easily supports all
+or a piece of expensive enterprise CMDB software.   Ansible easily supports all
 of these options via an external inventory system.  The plugins directory contains some of these already -- including options for EC2/Eucalyptus and OpenStack, which will be detailed below.
 
 It's possible to write an external inventory script in any language.  If you are familiar with Puppet terminology, this concept is basically the same as 'external nodes', with the slight difference that it also defines which hosts are managed.
@@ -364,4 +364,3 @@ In addition, plugins can be shipped in a subdirectory relative to a top-level pl
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
