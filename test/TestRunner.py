@@ -137,6 +137,7 @@ class TestRunner(unittest.TestCase):
         result = self._run('command', ["/bin/echo", "hi"])
         assert "failed" not in result
         assert "msg" not in result
+        assert "ansible_facts" not in result
         assert result['rc'] == 0
         assert result['stdout'] == 'hi'
         assert result['stderr'] == ''
@@ -144,6 +145,11 @@ class TestRunner(unittest.TestCase):
         result = self._run('command', ["false"])
         assert result['rc'] == 1
         assert 'failed' not in result
+
+        for opt in ('ignore_error', 'ignore_errors'):
+            result = self._run('command', ["false", "%s=yes" % opt])
+            assert result['rc'] == 0
+            assert 'failed' not in result
 
         result = self._run('command', ["/usr/bin/this_does_not_exist", "splat"])
         assert 'msg' in result
@@ -167,6 +173,142 @@ class TestRunner(unittest.TestCase):
 
         result = self._run('shell', ["removes=/tmp/ansible\\ command\\ test", "false"])
         assert 'skipped' in result
+
+        result = self._run('command', ["false", "fact=a_fact"])
+        assert result['rc'] == 1
+        assert 'msg' not in result
+        assert 'failed' not in result
+        assert 'ansible_facts' in result
+        assert 'a_fact' in result['ansible_facts']
+        assert result['ansible_facts']['a_fact']['status'] is False
+        assert result['ansible_facts']['a_fact']['rc'] == 1
+        assert result['ansible_facts']['a_fact']['output'] == ''
+
+        result = self._run('command', ["false", "fact=a_fact", "always_run=yes"], check_mode=True)
+        assert result['rc'] == 1
+        assert 'msg' not in result
+        assert 'failed' not in result
+        assert 'ansible_facts' in result
+        assert 'a_fact' in result['ansible_facts']
+        assert result['ansible_facts']['a_fact']['status'] is False
+        assert result['ansible_facts']['a_fact']['rc'] == 1
+        assert result['ansible_facts']['a_fact']['output'] == ''
+
+        result = self._run('command', ["false", "fact=a_fact", "always_run=yes", "ignore_errors=yes"], check_mode=True)
+        assert result['rc'] == 0
+        assert 'msg' not in result
+        assert 'failed' not in result
+        assert 'ansible_facts' in result
+        assert 'a_fact' in result['ansible_facts']
+        assert result['ansible_facts']['a_fact']['status'] is False
+        assert result['ansible_facts']['a_fact']['rc'] == 1
+        assert result['ansible_facts']['a_fact']['output'] == ''
+
+        result = self._run('command', ["true", "fact=a_fact", "always_run=yes", "ignore_errors=1"], check_mode=True)
+        assert result['rc'] == 0
+        assert 'msg' not in result
+        assert 'failed' not in result
+        assert 'ansible_facts' in result
+        assert 'a_fact' in result['ansible_facts']
+        assert result['ansible_facts']['a_fact']['status'] is True
+        assert result['ansible_facts']['a_fact']['rc'] == 0
+        assert result['ansible_facts']['a_fact']['output'] == ''
+
+        result = self._run('command', ["printf 'one\ntwo\n'", "fact=a_fact"])
+        assert result['rc'] == 0
+        assert 'msg' not in result
+        assert 'failed' not in result
+        assert 'ansible_facts' in result
+        assert 'a_fact' in result['ansible_facts']
+        assert result['ansible_facts']['a_fact']['status'] is True
+        assert result['ansible_facts']['a_fact']['rc'] == 0
+        assert result['ansible_facts']['a_fact']['output'] == "one\ntwo"
+
+        for m in ('command', 'shell'):
+            result = self._run(m, ["printf 'one\ntwo\n'", "fact=a_fact"], check_mode=True)
+            assert 'skipped' in result
+            assert result['skipped'] is True
+
+            result = self._run(m, ["/bin/echo", "hi", "ignore_changed=yes"])
+            assert result['rc'] == 0
+            assert 'changed' in result
+            assert result['changed'] == False
+
+            result = self._run(m, ["/bin/echo", "hi", "ignore_changed=yes", "always_run=yes"], check_mode=True)
+            assert result['rc'] == 0
+            assert 'changed' in result
+            assert result['changed'] == False
+
+            result = self._run(m, ["false", "ignore_changed=yes", "always_run=yes"], check_mode=True)
+            assert result['rc'] == 1
+            assert 'failed' not in result
+            assert 'changed' in result
+            assert result['changed'] == False
+
+
+        result = self._run('command', ["printf 'one\ntwo\n'", "fact=a_fact", "always_run=True"], check_mode=True)
+        assert result['rc'] == 0
+        assert 'msg' not in result
+        assert 'failed' not in result
+        assert 'ansible_facts' in result
+        assert 'a_fact' in result['ansible_facts']
+        assert result['ansible_facts']['a_fact']['status'] is True
+        assert result['ansible_facts']['a_fact']['rc'] == 0
+        assert result['ansible_facts']['a_fact']['output'] == "one\ntwo"
+
+        result = self._run('shell', ["printf 'one\ntwo\n'", ";", "true", "fact=a_fact"])
+        assert result['rc'] == 0
+        assert 'msg' not in result
+        assert 'failed' not in result
+        assert 'ansible_facts' in result
+        assert 'a_fact' in result['ansible_facts']
+        assert result['ansible_facts']['a_fact']['status'] is True
+        assert result['ansible_facts']['a_fact']['rc'] == 0
+        assert result['ansible_facts']['a_fact']['output'] == "one\ntwo"
+
+        for mode in (False, True):
+
+            result = self._run('shell', ["printf 'one\ntwo\n'", ";", "false", "fact=a_fact", "always_run=on"], check_mode=mode)
+            assert result['rc'] == 1
+            assert 'msg' not in result
+            assert 'failed' not in result
+            assert 'ansible_facts' in result
+            assert 'a_fact' in result['ansible_facts']
+            assert result['ansible_facts']['a_fact']['status'] is False
+            assert result['ansible_facts']['a_fact']['rc'] == 1
+            assert result['ansible_facts']['a_fact']['output'] == "one\ntwo"
+
+            result = self._run('shell', ["printf 'one\ntwo\n'", ";", "false", "fact=a_fact", "always_run=on", "ignore_errors=yes"], check_mode=mode)
+            assert result['rc'] == 0
+            assert 'msg' not in result
+            assert 'failed' not in result
+            assert 'ansible_facts' in result
+            assert 'a_fact' in result['ansible_facts']
+            assert result['ansible_facts']['a_fact']['status'] is False
+            assert result['ansible_facts']['a_fact']['rc'] == 1
+            assert result['ansible_facts']['a_fact']['output'] == "one\ntwo"
+
+            result = self._run('shell', ["printf 'one\ntwo\n'", ";", "false", "fact=a_fact", "always_run=on", "ignore_errors=yes",
+                "ignore_changed=yes"], check_mode=mode)
+            assert result['rc'] == 0
+            assert 'msg' not in result
+            assert 'failed' not in result
+            assert 'ansible_facts' in result
+            assert 'a_fact' in result['ansible_facts']
+            assert result['changed'] == False
+            assert result['ansible_facts']['a_fact']['status'] is False
+            assert result['ansible_facts']['a_fact']['rc'] == 1
+            assert result['ansible_facts']['a_fact']['output'] == "one\ntwo"
+
+            result = self._run('shell', ["/usr/bin/this_does_not_exist", "splat", "ignore_errors=yes",
+                "ignore_changed=yes", "always_run=yes"], check_mode=mode)
+            assert result['rc'] == 0
+            assert 'msg' not in result
+            assert 'failed' not in result
+            assert 'ansible_facts' not in result
+            assert result['changed'] == False
+            assert result['stdout'] == ''
+            assert 'No such file or directory' in result['stderr']
 
     def test_git(self):
         self._run('file', ['path=/tmp/gitdemo', 'state=absent'])

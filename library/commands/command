@@ -65,6 +65,41 @@ options:
     required: false
     default: null
     version_added: "0.9"
+  ignore_errors:
+    description:
+      - |
+        ignore the termination status of the executed command: it is overridden
+        with zero.
+    required: false
+    default: false
+    version_added: "1.3"
+    aliases: [ 'ignore_error' ]
+  ignore_changed:
+    description:
+      - the task's changed state is false whether the command is executed
+        or not.
+    required: false
+    default: false
+    version_added: "1.3"
+  always_run:
+    description:
+      - always execute the command whether the play is run in check mode or
+        not.
+    required: false
+    default: false
+    version_added: "1.3"
+  fact:
+    description:
+      - |
+        set a new host fact as a dictionary with the following keys
+        and values: C(output) as the command's standard output with
+        the trailing newline removed, C(rc) as the command termination
+        status (not overriden by the C(ignore_errors) option) and
+        C(status) as the logical, I(shell-like), interpretation of the
+        command's termination status.
+    required: false
+    default: null
+    version_added: "1.3"
 notes:
     -  If you want to run a command through the shell (say you are using C(<),
        C(>), C(|), etc), you actually want the M(shell) module instead. The
@@ -86,7 +121,7 @@ def main():
 
     # the command module is the one ansible module that does not take key=value args
     # hence don't copy this one if you are looking to build others!
-    module = CommandModule(argument_spec=dict())
+    module = CommandModule(argument_spec=dict(), supports_check_mode=True)
 
     shell = module.params['shell']
     chdir = module.params['chdir']
@@ -94,6 +129,13 @@ def main():
     args  = module.params['args']
     creates  = module.params['creates']
     removes  = module.params['removes']
+    ignore_errors = module.params['ignore_errors']
+    ignore_changed = module.params['ignore_changed']
+    # no need to check for always_run parameter, if we get until
+    # here we are going to run anyway,
+    # see lib/ansible/runner/action_plugins/normal.py
+    #always_run = module.params['always_run']
+    fact = module.params['fact']
 
     if args.strip() == '':
         module.fail_json(rc=256, msg="no command given")
@@ -145,16 +187,39 @@ def main():
     if err is None:
         err = ''
 
-    module.exit_json(
+    stdout = out.rstrip("\r\n")
+
+    if ignore_changed:
+        changed = False
+    else:
+        changed = True
+
+    result = dict(
         cmd     = args,
-        stdout  = out.rstrip("\r\n"),
+        stdout  = stdout,
         stderr  = err.rstrip("\r\n"),
         rc      = rc,
         start   = str(startd),
         end     = str(endd),
         delta   = str(delta),
-        changed = True
+        changed = changed
     )
+
+    if ignore_errors:
+        result['rc'] = 0
+
+    if fact:
+        fact_value = dict(
+            output = stdout,
+            rc = rc,
+        )
+        if rc == 0:
+            fact_value['status'] = True
+        else:
+            fact_value['status'] = False
+        result['ansible_facts'] = { fact: fact_value }
+
+    module.exit_json(**result)
 
 # include magic from lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
@@ -179,11 +244,15 @@ class CommandModule(AnsibleModule):
         params['removes'] = None
         params['shell'] = False
         params['executable'] = None
+        params['ignore_errors'] = False
+        params['ignore_changed'] = False
+        params['always_run'] = False
+        params['fact'] = None
         if args.find("#USE_SHELL") != -1:
             args = args.replace("#USE_SHELL", "")
             params['shell'] = True
 
-        r = re.compile(r'(^|\s)(creates|removes|chdir|executable)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)')
+        r = re.compile(r'(^|\s)(creates|removes|chdir|executable|ignore_error(?:s)?|ignore_changed|always_run|fact)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)')
         for m in r.finditer(args):
             v = m.group(4).replace("\\", "")
             if m.group(2) == "creates":
@@ -204,6 +273,16 @@ class CommandModule(AnsibleModule):
                 elif v[0] != '/':
                     self.fail_json(rc=259, msg="the path for 'executable' argument must be fully qualified")
                 params['executable'] = v
+            elif m.group(2) in ("ignore_errors", "ignore_error"):
+                params['ignore_errors'] = self.boolean(v)
+            elif m.group(2) == "ignore_changed":
+                params['ignore_changed'] = self.boolean(v)
+            elif m.group(2) == "always_run":
+                # get always_run value, even if new don't need it,
+                # see main() above, as a way to check its correctness
+                params['always_run'] = self.boolean(v)
+            elif m.group(2) == "fact":
+                params['fact'] = v
         args = r.sub("", args)
         params['args'] = args
         return (params, params['args'])

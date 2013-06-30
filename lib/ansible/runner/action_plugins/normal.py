@@ -20,6 +20,7 @@ import pwd
 import random
 import traceback
 import tempfile
+import re
 
 import ansible.constants as C
 from ansible import utils
@@ -27,6 +28,7 @@ from ansible import errors
 from ansible import module_common
 from ansible.runner.return_data import ReturnData
 from ansible.callbacks import vv, vvv
+BOOLEANS_TRUE = ['yes', 'on', '1', 'true', 1]
 
 class ActionModule(object):
 
@@ -40,10 +42,23 @@ class ActionModule(object):
 
         if self.runner.check:
             if module_name in [ 'shell', 'command' ]:
-                return ReturnData(conn=conn, comm_ok=True, result=dict(skipped=True, msg='check mode not supported for %s' % module_name))
-            # else let the module parsing code decide, though this will only be allowed for AnsibleModuleCommon using
-            # python modules for now
-            module_args += " CHECKMODE=True"
+                _run = False
+                # check if always_run is specified and truthy...
+                r = re.compile(r'(^|\s)always_run=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)')
+                m = r.search(module_args)
+                if m:
+                    v = m.group(3).replace("\\", "").lower()
+                    if v in BOOLEANS_TRUE:
+                        # ...yes it is!
+                        _run = True
+
+                if not _run:
+                    return ReturnData(conn=conn, comm_ok=True, result=dict(skipped=True, msg='check mode not supported for %s' % module_name))
+
+            else:
+                # else let the module parsing code decide, though this will only be allowed for AnsibleModuleCommon using
+                # python modules for now
+                module_args += " CHECKMODE=True"
 
         # shell and command are the same module
         if module_name == 'shell':
