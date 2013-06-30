@@ -183,12 +183,12 @@ def main():
         )
 
     # These params are allowed for certain commands only
-    specific_params = ('apps', 'database', 'failfast', 'fixtures', 'liveserver', 'testrunner', )
+    specific_params = ('apps', 'database', 'failfast', 'fixtures', 'liveserver', 'testrunner')
 
     # These params are automatically added to the command if present
     general_params = ('settings', 'pythonpath', )
-    specific_boolean_params = ('failfast', 'skip', 'merge', 'link' )
-    end_of_command_params = ('apps', 'cache_table', 'fixtures', )
+    specific_boolean_params = ('failfast', 'skip', 'merge', 'link')
+    end_of_command_params = ('apps', 'cache_table', 'fixtures')
 
     module = AnsibleModule(
         argument_spec=dict(
