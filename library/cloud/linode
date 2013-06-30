@@ -249,7 +249,7 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
                 # Update linode Label to match name
                 api.linode_update(LinodeId=linode_id, Label='%s_%s' % (linode_id, name))
                 # Save server
-                servers = api.linode_list(LinodeId=linode_id);
+                servers = api.linode_list(LinodeId=linode_id)
             except Exception, e:
                 module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
 
