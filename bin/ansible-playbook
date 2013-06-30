@@ -37,15 +37,18 @@ def colorize(lead, num, color):
     else:
         return "%s=%-4s" % (lead, str(num))
 
-def hostcolor(host, stats, color=True):
+def hostcolor(host, stats, color=True, width=None):
+    if not width:
+        width = 26
     if ANSIBLE_COLOR and color:
+        width += 11
         if stats['failures'] != 0 or stats['unreachable'] != 0:
-            return "%-37s" % stringc(host, 'red')
+            return "%*s" % (-width, stringc(host, 'red'))
         elif stats['changed'] != 0:
-            return "%-37s" % stringc(host, 'yellow')
+            return "%*s" % (-width, stringc(host, 'yellow'))
         else:
-            return "%-37s" % stringc(host, 'green')
-    return "%-26s" % host
+            return "%*s" % (-width, stringc(host, 'green'))
+    return "%*s" % (-width, host)
 
 
 def main(args):
@@ -190,10 +193,14 @@ def main(args):
             display(callbacks.banner("PLAY RECAP"))
             playbook_cb.on_stats(pb.stats)
 
+            maxlen = 0
+
             for h in hosts:
                 t = pb.stats.summarize(h)
                 if t['unreachable'] > 0 or t['failures'] > 0:
                     failed_hosts.append(h)
+                if len(h) > maxlen:
+                    maxlen = len(h)
 
             if len(failed_hosts) > 0:
                 filename = pb.generate_retry_inventory(failed_hosts)
@@ -204,7 +211,7 @@ def main(args):
                 t = pb.stats.summarize(h)
 
                 display("%s : %s %s %s %s" % (
-                    hostcolor(h, t),
+                    hostcolor(h, t, width=maxlen+1),
                     colorize('ok', t['ok'], 'green'),
                     colorize('changed', t['changed'], 'yellow'),
                     colorize('unreachable', t['unreachable'], 'red'),
