@@ -3,6 +3,7 @@
 #
 # (c) 2012, Dane Summers <dsummers@pinedesk.biz>
 # (c) 2013, Mike Grozak  <mike.grozak@gmail.com>
+# (c) 2013, Patrick Callahan <pmc@patrickcallahan.com>
 #
 # This file is part of Ansible
 #
@@ -28,7 +29,7 @@
 DOCUMENTATION = """
 ---
 module: cron
-short_description: Manage crontab entries.
+short_description: Manage cron.d and crontab entries.
 description:
   - Use this module to manage crontab entries. This module allows you to create named
     crontab entries, update, or delete them.
@@ -41,79 +42,72 @@ options:
     description:
       - Description of a crontab entry.
     required: true
-    default:
-    aliases: []
+    default: null
   user:
     description:
       - The specific user who's crontab should be modified.
     required: false
     default: root
-    aliases: []
   job:
     description:
-      - The command to execute.
-      - Required if state=present.
+      - The command to execute. Required if state=present.
     required: false
-    default: 
-    aliases: []
+    default: null
   state:
     description:
-      - Whether to ensure the job is present or absent.  
+      - Whether to ensure the job is present or absent.
     required: false
     default: present
-    aliases: []
   cron_file:
     description:
-      - If specified, uses this file in cron.d versus in the main crontab
+      - If specified, uses this file in cron.d instead of an individual user's crontab.
     required: false
-    default:
-    aliases: []
+    default: null
   backup:
     description:
       - If set, then create a backup of the crontab before it is modified.
-      - The location of the backup is returned in the C(backup) variable by this module.
+        The location of the backup is returned in the C(backup) variable by this module.
     required: false
     default: false
-    aliases: []
   minute:
     description:
       - Minute when the job should run ( 0-59, *, */2, etc )
     required: false
     default: "*"
-    aliases: []
   hour:
     description:
       - Hour when the job should run ( 0-23, *, */2, etc )
     required: false
     default: "*"
-    aliases: []
   day:
     description:
       - Day of the month the job should run ( 1-31, *, */2, etc )
     required: false
     default: "*"
-    aliases: []
   month:
     description:
       - Month of the year the job should run ( 1-12, *, */2, etc )
     required: false
     default: "*"
-    aliases: []
   weekday:
     description:
       - Day of the week that the job should run ( 0-7 for Sunday - Saturday, or mon, tue, * etc )
     required: false
     default: "*"
-    aliases: []
-
   reboot:
     description:
-      - If the job should be run at reboot, will ignore minute, hour, day, and month settings in favour of C(@reboot)
+      - If the job should be run at reboot. This option is deprecated. Users should use special_time.
     version_added: "1.0"
     required: false
     default: "no"
     choices: [ "yes", "no" ]
-    aliases: []
+  special_time:
+    description:
+      - Special time specification nickname.
+    version_added: "1.3"
+    required: false
+    default: null
+    choices: [ "reboot", "yearly", "annually", "monthly", "weekly", "daily", "hourly" ]
 requirements:
   - cron
 author: Dane Summers
@@ -127,32 +121,33 @@ EXAMPLES = '''
 
 # Ensure an old job is no longer present. Removes any job that is prefixed
 # by "#Ansible: an old job" from the crontab
-- cron: name="an old job" cron job="/some/dir/job.sh" state=absent
+- cron: name="an old job" state=absent
 
 # Creates an entry like "@reboot /some/job.sh"
-- cron: name="a job for reboot" reboot=yes job="/some/job.sh"
+- cron: name="a job for reboot" special_time=reboot job="/some/job.sh"
 
 - cron: name="yum autoupdate" weekday="2" minute=0 hour=12
         user="root" job="YUMINTERACTIVE=0 /usr/sbin/yum-autoupdate"
         cron_file=ansible_yum-autoupdate
 '''
 
+import os
 import re
 import tempfile
-import os
 
 def get_jobs_file(module, user, tmpfile, cron_file):
     if cron_file:
         cmd = "cp -fp /etc/cron.d/%s %s" % (cron_file, tmpfile)
     else:
         cmd = "crontab -l %s > %s" % (user,tmpfile)
-    
+
     return module.run_command(cmd)
 
 def install_jobs(module, user, tmpfile, cron_file):
     if cron_file:
         cron_file = '/etc/cron.d/%s' % cron_file
         module.atomic_move(tmpfile, cron_file)
+        return (0, None, None)
     else:
         cmd = "crontab %s %s" % (user, tmpfile)
         return module.run_command(cmd)
@@ -222,14 +217,14 @@ def _update_job(name,job,tmpfile,addlinesfunction):
     if len(newlines) == 0:
         return True
     else:
-        return False # TODO add some more error testing 
+        return False # TODO add some more error testing
 
-def get_cron_job(minute,hour,day,month,weekday,job,user,cron_file,reboot):
-    if reboot:
+def get_cron_job(minute,hour,day,month,weekday,job,user,cron_file,special_time):
+    if special_time:
         if cron_file:
-            return "@reboot %s %s" % (user, job)
+            return "@%s %s %s" % (special_time, user, job)
         else:
-            return "@reboot %s" % (job)
+            return "@%s %s" % (special_time, job)
     else:
         if cron_file:
             return "%s %s %s %s %s %s %s" % (minute,hour,day,month,weekday,user,job)
@@ -240,11 +235,14 @@ def get_cron_job(minute,hour,day,month,weekday,job,user,cron_file,reboot):
 
 def main():
     # The following example playbooks:
-    # - action: cron name="check dirs" hour="5,2" job="ls -alh > /dev/null"
+    #
+    # - cron: name="check dirs" hour="5,2" job="ls -alh > /dev/null"
+    #
     # - name: do the job
-    #   action: name="do the job" cron hour="5,2" job="/some/dir/job.sh"
+    #   cron: name="do the job" hour="5,2" job="/some/dir/job.sh"
+    #
     # - name: no job
-    #   action: name="an old job" cron job="/some/dir/job.sh" state=absent
+    #   cron: name="an old job" state=absent
     #
     # Would produce:
     # # Ansible: check dirs
@@ -275,27 +273,37 @@ def main():
             day=dict(default='*'),
             month=dict(default='*'),
             weekday=dict(default='*'),
-            reboot=dict(required=False, default=False, type='bool')
-        )
+            reboot=dict(required=False, default=False, type='bool'),
+            special_time=dict(required=False,
+                              default=None,
+                              choices=["reboot", "yearly", "annually", "monthly", "weekly", "daily", "hourly"],
+                              type='str')
+        ),
+        supports_check_mode = False,
     )
 
-    backup     = module.params['backup']
-    name       = module.params['name']
-    user       = module.params['user']
-    job        = module.params['job']
-    cron_file  = module.params['cron_file']
-    minute     = module.params['minute']
-    hour       = module.params['hour']
-    day        = module.params['day']
-    month      = module.params['month']
-    weekday    = module.params['weekday']
-    reboot     = module.params['reboot']
-    state      = module.params['state']
-    do_install = module.params['state'] == 'present'
-    changed    = False
+    backup        = module.params['backup']
+    name          = module.params['name']
+    user          = module.params['user']
+    job           = module.params['job']
+    cron_file     = module.params['cron_file']
+    minute        = module.params['minute']
+    hour          = module.params['hour']
+    day           = module.params['day']
+    month         = module.params['month']
+    weekday       = module.params['weekday']
+    reboot        = module.params['reboot']
+    special_time  = module.params['special_time']
+    state         = module.params['state']
+    do_install    = module.params['state'] == 'present'
+    changed       = False
+    jobnames      = []
+    rc, out, err, rm = (0, None, None, None)
 
-    if reboot and (True in [(x != '*') for x in [minute, hour, day, month, weekday]]):
-        module.fail_json(msg="You must specify either reboot=True or any of minute, hour, day, month, weekday")
+    # --- user input validation
+    if (special_time or reboot) and \
+       (True in [(x != '*') for x in [minute, hour, day, month, weekday]]):
+        module.fail_json(msg="You must specify time and date fields or special time.")
 
     if cron_file:
         if not user:
@@ -306,11 +314,20 @@ def main():
         else:
             user = "-u %s" % (user)
 
-    job = get_cron_job(minute,hour,day,month,weekday,job,user,cron_file,reboot)
-    rc, out, err, rm, status = (0, None, None, None, None)
+    if reboot:
+        if special_time:
+            module.fail_json(msg="reboot and special_time are mutually exclusive")
+        else:
+            special_time = "reboot"
+
     if job is None and do_install:
         module.fail_json(msg="You must specify 'job' to install a new cron job")
 
+    # --- construct the job line
+    job = get_cron_job(minute,hour,day,month,weekday,job,user,cron_file,special_time)
+
+    # create a temp file and load the contents of the user's crontab
+    # or the system crontab file in /etc/cron.d
     tmpfile = tempfile.NamedTemporaryFile()
     (rc, out, err) = get_jobs_file(module,user,tmpfile.name, cron_file)
 
@@ -319,6 +336,7 @@ def main():
 
     (handle,backupfile) = tempfile.mkstemp(prefix='crontab')
     (rc, out, err) = get_jobs_file(module,user,backupfile, cron_file)
+
     if rc != 0 and rc != 1:
         module.fail_json(msg=err)
 
@@ -339,6 +357,7 @@ def main():
             # there is no old_jobs for deletion - we should leave everything
             # as is. If the file is empty, it will be removed later
             tmpfile.close()
+
             # the file created by mks should be deleted explicitly
             os.unlink(backupfile)
             module.exit_json(changed=changed,cron_file=cron_file,state=state)
