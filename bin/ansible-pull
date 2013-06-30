@@ -99,7 +99,7 @@ def main(args):
     parser = OptionParser(usage=usage)
     parser.add_option('--purge', default=False, action='store_true',
                       help='Purge git checkout after playbook run')
-    parser.add_option('-o', '--only-if-changed', dest='ifchanged', default=False,
+    parser.add_option('-o', '--only-if-changed', dest='ifchanged', default=False, action='store_true',
                       help='Only run the playbook if the repository has been updated')
     parser.add_option('-d', '--directory', dest='dest', default=None,
                       help='Directory to clone git repository to')
