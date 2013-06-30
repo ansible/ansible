@@ -60,8 +60,6 @@ class Cli(object):
         parser.add_option('-m', '--module-name', dest='module_name',
             help="module name to execute (default=%s)" % C.DEFAULT_MODULE_NAME,
             default=C.DEFAULT_MODULE_NAME)
-        parser.add_option('--list-hosts', dest='listhosts', action='store_true',
-            help="dump out a list of hosts matching input pattern, does not execute any modules!")
 
         options, args = parser.parse_args()
         self.callbacks.options = options
