@@ -148,9 +148,9 @@ EXAMPLES = '''
 def dolink(src, path, state, module):
     try:
         if state == 'hard':
-           os.link(src,path)
+            os.link(src,path)
         else:
-           os.symlink(src, path)
+            os.symlink(src, path)
     except OSError, e:
         module.fail_json(path=path, msg='Error while linking: %s' % str(e))
 
