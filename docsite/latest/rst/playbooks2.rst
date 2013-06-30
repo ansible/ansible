@@ -310,7 +310,7 @@ Tip: Sometimes you'll get back a variable that's a string and you'll want to do 
 
     tasks:
       - shell: echo "only on Red Hat 6, derivatives, and later"
-        when: ansible_os_family == "RedHat" and ansible_lsb.major_version|int >= 6
+        when: ansible_os_family == "RedHat" and ansible_lsb.major_release|int >= 6
 
 Variables defined in the playbooks or inventory can also be used.
 
