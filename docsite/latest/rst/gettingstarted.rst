@@ -27,7 +27,7 @@ If you are using RHEL or CentOS 5, Python is version 2.4 by default, but you can
 On the managed nodes, you only need Python 2.4 or later, but if you are are running less than Python 2.6 on them, you will
 also need:
 
-* ``python-simplejson`` 
+* ``python-simplejson``
 
 .. note::
 
@@ -41,12 +41,12 @@ also need:
 
    Python 3 is a slightly different language than Python 2 and most python programs (including
    Ansible) are not
-   switching over yet.  However, some Linux distributions (Gentoo, Arch) may not have a 
+   switching over yet.  However, some Linux distributions (Gentoo, Arch) may not have a
    Python 2.X interpreter installed by default.  On those systems, you should install one, and set
    the 'ansible_python_interpreter' variable in inventory (see :doc:`patterns`) to point at your 2.X python.  Distributions
    like Red Hat Enterprise Linux, CentOS, Fedora, and Ubuntu all have a 2.X interpreter installed
    by default and this does not apply to those distributions.  This is also true of nearly all
-   Unix systems.  If you need to bootstrap these remote systems by installing Python 2.X, 
+   Unix systems.  If you need to bootstrap these remote systems by installing Python 2.X,
    using the 'raw' module will be able to do it remotely.
 
 Getting Ansible
@@ -54,12 +54,12 @@ Getting Ansible
 
 If you are interested in using all the latest features, you may wish to keep up to date
 with the development branch of the git checkout.  This also makes it easiest to contribute
-back to the project.  
+back to the project.
 
 Instructions for installing from source are below.
 
 Ansible's release cycles are usually about two months long.  Due to this
-short release cycle, minor bugs will generally be fixed in the next release versus maintaining 
+short release cycle, minor bugs will generally be fixed in the next release versus maintaining
 backports on the stable branch.
 
 You may also wish to follow the `Github project <https://github.com/ansible/ansible>`_ if
@@ -98,7 +98,7 @@ Now let's test things:
 Make Install
 ++++++++++++
 
-If you are not working from a distribution where Ansible is packaged yet, you can install Ansible 
+If you are not working from a distribution where Ansible is packaged yet, you can install Ansible
 using "make install".  This is done through `python-distutils`:
 
 .. code-block:: bash
@@ -126,22 +126,22 @@ Via RPM
 
 RPMs for the last Ansible release are available for `EPEL
 <http://fedoraproject.org/wiki/EPEL>`_ 6 and currently supported
-Fedora distributions. RPMs for openSUSE can be found via the 
-`openSUSE Software Portal <http://software.opensuse.org/package/ansible>`_ 
-(in the systemsmanagement Project) for all currently supported 
+Fedora distributions. RPMs for openSUSE can be found via the
+`openSUSE Software Portal <http://software.opensuse.org/package/ansible>`_
+(in the systemsmanagement Project) for all currently supported
 openSUSE and SLES distributions.
 
 Ansible itself can manage earlier operating
 systems that contain python 2.4 or higher.
 
 If you are using RHEL or CentOS and have not already done so, `configure EPEL <http://fedoraproject.org/wiki/EPEL>`_
-   
+
 .. code-block:: bash
 
     # install the epel-release RPM if needed on CentOS, RHEL, or Scientific Linux
     $ sudo yum install ansible
 
-For openSUSE and SUSE Linux Enterprise, add the `systemsmanagement repository <http://download.opensuse.org/repositories/systemsmanagement/>`_ 
+For openSUSE and SUSE Linux Enterprise, add the `systemsmanagement repository <http://download.opensuse.org/repositories/systemsmanagement/>`_
 for your distribution:
 
 .. code-block:: bash
@@ -150,7 +150,7 @@ for your distribution:
     $ sudo zypper ar -f http://download.opensuse.org/repositories/systemsmanagement/$dist/systemsmanagement.repo
     $ sudo zypper install ansible
 
-You can also use the ``make rpm`` command to build an RPM you can distribute and install. 
+You can also use the ``make rpm`` command to build an RPM you can distribute and install.
 Make sure you have ``rpm-build``, ``make``, and ``python2-devel`` installed.
 
 .. code-block:: bash
@@ -194,7 +194,7 @@ In Ubuntu 13.04 (raring) its part of the backports repository:
 
     $ sudo apt-get install ansible/raring-backports
 
-In Debian testing/unstable and Ubntu 13.10+ it is available via
+In Debian testing/unstable and Ubuntu 13.10+ it is available via
 
 .. code-block:: bash
 
@@ -223,7 +223,7 @@ If you have python3 installed on Arch, you probably want to symlink python to py
 
     $ sudo ln -sf /usr/bin/python2 /usr/bin/python
 
-You should also set a 'ansible_python_interpreter' inventory variable (see :doc:`patterns`) for hosts that have python 
+You should also set a 'ansible_python_interpreter' inventory variable (see :doc:`patterns`) for hosts that have python
 pointing to python3, so the right python can be found on the managed nodes.
 
 Tagged Releases
@@ -252,7 +252,7 @@ command, or set the ANSIBLE_TRANSPORT environment variable to
 If ANSIBLE_SSH_ARGS are not set, ansible will try to use some sensible ControlMaster options
 by default.  You are free to override this environment variable, but should still pass ControlMaster
 options to ensure performance of this transport.  With ControlMaster in use, both transports
-are roughly the same speed.  Without CM, the binary ssh transport is signficantly slower.
+are roughly the same speed.  Without CM, the binary ssh transport is significantly slower.
 
 If none of this makes sense to you, the default paramiko option is probably fine.
 
@@ -294,7 +294,7 @@ If you would like to access sudo mode, there are also flags to do that:
     # as bruce
     $ ansible all -m ping -u bruce
     # as bruce, sudoing to root
-    $ ansible all -m ping -u bruce --sudo 
+    $ ansible all -m ping -u bruce --sudo
     # as bruce, sudoing to batman
     $ ansible all -m ping -u bruce --sudo --sudo-user batman
 
@@ -302,7 +302,7 @@ If you would like to access sudo mode, there are also flags to do that:
 replacement.  Flags passed dot sudo can also be set.)
 
 Now run a live command on all of your nodes:
-  
+
 .. code-block:: bash
 
    $ ansible all -a "/bin/echo hello"
@@ -325,4 +325,3 @@ explore, but you already have a fully working infrastructure!
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-

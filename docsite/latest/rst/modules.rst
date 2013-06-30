@@ -44,7 +44,7 @@ Modules are `idempotent`, meaning they will seek to avoid changes to the system 
 playbooks, these modules can trigger 'change events' in the form of notifying 'handlers'
 to run additional tasks.
 
-Documention for each module can be accessed from the command line with the
+Documentation for each module can be accessed from the command line with the
 ansible-doc as well as the man command::
 
     ansible-doc command
@@ -78,4 +78,3 @@ See :doc:`moduledev`.
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-

@@ -284,7 +284,7 @@ triggered once even if notified by multiple different tasks.
 
 For instance, multiple resources may indicate
 that apache needs to be restarted because they have changed a config file,
-but apache will only be bounced once to avoid unneccessary restarts.
+but apache will only be bounced once to avoid unnecessary restarts.
 
 Here's an example of restarting two services when the contents of a file
 change, but only if the file changes::
@@ -575,5 +575,3 @@ can do this::
        Complete playbook files from the github project source
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
-
-
