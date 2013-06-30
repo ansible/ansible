@@ -74,9 +74,9 @@ class Connection(object):
 
         if self.runner.sudo and sudoable:
             raise errors.AnsibleError(
-                "When using fireball you should not use sudo to run your tasks. " +
-                "Instead please run fireball action with sudo and use 'sudo: no' " +
-                "for the tasks that go via fireball."
+                "When using fireball, do not specify sudo to run your tasks. " +
+                "Instead sudo the fireball action with sudo. " +
+                "Task will communicate with the fireball already running in sudo mode."
             )
 
         data = dict(
