@@ -547,6 +547,27 @@ class LinuxService(Service):
                 if not self.enable:
                     return
 
+        if self.enable_cmd.endswith("update-rc.d"):
+            if self.enable:
+                action = 'enable'
+            else:
+                action = 'disable'
+            (rc, out, err) = self.execute_command("%s -n %s %s" \
+                                                  % (self.enable_cmd, self.name, action))
+            self.changed = False
+            for line in out.splitlines():
+                if line.startswith('rename'):
+                    self.changed = True
+                    break
+
+            if self.module.check_mode:
+                self.module.exit_json(changed=changed)
+
+            if not self.changed:
+                return
+
+            return self.execute_command("%s %s %s" % (self.enable_cmd, self.name, action))
+
         # we change argument depending on real binary used:
         # - update-rc.d and systemctl wants enable/disable
         # - chkconfig wants on/off
@@ -561,9 +582,7 @@ class LinuxService(Service):
             enable_disable = "disable"
             add_delete = "delete"
 
-        if self.enable_cmd.endswith("update-rc.d"):
-            args = (self.enable_cmd, self.name, enable_disable)
-        elif self.enable_cmd.endswith("rc-update"):
+        if self.enable_cmd.endswith("rc-update"):
             args = (self.enable_cmd, add_delete, self.name + " " + self.runlevel)
         elif self.enable_cmd.endswith("systemctl"):
             args = (self.enable_cmd, enable_disable, self.name + ".service")
