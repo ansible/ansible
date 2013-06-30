@@ -53,6 +53,9 @@ Misc changes:
 * rackspace module now explicitly indicates rackspace vs vanilla openstack
 * add_host module does not report changed=True any longer
 * explanatory error message when using fireball with sudo message has been improved
+* git module now automatically pulls down git submodules
+* negated patterns don't require "all:!foo", you can just say "!foo" now to select all not foos.
+* fix for Debian services always reporting changed when toggling enablement bit
 
 1.2 "Right Now" -- June 10, 2013
 
