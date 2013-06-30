@@ -267,7 +267,7 @@ class AristaLag(object):
         """
         (rc, out, err) = self.run_command("netdev lag list")
         collection = json.loads(out)
-        return collection.get('result').has_key(self.interface_id)
+        return self.interface_id in collection.get('result')
         
 
 def main():
