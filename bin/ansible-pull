@@ -133,7 +133,8 @@ def main(args):
     if rc != 0:
         return rc
     elif options.ifchanged and '"changed": true' not in out:
-        return "Repository has not changed, quitting."
+        print "Repository has not changed, quitting."
+        return 0
 
     playbook = select_playbook(options.dest, args)
 
