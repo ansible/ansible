@@ -92,10 +92,10 @@ def main():
     port = int(params['port'])
     state = params['state']
 
+    start = datetime.datetime.now()
+
     if delay:
         time.sleep(delay)
-
-    start = datetime.datetime.now()
 
     if state == 'stopped':
         ### first wait for the host to go down
