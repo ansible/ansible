@@ -351,11 +351,11 @@ def main():
         az = response.read()
         for r in AWS_REGIONS:
             if az.startswith(r):
-              ec2_region = r
-              break
+                ec2_region = r
+                break
 
         if not ec2_region:
-          module.fail_json(msg = str("ec2_region not specified and unable to determine region from AWS."))
+            module.fail_json(msg = str("ec2_region not specified and unable to determine region from AWS."))
 
     # connect to the rds endpoint
     try:
@@ -450,7 +450,7 @@ def main():
             db = conn.create_dbinstance(instance_name, size, instance_type, username, password, **params)
         elif command == 'replicate':
             if instance_type:
-              params["instance_class"] = instance_type
+                params["instance_class"] = instance_type
             db = conn.create_dbinstance_read_replica(instance_name, source_instance, **params)
         elif command == 'delete':
             if snapshot:
