@@ -56,6 +56,11 @@ Misc changes:
 * git module now automatically pulls down git submodules
 * negated patterns don't require "all:!foo", you can just say "!foo" now to select all not foos.
 * fix for Debian services always reporting changed when toggling enablement bit
+* roles files now tolerate files named 'main.yaml' and 'main' in addition to main.yaml
+* some help cleanup to command line flags on scripts
+* force option reinstated for file module, can create symlinks to non-existant files, etc
+* added termination support to ec2 module
+* --ask-sudo-pass or --sudo-user does not enable all options to use sudo in ansible-playbook
 
 1.2 "Right Now" -- June 10, 2013
 
