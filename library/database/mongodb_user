@@ -67,6 +67,21 @@ options:
         required: false
         default: present
         choices: [ "present", "absent" ]
+    roles:
+        description:
+            - Comma separated list of mongodb 2.4 role names
+        required: false
+        default: null
+    otherDBRoles:
+        description:
+            - Pipe and comma separated list of mongodb 2.4 databases and role names, e.g db1:read|db2:readWrite,dbAdmin
+        required: false
+        default: null
+    check_implicit_admin:
+        description:
+            - Check if mongodb is allows login with no username/password before trying supplied credentials.
+        required: false
+        default: false
 notes:
     - Requires the pymongo Python package on the remote host, version 2.4.2+. This
       can be installed using pip or the OS package manager. @see http://api.mongodb.org/python/current/installation.html
@@ -101,10 +116,18 @@ else:
 # MongoDB module specific support methods.
 #
 
-def user_add(client, db_name, user, password):
+def user_add(client, db_name, user, password, roles, otherDBRoles):
     try:
         db = client[db_name]
-        db.add_user(user, password)
+        kwargs = {}
+        if roles:
+            kwargs['roles'] = roles
+        if otherDBRoles:
+            kwargs['otherDBRoles'] = otherDBRoles
+            if 'roles' not in kwargs:
+                kwargs['roles'] = []
+        db.add_user(user, password, **kwargs)
+
     except OperationFailure:
         return False
 
@@ -152,6 +175,9 @@ def main():
             user=dict(required=True, aliases=['name']),
             password=dict(aliases=['pass']),
             state=dict(default='present', choices=['absent', 'present']),
+            roles=dict(default=None),
+            otherDBRoles=dict(default=None),
+            check_implicit_admin=dict(default=False)
         )
     )
 
@@ -166,6 +192,20 @@ def main():
     user = module.params['user']
     password = module.params['password']
     state = module.params['state']
+    roles = module.params['roles']
+    otherDBRoles = module.params['otherDBRoles']
+    check_implicit_admin = module.params['check_implicit_admin']
+
+    if roles is not None:
+        roles = roles.split(',')
+    if otherDBRoles is not None:
+        tmp = {}
+        for r in otherDBRoles.split('|'):
+            if ':' not in r:
+                continue
+            (dbName, dbRoles) = r.split(':')
+            tmp[dbName] = dbRoles.split(',')
+        otherDBRoles = tmp
 
     try:
         client = MongoClient(login_host, int(login_port))
@@ -177,6 +217,14 @@ def main():
         elif login_password is None and login_user is not None:
             module.fail_json(msg='when supplying login arguments, both login_user and login_password must be provided')
 
+        if check_implicit_admin:
+            try:
+                client.admin.collection_names()
+                login_user = None
+                login_password = None
+            except:
+                pass
+
         if login_user is not None and login_password is not None:
             client.admin.authenticate(login_user, login_password)
 
@@ -186,7 +234,7 @@ def main():
     if state == 'present':
         if password is None:
             module.fail_json(msg='password parameter required when adding a user')
-        if user_add(client, db_name, user, password) is not True:
+        if user_add(client, db_name, user, password, roles, otherDBRoles) is not True:
             module.fail_json(msg='Unable to add or update user, check login_user and login_password are correct and that this user has access to the admin collection')
     elif state == 'absent':
         if user_remove(client, db_name, user) is not True:
