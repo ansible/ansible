@@ -136,6 +136,11 @@ class Inventory(object):
         finds hosts that match a list of patterns. Handles negative
         matches as well as intersection matches.
         """
+        try:
+            if patterns[0].startswith("!"):
+                patterns.insert(0, "all")
+        except IndexError:
+            pass
 
         hosts = set()
         for p in patterns:
