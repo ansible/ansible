@@ -170,9 +170,12 @@ class Play(object):
                 path = path2
             elif not os.path.isdir(path):
                 raise errors.AnsibleError("cannot find role in %s" % (path))
-            task      = utils.path_dwim(self.basedir, os.path.join(path, 'tasks', 'main.yml'))
-            handler   = utils.path_dwim(self.basedir, os.path.join(path, 'handlers', 'main.yml'))
-            vars_file = utils.path_dwim(self.basedir, os.path.join(path, 'vars', 'main.yml'))
+            task_basepath    = utils.path_dwim(self.basedir, os.path.join(path, 'tasks'))
+            handler_basepath = utils.path_dwim(self.basedir, os.path.join(path, 'handlers'))
+            vars_basepath    = utils.path_dwim(self.basedir, os.path.join(path, 'vars'))
+            task      = self._resolve_main(task_basepath)
+            handler   = self._resolve_main(handler_basepath)
+            vars_file = self._resolve_main(vars_basepath)
             library   = utils.path_dwim(self.basedir, os.path.join(path, 'library'))
             if not os.path.isfile(task) and not os.path.isfile(handler) and not os.path.isfile(vars_file) and not os.path.isdir(library):
                 raise errors.AnsibleError("found role at %s, but cannot find %s or %s or %s or %s" % (path, task, handler, vars_file, library))
@@ -223,6 +226,24 @@ class Play(object):
         ds['vars_files'] = new_vars_files
 
         return ds
+
+    # *************************************************
+
+    def _resolve_main(self, basepath):
+        ''' flexibly handle variations in main filenames '''
+        # these filenames are acceptable:
+        mains = (
+                 os.path.join(basepath, 'main'),
+                 os.path.join(basepath, 'main.yml'),
+                 os.path.join(basepath, 'main.yaml'),
+                )
+        if sum([os.path.isfile(x) for x in mains]) > 1:
+            raise errors.AnsibleError("found multiple main files at %s, only one allowed" % (basepath))
+        else:
+            for m in mains:
+                if os.path.isfile(m):
+                    return m # exactly one main file
+            return mains[0] # zero mains (we still need to return something)
 
     # *************************************************
 
