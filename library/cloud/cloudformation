@@ -119,22 +119,22 @@ def stack_operation(cfn, stack_name, operation):
                               output='Stack Deleted',
                               events=map(str, list(stack.describe_events())))
             else:
-                result = dict (changed= True, output='Stack Not Found')
+                result = dict(changed= True, output='Stack Not Found')
             break
         if '%s_COMPLETE' % operation == stack.stack_status:
             result = dict(changed=True,
                           events = map(str, list(stack.describe_events())),
-                          output = 'Stack %s complete' % operation )
+                          output = 'Stack %s complete' % operation)
             break
         if '%s_ROLLBACK_COMPLETE' % operation == stack.stack_status:
             result = dict(changed=True,
                           events = map(str, list(stack.describe_events())),
-                          output = 'Problem with %s. Rollback complete' % operation )
+                          output = 'Problem with %s. Rollback complete' % operation)
             break
         elif '%s_FAILED' % operation == stack.stack_status:
             result = dict(changed=False,
                           events = map(str, list(stack.describe_events())),
-                          output = 'Stack %s failed' % operation )
+                          output = 'Stack %s failed' % operation)
             break
         else:
             time.sleep(5)
