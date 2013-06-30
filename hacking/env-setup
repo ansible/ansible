@@ -1,7 +1,4 @@
-# usage: source env-setup [-q]
-#        source hacking/env-setup [-q]
-#        . ./env-setup [-q]
-#        . ./hacking/env-setup [q]
+# usage: source ./hacking/env-setup [-q]
 #    modifies environment for running Ansible from checkout
 
 # When run using source as directed, $0 gets set to bash, so we must use $BASH_SOURCE
@@ -11,6 +8,7 @@ case "$0" in
     (*)
         HACKING_DIR="${0%/*}";;
 esac
+
 # The below is an alternative to readlink -fn which doesn't exist on OS X
 # Source: http://stackoverflow.com/a/1678636
 FULL_PATH=$(python -c "import os; print(os.path.realpath('$HACKING_DIR'))")
@@ -24,14 +22,17 @@ case "$PYTHONPATH" in
   (*${PREFIX_PYTHONPATH}*) :;;
   (*) export PYTHONPATH="$PREFIX_PYTHONPATH${PYTHONPATH:+:$PYTHONPATH}";;
 esac
+
 case "$MANPATH" in
   (*${PREFIX_MANPATH}*) :;;
   (*) export MANPATH="$PREFIX_MANPATH${MANPATH:+:$MANPATH}";;
 esac
+
 case "$PATH" in
   (*${PREFIX_PATH}*) :;;
   (*) export PATH="$PREFIX_PATH${PATH:+:$PATH}";;
 esac
+
 export ANSIBLE_LIBRARY="$ANSIBLE_HOME/library"
 
 # Print out values unless -q is set
@@ -51,3 +52,5 @@ if [ $# -eq 0 ] || [ "$1" != "-q" ] ; then
     echo "Done!"
     echo ""
 fi
+
+
