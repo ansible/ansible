@@ -69,7 +69,7 @@ All of these variables can of course also be set outside of the inventory file, 
 to keep your inventory file simple.
 
 List of Reserved Inventory Parameters
-+++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++
 
 As a summary, you can set these parameters as host inventory variables.  (Some we have already
 mentioned).
