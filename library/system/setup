@@ -1131,7 +1131,9 @@ class HPUX(Hardware):
     - model
     - firmware
     """
+
     platform = 'HP-UX'
+
     def __init__(self):
         Hardware.__init__(self)
 
