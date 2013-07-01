@@ -204,8 +204,8 @@ EXAMPLES = '''
     image: ami-6e649707 
     wait: yes 
     count: 5 
-    instance_tags: '{"db":"postgres"}' monitoring=yes'
-    idempotence_attribute: instance_tags
+    instance_tags: '{"db":"postgres"}'
+    idempotency_attribute: instance_tags
 
 # VPC example
 - local_action: 

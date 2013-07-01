@@ -16,11 +16,6 @@ Requirements for the AWS modules are minimal.  All of the modules require and ar
 
     $ yum install python-boto
 
-Provisioning
-````````````
-
-The ec2 module provides the ability to provision instance(s) within EC2.  Typically the provisioning task will be performed against your Ansible master server as a local_action.  
-
 .. note::
 
    Authentication with the AWS-related modules is handled by either 
@@ -34,11 +29,22 @@ The ec2 module provides the ability to provision instance(s) within EC2.  Typica
    exporting the variable as EC2_URL=https://myhost:8773/services/Eucalyptus.
    This can be set using the 'environment' keyword in Ansible if you like.
 
-Provisioning a number of instances in ad-hoc mode mode:
+Provisioning
+````````````
+
+The ec2 module provides the ability to provision EC2 instance(s).  Typically the provisioning task will be performed against your Ansible master server as a local_action. There are two ways to provision instances:
+
+* **Non-idempotent provisioning** (default). With non-idempotent provisioning, each time the provision command is run, a new instance is provisioned regardless of any instances that are alredy running.
+* **Idempotent provisioning** (enabled with the idempotent_attribute option). By using the idempotent_attribute, the provisioning will ensure that at least count=N instances are running.  If N instance are already running, no new instances will be provisioned.
+
+Non-idempotent provisioning
+++++++++++++++
+
+Each time the following ad-hoc command is run, five instances will be provisioned:
 
 .. code-block:: bash
 
-    # ansible localhost -m ec2 -a "image=ami-6e649707 instance_type=m1.large keypair=mykey group=webservers wait=yes"
+    # ansible localhost -m ec2 -a "count=5 image=ami-6e649707 instance_type=m1.large keypair=mykey group=webservers wait=yes"
 
 In a play, this might look like (assuming the parameters are held as vars)::
 
@@ -66,6 +72,37 @@ With the host group now created, the second play in your provision playbook migh
         action: service name=ntpd state=started
 
 The method above ties the configuration of a host with the provisioning step.  This isn't always ideal and leads us onto the next section.
+
+Idempotent provisioning
+++++++++++++++
+Idempotent provisioning provides a simple mechanism for maintaing a specified number of instances running in a particular host group.
+
+Using the ec2 inventory plugin ([documented in the API chapter](http://ansible.cc/docs/api.html#external-inventory-scripts>)) it is possible to group hosts by security group, machine image (AMI) or instance tags. Instance tags in particular provide a flexible way of marking instances as belonging to a particular host group.
+
+The following example shows how one can idempotently provision a group of 5 hosts tagged as webservers::
+
+    - local_action: 
+	module: ec2 
+	keypair: mykey 
+	group: webservers
+	instance_type: m1.large 
+	image: ami-6e649707 
+	wait: yes 
+	count: 5 
+	instance_tags: '{"name":"webserver"}'
+	idempotency_attribute: instance_tags
+
+If this play is run when 3 EC2 instances with the tag `'{"name":"webserver"}'` are already running, then only two more will be provisioned in order to bring the total up to 5. If five such instances are already running, then no new instances will be provisioned. If you wanted to refer to this group at some point in the future, then make sure the EC2 inventory plugin is enabled and select the hosts using::
+
+    - hosts: tag_Name_webservers
+      gather_facts: false
+      sudo: true
+
+      tasks:
+      ...
+
+Note that the value of the `idempotency_attribute` option can also be `image`, `group` (security group), `group_id` (security group id) or `client-token`. The `client-token` is set using the `id` option.
+
 
 Advanced Usage
 ``````````````
