@@ -86,7 +86,7 @@ Fireball Mode
 +++++++++++++
 
 By default Ansible uses SSH for connections -- either Paramiko (the actual default) or a common alternative, native Open SSH.  Some users
-may want to execute operations even faster though, and they can if they opt in on running an ephmeral message bus.  What happens is Ansible
+may want to execute operations even faster though, and they can if they opt in on running an ephemeral message bus.  What happens is Ansible
 will start talking to a node over SSH, and then set up a temporary secured message bus good only to talk from one machine, that will
 self destruct after a set period of time.  This means the bus does not allow management of any kind after the time interval has expired.
 
@@ -157,7 +157,7 @@ the inventory file, in YAML format.  This provides a convient place to assign va
 them in the inventory file.  The Host Vars file can also be used to define complex datastructures that can't be represented in the
 inventory file.
 
-Lazy Evalution
+Lazy Evaluation
 ++++++++++++++
 
 In general Ansible evaluates any variables in playbook content at the last possible second, which means that if you define a datastructure
