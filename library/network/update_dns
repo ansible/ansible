@@ -1,0 +1,125 @@
+#!/usr/bin/python2
+# -*- coding: utf-8 -*-
+
+DOCUMENTATION = '''
+---
+module: update_dns
+short_description: Maintains the DNS entry for a host.
+description:
+    - Adds a DNS entry for a host using nsupdate. This module requires nslookup and nsupdate to be installed.
+options:
+  hostname:
+    description:
+      - (short) name of the host.
+    required: true
+  ipaddress:
+    description:
+      - IP address of the host.
+    required: true
+  dnsserver:
+    description:
+      - DNS server to communicate with.
+    required: true
+  dnsdomain:
+    description:
+      - DNS domain the host should be in.
+    required: true
+  dnsrevdomain:
+    description:
+      - Reverse DNS domain the host should be in.
+    required: true
+  dnskey:
+    description:
+      - The secret DNS key to use to authenticate communications.
+    required: true
+'''
+
+EXAMPLES = '''
+- name: example dns host
+  update_dns:
+    hostname='$inventory_hostname_short'
+    ipaddress='192.168.1.1'
+    dnsserver='192.168.1.254'
+    dnsdomain='my.private.domain'
+    dnsrevdomain='10.in-addr.arpa'
+    dnskey='SECRETKEY'
+'''
+
+def getDnsIp(module, hostname, server):
+
+    cmd = "nslookup %s %s" % (hostname, server)
+    rc, out, err = module.run_command(cmd)
+    if rc == 1:
+        return None
+    elif rc:
+        module.fail_json(msg="Failed to query DNS", rc=rc, err=err)
+
+    i = 0
+    for m in re.finditer('Address:\s+([0-9.]+)', out):
+        if i:
+            return m.group(1)
+        i += 1
+
+    return None
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            hostname=dict(required=True),
+            ipaddress=dict(required=True),
+            dnsserver=dict(required=True),
+            dnsdomain=dict(required=True),
+            dnsrevdomain=dict(required=True),
+            dnskey=dict(required=True),
+        ),
+        supports_check_mode=True,
+    )
+    hostname = module.params['hostname']
+    ipaddress = module.params['ipaddress'].strip()
+    dnsserver = module.params['dnsserver']
+    dnsdomain = module.params['dnsdomain'].strip('.')
+    dnsrevdomain = module.params['dnsrevdomain'].strip('.')
+    dnskey = module.params['dnskey'].replace(':', ' ')
+
+    changed = False
+
+    dnsIp = getDnsIp(module, "%s.%s" % (hostname, dnsdomain), dnsserver)
+    if dnsIp == ipaddress:
+        module.exit_json(changed=False)
+
+    revhostname = '.'.join(reversed(ipaddress.split('.')))
+
+    if module.check_mode:
+        changed = True
+    else:
+        script = '''
+key %(dnskey)s
+server %(dnsserver)s
+
+zone %(dnsdomain)s.
+update delete %(hostname)s.%(dnsdomain)s. A
+update add %(hostname)s.%(dnsdomain)s. 38400 A %(ip)s
+
+zone %(dnsrevdomain)s.
+update delete %(revhostname)s.in-addr.arpa. PTR
+update add %(revhostname)s.in-addr.arpa. 38400 PTR %(hostname)s.%(dnsdomain)s.
+
+send
+''' % {'dnskey': dnskey,
+       'dnsserver': dnsserver,
+       'dnsdomain': dnsdomain,
+       'dnsrevdomain': dnsrevdomain,
+       'hostname': hostname,
+       'revhostname': revhostname,
+       'ip': ipaddress}
+        rc, out, err = module.run_command("nsupdate", data=script)
+        if rc:
+            module.fail_json(msg="Failed to update DNS %s" % script, rc=rc, err=err)
+
+        changed = True
+
+    module.exit_json(changed=changed)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
