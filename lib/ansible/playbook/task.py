@@ -29,7 +29,7 @@ class Task(object):
         'delegate_to', 'first_available_file', 'ignore_errors',
         'local_action', 'transport', 'sudo', 'sudo_user', 'sudo_pass',
         'items_lookup_plugin', 'items_lookup_terms', 'environment', 'args',
-        'any_errors_fatal', 'ignore_changed'
+        'any_errors_fatal', 'ignore_changed', 'always_run'
     ]
 
     # to prevent typos and such
@@ -38,7 +38,7 @@ class Task(object):
          'first_available_file', 'include', 'tags', 'register', 'ignore_errors',
          'delegate_to', 'local_action', 'transport', 'sudo', 'sudo_user',
          'sudo_pass', 'when', 'connection', 'environment', 'args',
-         'any_errors_fatal', 'ignore_changed'
+         'any_errors_fatal', 'ignore_changed', 'always_run'
     ]
 
     def __init__(self, play, ds, module_vars=None, additional_conditions=None):
@@ -175,6 +175,7 @@ class Task(object):
         self.any_errors_fatal = ds.get('any_errors_fatal', play.any_errors_fatal)
 
         self.ignore_changed = ds.get('ignore_changed', False)
+        self.always_run = ds.get('always_run', False)
 
         # action should be a string
         if not isinstance(self.action, basestring):
@@ -214,9 +215,10 @@ class Task(object):
         # allow runner to see delegate_to option
         self.module_vars['delegate_to'] = self.delegate_to
 
-        # make ignore_errors and ignore_changed accessible to Runner code
+        # make some task attributes accessible to Runner code
         self.module_vars['ignore_errors'] = self.ignore_errors
         self.module_vars['ignore_changed'] = self.ignore_changed
+        self.module_vars['always_run'] = self.always_run
 
         # tags allow certain parts of a playbook to be run without running the whole playbook
         apply_tags = ds.get('tags', None)

@@ -971,6 +971,23 @@ Example::
 
     ansible-playbook foo.yml --check
 
+Running some tasks in Check Mode
+`````````````````````````````````
+
+.. versionadded:: 1.3
+
+Sometimes you may want to have a task to be executed even in check mode. To achieve this use the
+'always_run' keyword on the task.
+
+Example::
+
+    tasks:
+
+      - name: this task is run even in check mode
+        command: /something/to/run --even-in-check-mode
+        always_run: yes
+
+
 Showing Differences with --diff
 ```````````````````````````````
 
