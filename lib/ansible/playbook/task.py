@@ -29,7 +29,7 @@ class Task(object):
         'delegate_to', 'first_available_file', 'ignore_errors',
         'local_action', 'transport', 'sudo', 'sudo_user', 'sudo_pass',
         'items_lookup_plugin', 'items_lookup_terms', 'environment', 'args',
-        'any_errors_fatal'
+        'any_errors_fatal', 'ignore_changed'
     ]
 
     # to prevent typos and such
@@ -38,7 +38,7 @@ class Task(object):
          'first_available_file', 'include', 'tags', 'register', 'ignore_errors',
          'delegate_to', 'local_action', 'transport', 'sudo', 'sudo_user',
          'sudo_pass', 'when', 'connection', 'environment', 'args',
-         'any_errors_fatal'
+         'any_errors_fatal', 'ignore_changed'
     ]
 
     def __init__(self, play, ds, module_vars=None, additional_conditions=None):
@@ -174,6 +174,8 @@ class Task(object):
         self.ignore_errors = ds.get('ignore_errors', False)
         self.any_errors_fatal = ds.get('any_errors_fatal', play.any_errors_fatal)
 
+        self.ignore_changed = ds.get('ignore_changed', False)
+
         # action should be a string
         if not isinstance(self.action, basestring):
             raise errors.AnsibleError("action is of type '%s' and not a string in task. name: %s" % (type(self.action).__name__, self.name))
@@ -212,8 +214,9 @@ class Task(object):
         # allow runner to see delegate_to option
         self.module_vars['delegate_to'] = self.delegate_to
 
-        # make ignore_errors accessable to Runner code
+        # make ignore_errors and ignore_changed accessible to Runner code
         self.module_vars['ignore_errors'] = self.ignore_errors
+        self.module_vars['ignore_changed'] = self.ignore_changed
 
         # tags allow certain parts of a playbook to be run without running the whole playbook
         apply_tags = ds.get('tags', None)

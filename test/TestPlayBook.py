@@ -354,6 +354,34 @@ class TestPlaybook(unittest.TestCase):
       # restore default hash behavior
       C.DEFAULT_HASH_BEHAVIOUR = saved_hash_behavior
 
+   def test_playbook_ignore_changed(self):
+      test_callbacks = TestCallbacks()
+      playbook = ansible.playbook.PlayBook(
+          playbook=os.path.join(self.test_dir, 'playbook-ignore-changed.yml'),
+          host_list='test/ansible_hosts',
+          stats=ans_callbacks.AggregateStats(),
+          callbacks=test_callbacks,
+          runner_callbacks=test_callbacks
+      )
+      actual = playbook.run()
+
+      # if different, this will output to screen
+      print "**ACTUAL**"
+      print utils.jsonify(actual, format=True)
+      expected =  {
+          "localhost": {
+              "changed": 1,
+              "failures": 0,
+              "ok": 2,
+              "skipped": 0,
+              "unreachable": 0
+          }
+      }
+      print "**EXPECTED**"
+      print utils.jsonify(expected, format=True)
+
+      assert utils.jsonify(expected, format=True) == utils.jsonify(actual,format=True)
+
    def _compare_file_output(self, filename, expected_lines):
       actual_lines = []
       with open(filename) as f:
