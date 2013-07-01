@@ -4,9 +4,9 @@
 DOCUMENTATION = '''
 ---
 module: update_dns
-short_description: Maintains the DNS entry for a host.
+short_description: Maintains the DNS A and RR entries for a host.
 description:
-    - Adds a DNS entry for a host using nsupdate. This module requires nslookup and nsupdate to be installed.
+    - Adds a DNS A and associated RR entries for a host using nsupdate. This module requires dig and nsupdate to be installed.
 options:
   hostname:
     description:
@@ -47,18 +47,13 @@ EXAMPLES = '''
 
 def getDnsIp(module, hostname, server):
 
-    cmd = "nslookup %s %s" % (hostname, server)
+    cmd = "dig +short @%s A %s" % (server, hostname)
     rc, out, err = module.run_command(cmd)
-    if rc == 1:
-        return None
-    elif rc:
+    if rc:
         module.fail_json(msg="Failed to query DNS", rc=rc, err=err)
 
-    i = 0
-    for m in re.finditer('Address:\s+([0-9.]+)', out):
-        if i:
-            return m.group(1)
-        i += 1
+    if len(out.split('\n')) > 0:
+        return out.split('\n').strip()
 
     return None
 
