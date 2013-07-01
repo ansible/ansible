@@ -33,7 +33,7 @@ See the rest of the documentation for more information about how to organize var
 How do I get ansible to reuse connections, enable Kerberized SSH, or have Ansible pay attention to my local SSH config file?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Switch your default connectiont type in the configuration file to 'ssh', or use '-c ssh' to use
+Switch your default connection type in the configuration file to 'ssh', or use '-c ssh' to use
 Native OpenSSH for connections instead of the python paramiko library.
 
 Paramiko is great for starting out, but the OpenSSH type offers many advanced options.  You will want to run Ansible
@@ -157,7 +157,7 @@ environment variable on management machine::
 
 If you need to set environment variables, see the Advanced Playbooks section about environments.
 
-Can I get training on Ansible or find commerical support?
+Can I get training on Ansible or find commercial support?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Yes!  See `AnsibleWorks.com <http://ansibleworks.com>`_ or email `info@ansibleworks.com <mailto:info@ansibleworks.com>`_.

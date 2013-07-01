@@ -2,7 +2,7 @@ Advanced Playbooks
 ==================
 
 Here are some advanced features of the playbooks language.  Using all of these features
-are not neccessary, but many of them will prove useful.  If a feature doesn't seem immediately
+are not necessary, but many of them will prove useful.  If a feature doesn't seem immediately
 relevant, feel free to skip it.  For many people, the features documented in `playbooks` will
 be 90% or more of what they use in Ansible.
 
