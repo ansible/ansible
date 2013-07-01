@@ -38,13 +38,13 @@ The ec2 module provides the ability to provision EC2 instance(s).  Typically the
 * **Idempotent provisioning** (enabled with the idempotent_attribute option). By using the idempotent_attribute, the provisioning will ensure that at least count=N instances are running.  If N instance are already running, no new instances will be provisioned.
 
 Non-idempotent provisioning
-++++++++++++++
++++++++++++++++++++++++++++
 
 Each time the following ad-hoc command is run, five instances will be provisioned:
 
 .. code-block:: bash
 
-    # ansible localhost -m ec2 -a "count=5 image=ami-6e649707 instance_type=m1.large keypair=mykey group=webservers wait=yes"
+    ansible localhost -m ec2 -a "count=5 image=ami-6e649707 instance_type=m1.large keypair=mykey group=webservers wait=yes"
 
 In a play, this might look like (assuming the parameters are held as vars)::
 
@@ -74,10 +74,10 @@ With the host group now created, the second play in your provision playbook migh
 The method above ties the configuration of a host with the provisioning step.  This isn't always ideal and leads us onto the next section.
 
 Idempotent provisioning
-++++++++++++++
++++++++++++++++++++++++
 Idempotent provisioning provides a simple mechanism for maintaing a specified number of instances running in a particular host group.
 
-Using the ec2 inventory plugin ([documented in the API chapter](http://ansible.cc/docs/api.html#external-inventory-scripts>)) it is possible to group hosts by security group, machine image (AMI) or instance tags. Instance tags in particular provide a flexible way of marking instances as belonging to a particular host group.
+Using the ec2 inventory plugin it is possible to group hosts by security group, machine image (AMI) or instance tags. Instance tags in particular provide a flexible way of marking instances as belonging to a particular host group.
 
 The following example shows how one can idempotently provision a group of 5 hosts tagged as webservers::
 
@@ -101,6 +101,13 @@ If this play is run when 3 EC2 instances with the tag `'{"name":"webserver"}'` a
       tasks:
       ...
 
+If the above playbook were called `provision_webservers.yml`, then it could be run from the command line using
+
+```bash
+ansible-playbook provision_werbservers.yml -i hosts/
+```
+where the `hosts/` folder contains both files defining host groups, and the `ec2.py` inventory plugin. Only by putting all of these files together in a folder, and specifying that entire folder as the hosts location can locally defined hosts and those provided by the ec2 inventory plugin be combined.
+
 Note that the value of the `idempotency_attribute` option can also be `image`, `group` (security group), `group_id` (security group id) or `client-token`. The `client-token` is set using the `id` option.
 
 
@@ -118,7 +125,7 @@ You may wish to schedule a regular refresh of the inventory cache to accomodate 
 
 .. code-block:: bash
    
-    # ./ec2.py --refresh-cache
+    ./ec2.py --refresh-cache
 
 Put this into a crontab as appropriate to make calls from your Ansible master server to the EC2 API endpoints and gather host information.  The aim is to keep the view of hosts as up-to-date as possible, so schedule accordingly. Playbook calls could then also be scheduled to act on the refreshed hosts inventory after each refresh.  This approach means that machine images can remain "raw", containing no payload and OS-only.  Configuration of the workload is handled entirely by Ansible.  
 
