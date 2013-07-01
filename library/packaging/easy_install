@@ -111,7 +111,7 @@ def main():
             command = '%s %s' % (virtualenv, env)
             if site_packages:
                 command += ' --system-site-packages'
-            rc_venv, out_venv, err_venv = module.run_command('%s %s' % (virtualenv, env))
+            rc_venv, out_venv, err_venv = module.run_command(command)
 
             rc += rc_venv
             out += out_venv

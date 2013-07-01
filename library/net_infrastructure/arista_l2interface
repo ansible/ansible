@@ -1,0 +1,336 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+#    
+# Copyright (C) 2013, Arista Networks <netdevops@aristanetworks.com>
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+DOCUMENTATION = '''
+---
+module: arista_l2interface
+author: Peter Sprygada
+short_description: Manage layer 2 interfaces
+requirements:
+    - Arista EOS 4.10
+    - Netdev extension for EOS
+description:
+    - Manage layer 2 interface resources on Arista EOS network devices
+options:
+    interface_id:
+        description:
+            - the full name of the interface
+        required: true
+    state:
+        description:
+            - describe the desired state of the interface related to the config
+        required: false
+        default: 'present'
+        choices: [ 'present', 'absent' ]
+    logging:
+        description:
+            - enables or disables the syslog facility for this module
+        required: false
+        default: false
+        choices: [ 'true', 'false', 'yes', 'no' ]
+    vlan_tagging:
+        description:
+            - specifies whether or not vlan tagging should be enabled for 
+              this interface
+        required: false
+        default: true
+        choices: [ 'enable', 'disable' ]
+    tagged_vlans: 
+        description:
+            - specifies the list of vlans that should be allowed to transit
+              this interface
+        required: false
+    untagged_vlan:
+        description:
+            - specifies the vlan that untagged traffic should be placed in for
+              transit across a vlan tagged link
+        required: false
+        default: 'default'
+notes:
+    - Requires EOS 4.10 or later 
+    - The Netdev extension for EOS must be installed and active in the 
+      available extensions (show extensions from the EOS CLI)
+    - See http://eos.aristanetworks.com for details
+'''
+EXAMPLES = '''
+Example playbook entries using the arista_l2interface module to manage resource 
+state. Note that interface names must be the full interface name not shortcut
+names (ie Ethernet, not Et1)
+
+    tasks:
+    - name: create switchport ethernet1 access port 
+      action: arista_l2interface interface_id=Ethernet1 logging=true
+
+    - name: create switchport ethernet2 trunk port
+      action: arista_l2interface interface_id=Ethernet2 vlan_tagging=enable logging=true
+
+    - name: add vlans to red and blue switchport ethernet2
+      action: arista_l2interface interface_id=Ethernet2 tagged_vlans=red,blue logging=true
+
+    - name: set untagged vlan for Ethernet1
+      action: arista_l2interface interface_id=Ethernet1 untagged_vlan=red logging=true
+
+    - name: convert access to trunk
+      action: arista_l2interface interface_id=Ethernet1 vlan_tagging=enable tagged_vlans=red,blue logging=true
+
+    - name: convert trunk to access
+      action: arista_l2interface interface_id=Ethernet2 vlan_tagging=disable untagged_vlan=blue logging=true
+
+    - name: delete switchport ethernet1
+      action: arista_l2interface interface_id=Ethernet1 state=absent logging=true
+'''
+import syslog
+import json
+
+class AristaL2Interface(object):
+    """ This is the base class  managing layer 2 interfaces (switchport) 
+        resources in Arista EOS network devices.  This class provides an 
+        implementation for creating, updating and deleting layer 2 interfaces.
+        
+        Note: The netdev extension for EOS must be installed in order of this
+        module to work properly.
+        
+        The following commands are implemented in this module:
+            * netdev l2interface list
+            * netdev l2interface show
+            * netdev l2interface edit
+            * netdev l2interface delete
+
+    """
+    
+    attributes= ['vlan_tagging', 'tagged_vlans', 'untagged_vlan']
+    
+    def __init__(self, module):
+        self.module         = module
+        self.interface_id   = module.params['interface_id']
+        self.state          = module.params['state']
+        self.vlan_tagging   = module.params['vlan_tagging']
+        self.tagged_vlans   = module.params['tagged_vlans']
+        self.untagged_vlan  = module.params['untagged_vlan']
+        self.logging        = module.params['logging']
+
+    @property
+    def changed(self):
+        """ The changed property provides a boolean response if the currently
+            loaded resouces has changed from the resource running in EOS.
+            
+            Returns True if the object is not in sync 
+            Returns False if the object is in sync.
+        """
+        return len(self.updates()) > 0
+
+    def log(self, entry):
+        """ This method is responsible for sending log messages to the local
+            syslog.
+        """
+        if self.logging:
+            syslog.openlog('ansible-%s' % os.path.basename(__file__))
+            syslog.syslog(syslog.LOG_NOTICE, entry)
+
+    def run_command(self, cmd):
+        """ Calls the Ansible module run_command method. This method will 
+            directly return the results of the run_command method
+        """        
+        self.log("Command: %s" % cmd)
+        return self.module.run_command(cmd.split())
+
+
+    def get(self):
+        """ This method will return a dictionary with the attributes of the
+            layer 2 interface resource specified in interface_id.  The layer
+            2 interface resource has the following stucture:
+            
+              {
+                "interface_id": <interface_id>,
+                "vlan_tagging": [enable* | disable],
+                "tagged_vlans": <array of vlan names>,
+                "untagged_vlan": <vlan name>
+              }
+            
+            If the layer 2 interface specified by interface_id does not
+            exist in the system, this method will return None.
+        """
+        cmd = "netdev l2interface show %s" % self.interface_id
+        (rc, out, err) = self.run_command(cmd)
+        obj = json.loads(out)
+        if obj.get('status') != 200: 
+            return None
+        return obj['result']
+
+    def create(self):
+        """ Creates a layer 2 interface resource in the current running 
+            configuration.  If the layer 2 interface already exists, the 
+            function will return successfully.
+            
+            This function implements the following commands:
+                * netdev l2interface create {interface_id} [attributes]
+            
+            Returns the layer 2 interface resource if the create method was 
+            successful
+            Returns an error message if there as a problem creating the layer
+            2 interface
+        """
+        attribs = []
+        for attrib in self.attributes:
+            if getattr(self, attrib):
+                attribs.append("--%s" % attrib)
+                attribs.append(getattr(self, attrib))
+
+            cmd = "netdev l2interface create %s " % self.interface_id
+            cmd += " ".join(attribs)
+
+            (rc, out, err) = self.run_command(cmd)
+            resp = json.loads(out)
+            if resp.get('status') != 201:
+                rc = int(resp['status'])
+                err = resp['message']
+                out = None
+            else:
+                out = resp['result']
+        return (rc, out, err)
+
+    def update(self):
+        """ Updates an existing VLAN resource in the current running 
+            configuration.   If the VLAN resource does not exist, this method
+            will return an error.
+            
+            This method implements the following commands:
+                * netdev l2interface edit {interface_id} [attributes]
+            
+            Returns an updated layer 2 interafce resoure if the update method 
+            was successful
+        """
+        attribs = list()        
+        for attrib in self.updates():
+            attribs.append("--%s" % attrib)
+            attribs.append(getattr(self, attrib))
+
+            cmd = "netdev l2interface edit %s " % self.interface_id
+            cmd += " ".join(attribs)
+
+            (rc, out, err) = self.run_command(cmd)
+            resp = json.loads(out)
+            if resp.get('status') != 200:
+                rc = int(resp['status'])
+                err = resp['message']
+                out = None
+            else:
+                out = resp['result']
+            return (rc, out, err)
+  
+        return (0, None, "No attributes have been modified")
+
+    def delete(self):
+        """ Deletes an existing layer 2 interface resource from the current 
+            running configuration.  A nonexistent layer 2 interface will 
+            return successful for this operation.
+            
+            This method implements the following commands:
+                * netdev l2interface delete {interface_id}
+            
+            Returns nothing if the delete was successful
+            Returns error message if there was a problem deleting the resource 
+        """
+        cmd = "netdev l2interface delete %s" % self.interface_id
+        (rc, out, err) = self.run_command(cmd)
+        resp = json.loads(out)
+        if resp.get('status') != 200: 
+            rc = resp['status']
+            err = resp['message']
+            out = None
+        return (rc, out, err)
+
+    def updates(self):
+        """ This method will check the current layer 2 interface resource in 
+            the running configuration and return a list of attributes that are
+            not in sync with the current resource.
+        """
+        obj = self.get()
+        update = lambda a, z: a != z
+
+        updates = list()
+        for attrib in self.attributes:
+            value = getattr(self, attrib)
+            if update(obj[attrib], value) and value is not None:
+                updates.append(attrib)
+        self.log("Updates: %s" % updates)
+        return updates
+
+    def exists(self):
+        """ Returns True if the current layer 2 interface resource exists and 
+            returns False if it does not.   This method only checks for the 
+            existence of the interface as specified in interface_id.
+        """
+        (rc, out, err) = self.run_command("netdev l2interface list")
+        collection = json.loads(out)
+        return self.interface_id in collection.get('result')
+        
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            interface_id=dict(default=None, type='str'),
+            state=dict(default='present', choices=['present', 'absent'], type='str'),
+            vlan_tagging=dict(default=None, choices=['enable', 'disable']),
+            tagged_vlans=dict(default=None, type='str'),
+            untagged_vlan=dict(default=None, type='str'),
+            logging=dict(default=False, type='bool')
+        ),
+        supports_check_mode = True
+    )
+    
+    obj = AristaL2Interface(module)
+    
+    rc = None
+    result = dict()
+
+    if obj.state == 'absent':
+        if obj.exists():
+            if module.check_mode: 
+                module.exit_json(changed=True)
+            (rc, out, err) = obj.delete()
+            if rc !=0: 
+                module.fail_json(msg=err, rc=rc)                
+
+    elif obj.state == 'present':
+        if not obj.exists():
+            if module.check_mode: 
+                module.exit_json(changed=True)
+            (rc, out, err) = obj.create()
+            result['results'] = out
+        else:
+            if obj.changed:
+                if module.check_mode: 
+                    module.exit_json(changed=obj.changed)
+                (rc, out, err) = obj.update()
+                result['results'] = out
+
+        if rc is not None and rc != 0:
+            module.fail_json(msg=err, rc=rc)
+
+    if rc is None:
+        result['changed'] = False
+    else:
+        result['changed'] = True
+
+    module.exit_json(**result)
+
+
+# include magic from lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()

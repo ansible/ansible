@@ -16,6 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import os.path
 import sys
 import glob
 import imp
@@ -108,6 +109,7 @@ class PluginLoader(object):
         # look in any configured plugin paths, allow one level deep for subcategories 
         configured_paths = self.config.split(os.pathsep)
         for path in configured_paths:
+            path = os.path.expanduser(path)
             contents = glob.glob("%s/*" % path)
             for c in contents:
                 if os.path.isdir(c):
@@ -141,7 +143,6 @@ class PluginLoader(object):
         suffix = ".py"
         if not self.class_name:
             suffix = ""
-        paths = self._get_paths()
 
         for i in self._get_paths():
             path = os.path.join(i, "%s%s" % (name, suffix))

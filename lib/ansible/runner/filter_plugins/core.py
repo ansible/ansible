@@ -32,16 +32,22 @@ def to_nice_json(*a, **kw):
 def failed(*a, **kw):
     item = a[0] 
     if type(item) != dict:
-       raise errors.AnsibleError("|failed expects a dictionary")
+        raise errors.AnsibleError("|failed expects a dictionary")
     rc = item.get('rc',0)
     failed = item.get('failed',False)
     if rc != 0 or failed:
-       return True
+        return True
     else:
-       return False
+        return False
 
 def success(*a, **kw):
     return not failed(*a, **kw)
+
+def mandatory(a):
+    ''' Make a variable mandatory '''
+    if not a:
+        raise errors.AnsibleError('Mandatory variable not defined.')
+    return a
 
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
@@ -70,5 +76,7 @@ class FilterModule(object):
             'failed'  : failed,
             'success' : success,
 
+            # variable existence
+            'mandatory': mandatory,
         }
     

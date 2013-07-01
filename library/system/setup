@@ -1137,7 +1137,9 @@ class HPUX(Hardware):
     - model
     - firmware
     """
+
     platform = 'HP-UX'
+
     def __init__(self):
         Hardware.__init__(self)
 
@@ -1185,7 +1187,7 @@ class HPUX(Hardware):
                     rc, out, err = module.run_command("/usr/contrib/bin/machinfo |grep Intel |cut -d' ' -f4-")
                     self.facts['processor'] = out.strip()
                 else:
-                    rc, out, err = module.run_command("/usr/contrib/bin/machinfo |egrep 'socket[s]?$' | tail -1");
+                    rc, out, err = module.run_command("/usr/contrib/bin/machinfo |egrep 'socket[s]?$' | tail -1")
                     self.facts['processor_count'] = int(out.strip().split(" ")[0])
                     rc, out, err = module.run_command("/usr/contrib/bin/machinfo |grep -e '[0-9] core' |tail -1")
                     self.facts['processor_cores'] = int(out.strip().split(" ")[0])

@@ -306,27 +306,27 @@ def main():
     )
 
     command            = module.params.get('command')
-    instance_name      = module.params.get('instance_name');
-    source_instance    = module.params.get('source_instance');
-    db_engine          = module.params.get('db_engine');
-    size               = module.params.get('size');
-    instance_type      = module.params.get('instance_type');
-    username           = module.params.get('username');
-    password           = module.params.get('password');
-    db_name            = module.params.get('db_name');
-    engine_version     = module.params.get('engine_version');
-    parameter_group    = module.params.get('parameter_group');
-    license_model      = module.params.get('license_model');
-    multi_zone         = module.params.get('multi_zone');
-    iops               = module.params.get('iops');
-    security_groups    = module.params.get('security_groups');
-    port               = module.params.get('port');
-    upgrade            = module.params.get('upgrade');
-    option_group       = module.params.get('option_group');
-    maint_window       = module.params.get('maint_window');
-    subnet             = module.params.get('subnet');
-    backup_window      = module.params.get('backup_window');
-    backup_retention   = module.params.get('module_retention');
+    instance_name      = module.params.get('instance_name')
+    source_instance    = module.params.get('source_instance')
+    db_engine          = module.params.get('db_engine')
+    size               = module.params.get('size')
+    instance_type      = module.params.get('instance_type')
+    username           = module.params.get('username')
+    password           = module.params.get('password')
+    db_name            = module.params.get('db_name')
+    engine_version     = module.params.get('engine_version')
+    parameter_group    = module.params.get('parameter_group')
+    license_model      = module.params.get('license_model')
+    multi_zone         = module.params.get('multi_zone')
+    iops               = module.params.get('iops')
+    security_groups    = module.params.get('security_groups')
+    port               = module.params.get('port')
+    upgrade            = module.params.get('upgrade')
+    option_group       = module.params.get('option_group')
+    maint_window       = module.params.get('maint_window')
+    subnet             = module.params.get('subnet')
+    backup_window      = module.params.get('backup_window')
+    backup_retention   = module.params.get('module_retention')
     ec2_region         = module.params.get('ec2_region')
     zone               = module.params.get('zone')
     ec2_secret_key     = module.params.get('ec2_secret_key')
@@ -351,11 +351,11 @@ def main():
         az = response.read()
         for r in AWS_REGIONS:
             if az.startswith(r):
-              ec2_region = r
-              break
+                ec2_region = r
+                break
 
         if not ec2_region:
-          module.fail_json(msg = str("ec2_region not specified and unable to determine region from AWS."))
+            module.fail_json(msg = str("ec2_region not specified and unable to determine region from AWS."))
 
     # connect to the rds endpoint
     try:
@@ -450,7 +450,7 @@ def main():
             db = conn.create_dbinstance(instance_name, size, instance_type, username, password, **params)
         elif command == 'replicate':
             if instance_type:
-              params["instance_class"] = instance_type
+                params["instance_class"] = instance_type
             db = conn.create_dbinstance_read_replica(instance_name, source_instance, **params)
         elif command == 'delete':
             if snapshot:

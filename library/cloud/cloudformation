@@ -60,13 +60,7 @@ options:
     required: true
     default: null
     aliases: []
-  wait_for:
-    description:
-      - Wait while the stack is being created/updated/deleted.
-    required: false
-    default: "yes"
-    choices: [ "yes", "no" ]
-    aliases: []
+
 requirements: [ "boto" ]
 author: James S. Martin
 '''
@@ -89,30 +83,29 @@ tasks:
 
 import boto.cloudformation.connection
 import json
-
+import time
 
 class Region:
     def __init__(self, region):
+        '''connects boto to the region specified in the cloudformation template'''
         self.name = region
         self.endpoint = 'cloudformation.%s.amazonaws.com' % region
 
 
 def boto_exception(err):
+    '''generic error message handler'''
+    if hasattr(err, 'error_message'):
+        error = err.error_message
+    elif hasattr(err, 'message'):
+        error = err.message
+    else:
+        error = '%s: %s' % (Exception, err)
 
-        if hasattr(err, 'error_message'):
-            error = err.error_message
-        elif hasattr(err, 'message'):
-            error = err.message
-        else:
-            error = '%s: %s' % (Exception, err)
-        try:
-            error_msg = json.loads(error)
-        except:
-            error_msg = {'Error': error}
-        return error_msg
+    return error
 
 
 def stack_operation(cfn, stack_name, operation):
+    '''gets the status of a stack while it is created/updated/deleted'''
     existed = []
     result = {}
     operation_complete = False
@@ -122,20 +115,26 @@ def stack_operation(cfn, stack_name, operation):
             existed.append('yes')
         except:
             if 'yes' in existed:
-                result = {'changed': True, 'output': 'Stack Deleted'}
-                result['events'] = map(str, list(stack.describe_events()))
+                result = dict(changed=True,
+                              output='Stack Deleted',
+                              events=map(str, list(stack.describe_events())))
             else:
-                result = {'changed': True, 'output': 'Stack Not Found'}
+                result = dict(changed= True, output='Stack Not Found')
             break
         if '%s_COMPLETE' % operation == stack.stack_status:
-            result['changed'] = True
-            result['events'] = map(str, list(stack.describe_events()))
-            result['output'] = 'Stack %s complete' % operation
+            result = dict(changed=True,
+                          events = map(str, list(stack.describe_events())),
+                          output = 'Stack %s complete' % operation)
+            break
+        if '%s_ROLLBACK_COMPLETE' % operation == stack.stack_status:
+            result = dict(changed=True,
+                          events = map(str, list(stack.describe_events())),
+                          output = 'Problem with %s. Rollback complete' % operation)
             break
         elif '%s_FAILED' % operation == stack.stack_status:
-            result['changed'] = False
-            result['events'] = map(str, list(stack.describe_events()))
-            result['output'] = 'Stack %s failed' % operation
+            result = dict(changed=False,
+                          events = map(str, list(stack.describe_events())),
+                          output = 'Stack %s failed' % operation)
             break
         else:
             time.sleep(5)
@@ -154,12 +153,10 @@ def main():
                                  'us-west-2']),
             state=dict(default='present', choices=['present', 'absent']),
             template=dict(default=None, required=True),
-            disable_rollback=dict(default=False),
-            wait_for=dict(default=True)
+            disable_rollback=dict(default=False)
         )
     )
 
-    wait_for = module.params['wait_for']
     state = module.params['state']
     stack_name = module.params['stack_name']
     region = Region(module.params['region'])
@@ -167,10 +164,9 @@ def main():
     disable_rollback = module.params['disable_rollback']
     template_parameters = module.params['template_parameters']
 
+    # convert the template parameters ansible passes into a tuple for boto
     template_parameters_tup = [(k, v) for k, v in template_parameters.items()]
     stack_outputs = {}
-    stack_outputs[module.params['region']] = {}
-    stack_outputs[module.params['region']][stack_name] = {}
 
     try:
         cfn = boto.cloudformation.connection.CloudFormationConnection(
@@ -178,11 +174,11 @@ def main():
     except boto.exception.NoAuthHandlerFound, e:
         module.fail_json(msg=str(e))
     update = False
-    stack_events = []
     result = {}
     operation = None
-    output = ''
 
+    # if state is present we are going to ensure that the stack is either
+    # created or updated
     if state == 'present':
         try:
             cfn.create_stack(stack_name, parameters=template_parameters_tup,
@@ -192,13 +188,16 @@ def main():
             operation = 'CREATE'
         except Exception, err:
             error_msg = boto_exception(err)
-            if error_msg['Error']['Code'] == 'AlreadyExistsException':
+            if 'AlreadyExistsException' in error_msg:
                 update = True
             else:
-                result = {'changed': False, 'output': error_msg}
-                module.fail_json(**result)
+                module.fail_json(msg=error_msg)
         if not update:
             result = stack_operation(cfn, stack_name, operation)
+
+    # if the state is present and the stack already exists, we try to update it
+    # AWS will tell us if the stack template and parameters are the same and
+    # don't need to be updated.
     if update:
         try:
             cfn.update_stack(stack_name, parameters=template_parameters_tup,
@@ -208,22 +207,26 @@ def main():
             operation = 'UPDATE'
         except Exception, err:
             error_msg = boto_exception(err)
-            if error_msg['Error']['Message'] == 'No updates are to be performed.':
-                output = error_msg['Error']['Message']
-            result = {'changed': False, 'output': output}
+            if 'No updates are to be performed.' in error_msg:
+                result = dict(changed=False, output='Stack is already up-to-date.')
+            else:
+                module.fail_json(msg=error_msg)
+
         if operation == 'UPDATE':
             result = stack_operation(cfn, stack_name, operation)
+
+    # check the status of the stack while we are creating/updating it.
+    # and get the outputs of the stack
 
     if state == 'present' or update:
         stack = cfn.describe_stacks(stack_name)[0]
         for output in stack.outputs:
-            stack_outputs[module.params['region']][stack_name][
-                output.key] = output.value
+            stack_outputs[output.key] = output.value
         result['stack_outputs'] = stack_outputs
 
-# absent state is different because of the way delete_stack works.
-# problem is it it doesn't give an error if stack isn't found
-# so must describe the stack first
+    # absent state is different because of the way delete_stack works.
+    # problem is it it doesn't give an error if stack isn't found
+    # so must describe the stack first
 
     if state == 'absent':
         try:
@@ -231,8 +234,10 @@ def main():
             operation = 'DELETE'
         except Exception, err:
             error_msg = boto_exception(err)
-            result = {'changed': False, 'output': error_msg}
-            module.fail_json(result)
+            if 'Stack:%s does not exist' % stack_name in error_msg:
+                result = dict(changed=False, output='Stack not found.')
+            else:
+                module.fail_json(msg=error_msg)
         if operation == 'DELETE':
             cfn.delete_stack(stack_name)
             result = stack_operation(cfn, stack_name, operation)

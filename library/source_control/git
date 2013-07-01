@@ -107,7 +107,7 @@ def clone(git_path, module, repo, dest, remote, depth):
     except:
         pass
     os.chdir(dest_dirname)
-    cmd = [ git_path, 'clone', '-o', remote ]
+    cmd = [ git_path, 'clone', '-o', remote, '--recursive' ]
     if depth:
         cmd.extend([ '--depth', str(depth) ])
     cmd.extend([ repo, dest ])
@@ -237,7 +237,22 @@ def fetch(git_path, module, repo, dest, version, remote):
     (rc, out2, err2) = module.run_command("%s fetch --tags %s" % (git_path, remote))
     if rc != 0:
         module.fail_json(msg="Failed to download remote objects and refs")
-    return (rc, out1 + out2, err1 + err2)
+    (rc, out3, err3) = submodule_update(git_path, module, repo, dest)
+    return (rc, out1 + out2 + out3, err1 + err2 + err3)
+
+def submodule_update(git_path, module, repo, dest):
+    ''' init and update any submodules '''
+    os.chdir(dest)
+    # skip submodule commands if .gitmodules is not present
+    if not os.path.exists(os.path.join(dest, '.gitmodules')):
+        return (0, '', '')
+    cmd = [ git_path, 'submodule', 'sync' ]
+    (rc, out, err) = module.run_command(cmd, check_rc=True)
+    cmd = [ git_path, 'submodule', 'update', '--init', '--recursive' ]
+    (rc, out, err) = module.run_command(cmd)
+    if rc != 0:
+        module.fail_json(msg="Failed to init/update submodules")
+    return (rc, out, err)
 
 def switch_version(git_path, module, dest, remote, version):
     ''' once pulled, switch to a particular SHA, tag, or branch '''

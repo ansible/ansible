@@ -52,10 +52,9 @@ def main(args):
     ''' run ansible-playbook operations '''
 
     # create parser for CLI options
-    usage = "%prog playbook.yml"
     parser = utils.base_parser(
         constants=C, 
-        usage=usage, 
+        usage = "%prog playbook.yml",
         connect_opts=True, 
         runas_opts=True, 
         subset_opts=True, 
@@ -66,17 +65,14 @@ def main(args):
         help="set additional key=value variables from the CLI")
     parser.add_option('-t', '--tags', dest='tags', default='all',
         help="only run plays and tasks tagged with these values")
-    # FIXME: list hosts is a common option and can be moved to utils/__init__.py
-    parser.add_option('--list-hosts', dest='listhosts', action='store_true',
-        help="dump out a list of hosts, each play will run against, does not run playbook!")
     parser.add_option('--syntax-check', dest='syntax', action='store_true',
-        help="do a playbook syntax check on the playbook, do not execute the playbook")
+        help="perform a syntax check on the playbook, but do not execute it")
     parser.add_option('--list-tasks', dest='listtasks', action='store_true',
-        help="do list all tasks that would be executed")
+        help="list all tasks that would be executed")
     parser.add_option('--step', dest='step', action='store_true',
         help="one-step-at-a-time: confirm each task before running")
     parser.add_option('--start-at-task', dest='start_at', 
-        help="start the playbook with a task matching this name")
+        help="start the playbook at the task matching this name")
 
     options, args = parser.parse_args(args)
 
@@ -95,8 +91,6 @@ def main(args):
         options.ask_pass = options.ask_pass or C.DEFAULT_ASK_PASS
         options.ask_sudo_pass = options.ask_sudo_pass or C.DEFAULT_ASK_SUDO_PASS
         ( sshpass, sudopass ) = utils.ask_passwords(ask_pass=options.ask_pass, ask_sudo_pass=options.ask_sudo_pass)
-        if options.sudo_user or options.ask_sudo_pass:
-            options.sudo = True
         options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
     if options.extra_vars and options.extra_vars[0] in '[{':
         extra_vars = utils.json_loads(options.extra_vars)
