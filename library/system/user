@@ -161,10 +161,10 @@ options:
     update_password:
         required: false
         default: always
-        choices: ['always', 'on_creation']
+        choices: ['always', 'on_create']
         version_added: "1.3"
         description:
-            - C(always) will update passwords if they differ.  C(on_creation) will only set the password for newly created users.
+            - C(always) will update passwords if they differ.  C(on_create) will only set the password for newly created users.
 '''
 
 EXAMPLES = '''
