@@ -306,6 +306,11 @@ def main():
         else:
             user = "-u %s" % (user)
 
+    if state == 'present':
+        if not job:
+            module.fail_json(msg="parameter 'job' is required if state is"
+                                 "'present'")
+
     job = get_cron_job(minute,hour,day,month,weekday,job,user,cron_file,reboot)
     rc, out, err, rm, status = (0, None, None, None, None)
     if job is None and do_install:
