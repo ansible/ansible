@@ -91,15 +91,15 @@ def auth_encode(apikey):
     
 def build_url(name, apiid, action, meter_id=None, cert_type=None):
     if action == "create":
-        return 'https://{api_host}/{apiid}/meters'.format(api_host=api_host, apiid=apiid)
+        return 'https://%s/%s/meters' % (api_host, apiid)
     elif action == "search":
-        return "https://{api_host}/{apiid}/meters?name={name}".format(api_host=api_host, apiid=apiid, name=name)
+        return "https://%s/%s/meters?name=%s" % (api_host, apiid, name)
     elif action == "certificates":
-        return "https://{api_host}/{apiid}/meters/{meter_id}/{cert_type}.pem".format(api_host=api_host, apiid=apiid, meter_id=meter_id, cert_type=cert_type)
+        return "https://%s/%s/meters/%s/%s.pem" % (api_host, apiid, meter_id, cert_type)
     elif action == "tags":
-        return  "https://{api_host}/{apiid}/meters/{meter_id}/tags".format(api_host=api_host, apiid=apiid, meter_id=meter_id)
+        return  "https://%s/%s/meters/%s/tags" % (api_host, apiid, meter_id)
     elif action == "delete":
-        return  "https://{api_host}/{apiid}/meters/{meter_id}".format(api_host=api_host, apiid=apiid, meter_id=meter_id)
+        return  "https://%s/%s/meters/%s" % (api_host, apiid, meter_id)
 
 def http_request(name, apiid, apikey, action, meter_id=None, cert_type=None):
     
@@ -113,7 +113,7 @@ def http_request(name, apiid, apikey, action, meter_id=None, cert_type=None):
 
     auth = auth_encode(apikey)
     request = urllib2.Request(url)
-    request.add_header("Authorization", "Basic {auth}".format(auth=auth)) 
+    request.add_header("Authorization", "Basic %s" % (auth)) 
     request.add_header("Content-Type", "application/json")
     return request
 
@@ -149,7 +149,7 @@ def create_meter(module, name, apiid, apikey):
         for cert_type in types:
             try:
                 # If we can't open the file it's not there, so we should download it
-                cert_file = open('{config_directory}/{cert_type}.pem'.format(config_directory=config_directory,cert_type=cert_type))
+                cert_file = open('%s/%s.pem' % (config_directory,cert_type))
             except IOError:
                 # Now download the file...
                 rc = download_request(module, name, apiid, apikey, cert_type)
@@ -201,7 +201,7 @@ def delete_meter(module, name, apiid, apikey):
         types = ['cert', 'key']
         for cert_type in types:
             try:
-                cert_file = '{config_directory}/{cert_type}.pem'.format(config_directory=config_directory,cert_type=cert_type)
+                cert_file = '%s/%s.pem' % (config_directory,cert_type)
                 os.remove(cert_file)
             except OSError, e:  ## if failed, report it back to the user ##
                 module.fail_json("Failed to remove " + cert_type + ".pem file")
@@ -223,7 +223,7 @@ def download_request(module, name, apiid, apikey, cert_type):
 
         if result:
             try:
-                cert_file_path = '{config_directory}/{cert_type}.pem'.format(config_directory=config_directory,cert_type=cert_type)
+                cert_file_path = '%s/%s.pem' % (config_directory,cert_type)
                 body = result.read()
                 cert_file = open(cert_file_path, 'w')
                 cert_file.write(body)
