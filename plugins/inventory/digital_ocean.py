@@ -15,6 +15,12 @@ location is /tmp/ansible-digital_ocean.cache).
 The --pretty (-p) option pretty-prints the output for better human readability.
 
 ----
+Although the cache stores all the information received from DigitalOcean,
+the cache is not used for current droplet information (in --list, --host,
+--all, and --droplets).  This is so that accurate droplet information is always
+found.  You can force this script to use the cache with --force-cache.
+
+----
 Configuration is read from `digital_ocean.ini`, then from environment variables,
 then and command-line arguments.
 
@@ -178,15 +184,24 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
         self.cache_filename = self.cache_path + "/ansible-digital_ocean.cache"
         self.cache_refreshed = False
 
-        if self.args.refresh_cache or not self.is_cache_valid():
+        if not self.args.force_cache and self.args.refresh_cache or not self.is_cache_valid():
             self.load_all_data_from_digital_ocean()
         else:
             self.load_from_cache()
             if len(self.data) == 0:
+                if self.args.force_cache:
+                    print '''Cache is empty and --force-cache was specified'''
+                    sys.exit(-1)
                 self.load_all_data_from_digital_ocean()
+            else:
+                # We always get fresh droplets for --list, --host, --all, and --droplets
+                # unless --force-cache is specified
+                if not self.args.force_cache and (
+                   self.args.list or self.args.host or self.args.all or self.args.droplets):
+                    self.load_droplets_from_digital_ocean()
 
         # Pick the json_data to print based on the CLI command
-        if self.args.droplets:   json_data = { 'droplets': self.data['droplets'] }
+        if   self.args.droplets: json_data = { 'droplets': self.data['droplets'] }
         elif self.args.regions:  json_data = { 'regions':  self.data['regions'] }
         elif self.args.images:   json_data = { 'images':   self.data['images'] }
         elif self.args.sizes:    json_data = { 'sizes':    self.data['sizes'] }
@@ -194,9 +209,9 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
         elif self.args.domains:  json_data = { 'domains':  self.data['domains'] }
         elif self.args.all:      json_data = self.data
 
-        elif self.args.host:    json_data = self.load_droplet_variables_for_host()
+        elif self.args.host:     json_data = self.load_droplet_variables_for_host()
         else:    # '--list' this is last to make it default
-                                json_data = self.inventory
+                                 json_data = self.inventory
 
         if self.args.pretty:
             print json.dumps( json_data, sort_keys=True, indent=2 )
@@ -242,7 +257,7 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
         parser.add_argument('--host', action='store', help='Get all Ansible inventory variables about a specific Droplet')
 
         parser.add_argument('--all', action='store_true', help='List all DigitalOcean information as JSON')
-        parser.add_argument('--droplets', action='store_true', help='List Droplets as JSON')
+        parser.add_argument('--droplets','-d', action='store_true', help='List Droplets as JSON')
         parser.add_argument('--regions', action='store_true', help='List Regions as JSON')
         parser.add_argument('--images', action='store_true', help='List Images as JSON')
         parser.add_argument('--sizes', action='store_true', help='List Sizes as JSON')
@@ -253,7 +268,8 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
 
         parser.add_argument('--cache-path', action='store', help='Path to the cache files (default: .)')
         parser.add_argument('--cache-max_age', action='store', help='Maximum age of the cached items (default: 0)')
-        parser.add_argument('--refresh-cache', action='store_true', default=False, help='Force refresh of cache by making API requests to DigitalOcean (default: False - use cache files)')
+        parser.add_argument('--force-cache', action='store_true', default=False, help='Only use data from the cache')
+        parser.add_argument('--refresh-cache','-r', action='store_true', default=False, help='Force refresh of cache by making API requests to DigitalOcean (default: False - use cache files)')
 
         parser.add_argument('--env','-e', action='store_true', help='Display DO_CLIENT_ID and DO_API_KEY')
         parser.add_argument('--client-id','-c', action='store', help='DigitalOcean Client ID')
@@ -266,6 +282,11 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
         if self.args.cache_path: self.cache_path = self.args.cache_path
         if self.args.cache_max_age: self.cache_max_age = self.args.cache_max_age
 
+        # Make --list default if none of the other commands are specified
+        if (not self.args.droplets and not self.args.regions and not self.args.images and
+            not self.args.sizes and not self.args.ssh_keys and not self.args.domains and
+            not self.args.all and not self.args.host):
+                self.args.list = True
 
 
     ###########################################################################
@@ -296,11 +317,21 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
         self.write_to_cache()
 
 
+    def load_droplets_from_digital_ocean(self):
+        ''' Use dopy to get droplet information from DigitalOcean and save data in cache files '''
+        manager  = DoManager( self.client_id, self.api_key )
+        self.data['droplets'] = self.sanitize_list( manager.all_active_droplets() )
+        self.index['host_to_droplet'] = self.build_index( self.data['droplets'], 'ip_address', 'id', False )
+        self.build_inventory()
+        self.write_to_cache()
+
+
     def build_index(self, source_seq, key_from, key_to, use_slug=True):
         dest_dict = {}
         for item in source_seq:
             name = (use_slug and item.has_key('slug')) and item['slug'] or item[key_to]
-            dest_dict[item[key_from]] = name
+            key = item[key_from]
+            dest_dict[key] = name
         return dest_dict
 
 
@@ -338,7 +369,8 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
 
         if not host in self.index['host_to_droplet']:
             # try updating cache
-            self.load_all_data_from_digital_ocean()
+            if not self.args.force_cache:
+                self.load_all_data_from_digital_ocean()
             if not host in self.index['host_to_droplet']:
                 # host might not exist anymore
                 return {}
@@ -347,7 +379,7 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
         if self.cache_refreshed:
             for drop in self.data['droplets']:
                 if drop['ip_address'] == host:
-                    droplet = drop
+                    droplet = self.sanitize_dict( drop )
                     break
         else:
             # Cache wasn't refreshed this run, so hit DigitalOcean API
