@@ -1,0 +1,293 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+"""
+Ansible module to manage SSH known_host entries
+(c) 2013, Evan Wies <evan@neomantra.net>
+
+Adapted from the authorized_keys module.
+
+This file is part of Ansible
+
+Ansible is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Ansible is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+DOCUMENTATION = '''
+---
+module: known_host
+short_description: Adds or removes an SSH known_host entries
+description:
+     - Adds or removes an SSH known_host entries using ssh-keyscan
+version_added: "1.3"
+options:
+  host:
+    description:
+      - Comma seperated list of hostnames or IP addresses to ssh-keyscan
+    required: true
+    default: null    
+  port:
+    description:
+      - Port to connect to on the remote host
+    required: false
+    default: 22
+  keytype:
+    description:
+      - Specifies the type of the key to fetch. C(man ssh-keyscan) for possible values.
+    required: false
+    default: "rsa"
+  hash:
+    description:
+      - Hashe the hostnames/addresses when adding.
+    required: false
+    choices: [ "yes", "no" ]
+    default: "yes"
+  timeout:
+    description:
+      - Timeout for ssh-keyscan connection attempts.
+    required: false
+  user:
+    description:
+      - The username on the remote host whose known_hosts file will be modified
+    required: true
+    default: null
+    aliases: []
+  path:
+    description:
+      - Alternate path to the known_hosts file
+    required: false
+    default: "(homedir)+/.ssh/known_hosts"
+  manage_dir:
+    description:
+      - Whether this module should manage the directory of the known_hosts file
+    required: false
+    choices: [ "yes", "no" ]
+    default: "yes"
+  state:
+    description:
+      - Whether the given known_host entry should or should not be in the file
+    required: false
+    choices: [ "present", "absent" ]
+    default: "present"
+requirements:
+  - ssh-keygen
+  - ssh-keyscan
+description:
+  - "Adds or removes SSH known_host entries"
+author: Evan Wies
+'''
+
+EXAMPLES = '''
+
+# Make sure github.com is a known host for user charlie
+- known_host: user=charlie host=github.com"
+
+# Using alternate directory locations:
+- known_host: user=charlie
+              host=github.com
+              path='/etc/ssh/known_hosts/charlie'
+              manage_dir=no
+'''
+
+import sys
+import os
+import pwd
+import os.path
+import tempfile
+from subprocess import Popen, PIPE
+
+
+def get_known_hosts_pathname(module, user, path=None, manage_dir=True):
+    """
+    Calculate the pathname of known_hosts file, optionally creating the
+    directories and file, properly setting permissions.
+
+    :param str user: name of user in passwd file
+    :param str path: if not None, use provided path rather than default of '~user/.ssh/known_hosts'
+    :param bool manage_dir: if True, create and set ownership of the parent dir of the known_hosts file
+    :return: full path string to known_hosts for user
+    """
+
+    try:
+        user_entry = pwd.getpwnam(user)
+    except KeyError, e:
+        module.fail_json(msg="Failed to lookup user %s: %s" % (user, str(e)))
+    if path is None:
+        homedir    = user_entry.pw_dir
+        sshdir     = os.path.join(homedir, ".ssh")
+        hostsfile  = os.path.join(sshdir, "known_hosts")
+    else:
+        sshdir     = os.path.dirname(path)
+        hostsfile  = path
+
+    uid = user_entry.pw_uid
+    gid = user_entry.pw_gid
+
+    if manage_dir in BOOLEANS_TRUE:
+        if not os.path.exists(sshdir):
+            os.mkdir(sshdir, 0700)
+            if module.selinux_enabled():
+                module.set_default_selinux_context(sshdir, False)
+        os.chown(sshdir, uid, gid)
+        os.chmod(sshdir, 0700)
+
+    if not os.path.exists(hostsfile):
+        basedir = os.path.dirname(hostsfile)
+        if not os.path.exists(basedir):
+            os.makedirs(basedir)
+        try:
+            f = open(hostsfile, "w") #touches file so we can set ownership and perms
+        finally:
+            f.close()
+        if module.selinux_enabled():
+            module.set_default_selinux_context(keysfile, False)
+
+    try:
+        os.chown(hostsfile, uid, gid)
+    except OSError:
+        pass
+
+    return hostsfile
+
+
+def check_presence(hostsfile, host):
+    """ Returns True if the host is in theFinds host keys with ssh-keygen and returns them as a string """
+    output = subprocess.check_output(["ssh-keygen", "-f", hostsfile, "-F", host])
+    return (len(output) != 0)
+
+
+def find_host_key(module, host, port, keytype, hashish, timeout):
+    """ Finds host keys with ssh-keygen and returns them as a string """
+    cmd = ["ssh-keyscan"]
+    if port:    cmd.extend(["-p", str(port)])
+    if keytype: cmd.extend(["-t", keytype])
+    if timeout: cmd.extend(["-T", str(timeout)])
+    if hashish: cmd.append("-H")
+    cmd.append(host)
+
+    proc = Popen(cmd, shell=False, stdout=PIPE, stderr=PIPE)
+    out, err = proc.communicate()
+
+    if proc.returncode != 0:
+        module.fail_json(msg="ssh-keyscan failed: %s" % (err))
+    return out
+
+
+def remove_host(module, hostsfile, host):
+    """ Removes given host from a hostfile """
+    cmd = ["ssh-keygen", "-f", hostsfile, "-R", host]
+    proc = Popen(cmd, shell=False, stdout=PIPE, stderr=PIPE)
+    out, err = proc.communicate()
+    if proc.returncode != 0:
+        module.fail_json(msg="ssh-keygen failed: %s" % (err))
+
+
+def enforce_state(module, params):
+    """
+    Add or remove known hosts.
+    """
+
+    host       = params["host"]
+    port       = params["port"]
+    keytype    = params["keytype"]
+    hashish    = params["hash"] 
+    timeout    = params["timeout"] 
+    user       = params["user"]
+    path       = params.get("path", None)
+    manage_dir = params.get("manage_dir", True)
+    state      = params.get("state", "present")
+
+    # get our current hostsfile and copy it to a tempfile
+    known_hosts_path = get_known_hosts_pathname(module, user, path, manage_dir)
+    try:
+        temp_dir = tempfile.gettempdir()
+        temp_path = os.path.join(temp_dir, 'tmp.known_hosts.%s' % (user))
+        shutil.copy2(known_hosts_path, temp_path)
+    except:
+        module.fail_json(msg="Failed to copy temporary %s from %s: %s" % (known_hosts_path, tmp_path, str(e)))
+
+    # Go over the hosts, making sure they are absent/present
+    hosts = params["host"].split(',')
+    new_keys = []
+    params['hosts_added'] = 0
+    params['hosts_removed'] = 0
+    params['changed'] = False
+
+    for host in hosts:
+        present = check_presence(temp_path, host)
+        # handle idempotent state=present
+        if state=="present":
+            if present:
+                continue
+            keys = find_host_key(module, host, port, keytype, hashish, timeout)
+            if keys:
+                new_keys.extend( keys.replace('\r','').split('\n') )
+                params['hosts_added'] += 1
+            params['changed'] = True
+
+        elif state=="absent":
+            if not present:
+                continue
+            remove_host(module, temp_path, host)
+
+            # Unfortunately, the only way to know if we actually changed anything
+            # is by comparing known_hosts to known_hosts.old
+            # Is it worth bothering?!
+            # We got here because of check_presence, so this probably did something
+            params['hosts_removed'] += 1
+            params['changed'] = True
+
+    # Write the append the new keys, copy to the real known_hosts, and cleanup
+    if params['changed']:
+        # write new_hosts to temp_file
+        new_keys = filter(None, new_keys)
+        with open(temp_path, "a") as temp_file:
+            for key in new_keys:
+                temp_file.write(key + '\n')
+
+        # move the resulting file atomically, writing over the original known_hosts
+        module.atomic_move(temp_path, known_hosts_path)
+
+        # Remove ssh-keygen's an 'original contents' file
+        try:
+            os.remove(temp_path + '.old')
+        except OSError:
+            pass
+
+    params["known_hosts_path"] = known_hosts_path
+    params['host_keys_added'] = len(new_keys)
+    return params
+
+
+def main():
+
+    module = AnsibleModule(
+        argument_spec = dict(
+           host       = dict(required=True,  type='str'),
+           port       = dict(required=False, type='int'),
+           keytype    = dict(required=False, type='str',  default="rsa"),
+           hash       = dict(required=False, type='bool', default=True),
+           timeout    = dict(required=False, type='int'),
+           user       = dict(required=True,  type='str'),
+           path       = dict(required=False, type='str'),
+           manage_dir = dict(required=False, type='bool', default=True),
+           state      = dict(default='present', choices=['absent','present'])
+        )
+    )
+
+    results = enforce_state(module, module.params)
+    module.exit_json(**results)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
