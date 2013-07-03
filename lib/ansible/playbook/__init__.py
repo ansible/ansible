@@ -218,7 +218,7 @@ class PlayBook(object):
         for (play_ds, play_basedir) in zip(self.playbook, self.play_basedirs):
             play = Play(self, play_ds, play_basedir)
             assert play is not None
-            
+
             matched_tags, unmatched_tags = play.compare_tags(self.only_tags)
             matched_tags_all = matched_tags_all | matched_tags
             unmatched_tags_all = unmatched_tags_all | unmatched_tags
@@ -333,7 +333,7 @@ class PlayBook(object):
             ansible.callbacks.set_task(self.callbacks, None)
             ansible.callbacks.set_task(self.runner_callbacks, None)
             return True
-        
+
         # load up an appropriate ansible runner to run the task in parallel
         results = self._run_task_internal(task)
 
@@ -342,7 +342,7 @@ class PlayBook(object):
         if results is None:
             hosts_remaining = False
             results = {}
- 
+
         contacted = results.get('contacted', {})
         self.stats.compute(results, ignore_errors=task.ignore_errors)
 
@@ -410,7 +410,7 @@ class PlayBook(object):
 
         self.callbacks.on_setup()
         self.inventory.restrict_to(host_list)
-        
+
         ansible.callbacks.set_task(self.callbacks, None)
         ansible.callbacks.set_task(self.runner_callbacks, None)
 
@@ -440,10 +440,10 @@ class PlayBook(object):
 
     def generate_retry_inventory(self, replay_hosts):
         '''
-        called by /usr/bin/ansible when a playbook run fails. It generates a inventory 
+        called by /usr/bin/ansible when a playbook run fails. It generates a inventory
         that allows re-running on ONLY the failed hosts.  This may duplicate some
         variable information in group_vars/host_vars but that is ok, and expected.
-        ''' 
+        '''
 
         buf = StringIO.StringIO()
         for x in replay_hosts:
@@ -509,7 +509,7 @@ class PlayBook(object):
 
                     # meta tasks are an internalism and are not valid for end-user playbook usage
                     # here a meta task is a placeholder that signals handlers should be run
- 
+
                     if task.meta == 'flush_handlers':
                         for handler in play.handlers():
                             if len(handler.notified_by) > 0:
