@@ -735,7 +735,7 @@ class PlayBook(object):
                 # only run the task if name or action matches the filter
                 should_run_filter = False
                 for term in self.task_filter:
-                    if term in task.name or term in task.action:
+                    if term in task.name or term in task.action or term in task.tags:
                         should_run_filter = True
                         break
 
