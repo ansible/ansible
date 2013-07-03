@@ -21,9 +21,14 @@ import pipes
 import socket
 import random
 import logging
+import traceback
+import fcntl
+import sys
+from binascii import hexlify
 from ansible.callbacks import vvv
 from ansible import errors
 from ansible import utils
+from ansible import constants as C
 
 # prevent paramiko warning noise -- see http://stackoverflow.com/questions/3920502/
 HAVE_PARAMIKO=False
@@ -36,11 +41,28 @@ with warnings.catch_warnings():
     except ImportError:
         pass
 
+class MyAutoAddPolicy(object):
+    """
+    Modified version of AutoAddPolicy in paramiko so we can determine when keys are added.
+
+    Policy for automatically adding the hostname and new host key to the
+    local L{HostKeys} object, and saving it.  This is used by L{SSHClient}.
+    """
+
+    def missing_host_key(self, client, hostname, key):
+
+        key._added_by_ansible_this_time = True
+
+        # existing implementation below:
+        client._host_keys.add(hostname, key.get_name(), key)
+        if client._host_keys_filename is not None:
+            client.save_host_keys(client._host_keys_filename)
+        
+
 # keep connection objects on a per host basis to avoid repeated attempts to reconnect
 
 SSH_CONNECTION_CACHE = {}
 SFTP_CONNECTION_CACHE = {}
-
 
 class Connection(object):
     ''' SSH based connections with Paramiko '''
@@ -76,7 +98,12 @@ class Connection(object):
         vvv("ESTABLISH CONNECTION FOR USER: %s on PORT %s TO %s" % (self.user, self.port, self.host), host=self.host)
 
         ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+     
+        self.keyfile = os.path.expanduser("~/.ssh/known_hosts")
+
+        if C.HOST_KEY_CHECKING:
+            ssh.load_system_host_keys()
+        ssh.set_missing_host_key_policy(MyAutoAddPolicy())
 
         allow_agent = True
         if self.password is not None:
@@ -188,6 +215,41 @@ class Connection(object):
         except IOError:
             raise errors.AnsibleError("failed to transfer file from %s" % in_path)
 
+    def _save_ssh_host_keys(self, filename):
+        ''' 
+        not using the paramiko save_ssh_host_keys function as we want to add new SSH keys at the bottom so folks 
+        don't complain about it :) 
+        '''
+
+        added_any = False        
+        for hostname, keys in self.ssh._host_keys.iteritems():
+            for keytype, key in keys.iteritems():
+                added_this_time = getattr(key, '_added_by_ansible_this_time', False)
+                if added_this_time:
+                    added_any = True
+                    break
+
+        if not added_any:
+            return
+
+        path = os.path.expanduser("~/.ssh")
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+        f = open(filename, 'w')
+        for hostname, keys in self.ssh._host_keys.iteritems():
+            for keytype, key in keys.iteritems():
+               # was f.write
+               added_this_time = getattr(key, '_added_by_ansible_this_time', False)
+               if not added_this_time:
+                   f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
+        for hostname, keys in self.ssh._host_keys.iteritems():
+            for keytype, key in keys.iteritems():
+               added_this_time = getattr(key, '_added_by_ansible_this_time', False)
+               if added_this_time:
+                   f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
+        f.close()
+
     def close(self):
         ''' terminate the connection '''
         cache_key = self._cache_key()
@@ -195,5 +257,24 @@ class Connection(object):
         SFTP_CONNECTION_CACHE.pop(cache_key, None)
         if self.sftp is not None:
             self.sftp.close()
+
+        # add any new SSH host keys
+        lockfile = self.keyfile.replace("known_hosts",".known_hosts.lock") 
+        KEY_LOCK = open(lockfile, 'w')
+        fcntl.flock(KEY_LOCK, fcntl.LOCK_EX)
+        
+        try:
+            # just in case any were added recently
+            self.ssh.load_system_host_keys()
+            self.ssh._host_keys.update(self.ssh._system_host_keys)
+            #self.ssh.save_host_keys(self.keyfile)
+            self._save_ssh_host_keys(self.keyfile)
+        except:
+            # unable to save keys, including scenario when key was invalid
+            # and caught earlier
+            traceback.print_exc()
+            pass
+        fcntl.flock(KEY_LOCK, fcntl.LOCK_UN)
+
         self.ssh.close()
         
