@@ -63,6 +63,7 @@ class PlayBook(object):
         sudo_user        = C.DEFAULT_SUDO_USER,
         extra_vars       = None,
         only_tags        = None,
+        task_filter     =  "",
         subset           = C.DEFAULT_SUBSET,
         inventory        = None,
         check            = False,
@@ -117,6 +118,7 @@ class PlayBook(object):
         self.global_vars      = {}
         self.private_key_file = private_key_file
         self.only_tags        = only_tags
+        self.task_filter     = task_filter
         self.any_errors_fatal = any_errors_fatal
 
         self.callbacks.playbook = self
@@ -216,7 +218,7 @@ class PlayBook(object):
         for (play_ds, play_basedir) in zip(self.playbook, self.play_basedirs):
             play = Play(self, play_ds, play_basedir)
             assert play is not None
-            
+
             matched_tags, unmatched_tags = play.compare_tags(self.only_tags)
             matched_tags_all = matched_tags_all | matched_tags
             unmatched_tags_all = unmatched_tags_all | unmatched_tags
@@ -331,7 +333,7 @@ class PlayBook(object):
             ansible.callbacks.set_task(self.callbacks, None)
             ansible.callbacks.set_task(self.runner_callbacks, None)
             return True
-        
+
         # load up an appropriate ansible runner to run the task in parallel
         results = self._run_task_internal(task)
 
@@ -340,7 +342,7 @@ class PlayBook(object):
         if results is None:
             hosts_remaining = False
             results = {}
- 
+
         contacted = results.get('contacted', {})
         self.stats.compute(results, ignore_errors=task.ignore_errors)
 
@@ -408,7 +410,7 @@ class PlayBook(object):
 
         self.callbacks.on_setup()
         self.inventory.restrict_to(host_list)
-        
+
         ansible.callbacks.set_task(self.callbacks, None)
         ansible.callbacks.set_task(self.runner_callbacks, None)
 
@@ -438,10 +440,10 @@ class PlayBook(object):
 
     def generate_retry_inventory(self, replay_hosts):
         '''
-        called by /usr/bin/ansible when a playbook run fails. It generates a inventory 
+        called by /usr/bin/ansible when a playbook run fails. It generates a inventory
         that allows re-running on ONLY the failed hosts.  This may duplicate some
         variable information in group_vars/host_vars but that is ok, and expected.
-        ''' 
+        '''
 
         buf = StringIO.StringIO()
         for x in replay_hosts:
@@ -507,7 +509,7 @@ class PlayBook(object):
 
                     # meta tasks are an internalism and are not valid for end-user playbook usage
                     # here a meta task is a placeholder that signals handlers should be run
- 
+
                     if task.meta == 'flush_handlers':
                         for handler in play.handlers():
                             if len(handler.notified_by) > 0:
@@ -526,14 +528,22 @@ class PlayBook(object):
                 hosts_count = len(self._list_available_hosts(play.hosts))
 
                 # only run the task if the requested tags match
-                should_run = False
+                should_run_tags = False
                 for x in self.only_tags:
 
                     for y in task.tags:
                         if (x==y):
-                            should_run = True
+                            should_run_tags = True
                             break
 
+                # only run the task if name or action matches the filter
+                should_run_filter = False
+                for term in self.task_filter:
+                    if term in task.name or term in task.action:
+                        should_run_filter = True
+                        break
+
+                should_run = should_run_tags and should_run_filter
                 if should_run:
                     if not self._run_task(play, task, False):
                         # whether no hosts matched is fatal or not depends if it was on the initial step.

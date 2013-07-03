@@ -23,7 +23,7 @@ import os
 
 import ansible.playbook
 import ansible.constants as C
-import ansible.utils.template 
+import ansible.utils.template
 from ansible import errors
 from ansible import callbacks
 from ansible import utils
@@ -53,16 +53,18 @@ def main(args):
 
     # create parser for CLI options
     parser = utils.base_parser(
-        constants=C, 
+        constants=C,
         usage = "%prog playbook.yml",
-        connect_opts=True, 
-        runas_opts=True, 
-        subset_opts=True, 
+        connect_opts=True,
+        runas_opts=True,
+        subset_opts=True,
         check_opts=True,
         diff_opts=True
     )
     parser.add_option('-e', '--extra-vars', dest="extra_vars", default=None,
         help="set additional key=value variables from the CLI")
+    parser.add_option('', '--filter', dest='filter', default='',
+        help="only run tasks whose name or action includes a filter term")
     parser.add_option('-t', '--tags', dest='tags', default='all',
         help="only run plays and tasks tagged with these values")
     parser.add_option('--syntax-check', dest='syntax', action='store_true',
@@ -71,7 +73,7 @@ def main(args):
         help="list all tasks that would be executed")
     parser.add_option('--step', dest='step', action='store_true',
         help="one-step-at-a-time: confirm each task before running")
-    parser.add_option('--start-at-task', dest='start_at', 
+    parser.add_option('--start-at-task', dest='start_at',
         help="start the playbook at the task matching this name")
 
     options, args = parser.parse_args(args)
@@ -97,6 +99,7 @@ def main(args):
     else:
         extra_vars = utils.parse_kv(options.extra_vars)
     only_tags = options.tags.split(",")
+    task_filter = options.filter.split(",")
 
     for playbook in args:
         if not os.path.exists(playbook):
@@ -137,7 +140,8 @@ def main(args):
             private_key_file=options.private_key_file,
             only_tags=only_tags,
             check=options.check,
-            diff=options.diff
+            diff=options.diff,
+            task_filter=task_filter
         )
 
         if options.listhosts or options.listtasks:
@@ -173,7 +177,7 @@ def main(args):
             # if we've not exited by now then we are fine.
             print 'Playbook Syntax is fine'
             return 0
-            
+
         failed_hosts = []
 
         try:
@@ -202,7 +206,7 @@ def main(args):
                     colorize('ok', t['ok'], 'green'),
                     colorize('changed', t['changed'], 'yellow'),
                     colorize('unreachable', t['unreachable'], 'red'),
-                    colorize('failed', t['failures'], 'red')), 
+                    colorize('failed', t['failures'], 'red')),
                     screen_only=True
                 )
 
@@ -211,11 +215,11 @@ def main(args):
                     colorize('ok', t['ok'], None),
                     colorize('changed', t['changed'], None),
                     colorize('unreachable', t['unreachable'], None),
-                    colorize('failed', t['failures'], None)), 
+                    colorize('failed', t['failures'], None)),
                     log_only=True
                 )
 
- 
+
             print ""
             if len(failed_hosts) > 0:
                 return 2
