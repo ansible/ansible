@@ -53,7 +53,7 @@ options:
     aliases: []
   wait:
     description:
-      - wait for the instance to be in state 'available' before returning.
+      - wait for the AMI to be in state 'available' before returning.
     required: false
     default: "no"
     choices: [ "yes", "no" ]
@@ -72,12 +72,6 @@ options:
   region:
     description:
       - the EC2 region to use
-    required: false
-    default: null
-    aliases: []
-  zone:
-    description:
-      - availability zone in which to launch the instance
     required: false
     default: null
     aliases: []
@@ -158,14 +152,13 @@ import time
 
 try:
     import boto.ec2
-    from boto.exception import EC2ResponseError
 except ImportError:
     print "failed=True msg='boto required for this module'"
     sys.exit(1)
 
 def create_image(module, ec2):
     """
-    Creates new instances
+    Creates new AMI
 
     module : AnsbileModule object
     ec2: authenticated ec2 connection object
@@ -191,7 +184,7 @@ def create_image(module, ec2):
     # wait here until the image is gone
     img = ec2.get_image(image_id)
     wait_timeout = time.time() + wait_timeout
-    while wait and wait_timeout > time.time() and (img == None or img.state != 'available'):
+    while wait and wait_timeout > time.time() and (img is None or img.state != 'available'):
         img = ec2.get_image(image_id)
         time.sleep(3)
     if wait and wait_timeout <= time.time():
@@ -214,7 +207,7 @@ def deregister_image(module, ec2):
 
     img = ec2.get_image(image_id)
     if img == None:
-        module.fail_json(msg = "Image %s does not exist" % image_id)
+        module.fail_json(msg = "Image %s does not exist" % image_id, changed=False)
 
     try:
         params = {'image_id': image_id,
@@ -227,7 +220,7 @@ def deregister_image(module, ec2):
     # wait here until the image is gone
     img = ec2.get_image(image_id)
     wait_timeout = time.time() + wait_timeout
-    while wait and wait_timeout > time.time() and img != None:
+    while wait and wait_timeout > time.time() and img is not None:
         img = ec2.get_image(image_id)
         time.sleep(3)
     if wait and wait_timeout <= time.time():
@@ -291,8 +284,7 @@ def main():
         deregister_image(module, ec2)
 
     elif module.params.get('state') == 'present':
-        # Changed is always set to true when provisioning new instances
-        changed = True
+        # Changed is always set to true when provisioning new AMI
         if not module.params.get('instance_id'):
             module.fail_json(msg='instance_id parameter is required for new image')
         if not module.params.get('name'):
