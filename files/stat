@@ -32,16 +32,18 @@ author: Bruce Pennypacker
 '''
 
 EXAMPLES = '''
-# Obtain the stats of /etc/foo.conf
-- stats: >
-      path=/etc/foo.conf
-
+# Obtain the stats of /etc/foo.conf, and check that the file still belongs
+# to 'root'. Fail otherwise.
+- stats: path=/etc/foo.conf
+  register: st
+- fail: msg="Whoops! file ownership has changed"
+  when: st.stat.pw_name != 'root'
 '''
 
 import os
 import sys
 from stat import *
-from pprint import pprint
+import pwd
 
 def main():
     module = AnsibleModule(
@@ -99,6 +101,16 @@ def main():
     if S_ISDIR(mode) and os.path.islink(path):
         d['isdir'] = False
         d['islnk'] = True
+
+    if S_ISREG(mode):
+        d['md5']        = module.md5(path)
+
+    try:
+        pw = pwd.getpwuid(st.st_uid)
+
+        d['pw_name']   = pw.pw_name
+    except:
+        pass
         
 
     module.exit_json(changed=False, stat=d)
