@@ -20,7 +20,9 @@
 from ansible.utils.template import template
 from ansible import utils
 from ansible import errors
+from ansible import __version__ as ANSIBLE_VERSION
 from ansible.playbook.task import Task
+from distutils.version import StrictVersion
 import shlex
 import os
 
@@ -31,7 +33,7 @@ class Play(object):
        'handlers', 'remote_user', 'remote_port',
        'sudo', 'sudo_user', 'transport', 'playbook',
        'tags', 'gather_facts', 'serial', '_ds', '_handlers', '_tasks',
-       'basedir', 'any_errors_fatal', 'roles'
+       'basedir', 'any_errors_fatal', 'roles', 'ansible_version',
     ]
 
     # to catch typos and so forth -- these are userland names
@@ -40,7 +42,8 @@ class Play(object):
        'hosts', 'name', 'vars', 'vars_prompt', 'vars_files',
        'tasks', 'handlers', 'user', 'port', 'include',
        'sudo', 'sudo_user', 'connection', 'tags', 'gather_facts', 'serial',
-       'any_errors_fatal', 'roles', 'pre_tasks', 'post_tasks'
+       'any_errors_fatal', 'roles', 'pre_tasks', 'post_tasks',
+       'ansible_required',
     ]
 
     # *************************************************
@@ -51,6 +54,13 @@ class Play(object):
         for x in ds.keys():
             if not x in Play.VALID_KEYS:
                 raise errors.AnsibleError("%s is not a legal parameter in an Ansible Playbook" % x)
+
+        self.ansible_version = StrictVersion(ANSIBLE_VERSION)
+        ansible_required = ds.get('ansible_required', None)
+        if ansible_required:
+            required_version = StrictVersion(str(ansible_required))
+            if required_version > self.ansible_version:
+                raise errors.AnsibleError("This play required Ansible version %s or higher. Ansible %s is installed." % (ansible_required, ansible_version))
 
         # allow all playbook keys to be set by --extra-vars
         self.vars             = ds.get('vars', {})
@@ -487,6 +497,15 @@ class Play(object):
                 if self._has_vars_in(filename4):
                     continue
                 new_vars = utils.parse_yaml_from_file(filename4)
+                filename5 = filename4.replace("\\", "/")
+                if 'roles/' in filename5:
+                    ansible_required = new_vars.get('ansible_required', None)
+                    if ansible_required:
+                        required_version = StrictVersion(str(ansible_required))
+                        role_name = filename5.split("roles/")[1].split("/")[0]
+                        if required_version > self.ansible_version:
+                            raise errors.AnsibleError("Role '%s' requires Ansible version %s or higher. Ansible %s is installed." % (role_name, ansible_required, self.ansible_version))
+
                 if new_vars:
                     if type(new_vars) != dict:
                         raise errors.AnsibleError("%s must be stored as dictonary/hash: %s" % (filename4, type(new_vars)))
