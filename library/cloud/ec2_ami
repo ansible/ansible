@@ -241,7 +241,7 @@ def main():
             delete_snapshot = dict(),
             name = dict(),
             wait = dict(type="bool", default=False),
-            wait_timeout = dict(default=300),
+            wait_timeout = dict(default=900),
             description = dict(default=""),
             no_reboot = dict(default=True, type="bool"),
             state = dict(default='present')
