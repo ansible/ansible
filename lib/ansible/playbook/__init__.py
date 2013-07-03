@@ -71,6 +71,7 @@ class PlayBook(object):
         extra_vars       = None,
         only_tags        = None,
         skip_tags        = None,
+        task_filter     =  "",
         subset           = C.DEFAULT_SUBSET,
         inventory        = None,
         check            = False,
@@ -146,6 +147,7 @@ class PlayBook(object):
         self.private_key_file = private_key_file
         self.only_tags        = only_tags
         self.skip_tags        = skip_tags
+        self.task_filter     = task_filter
         self.any_errors_fatal = any_errors_fatal
         self.su               = su
         self.su_user          = su_user
@@ -722,14 +724,22 @@ class PlayBook(object):
                     continue
 
                 # only run the task if the requested tags match
-                should_run = False
+                should_run_tags = False
                 for x in self.only_tags:
 
                     for y in task.tags:
                         if x == y:
-                            should_run = True
+                            should_run_tags = True
                             break
 
+                # only run the task if name or action matches the filter
+                should_run_filter = False
+                for term in self.task_filter:
+                    if term in task.name or term in task.action:
+                        should_run_filter = True
+                        break
+
+                should_run = should_run_tags and should_run_filter
                 # Check for tags that we need to skip
                 if should_run:
                     if any(x in task.tags for x in self.skip_tags):
