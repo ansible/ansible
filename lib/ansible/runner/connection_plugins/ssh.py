@@ -53,7 +53,6 @@ class Connection(object):
             self.common_args += ["-o", "ControlMaster=auto",
                                  "-o", "ControlPersist=60s",
                                  "-o", "ControlPath=/tmp/ansible-ssh-%h-%p-%r"]
-        self.common_args += ["-o", "StrictHostKeyChecking=no"]
         if self.port is not None:
             self.common_args += ["-o", "Port=%d" % (self.port)]
         if self.private_key_file is not None:
