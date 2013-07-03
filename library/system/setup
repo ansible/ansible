@@ -518,7 +518,9 @@ class LinuxHardware(Hardware):
     def get_cpu_facts(self):
         i = 0
         physid = 0
+        coreid = 0
         sockets = {}
+        cores = {}
         if not os.access("/proc/cpuinfo", os.R_OK):
             return
         self.facts['processor'] = []
@@ -536,14 +538,20 @@ class LinuxHardware(Hardware):
                 physid = data[1].strip()
                 if physid not in sockets:
                     sockets[physid] = 1
+            elif key == 'core id':
+                coreid = data[1].strip()
+                if coreid not in sockets:
+                    cores[coreid] = 1
             elif key == 'cpu cores':
                 sockets[physid] = int(data[1].strip())
-        if len(sockets) > 0:
-            self.facts['processor_count'] = len(sockets)
-            self.facts['processor_cores'] = reduce(lambda x, y: x + y, sockets.values())
-        else:
-            self.facts['processor_count'] = i
-            self.facts['processor_cores'] = 'NA'
+            elif key == 'siblings':
+                cores[coreid] = int(data[1].strip())
+        self.facts['processor_count'] = sockets and len(sockets) or i
+        self.facts['processor_cores'] = sockets.values() and sockets.values()[0] or 1
+        self.facts['processor_threads_per_core'] = ((cores.values() and
+            cores.values()[0] or 1) / self.facts['processor_cores'])
+        self.facts['processor_vcpus'] = (self.facts['processor_threads_per_core'] *
+            self.facts['processor_count'] * self.facts['processor_cores'])
 
     def get_dmi_facts(self):
         ''' learn dmi facts from system
