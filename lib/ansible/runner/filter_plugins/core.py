@@ -19,6 +19,7 @@ import base64
 import json
 import os.path
 import yaml
+import types
 from ansible import errors
 
 def to_nice_yaml(*a, **kw):
@@ -49,6 +50,17 @@ def mandatory(a):
         raise errors.AnsibleError('Mandatory variable not defined.')
     return a
 
+def bool(a):
+    ''' return a bool for the arg '''
+    if a is None or type(a) == bool:
+        return a
+    if type(a) in types.StringTypes:
+        a = a.lower()
+    if a in ['yes', 'on', '1', 'true', 1]:
+        return True
+    else:
+        return False
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -78,5 +90,8 @@ class FilterModule(object):
 
             # variable existence
             'mandatory': mandatory,
+
+            # value as boolean
+            'bool': bool,
         }
     
