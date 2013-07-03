@@ -76,7 +76,7 @@ class Connection(object):
         vvv("ESTABLISH CONNECTION FOR USER: %s on PORT %s TO %s" % (self.user, self.port, self.host), host=self.host)
 
         ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.load_system_host_keys(os.path.expanduser("~/.ssh/known_hosts"))
 
         allow_agent = True
         if self.password is not None:
@@ -196,4 +196,4 @@ class Connection(object):
         if self.sftp is not None:
             self.sftp.close()
         self.ssh.close()
-        
+
