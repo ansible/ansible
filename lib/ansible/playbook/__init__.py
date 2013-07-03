@@ -63,6 +63,7 @@ class PlayBook(object):
         sudo_user        = C.DEFAULT_SUDO_USER,
         extra_vars       = None,
         only_tags        = None,
+        task_filter     =  "",
         subset           = C.DEFAULT_SUBSET,
         inventory        = None,
         check            = False,
@@ -117,6 +118,7 @@ class PlayBook(object):
         self.global_vars      = {}
         self.private_key_file = private_key_file
         self.only_tags        = only_tags
+        self.task_filter     = task_filter
         self.any_errors_fatal = any_errors_fatal
 
         self.callbacks.playbook = self
@@ -533,6 +535,13 @@ class PlayBook(object):
                         if (x==y):
                             should_run = True
                             break
+
+                # only run the task if name or action matches the filter
+                should_run = False
+                for term in self.task_filter:
+                    if term in task.name or term in task.action:
+                        should_run = True
+                        break
 
                 if should_run:
                     if not self._run_task(play, task, False):

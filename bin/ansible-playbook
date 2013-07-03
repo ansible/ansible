@@ -63,6 +63,8 @@ def main(args):
     )
     parser.add_option('-e', '--extra-vars', dest="extra_vars", default=None,
         help="set additional key=value variables from the CLI")
+    parser.add_option('', '--filter', dest='filter', default='',
+        help="only run tasks whose name or action includes a filter term")
     parser.add_option('-t', '--tags', dest='tags', default='all',
         help="only run plays and tasks tagged with these values")
     parser.add_option('--syntax-check', dest='syntax', action='store_true',
@@ -97,6 +99,7 @@ def main(args):
     else:
         extra_vars = utils.parse_kv(options.extra_vars)
     only_tags = options.tags.split(",")
+    task_filter = options.filter.split(",")
 
     for playbook in args:
         if not os.path.exists(playbook):
@@ -137,7 +140,8 @@ def main(args):
             private_key_file=options.private_key_file,
             only_tags=only_tags,
             check=options.check,
-            diff=options.diff
+            diff=options.diff,
+            task_filter=task_filter
         )
 
         if options.listhosts or options.listtasks:
