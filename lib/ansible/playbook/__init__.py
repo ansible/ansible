@@ -528,21 +528,22 @@ class PlayBook(object):
                 hosts_count = len(self._list_available_hosts(play.hosts))
 
                 # only run the task if the requested tags match
-                should_run = False
+                should_run_tags = False
                 for x in self.only_tags:
 
                     for y in task.tags:
                         if (x==y):
-                            should_run = True
+                            should_run_tags = True
                             break
 
                 # only run the task if name or action matches the filter
-                should_run = False
+                should_run_filter = False
                 for term in self.task_filter:
                     if term in task.name or term in task.action:
-                        should_run = True
+                        should_run_filter = True
                         break
 
+                should_run = should_run_tags and should_run_filter
                 if should_run:
                     if not self._run_task(play, task, False):
                         # whether no hosts matched is fatal or not depends if it was on the initial step.
