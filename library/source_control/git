@@ -237,10 +237,10 @@ def fetch(git_path, module, repo, dest, version, remote):
     (rc, out2, err2) = module.run_command("%s fetch --tags %s" % (git_path, remote))
     if rc != 0:
         module.fail_json(msg="Failed to download remote objects and refs")
-    (rc, out3, err3) = submodule_update(git_path, module, repo, dest)
+    (rc, out3, err3) = submodule_update(git_path, module, dest)
     return (rc, out1 + out2 + out3, err1 + err2 + err3)
 
-def submodule_update(git_path, module, repo, dest):
+def submodule_update(git_path, module, dest):
     ''' init and update any submodules '''
     os.chdir(dest)
     # skip submodule commands if .gitmodules is not present
@@ -275,7 +275,11 @@ def switch_version(git_path, module, dest, remote, version):
         if rc != 0:
             module.fail_json(msg="Failed to checkout branch %s" % branch)
         cmd = "%s reset --hard %s" % (git_path, remote)
-    return module.run_command(cmd, check_rc=True)
+    (rc, out1, err1) = module.run_command(cmd)
+    if rc != 0:
+        module.fail_json(msg="Failed to checkout branch %s" % (branch))
+    (rc, out2, err2) = submodule_update(git_path, module, dest)
+    return (rc, out1 + out2, err1 + err2)
 
 # ===========================================
 
@@ -356,6 +360,8 @@ def main():
     # switch to version specified regardless of whether
     # we cloned or pulled
     (rc, out, err) = switch_version(git_path, module, dest, remote, version)
+    if rc != 0:
+        module.fail_json(msg=err)
 
     # determine if we changed anything
     after = get_version(git_path, dest)
