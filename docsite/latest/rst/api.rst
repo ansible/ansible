@@ -313,12 +313,12 @@ system, or even (yes, really) making sound effects.  Some examples are contained
 Connection Type Plugins
 -----------------------
 
-By default, ansible ships with a 'paramiko' SSH, native ssh (just called 'ssh'), and 'local' connection type.  Release 0.8 also
-added an accelerated connection type named 'fireball'.  All of these can be used
+By default, ansible ships with a 'paramiko' SSH, native ssh (just called 'ssh'), and 'local' connection type, and an accelerated connection type named 'fireball'.  All of these can be used
 in playbooks and with /usr/bin/ansible to decide how you want to talk to remote machines.  The basics of these connection types
 are covered in the 'getting started' section.  Should you want to extend Ansible to support other transports (SNMP? Message bus?
 Carrier Pigeon?) it's as simple as copying the format of one of the existing modules and dropping it into the connection plugins
-directory.
+directory.   The value of 'smart' for a connection allows selection of paramiko or openssh based on system capabilities, and chooses
+'ssh' if OpenSSH supports ControlPersist, in Ansible 1.2.1 an later.  Previous versions did not support 'smart'.
 
 Lookup Plugins
 --------------
