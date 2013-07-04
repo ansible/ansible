@@ -130,7 +130,7 @@ def po_to_nevra(po):
     else:
         return '%s-%s-%s.%s' % (po.name, po.version, po.release, po.arch)
 
-def is_installed(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=[], dis_repos=[]):
+def is_installed(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=[], dis_repos=[], is_pkg=False):
 
     if not repoq:
 
@@ -155,8 +155,12 @@ def is_installed(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=[], dis_
 
         cmd = repoq + ["--disablerepo=*", "--pkgnarrow=installed", "--qf", qf, pkgspec]
         rc,out,err = module.run_command(cmd)
-        cmd = repoq + ["--disablerepo=*", "--pkgnarrow=installed", "--qf", qf, "--whatprovides", pkgspec]
-        rc2,out2,err2 = module.run_command(cmd)
+        if not is_pkg:
+            cmd = repoq + ["--disablerepo=*", "--pkgnarrow=installed", "--qf", qf, "--whatprovides", pkgspec]
+            rc2,out2,err2 = module.run_command(cmd)
+        else:
+            rc2,out2,err2 = (0, '', '')
+            
         if rc == 0 and rc2 == 0:
             out += out2
             return [ p for p in out.split('\n') if p.strip() ]
@@ -406,6 +410,15 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
 
         # range requires or file-requires or pkgname :(
         else:
+            # most common case is the pkg is already installed and done
+            # short circuit all the bs - and search for it as a pkg in is_installed
+            # if you find it then we're done
+            if not set(['*','?']).intersection(set(spec)):
+                pkgs = is_installed(module, repoq, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos, is_pkg=True)
+                if pkgs:
+                    res['results'].append('%s providing %s is already installed' % (pkgs[0], spec))
+                    continue
+            
             # look up what pkgs provide this
             pkglist = what_provides(module, repoq, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos)
             if not pkglist:
@@ -417,7 +430,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
 
             found = False
             for this in pkglist:
-                if is_installed(module, repoq, this, conf_file, en_repos=en_repos, dis_repos=dis_repos):
+                if is_installed(module, repoq, this, conf_file, en_repos=en_repos, dis_repos=dis_repos, is_pkg=True):
                     found = True
                     res['results'].append('%s providing %s is already installed' % (this, spec))
                     break
