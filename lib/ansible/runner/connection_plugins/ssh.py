@@ -131,8 +131,9 @@ class Connection(object):
         if C.HOST_KEY_CHECKING and not_in_host_file:
             # lock around the initial SSH connectivity so the user prompt about whether to add 
             # the host to known hosts is not intermingled with multiprocess output.
-            KEY_LOCK = self.runner.lockfile
-            fcntl.lockf(KEY_LOCK, fcntl.LOCK_EX)
+            fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_EX)
+            fcntl.lockf(self.runner.output_lockfile, fcntl.LOCK_EX)
+        
 
 
         try:
@@ -191,8 +192,8 @@ class Connection(object):
         if C.HOST_KEY_CHECKING and not_in_host_file:
             # lock around the initial SSH connectivity so the user prompt about whether to add 
             # the host to known hosts is not intermingled with multiprocess output.
-            KEY_LOCK = self.runner.lockfile
-            fcntl.lockf(KEY_LOCK, fcntl.LOCK_EX)
+            fcntl.lockf(self.runner.output_lockfile, fcntl.LOCK_UN)
+            fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_UN)
 
         if p.returncode != 0 and stderr.find('Bad configuration option: ControlPersist') != -1:
             raise errors.AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" (or ansible_ssh_args in the config file) before running again')
