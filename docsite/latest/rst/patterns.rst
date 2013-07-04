@@ -83,7 +83,7 @@ ansible_ssh_user
 ansible_ssh_pass
   The ssh password to use (this is insecure, we strongly recommend using --ask-pass or SSH keys)
 ansible_connection
-  Connection type of the host. Candidates are local, ssh or paramiko.  Default is paramiko
+  Connection type of the host. Candidates are local, ssh or paramiko.  The default is paramiko before Ansible 1.2, and 'smart' afterwards which detects whether usage of 'ssh' would be feasible based on whether ControlPersist is supported.
 ansible_ssh_private_key_file
   Private key file used by ssh.  Useful if using multiple keys and you don't want to use SSH agent.
 ansible_syslog_facility

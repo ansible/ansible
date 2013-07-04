@@ -34,7 +34,8 @@ How do I get ansible to reuse connections, enable Kerberized SSH, or have Ansibl
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Switch your default connectiont type in the configuration file to 'ssh', or use '-c ssh' to use
-Native OpenSSH for connections instead of the python paramiko library.
+Native OpenSSH for connections instead of the python paramiko library.  In Ansible 1.2.1 and later, 'ssh' will be used
+by default if OpenSSH is new enough to support ControlPersist as an option.
 
 Paramiko is great for starting out, but the OpenSSH type offers many advanced options.  You will want to run Ansible
 from a machine new enough to support ControlPersist, if you are using this connection type.  You can still manage
