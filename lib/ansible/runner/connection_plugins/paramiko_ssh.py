@@ -98,12 +98,13 @@ class Connection(object):
         vvv("ESTABLISH CONNECTION FOR USER: %s on PORT %s TO %s" % (self.user, self.port, self.host), host=self.host)
 
         ssh = paramiko.SSHClient()
-     
+
         self.keyfile = os.path.expanduser("~/.ssh/known_hosts")
 
         if C.HOST_KEY_CHECKING:
             ssh.load_system_host_keys()
-        ssh.set_missing_host_key_policy(MyAutoAddPolicy())
+        else:
+            ssh.set_missing_host_key_policy(MyAutoAddPolicy())
 
         allow_agent = True
         if self.password is not None:
