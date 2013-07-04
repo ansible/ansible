@@ -350,7 +350,11 @@ If you wish to disable this behavior and understand the implications, you can do
     [default]
     host_key_checking = False
 
-Usage of host key checking in paramiko mode is reasonably slow, therefore switching to 'ssh' is also recommended when using this
+Alternatively this can be set by an environment variable:
+
+    $ export ANSIBLE_HOST_KEY_CHECKING=False
+
+Also note that host key checking in paramiko mode is reasonably slow, therefore switching to 'ssh' is also recommended when using this
 feature.
 
 .. seealso::
