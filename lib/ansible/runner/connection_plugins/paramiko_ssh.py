@@ -15,6 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+
+# ---
+# The paramiko transport is provided because many distributions, in particular EL6 and before
+# do not support ControlPersist in their SSH implementations.  This is needed on the Ansible
+# control machine to be reasonably efficient with connections.  Thus paramiko is faster
+# for most users on these platforms.  Users with ControlPersist capability can consider
+# using -c ssh or configuring the transport in ansible.cfg.
+
 import warnings
 import os
 import pipes
@@ -24,11 +32,18 @@ import logging
 import traceback
 import fcntl
 import sys
+from termios import tcflush, TCIFLUSH
 from binascii import hexlify
 from ansible.callbacks import vvv
 from ansible import errors
 from ansible import utils
 from ansible import constants as C
+            
+AUTHENTICITY_MSG="""
+paramiko: The authenticity of host '%s' can't be established. 
+The %s key fingerprint is %s. 
+Are you sure you want to continue connecting (yes/no)?
+"""
 
 # prevent paramiko warning noise -- see http://stackoverflow.com/questions/3920502/
 HAVE_PARAMIKO=False
@@ -41,22 +56,49 @@ with warnings.catch_warnings():
     except ImportError:
         pass
 
-class MyAutoAddPolicy(object):
+class MyAddPolicy(object):
     """
-    Modified version of AutoAddPolicy in paramiko so we can determine when keys are added.
+    Based on AutoAddPolicy in paramiko so we can determine when keys are added
+    and also prompt for input.
 
     Policy for automatically adding the hostname and new host key to the
     local L{HostKeys} object, and saving it.  This is used by L{SSHClient}.
     """
 
+    def __init__(self, runner): 
+        self.runner = runner
+
     def missing_host_key(self, client, hostname, key):
+
+        if C.HOST_KEY_CHECKING:
+
+            KEY_LOCK = self.runner.lockfile
+            fcntl.lockf(KEY_LOCK, fcntl.LOCK_EX)
+ 
+            old_stdin = sys.stdin
+            sys.stdin = self.runner._new_stdin
+            fingerprint = hexlify(key.get_fingerprint())
+            ktype = key.get_name()
+            
+            # clear out any premature input on sys.stdin
+            tcflush(sys.stdin, TCIFLUSH)
+
+            inp = raw_input(AUTHENTICITY_MSG % (hostname, ktype, fingerprint))
+            sys.stdin = old_stdin
+            if inp not in ['yes','y','']:
+                fcntl.flock(KEY_LOCK, fcntl.LOCK_UN)
+                raise errors.AnsibleError("host connection rejected by user")
+
+            fcntl.flock(KEY_LOCK, fcntl.LOCK_UN)
+
 
         key._added_by_ansible_this_time = True
 
         # existing implementation below:
         client._host_keys.add(hostname, key.get_name(), key)
-        if client._host_keys_filename is not None:
-            client.save_host_keys(client._host_keys_filename)
+
+        # host keys are actually saved in close() function below
+        # in order to control ordering.
         
 
 # keep connection objects on a per host basis to avoid repeated attempts to reconnect
@@ -103,7 +145,7 @@ class Connection(object):
 
         if C.HOST_KEY_CHECKING:
             ssh.load_system_host_keys()
-        ssh.set_missing_host_key_policy(MyAutoAddPolicy())
+        ssh.set_missing_host_key_policy(MyAddPolicy(self.runner))
 
         allow_agent = True
         if self.password is not None:

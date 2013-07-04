@@ -53,7 +53,7 @@ multiprocessing_runner = None
 
 ################################################
 
-def _executor_hook(job_queue, result_queue):
+def _executor_hook(job_queue, result_queue, new_stdin):
 
     # attempt workaround of https://github.com/newsapps/beeswithmachineguns/issues/17
     # this function also not present in CentOS 6
@@ -64,7 +64,7 @@ def _executor_hook(job_queue, result_queue):
     while not job_queue.empty():
         try:
             host = job_queue.get(block=False)
-            return_data = multiprocessing_runner._executor(host)
+            return_data = multiprocessing_runner._executor(host, new_stdin)
             result_queue.put(return_data)
 
             if 'LEGACY_TEMPLATE_WARNING' in return_data.flags:
@@ -75,6 +75,8 @@ def _executor_hook(job_queue, result_queue):
             pass
         except:
             traceback.print_exc()
+    if new_stdin:
+        new_stdin.close()
 
 class HostVars(dict):
     ''' A special view of setup_cache that adds values from the inventory when needed. '''
@@ -132,6 +134,9 @@ class Runner(object):
         complex_args=None,                  # structured data in addition to module_args, must be a dict
         error_on_undefined_vars=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR # ex. False
         ):
+
+        # used to lock multiprocess inputs that wish to share stdin
+        self.lockfile = tempfile.NamedTemporaryFile()
 
         if not complex_args:
             complex_args = {}
@@ -331,7 +336,7 @@ class Runner(object):
 
     # *****************************************************
 
-    def _executor(self, host):
+    def _executor(self, host, new_stdin):
         ''' handler for multiprocessing library '''
 
         def get_flags():
@@ -344,7 +349,9 @@ class Runner(object):
             return flags
 
         try:
-            exec_rc = self._executor_internal(host)
+            self._new_stdin = new_stdin
+
+            exec_rc = self._executor_internal(host, new_stdin)
             if type(exec_rc) != ReturnData:
                 raise Exception("unexpected return type: %s" % type(exec_rc))
             exec_rc.flags = get_flags()
@@ -363,7 +370,7 @@ class Runner(object):
 
     # *****************************************************
 
-    def _executor_internal(self, host):
+    def _executor_internal(self, host, new_stdin):
         ''' executes any module one or more times '''
 
         host_variables = self.inventory.get_variables(host)
@@ -774,8 +781,9 @@ class Runner(object):
 
         workers = []
         for i in range(self.forks):
+            new_stdin = os.fdopen(os.dup(sys.stdin.fileno()))
             prc = multiprocessing.Process(target=_executor_hook,
-                args=(job_queue, result_queue))
+                args=(job_queue, result_queue, new_stdin))
             prc.start()
             workers.append(prc)
 
@@ -786,7 +794,7 @@ class Runner(object):
             for worker in workers:
                 worker.terminate()
                 worker.join()
-
+        
         results = []
         try:
             while not result_queue.empty():
@@ -847,7 +855,7 @@ class Runner(object):
             # We aren't iterating over all the hosts in this
             # group. So, just pick the first host in our group to
             # construct the conn object with.
-            result_data = self._executor(hosts[0]).result
+            result_data = self._executor(hosts[0], None).result
             # Create a ResultData item for each host in this group
             # using the returned result. If we didn't do this we would
             # get false reports of dark hosts.
@@ -865,7 +873,7 @@ class Runner(object):
                     raise errors.AnsibleError("interrupted")
                 raise
         else:
-            results = [ self._executor(h) for h in hosts ]
+            results = [ self._executor(h, None) for h in hosts ]
         return self._partition_results(results)
 
     # *****************************************************
