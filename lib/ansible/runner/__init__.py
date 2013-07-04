@@ -51,6 +51,9 @@ except ImportError:
     HAS_ATFORK=False
 
 multiprocessing_runner = None
+        
+OUTPUT_LOCKFILE  = tempfile.TemporaryFile()
+PROCESS_LOCKFILE = tempfile.TemporaryFile()
 
 ################################################
 
@@ -134,8 +137,9 @@ class Runner(object):
         error_on_undefined_vars=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR # ex. False
         ):
 
-        # used to lock multiprocess inputs that wish to share stdin
-        self.lockfile = tempfile.NamedTemporaryFile()
+        # used to lock multiprocess inputs and outputs at various levels
+        self.output_lockfile  = OUTPUT_LOCKFILE
+        self.process_lockfile = PROCESS_LOCKFILE
 
         if not complex_args:
             complex_args = {}
@@ -883,9 +887,6 @@ class Runner(object):
                 raise
         else:
             results = [ self._executor(h, None) for h in hosts ]
-
-
-        self.lockfile.close()
 
         return self._partition_results(results)
 
