@@ -72,9 +72,9 @@ class MyAddPolicy(object):
 
         if C.HOST_KEY_CHECKING:
 
-            KEY_LOCK = self.runner.lockfile
-            fcntl.lockf(KEY_LOCK, fcntl.LOCK_EX)
- 
+            fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_EX)
+            fcntl.lockf(self.runner.output_lockfile, fcntl.LOCK_EX)
+
             old_stdin = sys.stdin
             sys.stdin = self.runner._new_stdin
             fingerprint = hexlify(key.get_fingerprint())
@@ -86,10 +86,12 @@ class MyAddPolicy(object):
             inp = raw_input(AUTHENTICITY_MSG % (hostname, ktype, fingerprint))
             sys.stdin = old_stdin
             if inp not in ['yes','y','']:
-                fcntl.flock(KEY_LOCK, fcntl.LOCK_UN)
+                fcntl.flock(self.runner.output_lockfile, fcntl.LOCK_UN)
+                fcntl.flock(self.runner.process_lockfile, fcntl.LOCK_UN)
                 raise errors.AnsibleError("host connection rejected by user")
 
-            fcntl.flock(KEY_LOCK, fcntl.LOCK_UN)
+            fcntl.lockf(self.runner.output_lockfile, fcntl.LOCK_UN)
+            fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_UN)
 
 
         key._added_by_ansible_this_time = True
@@ -257,22 +259,23 @@ class Connection(object):
         except IOError:
             raise errors.AnsibleError("failed to transfer file from %s" % in_path)
 
+    def _any_keys_added(self):
+        added_any = False        
+        for hostname, keys in self.ssh._host_keys.iteritems():
+            for keytype, key in keys.iteritems():
+                added_this_time = getattr(key, '_added_by_ansible_this_time', False)
+                if added_this_time:
+                    return True
+        return False
+
     def _save_ssh_host_keys(self, filename):
         ''' 
         not using the paramiko save_ssh_host_keys function as we want to add new SSH keys at the bottom so folks 
         don't complain about it :) 
         '''
 
-        added_any = False        
-        for hostname, keys in self.ssh._host_keys.iteritems():
-            for keytype, key in keys.iteritems():
-                added_this_time = getattr(key, '_added_by_ansible_this_time', False)
-                if added_this_time:
-                    added_any = True
-                    break
-
-        if not added_any:
-            return
+        if not self._any_keys_added():
+            return False
 
         path = os.path.expanduser("~/.ssh")
         if not os.path.exists(path):
@@ -300,23 +303,22 @@ class Connection(object):
         if self.sftp is not None:
             self.sftp.close()
 
-        # add any new SSH host keys
-        lockfile = self.keyfile.replace("known_hosts",".known_hosts.lock") 
-        KEY_LOCK = open(lockfile, 'w')
-        fcntl.flock(KEY_LOCK, fcntl.LOCK_EX)
-        
-        try:
-            # just in case any were added recently
-            self.ssh.load_system_host_keys()
-            self.ssh._host_keys.update(self.ssh._system_host_keys)
-            #self.ssh.save_host_keys(self.keyfile)
-            self._save_ssh_host_keys(self.keyfile)
-        except:
-            # unable to save keys, including scenario when key was invalid
-            # and caught earlier
-            traceback.print_exc()
-            pass
-        fcntl.flock(KEY_LOCK, fcntl.LOCK_UN)
+        if self._any_keys_added():
+            # add any new SSH host keys -- warning -- this could be slow
+            lockfile = self.keyfile.replace("known_hosts",".known_hosts.lock") 
+            KEY_LOCK = open(lockfile, 'w')
+            fcntl.lockf(KEY_LOCK, fcntl.LOCK_EX)
+            try:
+                # just in case any were added recently
+                self.ssh.load_system_host_keys()
+                self.ssh._host_keys.update(self.ssh._system_host_keys)
+                self._save_ssh_host_keys(self.keyfile)
+            except:
+                # unable to save keys, including scenario when key was invalid
+                # and caught earlier
+                traceback.print_exc()
+                pass
+            fcntl.lockf(KEY_LOCK, fcntl.LOCK_UN)
 
         self.ssh.close()
         

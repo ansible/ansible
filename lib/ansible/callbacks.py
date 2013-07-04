@@ -79,11 +79,23 @@ def log_lockfile():
 
 LOG_LOCK = open(log_lockfile(), 'w')
 
-def log_flock():
-    fcntl.flock(LOG_LOCK, fcntl.LOCK_EX)
+def log_flock(runner):
+    fcntl.lockf(LOG_LOCK, fcntl.LOCK_EX)
+    if runner is not None:
+        try:
+            fcntl.lockf(runner.output_lockfile, fcntl.LOCK_EX)
+        except OSError, e:
+            # already got closed?
+            pass
 
-def log_unflock():
-    fcntl.flock(LOG_LOCK, fcntl.LOCK_UN)
+def log_unflock(runner):
+    fcntl.lockf(LOG_LOCK, fcntl.LOCK_UN)
+    if runner is not None:
+        try:
+            fcntl.lockf(runner.output_lockfile, fcntl.LOCK_UN)
+        except OSError, e:
+            # already got closed?
+            pass
 
 def set_play(callback, play):
     ''' used to notify callback plugins of context '''
@@ -97,9 +109,9 @@ def set_task(callback, task):
     for callback_plugin in callback_plugins:
         callback_plugin.task = task
 
-def display(msg, color=None, stderr=False, screen_only=False, log_only=False):
+def display(msg, color=None, stderr=False, screen_only=False, log_only=False, runner=None):
     # prevent a very rare case of interlaced multiprocess I/O
-    log_flock()
+    log_flock(runner)
     msg2 = msg
     if color:
         msg2 = stringc(msg, color)
@@ -116,7 +128,7 @@ def display(msg, color=None, stderr=False, screen_only=False, log_only=False):
                 logger.error(msg)
             else:
                 logger.info(msg)
-    log_unflock()
+    log_unflock(runner)
 
 def call_callback_module(method_name, *args, **kwargs):
 
@@ -342,7 +354,7 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
     def on_unreachable(self, host, res):
         if type(res) == dict:
             res = res.get('msg','')
-        display("%s | FAILED => %s" % (host, res), stderr=True, color='red')
+        display("%s | FAILED => %s" % (host, res), stderr=True, color='red', runner=self.runner)
         if self.options.tree:
             utils.write_tree_file(
                 self.options.tree, host,
@@ -351,15 +363,15 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
         super(CliRunnerCallbacks, self).on_unreachable(host, res)
 
     def on_skipped(self, host, item=None):
-        display("%s | skipped" % (host))
+        display("%s | skipped" % (host), runner=self.runner)
         super(CliRunnerCallbacks, self).on_skipped(host, item)
 
     def on_error(self, host, err):
-        display("err: [%s] => %s\n" % (host, err), stderr=True)
+        display("err: [%s] => %s\n" % (host, err), stderr=True, runner=self.runner)
         super(CliRunnerCallbacks, self).on_error(host, err)
 
     def on_no_hosts(self):
-        display("no hosts matched\n", stderr=True)
+        display("no hosts matched\n", stderr=True, runner=self.runner)
         super(CliRunnerCallbacks, self).on_no_hosts()
 
     def on_async_poll(self, host, res, jid, clock):
@@ -367,27 +379,27 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
             self._async_notified[jid] = clock + 1
         if self._async_notified[jid] > clock:
             self._async_notified[jid] = clock
-            display("<job %s> polling, %ss remaining" % (jid, clock))
+            display("<job %s> polling, %ss remaining" % (jid, clock), runner=self.runner)
         super(CliRunnerCallbacks, self).on_async_poll(host, res, jid, clock)
 
     def on_async_ok(self, host, res, jid):
-        display("<job %s> finished on %s => %s"%(jid, host, utils.jsonify(res,format=True)))
+        display("<job %s> finished on %s => %s"%(jid, host, utils.jsonify(res,format=True)), runner=self.runner)
         super(CliRunnerCallbacks, self).on_async_ok(host, res, jid)
 
     def on_async_failed(self, host, res, jid):
-        display("<job %s> FAILED on %s => %s"%(jid, host, utils.jsonify(res,format=True)), color='red', stderr=True)
+        display("<job %s> FAILED on %s => %s"%(jid, host, utils.jsonify(res,format=True)), color='red', stderr=True, runner=self.runner)
         super(CliRunnerCallbacks, self).on_async_failed(host,res,jid)
 
     def _on_any(self, host, result):
         result2 = result.copy()
         result2.pop('invocation', None)
         (msg, color) = host_report_msg(host, self.options.module_name, result2, self.options.one_line)
-        display(msg, color=color)
+        display(msg, color=color, runner=self.runner)
         if self.options.tree:
             utils.write_tree_file(self.options.tree, host, utils.jsonify(result2,format=True))
 
     def on_file_diff(self, host, diff):
-        display(utils.get_diff(diff))
+        display(utils.get_diff(diff), runner=self.runner)
         super(CliRunnerCallbacks, self).on_file_diff(host, diff)
 
 ########################################################################
@@ -408,10 +420,11 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
             msg = "fatal: [%s] => (item=%s) => %s" % (host, item, results)
         else:
             msg = "fatal: [%s] => %s" % (host, results)
-        display(msg, color='red')
+        display(msg, color='red', runner=self.runner)
         super(PlaybookRunnerCallbacks, self).on_unreachable(host, results)
 
     def on_failed(self, host, results, ignore_errors=False):
+
 
         results2 = results.copy()
         results2.pop('invocation', None)
@@ -429,21 +442,22 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
             msg = "failed: [%s] => (item=%s) => %s" % (host, item, utils.jsonify(results2))
         else:
             msg = "failed: [%s] => %s" % (host, utils.jsonify(results2))
-        display(msg, color='red')
+        display(msg, color='red', runner=self.runner)
 
         if stderr:
-            display("stderr: %s" % stderr, color='red')
+            display("stderr: %s" % stderr, color='red', runner=self.runner)
         if stdout:
-            display("stdout: %s" % stdout, color='red')
+            display("stdout: %s" % stdout, color='red', runner=self.runner)
         if returned_msg:
-            display("msg: %s" % returned_msg, color='red')
+            display("msg: %s" % returned_msg, color='red', runner=self.runner)
         if not parsed and module_msg:
-            display("invalid output was: %s" % module_msg, color='red')
+            display("invalid output was: %s" % module_msg, color='red', runner=self.runner)
         if ignore_errors:
-            display("...ignoring", color='cyan')
+            display("...ignoring", color='cyan', runner=self.runner)
         super(PlaybookRunnerCallbacks, self).on_failed(host, results, ignore_errors=ignore_errors)
 
     def on_ok(self, host, host_result):
+        
         item = host_result.get('item', None)
 
         host_result2 = host_result.copy()
@@ -473,9 +487,9 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
 
         if msg != '':
             if not changed:
-                display(msg, color='green')
+                display(msg, color='green', runner=self.runner)
             else:
-                display(msg, color='yellow')
+                display(msg, color='yellow', runner=self.runner)
         super(PlaybookRunnerCallbacks, self).on_ok(host, host_result)
 
     def on_error(self, host, err):
@@ -487,7 +501,7 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         else:
             msg = "err: [%s] => %s" % (host, err)
 
-        display(msg, color='red', stderr=True)
+        display(msg, color='red', stderr=True, runner=self.runner)
         super(PlaybookRunnerCallbacks, self).on_error(host, err)
 
     def on_skipped(self, host, item=None):
@@ -496,11 +510,11 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
             msg = "skipping: [%s] => (item=%s)" % (host, item)
         else:
             msg = "skipping: [%s]" % host
-        display(msg, color='cyan')
+        display(msg, color='cyan', runner=self.runner)
         super(PlaybookRunnerCallbacks, self).on_skipped(host, item)
 
     def on_no_hosts(self):
-        display("FATAL: no hosts matched or all hosts have already failed -- aborting\n", color='red')
+        display("FATAL: no hosts matched or all hosts have already failed -- aborting\n", color='red', runner=self.runner)
         super(PlaybookRunnerCallbacks, self).on_no_hosts()
 
     def on_async_poll(self, host, res, jid, clock):
@@ -509,21 +523,21 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         if self._async_notified[jid] > clock:
             self._async_notified[jid] = clock
             msg = "<job %s> polling, %ss remaining"%(jid, clock)
-            display(msg, color='cyan')
+            display(msg, color='cyan', runner=self.runner)
         super(PlaybookRunnerCallbacks, self).on_async_poll(host,res,jid,clock)
 
     def on_async_ok(self, host, res, jid):
         msg = "<job %s> finished on %s"%(jid, host)
-        display(msg, color='cyan')
+        display(msg, color='cyan', runner=self.runner)
         super(PlaybookRunnerCallbacks, self).on_async_ok(host, res, jid)
 
     def on_async_failed(self, host, res, jid):
         msg = "<job %s> FAILED on %s" % (jid, host)
-        display(msg, color='red', stderr=True)
+        display(msg, color='red', stderr=True, runner=self.runner)
         super(PlaybookRunnerCallbacks, self).on_async_failed(host,res,jid)
 
     def on_file_diff(self, host, diff):
-        display(utils.get_diff(diff))
+        display(utils.get_diff(diff), runner=self.runner)
         super(PlaybookRunnerCallbacks, self).on_file_diff(host, diff)
 
 ########################################################################
