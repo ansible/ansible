@@ -745,7 +745,7 @@ class Runner(object):
             complex_args_json = utils.jsonify(complex_args)
             # We force conversion of module_args to str because module_common calls shlex.split,
             # a standard library function that incorrectly handles Unicode input before Python 2.7.3.
-            encoded_args = repr(str(module_args))
+            encoded_args = repr(module_args.encode('utf-8'))
             encoded_lang = repr(C.DEFAULT_MODULE_LANG)
             encoded_complex = repr(complex_args_json)
 
