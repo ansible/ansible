@@ -31,6 +31,7 @@ import sys
 import shlex
 import pipes
 import jinja2
+import subprocess
 
 import ansible.constants as C
 import ansible.inventory
@@ -169,8 +170,18 @@ class Runner(object):
         self.environment      = environment
         self.complex_args     = complex_args
         self.error_on_undefined_vars = error_on_undefined_vars
-
         self.callbacks.runner = self
+
+        # if the transport is 'smart' see if SSH can support ControlPersist if not use paramiko
+        # 'smart' is the default since 1.2.1/1.3
+        if self.transport == 'smart':
+            cmd = subprocess.Popen(['ssh','-o','ControlPersist'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            (out, err) = cmd.communicate() 
+            if "Bad configuration option" in err:
+                self.transport = "paramiko"
+            else:
+                self.transport = "ssh" 
+
 
         # misc housekeeping
         if subset and self.inventory._subset is None:
