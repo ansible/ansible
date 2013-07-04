@@ -93,6 +93,22 @@ class Connection(object):
             os.write(self.wfd, "%s\n" % self.password)
             os.close(self.wfd)
 
+    def not_in_host_file(self, host):
+        host_file = os.path.expanduser("~/.ssh/known_hosts")
+        if not os.path.exists(host_file):
+            print "previous known host file not found"
+            return True
+        host_fh = open(host_file)
+        data = host_fh.read()
+        host_fh.close()
+        for line in data.split("\n"):
+            if line is None or line.find(" ") == -1:
+                continue
+            tokens = line.split()
+            if host in tokens[0]:
+                return False
+        return True
+
     def exec_command(self, cmd, tmp_path, sudo_user,sudoable=False, executable='/bin/sh'):
         ''' run a command on the remote host '''
 
@@ -109,6 +125,16 @@ class Connection(object):
             ssh_cmd.append(sudocmd)
 
         vvv("EXEC %s" % ssh_cmd, host=self.host)
+
+        not_in_host_file = self.not_in_host_file(self.host)
+
+        if C.HOST_KEY_CHECKING and not_in_host_file:
+            # lock around the initial SSH connectivity so the user prompt about whether to add 
+            # the host to known hosts is not intermingled with multiprocess output.
+            KEY_LOCK = self.runner.lockfile
+            fcntl.lockf(KEY_LOCK, fcntl.LOCK_EX)
+
+
         try:
             # Make sure stdin is a proper (pseudo) pty to avoid: tcgetattr errors
             import pty
@@ -161,6 +187,12 @@ class Connection(object):
             elif p.poll() is not None:
                 break
         stdin.close() # close stdin after we read from stdout (see also issue #848)
+        
+        if C.HOST_KEY_CHECKING and not_in_host_file:
+            # lock around the initial SSH connectivity so the user prompt about whether to add 
+            # the host to known hosts is not intermingled with multiprocess output.
+            KEY_LOCK = self.runner.lockfile
+            fcntl.lockf(KEY_LOCK, fcntl.LOCK_EX)
 
         if p.returncode != 0 and stderr.find('Bad configuration option: ControlPersist') != -1:
             raise errors.AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" (or ansible_ssh_args in the config file) before running again')
