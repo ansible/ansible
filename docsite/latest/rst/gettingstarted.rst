@@ -308,12 +308,50 @@ Now run a live command on all of your nodes:
    $ ansible all -a "/bin/echo hello"
 
 Congratulations.  You've just contacted your nodes with Ansible.  It's
-now time to read some of the more real-world :doc:`examples`, and explore
+soon going to be time to read some of the more real-world :doc:`examples`, and explore
 what you can do with different modules, as well as the Ansible
 :doc:`playbooks` language.  Ansible is not just about running commands, it
 also has powerful configuration management and deployment features.  There's more to
 explore, but you already have a fully working infrastructure!
 
+A note about Connection (Transport) Modes
+`````````````````````````````````````````
+
+Ansible has two major forms of SSH transport implemented, 'ssh' (OpenSSH) and 'paramiko'.  Paramiko is a python
+SSH implementation and 'ssh' simply calls OpenSSH behind the scenes.  There are additionally 'fireball' (an accelerated
+remote transport), 'local', and 'chroot' connection modes in Ansible that don't use SSH, but connecting by one of the two 
+SSH transports is the most common way to manage systems.  It is useful to understand the difference between the 'ssh' 
+and 'paramiko' modes.
+
+Paramiko is provided because older Enterprise Linux operating systems do not have an efficient OpenSSH that support
+ControlPersist technology, and in those cases, 'paramiko' is faster than 'ssh'.  Thus, until EL6 backports a newer
+SSH, 'paramiko' is the faster option on that platform. 
+
+However, if you have a newer 'ssh' that supports ControlPersist, usage of the 'ssh' transport unlocks additional
+configurability, including the option to use Kerberos.  For instance, the latest Fedora and Ubuntu releases
+all offer a sufficiently new OpenSSH.  With ControlPersist available, 'ssh' is usually about as fast as paramiko.
+If you'd like even more speed, read about 'fireball' in the Advanced Playbooks section.
+
+Starting with Ansible 1.2.1, the default transport mode for Ansible is 'smart', which means it will detect
+if OpenSSH supports ControlPersist, and will select 'ssh' if available, and otherwise pick 'paramiko'.
+Previous versions of Ansible defaulted to 'paramiko'.
+
+A note about Host Key Checking
+``````````````````````````````
+
+Ansible 1.2.1 and later have host key checking enabled by default.  
+
+If a host is reinstalled and has a different key in 'known_hosts', this will result in a error message until
+corrected.  If a host is not initially in 'known_hosts' this will result in prompting for confirmation of the key,
+which results in a interactive experience if using Ansible, from say, cron.
+
+If you wish to disable this behavior and understand the implications, you can do so by editing /etc/ansible/ansible.cfg or ~/.ansible.cfg::
+
+    [default]
+    host_key_checking = False
+
+Usage of host key checking in paramiko mode is reasonably slow, therefore switching to 'ssh' is also recommended when using this
+feature.
 
 .. seealso::
 
