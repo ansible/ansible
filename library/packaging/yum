@@ -35,6 +35,7 @@ options:
   name:
     description:
       - package name, or package specifier with version, like C(name-1.0).
+      - in state=latest this can be '*' which means run: yum -y update
     required: true
     default: null
     aliases: []
@@ -96,6 +97,7 @@ EXAMPLES = '''
 - yum: name=httpd state=latest
 - yum: name=httpd state=removed
 - yum: name=httpd enablerepo=testing state=installed
+- yum: name=* state=latest
 '''
 
 def_qf = "%{name}-%{version}-%{release}.%{arch}"
