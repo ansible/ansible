@@ -74,8 +74,6 @@ def _executor_hook(job_queue, result_queue, new_stdin):
             pass
         except:
             traceback.print_exc()
-    if new_stdin:
-        new_stdin.close()
 
 class HostVars(dict):
     ''' A special view of setup_cache that adds values from the inventory when needed. '''
