@@ -544,9 +544,20 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
 
         pkg = None
         basecmd = 'update'
+        cmd = ''
         # groups, again
         if spec.startswith('@'):
             pkg = spec
+        
+        elif spec == '*': #update all
+            # use check-update to see if there is any need
+            rc,out,err = module.run_command(yum_basecmd + ['check-update'])
+            if rc == 100:
+                cmd = yum_basecmd + [basecmd]
+            else:
+                res['results'].append('All packages up to date')
+                continue
+        
         # dep/pkgname  - find it
         else:
             if is_installed(module, repoq, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos):
@@ -574,8 +585,8 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
                 continue
 
             pkg = spec
-
-        cmd = yum_basecmd + [basecmd, pkg]
+        if not cmd:
+            cmd = yum_basecmd + [basecmd, pkg]
 
         if module.check_mode:
             return module.exit_json(changed=True)
