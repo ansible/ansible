@@ -6,7 +6,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 Name: ansible
 Release: 1%{?dist}
 Summary: SSH-based configuration management, deployment, and orchestration engine
-Version: 1.2
+Version: 1.2.1
 
 Group: Development/Libraries
 License: GPLv3
@@ -115,6 +115,9 @@ rm -rf $RPM_BUILD_ROOT
 %doc README.md PKG-INFO COPYING
 
 %changelog
+
+* Thu Jul 04 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.2-1
+* Release 1.2.1
 
 * Mon Jun 10 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.2-0
 * Release 1.2
