@@ -1,6 +1,15 @@
 Ansible Changes By Release
 ==========================
 
+1.2.1 "Hear About It Later" -- July 4, 2013
+
+* Connection default is now "smart", which discovers if the system openssh can support ControlPersist, and uses
+  it if so, if not falls back to paramiko.
+* Host key checking is on by default.  Disable it if you like by adding host_key_checking=False in the [default]
+  section of /etc/ansible/ansible.cfg or ~/ansible.cfg or by exporting ANSIBLE_HOST_KEY_CHECKING=False
+* Paramiko now records host keys it was in contact with host key checking is on.  It is somewhat sluggish when doing this, 
+  so switch to the 'ssh' transport if this concerns you.
+
 1.2 "Right Now" -- June 10, 2013
 
 Core Features:
