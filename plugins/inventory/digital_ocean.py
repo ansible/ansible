@@ -300,7 +300,7 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
         self.data = {}
         self.data['droplets'] = self.sanitize_list( manager.all_active_droplets() )
         self.data['regions']  = self.sanitize_list( manager.all_regions() )
-        self.data['images']   = self.sanitize_list( manager.all_images() )
+        self.data['images']   = self.sanitize_list( manager.all_images(filter=None) )
         self.data['sizes']    = self.sanitize_list( manager.sizes() )
         self.data['ssh_keys'] = self.sanitize_list( manager.all_ssh_keys() )
         self.data['domains']  = self.sanitize_list( manager.all_domains() )
