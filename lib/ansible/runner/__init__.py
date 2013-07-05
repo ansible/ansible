@@ -536,6 +536,8 @@ class Runner(object):
 
         conn = None
         actual_host = inject.get('ansible_ssh_host', host)
+        # allow ansible_ssh_host to be templated
+        actual_host = template.template(self.basedir, actual_host, inject, fail_on_undefined=True)
         actual_port = port
         actual_user = inject.get('ansible_ssh_user', self.remote_user)
         actual_pass = inject.get('ansible_ssh_pass', self.remote_pass)
@@ -560,6 +562,8 @@ class Runner(object):
             try:
                 delegate_info = inject['hostvars'][delegate_to]
                 actual_host = delegate_info.get('ansible_ssh_host', delegate_to)
+                # allow ansible_ssh_host to be templated
+                actual_host = template.template(self.basedir, actual_host, inject, fail_on_undefined=True)
                 actual_port = delegate_info.get('ansible_ssh_port', port)
                 actual_user = delegate_info.get('ansible_ssh_user', actual_user)
                 actual_pass = delegate_info.get('ansible_ssh_pass', actual_pass)
