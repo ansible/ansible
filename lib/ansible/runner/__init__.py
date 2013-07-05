@@ -857,6 +857,10 @@ class Runner(object):
                 raise
         else:
             results = [ self._executor(h, None) for h in hosts ]
+
+
+        self.lockfile.close()
+
         return self._partition_results(results)
 
     # *****************************************************
