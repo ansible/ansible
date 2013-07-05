@@ -1,0 +1,139 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# Copyright (C) 2013, Scott W. Dunlop <swdunlop@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+DOCUMENTATION = '''
+---
+module: gobuild
+author: swdunlop@gmail.com
+version_added: '1.2'
+short_description: builds Go programs using `go build` and `go get`
+description:
+    - Builds a Go program using `go build` and `go get`, automatically fetching dependencies.  You must already have
+      Go installation to use this.  Supports building for other OS's and architectures and arbitrary GOPATHs.
+
+options:
+    name:
+        description:
+            - name of the package to build; see "go build --help" for more information
+        required: true
+    path:
+        description:
+            - the file to produce; also used to guard against repeated builds unless "update" is true
+        required: true
+    update:
+        description:
+            - will rebuild the product and all dependencies even if it already exists
+        default: "no"
+        required: false
+    gopath:
+        description:
+            - overrides the GOPATH environment variable used by Go to locate dependencies
+        required: false
+    goroot:
+        description:
+            - overrides the GOROOT environment variable to locate the Go installation
+        required: false
+'''
+
+EXAMPLES = '''
+# Builds GeertJohan's terminal screensaver
+- gobuild: name=github.com/GeertJohan/gomatrix path=/usr/local/bin/gomatrix
+'''
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+import os, os.path, subprocess, traceback
+
+class GoModule(AnsibleModule):
+    def load_go_arguments(self):
+        'parses go parameters identified by AnsibleModule or in the environment'
+
+        self.goos = self.params.get('goos') or os.environ.get('GOOS') or ''
+        self.goarch = self.params.get('goarch') or os.environ.get('GOARCH') or ''
+        self.gopath = self.params.get('gopath') or os.environ.get('GOPATH') or ''
+        self.goroot = self.params.get('goroot') or os.environ.get('GOROOT') or ''
+        self.gopath = os.path.expandvars(self.gopath)
+        self.goroot = os.path.expandvars(self.goroot)
+        self.product = self.params.get('path')
+        self.package = self.params.get('name')
+        self.update = self.params.get('update') 
+       
+        # construct an environment to pass to Go based on what Python received
+        self.environ = os.environ.copy()
+        if self.goos:
+            self.environ['GOOS'] = self.goos
+        if self.goarch:
+            self.environ['GOARCH'] = self.goarch
+        if self.gopath:
+            self.environ['GOPATH'] = self.gopath
+        if self.goroot:
+            self.environ['GOROOT'] = self.goroot
+        
+        self.go = self.get_bin_path('go', opt_dirs=[self.goroot], required=True)
+
+    def build_required(self):
+        'returns false if the product exists and update was not forced'
+        return self.update or not os.path.exists(self.product)
+
+    def build(self):
+        # we download all missing dependencies, first..
+        if self.update:
+            self.call('go', 'get', '-u', '-d', self.package)
+        else:
+            self.call('go', 'get', '-d', self.package)
+        return self.call('go', 'build', '-o', self.product, self.package)
+        
+    def call(self, *cmd):
+        try:
+            pipe = subprocess.Popen(
+                cmd, shell=False, stdin=None, 
+                stdout=subprocess.PIPE, 
+                stderr=subprocess.PIPE,
+                env=self.environ
+            )
+            out, err = pipe.communicate()
+            rc = pipe.returncode
+        except (OSError, IOError), e:
+            self.fail_json(rc=e.errno, msg=str(e), cmd=cmd)
+        except:
+            self.fail_json(rc=257, msg=traceback.format_exc(), cmd=cmd)
+        if rc == 0:
+            return out
+        self.fail_json(rc=rc, msg=err, cmd=cmd)
+
+def main():
+    module = GoModule(argument_spec = {
+        'name'   : { 'required' : True },
+        'path'   : { 'required' : True },
+        'gopath' : { 'required' : False, 'default' : '' },
+        'goroot' : { 'required' : False, 'default' : '' },
+        'goarch' : { 'required' : False, 'default' : '' },
+        'goos'   : { 'required' : False, 'default' : '' },
+        'update' : { 'required' : False, 'default' : 'no', 'type' : 'bool'},
+    }, supports_check_mode=True)
+    module.load_go_arguments()
+    if not module.build_required():
+        module.exit_json(changed=False, msg='path already present')
+    module.build()
+    module.exit_json(changed=True, path=module.product, name=module.package)
+
+main()
