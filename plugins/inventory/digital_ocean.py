@@ -201,7 +201,7 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
                     self.load_droplets_from_digital_ocean()
 
         # Pick the json_data to print based on the CLI command
-        if   self.args.droplets: json_data = { 'droplets': self.data['droplets'] }
+        if self.args.droplets:   json_data = { 'droplets': self.data['droplets'] }
         elif self.args.regions:  json_data = { 'regions':  self.data['regions'] }
         elif self.args.images:   json_data = { 'images':   self.data['images'] }
         elif self.args.sizes:    json_data = { 'sizes':    self.data['sizes'] }
@@ -214,9 +214,9 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
                                  json_data = self.inventory
 
         if self.args.pretty:
-            print json.dumps( json_data, sort_keys=True, indent=2 )
+            print json.dumps(json_data, sort_keys=True, indent=2)
         else:
-            print json.dumps( json_data )
+            print json.dumps(json_data)
         # That's all she wrote...
 
 
@@ -295,22 +295,22 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
 
     def load_all_data_from_digital_ocean(self):
         ''' Use dopy to get all the information from DigitalOcean and save data in cache files '''
-        manager  = DoManager( self.client_id, self.api_key )
+        manager  = DoManager(self.client_id, self.api_key)
 
         self.data = {}
-        self.data['droplets'] = self.sanitize_list( manager.all_active_droplets() )
-        self.data['regions']  = self.sanitize_list( manager.all_regions() )
-        self.data['images']   = self.sanitize_list( manager.all_images(filter=None) )
-        self.data['sizes']    = self.sanitize_list( manager.sizes() )
-        self.data['ssh_keys'] = self.sanitize_list( manager.all_ssh_keys() )
-        self.data['domains']  = self.sanitize_list( manager.all_domains() )
+        self.data['droplets'] = self.sanitize_list(manager.all_active_droplets())
+        self.data['regions']  = self.sanitize_list(manager.all_regions())
+        self.data['images']   = self.sanitize_list(manager.all_images(filter=None))
+        self.data['sizes']    = self.sanitize_list(manager.sizes())
+        self.data['ssh_keys'] = self.sanitize_list(manager.all_ssh_keys())
+        self.data['domains']  = self.sanitize_list(manager.all_domains())
 
         self.index = {}
-        self.index['region_to_name']  = self.build_index( self.data['regions'], 'id', 'name' )
-        self.index['size_to_name']    = self.build_index( self.data['sizes'], 'id', 'name' )
-        self.index['image_to_name']   = self.build_index( self.data['images'], 'id', 'name' )
-        self.index['image_to_distro'] = self.build_index( self.data['images'], 'id', 'distribution' )
-        self.index['host_to_droplet'] = self.build_index( self.data['droplets'], 'ip_address', 'id', False )
+        self.index['region_to_name']  = self.build_index(self.data['regions'], 'id', 'name')
+        self.index['size_to_name']    = self.build_index(self.data['sizes'], 'id', 'name')
+        self.index['image_to_name']   = self.build_index(self.data['images'], 'id', 'name')
+        self.index['image_to_distro'] = self.build_index(self.data['images'], 'id', 'distribution')
+        self.index['host_to_droplet'] = self.build_index(self.data['droplets'], 'ip_address', 'id', False)
 
         self.build_inventory()
 
@@ -319,9 +319,9 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
 
     def load_droplets_from_digital_ocean(self):
         ''' Use dopy to get droplet information from DigitalOcean and save data in cache files '''
-        manager  = DoManager( self.client_id, self.api_key )
-        self.data['droplets'] = self.sanitize_list( manager.all_active_droplets() )
-        self.index['host_to_droplet'] = self.build_index( self.data['droplets'], 'ip_address', 'id', False )
+        manager  = DoManager(self.client_id, self.api_key)
+        self.data['droplets'] = self.sanitize_list(manager.all_active_droplets())
+        self.index['host_to_droplet'] = self.build_index(self.data['droplets'], 'ip_address', 'id', False)
         self.build_inventory()
         self.write_to_cache()
 
@@ -344,23 +344,23 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
             dest = droplet['ip_address']
 
             self.inventory[droplet['id']] = [dest]
-            self.push( self.inventory, droplet['name'], dest )
-            self.push( self.inventory, 'region_'+droplet['region_id'], dest )
-            self.push( self.inventory, 'image_' +droplet['image_id'], dest )
-            self.push( self.inventory, 'size_'  +droplet['size_id'], dest )
-            self.push( self.inventory, 'status_'+droplet['status'], dest )
+            self.push(self.inventory, droplet['name'], dest)
+            self.push(self.inventory, 'region_'+droplet['region_id'], dest)
+            self.push(self.inventory, 'image_' +droplet['image_id'], dest)
+            self.push(self.inventory, 'size_'  +droplet['size_id'], dest)
+            self.push(self.inventory, 'status_'+droplet['status'], dest)
 
             region_name = self.index['region_to_name'][droplet['region_id']]
-            self.push( self.inventory, 'region_'+region_name, dest )
+            self.push(self.inventory, 'region_'+region_name, dest)
 
             size_name = self.index['size_to_name'][droplet['size_id']]
-            self.push( self.inventory, 'size_'+size_name, dest )
+            self.push(self.inventory, 'size_'+size_name, dest)
 
             image_name = self.index['image_to_name'][droplet['image_id']]
-            self.push( self.inventory, 'image_'+image_name, dest )
+            self.push(self.inventory, 'image_'+image_name, dest)
 
             distro_name = self.index['image_to_distro'][droplet['image_id']]
-            self.push( self.inventory, 'distro_'+distro_name, dest )
+            self.push(self.inventory, 'distro_'+distro_name, dest)
 
 
     def load_droplet_variables_for_host(self):
@@ -379,13 +379,13 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
         if self.cache_refreshed:
             for drop in self.data['droplets']:
                 if drop['ip_address'] == host:
-                    droplet = self.sanitize_dict( drop )
+                    droplet = self.sanitize_dict(drop)
                     break
         else:
             # Cache wasn't refreshed this run, so hit DigitalOcean API
-            manager = DoManager( self.client_id, self.api_key )
+            manager = DoManager(self.client_id, self.api_key)
             droplet_id = self.index['host_to_droplet'][host]
-            droplet = self.sanitize_dict( manager.show_droplet( droplet_id ) )
+            droplet = self.sanitize_dict(manager.show_droplet(droplet_id))
        
         if not droplet:
             return {}
@@ -427,7 +427,7 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
         cache = open(self.cache_filename, 'r')
         json_data = cache.read()
         cache.close()
-        data = json.loads( json_data )
+        data = json.loads(json_data)
 
         self.data = data['data']
         self.inventory = data['inventory']
@@ -437,7 +437,7 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
     def write_to_cache(self):
         ''' Writes data in JSON format to a file '''
         data = { 'data': self.data, 'index': self.index, 'inventory': self.inventory }
-        json_data = json.dumps( data, sort_keys=True, indent=2 )
+        json_data = json.dumps(data, sort_keys=True, indent=2)
 
         cache = open(self.cache_filename, 'w')
         cache.write(json_data)
@@ -473,7 +473,7 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
     def sanitize_list(self, seq):
         new_seq = []
         for d in seq:
-            new_seq.append( self.sanitize_dict(d) )
+            new_seq.append(self.sanitize_dict(d))
         return new_seq
 
 
