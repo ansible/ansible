@@ -116,8 +116,11 @@ rm -rf $RPM_BUILD_ROOT
 
 %changelog
 
-* Mon Jun 10 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.3-0
+* Fri Jul 06 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.3-0
 * (release pending)
+
+* Thu Jul 05 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.2-2
+* Release 1.2.2
 
 * Thu Jul 04 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.2-1
 * Release 1.2.1
