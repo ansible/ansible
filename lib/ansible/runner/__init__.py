@@ -618,6 +618,10 @@ class Runner(object):
             self.callbacks.on_unreachable(host, result.result)
         else:
             data = result.result
+
+            if self.module_vars.get('ignore_changed', False) and 'changed' in data and data['changed']:
+                data['changed'] = False
+
             if 'item' in inject:
                 result.result['item'] = inject['item']
 
