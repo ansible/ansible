@@ -1,6 +1,14 @@
 Ansible Changes By Release
 ==========================
 
+1.2.1 "Hear About It Later" (reprise) -- July 4, 2013
+
+* Added a configuration file option [paramiko_connection] record_host_keys which allows the code that paramiko uses
+to update known_hosts to be disabled.  This is done because paramiko can be very slow at doing this if you have a
+large number of hosts and some folks may not want this behavior.  This can be toggled independently of host key checking
+and does not affect the ssh transport plugin.  Use of the ssh transport plugin is preferred if you have ControlPersist
+capability, and Ansible by default in 1.2.1 and later will autodetect.
+
 1.2.1 "Hear About It Later" -- July 4, 2013
 
 * Connection default is now "smart", which discovers if the system openssh can support ControlPersist, and uses
