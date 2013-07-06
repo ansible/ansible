@@ -303,9 +303,14 @@ class Connection(object):
         if self.sftp is not None:
             self.sftp.close()
 
-        if self._any_keys_added():
+        if C.PARAMIKO_RECORD_HOST_KEYS and self._any_keys_added():
+
             # add any new SSH host keys -- warning -- this could be slow
             lockfile = self.keyfile.replace("known_hosts",".known_hosts.lock") 
+            dirname = os.path.dirname(self.keyfile)
+            if not os.path.exists(dirname):
+                os.makedirs(dirname)
+
             KEY_LOCK = open(lockfile, 'w')
             fcntl.lockf(KEY_LOCK, fcntl.LOCK_EX)
             try:
