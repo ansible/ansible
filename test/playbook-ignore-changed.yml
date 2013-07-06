@@ -1,0 +1,9 @@
+---
+- hosts: all
+  connection: local
+  gather_facts: False
+
+  tasks:
+  - action: command echo ping
+    ignore_changed: true
+  - action: command echo pong

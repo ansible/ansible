@@ -69,6 +69,19 @@ write a task that looks like this::
       action: command /bin/false
       ignore_errors: yes
 
+Ignoring Changes
+````````````````
+
+.. versionadded:: 1.3
+
+When a task make some changes or sometimes is simply executed, it
+is reported as changed.  You may want to override this.  To do so,
+write a task that looks like this::
+
+    - name: this will not be counted as changed
+      action: command /bin/true
+      ignore_changed: yes
+
 Accessing Complex Variable Data
 ```````````````````````````````
 
@@ -957,6 +970,23 @@ it may be less useful for you.  However it is great for one-node-at-time basic c
 Example::
 
     ansible-playbook foo.yml --check
+
+Running some tasks in Check Mode
+`````````````````````````````````
+
+.. versionadded:: 1.3
+
+Sometimes you may want to have a task to be executed even in check mode. To achieve this use the
+'always_run' keyword on the task.
+
+Example::
+
+    tasks:
+
+      - name: this task is run even in check mode
+        command: /something/to/run --even-in-check-mode
+        always_run: yes
+
 
 Showing Differences with --diff
 ```````````````````````````````
