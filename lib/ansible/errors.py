@@ -35,3 +35,6 @@ class AnsibleYAMLValidationFailed(AnsibleError):
 
 class AnsibleUndefinedVariable(AnsibleError):
     pass
+
+class AnsibleFilterError(AnsibleError):
+    pass
