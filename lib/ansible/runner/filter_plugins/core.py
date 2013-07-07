@@ -44,6 +44,13 @@ def failed(*a, **kw):
 def success(*a, **kw):
     return not failed(*a, **kw)
 
+def skipped(*a, **kw):
+    item = a[0]
+    if type(item) != dict:
+        raise errors.AnsibleError("|skipped expects a dictionary")
+    skipped = item.get('skipped', False)
+    return skipped
+
 def mandatory(a):
     ''' Make a variable mandatory '''
     if not a:
@@ -87,6 +94,9 @@ class FilterModule(object):
             # failure testing
             'failed'  : failed,
             'success' : success,
+
+            # skip testing
+            'skipped' : skipped,
 
             # variable existence
             'mandatory': mandatory,
