@@ -20,6 +20,7 @@ import json
 import os.path
 import yaml
 import types
+import pipes
 from ansible import errors
 
 def to_nice_yaml(*a, **kw):
@@ -61,6 +62,10 @@ def bool(a):
     else:
         return False
 
+def quote(a):
+    ''' return its argument quoted for shell usage '''
+    return pipes.quote(a)
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -93,5 +98,8 @@ class FilterModule(object):
 
             # value as boolean
             'bool': bool,
+
+            # quote string for shell usage
+            'quote': quote,
         }
     
