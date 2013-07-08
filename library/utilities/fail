@@ -24,7 +24,7 @@ module: fail
 short_description: Fail with custom message
 description:
      - This module fails the progress with a custom message. It can be
-       useful for bailing out when a certain condition is met using C(only_if).
+       useful for bailing out when a certain condition is met using C(when).
 version_added: "0.8"
 options:
   msg:
@@ -38,7 +38,7 @@ author: Dag Wieers
 '''
 
 EXAMPLES = '''
-# Example playbook using fail and only_if together
+# Example playbook using fail and when together
 - fail: msg="The system may not be provisioned according to the CMDB status."
-  only_if: "'$cmdb_status' != 'to-be-staged'"
+  when: "{{ cmdb_status }} != 'to-be-staged'"
 '''
