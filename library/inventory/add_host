@@ -20,7 +20,10 @@ options:
     - The groups to add the hostname to, comma separated.
     required: false
 author: Seth Vidal
-'''
+notes:
+    - Be aware that every dynamic created hosts/groups will be filtered by your provided SUBSET (-l/--limit). So
+      usually you want to run this module without a SUBSET.
+''
 
 EXAMPLES = '''
 # add host to group 'just_created' with variable foo=42
