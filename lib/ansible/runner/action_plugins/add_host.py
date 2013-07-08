@@ -79,7 +79,7 @@ class ActionModule(object):
                     inventory.add_group(new_group)
                 grp = inventory.get_group(group_name)
                 grp.add_host(new_host)
-            vv("added host to group via add_host module: %s" % group_name)
+                vv("added host to group via add_host module: %s" % group_name)
             result['new_groups'] = groupnames.split(",")
             
         result['new_host'] = new_name
