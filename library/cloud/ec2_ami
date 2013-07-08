@@ -244,7 +244,8 @@ def main():
             wait_timeout = dict(default=300),
             description = dict(default=""),
             no_reboot = dict(default=True, type="bool"),
-            state = dict(default='present')
+            state = dict(default='present'),
+            region = dict()
         )
     )
 
