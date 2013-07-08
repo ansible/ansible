@@ -270,8 +270,8 @@ class User(object):
             cmd.append('-u')
             cmd.append(self.uid)
 
-        if self.non_unique:
-            cmd.append('-o')
+            if self.non_unique:
+                cmd.append('-o')
 
         if self.group is not None:
             if not self.group_exists(self.group):
@@ -320,8 +320,8 @@ class User(object):
             cmd.append('-u')
             cmd.append(self.uid)
 
-        if self.non_unique:
-            cmd.append('-o')
+            if self.non_unique:
+                cmd.append('-o')
 
         if self.group is not None:
             if not self.group_exists(self.group):
@@ -578,8 +578,8 @@ class FreeBsdUser(User):
             cmd.append('-u')
             cmd.append(self.uid)
 
-        if self.non_unique:
-            cmd.append('-o')
+            if self.non_unique:
+                cmd.append('-o')
 
         if self.comment is not None:
             cmd.append('-c')
@@ -643,8 +643,8 @@ class FreeBsdUser(User):
             cmd.append('-u')
             cmd.append(self.uid)
 
-        if self.non_unique:
-            cmd.append('-o')
+            if self.non_unique:
+                cmd.append('-o')
 
         if self.comment is not None and info[4] != self.comment:
             cmd.append('-c')
@@ -739,8 +739,8 @@ class OpenBSDUser(User):
             cmd.append('-u')
             cmd.append(self.uid)
 
-        if self.non_unique:
-            cmd.append('-o')
+            if self.non_unique:
+                cmd.append('-o')
 
         if self.group is not None:
             if not self.group_exists(self.group):
@@ -794,8 +794,8 @@ class OpenBSDUser(User):
             cmd.append('-u')
             cmd.append(self.uid)
 
-        if self.non_unique:
-            cmd.append('-o')
+            if self.non_unique:
+                cmd.append('-o')
 
         if self.group is not None:
             if not self.group_exists(self.group):
@@ -889,8 +889,8 @@ class NetBSDUser(User):
             cmd.append('-u')
             cmd.append(self.uid)
 
-        if self.non_unique:
-            cmd.append('-o')
+            if self.non_unique:
+                cmd.append('-o')
 
         if self.group is not None:
             if not self.group_exists(self.group):
@@ -946,8 +946,8 @@ class NetBSDUser(User):
             cmd.append('-u')
             cmd.append(self.uid)
 
-        if self.non_unique:
-            cmd.append('-o')
+            if self.non_unique:
+                cmd.append('-o')
 
         if self.group is not None:
             if not self.group_exists(self.group):
@@ -1049,8 +1049,8 @@ class SunOS(User):
             cmd.append('-u')
             cmd.append(self.uid)
 
-        if self.non_unique:
-            cmd.append('-o')
+            if self.non_unique:
+                cmd.append('-o')
 
         if self.group is not None:
             if not self.group_exists(self.group):
@@ -1111,8 +1111,8 @@ class SunOS(User):
             cmd.append('-u')
             cmd.append(self.uid)
 
-        if self.non_unique:
-            cmd.append('-o')
+            if self.non_unique:
+                cmd.append('-o')
 
         if self.group is not None:
             if not self.group_exists(self.group):
