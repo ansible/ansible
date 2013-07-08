@@ -561,7 +561,7 @@ class LinuxService(Service):
                     break
 
             if self.module.check_mode:
-                self.module.exit_json(changed=changed)
+                self.module.exit_json(changed=self.changed)
 
             if not self.changed:
                 return
