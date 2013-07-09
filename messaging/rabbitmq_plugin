@@ -42,7 +42,7 @@ options:
     choices: [ "yes", "no" ]
   state:
     description:
-      - Specify if pluginss are to be enabled or disabled
+      - Specify if plugins are to be enabled or disabled
     required: false
     default: enabled
     choices: [enabled, disabled]
