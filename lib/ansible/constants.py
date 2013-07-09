@@ -70,7 +70,7 @@ def shell_expand_path(path):
     ''' shell_expand_path is needed as os.path.expanduser does not work
         when path is None, which is the default for ANSIBLE_PRIVATE_KEY_FILE '''
     if path:
-        path = os.path.expanduser(path)
+        path = os.path.expandvars(os.path.expanduser(path))
     return path
 
 p = load_config_file()
