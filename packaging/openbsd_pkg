@@ -102,7 +102,7 @@ def get_package_state(name, specific_version):
         return False
 
 # Function used to make sure a package is present.
-def package_present(name, installed_state, module):
+def package_present(name, installed_state, specific_version, module):
     if module.check_mode:
         install_cmd = 'pkg_add -In'
     else: 
@@ -113,16 +113,28 @@ def package_present(name, installed_state, module):
         # Attempt to install the package
         (rc, stdout, stderr) = execute_command("%s %s" % (install_cmd, name), syslogging)
 
-        # pkg_add returns 0 even if the package does not exist
-        # so depend on stderr instead if something bad happened.
-        if stderr:
-            rc = 1
-            changed=False
+        # The behaviour of pkg_add is a bit different depending on if a
+        # specific version is supplied or not.
+        # 
+        # When a specific version is supplied the return code will be 0 when
+        # a package is found and 1 when it is not, if a version is not
+        # supplied the tool will exit 0 in both cases:
+        if specific_version:
+            # Depend on the return code.
+            if rc: 
+                changed=False
         else:
+            # Depend on stderr instead and fake the return code.
+            if stderr:
+                rc = 1
+                changed=False
+
+        if rc == 0:
             if module.check_mode:
                 module.exit_json(changed=True)
 
             changed=True
+
     else:
         rc = 0
         stdout = ''
@@ -234,7 +246,7 @@ def main():
 
     # Perform requested action
     if state in ['installed', 'present']:
-        (rc, stdout, stderr, changed) = package_present(name, installed_state, module)
+        (rc, stdout, stderr, changed) = package_present(name, installed_state, specific_version, module)
     elif state in ['absent', 'removed']:
         (rc, stdout, stderr, changed) = package_absent(name, installed_state, module)
     elif state == 'latest':
