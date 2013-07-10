@@ -73,6 +73,14 @@ EXAMPLES = '''
                   key="{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
                   path='/etc/ssh/authorized_keys/charlie'
                   manage_dir=no
+
+# Using with_file
+- name: Set up authorized_keys for the deploy user
+  authorized_key: user=deploy
+                  key="{{ item }}"
+  with_file:
+    - public_keys/doe-jane
+    - public_keys/doe-john
 '''
 
 # Makes sure the public key line is present or absent in the user's .ssh/authorized_keys.
