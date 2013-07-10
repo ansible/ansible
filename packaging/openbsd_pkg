@@ -183,16 +183,24 @@ def package_latest(name, installed_state, specific_version, module):
         else:
             changed = False
 
-        # 'pkg_add -u' returns 0 even when something strange happened, stderr
-        # should be empty if everything went fine.
-        if stderr:
-            rc=1
+        # FIXME: This part is problematic. Based on the issues mentioned (and
+        # handled) in package_present() it is not safe to blindly trust stderr
+        # as an indicator that the command failed, and in the case with
+        # empty installpath directories this will break.
+        #
+        # For now keep this safeguard here, but ignore it if we managed to
+        # parse out a successful update above. This way we will report a
+        # successful run when we actually modify something but fail
+        # otherwise.
+        if changed != True:
+            if stderr:
+                rc=1
 
         return (rc, stdout, stderr, changed)
 
     else:
         # If package was not installed at all just make it present.
-        return package_present(name, installed_state, module)
+        return package_present(name, installed_state, specific_version, module)
 
 # Function used to make sure a package is not installed.
 def package_absent(name, installed_state, module):
