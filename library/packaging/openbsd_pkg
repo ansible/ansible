@@ -104,9 +104,9 @@ def get_package_state(name, specific_version):
 # Function used to make sure a package is present.
 def package_present(name, installed_state, specific_version, module):
     if module.check_mode:
-        install_cmd = 'pkg_add -In'
-    else: 
-        install_cmd = 'pkg_add -I'
+        install_cmd = 'pkg_add -Imn'
+    else:
+        install_cmd = 'pkg_add -Im'
 
     if installed_state is False:
 
@@ -124,10 +124,21 @@ def package_present(name, installed_state, specific_version, module):
             if rc: 
                 changed=False
         else:
-            # Depend on stderr instead and fake the return code.
+            # Depend on stderr instead.
             if stderr:
-                rc = 1
-                changed=False
+                # There is a corner case where having an empty directory in
+                # installpath prior to the right location will result in a
+                # "file:/local/package/directory/ is empty" message on stderr
+                # while still installing the package, so we need to look for
+                # for a message like "packagename-1.0: ok" just in case.
+                match = re.search("\W%s-[^:]+: ok\W" % name, stdout)
+                if match:
+                    # It turns out we were able to install the package.
+                    pass
+                else:
+                    # We really did fail, fake the return code.
+                    rc = 1
+                    changed=False
 
         if rc == 0:
             if module.check_mode:
