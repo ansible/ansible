@@ -61,6 +61,15 @@ def bool(a):
     else:
         return False
 
+def split(a, **kw):
+    sep = kw.get('sep', None)
+    maxsplit = kw.get('maxsplit', None)
+    if maxsplit:
+        return a.split(sep, maxsplit)
+    else:
+        return a.split(sep)
+
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -93,5 +102,8 @@ class FilterModule(object):
 
             # value as boolean
             'bool': bool,
+
+            # misc
+            'split': split,
         }
     
