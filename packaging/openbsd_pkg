@@ -56,7 +56,7 @@ EXAMPLES = '''
 # select whether we dump additional debug info through syslog
 syslogging = False
 
-# Function used for executing commands. 
+# Function used for executing commands.
 def execute_command(cmd, syslogging):
     if syslogging:
         syslog.openlog('ansible-%s' % os.path.basename(__file__))
@@ -115,13 +115,13 @@ def package_present(name, installed_state, specific_version, module):
 
         # The behaviour of pkg_add is a bit different depending on if a
         # specific version is supplied or not.
-        # 
+        #
         # When a specific version is supplied the return code will be 0 when
         # a package is found and 1 when it is not, if a version is not
         # supplied the tool will exit 0 in both cases:
         if specific_version:
             # Depend on the return code.
-            if rc: 
+            if rc:
                 changed=False
         else:
             # Depend on stderr instead.
@@ -158,7 +158,7 @@ def package_present(name, installed_state, specific_version, module):
 def package_latest(name, installed_state, specific_version, module):
     if module.check_mode:
         upgrade_cmd = 'pkg_add -umn'
-    else: 
+    else:
         upgrade_cmd = 'pkg_add -um'
 
     pre_upgrade_name = ''
