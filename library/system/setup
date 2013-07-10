@@ -1525,13 +1525,13 @@ class GenericBsdIfconfigNetwork(Network):
     def get_default_interfaces(self, route_path):
 
         # Use the commands:
-        #     route -n get 8.8.8.8                     -> Google public DNS
-        #     route -n get 2404:6800:400a:800::1012    -> ipv6.google.com
+        #     route -n get 8.8.8.8                            -> Google public DNS
+        #     route -n get -inet6 2404:6800:400a:800::1012    -> ipv6.google.com
         # to find out the default outgoing interface, address, and gateway
 
         command = dict(
             v4 = [route_path, '-n', 'get', '8.8.8.8'],
-            v6 = [route_path, '-n', 'get', '2404:6800:400a:800::1012']
+            v6 = [route_path, '-n', 'get', '-inet6', '2404:6800:400a:800::1012']
         )
 
         interface = dict(v4 = {}, v6 = {})
