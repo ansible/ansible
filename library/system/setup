@@ -1548,9 +1548,12 @@ class GenericBsdIfconfigNetwork(Network):
             lines = out.split('\n')
             for line in lines:
                 words = line.split()
-                # look for first word starting interface
-                if len(words) > 0 and words[0] == 'interface:':
-                    interface[v]['interface'] = words[1]
+                # Collect output from route command
+                if len(words) > 0:
+                    if words[0] == 'interface:':
+                        interface[v]['interface'] = words[1]
+                    if words[0] == 'gateway:':
+                        interface[v]['gateway'] = words[1]
 
         return interface['v4'], interface['v6']
 
