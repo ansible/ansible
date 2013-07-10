@@ -2,7 +2,7 @@ Advanced Playbooks
 ==================
 
 Here are some advanced features of the playbooks language.  Using all of these features
-are not neccessary, but many of them will prove useful.  If a feature doesn't seem immediately
+are not necessary, but many of them will prove useful.  If a feature doesn't seem immediately
 relevant, feel free to skip it.  For many people, the features documented in `playbooks` will
 be 90% or more of what they use in Ansible.
 
@@ -84,7 +84,7 @@ Similarly, this is how we access the first element of an array:
 Magic Variables, and How To Access Information About Other Hosts
 ````````````````````````````````````````````````````````````````
 
-Even if you didn't define them yourself, ansible provides a few variables for you, automatically.
+Even if you didn't define them yourself, Ansible provides a few variables for you, automatically.
 The most important of these are 'hostvars', 'group_names', and 'groups'.  Users should not use
 these names themselves as they are reserved.  'environment' is also reserved.
 
@@ -187,7 +187,7 @@ in a push-script::
 There are full examples of both of these items in the github examples/playbooks directory.
 
 If you have a variable that changes infrequently, it might make sense to
-provide a default value that can be overriden.  This can be accomplished using
+provide a default value that can be overridden.  This can be accomplished using
 the default argument::
 
    vars_prompt:
@@ -245,7 +245,7 @@ Passing Variables On The Command Line
 `````````````````````````````````````
 
 In addition to `vars_prompt` and `vars_files`, it is possible to send variables over
-the ansible command line.  This is particularly useful when writing a generic release playbook
+the Ansible command line.  This is particularly useful when writing a generic release playbook
 where you may want to pass in the version of the application to deploy::
 
     ansible-playbook release.yml --extra-vars "version=1.23.45 other_variable=foo"
@@ -289,7 +289,7 @@ Don't panic -- it's actually pretty simple::
         when: ansible_os_family == "Debian"
 
 A number of Jinja2 "filters" can also be used in when statements, some of which are unique
-and provided by ansible.  Suppose we want to ignore the error of one statement and then
+and provided by Ansible.  Suppose we want to ignore the error of one statement and then
 decide to do something conditionally based on success or failure::
 
     tasks:
@@ -484,7 +484,7 @@ be used like this::
 
 .. versionadded: 0.9
 
-Many new lookup abilities were added in 0.9.  Remeber lookup plugins are run on the *controlling* machine::
+Many new lookup abilities were added in 0.9.  Remember, lookup plugins are run on the *controlling* machine::
 
     ---
     - hosts: all
@@ -580,7 +580,7 @@ This length can be changed by passing an extra parameter::
 
         (...)
 
-        # create an user with a given password
+        # create a user with a given password
         - user: name=guestuser
                 state=present
                 uid=5000
@@ -737,7 +737,7 @@ Turning Off Facts
 `````````````````
 
 If you know you don't need any fact data about your hosts, and know everything about your systems centrally, you
-can turn off fact gathering.  This has advantages in scaling ansible in push mode with very large numbers of
+can turn off fact gathering.  This has advantages in scaling Ansible in push mode with very large numbers of
 systems, mainly, or if you are using Ansible on experimental platforms.   In any play, just do this::
 
     - hosts: whatever
@@ -750,8 +750,8 @@ The use of playbooks in local mode (above) is made extremely powerful with the a
 A script for setting up ansible-pull is provided in the examples/playbooks directory of the source
 checkout.
 
-The basic idea is to use Ansible to set up a remote copy of ansible on each managed node, each set to run via
-cron and update playbook source via git.  This inverts the default push architecture of ansible into a pull
+The basic idea is to use Ansible to set up a remote copy of Ansible on each managed node, each set to run via
+cron and update playbook source via git.  This inverts the default push architecture of Ansible into a pull
 architecture, which has near-limitless scaling potential.  The setup playbook can be tuned to change
 the cron frequency, logging locations, and parameters to ansible-pull.
 
@@ -765,7 +765,7 @@ Register Variables
 
 Often in a playbook it may be useful to store the result of a given command in a variable and access
 it later.  Use of the command module in this way can in many ways eliminate the need to write site specific facts, for
-instance, you could test for the existance of a particular program.
+instance, you could test for the existence of a particular program.
 
 The 'register' keyword decides what variable to save a result in.  The resulting variables can be used in templates, action lines, or *when* statements.  It looks like this (in an obviously trivial example)::
 
@@ -786,8 +786,8 @@ Rolling Updates
 
 .. versionadded:: 0.7
 
-By default ansible will try to manage all of the machines referenced in a play in parallel.  For a rolling updates
-use case, you can define how many hosts ansible should manage at a single time by using the ''serial'' keyword::
+By default, Ansible will try to manage all of the machines referenced in a play in parallel.  For a rolling updates
+use case, you can define how many hosts Ansible should manage at a single time by using the ''serial'' keyword::
 
 
     - name: test play
@@ -858,11 +858,11 @@ Fireball Mode
 
 Ansible's core connection types of 'local', 'paramiko', and 'ssh' are augmented in version 0.8 and later by a new extra-fast
 connection type called 'fireball'.  It can only be used with playbooks and does require some additional setup
-outside the lines of ansible's normal "no bootstrapping" philosophy.  You are not required to use fireball mode
+outside the lines of Ansible's normal "no bootstrapping" philosophy.  You are not required to use fireball mode
 to use Ansible, though some users may appreciate it.
 
 Fireball mode works by launching a temporary 0mq daemon from SSH that by default lives for only 30 minutes before
-shutting off.  Fireball mode once running uses temporary AES keys to encrypt a session, and requires direct
+shutting off.  Fireball mode, once running, uses temporary AES keys to encrypt a session, and requires direct
 communication to given nodes on the configured port.  The default is 5099.  The fireball daemon runs as any user you
 set it down as.  So it can run as you, root, or so on.  If multiple users are running Ansible as the same batch of hosts,
 take care to use unique ports.
@@ -972,7 +972,7 @@ feature produces a large amount of output, it is best used when checking a singl
 Dictionary & Nested (Complex) Arguments
 ```````````````````````````````````````
 
-As a review, most tasks in ansible are of this form::
+As a review, most tasks in Ansible are of this form::
 
     tasks:
 
