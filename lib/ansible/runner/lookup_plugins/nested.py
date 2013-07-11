@@ -31,10 +31,16 @@ def flatten(terms):
     return ret
 
 def combine(a,b):
+    """
+    Transform a list of arrays:
+    [1, 2, 3], [4, 5, 6] -> [1, 4], [2, 5], [3, 6]
+    
+    Replace any empty spots in 2nd array with "":
+    [1, 2], [3] -> [1, 3], [2, ""]
+    """
     results = []
-    for x in a:
-        for y in b:
-            results.append([x,y])
+    for i in xrange(len(a)):
+        results.append([a[i], (b[i:i+1]+[""])[0]]) 
     return results
 
 class LookupModule(object):
