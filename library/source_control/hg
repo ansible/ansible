@@ -54,13 +54,13 @@ options:
         default: "default"
     force:
         description:
-            - Discards uncommited changes. Runs C(hg update -C).
+            - Discards uncommitted changes. Runs C(hg update -C).
         required: false
         default: "yes"
         choices: [ "yes", "no" ]
     purge:
         description:
-            - Delets untracked files. Runs C(hg purge). Note this requires C(purge) extension to
+            - Deletes untracked files. Runs C(hg purge). Note this requires C(purge) extension to
               be enabled if C(purge=yes). This module will modify hgrc file on behalf of the user
               and undo the changes before exiting the task.
         required: false
