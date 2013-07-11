@@ -233,7 +233,6 @@ class Droplet(JsonfyMixIn):
     def add(cls, name, size_id, image_id, region_id, ssh_key_ids=None):
         json = cls.manager.new_droplet(name, size_id, image_id, region_id, ssh_key_ids)
         droplet = cls(json)
-        droplet.update_attr()
         return droplet
 
     @classmethod
