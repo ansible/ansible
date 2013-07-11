@@ -300,6 +300,8 @@ decide to do something conditionally based on success or failure::
         when: result|failed
       - action: command /bin/something_else
         when: result|success
+      - action: command /bin/still/something_else
+        when: result|skipped
 
 
 As a reminder, to see what derived variables are available, you can do::
