@@ -87,7 +87,7 @@ def main():
         module.exit_json(changed=False, name=name, state=state)
 
     rc, out, err = module.run_command('%s summary | grep %s' % (MONIT, name))
-    running = 'Running' in out
+    running = 'running' in out.lower()
 
     if running and (state == 'started' or state == 'monitored'):
         module.exit_json(changed=False, name=name, state=state)
