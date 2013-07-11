@@ -12,6 +12,7 @@ class TestInventory(unittest.TestCase):
         self.inventory_file             = os.path.join(self.test_dir, 'simple_hosts')
         self.large_range_inventory_file = os.path.join(self.test_dir, 'large_range')
         self.complex_inventory_file     = os.path.join(self.test_dir, 'complex_hosts')
+        self.multidim_inventory_file    = os.path.join(self.test_dir, 'multidimensional_hosts')
         self.inventory_script           = os.path.join(self.test_dir, 'inventory_api.py')
         self.inventory_dir              = os.path.join(self.test_dir, 'inventory_dir')
 
@@ -39,6 +40,9 @@ class TestInventory(unittest.TestCase):
 
     def complex_inventory(self):
         return Inventory(self.complex_inventory_file)
+
+    def multidimensional_inventory(self):
+        return Inventory(self.multidim_inventory_file)
 
     def dir_inventory(self):
         return Inventory(self.inventory_dir)
@@ -212,6 +216,23 @@ class TestInventory(unittest.TestCase):
         self.compare(hosts, ['rtp_a'])
         hosts = inventory.list_hosts("nc:&triangle:!tri_c")
         self.compare(hosts, ['tri_a', 'tri_b'])
+
+    def test_set_operations(self):
+        inventory = self.multidimensional_inventory()
+        hosts = inventory.list_hosts("web:db:&linode:&failover")
+        self.compare(hosts, ['newark3', 'newark5'])
+        hosts = inventory.list_hosts("web:&linode:&failover:db")
+        #FIXME self.compare(hosts, ['newark3', 'newark5'])
+
+        hosts = inventory.list_hosts("proxy:db:ovh:&linode")
+        self.compare(hosts, ['newark1', 'newark2', 'newark3', 'tokyo1'])
+        hosts = inventory.list_hosts("proxy:db:&linode:ovh")
+        #FIXME self.compare(hosts, ['newark1', 'newark2', 'newark3', 'tokyo1'])
+
+        hosts = inventory.list_hosts("web:db:&failover:!linode")
+        self.compare(hosts, ['montreal4'])
+        hosts = inventory.list_hosts("db:&failover:!linode:web")
+        #FIXME self.compare(hosts, ['montreal4'])
 
 
     ###################################################

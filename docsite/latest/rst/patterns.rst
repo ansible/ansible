@@ -150,6 +150,17 @@ You can do combinations::
 
     webservers:dbservers:!phoenix:&staging
 
+Intersection & exclusion rules always apply.   The following rule would not match any servers, assuming that staging and production are mutually exclusive::
+
+    webservers:dbservers:&staging:&production
+
+Order is not important, the following rules are identical::
+
+    web:db:&linode:&failover
+    web:&linode:&failover:db
+
+Older versions of Ansible require that intersection and exclusion rules are placed at the end of the pattern.
+
 You can also use variables::
 
     webservers:!{{excluded}}:&{{required}}
