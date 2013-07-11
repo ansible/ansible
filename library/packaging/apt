@@ -228,7 +228,7 @@ def remove(m, pkgspec, cache, purge=False):
             m.fail_json(msg="'apt-get remove %s' failed: %s" % (packages, err))
         m.exit_json(changed=True)
 
-def upgrade(m, mode="yes"):
+def upgrade(m, mode="yes", force=False):
     if m.check_mode:
         check_arg = '--simulate'
     else:
@@ -246,9 +246,14 @@ def upgrade(m, mode="yes"):
         apt_cmd = APTITUDE_CMD
         upgrade_command = "safe-upgrade"
 
+    if force:
+        force_yes = '--force-yes'
+    else:
+        force_yes = ''
+
     apt_cmd_path = m.get_bin_path(apt_cmd, required=True)
-    cmd = '%s %s -y %s %s %s' % (APT_ENVVARS, apt_cmd_path, DPKG_OPTIONS,
-                                check_arg, upgrade_command)
+    cmd = '%s %s -y %s %s %s %s' % (APT_ENVVARS, apt_cmd_path, DPKG_OPTIONS,
+                                    force_yes, check_arg, upgrade_command)
     rc, out, err = m.run_command(cmd)
     if rc:
         m.fail_json(msg="'%s %s' failed: %s" % (apt_cmd, upgrade_command, err))
@@ -332,7 +337,7 @@ def main():
         force_yes = p['force']
 
         if p['upgrade']:
-            upgrade(module, p['upgrade'])
+            upgrade(module, p['upgrade'], force_yes)
 
         packages = p['package'].split(',')
         latest = p['state'] == 'latest'
