@@ -59,7 +59,7 @@ options:
      - Optional, comma separated list of ssh_key_ids that you would like to be added to the server
   wait:
     description: 
-     - Wait for the droplet to be in state 'running' before returning.
+     - Wait for the droplet to be in state 'running' before returning.  If wait is "no" an ip_address may not be returned.
     default: "yes"
     choices: [ "yes", "no" ]
   wait_timeout:
@@ -101,6 +101,8 @@ EXAMPLES = '''
       region_id=2 
       image_id=3 
       wait_timeout=500
+  register: my_droplet
+- debug: msg="ID: {{ my_droplet.droplet.id }} IP: {{ my_droplet.droplet.ip_address }}"
 
 # Ensure a droplet is present
 # If droplet id already exist, will return the droplet details and changed = False
