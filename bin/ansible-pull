@@ -116,6 +116,8 @@ def main(args):
         parser.error("Missing required directory argument")
         return 1
 
+    options.dest = os.path.abspath(options.dest)
+
     if not options.url:
         parser.error("URL for git repo not specified, use -h for help")
         return 1
