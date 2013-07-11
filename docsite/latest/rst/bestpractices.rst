@@ -162,7 +162,7 @@ Below is an example tasks file, that explains how a role works.  Our common role
       tags: ntp
 
     - name: be sure ntp is configured
-      template: src=common/templates/ntp.conf.j2 dest=/etc/ntp.conf
+      template: src=ntp.conf.j2 dest=/etc/ntp.conf
       notify:
         - restart ntpd
       tags: ntp
