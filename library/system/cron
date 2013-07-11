@@ -140,6 +140,7 @@ EXAMPLES = '''
 import re
 import tempfile
 import os
+import shutil
 
 def get_jobs_file(module, user, tmpfile, cron_file):
     if cron_file:
@@ -152,7 +153,8 @@ def get_jobs_file(module, user, tmpfile, cron_file):
 def install_jobs(module, user, tmpfile, cron_file):
     if cron_file:
         cron_file = '/etc/cron.d/%s' % cron_file
-        module.atomic_move(tmpfile, cron_file)
+        shutil.copy(tmpfile, cron_file)
+        return (0, '', '')
     else:
         cmd = "crontab %s %s" % (user, tmpfile)
         return module.run_command(cmd)
