@@ -155,7 +155,8 @@ def main():
     ec2_facts_result = dict(changed=False, ansible_facts=ec2_facts)
 
     module = AnsibleModule(
-        argument_spec = dict()
+        argument_spec = dict(),
+        supports_check_mode = True,
     )
     module.exit_json(**ec2_facts_result)
 
