@@ -43,7 +43,8 @@ options:
     default: present
     choices: [ "present", "absent" ]
 notes:
-   - This module works on Debian and Ubuntu only and requires C(apt-add-repository) be available on the destination server. To ensure this package is available use the M(apt) module and install the C(python-software-properties) package before using this module.
+   - If the repository is added, C(apt-get update) is invoked.
+   - This module works on Debian and Ubuntu only and requires C(apt-add-repository) be available on the destination server. To ensure this package is available use the M(apt) module and install the C(python-software-properties) package (or C(software-properties-common) in Ubuntu 13.04 or newer) before using this module.
    - This module cannot be used on Debian Squeeze (Version 6) as there is no C(add-apt-repository) in C(python-software-properties)
    - A bug in C(apt-add-repository) always adds C(deb) and C(deb-src) types for repositories (see the issue on Launchpad U(https://bugs.launchpad.net/ubuntu/+source/software-properties/+bug/987264)), if a repo doesn't have source information (eg MongoDB repo from 10gen) the system will fail while updating repositories.
 author: Matt Wright
