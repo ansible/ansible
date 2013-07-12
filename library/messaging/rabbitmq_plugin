@@ -46,9 +46,9 @@ options:
     required: false
     default: enabled
     choices: [enabled, disabled]
-  path:
+  prefix:
     description:
-      - Specify a custom path to a Rabbit
+      - Specify a custom prefix to a Rabbit
     required: false
     default: null
 '''
@@ -62,8 +62,8 @@ class RabbitMqPlugins(object):
     def __init__(self, module):
         self.module = module
 
-        if module.params['path']:
-            self._rabbitmq_plugins = module.params['path'] + "/sbin/rabbitmq-plugins"
+        if module.params['prefix']:
+            self._rabbitmq_plugins = module.params['prefix'] + "/sbin/rabbitmq-plugins"
         else:
             self._rabbitmq_plugins = module.get_bin_path('rabbitmq-plugins', True)
 
@@ -88,7 +88,7 @@ def main():
         names=dict(required=True, aliases=['name']),
         new_only=dict(default='no', type='bool'),
         state=dict(default='enabled', choices=['enabled', 'disabled']),
-        path=dict(required=False, default=None)
+        prefix=dict(required=False, default=None)
     )
     module = AnsibleModule(
         argument_spec=arg_spec,
