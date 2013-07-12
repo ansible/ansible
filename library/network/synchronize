@@ -99,10 +99,6 @@ def main():
     rsync = module.params.get('local_rsync_path', 'rsync')
     temp = os.path.dirname(os.path.realpath(__file__))
 
-    if not private_key and ('@' in dest or '@' in source):
-        return module.fail_json(msg='A private key is required for remote connections.'
-                                )
-
     cmd = '%s --archive --delay-updates --compress' % rsync
     if verbosity:
         cmd = '%s -%s' % (cmd, 'v' * int(verbosity))
@@ -112,8 +108,11 @@ def main():
         cmd = cmd + ' --temp-dir ' + temp
     if module.boolean(delete):
         cmd = cmd + ' --delete-after'
-    if private_key:
-        cmd = cmd + " --rsh '%s -i %s -o %s'" % ('ssh', private_key,
+    if private_key is None:
+        private_key = ''
+    else:
+        private_key = '-i '+ private_key 
+    cmd = cmd + " --rsh '%s %s -o %s'" % ('ssh', private_key,
                 'StrictHostKeyChecking=no')  # need ssh param
     if rsync_path:
         cmd = cmd + ' --rsync-path ' + rsync_path
