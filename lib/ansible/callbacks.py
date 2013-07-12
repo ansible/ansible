@@ -31,10 +31,13 @@ import logging
 if constants.DEFAULT_LOG_PATH != '':
     path = constants.DEFAULT_LOG_PATH
 
-    if (os.path.exists(path) and not os.access(path, os.W_OK)) or not os.access(os.path.dirname(path), os.W_OK):
-        sys.stderr.write("log file at %s is not writeable, aborting\n" % path)
+    if (os.path.exists(path)):
+        if not os.access(path, os.W_OK):
+            sys.stderr.write("log file at %s is not writeable, aborting\n" % path)
+            sys.exit(1)
+    else:
+        sys.stderr.write("log file at %s does not exist, aborting\n" % path)
         sys.exit(1)
-
 
     logging.basicConfig(filename=path, level=logging.DEBUG, format='%(asctime)s %(name)s %(message)s')
     mypid = str(os.getpid())
