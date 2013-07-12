@@ -20,7 +20,7 @@ try:
     from quantumclient.quantum import client
     from keystoneclient.v2_0 import client as ksclient
 except ImportError:
-    print("failed=True msg='quantunclient and keystone client are required'")
+    print("failed=True msg='quantumclient and keystone client are required'")
 
 DOCUMENTATION = '''
 ---
