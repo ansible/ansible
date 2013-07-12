@@ -45,6 +45,9 @@ class ActionModule(object):
 
         source   = options.get('src', None)
         dest     = options.get('dest', None)
+        # default mode is 0644
+        if options.get('mode', None) == None:
+            module_args = "%s mode=0644" % module_args
 
         if (source is None and 'first_available_file' not in inject) or dest is None:
             result = dict(failed=True, msg="src and dest are required")
