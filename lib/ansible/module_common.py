@@ -840,7 +840,9 @@ class AnsibleModule(object):
                 sys.stderr.write("could not cleanup %s: %s" % (tmpfile, e))
 
     def atomic_move(self, src, dest):
-        '''atomically move src to dest, copying attributes from dest, returns true on success'''
+        '''atomically move src to dest, copying attributes from dest, returns true on success
+        it uses os.rename to ensure this as it is an atomic operation, rest of the function is
+        to work around limitations, corner cases and ensure selinux context is saved if possible'''
         context = None
         if os.path.exists(dest):
             try:
@@ -855,26 +857,35 @@ class AnsibleModule(object):
         else:
             if self.selinux_enabled():
                 context = self.selinux_default_context(dest)
-        # Ensure file is on same partition to make replacement atomic
-        dest_dir = os.path.dirname(dest)
-        dest_file = os.path.basename(dest)
-        tmp_dest = "%s/.%s.%s.%s" % (dest_dir,dest_file,os.getpid(),time.time())
 
-        try: # leaves tmp file behind when sudo and  not root
-            if os.getenv("SUDO_USER") and os.getuid() != 0:
-               # cleanup will happen by 'rm' of tempdir
-               shutil.copy(src, tmp_dest)
-            else:
-               shutil.move(src, tmp_dest)
-            if self.selinux_enabled():
-                self.set_context_if_different(tmp_dest, context, False)
-            os.rename(tmp_dest, dest)
-            if self.selinux_enabled():
-                # rename might not preserve context
-                self.set_context_if_different(dest, context, False)
-        except (shutil.Error, OSError, IOError), e:
-            self.cleanup(tmp_dest)
-            self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
+        try:
+            # Optimistically try a rename, solves some corner cases and can avoid useless work.
+            os.rename(src, dest)
+        except (IOError,OSError), e:
+            # only try workarounds for errno 18 (cross device) and 1 (not permited)
+            if e.errno != errno.EPERM and e.errno != errno.EXDEV:
+                self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
+
+            dest_dir = os.path.dirname(dest)
+            dest_file = os.path.basename(dest)
+            tmp_dest = "%s/.%s.%s.%s" % (dest_dir,dest_file,os.getpid(),time.time())
+
+            try: # leaves tmp file behind when sudo and  not root
+                if os.getenv("SUDO_USER") and os.getuid() != 0:
+                   # cleanup will happen by 'rm' of tempdir
+                   shutil.copy(src, tmp_dest)
+                else:
+                   shutil.move(src, tmp_dest)
+                if self.selinux_enabled():
+                    self.set_context_if_different(tmp_dest, context, False)
+                os.rename(tmp_dest, dest)
+            except (shutil.Error, OSError, IOError), e:
+                self.cleanup(tmp_dest)
+                self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
+
+        if self.selinux_enabled():
+            # rename might not preserve context
+            self.set_context_if_different(dest, context, False)
 
     def run_command(self, args, check_rc=False, close_fds=False, executable=None, data=None, binary_data=False):
         '''
