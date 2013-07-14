@@ -382,6 +382,34 @@ class TestPlaybook(unittest.TestCase):
 
        assert utils.jsonify(expected, format=True) == utils.jsonify(actual,format=True)
 
+   def test_playbook_changed_when(self):
+       test_callbacks = TestCallbacks()
+       playbook = ansible.playbook.PlayBook(
+           playbook=os.path.join(self.test_dir, 'playbook-changed_when.yml'),
+           host_list='test/ansible_hosts',
+           stats=ans_callbacks.AggregateStats(),
+           callbacks=test_callbacks,
+           runner_callbacks=test_callbacks
+       )
+       actual = playbook.run()
+
+       # if different, this will output to screen
+       print "**ACTUAL**"
+       print utils.jsonify(actual, format=True)
+       expected =  {
+           "localhost": {
+               "changed": 3,
+               "failures": 0,
+               "ok": 6,
+               "skipped": 0,
+               "unreachable": 0
+           }
+       }
+       print "**EXPECTED**"
+       print utils.jsonify(expected, format=True)
+
+       assert utils.jsonify(expected, format=True) == utils.jsonify(actual,format=True)
+
    def _compare_file_output(self, filename, expected_lines):
       actual_lines = []
       with open(filename) as f:

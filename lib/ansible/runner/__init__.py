@@ -630,6 +630,16 @@ class Runner(object):
                 module_name=module_name
             )
 
+            changed_when = self.module_vars.get('changed_when')
+            if changed_when is not None:
+                register = self.module_vars.get('register')
+                if  register is not None:
+                    if 'stdout' in data:
+                        data['stdout_lines'] = data['stdout'].splitlines()
+                    inject[register] = data
+                changed = template.template(self.basedir, changed_when, inject, fail_on_undefined=self.error_on_undefined_vars)
+                data['changed'] = utils.check_conditional(changed)
+
             if is_chained:
                 # no callbacks
                 return result

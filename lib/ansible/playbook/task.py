@@ -29,7 +29,7 @@ class Task(object):
         'delegate_to', 'first_available_file', 'ignore_errors',
         'local_action', 'transport', 'sudo', 'sudo_user', 'sudo_pass',
         'items_lookup_plugin', 'items_lookup_terms', 'environment', 'args',
-        'any_errors_fatal'
+        'any_errors_fatal', 'changed_when'
     ]
 
     # to prevent typos and such
@@ -38,7 +38,7 @@ class Task(object):
          'first_available_file', 'include', 'tags', 'register', 'ignore_errors',
          'delegate_to', 'local_action', 'transport', 'sudo', 'sudo_user',
          'sudo_pass', 'when', 'connection', 'environment', 'args',
-         'any_errors_fatal'
+         'any_errors_fatal', 'changed_when'
     ]
 
     def __init__(self, play, ds, module_vars=None, additional_conditions=None):
@@ -88,8 +88,8 @@ class Task(object):
                 else:
                     raise errors.AnsibleError("cannot find lookup plugin named %s for usage in with_%s" % (plugin_name, plugin_name))
 
-            elif x == 'when':
-                ds['when'] = "jinja2_compare %s" % (ds[x])
+            elif x in [ 'changed_when', 'when']:
+                ds[x] = "jinja2_compare %s" % (ds[x])
             elif x.startswith("when_"):
                 if 'when' in ds:
                     raise errors.AnsibleError("multiple when_* statements specified in task %s" % (ds.get('name', ds['action'])))
@@ -161,6 +161,10 @@ class Task(object):
         # load various attributes
         self.only_if = ds.get('only_if', 'True')
         self.when    = ds.get('when', None)
+        self.changed_when = ds.get('changed_when', None)
+
+        if self.changed_when is not None:
+            self.changed_when = utils.compile_when_to_only_if(self.changed_when)
 
         self.async_seconds = int(ds.get('async', 0))  # not async by default
         self.async_poll_interval = int(ds.get('poll', 10))  # default poll = 10 seconds
@@ -214,6 +218,8 @@ class Task(object):
 
         # make ignore_errors accessable to Runner code
         self.module_vars['ignore_errors'] = self.ignore_errors
+        self.module_vars['register'] = self.register
+        self.module_vars['changed_when'] = self.changed_when
 
         # tags allow certain parts of a playbook to be run without running the whole playbook
         apply_tags = ds.get('tags', None)
