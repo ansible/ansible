@@ -1,4 +1,4 @@
-# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2013, Bradley Young <young.bradley@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -18,6 +18,7 @@
 import ansible.utils as utils
 from ansible.utils import safe_eval
 import ansible.errors as errors
+from itertools import izip_longest
 
 def flatten(terms):
     ret = []
@@ -30,20 +31,13 @@ def flatten(terms):
             ret.append(term)
     return ret
 
-def transpose(a,b):
+class LookupModule(object):
     """
     Transpose a list of arrays:
     [1, 2, 3], [4, 5, 6] -> [1, 4], [2, 5], [3, 6]
-    Replace any empty spots in 2nd array with "":
-    [1, 2], [3] -> [1, 3], [2, ""]
+    Replace any empty spots in 2nd array with None:
+    [1, 2], [3] -> [1, 3], [2, None]
     """
-    results = []
-    for i in xrange(len(a)):
-        results.append([a[i], (b[i:i+1]+[""])[0]])
-    return results
-
-
-class LookupModule(object):
 
     def __init__(self, basedir=None, **kwargs):
         self.basedir = basedir
@@ -65,17 +59,8 @@ class LookupModule(object):
         terms = self.__lookup_injects(terms, inject)
 
         my_list = terms[:]
-        my_list.reverse()
-        result = []
         if len(my_list) == 0:
             raise errors.AnsibleError("with_transpose requires at least one element in each list")
-        result = my_list.pop()
-        while len(my_list) > 0:
-            result2 = transpose(result, my_list.pop())
-            result  = result2
-        new_result = []
-        for x in result:
-            new_result.append(flatten(x))
-        return new_result
+        return [flatten(x) for x in izip_longest(*my_list, fillvalue=None)]
 
 
