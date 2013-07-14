@@ -32,6 +32,7 @@ options:
       - name of the database to add or remove
     required: true
     default: null
+    aliases: [ db ]
   login_user:
     description:
       - The username used to authenticate with
@@ -85,7 +86,7 @@ author: Mark Theunissen
 
 EXAMPLES = '''
 # Create a new database with name 'bobdata'
-- mysql_db: db=bobdata state=present
+- mysql_db: name=bobdata state=present
 '''
 
 import ConfigParser
