@@ -145,6 +145,7 @@ class Runner(object):
             complex_args = {}
 
         # storage & defaults
+        self._check           = None
         self.check            = check
         self.diff             = diff
         self.setup_cache      = utils.default(setup_cache, lambda: collections.defaultdict(dict))
@@ -203,6 +204,16 @@ class Runner(object):
 
         # ensure we are using unique tmp paths
         random.seed()
+    # *****************************************************
+
+    def get_check(self):
+        return self._check and not self.module_vars.get('always_run', False)
+
+    def set_check(self, value):
+        self._check = value
+
+    check = property(get_check, set_check)
+
     # *****************************************************
 
     def _complex_args_hack(self, complex_args, module_args):

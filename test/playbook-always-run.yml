@@ -1,0 +1,9 @@
+---
+- hosts: all
+  connection: local
+  gather_facts: False
+
+  tasks:
+  - action: command echo ping
+    always_run: yes
+  - action: command echo pong
