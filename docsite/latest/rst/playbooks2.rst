@@ -782,6 +782,24 @@ The 'register' keyword decides what variable to save a result in.  The resulting
           - action: shell echo "motd contains the word hi"
             when: motd_contents.stdout.find('hi') != -1
 
+As shown previously, the registered variable's string contents are accessible with the 'stdout' method. 
+The registered result can be used in the "with_items" of a task if it is converted into
+a list (or already is a list) as shown below in another trivial example::
+
+
+    - name: registered variable usage as a with_items list
+      hosts: all
+
+      tasks:
+
+          - name: retrieve the list of home directories
+            command: ls /home
+            register: home_dirs
+
+          - name: add home dirs to the backup spooler
+            file: path=/mnt/bkspool/{{item}} src=/home/{{ item }} state=link
+            with_items: home_dirs.stdout.split()
+
 
 Rolling Updates
 ```````````````
