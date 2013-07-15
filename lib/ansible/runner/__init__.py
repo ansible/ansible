@@ -719,7 +719,14 @@ class Runner(object):
         cmd += ' && echo %s' % basetmp
 
         result = self._low_level_exec_command(conn, cmd, None, sudoable=False)
+        if result['rc'] != 0:
+            raise errors.AnsibleError('could not create temporary directory: '
+                                      'SSH exited with return code %d' % result['rc'])
         rc = utils.last_non_blank_line(result['stdout']).strip() + '/'
+        # Catch any other failure conditions here; files should never be
+        # written directly to /.
+        if rc == '/':
+            raise errors.AnsibleError('refusing to use / as a temporary directory.')
         return rc
 
 
