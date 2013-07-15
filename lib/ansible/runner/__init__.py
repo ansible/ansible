@@ -707,7 +707,9 @@ class Runner(object):
         # Catch any other failure conditions here; files should never be
         # written directly to /.
         if rc == '/':
-            raise errors.AnsibleError('refusing to use / as a temporary directory.')
+            raise errors.AnsibleError('failed to resolve remote temporary '
+                                      'directory from %s: `%s` returned '
+                                      'empty string' % (basetmp, cmd))
         return rc
 
 
