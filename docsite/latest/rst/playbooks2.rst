@@ -438,6 +438,8 @@ The above would be the equivalent of::
 
 The yum and apt modules use with_items to execute fewer package manager transactions.
 
+One can also use a registered variable in with_items if it is converted into a list.  See the "Register Variables" section for an example.
+
 Note that the types of items you iterate over with 'with_items' do not have to be simple lists of strings.
 If you have a list of hashes, you can reference subkeys using things like::
 
@@ -781,6 +783,22 @@ The 'register' keyword decides what variable to save a result in.  The resulting
 
           - shell: echo "motd contains the word hi"
             when: motd_contents.stdout.find('hi') != -1
+
+As shown previously, the registered variable's string contents are accessible with the 'stdout' method.  
+The registered results can also be converted into a list for use with "with_items" as shown below (in another 
+trivial example)::
+
+
+    - name: registered variable usage as a with_items list
+      hosts: all
+
+      tasks:
+
+          - command: ls /home
+            register: home_dirs
+
+          - stat: path=/home/{{ item }}
+            with_items: home_dirs.stdout.split()
 
 
 Rolling Updates
