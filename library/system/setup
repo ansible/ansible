@@ -626,16 +626,28 @@ class LinuxHardware(Hardware):
             if line.startswith('/'):
                 fields = line.rstrip('\n').split()
                 if(fields[2] != 'none'):
-                    statvfs_result = os.statvfs(fields[1])
-                    self.facts['mounts'].append(
-                        {'mount': fields[1],
-                         'device':fields[0],
-                         'fstype': fields[2],
-                         'options': fields[3],
-                         # statvfs data
-                         'size_total': statvfs_result.f_bsize * statvfs_result.f_blocks,
-                         'size_available': statvfs_result.f_bsize * (statvfs_result.f_bavail),
-                         })
+                    try:
+                        statvfs_result = os.statvfs(fields[1])
+                        self.facts['mounts'].append(
+                            {'mount': fields[1],
+                             'device':fields[0],
+                             'fstype': fields[2],
+                             'options': fields[3],
+                             # statvfs data
+                             'size_total': statvfs_result.f_bsize * statvfs_result.f_blocks,
+                             'size_available': statvfs_result.f_bsize * (statvfs_result.f_bavail),
+                             })
+                    except OSError, e:
+                        # don't have access to stat so we'll set to None
+                        self.facts['mounts'].append(
+                            {'mount': fields[1],
+                             'device':fields[0],
+                             'fstype': fields[2],
+                             'options': fields[3],
+                             # statvfs data
+                             'size_total': None,
+                             'size_available': None,
+                             })
 
     def get_device_facts(self):
         self.facts['devices'] = {}
