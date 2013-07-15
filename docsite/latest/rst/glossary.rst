@@ -227,9 +227,7 @@ Ansible uses JSON for return data from remote modules.  This allows modules to b
 only_if
 +++++++
 
-A conditional statement that decides if a task is going to be executed in a playbook based on whether if the following expression
-given is true or false.  The newer 'when_' statements provide a cleaner way to express conditionals, 'only_if' is an older
-construct.  Though it may be still be useful in advanced situations.
+A deprecated form of the "when:" statement. It should no longer be used.
 
 Library
 +++++++
@@ -414,7 +412,7 @@ Ansible uses "Connection Plugins" to define types of available transports.  Thes
 When
 ++++
 
-When statements (when_string, when_changed, when_boolean, when_integer, etc) are easier to write forms of the only_if conditional. They can be affixed to any task to make that task decide to run only when an expression involving variables or facts is actually true.
+An optional conditional statement attached to a task that is used to determine if the task should run or not. If the expression following the "when:" keyword evaluates to false, the task will be ignored.
 
 Van Halen
 +++++++++
