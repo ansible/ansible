@@ -68,7 +68,7 @@ class ActionModule(object):
         result = handler.run(conn, tmp, 'raw', module_args, inject)
 
         # clean up after
-        if tmp.find("tmp") != -1 and C.DEFAULT_KEEP_REMOTE_FILES != '1':
+        if tmp.find("tmp") != -1 and not C.DEFAULT_KEEP_REMOTE_FILES:
             self.runner._low_level_exec_command(conn, 'rm -rf %s >/dev/null 2>&1' % tmp, tmp)
 
         return result
