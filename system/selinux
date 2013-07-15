@@ -61,7 +61,7 @@ import sys
 try:
     import selinux
 except ImportError:
-    print json.dumps(failed=True, msg='python-selinux required for this module')
+    print "failed=True msg='python-selinux required for this module'"
     sys.exit(1)
 
 # getter subroutines
@@ -200,3 +200,4 @@ def main():
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
 
 main()
+
