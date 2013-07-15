@@ -34,8 +34,7 @@ description:
 options:
   name:
     description:
-      - package name, or package specifier with version, like C(name-1.0).
-      - in state=latest this can be '*' which means run: yum -y update
+      - "package name, or package specifier with version, like C(name-1.0) in state=latest this can be '*' which means run: yum -y update"
     required: true
     default: null
     aliases: []
