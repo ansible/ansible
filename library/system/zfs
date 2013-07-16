@@ -292,11 +292,9 @@ class Zfs(object):
         if self.module.check_mode:
             self.changed = True
             return
-        cmd = [self.module.get_bin_path('zfs', True)]
-        cmd.append('set')
-        cmd.append(prop + '=' + value)
-        cmd.append(self.name)
-        (rc, err, out) = self.module.run_command(' '.join(cmd))
+        cmd = self.module.get_bin_path('zfs', True)
+        args = [cmd, 'set', prop + '=' + value, self.name]
+        (rc, err, out) = self.module.run_command(args)
         if rc == 0:
             self.changed = True
         else:
