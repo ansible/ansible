@@ -927,8 +927,8 @@ class AnsibleModule(object):
 
     def pretty_bytes(self,size):
         ranges = (
-                (1<<50L, 'ZB'),
-                (1<<50L, 'EB'),
+                (1<<70L, 'ZB'),
+                (1<<60L, 'EB'),
                 (1<<50L, 'PB'),
                 (1<<40L, 'TB'),
                 (1<<30L, 'GB'),
