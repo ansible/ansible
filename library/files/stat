@@ -28,6 +28,12 @@ options:
     required: true
     default: null
     aliases: []
+  follow:
+    description:
+      - Whether to follow symlinks
+    required: false
+    default: no
+    aliases: []
 author: Bruce Pennypacker
 '''
 
@@ -49,13 +55,18 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             path = dict(required=True),
+            follow = dict(default='no', type='bool')
         )
     )
 
     path = module.params.get('path')
+    follow = module.params.get('follow')
 
     try:
-        st = os.stat(path)
+        if follow:
+            st = os.stat(path)
+        else:
+            st = os.lstat(path)
     except OSError, e:
         if e.errno == errno.ENOENT:
             d = { 'exists' : False }
@@ -98,9 +109,8 @@ def main():
         'isgid'    : bool(mode & stat.S_ISGID),
         }
 
-    if S_ISDIR(mode) and os.path.islink(path):
-        d['isdir'] = False
-        d['islnk'] = True
+    if S_ISLNK(mode):
+        d['lnk_source'] = os.path.realpath(path)
 
     if S_ISREG(mode):
         d['md5']        = module.md5(path)
