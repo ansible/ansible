@@ -860,9 +860,12 @@ class AnsibleModule(object):
         dest_file = os.path.basename(dest)
         tmp_dest = "%s/.%s.%s.%s" % (dest_dir,dest_file,os.getpid(),time.time())
 
-        try: # leaves tmp file behind when sudo and  not root
-            if os.getenv("SUDO_USER") and os.getuid() != 0:
+        try: # leaves tmp file behind when sudo
+            if os.getenv("SUDO_USER"):
                # cleanup will happen by 'rm' of tempdir
+
+               # the source file is copied to ensure that the
+               # destination file belongs to the sudo_user
                shutil.copy(src, tmp_dest)
             else:
                shutil.move(src, tmp_dest)
