@@ -114,7 +114,7 @@ class Play(object):
 
         if self.sudo_user != 'root':
             self.sudo = True
-        
+
 
     # *************************************************
 
@@ -308,6 +308,48 @@ class Play(object):
         return self._handlers
 
     # *************************************************
+    def get_vars_prompt(self):
+        new_vars = {}
+        if type(self.vars_prompt) == list:
+            for var in self.vars_prompt:
+                if not 'name' in var:
+                    raise errors.AnsibleError("'vars_prompt' item is missing 'name:'")
+
+                vname = var['name']
+                prompt = var.get("prompt", vname)
+                default = var.get("default", None)
+                private = var.get("private", True)
+
+                confirm = var.get("confirm", False)
+                encrypt = var.get("encrypt", None)
+                salt_size = var.get("salt_size", None)
+                salt = var.get("salt", None)
+
+                if vname not in self.playbook.extra_vars:
+                    new_vars[vname] = self.playbook.callbacks.on_vars_prompt(
+                                         vname, private, prompt, encrypt, confirm, salt_size, salt, default
+                                      )
+
+        elif type(self.vars_prompt) == dict:
+            for (vname, prompt) in self.vars_prompt.iteritems():
+                prompt_msg = "%s: " % prompt
+                if vname not in self.playbook.extra_vars:
+                    new_vars[vname] = self.playbook.callbacks.on_vars_prompt(
+                                         varname=vname, private=False, prompt=prompt_msg, default=None
+                                      )
+        else:
+            raise errors.AnsibleError("'vars_prompt' section is malformed, see docs")
+
+        self.vars = utils.combine_vars(self.vars, new_vars)
+
+        load_vars = {}
+        if self.playbook.inventory.basedir() is not None:
+            load_vars['inventory_dir'] = self.playbook.inventory.basedir()
+
+        self._tasks      = self._load_tasks(self._ds.get('tasks', []), load_vars)
+        self._handlers   = self._load_tasks(self._ds.get('handlers', []), load_vars)
+
+    # *************************************************
 
     def _get_vars(self):
         ''' load the vars section from a play, accounting for all sorts of variable features
@@ -331,37 +373,6 @@ class Play(object):
                 vars[k] = v
         else:
             vars.update(self.vars)
-
-        if type(self.vars_prompt) == list:
-            for var in self.vars_prompt:
-                if not 'name' in var:
-                    raise errors.AnsibleError("'vars_prompt' item is missing 'name:'")
-
-                vname = var['name']
-                prompt = var.get("prompt", vname)
-                default = var.get("default", None)
-                private = var.get("private", True)
-
-                confirm = var.get("confirm", False)
-                encrypt = var.get("encrypt", None)
-                salt_size = var.get("salt_size", None)
-                salt = var.get("salt", None)
-
-                if vname not in self.playbook.extra_vars:
-                    vars[vname] = self.playbook.callbacks.on_vars_prompt(
-                                     vname, private, prompt, encrypt, confirm, salt_size, salt, default
-                                  )
-
-        elif type(self.vars_prompt) == dict:
-            for (vname, prompt) in self.vars_prompt.iteritems():
-                prompt_msg = "%s: " % prompt
-                if vname not in self.playbook.extra_vars:
-                    vars[vname] = self.playbook.callbacks.on_vars_prompt(
-                                     varname=vname, private=False, prompt=prompt_msg, default=None
-                                  )
-
-        else:
-            raise errors.AnsibleError("'vars_prompt' section is malformed, see docs")
 
         if type(self.playbook.extra_vars) == dict:
             vars.update(self.playbook.extra_vars)
