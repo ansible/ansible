@@ -16,11 +16,11 @@
 
 DOCUMENTATION = '''
 ---
-module: route53 
+module: rds
 version_added: "1.4"
-short_description: add or delete entries in Amazon's Route53 DNS service
+short_description: add or delete entries in Amazons Route53 DNS service
 description:
-     - Creates and deletes DNS records in Amazon's Route53 service
+     - Creates and deletes DNS records in Amazons Route53 service
 options:
   command:
     description:
@@ -77,7 +77,7 @@ author: Bruce Pennypacker
 '''
 
 EXAMPLES = '''
-# Add new.foo.com as an A record with 3 IP's
+# Add new.foo.com as an A record with 3 IPs
 - route53: >
       command=create
       zone=foo.com
@@ -94,14 +94,24 @@ EXAMPLES = '''
       type=A
   register: rec
 
-# Delete new.foo.com's A record using the results from the 'get'
+# Delete new.foo.com A record using the results from the get command
 - route53: >
       command=delete
       zone=foo.com
-      record={{ rec.set.record }}
-      type={{ rec.set.type }}
-      value={{ rec.set.value }}
-.''
+      record={{ r.set.record }}
+      type={{ r.set.type }}
+      value={{ r.set.value }}
+
+# Add an AAAA record.  Note that because there are colons in the value
+# that the entire parameter list must be quoted:
+- route53: >
+      "command=create
+      zone=foo.com
+      record=localhost.foo.com
+      type=AAAA
+      ttl=7200
+      value=::1"
+'''
 
 import sys
 
