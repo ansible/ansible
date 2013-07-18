@@ -84,6 +84,11 @@ class Connection(object):
             return ["sshpass", "-d%d" % self.rfd]
         return []
 
+    def _ssh_cmd(self):
+        ssh_cmd = self._password_cmd()
+        ssh_cmd += ["ssh", "-tt", "-q"] + self.common_args + [self.host]
+        return ssh_cmd
+
     def _send_password(self):
         if self.password:
             os.close(self.rfd)
@@ -92,9 +97,7 @@ class Connection(object):
 
     def exec_command(self, cmd, tmp_path, sudo_user,sudoable=False, executable='/bin/sh'):
         ''' run a command on the remote host '''
-
-        ssh_cmd = self._password_cmd()
-        ssh_cmd += ["ssh", "-tt", "-q"] + self.common_args + [self.host]
+        ssh_cmd = self._ssh_cmd()
 
         if not self.runner.sudo or not sudoable:
             if executable:
@@ -209,6 +212,9 @@ class Connection(object):
             raise errors.AnsibleError("failed to transfer file from %s:\n%s\n%s" % (in_path, stdout, stderr))
 
     def close(self):
-        ''' not applicable since we're executing openssh binaries '''
-        pass
-
+        # kill sudo credentials on exit (needed on older ubuntu versions)
+        if self.runner.sudo and self.runner.sudo_pass:
+            cmd = self._ssh_cmd() + ["sudo", "-K"]
+            ret = subprocess.call(cmd)
+            vvv("CLOSE %s returned %s" % (cmd, ret))
+                
