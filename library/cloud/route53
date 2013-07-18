@@ -16,7 +16,7 @@
 
 DOCUMENTATION = '''
 ---
-module: rds
+module: route53 
 version_added: "1.4"
 short_description: add or delete entries in Amazon's Route53 DNS service
 description:
@@ -98,9 +98,9 @@ EXAMPLES = '''
 - route53: >
       command=delete
       zone=foo.com
-      record={{ r.set.record }}
-      type={{ r.set.type }}
-      value={{ r.set.value }}
+      record={{ rec.set.record }}
+      type={{ rec.set.type }}
+      value={{ rec.set.value }}
 .''
 
 import sys
