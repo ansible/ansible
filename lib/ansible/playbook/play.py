@@ -159,8 +159,12 @@ class Play(object):
                 has_dict = orig_path
                 orig_path = role_name
 
-            with_items = has_dict.get('with_items', None)
-            when       = has_dict.get('when', None)
+            # special vars must be extracted from the dict to the included tasks
+            special_keys = [ "sudo", "sudo_user", "when", "with_items" ]
+            special_vars = {}
+            for k in special_keys:
+                if k in has_dict:
+                    special_vars[k] = has_dict[k]
 
             path = utils.path_dwim(self.basedir, os.path.join('roles', orig_path))
             if not os.path.isdir(path) and not orig_path.startswith(".") and not orig_path.startswith("/"):
@@ -181,17 +185,15 @@ class Play(object):
                 raise errors.AnsibleError("found role at %s, but cannot find %s or %s or %s or %s" % (path, task, handler, vars_file, library))
             if os.path.isfile(task):
                 nt = dict(include=task, vars=has_dict)
-                if when:
-                    nt['when'] = when
-                if with_items:
-                    nt['with_items'] = with_items
+                for k in special_keys:
+                    if k in special_vars:
+                        nt[k] = special_vars[k]
                 new_tasks.append(nt)
             if os.path.isfile(handler):
                 nt = dict(include=handler, vars=has_dict)
-                if when:
-                    nt['when'] = when
-                if with_items:
-                    nt['with_items'] = with_items
+                for k in special_keys:
+                    if k in special_vars:
+                        nt[k] = special_vars[k]
                 new_handlers.append(nt)
             if os.path.isfile(vars_file):
                 new_vars_files.append(vars_file)
@@ -247,7 +249,7 @@ class Play(object):
 
     # *************************************************
 
-    def _load_tasks(self, tasks, vars={}, additional_conditions=[], original_file=None):
+    def _load_tasks(self, tasks, vars={}, sudo_vars={}, additional_conditions=[], original_file=None):
         ''' handle task and handler include statements '''
 
         results = []
@@ -258,6 +260,15 @@ class Play(object):
         for x in tasks:
             if not isinstance(x, dict):
                 raise errors.AnsibleError("expecting dict; got: %s" % x)
+
+            # evaluate sudo vars for current and child tasks 
+            included_sudo_vars = {}
+            for k in ["sudo", "sudo_user"]:
+                if k in x:
+                    included_sudo_vars[k] = x[k]
+                elif k in sudo_vars:
+                    included_sudo_vars[k] = sudo_vars[k]
+                    x[k] = sudo_vars[k]
 
             if 'meta' in x:
                 if x['meta'] == 'flush_handlers':
@@ -284,7 +295,7 @@ class Play(object):
                         included_additional_conditions.append(utils.compile_when_to_only_if("%s %s" % (k[5:], x[k])))
                     elif k == 'when':
                         included_additional_conditions.append(utils.compile_when_to_only_if("jinja2_compare %s" % x[k]))
-                    elif k in ("include", "vars", "only_if"):
+                    elif k in ("include", "vars", "only_if", "sudo", "sudo_user"):
                         pass
                     else:
                         raise errors.AnsibleError("parse error: task includes cannot be used with other directives: %s" % k)
@@ -306,7 +317,7 @@ class Play(object):
                     include_file = template(dirname, tokens[0], mv)
                     include_filename = utils.path_dwim(dirname, include_file)
                     data = utils.parse_yaml_from_file(include_filename)
-                    results += self._load_tasks(data, mv, included_additional_conditions, original_file=include_filename)
+                    results += self._load_tasks(data, mv, included_sudo_vars, included_additional_conditions, original_file=include_filename)
             elif type(x) == dict:
                 results.append(Task(self,x,module_vars=task_vars, additional_conditions=additional_conditions))
             else:
