@@ -149,7 +149,8 @@ class Play(object):
         # variables if the role was parameterized (i.e. given as a hash)
         has_dict = {}
 
-        for orig_path in roles:
+        for role_path in roles:
+            orig_path = template(self.basedir,role_path,self.playbook.extra_vars)
 
             if type(orig_path) == dict:
                 # what, not a path?
