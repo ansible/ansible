@@ -433,7 +433,6 @@ Note that you cannot do variable substitution when including one playbook
 inside another.
 
 .. note::
-
    You can not conditionally path the location to an include file,
    like you can with 'vars_files'.  If you find yourself needing to do
    this, consider how you can restructure your playbook to be more
@@ -540,6 +539,11 @@ If you want to define certain tasks to happen before AND after roles are applied
         - shell: echo 'still busy'
       post_tasks:
         - shell: echo 'goodbye'
+
+.. note::
+If you are using tags with tasks (described later as a means of only running part of a playbook) 
+be sure you also tag your pre_tasks and post_tasks and pass those along as well, especially if the pre
+and post tasks are used for monitoring outage window control or load balancing.
 
 Executing A Playbook
 ````````````````````

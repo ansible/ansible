@@ -172,8 +172,7 @@ Lookup Plugin
 
 A lookup plugin is a way to get data into Ansible from the outside world.  These are how such things as "with_items" are implemented, which is a
 basic looping plugin, but there are also things like "with_file" which loads data from a file, and even things for querying environment variables,
-DNS text records, or key value stores.  Lookup plugins can also be accessed in templates using an all caps form, such as the contents of a file
-on the local machine can be accessed like ``$FILE(/path/to/file)``.
+DNS text records, or key value stores.  Lookup plugins can also be accessed in templates as ``{{ lookup('file','/path/to/file') }}``.
 
 Multi-Tier
 ++++++++++
@@ -250,7 +249,7 @@ Local Action
 ++++++++++++
 
 A local_action directive in a playbook targetting remote machines means that the given step will actually occur on local
-machine, but that the variable '$ansible_hostname' can be passed in to reference the remote hostname being referred to in
+machine, but that the variable '{{ ansible_hostname }}' can be passed in to reference the remote hostname being referred to in
 that step.  This can be used to trigger, for example, an rsync operation.
 
 Loops
