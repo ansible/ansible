@@ -450,15 +450,15 @@ If you have a list of hashes, you can reference subkeys using things like::
 Nested Loops
 ````````````
 
-Loops can be nested too:
+Loops can be nested as well:
 
-    - name: give all employees access to every departament's database
+    - name: give users access to multiple databases
       mysql_user: name={{ item[0] }} priv={{ item[1] }}.*:*
       with_nested:
         - [ 'alice', 'bob', 'eve' ]
         - [ 'clientdb', 'employeedb', 'providerdb' ]
 
-As with the case of 'with_items" above, you can use previously defined variables, and you can use their raw name without templating it with '{{ }}'.
+As with the case of 'with_items' above, you can use previously defined variables. Just specify the variable'sname without templating it with '{{ }}'.
 
     - name: here, 'users' contains the above list of employees
       mysql_user: name={{ item[0] }} priv={{ item[1] }}.*:*
