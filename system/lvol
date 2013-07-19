@@ -96,6 +96,8 @@ def main():
     lv = module.params['lv']
     size = module.params['size']
     state = module.params['state']
+    size_opt = 'L'
+    size_unit = 'm'
 
     if state=='present' and not size:
         module.fail_json(msg="No size given.")
@@ -128,9 +130,7 @@ def main():
                 module.fail_json(msg="Size unit should be one of [bBsSkKmMgGtTpPeE]")
         # when no unit, megabytes by default
         elif size.isdigit():
-            size_unit = 'm'
             size = int(size)
-            size_opt = 'L'
         else:
             module.fail_json(msg="Bad size specification")
 
