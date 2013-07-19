@@ -347,7 +347,7 @@ which results in a interactive experience if using Ansible, from say, cron.
 
 If you wish to disable this behavior and understand the implications, you can do so by editing /etc/ansible/ansible.cfg or ~/.ansible.cfg::
 
-    [default]
+    [defaults]
     host_key_checking = False
 
 Alternatively this can be set by an environment variable:
