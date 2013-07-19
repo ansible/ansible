@@ -3,7 +3,6 @@ Amazon Web Services
 
 .. contents::
    :depth: 2
-   :backlinks: top
 
 Introduction
 ````````````
