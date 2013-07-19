@@ -8,7 +8,6 @@ be 90% or more of what they use in Ansible.
 
 .. contents::
    :depth: 2
-   :backlinks: top
 
 Tags
 ````

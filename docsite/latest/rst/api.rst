@@ -7,8 +7,7 @@ and you can plug in inventory data from external data sources.  Ansible is writt
 API so you have a considerable amount of power across the board.
 
 .. contents:: `Table of contents`
-   :depth: 2
-   :backlinks: top
+   :depth: 4
 
 Python API
 ----------

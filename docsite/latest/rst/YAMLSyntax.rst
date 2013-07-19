@@ -11,6 +11,8 @@ and writing YAML in most programming languages.
 You may also wish to read :doc:`playbooks` at the same time to see how this
 is used in practice.
 
+.. contents:: `Table of contents`
+   :depth: 4
 
 YAML Basics
 -----------
