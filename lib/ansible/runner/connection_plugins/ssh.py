@@ -82,7 +82,7 @@ class Connection(object):
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 p.communicate()
             except OSError:
-                raise errors.AnsibleError("to use -c ssh with passwords, you must install the sshpass program")
+                raise errors.AnsibleError("to use the 'ssh' connection type with passwords, you must install the sshpass program")
             (self.rfd, self.wfd) = os.pipe()
             return ["sshpass", "-d%d" % self.rfd]
         return []
