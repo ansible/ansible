@@ -56,6 +56,18 @@ with warnings.catch_warnings():
     except ImportError:
         pass
 
+# agent forwarding feature check
+HAVE_PARAMIKO_AGENT_FORWARDING=False
+try:
+    import paramiko.agent
+    if hasattr(paramiko.agent, "AgentRequestHandler"):
+        HAVE_PARAMIKO_AGENT_FORWARDING = True
+except ImportError:
+    pass
+
+if C.PARAMIKO_AGENT_FORWARDING != "none" and not HAVE_PARAMIKO_AGENT_FORWARDING:
+    raise errors.AnsibleError("PARAMIKO_AGENT_FORWARDING: paramiko version is too old")
+
 class MyAddPolicy(object):
     """
     Based on AutoAddPolicy in paramiko so we can determine when keys are added
@@ -187,6 +199,10 @@ class Connection(object):
                 msg += ": %s" % str(e)
             raise errors.AnsibleConnectionFailed(msg)
 
+        # activate Agent Forwarding
+        if C.PARAMIKO_AGENT_FORWARDING != "none" and HAVE_PARAMIKO_AGENT_FORWARDING:
+            paramiko.agent.AgentRequestHandler(chan)
+
         if not self.runner.sudo or not sudoable:
             if executable:
                 quoted_command = executable + ' -c ' + pipes.quote(cmd)
@@ -201,7 +217,18 @@ class Connection(object):
             chan.get_pty(term=os.getenv('TERM', 'vt100'),
                          width=int(os.getenv('COLUMNS', 0)),
                          height=int(os.getenv('LINES', 0)))
-            shcmd, prompt = utils.make_sudo_cmd(sudo_user, executable, cmd)
+            export_env_vars = []
+            if C.PARAMIKO_AGENT_FORWARDING in ('sudo', 'sudo_user'):
+                export_env_vars.append('SSH_AUTH_SOCK')
+
+            shcmd, prompt = utils.make_sudo_cmd(sudo_user, executable, cmd, export_env_vars)
+
+            if C.PARAMIKO_AGENT_FORWARDING == "sudo_user" and sudo_user != "root":
+                grant_sock_error = ' >/dev/null 2>&1 || { echo "setfacl is required on host (PARAMIKO_AGENT_FORWARDING=sudo_user). Aborting." >&2; exit 1; }; '
+                grant_sock_access =  ("command setfacl -m u:%s:rw $SSH_AUTH_SOCK" + grant_sock_error) % (sudo_user)
+                grant_sock_access += ("command setfacl -m u:%s:x $(dirname $SSH_AUTH_SOCK)" + grant_sock_error) % (sudo_user)
+                shcmd = grant_sock_access + shcmd
+
             vvv("EXEC %s" % shcmd, host=self.host)
             sudo_output = ''
             try:

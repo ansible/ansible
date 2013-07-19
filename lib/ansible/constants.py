@@ -131,6 +131,8 @@ ANSIBLE_NOCOLOR                = get_config(p, DEFAULTS, 'nocolor', 'ANSIBLE_NOC
 ANSIBLE_NOCOWS                 = get_config(p, DEFAULTS, 'nocows', 'ANSIBLE_NOCOWS', None, boolean=True)
 ANSIBLE_SSH_ARGS               = get_config(p, 'ssh_connection', 'ssh_args', 'ANSIBLE_SSH_ARGS', None)
 PARAMIKO_RECORD_HOST_KEYS      = get_config(p, 'paramiko_connection', 'record_host_keys', 'ANSIBLE_PARAMIKO_RECORD_HOST_KEYS', True, boolean=True)
+# agent forwarding can be configured at 4 progressive levels: 'none', 'user', 'sudo', 'sudo_user'
+PARAMIKO_AGENT_FORWARDING      = get_config(p, 'paramiko_connection', 'agent_forwarding', 'ANSIBLE_PARAMIKO_AGENT_FORWARDING', 'none')
 ZEROMQ_PORT                    = int(get_config(p, 'fireball_connection', 'zeromq_port', 'ANSIBLE_ZEROMQ_PORT', 5099))
 ACCELERATE_PORT                = int(get_config(p, 'accelerate', 'accelerate_port', 'ACCELERATE_PORT', 5099))
 

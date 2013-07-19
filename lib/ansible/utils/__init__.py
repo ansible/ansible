@@ -720,7 +720,7 @@ def compile_when_to_only_if(expression):
     else:
         raise errors.AnsibleError("invalid usage of when_ operator: %s" % expression)
 
-def make_sudo_cmd(sudo_user, executable, cmd):
+def make_sudo_cmd(sudo_user, executable, cmd, export_env_vars = []):
     """
     helper function for connection plugins to create sudo commands
     """
@@ -731,11 +731,18 @@ def make_sudo_cmd(sudo_user, executable, cmd):
     # and pass the quoted string to the user's shell.  We loop reading
     # output until we see the randomly-generated sudo prompt set with
     # the -p option.
+
+    extra_env = ''
+    if export_env_vars:
+        extra_env = '/usr/bin/env '
+        for var in export_env_vars:
+            extra_env += '%s=$%s ' % (var, var)
+
     randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
     prompt = '[sudo via ansible, key=%s] password: ' % randbits
-    sudocmd = '%s -k && %s %s -S -p "%s" -u %s %s -c %s' % (
+    sudocmd = '%s -k && %s %s -S -p "%s" -u %s %s %s -c %s' % (
         C.DEFAULT_SUDO_EXE, C.DEFAULT_SUDO_EXE, C.DEFAULT_SUDO_FLAGS,
-        prompt, sudo_user, executable or '$SHELL', pipes.quote(cmd))
+        prompt, sudo_user, extra_env, executable or '$SHELL', pipes.quote(cmd))
     return ('/bin/sh -c ' + pipes.quote(sudocmd), prompt)
 
 _TO_UNICODE_TYPES = (unicode, type(None))
