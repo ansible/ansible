@@ -720,15 +720,12 @@ class Runner(object):
 
         result = self._low_level_exec_command(conn, cmd, None, sudoable=False)
         if result['rc'] != 0:
-            raise errors.AnsibleError('could not create temporary directory: '
-                                      'SSH exited with return code %d' % result['rc'])
+            raise errors.AnsibleError('could not create temporary directory, SSH exited with result %d' % result['rc'])
         rc = utils.last_non_blank_line(result['stdout']).strip() + '/'
         # Catch any other failure conditions here; files should never be
         # written directly to /.
         if rc == '/':
-            raise errors.AnsibleError('failed to resolve remote temporary '
-                                      'directory from %s: `%s` returned '
-                                      'empty string' % (basetmp, cmd))
+            raise errors.AnsibleError('failed to resolve remote temporary directory from %s: `%s` returned empty string' % (basetmp, cmd))
         return rc
 
 
