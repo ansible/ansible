@@ -291,6 +291,9 @@ def main():
     global APT_GET_CMD
     APT_GET_CMD = module.get_bin_path("apt-get")
 
+    if not APTITUDE_CMD:
+      module.fail_json(msg="Could not find aptitude. Please ensure it is installed.")
+
     p = module.params
     install_recommends = p['install_recommends']
 
