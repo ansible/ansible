@@ -67,16 +67,16 @@ EXAMPLES = '''
 # Playbook example combined with instance launch 
 - local_action: 
     module: ec2 
-    keypair: $keypair 
-    image: $image 
+    keypair: "{{ keypair }}"
+    image: "{{ image }}"
     wait: yes 
     count: 3
     register: ec2
 - local_action: 
     module: ec2_vol 
-    instance: ${item.id} 
+    instance: "{{ item.id }} " 
     volume_size: 5
-    with_items: ${ec2.instances}
+    with_items: ec2.instances
     register: ec2_vol
 '''
 
