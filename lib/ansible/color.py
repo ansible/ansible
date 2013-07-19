@@ -21,7 +21,7 @@ import sys
 ANSIBLE_COLOR=True
 if os.getenv("ANSIBLE_NOCOLOR") is not None:
     ANSIBLE_COLOR=False
-elif not sys.stdout.isatty():
+elif not hasattr(sys.stdout, 'isatty') or not sys.stdout.isatty():
     ANSIBLE_COLOR=False
 else:
     try:
