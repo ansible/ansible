@@ -56,7 +56,7 @@ EXAMPLES = '''
 # select whether we dump additional debug info through syslog
 syslogging = False
 
-# Function used for executing commands. 
+# Function used for executing commands.
 def execute_command(cmd, syslogging):
     if syslogging:
         syslog.openlog('ansible-%s' % os.path.basename(__file__))
@@ -102,27 +102,50 @@ def get_package_state(name, specific_version):
         return False
 
 # Function used to make sure a package is present.
-def package_present(name, installed_state, module):
+def package_present(name, installed_state, specific_version, module):
     if module.check_mode:
-        install_cmd = 'pkg_add -In'
-    else: 
-        install_cmd = 'pkg_add -I'
+        install_cmd = 'pkg_add -Imn'
+    else:
+        install_cmd = 'pkg_add -Im'
 
     if installed_state is False:
 
         # Attempt to install the package
         (rc, stdout, stderr) = execute_command("%s %s" % (install_cmd, name), syslogging)
 
-        # pkg_add returns 0 even if the package does not exist
-        # so depend on stderr instead if something bad happened.
-        if stderr:
-            rc = 1
-            changed=False
+        # The behaviour of pkg_add is a bit different depending on if a
+        # specific version is supplied or not.
+        #
+        # When a specific version is supplied the return code will be 0 when
+        # a package is found and 1 when it is not, if a version is not
+        # supplied the tool will exit 0 in both cases:
+        if specific_version:
+            # Depend on the return code.
+            if rc:
+                changed=False
         else:
+            # Depend on stderr instead.
+            if stderr:
+                # There is a corner case where having an empty directory in
+                # installpath prior to the right location will result in a
+                # "file:/local/package/directory/ is empty" message on stderr
+                # while still installing the package, so we need to look for
+                # for a message like "packagename-1.0: ok" just in case.
+                match = re.search("\W%s-[^:]+: ok\W" % name, stdout)
+                if match:
+                    # It turns out we were able to install the package.
+                    pass
+                else:
+                    # We really did fail, fake the return code.
+                    rc = 1
+                    changed=False
+
+        if rc == 0:
             if module.check_mode:
                 module.exit_json(changed=True)
 
             changed=True
+
     else:
         rc = 0
         stdout = ''
@@ -135,7 +158,7 @@ def package_present(name, installed_state, module):
 def package_latest(name, installed_state, specific_version, module):
     if module.check_mode:
         upgrade_cmd = 'pkg_add -umn'
-    else: 
+    else:
         upgrade_cmd = 'pkg_add -um'
 
     pre_upgrade_name = ''
@@ -160,16 +183,24 @@ def package_latest(name, installed_state, specific_version, module):
         else:
             changed = False
 
-        # 'pkg_add -u' returns 0 even when something strange happened, stderr
-        # should be empty if everything went fine.
-        if stderr:
-            rc=1
+        # FIXME: This part is problematic. Based on the issues mentioned (and
+        # handled) in package_present() it is not safe to blindly trust stderr
+        # as an indicator that the command failed, and in the case with
+        # empty installpath directories this will break.
+        #
+        # For now keep this safeguard here, but ignore it if we managed to
+        # parse out a successful update above. This way we will report a
+        # successful run when we actually modify something but fail
+        # otherwise.
+        if changed != True:
+            if stderr:
+                rc=1
 
         return (rc, stdout, stderr, changed)
 
     else:
         # If package was not installed at all just make it present.
-        return package_present(name, installed_state, module)
+        return package_present(name, installed_state, specific_version, module)
 
 # Function used to make sure a package is not installed.
 def package_absent(name, installed_state, module):
@@ -234,7 +265,7 @@ def main():
 
     # Perform requested action
     if state in ['installed', 'present']:
-        (rc, stdout, stderr, changed) = package_present(name, installed_state, module)
+        (rc, stdout, stderr, changed) = package_present(name, installed_state, specific_version, module)
     elif state in ['absent', 'removed']:
         (rc, stdout, stderr, changed) = package_absent(name, installed_state, module)
     elif state == 'latest':
