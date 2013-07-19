@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python2
 # (C) 2012, Michael DeHaan, <michael.dehaan@gmail.com>
 
 # This file is part of Ansible
