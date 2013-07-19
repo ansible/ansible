@@ -23,14 +23,14 @@ Example::
 
     tasks:
 
-        - action: yum name={{ item }} state=installed
+        - yum: name={{ item }} state=installed
           with_items:
              - httpd
              - memcached
           tags:
              - packages
 
-        - action: template src=templates/src.j2 dest=/etc/foo.conf
+        - template: src=templates/src.j2 dest=/etc/foo.conf
           tags:
              - configuration
 
@@ -66,7 +66,7 @@ has a failure.  Sometimes, though, you want to continue on.  To do so,
 write a task that looks like this::
 
     - name: this will not be counted as a failure
-      action: command /bin/false
+      command: /bin/false
       ignore_errors: yes
 
 Accessing Complex Variable Data
@@ -149,7 +149,7 @@ You can do this by using an external variables file, or files, just like this::
         - /vars/external_vars.yml
       tasks:
       - name: this is just a placeholder
-        action: command /bin/echo foo
+        command: /bin/echo foo
 
 This removes the risk of sharing sensitive data with others when
 sharing your playbook source with them.
@@ -285,7 +285,7 @@ Don't panic -- it's actually pretty simple::
 
     tasks:
       - name: "shutdown Debian flavored systems"
-        action: command /sbin/shutdown -t now
+        command: /sbin/shutdown -t now
         when: ansible_os_family == "Debian"
 
 A number of Jinja2 "filters" can also be used in when statements, some of which are unique
@@ -293,14 +293,14 @@ and provided by Ansible.  Suppose we want to ignore the error of one statement a
 decide to do something conditionally based on success or failure::
 
     tasks:
-      - action: command /bin/false
+      - command: /bin/false
         register: result
         ignore_errors: True
-      - action: command /bin/something
+      - command: /bin/something
         when: result|failed
-      - action: command /bin/something_else
+      - command: /bin/something_else
         when: result|success
-      - action: command /bin/still/something_else
+      - command: /bin/still/something_else
         when: result|skipped
 
 
@@ -336,14 +336,14 @@ there will be accessible to future tasks::
     tasks:
         - name: gather site specific fact data
           action: site_facts
-        - action: command echo {{ my_custom_fact_can_be_used_now }}
+        - command: echo {{ my_custom_fact_can_be_used_now }}
 
 One useful trick with *when* is to key off the changed result of a last command.  As an example::
 
     tasks:
-        - action: template src=/templates/foo.j2 dest=/etc/foo.conf
+        - template: src=/templates/foo.j2 dest=/etc/foo.conf
           register: last_result
-        - action: command echo 'the file has changed'
+        - command: echo 'the file has changed'
           when: last_result.changed
 
 {{ last_result }} is a variable set by the register directive. This assumes Ansible 0.8 and later.
@@ -352,7 +352,7 @@ When combining `when` with `with_items`, be aware that the `when` statement is p
 This is by design::
 
     tasks:
-        - action: command echo {{ item }}
+        - command: echo {{ item }}
           with_items: [ 0, 2, 4, 6, 8, 10 ]
           when: item > 5
 
@@ -380,7 +380,7 @@ but it is easily handled with a minimum of syntax in an Ansible Playbook::
         - [ "vars/{{ ansible_os_family }}.yml", "vars/os_defaults.yml" ]
       tasks:
       - name: make sure apache is running
-        action: service name={{ apache }} state=running
+        service: name={{ apache }} state=running
 
 .. note::
    The variable 'ansible_os_family' is being interpolated into
@@ -420,7 +420,7 @@ Loops
 To save some typing, repeated tasks can be written in short-hand like so::
 
     - name: add several users
-      action: user name={{ item }} state=present groups=wheel
+      user: name={{ item }} state=present groups=wheel
       with_items:
          - testuser1
          - testuser2
@@ -432,9 +432,9 @@ If you have defined a YAML list in a variables file, or the 'vars' section, you 
 The above would be the equivalent of::
 
     - name: add user testuser1
-      action: user name=testuser1 state=present groups=wheel
+      user: name=testuser1 state=present groups=wheel
     - name: add user testuser2
-      action: user name=testuser2 state=present groups=wheel
+      user: name=testuser2 state=present groups=wheel
 
 The yum and apt modules use with_items to execute fewer package manager transactions.
 
@@ -442,7 +442,7 @@ Note that the types of items you iterate over with 'with_items' do not have to b
 If you have a list of hashes, you can reference subkeys using things like::
 
     - name: add several users
-      action: user name={{ item.name }} state=present groups={{ item.groups }}
+      user: name={{ item.name }} state=present groups={{ item.groups }}
       with_items:
         - { name: 'testuser1', groups: 'wheel' }
         - { name: 'testuser2', groups: 'root' }
@@ -484,16 +484,16 @@ be used like this::
       tasks:
 
         # first ensure our target directory exists
-        - action: file dest=/etc/fooapp state=directory
+        - file: dest=/etc/fooapp state=directory
 
         # copy each file over that matches the given pattern
-        - action: copy src={{ item }} dest=/etc/fooapp/ owner=root mode=600
+        - copy: src={{ item }} dest=/etc/fooapp/ owner=root mode=600
           with_fileglob:
             - /playbooks/files/fooapp/*
 
 ``with_file`` loads data in from a file directly::
 
-        - action: authorized_key user=foo key={{ item }}
+        - authorized_key: user=foo key={{ item }}
           with_file:
              - /home/foo/.ssh/id_rsa.pub
 
@@ -512,19 +512,19 @@ Many new lookup abilities were added in 0.9.  Remember, lookup plugins are run o
 
       tasks:
 
-         - action: debug msg="{{ lookup('env','HOME') }} is an environment variable"
+         - debug: msg="{{ lookup('env','HOME') }} is an environment variable"
 
-         - action: debug msg="{{ item }} is a line from the result of this command"
+         - debug: msg="{{ item }} is a line from the result of this command"
            with_lines:
              - cat /etc/motd
 
-         - action: debug msg="{{ lookup('pipe','date') }} is the raw result of running this command"
+         - debug: msg="{{ lookup('pipe','date') }} is the raw result of running this command"
 
-         - action: debug msg="{{ lookup('redis_kv', 'redis://localhost:6379,somekey') }} is value in Redis for somekey"
+         - debug: msg="{{ lookup('redis_kv', 'redis://localhost:6379,somekey') }} is value in Redis for somekey"
 
-         - action: debug msg="{{ lookup('dnstxt', 'example.com') }} is a DNS TXT record for example.com"
+         - debug: msg="{{ lookup('dnstxt', 'example.com') }} is a DNS TXT record for example.com"
 
-         - action: debug msg="{{ lookup('template', './some_template.j2') }} is a value from evaluation of this template"
+         - debug: msg="{{ lookup('template', './some_template.j2') }} is a value from evaluation of this template"
 
 As an alternative you can also assign lookup plugins to variables or use them
 elsewhere.  This macros are evaluated each time they are used in a task (or
@@ -679,7 +679,7 @@ The following construct selects the first available file appropriate for the var
 The following example shows how to template out a configuration file that was very different between, say, CentOS and Debian::
 
     - name: template a file
-      action: template src={{ item }} dest=/etc/myapp/foo.conf
+      template: src={{ item }} dest=/etc/myapp/foo.conf
       first_available_file:
         - /srv/templates/myapp/{{ ansible_distribution }}.conf
         - /srv/templates/myapp/default.conf
@@ -707,7 +707,7 @@ poll value is 10 seconds if you do not specify a value for `poll`::
       user: root
       tasks:
       - name: simulate long running op (15 sec), wait for up to 45, poll every 5
-        action: command /bin/sleep 15
+        command: /bin/sleep 15
         async: 45
         poll: 5
 
@@ -724,7 +724,7 @@ Alternatively, if you do not need to wait on the task to complete, you may
       user: root
       tasks:
       - name: simulate long running op, allow to run for 45, fire and forget
-        action: command /bin/sleep 15
+        command: /bin/sleep 15
         async: 45
         poll: 0
 
@@ -795,10 +795,10 @@ The 'register' keyword decides what variable to save a result in.  The resulting
 
       tasks:
 
-          - action: shell cat /etc/motd
+          - shell: cat /etc/motd
             register: motd_contents
 
-          - action: shell echo "motd contains the word hi"
+          - shell: echo "motd contains the word hi"
             when: motd_contents.stdout.find('hi') != -1
 
 
@@ -834,14 +834,14 @@ a good idea::
 
       tasks:
       - name: take out of load balancer pool
-        action: command /usr/bin/take_out_of_pool {{ inventory_hostname }}
+        command: /usr/bin/take_out_of_pool {{ inventory_hostname }}
         delegate_to: 127.0.0.1
 
       - name: actual steps would go here
-        action: yum name=acme-web-stack state=latest
+        yum: name=acme-web-stack state=latest
 
       - name: add back to load balancer pool
-        action: command /usr/bin/add_back_to_pool {{ inventory_hostname }}
+        command: /usr/bin/add_back_to_pool {{ inventory_hostname }}
         delegate_to: 127.0.0.1
 
 
@@ -905,7 +905,7 @@ if you have a large number of hosts::
     - hosts: all
       connection: fireball
       tasks:
-          - action: shell echo "Hello {{ item }}"
+          - shell: echo "Hello {{ item }}"
             with_items:
                 - one
                 - two
@@ -919,8 +919,8 @@ any platform.  You will also need gcc and zeromq-devel installed from your packa
       gather_facts: no
       connection: ssh
       tasks:
-          - action: easy_install name=pip
-          - action: pip name={{ item }} state=present
+          - easy_install: name=pip
+          - pip: name={{ item }} state=present
             with_items:
               - pyzmq
               - pyasn1
