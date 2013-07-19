@@ -7,7 +7,6 @@ You can find some example playbooks illustrating these best practices in our `an
 
 .. contents::
    :depth: 2
-   :backlinks: top
 
 Content Organization
 ++++++++++++++++++++++

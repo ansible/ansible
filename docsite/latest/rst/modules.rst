@@ -3,7 +3,6 @@ Ansible Modules
 
 .. contents::
    :depth: 3
-   :backlinks: top
 
 Introduction
 ````````````

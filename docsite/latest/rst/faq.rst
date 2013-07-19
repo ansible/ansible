@@ -5,7 +5,6 @@ Here are some commonly-asked questions and their answers.
 
 .. contents::
    :depth: 2
-   :backlinks: top
 
 How do I handle different machines needing different user accounts or ports to log in with?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

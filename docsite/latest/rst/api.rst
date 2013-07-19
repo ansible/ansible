@@ -8,7 +8,6 @@ API so you have a considerable amount of power across the board.
 
 .. contents:: `Table of contents`
    :depth: 2
-   :backlinks: top
 
 Python API
 ----------

@@ -9,7 +9,6 @@ Ansible's inventory file, which defaults to /etc/ansible/hosts.
 
 .. contents::
    :depth: 2
-   :backlinks: top
 
 .. _inventoryformat:
 
