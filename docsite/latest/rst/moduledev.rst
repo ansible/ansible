@@ -8,9 +8,7 @@ Modules can be written in any language and are found in the path specified
 by `ANSIBLE_LIBRARY` or the ``--module-path`` command line option.
 
 .. contents::
-   :depth: 2
-   :backlinks: top
-
+   :depth: 3
 
 Tutorial
 ````````

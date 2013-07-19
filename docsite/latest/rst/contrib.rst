@@ -6,6 +6,9 @@ curated list, but growing. Everyone is encouraged to add to this
 document, just `edit it on Github <https://github.com/ansible/ansible/blob/devel/docsite/latest/rst/contrib.rst>`_
 and send a pull request!
 
+.. contents:: `Table of contents`
+   :depth: 1
+
 Ansible Modules
 ```````````````
 

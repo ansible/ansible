@@ -9,6 +9,9 @@ when a term comes up on the mailing list.
 
 See the main documentation if you are looking for examples to put all of this into context.
 
+.. contents:: `Table of contents`
+   :depth: 2
+
 Action
 ++++++
 

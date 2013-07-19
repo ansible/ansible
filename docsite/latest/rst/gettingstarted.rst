@@ -2,8 +2,7 @@ Getting Started
 ===============
 
 .. contents::
-   :depth: 2
-   :backlinks: top
+   :depth: 3
 
 Requirements
 ````````````
