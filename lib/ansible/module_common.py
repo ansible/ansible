@@ -860,12 +860,9 @@ class AnsibleModule(object):
         dest_file = os.path.basename(dest)
         tmp_dest = "%s/.%s.%s.%s" % (dest_dir,dest_file,os.getpid(),time.time())
 
-        try: # leaves tmp file behind when sudo and  not root
-            if os.getenv("SUDO_USER") and os.getuid() != 0:
-               # cleanup will happen by 'rm' of tempdir
-               shutil.copy(src, tmp_dest)
-            else:
-               shutil.move(src, tmp_dest)
+        try: # leaves tmp file behind 
+            # cleanup will happen by 'rm' of tempdir
+            shutil.copy(src, tmp_dest)
             if self.selinux_enabled():
                 self.set_context_if_different(tmp_dest, context, False)
             os.rename(tmp_dest, dest)
