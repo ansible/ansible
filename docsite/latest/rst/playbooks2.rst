@@ -800,10 +800,11 @@ The 'register' keyword decides what variable to save a result in.  The resulting
           - shell: echo "motd contains the word hi"
             when: motd_contents.stdout.find('hi') != -1
 
-As shown previously, the registered variable's string contents are accessible with the 'stdout' method. 
+As shown previously, the registered variable's string contents are accessible with the 'stdout' value. 
 The registered result can be used in the "with_items" of a task if it is converted into
-a list (or already is a list) as shown below in another trivial example::
-
+a list (or already is a list) as shown below.  "stdout_lines" is already available on the object as
+well though you could also call "home_dirs.stdout.split()" if you wanted, and could split by other
+fields::
 
     - name: registered variable usage as a with_items list
       hosts: all
@@ -815,9 +816,9 @@ a list (or already is a list) as shown below in another trivial example::
             register: home_dirs
 
           - name: add home dirs to the backup spooler
-            file: path=/mnt/bkspool/{{item}} src=/home/{{ item }} state=link
-            with_items: home_dirs.stdout.split()
-
+            file: path=/mnt/bkspool/{{ item }} src=/home/{{ item }} state=link
+            with_items: home_dirs.stdout_lines
+            # with_items: home_dirs.stdout.split()
 
 Rolling Updates
 ```````````````
