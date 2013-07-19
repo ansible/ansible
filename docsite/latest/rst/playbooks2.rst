@@ -447,6 +447,25 @@ If you have a list of hashes, you can reference subkeys using things like::
         - { name: 'testuser1', groups: 'wheel' }
         - { name: 'testuser2', groups: 'root' }
 
+Nested Loops
+````````````
+
+Loops can be nested too:
+
+    - name: give all employees access to every departament's database
+      mysql_user: name={{ item[0] }} priv={{ item[1] }}.*:*
+      with_nested:
+        - [ 'alice', 'bob', 'eve' ]
+        - [ 'clientdb', 'employeedb', 'providerdb' ]
+
+As with the case of 'with_items" above, you can use previously defined variables, and you can use their raw name without templating it with '{{ }}'.
+
+    - name: here, 'users' contains the above list of employees
+      mysql_user: name={{ item[0] }} priv={{ item[1] }}.*:*
+      with_nested:
+        - users
+        - [ 'clientdb', 'employeedb', 'providerdb' ]
+
 Lookup Plugins - Accessing Outside Data
 ```````````````````````````````````````
 
