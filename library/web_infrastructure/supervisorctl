@@ -37,21 +37,25 @@ options:
       - configuration file path, passed as -c to supervisorctl
     required: false
     default: null
+    version_added: "1.3"
   server_url:
     description:
       - URL on which supervisord server is listening, passed as -s to supervisorctl
     required: false
     default: null
+    version_added: "1.3"
   username:
     description:
       - username to use for authentication with server, passed as -u to supervisorctl
     required: false
     default: null
+    version_added: "1.3"
   password:
     description:
       - password to use for authentication with server, passed as -p to supervisorctl
     required: false
     default: null
+    version_added: "1.3"
   state:
     description:
       - The state of service
