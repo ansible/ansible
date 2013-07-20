@@ -295,42 +295,48 @@ def legacy_varReplace(basedir, raw, vars, lookup_fatal=True, depth=0, expand_lis
 
 # TODO: varname is misnamed here
 
-def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=True, convert_bare=False, fail_on_undefined=False):
+def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=True, convert_bare=False, fail_on_undefined=False, filter_fatal=True):
     ''' templates a data structure by traversing it and substituting for other data structures '''
 
-    if convert_bare and isinstance(varname, basestring):
-        first_part = varname.split(".")[0].split("[")[0]
-        if first_part in vars and '{{' not in varname and '$' not in varname:
-            varname = "{{%s}}" % varname
-
-    if isinstance(varname, basestring):
-        if '{{' in varname or '{%' in varname:
-            varname = template_from_string(basedir, varname, vars, fail_on_undefined)
-        if not '$' in varname:
-            return varname
-
-        m = _legacy_varFind(basedir, varname, vars, lookup_fatal, depth, expand_lists)
-        if not m:
-            return varname
-        if m['start'] == 0 and m['end'] == len(varname):
-            if m['replacement'] is not None:
-                Flags.LEGACY_TEMPLATE_WARNING = True
-                return template(basedir, m['replacement'], vars, lookup_fatal, depth, expand_lists)
-            else:
+    try:
+        if convert_bare and isinstance(varname, basestring):
+            first_part = varname.split(".")[0].split("[")[0]
+            if first_part in vars and '{{' not in varname and '$' not in varname:
+                varname = "{{%s}}" % varname
+    
+        if isinstance(varname, basestring):
+            if '{{' in varname or '{%' in varname:
+                varname = template_from_string(basedir, varname, vars, fail_on_undefined)
+            if not '$' in varname:
                 return varname
+    
+            m = _legacy_varFind(basedir, varname, vars, lookup_fatal, depth, expand_lists)
+            if not m:
+                return varname
+            if m['start'] == 0 and m['end'] == len(varname):
+                if m['replacement'] is not None:
+                    Flags.LEGACY_TEMPLATE_WARNING = True
+                    return template(basedir, m['replacement'], vars, lookup_fatal, depth, expand_lists)
+                else:
+                    return varname
+            else:
+                Flags.LEGACY_TEMPLATE_WARNING = True
+                return legacy_varReplace(basedir, varname, vars, lookup_fatal, depth, expand_lists)
+    
+        elif isinstance(varname, (list, tuple)):
+            return [template(basedir, v, vars, lookup_fatal, depth, expand_lists) for v in varname]
+        elif isinstance(varname, dict):
+            d = {}
+            for (k, v) in varname.iteritems():
+                d[k] = template(basedir, v, vars, lookup_fatal, depth, expand_lists)
+            return d
         else:
-            Flags.LEGACY_TEMPLATE_WARNING = True
-            return legacy_varReplace(basedir, varname, vars, lookup_fatal, depth, expand_lists)
-
-    elif isinstance(varname, (list, tuple)):
-        return [template(basedir, v, vars, lookup_fatal, depth, expand_lists) for v in varname]
-    elif isinstance(varname, dict):
-        d = {}
-        for (k, v) in varname.iteritems():
-            d[k] = template(basedir, v, vars, lookup_fatal, depth, expand_lists)
-        return d
-    else:
-        return varname
+            return varname
+    except errors.AnsibleFilterError:
+        if filter_fatal:
+            raise
+        else:
+            return varname
 
 
 class _jinja2_vars(object):
