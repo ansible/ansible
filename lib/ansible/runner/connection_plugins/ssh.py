@@ -215,11 +215,11 @@ class Connection(object):
 
         if C.DEFAULT_SCP_IF_SSH:
             cmd += ["scp"] + self.common_args
-            cmd += [in_path,self.host + ":" + out_path]
+            cmd += [in_path,self.host + ":" + pipes.quote(out_path)]
             indata = None
         else:
             cmd += ["sftp"] + self.common_args + [self.host]
-            indata = "put %s %s\n" % (in_path, out_path)
+            indata = "put %s %s\n" % (pipes.quote(in_path), pipes.quote(out_path))
 
         p = subprocess.Popen(cmd, stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
