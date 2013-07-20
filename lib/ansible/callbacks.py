@@ -88,7 +88,7 @@ def log_flock(runner):
     if runner is not None:
         try:
             fcntl.lockf(runner.output_lockfile, fcntl.LOCK_EX)
-        except OSError, e:
+        except OSError:
             # already got closed?
             pass
 
@@ -97,7 +97,7 @@ def log_unflock(runner):
     if runner is not None:
         try:
             fcntl.lockf(runner.output_lockfile, fcntl.LOCK_UN)
-        except OSError, e:
+        except OSError:
             # already got closed?
             pass
 
