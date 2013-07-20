@@ -19,6 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
+import shlex
 
 DOCUMENTATION = '''
 ---
@@ -62,7 +63,9 @@ def execute_command(cmd, syslogging):
         syslog.openlog('ansible-%s' % os.path.basename(__file__))
         syslog.syslog(syslog.LOG_NOTICE, 'Command %s' % '|'.join(cmd))
 
-    p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    # Break command line into arguments
+    cmd_args = shlex.split(cmd)
+    p = subprocess.Popen(cmd_args, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (out, err) = p.communicate()
     rc = p.returncode
     return (rc, out, err)
