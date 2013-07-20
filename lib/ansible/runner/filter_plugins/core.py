@@ -48,14 +48,14 @@ def success(*a, **kw):
 def skipped(*a, **kw):
     item = a[0]
     if type(item) != dict:
-        raise errors.AnsibleError("|skipped expects a dictionary")
+        raise errors.AnsibleFilterError("|skipped expects a dictionary")
     skipped = item.get('skipped', False)
     return skipped
 
 def mandatory(a):
     ''' Make a variable mandatory '''
     if not a:
-        raise errors.AnsibleError('Mandatory variable not defined.')
+        raise errors.AnsibleFilterError('Mandatory variable not defined.')
     return a
 
 def bool(a):
