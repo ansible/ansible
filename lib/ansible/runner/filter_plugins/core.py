@@ -34,7 +34,7 @@ def to_nice_json(*a, **kw):
 def failed(*a, **kw):
     item = a[0] 
     if type(item) != dict:
-        raise errors.AnsibleError("|failed expects a dictionary")
+        raise errors.AnsibleFilterError("|failed expects a dictionary")
     rc = item.get('rc',0)
     failed = item.get('failed',False)
     if rc != 0 or failed:
