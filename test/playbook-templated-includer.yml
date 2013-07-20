@@ -1,0 +1,2 @@
+---
+- include: "{{dir}}/playbook-included.yml variable=foobar"
