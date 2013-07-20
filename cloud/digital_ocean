@@ -59,7 +59,7 @@ options:
      - Optional, comma separated list of ssh_key_ids that you would like to be added to the server
   wait:
     description: 
-     - Wait for the droplet to be in state 'running' before returning.
+     - Wait for the droplet to be in state 'running' before returning.  If wait is "no" an ip_address may not be returned.
     default: "yes"
     choices: [ "yes", "no" ]
   wait_timeout:
@@ -101,6 +101,8 @@ EXAMPLES = '''
       region_id=2 
       image_id=3 
       wait_timeout=500
+  register: my_droplet
+- debug: msg="ID: {{ my_droplet.droplet.id }} IP: {{ my_droplet.droplet.ip_address }}"
 
 # Ensure a droplet is present
 # If droplet id already exist, will return the droplet details and changed = False
@@ -187,19 +189,13 @@ class Droplet(JsonfyMixIn):
     def is_powered_on(self):
         return self.status == 'active'
 
-    def update_attr(self, attrs=None, times=5):
+    def update_attr(self, attrs=None):
         if attrs:
             for k, v in attrs.iteritems():
                 setattr(self, k, v)
         else:
             json = self.manager.show_droplet(self.id)
-            if not json['ip_address']:
-                if times > 0:
-                    time.sleep(2)
-                    self.update_attr(times=times-1)
-                else:
-                    raise TimeoutError('No ip is found.', self.id)
-            else:
+            if json['ip_address']:
                 self.update_attr(json)
 
     def power_on(self):
@@ -219,6 +215,8 @@ class Droplet(JsonfyMixIn):
                 time.sleep(min(20, end_time-time.time()))
                 self.update_attr()
                 if self.is_powered_on():
+                    if not self.ip_address:
+                        raise TimeoutError('No ip is found.', self.id)
                     return
             raise TimeoutError('Wait for droplet running timeout', self.id)
 
@@ -233,7 +231,6 @@ class Droplet(JsonfyMixIn):
     def add(cls, name, size_id, image_id, region_id, ssh_key_ids=None):
         json = cls.manager.new_droplet(name, size_id, image_id, region_id, ssh_key_ids)
         droplet = cls(json)
-        droplet.update_attr()
         return droplet
 
     @classmethod
