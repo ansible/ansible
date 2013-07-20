@@ -48,8 +48,9 @@ options:
     choices: [enabled, disabled]
   prefix:
     description:
-      - Specify a custom prefix to a Rabbit
+      - Specify a custom install prefix to a Rabbit
     required: false
+    version_added: "1.3"
     default: null
 '''
 
