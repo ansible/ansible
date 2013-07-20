@@ -294,9 +294,9 @@ class Play(object):
                         terms = template(self.basedir, x[k], task_vars)
                         items = utils.plugins.lookup_loader.get(plugin_name, basedir=self.basedir, runner=None).run(terms, inject=task_vars)
                     elif k.startswith("when_"):
-                        included_additional_conditions.append(utils.compile_when_to_only_if("%s %s" % (k[5:], x[k])))
+                        included_additional_conditions.insert(0, utils.compile_when_to_only_if("%s %s" % (k[5:], x[k])))
                     elif k == 'when':
-                        included_additional_conditions.append(utils.compile_when_to_only_if("jinja2_compare %s" % x[k]))
+                        included_additional_conditions.insert(0, utils.compile_when_to_only_if("jinja2_compare %s" % x[k]))
                     elif k in ("include", "vars", "only_if", "sudo", "sudo_user"):
                         pass
                     else:
