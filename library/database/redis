@@ -26,9 +26,9 @@ description:
      'flush' Flushes all the instance or ans specified db.
 version_added: "1.3"
 options:
-    action:
+    command:
         description:
-            - The selected redis action
+            - The selected redis command
         required: true
         default: null
         choices: [ "slave", "flush" ]
@@ -49,29 +49,29 @@ options:
         default: 6379
     master_host:
         description:
-            - The host of the master instance [slave action]
+            - The host of the master instance [slave command]
         required: false
         default: null
     master_port:
         description:
-            - The port of the master instance [slave action]
+            - The port of the master instance [slave command]
         required: false
         default: null
     slave_mode:
         description:
-            - the mode of the redis instance [slave action]
+            - the mode of the redis instance [slave command]
         required: false
         default: slave
         choices: [ "master", "slave" ]
     db:
         description:
-            - The database to flush (used in db mode) [flush action]
+            - The database to flush (used in db mode) [flush command]
         required: false
         default: null
     flush_mode:
         description:
             - Type of flush (all the dbs in a redis instance or a specific one)
-              [flush action]
+              [flush command]
         required: false
         default: all
         choices: [ "all", "db" ]
@@ -90,16 +90,16 @@ author: Xabier Larrakoetxea
 
 EXAMPLES = '''
 # Set local redis instance to be slave of melee.island on port 6377
-- redis: action=slave master_host=melee.island master_port=6377
+- redis: command=slave master_host=melee.island master_port=6377
 
 # Deactivate slave mode
-- redis: action=slave slave_mode=master
+- redis: command=slave slave_mode=master
 
 # Flush all the redis db
-- redis: action=flush flush_mode=all
+- redis: command=flush flush_mode=all
 
 # Flush only one db in a redis instance
-- redis: action=flush db=1 flush_mode=db
+- redis: command=flush db=1 flush_mode=db
 '''
 
 try:
@@ -146,7 +146,7 @@ def flush(client, db=None):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            action=dict(default=None, choices=['slave', 'flush']),
+            command=dict(default=None, choices=['slave', 'flush']),
             login_password=dict(default=None),
             login_host=dict(default='localhost'),
             login_port=dict(default='6379'),
@@ -165,10 +165,10 @@ def main():
     login_password = module.params['login_password']
     login_host = module.params['login_host']
     login_port = int(module.params['login_port'])
-    action = module.params['action']
+    command = module.params['command']
 
     # Slave Command section -----------
-    if action == "slave":
+    if command == "slave":
         master_host = module.params['master_host']
         master_port = module.params['master_port']
         try:
@@ -213,7 +213,7 @@ def main():
             module.exit_json(changed=False, mode=status)
         else:
             # Do the stuff
-            # (Check Check_mode before actions so the actions aren't evaluated
+            # (Check Check_mode before commands so the commands aren't evaluated
             # if not necesary)
             if mode == "slave":
                 if module.check_mode or\
@@ -235,7 +235,7 @@ def main():
                     module.fail_json(msg='Unable to set master mode')
 
     # flush Command section -----------
-    elif action == "flush":
+    elif command == "flush":
         try:
             db = int(module.params['db'])
         except Exception:
@@ -259,7 +259,7 @@ def main():
             module.fail_json(msg="unable to connect to database: %s" % e)
 
         # Do the stuff
-        # (Check Check_mode before actions so the actions aren't evaluated
+        # (Check Check_mode before commands so the commands aren't evaluated
         # if not necesary)
         if mode == "all":
             if module.check_mode or flush(r):
@@ -274,7 +274,7 @@ def main():
                 module.fail_json(msg="Unable to flush '%d' database" % db)
 
     else:
-        module.fail_json(msg='A valid action must be provided')
+        module.fail_json(msg='A valid command must be provided')
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
