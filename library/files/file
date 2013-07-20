@@ -37,12 +37,12 @@ description:
        files/symlinks/directories. Many other modules support the same options as
        the M(file) module - including M(copy), M(template), and M(assemble).
 options:
-  dest:
+  path:
     description:
       - defines the file being managed, unless when used with C(state=link), and then sets the destination to create a symbolic link to using I(src)
     required: true
     default: []
-    aliases: ['name', 'path'] 
+    aliases: ['dest', 'name'] 
   state:
     description:
       - If C(directory), all immediate subdirectories will be created if they
@@ -127,7 +127,7 @@ options:
     description:
       - 'force the creation of the symlinks in two cases: the source file does 
         not exist (but will appear later); the destination exists and a file (so, we need to unlink the
-        "dest" file and create symlink to the "src" file in place of it).'
+        "path" file and create symlink to the "src" file in place of it).'
 notes:
     - See also M(copy), M(template), M(assemble)
 requirements: [ ]
@@ -135,18 +135,18 @@ author: Michael DeHaan
 '''
 
 EXAMPLES = '''
-- file: dest=/etc/foo.conf owner=foo group=foo mode=0644
+- file: path=/etc/foo.conf owner=foo group=foo mode=0644
 - file: src=/file/to/link/to dest=/path/to/symlink owner=foo group=foo state=link
 '''
 
-def dolink(src, dest, state, module):
+def dolink(src, path, state, module):
     try:
         if state == 'hard':
-            os.link(src,dest)
+            os.link(src,path)
         else:
-            os.symlink(src, dest)
+            os.symlink(src, path)
     except OSError, e:
-        module.fail_json(dest=dest, msg='Error while linking: %s' % str(e))
+        module.fail_json(path=path, msg='Error while linking: %s' % str(e))
 
 def main():
 
@@ -156,7 +156,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             state = dict(choices=['file','directory','link','hard','absent'], default='file'),
-            dest  = dict(aliases=['name', 'path'], required=True),
+            path  = dict(aliases=['dest', 'name'], required=True),
             recurse  = dict(default='no', type='bool'),
             force = dict(required=False,default=False,type='bool'),
             diff_peek = dict(default=None),
@@ -169,20 +169,20 @@ def main():
     params = module.params
     state  = params['state']
     force = params['force']
-    params['dest'] = dest = os.path.expanduser(params['dest'])
+    params['path'] = path = os.path.expanduser(params['path'])
 
     # short-circuit for diff_peek
     if params.get('diff_peek', None) is not None:
         appears_binary = False
         try:
-            f = open(dest)
+            f = open(path)
             b = f.read(8192)
             f.close()
             if b.find("\x00") != -1:
                 appears_binary = True
         except:
             pass
-        module.exit_json(dest=dest, changed=False, appears_binary=appears_binary)
+        module.exit_json(path=path, changed=False, appears_binary=appears_binary)
 
     # source is both the source of a symlink or an informational passing of the src for a template module
     # or copy module, even if this module never uses it, it is needed to key off some things
@@ -191,24 +191,24 @@ def main():
     if src:
         src = os.path.expanduser(src)
 
-    if src is not None and os.path.isdir(dest) and state != "link":
-        params['dest'] = dest = os.path.join(dest, os.path.basename(src))
+    if src is not None and os.path.isdir(path) and state != "link":
+        params['path'] = path = os.path.join(path, os.path.basename(src))
 
     file_args = module.load_file_common_arguments(params)
 
-    if state in ['link','hard'] and (src is None or dest is None):
+    if state in ['link','hard'] and (src is None or path is None):
         module.fail_json(msg='src and dest are required for creating links')
-    elif dest is None:
+    elif path is None:
         module.fail_json(msg='path is required')
 
     changed = False
 
     prev_state = 'absent'
 
-    if os.path.lexists(dest):
-        if os.path.islink(dest):
+    if os.path.lexists(path):
+        if os.path.islink(path):
             prev_state = 'link'
-        elif os.path.isdir(dest):
+        elif os.path.isdir(path):
             prev_state = 'directory'
         else:
             prev_state = 'file'
@@ -216,64 +216,64 @@ def main():
     if prev_state != 'absent' and state == 'absent':
         try:
             if prev_state == 'directory':
-                if os.path.islink(dest):
+                if os.path.islink(path):
                     if module.check_mode:
                         module.exit_json(changed=True)
-                    os.unlink(dest)
+                    os.unlink(path)
                 else:
                     try:
                         if module.check_mode:
                             module.exit_json(changed=True)
-                        shutil.rmtree(dest, ignore_errors=False)
+                        shutil.rmtree(path, ignore_errors=False)
                     except:
                         module.exit_json(msg="rmtree failed")
             else:
                 if module.check_mode:
                     module.exit_json(changed=True)
-                os.unlink(dest)
+                os.unlink(path)
         except Exception, e:
-            module.fail_json(dest=dest, msg=str(e))
-        module.exit_json(dest=dest, changed=True)
+            module.fail_json(path=path, msg=str(e))
+        module.exit_json(path=path, changed=True)
 
     if prev_state != 'absent' and prev_state != state:
         if force and prev_state == 'file' and state == 'link':
             pass
         else:
-            module.fail_json(dest=dest, msg='refusing to convert between %s and %s for %s' % (prev_state, state, src))
+            module.fail_json(path=path, msg='refusing to convert between %s and %s for %s' % (prev_state, state, src))
 
     if prev_state == 'absent' and state == 'absent':
-        module.exit_json(dest=dest, changed=False)
+        module.exit_json(path=path, changed=False)
 
     if state == 'file':
 
         if prev_state != 'file':
-            module.fail_json(dest=dest, msg='file (%s) does not exist, use copy or template module to create' % dest)
+            module.fail_json(path=path, msg='file (%s) does not exist, use copy or template module to create' % path)
 
         changed = module.set_file_attributes_if_different(file_args, changed)
-        module.exit_json(dest=dest, changed=changed)
+        module.exit_json(path=path, changed=changed)
 
     elif state == 'directory':
         if prev_state == 'absent':
             if module.check_mode:
                 module.exit_json(changed=True)
-            os.makedirs(dest)
+            os.makedirs(path)
             changed = True
 
         changed = module.set_directory_attributes_if_different(file_args, changed)
         recurse = params['recurse']
         if recurse:
-            for root,dirs,files in os.walk( file_args['dest'] ):
+            for root,dirs,files in os.walk( file_args['path'] ):
                 for dir in dirs:
                     dirname=os.path.join(root,dir)
                     tmp_file_args = file_args.copy()
-                    tmp_file_args['dest']=dirname
+                    tmp_file_args['path']=dirname
                     changed = module.set_directory_attributes_if_different(tmp_file_args, changed)
                 for file in files:
                     filename=os.path.join(root,file)
                     tmp_file_args = file_args.copy()
-                    tmp_file_args['dest']=filename
+                    tmp_file_args['path']=filename
                     changed = module.set_file_attributes_if_different(tmp_file_args, changed)
-        module.exit_json(dest=dest, changed=changed)
+        module.exit_json(path=path, changed=changed)
 
     elif state in ['link','hard']:
 
@@ -283,46 +283,46 @@ def main():
             module.fail_json(msg="absolute paths are required")
 
         if not os.path.exists(abs_src) and not force:
-            module.fail_json(dest=dest, src=src, msg='src file does not exist')
+            module.fail_json(path=path, src=src, msg='src file does not exist')
 
         if prev_state == 'absent':
             if module.check_mode:
                 module.exit_json(changed=True)
-            dolink(src, dest, state, module)
+            dolink(src, path, state, module)
             changed = True
         elif prev_state == 'link':
-            old_src = os.readlink(dest)
+            old_src = os.readlink(path)
             if not os.path.isabs(old_src):
-                old_src = os.path.join(os.path.dirname(dest), old_src)
+                old_src = os.path.join(os.path.dirname(path), old_src)
             if old_src != src:
                 if module.check_mode:
                     module.exit_json(changed=True)
-                os.unlink(dest)
-                dolink(src, dest, state, module)
+                os.unlink(path)
+                dolink(src, path, state, module)
                 changed = True
         elif prev_state == 'file':
             if not force:
-                module.fail_json(dest=dest, src=src, msg='Cannot link, file exists at destination')
+                module.fail_json(dest=path, src=src, msg='Cannot link, file exists at destination')
             else:
                 if module.check_mode:
                     module.exit_json(changed=True)
-                os.unlink(dest)
-                dolink(src, dest, state, module)
+                os.unlink(path)
+                dolink(src, path, state, module)
                 changed = True
         else:
-            module.fail_json(dest=dest, src=src, msg='unexpected position reached')
+            module.fail_json(dest=path, src=src, msg='unexpected position reached')
 
         # set modes owners and context as needed
 
         file_args = module.load_file_common_arguments(module.params)
-        changed   = module.set_context_if_different(dest, file_args['secontext'], changed)
-        changed   = module.set_owner_if_different(dest, file_args['owner'], changed)
-        changed   = module.set_group_if_different(dest, file_args['group'], changed)
-        changed   = module.set_mode_if_different(dest, file_args['mode'], changed)
+        changed   = module.set_context_if_different(path, file_args['secontext'], changed)
+        changed   = module.set_owner_if_different(path, file_args['owner'], changed)
+        changed   = module.set_group_if_different(path, file_args['group'], changed)
+        changed   = module.set_mode_if_different(path, file_args['mode'], changed)
 
-        module.exit_json(dest=dest, src=src, changed=changed)
+        module.exit_json(dest=path, src=src, changed=changed)
 
-    module.fail_json(dest=dest, msg='unexpected position reached')
+    module.fail_json(path=path, msg='unexpected position reached')
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
