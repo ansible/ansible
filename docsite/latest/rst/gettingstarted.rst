@@ -193,7 +193,7 @@ In Ubuntu 13.04 (raring) its part of the backports repository:
 
     $ sudo apt-get install ansible/raring-backports
 
-In Debian testing/unstable and Ubntu 13.10+ it is available via
+In Debian testing/unstable and Ubuntu 13.10+ it is available via
 
 .. code-block:: bash
 
