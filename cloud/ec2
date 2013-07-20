@@ -163,6 +163,13 @@ options:
     required: false
     defualt: null
     aliases: []
+  instance_profile_name:
+    version_added: "1.3"
+    description:
+      - Name of the IAM instance profile to use
+    required: false
+    default: null
+    aliases: []
   instance_ids:
     version_added: "1.3"
     description:
@@ -177,7 +184,6 @@ options:
     required: false
     default: 'present'
     aliases: []
-
 
 requirements: [ "boto" ]
 author: Seth Vidal, Tim Gerla, Lester Wade
@@ -345,6 +351,7 @@ def create_instances(module, ec2):
     instance_tags = module.params.get('instance_tags')
     vpc_subnet_id = module.params.get('vpc_subnet_id')
     private_ip = module.params.get('private_ip')
+    instance_profile_name = module.params.get('instance_profile_name')
 
 
     # Here we try to lookup the group name from the security group id - if group_id is set.
@@ -401,7 +408,8 @@ def create_instances(module, ec2):
                       'ramdisk_id': ramdisk,
                       'subnet_id': vpc_subnet_id,
                       'private_ip_address': private_ip,
-                      'user_data': user_data}
+                      'user_data': user_data,
+                      'instance_profile_name': instance_profile_name}
 
             if vpc_subnet_id:
                 params['security_group_ids'] = group_id
@@ -521,6 +529,7 @@ def main():
             instance_tags = dict(),
             vpc_subnet_id = dict(),
             private_ip = dict(),
+            instance_profile_name = dict(),
             instance_ids = dict(type='list'),
             state = dict(default='present'),
         )
