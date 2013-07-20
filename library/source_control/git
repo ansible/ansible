@@ -94,9 +94,8 @@ import tempfile
 def get_version(git_path, dest):
     ''' samples the version of the git repo '''
     os.chdir(dest)
-    cmd = "%s show --abbrev-commit" % (git_path,)
-    sha = os.popen(cmd).read().split("\n")
-    sha = sha[0].split()[1]
+    cmd = "%s rev-parse HEAD" % (git_path,)
+    sha = os.popen(cmd).read().strip()
     return sha
 
 def clone(git_path, module, repo, dest, remote, depth, version):
@@ -157,39 +156,25 @@ def is_remote_tag(git_path, module, dest, remote, version):
     os.chdir(dest)
     cmd = '%s ls-remote %s -t refs/tags/%s' % (git_path, remote, version)
     (rc, out, err) = module.run_command(cmd)
-    if version in out:
-        return True
-    else:
-        return False
+    return version in out
 
 def get_branches(git_path, module, dest):
     os.chdir(dest)
-    branches = []
     cmd = '%s branch -a' % (git_path,)
     (rc, out, err) = module.run_command(cmd)
     if rc != 0:
         module.fail_json(msg="Could not determine branch data - received %s" % out)
-    for line in out.split('\n'):
-        branches.append(line.strip())
-    return branches
+    return [line.strip() for line in out.split('\n')]
 
 def is_remote_branch(git_path, module, dest, remote, branch):
     branches = get_branches(git_path, module, dest)
     rbranch = 'remotes/%s/%s' % (remote, branch)
-    if rbranch in branches:
-        return True
-    else:
-        return False
+    return rbranch in branches
 
 def is_local_branch(git_path, module, dest, branch):
     branches = get_branches(git_path, module, dest)
     lbranch = '%s' % branch
-    if lbranch in branches:
-        return True
-    elif '* %s' % branch in branches:
-        return True
-    else:
-        return False
+    return (lbranch in branches) or ('* %s' % branch in branches)
 
 def is_not_a_branch(git_path, module, dest):
     branches = get_branches(git_path, module, dest)
@@ -211,11 +196,7 @@ def get_head_branch(git_path, module, dest, remote):
     if os.path.isfile(repo_path):
         try:
             gitdir = yaml.safe_load(open(repo_path)).get('gitdir')
-            # There is a posibility the .git file to have an absolute path.
-            if os.path.isabs(gitdir):
-                repo_path = gitdir
-            else:
-                repo_path = os.path.join(repo_path.split('.git')[0], gitdir)
+            repo_path = os.path.join(dest, gitdirdf)
         except (IOError, AttributeError):
             return ''
     # Read .git/HEAD for the name of the branch.
@@ -337,23 +318,15 @@ def main():
         if rc != 0:
             module.fail_json(msg=err)
         # check or get changes from remote
-        remote_head = get_remote_head(git_path, module, dest, version, remote)
         if module.check_mode:
-            changed = False
+            remote_head = get_remote_head(git_path, module, dest, version, remote)
             if remote_head == version:
                 # get_remote_head returned version as-is
                 # were given a sha1 object, see if it is present
                 (rc, out, err) = module.run_command("%s show %s" % (git_path, version))
-                if version in out:
-                    changed = False
-                else:
-                    changed = True
+                changed = version not in out
             else:
-                remote_head = remote_head[0:7]
-                if before != remote_head:
-                    changed = True
-                else:
-                    changed = False
+                changed = before != remote_head
             module.exit_json(changed=changed, before=before, after=remote_head)
         (rc, out, err) = fetch(git_path, module, repo, dest, version, remote)
         if rc != 0:
@@ -367,10 +340,7 @@ def main():
 
     # determine if we changed anything
     after = get_version(git_path, dest)
-    changed = False
-
-    if before != after or local_mods:
-        changed = True
+    changed = before != after or local_mods
 
     module.exit_json(changed=changed, before=before, after=after)
 
