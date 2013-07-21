@@ -5,9 +5,9 @@ Ansible Changes By Release
 
 Major new features:
 
-* new /etc/ansible/facts.d allows JSON or INI style facts to be provided from the remote node, and supports executable fact programs in this dir. Files must end in *.fact.
+* (DOCS PENDING) new /etc/ansible/facts.d allows JSON or INI style facts to be provided from the remote node, and supports executable fact programs in this dir. Files must end in *.fact.
 * ability to make undefined template variables raise errors, see ansible.cfg
-* sudo: True/False and sudo_user: True/False can set at include and role level
+* (DOCS PENDING) sudo: True/False and sudo_user: True/False can set at include and role level
 * added changed_when: (expression) which allows overriding whether a result is changed or not, can work with registered expressions.
 
 New modules:
