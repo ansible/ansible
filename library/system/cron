@@ -117,7 +117,7 @@ options:
 requirements:
   - cron
 author: Dane Summers
-updates: Mike Grozak
+updates: [ 'Mike Grozak', 'Patrick Callahan' ]
 """
 
 EXAMPLES = '''
