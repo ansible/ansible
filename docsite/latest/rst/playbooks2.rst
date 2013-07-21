@@ -98,7 +98,7 @@ them a simple {{ foo }} is not sufficient, but it is still easy to do.   Here's 
 
     {{ ansible_eth0["ipv4"]["address"] }}
 
-Similarly, this is how we access the first element of an array:
+Similarly, this is how we access the first element of an array::
 
     {{ foo[0] }}
 
