@@ -138,11 +138,11 @@ def main():
     )
 
     command_in            = module.params.get('command')
-    zone_in               = module.params.get('zone');
-    ttl_in                = module.params.get('ttl');
-    record_in             = module.params.get('record');
-    type_in               = module.params.get('type');
-    value_in              = module.params.get('value');
+    zone_in               = module.params.get('zone')
+    ttl_in                = module.params.get('ttl')
+    record_in             = module.params.get('record')
+    type_in               = module.params.get('type')
+    value_in              = module.params.get('value')
     ec2_secret_key        = module.params.get('ec2_secret_key')
     ec2_access_key        = module.params.get('ec2_access_key')
 
