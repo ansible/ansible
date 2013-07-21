@@ -90,6 +90,7 @@ Misc changes:
 * added Jinja2 filters: quote, quotes a string if it needs to be quoted
 * allow force=yes to affect apt upgrades
 * fix for saving conditionals in variable names
+* support for multiple host ranges in INI inventory like: db[01:10:3]node-[01:10]
 
 1.2.2 "Hear About It Later" (reprise) -- July 4, 2013
 
