@@ -165,6 +165,14 @@ def check_conditional(conditional, basedir, inject):
         conditional = template.template(basedir, conditional, inject)
         # a Jinja2 evaluation that results in something Python can eval!
         presented = "{% if " + conditional + " %} True {% else %} False {% endif %}"
+        conditional = template.template(basedir, presented, inject)
+        val = conditional.lstrip().rstrip()
+        if val == "True":
+            return True
+        elif val == "False":
+            return False
+        else:
+            raise errors.AnsibleError("unable to evaluate conditional: %s" % conditional)
 
     if not isinstance(conditional, basestring):
         return conditional
