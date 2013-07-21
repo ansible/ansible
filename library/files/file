@@ -106,13 +106,6 @@ options:
       - level part of the SELinux file context. This is the MLS/MCS attribute,
         sometimes known as the C(range). C(_default) feature works as for
         I(seuser).
-  context:
-    required: false
-    default: null
-    choices: [ "default" ]
-    description:
-      - accepts only C(default) as value. This will restore a file's SELinux context
-        in the policy. Does nothing if no default value is available.
   recurse:
     required: false
     default: "no"
