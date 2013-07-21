@@ -15,6 +15,7 @@ New modules:
 * cloud: digital_ocean -- module for digital ocean provisioning, also includes inventory module
 * cloud: rds -- Amazon relational database service
 * cloud: linode -- also included, an inventory module
+* cloud: route53 -- manage Amazon DNS entries 
 * net_infrastructure: arista_
 * system: stat -- reports on stat(istics) of remote files, for use with 'register'
 * htpasswd -- manipulate htpasswd files
