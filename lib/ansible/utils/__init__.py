@@ -155,16 +155,18 @@ def is_changed(result):
 
     return (result.get('changed', False) in [ True, 'True', 'true'])
 
-def check_conditional(conditional, basedir, inject):
+def check_conditional(conditional, basedir, inject, fail_on_undefined=False):
 
     if conditional.startswith("jinja2_compare"):
         conditional = conditional.replace("jinja2_compare ","")
         # allow variable names
         if conditional in inject:
             conditional = inject[conditional]
-        conditional = template.template(basedir, conditional, inject)
+        print "INJECTIFYING: %s" % inject
+        conditional = template.template(basedir, conditional, inject, fail_on_undefined=fail_on_undefined)
         # a Jinja2 evaluation that results in something Python can eval!
         presented = "{% if " + conditional + " %} True {% else %} False {% endif %}"
+        return presented
 
     if not isinstance(conditional, basestring):
         return conditional
