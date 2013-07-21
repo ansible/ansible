@@ -172,7 +172,8 @@ def main(args):
 
                     if unknown_tags:
                         continue
-                    print '  play #%d (%s): task count=%d' % (playnum, label, len(play.tasks()))
+                    print '  play #%d (%s):' % (playnum, label)
+
                     for task in play.tasks():
                         if (set(task.tags).intersection(pb.only_tags) and not
                             set(task.tags).intersection(pb.skip_tags)):
