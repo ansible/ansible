@@ -58,7 +58,7 @@ EXAMPLES = '''
 - acl: name=/etc/foo.conf entry="u:joe:r" state=present
 
 # Removes the acl for joe
-- acl: name=/etc/foo.conf entry="u:joe" state=absent
+- acl: name=/etc/foo.conf entry="u:joe:-" state=absent
 '''
 
 try:
