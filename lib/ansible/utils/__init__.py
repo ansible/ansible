@@ -162,11 +162,17 @@ def check_conditional(conditional, basedir, inject, fail_on_undefined=False):
         # allow variable names
         if conditional in inject:
             conditional = inject[conditional]
-        print "INJECTIFYING: %s" % inject
         conditional = template.template(basedir, conditional, inject, fail_on_undefined=fail_on_undefined)
         # a Jinja2 evaluation that results in something Python can eval!
         presented = "{% if " + conditional + " %} True {% else %} False {% endif %}"
-        return presented
+        conditional = template.template(basedir, presented, inject)
+        val = conditional.lstrip().rstrip()
+        if val == "True":
+            return True
+        elif val == "False":
+            return False
+        else:
+            raise errors.AnsibleError("unable to evaluate conditional: %s" % conditional)
 
     if not isinstance(conditional, basestring):
         return conditional
