@@ -51,6 +51,11 @@ options:
       - The repository from which the gem will be installed
     required: false
     aliases: [source]
+  user_install:
+    description:
+      - Install gem in user's local gems cache or for all users
+    required: false
+    default: "yes"
   version:
     description:
       - Version of the gem to be installed/removed.
@@ -151,6 +156,8 @@ def install(module):
     else:
         if major and major < 2:
             cmd.append('--include-dependencies')
+    if not module.params['user_install']:
+        cmd.append('--no-user-install')            
     cmd.append('--no-rdoc')
     cmd.append('--no-ri')
     cmd.append(module.params['gem_source'])
@@ -165,6 +172,7 @@ def main():
             name                 = dict(required=True, type='str'),
             repository           = dict(required=False, aliases=['source'], type='str'),
             state                = dict(required=False, choices=['present','absent','latest'], type='str'),
+            user_install         = dict(required=False, default=True, type='bool'),
             version              = dict(required=False, type='str'),
         ),
         supports_check_mode = True,
