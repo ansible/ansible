@@ -70,12 +70,24 @@ def expand_hostname_range(line = None):
         # nrange: [1:6]; range() is a built-in. Can't use the name
         # tail: '-node'
 
-        (head, nrange, tail) = line.replace('[','|').replace(']','|').split('|')
+        # Add support for multiple ranges in a host so:
+        # db[01:10:3]node-[01:10]
+        # - to do this we split off at the first [...] set, getting the list
+        #   of hosts and then repeat until none left.
+        # - also add an optional third parameter which contains the step. (Default: 1)
+        #   so range can be [01:10:2] -> 01 03 05 07 09
+        # FIXME: make this work for alphabetic sequences too.
+
+        (head, nrange, tail) = line.replace('[','|',1).replace(']','|',1).split('|')
         bounds = nrange.split(":")
-        if len(bounds) != 2:
+        if len(bounds) != 2 and len(bounds) != 3:
             raise errors.AnsibleError("host range incorrectly specified")
         beg = bounds[0]
         end = bounds[1]
+        if len(bounds) == 2:
+            step = 1
+        else:
+            step = bounds[2]
         if not beg:
             beg = "0"
         if not end:
@@ -95,10 +107,14 @@ def expand_hostname_range(line = None):
                 raise errors.AnsibleError("host range format incorrectly specified!")
             seq = string.ascii_letters[i_beg:i_end+1]
         except ValueError:  # not a alpha range
-            seq = range(int(beg), int(end)+1)
+            seq = range(int(beg), int(end)+1, int(step))
 
         for rseq in seq:
             hname = ''.join((head, fill(rseq), tail))
-            all_hosts.append(hname)
+
+            if detect_range(hname):
+                all_hosts.extend( expand_hostname_range( hname ) )
+            else:
+                all_hosts.append(hname)
 
         return all_hosts
