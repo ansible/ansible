@@ -58,7 +58,7 @@ class ActionModule(object):
             data = {}
             data.update(inject)
             data.update(inject['hostvars'][host])
-            if not check_conditional(self.runner.basedir, self.runner.conditional, data):
+            if not check_conditional(self.runner.basedir, self.runner.conditional, data, fail_on_undefined=self.runner.error_on_undefined_vars):
                 continue
             group_name = template.template(self.runner.basedir, args['key'], data)
             group_name = group_name.replace(' ','-')
