@@ -106,12 +106,12 @@ class ElbManager:
         self.elb_region = None
 
         if region_name is not None:
-          for region in elb_regions():
-            if region.name == region_name:
-              self.elb_region = region
+            for region in elb_regions():
+                if region.name == region_name:
+                    self.elb_region = region
 
-          if self.elb_region is None:
-            self.module.fail_json(msg=str("Invalid region"))
+            if self.elb_region is None:
+                self.module.fail_json(msg=str("Invalid region"))
 
         self.lbs = self._get_instance_lbs(ec2_elbs)
 
