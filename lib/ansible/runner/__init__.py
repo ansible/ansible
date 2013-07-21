@@ -739,7 +739,7 @@ class Runner(object):
             raise errors.AnsibleFileNotFound("%s is not a module" % module_name)
 
         # Search module path(s) for named module.
-        in_path = utils.plugins.module_finder.find_plugin(module_name)
+        in_path = utils.plugins.module_finder.find(module_name)
         if in_path is None:
             raise errors.AnsibleFileNotFound("module %s not found in %s" % (module_name, utils.plugins.module_finder.print_paths()))
 

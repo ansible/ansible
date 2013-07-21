@@ -23,43 +23,35 @@ import imp
 from ansible import constants as C
 from ansible import errors
 
-MODULE_CACHE = {}
-PATH_CACHE = {}
-PLUGIN_PATH_CACHE = {}
 _basedirs = []
 
 def push_basedir(basedir):
     if basedir not in _basedirs:
         _basedirs.insert(0, basedir)
 
-class PluginLoader(object):
+class BaseLoader(object):
 
     '''
-    PluginLoader loads plugins from the configured plugin directories.
+    BaseLoader is the base class for plug-in and module loaders in this module.
 
-    It searches for plugins by iterating through the combined list of
-    play basedirs, configured paths, and the python path.
-    The first match is used.
+    It searches for files (plug-ins or modules) by iterating through
+    the combined list of play basedirs and configured
+    paths. Subclasses may add additional paths by overriding the
+    _get_default_paths method.
+
+    The first file found is used.
+
     '''
 
-    def __init__(self, class_name, package, config, subdir, aliases={}):
+    def __init__(self, config, subdir, file_suffix="", aliases={}):
 
-        self.class_name         = class_name
-        self.package            = package
         self.config             = config
         self.subdir             = subdir
+        self.file_suffix        = file_suffix
         self.aliases            = aliases
 
-        if not class_name in MODULE_CACHE:
-            MODULE_CACHE[class_name] = {}
-        if not class_name in PATH_CACHE:
-            PATH_CACHE[class_name] = None
-        if not class_name in PLUGIN_PATH_CACHE:
-            PLUGIN_PATH_CACHE[class_name] = {}
-
-        self._module_cache      = MODULE_CACHE[class_name]
-        self._paths             = PATH_CACHE[class_name]
-        self._plugin_path_cache = PLUGIN_PATH_CACHE[class_name]
+        self._paths = None
+        self._found_cache = {}
 
         self._extra_dirs = []
 
@@ -73,20 +65,9 @@ class PluginLoader(object):
                 ret.append(i)
         return os.pathsep.join(ret)
 
-    def _get_package_paths(self):
-        ''' Gets the path of a Python package '''
-
-        paths = []
-        if not self.package:
-            return []
-        if not hasattr(self, 'package_path'):
-            m = __import__(self.package)
-            parts = self.package.split('.')[1:]
-            self.package_path = os.path.join(os.path.dirname(m.__file__), *parts)
-            paths.append(self.package_path)
-            return paths
-        else:
-            return [ self.package_path ]
+    def _get_default_paths(self):
+        ''' Subclasses may override this method to append search paths '''
+        return []
 
     def _get_paths(self):
         ''' Return a list of paths to search for plugins in '''
@@ -106,8 +87,10 @@ class PluginLoader(object):
                 if fullpath not in ret:
                     ret.append(fullpath)
 
-        # look in any configured plugin paths, allow one level deep for subcategories 
+        # look in any configured paths, allow one level deep for subcategories
         configured_paths = self.config.split(os.pathsep)
+        # search default paths, such as the standard plug-ins, last
+        configured_paths.extend(self._get_default_paths())
         for path in configured_paths:
             path = os.path.expanduser(path)
             contents = glob.glob("%s/*" % path)
@@ -115,9 +98,6 @@ class PluginLoader(object):
                 if os.path.isdir(c):
                     ret.append(c)       
             ret.append(path)
-
-        # look for any plugins installed in the package subtree
-        ret.extend(self._get_package_paths())
 
         self._paths = ret
 
@@ -134,37 +114,58 @@ class PluginLoader(object):
                 directory = os.path.join(directory, self.subdir)
             self._extra_dirs.append(directory)
 
-    def find_plugin(self, name):
-        ''' Find a plugin named name '''
+    def find(self, name):
+        ''' Find a file named with the given name and file_suffix '''
 
-        if 'name' in self._plugin_path_cache:
-            return self._plugin_path_cache[name]
-
-        suffix = ".py"
-        if not self.class_name:
-            suffix = ""
+        if name in self._found_cache:
+            return self._found_cache[name]
 
         for i in self._get_paths():
-            path = os.path.join(i, "%s%s" % (name, suffix))
+            path = os.path.join(i, "%s%s" % (name, self.file_suffix))
             if os.path.exists(path):
-                self._plugin_path_cache[name] = path
+                self._found_cache[name] = path
                 return path
 
         return None
 
-    def has_plugin(self, name):
-        ''' Checks if a plugin named name exists '''
+    def __contains__(self, name):
+        ''' Checks if we can find a file named name '''
 
-        return self.find_plugin(name) is not None
+        return self.find(name) is not None
 
-    __contains__ = has_plugin
+class PluginLoader (BaseLoader):
+
+    '''
+    Loads Ansible plug-ins.
+
+    Plug-ins may be loaded from the play basedirs, configured paths,
+    or from the default ansible packages found on Python's path.  The
+    first plug-in found is used.
+
+    '''
+
+    def __init__(self, class_name, package, config, subdir, aliases={}):
+        BaseLoader.__init__(self, config, subdir, file_suffix=".py",
+                            aliases=aliases)
+        self.class_name = class_name
+        self.package = package
+        self._module_cache = {}
+
+    def _get_default_paths(self):
+        ''' return the path to the appropriate standard plug-ins '''
+
+        if not hasattr(self, 'package_path'):
+            m = __import__(self.package)
+            parts = self.package.split('.')[1:]
+            self.package_path = os.path.join(os.path.dirname(m.__file__), *parts)
+        return [ self.package_path ]
 
     def get(self, name, *args, **kwargs):
         ''' instantiates a plugin of the given name using arguments '''
 
         if name in self.aliases:
             name = self.aliases[name]
-        path = self.find_plugin(name)
+        path = self.find(name)
         if path is None:
             return None
         if path not in self._module_cache:
@@ -182,6 +183,18 @@ class PluginLoader(object):
                 if path not in self._module_cache:
                     self._module_cache[path] = imp.load_source('.'.join([self.package, name]), path)
                 yield getattr(self._module_cache[path], self.class_name)(*args, **kwargs)
+
+class ModuleLoader (BaseLoader):
+    '''
+    Loads Ansible modules.
+
+    Modules may be loaded from the play basedirs, configured paths, or
+    from the default Ansible modules.  The first module found is used.
+
+    '''
+    def _get_default_paths(self):
+        ''' returns the path to the standard Ansible modules '''
+        return [C.DIST_MODULE_PATH]
 
 action_loader = PluginLoader(
     'ActionModule',   
@@ -205,13 +218,6 @@ connection_loader = PluginLoader(
     aliases={'paramiko': 'paramiko_ssh'}
 )
 
-module_finder = PluginLoader(
-    '', 
-    '', 
-    C.DEFAULT_MODULE_PATH, 
-    'library'
-)
-
 lookup_loader = PluginLoader(
     'LookupModule',   
     'ansible.runner.lookup_plugins', 
@@ -233,4 +239,7 @@ filter_loader = PluginLoader(
     'filter_plugins'
 )
 
-
+module_finder = ModuleLoader(
+    C.DEFAULT_MODULE_PATH,
+    'library'
+)

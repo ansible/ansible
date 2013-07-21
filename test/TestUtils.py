@@ -386,8 +386,9 @@ class TestUtils(unittest.TestCase):
     ### plugins
 
     def test_loaders_expanduser_each_dir(self):
-        # Test that PluginLoader will call expanduser on each path
-        # when it splits its "config" argument.
+        # Test that BaseLoader, superclass of PluginLoader and
+        # ModuleLoader, will call expanduser on each path when it
+        # splits its "config" argument.
         home_dir = os.path.expanduser("~")
         if home_dir == "~":
             raise SkipTest("your platform doesn't expand ~ in paths")
@@ -397,7 +398,7 @@ class TestUtils(unittest.TestCase):
             raise SkipTest("~ expands to non-absolute path %r" % (home_dir,))
         # Unfortunately we have to create temporary directories in
         # your home directory; the directories have to exist for
-        # PluginLoader to accept them.
+        # BaseLoader to accept them.
         abs_dirs, tilde_dirs = [], []
         try:
             for _ in range(2):
@@ -407,9 +408,7 @@ class TestUtils(unittest.TestCase):
                 tilde_dir = os.path.join("~", os.path.relpath(temp_dir,
                                                               home_dir))
                 tilde_dirs.append(tilde_dir)
-            loader = ansible.utils.plugins.PluginLoader(
-                "",
-                "",
+            loader = ansible.utils.plugins.BaseLoader(
                 os.pathsep.join(tilde_dirs),
                 "something_under_basedir"
             )
