@@ -17,6 +17,7 @@ New modules:
 * cloud: rds -- Amazon relational database service
 * cloud: linode -- also included, an inventory module
 * cloud: route53 -- manage Amazon DNS entries 
+* cloud: ec2_ami -- manages (including creates!) ec2 AMIs
 * net_infrastructure: arista_
 * system: stat -- reports on stat(istics) of remote files, for use with 'register'
 * htpasswd -- manipulate htpasswd files
