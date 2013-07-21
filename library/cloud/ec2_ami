@@ -103,11 +103,11 @@ options:
 
 requirements: [ "boto" ]
 author: Evan Duffield <eduffield@iacquire.com>
-
-Thank you to iAcquire for sponsoring development of this module.
-
-See http://alestic.com/2011/06/ec2-ami-security for more information about ensuring the security of your AMI.
 '''
+
+# Thank you to iAcquire for sponsoring development of this module.
+# 
+# See http://alestic.com/2011/06/ec2-ami-security for more information about ensuring the security of your AMI.
 
 EXAMPLES = '''
 # Basic AMI Creation
