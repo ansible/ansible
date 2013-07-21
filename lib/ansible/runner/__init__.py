@@ -528,7 +528,8 @@ class Runner(object):
             self.conditional = [ self.conditional ]
 
         for cond in self.conditional:
-            if not utils.check_conditional(cond, self.basedir, inject):
+
+            if not utils.check_conditional(cond, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
                 result = utils.jsonify(dict(changed=False, skipped=True))
                 self.callbacks.on_skipped(host, inject.get('item',None))
                 return ReturnData(host=host, result=result)
@@ -628,6 +629,15 @@ class Runner(object):
                 module_args=module_args,
                 module_name=module_name
             )
+
+            changed_when = self.module_vars.get('changed_when')
+            if changed_when is not None:
+                register = self.module_vars.get('register')
+                if  register is not None:
+                    if 'stdout' in data:
+                        data['stdout_lines'] = data['stdout'].splitlines()
+                    inject[register] = data
+                data['changed'] = utils.check_conditional(changed_when, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars)
 
             if is_chained:
                 # no callbacks

@@ -360,7 +360,7 @@ class PlayBook(object):
             # extra vars need to always trump - so update  again following the facts
             self.SETUP_CACHE[host].update(self.extra_vars)
             if task.register:
-                if 'stdout' in result:
+                if 'stdout' in result and 'stdout_lines' not in result:
                     result['stdout_lines'] = result['stdout'].splitlines()
                 self.SETUP_CACHE[host][task.register] = result
 
@@ -368,7 +368,7 @@ class PlayBook(object):
         if task.ignore_errors and task.register:
             failed = results.get('failed', {})
             for host, result in failed.iteritems():
-                if 'stdout' in result:
+                if 'stdout' in result and 'stdout_lines' not in result:
                     result['stdout_lines'] = result['stdout'].splitlines()
                 self.SETUP_CACHE[host][task.register] = result
 
