@@ -10,8 +10,7 @@ when a term comes up on the mailing list.
 Action
 ++++++
 
-An action is a part of a task that specifies which one of the :ref:`modules` will run, and the arguments to pass to that module.  Each task can
-have only one action, but it may also have other parameters.
+An action is a part of a task that specifies which of the modules to run and the arguments to pass to that module.  Each task can have only one action, but it may also have other parameters.
 
 Ad Hoc
 ++++++
@@ -159,7 +158,7 @@ them in the inventory file.  The Host Vars file can also be used to define compl
 inventory file.
 
 Lazy Evaluation
-++++++++++++++
++++++++++++++++
 
 In general, Ansible evaluates any variables in playbook content at the last possible second, which means that if you define a data structure
 that data structure itself can define variable values within it, and everything "just works" as you would expect.  This also means variable

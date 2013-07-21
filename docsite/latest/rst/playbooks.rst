@@ -541,9 +541,9 @@ If you want to define certain tasks to happen before AND after roles are applied
         - shell: echo 'goodbye'
 
 .. note::
-If you are using tags with tasks (described later as a means of only running part of a playbook) 
-be sure you also tag your pre_tasks and post_tasks and pass those along as well, especially if the pre
-and post tasks are used for monitoring outage window control or load balancing.
+   If using tags with tasks (described later as a means of only running part of a playbook),  
+   be sure to also tag your pre_tasks and post_tasks and pass those along as well, especially if the pre
+   and post tasks are used for monitoring outage window control or load balancing.
 
 Executing A Playbook
 ````````````````````
