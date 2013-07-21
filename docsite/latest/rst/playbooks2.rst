@@ -73,25 +73,22 @@ Overriding Changed Result
 
 .. versionadded:: 1.3
 
-When a task make some changes or sometimes is simply executed, it
-is reported as changed.  You may want to override this.  To do so,
-write a task with the `changed_when` clause, which actually is a
-Python expression. When this expression evaluates to true the task
-is considered changed, when it evaluates to false the tasks is
-considered changed. See below about the `when` clause for details
-on the expressions you can use. You may also find the `register`
-keyword useful with `changed_when`, see below.
+When a shell/command or other module runs it will typically report
+"changed" status based on whether it thinks it affected machine state.  
 
-Example::
+Sometimes you will know, based on the return code
+or output that it did not make any changes, and wish to override
+the "changed" result such that it does not appear in report output or
+does not cause handlers to fire::
+
     tasks:
-      - action: command some command with output
-        register: result
-        changed_when: "'reticulating splines' in result.stdout"
-      - action: command another command
-        register: another_result
-        changed_when: "another_result.rc != 2"
-      - action: command yet another command
-        changed_when: false # never changed !
+
+      - shell: /usr/bin/billybass --mode="take me to the river"
+        register: bass_result
+        changed_when: "bass_result.rc != 2"
+
+      # this will never report 'changed' status
+      - shell: wall 'beep'
 
 Accessing Complex Variable Data
 ```````````````````````````````
