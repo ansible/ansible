@@ -68,6 +68,31 @@ write a task that looks like this::
       command: /bin/false
       ignore_errors: yes
 
+Overriding Changed Result
+`````````````````````````
+
+.. versionadded:: 1.3
+
+When a task make some changes or sometimes is simply executed, it
+is reported as changed.  You may want to override this.  To do so,
+write a task with the `changed_when` clause, which actually is a
+Python expression. When this expression evaluates to true the task
+is considered changed, when it evaluates to false the tasks is
+considered changed. See below about the `when` clause for details
+on the expressions you can use. You may also find the `register`
+keyword useful with `changed_when`, see below.
+
+Example::
+    tasks:
+      - action: command some command with output
+        register: result
+        changed_when: "'reticulating splines' in result.stdout"
+      - action: command another command
+        register: another_result
+        changed_when: "another_result.rc != 2"
+      - action: command yet another command
+        changed_when: false # never changed !
+
 Accessing Complex Variable Data
 ```````````````````````````````
 
