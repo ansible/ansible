@@ -528,8 +528,7 @@ class Runner(object):
             self.conditional = [ self.conditional ]
 
         for cond in self.conditional:
-            cond = template.template(self.basedir, cond, inject, expand_lists=False)
-            if not utils.check_conditional(cond):
+            if not utils.check_conditional(cond, self.basedir, inject):
                 result = utils.jsonify(dict(changed=False, skipped=True))
                 self.callbacks.on_skipped(host, inject.get('item',None))
                 return ReturnData(host=host, result=result)

@@ -89,6 +89,7 @@ Misc changes:
 * added Jinja2 filters: skipped, whether a result was skipped
 * added Jinja2 filters: quote, quotes a string if it needs to be quoted
 * allow force=yes to affect apt upgrades
+* fix for saving conditionals in variable names
 
 1.2.2 "Hear About It Later" (reprise) -- July 4, 2013
 

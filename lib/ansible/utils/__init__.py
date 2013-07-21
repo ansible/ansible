@@ -155,7 +155,16 @@ def is_changed(result):
 
     return (result.get('changed', False) in [ True, 'True', 'true'])
 
-def check_conditional(conditional):
+def check_conditional(conditional, basedir, inject):
+
+    if conditional.startswith("jinja2_compare"):
+        conditional = conditional.replace("jinja2_compare ","")
+        # allow variable names
+        if conditional in inject:
+            conditional = inject[conditional]
+        conditional = template.template(basedir, conditional, inject)
+        # a Jinja2 evaluation that results in something Python can eval!
+        presented = "{% if " + conditional + " %} True {% else %} False {% endif %}"
 
     if not isinstance(conditional, basestring):
         return conditional
@@ -667,9 +676,7 @@ def compile_when_to_only_if(expression):
 
     # the stock 'when' without qualification (new in 1.2), assumes Jinja2 terms
     elif tokens[0] == 'jinja2_compare':
-        # a Jinja2 evaluation that results in something Python can eval!
-        presented = "{% if " + " ".join(tokens[1:]).strip() + " %} True {% else %} False {% endif %}"
-        return presented
+        return " ".join(tokens)
     else:
         raise errors.AnsibleError("invalid usage of when_ operator: %s" % expression)
 
