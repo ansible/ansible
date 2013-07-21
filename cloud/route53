@@ -16,8 +16,8 @@
 
 DOCUMENTATION = '''
 ---
-module: rds
-version_added: "1.4"
+module: route53
+version_added: "1.3"
 short_description: add or delete entries in Amazons Route53 DNS service
 description:
      - Creates and deletes DNS records in Amazons Route53 service
