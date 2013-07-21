@@ -56,6 +56,7 @@ options:
       - Install gem in user's local gems cache or for all users
     required: false
     default: "yes"
+    version_added: "1.3"
   version:
     description:
       - Version of the gem to be installed/removed.
