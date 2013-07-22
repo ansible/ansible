@@ -165,8 +165,7 @@ Yes!  See `AnsibleWorks.com <http://ansibleworks.com>`_ or email `info@ansiblewo
 How do I submit a change to the documentation?
 ++++++++++++++++++++++++++++++++++++++++++++++
 
-Great question!  Documentation for the Ansible project is kept in `Github <https://github.com/ansible/ansible/tree/devel/docsite/latest/rst>`_ in restructured text format.  Simply send in a pull request for changes, or file a ticket if you found an error but do not have time to submit
-a change request.   Thanks!
+Great question!  Documentation for Ansible is kept in the main project git repository, and complete instructions for contributing can be found in the docs README `viewable on GitHub <https://github.com/ansible/ansible/tree/devel/docsite/latest#readme>`_.  Thanks!
 
 I don't see my question here
 ++++++++++++++++++++++++++++
