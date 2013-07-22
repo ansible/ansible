@@ -636,7 +636,7 @@ class LinuxHardware(Hardware):
                         if e.errno == errno.ENOENT:
                             pass
                         else:
-                            self.fail_json(msg=e.strerror)
+                            module.fail_json(msg=e.strerror)
 
                     self.facts['mounts'].append(
                         {'mount': fields[1],
