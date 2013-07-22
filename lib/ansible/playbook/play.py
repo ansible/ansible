@@ -151,7 +151,7 @@ class Play(object):
         has_dict = {}
 
         for role_path in roles:
-            orig_path = template(self.basedir,role_path,self.playbook.extra_vars)
+            orig_path = template(self.basedir,role_path,self.vars)
 
             if type(orig_path) == dict:
                 # what, not a path?
