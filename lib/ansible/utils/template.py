@@ -324,11 +324,11 @@ def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=Tr
                 return legacy_varReplace(basedir, varname, vars, lookup_fatal, depth, expand_lists)
     
         elif isinstance(varname, (list, tuple)):
-            return [template(basedir, v, vars, lookup_fatal, depth, expand_lists) for v in varname]
+            return [template(basedir, v, vars, lookup_fatal, depth, expand_lists, fail_on_undefined=fail_on_undefined) for v in varname]
         elif isinstance(varname, dict):
             d = {}
             for (k, v) in varname.iteritems():
-                d[k] = template(basedir, v, vars, lookup_fatal, depth, expand_lists)
+                d[k] = template(basedir, v, vars, lookup_fatal, depth, expand_lists, fail_on_undefined=fail_on_undefined)
             return d
         else:
             return varname
@@ -350,10 +350,11 @@ class _jinja2_vars(object):
     extras is a list of locals to also search for variables.
     '''
 
-    def __init__(self, basedir, vars, globals, *extras):
+    def __init__(self, basedir, vars, globals, fail_on_undefined, *extras):
         self.basedir = basedir
         self.vars = vars
         self.globals = globals
+        self.fail_on_undefined = fail_on_undefined
         self.extras = extras
 
     def __contains__(self, k):
@@ -380,7 +381,7 @@ class _jinja2_vars(object):
         if isinstance(var, dict) and type(var) != dict:
             return var
         else:
-            return template(self.basedir, var, self.vars)
+            return template(self.basedir, var, self.vars, fail_on_undefined=self.fail_on_undefined)
 
     def add_locals(self, locals):
         '''
@@ -389,7 +390,7 @@ class _jinja2_vars(object):
         '''
         if locals is None:
             return self
-        return _jinja2_vars(self.basedir, self.vars, self.globals, locals, *self.extras)
+        return _jinja2_vars(self.basedir, self.vars, self.globals, self.fail_on_undefined, locals, *self.extras)
 
 class J2Template(jinja2.environment.Template):
     '''
@@ -466,7 +467,7 @@ def template_from_file(basedir, path, vars):
     # Ideally, this could use some API where setting shared=True and the object won't get
     # passed through dict(o), but I have not found that yet.
     try:
-        res = jinja2.utils.concat(t.root_render_func(t.new_context(_jinja2_vars(basedir, vars, t.globals), shared=True)))
+        res = jinja2.utils.concat(t.root_render_func(t.new_context(_jinja2_vars(basedir, vars, t.globals, fail_on_undefined), shared=True)))
     except jinja2.exceptions.UndefinedError, e:
         raise errors.AnsibleUndefinedVariable("One or more undefined variables: %s" % str(e))
 
@@ -507,12 +508,11 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
 
         t.globals['lookup'] = my_lookup
 
-        res = jinja2.utils.concat(t.root_render_func(t.new_context(_jinja2_vars(basedir, vars, t.globals), shared=True)))
+        res = jinja2.utils.concat(t.root_render_func(t.new_context(_jinja2_vars(basedir, vars, t.globals, fail_on_undefined), shared=True)))
         return res
     except jinja2.exceptions.UndefinedError:
         if fail_on_undefined:
             raise
         else:
-        # this shouldn't happen due to undeclared check above
             return data
 
