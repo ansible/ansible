@@ -731,12 +731,15 @@ class Runner(object):
 
         # error handling on this seems a little aggressive?
         if result['rc'] != 0:
-            raise errors.AnsibleError('could not create temporary directory, SSH (%s) exited with result %d' % (cmd, result['rc']))
+            output = 'could not create temporary directory, SSH (%s) exited with result %d' % (cmd, result['rc'])
+            if 'stdout' in result and result['stdout'] != '':
+                output = output + ": %s" % result['stdout']
+            raise errors.AnsibleError(output)
 
         rc = utils.last_non_blank_line(result['stdout']).strip() + '/'
         # Catch failure conditions, files should never be
         # written to locations in /.
-        if rc.startswith('/'):
+        if rc == '/': 
             raise errors.AnsibleError('failed to resolve remote temporary directory from %s: `%s` returned empty string' % (basetmp, cmd))
         return rc
 
