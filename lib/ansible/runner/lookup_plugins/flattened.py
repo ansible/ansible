@@ -71,7 +71,7 @@ class LookupModule(object):
         terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
 
         if not isinstance(terms, list):
-            raise errors.AnsibleError("with_flat_list expects a list")
+            raise errors.AnsibleError("with_flattened expects a list")
 
         ret = self.flatten(terms, inject)
         return ret
