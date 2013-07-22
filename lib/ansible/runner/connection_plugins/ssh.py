@@ -25,6 +25,7 @@ import select
 import fcntl
 import hmac
 import pwd
+import gettext
 from hashlib import sha1
 import ansible.constants as C
 from ansible.callbacks import vvv
@@ -191,8 +192,9 @@ class Connection(object):
             rfd, wfd, efd = select.select([p.stdout, p.stderr], [], [p.stdout, p.stderr], 1)
 
             # fail early if the sudo password is wrong
+            incorrect_password = gettext.dgettext("sudo", "Sorry, try again.")
             if (self.runner.sudo and sudoable and self.runner.sudo_pass and
-                stdout.endswith("Sorry, try again.\r\n%s" % prompt)):
+                stdout.endswith("%s\r\n%s" % (incorrect_password, prompt))):
                 raise errors.AnsibleError('Incorrect sudo password')
 
             if p.stdout in rfd:
