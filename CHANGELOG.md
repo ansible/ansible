@@ -96,6 +96,7 @@ Misc changes:
 * support for multiple host ranges in INI inventory like: db[01:10:3]node-[01:10]
 * fixes/improvements to cron module
 * add user_install=no option to gem module to install gems system wide
+* added raw=yes to allow copying without python on remote machines
 
 1.2.2 "Hear About It Later" (reprise) -- July 4, 2013
 
