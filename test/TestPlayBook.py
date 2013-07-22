@@ -273,6 +273,52 @@ class TestPlaybook(unittest.TestCase):
        )
        playbook.run()
 
+   def _test_playbook_undefined_vars(self, playbook, fail_on_undefined):
+       # save DEFAULT_UNDEFINED_VAR_BEHAVIOR so we can restore it in the end of the test
+       saved_undefined_var_behavior = C.DEFAULT_UNDEFINED_VAR_BEHAVIOR
+       C.DEFAULT_UNDEFINED_VAR_BEHAVIOR = fail_on_undefined
+
+       test_callbacks = TestCallbacks()
+       playbook = ansible.playbook.PlayBook(
+           playbook=os.path.join(self.test_dir, 'test_playbook_undefined_vars', playbook),
+           host_list='test/test_playbook_undefined_vars/hosts',
+           stats=ans_callbacks.AggregateStats(),
+           callbacks=test_callbacks,
+           runner_callbacks=test_callbacks
+       )
+       actual = playbook.run()
+
+       C.DEFAULT_UNDEFINED_VAR_BEHAVIOR = saved_undefined_var_behavior
+
+       # if different, this will output to screen
+       print "**ACTUAL**"
+       print utils.jsonify(actual, format=True)
+       expected =  {
+           "localhost": {
+               "changed": 0,
+               "failures": 0,
+               "ok": int(not fail_on_undefined) + 1,
+               "skipped": 0,
+               "unreachable": int(fail_on_undefined)
+           }
+       }
+       print "**EXPECTED**"
+       print utils.jsonify(expected, format=True)
+
+       assert utils.jsonify(expected, format=True) == utils.jsonify(actual, format=True)
+
+   def test_playbook_undefined_vars1_ignore(self):
+       self._test_playbook_undefined_vars('playbook1.yml', False)
+
+   def test_playbook_undefined_vars1_fail(self):
+       self._test_playbook_undefined_vars('playbook1.yml', True)
+
+   def test_playbook_undefined_vars2_ignore(self):
+       self._test_playbook_undefined_vars('playbook2.yml', False)
+
+   def test_playbook_undefined_vars2_fail(self):
+       self._test_playbook_undefined_vars('playbook2.yml', True)
+
    def test_yaml_hosts_list(self):
        # Make sure playbooks support hosts: [host1, host2]
        # TODO: Actually run the play on more than one host
