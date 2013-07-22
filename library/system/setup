@@ -633,10 +633,7 @@ class LinuxHardware(Hardware):
                         size_total = statvfs_result.f_bsize * statvfs_result.f_blocks
                         size_available = statvfs_result.f_bsize * (statvfs_result.f_bavail)
                     except OSError, e:
-                        if e.errno == errno.ENOENT:
-                            pass
-                        else:
-                            module.fail_json(msg=e.strerror)
+                        continue
 
                     self.facts['mounts'].append(
                         {'mount': fields[1],
