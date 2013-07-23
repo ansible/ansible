@@ -69,7 +69,37 @@ def main():
             st = os.lstat(path)
     except OSError, e:
         if e.errno == errno.ENOENT:
-            d = { 'exists' : False }
+            d = {
+                'exists'   : False,
+                'mode'     : False,
+                'isdir'    : False,
+                'ischr'    : False,
+                'isblk'    : False,
+                'isreg'    : False,
+                'isfifo'   : False,
+                'islnk'    : False,
+                'issock'   : False,
+                'uid'      : 0,
+                'gid'      : 0,
+                'size'     : 0,
+                'inode'    : 0,
+                'dev'      : 0,
+                'nlink'    : 0,
+                'atime'    : 0,
+                'mtime'    : 0,
+                'ctime'    : 0,
+                'wusr'     : False,
+                'rusr'     : False,
+                'xusr'     : False,
+                'wgrp'     : False,
+                'rgrp'     : False,
+                'xgrp'     : False,
+                'woth'     : False,
+                'roth'     : False,
+                'xoth'     : False,
+                'isuid'    : False,
+                'isgid'    : False
+                }
             module.exit_json(changed=False, stat=d)
        
         module.fail_json(msg = e.strerror)
