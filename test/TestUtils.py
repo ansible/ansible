@@ -375,6 +375,100 @@ class TestUtils(unittest.TestCase):
 
         assert res == u'hello wórld'
 
+
+    #####################################
+    ### check_conditional tests
+
+    def test_check_conditional_jinja2_literals(self):
+        # see http://jinja.pocoo.org/docs/templates/#literals
+
+        # boolean
+        assert(ansible.utils.check_conditional(
+            'jinja2_compare true', '/', {}) == True)
+        assert(ansible.utils.check_conditional(
+            'jinja2_compare false', '/', {}) == False)
+        assert(ansible.utils.check_conditional(
+            'jinja2_compare True', '/', {}) == True)
+        assert(ansible.utils.check_conditional(
+            'jinja2_compare False', '/', {}) == False)
+
+        # integer
+        assert(ansible.utils.check_conditional(
+            'jinja2_compare 1', '/', {}) == True)
+        assert(ansible.utils.check_conditional(
+            'jinja2_compare 0', '/', {}) == False)
+
+        # string, beware, a string is truthy unless empty
+        assert(ansible.utils.check_conditional(
+            'jinja2_compare "yes"', '/', {}) == True)
+        assert(ansible.utils.check_conditional(
+            'jinja2_compare "no"', '/', {}) == True)
+        assert(ansible.utils.check_conditional(
+            'jinja2_compare ""', '/', {}) == False)
+
+
+    def test_check_conditional_jinja2_variable_literals(self):
+        # see http://jinja.pocoo.org/docs/templates/#literals
+
+        # boolean
+        assert(ansible.utils.check_conditional(
+            'jinja2_compare var', '/', {'var': 'True'}) == True)
+        assert(ansible.utils.check_conditional(
+            'jinja2_compare var', '/', {'var': 'true'}) == True)
+        assert(ansible.utils.check_conditional(
+            'jinja2_compare var', '/', {'var': 'False'}) == False)
+        assert(ansible.utils.check_conditional(
+            'jinja2_compare var', '/', {'var': 'false'}) == False)
+
+        # integer
+        assert(ansible.utils.check_conditional(
+            'jinja2_compare var', '/', {'var': '1'}) == True)
+        assert(ansible.utils.check_conditional(
+            'jinja2_compare var', '/', {'var': 1}) == True)
+        assert(ansible.utils.check_conditional(
+            'jinja2_compare var', '/', {'var': '0'}) == False)
+        assert(ansible.utils.check_conditional(
+            'jinja2_compare var', '/', {'var': 0}) == False)
+
+        # string, beware, a string is truthy unless empty
+        assert(ansible.utils.check_conditional(
+            'jinja2_compare var', '/', {'var': '"yes"'}) == True)
+        assert(ansible.utils.check_conditional(
+            'jinja2_compare var', '/', {'var': '"no"'}) == True)
+        assert(ansible.utils.check_conditional(
+            'jinja2_compare var', '/', {'var': '""'}) == False)
+
+        # Python boolean in Jinja2 expression
+        assert(ansible.utils.check_conditional(
+            'jinja2_compare var', '/', {'var': True}) == True)
+        assert(ansible.utils.check_conditional(
+            'jinja2_compare var', '/', {'var': False}) == False)
+
+
+    def test_check_conditional_jinja2_expression(self):
+        assert(ansible.utils.check_conditional(
+            'jinja2_compare 1 == 1', '/', {}) == True)
+        assert(ansible.utils.check_conditional(
+            'jinja2_compare bar == 42', '/', {'bar': 42}) == True)
+        assert(ansible.utils.check_conditional(
+            'jinja2_compare bar != 42', '/', {'bar': 42}) == False)
+
+
+    def test_check_conditional_jinja2_expression_in_variable(self):
+        assert(ansible.utils.check_conditional(
+            'jinja2_compare var', '/', {'var': '1 == 1'}) == True)
+        assert(ansible.utils.check_conditional(
+            'jinja2_compare var', '/', {'var': 'bar == 42', 'bar': 42}) == True)
+        assert(ansible.utils.check_conditional(
+            'jinja2_compare var', '/', {'var': 'bar != 42', 'bar': 42}) == False)
+
+    def test_check_conditional_jinja2_unicode(self):
+        assert(ansible.utils.check_conditional(
+            u'jinja2_compare "\u00df"', '/', {}) == True)
+        assert(ansible.utils.check_conditional(
+            u'jinja2_compare var == "\u00df"', '/', {'var': u'\u00df'}) == True)
+
+
     #####################################
     ### key-value parsing
 
