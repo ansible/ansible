@@ -32,7 +32,7 @@ class Play(object):
        'handlers', 'remote_user', 'remote_port',
        'sudo', 'sudo_user', 'transport', 'playbook',
        'tags', 'gather_facts', 'serial', '_ds', '_handlers', '_tasks',
-       'basedir', 'any_errors_fatal', 'roles'
+       'basedir', 'any_errors_fatal', 'roles', 'max_fail_pct'
     ]
 
     # to catch typos and so forth -- these are userland names
@@ -41,7 +41,7 @@ class Play(object):
        'hosts', 'name', 'vars', 'vars_prompt', 'vars_files',
        'tasks', 'handlers', 'user', 'port', 'include',
        'sudo', 'sudo_user', 'connection', 'tags', 'gather_facts', 'serial',
-       'any_errors_fatal', 'roles', 'pre_tasks', 'post_tasks'
+       'any_errors_fatal', 'roles', 'pre_tasks', 'post_tasks', 'max_fail_pct' 
     ]
 
     # *************************************************
@@ -101,9 +101,9 @@ class Play(object):
         self.sudo_user        = ds.get('sudo_user', self.playbook.sudo_user)
         self.transport        = ds.get('connection', self.playbook.transport)
         self.gather_facts     = ds.get('gather_facts', None)
-        self.serial           = int(ds.get('serial', 0))
         self.remote_port      = self.remote_port
         self.any_errors_fatal = ds.get('any_errors_fatal', False)
+        self.max_fail_pct     = int(ds.get('max_fail_pct', 100))
 
         load_vars = {}
         if self.playbook.inventory.basedir() is not None:
