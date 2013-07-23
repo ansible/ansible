@@ -61,16 +61,16 @@ options:
         required: true
 
 notes:
-    - This module does not yet support tags.
+    - This module does not yet support boundary tags.
 
 '''
 
 EXAMPLES='''
 - name: Create meter
-  boundary_meter: apiid=AAAAAA apikey=BBBBBB state=present name={{ inventory_hostname }}"
+  boundary_meter: apiid=AAAAAA api_key=BBBBBB state=present name={{ inventory_hostname }}"
 
 - name: Delete meter
-  boundary_meter: apiid=AAAAAA apikey=BBBBBB state=absent name={{ inventory_hostname }}"
+  boundary_meter: apiid=AAAAAA api_key=BBBBBB state=absent name={{ inventory_hostname }}"
 
 '''
 
@@ -252,8 +252,8 @@ def main():
 
     state = module.params['state']
     name= module.params['name']
-    apikey = module.params['apikey']
-    apiid = module.params['apiid']
+    apikey = module.params['api_key']
+    apiid = module.params['api_id']
 
     if state == "present":
         (rc, result) = create_meter(module, name, apiid, apikey)
