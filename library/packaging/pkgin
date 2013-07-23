@@ -66,7 +66,34 @@ def query_package(module, pkgin_path, name, state="present"):
         rc, out, err = module.run_command("%s list | grep ^%s" % (pkgin_path, name))
 
         if rc == 0:
-            return name == '-'.join(out.split(' ')[0].split('-')[:-1])
+            # At least one package with a package name that starts with ``name``
+            # is installed.  For some cases this is not sufficient to determine
+            # wether the queried package is installed.
+            #
+            # E.g. for ``name='gcc47'``, ``gcc47`` not being installed, but
+            # ``gcc47-libs`` being installed, ``out`` would be:
+            #
+            #   gcc47-libs-4.7.2nb4  The GNU Compiler Collection (GCC) support shared libraries.
+            #
+            # Multiline output is also possible, for example with the same query
+            # and bot ``gcc47`` and ``gcc47-libs`` being installed:
+            #
+            #   gcc47-libs-4.7.2nb4   The GNU Compiler Collection (GCC) support shared libraries.
+            #   gcc47-4.7.2nb3       The GNU Compiler Collection (GCC) - 4.7 Release Series
+
+            # Loop over lines in ``out``
+            for line in out.split('\n'):
+
+                # Strip description
+                # (results in sth. like 'gcc47-libs-4.7.2nb4')
+                pkgname_with_version = out.split(' ')[0]
+
+                # Strip version
+                # (results in sth like 'gcc47-libs')
+                pkgname_without_version = '-'.join(pkgname_with_version.split('-')[:-1])
+
+                if name == pkgname_without_version:
+                    return True
 
         return False
 
