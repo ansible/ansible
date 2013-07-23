@@ -12,7 +12,7 @@ ansible-pull - set up a remote copy of ansible on each managed node
 
 SYNOPSIS
 --------
-ansible -d DEST -U URL [ -C CHECKOUT ] [ -i INVENTORY ] [ <filename.yml> ]
+ansible -d DEST -U URL [options] [ <filename.yml> ]
 
 
 DESCRIPTION
@@ -23,8 +23,9 @@ SSH.
 
 Use ansible-pull to set up a remote copy of ansible on each managed
 node, each set to run via cron and update playbook source via
-git. This inverts the default *push* architecture of ansible into a
-*pull* architecture, which has near-limitless scaling potential.
+a source repository. This inverts the default *push* architecture of
+ansible into a *pull* architecture, which has near-limitless scaling
+potential.
 
 The setup playbook can be tuned to change the cron frequency, logging
 locations, and parameters to ansible-pull.
@@ -41,7 +42,7 @@ OPTIONAL ARGUMENT
 *filename.yml*::
 
 The name of one the YAML format files to run as an ansible playbook.  This can
-be a relative path within the git checkout.  If not provided, ansible-pull
+be a relative path within the checkout.  If not provided, ansible-pull
 will look for a playbook based on the host's fully-qualified domain name and
 finally a playbook named *local.yml*.
 
@@ -51,24 +52,29 @@ OPTIONS
 
 *-d* 'DEST', *--directory=*'DEST'::
 
-Directory to checkout git repository into.
+Directory to checkout repository into.
 
 *-U* 'URL', *--url=*'URL'::
 
-URL of git repository to clone.
+URL of the playbook repository to checkout.
 
 *-C* 'CHECKOUT', *--checkout=*'CHECKOUT'::
 
-Branch/Tag/Commit to checkout.  Defaults to 'HEAD'.
+Branch/Tag/Commit to checkout.  If not provided, uses default behavior
+of module used to check out playbook repository.
 
 *-i* 'PATH', *--inventory=*'PATH'::
 
 The 'PATH' to the inventory hosts file.  This can be a relative path within
-the git checkout.
+the checkout.
 
 *--purge*::
 
-Purge the git checkout after the playbook is run.
+Purge the checkout after the playbook is run.
+
+*-m* 'NAME', *--module-name=*'NAME'::
+
+Module used to checkout playbook repository.  Defaults to git.
 
 
 AUTHOR
