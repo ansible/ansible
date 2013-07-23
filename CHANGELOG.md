@@ -5,8 +5,10 @@ Ansible Changes By Release
 
 Major new features:
 
-* new /etc/ansible/facts.d allows JSON or INI style facts to be provided from the remote node, and supports executable fact programs in this dir. Files must end in *.fact.
+* (DOCS PENDING) new /etc/ansible/facts.d allows JSON or INI style facts to be provided from the remote node, and supports executable fact programs in this dir. Files must end in *.fact.
 * ability to make undefined template variables raise errors, see ansible.cfg
+* (DOCS PENDING) sudo: True/False and sudo_user: True/False can set at include and role level
+* added changed_when: (expression) which allows overriding whether a result is changed or not, can work with registered expressions.
 
 New modules:
 
@@ -14,7 +16,9 @@ New modules:
 * cloud: digital_ocean -- module for digital ocean provisioning, also includes inventory module
 * cloud: rds -- Amazon relational database service
 * cloud: linode -- also included, an inventory module
-* net_infrastructure: arista_ 
+* cloud: route53 -- manage Amazon DNS entries 
+* cloud: ec2_ami -- manages (including creates!) ec2 AMIs
+* net_infrastructure: arista_
 * system: stat -- reports on stat(istics) of remote files, for use with 'register'
 * htpasswd -- manipulate htpasswd files
 
@@ -54,13 +58,44 @@ Misc changes:
 * add_host module does not report changed=True any longer
 * explanatory error message when using fireball with sudo message has been improved
 * git module now automatically pulls down git submodules
-* negated patterns don't require "all:!foo", you can just say "!foo" now to select all not foos.
+* negated patterns do not require "all:!foo", you can just say "!foo" now to select all not foos.
 * fix for Debian services always reporting changed when toggling enablement bit
 * roles files now tolerate files named 'main.yaml' and 'main' in addition to main.yaml
 * some help cleanup to command line flags on scripts
 * force option reinstated for file module, can create symlinks to non-existant files, etc
 * added termination support to ec2 module
 * --ask-sudo-pass or --sudo-user does not enable all options to use sudo in ansible-playbook
+* include/role conditionals are added ahead of task conditionals so they can short circuit properly
+* added pipes.quote in various places so paths with spaces are better tolerated
+* error handling while executing Jinja2 filters has been improved
+* upgrades to atomic replacement logic when copying files across partitions/etc
+* mysql user module can try to login before requiring explicit password
+* various additional options to supervisorctl module
+* only add non unique parameter on group creation when required
+* allow rabbitmq_plugin to specify a non-standard rabbitmq path
+* authentatication fixes to keystone_user module
+* added IAM role support to EC2 module
+* fixes for OpenBSD package module to avoid shell expansion
+* git module upgrades to allow --depth and --version to be used together
+* new lookup plugin, "with_flat_list"
+* extra vars (-e) variables can be used in playbook include paths
+* improved reporting for invalid sudo passwords
+* improved reporting for inability to find a suitable tmp location
+* require libselinux-python to perform file operations if SELinux is operational.
+* ZFS module fixes for byte display constants and handling paths with spaces
+* setup module more tolerant of gathering facts against things it does not have permission to read
+* can specify name=* state=latest to update all yum modules
+* major speedups to the yum module for default cases
+* ec2_facts module will now run in check mode
+* sleep option on service module for sleeping between stop/restart
+* fix for IPv6 facts on BSD
+* added Jinja2 filters: skipped, whether a result was skipped
+* added Jinja2 filters: quote, quotes a string if it needs to be quoted
+* allow force=yes to affect apt upgrades
+* fix for saving conditionals in variable names
+* support for multiple host ranges in INI inventory like: db[01:10:3]node-[01:10]
+* fixes/improvements to cron module
+* add user_install=no option to gem module to install gems system wide
 
 1.2.2 "Hear About It Later" (reprise) -- July 4, 2013
 
@@ -106,7 +141,7 @@ Core Features:
 * more filters: ability to say {{ foo|success }} and {{ foo|failed }} and when: foo|success and when: foo|failed
 * more filters: {{ path|basename }} and {{ path|dirname }}
 * lookup plugins now use the basedir of the file they have included from, avoiding needs of ../../../ in places and
-increasing the ease at which things can be reorganized.  
+increasing the ease at which things can be reorganized.
 
 Modules added:
 

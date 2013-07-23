@@ -528,8 +528,8 @@ class Runner(object):
             self.conditional = [ self.conditional ]
 
         for cond in self.conditional:
-            cond = template.template(self.basedir, cond, inject, expand_lists=False)
-            if not utils.check_conditional(cond):
+
+            if not utils.check_conditional(cond, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
                 result = utils.jsonify(dict(changed=False, skipped=True))
                 self.callbacks.on_skipped(host, inject.get('item',None))
                 return ReturnData(host=host, result=result)
@@ -630,6 +630,15 @@ class Runner(object):
                 module_name=module_name
             )
 
+            changed_when = self.module_vars.get('changed_when')
+            if changed_when is not None:
+                register = self.module_vars.get('register')
+                if  register is not None:
+                    if 'stdout' in data:
+                        data['stdout_lines'] = data['stdout'].splitlines()
+                    inject[register] = data
+                data['changed'] = utils.check_conditional(changed_when, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars)
+
             if is_chained:
                 # no callbacks
                 return result
@@ -719,12 +728,18 @@ class Runner(object):
         cmd += ' && echo %s' % basetmp
 
         result = self._low_level_exec_command(conn, cmd, None, sudoable=False)
+
+        # error handling on this seems a little aggressive?
         if result['rc'] != 0:
-            raise errors.AnsibleError('could not create temporary directory, SSH exited with result %d' % result['rc'])
+            output = 'could not create temporary directory, SSH (%s) exited with result %d' % (cmd, result['rc'])
+            if 'stdout' in result and result['stdout'] != '':
+                output = output + ": %s" % result['stdout']
+            raise errors.AnsibleError(output)
+
         rc = utils.last_non_blank_line(result['stdout']).strip() + '/'
-        # Catch any other failure conditions here; files should never be
-        # written directly to /.
-        if rc == '/':
+        # Catch failure conditions, files should never be
+        # written to locations in /.
+        if rc == '/': 
             raise errors.AnsibleError('failed to resolve remote temporary directory from %s: `%s` returned empty string' % (basetmp, cmd))
         return rc
 

@@ -68,6 +68,28 @@ write a task that looks like this::
       command: /bin/false
       ignore_errors: yes
 
+Overriding Changed Result
+`````````````````````````
+
+.. versionadded:: 1.3
+
+When a shell/command or other module runs it will typically report
+"changed" status based on whether it thinks it affected machine state.  
+
+Sometimes you will know, based on the return code
+or output that it did not make any changes, and wish to override
+the "changed" result such that it does not appear in report output or
+does not cause handlers to fire::
+
+    tasks:
+
+      - shell: /usr/bin/billybass --mode="take me to the river"
+        register: bass_result
+        changed_when: "bass_result.rc != 2"
+
+      # this will never report 'changed' status
+      - shell: wall 'beep'
+
 Accessing Complex Variable Data
 ```````````````````````````````
 
@@ -76,7 +98,7 @@ them a simple {{ foo }} is not sufficient, but it is still easy to do.   Here's 
 
     {{ ansible_eth0["ipv4"]["address"] }}
 
-Similarly, this is how we access the first element of an array:
+Similarly, this is how we access the first element of an array::
 
     {{ foo[0] }}
 

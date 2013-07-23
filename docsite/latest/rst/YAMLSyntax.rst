@@ -4,9 +4,9 @@ YAML Syntax
 This page provides a basic overview of correct YAML syntax, which is how Ansible
 playbooks (our configuration management language) are expressed.  
 
-We use YAML because it is easier to read and write for humans than other common 
-data formats like XML or JSON.  Further, there are libraries available for reading
-and writing YAML in most programming languages.  
+We use YAML because it is easier for humans to read and write than other common
+data formats like XML or JSON.  Further, there are libraries available in most
+programming languages for working with YAML.
 
 You may also wish to read :doc:`playbooks` at the same time to see how this
 is used in practice.
@@ -15,14 +15,14 @@ is used in practice.
 YAML Basics
 -----------
 
-For `ansible`, nearly every YAML file starts with a list.   
+For Ansible, nearly every YAML file starts with a list.   
 Each item in the list is a list of key/value pairs, commonly
 called a "hash" or a "dictionary".  So, we need to know how
 to write lists and dictionaries in YAML.
 
 There's another small quirk to YAML.  All YAML files (regardless of their association with
-`ansible` or not) should start with ``---``.  This is just a YAML
-format thing that means "this is the start of a document".
+Ansible or not) should begin with ``---``.  This is part of the YAML
+format and indicates the start of a document.
 
 All members of a list are lines beginning at the same indentation level starting
 with a ``-`` (dash) character::
@@ -60,7 +60,7 @@ boolean value (true/false) in several forms::
     likes_emacs: TRUE
     uses_cvs: false
 
-Let's combine what we learned so far in an arbitary YAML example.  This really
+Let's combine what we learned so far in an arbitrary YAML example.  This really
 has nothing to do with Ansible, but will give you a feel for the format::
 
     ---
@@ -76,16 +76,16 @@ has nothing to do with Ansible, but will give you a feel for the format::
         - Mango
     languages:
         ruby: Elite
-	python: Elite
-	dotnet: Lame
+        python: Elite
+        dotnet: Lame
 
-That's all you really need to know about YAML to get started writing
+That's all you really need to know about YAML to start writing
 `Ansible` playbooks.
 
 Gotchas
 -------
 
-While YAML is generally friendly, the following is going to be a YAML syntax error:
+While YAML is generally friendly, the following is going to result in a YAML syntax error:
 
     foo: somebody said I should put a colon here: so I did
 
@@ -96,7 +96,7 @@ You will want to quote any hash values using colons, like so:
 And then the colon will be preserved.
 
 Further, Ansible uses "{{ var }}" for variables.  If a value after a colon starts
-with a "{", YAML will think it a dictionary, so you must quote it, like so::
+with a "{", YAML will think it is a dictionary, so you must quote it, like so::
 
     foo: "{{ variable }}"
 

@@ -108,7 +108,7 @@ def clone(git_path, module, repo, dest, remote, depth, version):
         pass
     os.chdir(dest_dirname)
     cmd = [ git_path, 'clone', '-o', remote, '--recursive' ]
-    if version:
+    if version and version != 'HEAD':
         cmd.extend([ '--branch', str(version) ])
     if depth:
         cmd.extend([ '--depth', str(depth) ])

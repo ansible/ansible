@@ -284,15 +284,15 @@ class Connection(object):
         f = open(filename, 'w')
         for hostname, keys in self.ssh._host_keys.iteritems():
             for keytype, key in keys.iteritems():
-               # was f.write
-               added_this_time = getattr(key, '_added_by_ansible_this_time', False)
-               if not added_this_time:
-                   f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
+                # was f.write
+                added_this_time = getattr(key, '_added_by_ansible_this_time', False)
+                if not added_this_time:
+                    f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
         for hostname, keys in self.ssh._host_keys.iteritems():
             for keytype, key in keys.iteritems():
-               added_this_time = getattr(key, '_added_by_ansible_this_time', False)
-               if added_this_time:
-                   f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
+                added_this_time = getattr(key, '_added_by_ansible_this_time', False)
+                if added_this_time:
+                    f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
         f.close()
 
     def close(self):
