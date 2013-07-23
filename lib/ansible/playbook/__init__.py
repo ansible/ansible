@@ -561,6 +561,10 @@ class PlayBook(object):
                 if task.any_errors_fatal and len(host_list) < hosts_count:
                     host_list = None
 
+                # If threshold for max nodes failed is exceeded , bail out.
+                if (hosts_count - len(host_list)) > int((play.max_fail_pct)/100.0 * hosts_count):
+                    host_list = None
+                    
                 # if no hosts remain, drop out
                 if not host_list:
                     self.callbacks.on_no_hosts_remaining()
