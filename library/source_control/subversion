@@ -34,6 +34,7 @@ options:
     description:
       - The subversion URL to the repository.
     required: true
+    aliases: [ name, repository ]
     default: null
   dest:
     description:
@@ -45,6 +46,7 @@ options:
       - Specific revision to checkout.
     required: false
     default: HEAD
+    aliases: [ version ]
   force:
     description:
       - If C(yes), modified files will be discarded. If C(no), module will fail if it encounters modified files.
@@ -141,7 +143,7 @@ def main():
         argument_spec=dict(
             dest=dict(required=True),
             repo=dict(required=True, aliases=['name', 'repository']),
-            revision=dict(default='HEAD', aliases=['rev']),
+            revision=dict(default='HEAD', aliases=['rev', 'version']),
             force=dict(default='yes', type='bool'),
             username=dict(required=False),
             password=dict(required=False),
