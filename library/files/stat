@@ -40,7 +40,7 @@ author: Bruce Pennypacker
 EXAMPLES = '''
 # Obtain the stats of /etc/foo.conf, and check that the file still belongs
 # to 'root'. Fail otherwise.
-- stats: path=/etc/foo.conf
+- stat: path=/etc/foo.conf
   register: st
 - fail: msg="Whoops! file ownership has changed"
   when: st.stat.pw_name != 'root'
