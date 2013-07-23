@@ -53,6 +53,13 @@ options:
     version_added: "0.8"
     required: no
     default: null
+  returnok:
+    description:
+      - if the command retuns 0 assume nothing has been done.
+    version_added: "0.8"
+    required: no
+    default: no
+    choices: [ 'no', 'yes' ]
   chdir:
     description:
       - cd into this directory before running the command
@@ -94,6 +101,7 @@ def main():
     args  = module.params['args']
     creates  = module.params['creates']
     removes  = module.params['removes']
+    returnok = module.params['returnok']
 
     if args.strip() == '':
         module.fail_json(rc=256, msg="no command given")
@@ -145,6 +153,11 @@ def main():
     if err is None:
         err = ''
 
+    changed = True
+
+    if rc == 0 and returnok == 'yes':
+        changed = False
+
     module.exit_json(
         cmd     = args,
         stdout  = out.rstrip("\r\n"),
@@ -153,7 +166,7 @@ def main():
         start   = str(startd),
         end     = str(endd),
         delta   = str(delta),
-        changed = True
+        changed = changed
     )
 
 # include magic from lib/ansible/module_common.py
@@ -177,19 +190,22 @@ class CommandModule(AnsibleModule):
         params['chdir'] = None
         params['creates'] = None
         params['removes'] = None
+        params['returnok'] = False
         params['shell'] = False
         params['executable'] = None
         if args.find("#USE_SHELL") != -1:
             args = args.replace("#USE_SHELL", "")
             params['shell'] = True
 
-        r = re.compile(r'(^|\s)(creates|removes|chdir|executable)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)')
+        r = re.compile(r'(^|\s)(creates|removes|returnok|chdir|executable)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)')
         for m in r.finditer(args):
             v = m.group(4).replace("\\", "")
             if m.group(2) == "creates":
                 params['creates'] = v
             elif m.group(2) == "removes":
                 params['removes'] = v
+            elif m.group(2) == "returnok":
+                params['returnok'] = v
             elif m.group(2) == "chdir":
                 v = os.path.expanduser(v)
                 if not (os.path.exists(v) and os.path.isdir(v)):
