@@ -59,7 +59,7 @@ options:
     aliases: ['keypair']
   files:
     description:
-     - Files to insert into the instance. remotefilename:localcontent
+     - Files to insert into the instance. [remotefilename=localcontent]
     default: null
   region:
     description:
@@ -91,6 +91,7 @@ EXAMPLES = '''
      name: rax-test1
      flavor: 5
      image: b11d9567-e412-4255-96b9-bd63ab23bcfe
+     files: [/root/.ssh/authorized_keys=/home/username/.ssh/id_rsa.pub]
      wait: yes
      state: present
 '''
