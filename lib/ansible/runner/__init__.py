@@ -886,6 +886,9 @@ class Runner(object):
         # host.
         p = utils.plugins.action_loader.get(self.module_name, self)
 
+        if self.forks == 0 or self.forks > len(hosts):
+            self.forks = len(hosts)
+
         if p and getattr(p, 'BYPASS_HOST_LOOP', None):
 
             # Expose the current hostgroup to the bypassing plugins
