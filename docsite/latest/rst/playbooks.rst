@@ -266,15 +266,14 @@ Action Shorthand
 
 Rather than listing out the explicit word, "action:", like so::
 
-    template: src=templates/foo.j2 dest=/etc/foo.conf
+    action: template src=templates/foo.j2 dest=/etc/foo.conf
 
-It is also possible to say:
+It is also possible to say::
 
     template: src=templates/foo.j2 dest=/etc/foo.conf
 
 The name of the module is simply followed by a colon and the arguments to that module.  We think this is a lot more intuitive.
-Our documentation has not converted over to this new format just yet as many users may still be using older versions.
-You'll be able to use both formats forever.
+Most of our documentation has converted over to this new format. You'll be able to use both formats forever, though.
 
 Running Operations On Change
 ````````````````````````````
