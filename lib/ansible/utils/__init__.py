@@ -164,7 +164,6 @@ def check_conditional(conditional, basedir, inject, fail_on_undefined=False):
             conditional = inject[conditional]
         conditional = template.template(basedir, conditional, inject, fail_on_undefined=fail_on_undefined)
         # a Jinja2 evaluation that results in something Python can eval!
-
         presented = "{% if " + str(conditional) + " %} True {% else %} False {% endif %}"
         conditional = template.template(basedir, presented, inject)
         val = conditional.lstrip().rstrip()
