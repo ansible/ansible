@@ -48,7 +48,7 @@ options:
     default: "rsa"
   hash:
     description:
-      - Hashe the hostnames/addresses when adding.
+      - Hash the hostnames/addresses when adding.
     required: false
     choices: [ "yes", "no" ]
     default: "yes"
@@ -121,7 +121,7 @@ def get_known_hosts_pathname(module, user, path=None, manage_dir=True):
     try:
         user_entry = pwd.getpwnam(user)
     except KeyError, e:
-        module.fail_json(msg="Failed to lookup user %s: %s" % (user, str(e)))
+        module.fail_json(msg="Cannot determine known_hosts path because user '%s' was not found" % user, error=str(e))
     if path is None:
         homedir    = user_entry.pw_dir
         sshdir     = os.path.join(homedir, ".ssh")
@@ -150,7 +150,7 @@ def get_known_hosts_pathname(module, user, path=None, manage_dir=True):
         finally:
             f.close()
         if module.selinux_enabled():
-            module.set_default_selinux_context(keysfile, False)
+            module.set_default_selinux_context(hostsfile, False)
 
     try:
         os.chown(hostsfile, uid, gid)
@@ -161,7 +161,7 @@ def get_known_hosts_pathname(module, user, path=None, manage_dir=True):
 
 
 def check_presence(hostsfile, host):
-    """ Returns True if the host is in theFinds host keys with ssh-keygen and returns them as a string """
+    """ Returns True if the host is in the hostsfile. """
     output = subprocess.check_output(["ssh-keygen", "-f", hostsfile, "-F", host])
     return (len(output) != 0)
 
@@ -231,7 +231,7 @@ def enforce_state(module, params):
                 continue
             keys = find_host_key(module, host, port, keytype, hashish, timeout)
             if keys:
-                new_keys.extend( keys.replace('\r','').split('\n') )
+                new_keys.extend(keys.replace('\r','').split('\n'))
                 params['hosts_added'] += 1
             params['changed'] = True
 

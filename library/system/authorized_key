@@ -109,7 +109,7 @@ def keyfile(module, user, write=False, path=None, manage_dir=True):
     try:
         user_entry = pwd.getpwnam(user)
     except KeyError, e:
-        module.fail_json(msg="Failed to lookup user %s: %s" % (user, str(e)))
+        module.fail_json(msg="Cannot determine authorized_keys path because user '%s' was not found" % user, error=str(e))
     if path is None:
         homedir    = user_entry.pw_dir
         sshdir     = os.path.join(homedir, ".ssh")
