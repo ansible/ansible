@@ -60,11 +60,11 @@ EXAMPLES = '''
 # Removes the acl for joe
 - acl: name=/etc/foo.conf entry="u:joe:-" state=absent
 '''
-
+NO_PYLIBACL=False
 try:
     import posix1e
 except:
-    module.fail_json(msg="Could not import required module pylibacl (posix1e)")
+    NO_PYLIBACL=True
 
 def main():
     module = AnsibleModule(
@@ -76,6 +76,10 @@ def main():
         ),
         supports_check_mode=True,
     )
+
+    if NO_PYLIBACL:
+        module.fail_json(msg="Could not import required module pylibacl (posix1e)")
+
     path = module.params.get('name')
     entry = module.params.get('entry')
     state = module.params.get('state')
