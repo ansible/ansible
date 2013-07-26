@@ -41,7 +41,7 @@ class Play(object):
        'hosts', 'name', 'vars', 'vars_prompt', 'vars_files',
        'tasks', 'handlers', 'user', 'port', 'include',
        'sudo', 'sudo_user', 'connection', 'tags', 'gather_facts', 'serial',
-       'any_errors_fatal', 'roles', 'pre_tasks', 'post_tasks', 'max_fail_pct' 
+       'any_errors_fatal', 'roles', 'pre_tasks', 'post_tasks', 'max_fail_percentage' 
     ]
 
     # *************************************************
@@ -103,7 +103,7 @@ class Play(object):
         self.gather_facts     = ds.get('gather_facts', None)
         self.remote_port      = self.remote_port
         self.any_errors_fatal = ds.get('any_errors_fatal', False)
-        self.max_fail_pct     = int(ds.get('max_fail_pct', 100))
+        self.max_fail_pct     = int(ds.get('max_fail_percentage', 100))
 
         load_vars = {}
         if self.playbook.inventory.basedir() is not None:
