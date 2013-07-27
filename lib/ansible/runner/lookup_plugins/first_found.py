@@ -133,6 +133,7 @@ class LookupModule(object):
         result = None
         anydict = False
         skip = False
+        check = False
 
         for term in terms:
             if isinstance(term, dict):
@@ -174,10 +175,16 @@ class LookupModule(object):
 
         result = None
         for fn in total_search:
-            path = utils.path_dwim(self.basedir, fn)
+            path  = utils.path_dwim_relative(inject['_original_file'], 'templates', fn, self.basedir, check=False)
             if os.path.exists(path):
                 return [path]
-
+	 
+            if (skip == False) and (fn == total_search[-1]):
+                check = True
+   
+            path = utils.path_dwim_relative(inject['_original_file'], 'files', fn, self.basedir, check)
+            if os.path.exists(path):	
+                return [path]
 
         if not result:
             if skip:
