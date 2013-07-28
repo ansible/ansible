@@ -43,7 +43,7 @@ options:
   group_id:
     version_added: "1.1"
     description:
-      - security group id to use with the instance
+      - security group id (or list of ids) to use with the instance
     required: false
     default: null
     aliases: []
@@ -232,7 +232,7 @@ local_action:
     instance_type: m1.small
     image: ami-6e649707
     wait: yes
-    vpc_subnet_id: subnet-29e63245'
+    vpc_subnet_id: subnet-29e63245
 
 
 # Launch instances, runs some tasks
@@ -354,7 +354,7 @@ def create_instances(module, ec2):
     instance_profile_name = module.params.get('instance_profile_name')
 
 
-    # Here we try to lookup the group name from the security group id - if group_id is set.
+    # group_id and group_name are exclusive of each other
     if group_id and group_name:
         module.fail_json(msg = str("Use only one type of parameter (group_name) or (group_id)"))
         sys.exit(1)
@@ -372,6 +372,9 @@ def create_instances(module, ec2):
                 group_name = [group_name]
         # Now we try to lookup the group id testing if group exists.
         elif group_id:
+            #wrap the group_id in a list if it's not one already
+            if type(group_id) == str:
+                group_id = [group_id]
             grp_details = ec2.get_all_security_groups(group_ids=group_id)
             grp_item = grp_details[0]
             group_name = [grp_item.name]
