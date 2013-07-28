@@ -132,6 +132,9 @@ class PlayBook(object):
         else:
             self.inventory    = inventory
 
+        if self.module_path is not None:
+           utils.plugins.module_finder.add_directory(self.module_path)
+
         self.basedir     = os.path.dirname(playbook) or '.'
         utils.plugins.push_basedir(self.basedir)
         vars = extra_vars.copy()
