@@ -314,7 +314,7 @@ Bugfixes and Misc Changes:
 * cowsay able to run out of macports (very important!)
 * improved logging for fireball mode
 * nicer error message when talking to an older system that needs a JSON module installed
-* 'magic' variable 'inventory_basedir' now gives path to inventory file
+* 'magic' variable 'inventory_dir' now gives path to inventory file
 * 'magic' variable 'vars' works like 'hostvars' but gives global scope variables, useful for debugging in templates mostly
 * conditionals can be used on plugins like add_host
 * developers: all callbacks now have access to a ".runner" and ".playbook", ".play", and ".task" object (use getattr, they may not always be set!)
