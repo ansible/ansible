@@ -38,6 +38,11 @@ class ActionModule(object):
         else:
             return path
 
+    def setup(self, module_name, inject):
+        ''' Always default to localhost as delegate if None defined '''
+        if inject.get('delegate_to') is None:
+            inject['delegate_to'] = '127.0.0.1'
+
     def run(
         self,
         conn,
@@ -65,10 +70,6 @@ class ActionModule(object):
         except KeyError:
             pass
 
-        # the localhost is the default delegate in an rsync task
-        if inject.get('delegate_to') is None:
-            conn.delegate = '127.0.0.1'
-            inject['delegate_to'] = '127.0.0.1'
         src_host = inject['delegate_to'] 
         dest_host = inject.get('ansible_ssh_host', inject['inventory_hostname'])
         if options.get('mode', 'push') == 'pull':
