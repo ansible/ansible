@@ -65,13 +65,12 @@ class ActionModule(object):
         except KeyError:
             pass
 
-        dest_host = inject.get('delegate_to',
-                               inject.get('ansible_ssh_host'))
-	if dest_host is None:
-            dest_host = inject['inventory_hostname']
-	if dest_host in ['localhost', '127.0.0.1']:
-            dest_host = '127.0.0.1'
-	src_host = '127.0.0.1'  # inventory_hostname is localhost when transport not local
+        # the localhost is the default delegate in an rsync task
+        if inject.get('delegate_to') is None:
+            conn.delegate = '127.0.0.1'
+            inject['delegate_to'] = '127.0.0.1'
+        src_host = inject['delegate_to'] 
+        dest_host = inject.get('ansible_ssh_host', inject['inventory_hostname'])
         if options.get('mode', 'push') == 'pull':
             (dest_host, src_host) = (src_host, dest_host)
         if not dest_host is src_host:
