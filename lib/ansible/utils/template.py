@@ -511,7 +511,7 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
 
         res = jinja2.utils.concat(t.root_render_func(t.new_context(_jinja2_vars(basedir, vars, t.globals, fail_on_undefined), shared=True)))
         return res
-    except jinja2.exceptions.UndefinedError:
+    except (jinja2.exceptions.UndefinedError, errors.AnsibleUndefinedVariable):
         if fail_on_undefined:
             raise
         else:
