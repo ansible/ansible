@@ -61,8 +61,8 @@ def main(args):
         check_opts=True,
         diff_opts=True
     )
-    parser.add_option('-e', '--extra-vars', dest="extra_vars", default=None,
-        help="set additional key=value variables from the CLI")
+    parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
+        help="set additional key=value variables from the CLI", default=[])
     parser.add_option('-t', '--tags', dest='tags', default='all',
         help="only run plays and tasks tagged with these values")
     parser.add_option('--skip-tags', dest='skip_tags',
@@ -94,10 +94,12 @@ def main(args):
         options.ask_sudo_pass = options.ask_sudo_pass or C.DEFAULT_ASK_SUDO_PASS
         ( sshpass, sudopass ) = utils.ask_passwords(ask_pass=options.ask_pass, ask_sudo_pass=options.ask_sudo_pass)
         options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
-    if options.extra_vars and options.extra_vars[0] in '[{':
-        extra_vars = utils.json_loads(options.extra_vars)
-    else:
-        extra_vars = utils.parse_kv(options.extra_vars)
+    extra_vars = {}
+    for extra_vars_opt in options.extra_vars:
+        if len(extra_vars_opt) > 0 and extra_vars_opt[0] in '[{':
+            extra_vars.update(utils.json_loads(extra_vars_opt))
+        else:
+            extra_vars.update(utils.parse_kv(extra_vars_opt))
     only_tags = options.tags.split(",")
     skip_tags = options.skip_tags
     if options.skip_tags is not None:
