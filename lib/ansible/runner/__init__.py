@@ -503,6 +503,8 @@ class Runner(object):
             self.callbacks.on_skipped(host, inject.get('item',None))
             return ReturnData(host=host, result=result)
 
+        if getattr(handler, 'setup', None) is not None:
+            handler.setup(module_name, inject)
         conn = None
         actual_host = inject.get('ansible_ssh_host', host)
         actual_port = port
