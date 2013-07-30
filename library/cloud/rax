@@ -93,7 +93,7 @@ EXAMPLES = '''
      image: b11d9567-e412-4255-96b9-bd63ab23bcfe
      files:
         - /root/.ssh/authorized_keys=/home/localuser/.ssh/id_rsa.pub
-        - /root/test.txt=/home/localuser/test.txt]
+        - /root/test.txt=/home/localuser/test.txt
      wait: yes
      state: present
 '''
