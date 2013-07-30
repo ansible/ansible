@@ -24,7 +24,7 @@ along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 DOCUMENTATION = '''
 ---
-module: mysql_replication
+module: mysql_variables
 
 short_description: Manage MySQL global variables
 description: 
