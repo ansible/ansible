@@ -13,7 +13,7 @@ Ansible is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
- 
+
 Ansible is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -27,19 +27,34 @@ DOCUMENTATION = '''
 module: mysql_variables
 
 short_description: Manage MySQL global variables
-description: 
-    - Query / Set MySQL variables 
+description:
+    - Query / Set MySQL variables
 options:
     variable:
         description:
-            - Variable name to operate 
+            - Variable name to operate
         required: True
     value:
         description:
+            - If set, then sets variable value to this
+        required: False
+    login_user:
+        description:
             - username to connect mysql host, if defined login_password also needed.
         required: False
-    
+    login_password:
+        description:
+            - password to connect mysql host, if defined login_user also needed.
+        required: False
+    login_host:
+        description:
+            - mysql host to connect
+        required: False
+    login_unix_socket:
+        description:
+            - unix socket to connect mysql server
 '''
+
 
 import ConfigParser
 import os
@@ -66,7 +81,6 @@ def setvariable(cursor, mysqlvar, value):
     except Exception, e:
         result = str(e)
     return result
-
 
 
 def strip_quotes(s):
@@ -137,7 +151,7 @@ def main():
             login_unix_socket=dict(default=None),
             variable=dict(default=None),
             value=dict(default=None)
-            
+
         )
     )
     user = module.params["login_user"]
@@ -145,8 +159,6 @@ def main():
     host = module.params["login_host"]
     mysqlvar = module.params["variable"]
     value = module.params["value"]
-    
-
     if not mysqldb_found:
         module.fail_json(msg="the python mysqldb module is required")
     else:
@@ -167,17 +179,14 @@ def main():
             login_password = mycnf_creds["passwd"]
     elif login_password is None or login_user is None:
         module.fail_json(msg="when supplying login arguments, both login_user and login_password must be provided")
-
     try:
         if module.params["login_unix_socket"]:
             db_connection = MySQLdb.connect(host=module.params["login_host"], unix_socket=module.params["login_unix_socket"], user=login_user, passwd=login_password, db="mysql")
         else:
-            db_connection = MySQLdb.connect(host=module.params["login_host"], user=login_user, passwd=login_password, db="mysql")            
+            db_connection = MySQLdb.connect(host=module.params["login_host"], user=login_user, passwd=login_password, db="mysql")
         cursor = db_connection.cursor()
     except Exception, e:
         module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or ~/.my.cnf has the credentials")
-
-   
     if mysqlvar is None:
         module.fail_json(msg="Cannot run without variable to operate with")
     if value is None and mysqlvar is not None:
@@ -189,8 +198,6 @@ def main():
             module.exit_json(msg="Variable change succeeded", changed=True)
         else:
             module.fail_json(msg=result, changed=False)
-
-    
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
