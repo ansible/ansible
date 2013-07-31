@@ -65,13 +65,15 @@ def get_cowsay_info():
         cowsay = "/opt/local/bin/cowsay"
 
     noncow = os.getenv("ANSIBLE_COW_SELECTION",None)
-    if cowsay and noncow == 'random':
-        cmd = subprocess.Popen([cowsay, "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        (out, err) = cmd.communicate()
-        cows = out.split()
-        cows.append(False)
-        noncow = random.choice(cows)
     return (cowsay, noncow)
+
+def select_random_cow():
+    cmd = subprocess.Popen([cowsay, "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out, err) = cmd.communicate()
+    cows = out.split()
+    cows.append(False)
+    noncow = random.choice(cows)
+    return noncow
 
 cowsay, noncow = get_cowsay_info()
 
@@ -229,7 +231,10 @@ def banner_cowsay(msg):
     runcmd = [cowsay,"-W", "60"]
     if noncow:
         runcmd.append('-f')
-        runcmd.append(noncow)
+        if noncow == 'random':
+            runcmd.append(select_random_cow())
+        else:
+            runcmd.append(noncow)
     runcmd.append(msg)
     cmd = subprocess.Popen(runcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (out, err) = cmd.communicate()
