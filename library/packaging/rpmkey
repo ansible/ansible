@@ -28,7 +28,7 @@ author: Hector Acosta <hector.acosta@gazzang.com>
 short_description: Adds or removes a gpg key from the rpm db
 description:
     - Adds or removes (rpm --import) a gpg key to your rpm database.
-version_added: "0.13"
+version_added: "1.3"
 options:
     key:
       required: true
@@ -46,10 +46,10 @@ options:
 
 EXAMPLES = '''
 # Example action to import a key from a url
-- rpmkey state=imported key=http://apt.sw.be/RPM-GPG-KEY.dag.txt
+- rpmkey state=present key=http://apt.sw.be/RPM-GPG-KEY.dag.txt
 
 # Example action to import a key from a file
-- rpmkey state=imported key=/path/to/key.gpg
+- rpmkey state=present key=/path/to/key.gpg
 
 # Example action to ensure a key is not present in the db
 - rpmkey state=absent key=DEADB33F
