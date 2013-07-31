@@ -78,6 +78,7 @@ class RpmKey:
         keyfile = None
         should_cleanup_keyfile = False
         self.module = module
+        self.rpm = self.module.get_bin_path('rpm', True)
         state = module.params['state']
         key = module.params['key']
 
@@ -160,7 +161,7 @@ class RpmKey:
         return stdout, stderr
 
     def is_key_imported(self, keyid):
-        stdout, stderr = self.execute_command(['rpm', '-q', 'gpg-pubkey'])
+        stdout, stderr = self.execute_command([self.rpm, '-q', 'gpg-pubkey'])
         for line in stdout.splitlines():
             line = line.strip()
             if not line:
@@ -175,11 +176,11 @@ class RpmKey:
 
     def import_key(self, keyfile, dryrun=False):
         if not dryrun:
-            self.execute_command(['rpm', '--import', keyfile])
+            self.execute_command([self.rpm, '--import', keyfile])
 
     def drop_key(self, key, dryrun=False):
         if not dryrun:
-            self.execute_command(['rpm', '--erase', '--allmatches', "gpg-pubkey-%s" % key])
+            self.execute_command([self.rpm, '--erase', '--allmatches', "gpg-pubkey-%s" % key])
 
 
 def main():
