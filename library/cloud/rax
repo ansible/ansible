@@ -59,7 +59,7 @@ options:
     aliases: ['keypair']
   files:
     description:
-     - Files to insert into the instance. remotefilename=localcontent
+     - Files to insert into the instance. remotefilename:localcontent
     default: null
   region:
     description:
