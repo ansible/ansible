@@ -43,7 +43,7 @@ options:
   group_id:
     version_added: "1.1"
     description:
-      - security group id to use with the instance
+      - security group id (or list of ids) to use with the instance
     required: false
     default: null
     aliases: []
@@ -163,6 +163,13 @@ options:
     required: false
     defualt: null
     aliases: []
+  instance_profile_name:
+    version_added: "1.3"
+    description:
+      - Name of the IAM instance profile to use
+    required: false
+    default: null
+    aliases: []
   instance_ids:
     version_added: "1.3"
     description:
@@ -177,7 +184,6 @@ options:
     required: false
     default: 'present'
     aliases: []
-
 
 requirements: [ "boto" ]
 author: Seth Vidal, Tim Gerla, Lester Wade
@@ -226,7 +232,7 @@ local_action:
     instance_type: m1.small
     image: ami-6e649707
     wait: yes
-    vpc_subnet_id: subnet-29e63245'
+    vpc_subnet_id: subnet-29e63245
 
 
 # Launch instances, runs some tasks
@@ -244,14 +250,14 @@ local_action:
     region: us-east-1
   tasks:
     - name: Launch instance
-      local_action: ec2 keypair=$keypair group=$security_group instance_type=$instance_type image=$image wait=true region=$region
+      local_action: ec2 keypair={{ keypair }} group={{ security_group }} instance_type={{ instance_type }} image={{ image }} wait=true region={{ region }}
       register: ec2
     - name: Add new instance to host group
-      local_action: add_host hostname=${item.public_ip} groupname=launched
-      with_items: ${ec2.instances}
+      local_action: add_host hostname={{ item.public_ip }} groupname=launched
+      with_items: ec2.instances
     - name: Wait for SSH to come up
-      local_action: wait_for host=${item.public_dns_name} port=22 delay=60 timeout=320 state=started
-      with_items: ${ec2.instances}
+      local_action: wait_for host={{ item.public_dns_name }} port=22 delay=60 timeout=320 state=started
+      with_items: ec2.instances
 
 - name: Configure instance(s)
   hosts: launched
@@ -345,9 +351,10 @@ def create_instances(module, ec2):
     instance_tags = module.params.get('instance_tags')
     vpc_subnet_id = module.params.get('vpc_subnet_id')
     private_ip = module.params.get('private_ip')
+    instance_profile_name = module.params.get('instance_profile_name')
 
 
-    # Here we try to lookup the group name from the security group id - if group_id is set.
+    # group_id and group_name are exclusive of each other
     if group_id and group_name:
         module.fail_json(msg = str("Use only one type of parameter (group_name) or (group_id)"))
         sys.exit(1)
@@ -365,6 +372,9 @@ def create_instances(module, ec2):
                 group_name = [group_name]
         # Now we try to lookup the group id testing if group exists.
         elif group_id:
+            #wrap the group_id in a list if it's not one already
+            if type(group_id) == str:
+                group_id = [group_id]
             grp_details = ec2.get_all_security_groups(group_ids=group_id)
             grp_item = grp_details[0]
             group_name = [grp_item.name]
@@ -401,7 +411,8 @@ def create_instances(module, ec2):
                       'ramdisk_id': ramdisk,
                       'subnet_id': vpc_subnet_id,
                       'private_ip_address': private_ip,
-                      'user_data': user_data}
+                      'user_data': user_data,
+                      'instance_profile_name': instance_profile_name}
 
             if vpc_subnet_id:
                 params['security_group_ids'] = group_id
@@ -521,6 +532,7 @@ def main():
             instance_tags = dict(),
             vpc_subnet_id = dict(),
             private_ip = dict(),
+            instance_profile_name = dict(),
             instance_ids = dict(type='list'),
             state = dict(default='present'),
         )

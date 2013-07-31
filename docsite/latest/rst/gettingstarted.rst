@@ -3,7 +3,6 @@ Getting Started
 
 .. contents::
    :depth: 2
-   :backlinks: top
 
 Requirements
 ````````````
@@ -194,7 +193,7 @@ In Ubuntu 13.04 (raring) its part of the backports repository:
 
     $ sudo apt-get install ansible/raring-backports
 
-In Debian testing/unstable and Ubntu 13.10+ it is available via
+In Debian testing/unstable and Ubuntu 13.10+ it is available via
 
 .. code-block:: bash
 
@@ -347,7 +346,7 @@ which results in a interactive experience if using Ansible, from say, cron.
 
 If you wish to disable this behavior and understand the implications, you can do so by editing /etc/ansible/ansible.cfg or ~/.ansible.cfg::
 
-    [default]
+    [defaults]
     host_key_checking = False
 
 Alternatively this can be set by an environment variable:

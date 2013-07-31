@@ -72,6 +72,12 @@ options:
     required: false
     default: present
     choices: [ "present", "absent" ]
+  check_implicit_admin:
+    description:
+      - Check if mysql allows login as root/nopassword before trying supplied credentials.
+    required: false
+    default: false
+    version_added: "1.3"
 notes:
    - Requires the MySQLdb Python package on the remote host. For Ubuntu, this
      is as easy as apt-get install python-mysqldb.
@@ -316,6 +322,13 @@ def load_mycnf():
     creds = dict(user=user,passwd=passwd)
     return creds
 
+def connect(module, login_user, login_password):
+    if module.params["login_unix_socket"]:
+        db_connection = MySQLdb.connect(host=module.params["login_host"], unix_socket=module.params["login_unix_socket"], user=login_user, passwd=login_password, db="mysql")
+    else:
+        db_connection = MySQLdb.connect(host=module.params["login_host"], user=login_user, passwd=login_password, db="mysql")
+    return db_connection.cursor()
+
 # ===========================================
 # Module execution.
 #
@@ -332,6 +345,7 @@ def main():
             host=dict(default="localhost"),
             state=dict(default="present", choices=["absent", "present"]),
             priv=dict(default=None),
+            check_implicit_admin=dict(default=False),
         )
     )
     user = module.params["user"]
@@ -339,6 +353,7 @@ def main():
     host = module.params["host"]
     state = module.params["state"]
     priv = module.params["priv"]
+    check_implicit_admin = module.params['check_implicit_admin']
 
     if not mysqldb_found:
         module.fail_json(msg="the python mysqldb module is required")
@@ -365,12 +380,16 @@ def main():
     elif login_password is None or login_user is None:
         module.fail_json(msg="when supplying login arguments, both login_user and login_password must be provided")
 
+    cursor = None
     try:
-        if module.params["login_unix_socket"]:
-            db_connection = MySQLdb.connect(host=module.params["login_host"], unix_socket=module.params["login_unix_socket"], user=login_user, passwd=login_password, db="mysql")
-        else:
-            db_connection = MySQLdb.connect(host=module.params["login_host"], user=login_user, passwd=login_password, db="mysql")
-        cursor = db_connection.cursor()
+        if check_implicit_admin:
+            try:
+                cursor = connect(module, 'root', '')
+            except:
+                pass
+
+        if not cursor:
+            cursor = connect(module, login_user, login_password)
     except Exception, e:
         module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or ~/.my.cnf has the credentials")
 

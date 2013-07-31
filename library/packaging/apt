@@ -233,6 +233,8 @@ def upgrade(m, mode="yes", force=False):
         check_arg = '--simulate'
     else:
         check_arg = ''
+
+    apt_cmd = None
     if mode == "dist":
         # apt-get dist-upgrade
         apt_cmd = APT_GET_CMD
@@ -292,6 +294,9 @@ def main():
     APT_GET_CMD = module.get_bin_path("apt-get")
 
     p = module.params
+    if not APTITUDE_CMD and p.get('upgrade', None) in [ 'full', 'safe', 'yes' ]:
+        module.fail_json(msg="Could not find aptitude. Please ensure it is installed.")
+
     install_recommends = p['install_recommends']
 
     try:

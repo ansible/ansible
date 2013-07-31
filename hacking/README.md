@@ -29,7 +29,7 @@ a module outside of the ansible program, locally, on the current machine.
 
 Example:
 
-    $ ./hacking/test-module -m library/shell -a "echo hi"
+    $ ./hacking/test-module -m library/commands/shell -a "echo hi"
 
 This is a good way to insert a breakpoint into a module, for instance.
 

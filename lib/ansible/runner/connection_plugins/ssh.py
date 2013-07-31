@@ -82,7 +82,7 @@ class Connection(object):
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 p.communicate()
             except OSError:
-                raise errors.AnsibleError("to use -c ssh with passwords, you must install the sshpass program")
+                raise errors.AnsibleError("to use the 'ssh' connection type with passwords, you must install the sshpass program")
             (self.rfd, self.wfd) = os.pipe()
             return ["sshpass", "-d%d" % self.rfd]
         return []
@@ -173,6 +173,12 @@ class Connection(object):
         stderr = ''
         while True:
             rfd, wfd, efd = select.select([p.stdout, p.stderr], [], [p.stdout, p.stderr], 1)
+
+            # fail early if the sudo password is wrong
+            if (self.runner.sudo and sudoable and self.runner.sudo_pass and
+                stdout.endswith("Sorry, try again.\r\n%s" % prompt)):
+                raise errors.AnsibleError('Incorrect sudo password')
+
             if p.stdout in rfd:
                 dat = os.read(p.stdout.fileno(), 9000)
                 stdout += dat
@@ -209,11 +215,11 @@ class Connection(object):
 
         if C.DEFAULT_SCP_IF_SSH:
             cmd += ["scp"] + self.common_args
-            cmd += [in_path,self.host + ":" + out_path]
+            cmd += [in_path,self.host + ":" + pipes.quote(out_path)]
             indata = None
         else:
             cmd += ["sftp"] + self.common_args + [self.host]
-            indata = "put %s %s\n" % (in_path, out_path)
+            indata = "put %s %s\n" % (pipes.quote(in_path), pipes.quote(out_path))
 
         p = subprocess.Popen(cmd, stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
