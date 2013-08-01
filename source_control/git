@@ -271,6 +271,7 @@ def switch_version(git_path, module, dest, remote, version):
                 cmd = "%s reset --hard %s/%s" % (git_path, remote, version)
         else:
             cmd = "%s checkout --force %s" % (git_path, version)
+        branch = version
     else:
         branch = get_head_branch(git_path, module, dest, remote)
         (rc, out, err) = module.run_command("%s checkout --force %s" % (git_path, branch))
