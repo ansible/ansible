@@ -160,7 +160,7 @@ def main():
                 changed = True
             else:
                 ### create PV
-                pvcreate_cmd = module.get_bin_path('pvcreate',True)
+                pvcreate_cmd = module.get_bin_path('pvcreate', True)
                 for current_dev in dev_list:
                     rc,_,err = module.run_command("%s %s"%(pvcreate_cmd,current_dev))
                     if rc == 0:
@@ -180,8 +180,8 @@ def main():
             else:
                 if this_vg['lv_count'] == 0 or force:
                     ### remove VG
-                    vgremove_cmd = module.get_bin_path('vgremove',True)
-                    rc,_,err = module.run_command("%s --force %s"%(vgremove_cmd,vg))
+                    vgremove_cmd = module.get_bin_path('vgremove', True)
+                    rc,_,err = module.run_command("%s --force %s" % (vgremove_cmd, vg))
                     if rc == 0:
                         module.exit_json(changed=True)
                     else:
@@ -201,15 +201,15 @@ def main():
                 if devs_to_add:
                     devs_to_add_string = ' '.join(devs_to_add)
                     ### create PV
-                    pvcreate_cmd = module.get_bin_path('pvcreate',True)
+                    pvcreate_cmd = module.get_bin_path('pvcreate', True)
                     for current_dev in devs_to_add:
-                        rc,_,err = module.run_command("%s %s"%(pvcreate_cmd,current_dev))
+                        rc,_,err = module.run_command("%s %s" % (pvcreate_cmd, current_dev))
                         if rc == 0:
                             changed = True
                         else:
                             module.fail_json(msg="Creating physical volume '%s' failed"%current_dev, rc=rc, err=err)
                     ### add PV to our VG
-                    vgextend_cmd = module.get_bin_path('vgextend',True)
+                    vgextend_cmd = module.get_bin_path('vgextend', True)
                     rc,_,err = module.run_command("vgextend %s %s"%(vgextend_cmd, vg, devs_to_add_string))
                     if rc == 0:
                         changed = True
@@ -219,8 +219,8 @@ def main():
                 ### remove some PV from our VG
                 if devs_to_remove:
                     devs_to_remove_string = ' '.join(devs_to_remove)
-                    vgreduce_cmd = module.get_bin_path('vgreduce',True)
-                    rc,_,err = module.run_command("%s --force %s %s"%(vgreduce_cmd, vg, devs_to_remove_string))
+                    vgreduce_cmd = module.get_bin_path('vgreduce', True)
+                    rc,_,err = module.run_command("%s --force %s %s" % (vgreduce_cmd, vg, devs_to_remove_string))
                     if rc == 0:
                         changed = True
                     else:
