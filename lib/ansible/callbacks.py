@@ -65,11 +65,13 @@ def get_cowsay_info():
         cowsay = "/opt/local/bin/cowsay"
 
     noncow = os.getenv("ANSIBLE_COW_SELECTION",None)
-    if cowsay and noncow == 'random':
+    if cowsay and noncow in ['random','random_sfw']:
         cmd = subprocess.Popen([cowsay, "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (out, err) = cmd.communicate()
         cows = out.split()
         cows.append(False)
+        if noncow == 'random_sfw':
+            cows = [x for x in cows if x not in constants.ANSIBLE_COWS_NSFW]
         noncow = random.choice(cows)
     return (cowsay, noncow)
 
