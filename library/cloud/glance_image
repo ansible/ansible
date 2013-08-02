@@ -176,7 +176,7 @@ def _glance_image_create(module, params, client):
                 'copy_from':        params.get('copy_from'),
     }
     try:                
-        timeout = params.get('timeout')
+        timeout = float(params.get('timeout'))
         expire = time.time() + timeout
         image = client.images.create(**kwargs)
         if not params['copy_from']:
