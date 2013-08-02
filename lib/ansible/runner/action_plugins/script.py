@@ -32,7 +32,7 @@ class ActionModule(object):
     def run(self, conn, tmp, module_name, module_args, inject, complex_args=None, **kwargs):
         ''' handler for file transfer operations '''
 
-        if self.runner.check:
+        if self.runner.noop(inject):
             # in check mode, always skip this module
             return ReturnData(conn=conn, comm_ok=True, result=dict(skipped=True, msg='check mode not supported for this module'))
 

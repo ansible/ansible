@@ -155,7 +155,10 @@ def is_changed(result):
 
     return (result.get('changed', False) in [ True, 'True', 'true'])
 
-def check_conditional(conditional, basedir, inject, fail_on_undefined=False):
+def check_conditional(conditional, basedir, inject, fail_on_undefined=False, jinja2=False):
+
+    if jinja2:
+        conditional = "jinja2_compare %s" % conditional
 
     if conditional.startswith("jinja2_compare"):
         conditional = conditional.replace("jinja2_compare ","")

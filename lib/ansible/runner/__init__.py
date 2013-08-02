@@ -37,6 +37,7 @@ import ansible.constants as C
 import ansible.inventory
 from ansible import utils
 from ansible.utils import template
+from ansible.utils import check_conditional
 from ansible import errors
 from ansible import module_common
 import poller
@@ -155,6 +156,7 @@ class Runner(object):
         self.inventory        = utils.default(inventory, lambda: ansible.inventory.Inventory(host_list))
 
         self.module_vars      = utils.default(module_vars, lambda: {})
+        self.always_run       = None
         self.connector        = connection.Connection(self)
         self.conditional      = conditional
         self.module_name      = module_name
@@ -923,3 +925,16 @@ class Runner(object):
         self.background = time_limit
         results = self.run()
         return results, poller.AsyncPoller(results, self)
+
+    # *****************************************************
+
+    def noop(self, inject):
+        ''' Should the runner run or not ? '''
+
+        # initialize self.always_run on first call
+        if self.always_run is None:
+            self.always_run = self.module_vars.get('always_run', False)
+            self.always_run = check_conditional(
+                self.always_run, self.basedir, inject, fail_on_undefined=True, jinja2=True)
+
+        return (self.check and not self.always_run)
