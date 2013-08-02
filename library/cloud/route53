@@ -98,9 +98,9 @@ EXAMPLES = '''
 - route53: >
       command=delete
       zone=foo.com
-      record={{ r.set.record }}
-      type={{ r.set.type }}
-      value={{ r.set.value }}
+      record={{ rec.set.record }}
+      type={{ rec.set.type }}
+      value={{ rec.set.value }}
 
 # Add an AAAA record.  Note that because there are colons in the value
 # that the entire parameter list must be quoted:
