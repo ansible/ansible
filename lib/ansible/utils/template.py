@@ -28,6 +28,7 @@ import time
 import subprocess
 import datetime
 import pwd
+import ast
 
 class Globals(object):
 
@@ -435,7 +436,7 @@ def template_from_file(basedir, path, vars):
         data = data[eol+1:]
         for pair in line.split(','):
             (key,val) = pair.split(':')
-            setattr(environment,key.strip(),val.strip())
+            setattr(environment,key.strip(),ast.literal_eval(val.strip()))
 
     environment.template_class = J2Template
     t = environment.from_string(data)
