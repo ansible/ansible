@@ -34,7 +34,7 @@ def combine(a,b):
     results = []
     for x in a:
         for y in b:
-            results.append([x,y])
+            results.append(flatten([x,y]))
     return results
 
 class LookupModule(object):

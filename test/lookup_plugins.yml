@@ -55,6 +55,15 @@
     action: copy src=sample.j2 dest=/tmp/ansible-test-with_lines-data
   - name: cleanup test file
     action: file path=/tmp/ansible-test-with_lines-data state=absent
+    
+    # Test nested loop
+  - name: test nested loop with more than 3 elements
+    command: test "{{ item[0] }}, {{ item[1] }}, {{ item[2] }}, {{ item[3] }}" = "red, 1, up, top"
+    with_nested:
+    - [ 'red' ]
+    - [ 1 ]
+    - [ 'up']
+    - [ 'top']
 
 # password lookup plugin
   - name: ensure test file doesn't exist
