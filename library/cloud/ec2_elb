@@ -43,16 +43,18 @@ options:
       - List of ELB names, required for registration. The ec2_elbs fact should be used if there was a previous de-register.
     required: false
     default: None
-  ec2_secret_key:
+  aws_secret_key:
     description:
       - AWS Secret API key
     required: false
     default: None
-  ec2_access_key:
+    aliases: ['ec2_secret_key', 'secret_key' ]
+  aws_access_key:
     description:
       - AWS Access API key
     required: false
     default: None
+    aliases: ['ec2_access_key', 'access_key' ]
 
 """
 
@@ -92,9 +94,9 @@ class ElbManager:
     """Handles EC2 instance ELB registration and de-registration"""
 
     def __init__(self, module, instance_id=None, ec2_elbs=None,
-                 ec2_access_key=None, ec2_secret_key=None):
-        self.ec2_access_key = ec2_access_key
-        self.ec2_secret_key = ec2_secret_key
+                 aws_access_key=None, aws_secret_key=None):
+        self.aws_access_key = aws_access_key
+        self.aws_secret_key = aws_secret_key
         self.module = module
         self.instance_id = instance_id
         self.lbs = self._get_instance_lbs(ec2_elbs)
@@ -140,7 +142,7 @@ class ElbManager:
                   are attached to self.instance_id"""
 
         try:
-            elb = boto.connect_elb(self.ec2_access_key, self.ec2_secret_key)
+            elb = boto.connect_elb(self.aws_access_key, self.aws_secret_key)
         except boto.exception.NoAuthHandlerFound, e:
             self.module.fail_json(msg=str(e))
         elbs = elb.get_all_load_balancers()
@@ -164,26 +166,33 @@ def main():
                     'choices': ['present', 'absent']},
             instance_id={'required': True},
             ec2_elbs={'default': None, 'required': False},
-            ec2_secret_key={'default': None, 'aliases': ['EC2_SECRET_KEY']},
-            ec2_access_key={'default': None, 'aliases': ['EC2_ACCESS_KEY']}
+            aws_secret_key={'default': None, 'aliases': ['ec2_secret_key', 'secret_key'], 'no_log': True},
+            aws_access_key={'default': None, 'aliases': ['ec2_access_key', 'access_key']}
         )
     )
 
-    ec2_secret_key = module.params['ec2_secret_key']
-    ec2_access_key = module.params['ec2_access_key']
+    aws_secret_key = module.params['aws_secret_key']
+    aws_access_key = module.params['aws_access_key']
     ec2_elbs = module.params['ec2_elbs']
 
     if module.params['state'] == 'present' and 'ec2_elbs' not in module.params:
         module.fail_json(msg="ELBs are required for registration")
 
-    if not ec2_secret_key and 'EC2_SECRET_KEY' in os.environ:
-        ec2_secret_key = os.environ['EC2_SECRET_KEY']
-    if not ec2_access_key and 'EC2_ACCESS_KEY' in os.environ:
-        ec2_access_key = os.environ['EC2_ACCESS_KEY']
+    if not aws_secret_key:
+        if  'AWS_SECRET_KEY' in os.environ:
+            aws_secret_key = os.environ['AWS_SECRET_KEY']
+        elif 'EC2_SECRET_KEY' in os.environ:
+            aws_secret_key = os.environ['EC2_SECRET_KEY']
+
+    if not aws_access_key:
+        if 'AWS_ACCESS_KEY' in os.environ:
+            aws_access_key = os.environ['AWS_ACCESS_KEY']
+        elif 'EC2_ACCESS_KEY' in os.environ:
+            aws_access_key = os.environ['EC2_ACCESS_KEY']
 
     instance_id = module.params['instance_id']
-    elb_man = ElbManager(module, instance_id, ec2_elbs, ec2_access_key,
-                         ec2_secret_key)
+    elb_man = ElbManager(module, instance_id, ec2_elbs, aws_access_key,
+                         aws_secret_key)
 
     if module.params['state'] == 'present':
         elb_man.register()

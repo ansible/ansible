@@ -60,18 +60,18 @@ options:
     required: false
     default: null
     aliases: []
-  ec2_secret_key:
+  aws_secret_key:
     description:
-      - EC2 secret key. If not specified then the EC2_SECRET_KEY environment variable is used.
+      - AWS secret key. 
     required: false
     default: null
-    aliases: []
-  ec2_access_key:
+    aliases: ['ec2_secret_key', 'secret_key']
+  aws_access_key:
     description:
-      - EC2 access key. If not specified then the EC2_ACCESS_KEY environment variable is used.
+      - AWS access key. 
     required: false
     default: null
-    aliases: []
+    aliases: ['ec2_access_key', 'access_key']
 requirements: [ "boto" ]
 author: Bruce Pennypacker
 '''
@@ -132,8 +132,8 @@ def main():
             ttl             = dict(required=False, default=3600),
             type            = dict(choices=['A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'NS'], required=True),
             value           = dict(required=False), 
-            ec2_secret_key  = dict(aliases=['EC2_SECRET_KEY'], no_log=True, required=False),
-            ec2_access_key  = dict(aliases=['EC2_ACCESS_KEY'], required=False)
+            aws_secret_key  = dict(aliases=['ec2_secret_key', 'secret_key'], no_log=True, required=False),
+            aws_access_key  = dict(aliases=['ec2_access_key', 'access_key'], required=False)
         )
     )
 
@@ -143,8 +143,8 @@ def main():
     record_in             = module.params.get('record')
     type_in               = module.params.get('type')
     value_in              = module.params.get('value')
-    ec2_secret_key        = module.params.get('ec2_secret_key')
-    ec2_access_key        = module.params.get('ec2_access_key')
+    aws_secret_key        = module.params.get('aws_secret_key')
+    aws_access_key        = module.params.get('aws_access_key')
 
     value_list = ()
 
@@ -165,14 +165,21 @@ def main():
             module.fail_json(msg = "parameter 'value' required for create/delete")
 
     # allow environment variables to be used if ansible vars aren't set
-    if not ec2_secret_key and 'EC2_SECRET_KEY' in os.environ:
-        ec2_secret_key = os.environ['EC2_SECRET_KEY']
-    if not ec2_access_key and 'EC2_ACCESS_KEY' in os.environ:
-        ec2_access_key = os.environ['EC2_ACCESS_KEY']
+    if not aws_secret_key:
+        if  'AWS_SECRET_KEY' in os.environ:
+            aws_secret_key = os.environ['AWS_SECRET_KEY']
+        elif 'EC2_SECRET_KEY' in os.environ:
+            aws_secret_key = os.environ['EC2_SECRET_KEY']
+
+    if not aws_access_key:
+        if 'AWS_ACCESS_KEY' in os.environ:
+            aws_access_key = os.environ['AWS_ACCESS_KEY']
+        elif 'EC2_ACCESS_KEY' in os.environ:
+            aws_access_key = os.environ['EC2_ACCESS_KEY']
 
     # connect to the route53 endpoint 
     try:
-        conn = boto.route53.connection.Route53Connection(ec2_access_key, ec2_secret_key)
+        conn = boto.route53.connection.Route53Connection(aws_access_key, aws_secret_key)
     except boto.exception.BotoServerError, e:
         module.fail_json(msg = e.error_message)
 

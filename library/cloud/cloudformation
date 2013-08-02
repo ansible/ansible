@@ -46,7 +46,7 @@ options:
       - The AWS region the stack will be launched in
     required: true
     default: null
-    aliases: []
+    aliases: ['aws_region', 'ec2_region']
   state:
     description:
       - If state is "present", stack will be created.  If state is "present" and if stack exists and template has changed, it will be updated.
@@ -81,9 +81,23 @@ tasks:
       ClusterSize: 3
 '''
 
-import boto.cloudformation.connection
 import json
 import time
+
+try:
+    import boto.cloudformation.connection
+except ImportError:
+    print "failed=True msg='boto required for this module'"
+    sys.exit(1)
+
+AWS_REGIONS = ['ap-northeast-1',
+               'ap-southeast-1',
+               'ap-southeast-2',
+               'eu-west-1',
+               'sa-east-1',
+               'us-east-1',
+               'us-west-1',
+               'us-west-2']
 
 class Region:
     def __init__(self, region):
@@ -146,11 +160,7 @@ def main():
         argument_spec=dict(
             stack_name=dict(required=True),
             template_parameters=dict(required=False),
-            region=dict(required=True,
-                        choices=['ap-northeast-1', 'ap-southeast-1',
-                                 'ap-southeast-2', 'eu-west-1',
-                                 'sa-east-1', 'us-east-1', 'us-west-1',
-                                 'us-west-2']),
+            region=dict(aliases=['aws_region', 'ec2_region'], required=True, choices=AWS_REGIONS),
             state=dict(default='present', choices=['present', 'absent']),
             template=dict(default=None, required=True),
             disable_rollback=dict(default=False)
