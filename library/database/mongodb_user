@@ -61,8 +61,8 @@ options:
         required: false
         default: null
     roles:
-		    description:
-		        - The database user roles valid values are one or more of the following: "read", "readWrite", "dbAdmin", "userAdmin", "clusterAdmin", "readAnyDatabase", "readWriteAnyDatabase", "userAdminAnyDatabase", "dbAdminAnyDatabase"
+        description:
+            - The database user roles valid values are one or more of the following: "read", "readWrite", "dbAdmin", "userAdmin", "clusterAdmin", "readAnyDatabase", "readWriteAnyDatabase", "userAdminAnyDatabase", "dbAdminAnyDatabase"
         required: false
         default: "readWrite"
     state:
