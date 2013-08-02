@@ -60,6 +60,11 @@ options:
             - The password to use for the user
         required: false
         default: null
+    roles:
+		    description:
+		        - The database user roles valid values are one or more of the following: "read", "readWrite", "dbAdmin", "userAdmin", "clusterAdmin", "readAnyDatabase", "readWriteAnyDatabase", "userAdminAnyDatabase", "dbAdminAnyDatabase"
+        required: false
+        default: "readWrite"
     state:
         state:
         description:
@@ -80,6 +85,11 @@ EXAMPLES = '''
 
 # Delete 'burgers' database user with name 'bob'.
 - mongodb_user: database=burgers name=bob state=absent
+
+# Define more users with various specific roles (default is 'readWrite')
+- mongodb_user: database=burgers name=ben password=12345 roles='read' state=present
+- mongodb_user: database=burgers name=jim password=12345 roles='readWrite,dbAdmin,userAdmin' state=present
+- mongodb_user: database=burgers name=joe password=12345 roles='readWriteAnyDatabase' state=present
 '''
 
 import ConfigParser
@@ -101,13 +111,12 @@ else:
 # MongoDB module specific support methods.
 #
 
-def user_add(client, db_name, user, password):
+def user_add(client, db_name, user, password, roles):
     try:
         db = client[db_name]
-        db.add_user(user, password)
+        db.add_user(user, password, None, roles=roles)
     except OperationFailure:
         return False
-
 
     return True
 
@@ -151,6 +160,7 @@ def main():
             database=dict(required=True, aliases=['db']),
             user=dict(required=True, aliases=['name']),
             password=dict(aliases=['pass']),
+            roles=dict(default='readWrite'),
             state=dict(default='present', choices=['absent', 'present']),
         )
     )
@@ -165,6 +175,7 @@ def main():
     db_name = module.params['database']
     user = module.params['user']
     password = module.params['password']
+    roles = module.params['roles'].split(",")
     state = module.params['state']
 
     try:
@@ -186,7 +197,7 @@ def main():
     if state == 'present':
         if password is None:
             module.fail_json(msg='password parameter required when adding a user')
-        if user_add(client, db_name, user, password) is not True:
+        if user_add(client, db_name, user, password, roles) is not True:
             module.fail_json(msg='Unable to add or update user, check login_user and login_password are correct and that this user has access to the admin collection')
     elif state == 'absent':
         if user_remove(client, db_name, user) is not True:
