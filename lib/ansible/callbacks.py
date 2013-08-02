@@ -84,21 +84,30 @@ def log_lockfile():
 LOG_LOCK = open(log_lockfile(), 'w')
 
 def log_flock(runner):
-    fcntl.lockf(LOG_LOCK, fcntl.LOCK_EX)
     if runner is not None:
         try:
             fcntl.lockf(runner.output_lockfile, fcntl.LOCK_EX)
         except OSError:
             # already got closed?
             pass
+    else:
+        try:
+           fcntl.lockf(LOG_LOCK, fcntl.LOCK_EX)
+        except OSError:
+           pass
+        
 
 def log_unflock(runner):
-    fcntl.lockf(LOG_LOCK, fcntl.LOCK_UN)
     if runner is not None:
         try:
             fcntl.lockf(runner.output_lockfile, fcntl.LOCK_UN)
         except OSError:
             # already got closed?
+            pass
+    else:
+        try:
+            fcntl.lockf(LOG_LOCK, fcntl.LOCK_UN)
+        except OSError:
             pass
 
 def set_play(callback, play):
