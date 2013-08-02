@@ -211,7 +211,7 @@ def main():
         ),
     )
     repo = module.params['repo']
-    dest = module.params['dest']
+    dest = os.path.expanduser(module.params['dest'])
     revision = module.params['revision']
     force = module.params['force']
     purge = module.params['purge']
