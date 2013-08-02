@@ -25,10 +25,8 @@ short_description: Print statements during execution
 description:
      - This module prints statements during execution and can be useful
        for debugging variables or expressions without necessarily halting
-       the playbook. Useful for debugging together with the only_if directive.
+       the playbook. Useful for debugging together with the 'when:' directive.
 
-       In order to see the debug message, you need to run ansible in verbose
-       mode (using the C(-v) option).
 version_added: "0.8"
 options:
   msg:
