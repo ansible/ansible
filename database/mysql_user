@@ -68,7 +68,8 @@ options:
     default: null
   state:
     description:
-      - The database state
+      - Whether the user should exist.  When C(absent), removes
+        the user.
     required: false
     default: present
     choices: [ "present", "absent" ]
