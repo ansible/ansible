@@ -435,7 +435,9 @@ class AnsibleModule(object):
                 else:
                     os.chmod(path, mode)
             except OSError, e:
-                if e.errno == errno.ENOENT: # Can't set mode on broken symbolic links
+                if os.path.islink(path) and e.errno == errno.EPERM:  # Can't set mode on symbolic links
+                    pass
+                elif e.errno == errno.ENOENT: # Can't set mode on broken symbolic links
                     pass
                 else:
                     raise e
