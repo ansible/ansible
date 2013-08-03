@@ -57,7 +57,7 @@ options:
     version_added: "1.2"
   mode:
     description:
-      - Switches the module behaviour between put (upload), get (download), create (bucket) and delete (bucket). 
+      - Switches the module behaviour between put (upload), get (download), geturl (return download url), getstr (download object as string) create (bucket) and delete (bucket). 
     required: true
     default: null
     aliases: []
@@ -80,6 +80,8 @@ EXAMPLES = '''
 - s3: bucket=mybucket object=/my/desired/key.txt dest=/usr/local/myfile.txt mode=get overwrite=true
 # PUT/upload and overwrite remote file (trust local)
 - s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=put overwrite=true
+# Download an object as a string to use else where in your playbook
+- s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=getstr
 # Create an empty bucket
 - s3: bucket=mybucket mode=create
 # Delete a bucket and all contents
@@ -201,6 +203,16 @@ def download_s3file(module, s3, bucket, obj, dest):
     except s3.provider.storage_copy_error, e:
         module.fail_json(msg= str(e))
 
+def download_s3str(module, s3, bucket, obj):
+    try:
+        bucket = s3.lookup(bucket)
+        key = bucket.lookup(obj)
+        contents = key.get_contents_as_string()
+        module.exit_json(msg="GET operation complete", contents=contents, changed=True)
+        sys.exit(0)
+    except s3.provider.storage_copy_error, e:
+        module.fail_json(msg= str(e))
+
 def get_download_url(module, s3, bucket, obj, expiry):
     try:
         bucket = s3.lookup(bucket)
@@ -218,7 +230,7 @@ def main():
             object         = dict(),
             src            = dict(),
             dest           = dict(),
-            mode           = dict(choices=['get', 'put', 'delete', 'create', 'geturl'], required=True),
+            mode           = dict(choices=['get', 'put', 'delete', 'create', 'geturl', 'getstr'], required=True),
             expiry         = dict(default=600, aliases=['expiration']),
             s3_url         = dict(aliases=['S3_URL']),
             ec2_secret_key = dict(aliases=['EC2_SECRET_KEY']),
@@ -396,6 +408,18 @@ def main():
         else:
             module.fail_json(msg="Bucket and Object parameters must be set", failed=True)
             sys.exit(0)
+
+    if mode == 'getstr':
+        if bucket and obj:
+            bucketrtn = bucket_check(module, s3, bucket)
+            if bucketrtn is False:
+                module.fail_json(msg="Bucket %s does not exist."%bucket, failed=True)
+            else:
+                keyrtn = key_check(module, s3, bucket, obj)
+                if keyrtn is True:
+                    download_s3str(module, s3, bucket, obj)
+                else:
+                    module.fail_json(msg="Key %s does not exist."%obj, failed=True)
 
     sys.exit(0)
 
