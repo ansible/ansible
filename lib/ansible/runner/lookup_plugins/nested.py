@@ -47,6 +47,8 @@ class LookupModule(object):
         for x in terms:
             if isinstance(x, basestring) and x in inject:
                 results.append(inject[x])
+            elif isinstance(x, basestring):
+                raise errors.AnsibleError("cannot resolve: %s" % x)
             else:
                 results.append(x)
         return results
