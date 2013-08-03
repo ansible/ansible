@@ -141,7 +141,10 @@ def main():
     rc,current_lvs,err = module.run_command("lvs --noheadings -o lv_name,size --units %s --separator ';' %s" % (unit, vg))
 
     if rc != 0:
-        module.fail_json(msg="Volume group %s does not exist."%vg, rc=rc, err=err)
+        if state == 'absent':
+            module.exit_json(changed=False,skipped=True,stdout="Skipping because volume group %s does not exist." % vg,stderr=False)
+        else:
+            module.fail_json(msg="Volume group %s does not exist."%vg, rc=rc, err=err)
 
     changed = False
 
