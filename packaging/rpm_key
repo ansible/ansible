@@ -155,7 +155,7 @@ class RpmKey:
         if self.syslogging:
             syslog.openlog('ansible-%s' % os.path.basename(__file__))
             syslog.syslog(syslog.LOG_NOTICE, 'Command %s' % '|'.join(cmd))
-        rc, stdout, stderr =  self.module.run_command(cmd)
+        rc, stdout, stderr = self.module.run_command(cmd)
         if rc != 0:
             self.module.fail_json(msg=stderr)
         return stdout, stderr
