@@ -195,8 +195,8 @@ class Connection(object):
             if self.runner.sudo and sudoable and self.runner.sudo_pass:
                 incorrect_password = gettext.dgettext(
                     "sudo", "Sorry, try again.")
-                stdout.endswith("%s\r\n%s" % (incorrect_password, prompt))
-                raise errors.AnsibleError('Incorrect sudo password')
+                if stdout.endswith("%s\r\n%s" % (incorrect_password, prompt)):
+                    raise errors.AnsibleError('Incorrect sudo password')
 
             if p.stdout in rfd:
                 dat = os.read(p.stdout.fileno(), 9000)
