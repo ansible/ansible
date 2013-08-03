@@ -52,6 +52,7 @@ options:
         default: none
         description:
             - path to specific keyring file in /etc/apt/trusted.gpg.d
+        version_added: "1.3"
     url:
         required: false
         default: none
