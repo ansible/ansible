@@ -203,7 +203,7 @@ def delete_meter(module, name, apiid, apikey):
             try:
                 cert_file = '%s/%s.pem' % (config_directory,cert_type)
                 os.remove(cert_file)
-            except OSError, e:  ## if failed, report it back to the user ##
+            except OSError, e:  
                 module.fail_json("Failed to remove " + cert_type + ".pem file")
 
     return 0, "Meter " + name + " deleted"
