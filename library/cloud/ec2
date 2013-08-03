@@ -545,7 +545,6 @@ def main():
     ec2_secret_key = module.params.get('ec2_secret_key')
     ec2_access_key = module.params.get('ec2_access_key')
     region = module.params.get('region')
-    termination_list = module.params.get('termination_list')
 
 
         # allow eucarc environment variables to be used if ansible vars aren't set
