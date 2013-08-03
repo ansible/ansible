@@ -54,23 +54,6 @@ options:
         description: ["An arbitrary string to use for aggregation."]
         required: false
         default: null
-    source_type_name:
-        description: ["The type of event being posted."]
-        required: false
-        default: null
-        choices:
-        - 'nagios'
-        - 'hudson'
-        - 'jenkins'
-        - 'user'
-        - 'my apps'
-        - 'feed'
-        - 'chef'
-        - 'puppet'
-        - 'git'
-        - 'bitbucket'
-        - 'fabric'
-        - 'capistrano'
 '''
 
 EXAMPLES = '''
@@ -103,7 +86,7 @@ def main():
             ),
             aggregation_key=dict(required=False, default=None),
             source_type_name=dict(
-                required=False, default=None,
+                required=False, default='my apps',
                 choices=['nagios', 'hudson', 'jenkins', 'user', 'my apps',
                          'feed', 'chef', 'puppet', 'git', 'bitbucket', 'fabric',
                          'capistrano']
