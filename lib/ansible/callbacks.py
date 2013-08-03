@@ -92,9 +92,9 @@ def log_flock(runner):
             pass
     else:
         try:
-           fcntl.lockf(LOG_LOCK, fcntl.LOCK_EX)
+            fcntl.lockf(LOG_LOCK, fcntl.LOCK_EX)
         except OSError:
-           pass
+            pass
         
 
 def log_unflock(runner):
