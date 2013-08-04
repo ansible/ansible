@@ -49,12 +49,19 @@ PLAYBOOK_ERRORS = {1: 'File does not exist',
                     2: 'File is not readable'}
 
 
-def _run(cmd):
+def _run(cmd, buffer_output=True):
+    # if buffer_ouput is set to False
+    # "out" will only contain stderr if
+    # there is a failure, output will go to
+    # the terminal
+
     print >>sys.stderr, "Running: '%s'" % cmd
     cmd = subprocess.Popen(cmd, shell=True,
                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if not buffer_output:
+        for line in iter(cmd.stdout.readline, ""):
+            print >>sys.stdout, line.rstrip()
     (out, err) = cmd.communicate()
-    print out
     if cmd.returncode != 0:
         print >>sys.stderr, err
     return cmd.returncode, out
@@ -148,7 +155,9 @@ def main(args):
     if options.inventory:
         cmd += ' -i "%s"' % options.inventory
     os.chdir(options.dest)
-    rc, out = _run(cmd)
+    # when running the playbook we don't want to buffer
+    # stdout since it is put in memory
+    rc, out = _run(cmd, buffer_output=False)
 
     if options.purge:
         os.chdir('/')
