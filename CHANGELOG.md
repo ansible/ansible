@@ -10,7 +10,7 @@ Highlighted new features:
 * (DOCS PENDING) sudo: True/False and sudo_user: True/False can set at include and role level
 * added changed_when: (expression) which allows overriding whether a result is changed or not, can work with registered expressions.
 * --extra-vars can now take a file as input "-e @filename"
-
+* external inventory scripts may now return host variables in one pass, which allows them to be much for efficient for large numbers of hosts
 
 New modules:
 
