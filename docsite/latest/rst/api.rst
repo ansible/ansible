@@ -136,6 +136,37 @@ if the script does not wish to do this, returning an empty hash/dictionary is th
         "monitoring" : "pack.example.com"
     }
 
+Tuning the External Inventory Script
+````````````````````````````````````
+
+.. versionadded: 1.3
+
+The stock inventory script system detailed above works for all versions of Ansible, but calling
+'--host' for every host can be rather expensive,  especially if it involves expensive API calls to
+a remote subsystemm.  In Ansible 
+1.3 or later, if the inventory script returns a top level element called "_meta", it is possible
+to return all of the host variables in one inventory script call.  When this meta element contains
+a value for "hostvars", the inventory script will not be invoked with "--host" for each host.  This
+results in a significant performance increase for large numbers of hosts, and also makes client
+side caching easier to implement for the inventory script.
+
+The data to be added to the top level JSON dictionary looks like this::
+
+    {
+
+        # results of inventory script as above go here
+        # ...
+
+        "_meta" : {
+           "hostvars" : {
+              "moocow.example.com"     : { "asdf" : 1234 },
+              "llama.example.com"      : { "asdf" : 5678 },
+           }
+        }
+
+    }
+
+
 Example: The Cobbler External Inventory Script
 ``````````````````````````````````````````````
 
