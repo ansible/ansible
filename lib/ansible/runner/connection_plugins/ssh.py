@@ -34,14 +34,16 @@ from ansible import utils
 class Connection(object):
     ''' ssh based connections '''
 
-    def __init__(self, runner, host, port, user, password, private_key_file, *args, **kwargs):
+    def __init__(self, runner, host, port, user, password, private_key_file, ssh_config, *args, **kwargs):
         self.runner = runner
         self.host = host
         self.port = port
         self.user = user
         self.password = password
         self.private_key_file = private_key_file
+        self.ssh_config = ssh_config
         self.HASHED_KEY_MAGIC = "|1|"
+        self.ssh_config_opt = ['-F', os.path.expanduser(self.ssh_config)] if self.ssh_config else []
 
     def connect(self):
         ''' connect to the remote host '''
@@ -129,7 +131,7 @@ class Connection(object):
         ''' run a command on the remote host '''
 
         ssh_cmd = self._password_cmd()
-        ssh_cmd += ["ssh", "-tt", "-q"] + self.common_args + [self.host]
+        ssh_cmd += ["ssh", "-tt", "-q"] + self.common_args + self.ssh_config_opt + [self.host]
 
         if not self.runner.sudo or not sudoable:
             if executable:
@@ -230,11 +232,11 @@ class Connection(object):
         cmd = self._password_cmd()
 
         if C.DEFAULT_SCP_IF_SSH:
-            cmd += ["scp"] + self.common_args
+            cmd += ["scp"] + self.common_args + self.ssh_config_opt
             cmd += [in_path,self.host + ":" + pipes.quote(out_path)]
             indata = None
         else:
-            cmd += ["sftp"] + self.common_args + [self.host]
+            cmd += ["sftp"] + self.common_args + self.ssh_config_opt + [self.host]
             indata = "put %s %s\n" % (pipes.quote(in_path), pipes.quote(out_path))
 
         p = subprocess.Popen(cmd, stdin=subprocess.PIPE,
@@ -251,11 +253,12 @@ class Connection(object):
         cmd = self._password_cmd()
 
         if C.DEFAULT_SCP_IF_SSH:
-            cmd += ["scp"] + self.common_args
+            cmd += ["scp"] + self.common_args + self.ssh_config_opt
             cmd += [self.host + ":" + in_path, out_path]
             indata = None
         else:
-            cmd += ["sftp"] + self.common_args + [self.host]
+            cmd += ["sftp"] + self.common_args + self.ssh_config_opt
+            cmd += [self.host]
             indata = "get %s %s\n" % (in_path, out_path)
 
         p = subprocess.Popen(cmd, stdin=subprocess.PIPE,
