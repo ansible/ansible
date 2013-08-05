@@ -68,7 +68,8 @@ options:
     default: null
   state:
     description:
-      - The database state
+      - Whether the user should exist.  When C(absent), removes
+        the user.
     required: false
     default: present
     choices: [ "present", "absent" ]
@@ -144,6 +145,7 @@ def user_add(cursor, user, host, password, new_priv):
 
 def user_mod(cursor, user, host, password, new_priv):
     changed = False
+    grant_option = False
 
     # Handle passwords.
     if password is not None:
@@ -162,9 +164,12 @@ def user_mod(cursor, user, host, password, new_priv):
         # If the user has privileges on a db.table that doesn't appear at all in
         # the new specification, then revoke all privileges on it.
         for db_table, priv in curr_priv.iteritems():
+            # If the user has the GRANT OPTION on a db.table, revoke it first.
+            if "GRANT" in priv:
+                grant_option = True
             if db_table not in new_priv:
                 if user != "root" and "PROXY" not in priv:
-                    privileges_revoke(cursor, user,host,db_table)
+                    privileges_revoke(cursor, user,host,db_table,grant_option)
                     changed = True
 
         # If the user doesn't currently have any privileges on a db.table, then
@@ -180,7 +185,7 @@ def user_mod(cursor, user, host, password, new_priv):
         for db_table in db_table_intersect:
             priv_diff = set(new_priv[db_table]) ^ set(curr_priv[db_table])
             if (len(priv_diff) > 0):
-                privileges_revoke(cursor, user,host,db_table)
+                privileges_revoke(cursor, user,host,db_table,grant_option)
                 privileges_grant(cursor, user,host,db_table,new_priv[db_table])
                 changed = True
 
@@ -243,17 +248,12 @@ def privileges_unpack(priv):
 
     return output
 
-def privileges_revoke(cursor, user,host,db_table):
+def privileges_revoke(cursor, user,host,db_table,grant_option):
+    if grant_option:
+        query = "REVOKE GRANT OPTION ON %s FROM '%s'@'%s'" % (db_table,user,host)
+        cursor.execute(query)
     query = "REVOKE ALL PRIVILEGES ON %s FROM '%s'@'%s'" % (db_table,user,host)
     cursor.execute(query)
-    query = "REVOKE GRANT OPTION ON %s FROM '%s'@'%s'" % (db_table,user,host)
-    try:
-        cursor.execute(query)
-    except MySQLdb.OperationalError, e:
-        # 1141 -> There is no such grant defined for user ... on host ...
-        # If this exception is raised, there is no need to revoke the GRANT privilege
-        if e.args[0] != 1141 or not e.args[1].startswith("There is no such grant defined for user"):
-            raise e
 
 def privileges_grant(cursor, user,host,db_table,priv):
 

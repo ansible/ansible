@@ -98,6 +98,8 @@ class LinodeInventory(object):
         self.inventory = {}
         # Index of label to Linode ID
         self.index = {}
+        # Local cache of Datacenter objects populated by populate_datacenter_cache()
+        self._datacenter_cache = None
 
         # Read settings and parse CLI arguments
         self.read_settings()
@@ -162,7 +164,7 @@ class LinodeInventory(object):
     def get_nodes(self):
         """Makes an Linode API call to get the list of nodes."""
         try:
-            for node in Linode.search():
+            for node in Linode.search(status=Linode.STATUS_RUNNING):
                 self.add_node(node)
         except api.linode_api.ApiError, e:
             print "Looks like Linode's API is down:"
@@ -180,19 +182,24 @@ class LinodeInventory(object):
             print e
             sys.exit(1)
 
+    def populate_datacenter_cache(self):
+        """Creates self._datacenter_cache, containing all Datacenters indexed by ID."""
+        self._datacenter_cache = {}
+        dcs = Datacenter.search()
+        for dc in dcs:
+            self._datacenter_cache[dc.api_id] = dc
+
     def get_datacenter_city(self, node):
         """Returns a the lowercase city name of the node's data center."""
-        location = node.datacenter.location
+        if self._datacenter_cache is None:
+            self.populate_datacenter_cache()
+        location = self._datacenter_cache[node.datacenter_id].location
         location = location.lower()
         location = location.split(",")[0]
         return location
 
     def add_node(self, node):
         """Adds an node to the inventory and index."""
-
-        # Only want running nodes
-        if not node.is_up():
-            return
 
         dest = node.label
 

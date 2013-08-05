@@ -94,12 +94,20 @@ def main(args):
         options.ask_sudo_pass = options.ask_sudo_pass or C.DEFAULT_ASK_SUDO_PASS
         ( sshpass, sudopass ) = utils.ask_passwords(ask_pass=options.ask_pass, ask_sudo_pass=options.ask_sudo_pass)
         options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
+
     extra_vars = {}
-    for extra_vars_opt in options.extra_vars:
-        if len(extra_vars_opt) > 0 and extra_vars_opt[0] in '[{':
-            extra_vars.update(utils.json_loads(extra_vars_opt))
+    for extra_vars_arg in options.extra_vars:
+        if extra_vars_arg.startswith("@"):
+            # Argument is a JSON file
+            with open(extra_vars_arg[1:]) as fd:
+                extra_vars = utils.combine_vars(extra_vars, utils.json_loads(fd.read()))
+        elif extra_vars_arg[0] in '[{':
+            # Arguments as JSON
+            extra_vars = utils.combine_vars(extra_vars, utils.json_loads(extra_vars_arg))
         else:
-            extra_vars.update(utils.parse_kv(extra_vars_opt))
+            # Arguments as Key-value
+            extra_vars = utils.combine_vars(extra_vars, utils.parse_kv(extra_vars_arg))
+
     only_tags = options.tags.split(",")
     skip_tags = options.skip_tags
     if options.skip_tags is not None:

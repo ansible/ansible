@@ -264,17 +264,15 @@ Action Shorthand
 
 .. versionadded: 0.8
 
-Rather than listing out the explicit word, "action:", like so::
+Ansible prefers listing modules like this in 0.8 and later::
 
     template: src=templates/foo.j2 dest=/etc/foo.conf
 
-It is also possible to say:
+You will notice in earlier versions, this was only available as::
 
-    template: src=templates/foo.j2 dest=/etc/foo.conf
+    action: template src=templates/foo.j2 dest=/etc/foo.conf
 
-The name of the module is simply followed by a colon and the arguments to that module.  We think this is a lot more intuitive.
-Our documentation has not converted over to this new format just yet as many users may still be using older versions.
-You'll be able to use both formats forever.
+The old form continues to work in newer versions without any plan of deprecation.
 
 Running Operations On Change
 ````````````````````````````

@@ -31,6 +31,8 @@ options:
   id:
     description:
       - identifier for this instance or set of instances, so that the module will be idempotent with respect to EC2 instances.
+      - Note: this identifier is valid for at least 24 hours after the termination of the instance, and should not be reused for another call later on.
+      - For details, see the description of client token at U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Run_Instance_Idempotency.html).
     required: false
     default: null
     aliases: []
@@ -396,7 +398,10 @@ def create_instances(module, ec2):
 
     # Both min_count and max_count equal count parameter. This means the launch request is explicit (we want count, or fail) in how many instances we want.
 
-    if count_remaining > 0:
+    if count_remaining == 0:
+        changed = False
+    else:
+        changed = True
         try:
             params = {'image_id': image,
                       'key_name': key_name,
@@ -465,7 +470,7 @@ def create_instances(module, ec2):
         created_instance_ids.append(inst.id)
         instance_dict_array.append(d)
 
-    return (instance_dict_array, created_instance_ids)
+    return (instance_dict_array, created_instance_ids, changed)
 
 
 def terminate_instances(module, ec2, instance_ids):
@@ -542,7 +547,6 @@ def main():
     ec2_secret_key = module.params.get('ec2_secret_key')
     ec2_access_key = module.params.get('ec2_access_key')
     region = module.params.get('region')
-    termination_list = module.params.get('termination_list')
 
 
         # allow eucarc environment variables to be used if ansible vars aren't set
@@ -578,14 +582,13 @@ def main():
 
     elif module.params.get('state') == 'present':
         # Changed is always set to true when provisioning new instances
-        changed = True
         if not module.params.get('key_name'):
             module.fail_json(msg='key_name parameter is required for new instance')
         if not module.params.get('image'):
             module.fail_json(msg='image parameter is required for new instance')
-        (instance_dict_array, new_instance_ids) = create_instances(module, ec2)
+        (instance_dict_array, new_instance_ids, changed) = create_instances(module, ec2)
 
-    module.exit_json(changed=True, instance_ids=new_instance_ids, instances=instance_dict_array)
+    module.exit_json(changed=changed, instance_ids=new_instance_ids, instances=instance_dict_array)
 
 
 # this is magic, see lib/ansible/module_common.py
