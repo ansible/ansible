@@ -218,7 +218,7 @@ def remove(m, pkgspec, cache, purge=False):
             purge = '--purge'
         else:
             purge = ''
-        cmd = "%s -q -y %s remove %s" % (APT_GET_CMD, purge,packages)
+        cmd = "%s %s -q -y %s %s remove %s" % (APT_ENVVARS, APT_GET_CMD, DPKG_OPTIONS, purge, packages)
 
         if m.check_mode:
             m.exit_json(changed=True)
