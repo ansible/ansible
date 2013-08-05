@@ -569,15 +569,6 @@ class PlayBook(object):
                     self.callbacks.on_no_hosts_remaining()
                     return False
 
-            # run notify actions
-            #for handler in play.handlers():
-            #    if len(handler.notified_by) > 0:
-            #        self.inventory.restrict_to(handler.notified_by)
-            #        self._run_task(play, handler, True)
-            #        self.inventory.lift_restriction()
-            #        handler.notified_by = []
-            #    handler.notified_by = []
-
             self.inventory.lift_also_restriction()
 
         return True
