@@ -105,16 +105,16 @@ options:
     aliases: []
   ec2_secret_key:
     description:
-      - ec2 secret key
+      - EC2 secret key. If not specified then the EC2_SECRET_KEY environment variable is used.
     required: false
     default: null
-    aliases: []
+    aliases: [ EC2_SECRET_KEY ]
   ec2_access_key:
     description:
-      - ec2 access key
+      - EC2 access key. If not specified then the EC2_ACCESS_KEY environment variable is used.
     required: false
     default: null
-    aliases: []
+    aliases: [ EC2_ACCESS_KEY ]
   count:
     description:
       - number of instances to launch
