@@ -332,7 +332,7 @@ As a reminder, to see what derived variables are available, you can do::
 
     ansible hostname.example.com -m setup
 
-Tip: Sometimes you'll get back a variable that's a string and you'll want to do a comparison on it.  You can do this like so:
+Tip: Sometimes you'll get back a variable that's a string and you'll want to do a comparison on it.  You can do this like so::
 
     tasks:
       - shell: echo "only on Red Hat 6, derivatives, and later"
