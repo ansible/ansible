@@ -75,7 +75,7 @@ class InventoryParser(object):
                 elif active_group_name not in self.groups:
                     new_group = self.groups[active_group_name] = Group(name=active_group_name)
                     all.add_child_group(new_group)
-            elif line.startswith("#") or line == '':
+            elif line.startswith("#") or line.startswith(";") or line == '':
                 pass
             elif active_group_name:
                 tokens = shlex.split(line.split(" #")[0])
@@ -132,7 +132,7 @@ class InventoryParser(object):
                 group = self.groups.get(line, None)
                 if group is None:
                     group = self.groups[line] = Group(name=line)
-            elif line.startswith("#"):
+            elif line.startswith("#") or line.startswith(";"):
                 pass
             elif line.startswith("["):
                 group = None
@@ -157,7 +157,7 @@ class InventoryParser(object):
                 group = self.groups.get(line, None)
                 if group is None:
                     raise errors.AnsibleError("can't add vars to undefined group: %s" % line)
-            elif line.startswith("#"):
+            elif line.startswith("#") or line.startswith(";"):
                 pass
             elif line.startswith("["):
                 group = None
