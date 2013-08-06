@@ -119,7 +119,10 @@ Misc changes:
 * conditional tests against raw booleans fixed 
 * mysql module grant removal is now smarter
 * and other misc bugfixes
-
+* apt-remove is now forced to be non-interactive
+* support ; comments in INI file module
+* fixes to callbacks WRT async output (fire and forget tasks now trigger callbacks!)
+* folder support for s3 module
 
 1.2.2 "Hear About It Later" (reprise) -- July 4, 2013
 
