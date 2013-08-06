@@ -489,6 +489,8 @@ class PlayBook(object):
             self.callbacks.on_no_hosts_matched()
             return True
 
+        # if host is present get vars prompt
+        play.get_vars_prompt()
         # get facts from system
         self._do_setup_step(play)
 
