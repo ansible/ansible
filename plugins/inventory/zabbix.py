@@ -38,76 +38,76 @@ except:
 
 class ZabbixInventory(object):
 
-	def read_settings(self):
-	    config = ConfigParser.SafeConfigParser()
-	    config.read(os.path.dirname(os.path.realpath(__file__)) + '/zabbix.ini')
-	    # server
-	    if config.has_option('zabbix', 'server'):
-	        self.zabbix_server = config.get('zabbix', 'server')
+    def read_settings(self):
+        config = ConfigParser.SafeConfigParser()
+        config.read(os.path.dirname(os.path.realpath(__file__)) + '/zabbix.ini')
+        # server
+        if config.has_option('zabbix', 'server'):
+            self.zabbix_server = config.get('zabbix', 'server')
 
-	    # login   
-	    if config.has_option('zabbix', 'username'):
-	        self.zabbix_username = config.get('zabbix', 'username')
-	    if config.has_option('zabbix', 'password'):
-	        self.zabbix_password = config.get('zabbix', 'password')
+        # login   
+        if config.has_option('zabbix', 'username'):
+            self.zabbix_username = config.get('zabbix', 'username')
+        if config.has_option('zabbix', 'password'):
+            self.zabbix_password = config.get('zabbix', 'password')
 
-	def read_cli(self):
-		parser = argparse.ArgumentParser()
-		parser.add_argument('--host')
-		parser.add_argument('--list', action='store_true')
-		self.options = parser.parse_args()
+    def read_cli(self):
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--host')
+        parser.add_argument('--list', action='store_true')
+        self.options = parser.parse_args()
 
-	def hoststub(self):
-		return {
-			'hosts': []
-		}
+    def hoststub(self):
+        return {
+            'hosts': []
+        }
 
-	def getHost(self, api, name):
-		data = {}
-		return data
+    def get_host(self, api, name):
+        data = {}
+        return data
 
-	def getList(self, api):
-		hostsData = api.host.get({'output': 'extend', 'selectGroups': 'extend'})
+    def get_list(self, api):
+        hostsData = api.host.get({'output': 'extend', 'selectGroups': 'extend'})
 
-		data = {}
-		data[self.defaultgroup] = self.hoststub()
+        data = {}
+        data[self.defaultgroup] = self.hoststub()
 
-		for host in hostsData:
-			hostname = host['name']
-			data[self.defaultgroup]['hosts'].append(hostname)	
+        for host in hostsData:
+            hostname = host['name']
+            data[self.defaultgroup]['hosts'].append(hostname)   
 
-			for group in host['groups']:
-				groupname = group['name']
+            for group in host['groups']:
+                groupname = group['name']
 
-				if not groupname in data:
-					data[groupname] = self.hoststub()
+                if not groupname in data:
+                    data[groupname] = self.hoststub()
 
-				data[groupname]['hosts'].append(hostname)
+                data[groupname]['hosts'].append(hostname)
 
-		return data
+        return data
 
-	def __init__(self):
+    def __init__(self):
 
-		self.defaultgroup = 'group_all'
-		self.zabbix_server = None
-		self.zabbix_username = None
-		self.zabbix_password = None
+        self.defaultgroup = 'group_all'
+        self.zabbix_server = None
+        self.zabbix_username = None
+        self.zabbix_password = None
 
-		self.read_settings()
-		self.read_cli()
+        self.read_settings()
+        self.read_cli()
 
-		if self.zabbix_server and self.zabbix_username:
-			api = ZabbixAPI(server=self.zabbix_server)
-			api.login(user=self.zabbix_username, password=self.zabbix_password)
+        if self.zabbix_server and self.zabbix_username:
+            api = ZabbixAPI(server=self.zabbix_server)
+            api.login(user=self.zabbix_username, password=self.zabbix_password)
 
-			if self.options.host:
-				data = self.getHost(api, self.options.host)
-				print json.dumps(data, indent=2)
+            if self.options.host:
+                data = self.get_host(api, self.options.host)
+                print json.dumps(data, indent=2)
 
-			elif self.options.list:
-				data = self.getList(api)
-				print json.dumps(data, indent=2)
-		else:
-			print "Configuration of server and credentials is required"
+            elif self.options.list:
+                data = self.get_list(api)
+                print json.dumps(data, indent=2)
+        else:
+            print "Configuration of server and credentials is required"
 
 ZabbixInventory()
