@@ -67,6 +67,23 @@ options:
     required: false
     default: null
     aliases: []
+  s3_url:
+    description:
+        - S3 URL endpoint. If not specified then the S3_URL environment variable is used, if that variable is defined.
+    default: null
+    aliases: [ S3_URL ]
+  ec2_access_key:
+    description:
+      - EC2 access key. If not specified then the EC2_ACCESS_KEY environment variable is used.
+    required: false
+    default: null
+    aliases: [ EC2_ACCESS_KEY ]
+  ec2_secret_key:
+    description:
+      - EC2 secret key. If not specified then the EC2_SECRET_KEY environment variable is used.
+    required: false
+    default: null
+    aliases: [ EC2_SECRET_KEY ]
 requirements: [ "boto" ]
 author: Lester Wade, Ralph Tice
 '''
