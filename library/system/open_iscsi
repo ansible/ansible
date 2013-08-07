@@ -50,7 +50,6 @@ options:
         choices: [true, false]
         description:
         - whether the target node should be connected
-          if connected, return list of created device nodes
     auto_node_startup:
         aliases: [automatic]
         required: false
@@ -62,26 +61,29 @@ options:
         choices: [true, false]
         description:
         - whether the list of target nodes on the portal should be
-          (re)discovered and added to the persistent iscsi database
+          (re)discovered and added to the persistent iscsi database.
+          Keep in mind that iscsiadm discovery tends to reset node.startup to
+          manual, hence combined with auto_node_startup=yes will allways return
+          a changed state.
     show_nodes:
         required: false
         choices: [true, false]
         description:
         - whether the list of nodes in the persistent iscsi database should be
           returned by the module
-'''
-EXAMPLES = '''
-# perform a discovery on 10.1.2.3 and show available target nodes
-- open_iscsi: show_nodes=yes discover=yes portal=10.1.2.3
 
-# discover targets on portal and login to the one available (only works if exactly one target is exported to the initiator)
-- open_iscsi: portal={{iscsi_target}} login=yes discover=yes
-
-# connect to the named target, after updating the local persistent database (cache)
-- login=yes target=iqn.1986-03.com.sun:02:f8c1f9e0-c3ec-ec84-c9c9-8bfb0cd5de3d
-
-# discconnect from the cached named target
-- login=no target=iqn.1986-03.com.sun:02:f8c1f9e0-c3ec-ec84-c9c9-8bfb0cd5de3d"
+examples:
+    - description: perform a discovery on 10.1.2.3 and show available target
+                   nodes
+      code: open_iscsi: show_nodes=yes discover=yes portal=10.1.2.3
+    - description: discover targets on portal and login to the one available
+                   (only works if exactly one target is exported to the initiator)
+      code: open_iscsi: portal={{iscsi_target}} login=yes discover=yes
+    - description: connect to the named target, after updating the local
+                   persistent database (cache)
+      code: login=yes target=iqn.1986-03.com.sun:02:f8c1f9e0-c3ec-ec84-c9c9-8bfb0cd5de3d
+    - description: discconnect from the cached named target
+      code: login=no target=iqn.1986-03.com.sun:02:f8c1f9e0-c3ec-ec84-c9c9-8bfb0cd5de3d"
 '''
 
 import glob
@@ -98,7 +100,7 @@ def compare_nodelists(l1, l2):
 
 def iscsi_get_cached_nodes(module, portal=None):
 
-    cmd = '%s -m node' % iscsiadm_cmd
+    cmd = '%s --mode node' % iscsiadm_cmd
     (rc, out, err) = module.run_command(cmd)
 
     if rc == 0:
@@ -115,7 +117,6 @@ def iscsi_get_cached_nodes(module, portal=None):
 
             if portal is None or portal == target_portal:
                 nodes.append(target)
-
 
     elif rc == 255:
         nodes = []
@@ -314,6 +315,7 @@ def main():
         isauto = target_isauto(module, target)
         if (automatic and isauto) or (not automatic and not isauto):
             result['changed'] |= False
+            result['automatic_changed'] = False
         elif not check:
             if automatic:
                 target_setauto(module, target)
