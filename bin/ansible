@@ -97,6 +97,9 @@ class Cli(object):
         sshpass = None
         sudopass = None
         options.ask_pass = options.ask_pass or C.DEFAULT_ASK_PASS
+        # Never ask for an SSH password when we run with local connection
+        if options.connection == "local":
+          options.ask_pass = False
         options.ask_sudo_pass= options.ask_sudo_pass or C.DEFAULT_ASK_SUDO_PASS
         ( sshpass, sudopass ) = utils.ask_passwords(ask_pass=options.ask_pass, ask_sudo_pass=options.ask_sudo_pass)
         if options.sudo_user or options.ask_sudo_pass:
