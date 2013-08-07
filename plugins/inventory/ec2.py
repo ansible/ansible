@@ -307,19 +307,21 @@ class Ec2Inventory(object):
         dest = None
         if instance.subnet_id:
                 for dest_var in [i.strip() for i in self.vpc_destination_variable.split(",")]:
+                         tag = dest_var[len('ec2_tag_'):]
                          if hasattr(instance, dest_var):
                                 dest = getattr(instance, dest_var)
                                 break
-                         elif dest_var[8:] in instance.tags:
-                                dest = instance.tags[dest_var[8:]]
+                         elif tag in instance.tags:
+                                dest = instance.tags[tag]
                                 break
         else:
                for dest_var in [i.strip() for i in self.destination_variable.split(",")]:
+                         tag = dest_var[len('ec2_tag_'):]
                          if hasattr(instance, dest_var):
                                 dest = getattr(instance, dest_var)
                                 break
-                         elif dest_var[8:] in instance.tags:
-                                dest = instance.tags[dest_var[8:]]
+                         elif tag in instance.tags:
+                                dest = instance.tags[tag]
                                 break
 
         if not dest:
