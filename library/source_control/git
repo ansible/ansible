@@ -73,6 +73,12 @@ options:
             - If C(yes), repository will be updated using the supplied
               remote.  Otherwise the repo will be left untouched.
               Prior to 1.2, this was always 'yes' and could not be disabled.
+notes:
+    - If the task seems to be hanging, first verify remote host is in C(known_hosts).
+      SSH will prompt user to authorize the first contact with a remote host. One solution is to add
+      C(StrictHostKeyChecking no) in C(.ssh/config) which will accept and authorize the connection
+      on behalf of the user. However, if you run as a different user such as setting sudo to True),
+      for example, root will not look at the user .ssh/config setting.
 '''
 
 EXAMPLES = '''
