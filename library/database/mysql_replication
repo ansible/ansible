@@ -13,7 +13,7 @@ Ansible is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
- 
+
 Ansible is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -27,14 +27,14 @@ DOCUMENTATION = '''
 module: mysql_replication
 
 short_description: Manage MySQL replication
-description: 
-    - Manages MySQL server replication, slave, master status get and change master host. 
+description:
+    - Manages MySQL server replication, slave, master status get and change master host.
 options:
     mode:
         description:
             - module operating mode. Could be getslave (SHOW SLAVE STATUS), getmaster (SHOW MASTER STATUS), changemaster (CHANGE MASTER TO), startslave (START SLAVE), stopslave (STOP SLAVE)
         required: False
-        choices: 
+        choices:
             - getslave
             - getmaster
             - changemaster
@@ -105,6 +105,17 @@ options:
 
 '''
 
+EXAMPLES = '''
+# Stop mysql slave thread
+- mysql_replication: mode=stopslave
+
+# Get master binlog file name and binlog position
+- mysql_replication: mode=getmaster
+
+# Change master to master server 192.168.1.1 and use binary log 'mysql-bin.000009' with position 4578
+- mysql_replication: mode=changemaster master_host=192.168.1.1 master_log_file=mysql-bin.000009 master_log_pos=4578
+'''
+
 import ConfigParser
 import os
 import warnings
@@ -139,7 +150,7 @@ def stop_slave(cursor):
 
 
 def start_slave(cursor):
-    try: 
+    try:
         cursor.execute("START SLAVE")
         started = True
     except:
@@ -281,7 +292,7 @@ def main():
         if module.params["login_unix_socket"]:
             db_connection = MySQLdb.connect(host=module.params["login_host"], unix_socket=module.params["login_unix_socket"], user=login_user, passwd=login_password, db="mysql")
         else:
-            db_connection = MySQLdb.connect(host=module.params["login_host"], user=login_user, passwd=login_password, db="mysql")            
+            db_connection = MySQLdb.connect(host=module.params["login_host"], user=login_user, passwd=login_password, db="mysql")
         cursor = db_connection.cursor()
     except Exception, e:
         module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or ~/.my.cnf has the credentials")
@@ -289,67 +300,67 @@ def main():
     if mode in "getmaster":
         masterstatus = get_master_status(cursor)
         try:
-            module.exit_json(   
-                            File=masterstatus[0],
-                            Position=masterstatus[1],
-                            Binlog_Do_DB=masterstatus[2],
-                            Binlog_Ignore_DB=masterstatus[3]
-                        )
+            module.exit_json(
+                File=masterstatus[0],
+                Position=masterstatus[1],
+                Binlog_Do_DB=masterstatus[2],
+                Binlog_Ignore_DB=masterstatus[3]
+            )
         except TypeError:
             module.fail_json(msg="Server is not configured as mysql master")
 
     elif mode in "getslave":
         slavestatus = get_slave_status(cursor)
         try:
-            module.exit_json(   
-                            Slave_IO_State=slavestatus[0],
-                            Master_Host=slavestatus[1],
-                            Master_User=slavestatus[2],
-                            Master_Port=slavestatus[3],
-                            Connect_Retry=slavestatus[4],
-                            Master_Log_File=slavestatus[5],
-                            Read_Master_Log_Pos=slavestatus[6],
-                            Relay_Log_File=slavestatus[7],
-                            Relay_Log_Pos=slavestatus[8],
-                            Relay_Master_Log_File=slavestatus[9],
-                            Slave_IO_Running=slavestatus[10],
-                            Slave_SQL_Running=slavestatus[11],
-                            Replicate_Do_DB=slavestatus[12],
-                            Replicate_Ignore_DB=slavestatus[13],
-                            Replicate_Do_Table=slavestatus[14],
-                            Replicate_Ignore_Table=slavestatus[15],
-                            Replicate_Wild_Do_Table=slavestatus[16],
-                            Replicate_Wild_Ignore_Table=slavestatus[17],
-                            Last_Errno=slavestatus[18],
-                            Last_Error=slavestatus[19],
-                            Skip_Counter=slavestatus[20],
-                            Exec_Master_Log_Pos=slavestatus[21],
-                            Relay_Log_Space=slavestatus[22],
-                            Until_Condition=slavestatus[23],
-                            Until_Log_File=slavestatus[24],
-                            Until_Log_Pos=slavestatus[25],
-                            Master_SSL_Allowed=slavestatus[26],
-                            Master_SSL_CA_File=slavestatus[27],
-                            Master_SSL_CA_Path=slavestatus[28],
-                            Master_SSL_Cert=slavestatus[29],
-                            Master_SSL_Cipher=slavestatus[30],
-                            Master_SSL_Key=slavestatus[31],
-                            Seconds_Behind_Master=slavestatus[32],
-                            Master_SSL_Verify_Server_Cert=slavestatus[33],
-                            Last_IO_Errno=slavestatus[34],
-                            Last_IO_Error=slavestatus[35],
-                            Last_SQL_Errno=slavestatus[36],
-                            Last_SQL_Error=slavestatus[37],
-                            Replicate_Ignore_Server_Ids=slavestatus[38],
-                            Master_Server_Id=slavestatus[39]
-                         )
+            module.exit_json(
+                Slave_IO_State=slavestatus[0],
+                Master_Host=slavestatus[1],
+                Master_User=slavestatus[2],
+                Master_Port=slavestatus[3],
+                Connect_Retry=slavestatus[4],
+                Master_Log_File=slavestatus[5],
+                Read_Master_Log_Pos=slavestatus[6],
+                Relay_Log_File=slavestatus[7],
+                Relay_Log_Pos=slavestatus[8],
+                Relay_Master_Log_File=slavestatus[9],
+                Slave_IO_Running=slavestatus[10],
+                Slave_SQL_Running=slavestatus[11],
+                Replicate_Do_DB=slavestatus[12],
+                Replicate_Ignore_DB=slavestatus[13],
+                Replicate_Do_Table=slavestatus[14],
+                Replicate_Ignore_Table=slavestatus[15],
+                Replicate_Wild_Do_Table=slavestatus[16],
+                Replicate_Wild_Ignore_Table=slavestatus[17],
+                Last_Errno=slavestatus[18],
+                Last_Error=slavestatus[19],
+                Skip_Counter=slavestatus[20],
+                Exec_Master_Log_Pos=slavestatus[21],
+                Relay_Log_Space=slavestatus[22],
+                Until_Condition=slavestatus[23],
+                Until_Log_File=slavestatus[24],
+                Until_Log_Pos=slavestatus[25],
+                Master_SSL_Allowed=slavestatus[26],
+                Master_SSL_CA_File=slavestatus[27],
+                Master_SSL_CA_Path=slavestatus[28],
+                Master_SSL_Cert=slavestatus[29],
+                Master_SSL_Cipher=slavestatus[30],
+                Master_SSL_Key=slavestatus[31],
+                Seconds_Behind_Master=slavestatus[32],
+                Master_SSL_Verify_Server_Cert=slavestatus[33],
+                Last_IO_Errno=slavestatus[34],
+                Last_IO_Error=slavestatus[35],
+                Last_SQL_Errno=slavestatus[36],
+                Last_SQL_Error=slavestatus[37],
+                Replicate_Ignore_Server_Ids=slavestatus[38],
+                Master_Server_Id=slavestatus[39]
+            )
         except TypeError:
             module.fail_json(msg="Server is not configured as mysql slave")
-       
+
     elif mode in "changemaster":
         print "Change master"
         chm=[]
-        if master_host: 
+        if master_host:
             chm.append("MASTER_HOST='" + master_host + "'")
         if master_user:
             chm.append("MASTER_USER='" + master_user + "'")
