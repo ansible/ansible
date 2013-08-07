@@ -31,6 +31,7 @@ import ansible.constants as C
 import time
 import StringIO
 import stat
+import string
 import termios
 import tty
 import pipes
@@ -40,6 +41,7 @@ import warnings
 import traceback
 import getpass
 
+import hmac
 from Crypto.Cipher import 
 from Crypto import Random
 from Crypto.Random.random import StrongRandom
@@ -55,8 +57,10 @@ except ImportError:
 
 try:
     from hashlib import md5 as _md5
+    from hashlib import sha1 as _sha1
 except ImportError:
     from md5 import md5 as _md5
+    from sha1 import sha1 as _sha1
 
 PASSLIB_AVAILABLE = False
 try:
@@ -109,7 +113,7 @@ class AES256Cipher(object):
         Returns true if the lifetime of the current key has
         exceeded the set lifetime.
         """
-        if ((time.time() - self.init_time) > self.lifetime):
+        if (time.time() - self.init_time) > self.lifetime:
             return True
         else:
             return False
@@ -134,7 +138,7 @@ class AES256Cipher(object):
         """
         Generates an HMAC-SHA1 signature for the message
         """
-        return hmac.new(self.key, msg, hashlib.sha1).digest()
+        return hmac.new(self.key, msg, _sha1).digest()
 
     def validate_sig(self, msg, sig):
         """
