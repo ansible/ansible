@@ -34,10 +34,10 @@ class InventoryParser(object):
     def __init__(self, filename=C.DEFAULT_HOST_LIST):
 
         with open(filename) as fh:
-            self.lines = fh.readlines()
-            self.groups = {}
-            self.hosts = {}
-            self._parse()
+                self.lines = fh.readlines()
+                self.groups = {}
+                self.hosts = {}
+                self._parse()
 
     def _parse(self):
 
@@ -112,7 +112,10 @@ class InventoryParser(object):
                         for t in tokens[1:]:
                             if t.startswith('#'):
                                 break
-                            (k,v) = t.split("=")
+                            try:
+                                (k,v) = t.split("=")
+                            except ValueError, e:
+                                raise errors.AnsibleError("Invalid ini entry: %s - %s" % (t, str(e)))
                             host.set_variable(k,v)
                     self.groups[active_group_name].add_host(host)
 
