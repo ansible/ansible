@@ -30,7 +30,7 @@ options:
   pkg:
     description:
       - A package name or package specifier with version, like C(foo) or C(foo=1.0). Shell like wildcards (fnmatch) like apt* are also supported.
-    required: true
+    required: false
     default: null
   state:
     description:
@@ -87,26 +87,37 @@ author: Matthew Williams
 notes:
    - Three of the upgrade modes (C(full), C(safe) and its alias C(yes)) require C(aptitude), otherwise
      C(apt-get) suffices.
-examples:
-    - code: "apt: pkg=foo update_cache=yes"
-      description: Update repositories cache and install C(foo) package
-    - code: "apt: pkg=foo state=absent"
-      description: Remove C(foo) package
-    - code: "apt: pkg=foo state=present"
-      description: Install the package C(foo)
-    - code: "apt: pkg=foo=1.00 state=present"
-      description: Install the version '1.00' of package C(foo)
-    - code: "apt: pkg=nginx state=latest default_release=squeeze-backports update_cache=yes"
-      description: Update the repository cache and update package C(nginx) to latest version using default release C(squeeze-backport)
-    - code: "apt: pkg=openjdk-6-jdk state=latest install_recommends=no"
-      description: Install latest version of C(openjdk-6-jdk) ignoring C(install-reccomends)
-    - code: "apt: upgrade=dist"
-      description: Update all packages to the latest version
-    - code: "apt: update_cache=yes"
-      description: Run the equivalent of C(apt-get update) as a separate step
-    - code: "apt: update_cache=yes cache_valid_time=3600"
-      description: Only run C(update_cache=yes) if the last one is more than more than 3600 seconds ago
 '''
+
+EXAMPLES = '''
+# Update repositories cache and install "foo" package
+- apt: pkg=foo update_cache=yes
+
+# Remove "foo" package
+- apt: pkg=foo state=absent
+
+# Install the package "foo"
+- apt: pkg=foo state=present
+
+# Install the version '1.00' of package "foo"
+- apt: pkg=foo=1.00 state=present
+
+# Update the repository cache and update package "nginx" to latest version using default release squeeze-backport
+- apt: pkg=nginx state=latest default_release=squeeze-backports update_cache=yes
+
+# Install latest version of "openjdk-6-jdk" ignoring "install-reccomends"
+- apt: pkg=openjdk-6-jdk state=latest install_recommends=no
+
+# Update all packages to the latest version
+- apt: upgrade=dist
+
+# Run the equivalent of "apt-get update" as a separate step
+- apt: update_cache=yes
+
+# Only run "update_cache=yes" if the last one is more than more than 3600 seconds ago
+- apt: update_cache=yes cache_valid_time=3600
+'''
+
 
 import traceback
 # added to stave off future warnings about apt api
@@ -139,19 +150,24 @@ def package_status(m, pkgname, version, cache, state):
         if state == 'install':
             m.fail_json(msg="No package matching '%s' is available" % pkgname)
         else:
-            return False, False
+            return False, False, False
+    try:
+        has_files = len(pkg.installed_files) > 0
+    except AttributeError:
+        has_files = False  # older python-apt cannot be used to determine non-purged
+
     if version:
         try :
-            return pkg.is_installed and fnmatch.fnmatch(pkg.installed.version, version), False
+            return pkg.is_installed and fnmatch.fnmatch(pkg.installed.version, version), False, has_files
         except AttributeError:
             #assume older version of python-apt is installed
-            return pkg.isInstalled and fnmatch.fnmatch(pkg.installedVersion, version), False
+            return pkg.isInstalled and fnmatch.fnmatch(pkg.installedVersion, version), False, has_files
     else:
         try :
-            return pkg.is_installed, pkg.is_upgradable
+            return pkg.is_installed, pkg.is_upgradable, has_files
         except AttributeError:
             #assume older version of python-apt is installed
-            return pkg.isInstalled, pkg.isUpgradable
+            return pkg.isInstalled, pkg.isUpgradable, has_files
 
 def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
     new_pkgspec = []
@@ -179,7 +195,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None, install_reco
     pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache)
     for package in pkgspec:
         name, version = package_split(package)
-        installed, upgradable = package_status(m, name, version, cache, state='install')
+        installed, upgradable, has_files = package_status(m, name, version, cache, state='install')
         if not installed or (upgrade and upgradable):
             packages += "'%s' " % package
 
@@ -213,17 +229,18 @@ def remove(m, pkgspec, cache, purge=False):
     packages = ""
     for package in pkgspec:
         name, version = package_split(package)
-        installed, upgradable = package_status(m, name, version, cache, state='remove')
-        if installed:
+        installed, upgradable, has_files = package_status(m, name, version, cache, state='remove')
+        if installed or (has_files and purge):
             packages += "'%s' " % package
 
     if len(packages) == 0:
         m.exit_json(changed=False)
     else:
-        purge = ''
         if purge:
             purge = '--purge'
-        cmd = "%s -q -y %s remove %s" % (APT_GET_CMD, purge,packages)
+        else:
+            purge = ''
+        cmd = "%s %s -q -y %s %s remove %s" % (APT_ENVVARS, APT_GET_CMD, DPKG_OPTIONS, purge, packages)
 
         if m.check_mode:
             m.exit_json(changed=True)
@@ -233,11 +250,13 @@ def remove(m, pkgspec, cache, purge=False):
             m.fail_json(msg="'apt-get remove %s' failed: %s" % (packages, err))
         m.exit_json(changed=True)
 
-def upgrade(m, mode="yes"):
+def upgrade(m, mode="yes", force=False):
     if m.check_mode:
         check_arg = '--simulate'
     else:
         check_arg = ''
+
+    apt_cmd = None
     if mode == "dist":
         # apt-get dist-upgrade
         apt_cmd = APT_GET_CMD
@@ -251,9 +270,14 @@ def upgrade(m, mode="yes"):
         apt_cmd = APTITUDE_CMD
         upgrade_command = "safe-upgrade"
 
+    if force:
+        force_yes = '--force-yes'
+    else:
+        force_yes = ''
+
     apt_cmd_path = m.get_bin_path(apt_cmd, required=True)
-    cmd = '%s %s -y %s %s %s' % (APT_ENVVARS, apt_cmd_path, DPKG_OPTIONS,
-                                check_arg, upgrade_command)
+    cmd = '%s %s -y %s %s %s %s' % (APT_ENVVARS, apt_cmd_path, DPKG_OPTIONS,
+                                    force_yes, check_arg, upgrade_command)
     rc, out, err = m.run_command(cmd)
     if rc:
         m.fail_json(msg="'%s %s' failed: %s" % (apt_cmd, upgrade_command, err))
@@ -292,6 +316,9 @@ def main():
     APT_GET_CMD = module.get_bin_path("apt-get")
 
     p = module.params
+    if not APTITUDE_CMD and p.get('upgrade', None) in [ 'full', 'safe', 'yes' ]:
+        module.fail_json(msg="Could not find aptitude. Please ensure it is installed.")
+
     install_recommends = p['install_recommends']
 
     try:
@@ -337,7 +364,7 @@ def main():
         force_yes = p['force']
 
         if p['upgrade']:
-            upgrade(module, p['upgrade'])
+            upgrade(module, p['upgrade'], force_yes)
 
         packages = p['package'].split(',')
         latest = p['state'] == 'latest'

@@ -57,11 +57,6 @@ options:
         C(pyvenv), C(virtualenv), C(virtualenv2).
     required: false
     default: virtualenv
-examples:
-   - code: "easy_install: name=pip"
-     description: "Examples from Ansible Playbooks"
-   - code: "easy_install: name=flask virtualenv=/webapps/myapp/venv"
-     description: "Install I(Flask) (U(http://flask.pocoo.org/)) into the specified I(virtualenv)"
 notes:
     - Please note that the M(easy_install) module can only install Python
       libraries. Thus this module is not able to remove libraries. It is
@@ -71,6 +66,14 @@ notes:
       C(virtualenv) parameter is specified.
 requirements: [ "virtualenv" ]
 author: Matt Wright
+'''
+
+EXAMPLES = '''
+# Examples from Ansible Playbooks
+- easy_install: name=pip
+
+# Install Flast into the specified virtualenv.
+- easy_install: name=flask virtualenv=/webapps/myapp/venv
 '''
 
 def _is_package_installed(module, name, easy_install):
@@ -108,7 +111,7 @@ def main():
             command = '%s %s' % (virtualenv, env)
             if site_packages:
                 command += ' --system-site-packages'
-            rc_venv, out_venv, err_venv = module.run_command('%s %s' % (virtualenv, env))
+            rc_venv, out_venv, err_venv = module.run_command(command)
 
             rc += rc_venv
             out += out_venv

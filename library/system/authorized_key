@@ -31,13 +31,13 @@ version_added: "0.5"
 options:
   user:
     description:
-      - Name of the user who should have access to the remote host
+      - The username on the remote host whose authorized_keys file will be modified
     required: true
     default: null
     aliases: []
   key:
     description:
-      - the SSH public key, as a string
+      - The SSH public key, as a string
     required: true
     default: null
   path:
@@ -55,21 +55,32 @@ options:
     version_added: "1.2"
   state:
     description:
-      - whether the given key should or should not be in the file
+      - Whether the given key should or should not be in the file
     required: false
     choices: [ "present", "absent" ]
     default: "present"
-description: 
-    - "adds or removes authorized keys for particular user accounts"
+description:
+    - "Adds or removes authorized keys for particular user accounts"
 author: Brad Olson
 '''
 
 EXAMPLES = '''
 # Example using key data from a local file on the management machine
-authorized_key: user=charlie key="{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
+- authorized_key: user=charlie key="{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
 
 # Using alternate directory locations:
-authorized_key: user=charlie key="{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"  sshdir='/etc/ssh/authorized_keys/charlie' manage_dir=no
+- authorized_key: user=charlie
+                  key="{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
+                  path='/etc/ssh/authorized_keys/charlie'
+                  manage_dir=no
+
+# Using with_file
+- name: Set up authorized_keys for the deploy user
+  authorized_key: user=deploy
+                  key="{{ item }}"
+  with_file:
+    - public_keys/doe-jane
+    - public_keys/doe-john
 '''
 
 # Makes sure the public key line is present or absent in the user's .ssh/authorized_keys.
@@ -215,7 +226,7 @@ def main():
            user       = dict(required=True, type='str'),
            key        = dict(required=True, type='str'),
            path       = dict(required=False, type='str'),
-           manage_dir = dict(required=False, type='bool'),
+           manage_dir = dict(required=False, type='bool', default=True),
            state      = dict(default='present', choices=['absent','present'])
         )
     )

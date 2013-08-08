@@ -38,7 +38,7 @@ class Inventory(object):
 
     __slots__ = [ 'host_list', 'groups', '_restriction', '_also_restriction', '_subset', 
                   'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache', '_groups_list',
-                  '_vars_plugins']
+                  '_vars_plugins', '_playbook_basedir']
 
     def __init__(self, host_list=C.DEFAULT_HOST_LIST):
 
@@ -53,6 +53,9 @@ class Inventory(object):
         self._vars_per_group = {}
         self._hosts_cache    = {}
         self._groups_list    = {} 
+
+        # to be set by calling set_playbook_basedir by ansible-playbook
+        self._playbook_basedir = None
 
         # the inventory object holds a list of groups
         self.groups = []
@@ -87,12 +90,8 @@ class Inventory(object):
                 self.parser = InventoryScript(filename=host_list)
                 self.groups = self.parser.groups.values()
             else:
-                data = file(host_list).read()
-                if not data.startswith("---"):
-                    self.parser = InventoryParser(filename=host_list)
-                    self.groups = self.parser.groups.values()
-                else:
-                    raise errors.AnsibleError("YAML inventory support is deprecated in 0.6 and removed in 0.7, see the migration script in examples/scripts in the git checkout")
+                self.parser = InventoryParser(filename=host_list)
+                self.groups = self.parser.groups.values()
 
             utils.plugins.vars_loader.add_directory(self.basedir(), with_subdir=True)
         else:
@@ -137,6 +136,11 @@ class Inventory(object):
         finds hosts that match a list of patterns. Handles negative
         matches as well as intersection matches.
         """
+        try:
+            if patterns[0].startswith("!"):
+                patterns.insert(0, "all")
+        except IndexError:
+            pass
 
         hosts = set()
         for p in patterns:
@@ -371,4 +375,21 @@ class Inventory(object):
         """ if inventory came from a file, what's the directory? """
         if not self.is_file():
             return None
-        return os.path.dirname(self.host_list)
+        dname = os.path.dirname(self.host_list)
+        if dname is None or dname == '':
+            cwd = os.getcwd()
+            return cwd 
+        return dname
+
+    def playbook_basedir(self):
+        """ returns the directory of the current playbook """
+        return self._playbook_basedir
+
+    def set_playbook_basedir(self, dir):
+        """ 
+        sets the base directory of the playbook so inventory plugins can use it to find
+        variable files and other things. 
+        """
+        self._playbook_basedir = dir
+
+

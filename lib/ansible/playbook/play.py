@@ -21,6 +21,7 @@ from ansible.utils.template import template
 from ansible import utils
 from ansible import errors
 from ansible.playbook.task import Task
+import pipes
 import shlex
 import os
 
@@ -77,11 +78,11 @@ class Play(object):
         # tasks/handlers as they may have inventory scope overrides
         _tasks    = ds.pop('tasks', [])
         _handlers = ds.pop('handlers', [])
-        ds = template(basedir, ds, self.vars) 
+        ds = template(basedir, ds, self.vars)
         ds['tasks'] = _tasks
         ds['handlers'] = _handlers
 
-        self._ds = ds         
+        self._ds = ds
 
         hosts = ds.get('hosts')
         if hosts is None:
@@ -114,7 +115,7 @@ class Play(object):
 
         if self.sudo_user != 'root':
             self.sudo = True
-        
+
 
     # *************************************************
 
@@ -146,10 +147,11 @@ class Play(object):
         # flush handlers after pre_tasks
         new_tasks.append(dict(meta='flush_handlers'))
 
-        # variables if the role was parameterized (i.e. given as a hash) 
+        # variables if the role was parameterized (i.e. given as a hash)
         has_dict = {}
 
-        for orig_path in roles:
+        for role_path in roles:
+            orig_path = template(self.basedir,role_path,self.vars)
 
             if type(orig_path) == dict:
                 # what, not a path?
@@ -159,8 +161,12 @@ class Play(object):
                 has_dict = orig_path
                 orig_path = role_name
 
-            with_items = has_dict.get('with_items', None)
-            when       = has_dict.get('when', None)
+            # special vars must be extracted from the dict to the included tasks
+            special_keys = [ "sudo", "sudo_user", "when", "with_items" ]
+            special_vars = {}
+            for k in special_keys:
+                if k in has_dict:
+                    special_vars[k] = has_dict[k]
 
             path = utils.path_dwim(self.basedir, os.path.join('roles', orig_path))
             if not os.path.isdir(path) and not orig_path.startswith(".") and not orig_path.startswith("/"):
@@ -170,25 +176,26 @@ class Play(object):
                 path = path2
             elif not os.path.isdir(path):
                 raise errors.AnsibleError("cannot find role in %s" % (path))
-            task      = utils.path_dwim(self.basedir, os.path.join(path, 'tasks', 'main.yml'))
-            handler   = utils.path_dwim(self.basedir, os.path.join(path, 'handlers', 'main.yml'))
-            vars_file = utils.path_dwim(self.basedir, os.path.join(path, 'vars', 'main.yml'))
+            task_basepath    = utils.path_dwim(self.basedir, os.path.join(path, 'tasks'))
+            handler_basepath = utils.path_dwim(self.basedir, os.path.join(path, 'handlers'))
+            vars_basepath    = utils.path_dwim(self.basedir, os.path.join(path, 'vars'))
+            task      = self._resolve_main(task_basepath)
+            handler   = self._resolve_main(handler_basepath)
+            vars_file = self._resolve_main(vars_basepath)
             library   = utils.path_dwim(self.basedir, os.path.join(path, 'library'))
             if not os.path.isfile(task) and not os.path.isfile(handler) and not os.path.isfile(vars_file) and not os.path.isdir(library):
                 raise errors.AnsibleError("found role at %s, but cannot find %s or %s or %s or %s" % (path, task, handler, vars_file, library))
             if os.path.isfile(task):
-                nt = dict(include=task, vars=has_dict)
-                if when: 
-                    nt['when'] = when
-                if with_items:
-                    nt['with_items'] = with_items
+                nt = dict(include=pipes.quote(task), vars=has_dict)
+                for k in special_keys:
+                    if k in special_vars:
+                        nt[k] = special_vars[k]
                 new_tasks.append(nt)
             if os.path.isfile(handler):
-                nt = dict(include=handler, vars=has_dict)
-                if when: 
-                    nt['when'] = when
-                if with_items:
-                    nt['with_items'] = with_items
+                nt = dict(include=pipes.quote(handler), vars=has_dict)
+                for k in special_keys:
+                    if k in special_vars:
+                        nt[k] = special_vars[k]
                 new_handlers.append(nt)
             if os.path.isfile(vars_file):
                 new_vars_files.append(vars_file)
@@ -226,7 +233,25 @@ class Play(object):
 
     # *************************************************
 
-    def _load_tasks(self, tasks, vars={}, additional_conditions=[], original_file=None):
+    def _resolve_main(self, basepath):
+        ''' flexibly handle variations in main filenames '''
+        # these filenames are acceptable:
+        mains = (
+                 os.path.join(basepath, 'main'),
+                 os.path.join(basepath, 'main.yml'),
+                 os.path.join(basepath, 'main.yaml'),
+                )
+        if sum([os.path.isfile(x) for x in mains]) > 1:
+            raise errors.AnsibleError("found multiple main files at %s, only one allowed" % (basepath))
+        else:
+            for m in mains:
+                if os.path.isfile(m):
+                    return m # exactly one main file
+            return mains[0] # zero mains (we still need to return something)
+
+    # *************************************************
+
+    def _load_tasks(self, tasks, vars={}, sudo_vars={}, additional_conditions=[], original_file=None):
         ''' handle task and handler include statements '''
 
         results = []
@@ -238,11 +263,20 @@ class Play(object):
             if not isinstance(x, dict):
                 raise errors.AnsibleError("expecting dict; got: %s" % x)
 
+            # evaluate sudo vars for current and child tasks 
+            included_sudo_vars = {}
+            for k in ["sudo", "sudo_user"]:
+                if k in x:
+                    included_sudo_vars[k] = x[k]
+                elif k in sudo_vars:
+                    included_sudo_vars[k] = sudo_vars[k]
+                    x[k] = sudo_vars[k]
+
             if 'meta' in x:
                 if x['meta'] == 'flush_handlers':
                     results.append(Task(self,x))
                     continue
- 
+
             task_vars = self.vars.copy()
             task_vars.update(vars)
             if original_file:
@@ -260,16 +294,16 @@ class Play(object):
                         terms = template(self.basedir, x[k], task_vars)
                         items = utils.plugins.lookup_loader.get(plugin_name, basedir=self.basedir, runner=None).run(terms, inject=task_vars)
                     elif k.startswith("when_"):
-                        included_additional_conditions.append(utils.compile_when_to_only_if("%s %s" % (k[5:], x[k])))
+                        included_additional_conditions.insert(0, utils.compile_when_to_only_if("%s %s" % (k[5:], x[k])))
                     elif k == 'when':
-                        included_additional_conditions.append(utils.compile_when_to_only_if("jinja2_compare %s" % x[k]))
-                    elif k in ("include", "vars", "only_if"):
+                        included_additional_conditions.insert(0, utils.compile_when_to_only_if("jinja2_compare %s" % x[k]))
+                    elif k in ("include", "vars", "only_if", "sudo", "sudo_user"):
                         pass
                     else:
                         raise errors.AnsibleError("parse error: task includes cannot be used with other directives: %s" % k)
 
                 if 'vars' in x:
-                    task_vars.update(x['vars'])
+                    task_vars = utils.combine_vars(task_vars, x['vars'])
                 if 'only_if' in x:
                     included_additional_conditions.append(x['only_if'])
 
@@ -281,11 +315,11 @@ class Play(object):
                         mv[k] = template(self.basedir, v, mv)
                     dirname = self.basedir
                     if original_file:
-                        dirname = os.path.dirname(original_file)     
+                        dirname = os.path.dirname(original_file)
                     include_file = template(dirname, tokens[0], mv)
                     include_filename = utils.path_dwim(dirname, include_file)
                     data = utils.parse_yaml_from_file(include_filename)
-                    results += self._load_tasks(data, mv, included_additional_conditions, original_file=include_filename)
+                    results += self._load_tasks(data, mv, included_sudo_vars, included_additional_conditions, original_file=include_filename)
             elif type(x) == dict:
                 results.append(Task(self,x,module_vars=task_vars, additional_conditions=additional_conditions))
             else:

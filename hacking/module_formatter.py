@@ -30,6 +30,7 @@ import optparse
 import time
 import datetime
 import subprocess
+import cgi
 import ansible.utils
 import ansible.utils.module_docs as module_docs
 
@@ -62,11 +63,15 @@ def latex_ify(text):
 
 def html_ify(text):
 
-    t = _ITALIC.sub("<em>" + r"\1" + "</em>", text)
+    #print "DEBUG: text=%s" % text
+    
+    t = cgi.escape(text)
+    t = _ITALIC.sub("<em>" + r"\1" + "</em>", t)
     t = _BOLD.sub("<b>" + r"\1" + "</b>", t)
     t = _MODULE.sub("<span class='module'>" + r"\1" + "</span>", t)
     t = _URL.sub("<a href='" + r"\1" + "'>" + r"\1" + "</a>", t)
     t = _CONST.sub("<code>" + r"\1" + "</code>", t)
+
     return t
 
 def json_ify(text):
@@ -105,9 +110,13 @@ def rst_ify(text):
 
     return t
 
+_MARKDOWN = re.compile(r"[*_`]")
+
 def markdown_ify(text):
 
-    t = _ITALIC.sub("_" + r"\1" + "_", text)
+    t = cgi.escape(text)
+    t = _MARKDOWN.sub(r"\\\g<0>", t)
+    t = _ITALIC.sub("_" + r"\1" + "_", t)
     t = _BOLD.sub("**" + r"\1" + "**", t)
     t = _MODULE.sub("*" + r"\1" + "*", t)
     t = _URL.sub("[" + r"\1" + "](" + r"\1" + ")", t)
@@ -316,6 +325,9 @@ def main():
         modules.sort()
 
         for module in modules:
+
+            print "rendering: %s" % module
+
             fname = module_map[module]
 
             if len(options.module_list):

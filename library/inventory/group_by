@@ -13,11 +13,13 @@ options:
     - The variables whose values will be used as groups
     required: true
 author: Jeroen Hoekx
-examples:
-  - description: Create groups based on the machine architecture
-    code: group_by key=${ansible_machine}
-  - description: Create groups like 'kvm-host'
-    code: group_by key=${ansible_virtualization_type}-${ansible_virtualization_role}
 notes:
   - Spaces in group names are converted to dashes '-'.
+'''
+
+EXAMPLES = '''
+# Create groups based on the machine architecture
+-  group_by: key=machine_{{ ansible_machine }}
+# Create groups like 'kvm-host'
+-  group_by: key=virt_{{ ansible_virtualization_type }}_{{ ansible_virtualization_role }}
 '''

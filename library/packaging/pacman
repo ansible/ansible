@@ -45,18 +45,34 @@ options:
         default: "no"
         choices: [ "yes", "no" ]
 
+    recurse:
+        description:
+            - remove all not explicitly installed dependencies not required
+              by other packages of the package to remove
+        required: false
+        default: "no"
+        choices: [ "yes", "no" ]
+        version_added: "1.3"
+
 author: Afterburn
 notes:  []
-examples:
-    - code: "pacman: name=foo state=installed"
-      description: install package foo
-    - code: "pacman: name=foo state=absent"
-      description: remove package foo
-    - code: "pacman: name=foo,bar state=absent"
-      description: remove packages foo and bar 
-    - code: "pacman: name=bar, state=installed, update_cache=yes"
-      description: update the package database (pacman -Syy) and install bar (bar will be the updated if a newer version exists) 
-      
+'''
+
+EXAMPLES = '''
+# Install package foo
+- pacman: name=foo state=installed
+
+# Remove package foo
+- pacman: name=foo state=absent
+
+# Remove packages foo and bar 
+- pacman: name=foo,bar state=absent
+
+# Recursively remove package baz
+- pacman: name=baz state=absent recurse=yes
+
+# Update the package database (pacman -Syy) and install bar (bar will be the updated if a newer version exists) 
+- pacman: name=bar, state=installed, update_cache=yes
 '''
 
 
@@ -88,6 +104,10 @@ def update_package_db(module):
          
 
 def remove_packages(module, packages):
+    if module.params["recurse"]:
+        args = "Rs"
+    else:
+        args = "R"
     
     remove_c = 0
     # Using a for loop incase of error, we can report the package that failed
@@ -96,7 +116,7 @@ def remove_packages(module, packages):
         if not query_package(module, package):
             continue
 
-        rc = os.system("pacman -R %s --noconfirm > /dev/null" % (package))
+        rc = os.system("pacman -%s %s --noconfirm > /dev/null" % (args, package))
 
         if rc != 0:
             module.fail_json(msg="failed to remove %s" % (package))
@@ -137,6 +157,7 @@ def main():
             argument_spec    = dict(
                 state        = dict(default="installed", choices=["installed","absent"]),
                 update_cache = dict(default="no", aliases=["update-cache"], type='bool'),
+                recurse      = dict(default="no", type='bool'),
                 name         = dict(aliases=["pkg"], required=True)))
                 
 

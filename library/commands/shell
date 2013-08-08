@@ -34,9 +34,6 @@ options:
     required: false
     default: null
     version_added: "0.9"
-examples:
-   - code: "shell: somescript.sh >> somelog.txt"
-     description: Execute the command in remote shell
 notes:
    -  If you want to execute a command securely and predictably, it may be
       better to use the M(command) module instead. Best practices when writing
@@ -45,4 +42,10 @@ notes:
       judgement.
 requirements: [ ]
 author: Michael DeHaan
+'''
+
+EXAMPLES = '''
+# Execute the command in remote shell; stdout goes to the specified
+# file on the remote
+- shell: somescript.sh >> somelog.txt
 '''

@@ -19,7 +19,12 @@ options:
      description:
         - Password of login user
      required: false
-     default: True
+     default: 'yes'
+   login_tenant_name:
+     description:
+        - The tenant login_user belongs to
+     required: false
+     default: None
    token:
      description:
         - The token to be uses in case the password is not specified
@@ -32,7 +37,7 @@ options:
      default: 'http://127.0.0.1:35357/v2.0/'
    user:
      description:
-        - The name of the user that has to added/removed from openstack
+        - The name of the user that has to added/removed from OpenStack
      required: false
      default: None
    password:
@@ -65,15 +70,19 @@ options:
         - Indicate desired state of the resource
      choices: ['present', 'absent']
      default: present
-examples:
-   - code: 'keystone_user: tenant=demo tenant_description="Default Tenant"'
-     description: Create a tenant
-   - code: 'keystone_user: user=john tenant=demo password=secrete'
-     description: Create a user
-   - code: 'keystone_user: role=admin user=john tenant=demo'
-     description: Apply the admin role to the john user in the demo tenant
 requirements: [ python-keystoneclient ]
 author: Lorin Hochstein
+'''
+
+EXAMPLES = '''
+# Create a tenant
+- keystone_user: tenant=demo tenant_description="Default Tenant"
+
+# Create a user
+- keystone_user: user=john tenant=demo password=secrete
+
+# Apply the admin role to the john user in the demo tenant
+- keystone_user: role=admin user=john tenant=demo
 '''
 
 try:
@@ -84,14 +93,14 @@ else:
     keystoneclient_found = True
 
 
-def authenticate(endpoint, token, login_user, login_password):
+def authenticate(endpoint, token, login_user, login_password, login_tenant_name):
     """Return a keystone client object"""
 
     if token:
         return client.Client(endpoint=endpoint, token=token)
     else:
-        return client.Client(endpoint=endpoint, username=login_user,
-                             password=login_password)
+        return client.Client(auth_url=endpoint, username=login_user,
+                             password=login_password, tenant_name=login_tenant_name)
 
 
 def tenant_exists(keystone, tenant):
@@ -289,11 +298,13 @@ def main():
                           default="http://127.0.0.1:35357/v2.0"),
             token=dict(required=False),
             login_user=dict(required=False),
-            login_password=dict(required=False)
+            login_password=dict(required=False),
+            login_tenant_name=dict(required=False)
         ),
         supports_check_mode=True,
         mutually_exclusive=[['token', 'login_user'],
-                            ['token', 'login_password']]
+                            ['token', 'login_password'],
+                            ['token', 'login_tenant_name']]
     )
 
     if not keystoneclient_found:
@@ -310,8 +321,9 @@ def main():
     token = module.params['token']
     login_user = module.params['login_user']
     login_password = module.params['login_password']
+    login_tenant_name = module.params['login_tenant_name']
 
-    keystone = authenticate(endpoint, token, login_user, login_password)
+    keystone = authenticate(endpoint, token, login_user, login_password, login_tenant_name)
 
     check_mode = module.check_mode
 

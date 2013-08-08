@@ -46,13 +46,15 @@ options:
     force:
         required: false
         default: "yes"
-        choices: [ yes, no ]
+        choices: [ 'yes', 'no' ]
         description:
             - If C(yes), any modified files in the working
               tree will be discarded.
-examples:
-    - code: "bzr name=bzr+ssh://foosball.example.org/path/to/branch dest=/srv/checkout version=22"
-      description: Example bzr checkout from Ansible Playbooks
+'''
+
+EXAMPLES = '''
+# Example bzr checkout from Ansible Playbooks
+- bzr: name=bzr+ssh://foosball.example.org/path/to/branch dest=/srv/checkout version=22
 '''
 
 import re

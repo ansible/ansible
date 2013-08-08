@@ -1,10 +1,6 @@
 Command Line Examples And Next Steps
 ====================================
 
-.. image:: http://ansible.cc/docs/_static/ansible_fest_2013.png
-   :alt: ansiblefest 2013
-   :target: http://ansibleworks.com/fest
-
 .. highlight:: bash
 
 The following examples show how to use `/usr/bin/ansible` for running
@@ -16,7 +12,6 @@ using `/usr/bin/ansible-playbook` -- the concepts port over directly.
 
 .. contents::
    :depth: 2
-   :backlinks: top
 
 
 Parallelism and Shell Commands
@@ -139,8 +134,9 @@ Ensure a package is not installed::
 
     $ ansible webservers -m yum -a "name=acme state=removed"
 
-Currently Ansible only has modules for managing packages with yum and apt.  You can install
-for other packages for now using the command module or (better!) contribute a module
+Ansible has modules for managing packages under many platforms.  If your package manager
+does not have a module available for it, you can install
+for other packages using the command module or (better!) contribute a module
 for other package managers.  Stop by the mailing list for info/details.
 
 Users and Groups
@@ -262,8 +258,8 @@ Ansible has an optional configuration file that can be used to tune settings and
 the first config file it finds present:
 
 1. File specified by the ``ANSIBLE_CONFIG`` environment variable
-2. ``ansible.cfg`` in the current working directory. (version 0.8 and up)
-3. ``~/.ansible.cfg``
+2. ``~/.ansible.cfg``
+3. ``ansible.cfg`` in the current working directory. (version 0.8 and up)
 4. ``/etc/ansible/ansible.cfg``
 
 For those running from source, a sample configuration file lives in the examples/ directory.  The RPM will install configuration into /etc/ansible/ansible.cfg automatically.

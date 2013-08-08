@@ -53,15 +53,20 @@ options:
   proxy:
     description:
       - HTTP[s] proxy to be used if C(src) is a URL.
-
-examples:
-  - code: svr4pkg name=CSWcommon src=/tmp/cswpkgs.pkg state=present
-    description: Install a package from an already copied file
-  - code: 'svr4pkg name=CSWpkgutil src=http://get.opencsw.org/now state=present'
-    description: Install a package directly from an http site
-  - code: svr4pkg name=SUNWgnome-sound-recorder state=absent
-    description: Ensure that a package is not installed.
 '''
+
+EXAMPLES = '''
+# Install a package from an already copied file
+- svr4pkg: name=CSWcommon src=/tmp/cswpkgs.pkg state=present
+
+# Install a package directly from an http site
+- svr4pkg: name=CSWpkgutil src=http://get.opencsw.org/now state=present
+
+# Ensure that a package is not installed.
+- svr4pkg: name=SUNWgnome-sound-recorder state=absent
+'''
+
+
 import os
 import tempfile
 
@@ -69,7 +74,7 @@ def package_installed(module, name):
     cmd = [module.get_bin_path('pkginfo', True)]
     cmd.append('-q')
     cmd.append(name)
-    rc, out, err = module.run_command(' '.join(cmd), shell=False)
+    rc, out, err = module.run_command(' '.join(cmd))
     if rc == 0:
         return True
     else:

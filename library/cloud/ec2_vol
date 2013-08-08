@@ -34,6 +34,13 @@ options:
     required: true
     default: null
     aliases: []
+  iops:
+    description:
+      - the provisioned IOPs you want to associate with this volume (integer).
+    required: false
+    default: 100
+    aliases: []
+    version_added: "1.3"
   device_name:
     description:
       - device id to override device mapping. Assumes /dev/sdf for Linux/UNIX and /dev/xvdf for Windows.
@@ -58,25 +65,33 @@ author: Lester Wade
 
 EXAMPLES = '''
 # Simple attachment action
-local_action: 
+- local_action: 
     module: ec2_vol 
     instance: XXXXXX 
     volume_size: 5 
     device_name: sdd
-   
+
+# Example using custom iops params   
+- local_action: 
+    module: ec2_vol 
+    instance: XXXXXX 
+    volume_size: 5 
+    iops: 200
+    device_name: sdd
+		
 # Playbook example combined with instance launch 
-local_action: 
+- local_action: 
     module: ec2 
-    keypair: $keypair 
-    image: $image 
+    keypair: "{{ keypair }}"
+    image: "{{ image }}"
     wait: yes 
     count: 3
     register: ec2
-local_action: 
+- local_action: 
     module: ec2_vol 
-    instance: ${item.id} 
+    instance: "{{ item.id }} " 
     volume_size: 5
-    with_items: ${ec2.instances}
+    with_items: ec2.instances
     register: ec2_vol
 '''
 
@@ -99,6 +114,7 @@ def main():
         argument_spec = dict(
             instance = dict(),
             volume_size = dict(required=True),
+            iops = dict(),
             device_name = dict(),
             region = dict(),
             zone = dict(),
@@ -110,6 +126,7 @@ def main():
 
     instance = module.params.get('instance')
     volume_size = module.params.get('volume_size')
+    iops = module.params.get('iops')
     device_name = module.params.get('device_name')
     region = module.params.get('region')
     zone = module.params.get('zone')
@@ -155,12 +172,20 @@ def main():
         if device_name:
             if device_name in inst.block_device_mapping:
                 module.exit_json(msg="Volume mapping for %s already exists on instance %s" % (device_name, instance),
+
                                  changed=False)
+
+    # If custom iops is defined we use volume_type "io1" rather than the default of "standard"
+
+    if iops:
+        volume_type = 'io1'
+    else:
+        volume_type = 'standard'
 
     # If no instance supplied, try volume creation based on module parameters.
 
     try:
-        volume = ec2.create_volume(volume_size, zone)
+        volume = ec2.create_volume(volume_size, zone, None, volume_type, iops)
         while volume.status != 'available':
             time.sleep(3)
             volume.update()

@@ -39,6 +39,14 @@ options:
             commands unless necessary.  C(restarted) will always bounce the
             service.  C(reloaded) will always reload. At least one of state
             and enabled are required.
+    sleep:
+        required: false
+        version_added: "1.3"
+        description:
+        - If the service is being C(restarted) then sleep this many seconds
+          between the stop and start command. This helps to workaround badly
+          behaving init scripts that exit immediately after signaling a process
+          to stop.
     pattern:
         required: false
         version_added: "0.7"
@@ -54,32 +62,47 @@ options:
         - Whether the service should start on boot. At least one of state and
           enabled are required.
 
+    runlevel:
+        required: false
+        default: 'default'
+        description:
+        - "For OpenRC init scripts (ex: Gentoo) only.  The runlevel that this service belongs to."
     arguments:
         description:
         - Additional arguments provided on the command line
         aliases: [ 'args' ]
-examples:
-    - description: Example action to start service httpd, if not running
-      code: "service: name=httpd state=started"
-    - description: Example action to stop service httpd, if running
-      code: "service: name=httpd state=stopped"
-    - description: Example action to restart service httpd, in all cases
-      code: "service: name=httpd state=restarted"
-    - description: Example action to reload service httpd, in all cases
-      code: "service: name=httpd state=reloaded"
-    - description: Example action to enable service httpd, and not touch the running state
-      code: "service: name=httpd enabled=yes"
-    - description: Example action to start service foo, based on running process /usr/bin/foo
-      code: "service: name=foo pattern=/usr/bin/foo state=started"
-    - description: Example action to restart network service for interface eth0
-      code: "service: name=network state=restarted args=eth0"
+'''
+
+EXAMPLES = '''
+# Example action to start service httpd, if not running
+- service: name=httpd state=started
+
+# Example action to stop service httpd, if running
+- service: name=httpd state=stopped
+
+# Example action to restart service httpd, in all cases
+- service: name=httpd state=restarted
+
+# Example action to reload service httpd, in all cases
+- service: name=httpd state=reloaded
+
+# Example action to enable service httpd, and not touch the running state
+- service: name=httpd enabled=yes
+
+# Example action to start service foo, based on running process /usr/bin/foo
+- service: name=foo pattern=/usr/bin/foo state=started
+
+# Example action to restart network service for interface eth0
+- service: name=network state=restarted args=eth0
 '''
 
 import platform
 import os
+import re
 import tempfile
 import shlex
 import select
+import time
 
 class Service(object):
     """
@@ -105,10 +128,13 @@ class Service(object):
         self.module         = module
         self.name           = module.params['name']
         self.state          = module.params['state']
+        self.sleep          = module.params['sleep']
         self.pattern        = module.params['pattern']
         self.enable         = module.params['enabled']
+        self.runlevel       = module.params['runlevel']
         self.changed        = False
         self.running        = None
+        self.crashed        = None
         self.action         = None
         self.svc_cmd        = None
         self.svc_initscript = None
@@ -352,7 +378,7 @@ class LinuxService(Service):
     def get_service_tools(self):
 
         paths = [ '/sbin', '/usr/sbin', '/bin', '/usr/bin' ]
-        binaries = [ 'service', 'chkconfig', 'update-rc.d', 'initctl', 'systemctl', 'start', 'stop', 'restart' ]
+        binaries = [ 'service', 'chkconfig', 'update-rc.d', 'rc-service', 'rc-update', 'initctl', 'systemctl', 'start', 'stop', 'restart' ]
         initpaths = [ '/etc/init.d' ]
         location = dict()
 
@@ -371,6 +397,11 @@ class LinuxService(Service):
         elif location.get('update-rc.d', None) and os.path.exists("/etc/init.d/%s" % self.name):
             # service is managed by with SysV init scripts, but with update-rc.d
             self.enable_cmd = location['update-rc.d']
+        elif location.get('rc-service', None) and not location.get('systemctl', None):
+            # service is managed by OpenRC
+            self.svc_cmd = location['rc-service']
+            self.enable_cmd = location['rc-update']
+            return
         elif location.get('systemctl', None):
 
             # verify service is managed by systemd
@@ -390,7 +421,6 @@ class LinuxService(Service):
                     break
 
         # Locate a tool for runtime service management (start, stop etc.)
-        self.svc_cmd = ''
         if location.get('service', None) and os.path.exists("/etc/init.d/%s" % self.name):
             # SysV init script
             self.svc_cmd = location['service']
@@ -405,12 +435,12 @@ class LinuxService(Service):
                     self.svc_initscript = initscript
 
         # couldn't find anything yet, assume systemd
-        if self.svc_initscript is None:
+        if self.svc_cmd is None and self.svc_initscript is None:
             if location.get('systemctl'):
                 self.svc_cmd = location['systemctl']
 
         if self.svc_cmd is None and not self.svc_initscript:
-            self.module.fail_json(msg='cannot find \'service\' binary or init script for service, aborting')
+            self.module.fail_json(msg='cannot find \'service\' binary or init script for service,  possible typo in service name?, aborting')
 
         if location.get('initctl', None):
             self.svc_initctl = location['initctl']
@@ -427,6 +457,11 @@ class LinuxService(Service):
                 self.running = False
             elif initctl_status_stdout.find("start/running") != -1:
                 self.running = True
+
+        if self.svc_cmd.endswith("rc-service") and self.running is None:
+            openrc_rc, openrc_status_stdout, openrc_status_stderr = self.execute_command("%s %s status" % (self.svc_cmd, self.name))
+            self.running = "started" in openrc_status_stdout
+            self.crashed = "crashed" in openrc_status_stderr
 
         # if the job status is still not known check it by response code
         # For reference, see:
@@ -502,19 +537,63 @@ class LinuxService(Service):
             elif not self.enable:
                 return
 
-        # we change argument depending on real binary used
-        # update-rc.d wants enable/disable while
-        # chkconfig wants on/off
-        # also, systemctl needs the argument order reversed
+        if self.enable_cmd.endswith("rc-update"):
+            (rc, out, err) = self.execute_command("%s show" % self.enable_cmd)
+            for line in out.splitlines():
+                service_name, runlevels = line.split('|')
+                service_name = service_name.strip()
+                if service_name != self.name:
+                    continue
+                runlevels = re.split(r'\s+', runlevels)
+                # service already enabled for the runlevel
+                if self.enable and self.runlevel in runlevels:
+                    return
+                # service already disabled for the runlevel
+                elif not self.enable and self.runlevel not in runlevels:
+                    return
+                break
+            else:
+                # service already disabled altogether
+                if not self.enable:
+                    return
+
+        if self.enable_cmd.endswith("update-rc.d"):
+            if self.enable:
+                action = 'enable'
+            else:
+                action = 'disable'
+            (rc, out, err) = self.execute_command("%s -n %s %s" \
+                                                  % (self.enable_cmd, self.name, action))
+            self.changed = False
+            for line in out.splitlines():
+                if line.startswith('rename'):
+                    self.changed = True
+                    break
+
+            if self.module.check_mode:
+                self.module.exit_json(changed=self.changed)
+
+            if not self.changed:
+                return
+
+            return self.execute_command("%s %s %s" % (self.enable_cmd, self.name, action))
+
+        # we change argument depending on real binary used:
+        # - update-rc.d and systemctl wants enable/disable
+        # - chkconfig wants on/off
+        # - rc-update wants add/delete
+        # also, rc-update and systemctl needs the argument order reversed
         if self.enable:
             on_off = "on"
             enable_disable = "enable"
+            add_delete = "add"
         else:
             on_off = "off"
             enable_disable = "disable"
+            add_delete = "delete"
 
-        if self.enable_cmd.endswith("update-rc.d"):
-            args = (self.enable_cmd, self.name, enable_disable)
+        if self.enable_cmd.endswith("rc-update"):
+            args = (self.enable_cmd, add_delete, self.name + " " + self.runlevel)
         elif self.enable_cmd.endswith("systemctl"):
             args = (self.enable_cmd, enable_disable, self.name + ".service")
         else:
@@ -535,7 +614,7 @@ class LinuxService(Service):
         arguments = self.arguments
         if self.svc_cmd:
             if not self.svc_cmd.endswith("systemctl"):
-                # SysV take the form <cmd> <name> <action>
+                # SysV and OpenRC take the form <cmd> <name> <action>
                 svc_cmd = "%s %s" % (self.svc_cmd, self.name)
             else:
                 # systemd commands take the form <cmd> <action> <name>
@@ -545,21 +624,32 @@ class LinuxService(Service):
             # upstart
             svc_cmd = "%s" % self.svc_initscript
 
+        # In OpenRC, if a service crashed, we need to reset its status to
+        # stopped with the zap command, before we can start it back.
+        if self.svc_cmd.endswith('rc-service') and self.action == 'start' and self.crashed:
+            self.execute_command("%s zap" % svc_cmd, daemonize=True)
+
         if self.action is not "restart":
             if svc_cmd != '':
-                # upstart or systemd
+                # upstart or systemd or OpenRC
                 rc_state, stdout, stderr = self.execute_command("%s %s %s" % (svc_cmd, self.action, arguments), daemonize=True)
             else:
                 # SysV
                 rc_state, stdout, stderr = self.execute_command("%s %s %s" % (self.action, self.name, arguments), daemonize=True)
+        elif self.svc_cmd.endswith('rc-service'):
+            # All services in OpenRC support restart.
+            rc_state, stdout, stderr = self.execute_command("%s %s %s" % (svc_cmd, self.action, arguments), daemonize=True)
         else:
-            # not all services support restart. Do it the hard way.
+            # In other systems, not all services support restart. Do it the hard way.
             if svc_cmd != '':
                 # upstart or systemd
                 rc1, stdout1, stderr1 = self.execute_command("%s %s %s" % (svc_cmd, 'stop', arguments), daemonize=True)
             else:
                 # SysV
                 rc1, stdout1, stderr1 = self.execute_command("%s %s %s" % ('stop', self.name, arguments), daemonize=True)
+
+            if self.sleep:
+                time.sleep(self.sleep)
 
             if svc_cmd != '':
                 # upstart or systemd
@@ -617,7 +707,14 @@ class FreeBsdService(Service):
             if os.path.isfile(rcfile):
                 self.rcconf_file = rcfile
 
-        self.rcconf_key = "%s_enable" % self.name
+        rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, 'rcvar', self.arguments))
+        rcvars = shlex.split(stdout, comments=True)
+        if not rcvars:
+            self.module.fail_json(msg="unable to determine rcvar")
+
+        # In rare cases, i.e. sendmail, rcvar can return several key=value pairs
+        # Usually there is just one, however.
+        self.rcconf_key = rcvars[0].split('=')[0]
 
         return self.service_enable_rcconf()
 
@@ -929,8 +1026,10 @@ def main():
         argument_spec = dict(
             name = dict(required=True),
             state = dict(choices=['running', 'started', 'stopped', 'restarted', 'reloaded']),
+            sleep = dict(required=False, type='int', default=None),
             pattern = dict(required=False, default=None),
             enabled = dict(choices=BOOLEANS, type='bool'),
+            runlevel = dict(required=False, default='default'),
             arguments = dict(aliases=['args'], default=''),
         ),
         supports_check_mode=True

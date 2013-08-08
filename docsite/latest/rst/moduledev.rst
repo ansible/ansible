@@ -1,11 +1,6 @@
 Module Development
 ==================
 
-.. image:: http://ansible.cc/docs/_static/ansible_fest_2013.png
-   :alt: ansiblefest 2013
-   :target: http://ansibleworks.com/fest
-
-
 Ansible modules are reusable units of magic that can be used by the Ansible API,
 or by the `ansible` or `ansible-playbook` programs.
 
@@ -14,7 +9,6 @@ by `ANSIBLE_LIBRARY` or the ``--module-path`` command line option.
 
 .. contents::
    :depth: 2
-   :backlinks: top
 
 
 Tutorial
@@ -368,12 +362,9 @@ Include it in your module file like this::
     module: modulename
     short_description: This is a sentence describing the module
     # ... snip ...
-    examples:
-        - code: modulename opt1=arg1 opt2=arg2
-          description: Optional words describing this example
     '''
 
-The ``description``, ``notes`` and ``description`` within ``examples``
+The ``description``, and ``notes`` 
 support formatting in some of the output formats (e.g. ``rst``, ``man``).
 These formatting functions are ``U()``, ``M()``, ``I()``, and ``C()``
 for URL, module, italic, and constant-width respectively. It is suggested
@@ -381,7 +372,7 @@ to use ``C()`` for file and option names, and ``I()`` when referencing
 parameters; module names should be specifies as ``M(module)``.
 
 Examples (which typically contain colons, quotes, etc.) are difficult
-to format with YAML, so these can (alternatively, or additionally) be
+to format with YAML, so these must be
 written in plain text in an ``EXAMPLES`` string within the module
 like this::
 
@@ -390,7 +381,7 @@ like this::
     '''
 
 The ``module_formatter.py`` script and ``ansible-doc(1)`` append the
-``EXAMPLES`` blob after any existing ``examples`` you may have in the
+``EXAMPLES`` blob after any existing (deprecated) ``examples`` you may have in the
 YAML ``DOCUMENTATION`` string.
 
 Building & Testing

@@ -91,29 +91,45 @@ options:
     required: false
     default: null
     version_added: "1.0"
-examples:
-   - code: "pip: name=flask"
-     description: Install I(flask) python package.
-   - code: "pip: name=flask version=0.8"
-     description: Install I(flask) python package on version 0.8.
-   - code: "pip: name='svn+http://myrepo/svn/MyApp#egg=MyApp'"
-     description: Install I(MyApp) using one of the remote protocols (bzr+,hg+,git+,svn+) or tarballs (zip, gz, bz2) C(pip) supports. You do not have to supply '-e' option in extra_args. For these source names, C(use_mirrors) is ignored and not applicable.
-   - code: "pip: name=flask virtualenv=/my_app/venv"
-     description: "Install I(Flask) (U(http://flask.pocoo.org/)) into the specified I(virtualenv), inheriting none of the globally installed modules"
-   - code: "pip: name=flask virtualenv=/my_app/venv virtualenv_site_packages=yes"
-     description: "Install I(Flask) (U(http://flask.pocoo.org/)) into the specified I(virtualenv), inheriting globally installed modules"
-   - code: "pip: name=flask virtualenv=/my_app/venv virtualenv_command=virtualenv-2.7"
-     description: "Install I(Flask) (U(http://flask.pocoo.org/)) into the specified I(virtualenv), using Python 2.7"
-   - code: "pip: requirements=/my_app/requirements.txt"
-     description: Install specified python requirements.
-   - code: "pip: requirements=/my_app/requirements.txt virtualenv=/my_app/venv"
-     description: Install specified python requirements in indicated I(virtualenv).
-   - code: "pip: requirements=/my_app/requirements.txt extra_args='-i https://example.com/pypi/simple'"
-     description: Install specified python requirements and custom Index URL.
+  chdir:
+    description:
+      - cd into this directory before running the command
+    version_added: "1.3"
+    required: false
+    default: null
 notes:
    - Please note that virtualenv (U(http://www.virtualenv.org/)) must be installed on the remote host if the virtualenv parameter is specified.
 requirements: [ "virtualenv", "pip" ]
 author: Matt Wright
+'''
+
+EXAMPLES = '''
+# Install (flask) python package.
+- pip: name=flask
+
+# Install (flask) python package on version 0.8.
+- pip: name=flask version=0.8
+
+# Install (MyApp) using one of the remote protocols (bzr+,hg+,git+,svn+) or tarballs (zip, gz, bz2) (pip) supports. You do not have to supply '-e' option in extra_args. For these source names, (use_mirrors) is ignored and not applicable.
+- pip: name='svn+http://myrepo/svn/MyApp#egg=MyApp'
+
+# Install (Flask) into the specified (virtualenv), inheriting none of the globally installed modules
+- pip: name=flask virtualenv=/my_app/venv
+
+# Install (Flask) into the specified (virtualenv), inheriting globally installed modules
+- pip: name=flask virtualenv=/my_app/venv virtualenv_site_packages=yes
+
+# Install (Flask) into the specified (virtualenv), using Python 2.7
+- pip: name=flask virtualenv=/my_app/venv virtualenv_command=virtualenv-2.7
+
+# Install specified python requirements.
+- pip: requirements=/my_app/requirements.txt
+
+# Install specified python requirements in indicated (virtualenv).
+- pip: requirements=/my_app/requirements.txt virtualenv=/my_app/venv
+
+# Install specified python requirements and custom Index URL.
+- pip: requirements=/my_app/requirements.txt extra_args='-i https://example.com/pypi/simple'
 '''
 
 
@@ -170,6 +186,7 @@ def main():
             virtualenv_command=dict(default='virtualenv', required=False),
             use_mirrors=dict(default='yes', type='bool'),
             extra_args=dict(default=None, required=False),
+            chdir=dict(default=None, required=False),
         ),
         required_one_of=[['name', 'requirements']],
         mutually_exclusive=[['name', 'requirements']],
@@ -182,6 +199,7 @@ def main():
     requirements = module.params['requirements']
     use_mirrors = module.params['use_mirrors']
     extra_args = module.params['extra_args']
+    chdir = module.params['chdir']
 
     if state == 'latest' and version is not None:
         module.fail_json(msg='version is incompatible with state=latest')
@@ -205,6 +223,8 @@ def main():
             else:
                 cmd = '%s %s' % (virtualenv, env)
             os.chdir(tempfile.gettempdir())
+            if chdir:
+                os.chdir(chdir)
             rc, out_venv, err_venv = module.run_command(cmd)
             out += out_venv
             err += err_venv
@@ -228,6 +248,7 @@ def main():
         # is_tar ends with .zip, .tar.gz, or .tar.bz2
         is_vcs = False
         is_tar = False
+        is_local_path = False
         if name.endswith('.tar.gz') or name.endswith('.tar.bz2') or name.endswith('.zip'):
             is_tar = True
         elif name.startswith('svn+') or name.startswith('git+') or \
@@ -242,8 +263,11 @@ def main():
                 args_list.append('-e')
                 # Ok, we will reconstruct the option string
                 extra_args = ' '.join(args_list)
+
+        if name.startswith(('.','/')):
+            is_local_path = True
         # for tarball or vcs source, applying --use-mirrors doesn't really make sense
-        is_package = is_vcs or is_tar       # just a shortcut for bool
+        is_package = is_vcs or is_tar or is_local_path       # just a shortcut for bool
         if not is_package and state != 'absent' and use_mirrors:
             cmd += ' --use-mirrors'
         cmd += ' %s' % _get_full_name(name, version)
@@ -253,6 +277,8 @@ def main():
     if module.check_mode:
         module.exit_json(changed=True)
     os.chdir(tempfile.gettempdir())
+    if chdir:
+        os.chdir(chdir)
     rc, out_pip, err_pip = module.run_command(cmd)
     out += out_pip
     err += err_pip

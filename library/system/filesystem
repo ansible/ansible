@@ -44,20 +44,23 @@ options:
   opts:
     description:
     - List of options to be passed to mkfs command.
-examples:
-  - description: Create a ext2 filesystem on /dev/sdb1.
-    code: filesystem fstype=ext2 dev=/dev/sdb1
-  - description: Create a ext4 filesystem on /dev/sdb1 and check disk blocks.
-    code: filesystem fstype=ext4 dev=/dev/sdb1 opts="-cc"
 notes:
   - uses mkfs command
+'''
+
+EXAMPLES = '''
+# Create a ext2 filesystem on /dev/sdb1.
+- filesystem: fstype=ext2 dev=/dev/sdb1
+
+# Create a ext4 filesystem on /dev/sdb1 and check disk blocks.
+- filesystem: fstype=ext4 dev=/dev/sdb1 opts="-cc"
 '''
 
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            fstype=dict(required=True),
-            dev=dict(required=True),
+            fstype=dict(required=True, aliases=['type']),
+            dev=dict(required=True, aliases=['device']),
             opts=dict(),
             force=dict(type='bool', default='no'),
         ),
@@ -74,7 +77,9 @@ def main():
     if not os.path.exists(dev):
         module.fail_json(msg="Device %s not found."%dev)
 
-    rc,raw_fs,err = module.run_command("blkid -o value -s TYPE %s"%(dev))
+    cmd = module.get_bin_path('blkid', required=True)
+
+    rc,raw_fs,err = module.run_command("%s -o value -s TYPE %s" % (cmd, dev))
     fs = raw_fs.strip()
 
 
@@ -88,11 +93,12 @@ def main():
     if module.check_mode:
         changed = True
     else:
+        mkfs = module.get_bin_path('mkfs', required=True)
         cmd = None
         if opts is None:
-            cmd = "mkfs -t %s '%s'"%(fstype, dev)
+            cmd = "%s -t %s '%s'" % (mkfs, fstype, dev)
         else:
-            cmd = "mkfs -t %s %s '%s'"%(fstype, opts, dev)
+            cmd = "%s -t %s %s '%s'" % (mkfs, fstype, opts, dev)
         rc,_,err = module.run_command(cmd)
         if rc == 0:
             changed = True

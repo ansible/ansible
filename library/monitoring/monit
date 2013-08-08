@@ -38,11 +38,13 @@ options:
     required: true
     default: null
     choices: [ "present", "started", "stopped", "restarted", "monitored", "unmonitored", "reloaded" ]
-examples:
-   - code: "monit: name=httpd state=started"
-     description: Manage the state of program I(httpd) to be in I(started) state.
 requirements: [ ]
 author: Darryl Stoflet
+'''
+
+EXAMPLES = '''
+# Manage the state of program "httpd" to be in "started" state.
+- monit: name=httpd state=started
 '''
 
 
@@ -85,7 +87,7 @@ def main():
         module.exit_json(changed=False, name=name, state=state)
 
     rc, out, err = module.run_command('%s summary | grep %s' % (MONIT, name))
-    running = 'Running' in out
+    running = 'running' in out.lower()
 
     if running and (state == 'started' or state == 'monitored'):
         module.exit_json(changed=False, name=name, state=state)

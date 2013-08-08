@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright 2013 Matt Coddington <coddington@gmail.com>
@@ -69,7 +69,10 @@ requirements: [ urllib, urllib2 ]
 '''
 
 EXAMPLES = '''
-action: newrelic_deployment token=AAAAAA app_name=myapp user='ansible deployment' revision=1.0
+- newrelic_deployment: token=AAAAAA
+                       app_name=myapp
+                       user='ansible deployment'
+                       revision=1.0
 '''
 
 HAS_URLLIB = True

@@ -1,13 +1,8 @@
 Ansible Modules
 ===============
 
-.. image:: http://ansible.cc/docs/_static/ansible_fest_2013.png
-   :alt: ansiblefest 2013
-   :target: http://ansibleworks.com/fest
-
 .. contents::
    :depth: 3
-   :backlinks: top
 
 Introduction
 ````````````

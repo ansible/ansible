@@ -42,14 +42,16 @@ options:
       - path to the SELinux configuration file, if non-standard
     required: false
     default: "/etc/selinux/config"
-examples:
-   - code: "selinux: policy=targeted state=enforcing"
-   - code: "selinux: policy=targeted state=permissive"
-   - code: "selinux: state=disabled"
 notes:
    - Not tested on any debian based system
 requirements: [ libselinux-python ]
 author: Derek Carter <goozbach@friocorte.com>
+'''
+
+EXAMPLES = '''
+- selinux: policy=targeted state=enforcing
+- selinux: policy=targeted state=permissive
+- selinux: state=disabled
 '''
 
 import os
@@ -59,7 +61,7 @@ import sys
 try:
     import selinux
 except ImportError:
-    print json.dumps(failed=True, msg='python-selinux required for this module')
+    print "failed=True msg='python-selinux required for this module'"
     sys.exit(1)
 
 # getter subroutines
@@ -198,3 +200,4 @@ def main():
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
 
 main()
+

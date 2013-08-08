@@ -3,7 +3,7 @@
 
 # (c) 2013, Shaun Zinck
 # Written by Shaun Zinck <shaun.zinck at gmail.com>
-# Based on pacman module written by Afterburn <http://github.com/afterburn> 
+# Based on pacman module written by Afterburn <http://github.com/afterburn>
 #  that was based on apt module written by Matthew Williams <matthew@flowroute.com>
 #
 # This module is free software: you can redistribute it and/or modify
@@ -40,13 +40,17 @@ options:
         default: present
 author: Shaun Zinck
 notes:  []
-examples:
-    - code: "pkgin: name=foo state=present"
-      description: install package foo"
-    - code: "pkgin: name=foo state=absent"
-      description: remove package foo
-    - code: "pkgin: name=foo,bar state=absent"
-      description: remove packages foo and bar 
+'''
+
+EXAMPLES = '''
+# install package foo"
+- pkgin: name=foo state=present
+
+# remove package foo
+- pkgin: name=foo state=absent
+
+# remove packages foo and bar
+- pkgin: name=foo,bar state=absent
 '''
 
 
@@ -55,6 +59,7 @@ import shlex
 import os
 import sys
 
+
 def query_package(module, pkgin_path, name, state="present"):
 
     if state == "present":
@@ -62,13 +67,40 @@ def query_package(module, pkgin_path, name, state="present"):
         rc, out, err = module.run_command("%s list | grep ^%s" % (pkgin_path, name))
 
         if rc == 0:
-            return True
+            # At least one package with a package name that starts with ``name``
+            # is installed.  For some cases this is not sufficient to determine
+            # wether the queried package is installed.
+            #
+            # E.g. for ``name='gcc47'``, ``gcc47`` not being installed, but
+            # ``gcc47-libs`` being installed, ``out`` would be:
+            #
+            #   gcc47-libs-4.7.2nb4  The GNU Compiler Collection (GCC) support shared libraries.
+            #
+            # Multiline output is also possible, for example with the same query
+            # and bot ``gcc47`` and ``gcc47-libs`` being installed:
+            #
+            #   gcc47-libs-4.7.2nb4   The GNU Compiler Collection (GCC) support shared libraries.
+            #   gcc47-4.7.2nb3       The GNU Compiler Collection (GCC) - 4.7 Release Series
+
+            # Loop over lines in ``out``
+            for line in out.split('\n'):
+
+                # Strip description
+                # (results in sth. like 'gcc47-libs-4.7.2nb4')
+                pkgname_with_version = out.split(' ')[0]
+
+                # Strip version
+                # (results in sth like 'gcc47-libs')
+                pkgname_without_version = '-'.join(pkgname_with_version.split('-')[:-1])
+
+                if name == pkgname_without_version:
+                    return True
 
         return False
 
 
 def remove_packages(module, pkgin_path, packages):
-    
+
     remove_c = 0
     # Using a for loop incase of error, we can report the package that failed
     for package in packages:
@@ -80,7 +112,7 @@ def remove_packages(module, pkgin_path, packages):
 
         if query_package(module, pkgin_path, package):
             module.fail_json(msg="failed to remove %s: %s" % (package, out))
-    
+
         remove_c += 1
 
     if remove_c > 0:
@@ -104,7 +136,7 @@ def install_packages(module, pkgin_path, packages):
             module.fail_json(msg="failed to install %s: %s" % (package, out))
 
         install_c += 1
-    
+
     if install_c > 0:
         module.exit_json(changed=True, msg="present %s package(s)" % (install_c))
 
@@ -132,5 +164,5 @@ def main():
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
-    
-main()        
+
+main()

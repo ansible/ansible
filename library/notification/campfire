@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 DOCUMENTATION = '''
@@ -43,9 +43,9 @@ author: Adam Garside <adam.garside@gmail.com>
 '''
 
 EXAMPLES = '''
-action: campfire subscription=foo token=12345 room=123 msg="Task completed."
+- campfire: subscription=foo token=12345 room=123 msg="Task completed."
 
-action: campfire subscription=foo token=12345 room=123 notify=loggins
+- campfire: subscription=foo token=12345 room=123 notify=loggins
         msg="Task completed ... with feeling."
 '''
 

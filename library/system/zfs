@@ -50,12 +50,12 @@ options:
     description:
       - The atime property.
     required: False
-    choices: [on,off]
+    choices: ['on','off']
   canmount:
     description:
       - The canmount property.
     required: False
-    choices: [on,off,noauto]
+    choices: ['on','off','noauto']
   casesensitivity:
     description:
       - The casesensitivity property.
@@ -65,12 +65,12 @@ options:
     description:
       - The checksum property.
     required: False
-    choices: [on,off,fletcher2,fletcher4,sha256]
+    choices: ['on','off',fletcher2,fletcher4,sha256]
   compression:
     description:
       - The compression property.
     required: False
-    choices: [on,off,lzjb,gzip,gzip-1,gzip-2,gzip-3,gzip-4,gzip-5,gzip-6,gzip-7,gzip-8,gzip-9]
+    choices: ['on','off',lzjb,gzip,gzip-1,gzip-2,gzip-3,gzip-4,gzip-5,gzip-6,gzip-7,gzip-8,gzip-9]
   copies:
     description:
       - The copies property.
@@ -80,22 +80,22 @@ options:
     description:
       - The dedup property.
     required: False
-    choices: [on,off]
+    choices: ['on','off']
   devices:
     description:
       - The devices property.
     required: False
-    choices: [on,off]
+    choices: ['on','off']
   exec:
     description:
       - The exec property.
     required: False
-    choices: [on,off]
+    choices: ['on','off']
   jailed:
     description:
       - The jailed property.
     required: False
-    choices: [on,off]
+    choices: ['on','off']
   logbias:
     description:
       - The logbias property.
@@ -109,7 +109,7 @@ options:
     description:
       - The nbmand property.
     required: False
-    choices: [on,off]
+    choices: ['on','off']
   normalization:
     description:
       - The normalization property.
@@ -128,7 +128,7 @@ options:
     description:
       - The readonly property.
     required: False
-    choices: [on,off]
+    choices: ['on','off']
   recordsize:
     description:
       - The recordsize property.
@@ -154,12 +154,12 @@ options:
     description:
       - The setuid property.
     required: False
-    choices: [on,off]
+    choices: ['on','off']
   shareiscsi:
     description:
       - The shareiscsi property.
     required: False
-    choices: [on,off]
+    choices: ['on','off']
   sharenfs:
     description:
       - The sharenfs property.
@@ -177,12 +177,12 @@ options:
     description:
       - The sync property.
     required: False
-    choices: [on,off]
+    choices: ['on','off']
   utf8only:
     description:
       - The utf8only property.
     required: False
-    choices: [on,off]
+    choices: ['on','off']
   volsize:
     description:
       - The volsize property.
@@ -195,28 +195,35 @@ options:
     description:
       - The vscan property.
     required: False
-    choices: [on,off]
+    choices: ['on','off']
   xattr:
     description:
       - The xattr property.
     required: False
-    choices: [on,off]
+    choices: ['on','off']
   zoned:
     description:
       - The zoned property.
     required: False
-    choices: [on,off]
-examples:
-  - code: zfs name=rpool/myfs state=present
-    description: Create a new file system called myfs in pool rpool
-  - code: zfs name=rpool/myvol state=present volsize=10M
-    description: Create a new volume called myvol in pool rpool. 
-  - code: zfs name=rpool/myfs@mysnapshot state=present
-    description: Create a snapshot of rpool/myfs file system.
-  - code: zfs name=rpool/myfs2 state=present snapdir=enabled
-    description: Create a new file system called myfs2 with snapdir enabled
+    choices: ['on','off']
 author: Johan Wiren
 '''
+
+EXAMPLES = '''
+# Create a new file system called myfs in pool rpool
+- zfs: name=rpool/myfs state=present
+
+# Create a new volume called myvol in pool rpool. 
+- zfs: name=rpool/myvol state=present volsize=10M
+
+# Create a snapshot of rpool/myfs file system.
+- zfs: name=rpool/myfs@mysnapshot state=present
+
+# Create a new file system called myfs2 with snapdir enabled
+- zfs: name=rpool/myfs2 state=present snapdir=enabled
+'''
+
+
 import os
 
 class Zfs(object):
@@ -285,11 +292,9 @@ class Zfs(object):
         if self.module.check_mode:
             self.changed = True
             return
-        cmd = [self.module.get_bin_path('zfs', True)]
-        cmd.append('set')
-        cmd.append(prop + '=' + value)
-        cmd.append(self.name)
-        (rc, err, out) = self.module.run_command(' '.join(cmd))
+        cmd = self.module.get_bin_path('zfs', True)
+        args = [cmd, 'set', prop + '=' + value, self.name]
+        (rc, err, out) = self.module.run_command(args)
         if rc == 0:
             self.changed = True
         else:
@@ -309,9 +314,9 @@ class Zfs(object):
         cmd.append('get -H all')
         cmd.append(self.name)
         rc, out, err = self.module.run_command(' '.join(cmd))
-        properties=dict()
+        properties = dict()
         for l in out.splitlines():
-            p, v = l.split()[1:3]
+            p, v = l.split('\t')[1:3]
             properties[p] = v
         return properties
 
@@ -321,6 +326,8 @@ class Zfs(object):
         return module.run_command(cmd)
 
 def main():
+
+    # FIXME: should use dict() constructor like other modules, required=False is default
     module = AnsibleModule(
         argument_spec = {
             'name':            {'required': True},

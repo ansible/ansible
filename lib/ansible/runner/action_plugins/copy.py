@@ -42,6 +42,7 @@ class ActionModule(object):
         source  = options.get('src', None)
         content = options.get('content', None)
         dest    = options.get('dest', None)
+        raw     = utils.boolean(options.get('raw', 'no'))
         force   = utils.boolean(options.get('force', 'yes'))
 
         if (source is None and content is None and not 'first_available_file' in inject) or dest is None:
@@ -57,12 +58,12 @@ class ActionModule(object):
             found = False
             for fn in inject.get('first_available_file'):
                 fn_orig = fn
-                fn = template.template(self.runner.basedir, fn, inject)
-                fn = utils.path_dwim(self.runner.basedir, fn)
-                if not os.path.exists(fn) and '_original_file' in inject:
-                    fn = utils.path_dwim_relative(inject['_original_file'], 'files', fn_orig, self.runner.basedir, check=False)
-                if os.path.exists(fn):
-                    source = fn
+                fnt = template.template(self.runner.basedir, fn, inject)
+                fnd = utils.path_dwim(self.runner.basedir, fnt)
+                if not os.path.exists(fnd) and '_original_file' in inject:
+                    fnd = utils.path_dwim_relative(inject['_original_file'], 'files', fnt, self.runner.basedir, check=False)
+                if os.path.exists(fnd):
+                    source = fnd
                     found = True
                     break
             if not found:
@@ -113,7 +114,7 @@ class ActionModule(object):
         exec_rc = None
         if local_md5 != remote_md5:
 
-            if self.runner.diff:
+            if self.runner.diff and not raw:
                 diff = self._get_diff_data(conn, tmp, inject, dest, source)
             else:
                 diff = {}
@@ -123,16 +124,29 @@ class ActionModule(object):
                     os.remove(tmp_content)
                 return ReturnData(conn=conn, result=dict(changed=True), diff=diff)
 
+
             # transfer the file to a remote tmp location
             tmp_src = tmp + 'source'
-            conn.put_file(source, tmp_src)
+
+            if not raw:
+                conn.put_file(source, tmp_src)
+            else:
+                conn.put_file(source, dest)
+
             if content is not None:
                 os.remove(tmp_content)
+
             # fix file permissions when the copy is done as a different user
-            if self.runner.sudo and self.runner.sudo_user != 'root':
+            if self.runner.sudo and self.runner.sudo_user != 'root' and not raw:
                 self.runner._low_level_exec_command(conn, "chmod a+r %s" % tmp_src, tmp)
 
+            if raw:
+                return ReturnData(conn=conn, result=dict(dest=dest, changed=True))
+
             # run the copy module
+            if 'raw' in module_args:
+                # don't send down raw=no
+                module_args.pop('raw')
             module_args = "%s src=%s original_basename=%s" % (module_args, pipes.quote(tmp_src), pipes.quote(os.path.basename(source)))
             return self.runner._execute_module(conn, tmp, 'copy', module_args, inject=inject, complex_args=complex_args)
 
@@ -142,7 +156,14 @@ class ActionModule(object):
 
             if content is not None:
                 os.remove(tmp_content)
+
+            if raw:
+                return ReturnData(conn=conn, result=dict(dest=dest, changed=False))
+
             tmp_src = tmp + os.path.basename(source)
+            if 'raw' in module_args:
+                # don't send down raw=no
+                module_args.pop('raw')
             module_args = "%s src=%s" % (module_args, pipes.quote(tmp_src))
             if self.runner.check:
                 module_args = "%s CHECKMODE=True" % module_args

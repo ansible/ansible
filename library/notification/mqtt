@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # (c) 2013, Jan-Piet Mens <jpmens () gmail.com>
@@ -85,7 +85,7 @@ author: Jan-Piet Mens
 '''
 
 EXAMPLES = '''
-local_action: mqtt
+- local_action: mqtt
               topic=service/ansible/{{ ansible_hostname }}
               payload="Hello at {{ ansible_date_time.iso8601 }}"
               qos=0

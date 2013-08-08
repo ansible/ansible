@@ -1,19 +1,13 @@
 Advanced Playbooks
 ==================
 
-.. image:: http://ansible.cc/docs/_static/ansible_fest_2013.png
-   :alt: ansiblefest 2013
-   :target: http://ansibleworks.com/fest
-
-
 Here are some advanced features of the playbooks language.  Using all of these features
-are not neccessary, but many of them will prove useful.  If a feature doesn't seem immediately
+are not necessary, but many of them will prove useful.  If a feature doesn't seem immediately
 relevant, feel free to skip it.  For many people, the features documented in `playbooks` will
 be 90% or more of what they use in Ansible.
 
 .. contents::
    :depth: 2
-   :backlinks: top
 
 Tags
 ````
@@ -28,14 +22,14 @@ Example::
 
     tasks:
 
-        - action: yum name={{ item }} state=installed
+        - yum: name={{ item }} state=installed
           with_items:
              - httpd
              - memcached
           tags:
              - packages
 
-        - action: template src=templates/src.j2 dest=/etc/foo.conf
+        - template: src=templates/src.j2 dest=/etc/foo.conf
           tags:
              - configuration
 
@@ -54,7 +48,7 @@ your webservers in "webservers.yml" and all your database servers in
 "dbservers.yml".  You can create a "site.yml" that would reconfigure
 all of your systems like this::
 
-    ----
+    ---
     - include: playbooks/webservers.yml
     - include: playbooks/dbservers.yml
 
@@ -71,8 +65,30 @@ has a failure.  Sometimes, though, you want to continue on.  To do so,
 write a task that looks like this::
 
     - name: this will not be counted as a failure
-      action: command /bin/false
+      command: /bin/false
       ignore_errors: yes
+
+Overriding Changed Result
+`````````````````````````
+
+.. versionadded:: 1.3
+
+When a shell/command or other module runs it will typically report
+"changed" status based on whether it thinks it affected machine state.
+
+Sometimes you will know, based on the return code
+or output that it did not make any changes, and wish to override
+the "changed" result such that it does not appear in report output or
+does not cause handlers to fire::
+
+    tasks:
+
+      - shell: /usr/bin/billybass --mode="take me to the river"
+        register: bass_result
+        changed_when: "bass_result.rc != 2"
+
+      # this will never report 'changed' status
+      - shell: wall 'beep'
 
 Accessing Complex Variable Data
 ```````````````````````````````
@@ -82,14 +98,14 @@ them a simple {{ foo }} is not sufficient, but it is still easy to do.   Here's 
 
     {{ ansible_eth0["ipv4"]["address"] }}
 
-Similarly, this is how we access the first element of an array:
+Similarly, this is how we access the first element of an array::
 
     {{ foo[0] }}
 
 Magic Variables, and How To Access Information About Other Hosts
 ````````````````````````````````````````````````````````````````
 
-Even if you didn't define them yourself, ansible provides a few variables for you, automatically.
+Even if you didn't define them yourself, Ansible provides a few variables for you, automatically.
 The most important of these are 'hostvars', 'group_names', and 'groups'.  Users should not use
 these names themselves as they are reserved.  'environment' is also reserved.
 
@@ -154,7 +170,7 @@ You can do this by using an external variables file, or files, just like this::
         - /vars/external_vars.yml
       tasks:
       - name: this is just a placeholder
-        action: command /bin/echo foo
+        command: /bin/echo foo
 
 This removes the risk of sharing sensitive data with others when
 sharing your playbook source with them.
@@ -190,6 +206,15 @@ in a push-script::
         favcolor: "what is your favorite color?"
 
 There are full examples of both of these items in the github examples/playbooks directory.
+
+If you have a variable that changes infrequently, it might make sense to
+provide a default value that can be overridden.  This can be accomplished using
+the default argument::
+
+   vars_prompt:
+     - name: "release_version"
+       prompt: "Product release version"
+       default: "1.0"
 
 An alternative form of vars_prompt allows for hiding input from the user, and may later support
 some other options, but otherwise works equivalently::
@@ -241,7 +266,7 @@ Passing Variables On The Command Line
 `````````````````````````````````````
 
 In addition to `vars_prompt` and `vars_files`, it is possible to send variables over
-the ansible command line.  This is particularly useful when writing a generic release playbook
+the Ansible command line.  This is particularly useful when writing a generic release playbook
 where you may want to pass in the version of the application to deploy::
 
     ansible-playbook release.yml --extra-vars "version=1.23.45 other_variable=foo"
@@ -250,7 +275,7 @@ This is useful, for, among other things, setting the hosts group or the user for
 
 Example::
 
-    -----
+    ---
     - user: '{{ user }}'
       hosts: '{{ hosts }}'
       tasks:
@@ -258,11 +283,21 @@ Example::
 
     ansible-playbook release.yml --extra-vars "hosts=vipers user=starbuck"
 
+As of Ansible 1.2, you can also pass in extra vars as quoted JSON, like so::
+
+    --extra-vars "{'pacman':'mrs','ghosts':['inky','pinky','clyde','sue']}"
+
+The key=value form is obviously simpler, but it's there if you need it!
+
+As of Ansible 1.3, extra vars can be loaded from a JSON file with the "@" syntax::
+
+    --extra-vars "@some_file.json"
+
 Conditional Execution
 `````````````````````
 
 (Note: this section covers 1.2 conditionals, if you are using a previous version, select
-the previous version of the documentation, `Ansible 1.1 Docs <http://ansible.cc/docs/released/1.1>`_ .  
+the previous version of the documentation, `Ansible 1.1 Docs <http://www.ansibleworks.com/docs/released/1.1/>`_ .
 Those conditional forms continue to be operational in 1.2, although the new mechanisms are cleaner.)
 
 Sometimes you will want to skip a particular step on a particular host.  This could be something
@@ -274,22 +309,38 @@ Don't panic -- it's actually pretty simple::
 
     tasks:
       - name: "shutdown Debian flavored systems"
-        action: command /sbin/shutdown -t now
+        command: /sbin/shutdown -t now
         when: ansible_os_family == "Debian"
+
+A number of Jinja2 "filters" can also be used in when statements, some of which are unique
+and provided by Ansible.  Suppose we want to ignore the error of one statement and then
+decide to do something conditionally based on success or failure::
+
+    tasks:
+      - command: /bin/false
+        register: result
+        ignore_errors: True
+      - command: /bin/something
+        when: result|failed
+      - command: /bin/something_else
+        when: result|success
+      - command: /bin/still/something_else
+        when: result|skipped
+
 
 As a reminder, to see what derived variables are available, you can do::
 
     ansible hostname.example.com -m setup
 
-Tip: Sometimes you'll get back a variable that's a string and you'll want to do a comparison on it.  You can do this like so:
+Tip: Sometimes you'll get back a variable that's a string and you'll want to do a comparison on it.  You can do this like so::
 
     tasks:
       - shell: echo "only on Red Hat 6, derivatives, and later"
-        when: ansible_os_family == "RedHat" and ansible_lsb.major_version|int >= 6
+        when: ansible_os_family == "RedHat" and ansible_lsb.major_release|int >= 6
 
 Variables defined in the playbooks or inventory can also be used.
 
-If a required variable has not been set, you can skip or fail using Jinja2's 
+If a required variable has not been set, you can skip or fail using Jinja2's
 `defined` test. For example::
 
     tasks:
@@ -299,7 +350,7 @@ If a required variable has not been set, you can skip or fail using Jinja2's
         - fail: msg="Bailing out: this play requires 'bar'"
           when: bar is not defined
 
-This is especially useful in combination with the conditional import of vars 
+This is especially useful in combination with the conditional import of vars
 files (see below).
 
 It's also easy to provide your own facts if you want, which is covered in :doc:`moduledev`.  To run them, just
@@ -309,14 +360,14 @@ there will be accessible to future tasks::
     tasks:
         - name: gather site specific fact data
           action: site_facts
-        - action: command echo {{ my_custom_fact_can_be_used_now }}
+        - command: echo {{ my_custom_fact_can_be_used_now }}
 
 One useful trick with *when* is to key off the changed result of a last command.  As an example::
 
     tasks:
-        - action: template src=/templates/foo.j2 dest=/etc/foo.conf
+        - template: src=/templates/foo.j2 dest=/etc/foo.conf
           register: last_result
-        - action: command echo 'the file has changed'
+        - command: echo 'the file has changed'
           when: last_result.changed
 
 {{ last_result }} is a variable set by the register directive. This assumes Ansible 0.8 and later.
@@ -325,7 +376,7 @@ When combining `when` with `with_items`, be aware that the `when` statement is p
 This is by design::
 
     tasks:
-        - action: command echo {{ item }}
+        - command: echo {{ item }}
           with_items: [ 0, 2, 4, 6, 8, 10 ]
           when: item > 5
 
@@ -353,7 +404,7 @@ but it is easily handled with a minimum of syntax in an Ansible Playbook::
         - [ "vars/{{ ansible_os_family }}.yml", "vars/os_defaults.yml" ]
       tasks:
       - name: make sure apache is running
-        action: service name={{ apache }} state=running
+        service: name={{ apache }} state=running
 
 .. note::
    The variable 'ansible_os_family' is being interpolated into
@@ -393,7 +444,7 @@ Loops
 To save some typing, repeated tasks can be written in short-hand like so::
 
     - name: add several users
-      action: user name={{ item }} state=present groups=wheel
+      user: name={{ item }} state=present groups=wheel
       with_items:
          - testuser1
          - testuser2
@@ -405,9 +456,9 @@ If you have defined a YAML list in a variables file, or the 'vars' section, you 
 The above would be the equivalent of::
 
     - name: add user testuser1
-      action: user name=testuser1 state=present groups=wheel
+      user: name=testuser1 state=present groups=wheel
     - name: add user testuser2
-      action: user name=testuser2 state=present groups=wheel
+      user: name=testuser2 state=present groups=wheel
 
 The yum and apt modules use with_items to execute fewer package manager transactions.
 
@@ -415,10 +466,29 @@ Note that the types of items you iterate over with 'with_items' do not have to b
 If you have a list of hashes, you can reference subkeys using things like::
 
     - name: add several users
-      action: user name={{ item.name }} state=present groups={{ item.groups }}
+      user: name={{ item.name }} state=present groups={{ item.groups }}
       with_items:
         - { name: 'testuser1', groups: 'wheel' }
         - { name: 'testuser2', groups: 'root' }
+
+Nested Loops
+````````````
+
+Loops can be nested as well::
+
+    - name: give users access to multiple databases
+      mysql_user: name={{ item[0] }} priv={{ item[1] }}.*:*
+      with_nested:
+        - [ 'alice', 'bob', 'eve' ]
+        - [ 'clientdb', 'employeedb', 'providerdb' ]
+
+As with the case of 'with_items' above, you can use previously defined variables. Just specify the variable'sname without templating it with '{{ }}'::
+
+    - name: here, 'users' contains the above list of employees
+      mysql_user: name={{ item[0] }} priv={{ item[1] }}.*:*
+      with_nested:
+        - users
+        - [ 'clientdb', 'employeedb', 'providerdb' ]
 
 Lookup Plugins - Accessing Outside Data
 ```````````````````````````````````````
@@ -432,47 +502,53 @@ can accept more than one parameter.
 ``with_fileglob`` matches all files in a single directory, non-recursively, that match a pattern.  It can
 be used like this::
 
-    ----
+    ---
     - hosts: all
 
       tasks:
 
         # first ensure our target directory exists
-        - action: file dest=/etc/fooapp state=directory
+        - file: dest=/etc/fooapp state=directory
 
         # copy each file over that matches the given pattern
-        - action: copy src={{ item }} dest=/etc/fooapp/ owner=root mode=600
+        - copy: src={{ item }} dest=/etc/fooapp/ owner=root mode=600
           with_fileglob:
             - /playbooks/files/fooapp/*
 
 ``with_file`` loads data in from a file directly::
 
-        - action: authorized_key user=foo key={{ item }}
+        - authorized_key: user=foo key={{ item }}
           with_file:
              - /home/foo/.ssh/id_rsa.pub
 
+.. note::
+
+   When using ``with_fileglob`` or ``with_file`` with :ref:`roles`, if you
+   specify a relative path (e.g., :file:`./foo`), Ansible resolves the path
+   relative to the :file:`roles/<rolename>/files` directory.
+
 .. versionadded: 0.9
 
-Many new lookup abilities were added in 0.9.  Remeber lookup plugins are run on the *controlling* machine::
+Many new lookup abilities were added in 0.9.  Remember, lookup plugins are run on the *controlling* machine::
 
     ---
     - hosts: all
 
       tasks:
 
-         - action: debug msg="{{ lookup('env','HOME') }} is an environment variable"
+         - debug: msg="{{ lookup('env','HOME') }} is an environment variable"
 
-         - action: debug msg="{{ item }} is a line from the result of this command"
+         - debug: msg="{{ item }} is a line from the result of this command"
            with_lines:
              - cat /etc/motd
 
-         - action: debug msg="{{ lookup('pipe','date') }} is the raw result of running this command"
+         - debug: msg="{{ lookup('pipe','date') }} is the raw result of running this command"
 
-         - action: debug msg="{{ lookup('redis_kv', 'redis://localhost:6379,somekey') }} is value in Redis for somekey"
+         - debug: msg="{{ lookup('redis_kv', 'redis://localhost:6379,somekey') }} is value in Redis for somekey"
 
-         - action: debug msg="{{ lookup('dnstxt', 'example.com') }} is a DNS TXT record for example.com"
+         - debug: msg="{{ lookup('dnstxt', 'example.com') }} is a DNS TXT record for example.com"
 
-         - action: debug msg="{{ lookup('template', './some_template.j2') }} is a value from evaluation of this template"
+         - debug: msg="{{ lookup('template', './some_template.j2') }} is a value from evaluation of this template"
 
 As an alternative you can also assign lookup plugins to variables or use them
 elsewhere.  This macros are evaluated each time they are used in a task (or
@@ -534,7 +610,7 @@ This length can be changed by passing an extra parameter::
 
         # create a mysql user with a random password:
         - mysql_user: name={{ client }}
-                      password="{{ lookup('password', 'credentials/' + client + '/' + tier + '/' + role + '/mysqlpassword') }}"
+                      password="{{ lookup('password', 'credentials/' + client + '/' + tier + '/' + role + '/mysqlpassword length=15') }}"
                       priv={{ client }}_{{ tier }}_{{ role }}.*:ALL
 
         (...)
@@ -549,7 +625,7 @@ This length can be changed by passing an extra parameter::
 
         (...)
 
-        # create an user with a given password
+        # create a user with a given password
         - user: name=guestuser
                 state=present
                 uid=5000
@@ -592,7 +668,7 @@ The environment can also be stored in a variable, and accessed like so::
 While just proxy settings were shown above, any number of settings can be supplied.  The most logical place
 to define an environment hash might be a group_vars file, like so::
 
-    ----
+    ---
     # file: group_vars/boston
 
     ntp_server: ntp.bos.example.com
@@ -627,7 +703,7 @@ The following construct selects the first available file appropriate for the var
 The following example shows how to template out a configuration file that was very different between, say, CentOS and Debian::
 
     - name: template a file
-      action: template src={{ item }} dest=/etc/myapp/foo.conf
+      template: src={{ item }} dest=/etc/myapp/foo.conf
       first_available_file:
         - /srv/templates/myapp/{{ ansible_distribution }}.conf
         - /srv/templates/myapp/default.conf
@@ -655,7 +731,7 @@ poll value is 10 seconds if you do not specify a value for `poll`::
       user: root
       tasks:
       - name: simulate long running op (15 sec), wait for up to 45, poll every 5
-        action: command /bin/sleep 15
+        command: /bin/sleep 15
         async: 45
         poll: 5
 
@@ -672,7 +748,7 @@ Alternatively, if you do not need to wait on the task to complete, you may
       user: root
       tasks:
       - name: simulate long running op, allow to run for 45, fire and forget
-        action: command /bin/sleep 15
+        command: /bin/sleep 15
         async: 45
         poll: 0
 
@@ -706,7 +782,7 @@ Turning Off Facts
 `````````````````
 
 If you know you don't need any fact data about your hosts, and know everything about your systems centrally, you
-can turn off fact gathering.  This has advantages in scaling ansible in push mode with very large numbers of
+can turn off fact gathering.  This has advantages in scaling Ansible in push mode with very large numbers of
 systems, mainly, or if you are using Ansible on experimental platforms.   In any play, just do this::
 
     - hosts: whatever
@@ -719,8 +795,8 @@ The use of playbooks in local mode (above) is made extremely powerful with the a
 A script for setting up ansible-pull is provided in the examples/playbooks directory of the source
 checkout.
 
-The basic idea is to use Ansible to set up a remote copy of ansible on each managed node, each set to run via
-cron and update playbook source via git.  This inverts the default push architecture of ansible into a pull
+The basic idea is to use Ansible to set up a remote copy of Ansible on each managed node, each set to run via
+cron and update playbook source via git.  This inverts the default push architecture of Ansible into a pull
 architecture, which has near-limitless scaling potential.  The setup playbook can be tuned to change
 the cron frequency, logging locations, and parameters to ansible-pull.
 
@@ -734,7 +810,7 @@ Register Variables
 
 Often in a playbook it may be useful to store the result of a given command in a variable and access
 it later.  Use of the command module in this way can in many ways eliminate the need to write site specific facts, for
-instance, you could test for the existance of a particular program.
+instance, you could test for the existence of a particular program.
 
 The 'register' keyword decides what variable to save a result in.  The resulting variables can be used in templates, action lines, or *when* statements.  It looks like this (in an obviously trivial example)::
 
@@ -743,20 +819,39 @@ The 'register' keyword decides what variable to save a result in.  The resulting
 
       tasks:
 
-          - action: shell cat /etc/motd
+          - shell: cat /etc/motd
             register: motd_contents
 
-          - action: shell echo "motd contains the word hi"
+          - shell: echo "motd contains the word hi"
             when: motd_contents.stdout.find('hi') != -1
 
+As shown previously, the registered variable's string contents are accessible with the 'stdout' value.
+The registered result can be used in the "with_items" of a task if it is converted into
+a list (or already is a list) as shown below.  "stdout_lines" is already available on the object as
+well though you could also call "home_dirs.stdout.split()" if you wanted, and could split by other
+fields::
+
+    - name: registered variable usage as a with_items list
+      hosts: all
+
+      tasks:
+
+          - name: retrieve the list of home directories
+            command: ls /home
+            register: home_dirs
+
+          - name: add home dirs to the backup spooler
+            file: path=/mnt/bkspool/{{ item }} src=/home/{{ item }} state=link
+            with_items: home_dirs.stdout_lines
+            # with_items: home_dirs.stdout.split()
 
 Rolling Updates
 ```````````````
 
 .. versionadded:: 0.7
 
-By default ansible will try to manage all of the machines referenced in a play in parallel.  For a rolling updates
-use case, you can define how many hosts ansible should manage at a single time by using the ''serial'' keyword::
+By default, Ansible will try to manage all of the machines referenced in a play in parallel.  For a rolling updates
+use case, you can define how many hosts Ansible should manage at a single time by using the ''serial'' keyword::
 
 
     - name: test play
@@ -782,19 +877,19 @@ a good idea::
 
       tasks:
       - name: take out of load balancer pool
-        action: command /usr/bin/take_out_of_pool {{ inventory_hostname }}
+        command: /usr/bin/take_out_of_pool {{ inventory_hostname }}
         delegate_to: 127.0.0.1
 
       - name: actual steps would go here
-        action: yum name=acme-web-stack state=latest
+        yum: name=acme-web-stack state=latest
 
       - name: add back to load balancer pool
-        action: command /usr/bin/add_back_to_pool {{ inventory_hostname }}
+        command: /usr/bin/add_back_to_pool {{ inventory_hostname }}
         delegate_to: 127.0.0.1
 
 
-These commands will run on 127.0.0.1, which is the machine running Ansible. There is also a shorthand syntax that 
-you can use on a per-task basis: 'local_action'. Here is the same playbook as above, but using the shorthand 
+These commands will run on 127.0.0.1, which is the machine running Ansible. There is also a shorthand syntax that
+you can use on a per-task basis: 'local_action'. Here is the same playbook as above, but using the shorthand
 syntax for delegating to 127.0.0.1::
 
     ---
@@ -827,11 +922,11 @@ Fireball Mode
 
 Ansible's core connection types of 'local', 'paramiko', and 'ssh' are augmented in version 0.8 and later by a new extra-fast
 connection type called 'fireball'.  It can only be used with playbooks and does require some additional setup
-outside the lines of ansible's normal "no bootstrapping" philosophy.  You are not required to use fireball mode
+outside the lines of Ansible's normal "no bootstrapping" philosophy.  You are not required to use fireball mode
 to use Ansible, though some users may appreciate it.
 
 Fireball mode works by launching a temporary 0mq daemon from SSH that by default lives for only 30 minutes before
-shutting off.  Fireball mode once running uses temporary AES keys to encrypt a session, and requires direct
+shutting off.  Fireball mode, once running, uses temporary AES keys to encrypt a session, and requires direct
 communication to given nodes on the configured port.  The default is 5099.  The fireball daemon runs as any user you
 set it down as.  So it can run as you, root, or so on.  If multiple users are running Ansible as the same batch of hosts,
 take care to use unique ports.
@@ -853,7 +948,7 @@ if you have a large number of hosts::
     - hosts: all
       connection: fireball
       tasks:
-          - action: shell echo "Hello {{ item }}"
+          - shell: echo "Hello {{ item }}"
             with_items:
                 - one
                 - two
@@ -867,8 +962,8 @@ any platform.  You will also need gcc and zeromq-devel installed from your packa
       gather_facts: no
       connection: ssh
       tasks:
-          - action: easy_install name=pip
-          - action: pip name={{ item }} state=present
+          - easy_install: name=pip
+          - pip: name={{ item }} state=present
             with_items:
               - pyzmq
               - pyasn1
@@ -888,17 +983,17 @@ event the same variable name occurs in more than one place, what happens?  There
 of precedence, and within those tiers, some minor ordering rules that you probably won't even need to remember.
 We'll explain them anyway though.
 
-Variables that are set during the execution of the play have highest priority. This includes registered 
-variables and facts, which are discovered pieces of information about remote hosts.  
+Variables that are set during the execution of the play have highest priority. This includes registered
+variables and facts, which are discovered pieces of information about remote hosts.
 
 Descending in priority are variables defined in the playbook.  'vars_files' as defined in the playbook are next up,
 followed by variables as passed to ansible-playbook via --extra-vars (-e), then variables defined in the 'vars' section.  These
 should all be taken to be basically the same thing -- good places to define constants about what the play does to all hosts
-in the play. 
+in the play.
 
 Finally, inventory variables have the least priority.  Variables about hosts override those about groups.
-If a variable is defined in multiple groups and one group is a child of the other, the child group variable 
-will override the variable set in the parent.  
+If a variable is defined in multiple groups and one group is a child of the other, the child group variable
+will override the variable set in the parent.
 
 This makes the 'group_vars/all' file the best place to define a default value you wish to override in another
 group, or even in a playbook.  For example, your organization might set a default ntp server in group_vars/all
@@ -906,8 +1001,8 @@ and then override it based on a group based on a geographic region.  However if 
 in a vars section of a playbook, you know from reading the playbook that THAT specific value is definitely the one
 that is going to be used.  You won't be fooled by some variable from inventory sneaking up on you.
 
-So, in short, if you want something easy to remember: facts beat playbook definitions, and 
-playbook definitions beat inventory variables.  
+So, in short, if you want something easy to remember: facts beat playbook definitions, and
+playbook definitions beat inventory variables.
 
 
 Check Mode ("Dry Run") --check
@@ -941,7 +1036,7 @@ feature produces a large amount of output, it is best used when checking a singl
 Dictionary & Nested (Complex) Arguments
 ```````````````````````````````````````
 
-As a review, most tasks in ansbile are of this form::
+As a review, most tasks in Ansible are of this form::
 
     tasks:
 

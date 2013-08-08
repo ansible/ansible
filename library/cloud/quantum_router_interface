@@ -37,15 +37,15 @@ options:
      description:
         - Password of login user
      required: true
-     default: True
+     default: 'yes'
    login_tenant_name:
      description:
         - The tenant name of the login user
      required: true
-     default: True
+     default: 'yes'
    auth_url:
      description:
-        - The keystone url for authentication
+        - The keystone URL for authentication
      required: false
      default: 'http://127.0.0.1:35357/v2.0/'
    region_name:
@@ -73,12 +73,19 @@ options:
         - Name of the tenant whose subnet has to be attached.
      required: false
      default: None
-examples:
-  - code: "quantum_router_interface: state=present login_username=admin login_password=admin login_tenant_name=admin 
-                                     tenant_name=tenant1 router_name=external_route subnet_name=t1subnet"
-    description: "Attach tenant1's subnet to the external router"
 requirements: ["quantumclient", "keystoneclient"]
 '''
+
+EXAMPLES = '''
+# Attach tenant1's subnet to the external router
+- quantum_router_interface: state=present login_username=admin
+                            login_password=admin
+                            login_tenant_name=admin 
+                            tenant_name=tenant1
+                            router_name=external_route
+                            subnet_name=t1subnet
+'''
+
 
 _os_keystone = None
 _os_tenant_id = None
@@ -193,48 +200,49 @@ def  _remove_interface_router(quantum, module, router_id, subnet_id):
     try:
         quantum.remove_interface_router(router_id, kwargs)
     except Exception as e:
-        module.fail_json(msg = "Error in removing interface from router: %s" % e.message)
+        module.fail_json(msg="Error in removing interface from router: %s" % e.message)
     return True
         
 def main():
     module = AnsibleModule(
         argument_spec                   = dict(
-        login_username                  = dict(default='admin'),
-        login_password                  = dict(required=True),
-        login_tenant_name               = dict(required='True'),
-        auth_url                        = dict(default='http://127.0.0.1:35357/v2.0/'),
-        region_name                     = dict(default=None),
-        router_name                     = dict(required=True),
-        subnet_name                     = dict(required=True),
-        tenant_name                     = dict(default=None),
-        state                           = dict(default='present', choices=['absent', 'present']),
+            login_username                  = dict(default='admin'),
+            login_password                  = dict(required=True),
+            login_tenant_name               = dict(required='True'),
+            auth_url                        = dict(default='http://127.0.0.1:35357/v2.0/'),
+            region_name                     = dict(default=None),
+            router_name                     = dict(required=True),
+            subnet_name                     = dict(required=True),
+            tenant_name                     = dict(default=None),
+            state                           = dict(default='present', choices=['absent', 'present']),
         ),
     )
                 
     quantum = _get_quantum_client(module, module.params)
     _set_tenant_id(module)
+
     router_id = _get_router_id(module, quantum)
     if not router_id:
-        module.fail_json(msg = "failed to get the router id, please check the router name")
+        module.fail_json(msg="failed to get the router id, please check the router name")
+
     subnet_id = _get_subnet_id(module, quantum) 
     if not subnet_id:
-        module.fail_json(msg = "failed to get the subnet id, please check the subnet name")
+        module.fail_json(msg="failed to get the subnet id, please check the subnet name")
                 
     if module.params['state'] == 'present':
         port_id = _get_port_id(quantum, module, router_id, subnet_id)
         if not port_id:
             _add_interface_router(quantum, module, router_id, subnet_id)
-            module.exit_json(changed = True, result = "created", id = port_id)
-        module.exit_json(changed = False, result = "success", id = port_id)
+            module.exit_json(changed=True, result="created", id=port_id)
+        module.exit_json(changed=False, result="success", id=port_id)
+
     if module.params['state'] == 'absent':
         port_id = _get_port_id(quantum, module, router_id, subnet_id)
         if not port_id:
-            module.exit_json(changed = False, result = "Sucess")
+            module.exit_json(changed = False, result = "Success")
         _remove_interface_router(quantum, module, router_id, subnet_id)
-        module.exit_json(changed = True, result = "Deleted")
+        module.exit_json(changed=True, result="Deleted")
                         
- 
-
 # this is magic, see lib/ansible/module.params['common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
 main()

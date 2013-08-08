@@ -1,11 +1,6 @@
 Ansible Resources
 =================
 
-.. image:: http://ansible.cc/docs/_static/ansible_fest_2013.png
-   :alt: ansiblefest 2013
-   :target: http://ansibleworks.com/fest
-
-
 User contributed playbooks, modules, and articles. This is a small
 curated list, but growing. Everyone is encouraged to add to this
 document, just `edit it on Github <https://github.com/ansible/ansible/blob/devel/docsite/latest/rst/contrib.rst>`_
@@ -18,23 +13,35 @@ Ansible modules are a way of adding new client-side logic to ansible.
 They can be written in any language.  Generally our goal is to include most modules in core ("batteries included!"),
 though a few may remain outside of core depending on use cases and implementations.
 
--  `Official "core" ansible modules <http://ansible.cc/docs/modules.html>`_ - various
+-  `Official "core" ansible modules <http://www.ansibleworks.com/docs/modules.html>`_ - various
 -  `Linode <https://github.com/lextoumbourou/ansible-linode>`_ - Lex Toumbourou
 -  `zypper (bash module example) <https://github.com/jpmens/ansible-zypp>`_ - jp\_mens
 -  `additional provisioning-related modules <https://github.com/ansible-provisioning>`_ - jhoekx and dagwieers
 -  `dynamic dns updates <https://github.com/jpmens/ansible-m-dnsupdate>`_ - jp\_mens
+-  `apk-tools <http://git.alpinelinux.org/cgit/bpiotrowski/ansible-apk>`_ - Bartłomiej Piotrowski
 
-All python modules should use the common "AnsibleModule" class to dramatically reduce the amount of boilerplate code required.
+All python modules (especially all submitted to core) should use the common "AnsibleModule" class to dramatically reduce the amount of boilerplate code required.
+
 Not all modules above may take advantage of this feature. See the official documentation for more details.
 
 Selected Playbooks
 ``````````````````
 
-`Playbooks <http://ansible.cc/docs/playbooks.html>`_ are Ansible's
+`Playbooks <http://www.ansibleworks.com/docs/playbooks.html>`_ are Ansible's
 configuration management language. It should be easy to write your own
-from scratch for most applications, but it's always helpful to look at
-what others have done for reference.
+from scratch for most applications (we keep the language simple for EXACTLY that reason), but it can 
+be helpful to look at what others have done for reference and see what is possible.
 
+The ansible-examples repo on github contains some examples of best-practices Ansible content deploying some
+full stack workloads:
+
+- `Ansible-Examples <http://github.com/ansible/ansible-examples>`_
+
+And here are some other community-developed playbooks.  Feel free to submit a pull request to the docs
+to add your own.
+
+-  `edX Online <https://github.com/edx/configuration>`_ - `edX Online <http://edx.org>`_
+-  `Fedora Infrastructure <http://infrastructure.fedoraproject.org/cgit/ansible.git/tree/>`_ - `Fedora <http://fedoraproject.org>`_
 -  `Hadoop <https://github.com/jkleint/ansible-hadoop>`_ - jkleint
 -  `LAMP <https://github.com/fourkitchens/server-playbooks>`_ - `Four Kitchens <http://fourkitchens.com>`_
 -  `LEMP <https://github.com/francisbesset/ansible-playbooks>`_ - francisbesset
@@ -42,7 +49,6 @@ what others have done for reference.
 -  `Nginx <http://www.capsunlock.net/2012/04/ansible-nginx-playbook.html>`_ - cocoy
 -  `OpenStack <http://github.com/lorin/openstack-ansible>`_ - lorin
 -  `Systems Configuration <https://github.com/cegeddin/ansible-contrib>`_ - cegeddin
--  `Fedora Infrastructure <http://infrastructure.fedoraproject.org/cgit/ansible.git/tree/>`_ - `Fedora <http://fedoraproject.org>`_
 
 Callbacks and Plugins
 `````````````````````
@@ -53,6 +59,7 @@ storage. Talk to Cobbler and EC2, tweak the way things are logged, or
 even add sound effects.
 
 -  `Ansible-Plugins <https://github.com/ansible/ansible/tree/devel/plugins>`_
+-  `Various modules, plugins, and scripts <https://github.com/ginsys/ansible-plugins>`_ sergevanginderachter
 
 Scripts And Misc
 ````````````````
@@ -93,9 +100,9 @@ Disclaimer
 
 Modules and playbooks here may not be using the latest in Ansible
 features. When in doubt to the features of a particular version of
-Ansbile, always consult `ansible.cc <http://ansible.cc>`_ and in
-particular see `Best Practices <http://ansible.cc/docs/bestpractices.html>`_ for some tips
-and tricks that may be useful.
+Ansible, always consult `ansibleworks.com <http://www.ansibleworks.com/>`_ and in
+particular see `Best Practices <http://www.ansibleworks.com/docs/bestpractices.html>`_ 
+for some tips and tricks that may be useful.
 
 Ansible is (C) 2012, `Michael DeHaan <http://twitter.com/laserllama>`_
 and others and is available under the GPLv3 license. Content here is as

@@ -46,18 +46,18 @@ class ActionModule(object):
         if not 'hostname' in args and not 'name' in args:
             raise ae("'name' is a required argument.")
 
-        result = {'changed': True}
+        result = {}
 
         # Parse out any hostname:port patterns
-        new_hostname = args.get('hostname', args.get('name', None))
-        vv("creating host via 'add_host': hostname=%s" % new_hostname)
+        new_name = args.get('name', args.get('hostname', None))
+        vv("creating host via 'add_host': hostname=%s" % new_name)
 
-        if ":" in new_hostname:
-            new_hostname, new_port = new_hostname.split(":")
+        if ":" in new_name:
+            new_name, new_port = new_name.split(":")
             args['ansible_ssh_port'] = new_port
         
         # create host and get inventory    
-        new_host = Host(new_hostname)
+        new_host = Host(new_name)
         inventory = self.runner.inventory
         
         # Add any variables to the new_host
@@ -69,7 +69,6 @@ class ActionModule(object):
         # add the new host to the 'all' group
         allgroup = inventory.get_group('all')
         allgroup.add_host(new_host)
-        result['changed'] = True
        
         groupnames = args.get('groupname', args.get('groups', '')) 
         # add it to the group if that was specified
@@ -80,10 +79,10 @@ class ActionModule(object):
                     inventory.add_group(new_group)
                 grp = inventory.get_group(group_name)
                 grp.add_host(new_host)
-            vv("added host to group via add_host module: %s" % group_name)
+                vv("added host to group via add_host module: %s" % group_name)
             result['new_groups'] = groupnames.split(",")
             
-        result['new_host'] = new_hostname
+        result['new_host'] = new_name
         
         return ReturnData(conn=conn, comm_ok=True, result=result)
 

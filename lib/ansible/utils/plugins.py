@@ -16,10 +16,11 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import os.path
 import sys
 import glob
 import imp
-import ansible.constants as C
+from ansible import constants as C
 from ansible import errors
 
 MODULE_CACHE = {}
@@ -28,7 +29,8 @@ PLUGIN_PATH_CACHE = {}
 _basedirs = []
 
 def push_basedir(basedir):
-    _basedirs.insert(0, basedir)
+    if basedir not in _basedirs:
+        _basedirs.insert(0, basedir)
 
 class PluginLoader(object):
 
@@ -107,6 +109,7 @@ class PluginLoader(object):
         # look in any configured plugin paths, allow one level deep for subcategories 
         configured_paths = self.config.split(os.pathsep)
         for path in configured_paths:
+            path = os.path.expanduser(path)
             contents = glob.glob("%s/*" % path)
             for c in contents:
                 if os.path.isdir(c):
@@ -129,7 +132,8 @@ class PluginLoader(object):
         if directory is not None:
             if with_subdir:
                 directory = os.path.join(directory, self.subdir)
-            self._extra_dirs.append(directory)
+            if directory not in self._extra_dirs:
+                self._extra_dirs.append(directory)
 
     def find_plugin(self, name):
         ''' Find a plugin named name '''
@@ -140,7 +144,6 @@ class PluginLoader(object):
         suffix = ".py"
         if not self.class_name:
             suffix = ""
-        paths = self._get_paths()
 
         for i in self._get_paths():
             path = os.path.join(i, "%s%s" % (name, suffix))

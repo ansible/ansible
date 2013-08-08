@@ -41,7 +41,11 @@ if constants.DEFAULT_LOG_PATH != '':
     user = getpass.getuser()
     logger = logging.getLogger("p=%s u=%s | " % (mypid, user))
 
-callback_plugins = [x for x in utils.plugins.callback_loader.all()]
+callback_plugins = []
+
+def load_callback_plugins():
+    global callback_plugins
+    callback_plugins = [x for x in utils.plugins.callback_loader.all()]
 
 def get_cowsay_info():
     if constants.ANSIBLE_NOCOWS is not None:
@@ -79,11 +83,32 @@ def log_lockfile():
 
 LOG_LOCK = open(log_lockfile(), 'w')
 
-def log_flock():
-    fcntl.flock(LOG_LOCK, fcntl.LOCK_EX)
+def log_flock(runner):
+    if runner is not None:
+        try:
+            fcntl.lockf(runner.output_lockfile, fcntl.LOCK_EX)
+        except OSError:
+            # already got closed?
+            pass
+    else:
+        try:
+            fcntl.lockf(LOG_LOCK, fcntl.LOCK_EX)
+        except OSError:
+            pass
+        
 
-def log_unflock():
-    fcntl.flock(LOG_LOCK, fcntl.LOCK_UN)
+def log_unflock(runner):
+    if runner is not None:
+        try:
+            fcntl.lockf(runner.output_lockfile, fcntl.LOCK_UN)
+        except OSError:
+            # already got closed?
+            pass
+    else:
+        try:
+            fcntl.lockf(LOG_LOCK, fcntl.LOCK_UN)
+        except OSError:
+            pass
 
 def set_play(callback, play):
     ''' used to notify callback plugins of context '''
@@ -97,9 +122,9 @@ def set_task(callback, task):
     for callback_plugin in callback_plugins:
         callback_plugin.task = task
 
-def display(msg, color=None, stderr=False, screen_only=False, log_only=False):
+def display(msg, color=None, stderr=False, screen_only=False, log_only=False, runner=None):
     # prevent a very rare case of interlaced multiprocess I/O
-    log_flock()
+    log_flock(runner)
     msg2 = msg
     if color:
         msg2 = stringc(msg, color)
@@ -116,7 +141,7 @@ def display(msg, color=None, stderr=False, screen_only=False, log_only=False):
                 logger.error(msg)
             else:
                 logger.info(msg)
-    log_unflock()
+    log_unflock(runner)
 
 def call_callback_module(method_name, *args, **kwargs):
 
@@ -204,27 +229,37 @@ def regular_generic_msg(hostname, result, oneline, caption):
         return "%s | %s >> %s\n" % (hostname, caption, utils.jsonify(result))
 
 
-def banner(msg):
+def banner_cowsay(msg):
 
+    if msg.find(": [") != -1:
+        msg = msg.replace("[","")
+        if msg.endswith("]"):
+            msg = msg[:-1]
+    runcmd = [cowsay,"-W", "60"]
+    if noncow:
+        runcmd.append('-f')
+        runcmd.append(noncow)
+    runcmd.append(msg)
+    cmd = subprocess.Popen(runcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out, err) = cmd.communicate()
+    return "%s\n" % out
+
+def banner_normal(msg):
+
+    width = 78 - len(msg)
+    if width < 3:
+        width = 3
+    filler = "*" * width
+    return "\n%s %s " % (msg, filler)
+
+def banner(msg):
     if cowsay:
-        if msg.find(": [") != -1:
-            msg = msg.replace("[","")
-            if msg.endswith("]"):
-                msg = msg[:-1]
-        runcmd = [cowsay,"-W", "60"]
-        if noncow:
-            runcmd.append('-f')
-            runcmd.append(noncow)
-        runcmd.append(msg)
-        cmd = subprocess.Popen(runcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        (out, err) = cmd.communicate()
-        return "%s\n" % out
-    else:
-        width = 78 - len(msg)
-        if width < 3:
-            width = 3
-        filler = "*" * width
-        return "\n%s %s " % (msg, filler)
+        try:
+            return banner_cowsay(msg)
+        except OSError:
+            # somebody cleverly deleted cowsay or something during the PB run.  heh.
+            return banner_normal(msg)
+    return banner_normal(msg)
 
 def command_generic_msg(hostname, result, oneline, caption):
     ''' output the result of a command run '''
@@ -332,7 +367,7 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
     def on_unreachable(self, host, res):
         if type(res) == dict:
             res = res.get('msg','')
-        display("%s | FAILED => %s" % (host, res), stderr=True, color='red')
+        display("%s | FAILED => %s" % (host, res), stderr=True, color='red', runner=self.runner)
         if self.options.tree:
             utils.write_tree_file(
                 self.options.tree, host,
@@ -341,15 +376,15 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
         super(CliRunnerCallbacks, self).on_unreachable(host, res)
 
     def on_skipped(self, host, item=None):
-        display("%s | skipped" % (host))
+        display("%s | skipped" % (host), runner=self.runner)
         super(CliRunnerCallbacks, self).on_skipped(host, item)
 
     def on_error(self, host, err):
-        display("err: [%s] => %s\n" % (host, err), stderr=True)
+        display("err: [%s] => %s\n" % (host, err), stderr=True, runner=self.runner)
         super(CliRunnerCallbacks, self).on_error(host, err)
 
     def on_no_hosts(self):
-        display("no hosts matched\n", stderr=True)
+        display("no hosts matched\n", stderr=True, runner=self.runner)
         super(CliRunnerCallbacks, self).on_no_hosts()
 
     def on_async_poll(self, host, res, jid, clock):
@@ -357,27 +392,27 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
             self._async_notified[jid] = clock + 1
         if self._async_notified[jid] > clock:
             self._async_notified[jid] = clock
-            display("<job %s> polling, %ss remaining" % (jid, clock))
+            display("<job %s> polling, %ss remaining" % (jid, clock), runner=self.runner)
         super(CliRunnerCallbacks, self).on_async_poll(host, res, jid, clock)
 
     def on_async_ok(self, host, res, jid):
-        display("<job %s> finished on %s => %s"%(jid, host, utils.jsonify(res,format=True)))
+        display("<job %s> finished on %s => %s"%(jid, host, utils.jsonify(res,format=True)), runner=self.runner)
         super(CliRunnerCallbacks, self).on_async_ok(host, res, jid)
 
     def on_async_failed(self, host, res, jid):
-        display("<job %s> FAILED on %s => %s"%(jid, host, utils.jsonify(res,format=True)), color='red', stderr=True)
+        display("<job %s> FAILED on %s => %s"%(jid, host, utils.jsonify(res,format=True)), color='red', stderr=True, runner=self.runner)
         super(CliRunnerCallbacks, self).on_async_failed(host,res,jid)
 
     def _on_any(self, host, result):
         result2 = result.copy()
         result2.pop('invocation', None)
         (msg, color) = host_report_msg(host, self.options.module_name, result2, self.options.one_line)
-        display(msg, color=color)
+        display(msg, color=color, runner=self.runner)
         if self.options.tree:
             utils.write_tree_file(self.options.tree, host, utils.jsonify(result2,format=True))
 
     def on_file_diff(self, host, diff):
-        display(utils.get_diff(diff))
+        display(utils.get_diff(diff), runner=self.runner)
         super(CliRunnerCallbacks, self).on_file_diff(host, diff)
 
 ########################################################################
@@ -398,10 +433,11 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
             msg = "fatal: [%s] => (item=%s) => %s" % (host, item, results)
         else:
             msg = "fatal: [%s] => %s" % (host, results)
-        display(msg, color='red')
+        display(msg, color='red', runner=self.runner)
         super(PlaybookRunnerCallbacks, self).on_unreachable(host, results)
 
     def on_failed(self, host, results, ignore_errors=False):
+
 
         results2 = results.copy()
         results2.pop('invocation', None)
@@ -419,21 +455,22 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
             msg = "failed: [%s] => (item=%s) => %s" % (host, item, utils.jsonify(results2))
         else:
             msg = "failed: [%s] => %s" % (host, utils.jsonify(results2))
-        display(msg, color='red')
+        display(msg, color='red', runner=self.runner)
 
         if stderr:
-            display("stderr: %s" % stderr, color='red')
+            display("stderr: %s" % stderr, color='red', runner=self.runner)
         if stdout:
-            display("stdout: %s" % stdout, color='red')
+            display("stdout: %s" % stdout, color='red', runner=self.runner)
         if returned_msg:
-            display("msg: %s" % returned_msg, color='red')
+            display("msg: %s" % returned_msg, color='red', runner=self.runner)
         if not parsed and module_msg:
-            display("invalid output was: %s" % module_msg, color='red')
+            display("invalid output was: %s" % module_msg, color='red', runner=self.runner)
         if ignore_errors:
-            display("...ignoring", color='cyan')
+            display("...ignoring", color='cyan', runner=self.runner)
         super(PlaybookRunnerCallbacks, self).on_failed(host, results, ignore_errors=ignore_errors)
 
     def on_ok(self, host, host_result):
+        
         item = host_result.get('item', None)
 
         host_result2 = host_result.copy()
@@ -463,9 +500,9 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
 
         if msg != '':
             if not changed:
-                display(msg, color='green')
+                display(msg, color='green', runner=self.runner)
             else:
-                display(msg, color='yellow')
+                display(msg, color='yellow', runner=self.runner)
         super(PlaybookRunnerCallbacks, self).on_ok(host, host_result)
 
     def on_error(self, host, err):
@@ -477,7 +514,7 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         else:
             msg = "err: [%s] => %s" % (host, err)
 
-        display(msg, color='red', stderr=True)
+        display(msg, color='red', stderr=True, runner=self.runner)
         super(PlaybookRunnerCallbacks, self).on_error(host, err)
 
     def on_skipped(self, host, item=None):
@@ -486,11 +523,11 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
             msg = "skipping: [%s] => (item=%s)" % (host, item)
         else:
             msg = "skipping: [%s]" % host
-        display(msg, color='cyan')
+        display(msg, color='cyan', runner=self.runner)
         super(PlaybookRunnerCallbacks, self).on_skipped(host, item)
 
     def on_no_hosts(self):
-        display("FATAL: no hosts matched or all hosts have already failed -- aborting\n", color='red')
+        display("FATAL: no hosts matched or all hosts have already failed -- aborting\n", color='red', runner=self.runner)
         super(PlaybookRunnerCallbacks, self).on_no_hosts()
 
     def on_async_poll(self, host, res, jid, clock):
@@ -499,21 +536,21 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         if self._async_notified[jid] > clock:
             self._async_notified[jid] = clock
             msg = "<job %s> polling, %ss remaining"%(jid, clock)
-            display(msg, color='cyan')
+            display(msg, color='cyan', runner=self.runner)
         super(PlaybookRunnerCallbacks, self).on_async_poll(host,res,jid,clock)
 
     def on_async_ok(self, host, res, jid):
         msg = "<job %s> finished on %s"%(jid, host)
-        display(msg, color='cyan')
+        display(msg, color='cyan', runner=self.runner)
         super(PlaybookRunnerCallbacks, self).on_async_ok(host, res, jid)
 
     def on_async_failed(self, host, res, jid):
         msg = "<job %s> FAILED on %s" % (jid, host)
-        display(msg, color='red', stderr=True)
+        display(msg, color='red', stderr=True, runner=self.runner)
         super(PlaybookRunnerCallbacks, self).on_async_failed(host,res,jid)
 
     def on_file_diff(self, host, diff):
-        display(utils.get_diff(diff))
+        display(utils.get_diff(diff), runner=self.runner)
         super(PlaybookRunnerCallbacks, self).on_file_diff(host, diff)
 
 ########################################################################
@@ -552,7 +589,8 @@ class PlaybookCallbacks(object):
         if hasattr(self, 'start_at'): # we still have start_at so skip the task
             self.skip_task = True
         elif hasattr(self, 'step') and self.step:
-            resp = raw_input('Perform task: %s (y/n/c): ' % name)
+            msg = ('Perform task: %s (y/n/c): ' % name).encode(sys.stdout.encoding)
+            resp = raw_input(msg)
             if resp.lower() in ['y','yes']:
                 self.skip_task = False
                 display(banner(msg))
@@ -570,7 +608,9 @@ class PlaybookCallbacks(object):
 
     def on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
 
-        if prompt:
+        if prompt and default:
+            msg = "%s [%s]: " % (prompt, default)
+        elif prompt:
             msg = "%s: " % prompt
         else:
             msg = 'input for %s: ' % varname

@@ -1,4 +1,4 @@
-#!/usr/bin/env python -tt
+#!/usr/bin/python -tt
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -19,7 +19,7 @@ DOCUMENTATION = '''
 module: rax
 short_description: create / delete an instance in Rackspace Public Cloud
 description:
-     - creates / deletes Rackspace Public Cloud instances and optionally waits for it to be 'running'.
+     - creates / deletes a Rackspace Public Cloud instance and optionally waits for it to be 'running'.
 version_added: "1.2"
 options:
   service:
@@ -74,25 +74,28 @@ options:
     description:
      - how long before wait gives up, in seconds
     default: 300
-examples:
-   - code: |
-           - name: Create a server
-             local_action:
-               module: rax
-               creds_file: ~/.raxpub
-               service: cloudservers
-               name: rax-test1
-               flavor: 5
-               image: b11d9567-e412-4255-96b9-bd63ab23bcfe
-               wait: yes
-               state: present
-     description: "Example from Ansible Playbooks"
 requirements: [ "pyrax" ]
 author: Jesse Keating
 notes:
   - Two environment variables can be used, RAX_CREDS and RAX_REGION.
   - RAX_CREDS points to a credentials file appropriate for pyrax
   - RAX_REGION defines a Rackspace Public Cloud region (DFW, ORD, LON, ...)
+'''
+
+EXAMPLES = '''
+# Create a server
+- local_action:
+     module: rax
+     creds_file: ~/.raxpub
+     service: cloudservers
+     name: rax-test1
+     flavor: 5
+     image: b11d9567-e412-4255-96b9-bd63ab23bcfe
+     files:
+        /root/.ssh/authorized_keys: /home/localuser/.ssh/id_rsa.pub
+        /root/test.txt: /home/localuser/test.txt
+     wait: yes
+     state: present
 '''
 
 import sys
@@ -247,6 +250,7 @@ def main():
 
     # setup the auth
     try:
+        pyrax.set_setting("identity_type", "rackspace")
         pyrax.set_credential_file(creds_file, region=region)
     except Exception, e:
         module.fail_json(msg = '%s' % e.message)

@@ -73,7 +73,7 @@ class AsyncPoller(object):
             else:
                 self.results['contacted'][host] = res
                 poll_results['contacted'][host] = res
-                if 'failed' in res:
+                if res.get('failed', False) or res.get('rc', 0) != 0:
                     self.runner.callbacks.on_async_failed(host, res, self.jid)
                 else:
                     self.runner.callbacks.on_async_ok(host, res, self.jid)

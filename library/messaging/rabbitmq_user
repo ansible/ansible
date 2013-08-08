@@ -35,7 +35,9 @@ options:
     aliases: [username, name]
   password:
     description:
-      - Password of user to add
+      - Password of user to add.
+      - To change the password of an existing user, you must also specify
+        C(force=yes).
     required: false
     default: null
   tags:
@@ -86,9 +88,17 @@ options:
     required: false
     default: present
     choices: [present, absent]
-examples:
-  - code: rabbitmq_user user=joe password=changeme vhost=/ configure_priv=.* read_priv=.* write_priv=.* state=present
-    description: Add user to server and assign full access control
+'''
+
+EXAMPLES = '''
+# Add user to server and assign full access control
+- rabbitmq_user: user=joe
+                 password=changeme
+                 vhost=/
+                 configure_priv=.*
+                 read_priv=.*
+                 write_priv=.*
+                 state=present
 '''
 
 class RabbitMqUser(object):

@@ -37,15 +37,15 @@ options:
      description:
         - Password of login user
      required: true
-     default: True
+     default: 'yes'
    login_tenant_name:
      description:
         - The tenant name of the login user
      required: true
-     default: True
+     default: 'yes'
    auth_url:
      description:
-        - The keystone url for authentication
+        - The keystone URL for authentication
      required: false
      default: 'http://127.0.0.1:35357/v2.0/'
    region_name:
@@ -68,11 +68,14 @@ options:
         - Name of the external network which should be attached to the router.
      required: true
      default: None
-examples:
-   - code: "quantum_router_gateway: state=present login_username=admin login_password=admin
-                          login_tenant_name=admin router_name=external_router network_name=external_network"
-     description: "Attaches an external network with a router to allow flow of external traffic"
 requirements: ["quantumclient", "keystoneclient"]
+'''
+
+EXAMPLES = '''
+# Attach an external network with a router to allow flow of external traffic
+- quantum_router_gateway: state=present login_username=admin login_password=admin
+                          login_tenant_name=admin router_name=external_router
+                          network_name=external_network
 '''
 
 _os_keystone = None
@@ -124,8 +127,8 @@ def _get_router_id(module, quantum):
 
 def _get_net_id(quantum, module):
     kwargs = {
-            'name': module.params['network_name'],
-            'router:external': True
+        'name':            module.params['network_name'],
+        'router:external': True
     }
     try:
         networks = quantum.list_networks(**kwargs)
@@ -135,11 +138,10 @@ def _get_net_id(quantum, module):
         return None
     return networks['networks'][0]['id']
 
-                
 def _get_port_id(quantum, module, router_id, network_id):
     kwargs = {
-            'device_id': router_id,
-            'network_id': network_id,
+        'device_id': router_id,
+        'network_id': network_id,
     }
     try:
         ports = quantum.list_ports(**kwargs)
@@ -151,7 +153,7 @@ def _get_port_id(quantum, module, router_id, network_id):
 
 def _add_gateway_router(quantum, module, router_id, network_id):
     kwargs = {
-            'network_id': network_id
+        'network_id': network_id
     }
     try:
         quantum.add_gateway_router(router_id, kwargs)
@@ -163,46 +165,47 @@ def  _remove_gateway_router(quantum, module, router_id):
     try:
         quantum.remove_gateway_router(router_id)
     except Exception as e:
-            module.fail_json(msg = "Error in removing gateway to router: %s" % e.message)
+        module.fail_json(msg = "Error in removing gateway to router: %s" % e.message)
     return True
         
 def main():
     
     module = AnsibleModule(
-        argument_spec                   = dict(
-        login_username                  = dict(default='admin'),
-        login_password                  = dict(required=True),
-        login_tenant_name               = dict(required='True'),
-        auth_url                        = dict(default='http://127.0.0.1:35357/v2.0/'),
-        region_name                     = dict(default=None),
-        router_name                     = dict(required=True),
-        network_name                    = dict(required=True),
-        state                           = dict(default='present', choices=['absent', 'present']),
+        argument_spec          = dict(
+            login_username     = dict(default='admin'),
+            login_password     = dict(required=True),
+            login_tenant_name  = dict(required='True'),
+            auth_url           = dict(default='http://127.0.0.1:35357/v2.0/'),
+            region_name        = dict(default=None),
+            router_name        = dict(required=True),
+            network_name       = dict(required=True),
+            state              = dict(default='present', choices=['absent', 'present']),
         ),
     )
                 
     quantum = _get_quantum_client(module, module.params)
     router_id = _get_router_id(module, quantum)
+
     if not router_id:
-        module.fail_json(msg = "failed to get the router id, please check the router name")
+        module.fail_json(msg="failed to get the router id, please check the router name")
+
     network_id = _get_net_id(quantum, module)   
     if not network_id:
-            module.fail_json(msg = "failed to get the network id, please check the network name and make sure it is external")
+        module.fail_json(msg="failed to get the network id, please check the network name and make sure it is external")
                 
     if module.params['state'] == 'present':
         port_id = _get_port_id(quantum, module, router_id, network_id)
         if not port_id:
-                _add_gateway_router(quantum, module, router_id, network_id)
-                module.exit_json(changed = True, result = "created")
-        module.exit_json(changed = False, result = "success")
+            _add_gateway_router(quantum, module, router_id, network_id)
+            module.exit_json(changed=True, result="created")
+        module.exit_json(changed=False, result="success")
+
     if module.params['state'] == 'absent':
         port_id = _get_port_id(quantum, module, router_id, network_id)
         if not port_id:
-            module.exit_json(changed = False, result = "Success")
+            module.exit_json(changed=False, result="Success")
         _remove_gateway_router(quantum, module, router_id)
-        module.exit_json(changed = True, result = "Deleted")
-                        
- 
+        module.exit_json(changed=True, result="Deleted")
 
 # this is magic, see lib/ansible/module.params['common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>

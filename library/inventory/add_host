@@ -10,6 +10,7 @@ description:
 version_added: "0.9"
 options:
   name:
+    aliases: [ 'hostname' ]
     description:
     - The hostname/ip of the host to add to the inventory, can include a colon and a port number.
     required: true     
@@ -19,11 +20,17 @@ options:
     - The groups to add the hostname to, comma separated.
     required: false
 author: Seth Vidal
-examples:
-  - description: add host to group 'just_created' with variable foo=42
-    code: add_host hostname=${ip_from_ec2} groups=just_created foo=42
-  - description: add a host with a non-standard port local to your machines
-    code: add_host hostname='${new_ip}:${new_port}' 
-  - description: add a host alias that we reach through a tunnel
-    code: add_host hostname=${new_ip} ansible_ssh_host=${inventory_hostname} ansible_ssh_port=${new_port}' 
+'''
+
+EXAMPLES = '''
+# add host to group 'just_created' with variable foo=42
+- add_host: name={{ ip_from_ec2 }} groups=just_created foo=42
+
+# add a host with a non-standard port local to your machines
+- add_host: name={{ new_ip }}:{{ new_port }}
+
+# add a host alias that we reach through a tunnel
+- add_host: hostname={{ new_ip }}
+            ansible_ssh_host={{ inventory_hostname }}
+            ansible_ssh_port={{ new_port }}
 '''

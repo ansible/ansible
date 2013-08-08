@@ -61,8 +61,7 @@ author: Michael DeHaan, Seth Vidal
 
 EXAMPLES = '''
 # a playbook task line:
-tasks:
-  - virt: name=alpha state=running
+- virt: name=alpha state=running
 
 # /usr/bin/ansible invocations
 ansible host -m virt -a "name=alpha command=status"
@@ -72,7 +71,10 @@ ansible host -m virt -a "name=alpha command=create uri=lxc:///"
 # a playbook example of defining and launching an LXC guest
 tasks:
   - name: define vm
-    virt: name=foo command=define xml="{{ lookup('template', 'container-template.xml.j2') }}" uri=lxc:///
+    virt: name=foo
+          command=define
+          xml="{{ lookup('template', 'container-template.xml.j2') }}"
+          uri=lxc:///
   - name: start vm
     virt: name=foo state=running uri=lxc:///
 '''
@@ -275,13 +277,18 @@ class Virt(object):
         }
         return info
 
-    def list_vms(self):
+    def list_vms(self, state=None):
         self.conn = self.__get_conn()
         vms = self.conn.find_vm(-1)
         results = []
         for x in vms:
             try:
-                results.append(x.name())
+                if state:
+                    vmstate = self.conn.get_status2(x)
+                    if vmstate == state:
+                        results.append(x.name())
+                else:
+                    results.append(x.name())
             except:
                 pass
         return results
@@ -395,6 +402,11 @@ def core(module):
     v = Virt(uri)
     res = {}
 
+    if state and command=='list_vms':
+        res = v.list_vms(state=state)
+        if type(res) != dict:
+            res = { command: res }
+        return VIRT_SUCCESS, res
 
     if state:
         if not guest:

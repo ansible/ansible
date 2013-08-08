@@ -25,6 +25,7 @@ class LookupModule(object):
         self.basedir = basedir
 
     def run(self, terms, inject=None, **kwargs):
+
         terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
         ret = []
 

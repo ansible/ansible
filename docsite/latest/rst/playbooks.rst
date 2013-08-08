@@ -1,14 +1,8 @@
 Playbooks
 =========
 
-.. image:: http://ansible.cc/docs/_static/ansible_fest_2013.png
-   :alt: ansiblefest 2013
-   :target: http://ansibleworks.com/fest
-
-
 .. contents::
    :depth: 2
-   :backlinks: top
 
 Introduction
 ````````````
@@ -41,8 +35,8 @@ Playbook Language Example
 Playbooks are expressed in YAML format and have a minimum of syntax.
 Each playbook is composed of one or more 'plays' in a list.
 
-The goal of a play is map a group of hosts to some well defined roles, represented by
-things ansible called tasks.  At the basic level, a task is nothing more than a call
+The goal of a play is to map a group of hosts to some well defined roles, represented by
+things ansible calls tasks.  At a basic level, a task is nothing more than a call
 to an ansible module, which you should have learned about in earlier chapters.
 
 By composing a playbook of multiple 'plays', it is possible to
@@ -60,16 +54,16 @@ For starters, here's a playbook that contains just one play::
       user: root
       tasks:
       - name: ensure apache is at the latest version
-        action: yum pkg=httpd state=latest
+        yum: pkg=httpd state=latest
       - name: write the apache config file
-        action: template src=/srv/httpd.j2 dest=/etc/httpd.conf
+        template: src=/srv/httpd.j2 dest=/etc/httpd.conf
         notify:
         - restart apache
       - name: ensure apache is running
-        action: service name=httpd state=started
+        service: name=httpd state=started
       handlers:
         - name: restart apache
-          action: service name=httpd state=restarted
+          service: name=httpd state=restarted
 
 Below, we'll break down what the various features of the playbook language are.
 
@@ -148,18 +142,18 @@ The `vars` section contains a list of variables and values that can be used in t
 
 .. note::
    You can also keep variables in separate files and include them alongside inline `vars` with a `vars_files` declaration
-   in the play. See the `Advanced Playbooks chapter <http://ansible.cc/docs/playbooks2.html#variable-file-separation>`_
+   in the play. See the `Advanced Playbooks chapter <http://www.ansibleworks.com/docs/playbooks2.html#variable-file-separation>`_
    for more info.
 
 These variables can be used later in the playbook like this::
 
     $varname or ${varname} or {{ varname }}
 
-If you ever want to do anything complex like uppercasing a string, {{ varname }} is best, as it uses the Jinja2 templating engine.  It is a good idea to get in the habit of using this form most of the time when the output is to be a string.  
+If you ever want to do anything complex like uppercasing a string, {{ varname }} is best, as it uses the Jinja2 templating engine.  It is a good idea to get in the habit of using this form most of the time when the output is to be a string.
 
 If just referencing the value of another simple variable though, it's fine to say $x or ${x}.  This is common for when a datastructure has a member that is the value of another datastructure.
 
-To learn more about Jinja2, you can optionally see the `Jinja2 docs <http://jinja.pocoo.org/docs/>`_ - though remember that Jinja2 loops and conditionals are only for 'templates' in Ansible, in playbooks, ansible has the 'when' and 'with' keywords for conditionals and loops. 
+To learn more about Jinja2, you can optionally see the `Jinja2 docs <http://jinja.pocoo.org/docs/>`_ - though remember that Jinja2 loops and conditionals are only for 'templates' in Ansible, in playbooks, ansible has the 'when' and 'with' keywords for conditionals and loops.
 
 If there are discovered variables about the system, called 'facts', these variables bubble up back into the
 playbook, and can be used on each system just like explicitly set variables.  Ansible provides several
@@ -170,7 +164,7 @@ porting over from those other configuration systems.
 How about an example.  If I wanted to write the hostname into the /etc/motd file, I could say::
 
    - name: write the motd
-     action: template src=/srv/templates/motd.j2 dest=/etc/motd
+     template: src=/srv/templates/motd.j2 dest=/etc/motd
 
 And in /srv/templates/motd.j2::
 
@@ -210,12 +204,17 @@ nice to have reasonably good descriptions of each task step.  If the name
 is not provided though, the string fed to 'action' will be used for
 output.
 
+Tasks can be declared using the legacy "action: module options" format, but 
+it is recommeded that you use the more conventional "module: options" format.
+This recommended format is used throughout the documentation, but you may
+encounter the older format in some playbooks.
+
 Here is what a basic task looks like, as with most modules,
 the service module takes key=value arguments::
 
    tasks:
      - name: make sure apache is running
-       action: service name=httpd state=running
+       service: name=httpd state=running
 
 The `command` and `shell` modules are the one modules that just takes a list
 of arguments, and don't use the key=value form.  This makes
@@ -223,20 +222,20 @@ them work just like you would expect. Simple::
 
    tasks:
      - name: disable selinux
-       action: command /sbin/setenforce 0
+       command: /sbin/setenforce 0
 
 The command and shell module care about return codes, so if you have a command
 who's successful exit code is not zero, you may wish to do this::
 
    tasks:
      - name: run this command and ignore the result
-       action: shell /usr/bin/somecommand || /bin/true
+       shell: /usr/bin/somecommand || /bin/true
 
 Or this::
 
    tasks:
      - name: run this command and ignore the result
-       action: shell /usr/bin/somecommand
+       shell: /usr/bin/somecommand
        ignore_errors: True
 
 
@@ -245,7 +244,7 @@ a space and indent any continuation lines::
 
     tasks:
       - name: Copy ansible inventory file to client
-        action: copy src=/etc/ansible/hosts dest=/etc/ansible/hosts
+        copy: src=/etc/ansible/hosts dest=/etc/ansible/hosts
                 owner=root group=root mode=0644
 
 Variables can be used in action lines.   Suppose you defined
@@ -253,7 +252,7 @@ a variable called 'vhost' in the 'vars' section, you could do this::
 
    tasks:
      - name: create a virtual host file for {{ vhost }}
-       action: template src=somefile.j2 dest=/etc/httpd/conf.d/{{ vhost }}
+       template: src=somefile.j2 dest=/etc/httpd/conf.d/{{ vhost }}
 
 Those same variables are usable in templates, which we'll get to later.
 
@@ -265,17 +264,15 @@ Action Shorthand
 
 .. versionadded: 0.8
 
-Rather than listing out the explicit word, "action:", like so::
-
-    action: template src=templates/foo.j2 dest=/etc/foo.conf
-
-It is also possible to say:
+Ansible prefers listing modules like this in 0.8 and later::
 
     template: src=templates/foo.j2 dest=/etc/foo.conf
 
-The name of the module is simply followed by a colon and the arguments to that module.  We think this is a lot more intuitive.
-Our documentation has not converted over to this new format just yet as many users may still be using older versions.
-You'll be able to use both formats forever.
+You will notice in earlier versions, this was only available as::
+
+    action: template src=templates/foo.j2 dest=/etc/foo.conf
+
+The old form continues to work in newer versions without any plan of deprecation.
 
 Running Operations On Change
 ````````````````````````````
@@ -295,7 +292,7 @@ Here's an example of restarting two services when the contents of a file
 change, but only if the file changes::
 
    - name: template configuration file
-     action: template src=template.j2 dest=/etc/foo.conf
+     template: src=template.j2 dest=/etc/foo.conf
      notify:
         - restart memcached
         - restart apache
@@ -313,9 +310,9 @@ Here's an example handlers section::
 
     handlers:
         - name: restart memcached
-          action: service name=memcached state=restarted
+          service:  name=memcached state=restarted
         - name: restart apache
-          action: service name=apache state=restarted
+          service: name=apache state=restarted
 
 Handlers are best used to restart services and trigger reboots.  You probably
 won't need them for much else.
@@ -350,9 +347,9 @@ A task include file simply contains a flat list of tasks, like so::
     ---
     # possibly saved as tasks/foo.yml
     - name: placeholder foo
-      action: command /bin/foo
+      command: /bin/foo
     - name: placeholder bar
-      action: command /bin/bar
+      command: /bin/bar
 
 Include directives look like this, and can be mixed in with regular tasks in a playbook::
 
@@ -403,7 +400,7 @@ of your playbooks.  You might make a handlers.yml that looks like::
    ---
    # this might be in a file like handlers/handlers.yml
    - name: restart apache
-     action: service name=apache state=restarted
+     service: name=apache state=restarted
 
 And in your main playbook file, just include it like so, at the bottom
 of a play::
@@ -424,7 +421,7 @@ For example::
       tasks:
       - name: say hi
         tags: foo
-        action: shell echo "hi..."
+        shell: echo "hi..."
 
     - include: load_balancers.yml
     - include: webservers.yml
@@ -434,7 +431,6 @@ Note that you cannot do variable substitution when including one playbook
 inside another.
 
 .. note::
-
    You can not conditionally path the location to an include file,
    like you can with 'vars_files'.  If you find yourself needing to do
    this, consider how you can restructure your playbook to be more
@@ -442,6 +438,8 @@ inside another.
    decide what include file to use.  All hosts contained within the
    play are going to get the same tasks.  ('*when*' provides some
    ability for hosts to conditionally skip tasks).
+
+.. _roles:
 
 Roles
 `````
@@ -517,6 +515,14 @@ While it's probably not something you should do often, you can also conditionall
 This works by applying the conditional to every task in the role.  Conditionals are covered later on in
 the documentation.
 
+Finally, you may wish to assign tags to the roles you specify. You can do so inline:::
+
+    ---
+    - hosts: webservers
+      roles:
+        - { role: foo, tags: ["bar", "baz"] }
+
+
 If the play still has a 'tasks' section, those tasks are executed after roles are applied.
 
 If you want to define certain tasks to happen before AND after roles are applied, you can do this::
@@ -531,6 +537,11 @@ If you want to define certain tasks to happen before AND after roles are applied
         - shell: echo 'still busy'
       post_tasks:
         - shell: echo 'goodbye'
+
+.. note::
+   If using tags with tasks (described later as a means of only running part of a playbook),  
+   be sure to also tag your pre_tasks and post_tasks and pass those along as well, especially if the pre
+   and post tasks are used for monitoring outage window control or load balancing.
 
 Executing A Playbook
 ````````````````````

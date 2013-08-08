@@ -30,6 +30,7 @@ docsite/latest/_static/*.gif
 docsite/latest/_static/*.png
 docsite/latest/_static/websupport.js
 docsite/latest/searchindex.js
+docsite/latest/htmlout
 # deb building stuff...
 debian/
 # Vim swap files

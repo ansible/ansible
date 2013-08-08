@@ -32,6 +32,7 @@ options:
       - name of the database to add or remove
     required: true
     default: null
+    aliases: [ db ]
   login_user:
     description:
       - The username used to authenticate with
@@ -72,9 +73,6 @@ options:
     description:
       - Where to dump/get the C(.sql) file
     required: false
-examples:
-   - code: "mysql_db: db=bobdata state=present"
-     description: Create a new database with name 'bobdata'
 notes:
    - Requires the MySQLdb Python package on the remote host. For Ubuntu, this
      is as easy as apt-get install python-mysqldb. (See M(apt).)
@@ -84,6 +82,11 @@ notes:
      default login of C(root) with no password.
 requirements: [ ConfigParser ]
 author: Mark Theunissen
+'''
+
+EXAMPLES = '''
+# Create a new database with name 'bobdata'
+- mysql_db: name=bobdata state=present
 '''
 
 import ConfigParser

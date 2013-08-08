@@ -45,8 +45,9 @@ import socket
 from optparse import OptionParser
 
 DEFAULT_PLAYBOOK = 'local.yml'
-PLAYBOOK_ERRORS = { 1: 'File does not exist',
-                    2: 'File is not readable' }
+PLAYBOOK_ERRORS = {1: 'File does not exist',
+                    2: 'File is not readable'}
+
 
 def _run(cmd):
     print >>sys.stderr, "Running: '%s'" % cmd
@@ -56,7 +57,8 @@ def _run(cmd):
     print out
     if cmd.returncode != 0:
         print >>sys.stderr, err
-    return cmd.returncode
+    return cmd.returncode, out
+
 
 def try_playbook(path):
     if not os.path.exists(path):
@@ -64,6 +66,7 @@ def try_playbook(path):
     if not os.access(path, os.R_OK):
         return 2
     return 0
+
 
 def select_playbook(path, args):
     playbook = None
@@ -89,24 +92,31 @@ def select_playbook(path, args):
             print >>sys.stderr, "\n".join(errors)
         return playbook
 
+
 def main(args):
     """ Set up and run a local playbook """
     usage = "%prog [options] [playbook.yml]"
     parser = OptionParser(usage=usage)
     parser.add_option('--purge', default=False, action='store_true',
-                      help='Purge git checkout after playbook run')
+                      help='purge git checkout after playbook run')
+    parser.add_option('-o', '--only-if-changed', dest='ifchanged', default=False, action='store_true',
+                      help='only run the playbook if the repository has been updated')
     parser.add_option('-d', '--directory', dest='dest', default=None,
-                      help='Directory to clone git repository to')
+                      help='directory to clone the git repository to')
     parser.add_option('-U', '--url', dest='url', default=None,
-                      help='URL of git repository')
+                      help='URL of the git repository')
     parser.add_option('-C', '--checkout', dest='checkout',
                       default="HEAD",
-                      help='Branch/Tag/Commit to checkout.  Defaults to HEAD.')
+                      help='branch/tag/commit to checkout; defaults to HEAD')
+    parser.add_option('-i', '--inventory-file', dest='inventory',
+                      help="location of the inventory host file")
     options, args = parser.parse_args(args)
 
     if not options.dest:
         parser.error("Missing required directory argument")
         return 1
+
+    options.dest = os.path.abspath(options.dest)
 
     if not options.url:
         parser.error("URL for git repo not specified, use -h for help")
@@ -115,12 +125,18 @@ def main(args):
     now = datetime.datetime.now()
     print >>sys.stderr, now.strftime("Starting ansible-pull at %F %T")
 
+    inv_opts = 'localhost,'
     limit_opts = 'localhost:%s:127.0.0.1' % socket.getfqdn()
     git_opts = "repo=%s dest=%s version=%s" % (options.url, options.dest, options.checkout)
-    cmd = 'ansible all -c local --limit "%s" -m git -a "%s"' % (limit_opts, git_opts)
-    rc = _run(cmd)
+    cmd = 'ansible all -c local -i "%s" --limit "%s" -m git -a "%s"' % (
+            inv_opts, limit_opts, git_opts
+            )
+    rc, out = _run(cmd)
     if rc != 0:
         return rc
+    elif options.ifchanged and '"changed": true' not in out:
+        print "Repository has not changed, quitting."
+        return 0
 
     playbook = select_playbook(options.dest, args)
 
@@ -129,8 +145,10 @@ def main(args):
         return 1
 
     cmd = 'ansible-playbook -c local --limit "%s" %s' % (limit_opts, playbook)
+    if options.inventory:
+        cmd += ' -i "%s"' % options.inventory
     os.chdir(options.dest)
-    rc = _run(cmd)
+    rc, out = _run(cmd)
 
     if options.purge:
         os.chdir('/')

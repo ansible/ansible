@@ -99,23 +99,25 @@ options:
       - The character set of email being sent
     default: 'us-ascii'
     requred: false
-examples:
-    - description: "Example playbook sending mail to root"
-      code: "local_action: mail msg='System ${ansible_hostname} has been sucessfully provisioned.'"
-    - description: Send e-mail to a bunch of users, attaching files
-      code: |
-           - local_action: mail
-                 host='127.0.0.1'
-                 port=2025
-                 subject="Ansible-report"
-                 body="Hello, this is an e-mail. I hope you like it ;-)"
-                 from="jane@example.net (Jane Jolie)"
-                 to="John Doe <j.d@example.org>, Suzie Something <sue@example.com>"
-                 cc="Charlie Root <root@localhost>"
-                 attach="/etc/group /tmp/pavatar2.png"
-                 headers=Reply-To=john@example.com|X-Special="Something or other"
-                 charset=utf8
 """
+
+EXAMPLES = '''
+# Example playbook sending mail to root
+- local_action: mail msg='System {{ ansible_hostname }} has been successfully provisioned.'
+
+# Send e-mail to a bunch of users, attaching files
+- local_action: mail
+                host='127.0.0.1'
+                port=2025
+                subject="Ansible-report"
+                body="Hello, this is an e-mail. I hope you like it ;-)"
+                from="jane@example.net (Jane Jolie)"
+                to="John Doe <j.d@example.org>, Suzie Something <sue@example.com>"
+                cc="Charlie Root <root@localhost>"
+                attach="/etc/group /tmp/pavatar2.png"
+                headers=Reply-To=john@example.com|X-Special="Something or other"
+                charset=utf8
+'''
 
 import os
 import sys
