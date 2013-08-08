@@ -26,6 +26,13 @@ import stat
 import tempfile
 import pipes
 
+## fixes https://github.com/ansible/ansible/issues/3518
+# http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
+import sys
+reload(sys)
+sys.setdefaultencoding("utf8")
+
+
 class ActionModule(object):
 
     def __init__(self, runner):
