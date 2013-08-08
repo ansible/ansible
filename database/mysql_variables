@@ -54,6 +54,13 @@ options:
         description:
             - unix socket to connect mysql server
 '''
+EXAMPLES = '''
+# Check for sync_binary_log setting
+- mysql_variables: variable=sync_binary_log
+
+# Set read_only variable to 1
+- mysql_variables: variable=read_only value=1
+'''
 
 
 import ConfigParser
