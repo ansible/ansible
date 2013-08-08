@@ -136,7 +136,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             instance_id = dict(required=True),
-            public_ip = dict(required=True, alises= ['ip'] ),
+            public_ip = dict(required=True, aliases= ['ip'] ),
             state = dict(required=False, default='present',
                          choices=['present', 'absent']),
             ec2_url = dict(required=False, aliases=['EC2_URL']),
