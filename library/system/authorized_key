@@ -55,10 +55,16 @@ options:
     version_added: "1.2"
   state:
     description:
-      - Whether the given key should or should not be in the file
+      - Whether the given key (with the given key_options) should or should not be in the file
     required: false
     choices: [ "present", "absent" ]
     default: "present"
+  key_options:
+    description:
+      - A string of ssh key options to be prepended to the key in the authorized_keys file
+    required: false
+    default: null
+    version_added: "1.3"
 description:
     - "Adds or removes authorized keys for particular user accounts"
 author: Brad Olson
@@ -81,6 +87,11 @@ EXAMPLES = '''
   with_file:
     - public_keys/doe-jane
     - public_keys/doe-john
+
+# Using key_options:
+- authorized_key: user=charlie
+                  key="{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
+                  key_options='no-port-forwarding,host="10.0.1.1"'
 '''
 
 # Makes sure the public key line is present or absent in the user's .ssh/authorized_keys.
@@ -189,6 +200,7 @@ def enforce_state(module, params):
     path       = params.get("path", None)
     manage_dir = params.get("manage_dir", True)
     state      = params.get("state", "present")
+    key_options = params.get("key_options", None)
 
     key = key.split('\n')
 
@@ -199,6 +211,9 @@ def enforce_state(module, params):
 
     # Check our new keys, if any of them exist we'll continue.
     for new_key in key:
+        if key_options is not None:
+            new_key = key_options + ' ' + new_key
+
         present = new_key in keys
         # handle idempotent state=present
         if state=="present":
@@ -227,7 +242,8 @@ def main():
            key        = dict(required=True, type='str'),
            path       = dict(required=False, type='str'),
            manage_dir = dict(required=False, type='bool', default=True),
-           state      = dict(default='present', choices=['absent','present'])
+           state      = dict(default='present', choices=['absent','present']),
+           key_options = dict(required=False, type='str')
         )
     )
 
