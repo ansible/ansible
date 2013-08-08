@@ -49,6 +49,7 @@ to add your own.
 -  `Nginx <http://www.capsunlock.net/2012/04/ansible-nginx-playbook.html>`_ - cocoy
 -  `OpenStack <http://github.com/lorin/openstack-ansible>`_ - lorin
 -  `Systems Configuration <https://github.com/cegeddin/ansible-contrib>`_ - cegeddin
+-  `Nginx, uWSGI, Redis, PostgreSQL <https://github.com/uggedal/playbooks>`_ - uggedal
 
 Callbacks and Plugins
 `````````````````````
