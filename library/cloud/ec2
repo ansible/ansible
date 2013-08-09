@@ -50,7 +50,7 @@ options:
   region:
     version_added: "1.2"
     description:
-      - the AWS region to use
+      - The AWS region to use.  Must be specified if ec2_url is not used. If not specified then the value of the EC2_REGION environment variable, if any, is used.
     required: false
     default: null
     aliases: [ 'aws_region', 'ec2_region' ]
@@ -99,19 +99,19 @@ options:
     aliases: []
   ec2_url:
     description:
-      - url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints)
+      - Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints).  Must be specified if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used
     required: false
     default: null
     aliases: []
   aws_secret_key:
     description:
-      - AWS secret key
+      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
     required: false
     default: null
     aliases: [ 'ec2_secret_key', 'secret_key' ]
   aws_access_key:
     description:
-      - AWS access key
+      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
     required: false
     default: null
     aliases: [ 'ec2_access_key', 'access_key' ]
@@ -190,6 +190,9 @@ author: Seth Vidal, Tim Gerla, Lester Wade
 '''
 
 EXAMPLES = '''
+# Note: None of these examples set aws_access_key, aws_secret_key, or region.
+# It is assumed that their matching environment variables are set.
+
 # Basic provisioning example
 - local_action:
     module: ec2
@@ -530,7 +533,7 @@ def main():
             ramdisk = dict(),
             wait = dict(choices=BOOLEANS, default=False),
             wait_timeout = dict(default=300),
-            ec2_url = dict(aliases=['EC2_URL']),
+            ec2_url = dict(),
             aws_secret_key = dict(aliases=['ec2_secret_key', 'secret_key'], no_log=True),
             aws_access_key = dict(aliases=['ec2_access_key', 'access_key']),
             placement_group = dict(),
@@ -551,7 +554,7 @@ def main():
     termination_list = module.params.get('termination_list')
 
 
-        # allow eucarc environment variables to be used if ansible vars aren't set
+    # allow eucarc environment variables to be used if ansible vars aren't set
     if not ec2_url and 'EC2_URL' in os.environ:
         ec2_url = os.environ['EC2_URL']
 
@@ -567,21 +570,26 @@ def main():
         elif 'EC2_ACCESS_KEY' in os.environ:
             aws_access_key = os.environ['EC2_ACCESS_KEY']
 
+    if not region:
+        if 'AWS_REGION' in os.environ:
+            region = os.environ['AWS_REGION']
+        elif 'EC2_REGION' in os.environ:
+            region = os.environ['EC2_REGION']
+
     # If we have a region specified, connect to its endpoint.
     if region:
         try:
             ec2 = boto.ec2.connect_to_region(region, aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key)
         except boto.exception.NoAuthHandlerFound, e:
             module.fail_json(msg = str(e))
-    # Otherwise, no region so we fallback to the old connection method
-    else:
+    # If we specified an ec2_url then try connecting to it
+    elif ec2_url:
         try:
-            if ec2_url: # if we have an URL set, connect to the specified endpoint
-                ec2 = boto.connect_ec2_endpoint(ec2_url, aws_access_key, aws_secret_key)
-            else: # otherwise it's Amazon.
-                ec2 = boto.connect_ec2(aws_access_key, aws_secret_key)
+            ec2 = boto.connect_ec2_endpoint(ec2_url, aws_access_key, aws_secret_key)
         except boto.exception.NoAuthHandlerFound, e:
             module.fail_json(msg = str(e))
+    else:
+        module.fail_json(msg="Either region or ec2_url must be specified")
 
     if module.params.get('state') == 'absent':
         instance_ids = module.params.get('instance_ids')

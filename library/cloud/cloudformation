@@ -43,7 +43,7 @@ options:
     aliases: []
   region:
     description:
-      - The AWS region the stack will be launched in
+      - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
     required: true
     default: null
     aliases: ['aws_region', 'ec2_region']
@@ -169,16 +169,25 @@ def main():
 
     state = module.params['state']
     stack_name = module.params['stack_name']
-    region = Region(module.params['region'])
+    r = module.params['region']
     template_body = open(module.params['template'], 'r').read()
     disable_rollback = module.params['disable_rollback']
     template_parameters = module.params['template_parameters']
+
+    if not r:
+        if 'AWS_REGION' in os.environ:
+            r = os.environ['AWS_REGION']
+        elif 'EC2_REGION' in os.environ:
+            r = os.environ['EC2_REGION']
+    
+    
 
     # convert the template parameters ansible passes into a tuple for boto
     template_parameters_tup = [(k, v) for k, v in template_parameters.items()]
     stack_outputs = {}
 
     try:
+        region = Region(r)
         cfn = boto.cloudformation.connection.CloudFormationConnection(
             region=region)
     except boto.exception.NoAuthHandlerFound, e:

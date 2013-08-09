@@ -24,16 +24,22 @@ version_added: "1.1"
 options:
   aws_secret_key:
     description:
-      - AWS Secret API key
+      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
     required: false
     default: None
     aliases: ['ec2_secret_key', 'secret_key' ]
   aws_access_key:
     description:
-      - AWS Access API key
+      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
     required: false
     default: None
     aliases: ['ec2_access_key', 'access_key' ]
+  ec2_url:
+    description:
+      - Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints).  Must be specified if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used
+    required: false
+    default: null
+    aliases: []
   instance:
     description:
       - instance ID if you wish to attach the volume. 
@@ -54,7 +60,7 @@ options:
     aliases: []
   region:
     description:
-      - region in which to create the volume
+      - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
     required: false
     default: null
     aliases: ['aws_region', 'ec2_region']
@@ -106,15 +112,24 @@ except ImportError:
     print "failed=True msg='boto required for this module'"
     sys.exit(1)
 
+AWS_REGIONS = ['ap-northeast-1',
+               'ap-southeast-1',
+               'ap-southeast-2',
+               'eu-west-1',
+               'sa-east-1',
+               'us-east-1',
+               'us-west-1',
+               'us-west-2']
+
 def main():
     module = AnsibleModule(
         argument_spec = dict(
             instance = dict(),
             volume_size = dict(required=True),
             device_name = dict(),
-            region = dict(aliases=['aws_region', 'ec2_region']),
+            region = dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS),
             zone = dict(aliases=['availability_zone', 'aws_zone', 'ec2_zone']),
-            ec2_url = dict(aliases=['EC2_URL']),
+            ec2_url = dict(),
             aws_secret_key = dict(aliases=['ec2_secret_key', 'secret_key'], no_log=True),
             aws_access_key = dict(aliases=['ec2_access_key', 'access_key']),
         )
@@ -144,6 +159,12 @@ def main():
             aws_access_key = os.environ['AWS_ACCESS_KEY']
         elif 'EC2_ACCESS_KEY' in os.environ:
             aws_access_key = os.environ['EC2_ACCESS_KEY']
+
+    if not region:
+        if 'AWS_REGION' in os.environ:
+            region = os.environ['AWS_REGION']
+        elif 'EC2_REGION' in os.environ:
+            region = os.environ['EC2_REGION']
     
     # If we have a region specified, connect to its endpoint.
     if region: 
@@ -152,14 +173,13 @@ def main():
         except boto.exception.NoAuthHandlerFound, e:
             module.fail_json(msg = str(e))
     # Otherwise, no region so we fallback to the old connection method
-    else: 
+    elif ec2_url:
         try:
-            if ec2_url: # if we have an URL set, connect to the specified endpoint 
-                ec2 = boto.connect_ec2_endpoint(ec2_url, aws_access_key, aws_secret_key)
-            else: # otherwise it's Amazon.
-                ec2 = boto.connect_ec2(aws_access_key, aws_secret_key)
+            ec2 = boto.connect_ec2_endpoint(ec2_url, aws_access_key, aws_secret_key)
         except boto.exception.NoAuthHandlerFound, e:
             module.fail_json(msg = str(e))
+    else:
+        module.fail_json(msg="Either region or ec2_url must be specified")
 
     # Here we need to get the zone info for the instance. This covers situation where 
     # instance is specified but zone isn't.
