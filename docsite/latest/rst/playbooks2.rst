@@ -74,7 +74,7 @@ Overriding Changed Result
 .. versionadded:: 1.3
 
 When a shell/command or other module runs it will typically report
-"changed" status based on whether it thinks it affected machine state.  
+"changed" status based on whether it thinks it affected machine state.
 
 Sometimes you will know, based on the return code
 or output that it did not make any changes, and wish to override
@@ -289,6 +289,9 @@ As of Ansible 1.2, you can also pass in extra vars as quoted JSON, like so::
 
 The key=value form is obviously simpler, but it's there if you need it!
 
+As of Ansible 1.3, extra vars can be loaded from a JSON file with the "@" syntax::
+
+    --extra-vars "@some_file.json"
 
 Conditional Execution
 `````````````````````
@@ -329,7 +332,7 @@ As a reminder, to see what derived variables are available, you can do::
 
     ansible hostname.example.com -m setup
 
-Tip: Sometimes you'll get back a variable that's a string and you'll want to do a comparison on it.  You can do this like so:
+Tip: Sometimes you'll get back a variable that's a string and you'll want to do a comparison on it.  You can do this like so::
 
     tasks:
       - shell: echo "only on Red Hat 6, derivatives, and later"
@@ -822,7 +825,7 @@ The 'register' keyword decides what variable to save a result in.  The resulting
           - shell: echo "motd contains the word hi"
             when: motd_contents.stdout.find('hi') != -1
 
-As shown previously, the registered variable's string contents are accessible with the 'stdout' value. 
+As shown previously, the registered variable's string contents are accessible with the 'stdout' value.
 The registered result can be used in the "with_items" of a task if it is converted into
 a list (or already is a list) as shown below.  "stdout_lines" is already available on the object as
 well though you could also call "home_dirs.stdout.split()" if you wanted, and could split by other

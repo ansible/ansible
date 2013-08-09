@@ -279,7 +279,10 @@ def switch_version(git_path, module, dest, remote, version):
         cmd = "%s reset --hard %s" % (git_path, remote)
     (rc, out1, err1) = module.run_command(cmd)
     if rc != 0:
-        module.fail_json(msg="Failed to checkout branch %s" % (branch))
+        if version != 'HEAD':
+            module.fail_json(msg="Failed to checkout %s" % (version))
+        else:
+            module.fail_json(msg="Failed to checkout branch %s" % (branch))
     (rc, out2, err2) = submodule_update(git_path, module, dest)
     return (rc, out1 + out2, err1 + err2)
 

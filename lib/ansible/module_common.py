@@ -435,7 +435,9 @@ class AnsibleModule(object):
                 else:
                     os.chmod(path, mode)
             except OSError, e:
-                if e.errno == errno.ENOENT: # Can't set mode on broken symbolic links
+                if os.path.islink(path) and e.errno == errno.EPERM:  # Can't set mode on symbolic links
+                    pass
+                elif e.errno == errno.ENOENT: # Can't set mode on broken symbolic links
                     pass
                 else:
                     raise e
@@ -867,8 +869,8 @@ class AnsibleModule(object):
             # Optimistically try a rename, solves some corner cases and can avoid useless work.
             os.rename(src, dest)
         except (IOError,OSError), e:
-            # only try workarounds for errno 18 (cross device) and 1 (not permited)
-            if e.errno != errno.EPERM and e.errno != errno.EXDEV:
+            # only try workarounds for errno 18 (cross device), 1 (not permited) and 13 (permission denied)
+            if e.errno != errno.EPERM and e.errno != errno.EXDEV and e.errno != errno.EACCES:
                 self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
 
             dest_dir = os.path.dirname(dest)

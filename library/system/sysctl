@@ -77,7 +77,7 @@ EXAMPLES = '''
 
 # Set kernel.panic to 3 in /tmp/test_sysctl.conf, check if the sysctl key
 # seems writable, but do not reload sysctl, and do not check kernel value
-# after (not needed, because not the real /etc/sysctl.conf updated)
+# after (not needed, because the real /etc/sysctl.conf was not updated)
 - sysctl: name=kernel.panic value=3 sysctl_file=/tmp/test_sysctl.conf check=before reload=no
 '''
 

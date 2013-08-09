@@ -47,6 +47,12 @@ options:
         default: none
         description:
             - keyfile path
+    keyring:
+        required: false
+        default: none
+        description:
+            - path to specific keyring file in /etc/apt/trusted.gpg.d
+        version_added: "1.3"
     url:
         required: false
         default: none
@@ -75,6 +81,9 @@ EXAMPLES = '''
 
 # Add a key from a file on the Ansible server    
 - apt_key: data="{{ lookup('file', 'apt.gpg') }}" state=present
+
+# Add an Apt signing key to a specific keyring file
+- apt_key: id=473041FA url=https://ftp-master.debian.org/keys/archive-key-6.0.asc keyring=/etc/apt/trusted.gpg.d/debian.gpg state=present
 '''
 
 
@@ -98,8 +107,12 @@ def check_missing_binaries(module):
     if len(missing):
         module.fail_json(msg="binaries are missing", names=all)
 
-def all_keys(module):
-    (rc, out, err) = module.run_command("apt-key list")
+def all_keys(module, keyring):
+    if keyring:
+        cmd = "apt-key --keyring %s list" % keyring
+    else:
+        cmd = "apt-key list"
+    (rc, out, err) = module.run_command(cmd)
     results = []
     lines = out.split('\n')
     for line in lines:
@@ -129,18 +142,27 @@ def download_key(module, url):
         module.fail_json(msg="error getting key id from url", traceback=format_exc())
 
 
-def add_key(module, keyfile, data=None):
+def add_key(module, keyfile, keyring, data=None):
     if data is not None:
-        cmd = "apt-key add -"
+        if keyring:
+            cmd = "apt-key --keyring %s add -" % keyring
+        else:
+            cmd = "apt-key add -"
         (rc, out, err) = module.run_command(cmd, data=data, check_rc=True, binary_data=True)
     else:
-        cmd = "apt-key add %s" % (keyfile)
+        if keyring:
+            cmd = "apt-key --keyring %s add %s" % (keyring, keyfile)
+        else:
+            cmd = "apt-key add %s" % (keyfile)
         (rc, out, err) = module.run_command(cmd, check_rc=True)
     return True
 
-def remove_key(module, key_id):
+def remove_key(module, key_id, keyring):
     # FIXME: use module.run_command, fail at point of error and don't discard useful stdin/stdout
-    cmd = 'apt-key del %s' % key_id
+    if keyring:
+        cmd = 'apt-key --keyring %s del %s' % (keyring, key_id)
+    else:
+        cmd = 'apt-key del %s' % key_id
     (rc, out, err) = module.run_command(cmd, check_rc=True)
     return True
 
@@ -152,6 +174,7 @@ def main():
             data=dict(required=False),
             file=dict(required=False),
             key=dict(required=False),
+            keyring=dict(required=False),
             state=dict(required=False, choices=['present', 'absent'], default='present')
         ),
         supports_check_mode=True
@@ -161,13 +184,14 @@ def main():
     url             = module.params['url']
     data            = module.params['data']
     filename        = module.params['file']
+    keyring         = module.params['keyring']
     state           = module.params['state']
     changed         = False
     
     # FIXME: I think we have a common facility for this, if not, want
     check_missing_binaries(module)
 
-    keys = all_keys(module)
+    keys = all_keys(module, keyring)
     return_values = {}
 
     if state == 'present':
@@ -182,11 +206,11 @@ def main():
                 if module.check_mode:
                     module.exit_json(changed=True)
                 if filename:
-                    add_key(module, filename)
+                    add_key(module, filename, keyring)
                 else:
-                    add_key(module, "-", data)
+                    add_key(module, "-", keyring, data)
                 changed=False
-                keys2 = all_keys(module)
+                keys2 = all_keys(module, keyring)
                 if len(keys) != len(keys2):
                     changed=True
                 if key_id and not key_id in keys2:
@@ -198,7 +222,7 @@ def main():
         if key_id in keys:
             if module.check_mode:
                 module.exit_json(changed=True)
-            if remove_key(module, key_id):
+            if remove_key(module, key_id, keyring):
                 changed=True
             else:
                 # FIXME: module.fail_json  or exit-json immediately at point of failure

@@ -57,7 +57,7 @@ options:
     version_added: "1.2"
   mode:
     description:
-      - Switches the module behaviour between put (upload), get (download), create (bucket) and delete (bucket). 
+      - Switches the module behaviour between put (upload), get (download), geturl (return download url (Ansible 1.3+), getstr (download object as string (1.3+)), create (bucket) and delete (bucket). 
     required: true
     default: null
     aliases: []
@@ -67,6 +67,23 @@ options:
     required: false
     default: null
     aliases: []
+  s3_url:
+    description:
+        - S3 URL endpoint. If not specified then the S3_URL environment variable is used, if that variable is defined.
+    default: null
+    aliases: [ S3_URL ]
+  ec2_access_key:
+    description:
+      - EC2 access key. If not specified then the EC2_ACCESS_KEY environment variable is used.
+    required: false
+    default: null
+    aliases: [ EC2_ACCESS_KEY ]
+  ec2_secret_key:
+    description:
+      - EC2 secret key. If not specified then the EC2_SECRET_KEY environment variable is used.
+    required: false
+    default: null
+    aliases: [ EC2_SECRET_KEY ]
 requirements: [ "boto" ]
 author: Lester Wade, Ralph Tice
 '''
@@ -80,8 +97,12 @@ EXAMPLES = '''
 - s3: bucket=mybucket object=/my/desired/key.txt dest=/usr/local/myfile.txt mode=get overwrite=true
 # PUT/upload and overwrite remote file (trust local)
 - s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=put overwrite=true
+# Download an object as a string to use else where in your playbook
+- s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=getstr
 # Create an empty bucket
 - s3: bucket=mybucket mode=create
+# Create a bucket with key as directory
+- s3: bucket=mybucket object=/my/directory/path mode=create
 # Delete a bucket and all contents
 - s3: bucket=mybucket mode=delete
 '''
@@ -152,15 +173,15 @@ def delete_key(module, s3, bucket, obj):
         bucket = s3.lookup(bucket)
         bucket.delete_key(obj)
         module.exit_json(msg="Object deleted from bucket %s"%bucket, changed=True)
-        sys.exit(0)
     except s3.provider.storage_response_error, e:
         module.fail_json(msg= str(e))
  
-def create_key(module, s3, bucket, obj):
+def create_dirkey(module, s3, bucket, obj):
     try:
         bucket = s3.lookup(bucket)
-        bucket.new_key(obj)
-        module.exit_json(msg="Object %s created in bucket %s" % (obj, bucket), changed=True)
+        key = bucket.new_key(obj)
+        key.set_contents_from_string('')
+        module.exit_json(msg="Virtual directory %s created in bucket %s" % (obj, bucket.name), changed=True)
     except s3.provider.storage_response_error, e:
         module.fail_json(msg= str(e))
 
@@ -201,6 +222,16 @@ def download_s3file(module, s3, bucket, obj, dest):
     except s3.provider.storage_copy_error, e:
         module.fail_json(msg= str(e))
 
+def download_s3str(module, s3, bucket, obj):
+    try:
+        bucket = s3.lookup(bucket)
+        key = bucket.lookup(obj)
+        contents = key.get_contents_as_string()
+        module.exit_json(msg="GET operation complete", contents=contents, changed=True)
+        sys.exit(0)
+    except s3.provider.storage_copy_error, e:
+        module.fail_json(msg= str(e))
+
 def get_download_url(module, s3, bucket, obj, expiry):
     try:
         bucket = s3.lookup(bucket)
@@ -218,7 +249,7 @@ def main():
             object         = dict(),
             src            = dict(),
             dest           = dict(),
-            mode           = dict(choices=['get', 'put', 'delete', 'create', 'geturl'], required=True),
+            mode           = dict(choices=['get', 'put', 'delete', 'create', 'geturl', 'getstr'], required=True),
             expiry         = dict(default=600, aliases=['expiration']),
             s3_url         = dict(aliases=['S3_URL']),
             ec2_secret_key = dict(aliases=['EC2_SECRET_KEY']),
@@ -372,14 +403,27 @@ def main():
     # Need to research how to create directories without "populating" a key, so this should just do bucket creation for now.
     # WE SHOULD ENABLE SOME WAY OF CREATING AN EMPTY KEY TO CREATE "DIRECTORY" STRUCTURE, AWS CONSOLE DOES THIS.
     if mode == 'create':
-        if bucket: 
+        if bucket and not obj: 
             bucketrtn = bucket_check(module, s3, bucket)
             if bucketrtn is True:
                 module.exit_json(msg="Bucket already exists.", changed=False)
             else:
                 created = create_bucket(module, s3, bucket)
         if bucket and obj:
-            module.fail_json(msg="mode=create can only be used for bucket creation.", failed=True)
+            bucketrtn = bucket_check(module, s3, bucket)
+            if obj.endswith('/'):
+                dirobj = obj
+            else:
+                dirobj = obj + "/"
+            if bucketrtn is True:
+                keyrtn = key_check(module, s3, bucket, dirobj)
+                if keyrtn is True: 
+                    module.exit_json(msg="Bucket %s and key %s already exists."% (bucket, obj), changed=False)
+                else:      
+                    create_dirkey(module, s3, bucket, dirobj)
+            if bucketrtn is False:
+                created = create_bucket(module, s3, bucket)
+                create_dirkey(module, s3, bucket, dirobj)
 
     # Support for grabbing the time-expired URL for an object in S3/Walrus.
     if mode == 'geturl':
@@ -396,6 +440,18 @@ def main():
         else:
             module.fail_json(msg="Bucket and Object parameters must be set", failed=True)
             sys.exit(0)
+
+    if mode == 'getstr':
+        if bucket and obj:
+            bucketrtn = bucket_check(module, s3, bucket)
+            if bucketrtn is False:
+                module.fail_json(msg="Bucket %s does not exist."%bucket, failed=True)
+            else:
+                keyrtn = key_check(module, s3, bucket, obj)
+                if keyrtn is True:
+                    download_s3str(module, s3, bucket, obj)
+                else:
+                    module.fail_json(msg="Key %s does not exist."%obj, failed=True)
 
     sys.exit(0)
 
