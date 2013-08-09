@@ -200,6 +200,10 @@ def pool_exists(api, pool):
     return result
 
 def create_pool(api, pool, lb_method):
+    # create requires lb_method but we don't want to default
+    # to a value on subsequent runs
+    if not lb_method:
+        lb_method = 'round_robin'
     lb_method = "LB_METHOD_%s" % lb_method.strip().upper()
     api.LocalLB.Pool.create_v2(pool_names=[pool], lb_methods=[lb_method],
                                members=[[]])
@@ -390,29 +394,57 @@ def main():
             elif pool_exists(api, pool):
                 # no host/port supplied, must be pool removal
                 if not module.check_mode:
-                    remove_pool(api, pool)
-                result = {'changed': True}
+                    # hack to handle concurrent runs of module
+                    # pool might be gone before we actually remove it
+                    try:
+                        remove_pool(api, pool)
+                        result = {'changed': True}
+                    except bigsuds.OperationFailed, e:
+                        if "was not found" in str(e):
+                            result = {'changed': False}
+                        else:
+                            # genuine exception
+                            raise
+                else:
+                    # check-mode return value
+                    result = {'changed': True}
 
         elif state == 'present':
+            update = False
             if not pool_exists(api, pool):
                 # pool does not exist -- need to create it
                 if not module.check_mode:
-                    # create requires lb_method but we don't want to default
-                    # to a value on subsequent runs
-                    if not lb_method:
-                        lb_method = 'round_robin'
-                    create_pool(api, pool, lb_method)
-                    if monitors:
-                        set_monitors(api, pool, monitor_type, quorum, monitors)
-                    if slow_ramp_time:
-                        set_slow_ramp_time(api, pool, slow_ramp_time)
-                    if service_down_action:
-                        set_action_on_service_down(api, pool, service_down_action)
-                    if host and port:
-                        add_pool_member(api, pool, address, port)
-                result = {'changed': True}
+                    # a bit of a hack to handle concurrent runs of this module.
+                    # even though we've checked the pool doesn't exist,
+                    # it may exist by the time we run create_pool().
+                    # this catches the exception and does something smart
+                    # about it!
+                    try:
+                        create_pool(api, pool, lb_method)
+                        result = {'changed': True}
+                    except bigsuds.OperationFailed, e:
+                        if "already exists" in str(e):
+                            update = True
+                        else:
+                            # genuine exception
+                            raise
+                    else:
+                        if monitors:
+                            set_monitors(api, pool, monitor_type, quorum, monitors)
+                        if slow_ramp_time:
+                            set_slow_ramp_time(api, pool, slow_ramp_time)
+                        if service_down_action:
+                            set_action_on_service_down(api, pool, service_down_action)
+                        if host and port:
+                            add_pool_member(api, pool, address, port)
+                else:
+                    # check-mode return value
+                    result = {'changed': True}
             else:
                 # pool exists -- potentially modify attributes
+                update = True
+
+            if update:
                 if lb_method and lb_method != get_lb_method(api, pool):
                     if not module.check_mode:
                         set_lb_method(api, pool, lb_method)
