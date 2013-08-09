@@ -1,0 +1,260 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2013, serge van Ginderachter <serge@vanginderachter.be>
+# based on Matt Hite's bigip_pool module
+# (c) 2013, Matt Hite <mhite@hotmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: bigip_monitor_http
+short_description: "Manages F5 BIG-IP LTM http monitors"
+description:
+    - "Manages F5 BIG-IP LTM monitors via iControl SOAP API"
+version_added: "1.3"
+author: Serge van Ginderachter
+notes:
+    - "Requires BIG-IP software version >= 11"
+    - "F5 developed module 'bigsuds' required (see http://devcentral.f5.com)"
+    - "Best run as a local_action in your playbook"
+    - "Monitor API documentation: https://devcentral.f5.com/wiki/iControl.LocalLB__Monitor.ashx"
+requirements:
+    - bigsuds
+options:
+    server:
+        description:
+            - BIG-IP host
+        required: true
+        default: null
+        choices: []
+        aliases: []
+    user:
+        description:
+            - BIG-IP username
+        required: true
+        default: null
+        choices: []
+        aliases: []
+    password:
+        description:
+            - BIG-IP password
+        required: true
+        default: null
+        choices: []
+        aliases: []
+    state:
+        description:
+            - Monitor state
+        required: false
+        default: 'present'
+        choices: ['present', 'absent']
+        aliases: []
+    name:
+        description:
+            - Monitor name
+        required: true
+        default: null
+        choices: []
+        aliases: ['monitor']
+    partition:
+        description:
+            - Partition
+        required: false
+        default: 'Common'
+        choices: []
+        aliases: []
+    parent:
+        description:
+            - The parent template of this monitor template
+        required: false
+        default: 'http'
+        choices: []
+        aliases: []
+    send:
+        description:
+        required: true
+        default: null
+        choices: []
+        aliases: []
+    receive:
+        description:
+        required: true
+        default: null
+        choices: []
+        aliases: []
+'''
+
+EXAMPLES = '''
+
+'''
+
+try:
+    import bigsuds
+except ImportError:
+    bigsuds_found = False
+else:
+    bigsuds_found = True
+
+TEMPLATE_TYPE = 'TTYPE_HTTP'
+DEFAULT_PARENT_TYPE = 'http'
+
+
+# ===========================================
+# bigip_monitor module generic methods.
+# these should be re-useable for other monitor types
+#
+
+def bigip_api(bigip, user, password):
+
+    api = bigsuds.BIGIP(hostname=bigip, username=user, password=password)
+    return api
+
+
+def monitor_exists(module, api, monitor, parent):
+
+    # hack to determine if monitor exists
+    result = False
+    try:
+        ttype = api.LocalLB.Monitor.get_template_type(template_names=[monitor])[0]
+        parent2 = api.LocalLB.Monitor.get_parent_template(template_names=[monitor])[0]
+        if ttype == TEMPLATE_TYPE and parent == parent2:
+            result = True
+        else:
+            module.fail_json(msg='Monitor already exists, but has a different type (%s) or parent(%s)' % (ttype, parent))
+    except bigsuds.OperationFailed, e:
+        if "was not found" in str(e):
+            result = False
+        else:
+            # genuine exception
+            raise
+    return result
+
+
+def create_monitor(api, monitor, template_attributes):
+
+    api.LocalLB.Monitor.create_template(templates=[{'template_name': monitor, 'template_type': TEMPLATE_TYPE}], template_attributes=[template_attributes])
+
+
+def delete_monitor(api, monitor):
+
+    try:
+        api.LocalLB.Monitor.delete_template(template_names=[monitor])
+    except bigsuds.OperationFailed, e:
+        # maybe it was deleted since we checked
+        if not "was not found" in str(e):
+            # genuine exception
+            raise
+
+def check_string_property(api, monitor, str_property):
+
+    return str_property == api.LocalLB.Monitor.get_template_string_property([monitor], [str_property['type']])[0]
+
+
+def set_string_property(api, monitor, str_property):
+
+    api.LocalLB.Monitor.set_template_string_property(template_names=[monitor], values=[str_property])
+
+
+# ===========================================
+# main loop
+#
+def main():
+
+
+    module = AnsibleModule(
+        argument_spec = dict(
+            server    = dict(required=True),
+            user      = dict(required=True),
+            password  = dict(required=True),
+            partition = dict(default='Common'),
+            state     = dict(default='present', choices=['present', 'absent']),
+            name      = dict(required=True),
+            parent    = dict(default=DEFAULT_PARENT_TYPE),
+            send      = dict(required=True),
+            receive   = dict(required=True)
+        ),
+        supports_check_mode=True
+    )
+
+    if not bigsuds_found:
+        module.fail_json(msg="the python bigsuds module is required")
+
+    server = module.params['server']
+    user = module.params['user']
+    password = module.params['password']
+    partition = module.params['partition']
+    state = module.params['state']
+    name = module.params['name']
+    parent = "/%s/%s" % (partition, module.params['parent'])
+    monitor = "/%s/%s" % (partition, name)
+    send = module.params['send']
+    receive = module.params['receive']
+
+    # sanity check user supplied values
+
+
+    # main logic 
+
+
+    try:
+        api = bigip_api(server, user, password)
+        result = {'changed': False}  # default
+
+
+        if state == 'absent':
+            if monitor_exists:
+                delete_monitor(api, monitor)
+                result['changed'] = True
+
+        else:
+            template_attributes = {'parent_template': parent,
+                                   'dest_ipport': {'address_type': 'ATYPE_STAR_ADDRESS_STAR_PORT',
+                                                   'ipport': {'address': '0.0.0.0', 
+                                                              'port': 0}
+                                                  },
+                                   'interval': 5,
+                                   'timeout': 16,
+                                   'is_read_only': False,
+                                   'is_directly_usable': True
+                                  }
+            template_string_properties = [{'type': 'STYPE_SEND',
+                                           'value': send},
+                                          {'type': 'STYPE_RECEIVE',
+                                           'value': receive}]
+            if monitor_exists(module, api, monitor, parent):
+                for str_property in template_string_properties:
+                    if not check_string_property(api, monitor, str_property):
+                        set_string_property(api, monitor, str_property)
+                        result['changed'] = True
+            else:
+                print (api, monitor, template_attributes)
+                create_monitor(api, monitor, template_attributes)
+                print "check"
+                for str_property in template_string_properties:
+                    set_string_property(api, monitor, str_property)
+                result['changed'] = True
+
+    except Exception, e:
+        module.fail_json(msg="received exception: %s" % e)
+
+    module.exit_json(**result)
+
+# include magic from lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
+
