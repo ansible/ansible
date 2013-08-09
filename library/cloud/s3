@@ -69,13 +69,13 @@ options:
     aliases: []
   aws_secret_key:
     description:
-      - AWS secret key. 
+      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
     required: false
     default: null
     aliases: ['ec2_secret_key', 'secret_key']
   aws_access_key:
     description:
-      - AWS access key. 
+      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
     required: false
     default: null
 requirements: [ "boto" ]

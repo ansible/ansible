@@ -25,7 +25,7 @@ description:
     if state=absent is passed as an argument.
   - Will be marked changed when called only if there are ELBs found to operate on.
 version_added: "1.2"
-requirements: [ "boto", "urllib2" ]
+requirements: [ "boto" ]
 author: John Jarvis
 options:
   state:
@@ -45,20 +45,19 @@ options:
     default: None
   aws_secret_key:
     description:
-      - AWS Secret API key
+      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
     required: false
     def2ault: None
     aliases: ['ec2_secret_key', 'secret_key' ]
   aws_access_key:
     description:
-      - AWS Access API key
+      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
     required: false
     default: None
     aliases: ['ec2_access_key', 'access_key' ]
   region:
     description:
-      - AWS region of your load balancer.  If not set then the region in which
-        this module is running will be used.
+      - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
     required: false
     aliases: ['aws_region', 'ec2_region']
 
@@ -69,7 +68,7 @@ EXAMPLES = """
 pre_tasks:
   - name: Gathering ec2 facts
     ec2_facts:
-  - name: Instance De-register
+  - name: Instnce De-register
     local_action: ec2_elb
     args:
       instance_id: "{{ ansible_ec2_instance_id }}"
@@ -104,12 +103,6 @@ try:
     from boto.regioninfo import RegionInfo
 except ImportError:
     print "failed=True msg='boto required for this module'"
-    sys.exit(1)
-
-try:
-    import urllib2
-except ImportError:
-    print "failed=True msg='urllib2 required for this module'"
     sys.exit(1)
 
 class ElbManager:
@@ -230,19 +223,14 @@ def main():
         elif 'EC2_ACCESS_KEY' in os.environ:
             aws_access_key = os.environ['EC2_ACCESS_KEY']
 
-    if not region and 'EC2_REGION' in os.environ:
-        region = os.environ['EC2_REGION']
+    if not region:
+        if 'AWS_REGION' in os.environ:
+            region = os.environ['AWS_REGION']
+        elif 'EC2_REGION' in os.environ:
+            region = os.environ['EC2_REGION']
 
     if not region:
-        response = urllib2.urlopen('http://169.254.169.254/latest/meta-data/placement/availability-zone')
-        az = response.read()
-        for r in AWS_REGIONS:
-            if az.startswith(r):
-                region = r
-                break
-
-        if not region:
-            module.fail_json(msg = str("region not specified and unable to determine region from AWS."))
+        module.fail_json(msg = str("Either region or EC2_REGION environment variable must be set."))
 
     instance_id = module.params['instance_id']
     elb_man = ElbManager(module, instance_id, ec2_elbs, aws_access_key,
