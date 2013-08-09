@@ -361,9 +361,10 @@ class PlayBook(object):
 
         # add facts to the global setup cache
         for host, result in contacted.iteritems():
-            if 'results' in result:
+            if 'results' in result and isinstance(result['results'], list):
                 # task ran with_ lookup plugin, so facts are encapsulated in
                 # multiple list items in the results key
+                # yum however also returns a results key, with a string value
                 for res in result['results']:
                     facts = res.get('ansible_facts', {})
                     self.SETUP_CACHE[host].update(facts)
