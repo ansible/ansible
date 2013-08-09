@@ -1,8 +1,8 @@
 #!/usr/bin/python -tt
 # -*- coding: utf-8 -*-
 
-# (c) 2012, Flowroute LLC
-# Written by Matthew Williams <matthew@flowroute.com>
+# (c) 2013, Raul Melo
+# Written by Raul Melo <raulmelo@fgmail.com>
 # Based on yum module written by Seth Vidal <skvidal at fedoraproject.org>
 #
 # This module is free software: you can redistribute it and/or modify
@@ -62,12 +62,6 @@ EXAMPLES = '''
 - swdepot: name=unzip state=absent
 '''
 
-def _run(cmd):
-    # returns (rc, stdout, stderr) from shell command
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-    stdout, stderr = process.communicate()
-    return (process.returncode, stdout, stderr)
-
 def compare_package(version1, version2):
     """ Compare version packages.
         Return values:
@@ -76,17 +70,17 @@ def compare_package(version1, version2):
         1 fisrt greater """
 
     def normalize(v):
-        return [int(x) for x in re.sub(r'(\.0+)*$','', v).split(".")]
+        return [int(x) for x in re.sub(r'(\.0+)*$', '', v).split(".")]
     return cmp(normalize(version1), normalize(version2))
 
-def query_package(name,depot=None):
+def query_package(module, name, depot=None):
     """ Returns whether a package is installed or not and version. """
 
     cmd_list = '/usr/sbin/swlist -a revision -l product'
     if depot:
-        rc, stdout, stderr = _run("%s -s %s %s | grep %s" % (cmd_list, depot, name, name))
+        rc, stdout, stderr = module.run_command("%s -s %s %s | grep %s" % (cmd_list, depot, name, name))
     else:
-        rc, stdout, stderr = _run("%s %s | grep %s" % (cmd_list, name, name))
+        rc, stdout, stderr = module.run_command("%s %s | grep %s" % (cmd_list, name, name))
     if rc == 0:
         version = re.sub("\s\s+|\t" , " ", stdout).strip().split()[1]
     else:
@@ -94,22 +88,22 @@ def query_package(name,depot=None):
 
     return rc, version
 
-def remove_package(name):
+def remove_package(module, name):
     """ Uninstall package if installed. """
 
     cmd_remove = '/usr/sbin/swremove'
-    rc, stdout, stderr = _run("%s %s" % (cmd_remove, name))
+    rc, stdout, stderr = module.run_command("%s %s" % (cmd_remove, name))
 
     if rc == 0:
         return rc, stdout
     else:
         return rc, stderr
 
-def install_package(depot, name):
+def install_package(module, depot, name):
     """ Install package if not already installed """
 
     cmd_install = '/usr/sbin/swinstall -x mount_all_filesystems=false'
-    rc, stdout, stderr = _run("%s -s %s %s" % (cmd_install, depot, name))
+    rc, stdout, stderr = module.run_command("%s -s %s %s" % (cmd_install, depot, name))
     if rc == 0:
         return rc, stdout
     else:
@@ -117,27 +111,27 @@ def install_package(depot, name):
 
 def main():
     module = AnsibleModule(
-            argument_spec = dict(
-                name = dict(aliases=['pkg'],required=True),
-                state = dict(choices=['present','absent','latest'],required=True),
-                depot = dict(default=None,requied=False)
-                ),
-            supports_check_mode=True
-            )
+        argument_spec = dict(
+            name = dict(aliases=['pkg'], required=True),
+            state = dict(choices=['present', 'absent', 'latest'], required=True),
+            depot = dict(default=None, requied=False)
+        ),
+        supports_check_mode=True
+    )
     name = module.params['name']
     state = module.params['state']
     depot = module.params['depot']
 
     changed = False
-    msg = 'No changed'
+    msg = "No changed"
     rc = 0
-    if ( state == "present" or state == "latest" ) and depot == None:
-        output = "depot parameter is mandatory with present or latest task"
-        module.fail_json(name=name,msg=output,rc=rc)
+    if ( state == 'present' or state == 'latest' ) and depot == None:
+        output = "depot parameter is mandatory in present or latest task"
+        module.fail_json(name=name, msg=output, rc=rc)
 
 
     #Check local version
-    rc, version_installed = query_package(name)
+    rc, version_installed = query_package(module, name)
     if not rc:
         installed = True
         msg = "Already installed"
@@ -148,51 +142,51 @@ def main():
     if ( state == 'present' or state == 'latest' ) and installed == False:
         if module.check_mode:
             module.exit_json(changed=True)
-        rc, output = install_package(depot, name)
+        rc, output = install_package(module, depot, name)
 
         if not rc:
             changed = True
             msg = "Packaged installed"
 
         else:
-            module.fail_json(name=name,msg=output,rc=rc)
+            module.fail_json(name=name, msg=output, rc=rc)
 
     elif state == 'latest' and installed == True:
         #Check depot version
-        rc, version_depot = query_package(name,depot)
+        rc, version_depot = query_package(module, name, depot)
 
         if not rc:
             if compare_package(version_installed,version_depot) == -1:
                 if module.check_mode:
                     module.exit_json(changed=True)
                 #Install new version
-                rc, output = install_package(depot, name)
+                rc, output = install_package(module, depot, name)
 
                 if not rc:
-                    msg = 'Packge upgraded, Before ' + version_installed + " Now " + version_depot
+                    msg = "Packge upgraded, Before " + version_installed + " Now " + version_depot
                     changed = True
 
                 else:
-                    module.fail_json(name=name,msg=output,rc=rc)
+                    module.fail_json(name=name, msg=output, rc=rc)
 
         else:
             output = "Software package not in repository " + depot
-            module.fail_json(name=name,msg=output,rc=rc)
+            module.fail_json(name=name, msg=output, rc=rc)
 
-    elif state == "absent" and installed == True:
+    elif state == 'absent' and installed == True:
         if module.check_mode:
             module.exit_json(changed=True)
-        rc, output = remove_package(name)
+        rc, output = remove_package(module, name)
         if not rc:
             changed = True
             msg = "Package removed"
         else:
-            module.fail_json(name=name,msg=output,rc=rc)
+            module.fail_json(name=name, msg=output, rc=rc)
 
     if module.check_mode:
         module.exit_json(changed=False)
 
-    module.exit_json(changed=changed,name=name,state=state,msg=msg)
+    module.exit_json(changed=changed, name=name, state=state, msg=msg)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
