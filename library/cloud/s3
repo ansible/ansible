@@ -67,6 +67,23 @@ options:
     required: false
     default: null
     aliases: []
+  s3_url:
+    description:
+        - S3 URL endpoint. If not specified then the S3_URL environment variable is used, if that variable is defined.
+    default: null
+    aliases: [ S3_URL ]
+  ec2_access_key:
+    description:
+      - EC2 access key. If not specified then the EC2_ACCESS_KEY environment variable is used.
+    required: false
+    default: null
+    aliases: [ EC2_ACCESS_KEY ]
+  ec2_secret_key:
+    description:
+      - EC2 secret key. If not specified then the EC2_SECRET_KEY environment variable is used.
+    required: false
+    default: null
+    aliases: [ EC2_SECRET_KEY ]
 requirements: [ "boto" ]
 author: Lester Wade, Ralph Tice
 '''
@@ -84,6 +101,8 @@ EXAMPLES = '''
 - s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=getstr
 # Create an empty bucket
 - s3: bucket=mybucket mode=create
+# Create a bucket with key as directory
+- s3: bucket=mybucket object=/my/directory/path mode=create
 # Delete a bucket and all contents
 - s3: bucket=mybucket mode=delete
 '''
@@ -157,11 +176,12 @@ def delete_key(module, s3, bucket, obj):
     except s3.provider.storage_response_error, e:
         module.fail_json(msg= str(e))
  
-def create_key(module, s3, bucket, obj):
+def create_dirkey(module, s3, bucket, obj):
     try:
         bucket = s3.lookup(bucket)
-        bucket.new_key(obj)
-        module.exit_json(msg="Object %s created in bucket %s" % (obj, bucket), changed=True)
+        key = bucket.new_key(obj)
+        key.set_contents_from_string('')
+        module.exit_json(msg="Virtual directory %s created in bucket %s" % (obj, bucket.name), changed=True)
     except s3.provider.storage_response_error, e:
         module.fail_json(msg= str(e))
 
@@ -383,14 +403,27 @@ def main():
     # Need to research how to create directories without "populating" a key, so this should just do bucket creation for now.
     # WE SHOULD ENABLE SOME WAY OF CREATING AN EMPTY KEY TO CREATE "DIRECTORY" STRUCTURE, AWS CONSOLE DOES THIS.
     if mode == 'create':
-        if bucket: 
+        if bucket and not obj: 
             bucketrtn = bucket_check(module, s3, bucket)
             if bucketrtn is True:
                 module.exit_json(msg="Bucket already exists.", changed=False)
             else:
                 created = create_bucket(module, s3, bucket)
         if bucket and obj:
-            module.fail_json(msg="mode=create can only be used for bucket creation.", failed=True)
+            bucketrtn = bucket_check(module, s3, bucket)
+            if obj.endswith('/'):
+                dirobj = obj
+            else:
+                dirobj = obj + "/"
+            if bucketrtn is True:
+                keyrtn = key_check(module, s3, bucket, dirobj)
+                if keyrtn is True: 
+                    module.exit_json(msg="Bucket %s and key %s already exists."% (bucket, obj), changed=False)
+                else:      
+                    create_dirkey(module, s3, bucket, dirobj)
+            if bucketrtn is False:
+                created = create_bucket(module, s3, bucket)
+                create_dirkey(module, s3, bucket, dirobj)
 
     # Support for grabbing the time-expired URL for an object in S3/Walrus.
     if mode == 'geturl':

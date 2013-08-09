@@ -23,6 +23,8 @@ If you are using RHEL or CentOS 5, Python is version 2.4 by default, but you can
 
    $ yum install python26 python26-PyYAML python26-paramiko python26-jinja2
 
+
+
 On the managed nodes, you only need Python 2.4 or later, but if you are are running less than Python 2.6 on them, you will
 also need:
 
@@ -35,6 +37,13 @@ also need:
    Ansible to install python-simplejson using the raw module, which
    then allows you to use everything else.  (That's jumping ahead
    though.)
+
+.. note::
+
+   If you have SELinux enabled on remote nodes, you will also want to install
+   python-selinux on them before using any copy/file/template related functions in
+   Ansible. You can of course still use the yum module in Ansible to install this package on
+   remote systems that do not have it.
 
 .. note::
 

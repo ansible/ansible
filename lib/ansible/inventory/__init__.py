@@ -136,11 +136,27 @@ class Inventory(object):
         finds hosts that match a list of patterns. Handles negative
         matches as well as intersection matches.
         """
-        try:
-            if patterns[0].startswith("!"):
-                patterns.insert(0, "all")
-        except IndexError:
-            pass
+
+        # Host specifiers should be sorted to ensure consistent behavior
+        pattern_regular = []
+        pattern_intersection = []
+        pattern_exclude = []
+        for p in patterns:
+            if p.startswith("!"):
+                pattern_exclude.append(p)
+            elif p.startswith("&"):
+                pattern_intersection.append(p)
+            else:
+                pattern_regular.append(p)
+
+        # if no regular pattern was given, hence only exclude and/or intersection
+        # make that magically work
+        if pattern_regular == []:
+            pattern_regular = ['all']
+
+        # when applying the host selectors, run those without the "&" or "!"
+        # first, then the &s, then the !s.
+        patterns = pattern_regular + pattern_intersection + pattern_exclude
 
         hosts = set()
         for p in patterns:

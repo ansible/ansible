@@ -1,3 +1,7 @@
+%if 0%{?rhel} == 5
+%define __python /usr/bin/python26
+%endif
+
 %if 0%{?rhel} && 0%{?rhel} <= 5
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
