@@ -61,13 +61,13 @@ options:
         default: present
         choices: ['present', 'absent']
         aliases: []
-    name:
+    pool:
         description:
             - Pool name. This pool must exist.
         required: true
         default: null
         choices: []
-        aliases: ['pool']
+        aliases: []
     partition:
         description:
             - Partition
@@ -81,7 +81,7 @@ options:
         required: true
         default: null
         choices: []
-        aliases: ['address']
+        aliases: ['address', 'name']
     port:
         description:
             - "Pool member port"
@@ -91,28 +91,28 @@ options:
         aliases: []
     connection_limit:
         description:
-            - Sets the connection limit for a set of pool member. Setting this to 0 disables the limit.
+            - Pool member connection limit. Setting this to 0 disables the limit.
         required: false
         default: null
         choices: []
         aliases: []
     description:
         description:
-            - Sets the description for a pool member. This is an arbitrary field which can be used for any purpose.
+            - Pool member description
         required: false
         default: null
         choices: []
         aliases: []
     rate_limit:
         description:
-            - Sets the rate limit for a pool member. This value should be a positive integer representing connections-per-second. Setting this to 0 disables the limit.
+            - Pool member rate limit (connections-per-second). Setting this to 0 disables the limit.
         required: false
         default: null
         choices: []
         aliases: []
     ratio:
         description:
-            - Sets the ratio weight for a pool member. Valid values range from 1 through 100. New pool members -- unless overriden with this value -- default to 1.
+            - Pool member ratio weight. Valid values range from 1 through 100. New pool members -- unless overriden with this value -- default to 1.
         required: false
         default: null
         choices: []
@@ -238,9 +238,9 @@ def main():
             user = dict(type='str', required=True),
             password = dict(type='str', required=True),
             state = dict(type='str', default='present', choices=['present', 'absent']),
-            name = dict(type='str', required=True, aliases=['pool']),
+            pool = dict(type='str', required=True),
             partition = dict(type='str', default='Common'),
-            host = dict(type='str', required=True, aliases=['address']),
+            host = dict(type='str', required=True, aliases=['address', 'name']),
             port = dict(type='int', required=True),
             connection_limit = dict(type='int'),
             description = dict(type='str'),
@@ -257,9 +257,8 @@ def main():
     user = module.params['user']
     password = module.params['password']
     state = module.params['state']
-    name = module.params['name']
     partition = module.params['partition']
-    pool = "/%s/%s" % (partition, name)
+    pool = "/%s/%s" % (partition, module.params['pool'])
     connection_limit = module.params['connection_limit']
     description = module.params['description']
     rate_limit = module.params['rate_limit']
