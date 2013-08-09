@@ -350,17 +350,21 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
             self.push(self.inventory, 'size_'  +droplet['size_id'], dest)
             self.push(self.inventory, 'status_'+droplet['status'], dest)
 
-            region_name = self.index['region_to_name'][droplet['region_id']]
-            self.push(self.inventory, 'region_'+region_name, dest)
+            region_name = self.index['region_to_name'].get(droplet['region_id'])
+            if region_name:
+                self.push(self.inventory, 'region_'+region_name, dest)
 
-            size_name = self.index['size_to_name'][droplet['size_id']]
-            self.push(self.inventory, 'size_'+size_name, dest)
+            size_name = self.index['size_to_name'].get(droplet['size_id'])
+            if size_name:
+                self.push(self.inventory, 'size_'+size_name, dest)
 
-            image_name = self.index['image_to_name'][droplet['image_id']]
-            self.push(self.inventory, 'image_'+image_name, dest)
+            image_name = self.index['image_to_name'].get(droplet['image_id'])
+            if image_name:
+                self.push(self.inventory, 'image_'+image_name, dest)
 
-            distro_name = self.index['image_to_distro'][droplet['image_id']]
-            self.push(self.inventory, 'distro_'+distro_name, dest)
+            distro_name = self.index['image_to_distro'].get(droplet['image_id'])
+            if distro_name:
+                self.push(self.inventory, 'distro_'+distro_name, dest)
 
 
     def load_droplet_variables_for_host(self):
@@ -397,12 +401,12 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
 
         # Generate user-friendly variables (i.e. not the ID's) 
         if droplet.has_key('region_id'):
-            info['do_region'] = self.index['region_to_name'][droplet['region_id']]
+            info['do_region'] = self.index['region_to_name'].get(droplet['region_id'])
         if droplet.has_key('size_id'):
-            info['do_size'] = self.index['size_to_name'][droplet['size_id']]
+            info['do_size'] = self.index['size_to_name'].get(droplet['size_id'])
         if droplet.has_key('image_id'):
-            info['do_image']  = self.index['image_to_name'][droplet['image_id']]
-            info['do_distro'] = self.index['image_to_distro'][droplet['image_id']]
+            info['do_image']  = self.index['image_to_name'].get(droplet['image_id'])
+            info['do_distro'] = self.index['image_to_distro'].get(droplet['image_id'])
 
         return info
 
