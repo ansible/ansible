@@ -1,0 +1,136 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2012-2013, Timothy Appnel <tim@appnel.com>
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+import subprocess
+
+DOCUMENTATION = \
+    '''
+---
+module: synchronize
+short_description: An Ansible action plugin using rsync to make synchronizing a file paths in your playbooks quick and easy.
+description:
+    - An Ansible action plugin using rsync to make synchronizing a file paths in your playbooks quick and easy. Of course you could just use the command action to call rsync yourself, but you also have to add a fair number of boilerplate options and host facts. You still may need to call rsync directly via C(command) or C(shell). The synchronize action is meant to do common things with C(rsync) easily. It does not provide access to the full power of rsync.
+options:
+  src:
+    description:
+      - Path on the source machine that will be synchronized to the destination; The path can be absolute or relative.
+    required: true
+    default: null
+  dest:
+    description:
+      - Path on the destination machine that will be synchronized from the source; The path can be absolute or relative.
+    required: true
+    default: null
+  mode:
+    description:
+      - Specify the direction of the synchroniztion. In push mode the localhost or delgate is the  source; In pull mode the inventory hostname in context is the source.
+    required: false
+    choices: [ 'push', 'pull' ]
+    default: 'push'
+  verbosity:
+    description:
+      - An integrater controling the amount of information returned during processing. The greater the value the more information rsync will report back. See the C(-v, --verbose) option of the rsync man page for details. If verbosity is not defined or a value of 0 is assumed, the C(--quiet) option is passed and information is supressed.
+    required: false
+    default: 0
+  delete:
+    description:
+      - Delete files that don't exist (after transfer, not before) in C(src) path.
+    choices: [ 'yes', 'no' ]
+    default: 'no'
+    required: false
+  rsync_path:
+    description:
+      - Specify rsync to run on the remote machine. See C(--rsync-path) on the rsync man page.
+    required: false
+    default: null
+examples:
+   - code: 'synchronize: src=some/relative/path dest=/some/absolute/path'
+     description: Synchronization of src on the localhost to dest on the current inventory host
+   - code: 'local_action: synchronize src=some/relative/path dest=/some/absolute/path'
+     description: Synchronization of src path to dest path on the localhost
+   - code: 'synchronize: mode=pull src=some/relative/path dest=/some/absolute/path'
+     description: Synchronization of src on the inventory host to the dest on the localhost.
+   - code: |
+       synchronize: src=some/relative/path dest=/some/absolute/path
+         delegate_to: delegate.host
+     description: Synchronization of src on delegate to dest on the current inventory host
+   - code: 'synchronize: src=some/relative/path dest=/some/absolute/path delete=yes'
+     description: 'Synchronize and delete files in dest on inventory host not found in src of localhost.'
+   - code: 'synchronize: src=some/relative/path dest=/some/absolute/path verbosity=1'
+     description: 'Synchronize and return verbose information from the rsync transfer.'
+   - code: 'synchronize: src=some/relative/path dest=/some/absolute/path rsync_path="sudo rsync"'
+     description: 'Synchronize with using an alternate rsync command.'
+author: Timothy Appnel
+'''
+
+
+def main():
+    module = AnsibleModule(argument_spec=dict(
+        src=dict(required=True),
+        dest=dict(required=True),
+        verbosity=dict(default=0),
+        tmp_dir=dict(default=None),
+        delete=dict(default='no', choices=['yes', 'no']),
+        private_key=dict(default=None),
+        rsync_path=dict(default=None),
+        ))
+
+    source = module.params['src']
+    dest = module.params['dest']
+    verbosity = module.params['verbosity']
+    delete = module.params['delete']
+    private_key = module.params['private_key']
+    rsync_path = module.params['rsync_path']
+    rsync = module.params.get('local_rsync_path', 'rsync')
+    temp = os.path.dirname(os.path.realpath(__file__))
+
+    cmd = '%s --archive --delay-updates --compress' % rsync
+    if verbosity:
+        cmd = '%s -%s' % (cmd, 'v' * int(verbosity))
+    else:
+        cmd = cmd + ' --quiet'
+    if temp:
+        cmd = cmd + ' --temp-dir ' + temp
+    if module.boolean(delete):
+        cmd = cmd + ' --delete-after'
+    if private_key is None:
+        private_key = ''
+    else:
+        private_key = '-i '+ private_key 
+    cmd = cmd + " --rsh '%s %s -o %s'" % ('ssh', private_key,
+                'StrictHostKeyChecking=no')  # need ssh param
+    if rsync_path:
+        cmd = cmd + ' --rsync-path ' + rsync_path
+
+    cmd = ' '.join([cmd, source, dest])
+    cmdstr = cmd
+    cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
+                           stderr=subprocess.PIPE)
+    (out, err) = cmd.communicate()
+    if cmd.returncode:
+        return module.fail_json(msg=err, rc=cmd.returncode, cmd=cmdstr)
+    else:
+        return module.exit_json(changed=True, msg=out,
+                                rc=cmd.returncode, cmd=cmdstr)
+
+
+# include magic from lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+main()
+
