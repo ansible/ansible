@@ -48,12 +48,10 @@ def load_callback_plugins():
     callback_plugins = [x for x in utils.plugins.callback_loader.all()]
 
 def get_cowsay_info():
-    if constants.ANSIBLE_NOCOWS is not None:
+    if constants.ANSIBLE_NOCOWS:
         return (None, None)
     cowsay = None
-    if os.getenv("ANSIBLE_NOCOWS") is not None:
-        cowsay = None
-    elif os.path.exists("/usr/bin/cowsay"):
+    if os.path.exists("/usr/bin/cowsay"):
         cowsay = "/usr/bin/cowsay"
     elif os.path.exists("/usr/games/cowsay"):
         cowsay = "/usr/games/cowsay"

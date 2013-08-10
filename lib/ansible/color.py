@@ -20,7 +20,7 @@ import sys
 import constants
 
 ANSIBLE_COLOR=True
-if constants.ANSIBLE_NOCOLOR is not None:
+if constants.ANSIBLE_NOCOLOR:
     ANSIBLE_COLOR=False
 elif not hasattr(sys.stdout, 'isatty') or not sys.stdout.isatty():
     ANSIBLE_COLOR=False
