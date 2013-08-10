@@ -54,6 +54,7 @@ multiprocessing_runner = None
         
 OUTPUT_LOCKFILE  = tempfile.TemporaryFile()
 PROCESS_LOCKFILE = tempfile.TemporaryFile()
+MULTIPROCESSING_MANAGER = multiprocessing.Manager()
 
 ################################################
 
@@ -813,7 +814,7 @@ class Runner(object):
     def _parallel_exec(self, hosts):
         ''' handles mulitprocessing when more than 1 fork is required '''
 
-        manager = multiprocessing.Manager()
+        manager = MULTIPROCESSING_MANAGER
         job_queue = manager.Queue()
         for host in hosts:
             job_queue.put(host)
