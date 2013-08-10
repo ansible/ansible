@@ -458,7 +458,7 @@ class LinuxService(Service):
             elif initctl_status_stdout.find("start/running") != -1:
                 self.running = True
 
-        if self.svc_cmd.endswith("rc-service") and self.running is None:
+        if self.svc_cmd and self.svc_cmd.endswith("rc-service") and self.running is None:
             openrc_rc, openrc_status_stdout, openrc_status_stderr = self.execute_command("%s %s status" % (self.svc_cmd, self.name))
             self.running = "started" in openrc_status_stdout
             self.crashed = "crashed" in openrc_status_stderr
@@ -626,7 +626,7 @@ class LinuxService(Service):
 
         # In OpenRC, if a service crashed, we need to reset its status to
         # stopped with the zap command, before we can start it back.
-        if self.svc_cmd.endswith('rc-service') and self.action == 'start' and self.crashed:
+        if self.svc_cmd and self.svc_cmd.endswith('rc-service') and self.action == 'start' and self.crashed:
             self.execute_command("%s zap" % svc_cmd, daemonize=True)
 
         if self.action is not "restart":
