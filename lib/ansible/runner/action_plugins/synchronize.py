@@ -26,12 +26,7 @@ class ActionModule(object):
     def __init__(self, runner):
         self.runner = runner
 
-    def _process_origin(
-        self,
-        host,
-        path,
-        user,
-        ):
+    def _process_origin(self, host, path, user):
 
         if not host in ['127.0.0.1', 'localhost']:
             return '%s@%s:%s' % (user, host, path)
@@ -43,16 +38,9 @@ class ActionModule(object):
         if inject.get('delegate_to') is None:
             inject['delegate_to'] = '127.0.0.1'
 
-    def run(
-        self,
-        conn,
-        tmp,
-        module_name,
-        module_args,
-        inject,
-        complex_args=None,
-        **kwargs
-        ):
+    def run(self, conn, tmp, module_name, module_args, 
+        inject, complex_args=None, **kwargs):
+
         ''' generates params and passes them on to the rsync module '''
 
         # load up options
@@ -77,9 +65,7 @@ class ActionModule(object):
         if not dest_host is src_host:
             user = inject.get('ansible_ssh_user',
                               self.runner.remote_user)
-            private_key = \
-                inject.get('ansible_ssh_private_key_file',
-                           self.runner.private_key_file)
+            private_key = inject.get('ansible_ssh_private_key_file', self.runner.private_key_file)
             if not private_key is None:
                 options['private_key'] = private_key
             src = self._process_origin(src_host, src, user)
@@ -87,10 +73,8 @@ class ActionModule(object):
 
         options['src'] = src
         options['dest'] = dest
-        try:
+        if 'mode' in options:
             del options['mode']
-        except KeyError:
-            pass
 
         # run the synchronize module
 
