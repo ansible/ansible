@@ -338,7 +338,26 @@ Tip: Sometimes you'll get back a variable that's a string and you'll want to do 
       - shell: echo "only on Red Hat 6, derivatives, and later"
         when: ansible_os_family == "RedHat" and ansible_lsb.major_release|int >= 6
 
+Note the above example requires the lsb_release package on the target host in order to return the ansible_lsb.major_release fact.
+
 Variables defined in the playbooks or inventory can also be used.
+
+An example may be the execution of a task based on a variable's boolean value::
+
+    vars:
+      epic: true
+
+Then a conditional execution with action on the boolean value of epic being True::
+
+    tasks:
+        - shell: echo "This certainly is epic!"
+          when: epic
+
+With a boolean value of False::
+ 
+    tasks:
+        - shell: echo "This certainly isn't epic!"
+          when: not epic
 
 If a required variable has not been set, you can skip or fail using Jinja2's
 `defined` test. For example::
