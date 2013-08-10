@@ -397,6 +397,12 @@ class Inventory(object):
             return cwd 
         return dname
 
+    def src(self):
+        """ if inventory came from a file, what's the directory and file name? """
+        if not self.is_file():
+            return None
+        return self.host_list
+
     def playbook_basedir(self):
         """ returns the directory of the current playbook """
         return self._playbook_basedir
