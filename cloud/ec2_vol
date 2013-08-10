@@ -78,7 +78,7 @@ EXAMPLES = '''
     volume_size: 5 
     iops: 200
     device_name: sdd
-		
+
 # Playbook example combined with instance launch 
 - local_action: 
     module: ec2 
