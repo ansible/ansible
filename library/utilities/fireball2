@@ -1,0 +1,284 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2013, James Cammarata <jcammarata@ansibleworks.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: fireball2
+short_description: Enable fireball2 mode on remote node
+description:
+     - This modules launches an ephemeral I(fireball2) daemon on the remote node which
+       Ansible can use to communicate with nodes at high speed.
+     - The daemon listens on a configurable port for a configurable amount of time.
+     - Starting a new fireball2 as a given user terminates any existing user fireballs2.
+     - Fireball mode is AES encrypted
+version_added: "1.3"
+options:
+  port:
+    description:
+      - TCP port for the socket connection
+    required: false
+    default: 5099
+    aliases: []
+  minutes:
+    description:
+      - The I(fireball2) listener daemon is started on nodes and will stay around for
+        this number of minutes before turning itself off.
+    required: false
+    default: 30
+notes:
+    - See the advanced playbooks chapter for more about using fireball2 mode.
+requirements: [ "pycrypto" ]
+author: James Cammarata
+'''
+
+EXAMPLES = '''
+# To use fireball2 mode, simple add "accelerated: true" to your play. The initial
+# key exchange and starting up of the daemon will occur over SSH, but all commands and
+# subsequent actions will be conducted over the raw socket connection using AES encryption
+
+- hosts: devservers
+  accelerated: true
+  tasks:
+      - command: /usr/bin/anything
+'''
+
+import os
+import sys
+import shutil
+import socket
+import struct
+import time
+import base64
+import syslog
+import signal
+import time
+import signal
+import traceback
+
+import SocketServer
+
+syslog.openlog('ansible-%s' % os.path.basename(__file__))
+PIDFILE = os.path.expanduser("~/.fireball2.pid")
+
+def log(msg):
+    syslog.syslog(syslog.LOG_NOTICE, msg)
+
+if os.path.exists(PIDFILE):
+    try:
+        data = int(open(PIDFILE).read())
+        try:
+            os.kill(data, signal.SIGKILL)
+        except OSError:
+            pass
+    except ValueError:
+        pass
+    os.unlink(PIDFILE)
+
+HAS_KEYCZAR = False
+try:
+    from keyczar.keys import AesKey
+    HAS_KEYCZAR = True
+except ImportError:
+    pass
+
+# NOTE: this shares a fair amount of code in common with async_wrapper, if async_wrapper were a new module we could move
+# this into utils.module_common and probably should anyway
+
+def daemonize_self(module, password, port, minutes):
+    # daemonizing code: http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/66012
+    try:
+        pid = os.fork()
+        if pid > 0:
+            log("exiting pid %s" % pid)
+            # exit first parent
+            module.exit_json(msg="daemonized fireball2 on port %s for %s minutes" % (port, minutes))
+    except OSError, e:
+        log("fork #1 failed: %d (%s)" % (e.errno, e.strerror))
+        sys.exit(1)
+
+    # decouple from parent environment
+    os.chdir("/")
+    os.setsid()
+    os.umask(022)
+
+    # do second fork
+    try:
+        pid = os.fork()
+        if pid > 0:
+            log("daemon pid %s, writing %s" % (pid, PIDFILE))
+            pid_file = open(PIDFILE, "w")
+            pid_file.write("%s" % pid)
+            pid_file.close()
+            log("pidfile written")
+            sys.exit(0)
+    except OSError, e:
+        log("fork #2 failed: %d (%s)" % (e.errno, e.strerror))
+        sys.exit(1)
+
+    dev_null = file('/dev/null','rw')
+    os.dup2(dev_null.fileno(), sys.stdin.fileno())
+    os.dup2(dev_null.fileno(), sys.stdout.fileno())
+    os.dup2(dev_null.fileno(), sys.stderr.fileno())
+    log("daemonizing successful")
+
+#class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
+class ThreadedTCPServer(SocketServer.ThreadingTCPServer):
+    def __init__(self, server_address, RequestHandlerClass, module, password):
+        self.module = module
+        self.key = AesKey.Read(password)
+        self.allow_reuse_address = True
+        self.timeout = None
+        SocketServer.ThreadingTCPServer.__init__(self, server_address, RequestHandlerClass)
+
+class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
+    def send_data(self, data):
+        packed_len = struct.pack('Q', len(data))
+        return self.request.sendall(packed_len + data)
+
+    def recv_data(self):
+        header_len = 8 # size of a packed unsigned long long
+        data = b""
+        while len(data) < header_len:
+            d = self.request.recv(1024)
+            if not d:
+                return None
+            data += d
+        data_len = struct.unpack('Q',data[:header_len])[0]
+        data = data[header_len:]
+        while len(data) < data_len:
+            data += self.request.recv(1024)
+        return data
+
+    def handle(self):
+        while True:
+            data = self.recv_data()
+            if not data:
+                break
+            try:
+                data = self.server.key.Decrypt(data)
+            except:
+                log("bad decrypt, skipping...")
+                data2 = json.dumps(dict(rc=1))
+                data2 = self.server.key.Encrypt(data2)
+                send_data(client, data2)
+                return
+
+            data = json.loads(data)
+
+            mode = data['mode']
+            response = {}
+            if mode == 'command':
+                response = self.command(data)
+            elif mode == 'put':
+                response = self.put(data)
+            elif mode == 'fetch':
+                response = self.fetch(data)
+
+            data2 = json.dumps(response)
+            data2 = self.server.key.Encrypt(data2)
+            self.send_data(data2)
+
+    def command(self, data):
+        if 'cmd' not in data:
+            return dict(failed=True, msg='internal error: cmd is required')
+        if 'tmp_path' not in data:
+            return dict(failed=True, msg='internal error: tmp_path is required')
+        if 'executable' not in data:
+            return dict(failed=True, msg='internal error: executable is required')
+
+        log("executing: %s" % data['cmd'])
+        rc, stdout, stderr = self.server.module.run_command(data['cmd'], executable=data['executable'], close_fds=True)
+        if stdout is None:
+            stdout = ''
+        if stderr is None:
+            stderr = ''
+        log("got stdout: %s" % stdout)
+
+        return dict(rc=rc, stdout=stdout, stderr=stderr)
+
+    def fetch(self, data):
+        if 'in_path' not in data:
+            return dict(failed=True, msg='internal error: in_path is required')
+
+        # FIXME: should probably support chunked file transfer for binary files
+        # at some point.  For now, just base64 encodes the file
+        # so don't use it to move ISOs, use rsync.
+
+        fh = open(data['in_path'])
+        data = base64.b64encode(fh.read())
+        return dict(data=data)
+
+    def put(self, data):
+        if 'data' not in data:
+            return dict(failed=True, msg='internal error: data is required')
+        if 'out_path' not in data:
+            return dict(failed=True, msg='internal error: out_path is required')
+
+        # FIXME: should probably support chunked file transfer for binary files
+        # at some point.  For now, just base64 encodes the file
+        # so don't use it to move ISOs, use rsync.
+
+        fh = open(data['out_path'], 'w')
+        fh.write(base64.b64decode(data['data']))
+        fh.close()
+
+        return dict()
+
+def daemonize(module, password, port, minutes):
+    try:
+        daemonize_self(module, password, port, minutes)
+
+        def catcher(signum, _):
+            module.exit_json(msg='timer expired')
+
+        signal.signal(signal.SIGALRM, catcher)
+        signal.setitimer(signal.ITIMER_REAL, 60 * minutes)
+
+        server = ThreadedTCPServer(("0.0.0.0", port), ThreadedTCPRequestHandler, module, password)
+        server.allow_reuse_address = True
+        
+        server.serve_forever(poll_interval=1.0)
+    except Exception, e:
+        tb = traceback.format_exc()
+        log("exception caught, exiting fireball mode: %s\n%s" % (e, tb))
+        sys.exit(0)
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            port=dict(required=False, default=5099),
+            password=dict(required=True),
+            minutes=dict(required=False, default=30),
+        )
+    )
+
+    password  = base64.b64decode(module.params['password'])
+    port      = module.params['port']
+    minutes   = int(module.params['minutes'])
+
+    if not HAS_KEYCZAR:
+        module.fail_json(msg="keyczar is not installed")
+
+    daemonize(module, password, port, minutes)
+
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
