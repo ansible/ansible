@@ -392,7 +392,7 @@ class Inventory(object):
         if not self.is_file():
             return None
         dname = os.path.dirname(self.host_list)
-        if dname is None or dname == '':
+        if dname is None or dname == '' or dname == '.':
             cwd = os.getcwd()
             return cwd 
         return dname
