@@ -138,7 +138,8 @@ class Runner(object):
         diff=False,                         # whether to show diffs for template files that change
         environment=None,                   # environment variables (as dict) to use inside the command
         complex_args=None,                  # structured data in addition to module_args, must be a dict
-        error_on_undefined_vars=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR # ex. False
+        error_on_undefined_vars=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR, # ex. False
+        accelerate=False,                   # use fireball acceleration
         ):
 
         # used to lock multiprocess inputs and outputs at various levels
@@ -179,11 +180,16 @@ class Runner(object):
         self.environment      = environment
         self.complex_args     = complex_args
         self.error_on_undefined_vars = error_on_undefined_vars
+        self.accelerate       = accelerate
         self.callbacks.runner = self
 
-        # if the transport is 'smart' see if SSH can support ControlPersist if not use paramiko
-        # 'smart' is the default since 1.2.1/1.3
-        if self.transport == 'smart':
+        if self.accelerate:
+            # if we're using accelerated mode, force the local
+            # transport to fireball2
+            self.transport = "fireball2"
+        elif self.transport == 'smart':
+            # if the transport is 'smart' see if SSH can support ControlPersist if not use paramiko
+            # 'smart' is the default since 1.2.1/1.3
             cmd = subprocess.Popen(['ssh','-o','ControlPersist'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             (out, err) = cmd.communicate() 
             if "Bad configuration option" in err:
