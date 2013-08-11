@@ -60,7 +60,7 @@ class LookupModule(object):
 
         my_list = terms[:]
         if len(my_list) == 0:
-            raise errors.AnsibleError("with_transpose requires at least one element in each list")
+            raise errors.AnsibleError("with_together requires at least one element in each list")
         return [flatten(x) for x in izip_longest(*my_list, fillvalue=None)]
 
 
