@@ -1,0 +1,129 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# Copyright 2013 Abhijit Menon-Sen <ams@toroid.org>
+# Loosely based on apt module by Matthew Williams <matthew@flowroute.com>
+#
+# This module is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+DOCUMENTATION = '''
+---
+module: apt_wouldinstall
+short_description: Checks if apt would install packages
+description:
+  - Returns true if any of the given I(apt) packages is not installed.
+options:
+  pkg:
+    description:
+      - A package name or package specifier with version, like C(foo) or C(foo=1.0)
+    required: true
+requirements: [ python-apt ]
+author: Abhijit Menon-Sen
+'''
+
+EXAMPLES = '''
+# Check if git or vim need to be installed
+- apt_wouldinstall: pkg=$item
+  with_items:
+    - git
+    - vim
+  register: git_and_vim
+
+- name: Do something before installing git and/or vim
+  command: echo "You need git and vim"
+  when: git_and_vim.changed
+'''
+
+import traceback
+# added to stave off future warnings about apt api
+import warnings
+warnings.filterwarnings('ignore', "apt API not stable yet", FutureWarning)
+
+import os
+import datetime
+import fnmatch
+
+def package_split(pkgspec):
+    parts = pkgspec.split('=')
+    if len(parts) > 1:
+        return parts[0], parts[1]
+    else:
+        return parts[0], None
+
+def would_install(package, cache):
+    name, version = package_split(package)
+
+    # If the package name is unknown, we'll say it won't be installed.
+    if not cache.has_key(name):
+        return False
+
+    pkg = cache[name]
+    try:
+        inst = pkg.is_installed
+    except AttributeError:
+        # assume an old version of python-apt
+        inst = pkg.isInstalled
+
+    if not inst:
+        return True
+
+    if version:
+        try:
+            instver = pkg.installed.version
+        except AttributeError:
+            # assume an old version of python-apt
+            instver = pkg.installedVersion
+        return not fnmatch.fnmatch(instver, version)
+
+    return False
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            package = dict(required=True, aliases=['pkg', 'name'])
+        ),
+        supports_check_mode = True
+    )
+
+    try:
+        import apt
+    except:
+        module.fail_json(msg="Could not import 'apt' module. Please install python-apt package.")
+
+    p = module.params
+
+    try:
+        cache = apt.Cache()
+
+        wanted = []
+        packages = p['package'].split(',')
+        for package in packages:
+            if package.count('=') > 1:
+                module.fail_json(msg="invalid package spec: %s" % package)
+
+            if would_install(package, cache):
+                wanted.append(package)
+
+        if len(wanted) > 0:
+            module.exit_json(changed=True, packages=wanted)
+        else:
+            module.exit_json(changed=False)
+
+    except apt.cache.LockFailedException:
+        module.fail_json(msg="Failed to lock apt for exclusive operation")
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
