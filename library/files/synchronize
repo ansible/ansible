@@ -18,10 +18,10 @@
 
 import subprocess
 
-DOCUMENTATION = \
-    '''
+DOCUMENTATION = '''
 ---
 module: synchronize
+version_added: "1.3"
 short_description: Uses rsync to make synchronizing file paths in your playbooks quick and easy.
 description:
     - This is a wrapper around rsync. Of course you could just use the command action to call rsync yourself, but you also have to add a fair number of boilerplate options and host facts. You still may need to call rsync directly via C(command) or C(shell) depending on your use case. The synchronize action is meant to do common things with C(rsync) easily. It does not provide access to the full power of rsync, but does make most invocations easier to follow.
