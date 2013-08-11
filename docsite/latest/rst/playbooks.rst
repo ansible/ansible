@@ -157,7 +157,7 @@ To learn more about Jinja2, you can optionally see the `Jinja2 docs <http://jinj
 
 If there are discovered variables about the system, called 'facts', these variables bubble up back into the
 playbook, and can be used on each system just like explicitly set variables.  Ansible provides several
-of these, prefixed with 'ansible', and are documented under 'setup' in the module documentation.  Additionally,
+of these, prefixed with 'ansible', which are documented under 'setup' in the module documentation.  Additionally,
 facts can be gathered by ohai and facter if they are installed.  Facter variables are prefixed with ``facter_`` and Ohai variables are prefixed with ``ohai_``.  These add extra dependencies and are only there for ease of users
 porting over from those other configuration systems.
 
@@ -188,7 +188,7 @@ The goal of each task is to execute a module, with very specific arguments.
 Variables, as mentioned above, can be used in arguments to modules.
 
 Modules are 'idempotent', meaning if you run them
-again, they will make the changes they are told to make to bring the
+again, they will make only the changes they must in order to bring the
 system to the desired state.  This makes it very safe to rerun
 the same playbook multiple times.  They won't change things
 unless they have to change things.
@@ -225,7 +225,7 @@ them work just like you would expect. Simple::
        command: /sbin/setenforce 0
 
 The command and shell module care about return codes, so if you have a command
-who's successful exit code is not zero, you may wish to do this::
+whose successful exit code is not zero, you may wish to do this::
 
    tasks:
      - name: run this command and ignore the result
@@ -320,7 +320,7 @@ won't need them for much else.
 .. note::
    Notify handlers are always run in the order written.
 
-Roles are described later on.  It's worth while to point out that handlers are
+Roles are described later on.  It's worthwhile to point out that handlers are
 automatically processed between 'pre_tasks', 'roles', 'tasks', and 'post_tasks'
 sections.  If you ever want to flush all the handler commands immediately though,
 in 1.2 and later, you can::
@@ -370,7 +370,7 @@ Variables passed in can then be used in the included files.  You can reference t
 
    {{ user }}
 
-(In addition to the explicitly passed in parameters, all variables from
+(In addition to the explicitly passed-in parameters, all variables from
 the vars section are also available for use here as well.)
 
 Starting in 1.0, variables can also be passed to include files using an alternative syntax,
@@ -554,7 +554,7 @@ Let's run a playbook using a parallelism level of 10::
 Tips and Tricks
 ```````````````
 
-Look at the bottom of the playbook execution for a summary of the nodes that were executed
+Look at the bottom of the playbook execution for a summary of the nodes that were targeted
 and how they performed.   General failures and fatal "unreachable" communication attempts are
 kept separate in the counts.
 
