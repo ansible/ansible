@@ -71,6 +71,8 @@ def main(args):
         help="perform a syntax check on the playbook, but do not execute it")
     parser.add_option('--list-tasks', dest='listtasks', action='store_true',
         help="list all tasks that would be executed")
+    parser.add_option('--list-tags', dest='listtags', action='store_true',
+        help="list all tasks, with their tags, that would be executed")
     parser.add_option('--step', dest='step', action='store_true',
         help="one-step-at-a-time: confirm each task before running")
     parser.add_option('--start-at-task', dest='start_at',
@@ -81,6 +83,9 @@ def main(args):
     if len(args) == 0:
         parser.print_help(file=sys.stderr)
         return 1
+
+    if options.listtags:
+        options.listtasks = True
 
     inventory = ansible.inventory.Inventory(options.inventory)
     inventory.subset(options.subset)
@@ -193,6 +198,8 @@ def main(args):
                             if getattr(task, 'name', None) is not None:
                                 # meta tasks have no names
                                 print '    %s' % task.name
+                                if options.listtags and len(task.tags) > 1:
+                                    print '        tags: %s' % ','.join([t for t in task.tags if not t == 'all'])
                 print ''
             continue
 
