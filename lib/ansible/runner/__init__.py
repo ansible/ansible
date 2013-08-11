@@ -737,7 +737,10 @@ class Runner(object):
 
         # error handling on this seems a little aggressive?
         if result['rc'] != 0:
-            output = 'could not create temporary directory, SSH (%s) exited with result %d' % (cmd, result['rc'])
+            if result['rc'] == 5:
+                output = 'Authentication failure.'
+            else:
+                output = 'Authentication or permission failure.  In some cases, you may have been able to authenticate and did not have permissions on the remote directory. Consider changing the remote temp path in ansible.cfg to a path rooted in "/tmp". Failed command was: %s, exited with result %d' % (cmd, result['rc'])
             if 'stdout' in result and result['stdout'] != '':
                 output = output + ": %s" % result['stdout']
             raise errors.AnsibleError(output)

@@ -11,6 +11,7 @@ Highlighted new features:
 * added changed_when: (expression) which allows overriding whether a result is changed or not, can work with registered expressions.
 * --extra-vars can now take a file as input "-e @filename"
 * external inventory scripts may now return host variables in one pass, which allows them to be much more efficient for large numbers of hosts
+* if --forks exceeds the numbers of hosts, it will be automatically reduced, set forks to 0 and you get "as many forks as I have hosts" out of the box.
 
 New modules:
 
@@ -29,6 +30,7 @@ New modules:
 * packaging: rpm_key -- adds or removes RPM signing keys
 * monitoring: boundary_meter -- adds or removes boundary.com meters
 * net_infrastructure: dnsmadeeasy - manipulate DnsMadeEasy records
+* files: synchronize -- a wrapper around making rsync easy to understand
 
 Misc changes:
 
