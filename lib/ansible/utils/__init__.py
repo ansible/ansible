@@ -353,7 +353,7 @@ def parse_kv(args):
 
 def merge_hash(a, b):
     ''' recursively merges hash b into a
-    keys from b take precedende over keys from a '''
+    keys from b take precedence over keys from a '''
 
     result = copy.deepcopy(a)
 
@@ -785,7 +785,7 @@ def safe_eval(str):
 def listify_lookup_plugin_terms(terms, basedir, inject):
 
     if isinstance(terms, basestring):
-        # somewhat did:
+        # someone did:
         #    with_items: alist
         # OR
         #    with_items: {{ alist }}
