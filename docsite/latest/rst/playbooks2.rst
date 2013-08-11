@@ -2,7 +2,7 @@ Advanced Playbooks
 ==================
 
 Here are some advanced features of the playbooks language.  Using all of these features
-are not necessary, but many of them will prove useful.  If a feature doesn't seem immediately
+is not necessary, but many of them will prove useful.  If a feature doesn't seem immediately
 relevant, feel free to skip it.  For many people, the features documented in `playbooks` will
 be 90% or more of what they use in Ansible.
 
@@ -105,7 +105,7 @@ Similarly, this is how we access the first element of an array::
 Magic Variables, and How To Access Information About Other Hosts
 ````````````````````````````````````````````````````````````````
 
-Even if you didn't define them yourself, Ansible provides a few variables for you, automatically.
+Even if you didn't define them yourself, Ansible provides a few variables for you automatically.
 The most important of these are 'hostvars', 'group_names', and 'groups'.  Users should not use
 these names themselves as they are reserved.  'environment' is also reserved.
 
@@ -437,7 +437,7 @@ As a reminder, the various YAML files contain just keys and values::
     somethingelse: 42
 
 How does this work?  If the operating system was 'CentOS', the first file Ansible would try to import
-would be 'vars/CentOS.yml', followed up by '/vars/os_defaults.yml' if that file
+would be 'vars/CentOS.yml', followed by '/vars/os_defaults.yml' if that file
 did not exist.   If no files in the list were found, an error would be raised.
 On Debian, it would instead first look towards 'vars/Debian.yml' instead of 'vars/CentOS.yml', before
 falling back on 'vars/os_defaults.yml'. Pretty simple.
@@ -614,7 +614,7 @@ Negative numbers are not supported.  This works as follows::
 .. versionadded: 1.1
 
 ``with_password`` and associated lookup macro generate a random plaintext password and store it in
-a file at a given filepath.  Support for crypted save modes (as with vars_prompt) are pending.  If the
+a file at a given filepath.  Support for crypted save modes (as with vars_prompt) is pending.  If the
 file exists previously, it will retrieve its contents, behaving just like with_file. Usage of variables like "{{ inventory_hostname }}" in the filepath can be used to set
 up random passwords per host (what simplifies password management in 'host_vars' variables).
 
@@ -1093,7 +1093,7 @@ If using local_action, you can do this::
         arg1: 1234
         arg2: 'asdf'
 
-Which of course means, though more verbose, this is also technically legal syntax::
+Which of course means that, though more verbose, this is also legal syntax::
 
     - name: foo
       template: { src: '/templates/motd.j2', dest: '/etc/motd' }
