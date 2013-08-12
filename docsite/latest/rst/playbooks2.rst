@@ -1098,6 +1098,48 @@ Which of course means that, though more verbose, this is also legal syntax::
     - name: foo
       template: { src: '/templates/motd.j2', dest: '/etc/motd' }
 
+Local Facts (Facts.d)
+`````````````````````
+
+.. version_added:: 1.3
+
+As discussed in the playbooks chapter, Ansible facts are a way of getting data about remote systems for use in playbook variables.
+Usually these are discovered automatically by the 'setup' module in Ansible. Users can also write custom facts modules, as described
+in the API guide.  However, what if you want to have a simple way to provide system or user 
+provided data for use in Ansible variables, without writing a fact module?  For instance, what if you want users to be able to control some aspect about how their systems are managed? "Facts.d" is one such mechanism.
+
+If a remotely managed system has an "/etc/ansible/facts.d" directory, any files in this directory
+ending in ".fact", can be JSON, INI, or executable files returning JSON, and these can supply local facts in Ansible.
+
+For instance assume a /etc/ansible/facts.d/preferences.fact::
+
+    [general]
+    asdf=1
+    bar=2
+
+This will produce a hash variable fact named "general" with 'asdf' and 'bar' as members.
+To validate this, run the following::
+
+    ansible <hostname> -m setup -a "filter=ansible_local"
+
+And you will see the following fact added::
+
+    "ansible_local": {
+            "preferences": {
+                "general": {
+                    "asdf" : "1", 
+                    "bar"  : "2"
+                }
+            }
+     }
+
+And this data can be accessed in a template/playbook as::
+
+     {{ ansible_local.preferences.general.asdf }}
+
+The local namespace prevents any user supplied fact from overriding system facts
+or variables defined elsewhere in the playbook.
+
 Style Points
 ````````````
 
