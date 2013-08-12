@@ -112,7 +112,7 @@ else:
 # MongoDB module specific support methods.
 #
 
-def user_add(client, db_name, user, password, roles=list):
+def user_add(client, db_name, user, password, roles):
     try:
         db = client[db_name]
         db.add_user(user, password, None, roles=roles)
@@ -176,7 +176,7 @@ def main():
     db_name = module.params['database']
     user = module.params['user']
     password = module.params['password']
-    roles = module.params['roles']
+    roles = module.params['roles'].split(",")
     state = module.params['state']
 
     try:
