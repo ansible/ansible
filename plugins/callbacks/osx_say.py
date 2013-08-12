@@ -17,19 +17,28 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import subprocess
+import os
 
 FAILED_VOICE="Zarvox"
 REGULAR_VOICE="Trinoids"
 HAPPY_VOICE="Cellos"
 LASER_VOICE="Princess"
+SAY_CMD="/usr/bin/say"
 
 def say(msg, voice):
-    subprocess.call(["/usr/bin/say", msg, "--voice=%s" % (voice)])
+    subprocess.call([SAY_CMD, msg, "--voice=%s" % (voice)])
 
 class CallbackModule(object):
     """
     makes Ansible much more exciting on OS X.
     """
+    def __init__(self):
+        # plugin disable itself if say is not present
+        # ansible will not call any callback if disabled is set to True
+        if not os.path.exists(SAY_CMD):
+            self.disabled = True
+            print "%s does not exist, plugin %s disabled" % \
+                    (SAY_CMD, os.path.basename(__file__))
 
     def on_any(self, *args, **kwargs):
         pass
