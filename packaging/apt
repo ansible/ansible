@@ -185,7 +185,11 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
             else:
                 matches = fnmatch.filter(
                     [pkg.name for pkg in cache], pkgname_or_fnmatch_pattern)
-            new_pkgspec.extend(matches)
+
+            if len(matches) == 0:
+                m.fail_json(msg="No package(s) matching '%s' available" % str(pkgname_or_fnmatch_pattern))
+            else:
+                new_pkgspec.extend(matches)
         else:
             new_pkgspec.append(pkgname_or_fnmatch_pattern)
     return new_pkgspec
