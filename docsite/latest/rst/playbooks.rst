@@ -155,11 +155,12 @@ If just referencing the value of another simple variable though, it's fine to sa
 
 To learn more about Jinja2, you can optionally see the `Jinja2 docs <http://jinja.pocoo.org/docs/>`_ - though remember that Jinja2 loops and conditionals are only for 'templates' in Ansible, in playbooks, ansible has the 'when' and 'with' keywords for conditionals and loops.
 
-If there are discovered variables about the system, called 'facts', these variables bubble up back into the
-playbook, and can be used on each system just like explicitly set variables.  Ansible provides several
+If there are discovered variables about the system, called 'facts', these variables bubble up back into the playbook, and can be used on each system just like explicitly set variables.  Ansible provides several
 of these, prefixed with 'ansible', which are documented under 'setup' in the module documentation.  Additionally,
 facts can be gathered by ohai and facter if they are installed.  Facter variables are prefixed with ``facter_`` and Ohai variables are prefixed with ``ohai_``.  These add extra dependencies and are only there for ease of users
-porting over from those other configuration systems.
+porting over from those other configuration systems.  Finally, it's possible to drop files
+on to the remote systems that provide additional sources of fact data, see "Facts.d" as documented
+in the Advanced Playbooks section.
 
 How about an example.  If I wanted to write the hostname into the /etc/motd file, I could say::
 
