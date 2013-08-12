@@ -67,6 +67,7 @@ def main():
     )
 
     path = module.params.get('path')
+    path = os.path.expanduser(path)
     follow = module.params.get('follow')
 
     try:
