@@ -21,11 +21,16 @@ class CallbackModule(object):
     """
     this is an example ansible callback file that does nothing.  You can drop
     other classes in the same directory to define your own handlers.  Methods
-    you do not use can be omitted.
+    you do not use can be omitted. If self.disabled is set to True, the plugin
+    methods will not be called.
 
     example uses include: logging, emailing, storing info, etc
     """
 
+    def __init__(self):
+        #if foo:
+        #    self.disabled = True
+        pass
 
     def on_any(self, *args, **kwargs):
         pass
