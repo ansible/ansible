@@ -27,6 +27,7 @@ from ansible import errors
 from ansible import __version__
 from ansible.utils.plugins import *
 from ansible.utils import template
+from ansible.color import yamlc
 import ansible.constants as C
 import time
 import StringIO
@@ -488,6 +489,8 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
         help='ask for sudo password')
     parser.add_option('--list-hosts', dest='listhosts', action='store_true',
         help='outputs a list of matching hosts; does not execute anything else')
+    parser.add_option('--show-variables', dest='showvars', action='store_true',
+        help='outputs the final state of the variables')
     parser.add_option('-M', '--module-path', dest='module_path',
         help="specify path(s) to module library (default=%s)" % constants.DEFAULT_MODULE_PATH,
         default=None)
@@ -813,6 +816,17 @@ def listify_lookup_plugin_terms(terms, basedir, inject):
             terms = [ terms ]
 
     return terms
+
+def dict2yaml(m, color=False):
+    _yaml = yaml.safe_dump(m,
+                indent=2,
+                allow_unicode=True,
+                default_flow_style=False,
+            )
+    if color:
+        return yamlc(_yaml)
+    else:
+        return _yaml
 
 def combine_vars(a, b):
     if C.DEFAULT_HASH_BEHAVIOUR == "merge":

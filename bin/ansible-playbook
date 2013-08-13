@@ -89,7 +89,7 @@ def main(args):
 
     sshpass = None
     sudopass = None
-    if not options.listhosts and not options.syntax and not options.listtasks:
+    if not any([options.listhosts, options.syntax, options.listtasks, options.showvars]):
         options.ask_pass = options.ask_pass or C.DEFAULT_ASK_PASS
         # Never ask for an SSH password when we run with local connection
         if options.connection == "local":
@@ -159,7 +159,7 @@ def main(args):
             diff=options.diff
         )
 
-        if options.listhosts or options.listtasks:
+        if any([options.listhosts, options.listtasks, options.showvars]):
             print ''
             print 'playbook: %s' % playbook
             print ''
@@ -168,11 +168,21 @@ def main(args):
                 playnum += 1
                 play = ansible.playbook.Play(pb, play_ds, play_basedir)
                 label = play.name
-                if options.listhosts:
+                if options.listhosts or options.showvars:
                     hosts = pb.inventory.list_hosts(play.hosts)
                     print '  play #%d (%s): host count=%d' % (playnum, label, len(hosts))
                     for host in hosts:
                         print '    %s' % host
+                        if options.showvars:
+                            _yaml = utils.dict2yaml(
+                                        utils.combine_vars(play.vars, 
+                                            inventory.get_variables(host)
+                                            ),
+                                        color=True
+                                        )
+                            for line in _yaml.split("\n"):
+                                print '      %s' % line
+                            print ''
                 if options.listtasks:
                     matched_tags, unmatched_tags = play.compare_tags(pb.only_tags)
 
