@@ -204,7 +204,12 @@ def main():
         elif os.path.isdir(path):
             prev_state = 'directory'
         else:
-            prev_state = 'file'
+            old_src_ino = os.fstat(os.open(path, os.O_RDWR|os.O_CREAT )).st_ino
+            new_src_ino = os.fstat(os.open(src, os.O_RDWR|os.O_CREAT )).st_ino
+            if old_src_ino == new_src_ino:
+                prev_state = 'hard'
+            else:
+                prev_state = 'file'
 
     if prev_state != 'absent' and state == 'absent':
         try:
@@ -229,7 +234,7 @@ def main():
         module.exit_json(path=path, changed=True)
 
     if prev_state != 'absent' and prev_state != state:
-        if force and prev_state == 'file' and state == 'link':
+        if force and prev_state == 'file' and state in ('link', 'hard'):
             pass
         else:
             module.fail_json(path=path, msg='refusing to convert between %s and %s for %s' % (prev_state, state, src))
@@ -293,6 +298,8 @@ def main():
                 os.unlink(path)
                 dolink(src, path, state, module)
                 changed = True
+        elif prev_state == 'hard':
+            pass
         elif prev_state == 'file':
             if not force:
                 module.fail_json(dest=path, src=src, msg='Cannot link, file exists at destination')
