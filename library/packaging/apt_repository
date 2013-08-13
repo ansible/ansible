@@ -30,6 +30,7 @@ notes:
     - This module works on Debian and Ubuntu and requires only C(python-apt) package.
     - This module supports Debian Squeeze (version 6) as well as its successors.
     - This module treats Debian and Ubuntu distributions separately. So PPA could be installed only on Ubuntu machines.
+    - For PPA support you either need python-pycurl or wget on the client.
 options:
     repo:
         required: true
@@ -66,8 +67,8 @@ import glob
 import json
 import os
 import re
+import subprocess
 import tempfile
-import pycurl
 
 try:
     import apt_pkg
@@ -80,6 +81,7 @@ except ImportError:
 
 VALID_SOURCE_TYPES = ('deb', 'deb-src')
 
+
 class CurlCallback:
     def __init__(self):
         self.contents = ''
@@ -87,8 +89,18 @@ class CurlCallback:
     def body_callback(self, buf):
         self.contents = self.contents + buf
 
+
 class InvalidSource(Exception):
     pass
+
+
+def get_executable_from_path(cmd):
+    full_path = [os.path.join(p, cmd)
+                 for p in os.environ.get("PATH", "").split(":")
+                 if os.path.isfile(os.path.join(p, cmd))]
+    if full_path:
+        return full_path[0]
+    return None
 
 
 # Simple version of aptsources.sourceslist.SourcesList.
@@ -250,12 +262,30 @@ class SourcesList(object):
 
 
 class UbuntuSourcesList(SourcesList):
+
+    LP_API = 'https://launchpad.net/api/1.0/~%s/+archive/%s' 
+
     def __init__(self, add_ppa_signing_keys_callback=None):
         self.add_ppa_signing_keys_callback = add_ppa_signing_keys_callback
         super(UbuntuSourcesList, self).__init__()
 
     def _get_ppa_info(self, owner_name, ppa_name):
-        lp_api = 'https://launchpad.net/api/1.0/~%s/+archive/%s' % (owner_name, ppa_name)
+        # we can not use urllib2 here as it does not do cert verification
+        lp_api = self.LP_API % (owner_name, ppa_name)
+        try:
+            return self._get_ppa_info_curl(lp_api)
+        except ImportError:
+            return self._get_ppa_info_wget(lp_api)
+
+    def _get_ppa_info_wget(self, lp_api):
+        wget = get_executable_from_path("wget")
+        p = subprocess.Popen([wget, "-q", "-O", "-",
+                              "--header=Accept: application/json",
+                              lp_api], stdout=subprocess.PIPE)
+        return json.loads(p.communicate()[0])
+
+    def _get_ppa_info_curl(self, lp_api):
+        import pycurl
         callback = CurlCallback()
         curl = pycurl.Curl()
         curl.setopt(pycurl.SSL_VERIFYPEER, 1)
@@ -320,6 +350,15 @@ def main():
 
     if not HAVE_PYTHON_APT:
         module.fail_json(msg='Could not import python modules: apt_pkg. Please install python-apt package.')
+
+    # see if we have something that can download from https with cert
+    # checking
+    try:
+        import pycurl
+    except ImportError:
+        wget = get_executable_from_path("wget")
+        if not wget:
+            module.fail_json(msg="Need the python-pycurl or wget package")
 
     repo = module.params['repo']
     state = module.params['state']
