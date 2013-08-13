@@ -43,7 +43,7 @@ options:
         description:
             - A source string state.
 author: Alexander Saltanov
-version_added: "1.2.1"
+version_added: "0.7"
 requirements: [ python-apt ]
 '''
 
