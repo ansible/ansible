@@ -6,7 +6,7 @@ from glob import glob
 
 sys.path.insert(0, os.path.abspath('lib'))
 from ansible import __version__, __author__
-from distutils.core import setup
+from setuptools import setup,find_packages
 
 # find library modules
 from ansible.constants import DIST_MODULE_PATH
@@ -25,20 +25,8 @@ setup(name='ansible',
       url='http://ansible.github.com/',
       license='GPLv3',
       install_requires=['paramiko', 'jinja2', "PyYAML"],
-      package_dir={ 'ansible': 'lib/ansible' },
-      packages=[
-         'ansible',
-         'ansible.utils',
-         'ansible.inventory',
-         'ansible.inventory.vars_plugins',
-         'ansible.playbook',
-         'ansible.runner',
-         'ansible.runner.action_plugins',
-         'ansible.runner.lookup_plugins',
-         'ansible.runner.connection_plugins',
-         'ansible.runner.filter_plugins',
-         'ansible.callback_plugins',
-      ],
+      package_dir = {'':'lib'},
+      packages=find_packages('lib'),
       scripts=[
          'bin/ansible',
          'bin/ansible-playbook',
