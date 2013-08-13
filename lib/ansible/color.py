@@ -18,6 +18,7 @@
 import os
 import sys
 import constants
+import yaml
 
 ANSIBLE_COLOR=True
 if constants.ANSIBLE_NOCOLOR:
@@ -63,6 +64,8 @@ codeCodes = {
     'normal':    '0'
 }
 
+CLEAR_CODE="\033[0m"
+
 def stringc(text, color):
     """String in color."""
 
@@ -71,5 +74,65 @@ def stringc(text, color):
     else:
         return text
 
+
 # --- end "pretty"
 
+
+
+# ---  begin "yamlc"
+# yamlc - The function is based on a heavily minimized adaptation from the
+# example at http://pyyaml.org/browser/pyyaml/trunk/examples/yaml-hl/yaml_hl.py
+
+
+YAML_TOKENS = {
+    "BlockEnd"          : None,
+    "FlowSequenceStart" : None,
+    "FlowMappingStart"  : None,
+    "FlowSequenceEnd"   : None,
+    "FlowMappingEnd"    : None,
+    "BlockMappingStart" : "\033[" + codeCodes["red"] + "m",
+    "Key"               : "\033[" + codeCodes["white"] + "m",
+    "Value"             : "\033[" + codeCodes["yellow"] + "m",
+    "BlockEntry"        : "\033[" + codeCodes["red"] + "m",
+    "Alias"             : CLEAR_CODE,
+    "Anchor"            : CLEAR_CODE,
+    "Scalar"            : "\033[" + codeCodes["green"] + "m",
+    "Tag"               : CLEAR_CODE,
+}
+YAML_SUBSTITUTIONS = {}
+for code in YAML_TOKENS:
+    cls = getattr(yaml, code+"Token")
+    YAML_SUBSTITUTIONS[cls] = YAML_TOKENS[code]
+
+def yamlc(data):
+    """ return a syntax highlighted version of a yaml document """
+    if ANSIBLE_COLOR:
+        tokens = yaml.scan(data)
+        markers = []
+        for token in tokens:
+            cls = token.__class__
+            if cls in YAML_SUBSTITUTIONS:
+                code = YAML_SUBSTITUTIONS[cls]
+                markers.append([token.start_mark.index, code])
+                markers.append([token.end_mark.index,CLEAR_CODE and code or None])
+            else:
+                markers.append([token.start_mark.index,None])
+                markers.append([token.end_mark.index,None])
+        markers.sort()
+        markers = markers[::-1]
+        pos = len(data)
+        chunks = []
+        for idx, sub in markers:
+            if idx < pos:
+                chunk = data[idx:pos]
+                chunks.append(chunk)
+            pos = idx
+            if sub:
+                chunks.append(sub)
+        chunks.reverse()
+
+        return u''.join(chunks).encode('utf-8')
+    else:
+        return data
+
+# ---  end "yamlc"
