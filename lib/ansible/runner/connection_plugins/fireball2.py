@@ -55,7 +55,8 @@ class Connection(object):
     def _execute_fb_module(self):
         args = "password=%s" % base64.b64encode(self.key.__str__())
         self.ssh.connect()
-        return self.runner._execute_module(self.ssh, "/root/.ansible/tmp", 'fireball2', args, inject={"password":self.key})
+        tmp_path = self.runner._make_tmp_path(self.ssh)
+        return self.runner._execute_module(self.ssh, tmp_path, 'fireball2', args, inject={"password":self.key})
 
     def connect(self, allow_ssh=True):
         ''' activates the connection object '''
