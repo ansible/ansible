@@ -114,7 +114,7 @@ def yamlc(data):
             if cls in YAML_SUBSTITUTIONS:
                 code = YAML_SUBSTITUTIONS[cls]
                 markers.append([token.start_mark.index, code])
-                markers.append([token.end_mark.index,CLEAR_CODE if code else None])
+                markers.append([token.end_mark.index,CLEAR_CODE and code or None])
             else:
                 markers.append([token.start_mark.index,None])
                 markers.append([token.end_mark.index,None])
