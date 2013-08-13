@@ -72,18 +72,18 @@ options:
         - S3 URL endpoint. If not specified then the S3_URL environment variable is used, if that variable is defined.
     default: null
     aliases: [ S3_URL ]
-  ec2_access_key:
+  aws_secret_key:
     description:
-      - EC2 access key. If not specified then the EC2_ACCESS_KEY environment variable is used.
+      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
     required: false
     default: null
-    aliases: [ EC2_ACCESS_KEY ]
-  ec2_secret_key:
+    aliases: ['ec2_secret_key', 'secret_key']
+  aws_access_key:
     description:
-      - EC2 secret key. If not specified then the EC2_SECRET_KEY environment variable is used.
+      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
     required: false
     default: null
-    aliases: [ EC2_SECRET_KEY ]
+    aliases: [ 'ec2_access_key', 'access_key' ]
 requirements: [ "boto" ]
 author: Lester Wade, Ralph Tice
 '''
@@ -252,8 +252,8 @@ def main():
             mode           = dict(choices=['get', 'put', 'delete', 'create', 'geturl', 'getstr'], required=True),
             expiry         = dict(default=600, aliases=['expiration']),
             s3_url         = dict(aliases=['S3_URL']),
-            ec2_secret_key = dict(aliases=['EC2_SECRET_KEY']),
-            ec2_access_key = dict(aliases=['EC2_ACCESS_KEY']),
+            aws_secret_key  = dict(aliases=['ec2_secret_key', 'secret_key'], no_log=True, required=False),
+            aws_access_key  = dict(aliases=['ec2_access_key', 'access_key'], required=False),
             overwrite      = dict(default=False, type='bool'),
         ),
     )
@@ -265,8 +265,8 @@ def main():
     mode = module.params.get('mode')
     expiry = int(module.params['expiry'])
     s3_url = module.params.get('s3_url')
-    ec2_secret_key = module.params.get('ec2_secret_key')
-    ec2_access_key = module.params.get('ec2_access_key')
+    aws_secret_key = module.params.get('aws_secret_key')
+    aws_access_key = module.params.get('aws_access_key')
     overwrite = module.params.get('overwrite')
     
     if module.params.get('object'):
@@ -275,21 +275,29 @@ def main():
     # allow eucarc environment variables to be used if ansible vars aren't set
     if not s3_url and 'S3_URL' in os.environ:
         s3_url = os.environ['S3_URL']
-    if not ec2_secret_key and 'EC2_SECRET_KEY' in os.environ:
-        ec2_secret_key = os.environ['EC2_SECRET_KEY']
-    if not ec2_access_key and 'EC2_ACCESS_KEY' in os.environ:
-        ec2_access_key = os.environ['EC2_ACCESS_KEY']
+
+    if not aws_secret_key:
+        if  'AWS_SECRET_KEY' in os.environ:
+            aws_secret_key = os.environ['AWS_SECRET_KEY']
+        elif 'EC2_SECRET_KEY' in os.environ:
+            aws_secret_key = os.environ['EC2_SECRET_KEY']
+
+    if not aws_access_key:
+        if 'AWS_ACCESS_KEY' in os.environ:
+            aws_access_key = os.environ['AWS_ACCESS_KEY']
+        elif 'EC2_ACCESS_KEY' in os.environ:
+            aws_access_key = os.environ['EC2_ACCESS_KEY']
 
     # If we have an S3_URL env var set, this is likely to be Walrus, so change connection method
     if 'S3_URL' in os.environ:
         try:
             walrus = urlparse.urlparse(s3_url).hostname
-            s3 = boto.connect_walrus(walrus, ec2_access_key, ec2_secret_key)
+            s3 = boto.connect_walrus(walrus, aws_access_key, aws_secret_key)
         except boto.exception.NoAuthHandlerFound, e:
             module.fail_json(msg = str(e))
     else:
         try:
-            s3 = boto.connect_s3(ec2_access_key, ec2_secret_key)
+            s3 = boto.connect_s3(aws_access_key, aws_secret_key)
         except boto.exception.NoAuthHandlerFound, e:
             module.fail_json(msg = str(e))
  
