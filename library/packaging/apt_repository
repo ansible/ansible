@@ -67,7 +67,7 @@ import json
 import os
 import re
 import tempfile
-import urllib2
+import pycurl
 
 try:
     import apt_pkg
@@ -80,6 +80,12 @@ except ImportError:
 
 VALID_SOURCE_TYPES = ('deb', 'deb-src')
 
+class CurlCallback:
+    def __init__(self):
+        self.contents = ''
+
+    def body_callback(self, buf):
+        self.contents = self.contents + buf
 
 class InvalidSource(Exception):
     pass
@@ -250,8 +256,17 @@ class UbuntuSourcesList(SourcesList):
 
     def _get_ppa_info(self, owner_name, ppa_name):
         lp_api = 'https://launchpad.net/api/1.0/~%s/+archive/%s' % (owner_name, ppa_name)
-        connection = urllib2.urlopen(lp_api, timeout=30)
-        return json.loads(connection.read())
+        callback = CurlCallback()
+        curl = pycurl.Curl()
+        curl.setopt(pycurl.SSL_VERIFYPEER, 1)
+        curl.setopt(pycurl.SSL_VERIFYHOST, 2)
+        curl.setopt(pycurl.WRITEFUNCTION, callback.body_callback)
+        curl.setopt(pycurl.URL, str(lp_api))
+        curl.setopt(pycurl.HTTPHEADER, ["Accept: application/json"])
+        curl.perform()
+        curl.close()
+        lp_page = callback.contents
+        return json.loads(lp_page)
 
     def _expand_ppa(self, path):
         ppa = path.split(':')[1]
