@@ -115,16 +115,16 @@ else:
 
 def user_add(module, client, db_name, user, password, roles):
     try:
-      db = client[db_name]
-      if roles is None:
-        db.add_user(user, password, False)
-      else:
-        try:
-          db.add_user(user, password, None, roles=roles)
-        except:
-          module.fail_json(msg='"problem adding user; you must be on mongodb 2.4+ and pymongo 2.5+ to use the roles param"')
+        db = client[db_name]
+        if roles is None:
+            db.add_user(user, password, False)
+        else:
+            try:
+                db.add_user(user, password, None, roles=roles)
+            except:
+                module.fail_json(msg='"problem adding user; you must be on mongodb 2.4+ and pymongo 2.5+ to use the roles param"')
     except OperationFailure:
-      return False
+        return False
 
     return True
 
