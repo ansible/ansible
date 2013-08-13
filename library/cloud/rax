@@ -94,19 +94,23 @@ notes:
 '''
 
 EXAMPLES = '''
-# Create a server
-- local_action:
-     module: rax
-     credentials: ~/.raxpub
-     service: cloudservers
-     name: rax-test1
-     flavor: 5
-     image: b11d9567-e412-4255-96b9-bd63ab23bcfe
-     files:
-        /root/.ssh/authorized_keys: /home/localuser/.ssh/id_rsa.pub
-        /root/test.txt: /home/localuser/test.txt
-     wait: yes
-     state: present
+- name: Build a Cloud Server
+  gather_facts: False
+
+  tasks:
+    - name: Server build request
+      local_action:
+        module: rax
+        credentials: ~/.raxpub
+        service: cloudservers
+        name: rax-test1
+        flavor: 5
+        image: b11d9567-e412-4255-96b9-bd63ab23bcfe
+        files:
+          /root/.ssh/authorized_keys: /home/localuser/.ssh/id_rsa.pub
+          /root/test.txt: /home/localuser/test.txt
+        wait: yes
+        state: present
 '''
 
 import sys
@@ -196,7 +200,7 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
         # See if we can find a server that matches our credentials
         for server in servers:
             if server.name == name:
-                if server.flavor['id'] == flavor and \
+                if int(server.flavor['id']) == int(flavor) and \
                 server.image['id'] == image and \
                 server.metadata == meta:
                     try:
