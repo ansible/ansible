@@ -63,7 +63,7 @@ options:
     roles:
         version_added: "1.3"
         description:
-            - The database user roles valid values are one or more of the following: "read", "readWrite", "dbAdmin", "userAdmin", "clusterAdmin", "readAnyDatabase", "readWriteAnyDatabase", "userAdminAnyDatabase", "dbAdminAnyDatabase"
+            - "The database user roles valid values are one or more of the following: read, 'readWrite', 'dbAdmin', 'userAdmin', 'clusterAdmin', 'readAnyDatabase', 'readWriteAnyDatabase', 'userAdminAnyDatabase', 'dbAdminAnyDatabase'"
             - This param requires mongodb 2.4+ and pymongo 2.5+
         required: false
         default: "readWrite"
