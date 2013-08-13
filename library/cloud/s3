@@ -78,6 +78,7 @@ options:
       - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
     required: false
     default: null
+    aliases: [ 'ec2_access_key', 'access_key' ]
 requirements: [ "boto" ]
 author: Lester Wade, Ralph Tice
 '''
