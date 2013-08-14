@@ -56,7 +56,7 @@ options:
         aliases: []
     state:
         description:
-            - Pool state
+            - Pool/pool member state
         required: false
         default: present
         choices: ['present', 'absent']
@@ -70,7 +70,7 @@ options:
         aliases: ['pool']
     partition:
         description:
-            - Partition
+            - Partition of pool/pool member
         required: false
         default: 'Common'
         choices: []
@@ -78,6 +78,7 @@ options:
     lb_method:
         description:
             - Load balancing method
+        version_added: "1.3"
         required: False
         default: 'round_robin'
         choices: ['round_robin', 'ratio_member', 'least_connection_member',
@@ -94,6 +95,7 @@ options:
     monitor_type:
         description:
             - Monitor rule type when monitors > 1
+        version_added: "1.3"
         required: False
         default: null
         choices: ['and_list', 'm_of_n']
@@ -101,20 +103,23 @@ options:
     quorum:
         description:
             - Monitor quorum value when monitor_type is m_of_n
+        version_added: "1.3"
         required: False
         default: null
         choices: []
         aliases: []
     monitors:
         description:
-            - Monitor template name list
+            - Monitor template name list. Always use the full path to the monitor.
+        version_added: "1.3"
         required: False
         default: null
         choices: []
         aliases: []
     slow_ramp_time:
         description:
-            - Sets the ramp-up time (in seconds) to gradually ramp up the load on newly added or freshly detected UP pool members
+            - Sets the ramp-up time (in seconds) to gradually ramp up the load on newly added or freshly detected up pool members
+        version_added: "1.3"
         required: False
         default: null
         choices: []
@@ -122,6 +127,7 @@ options:
     service_down_action:
         description:
             - Sets the action to take when node goes down in pool
+        version_added: "1.3"
         required: False
         default: null
         choices: ['none', 'reset', 'drop', 'reselect']
@@ -144,30 +150,74 @@ options:
 
 EXAMPLES = '''
 
-### Examples assume [localhost] is defined in inventory file
-
-## ad-hoc ansible CLI example
-
-# Create (or update) pool /matthite/matthite-pool on load balancer lb.mydomain.com
-ansible -c local localhost -m bigip_pool -a "server=lb.mydomain.com user=admin password=mysecret state=present name=matthite-pool partition=matthite lb_method=least_connection_member slow_ramp_time=120"
-
-# Remove pool /matthite/matthite-pool on load balancer lb.mydomain.com
-ansible -c local localhost -m bigip_pool -a "server=lb.mydomain.com user=admin password=mysecret state=absent name=matthite-pool partition=matthite"
-
-# Add pool member /matthite/1.1.1.1:80 to pool /matthite/matthite-pool on load balancer lb.mydomain.com
-ansible -c local localhost -m bigip_pool -a "server=lb.mydomain.com user=admin password=mysecret state=present name=matthite-pool partition=matthite host=1.1.1.1 port=80"
-
-# Remove pool member /matthite/1.1.1.1:80 to pool /matthite/matthite-pool on load balancer lb.mydomain.com
-ansible -c local localhost -m bigip_pool -a "server=lb.mydomain.com user=admin password=mysecret state=absent name=matthite-pool partition=matthite host=1.1.1.1 port=80"
-
-## playbook task example:
+## playbook task examples:
 
 ---
 # file bigip-test.yml
 # ...
+- hosts: localhost
   tasks:
-  - name: Create /matthite/matthite-pool
-    local_action: bigip_pool server=lb.mydomain.com user=admin password=mysecret state=present name=matthite-pool partition=matthite lb_method=least_connection_member slow_ramp_time=120
+  - name: Create pool
+    local_action: >
+      bigip_pool
+      server=lb.mydomain.com
+      user=admin
+      password=mysecret
+      state=present
+      name=matthite-pool
+      partition=matthite
+      lb_method=least_connection_member
+      slow_ramp_time=120
+
+  - name: Modify load balancer method
+    local_action: >
+      bigip_pool
+      server=lb.mydomain.com
+      user=admin
+      password=mysecret
+      state=present
+      name=matthite-pool
+      partition=matthite
+      lb_method=round_robin
+
+- hosts: bigip-test
+  tasks:
+  - name: Add pool member
+    local_action: >
+      bigip_pool
+      server=lb.mydomain.com
+      user=admin
+      password=mysecret
+      state=present
+      name=matthite-pool
+      partition=matthite
+      host="{{ ansible_default_ipv4["address"] }}"
+      port=80
+
+  - name: Remove pool member from pool
+    local_action: >
+      bigip_pool
+      server=lb.mydomain.com
+      user=admin
+      password=mysecret
+      state=absent
+      name=matthite-pool
+      partition=matthite
+      host="{{ ansible_default_ipv4["address"] }}"
+      port=80
+
+- hosts: localhost
+  tasks:
+  - name: Delete pool
+    local_action: >
+      bigip_pool
+      server=lb.mydomain.com
+      user=admin
+      password=mysecret
+      state=absent
+      name=matthite-pool
+      partition=matthite
+
 '''
 
 try:
