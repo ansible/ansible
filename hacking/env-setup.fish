@@ -1,5 +1,5 @@
 #!/usr/bin/env fish
-# usage: source ./hacking/env-setup [-q]
+# usage: . ./hacking/env-setup [-q]
 #    modifies environment for running Ansible from checkout
 set HACKING_DIR (dirname (status -f))
 set FULL_PATH (python -c "import os; print(os.path.realpath('$HACKING_DIR'))")
