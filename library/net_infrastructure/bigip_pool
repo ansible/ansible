@@ -392,6 +392,13 @@ def main():
         monitor_type = monitor_type.lower()
     quorum = module.params['quorum']
     monitors = module.params['monitors']
+    if monitors:
+        monitors = []
+        for monitor in module.params['monitors']:
+            if "/" not in monitor:
+                monitors.append("/%s/%s" % (partition, monitor))
+            else:
+                monitors.append(monitor)
     slow_ramp_time = module.params['slow_ramp_time']
     service_down_action = module.params['service_down_action']
     if service_down_action:
