@@ -159,7 +159,7 @@ if __name__ == '__main__':
             if 'failed' in result or result.get('rc', 0) != 0:
                 sys.exit(2)
         if results['dark']:
-            sys.exit(2)
+            sys.exit(3)
     except errors.AnsibleError, e:
         # Generic handler for ansible specific errors
         callbacks.display("ERROR: %s" % str(e), stderr=True, color='red')
