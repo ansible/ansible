@@ -467,8 +467,8 @@ class Runner(object):
                 inject['item'] = x
 
                 # TODO: this idiom should be replaced with an up-conversion to a Jinja2 template evaluation
-                if isinstance(complex_args, basestring):
-                    complex_args = template.template(self.basedir, complex_args, inject, convert_bare=True)
+                if isinstance(sel.fcomplex_args, basestring):
+                    complex_args = template.template(self.basedir, self.complex_args, inject, convert_bare=True)
                     complex_args = utils.safe_eval(complex_args)
                     if type(complex_args) != dict:
                         raise errors.AnsibleError("args must be a dictionary, received %s" % complex_args)
