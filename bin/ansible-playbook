@@ -202,6 +202,7 @@ def main(args):
             return 0
 
         failed_hosts = []
+        unreachable_hosts = []
 
         try:
 
@@ -213,11 +214,15 @@ def main(args):
 
             for h in hosts:
                 t = pb.stats.summarize(h)
-                if t['unreachable'] > 0 or t['failures'] > 0:
+                if t['failures'] > 0:
                     failed_hosts.append(h)
+                if t['unreachable'] > 0:
+                    unreachable_hosts.append(h)
 
-            if len(failed_hosts) > 0:
-                filename = pb.generate_retry_inventory(failed_hosts)
+            retries = failed_hosts + unreachable_hosts
+
+            if len(retries) > 0:
+                filename = pb.generate_retry_inventory(retries)
                 if filename:
                     display("           to retry, use: --limit @%s\n" % filename)
 
@@ -246,6 +251,8 @@ def main(args):
             print ""
             if len(failed_hosts) > 0:
                 return 2
+            if len(unreachable_hosts) > 0:
+                return 3
 
         except errors.AnsibleError, e:
             display("ERROR: %s" % e, color='red')
