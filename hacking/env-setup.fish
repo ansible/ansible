@@ -14,6 +14,7 @@ if not set -q PYTHONPATH
 else
     switch PYTHONPATH
         case "$PREFIX_PYTHONPATH*"
+        case "*"
             echo "Appending PYTHONPATH"
             set -gx PYTHONPATH $PREFIX_PYTHONPATH:$PYTHONPATH
     end
@@ -32,7 +33,9 @@ if not contains $PREFIX_MANPATH $MANPATH
         set -gx MANPATH $PREFIX_MANPATH $MANPATH
     end
 end
+
 set -gx ANSIBLE_LIBRARY $ANSIBLE_HOME/library
+
 if set -q argv 
     switch $argv
     case '-q' '--quiet'
