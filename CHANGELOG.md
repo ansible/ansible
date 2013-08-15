@@ -12,6 +12,7 @@ Highlighted new features:
 * --extra-vars can now take a file as input "-e @filename"
 * external inventory scripts may now return host variables in one pass, which allows them to be much more efficient for large numbers of hosts
 * if --forks exceeds the numbers of hosts, it will be automatically reduced, set forks to 0 and you get "as many forks as I have hosts" out of the box.
+* enabling error_on_undefined_vars by default, which will make errors in playbooks more obvious
 
 New modules:
 
