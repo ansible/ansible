@@ -31,7 +31,6 @@ New modules:
 * packaging: rpm_key -- adds or removes RPM signing keys
 * monitoring: boundary_meter -- adds or removes boundary.com meters
 * net_infrastructure: dnsmadeeasy - manipulate DnsMadeEasy records
-* files: synchronize -- a wrapper around making rsync easy to understand
 
 Misc changes:
 
