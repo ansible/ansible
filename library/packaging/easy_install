@@ -125,11 +125,11 @@ def main():
         if module.check_mode:
             module.exit_json(changed=True)
         cmd = '%s %s' % (easy_install, name)
-        rc_pip, out_pip, err_pip = module.run_command(cmd)
+        rc_easy_inst, out_easy_inst, err_easy_inst = module.run_command(cmd)
 
-        rc += rc_pip
-        out += out_pip
-        err += err_pip
+        rc += rc_easy_inst
+        out += out_easy_inst
+        err += err_easy_inst
 
         changed = True
 
