@@ -147,7 +147,7 @@ class Play(object):
 
         return (path, role_vars)
 
-    def _build_role_dependencies(self, roles, dep_stack, vars={}, level=0):
+    def _build_role_dependencies(self, roles, dep_stack, passed_vars={}, level=0):
         # this number is arbitrary, but it seems sane
         if level > 20:
             raise errors.AnsibleError("too many levels of recursion while resolving role dependencies")
@@ -162,13 +162,20 @@ class Play(object):
                     dependencies = data.get('dependencies',[])
                     for dep in dependencies:
                         (dep_path,dep_vars) = self._get_role_path(dep)
+                        vars = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(dep_path, 'vars')))
+                        vars_data = {}
+                        if os.path.isfile(vars):
+                            vars_data = utils.parse_yaml_from_file(vars)
                         dep_vars.update(role_vars)
-                        for k in vars.keys():
+                        for k in passed_vars.keys():
                             if not k in dep_vars:
-                                dep_vars[k] = vars[k]
+                                dep_vars[k] = passed_vars[k]
+                        for k in vars_data.keys():
+                            if not k in dep_vars:
+                                dep_vars[k] = vars_data[k]
                         if 'role' in dep_vars:
                             del dep_vars['role']
-                        self._build_role_dependencies([dep], dep_stack, vars=dep_vars, level=level+1)
+                        self._build_role_dependencies([dep], dep_stack, passed_vars=dep_vars, level=level+1)
                         dep_stack.append([dep,dep_path,dep_vars])
                     # only add the current role when we're at the top level,
                     # otherwise we'll end up in a recursive loop 
