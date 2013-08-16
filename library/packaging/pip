@@ -97,6 +97,15 @@ options:
     version_added: "1.3"
     required: false
     default: null
+  executable:
+    description:
+      - The explicit executable or a pathname to the executable to be used to
+        run pip for a specific version of Python installed in the system. For
+        example C(pip-3.3), if there are both Python 2.7 and 3.3 installations
+        in the system and you want to run pip for the Python 3.3 installation.
+    version_added: "1.3"
+    required: false
+    default: null
 notes:
    - Please note that virtualenv (U(http://www.virtualenv.org/)) must be installed on the remote host if the virtualenv parameter is specified.
 requirements: [ "virtualenv", "pip" ]
@@ -130,6 +139,9 @@ EXAMPLES = '''
 
 # Install specified python requirements and custom Index URL.
 - pip: requirements=/my_app/requirements.txt extra_args='-i https://example.com/pypi/simple'
+
+# Install (Bottle) for Python 3.3 specifically,using the 'pip-3.3' executable.
+- pip: name=bottle executable=pip-3.3
 '''
 
 
@@ -141,21 +153,26 @@ def _get_full_name(name, version=None):
     return resp
 
 
-def _get_pip(module, env):
-    # On Debian and Ubuntu, pip is pip.
-    # On Fedora18 and up, pip is python-pip.
-    # On Fedora17 and below, CentOS and RedHat 6 and 5, pip is pip-python.
-    # On Fedora, CentOS, and RedHat, the exception is in the virtualenv.
-    # There, pip is just pip.
-    # Try pip with the virtualenv directory first.
-    pip = module.get_bin_path('pip', False, ['%s/bin' % env])
-    for p in ['python-pip', 'pip-python']:
+def _get_pip(module, env, executable=None):
+    if executable is None:
+        # Default pip executables.
+        # On Debian and Ubuntu, pip is pip.
+        # On Fedora18 and up, pip is python-pip.
+        # On Fedora17 and below, CentOS and RedHat 6 and 5, pip is pip-python.
+        # On Fedora, CentOS, and RedHat, the exception is in the virtualenv.
+        # There, pip is just pip.
+        # Try pip with the virtualenv directory first.
+        pip = module.get_bin_path('pip', False, ['%s/bin' % env])
+        for p in ['python-pip', 'pip-python']:
+            if not pip:
+                pip = module.get_bin_path(p, False, ['%s/bin' % env])
+        # pip should have been found by now.  The final call to get_bin_path
+        # will trigger fail_json.
         if not pip:
-            pip = module.get_bin_path(p, False, ['%s/bin' % env])
-    # pip should have been found by now.  The final call to get_bin_path
-    # will trigger fail_json.
-    if not pip:
-        pip = module.get_bin_path('pip', True, ['%s/bin' % env])
+            pip = module.get_bin_path('pip', True, ['%s/bin' % env])
+    else:
+        # Explicit pip executable.
+        pip = module.get_bin_path(executable, True)
     return pip
 
 
@@ -187,6 +204,7 @@ def main():
             use_mirrors=dict(default='yes', type='bool'),
             extra_args=dict(default=None, required=False),
             chdir=dict(default=None, required=False),
+            executable=dict(default=None, required=False),
         ),
         required_one_of=[['name', 'requirements']],
         mutually_exclusive=[['name', 'requirements']],
@@ -231,7 +249,7 @@ def main():
             if rc != 0:
                 _fail(module, cmd, out, err)
 
-    pip = _get_pip(module, env)
+    pip = _get_pip(module, env, module.params['executable'])
 
     cmd = '%s %s' % (pip, state_map[state])
 
