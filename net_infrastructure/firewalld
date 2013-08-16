@@ -59,7 +59,7 @@ options:
     default: 0
 notes:
    - Not tested on any debian based system
-requirements: [ firewalld ]
+requirements: [ firewalld >= 0.2.11 ]
 author: Adam Miller <maxamillion@fedoraproject.org>
 '''
 
@@ -74,6 +74,9 @@ import re
 import sys
 
 try:
+    import firewall.config
+    FW_VERSION = firewall.config.VERSION
+
     from firewall.client import FirewallClient
     fw = FirewallClient()
 except ImportError:
@@ -164,6 +167,10 @@ def main():
         ),
         supports_check_mode=True
     )
+
+    ## Pre-run version checking
+    if FW_VERSION < "0.2.11":
+        module.fail_json(msg='unsupported version of firewalld, requires >= 2.0.11')
 
     ## Global Vars
     changed=False
