@@ -9,7 +9,7 @@ Requirements
 
 Requirements for Ansible are extremely minimal.
 
-For the central Ansible machine, you will need an environment with Python 2.6 or greater installed. If you are running Python 2.5 on an "Enterprise Linux" variant, we'll show you how to add 2.6 to your distribution. (Windows is not supported as the Ansible control machine.)
+For the central Ansible machine, you will need an environment with Python 2.6 or greater installed. If you are running Python 2.5 on an "Enterprise Linux 5" variant, we'll show you how to add 2.6 to your distribution, but most platforms already have a new enough Python. (Note that Windows is not supported as the Ansible control machine.)
 
 You will also want the following Python modules (installed via pip or perhaps via your OS package manager via slightly different names):
 
@@ -22,7 +22,6 @@ If you are using RHEL or CentOS 5, Python is version 2.4 by default, but you can
 .. code-block:: bash
 
    $ yum install python26 python26-PyYAML python26-paramiko python26-jinja2
-
 
 
 On the managed nodes, you only need Python 2.4 or later, but if you are are running less than Python 2.6 on them, you will
@@ -48,8 +47,7 @@ also need:
 .. note::
 
    Python 3 is a slightly different language than Python 2 and most python programs (including
-   Ansible) are not
-   switching over yet.  However, some Linux distributions (Gentoo, Arch) may not have a 
+   Ansible) are not switching over yet.  However, some Linux distributions (Gentoo, Arch) may not have a 
    Python 2.X interpreter installed by default.  On those systems, you should install one, and set
    the 'ansible_python_interpreter' variable in inventory (see :doc:`patterns`) to point at your 2.X python.  Distributions
    like Red Hat Enterprise Linux, CentOS, Fedora, and Ubuntu all have a 2.X interpreter installed
@@ -87,7 +85,15 @@ to use it:
     $ cd ./ansible
     $ source ./hacking/env-setup
 
-You can optionally specify an inventory file (see :doc:`patterns`) other than /etc/ansible/hosts:
+You will want to install the dependencies needed by Ansible with pip if going from a checkout::
+
+    # on Ubuntu, for example:
+    apt-get install python-dev python-pip
+    pip-install PyYAML Jinja2 paramiko
+
+Once running the env-setup script you'll be running from checkout and the default inventory file
+will be /etc/anisble/hosts.  You can optionally specify an inventory file (see :doc:`patterns`) 
+other than /etc/ansible/hosts:
 
 .. code-block:: bash
 
@@ -168,11 +174,11 @@ Make sure you have ``rpm-build``, ``make``, and ``python2-devel`` installed.
     $ make rpm
     $ sudo rpm -Uvh ~/rpmbuild/ansible-*.noarch.rpm
 
-Via MacPorts
-++++++++++++
+Via MacPorts on OS X
+++++++++++++++++++++
 
-An OSX port is available via MacPorts, to install the stable version of
-Ansible from MacPorts (this is the recommended way), run:
+Ansible is easily run or installed from source, but you can also use MacPorts.
+To install the stable version of Ansible from MacPorts, run:
 
 .. code-block:: bash
 
@@ -196,23 +202,19 @@ Ubuntu and Debian
 
 Ubuntu builds are available `in a PPA here <https://launchpad.net/~rquillo/+archive/ansible>`_.
 
-In Ubuntu 13.04 (raring) its part of the backports repository:
-
-.. code-block:: bash
-
-    $ sudo apt-get install ansible/raring-backports
-
-In Debian testing/unstable and Ubuntu 13.10+ it is available via
+Once configured, 
 
 .. code-block:: bash
 
     $ sudo apt-get install ansible
 
-Debian/Ubuntu package recipes can also be built from the source checkout, run:
+Debian/Ubuntu packages can also be built from the source checkout, run:
 
 .. code-block:: bash
 
     $ make debian
+
+You may also wish to run from source to get the latest, which is covered above.
 
 Gentoo, Arch, Others
 ++++++++++++++++++++
@@ -246,9 +248,12 @@ These releases are also tagged in the git repository with the release version.
 Choosing Between Paramiko and Native SSH
 ````````````````````````````````````````
 
-By default, ansible uses paramiko to talk to managed nodes over SSH.  Paramiko is fast, works
-very transparently, requires no configuration, and is a good choice for most users.
-However, it does not support some advanced SSH features that folks will want to use.
+By default, ansible 1.3 and later will try to use native SSH for remote communication when possible.
+This is done when ControlPersist support is available.  Paramiko is however reasonably fast and makes
+a good default on versions of Enterprise Linux where ControlPersist is not available.  However, Paramiko 
+does not support some advanced SSH features that folks will want to use.  In Ansible 1.2 and before,
+the default was strictly paramiko and native SSH had to be explicitly selected with -c ssh or set in the
+configuration file.
 
 .. versionadded:: 0.5
 
