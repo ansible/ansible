@@ -488,7 +488,7 @@ This designates the following behaviors, for each role 'x':
 - If roles/x/tasks/main.yml exists, tasks listed therein will be added to the play
 - If roles/x/handlers/main.yml exists, handlers listed therein will be added to the play
 - If roles/x/vars/main.yml exists, variables listed therein will be added to the play
-- If roles/x/meta/main.yml exists, any role dependencies listed therein will be added to the list of roles
+- If roles/x/meta/main.yml exists, any role dependencies listed therein will be added to the list of roles (1.3 and later)
 - Any copy tasks can reference files in roles/x/files/ without having to path them relatively or absolutely
 - Any script tasks can reference scripts in roles/x/files/ without having to path them relatively or absolutely
 - Any template tasks can reference files in roles/x/templates/ without having to path them relatively or absolutely
@@ -555,34 +555,27 @@ Role Dependencies
 
 .. versionadded: 1.3
 
-Role dependencies allow you to include other roles within your role, so that you no longer
-have to specify them at the top level. As noted above, role dependencies are stored in the
-`meta/main.yml` file contained within the role directory. This file should contain the following::
+Role dependencies allow you to automatically pull in other roles when using a role. Role dependencies are stored in the
+`meta/main.yml` file contained within the role directory. This file should contain 
+a list of roles and parameters to insert before the specified role, such as the following in an example
+`roles/myapp/meta/main.yml`::
 
     ---
     dependencies:
-    - { role: foo, x: 1 }
-    - { role: bar, y: 2 }
-    - { role: baz, z: 3 }
+      - { role: common, some_parameter: 3 }
+      - { role: apache, port: 80 }
+      - { role: postgres, dbname: blarg, other_parameter: 12 }
 
-Role dependencies can also be specified as a full path::
+Role dependencies can also be specified as a full path, just like top level roles::
 
     ---
     dependencies:
-    - { role: '/path/to/common/roles/foo', x: 1 }
+       - { role: '/path/to/common/roles/foo', x: 1 }
 
-Roles dependencies are always executed before the role that includes them. For example, given the following
-list of dependant roles::
+Roles dependencies are always executed before the role that includes them, and are recursive.
 
-    - car
-      - wheel
-        - tire
-        - brake
-
-The roles would be executed in the order: tire -> brake -> wheel -> car.
-
-Role dependencies may be included more than once. Continuing the above example, the car role could 
-add dependencies as follows::
+Role dependencies may be included more than once. Continuing the above example, the 'car' role could 
+add 'wheel' dependencies as follows::
 
     ---
     dependencies:
@@ -591,57 +584,19 @@ add dependencies as follows::
     - { role: wheel, n: 3 }
     - { role: wheel, n: 4 }
 
-Which would result in the following dependency tree::
+If the wheel role required tire and brake in turn, this would result in the following execution order::
 
-    - car
-      - wheel (n=1)
-        - tire (n=1)
-        - brake (n=1)
-      - wheel (n=2)
-        - tire (n=2)
-        - brake (n=2)
-      - wheel (n=3)
-        - tire (n=3)
-        - brake (n=3)
-      - wheel (n=4)
-        - tire (n=4)
-        - brake (n=4)
-
-And the order of execution would be tire(n=1) -> brake(n=1) -> wheel(n=1) -> tire(n=2) -> brake(n=2) -> wheel(n=2) -> ... -> car.
+    tire(n=1)
+    brake(n=1)
+    wheel(n=1)
+    tire(n=2)
+    brake(n=2)
+    wheel(n=2)
+    ...
+    car
 
 .. note::
-   Variable inheritance and scope are detailed below.
-
-Role Variable Scope and Precedence
-``````````````````````````````````
-
-There are two rules governing variable scope when it comes to roles and dependencies.
-
-1. Variables listed in vars/ files are loaded into the role and also into the global list of variables.
-
-This means that if two roles define the same variable name, the last one to be included will be the 
-one that sets the variable at the global level. These variables also override whatever may be set in group
-or host vars files, since inventory variables have the lowest priority.
-
-This allows roles to share variables with other roles that it doesn't know about, and means variables from 
-parent roles will override any that are set at a lower level. Given the car/wheel example above, if the 
-`tire` role sets `x: 1` in its vars/main.yml while the `wheel` roles sets `x: 2`, both roles will see 
-`x: 2` (as will the brake role). This allows parent roles to override variables defined in dependant classes, 
-for instance if you wanted to override the http_port setting in a web server role. 
-
-If you wish to avoid this behavior, make sure the variables in your roles have unique names instead of something 
-generic like `port`.
-
-2. Variables given when including/depending a role override variables in vars/main.yml
-
-This means that if you include a role (or add it to a list of dependencies) while setting a variable, 
-that variable value will be the one that role (and any dependant roles) will see.
-
-For example, given the car/wheel example again, if the car adds the wheel role as a dependency as follows::
-
-    - { role: wheel, x: 100 }
-
-Then the wheel, tire, and brake roles will all see `x: 100` no matter what is set in the vars files for each role.
+   Variable inheritance and scope are detailed in the Advanced Playbook section.
 
 Executing A Playbook
 ````````````````````

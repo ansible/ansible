@@ -1023,6 +1023,25 @@ that is going to be used.  You won't be fooled by some variable from inventory s
 So, in short, if you want something easy to remember: facts beat playbook definitions, and
 playbook definitions beat inventory variables.
 
+There's a little bit more if you are using roles -- roles fit in the "playbook definitions" category of scale.  They are
+trumped by facts, and still trump inventory variables.  However, there's a bit of extra magic.
+
+Variables passed as parameters to the role are accesible only within that role (and dependencies of that role).  You can
+almost think of them like programming functions or macros.
+
+Variables loaded via the 'vars/' directory of a role are made available to all roles and tasks, which in older versions of Ansible
+could be confusing in the case of a reused variable name.  In Ansible 1.3 and later, however, vars/ directories are guaranteed to be scoped to the current role, just like roles parameters.  They are still available globally though, so if you want to set a variable like "ntp_server" in a common role, other roles can still make use of it.  Thus they are just like "vars_files" construct that they emulate, but they have a bit more of a "Do What I Mean" semantic to them.  They are smarter.
+
+If there are role dependencies involved, dependent roles can set variables visible to the roles that require them, but
+the requiring role is allowed to override those variables.  For instance if a role "myapp" requires "apache", and
+the value of "apache_port" in "apache" is 80, "myapp" could choose to set it to 8080.  Thus you may think of this somewhat
+like an inheritance system if you're a developer -- though it's not exactly -- and we don't require folks to think in programming terms to know how things work.
+
+If you want, you can choose to prefix variable names with the name of your role and be extra sure of where
+data sources are coming from, but this is optional.  However it can be a nice thing to do in your templates as you immediately
+know where the variable was defined.
+
+Ultimately, the variable system may seem complex -- but it's really not.  It's mostly a "Do What I Mean" kind of system, though knowing the details may help you if you get stuck or are trying to do something advanced.  Feel free to experiment!
 
 Check Mode ("Dry Run") --check
 ```````````````````````````````
