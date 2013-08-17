@@ -79,6 +79,7 @@ EXAMPLES = '''
 import json
 import shlex
 import os
+import re
 import sys
 
 PACMAN_PATH = "/usr/bin/pacman"
@@ -130,15 +131,20 @@ def remove_packages(module, packages):
     module.exit_json(changed=False, msg="package(s) already absent")
 
 
-def install_packages(module, packages):
+def install_packages(module, packages, package_files):
 
     install_c = 0
 
-    for package in packages:
+    for i, package in enumerate(packages):
         if query_package(module, package):
             continue
 
-        rc = os.system("pacman -S %s --noconfirm > /dev/null" % (package))
+        if package_files[i]:
+            params = '-U %s' % package_files[i]
+        else:
+            params = '-S %s' % package
+
+        rc = os.system("pacman %s --noconfirm > /dev/null" % (params))
 
         if rc != 0:
             module.fail_json(msg="failed to install %s" % (package))
@@ -172,8 +178,18 @@ def main():
 
     pkgs = p["name"].split(",")
 
+    pkg_files = []
+    for i, pkg in enumerate(pkgs):
+        if pkg.endswith('.pkg.tar.xz'):
+            # The package given is a filename, extract the raw pkg name from
+            # it and store the filename
+            pkg_files.append(pkg)
+            pkgs[i] = re.sub('-[0-9].*$', '', pkgs[i].split('/')[-1])
+        else:
+            pkg_files.append(None)
+
     if p["state"] == "installed":
-        install_packages(module, pkgs)
+        install_packages(module, pkgs, pkg_files)
 
     elif p["state"] == "absent":
         remove_packages(module, pkgs)
