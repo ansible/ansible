@@ -1101,7 +1101,7 @@ Which of course means that, though more verbose, this is also legal syntax::
 Local Facts (Facts.d)
 `````````````````````
 
-.. version_added:: 1.3
+.. versionadded:: 1.3
 
 As discussed in the playbooks chapter, Ansible facts are a way of getting data about remote systems for use in playbook variables.
 Usually these are discovered automatically by the 'setup' module in Ansible. Users can also write custom facts modules, as described
