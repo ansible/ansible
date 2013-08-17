@@ -177,10 +177,10 @@ class Play(object):
                             del dep_vars['role']
                         self._build_role_dependencies([dep], dep_stack, passed_vars=dep_vars, level=level+1)
                         dep_stack.append([dep,dep_path,dep_vars])
-                    # only add the current role when we're at the top level,
-                    # otherwise we'll end up in a recursive loop 
-                    if level == 0:
-                        dep_stack.append([role,role_path,role_vars])
+            # only add the current role when we're at the top level,
+            # otherwise we'll end up in a recursive loop 
+            if level == 0:
+                dep_stack.append([role,role_path,role_vars])
         return dep_stack
 
     def _load_roles(self, roles, ds):
