@@ -182,6 +182,7 @@ class SourcesList(object):
             if sources:
                 d, fn = os.path.split(filename)
                 fd, tmp_path = tempfile.mkstemp(prefix=".%s-" % fn, dir=d)
+                os.chmod(os.path.join(fd, tmp_path), 0644)
 
                 with os.fdopen(fd, 'w') as f:
                     for n, valid, enabled, source, comment in sources:
