@@ -38,6 +38,7 @@ class Connection(object):
     def __init__(self, runner, host, port, user, password, private_key_file, *args, **kwargs):
         self.runner = runner
         self.host = host
+        self.ipv6 = ':' in self.host
         self.port = port
         self.user = user
         self.password = password
@@ -130,7 +131,10 @@ class Connection(object):
         ''' run a command on the remote host '''
 
         ssh_cmd = self._password_cmd()
-        ssh_cmd += ["ssh", "-tt", "-q"] + self.common_args + [self.host]
+        ssh_cmd += ["ssh", "-tt", "-q"] + self.common_args
+        if self.ipv6:
+            ssh_cmd += ['-6']
+        ssh_cmd += [self.host]
 
         if not self.runner.sudo or not sudoable:
             if executable:
@@ -232,12 +236,16 @@ class Connection(object):
             raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
         cmd = self._password_cmd()
 
+        host = self.host
+        if self.ipv6:
+            host = '[%s]' % host
+
         if C.DEFAULT_SCP_IF_SSH:
             cmd += ["scp"] + self.common_args
-            cmd += [in_path,self.host + ":" + pipes.quote(out_path)]
+            cmd += [in_path,host + ":" + pipes.quote(out_path)]
             indata = None
         else:
-            cmd += ["sftp"] + self.common_args + [self.host]
+            cmd += ["sftp"] + self.common_args + [host]
             indata = "put %s %s\n" % (pipes.quote(in_path), pipes.quote(out_path))
 
         p = subprocess.Popen(cmd, stdin=subprocess.PIPE,
@@ -253,12 +261,16 @@ class Connection(object):
         vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host)
         cmd = self._password_cmd()
 
+        host = self.host
+        if self.ipv6:
+            host = '[%s]' % host
+
         if C.DEFAULT_SCP_IF_SSH:
             cmd += ["scp"] + self.common_args
-            cmd += [self.host + ":" + in_path, out_path]
+            cmd += [host + ":" + in_path, out_path]
             indata = None
         else:
-            cmd += ["sftp"] + self.common_args + [self.host]
+            cmd += ["sftp"] + self.common_args + [host]
             indata = "get %s %s\n" % (in_path, out_path)
 
         p = subprocess.Popen(cmd, stdin=subprocess.PIPE,
