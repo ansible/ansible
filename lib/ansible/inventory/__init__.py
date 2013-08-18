@@ -74,12 +74,21 @@ class Inventory(object):
             self.parser = None
             all = Group('all')
             self.groups = [ all ]
+            ipv6_re = re.compile('\[([a-f:A-F0-9]*)\](?::(\d+))?')
             for x in host_list:
-                if ":" in x:
-                    tokens = x.split(":", 1)
-                    all.add_host(Host(tokens[0], tokens[1]))
+                m = ipv6_re.match(x)
+                if m:
+                    all.add_host(Host(m.groups()[0], m.groups()[1]))
                 else:
-                    all.add_host(Host(x))
+                    if ":" in x:
+                        tokens = x.rsplit(":", 1)
+                        # if there is ':' in the address, then this is a ipv6
+                        if ':' in tokens[0]:
+                            all.add_host(Host(x))
+                        else:
+                            all.add_host(Host(tokens[0], tokens[1]))
+                    else:
+                        all.add_host(Host(x))
         elif os.path.exists(host_list):
             if os.path.isdir(host_list):
                 # Ensure basedir is inside the directory
