@@ -114,6 +114,36 @@ class TestInventory(unittest.TestCase):
         print expected_hosts
         assert sorted(hosts) == sorted(expected_hosts)
 
+    def test_simple_string_ipv4(self):
+        inventory = Inventory('127.0.0.1,192.168.1.1')
+        hosts = inventory.list_hosts()
+        self.assertEqual(sorted(hosts), sorted(['127.0.0.1','192.168.1.1']))
+
+    def test_simple_string_ipv4_port(self):
+        inventory = Inventory('127.0.0.1:2222,192.168.1.1')
+        hosts = inventory.list_hosts()
+        self.assertEqual(sorted(hosts), sorted(['127.0.0.1','192.168.1.1']))
+
+    def test_simple_string_ipv4_vars(self):
+        inventory = Inventory('127.0.0.1:2222,192.168.1.1')
+        var = inventory.get_variables('127.0.0.1')
+        self.assertEqual(var['ansible_ssh_port'], 2222)
+
+    def test_simple_string_ipv6(self):
+        inventory = Inventory('FE80:EF45::12:1,192.168.1.1')
+        hosts = inventory.list_hosts()
+        self.assertEqual(sorted(hosts), sorted(['FE80:EF45::12:1','192.168.1.1']))
+
+    def test_simple_string_ipv6_port(self):
+        inventory = Inventory('[FE80:EF45::12:1]:2222,192.168.1.1')
+        hosts = inventory.list_hosts()
+        self.assertEqual(sorted(hosts), sorted(['FE80:EF45::12:1','192.168.1.1']))
+
+    def test_simple_string_ipv6_vars(self):
+        inventory = Inventory('[FE80:EF45::12:1]:2222,192.168.1.1')
+        var = inventory.get_variables('FE80:EF45::12:1')
+        self.assertEqual(var['ansible_ssh_port'], 2222)
+
     def test_simple_vars(self):
         inventory = self.simple_inventory()
         vars = inventory.get_variables('thor')
