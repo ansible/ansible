@@ -85,11 +85,17 @@ class Connection(object):
         header_len = 8 # size of a packed unsigned long long
         data = b""
         while len(data) < header_len:
-            data += self.conn.recv(1024)
+            d = self.conn.recv(1024)
+            if not d:
+                return None
+            data += d
         data_len = struct.unpack('Q',data[:header_len])[0]
         data = data[header_len:]
         while len(data) < data_len:
-            data += self.conn.recv(1024)
+            d = self.conn.recv(1024)
+            if not d:
+                return None
+            data += d
         return data
 
     def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False, executable='/bin/sh'):
