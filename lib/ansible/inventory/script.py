@@ -110,7 +110,7 @@ class InventoryScript(object):
     def get_host_variables(self, host):
         """ Runs <script> --host <hostname> to determine additional host variables """
         if self.host_vars_from_top is not None:
-            got = self.host_vars_from_top.get(host, {})
+            got = self.host_vars_from_top.get(host.name, {})
             return got
 
 
