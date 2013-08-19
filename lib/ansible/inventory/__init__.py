@@ -74,7 +74,7 @@ class Inventory(object):
             self.parser = None
             all = Group('all')
             self.groups = [ all ]
-            ipv6_re = re.compile('\[([a-f:A-F0-9]*)\](?::(\d+))?')
+            ipv6_re = re.compile('\[([a-f:A-F0-9]*[%[0-z]+]?)\](?::(\d+))?')
             for x in host_list:
                 m = ipv6_re.match(x)
                 if m:
