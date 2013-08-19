@@ -69,7 +69,7 @@ EXAMPLES = '''
 - xattr: path=/etc/foo.conf key=user.foo value=bar
 
 # Removes the key 'foo'
-- xattr: name=/etc/foo.conf name=user.foo state=remove
+- xattr: name=/etc/foo.conf key=user.foo state=absent
 '''
 
 import operator
@@ -97,7 +97,7 @@ def get_xattr(module,path,key,follow):
         cmd.append('-n %s' % key)
     cmd.append(path)
 
-    return _run_xattr(module,cmd)
+    return _run_xattr(module,cmd,False)
 
 def set_xattr(module,path,key,value,follow):
 
@@ -142,7 +142,7 @@ def _run_xattr(module,cmd,check_rc=True):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            name = dict(required=True, aliases=['paht']),
+            name = dict(required=True, aliases=['path']),
             key = dict(required=False, default=None),
             value = dict(required=False, default=None),
             state = dict(required=False, default='read', choices=[ 'read', 'present', 'all', 'keys', 'absent' ], type='str'),
