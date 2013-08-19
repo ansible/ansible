@@ -23,7 +23,7 @@ short_description: Various redis commands, slave and flush
 description:
    - Unified utility to interact with redis instances.
      'slave' Sets a redis instance in slave or master mode.
-     'flush' Flushes all the instance or ans specified db.
+     'flush' Flushes all the instance or a specified db.
 version_added: "1.3"
 options:
     command:
