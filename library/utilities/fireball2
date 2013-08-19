@@ -163,7 +163,10 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
         data_len = struct.unpack('Q',data[:header_len])[0]
         data = data[header_len:]
         while len(data) < data_len:
-            data += self.request.recv(1024)
+            d = self.request.recv(1024)
+            if not d:
+                return None
+            data += d
         return data
 
     def handle(self):
