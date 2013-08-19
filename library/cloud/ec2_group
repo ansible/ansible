@@ -20,7 +20,7 @@ options:
   vpc_id:
     description:
       - ID of the VPC to create the group in.
-    required: true
+    required: false
   rules:
     description:
       - List of firewall rules to enforce in this group (see example).
