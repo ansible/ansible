@@ -213,7 +213,7 @@ def main():
         auth_url                        = dict(default='http://127.0.0.1:35357/v2.0/'),
         region_name                     = dict(default=None),
         name                            = dict(required=True),
-        image_id                        = dict(required=True), 
+        image_id                        = dict(default=None), 
         flavor_id                       = dict(default=1),
         key_name                        = dict(default=None),
         security_groups                 = dict(default='default'),
@@ -234,8 +234,11 @@ def main():
     except Exception as e:
         module.fail_json( msg = "Error in authenticating to nova: %s" % e.message)
     if module.params['state'] == 'present':
-        _get_server_state(module, nova)
-        _create_server(module, nova)
+        if not module.params['image_id']:
+            module.fail_json( msg = "Parameter 'image_id' is required if state == 'present'")
+        else:
+            _get_server_state(module, nova)
+            _create_server(module, nova)
     if module.params['state'] == 'absent':
         _get_server_state(module, nova)
         _delete_server(module, nova)
