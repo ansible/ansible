@@ -36,7 +36,7 @@ class ActionModule(object):
     def run(self, conn, tmp, module_name, module_args, inject, complex_args=None, **kwargs):
         ''' handler for fetch operations '''
 
-        if self.runner.check:
+        if self.runner.noop(inject):
             return ReturnData(conn=conn, comm_ok=True, result=dict(skipped=True, msg='check mode not (yet) supported for this module'))
 
         # load up options

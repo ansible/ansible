@@ -126,7 +126,7 @@ class ActionModule(object):
             else:
                 diff = {}
 
-            if self.runner.check:
+            if self.runner.noop(inject):
                 if content is not None:
                     os.remove(tmp_content)
                 return ReturnData(conn=conn, result=dict(changed=True), diff=diff)
@@ -172,7 +172,7 @@ class ActionModule(object):
                 # don't send down raw=no
                 module_args.pop('raw')
             module_args = "%s src=%s" % (module_args, pipes.quote(tmp_src))
-            if self.runner.check:
+            if self.runner.noop(inject):
                 module_args = "%s CHECKMODE=True" % module_args
             return self.runner._execute_module(conn, tmp, 'file', module_args, inject=inject, complex_args=complex_args)
 
