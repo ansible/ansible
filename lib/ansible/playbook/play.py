@@ -183,6 +183,20 @@ class Play(object):
                 dep_stack.append([role,role_path,role_vars])
         return dep_stack
 
+    def _load_role_defaults(self, defaults_files):
+        # process default variables
+        default_vars = {}
+        for filename in defaults_files:
+            if os.path.exists(filename):
+                new_default_vars = utils.parse_yaml_from_file(filename)
+                if new_default_vars:
+                    if type(new_default_vars) != dict:
+                        raise errors.AnsibleError("%s must be stored as dictonary/hash: %s" % (filename, type(new_default_vars)))
+
+                    default_vars = utils.combine_vars(default_vars, new_default_vars)
+
+        return default_vars
+
     def _load_roles(self, roles, ds):
         # a role is a name that auto-includes the following if they exist
         #    <rolename>/tasks/main.yml
@@ -199,6 +213,7 @@ class Play(object):
         new_tasks = []
         new_handlers = []
         new_vars_files = []
+        defaults_files = []
 
         pre_tasks = ds.get('pre_tasks', None)
         if type(pre_tasks) != list:
@@ -222,10 +237,13 @@ class Play(object):
             task_basepath    = utils.path_dwim(self.basedir, os.path.join(role_path, 'tasks'))
             handler_basepath = utils.path_dwim(self.basedir, os.path.join(role_path, 'handlers'))
             vars_basepath    = utils.path_dwim(self.basedir, os.path.join(role_path, 'vars'))
+            defaults_basepath    = utils.path_dwim(self.basedir, os.path.join(role_path, 'defaults'))
 
             task      = self._resolve_main(task_basepath)
             handler   = self._resolve_main(handler_basepath)
             vars_file = self._resolve_main(vars_basepath)
+            defaults_file = self._resolve_main(defaults_basepath)
+
             library   = utils.path_dwim(self.basedir, os.path.join(role_path, 'library'))
 
             if not os.path.isfile(task) and not os.path.isfile(handler) and not os.path.isfile(vars_file) and not os.path.isdir(library):
@@ -244,6 +262,8 @@ class Play(object):
                 new_handlers.append(nt)
             if os.path.isfile(vars_file):
                 new_vars_files.append(vars_file)
+            if os.path.isfile(defaults_file):
+                defaults_files.append(defaults_file)
             if os.path.isdir(library):
                 utils.plugins.module_finder.add_directory(library)
 
@@ -274,6 +294,11 @@ class Play(object):
         ds['tasks'] = new_tasks
         ds['handlers'] = new_handlers
         ds['vars_files'] = new_vars_files
+
+        defaults = self._load_role_defaults(defaults_files)
+        # merge default vars with self.vars, with vars taking precedence.
+        if defaults:
+            self.vars = utils.combine_vars(defaults, self.vars)
 
         return ds
 
