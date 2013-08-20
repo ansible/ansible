@@ -38,18 +38,18 @@ options:
     required: false
     default: None
     description:
-      - The value to set the named name/key to, it automatically sets the c(state) to 'set'
+      - The value to set the named name/key to, it automatically sets the C(state) to 'set'
   state:
     required: false
     default: get
     choices: [ 'read', 'present', 'all', 'keys', 'absent' ]
     description:
       - defines which state you want to do.
-        c(read) retrieves the current value for a c(key) (default)
-        c(present) sets c(name) to c(value), default if value is set
-        c(all) dumps all data
-        c(keys) retrieves all keys
-        c(absent) deletes the key
+        C(read) retrieves the current value for a C(key) (default)
+        C(present) sets C(name) to C(value), default if value is set
+        C(all) dumps all data
+        C(keys) retrieves all keys
+        C(absent) deletes the key
   follow:
     required: false
     default: yes
