@@ -30,7 +30,7 @@ class ActionModule(object):
 
     def run(self, conn, tmp, module_name, module_args, inject, complex_args=None, **kwargs):
 
-        if self.runner.check:
+        if self.runner.noop_on_check(inject):
             # in --check mode, always skip this module execution
             return ReturnData(conn=conn, comm_ok=True, result=dict(skipped=True))
 
