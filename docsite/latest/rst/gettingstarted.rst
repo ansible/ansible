@@ -89,10 +89,10 @@ You will want to install the dependencies needed by Ansible with pip if going fr
 
     # on Ubuntu, for example:
     apt-get install python-dev python-pip
-    pip-install PyYAML Jinja2 paramiko
+    pip install PyYAML Jinja2 paramiko
 
 Once running the env-setup script you'll be running from checkout and the default inventory file
-will be /etc/anisble/hosts.  You can optionally specify an inventory file (see :doc:`patterns`) 
+will be /etc/ansible/hosts.  You can optionally specify an inventory file (see :doc:`patterns`) 
 other than /etc/ansible/hosts:
 
 .. code-block:: bash
