@@ -41,6 +41,7 @@ class Connection(object):
         self.user = user
         self.password = password
         self.private_key_file = private_key_file
+        self.cp_dir = utils.prepare_writeable_dir('$HOME/.ansible/cp',mode=0700)
         self.HASHED_KEY_MAGIC = "|1|"
 
     def connect(self):
@@ -55,7 +56,18 @@ class Connection(object):
         else:
             self.common_args += ["-o", "ControlMaster=auto",
                                  "-o", "ControlPersist=60s",
-                                 "-o", "ControlPath=/tmp/ansible-ssh-%h-%p-%r"]
+                                 "-o", "ControlPath=%s/ansible-ssh-%%h-%%p-%%r" % self.cp_dir]
+
+        cp_in_use = False
+        cp_path_set = False
+        for arg in self.common_args:
+            if arg.find("ControlPersist") != -1:
+                cp_in_use = True
+            if arg.find("ControlPath") != -1:
+                cp_path_set = True
+
+        if cp_in_use and not cp_path_set:
+            self.common_args += ["-o", "ControlPath=%s/ansible-ssh-%%h-%%p-%%r" % self.cp_dir]
 
         if not C.HOST_KEY_CHECKING:
             self.common_args += ["-o", "StrictHostKeyChecking=no"]
