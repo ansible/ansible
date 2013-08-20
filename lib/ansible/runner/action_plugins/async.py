@@ -25,7 +25,7 @@ class ActionModule(object):
     def run(self, conn, tmp, module_name, module_args, inject, complex_args=None, **kwargs):
         ''' transfer the given module name, plus the async module, then run it '''
 
-        if self.runner.check:
+        if self.runner.noop_on_check(inject):
             return ReturnData(conn=conn, comm_ok=True, result=dict(skipped=True, msg='check mode not supported for this module'))
 
         # shell and command module are the same
