@@ -21,7 +21,7 @@ version_added: "1.3"
 short_description: set/retrieve extended attributes
 description:
      - Manages filesystem user defined extended attributes, requires that they are enabled
-    on the target filesystem and that the setfattr/getfattr utilities are present.
+       on the target filesystem and that the setfattr/getfattr utilities are present.
 options:
   name:
     required: true
@@ -45,18 +45,18 @@ options:
     choices: [ 'read', 'present', 'all', 'keys', 'absent' ]
     description:
       - defines which state you want to do.
-      c(read) retrieves the current value for a c(key) (default)
-      c(present) sets c(name) to c(value), default if value is set
-      c(all) dumps all data
-      c(keys) retrieves all keys
-      c(absent) deletes the key
+        c(read) retrieves the current value for a c(key) (default)
+        c(present) sets c(name) to c(value), default if value is set
+        c(all) dumps all data
+        c(keys) retrieves all keys
+        c(absent) deletes the key
   follow:
     required: false
     default: yes
     choices: [ 'yes', 'no' ]
     description:
       - if yes, dereferences symlinks and sets/gets attributes on symlink target,
-      otherwise acts on symlink itself.
+        otherwise acts on symlink itself.
 
 author: Brian Coca
 '''
