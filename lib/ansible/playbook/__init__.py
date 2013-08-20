@@ -477,13 +477,7 @@ class PlayBook(object):
         basedir = self.inventory.basedir()
         filename = "%s.retry" % os.path.basename(self.filename)
         filename = filename.replace(".yml","")
-
-        if not os.path.exists('/var/tmp/ansible'):
-            try:
-                os.makedirs('/var/tmp/ansible')
-            except:
-                pass
-        filename = os.path.join('/var/tmp/ansible', filename)
+        filename = os.path.join(os.path.expandvars('$HOME/'), filename)
 
         try:
             fd = open(filename, 'w')
