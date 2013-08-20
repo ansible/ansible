@@ -90,7 +90,8 @@ class InventoryParser(object):
                     hostname.find("]") != -1 and
                     hostname.find(":") != -1 and
                     (hostname.rindex("]") < hostname.rindex(":")) or
-                    (hostname.find("]") == -1 and hostname.find(":") != -1)):
+                    (hostname.find("]") == -1 and hostname.find(":") != -1
+                    and len(hostname.split(':')) == 2)):
                         tokens2  = hostname.rsplit(":", 1)
                         hostname = tokens2[0]
                         port     = tokens2[1]
