@@ -31,7 +31,7 @@ description:
       as a legacy feature in Solaris 11.
     - Pkgutil is an advanced packaging system, which resolves dependency on installation.
       It is designed for CSW packages.
-version_added: "1.2"
+version_added: "1.3"
 author: Alexander Winkler
 options:
   name:
@@ -41,22 +41,21 @@ options:
   site:
     description:
       - Specifies the repository path to install the package from.
-      - It's global definition is done in C(/etc/opt/csw/pkgutil.conf)).
+      - Its global definition is done in C(/etc/opt/csw/pkgutil.conf).
   state:
     description:
       - Whether to install (C(present)), or remove (C(absent)) a package.
       - The upgrade (C(latest)) operation will update/install the package to the latest version available.
-      - Beware: (C(latest)) only works for one package.
+      - "Beware: (C(latest)) only works for one package."
     required: true
     choices: ["present", "absent", "latest"]
 
-
 examples:
-  - code: pkgutil name=CSWcommon state=present
+  - pkgutil: name=CSWcommon state=present
     description: Install a package
-  - code: 'pkgutil name=CSWnrpe site=ftp://myinternal.repo/opencsw/kiel state=latest'
+  - pkgutil: 'name=CSWnrpe site=ftp://myinternal.repo/opencsw/kiel state=latest'
     description: If a package is not installed or not installed in the latest version, it will be installed with the newest version from a specified repository.
-  - code: pkgutil name=CSWaspell state=absent
+  - pkgutil: name=CSWaspell state=absent
     description: Ensure that a package is not installed.
 '''
 import os
