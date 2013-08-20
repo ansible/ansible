@@ -72,6 +72,12 @@ options:
     required: false
     default: null
     aliases: []
+  overwrite:
+    description:
+      - Whether an existing record should be overwritten on create if values do not match
+    required: false
+    default: null
+    aliases: []
 requirements: [ "boto" ]
 author: Bruce Pennypacker
 '''
@@ -133,7 +139,8 @@ def main():
             type            = dict(choices=['A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'NS'], required=True),
             value           = dict(required=False), 
             ec2_secret_key  = dict(aliases=['EC2_SECRET_KEY'], no_log=True, required=False),
-            ec2_access_key  = dict(aliases=['EC2_ACCESS_KEY'], required=False)
+            ec2_access_key  = dict(aliases=['EC2_ACCESS_KEY'], required=False),
+            overwrite       = dict(required=False, choices=BOOLEANS, type='bool')
         )
     )
 
@@ -211,6 +218,14 @@ def main():
         module.exit_json(changed=False)
 
     changes = ResourceRecordSets(conn, zones[zone_in])
+
+    if command_in == 'create' and found_record:
+        if not module.params['overwrite']:
+            module.fail_json(msg = "Record already exists with different value. Set 'overwrite' to replace it")
+        else:
+            change = changes.add_change("DELETE", record_in, type_in, ttl_in)
+        for v in record['values']:
+            change.add_value(v)
 
     if command_in == 'create' or command_in == 'delete':
         change = changes.add_change(command_in.upper(), record_in, type_in, ttl_in)
