@@ -85,3 +85,6 @@ host[1:2]
 [role2]
 host[2:3]
 
+[ipv6]
+fe80::234:d3fe:fade:471c%eth1
+2001:DB8::23
