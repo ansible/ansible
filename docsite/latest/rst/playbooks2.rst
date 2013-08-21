@@ -2,7 +2,7 @@ Advanced Playbooks
 ==================
 
 Here are some advanced features of the playbooks language.  Using all of these features
-are not necessary, but many of them will prove useful.  If a feature doesn't seem immediately
+is not necessary, but many of them will prove useful.  If a feature doesn't seem immediately
 relevant, feel free to skip it.  For many people, the features documented in `playbooks` will
 be 90% or more of what they use in Ansible.
 
@@ -74,7 +74,7 @@ Overriding Changed Result
 .. versionadded:: 1.3
 
 When a shell/command or other module runs it will typically report
-"changed" status based on whether it thinks it affected machine state.  
+"changed" status based on whether it thinks it affected machine state.
 
 Sometimes you will know, based on the return code
 or output that it did not make any changes, and wish to override
@@ -105,7 +105,7 @@ Similarly, this is how we access the first element of an array::
 Magic Variables, and How To Access Information About Other Hosts
 ````````````````````````````````````````````````````````````````
 
-Even if you didn't define them yourself, Ansible provides a few variables for you, automatically.
+Even if you didn't define them yourself, Ansible provides a few variables for you automatically.
 The most important of these are 'hostvars', 'group_names', and 'groups'.  Users should not use
 these names themselves as they are reserved.  'environment' is also reserved.
 
@@ -148,7 +148,7 @@ period, without the rest of the domain.
 
 Don't worry about any of this unless you think you need it.  You'll know when you do.
 
-Also available, *inventory_dir* is the pathname of the directory holding Ansible's inventory host file.
+Also available, *inventory_dir* is the pathname of the directory holding Ansible's inventory host file, *inventory_file* is the pathname and the filename pointing to the Ansible's inventory host file.
 
 Variable File Separation
 ````````````````````````
@@ -289,6 +289,9 @@ As of Ansible 1.2, you can also pass in extra vars as quoted JSON, like so::
 
 The key=value form is obviously simpler, but it's there if you need it!
 
+As of Ansible 1.3, extra vars can be loaded from a JSON file with the "@" syntax::
+
+    --extra-vars "@some_file.json"
 
 Conditional Execution
 `````````````````````
@@ -329,13 +332,32 @@ As a reminder, to see what derived variables are available, you can do::
 
     ansible hostname.example.com -m setup
 
-Tip: Sometimes you'll get back a variable that's a string and you'll want to do a comparison on it.  You can do this like so:
+Tip: Sometimes you'll get back a variable that's a string and you'll want to do a comparison on it.  You can do this like so::
 
     tasks:
       - shell: echo "only on Red Hat 6, derivatives, and later"
         when: ansible_os_family == "RedHat" and ansible_lsb.major_release|int >= 6
 
+Note the above example requires the lsb_release package on the target host in order to return the ansible_lsb.major_release fact.
+
 Variables defined in the playbooks or inventory can also be used.
+
+An example may be the execution of a task based on a variable's boolean value::
+
+    vars:
+      epic: true
+
+Then a conditional execution with action on the boolean value of epic being True::
+
+    tasks:
+        - shell: echo "This certainly is epic!"
+          when: epic
+
+With a boolean value of False::
+ 
+    tasks:
+        - shell: echo "This certainly isn't epic!"
+          when: not epic
 
 If a required variable has not been set, you can skip or fail using Jinja2's
 `defined` test. For example::
@@ -415,7 +437,7 @@ As a reminder, the various YAML files contain just keys and values::
     somethingelse: 42
 
 How does this work?  If the operating system was 'CentOS', the first file Ansible would try to import
-would be 'vars/CentOS.yml', followed up by '/vars/os_defaults.yml' if that file
+would be 'vars/CentOS.yml', followed by '/vars/os_defaults.yml' if that file
 did not exist.   If no files in the list were found, an error would be raised.
 On Debian, it would instead first look towards 'vars/Debian.yml' instead of 'vars/CentOS.yml', before
 falling back on 'vars/os_defaults.yml'. Pretty simple.
@@ -592,7 +614,7 @@ Negative numbers are not supported.  This works as follows::
 .. versionadded: 1.1
 
 ``with_password`` and associated lookup macro generate a random plaintext password and store it in
-a file at a given filepath.  Support for crypted save modes (as with vars_prompt) are pending.  If the
+a file at a given filepath.  Support for crypted save modes (as with vars_prompt) is pending.  If the
 file exists previously, it will retrieve its contents, behaving just like with_file. Usage of variables like "{{ inventory_hostname }}" in the filepath can be used to set
 up random passwords per host (what simplifies password management in 'host_vars' variables).
 
@@ -822,7 +844,7 @@ The 'register' keyword decides what variable to save a result in.  The resulting
           - shell: echo "motd contains the word hi"
             when: motd_contents.stdout.find('hi') != -1
 
-As shown previously, the registered variable's string contents are accessible with the 'stdout' value. 
+As shown previously, the registered variable's string contents are accessible with the 'stdout' value.
 The registered result can be used in the "with_items" of a task if it is converted into
 a list (or already is a list) as shown below.  "stdout_lines" is already available on the object as
 well though you could also call "home_dirs.stdout.split()" if you wanted, and could split by other
@@ -1001,6 +1023,25 @@ that is going to be used.  You won't be fooled by some variable from inventory s
 So, in short, if you want something easy to remember: facts beat playbook definitions, and
 playbook definitions beat inventory variables.
 
+There's a little bit more if you are using roles -- roles fit in the "playbook definitions" category of scale.  They are
+trumped by facts, and still trump inventory variables.  However, there's a bit of extra magic.
+
+Variables passed as parameters to the role are accesible only within that role (and dependencies of that role).  You can
+almost think of them like programming functions or macros.
+
+Variables loaded via the 'vars/' directory of a role are made available to all roles and tasks, which in older versions of Ansible
+could be confusing in the case of a reused variable name.  In Ansible 1.3 and later, however, vars/ directories are guaranteed to be scoped to the current role, just like roles parameters.  They are still available globally though, so if you want to set a variable like "ntp_server" in a common role, other roles can still make use of it.  Thus they are just like "vars_files" construct that they emulate, but they have a bit more of a "Do What I Mean" semantic to them.  They are smarter.
+
+If there are role dependencies involved, dependent roles can set variables visible to the roles that require them, but
+the requiring role is allowed to override those variables.  For instance if a role "myapp" requires "apache", and
+the value of "apache_port" in "apache" is 80, "myapp" could choose to set it to 8080.  Thus you may think of this somewhat
+like an inheritance system if you're a developer -- though it's not exactly -- and we don't require folks to think in programming terms to know how things work.
+
+If you want, you can choose to prefix variable names with the name of your role and be extra sure of where
+data sources are coming from, but this is optional.  However it can be a nice thing to do in your templates as you immediately
+know where the variable was defined.
+
+Ultimately, the variable system may seem complex -- but it's really not.  It's mostly a "Do What I Mean" kind of system, though knowing the details may help you if you get stuck or are trying to do something advanced.  Feel free to experiment!
 
 Check Mode ("Dry Run") --check
 ```````````````````````````````
@@ -1071,10 +1112,52 @@ If using local_action, you can do this::
         arg1: 1234
         arg2: 'asdf'
 
-Which of course means, though more verbose, this is also technically legal syntax::
+Which of course means that, though more verbose, this is also legal syntax::
 
     - name: foo
       template: { src: '/templates/motd.j2', dest: '/etc/motd' }
+
+Local Facts (Facts.d)
+`````````````````````
+
+.. versionadded:: 1.3
+
+As discussed in the playbooks chapter, Ansible facts are a way of getting data about remote systems for use in playbook variables.
+Usually these are discovered automatically by the 'setup' module in Ansible. Users can also write custom facts modules, as described
+in the API guide.  However, what if you want to have a simple way to provide system or user 
+provided data for use in Ansible variables, without writing a fact module?  For instance, what if you want users to be able to control some aspect about how their systems are managed? "Facts.d" is one such mechanism.
+
+If a remotely managed system has an "/etc/ansible/facts.d" directory, any files in this directory
+ending in ".fact", can be JSON, INI, or executable files returning JSON, and these can supply local facts in Ansible.
+
+For instance assume a /etc/ansible/facts.d/preferences.fact::
+
+    [general]
+    asdf=1
+    bar=2
+
+This will produce a hash variable fact named "general" with 'asdf' and 'bar' as members.
+To validate this, run the following::
+
+    ansible <hostname> -m setup -a "filter=ansible_local"
+
+And you will see the following fact added::
+
+    "ansible_local": {
+            "preferences": {
+                "general": {
+                    "asdf" : "1", 
+                    "bar"  : "2"
+                }
+            }
+     }
+
+And this data can be accessed in a template/playbook as::
+
+     {{ ansible_local.preferences.general.asdf }}
+
+The local namespace prevents any user supplied fact from overriding system facts
+or variables defined elsewhere in the playbook.
 
 Style Points
 ````````````

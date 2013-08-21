@@ -74,7 +74,6 @@ class TestRunner(unittest.TestCase):
         results = self.runner.run()
         # when using nosetests this will only show up on failure
         # which is pretty useful
-        print "RESULTS=%s" % results
         assert "localhost" in results['contacted']
         return results['contacted']['localhost']
 
@@ -197,7 +196,6 @@ class TestRunner(unittest.TestCase):
         assert os.path.isfile(filedemo)
 
         res = self._run('file', ['dest=' + filedemo, 'mode=604', 'state=file'])
-        print res
         assert res['changed']
         assert os.path.isfile(filedemo) and os.stat(filedemo).st_mode == 0100604
 
@@ -294,7 +292,6 @@ class TestRunner(unittest.TestCase):
             "src=%s" % input,
             "dest=%s" % output,
         ])
-        print result
         assert os.path.exists(output)
         out = file(output).read()
         assert out.find("first") != -1
@@ -307,7 +304,6 @@ class TestRunner(unittest.TestCase):
             "src=%s" % input,
             "dest=%s" % output,
         ])
-        print result
         assert result['changed'] is False
 
     def test_lineinfile(self):

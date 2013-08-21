@@ -132,11 +132,18 @@ class PlayBook(object):
         else:
             self.inventory    = inventory
 
+        if self.module_path is not None:
+            utils.plugins.module_finder.add_directory(self.module_path)
+
         self.basedir     = os.path.dirname(playbook) or '.'
         utils.plugins.push_basedir(self.basedir)
         vars = extra_vars.copy()
         if self.inventory.basedir() is not None:
             vars['inventory_dir'] = self.inventory.basedir()
+
+        if self.inventory.src() is not None:
+            vars['inventory_file'] = self.inventory.src()
+
         self.filename = playbook
         (self.playbook, self.play_basedirs) = self._load_playbook_from_file(playbook, vars)
         ansible.callbacks.load_callback_plugins()
@@ -274,7 +281,7 @@ class PlayBook(object):
         # since these likely got killed by async_wrapper
         for host in poller.hosts_to_poll:
             reason = { 'failed' : 1, 'rc' : None, 'msg' : 'timed out' }
-            self.runner_callbacks.on_failed(host, reason)
+            self.runner_callbacks.on_async_failed(host, reason, poller.jid)
             results['contacted'][host] = reason
 
         return results
@@ -305,7 +312,8 @@ class PlayBook(object):
             conditional=task.only_if, callbacks=self.runner_callbacks,
             sudo=task.sudo, sudo_user=task.sudo_user,
             transport=task.transport, sudo_pass=task.sudo_pass, is_playbook=True,
-            check=self.check, diff=self.diff, environment=task.environment, complex_args=task.args
+            check=self.check, diff=self.diff, environment=task.environment, complex_args=task.args,
+            error_on_undefined_vars=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR
         )
 
         if task.async_seconds == 0:
@@ -316,6 +324,9 @@ class PlayBook(object):
             if task.async_poll_interval > 0:
                 # if not polling, playbook requested fire and forget, so don't poll
                 results = self._async_poll(poller, task.async_seconds, task.async_poll_interval)
+            else:
+                for (host, res) in results.get('contacted', {}).iteritems():
+                    self.runner_callbacks.on_async_ok(host, res, poller.jid)
 
         contacted = results.get('contacted',{})
         dark      = results.get('dark', {})
@@ -355,8 +366,16 @@ class PlayBook(object):
 
         # add facts to the global setup cache
         for host, result in contacted.iteritems():
-            facts = result.get('ansible_facts', {})
-            self.SETUP_CACHE[host].update(facts)
+            if 'results' in result:
+                # task ran with_ lookup plugin, so facts are encapsulated in
+                # multiple list items in the results key
+                for res in result['results']:
+                    if type(res) == dict:
+                        facts = res.get('ansible_facts', {})
+                        self.SETUP_CACHE[host].update(facts)
+            else:
+                facts = result.get('ansible_facts', {})
+                self.SETUP_CACHE[host].update(facts)
             # extra vars need to always trump - so update  again following the facts
             self.SETUP_CACHE[host].update(self.extra_vars)
             if task.register:
@@ -458,13 +477,7 @@ class PlayBook(object):
         basedir = self.inventory.basedir()
         filename = "%s.retry" % os.path.basename(self.filename)
         filename = filename.replace(".yml","")
-
-        if not os.path.exists('/var/tmp/ansible'):
-            try:
-                os.makedirs('/var/tmp/ansible')
-            except:
-                pass
-        filename = os.path.join('/var/tmp/ansible', filename)
+        filename = os.path.join(os.path.expandvars('$HOME/'), filename)
 
         try:
             fd = open(filename, 'w')
@@ -561,19 +574,14 @@ class PlayBook(object):
                 if task.any_errors_fatal and len(host_list) < hosts_count:
                     host_list = None
 
+                # If threshold for max nodes failed is exceeded , bail out.
+                if (hosts_count - len(host_list)) > int((play.max_fail_pct)/100.0 * hosts_count):
+                    host_list = None
+                    
                 # if no hosts remain, drop out
                 if not host_list:
                     self.callbacks.on_no_hosts_remaining()
                     return False
-
-            # run notify actions
-            #for handler in play.handlers():
-            #    if len(handler.notified_by) > 0:
-            #        self.inventory.restrict_to(handler.notified_by)
-            #        self._run_task(play, handler, True)
-            #        self.inventory.lift_restriction()
-            #        handler.notified_by = []
-            #    handler.notified_by = []
 
             self.inventory.lift_also_restriction()
 

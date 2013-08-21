@@ -3,12 +3,17 @@ Ansible Changes By Release
 
 1.3 "Top of the World" - Release pending!
 
-Major new features:
+Highlighted new features:
 
-* (DOCS PENDING) new /etc/ansible/facts.d allows JSON or INI style facts to be provided from the remote node, and supports executable fact programs in this dir. Files must end in *.fact.
+* new /etc/ansible/facts.d allows JSON or INI style facts to be provided from the remote node, and supports executable fact programs in this dir. Files must end in *.fact.
 * ability to make undefined template variables raise errors, see ansible.cfg
 * (DOCS PENDING) sudo: True/False and sudo_user: True/False can set at include and role level
 * added changed_when: (expression) which allows overriding whether a result is changed or not, can work with registered expressions.
+* --extra-vars can now take a file as input "-e @filename"
+* external inventory scripts may now return host variables in one pass, which allows them to be much more efficient for large numbers of hosts
+* if --forks exceeds the numbers of hosts, it will be automatically reduced, set forks to 0 and you get "as many forks as I have hosts" out of the box.
+* enabling error_on_undefined_vars by default, which will make errors in playbooks more obvious
+* role dependencies -- be able to have one role pull in another, with parameters of its own.
 
 New modules:
 
@@ -18,9 +23,15 @@ New modules:
 * cloud: linode -- also included, an inventory module
 * cloud: route53 -- manage Amazon DNS entries 
 * cloud: ec2_ami -- manages (including creates!) ec2 AMIs
-* net_infrastructure: arista_
+* net_infrastructure: arista_interface
+* net_infrastructure: arista_lag
+* net_infrastructure: arista_l2interface
+* net_infrastructure: arista_vlan
 * system: stat -- reports on stat(istics) of remote files, for use with 'register'
-* htpasswd -- manipulate htpasswd files
+* web_infrastructure: htpasswd -- manipulate htpasswd files
+* packaging: rpm_key -- adds or removes RPM signing keys
+* monitoring: boundary_meter -- adds or removes boundary.com meters
+* net_infrastructure: dnsmadeeasy - manipulate DnsMadeEasy records
 
 Misc changes:
 
@@ -97,6 +108,25 @@ Misc changes:
 * fixes/improvements to cron module
 * add user_install=no option to gem module to install gems system wide
 * added raw=yes to allow copying without python on remote machines
+* added with_indexed_items lookup plugin
+* Linode inventory plugin now significantly faster
+* added recurse=yes parameter to pacman module for package removal
+* apt_key module can now target specific keyrings (keyring=filename)
+* ec2 module changed reporting improved
+* hg module now expands user paths (~)
+* SSH connection type known host checking now can process hashed known host files
+* lvg module now checks for executables in more correct locations
+* copy module support when sudoing improved
+* region parameter added to ec2_elb module
+* better default XMPP module default message types
+* conditional tests against raw booleans fixed 
+* mysql module grant removal is now smarter
+* and other misc bugfixes
+* apt-remove is now forced to be non-interactive
+* support ; comments in INI file module
+* fixes to callbacks WRT async output (fire and forget tasks now trigger callbacks!)
+* folder support for s3 module
+* added new example inventory plugin for Red Hat OpenShift
 
 1.2.2 "Hear About It Later" (reprise) -- July 4, 2013
 

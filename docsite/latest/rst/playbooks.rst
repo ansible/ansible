@@ -155,11 +155,12 @@ If just referencing the value of another simple variable though, it's fine to sa
 
 To learn more about Jinja2, you can optionally see the `Jinja2 docs <http://jinja.pocoo.org/docs/>`_ - though remember that Jinja2 loops and conditionals are only for 'templates' in Ansible, in playbooks, ansible has the 'when' and 'with' keywords for conditionals and loops.
 
-If there are discovered variables about the system, called 'facts', these variables bubble up back into the
-playbook, and can be used on each system just like explicitly set variables.  Ansible provides several
-of these, prefixed with 'ansible', and are documented under 'setup' in the module documentation.  Additionally,
+If there are discovered variables about the system, called 'facts', these variables bubble up back into the playbook, and can be used on each system just like explicitly set variables.  Ansible provides several
+of these, prefixed with 'ansible', which are documented under 'setup' in the module documentation.  Additionally,
 facts can be gathered by ohai and facter if they are installed.  Facter variables are prefixed with ``facter_`` and Ohai variables are prefixed with ``ohai_``.  These add extra dependencies and are only there for ease of users
-porting over from those other configuration systems.
+porting over from those other configuration systems.  Finally, it's possible to drop files
+on to the remote systems that provide additional sources of fact data, see "Facts.d" as documented
+in the Advanced Playbooks section.
 
 How about an example.  If I wanted to write the hostname into the /etc/motd file, I could say::
 
@@ -188,7 +189,7 @@ The goal of each task is to execute a module, with very specific arguments.
 Variables, as mentioned above, can be used in arguments to modules.
 
 Modules are 'idempotent', meaning if you run them
-again, they will make the changes they are told to make to bring the
+again, they will make only the changes they must in order to bring the
 system to the desired state.  This makes it very safe to rerun
 the same playbook multiple times.  They won't change things
 unless they have to change things.
@@ -225,7 +226,7 @@ them work just like you would expect. Simple::
        command: /sbin/setenforce 0
 
 The command and shell module care about return codes, so if you have a command
-who's successful exit code is not zero, you may wish to do this::
+whose successful exit code is not zero, you may wish to do this::
 
    tasks:
      - name: run this command and ignore the result
@@ -264,17 +265,15 @@ Action Shorthand
 
 .. versionadded: 0.8
 
-Rather than listing out the explicit word, "action:", like so::
+Ansible prefers listing modules like this in 0.8 and later::
 
     template: src=templates/foo.j2 dest=/etc/foo.conf
 
-It is also possible to say:
+You will notice in earlier versions, this was only available as::
 
-    template: src=templates/foo.j2 dest=/etc/foo.conf
+    action: template src=templates/foo.j2 dest=/etc/foo.conf
 
-The name of the module is simply followed by a colon and the arguments to that module.  We think this is a lot more intuitive.
-Our documentation has not converted over to this new format just yet as many users may still be using older versions.
-You'll be able to use both formats forever.
+The old form continues to work in newer versions without any plan of deprecation.
 
 Running Operations On Change
 ````````````````````````````
@@ -322,7 +321,7 @@ won't need them for much else.
 .. note::
    Notify handlers are always run in the order written.
 
-Roles are described later on.  It's worth while to point out that handlers are
+Roles are described later on.  It's worthwhile to point out that handlers are
 automatically processed between 'pre_tasks', 'roles', 'tasks', and 'post_tasks'
 sections.  If you ever want to flush all the handler commands immediately though,
 in 1.2 and later, you can::
@@ -372,7 +371,7 @@ Variables passed in can then be used in the included files.  You can reference t
 
    {{ user }}
 
-(In addition to the explicitly passed in parameters, all variables from
+(In addition to the explicitly passed-in parameters, all variables from
 the vars section are also available for use here as well.)
 
 Starting in 1.0, variables can also be passed to include files using an alternative syntax,
@@ -467,12 +466,14 @@ Example project structure::
          tasks/
          handlers/
          vars/
+         meta/
        webservers/
          files/
          templates/
          tasks/
          handlers/
          vars/
+         meta/
 
 In a playbook, it would look like this::
 
@@ -487,9 +488,13 @@ This designates the following behaviors, for each role 'x':
 - If roles/x/tasks/main.yml exists, tasks listed therein will be added to the play
 - If roles/x/handlers/main.yml exists, handlers listed therein will be added to the play
 - If roles/x/vars/main.yml exists, variables listed therein will be added to the play
+- If roles/x/meta/main.yml exists, any role dependencies listed therein will be added to the list of roles (1.3 and later)
 - Any copy tasks can reference files in roles/x/files/ without having to path them relatively or absolutely
 - Any script tasks can reference scripts in roles/x/files/ without having to path them relatively or absolutely
 - Any template tasks can reference files in roles/x/templates/ without having to path them relatively or absolutely
+
+.. note::
+   Role dependencies are discussed below.
 
 If any files are not present, they are just ignored.  So it's ok to not have a 'vars/' subdirectory for the role,
 for instance.
@@ -545,6 +550,54 @@ If you want to define certain tasks to happen before AND after roles are applied
    be sure to also tag your pre_tasks and post_tasks and pass those along as well, especially if the pre
    and post tasks are used for monitoring outage window control or load balancing.
 
+Role Dependencies
+`````````````````
+
+.. versionadded: 1.3
+
+Role dependencies allow you to automatically pull in other roles when using a role. Role dependencies are stored in the
+`meta/main.yml` file contained within the role directory. This file should contain 
+a list of roles and parameters to insert before the specified role, such as the following in an example
+`roles/myapp/meta/main.yml`::
+
+    ---
+    dependencies:
+      - { role: common, some_parameter: 3 }
+      - { role: apache, port: 80 }
+      - { role: postgres, dbname: blarg, other_parameter: 12 }
+
+Role dependencies can also be specified as a full path, just like top level roles::
+
+    ---
+    dependencies:
+       - { role: '/path/to/common/roles/foo', x: 1 }
+
+Roles dependencies are always executed before the role that includes them, and are recursive.
+
+Role dependencies may be included more than once. Continuing the above example, the 'car' role could 
+add 'wheel' dependencies as follows::
+
+    ---
+    dependencies:
+    - { role: wheel, n: 1 }
+    - { role: wheel, n: 2 }
+    - { role: wheel, n: 3 }
+    - { role: wheel, n: 4 }
+
+If the wheel role required tire and brake in turn, this would result in the following execution order::
+
+    tire(n=1)
+    brake(n=1)
+    wheel(n=1)
+    tire(n=2)
+    brake(n=2)
+    wheel(n=2)
+    ...
+    car
+
+.. note::
+   Variable inheritance and scope are detailed in the Advanced Playbook section.
+
 Executing A Playbook
 ````````````````````
 
@@ -556,7 +609,7 @@ Let's run a playbook using a parallelism level of 10::
 Tips and Tricks
 ```````````````
 
-Look at the bottom of the playbook execution for a summary of the nodes that were executed
+Look at the bottom of the playbook execution for a summary of the nodes that were targeted
 and how they performed.   General failures and fatal "unreachable" communication attempts are
 kept separate in the counts.
 

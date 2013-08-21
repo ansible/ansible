@@ -54,6 +54,7 @@ multiprocessing_runner = None
         
 OUTPUT_LOCKFILE  = tempfile.TemporaryFile()
 PROCESS_LOCKFILE = tempfile.TemporaryFile()
+MULTIPROCESSING_MANAGER = multiprocessing.Manager()
 
 ################################################
 
@@ -410,6 +411,9 @@ class Runner(object):
         if self.inventory.basedir() is not None:
             inject['inventory_dir'] = self.inventory.basedir()
 
+        if self.inventory.src() is not None:
+            inject['inventory_file'] = self.inventory.src()
+
         # late processing of parameterized sudo_user
         if self.sudo_user is not None:
             self.sudo_user = template.template(self.basedir, self.sudo_user, inject)
@@ -534,6 +538,8 @@ class Runner(object):
                 self.callbacks.on_skipped(host, inject.get('item',None))
                 return ReturnData(host=host, result=result)
 
+        if getattr(handler, 'setup', None) is not None:
+            handler.setup(module_name, inject)
         conn = None
         actual_host = inject.get('ansible_ssh_host', host)
         # allow ansible_ssh_host to be templated
@@ -731,7 +737,10 @@ class Runner(object):
 
         # error handling on this seems a little aggressive?
         if result['rc'] != 0:
-            output = 'could not create temporary directory, SSH (%s) exited with result %d' % (cmd, result['rc'])
+            if result['rc'] == 5:
+                output = 'Authentication failure.'
+            else:
+                output = 'Authentication or permission failure.  In some cases, you may have been able to authenticate and did not have permissions on the remote directory. Consider changing the remote temp path in ansible.cfg to a path rooted in "/tmp". Failed command was: %s, exited with result %d' % (cmd, result['rc'])
             if 'stdout' in result and result['stdout'] != '':
                 output = output + ": %s" % result['stdout']
             raise errors.AnsibleError(output)
@@ -811,7 +820,7 @@ class Runner(object):
     def _parallel_exec(self, hosts):
         ''' handles mulitprocessing when more than 1 fork is required '''
 
-        manager = multiprocessing.Manager()
+        manager = MULTIPROCESSING_MANAGER
         job_queue = manager.Queue()
         for host in hosts:
             job_queue.put(host)
@@ -885,6 +894,9 @@ class Runner(object):
         # run once per hostgroup, rather than pausing once per each
         # host.
         p = utils.plugins.action_loader.get(self.module_name, self)
+
+        if self.forks == 0 or self.forks > len(hosts):
+            self.forks = len(hosts)
 
         if p and getattr(p, 'BYPASS_HOST_LOOP', None):
 
