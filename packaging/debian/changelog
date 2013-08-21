@@ -1,3 +1,9 @@
+ansible (1.2.3) unstable; urgency=high
+  
+  * 1.2.3 release
+ 
+ -- James Cammarata <jcammarata@ansibleworks.com>  Wed, 21 August 2013 13:00:00 -0500
+
 ansible (1.2.2) unstable; urgency=low
   
   * 1.2.2 release

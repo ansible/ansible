@@ -1,6 +1,7 @@
 Ansible Releases at a Glance
 ============================
 
+1.2.3  "Hear About It Later" -- 08-21-2013
 1.2.2  "Hear About It Later" -- 07-05-2013
 1.2.1  "Hear About It Later" -- 07-04-2013
 1.2    "Right Now" ------------ 06-10-2013
