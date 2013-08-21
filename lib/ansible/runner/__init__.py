@@ -458,6 +458,9 @@ class Runner(object):
             # executing using with_items, so make multiple calls
             # TODO: refactor
 
+            if self.background > 0:
+                raise errors.AnsibleError("lookup plugins (with_*) cannot be used with async tasks")
+
             aggregrate = {}
             all_comm_ok = True
             all_changed = False
