@@ -109,26 +109,26 @@ class Runner(object):
     # see bin/ansible for how this is used...
 
     def __init__(self,
-        host_list=C.DEFAULT_HOST_LIST,      # ex: /etc/ansible/hosts, legacy usage
+        host_list=None,                     # ex: /etc/ansible/hosts, legacy usage
         module_path=None,                   # ex: /usr/share/ansible
-        module_name=C.DEFAULT_MODULE_NAME,  # ex: copy
-        module_args=C.DEFAULT_MODULE_ARGS,  # ex: "src=/tmp/a dest=/tmp/b"
-        forks=C.DEFAULT_FORKS,              # parallelism level
-        timeout=C.DEFAULT_TIMEOUT,          # SSH timeout
-        pattern=C.DEFAULT_PATTERN,          # which hosts?  ex: 'all', 'acme.example.org'
-        remote_user=C.DEFAULT_REMOTE_USER,  # ex: 'username'
-        remote_pass=C.DEFAULT_REMOTE_PASS,  # ex: 'password123' or None if using key
+        module_name=None,                   # ex: copy
+        module_args=None,                   # ex: "src=/tmp/a dest=/tmp/b"
+        forks=None,                         # parallelism level
+        timeout=None,                       # SSH timeout
+        pattern=None,                       # which hosts?  ex: 'all', 'acme.example.org'
+        remote_user=None,                   # ex: 'username'
+        remote_pass=None,                   # ex: 'password123' or None if using key
         remote_port=None,                   # if SSH on different ports
-        private_key_file=C.DEFAULT_PRIVATE_KEY_FILE, # if not using keys/passwords
-        sudo_pass=C.DEFAULT_SUDO_PASS,      # ex: 'password123' or None
+        private_key_file=None,              # if not using keys/passwords
+        sudo_pass=None,                     # ex: 'password123' or None
         background=0,                       # async poll every X seconds, else 0 for non-async
         basedir=None,                       # directory of playbook, if applicable
         setup_cache=None,                   # used to share fact data w/ other tasks
-        transport=C.DEFAULT_TRANSPORT,      # 'ssh', 'paramiko', 'local'
+        transport=None,                     # 'ssh', 'paramiko', 'local'
         conditional='True',                 # run only if this fact expression evals to true
         callbacks=None,                     # used for output
         sudo=False,                         # whether to run sudo or not
-        sudo_user=C.DEFAULT_SUDO_USER,      # ex: 'root'
+        sudo_user=None,                     # ex: 'root'
         module_vars=None,                   # a playbooks internals thing
         default_vars=None,                  # ditto
         is_playbook=False,                  # running from playbook or not?
@@ -138,8 +138,38 @@ class Runner(object):
         diff=False,                         # whether to show diffs for template files that change
         environment=None,                   # environment variables (as dict) to use inside the command
         complex_args=None,                  # structured data in addition to module_args, must be a dict
-        error_on_undefined_vars=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR # ex. False
+        error_on_undefined_vars=None        # ex. False
         ):
+
+        # Update variables from the defaults; this is implemented this way to allow the code
+        # to match the current constants (which may change due to code, or due to tests manipulating it).
+
+        if host_list is None:
+            host_list = C.DEFAULT_HOST_LIST
+        if module_name is None:
+            module_name = C.DEFAULT_MODULE_NAME
+        if module_args is None:
+            module_args = C.DEFAULT_MODULE_ARGS
+        if forks is None:
+            forks = C.DEFAULT_FORKS
+        if timeout is None:
+            timeout = C.DEFAULT_TIMEOUT
+        if pattern is None:
+            pattern = C.DEFAULT_PATTERN
+        if remote_user is None:
+            remote_user = C.DEFAULT_REMOTE_USER
+        if remote_pass is None:
+            remote_pass = C.DEFAULT_REMOTE_PASS
+        if private_key_file is None:
+            private_key_file = C.DEFAULT_PRIVATE_KEY_FILE
+        if sudo_pass is None:
+            sudo_pass = C.DEFAULT_SUDO_PASS
+        if transport is None:
+            transport = C.DEFAULT_TRANSPORT
+        if sudo_user is None:
+            sudo_user = C.DEFAULT_SUDO_USER
+        if error_on_undefined_vars is None:
+            error_on_undefined_vars = C.DEFAULT_UNDEFINED_VAR_BEHAVIOR
 
         # used to lock multiprocess inputs and outputs at various levels
         self.output_lockfile  = OUTPUT_LOCKFILE
