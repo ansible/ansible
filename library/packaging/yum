@@ -648,11 +648,16 @@ def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo,
             for r in dis_repos:
                 my.repos.disableRepo(r)
 
+            current_repos = my.repos.repos.keys()
             for r in en_repos:
                 try:
                     my.repos.enableRepo(r)
-                    rid = my.repos.getRepo(r)
-                    a = rid.repoXML.repoid
+                    new_repos = my.repos.repos.keys()
+                    for i in new_repos:
+                        if not i in current_repos:
+                            rid = my.repos.getRepo(i)
+                            a = rid.repoXML.repoid
+                    current_repos = new_repos
                 except yum.Errors.YumBaseError, e:
                     module.fail_json(msg="Error setting/accessing repo %s: %s" % (r, e))
         except yum.Errors.YumBaseError, e:
