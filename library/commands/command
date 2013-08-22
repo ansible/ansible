@@ -33,8 +33,7 @@ description:
      - The M(command) module takes the command name followed by a list of space-delimited arguments.
      - The given command will be executed on all selected nodes. It will not be
        processed through the shell, so variables like C($HOME) and operations
-       like C("<"), C(">"), C("|"), and C("&") will not work. As such, all
-       paths to commands must be fully qualified
+       like C("<"), C(">"), C("|"), and C("&") will not work.
 options:
   free_form:
     description:
@@ -192,17 +191,15 @@ class CommandModule(AnsibleModule):
                 params['removes'] = v
             elif m.group(2) == "chdir":
                 v = os.path.expanduser(v)
+                v = os.path.abspath(v)
                 if not (os.path.exists(v) and os.path.isdir(v)):
                     self.fail_json(rc=258, msg="cannot change to directory '%s': path does not exist" % v)
-                elif v[0] != os.sep:
-                    self.fail_json(rc=259, msg="the path for 'chdir' argument must be fully qualified")
                 params['chdir'] = v
             elif m.group(2) == "executable":
                 v = os.path.expanduser(v)
+                v = os.path.abspath(v)
                 if not (os.path.exists(v)):
                     self.fail_json(rc=258, msg="cannot use executable '%s': file does not exist" % v)
-                elif v[0] != '/':
-                    self.fail_json(rc=259, msg="the path for 'executable' argument must be fully qualified")
                 params['executable'] = v
         args = r.sub("", args)
         params['args'] = args
