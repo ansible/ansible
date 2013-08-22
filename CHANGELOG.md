@@ -128,6 +128,11 @@ Misc changes:
 * added new example inventory plugin for Red Hat OpenShift
 * and other misc. bugfixes
 
+1.2.3 "Hear About It Later" (reprise) -- Aug 21, 2013
+
+* Local security fixes for predictable file locations for ControlPersist and retry file paths on shared machines
+on operating systems without kernel symlink/hardlink protections.
+
 1.2.2 "Hear About It Later" (reprise) -- July 4, 2013
 
 * Added a configuration file option [paramiko_connection] record_host_keys which allows the code that paramiko uses
