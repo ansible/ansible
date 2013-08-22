@@ -82,15 +82,13 @@ def _executor_hook(job_queue, result_queue, new_stdin):
         except:
             traceback.print_exc()
 
-class HostVars(dict):
+class HostVars(collections.Mapping):
     ''' A special view of setup_cache that adds values from the inventory when needed. '''
 
     def __init__(self, setup_cache, inventory):
         self.setup_cache = setup_cache
         self.inventory = inventory
         self.lookup = {}
-
-        self.update(setup_cache)
 
     def __getitem__(self, host):
         if not host in self.lookup:
@@ -99,8 +97,12 @@ class HostVars(dict):
             self.lookup[host] = result
         return self.lookup[host]
 
-    def __contains__(self, host):
-        return host in self.lookup or host in self.setup_cache or self.inventory.get_host(host)
+    def __iter__(self):
+        return (host.name for host in self.inventory.get_group('all').hosts)
+
+    def __len__(self):
+        return len(self.inventory.get_group('all').hosts)
+
 
 class Runner(object):
     ''' core API interface to ansible '''
