@@ -384,8 +384,9 @@ class Ec2Inventory(object):
         
         # Inventory: Group by security group
         try:
-            key = self.to_safe("security_group_" + instance.security_group.name)
-            self.push(self.inventory, key, dest)
+            if instance.security_group:
+                key = self.to_safe("security_group_" + instance.security_group.name)
+                self.push(self.inventory, key, dest)
         except AttributeError:
             print 'Package boto seems a bit older.'
             print 'Please upgrade boto >= 2.3.0.'
