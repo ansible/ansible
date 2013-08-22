@@ -1,4 +1,4 @@
-#!/bin/python
+#!/usr/bin/env python
 
 # (c) 2013, Michael Scherer <misc@zarb.org>
 #
