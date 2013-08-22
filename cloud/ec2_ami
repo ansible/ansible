@@ -162,7 +162,7 @@ def create_image(module, ec2):
     """
     Creates new AMI
 
-    module : AnsbileModule object
+    module : AnsibleModule object
     ec2: authenticated ec2 connection object
     """
 
