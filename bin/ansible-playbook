@@ -62,7 +62,7 @@ def main(args):
         diff_opts=True
     )
     parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
-        help="set additional variables as key=value or JSON", default=[])
+        help="set additional variables as key=value or YAML/JSON", default=[])
     parser.add_option('-t', '--tags', dest='tags', default='all',
         help="only run plays and tasks tagged with these values")
     parser.add_option('--skip-tags', dest='skip_tags',
@@ -101,12 +101,11 @@ def main(args):
     extra_vars = {}
     for extra_vars_opt in options.extra_vars:
         if extra_vars_opt.startswith("@"):
-            # Argument is a JSON file
-            with open(extra_vars_opt[1:]) as fd:
-                extra_vars = utils.combine_vars(extra_vars, utils.json_loads(fd.read()))
+            # Argument is a YAML file (JSON is a subset of YAML)
+            extra_vars = utils.combine_vars(extra_vars, utils.parse_yaml_from_file(extra_vars_opt[1:]))
         elif extra_vars_opt[0] in '[{':
-            # Arguments as JSON
-            extra_vars = utils.combine_vars(extra_vars, utils.json_loads(extra_vars_opt))
+            # Arguments as YAML
+            extra_vars = utils.combine_vars(extra_vars, utils.parse_yaml(extra_vars_opt))
         else:
             # Arguments as Key-value
             extra_vars = utils.combine_vars(extra_vars, utils.parse_kv(extra_vars_opt))
