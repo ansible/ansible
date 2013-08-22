@@ -1,6 +1,8 @@
 import os
 import unittest
+from nose.tools import raises
 
+from ansible import errors
 from ansible.inventory import Inventory
 
 class TestInventory(unittest.TestCase):
@@ -64,6 +66,16 @@ class TestInventory(unittest.TestCase):
         inventory = self.simple_inventory()
         hosts = inventory.list_hosts('all')
         self.assertEqual(sorted(hosts), sorted(self.all_simple_hosts))
+
+    def test_get_hosts(self):
+        inventory = Inventory('127.0.0.1,192.168.1.1')
+        hosts = inventory.get_hosts('!10.0.0.1')
+        hosts_all = inventory.get_hosts('all')
+        self.assertEqual(sorted(hosts), sorted(hosts_all))
+
+    def test_no_src(self):
+        inventory = Inventory('127.0.0.1,')
+        self.assertEqual(inventory.src(), None)
 
     def test_simple_norse(self):
         inventory = self.simple_inventory()
@@ -170,6 +182,20 @@ class TestInventory(unittest.TestCase):
         hosts = inventory.list_hosts()
         self.assertEqual(sorted(hosts),  sorted('bob%03i' %i  for i in range(0, 143)))
 
+    def test_subset(self):
+        inventory = self.simple_inventory()
+        inventory.subset('odin;thor,loki')
+        self.assertEqual(sorted(inventory.list_hosts()),  sorted(['thor','odin','loki']))
+
+    def test_subset_filename(self):
+        inventory = self.simple_inventory()
+        inventory.subset('@' + os.path.join(self.test_dir, 'restrict_pattern'))
+        self.assertEqual(sorted(inventory.list_hosts()),  sorted(['thor','odin']))
+
+    @raises(errors.AnsibleError)
+    def testinvalid_entry(self):
+       Inventory('1234')
+
     ###################################################
     ### INI file advanced tests
 
@@ -227,7 +253,8 @@ class TestInventory(unittest.TestCase):
 
         inventory = self.complex_inventory()
         print "ALL NC=%s" % inventory.list_hosts("nc")
-        hosts = inventory.list_hosts("nc[0-1]")
+        # use "-1" instead of 0-1 to test the syntax, on purpose
+        hosts = inventory.list_hosts("nc[-1]")
         self.compare(hosts, expected1, sort=False)
         hosts = inventory.list_hosts("nc[2-3]")
         self.compare(hosts, expected2, sort=False)
