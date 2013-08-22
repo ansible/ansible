@@ -5,24 +5,24 @@ Ansible Changes By Release
 
 Highlighted new features:
 
-* new /etc/ansible/facts.d allows JSON or INI style facts to be provided from the remote node, and supports executable fact programs in this dir. Files must end in *.fact.
-* ability to make undefined template variables raise errors, see ansible.cfg
-* (DOCS PENDING) sudo: True/False and sudo_user: True/False can set at include and role level
-* added changed_when: (expression) which allows overriding whether a result is changed or not, can work with registered expressions.
-* --extra-vars can now take a file as input "-e @filename"
+* new /etc/ansible/facts.d allows JSON or INI-style facts to be provided from the remote node, and supports executable fact programs in this dir. Files must end in *.fact.
+* added the ability to make undefined template variables raise errors (see ansible.cfg)
+* (DOCS PENDING) sudo: True/False and sudo_user: True/False can be set at include and role level
+* added changed_when: (expression) which allows overriding whether a result is changed or not and can work with registered expressions
+* --extra-vars can now take a file as input, e.g., "-e @filename"
 * external inventory scripts may now return host variables in one pass, which allows them to be much more efficient for large numbers of hosts
-* if --forks exceeds the numbers of hosts, it will be automatically reduced, set forks to 0 and you get "as many forks as I have hosts" out of the box.
-* enabling error_on_undefined_vars by default, which will make errors in playbooks more obvious
-* role dependencies -- be able to have one role pull in another, with parameters of its own.
+* if --forks exceeds the numbers of hosts, it will be automatically reduced. Set forks to 0 and you get "as many forks as I have hosts" out of the box.
+* enabled error_on_undefined_vars by default, which will make errors in playbooks more obvious
+* role dependencies -- one role can now pull in another, with parameters of its own.
 
 New modules:
 
 * notifications: datadog_event -- send data to datadog
-* cloud: digital_ocean -- module for digital ocean provisioning, also includes inventory module
-* cloud: rds -- Amazon relational database service
-* cloud: linode -- also included, an inventory module
+* cloud: digital_ocean -- module for DigitalOcean provisioning that also includes inventory support
+* cloud: rds -- Amazon Relational Database Service
+* cloud: linode -- modules for Linode provisioning that also includes inventory support
 * cloud: route53 -- manage Amazon DNS entries 
-* cloud: ec2_ami -- manages (including creates!) ec2 AMIs
+* cloud: ec2_ami -- manages (and creates!) ec2 AMIs
 * net_infrastructure: arista_interface
 * net_infrastructure: arista_lag
 * net_infrastructure: arista_l2interface
@@ -31,33 +31,33 @@ New modules:
 * web_infrastructure: htpasswd -- manipulate htpasswd files
 * packaging: rpm_key -- adds or removes RPM signing keys
 * monitoring: boundary_meter -- adds or removes boundary.com meters
-* net_infrastructure: dnsmadeeasy - manipulate DnsMadeEasy records
+* net_infrastructure: dnsmadeeasy - manipulate DNS Made Easy records
 
 Misc changes:
 
 * Added OpenRC support (Gentoo) to the service module
 * ansible_ssh_user value is available to templates
 * added placement_group parameter to ec2 module
-* new sha256 parameter to get_url module for validation
+* new sha256sum parameter added to get_url module for checksum validation
 * search for mount binaries in system path and sbin vs assuming path
 * allowed inventory file to be read from a pipe
 * added Solaris distribution facts
 * fixed bug along error path in quantum_network module
-* user password update mode is controllable in user module now (creation vs every time)
+* user password update mode is controllable in user module now (at creation vs. every time)
 * added check mode support to the OpenBSD package module
 * Fix for MySQL 5.6 compatibility
 * HP UX virtualization facts
 * fixed some executable bits in git
 * made rhn_register module compatible with EL5
-* fix for setup module epoch time in Solaris
-* sudo_user is now expanded later allowing to be set at inventory scope
-* mondodb_user module change to also support MongoDB 2.2
-* new state=hard option to the file module for hardlinks vs softlinks
+* fix for setup module epoch time on Solaris
+* sudo_user is now expanded later, allowing it to be set at inventory scope
+* mongodb_user module changed to also support MongoDB 2.2
+* new state=hard option added to the file module for hardlinks vs softlinks
 * fixes to apt module purging option behavior
 * fixes for device facts with multiple PCI domains
-* added "with_inventory_hostnames" lookup plugin, which can take a pattern and loop over hostnames matching the pattern and is great for use with delegate_to and so on.
+* added "with_inventory_hostnames" lookup plugin, which can take a pattern and loop over hostnames matching the pattern and is great for use with delegate_to and so on
 * ec2 module supports adding to multiple security groups
-* cloudformation module fix down the error path, removed 'wait_for' parameter
+* cloudformation module includes fixes for the error path, and the 'wait_for' parameter was removed
 * added --only-if-changed to ansible-pull, which runs only if the repo has changes (not default)
 * added 'mandatory', a Jinja2 filter that checks if a variable is defined: {{ foo|mandatory }}
 * added support for multiple size formats to the lvol module
@@ -67,13 +67,13 @@ Misc changes:
 * fix for easy_install module when dealing with virtualenv
 * rackspace module now explicitly indicates rackspace vs vanilla openstack
 * add_host module does not report changed=True any longer
-* explanatory error message when using fireball with sudo message has been improved
+* explanatory error message when using fireball with sudo has been improved
 * git module now automatically pulls down git submodules
-* negated patterns do not require "all:!foo", you can just say "!foo" now to select all not foos.
+* negated patterns do not require "all:!foo", you can just say "!foo" now to select all not foos
 * fix for Debian services always reporting changed when toggling enablement bit
-* roles files now tolerate files named 'main.yaml' and 'main' in addition to main.yaml
+* roles files now tolerate files named 'main.yaml' and 'main' in addition to main.yml
 * some help cleanup to command line flags on scripts
-* force option reinstated for file module, can create symlinks to non-existant files, etc
+* force option reinstated for file module so it can create symlinks to non-existent files, etc.
 * added termination support to ec2 module
 * --ask-sudo-pass or --sudo-user does not enable all options to use sudo in ansible-playbook
 * include/role conditionals are added ahead of task conditionals so they can short circuit properly
@@ -81,10 +81,10 @@ Misc changes:
 * error handling while executing Jinja2 filters has been improved
 * upgrades to atomic replacement logic when copying files across partitions/etc
 * mysql user module can try to login before requiring explicit password
-* various additional options to supervisorctl module
+* various additional options added to supervisorctl module
 * only add non unique parameter on group creation when required
-* allow rabbitmq_plugin to specify a non-standard rabbitmq path
-* authentatication fixes to keystone_user module
+* allow rabbitmq_plugin to specify a non-standard RabbitMQ path
+* authentication fixes to keystone_user module
 * added IAM role support to EC2 module
 * fixes for OpenBSD package module to avoid shell expansion
 * git module upgrades to allow --depth and --version to be used together
@@ -92,7 +92,7 @@ Misc changes:
 * extra vars (-e) variables can be used in playbook include paths
 * improved reporting for invalid sudo passwords
 * improved reporting for inability to find a suitable tmp location
-* require libselinux-python to perform file operations if SELinux is operational.
+* require libselinux-python to perform file operations if SELinux is operational
 * ZFS module fixes for byte display constants and handling paths with spaces
 * setup module more tolerant of gathering facts against things it does not have permission to read
 * can specify name=* state=latest to update all yum modules
@@ -104,7 +104,7 @@ Misc changes:
 * added Jinja2 filters: quote, quotes a string if it needs to be quoted
 * allow force=yes to affect apt upgrades
 * fix for saving conditionals in variable names
-* support for multiple host ranges in INI inventory like: db[01:10:3]node-[01:10]
+* support for multiple host ranges in INI inventory, e.g., db[01:10:3]node-[01:10]
 * fixes/improvements to cron module
 * add user_install=no option to gem module to install gems system wide
 * added raw=yes to allow copying without python on remote machines
@@ -112,21 +112,21 @@ Misc changes:
 * Linode inventory plugin now significantly faster
 * added recurse=yes parameter to pacman module for package removal
 * apt_key module can now target specific keyrings (keyring=filename)
-* ec2 module changed reporting improved
+* ec2 module change reporting improved
 * hg module now expands user paths (~)
-* SSH connection type known host checking now can process hashed known host files
+* SSH connection type known host checking now can process hashed known_host files
 * lvg module now checks for executables in more correct locations
-* copy module support when sudoing improved
+* copy module now works correctly with sudo_user
 * region parameter added to ec2_elb module
-* better default XMPP module default message types
-* conditional tests against raw booleans fixed 
+* better default XMPP module message types
+* fixed conditional tests against raw booleans
 * mysql module grant removal is now smarter
-* and other misc bugfixes
 * apt-remove is now forced to be non-interactive
 * support ; comments in INI file module
 * fixes to callbacks WRT async output (fire and forget tasks now trigger callbacks!)
 * folder support for s3 module
 * added new example inventory plugin for Red Hat OpenShift
+* and other misc. bugfixes
 
 1.2.2 "Hear About It Later" (reprise) -- July 4, 2013
 
