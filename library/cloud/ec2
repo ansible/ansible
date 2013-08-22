@@ -325,7 +325,7 @@ def create_instances(module, ec2):
     """
     Creates new instances
 
-    module : AnsbileModule object
+    module : AnsibleModule object
     ec2: authenticated ec2 connection object
 
     Returns:
