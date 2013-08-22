@@ -38,7 +38,7 @@ class ActionModule(object):
 
         module_args = self.runner._complex_args_hack(complex_args, module_args)
 
-        if self.runner.check:
+        if self.runner.noop_on_check(inject):
             if module_name in [ 'shell', 'command' ]:
                 return ReturnData(conn=conn, comm_ok=True, result=dict(skipped=True, msg='check mode not supported for %s' % module_name))
             # else let the module parsing code decide, though this will only be allowed for AnsibleModuleCommon using
