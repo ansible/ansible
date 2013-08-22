@@ -151,6 +151,21 @@ def install_packages(module, packages):
     module.exit_json(changed=False, msg="package(s) already installed")
 
 
+def check_packages(module, packages, state):
+    would_be_changed = []
+    for package in packages:
+        installed = query_package(module, package)
+        if ((state == "installed" and not installed) or
+                (state == "absent" and installed)):
+            would_be_changed.append(package)
+    if would_be_changed:
+        if state == "absent":
+            state = "removed"
+        module.exit_json(changed=True, msg="%s package(s) would be %s" % (
+            len(would_be_changed), state))
+    else:
+        module.exit_json(change=False, msg="package(s) already %s" % state)
+
 
 def main():
     module = AnsibleModule(
@@ -158,7 +173,8 @@ def main():
                 state        = dict(default="installed", choices=["installed","absent"]),
                 update_cache = dict(default="no", aliases=["update-cache"], type='bool'),
                 recurse      = dict(default="no", type='bool'),
-                name         = dict(aliases=["pkg"], required=True)))
+                name         = dict(aliases=["pkg"], required=True)),
+            supports_check_mode = True)
                 
 
     if not os.path.exists(PACMAN_PATH):
@@ -166,13 +182,15 @@ def main():
 
     p = module.params
 
-
-    if p["update_cache"]:
+    if p["update_cache"] and not module.check_mode:
         update_package_db(module)
 
     pkgs = p["name"].split(",")
 
-    if p["state"] == "installed":
+    if module.check_mode:
+        check_packages(module, pkgs, p['state'])
+
+    elif p["state"] == "installed":
         install_packages(module, pkgs)
 
     elif p["state"] == "absent":
