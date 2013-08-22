@@ -334,6 +334,10 @@ def main():
         (rc, out, err) = reset(git_path, module, dest, force)
         if rc != 0:
             module.fail_json(msg=err)
+        # exit if already at desired sha version
+        # abbreviate version in case full sha is given
+        if before == str(version)[:7]:
+            module.exit_json(changed=False)
         # check or get changes from remote
         remote_head = get_remote_head(git_path, module, dest, version, remote)
         if module.check_mode:
