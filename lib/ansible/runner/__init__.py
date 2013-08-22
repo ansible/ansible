@@ -363,7 +363,10 @@ class Runner(object):
             return flags
 
         try:
-            self._new_stdin = new_stdin
+            if not new_stdin:
+                self._new_stdin = os.fdopen(os.dup(sys.stdin.fileno()))
+            else:
+                self._new_stdin = new_stdin
 
             exec_rc = self._executor_internal(host, new_stdin)
             if type(exec_rc) != ReturnData:
