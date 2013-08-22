@@ -44,7 +44,7 @@ options:
             - A source string state.
 author: Alexander Saltanov
 version_added: "0.7"
-requirements: [ python-apt, python-pycurl ]
+requirements: [ python-apt, python-pycurl, python-software-properties ]
 '''
 
 EXAMPLES = '''
