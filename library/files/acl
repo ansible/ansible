@@ -47,7 +47,7 @@ options:
       - if yes, dereferences symlinks and sets/gets attributes on symlink target, otherwise acts on symlink itself.
 author: Brian Coca
 notes:
-    - The "acl" module requires that acl is enabled on the target filesystem and that the setfacl and getfacl binaries are installed.
+    - The "acl" module requires the posix1e module on the target machine and  that acl is enabled on the target filesystem.
 '''
 
 EXAMPLES = '''
@@ -65,6 +65,12 @@ try:
     import posix1e
 except:
     NO_PYLIBACL=True
+
+def gen_acl(module,entry):
+    try:
+        return posix1e.ACL(text=entry)
+    except IOError, e:
+        module.fail_json(msg="Invalid entry: '%s', check that user/groups exist and permissions are correct" % entry)
 
 def main():
     module = AnsibleModule(
@@ -91,7 +97,7 @@ def main():
     if entry is None and state in ['present','absent']:
         module.fail_json(msg="%s needs entry to be set" % state)
 
-    if entry.count(":") != 3:
+    if entry.count(":") != 2:
         module.fail_json(msg="Invalid entry: '%s', it requires 3 sections divided by ':'" % entry)
 
     changed=False
@@ -101,8 +107,9 @@ def main():
     newacl = currentacl
     res = currentacl
 
+
     if (state == 'present'):
-        for newe in posix1e.ACL(text=entry):
+        for newe in gen_acl(module, entry):
             matched = False
             for olde in currentacl:
                 diff = False
@@ -127,7 +134,7 @@ def main():
                 changes=changes+1
         msg="%s is present" % (entry)
     elif state == 'absent':
-        for rme in posix1e.ACL(text=entry):
+        for rme in gen_acl(module, entry):
             for olde in currentacl:
                 if olde.tag_type == rme.tag_type:
                     if rme.tag_type in [ posix1e.ACL_GROUP, posix1e.ACL_USER ]:
@@ -144,8 +151,9 @@ def main():
         msg="current acl"
 
     if changes > 0:
+        newacl.calc_mask()
         if not newacl.valid():
-            module.fail_json("Invalid acl constructed: %s" % newacl.to_any_text())
+            module.fail_json(msg="Invalid acl constructed: %s" % newacl.to_any_text())
         if not module.check_mode:
             newacl.applyto(path)
         changed=True
