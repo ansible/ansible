@@ -39,6 +39,7 @@ New modules:
 
 Misc changes:
 
+* return 3 when there are hosts that were unreachable during a run
 * the yum module now supports wildcard values for the enablerepo argument
 * added an inventory script to pull host information from Zabbix
 * async mode no longer allows with_* lookup plugins due to incompatibilities
