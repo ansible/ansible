@@ -274,6 +274,11 @@ class TestInventory(unittest.TestCase):
     def test_invalid_range(self):
         Inventory(os.path.join(self.test_dir, 'inventory','test_incorrect_range'))
 
+    @raises(errors.AnsibleError)
+    def test_missing_end(self):
+        Inventory(os.path.join(self.test_dir, 'inventory','test_missing_end'))
+
+
     ###################################################
     ### Inventory API tests
 
