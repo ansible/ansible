@@ -60,6 +60,12 @@ options:
       - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
     required: false
     aliases: ['aws_region', 'ec2_region']
+  wait:
+    description:
+      - Wait for instance registration or deregistration to complete successfully before returning.  
+    required: false
+    default: yes
+    choices: [ "yes", "no" ] 
 
 """
 
@@ -124,21 +130,23 @@ class ElbManager:
         else:
             self.changed = False
 
-    def deregister(self):
+    def deregister(self, wait):
         """De-register the instance from all ELBs and wait for the ELB
         to report it out-of-service"""
 
         for lb in self.lbs:
             lb.deregister_instances([self.instance_id])
-            self._await_elb_instance_state(lb, 'OutOfService')
+            if wait: 
+                self._await_elb_instance_state(lb, 'OutOfService')
 
-    def register(self):
+    def register(self, wait):
         """Register the instance for all ELBs and wait for the ELB
         to report the instance in-service"""
 
         for lb in self.lbs:
             lb.register_instances([self.instance_id])
-            self._await_elb_instance_state(lb, 'InService')
+            if wait:
+                self._await_elb_instance_state(lb, 'InService')
 
     def exists(self, lbtest):
         """ Verify that the named ELB actually exists """
@@ -196,10 +204,11 @@ def main():
             state={'required': True,
                     'choices': ['present', 'absent']},
             instance_id={'required': True},
-            ec2_elbs={'default': None, 'required': False},
+            ec2_elbs={'default': None, 'required': False, 'type':'list'},
             aws_secret_key={'default': None, 'aliases': ['ec2_secret_key', 'secret_key'], 'no_log': True},
             aws_access_key={'default': None, 'aliases': ['ec2_access_key', 'access_key']},
-            region={'default': None, 'required': False, 'aliases':['aws_region', 'ec2_region'], 'choices':AWS_REGIONS}
+            region={'default': None, 'required': False, 'aliases':['aws_region', 'ec2_region'], 'choices':AWS_REGIONS},
+            wait={'required': False, 'choices': BOOLEANS, 'default': True}
         )
     )
 
@@ -207,6 +216,7 @@ def main():
     aws_access_key = module.params['aws_access_key']
     ec2_elbs = module.params['ec2_elbs']
     region = module.params['region']
+    wait = module.params['wait']
 
     if module.params['state'] == 'present' and 'ec2_elbs' not in module.params:
         module.fail_json(msg="ELBs are required for registration")
@@ -230,21 +240,21 @@ def main():
             region = os.environ['EC2_REGION']
 
     if not region:
-        module.fail_json(msg = str("Either region or EC2_REGION environment variable must be set."))
+        module.fail_json(msg=str("Either region or EC2_REGION environment variable must be set."))
 
     instance_id = module.params['instance_id']
     elb_man = ElbManager(module, instance_id, ec2_elbs, aws_access_key,
                          aws_secret_key, region=region)
 
-    for elb in [ ec2_elbs ]:
+    for elb in ec2_elbs:
         if not elb_man.exists(elb):
-            str="ELB %s does not exist" % elb
-            module.fail_json(msg=str)
+            msg="ELB %s does not exist" % elb
+            module.fail_json(msg=msg)
 
     if module.params['state'] == 'present':
-        elb_man.register()
+        elb_man.register(wait)
     elif module.params['state'] == 'absent':
-        elb_man.deregister()
+        elb_man.deregister(wait)
 
     ansible_facts = {'ec2_elbs': [lb.name for lb in elb_man.lbs]}
     ec2_facts_result = dict(changed=elb_man.changed, ansible_facts=ansible_facts)
