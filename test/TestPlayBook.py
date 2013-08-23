@@ -308,6 +308,12 @@ class TestPlaybook(unittest.TestCase):
    def test_playbook_undefined_vars2_fail(self):
        self._test_playbook_undefined_vars('playbook2.yml', True)
 
+   def test_playbook_undefined_vars3_ignore(self):
+       self._test_playbook_undefined_vars('playbook3.yml', False)
+
+   def test_playbook_undefined_vars3_fail(self):
+       self._test_playbook_undefined_vars('playbook3.yml', True)
+
    def test_yaml_hosts_list(self):
        # Make sure playbooks support hosts: [host1, host2]
        # TODO: Actually run the play on more than one host
