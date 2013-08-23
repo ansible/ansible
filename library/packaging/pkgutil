@@ -148,11 +148,11 @@ def main():
             (rc, out, err) = package_install(module, state, name, site)
         else:
             if not package_latest(module, name, site):
-               if module.check_mode:
-                   module.exit_json(changed=True) 
-               (rc, out, err) = package_upgrade(module, name, site)
-               if len(out) > 75:
-                   out = out[:75] + '...'
+                if module.check_mode:
+                    module.exit_json(changed=True) 
+                (rc, out, err) = package_upgrade(module, name, site)
+                if len(out) > 75:
+                    out = out[:75] + '...'
 
     elif state == 'absent':
         if package_installed(module, name):
