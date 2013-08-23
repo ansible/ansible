@@ -641,6 +641,18 @@ class Runner(object):
             if 'item' in inject:
                 result.result['item'] = inject['item']
 
+            # Finalize the returned data, so that any failed renders (say for debug or set) are
+            # actually exposed rather than ignored; to do this, expose the injected environment along
+            # side what's being rendered.
+            d = inject.copy()
+            d.update(result.result)
+            for key, value in result.result.iteritems():
+                if isinstance(value, basestring):
+                    try:
+                        d[key] = result.result[key] = template.template_from_string(self.basedir, value, d, fail_on_undefined=self.error_on_undefined_vars)
+                    except errors.AnsibleError:
+                        result.result['failed'] = True
+
             result.result['invocation'] = dict(
                 module_args=module_args,
                 module_name=module_name
