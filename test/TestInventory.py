@@ -282,6 +282,10 @@ class TestInventory(unittest.TestCase):
     def test_incorrect_format(self):
         Inventory(os.path.join(self.test_dir, 'inventory','test_incorrect_format'))
 
+    @raises(errors.AnsibleError)
+    def test_alpha_end_before_beg(self):
+        Inventory(os.path.join(self.test_dir, 'inventory','test_alpha_end_before_beg'))
+
 
     ###################################################
     ### Inventory API tests
