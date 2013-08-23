@@ -27,7 +27,7 @@ class Task(object):
         'notify', 'module_name', 'module_args', 'module_vars',
         'play', 'notified_by', 'tags', 'register',
         'delegate_to', 'first_available_file', 'ignore_errors',
-        'local_action', 'transport', 'sudo', 'sudo_user', 'sudo_pass',
+        'local_action', 'transport', 'sudo', 'remote_user', 'sudo_user', 'sudo_pass',
         'items_lookup_plugin', 'items_lookup_terms', 'environment', 'args',
         'any_errors_fatal', 'changed_when', 'always_run'
     ]
@@ -36,7 +36,7 @@ class Task(object):
     VALID_KEYS = [
          'name', 'meta', 'action', 'only_if', 'async', 'poll', 'notify',
          'first_available_file', 'include', 'tags', 'register', 'ignore_errors',
-         'delegate_to', 'local_action', 'transport', 'sudo', 'sudo_user',
+         'delegate_to', 'local_action', 'transport', 'remote_user', 'sudo', 'sudo_user',
          'sudo_pass', 'when', 'connection', 'environment', 'args',
          'any_errors_fatal', 'changed_when', 'always_run'
     ]
@@ -113,6 +113,8 @@ class Task(object):
         # rather than simple key=value args on the options line, these represent structured data and the values
         # can be hashes and lists, not just scalars
         self.args         = ds.get('args', {})
+
+        self.remote_user      = ds.get('remote_user', play.playbook.remote_user)
 
         if self.sudo:
             self.sudo_user    = ds.get('sudo_user', play.sudo_user)
