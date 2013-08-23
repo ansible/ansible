@@ -3,7 +3,7 @@
 
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 #
-#n This file is part of Ansible
+# This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -2104,9 +2104,7 @@ def run_setup(module):
             for (k,v) in facter_ds.items():
                 setup_options["facter_%s" % k] = v
 
-    # ditto for ohai, but just top level string keys
-    # because it contains a lot of nested stuff we can't use for
-    # templating w/o making a nicer key for it (TODO)
+    # ditto for ohai
 
     if ohai_path is not None:
         rc, out, err = module.run_command(ohai_path)
@@ -2117,9 +2115,8 @@ def run_setup(module):
             ohai = False
         if ohai:
             for (k,v) in ohai_ds.items():
-                if type(v) == str or type(v) == unicode:
-                    k2 = "ohai_%s" % k.replace('-', '_')
-                    setup_options[k2] = v
+                k2 = "ohai_%s" % k.replace('-', '_')
+                setup_options[k2] = v
 
     setup_result = { 'ansible_facts': {} }
 
