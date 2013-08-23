@@ -305,7 +305,7 @@ class PlayBook(object):
             pattern=task.play.hosts, inventory=self.inventory, module_name=task.module_name,
             module_args=task.module_args, forks=self.forks,
             remote_pass=self.remote_pass, module_path=self.module_path,
-            timeout=self.timeout, remote_user=task.play.remote_user,
+            timeout=self.timeout, remote_user=task.remote_user,
             remote_port=task.play.remote_port, module_vars=task.module_vars,
             private_key_file=self.private_key_file,
             setup_cache=self.SETUP_CACHE, basedir=task.play.basedir,
