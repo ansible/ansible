@@ -270,6 +270,9 @@ class TestInventory(unittest.TestCase):
         hosts = inventory.list_hosts("nc:&triangle:!tri_c")
         self.compare(hosts, ['tri_a', 'tri_b'])
 
+    @raises(errors.AnsibleError)
+    def test_invalid_range(self):
+        Inventory(os.path.join(self.test_dir, 'inventory','test_incorrect_range'))
 
     ###################################################
     ### Inventory API tests
