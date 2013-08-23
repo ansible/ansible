@@ -293,6 +293,9 @@ As of Ansible 1.3, extra vars can be loaded from a JSON file with the "@" syntax
 
     --extra-vars "@some_file.json"
 
+Also as of Ansible 1.3, extra vars can be formatted as YAML, either on the command line
+or in a file as above.
+
 Conditional Execution
 `````````````````````
 
