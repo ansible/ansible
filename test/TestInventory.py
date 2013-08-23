@@ -286,6 +286,11 @@ class TestInventory(unittest.TestCase):
     def test_alpha_end_before_beg(self):
         Inventory(os.path.join(self.test_dir, 'inventory','test_alpha_end_before_beg'))
 
+    def test_combined_range(self):
+        i = Inventory(os.path.join(self.test_dir, 'inventory','test_combined_range'))
+        hosts = i.list_hosts('test')
+        expected_hosts=['host1A','host2A','host1B','host2B']
+        assert sorted(hosts) == sorted(expected_hosts)
 
     ###################################################
     ### Inventory API tests
