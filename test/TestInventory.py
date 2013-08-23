@@ -219,9 +219,9 @@ class TestInventory(unittest.TestCase):
     def test_complex_group_names(self):
         inventory = self.complex_inventory()
         tests = {
-            'host1': [ 'role1' ],
+            'host1': [ 'role1', 'role3' ],
             'host2': [ 'role1', 'role2' ],
-            'host3': [ 'role2' ]
+            'host3': [ 'role2', 'role3' ]
         }
         for host, roles in tests.iteritems():
             group_names = inventory.get_variables(host)['group_names']

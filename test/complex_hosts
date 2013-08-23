@@ -85,3 +85,5 @@ host[1:2]
 [role2]
 host[2:3]
 
+[role3]
+host[1:3:2]
