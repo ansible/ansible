@@ -278,6 +278,10 @@ class TestInventory(unittest.TestCase):
     def test_missing_end(self):
         Inventory(os.path.join(self.test_dir, 'inventory','test_missing_end'))
 
+    @raises(errors.AnsibleError)
+    def test_incorrect_format(self):
+        Inventory(os.path.join(self.test_dir, 'inventory','test_incorrect_format'))
+
 
     ###################################################
     ### Inventory API tests
