@@ -122,7 +122,7 @@ simply a list of host/IP addresses, like so::
         "5points"     : [ "host7.example.com" ]
     }
 
-.. versionadded: 1.0
+.. versionadded:: 1.0
 
 Before version 1.0, each group could only have a list of hostnames/IP addresses, like the webservers, marietta, and 5points groups above.
 
@@ -139,7 +139,7 @@ if the script does not wish to do this, returning an empty hash/dictionary is th
 Tuning the External Inventory Script
 ````````````````````````````````````
 
-.. versionadded: 1.3
+.. versionadded:: 1.3
 
 The stock inventory script system detailed above works for all versions of Ansible, but calling
 '--host' for every host can be rather expensive,  especially if it involves expensive API calls to
@@ -370,7 +370,7 @@ If you want more Jinja2 filters available in a Jinja2 template (filters like to_
 Distributing Plugins
 --------------------
 
-.. versionadded: 0.8
+.. versionadded:: 0.8
 
 Plugins are loaded from both Python's site_packages (those that ship with ansible) and a configured plugins directory, which defaults
 to /usr/share/ansible/plugins, in a subfolder for each plugin type::
