@@ -149,7 +149,7 @@ These variables can be used later in the playbook like this::
 
     {{ varname }}
 
-Variables are passed through the Jinja2 templating engine, and support the use of filters to modify the variable (for example: {{ varname|int }} ensures the variable is interpretted as an integer). To learn more about Jinja2, you can optionally see the `Jinja2 docs <http://jinja.pocoo.org/docs/>`_ - though remember that Jinja2 loops and conditionals are only for 'templates' in Ansible, in playbooks, ansible has the 'when' and 'with' keywords for conditionals and loops.
+Variables are passed through the Jinja2 templating engine, and support the use of filters to modify the variable (for example: {{ varname|int }} ensures the variable is interpreted as an integer). To learn more about Jinja2, you can optionally see the `Jinja2 docs <http://jinja.pocoo.org/docs/>`_ - though remember that Jinja2 loops and conditionals are only for 'templates' in Ansible, in playbooks, ansible has the 'when' and 'with' keywords for conditionals and loops.
 
 If there are discovered variables about the system, called 'facts', these variables bubble up back into the playbook, and can be used on each system just like explicitly set variables.  Ansible provides several
 of these, prefixed with 'ansible', which are documented under 'setup' in the module documentation.  Additionally,
