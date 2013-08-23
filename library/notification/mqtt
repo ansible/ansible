@@ -1,0 +1,180 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2013, Jan-Piet Mens <jpmens () gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+DOCUMENTATION = '''
+---
+module: mqtt
+short_description: Publish a message on an MQTT topic for the IoT
+version_added: "1.2"
+description:
+   - Publish a message on an MQTT topic.
+options:
+  server:
+    description:
+      - MQTT broker address/name
+    required: false
+    default: localhost
+  port:
+    description:
+      - MQTT broker port number
+    required: false
+    default: 1883
+  username:
+    description:
+      - Username to authenticate against the broker.
+    required: false
+  password:
+    description:
+      - Password for C(username) to authenticate against the broker.
+    required: false
+  client_id:
+    description:
+      - MQTT client identifier
+    required: false
+    default: hostname + pid
+  topic:
+    description:
+      - MQTT topic name
+    required: true
+    default: null
+  payload:
+    description:
+      - Payload. The special string C("None") may be used to send a NULL
+        (i.e. empty) payload which is useful to simply notify with the I(topic)
+        or to clear previously retained messages.
+    required: true
+    default: null
+  qos:
+    description:
+      - QoS (Quality of Service)
+    required: false
+    default: 0
+    choices: [ "0", "1", "2" ]
+  retain:
+    description:
+      - Setting this flag causes the broker to retain (i.e. keep) the message so that
+        applications that subsequently subscribe to the topic can received the last
+        retained message immediately.
+    required: false
+    default: False
+
+# informational: requirements for nodes
+requirements: [ mosquitto ]
+notes:
+ - This module requires a connection to an MQTT broker such as Mosquitto
+   U(http://mosquitto.org) and the C(mosquitto) Python module (U(http://mosquitto.org/python)).
+author: Jan-Piet Mens
+'''
+
+EXAMPLES = '''
+- local_action: mqtt
+              topic=service/ansible/{{ ansible_hostname }}
+              payload="Hello at {{ ansible_date_time.iso8601 }}"
+              qos=0
+              retain=false
+              client_id=ans001
+'''
+
+# ===========================================
+# MQTT module support methods.
+#
+
+HAS_MOSQUITTO = True
+try:
+    import socket
+    import mosquitto
+except ImportError:
+    HAS_MOSQUITTO = False
+import os
+
+def publish(module, topic, payload, server='localhost', port='1883', qos='0',
+        client_id='', retain=False, username=None, password=None):
+    '''Open connection to MQTT broker and publish the topic'''
+
+    mqttc = mosquitto.Mosquitto(client_id, clean_session=True)
+
+    if username is not None and password is not None:
+        mqttc.username_pw_set(username, password)
+
+    rc = mqttc.connect(server, int(port), 5)
+    if rc != 0:
+        module.fail_json(msg="unable to connect to MQTT broker")
+
+    mqttc.publish(topic, payload, int(qos), retain)
+    rc = mqttc.loop()
+    if rc != 0:
+        module.fail_json(msg="unable to send to MQTT broker")
+
+    mqttc.disconnect()
+
+
+# ===========================================
+# Main
+#
+
+def main():
+
+    if not HAS_MOSQUITTO:
+        module.fail_json(msg="mosquitto is not installed")
+
+
+    module = AnsibleModule(
+        argument_spec=dict(
+            server = dict(default = 'localhost'),
+            port = dict(default = 1883),
+            topic = dict(required = True),
+            payload = dict(required = True),
+            client_id = dict(default = None),
+            qos = dict(default="0", choices=["0", "1", "2"]),
+            retain = dict(default='no', choices=BOOLEANS, type='bool'),
+            username = dict(default = None),
+            password = dict(default = None),
+        ),
+        supports_check_mode=True
+    )
+
+    server     = module.params["server"]
+    port       = module.params["port"]
+    topic      = module.params["topic"]
+    payload    = module.params["payload"]
+    client_id  = module.params["client_id"]
+    qos        = module.params["qos"]
+    retain     = module.params["retain"]
+    username   = module.params["username"]
+    password   = module.params["password"]
+
+    if client_id is None:
+        client_id = "%s_%s" % (socket.getfqdn(), os.getpid())
+
+    if payload and payload == 'None':
+        payload = None
+
+    try:
+        publish(module, topic, payload, server, port, qos, client_id, retain,
+                username, password)
+    except Exception, e:
+        module.fail_json(msg="unable to publish to MQTT broker %s" % (e))
+
+    module.exit_json(changed=False, topic=topic)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()

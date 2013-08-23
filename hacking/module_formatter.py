@@ -18,6 +18,7 @@
 #
 
 import os
+import glob
 import sys
 import yaml
 import codecs
@@ -25,45 +26,21 @@ import json
 import ast
 from jinja2 import Environment, FileSystemLoader
 import re
-import getopt
+import optparse
 import time
 import datetime
 import subprocess
+import cgi
+import ansible.utils
+import ansible.utils.module_docs as module_docs
 
-# modules that are ok that they do not have documentation strings
-BLACKLIST_MODULES = [
-   'async_wrapper'
-]
-
-MODULEDIR="/Users/jpm/Auto/pubgit/ansible/ansible/library"
-
-BOILERPLATE = '''
----
-module: foo
-author: AUTHORNAME
-short_description: A short description, think title
-description:
-  - First paragraph explains what the module does. More paragraphs can
-    be added.
-  - Second para of description. You can use B(bold), I(italic), and
-    C(constant-width). To refer to another M(module) use that, and
-    U(url) exists too.
-version_added: "0.x"
-options:
-  dest:
-    required: true
-    description:
-      - What does this option do, and bla bla bla
-      - More than one paragraph allowed here as well. Formatting
-        with B(bold), etc. work too.
-  remove:
-    required: false
-    choices: [ yes, no ]
-    default: "maybe"
-    aliases: [ kill, killme, delete ]
-    description:
-      - The foo to do on M(module) but be careful of lorem ipsum
-'''
+# Get parent directory of the directory this script lives in
+MODULEDIR=os.path.abspath(os.path.join(
+    os.path.dirname(os.path.realpath(__file__)), os.pardir, 'library'
+    ))
+EXAMPLE_YAML=os.path.abspath(os.path.join(
+    os.path.dirname(os.path.realpath(__file__)), os.pardir, 'examples', 'DOCUMENTATION.yaml'
+    ))
 
 # There is a better way of doing this!
 # TODO: somebody add U(text, http://foo.bar/) as described by Tim in #991
@@ -86,11 +63,15 @@ def latex_ify(text):
 
 def html_ify(text):
 
-    t = _ITALIC.sub("<em>" + r"\1" + "</em>", text)
+    #print "DEBUG: text=%s" % text
+    
+    t = cgi.escape(text)
+    t = _ITALIC.sub("<em>" + r"\1" + "</em>", t)
     t = _BOLD.sub("<b>" + r"\1" + "</b>", t)
     t = _MODULE.sub("<span class='module'>" + r"\1" + "</span>", t)
     t = _URL.sub("<a href='" + r"\1" + "'>" + r"\1" + "</a>", t)
     t = _CONST.sub("<code>" + r"\1" + "</code>", t)
+
     return t
 
 def json_ify(text):
@@ -129,6 +110,20 @@ def rst_ify(text):
 
     return t
 
+_MARKDOWN = re.compile(r"[*_`]")
+
+def markdown_ify(text):
+
+    t = cgi.escape(text)
+    t = _MARKDOWN.sub(r"\\\g<0>", t)
+    t = _ITALIC.sub("_" + r"\1" + "_", t)
+    t = _BOLD.sub("**" + r"\1" + "**", t)
+    t = _MODULE.sub("*" + r"\1" + "*", t)
+    t = _URL.sub("[" + r"\1" + "](" + r"\1" + ")", t)
+    t = _CONST.sub("`" + r"\1" + "`", t)
+
+    return t
+
 # Helper for Jinja2 (format() doesn't work here...)
 def rst_fmt(text, fmt):
     return fmt % (text)
@@ -139,152 +134,150 @@ def rst_xline(width, char="="):
 def load_examples_section(text):
     return text.split('***BREAK***')
 
-def get_docstring(filename, verbose=False):
-    """
-    Search for assignment of the DOCUMENTATION variable in the given file.
-    Parse that from YAML and return the YAML doc or None.
-    """
-
-    doc = None
-
-    try:
-        # Thank you, Habbie, for this bit of code :-)
-        M = ast.parse(''.join(open(filename)))
-        for child in M.body:
-            if isinstance(child, ast.Assign):
-                if 'DOCUMENTATION' in (t.id for t in child.targets):
-                    doc = yaml.load(child.value.s)
-
-    except:
-        if verbose:
-            raise
-        else:
-            print "unable to parse %s" % filename
-
-    return doc
-
-
-def return_data(text, args, outputname, module):
-    if args.output_dir is not None:
-        f = open(os.path.join(args.output_dir, outputname % module), 'w')
-        f.write(text)
+def return_data(text, options, outputname, module):
+    if options.output_dir is not None:
+        f = open(os.path.join(options.output_dir, outputname % module), 'w')
+        f.write(text.encode('utf-8'))
         f.close()
     else:
         print text
 
+def boilerplate():
+    if not os.path.exists(EXAMPLE_YAML):
+        print >>sys.stderr, "Missing example boiler plate: %S" % EXAMPLE_YAML
+    print "DOCUMENTATION = '''"
+    print file(EXAMPLE_YAML).read()
+    print "'''"
+    print ""
+
+def list_modules(module_dir):
+    categories = {}
+    files = glob.glob("%s/*" % module_dir)
+    for d in files:
+        if os.path.isdir(d):
+            files2 = glob.glob("%s/*" % d)
+            for f in files2:
+                tokens = f.split("/")
+                module = tokens[-1]
+                category = tokens[-2]
+                if not category in categories:
+                    categories[category] = {}
+                categories[category][module] = f
+    return categories
 
 def main():
-    class Object(object):
-        pass
 
-    type_choices = ['html', 'latex', 'man', 'rst', 'json']
+    p = optparse.OptionParser(
+        version='%prog 1.0',
+        usage='usage: %prog [options] arg1 arg2',
+        description='Convert Ansible module DOCUMENTATION strings to other formats',
+    )
 
-    args = Object()
-    args.ansible_version = 'unknown'
-    args.module_dir = MODULEDIR
-    args.template_dir = 'hacking/templates'
-    args.type = 'latex'
-    args.module_list = []
-    args.verbose = False
-    args.output_dir = None
-    args.includes_file = None
-    args.do_boilerplate = False
+    p.add_option("-A", "--ansible-version",
+            action="store",
+            dest="ansible_version",
+            default="unknown",
+            help="Ansible version number")
+    p.add_option("-M", "--module-dir",
+            action="store",
+            dest="module_dir",
+            default=MODULEDIR,
+            help="Ansible modules/ directory")
+    p.add_option("-T", "--template-dir",
+            action="store",
+            dest="template_dir",
+            default="hacking/templates",
+            help="directory containing Jinja2 templates")
+    p.add_option("-t", "--type",
+            action='store',
+            dest='type',
+            choices=['html', 'latex', 'man', 'rst', 'json', 'markdown', 'js'],
+            default='latex',
+            help="Output type")
+    p.add_option("-m", "--module",
+            action='append',
+            default=[],
+            dest='module_list',
+            help="Add modules to process in module_dir")
+    p.add_option("-v", "--verbose",
+            action='store_true',
+            default=False,
+            help="Verbose")
+    p.add_option("-o", "--output-dir",
+            action="store",
+            dest="output_dir",
+            default=None,
+            help="Output directory for module files")
+    p.add_option("-I", "--includes-file",
+            action="store",
+            dest="includes_file",
+            default=None,
+            help="Create a file containing list of processed modules")
+    p.add_option("-G", "--generate",
+            action="store_true",
+            dest="do_boilerplate",
+            default=False,
+            help="generate boilerplate DOCUMENTATION to stdout")
+    p.add_option('-V', action='version', help='Show version number and exit')
 
-    try:
-        opts, arguments = getopt.getopt(sys.argv[1:], 'A:M:T:t:m:vo:I:GVh',
-            [ 'ansible-version=', 'module-dir=', 'template-dir=', 'type=',
-              'module=', 'verbose', 'output-dir=', 'includes-file=',
-              'generate', 'version', 'help', ])
-    except getopt.error, e:
-        print >>sys.stderr, 'ERROR: %s'% str(e)
-        sys.exit(1)
+    (options, args) = p.parse_args()
 
-    for opt, arg in opts:
-        if opt in ('-A', '--ansible-version'):
-            args.ansible_version = arg
-        elif opt in ('-M', '--module-dir'):
-            args.module_dir = arg
-        elif opt in ('-T', '--template-dir'):
-            args.template_dir = arg
-        elif opt in ('-t', '--type'):
-            args.type = arg
-            if args.type not in type_choices:
-                print >>sys.stderr, 'ERROR: Type %s not in possible types %s.' % (args.type, type_choices)
-                sys.exit(1)
-        elif opt in ('-m', '--module'):
-            args.module_list.append(arg)
-        elif opt in ('-v', '--verbose'):
-            args.verbose = True
-        elif opt in ('-o', '--output-dir'):
-            args.output_dir = arg
-        elif opt in ('-I', '--includes-file'):
-            args.includes_file = arg
-        elif opt in ('-G', '--generate'):
-            args.do_boilerplate = True
-        elif opt in ('-V', '--version'):
-            print >>sys.stderr, '%(prog)s 1.0'
-        elif opt in ('-h', '--help'):
-            print >>sys.stderr, '''Convert Ansible module DOCUMENTATION strings to other formats
+#    print "M: %s" % options.module_dir
+#    print "t: %s" % options.type
+#    print "m: %s" % options.module_list
+#    print "v: %s" % options.verbose
 
- -A, --ansible-version=     Ansible version number
- -M, --module-dir=          Ansible modules/ directory
- -T, --template-dir=        Directory containing Jinja2 templates
- -t, --type=                Output type
- -m, --module=              Add modules to process in module_dir
- -v, --verbose              Verbose
- -o, --output-dir=          Output directory for module files
- -I, --includes-file=       Create a file containing list of processed modules
- -G, --generate             Generate boilerplate DOCUMENTATION to stdout
-'''
-            sys.exit(0)
-        else:
-            print >>sys.stderr, 'ERROR: Option %s unknown to getopt' % opt
-            sys.exit(1)
-
-    # print "M: %s" % args.module_dir
-    # print "t: %s" % args.type
-    # print "m: %s" % args.module_list
-    # print "v: %s" % args.verbose
-
-    if args.do_boilerplate:
+    if options.do_boilerplate:
         boilerplate()
+
+        print ""
+        print "EXAMPLES = '''"
+        print "# example of doing ___ from a playbook"
+        print "your_module: some_arg=1 other_arg=2"
+        print "'''"
+        print ""
+
         sys.exit(0)
 
-    if not args.module_dir:
+    if not options.module_dir:
         print "Need module_dir"
         sys.exit(1)
+    if not os.path.exists(options.module_dir):
+        print >>sys.stderr, "Module directory does not exist: %s" % options.module_dir
+        sys.exit(1)
 
-    if not args.template_dir:
+
+    if not options.template_dir:
         print "Need template_dir"
         sys.exit(1)
 
-    env = Environment(loader=FileSystemLoader(args.template_dir),
+    env = Environment(loader=FileSystemLoader(options.template_dir),
         variable_start_string="@{",
         variable_end_string="}@",
         trim_blocks=True,
-        )
+    )
 
     env.globals['xline'] = rst_xline
 
-    if args.type == 'latex':
+    if options.type == 'latex':
         env.filters['jpfunc'] = latex_ify
         template = env.get_template('latex.j2')
         outputname = "%s.tex"
-        includecmt = "% generated code\n"
-        includefmt = "\\input %s\n"
-    if args.type == 'html':
+        includecmt = ""
+        includefmt = "%s\n"
+    if options.type == 'html':
         env.filters['jpfunc'] = html_ify
         template = env.get_template('html.j2')
         outputname = "%s.html"
         includecmt = ""
         includefmt = ""
-    if args.type == 'man':
+    if options.type == 'man':
         env.filters['jpfunc'] = man_ify
         template = env.get_template('man.j2')
         outputname = "ansible.%s.3"
         includecmt = ""
         includefmt = ""
-    if args.type == 'rst':
+    if options.type == 'rst':
         env.filters['jpfunc'] = rst_ify
         env.filters['html_ify'] = html_ify
         env.filters['fmt'] = rst_fmt
@@ -293,111 +286,130 @@ def main():
         outputname = "%s.rst"
         includecmt = ".. Generated by module_formatter\n"
         includefmt = ".. include:: modules/%s.rst\n"
-    if args.type == 'json':
+    if options.type == 'json':
         env.filters['jpfunc'] = json_ify
         outputname = "%s.json"
         includecmt = ""
         includefmt = ""
-    if args.type == 'js':
+    if options.type == 'js':
         env.filters['jpfunc'] = js_ify
         template = env.get_template('js.j2')
         outputname = "%s.js"
+    if options.type == 'markdown':
+        env.filters['jpfunc'] = markdown_ify
+        env.filters['html_ify'] = html_ify
+        template = env.get_template('markdown.j2')
+        outputname = "%s.md"
+        includecmt = ""
+        includefmt = ""
 
-    if args.includes_file is not None and includefmt != "":
-        incfile = open(args.includes_file, "w")
+    if options.includes_file is not None and includefmt != "":
+        incfile = open(options.includes_file, "w")
         incfile.write(includecmt)
 
     # Temporary variable required to genrate aggregated content in 'js' format.
     js_data = []
-    for module in sorted(os.listdir(args.module_dir)):
-        if len(args.module_list):
-            if not module in args.module_list:
+
+    categories = list_modules(options.module_dir)
+    last_category = None
+    category_names = categories.keys()
+    category_names.sort()
+ 
+    for category in category_names:
+        module_map = categories[category]
+ 
+        category = category.replace("_"," ")
+        category = category.title()
+
+        modules = module_map.keys()
+        modules.sort()
+
+        for module in modules:
+
+            print "rendering: %s" % module
+
+            fname = module_map[module]
+
+            if len(options.module_list):
+                if not module in options.module_list:
+                    continue
+
+            # fname = os.path.join(options.module_dir, module)
+
+            extra = os.path.join("inc", "%s.tex" % module)
+
+            # probably could just throw out everything with extensions
+            if fname.endswith(".swp") or fname.endswith(".orig") or fname.endswith(".rej"):
                 continue
 
-        fname = os.path.join(args.module_dir, module)
-        extra = os.path.join("inc", "%s.tex" % module)
+            # print " processing module source ---> %s" % fname
 
-        if fname.endswith(".swp"):
-            continue
-
-        print " processing module source ---> %s" % fname
-
-        if args.type == 'js':
-            if fname.endswith(".json"):
-                f = open(fname)
-                j = json.load(f)
-                f.close()
-                js_data.append(j)
-            continue
-
-        doc = get_docstring(fname, verbose=args.verbose)
-
-        if doc is None and module not in BLACKLIST_MODULES:
-            sys.stderr.write("*** ERROR: CORE MODULE MISSING DOCUMENTATION: %s ***\n" % module)
-            #sys.exit(1)
-
-        if not doc is None:
-
-            doc['filename']         = fname
-            doc['docuri']           = doc['module'].replace('_', '-')
-            doc['now_date']         = datetime.date.today().strftime('%Y-%m-%d')
-            doc['ansible_version']  = args.ansible_version
-
-            if args.includes_file is not None and includefmt != "":
-                incfile.write(includefmt % module)
-
-            if args.verbose:
-                print json.dumps(doc, indent=4)
-
-
-            if args.type == 'latex':
-                if os.path.exists(extra):
-                    f = open(extra)
-                    extradata = f.read()
+            if options.type == 'js':
+                if fname.endswith(".json"):
+                    f = open(fname)
+                    j = json.load(f)
                     f.close()
-                    doc['extradata'] = extradata
+                    js_data.append(j)
+                continue
 
-            if args.type == 'json':
-                text = json.dumps(doc, indent=2)
-            else:
-                text = template.render(doc)
+            doc, examples = ansible.utils.module_docs.get_docstring(fname, verbose=options.verbose)
 
-            return_data(text, args, outputname, module)
+            if doc is None and module not in ansible.utils.module_docs.BLACKLIST_MODULES:
+                print " while processing module source ---> %s" % fname
+                sys.stderr.write("*** ERROR: CORE MODULE MISSING DOCUMENTATION: %s ***\n" % module)
+                #sys.exit(1)
 
-    if args.type == 'js':
-        docs = {}
-        docs['json'] = json.dumps(js_data, indent=2)
-        text = template.render(docs)
-        return_data(text, args, outputname, 'modules')
+            if not doc is None:
+ 
+                all_keys = []
+                for (k,v) in doc['options'].iteritems():
+                    all_keys.append(k)
+                all_keys = sorted(all_keys)
+                doc['option_keys'] = all_keys 
 
-#def boilerplate():
-#
-#    # Sneaky: insert author's name from Git config
-#
-#    cmd = subprocess.Popen("git config --get user.name", shell=True,
-#            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-#    out, err = cmd.communicate()
-#
-#    if len(out.split('\n')) == 2:
-#        author = out.split('\n')[0]
-#        print author
-#    else:
-#        author = "Your Name"
-#
-#    # I can't dump YAML in ordered fasion, so I use this boilerplate string
-#    # and verify it is parseable just before printing it out to the user.
-#
-#    try:
-#        boilplate = yaml.load(BOILERPLATE)
-#    except:
-#        print "Something is wrong with the BOILERPLATE"
-#        sys.exit(1)
-#
-#    print """
-#DOCUMENTATION = '''
-#%s
-#'''
-#"""[1:-1] % (BOILERPLATE.replace('AUTHORNAME', author) [1:-1] )
+                doc['filename']         = fname
+                doc['docuri']           = doc['module'].replace('_', '-')
+                doc['now_date']         = datetime.date.today().strftime('%Y-%m-%d')
+                doc['ansible_version']  = options.ansible_version
+                doc['plainexamples']    = examples  #plain text
+
+                # BOOKMARK: here is where we build the table of contents...
+
+                if options.includes_file is not None and includefmt != "":
+
+                    if last_category != category:
+                         incfile.write("\n\n")
+                         incfile.write(category)
+                         incfile.write("\n")
+                         incfile.write('`' * len(category))
+                         incfile.write("\n\n")
+                         last_category = category
+
+                    incfile.write(includefmt % module)
+
+                if options.verbose:
+                    print json.dumps(doc, indent=4)
+
+
+                if options.type == 'latex':
+                    if os.path.exists(extra):
+                        f = open(extra)
+                        extradata = f.read()
+                        f.close()
+                        doc['extradata'] = extradata
+
+                if options.type == 'json':
+                    text = json.dumps(doc, indent=2)
+                else:
+                    text = template.render(doc)
+
+                return_data(text, options, outputname, module)
+
+        if options.type == 'js':
+            docs = {}
+            docs['json'] = json.dumps(js_data, indent=2)
+            text = template.render(docs)
+            return_data(text, options, outputname, 'modules')
 
 if __name__ == '__main__':
     main()

@@ -1,0 +1,148 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2013, Darryl Stoflet <stoflet@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+DOCUMENTATION = '''
+---
+module: monit
+short_description: Manage the state of a program monitored via Monit
+description:
+     - Manage the state of a program monitored via I(Monit)
+version_added: "1.2"
+options:
+  name:
+    description:
+      - The name of the I(monit) program/process to manage
+    required: true
+    default: null
+  state:
+    description:
+      - The state of service
+    required: true
+    default: null
+    choices: [ "present", "started", "stopped", "restarted", "monitored", "unmonitored", "reloaded" ]
+requirements: [ ]
+author: Darryl Stoflet
+'''
+
+EXAMPLES = '''
+# Manage the state of program "httpd" to be in "started" state.
+- monit: name=httpd state=started
+'''
+
+
+def main():
+    arg_spec = dict(
+        name=dict(required=True),
+        state=dict(required=True, choices=['present', 'started', 'restarted', 'stopped', 'monitored', 'unmonitored', 'reloaded'])
+    )
+
+    module = AnsibleModule(argument_spec=arg_spec, supports_check_mode=True)
+
+    name = module.params['name']
+    state = module.params['state']
+
+    MONIT = module.get_bin_path('monit', True)
+
+    if state == 'reloaded':
+        if module.check_mode:
+            module.exit_json(changed=True)
+        rc, out, err = module.run_command('%s reload' % MONIT)
+        module.exit_json(changed=True, name=name, state=state)
+    
+    rc, out, err = module.run_command('%s summary | grep "Process \'%s\'"' % (MONIT, name))
+    present = name in out
+
+    if not present and not state == 'present':
+        module.fail_json(msg='%s process not presently configured with monit' % name, name=name, state=state)
+
+    if state == 'present':
+        if not present:
+            if module.check_mode:
+                module.exit_json(changed=True)
+            module.run_command('%s reload' % MONIT, check_rc=True)
+            rc, out, err = module.run_command('%s summary | grep %s' % (MONIT, name))
+            if name in out:
+                module.exit_json(changed=True, name=name, state=state)
+            else:
+                module.fail_json(msg=out, name=name, state=state)
+
+        module.exit_json(changed=False, name=name, state=state)
+
+    rc, out, err = module.run_command('%s summary | grep %s' % (MONIT, name))
+    running = 'running' in out.lower()
+
+    if running and (state == 'started' or state == 'monitored'):
+        module.exit_json(changed=False, name=name, state=state)
+
+    if running and state == 'monitored':
+        module.exit_json(changed=False, name=name, state=state)
+
+    if running and state == 'stopped':
+        if module.check_mode:
+            module.exit_json(changed=True)
+        module.run_command('%s stop %s' % (MONIT, name))
+        rc, out, err = module.run_command('%s summary | grep %s' % (MONIT, name))
+        if 'Not monitored' in out or 'stop pending' in out:
+            module.exit_json(changed=True, name=name, state=state)
+        module.fail_json(msg=out)
+
+    if running and state == 'unmonitored':
+        if module.check_mode:
+            module.exit_json(changed=True)
+        module.run_command('%s unmonitor %s' % (MONIT, name))
+        rc, out, err = module.run_command('%s summary | grep %s' % (MONIT, name))
+        if 'Not monitored' in out:
+            module.exit_json(changed=True, name=name, state=state)
+        module.fail_json(msg=out)
+
+    elif state == 'restarted':
+        if module.check_mode:
+            module.exit_json(changed=True)
+        module.run_command('%s stop %s' % (MONIT, name))
+        rc, out, err = module.run_command('%s start %s' % (MONIT, name))
+        if 'Initializing' in out:
+            module.exit_json(changed=True, name=name, state=state)
+        module.fail_json(msg=out)
+
+    elif not running and state == 'started':
+        if module.check_mode:
+            module.exit_json(changed=True)
+        module.run_command('%s start %s' % (MONIT, name))
+        rc, out, err = module.run_command('%s summary | grep %s' % (MONIT, name))
+        if 'Initializing' in out or 'start pending' in out:
+            module.exit_json(changed=True, name=name, state=state)
+        module.fail_json(msg=out)
+
+    elif not running and state == 'monitored':
+        if module.check_mode:
+            module.exit_json(changed=True)
+        module.run_command('%s monitor %s' % (MONIT, name))
+        rc, out, err = module.run_command('%s summary | grep %s' % (MONIT, name))
+        if 'Initializing' in out or 'start pending' in out:
+            module.exit_json(changed=True, name=name, state=state)
+        module.fail_json(msg=out)
+
+    module.exit_json(changed=False, name=name, state=state)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+main()

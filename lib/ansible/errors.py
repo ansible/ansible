@@ -32,3 +32,9 @@ class AnsibleConnectionFailed(AnsibleError):
 
 class AnsibleYAMLValidationFailed(AnsibleError):
     pass
+
+class AnsibleUndefinedVariable(AnsibleError):
+    pass
+
+class AnsibleFilterError(AnsibleError):
+    pass

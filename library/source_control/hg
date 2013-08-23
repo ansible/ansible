@@ -1,0 +1,256 @@
+#!/usr/bin/python
+#-*- coding: utf-8 -*-
+
+# (c) 2013, Yeukhon Wong <yeukhon@acm.org>
+#
+# This module was originally inspired by Brad Olson's ansible-module-mercurial
+# <https://github.com/bradobro/ansible-module-mercurial>. This module tends
+# to follow the git module implementation.
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+import os
+import shutil
+import ConfigParser
+from subprocess import Popen, PIPE
+
+DOCUMENTATION = '''
+---
+module: hg
+short_description: Manages Mercurial (hg) repositories.
+description:
+    - Manages Mercurial (hg) repositories. Supports SSH, HTTP/S and local address.
+version_added: "1.0"
+author: Yeukhon Wong
+options:
+    repo:
+        description:
+            - The repository address.
+        required: true
+        default: null
+        aliases: [ name ]
+    dest:
+        description:
+            - Absolute path of where the repository should be cloned to.
+        required: true
+        default: null
+    revision:
+        description:
+            - Equivalent C(-r) option in hg command which could be the changeset, revision number,
+              branch name or even tag. 
+        required: false
+        default: "default"
+        aliases: [ version ]
+    force:
+        description:
+            - Discards uncommitted changes. Runs C(hg update -C).
+        required: false
+        default: "yes"
+        choices: [ "yes", "no" ]
+    purge:
+        description:
+            - Deletes untracked files. Runs C(hg purge). Note this requires C(purge) extension to
+              be enabled if C(purge=yes). This module will modify hgrc file on behalf of the user
+              and undo the changes before exiting the task.
+        required: false
+        default: "no"
+        choices: [ "yes", "no" ]
+notes:
+    - If the task seems to be hanging, first verify remote host is in C(known_hosts).
+      SSH will prompt user to authorize the first contact with a remote host. One solution is to add
+      C(StrictHostKeyChecking no) in C(.ssh/config) which will accept and authorize the connection
+      on behalf of the user. However, if you run as a different user such as setting sudo to True),
+      for example, root will not look at the user .ssh/config setting.
+
+requirements: [ ]
+'''
+
+EXAMPLES = '''
+# Ensure the current working copy is inside the stable branch and deletes untracked files if any.
+- hg: repo=https://bitbucket.org/user/repo1 dest=/home/user/repo1 revision=stable purge=yes
+'''
+
+def _set_hgrc(hgrc, vals):
+    parser = ConfigParser.SafeConfigParser()
+    parser.read(hgrc)
+
+    # val is a list of triple-tuple of the form [(section, option, value),...]
+    for each in vals:
+        (section, option, value) = each
+        if not parser.has_section(section):
+            parser.add_section(section)
+        parser.set(section, option, value)
+    
+    f = open(hgrc, 'w')
+    parser.write(f)
+    f.close()
+
+def _undo_hgrc(hgrc, vals):
+    parser = ConfigParser.SafeConfigParser()
+    parser.read(hgrc)
+     
+    for each in vals:
+        (section, option, value) = each
+        if parser.has_section(section):
+            parser.remove_option(section, option)
+
+    f = open(hgrc, 'w')
+    parser.write(f)
+    f.close()
+
+def _hg_command(module, args_list):
+    (rc, out, err) = module.run_command(['hg'] + args_list)
+    return (rc, out, err)
+
+def _hg_list_untracked(module, dest):
+    return _hg_command(module, ['purge', '-R', dest, '--print'])
+
+def get_revision(module, dest):
+    """
+    hg id -b -i -t returns a string in the format:
+       "<changeset>[+] <branch_name> <tag>" 
+    This format lists the state of the current working copy,
+    and indicates whether there are uncommitted changes by the
+    plus sign. Otherwise, the sign is omitted.
+
+    Read the full description via hg id --help
+    """
+    (rc, out, err) = _hg_command(module, ['id', '-b', '-i', '-t', '-R', dest])
+    if rc != 0:
+        module.fail_json(msg=err)
+    else:
+        return out.strip('\n')
+
+def has_local_mods(module, dest):
+    now = get_revision(module, dest)
+    if '+' in now:
+        return True
+    else:
+        return False
+
+def hg_discard(module, dest):
+    before = has_local_mods(module, dest)
+    if not before:
+        return False
+
+    (rc, out, err) = _hg_command(module, ['update', '-C', '-R', dest])
+    if rc != 0:
+        module.fail_json(msg=err)
+
+    after = has_local_mods(module, dest)
+    if before != after and not after:   # no more local modification
+        return True
+            
+def hg_purge(module, dest):
+    hgrc = os.path.join(dest, '.hg/hgrc')
+    purge_option = [('extensions', 'purge', '')]
+    _set_hgrc(hgrc, purge_option)   # enable purge extension
+    
+    # before purge, find out if there are any untracked files
+    (rc1, out1, err1) = _hg_list_untracked(module, dest)
+    if rc1 != 0:
+        module.fail_json(msg=err)
+    
+    # there are some untrackd files
+    if out1 != '':
+        (rc2, out2, err2) = _hg_command(module, ['purge', '-R', dest])
+        if rc2 == 0:
+            _undo_hgrc(hgrc, purge_option)
+        else:
+            module.fail_json(msg=err)
+        return True
+    else:
+        return False
+
+def hg_cleanup(module, dest, force, purge):
+    discarded = False
+    purged = False
+
+    if force:
+        discarded = hg_discard(module, dest)
+    if purge:
+        purged = hg_purge(module, dest)
+    if discarded or purged:
+        return True
+    else:
+        return False
+
+def hg_pull(module, dest, revision, repo):
+    return _hg_command(module, ['pull', '-r', revision, '-R', dest, repo])
+
+def hg_update(module, dest, revision):
+    return _hg_command(module, ['update', '-R', dest])
+
+def hg_clone(module, repo, dest, revision):
+    return _hg_command(module, ['clone', repo, dest, '-r', revision])
+
+def switch_version(module, dest, revision):
+    return _hg_command(module, ['update', '-r', revision, '-R', dest])
+
+# ===========================================
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            repo = dict(required=True, aliases=['name']),
+            dest = dict(required=True),
+            revision = dict(default="default", aliases=['version']),
+            force = dict(default='yes', type='bool'),
+            purge = dict(default='no', type='bool')
+        ),
+    )
+    repo = module.params['repo']
+    dest = os.path.expanduser(module.params['dest'])
+    revision = module.params['revision']
+    force = module.params['force']
+    purge = module.params['purge']
+    hgrc = os.path.join(dest, '.hg/hgrc')
+   
+    # initial states
+    before = ''
+    changed = False
+    cleaned = False
+
+    # If there is no hgrc file, then assume repo is absent
+    # and perform clone. Otherwise, perform pull and update.
+    if not os.path.exists(hgrc):
+        (rc, out, err) = hg_clone(module, repo, dest, revision)
+        if rc != 0:
+            module.fail_json(msg=err)
+    else:
+        # get the current state before doing pulling
+        before = get_revision(module, dest)
+
+        # can perform force and purge
+        cleaned = hg_cleanup(module, dest, force, purge)
+
+        (rc, out, err) = hg_pull(module, dest, revision, repo)
+        if rc != 0:
+            module.fail_json(msg=err)
+
+        (rc, out, err) = hg_update(module, dest, revision)
+        if rc != 0:
+            module.fail_json(msg=err)
+
+    switch_version(module, dest, revision)
+    after = get_revision(module, dest)
+    if before != after or cleaned:
+        changed = True
+    module.exit_json(before=before, after=after, changed=changed, cleaned=cleaned)
+
+# include magic from lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 #
@@ -35,6 +35,7 @@ import traceback
 import optparse
 import ansible.utils as utils
 import ansible.module_common as module_common
+import ansible.constants as C
 
 try:
     import json
@@ -62,10 +63,13 @@ def parse():
     else:
         return options, args
 
-def write_argsfile(argstring):
+def write_argsfile(argstring, json=False):
     """ Write args to a file for old-style module's use. """
     argspath = os.path.expanduser("~/.ansible_test_module_arguments")
     argsfile = open(argspath, 'w')
+    if json:
+        args = utils.parse_kv(argstring)
+        argstring = utils.jsonify(args)
     argsfile.write(argstring)
     argsfile.close()
     return argspath
@@ -81,8 +85,13 @@ def boilerplate_module(modfile, args):
     if included_boilerplate:
 
         module_data = module_data.replace(module_common.REPLACER, module_common.MODULE_COMMON)
-        encoded_args = "\"\"\"%s\"\"\"" % args.replace("\"","\\\"")
+        encoded_args = repr(str(args))
         module_data = module_data.replace(module_common.REPLACER_ARGS, encoded_args)
+        encoded_lang = repr(C.DEFAULT_MODULE_LANG)
+        empty_complex = repr("{}")
+        module_data = module_data.replace(module_common.REPLACER_LANG, encoded_lang)
+        module_data = module_data.replace('syslog.LOG_USER', "syslog.%s" % C.DEFAULT_SYSLOG_FACILITY)
+        module_data = module_data.replace(module_common.REPLACER_COMPLEX, empty_complex)
 
         modfile2_path = os.path.expanduser("~/.ansible_module_generated")
         print "* including generated source, if any, saving to: %s" % modfile2_path
@@ -91,10 +100,16 @@ def boilerplate_module(modfile, args):
         modfile2.write(module_data)
         modfile2.close()
         modfile = modfile2_path
-        return (modfile2_path, included_boilerplate)
+
+        return (modfile2_path, included_boilerplate, False)
     else:
+
+        old_style_but_json = False
+        if 'WANT_JSON' in module_data:
+           old_style_but_json = True
+
         print "* module boilerplate substitution not requested in module, line numbers will be unaltered"
-        return (modfile, included_boilerplate)
+        return (modfile, included_boilerplate, old_style_but_json)
 
 def runtest( modfile, argspath):
     """Test run a module, piping it's output for reporting."""
@@ -136,10 +151,14 @@ def rundebug(debugger, modfile, argspath):
 def main(): 
 
     options, args = parse()
-    (modfile, is_new_style) = boilerplate_module(options.module_path, options.module_args)
+    (modfile, is_new_style, old_style_but_json) = boilerplate_module(options.module_path, options.module_args)
+
     argspath=None
     if not is_new_style:
-        argspath = write_argsfile(options.module_args)
+        if old_style_but_json:
+            argspath = write_argsfile(options.module_args, json=True)
+        else:
+            argspath = write_argsfile(options.module_args, json=False)
     if options.debugger: 
         rundebug(options.debugger, modfile, argspath)
     else:

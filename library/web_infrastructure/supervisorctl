@@ -1,0 +1,177 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2012, Matt Wright <matt@nobien.net>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+DOCUMENTATION = '''
+---
+module: supervisorctl
+short_description: Manage the state of a program or group of programs running via Supervisord
+description:
+     - Manage the state of a program or group of programs running via I(Supervisord)
+version_added: "0.7"
+options:
+  name:
+    description:
+      - The name of the I(supervisord) program/process to manage
+    required: true
+    default: null
+  config:
+    description:
+      - configuration file path, passed as -c to supervisorctl
+    required: false
+    default: null
+    version_added: "1.3"
+  server_url:
+    description:
+      - URL on which supervisord server is listening, passed as -s to supervisorctl
+    required: false
+    default: null
+    version_added: "1.3"
+  username:
+    description:
+      - username to use for authentication with server, passed as -u to supervisorctl
+    required: false
+    default: null
+    version_added: "1.3"
+  password:
+    description:
+      - password to use for authentication with server, passed as -p to supervisorctl
+    required: false
+    default: null
+    version_added: "1.3"
+  state:
+    description:
+      - The state of service
+    required: true
+    default: null
+    choices: [ "present", "started", "stopped", "restarted" ]
+requirements: [ ]
+author: Matt Wright
+'''
+
+EXAMPLES = '''
+# Manage the state of program to be in 'started' state.
+- supervisorctl: name=my_app state=started
+
+# Restart my_app, reading supervisorctl configuration from a specified file.
+- supervisorctl: name=my_app state=restarted config=/var/opt/my_project/supervisord.conf
+
+# Restart my_app, connecting to supervisord with credentials and server URL.
+- supervisorctl: name=my_app state=restarted username=test password=testpass server_url=http://localhost:9001
+
+'''
+
+def main():
+    arg_spec = dict(
+        name=dict(required=True),
+        config=dict(required=False),
+        server_url=dict(required=False),
+        username=dict(required=False),
+        password=dict(required=False),
+        state=dict(required=True, choices=['present', 'started', 'restarted', 'stopped'])
+    )
+
+    module = AnsibleModule(argument_spec=arg_spec, supports_check_mode=True)
+
+    name = module.params['name']
+    state = module.params['state']
+    config = module.params.get('config')
+    server_url = module.params.get('server_url')
+    username = module.params.get('username')
+    password = module.params.get('password')
+
+    supervisorctl_args = [ module.get_bin_path('supervisorctl', True) ]
+
+    if config:
+        supervisorctl_args.extend(['-c', config])
+    if server_url:
+        supervisorctl_args.extend(['-s', server_url])
+    if username:
+        supervisorctl_args.extend(['-u', username])
+    if password:
+        supervisorctl_args.extend(['-p', password])
+
+    def run_supervisorctl(cmd, name=None, **kwargs):
+        args = list(supervisorctl_args)  # copy the master args
+        args.append(cmd)
+        if name:
+            args.append(name)
+        return module.run_command(args, **kwargs)
+
+    rc, out, err = run_supervisorctl('status')
+    present = name in out
+
+    if state == 'present':
+        if not present:
+            if module.check_mode:
+                module.exit_json(changed=True)
+            run_supervisorctl('reread', check_rc=True)
+            rc, out, err = run_supervisorctl('add', name)
+
+            if '%s: added process group' % name in out:
+                module.exit_json(changed=True, name=name, state=state)
+            else:
+                module.fail_json(msg=out, name=name, state=state)
+
+        module.exit_json(changed=False, name=name, state=state)
+
+    rc, out, err = run_supervisorctl('status', name)
+    running = 'RUNNING' in out
+
+    if running and state == 'started':
+        module.exit_json(changed=False, name=name, state=state)
+
+    if running and state == 'stopped':
+        if module.check_mode:
+            module.exit_json(changed=True)
+        rc, out, err = run_supervisorctl('stop', name)
+
+        if '%s: stopped' % name in out:
+            module.exit_json(changed=True, name=name, state=state)
+
+        module.fail_json(msg=out)
+
+    elif state == 'restarted':
+        if module.check_mode:
+            module.exit_json(changed=True)
+        rc, out, err = run_supervisorctl('update', name)
+        rc, out, err = run_supervisorctl('restart', name)
+
+        if '%s: started' % name in out:
+            module.exit_json(changed=True, name=name, state=state)
+
+        module.fail_json(msg=out)
+
+    elif not running and state == 'started':
+        if module.check_mode:
+            module.exit_json(changed=True)
+        rc, out, err = run_supervisorctl('start',name)
+
+        if '%s: started' % name in out:
+            module.exit_json(changed=True, name=name, state=state)
+
+        module.fail_json(msg=out)
+
+    module.exit_json(changed=False, name=name, state=state)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+main()

@@ -1,0 +1,153 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2013, Andrew Dunham <andrew@du.nham.ca>
+# Based on macports (Jimmy Tang <jcftang@gmail.com>)
+#
+# This module is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: homebrew
+author: Andrew Dunham
+short_description: Package manager for Homebrew
+description:
+    - Manages Homebrew packages
+version_added: "1.1"
+options:
+    name:
+        description:
+            - name of package to install/remove
+        required: true
+    state:
+        description:
+            - state of the package
+        choices: [ 'present', 'absent' ]
+        required: false
+        default: present
+    update_homebrew:
+        description:
+            - update homebrew itself first
+        required: false
+        default: "no"
+        choices: [ "yes", "no" ]
+notes:  []
+'''
+EXAMPLES = '''
+- homebrew: name=foo state=present
+- homebrew: name=foo state=present update_homebrew=yes
+- homebrew: name=foo state=absent
+- homebrew: name=foo,bar state=absent
+'''
+
+
+def update_homebrew(module, brew_path):
+    """ Updates packages list. """
+
+    rc, out, err = module.run_command("%s update" % brew_path)
+
+    if rc != 0:
+        module.fail_json(msg="could not update homebrew")
+
+
+def query_package(module, brew_path, name, state="present"):
+    """ Returns whether a package is installed or not. """
+
+    if state == "present":
+        rc, out, err = module.run_command("%s list -m1 | grep -q '^%s$'" % (brew_path, name))
+        if rc == 0:
+            return True
+
+        return False
+
+
+def remove_packages(module, brew_path, packages):
+    """ Uninstalls one or more packages if installed. """
+
+    removed_count = 0
+
+    # Using a for loop incase of error, we can report the package that failed
+    for package in packages:
+        # Query the package first, to see if we even need to remove.
+        if not query_package(module, brew_path, package):
+            continue
+
+        if module.check_mode:
+            module.exit_json(changed=True)
+        rc, out, err = module.run_command([brew_path, 'remove', package])
+
+        if query_package(module, brew_path, package):
+            module.fail_json(msg="failed to remove %s: %s" % (package, out.strip()))
+
+        removed_count += 1
+
+    if removed_count > 0:
+        module.exit_json(changed=True, msg="removed %d package(s)" % removed_count)
+
+    module.exit_json(changed=False, msg="package(s) already absent")
+
+
+def install_packages(module, brew_path, packages):
+    """ Installs one or more packages if not already installed. """
+
+    installed_count = 0
+
+    for package in packages:
+        if query_package(module, brew_path, package):
+            continue
+
+        if module.check_mode:
+            module.exit_json(changed=True)
+        rc, out, err = module.run_command([brew_path, 'install', package])
+
+        if not query_package(module, brew_path, package):
+            module.fail_json(msg="failed to install %s: %s" % (package, out.strip()))
+
+        installed_count += 1
+
+    if installed_count > 0:
+        module.exit_json(changed=True, msg="installed %d package(s)" % (installed_count,))
+
+    module.exit_json(changed=False, msg="package(s) already present")
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            name = dict(aliases=["pkg"], required=True),
+            state = dict(default="present", choices=["present", "installed", "absent", "removed"]),
+            update_homebrew = dict(default="no", aliases=["update-brew"], type='bool')
+        ),
+        supports_check_mode=True
+    )
+
+    brew_path = module.get_bin_path('brew', True, ['/usr/local/bin'])
+
+    p = module.params
+
+    if p["update_homebrew"]:
+        update_homebrew(module, brew_path)
+
+    pkgs = p["name"].split(",")
+
+    if p["state"] in ["present", "installed"]:
+        install_packages(module, brew_path, pkgs)
+
+    elif p["state"] in ["absent", "removed"]:
+        remove_packages(module, brew_path, pkgs)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+main()

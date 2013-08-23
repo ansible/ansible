@@ -1,6 +1,7 @@
 # extremely simple test of the most basic of playbook engine/functions
 ---
 - hosts: all
+  connection: local
 
 # the 'weasels' string should show up in the output
 
@@ -24,7 +25,7 @@
     action: command true
 
   - name: test basic shell, plus two ways to dereference a variable
-    action: shell echo $HOME $port {{ port }}
+    action: shell echo $HOME $port
 
   - name: test vars_files imports
     action: shell echo $duck $cow $testing
@@ -41,7 +42,10 @@
 # not be triggered twice because it's already triggered
 
   - name: test template
-    action: template src=sample.j2 dest=/tmp/ansible_test_data_template.out
+    action: template src=$item dest=/tmp/ansible_test_data_template.out
+    first_available_file:
+    - nonexistantfile
+    - sample.j2
     notify:
     - on change 1
     - on change 2

@@ -47,11 +47,14 @@ The 'PATH' to the inventory hosts file, which defaults to
 
 *-M* 'DIRECTORY', *--module-path=*'DIRECTORY'::
 
-The 'DIRECTORY' to load modules from. The default is '/usr/share/ansible'.
+The 'DIRECTORY' search path to load modules from. The default is
+'/usr/share/ansible'. This can also be set with the ANSIBLE_LIBRARY
+environment variable.
 
 *-e* 'VARS', *--extra-vars=*'VARS'::
 
-Extra variables to inject into a playbook, in key=value key=value format.
+Extra variables to inject into a playbook, in key=value key=value format or
+as quoted JSON (hashes and arrays).
 
 *-f* 'NUM', *--forks=*'NUM'::
 
@@ -72,6 +75,25 @@ access, if any.
 *-U*, 'SUDO_USER', *--sudo-user=*'SUDO_USER'::
 
 Desired sudo user (default=root).
+
+*--tags*::
+
+Run only these tags from the playbook
+
+*--syntax-check*::
+
+Look for syntax errors in the playbook, but don't run anything
+
+*--check*::
+
+Do not make any changes on the remote system, but test resources to see what might
+have changed.  Note this can not scan all possible resource types and is only
+a simulation.
+
+*--diff*::
+
+When changing any templated files, show the unified diffs of how they changed.  When
+used with --check, shows how the files would have changed if --check were not used.
 
 *-T* 'SECONDS', *--timeout=*'SECONDS'::
 
@@ -107,6 +129,16 @@ ANSIBLE_HOSTS  -- Override the default ansible hosts file
 
 ANSIBLE_LIBRARY -- Override the default ansible module library path
 
+FILES
+-----
+
+/etc/ansible/hosts -- Default inventory file
+
+/usr/share/ansible/ -- Default module library
+
+/etc/ansible/ansible.cfg -- Config file, used if present
+
+~/.ansible.cfg -- User config file, overrides the default config if present
 
 AUTHOR
 ------
@@ -126,7 +158,7 @@ Ansible is released under the terms of the GPLv3 License.
 SEE ALSO
 --------
 
-*ansible*(1), *ansible-pull*(1)
+*ansible*(1), *ansible-pull*(1), *ansible-doc*(1)
 
 Extensive documentation as well as IRC and mailing list info
 is available on the ansible home page: <https://ansible.github.com/>

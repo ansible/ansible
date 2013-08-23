@@ -60,8 +60,9 @@ Execute the module called 'NAME'.
 
 *-M* 'DIRECTORY', *--module-path=*'DIRECTORY'::
 
-The 'DIRECTORY' to load modules from. The default is '/usr/share/ansible'.
-
+The 'DIRECTORY' search path to load modules from. The default is
+'/usr/share/ansible'. This can also be set with the ANSIBLE_LIBRARY
+environment variable.
 
 *-a* \'_ARGUMENTS_', *--args=*\'_ARGUMENTS_'::
 
@@ -102,7 +103,7 @@ Poll a background job every 'NUM' seconds. Requires *-B*.
 
 *-u* 'USERNAME', *--remote-user=*'USERNAME'::
 
-Use this remote 'USERNAME' instead of root.
+Use this remote 'USERNAME' instead of the current user.
 
 *-U* 'SUDO_USERNAME', *--sudo-user=*'SUDO_USERNAME'::
 
@@ -116,6 +117,10 @@ and 'local'.  'local' is mostly useful for crontab or kickstarts.
 *-l* 'SUBSET', *--limit=*'SUBSET'::
 
 Further limits the selected host/group patterns.
+
+*-l* '\~REGEX', *--limit=*'~REGEX'::
+
+Further limits hosts with a regex pattern.
 
 INVENTORY
 ---------
@@ -135,6 +140,9 @@ FILES
 
 /usr/share/ansible/ -- Default module library
 
+/etc/ansible/ansible.cfg -- Config file, used if present
+
+~/.ansible.cfg -- User config file, overrides the default config if present
 
 ENVIRONMENT
 -----------
@@ -144,6 +152,8 @@ The following environment variables may specified.
 ANSIBLE_HOSTS  -- Override the default ansible hosts file
 
 ANSIBLE_LIBRARY -- Override the default ansible module library path
+
+ANSIBLE_CONFIG -- Override the default ansible config file
 
 
 AUTHOR
@@ -164,7 +174,7 @@ Ansible is released under the terms of the GPLv3 License.
 SEE ALSO
 --------
 
-*ansible-playbook*(1), *ansible-pull*(1)
+*ansible-playbook*(1), *ansible-pull*(1), *ansible-doc*(1)
 
 Extensive documentation as well as IRC and mailing list info
 is available on the ansible home page: <https://ansible.github.com/>

@@ -17,6 +17,7 @@
 
 import json
 import os
+import base64
 from ansible.callbacks import vvv
 from ansible import utils
 from ansible import errors
@@ -33,7 +34,7 @@ except ImportError:
 class Connection(object):
     ''' ZeroMQ accelerated connection '''
 
-    def __init__(self, runner, host, port):
+    def __init__(self, runner, host, port, *args, **kwargs):
 
         self.runner = runner
 
@@ -66,18 +67,23 @@ class Connection(object):
 
         return self
 
-    def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False):
+    def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False, executable='/bin/sh'):
         ''' run a command on the remote host '''
 
         vvv("EXEC COMMAND %s" % cmd)
 
         if self.runner.sudo and sudoable:
-            raise errors.AnsibleError("fireball does not use sudo, but runs as whoever it was initiated as.  (That itself is where to use sudo).")
+            raise errors.AnsibleError(
+                "When using fireball, do not specify sudo to run your tasks. " +
+                "Instead sudo the fireball action with sudo. " +
+                "Task will communicate with the fireball already running in sudo mode."
+            )
 
         data = dict(
             mode='command',
             cmd=cmd,
             tmp_path=tmp_path,
+            executable=executable,
         )
         data = utils.jsonify(data)
         data = utils.encrypt(self.key, data)
@@ -87,7 +93,7 @@ class Connection(object):
         response = utils.decrypt(self.key, response)
         response = utils.parse_json(response)
 
-        return ('', response.get('stdout',''), response.get('stderr',''))
+        return (response.get('rc',None), '', response.get('stdout',''), response.get('stderr',''))
 
     def put_file(self, in_path, out_path):
 
@@ -97,8 +103,10 @@ class Connection(object):
         if not os.path.exists(in_path):
             raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
         data = file(in_path).read()
-        
+        data = base64.b64encode(data)
+
         data = dict(mode='put', data=data, out_path=out_path)
+        # TODO: support chunked file transfer
         data = utils.jsonify(data)
         data = utils.encrypt(self.key, data)
         self.socket.send(data)
@@ -113,7 +121,7 @@ class Connection(object):
         ''' save a remote file to the specified path '''
         vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host)
 
-        data = dict(mode='fetch', file=in_path)
+        data = dict(mode='fetch', in_path=in_path)
         data = utils.jsonify(data)
         data = utils.encrypt(self.key, data)
         self.socket.send(data)
@@ -122,6 +130,7 @@ class Connection(object):
         response = utils.decrypt(self.key, response)
         response = utils.parse_json(response)
         response = response['data']
+        response = base64.b64decode(response)        
 
         fh = open(out_path, "w")
         fh.write(response)

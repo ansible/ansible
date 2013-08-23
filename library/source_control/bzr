@@ -1,0 +1,176 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2013, André Paramés <git@andreparames.com>
+# Based on the Git module by Michael DeHaan <michael.dehaan@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = u'''
+---
+module: bzr
+author: André Paramés
+version_added: "1.1"
+short_description: Deploy software (or files) from bzr branches
+description:
+    - Manage I(bzr) branches to deploy files or software.
+options:
+    name:
+        required: true
+        aliases: [ 'parent' ]
+        description:
+            - SSH or HTTP protocol address of the parent branch.
+    dest:
+        required: true
+        description:
+            - Absolute path of where the branch should be cloned to.
+    version:
+        required: false
+        default: "head"
+        description:
+            - What version of the branch to clone.  This can be the
+              bzr revno or revid.
+    force:
+        required: false
+        default: "yes"
+        choices: [ 'yes', 'no' ]
+        description:
+            - If C(yes), any modified files in the working
+              tree will be discarded.
+'''
+
+EXAMPLES = '''
+# Example bzr checkout from Ansible Playbooks
+- bzr: name=bzr+ssh://foosball.example.org/path/to/branch dest=/srv/checkout version=22
+'''
+
+import re
+import tempfile
+
+def get_version(dest):
+    ''' samples the version of the bzr branch'''
+    os.chdir(dest)
+    cmd = "bzr revno"
+    revno = os.popen(cmd).read().strip()
+    return revno
+
+def clone(module, parent, dest, version):
+    ''' makes a new bzr branch if it does not already exist '''
+    dest_dirname = os.path.dirname(dest)
+    try:
+        os.makedirs(dest_dirname)
+    except:
+        pass
+    os.chdir(dest_dirname)
+    if version.lower() != 'head':
+        cmd = "bzr branch -r %s %s %s" % (version, parent, dest)
+    else:
+        cmd = "bzr branch %s %s" % (parent, dest)
+    return module.run_command(cmd, check_rc=True)
+
+def has_local_mods(dest):
+    os.chdir(dest)
+    cmd = "bzr status -S"
+    lines = os.popen(cmd).read().splitlines()
+    lines = filter(lambda c: not re.search('^\\?\\?.*$', c), lines)
+    return len(lines) > 0
+
+def reset(module,dest,force):
+    '''
+    Resets the index and working tree to head.
+    Discards any changes to tracked files in the working
+    tree since that commit.
+    '''
+    os.chdir(dest)
+    if not force and has_local_mods(dest):
+        module.fail_json(msg="Local modifications exist in branch (force=no).")
+    return module.run_command("bzr revert", check_rc=True)
+
+def fetch(module, dest, version):
+    ''' updates branch from remote sources '''
+    os.chdir(dest)
+    if version.lower() != 'head':
+        (rc, out, err) = module.run_command("bzr pull -r %s" % version)
+    else:
+        (rc, out, err) = module.run_command("bzr pull")
+    if rc != 0:
+        module.fail_json(msg="Failed to pull")
+    return (rc, out, err)
+
+def switch_version(module, dest, version):
+    ''' once pulled, switch to a particular revno or revid'''
+    os.chdir(dest)
+    cmd = ''
+    if version.lower() != 'head':
+        cmd = "bzr revert -r %s" % version
+    else:
+        cmd = "bzr revert"
+    return module.run_command(cmd, check_rc=True)
+
+# ===========================================
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            dest=dict(required=True),
+            name=dict(required=True, aliases=['parent']),
+            version=dict(default='head'),
+            force=dict(default='yes', type='bool')
+        )
+    )
+
+    dest    = os.path.abspath(os.path.expanduser(module.params['dest']))
+    parent  = module.params['name']
+    version = module.params['version']
+    force   = module.params['force']
+
+    bzrconfig = os.path.join(dest, '.bzr', 'branch', 'branch.conf')
+
+    rc, out, err, status = (0, None, None, None)
+
+    # if there is no bzr configuration, do a branch operation
+    # else pull and switch the version
+    before = None
+    local_mods = False
+    if not os.path.exists(bzrconfig):
+        (rc, out, err) = clone(module, parent, dest, version)
+    else:
+        # else do a pull
+        local_mods = has_local_mods(dest)
+        before = get_version(dest)
+        (rc, out, err) = reset(module, dest, force)
+        if rc != 0:
+            module.fail_json(msg=err)
+        (rc, out, err) = fetch(module, dest, version)
+        if rc != 0:
+            module.fail_json(msg=err)
+
+    # switch to version specified regardless of whether
+    # we cloned or pulled
+    (rc, out, err) = switch_version(module, dest, version)
+
+    # determine if we changed anything
+    after = get_version(dest)
+    changed = False
+
+    if before != after or local_mods:
+        changed = True
+
+    module.exit_json(changed=changed, before=before, after=after)
+
+# include magic from lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()

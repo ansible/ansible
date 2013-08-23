@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/env python
 
 '''
 EC2 external inventory script
@@ -108,12 +108,14 @@ Security groups are comma-separated in 'ec2_security_group_ids' and
 
 ######################################################################
 
+import sys
 import os
 import argparse
 import re
 from time import time
 import boto
 from boto import ec2
+from boto import rds
 import ConfigParser
 
 try:
@@ -132,7 +134,7 @@ class Ec2Inventory(object):
 
         # Index of hostname (address) to instance ID
         self.index = {}
-        
+
         # Read settings and parse CLI arguments
         self.read_settings()
         self.parse_cli_args()
@@ -180,9 +182,9 @@ class Ec2Inventory(object):
         self.eucalyptus_host = None
         self.eucalyptus = False
         if config.has_option('ec2', 'eucalyptus'):
-           self.eucalyptus = config.getboolean('ec2', 'eucalyptus')
+            self.eucalyptus = config.getboolean('ec2', 'eucalyptus')
         if self.eucalyptus and config.has_option('ec2', 'eucalyptus_host'):
-           self.eucalyptus_host = config.get('ec2', 'eucalyptus_host')
+            self.eucalyptus_host = config.get('ec2', 'eucalyptus_host')
 
         # Regions
         self.regions = []
@@ -226,6 +228,7 @@ class Ec2Inventory(object):
 
         for region in self.regions:
             self.get_instances_by_region(region)
+            self.get_rds_instances_by_region(region)
 
         self.write_to_cache(self.inventory, self.cache_path_cache)
         self.write_to_cache(self.index, self.cache_path_index)
@@ -235,17 +238,43 @@ class Ec2Inventory(object):
         ''' Makes an AWS EC2 API call to the list of instances in a particular
         region '''
 
-        if self.eucalyptus:
-            conn = boto.connect_euca(host=self.eucalyptus_host)
-            conn.APIVersion = '2010-08-31'
-        else:
-            conn = ec2.connect_to_region(region)
+        try:
+            if self.eucalyptus:
+                conn = boto.connect_euca(host=self.eucalyptus_host)
+                conn.APIVersion = '2010-08-31'
+            else:
+                conn = ec2.connect_to_region(region)
 
-        reservations = conn.get_all_instances()
-        for reservation in reservations:
-            for instance in reservation.instances:
-                self.add_instance(instance, region)
+            # connect_to_region will fail "silently" by returning None if the region name is wrong or not supported
+            if conn is None:
+                print("region name: %s likely not supported, or AWS is down.  connection to region failed." % region)
+                sys.exit(1)
+ 
+            reservations = conn.get_all_instances()
+            for reservation in reservations:
+                for instance in reservation.instances:
+                    self.add_instance(instance, region)
+        
+        except boto.exception.BotoServerError as e:
+            if  not self.eucalyptus:
+                print "Looks like AWS is down again:"
+            print e
+            sys.exit(1)
 
+    def get_rds_instances_by_region(self, region):
+	''' Makes an AWS API call to the list of RDS instances in a particular
+        region '''
+
+        try:
+            conn = rds.connect_to_region(region)
+            if conn:
+                instances = conn.get_all_dbinstances()
+                for instance in instances:
+                    self.add_rds_instance(instance, region)
+        except boto.exception.BotoServerError as e:
+            print "Looks like AWS RDS is down: "
+            print e
+            sys.exit(1)
 
     def get_instance(self, region, instance_id):
         ''' Gets details about a specific instance '''
@@ -254,6 +283,11 @@ class Ec2Inventory(object):
             conn.APIVersion = '2010-08-31'
         else:
             conn = ec2.connect_to_region(region)
+
+        # connect_to_region will fail "silently" by returning None if the region name is wrong or not supported
+        if conn is None:
+            print("region name: %s likely not supported, or AWS is down.  connection to region failed." % region)
+            sys.exit(1)
 
         reservations = conn.get_all_instances([instance_id])
         for reservation in reservations:
@@ -266,7 +300,7 @@ class Ec2Inventory(object):
         addressable '''
 
         # Only want running instances
-        if instance.state == 'terminated':
+        if instance.state != 'running':
             return
 
         # Select the best destination address
@@ -275,7 +309,7 @@ class Ec2Inventory(object):
         else:
             dest =  getattr(instance, self.destination_variable)
 
-        if dest == None:
+        if not dest:
             # Skip instances we cannot address (e.g. private VPC subnet)
             return
 
@@ -290,16 +324,79 @@ class Ec2Inventory(object):
 
         # Inventory: Group by availability zone
         self.push(self.inventory, instance.placement, dest)
-
+        
+        # Inventory: Group by instance type
+        self.push(self.inventory, self.to_safe('type_' + instance.instance_type), dest)
+        
+        # Inventory: Group by key pair
+        if instance.key_name:
+            self.push(self.inventory, self.to_safe('key_' + instance.key_name), dest)
+        
         # Inventory: Group by security group
-        for group in instance.groups:
-            key = self.to_safe("security_group_" + group.name)
-            self.push(self.inventory, key, dest)
+        try:
+            for group in instance.groups:
+                key = self.to_safe("security_group_" + group.name)
+                self.push(self.inventory, key, dest)
+        except AttributeError:
+            print 'Package boto seems a bit older.'
+            print 'Please upgrade boto >= 2.3.0.'
+            sys.exit(1)
 
         # Inventory: Group by tag keys
         for k, v in instance.tags.iteritems():
             key = self.to_safe("tag_" + k + "=" + v)
             self.push(self.inventory, key, dest)
+
+
+    def add_rds_instance(self, instance, region):
+        ''' Adds an RDS instance to the inventory and index, as long as it is
+        addressable '''
+
+        # Only want available instances
+        if instance.status != 'available':
+            return
+
+        # Select the best destination address
+        #if instance.subnet_id:
+            #dest = getattr(instance, self.vpc_destination_variable)
+        #else:
+            #dest =  getattr(instance, self.destination_variable)
+        dest = instance.endpoint[0]
+
+        if not dest:
+            # Skip instances we cannot address (e.g. private VPC subnet)
+            return
+
+        # Add to index
+        self.index[dest] = [region, instance.id]
+
+        # Inventory: Group by instance ID (always a group of 1)
+        self.inventory[instance.id] = [dest]
+
+        # Inventory: Group by region
+        self.push(self.inventory, region, dest)
+
+        # Inventory: Group by availability zone
+        self.push(self.inventory, instance.availability_zone, dest)
+        
+        # Inventory: Group by instance type
+        self.push(self.inventory, self.to_safe('type_' + instance.instance_class), dest)
+        
+        # Inventory: Group by security group
+        try:
+            if instance.security_group:
+                key = self.to_safe("security_group_" + instance.security_group.name)
+                self.push(self.inventory, key, dest)
+        except AttributeError:
+            print 'Package boto seems a bit older.'
+            print 'Please upgrade boto >= 2.3.0.'
+            sys.exit(1)
+
+        # Inventory: Group by engine
+        self.push(self.inventory, self.to_safe("rds_" + instance.engine), dest)
+
+        # Inventory: Group by parameter group
+        self.push(self.inventory, self.to_safe("rds_parameter_group_" + instance.parameter_group.name), dest)
 
 
     def get_host_info(self):
@@ -309,7 +406,15 @@ class Ec2Inventory(object):
             # Need to load index from cache
             self.load_index_from_cache()
 
+        if not self.args.host in self.index:
+            # try updating the cache
+            self.do_api_calls_update_cache()
+            if not self.args.host in self.index:
+                # host migh not exist anymore
+                return self.json_format_dict({}, True)
+
         (region, instance_id) = self.index[self.args.host]
+
         instance = self.get_instance(region, instance_id)
         instance_vars = {}
         for key in vars(instance):

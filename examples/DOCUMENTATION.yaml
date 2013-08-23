@@ -1,0 +1,29 @@
+---
+# If a key doesn't apply to your module (ex: choices, default, or
+# aliases) you can use the word 'null', or an empty list, [], where
+# appropriate.
+module: modulename
+short_description: This is a sentence describing the module
+description:
+    - Longer description of the module
+    - You might include instructions
+version_added: "X.Y"
+author: Your AWESOME name here
+notes:
+    - Other things consumers of your module should know
+requirements:
+    - list of required things
+    - like the factor package
+    - or a specic platform
+options:
+# One or more of the following
+    option_name:
+        description:
+            - Words go here
+            - that describe
+            - this option
+        required: true or false
+        default: a string or the word null
+        choices: [list, of, choices]
+        aliases: [list, of, aliases]
+        version_added: 1.X

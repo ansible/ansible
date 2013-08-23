@@ -1,0 +1,239 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+"""
+Ansible module to add authorized_keys for ssh logins.
+(c) 2012, Brad Olson <brado@movedbylight.com>
+
+This file is part of Ansible
+
+Ansible is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Ansible is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+DOCUMENTATION = '''
+---
+module: authorized_key
+short_description: Adds or removes an SSH authorized key
+description:
+     - Adds or removes an SSH authorized key for a user from a remote host.
+version_added: "0.5"
+options:
+  user:
+    description:
+      - The username on the remote host whose authorized_keys file will be modified
+    required: true
+    default: null
+    aliases: []
+  key:
+    description:
+      - The SSH public key, as a string
+    required: true
+    default: null
+  path:
+    description:
+      - Alternate path to the authorized_keys file
+    required: false
+    default: "(homedir)+/.ssh/authorized_keys"
+    version_added: "1.2"
+  manage_dir:
+    description:
+      - Whether this module should manage the directory of the authorized_keys file
+    required: false
+    choices: [ "yes", "no" ]
+    default: "yes"
+    version_added: "1.2"
+  state:
+    description:
+      - Whether the given key should or should not be in the file
+    required: false
+    choices: [ "present", "absent" ]
+    default: "present"
+description:
+    - "Adds or removes authorized keys for particular user accounts"
+author: Brad Olson
+'''
+
+EXAMPLES = '''
+# Example using key data from a local file on the management machine
+- authorized_key: user=charlie key="{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
+
+# Using alternate directory locations:
+- authorized_key: user=charlie
+                  key="{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
+                  path='/etc/ssh/authorized_keys/charlie'
+                  manage_dir=no
+
+# Using with_file
+- name: Set up authorized_keys for the deploy user
+  authorized_key: user=deploy
+                  key="{{ item }}"
+  with_file:
+    - public_keys/doe-jane
+    - public_keys/doe-john
+'''
+
+# Makes sure the public key line is present or absent in the user's .ssh/authorized_keys.
+#
+# Arguments
+# =========
+#    user = username
+#    key = line to add to authorized_keys for user
+#    path = path to the user's authorized_keys file (default: ~/.ssh/authorized_keys)
+#    manage_dir = whether to create, and control ownership of the directory (default: true)
+#    state = absent|present (default: present)
+#
+# see example in examples/playbooks
+
+import sys
+import os
+import pwd
+import os.path
+import tempfile
+import shutil
+
+def keyfile(module, user, write=False, path=None, manage_dir=True):
+    """
+    Calculate name of authorized keys file, optionally creating the
+    directories and file, properly setting permissions.
+
+    :param str user: name of user in passwd file
+    :param bool write: if True, write changes to authorized_keys file (creating directories if needed)
+    :param str path: if not None, use provided path rather than default of '~user/.ssh/authorized_keys'
+    :param bool manage_dir: if True, create and set ownership of the parent dir of the authorized_keys file
+    :return: full path string to authorized_keys for user
+    """
+
+    try:
+        user_entry = pwd.getpwnam(user)
+    except KeyError, e:
+        module.fail_json(msg="Failed to lookup user %s: %s" % (user, str(e)))
+    if path is None:
+        homedir    = user_entry.pw_dir
+        sshdir     = os.path.join(homedir, ".ssh")
+        keysfile   = os.path.join(sshdir, "authorized_keys")
+    else:
+        sshdir     = os.path.dirname(path)
+        keysfile   = path
+
+    if not write:
+        return keysfile
+
+    uid = user_entry.pw_uid
+    gid = user_entry.pw_gid
+
+    if manage_dir in BOOLEANS_TRUE:
+        if not os.path.exists(sshdir):
+            os.mkdir(sshdir, 0700)
+            if module.selinux_enabled():
+                module.set_default_selinux_context(sshdir, False)
+        os.chown(sshdir, uid, gid)
+        os.chmod(sshdir, 0700)
+
+    if not os.path.exists(keysfile):
+        basedir = os.path.dirname(keysfile)
+        if not os.path.exists(basedir):
+            os.makedirs(basedir)
+        try:
+            f = open(keysfile, "w") #touches file so we can set ownership and perms
+        finally:
+            f.close()
+        if module.selinux_enabled():
+            module.set_default_selinux_context(keysfile, False)
+
+    try:
+        os.chown(keysfile, uid, gid)
+        os.chmod(keysfile, 0600)
+    except OSError:
+        pass
+
+    return keysfile
+
+def readkeys(filename):
+
+    if not os.path.isfile(filename):
+        return []
+    f = open(filename)
+    keys = [line.rstrip() for line in f.readlines()]
+    f.close()
+    return keys
+
+def writekeys(module, filename, keys):
+
+    fd, tmp_path = tempfile.mkstemp('', 'tmp', os.path.dirname(filename))
+    f = open(tmp_path,"w")
+    try:
+        f.writelines( (key + "\n" for key in keys) )
+    except IOError, e:
+        module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, str(e)))
+    f.close()
+    module.atomic_move(tmp_path, filename)
+
+def enforce_state(module, params):
+    """
+    Add or remove key.
+    """
+
+    user       = params["user"]
+    key        = params["key"]
+    path       = params.get("path", None)
+    manage_dir = params.get("manage_dir", True)
+    state      = params.get("state", "present")
+
+    key = key.split('\n')
+
+    # check current state -- just get the filename, don't create file
+    write = False
+    params["keyfile"] = keyfile(module, user, write, path, manage_dir)
+    keys = readkeys(params["keyfile"])
+
+    # Check our new keys, if any of them exist we'll continue.
+    for new_key in key:
+        present = new_key in keys
+        # handle idempotent state=present
+        if state=="present":
+            if present:
+                continue
+            keys.append(new_key)
+            write = True
+            writekeys(module, keyfile(module, user, write, path, manage_dir), keys)
+            params['changed'] = True
+
+        elif state=="absent":
+            if not present:
+                continue
+            keys.remove(new_key)
+            write = True
+            writekeys(module, keyfile(module, user, write, path, manage_dir), keys)
+            params['changed'] = True
+
+    return params
+
+def main():
+
+    module = AnsibleModule(
+        argument_spec = dict(
+           user       = dict(required=True, type='str'),
+           key        = dict(required=True, type='str'),
+           path       = dict(required=False, type='str'),
+           manage_dir = dict(required=False, type='bool', default=True),
+           state      = dict(default='present', choices=['absent','present'])
+        )
+    )
+
+    results = enforce_state(module, module.params)
+    module.exit_json(**results)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()

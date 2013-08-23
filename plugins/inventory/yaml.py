@@ -226,7 +226,7 @@ base_dir = os.path.dirname(os.path.realpath(__file__))
 hosts_file = os.path.join(base_dir, 'hosts.yml')
 
 with open(hosts_file) as f:
-    yaml_hosts = yaml.load( f.read() )
+    yaml_hosts = yaml.safe_load( f.read() )
 
 groups, all_hosts = parse_yaml(yaml_hosts)
 

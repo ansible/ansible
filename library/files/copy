@@ -1,0 +1,175 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+import os
+import time
+
+DOCUMENTATION = '''
+---
+module: copy
+short_description: Copies files to remote locations.
+description:
+     - The M(copy) module copies a file on the local box to remote locations.
+options:
+  src:
+    description:
+      - Local path to a file to copy to the remote server; can be absolute or relative.
+    required: false
+    default: null
+    aliases: []
+  content:
+    version_added: "1.1"
+    description:
+      - When used instead of 'src', sets the contents of a file directly to the specified value.
+    required: false
+    default: null
+  dest:
+    description:
+      - Remote absolute path where the file should be copied to.
+    required: true
+    default: null
+  backup:
+    description:
+      - Create a backup file including the timestamp information so you can get
+        the original file back if you somehow clobbered it incorrectly.
+    version_added: "0.7"
+    required: false
+    choices: [ "yes", "no" ]
+    default: "no"
+  force:
+    description:
+      - the default is C(yes), which will replace the remote file when contents
+        are different than the source.  If C(no), the file will only be transferred
+        if the destination does not exist.
+    version_added: "1.1"
+    required: false
+    choices: [ "yes", "no" ]
+    default: "yes"
+    aliases: [ "thirsty" ]
+  validate:
+    description:
+      - validation to run before copying into place
+    required: false
+    default: ""
+    version_added: "1.2"
+  others:
+    description:
+      - all arguments accepted by the M(file) module also work here
+    required: false
+author: Michael DeHaan
+notes:
+   - The "copy" module can't be used to recursively copy directory structures to the target machine. Please see the
+     "Delegation" section of the Advanced Playbooks documentation for a better approach to recursive copies.
+'''
+
+EXAMPLES = '''
+# Example from Ansible Playbooks
+- copy: src=/srv/myfiles/foo.conf dest=/etc/foo.conf owner=foo group=foo mode=0644
+
+# Copy a new "ntp.conf file into place, backing up the original if it differs from the copied version
+- copy: src=/mine/ntp.conf dest=/etc/ntp.conf owner=root group=root mode=644 backup=yes
+
+# Copy a new "sudoers" file into place, after passing validation with visudo
+- copy: src=/mine/sudoers dest=/etc/sudoers validate='visudo -cf %s'
+'''
+
+def main():
+
+    module = AnsibleModule(
+        # not checking because of daisy chain to file module
+        argument_spec = dict(
+            src               = dict(required=False),
+            original_basename = dict(required=False), # used to handle 'dest is a directory' via template, a slight hack
+            content           = dict(required=False, no_log=True),
+            dest              = dict(required=True),
+            backup            = dict(default=False, type='bool'),
+            force             = dict(default=True, aliases=['thirsty'], type='bool'),
+            validate          = dict(required=False, type='str'),
+        ),
+        add_file_common_args=True,
+    )
+
+    src    = os.path.expanduser(module.params['src'])
+    dest   = os.path.expanduser(module.params['dest'])
+    backup = module.params['backup']
+    force  = module.params['force']
+    original_basename = module.params.get('original_basename',None)
+    validate = module.params.get('validate',None)
+
+    if not os.path.exists(src):
+        module.fail_json(msg="Source %s failed to transfer" % (src))
+    if not os.access(src, os.R_OK):
+        module.fail_json(msg="Source %s not readable" % (src))
+
+    md5sum_src = module.md5(src)
+    md5sum_dest = None
+
+    if os.path.exists(dest):
+        if not force:
+            module.exit_json(msg="file already exists", src=src, dest=dest, changed=False)
+        if (os.path.isdir(dest)):
+            basename = os.path.basename(src)
+            if original_basename:
+                basename = original_basename
+            dest = os.path.join(dest, basename)
+        if os.access(dest, os.R_OK):
+            md5sum_dest = module.md5(dest)
+    else:
+        if not os.path.exists(os.path.dirname(dest)):
+            module.fail_json(msg="Destination directory %s does not exist" % (os.path.dirname(dest)))
+    if not os.access(os.path.dirname(dest), os.W_OK):
+        module.fail_json(msg="Destination %s not writable" % (os.path.dirname(dest)))
+
+    backup_file = None
+    if md5sum_src != md5sum_dest or os.path.islink(dest):
+        try:
+            if backup:
+                if os.path.exists(dest):
+                    backup_file = module.backup_local(dest)
+            # allow for conversion from symlink.
+            if os.path.islink(dest):
+                os.unlink(dest)
+                open(dest, 'w').close()
+            if validate:
+                (rc,out,err) = module.run_command(validate % src)
+                if rc != 0:
+                    module.fail_json(msg="failed to validate: rc:%s error:%s" % (rc,err))
+            module.atomic_move(src, dest)
+        except IOError:
+            module.fail_json(msg="failed to copy: %s to %s" % (src, dest))
+        changed = True
+    else:
+        changed = False
+
+    res_args = dict(
+        dest = dest, src = src, md5sum = md5sum_src, changed = changed
+    )
+    if backup_file:
+        res_args['backup_file'] = backup_file
+
+    module.params['dest'] = dest
+    file_args = module.load_file_common_arguments(module.params)
+    res_args['changed'] = module.set_file_attributes_if_different(file_args, res_args['changed'])
+
+    module.exit_json(**res_args)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()

@@ -1,0 +1,133 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2012, Stephen Fromm <sfromm@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+import os
+import os.path
+import shutil
+import tempfile
+
+DOCUMENTATION = '''
+---
+module: assemble
+short_description: Assembles a configuration file from fragments
+description:
+     - Assembles a configuration file from fragments. Often a particular
+       program will take a single configuration file and does not support a
+       C(conf.d) style structure where it is easy to build up the configuration
+       from multiple sources. M(assemble) will take a directory of files that have
+       already been transferred to the system, and concatenate them together to
+       produce a destination file. Files are assembled in string sorting order.
+       Puppet calls this idea I(fragments).
+version_added: "0.5"
+options:
+  src:
+    description:
+      - An already existing directory full of source files.
+    required: true
+    default: null
+    aliases: []
+  dest:
+    description:
+      - A file to create using the concatenation of all of the source files.
+    required: true
+    default: null
+  backup:
+    description:
+      - Create a backup file (if C(yes)), including the timestamp information so
+        you can get the original file back if you somehow clobbered it
+        incorrectly.
+    required: false
+    choices: [ "yes", "no" ]
+    default: "no"
+  others:
+    description:
+      - all arguments accepted by the M(file) module also work here
+    required: false
+author: Stephen Fromm
+'''
+
+EXAMPLES = '''
+# Example from Ansible Playbooks
+- assemble: src=/etc/someapp/fragments dest=/etc/someapp/someapp.conf
+'''
+
+# ===========================================
+# Support method
+
+def assemble_from_fragments(src_path):
+    ''' assemble a file from a directory of fragments '''
+    tmpfd, temp_path = tempfile.mkstemp()
+    tmp = os.fdopen(tmpfd,'w')
+    for f in sorted(os.listdir(src_path)):
+        fragment = "%s/%s" % (src_path, f)
+        if os.path.isfile(fragment):
+            tmp.write(file(fragment).read())
+    tmp.close()
+    return temp_path
+
+# ==============================================================
+# main
+
+def main():
+
+    module = AnsibleModule(
+        # not checking because of daisy chain to file module
+        argument_spec = dict(
+            src = dict(required=True),
+            dest = dict(required=True),
+            backup=dict(default=False, type='bool'),
+        ),
+        add_file_common_args=True
+    )
+
+    changed = False
+    pathmd5 = None
+    destmd5 = None
+    src     = os.path.expanduser(module.params['src'])
+    dest    = os.path.expanduser(module.params['dest'])
+    backup  = module.params['backup']
+
+    if not os.path.exists(src):
+        module.fail_json(msg="Source (%s) does not exist" % src)
+
+    if not os.path.isdir(src):
+        module.fail_json(msg="Source (%s) is not a directory" % src)
+
+    path = assemble_from_fragments(src)
+    pathmd5 = module.md5(path)
+
+    if os.path.exists(dest):
+        destmd5 = module.md5(dest)
+
+    if pathmd5 != destmd5:
+        if backup and destmd5 is not None:
+            module.backup_local(dest)
+        shutil.copy(path, dest)
+        changed = True
+
+    file_args = module.load_file_common_arguments(module.params)
+    changed = module.set_file_attributes_if_different(file_args, changed)
+    # Mission complete
+    module.exit_json(src=src, dest=dest, md5sum=destmd5, changed=changed, msg="OK")
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+main()

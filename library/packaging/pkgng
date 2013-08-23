@@ -1,0 +1,158 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2013, bleader
+# Written by bleader <bleader@ratonland.org>
+# Based on pkgin module written by Shaun Zinck <shaun.zinck at gmail.com>
+# that was based on pacman module written by Afterburn <http://github.com/afterburn> 
+#  that was based on apt module written by Matthew Williams <matthew@flowroute.com>
+#
+# This module is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+
+
+DOCUMENTATION = '''
+---
+module: pkgng
+short_description: Package manager for FreeBSD >= 9.0
+description:
+    - Manage binary packages for FreeBSD using 'pkgng' which
+      is available in versions after 9.0.
+version_added: "1.2"
+options:
+    name:
+        description:
+            - name of package to install/remove
+        required: true
+    state:
+        description:
+            - state of the package
+        choices: [ 'present', 'absent' ]
+        required: false
+        default: present
+    cached:
+        description:
+            - use local package base or try to fetch an updated one
+        choices: [ 'yes', 'no' ]
+        required: false
+        default: no
+    pkgsite:
+        description:
+            - specify packagesite to use for downloading packages, if
+              not specified, use settings from /usr/local/etc/pkg.conf
+        required: false
+author: bleader
+notes:
+    - When using pkgsite, be careful that already in cache packages won't be downloaded again.
+'''
+
+EXAMPLES = '''
+# Install package foo
+- pkgng: name=foo state=present
+
+# Remove packages foo and bar 
+- pkgng: name=foo,bar state=absent
+'''
+
+
+import json
+import shlex
+import os
+import sys
+
+def query_package(module, pkgin_path, name):
+
+    rc, out, err = module.run_command("%s info -e %s" % (pkgin_path, name))
+
+    if rc == 0:
+        return True
+
+    return False
+
+
+def remove_packages(module, pkgin_path, packages):
+    
+    remove_c = 0
+    # Using a for loop incase of error, we can report the package that failed
+    for package in packages:
+        # Query the package first, to see if we even need to remove
+        if not query_package(module, pkgin_path, package):
+            continue
+
+        rc, out, err = module.run_command("%s delete -y %s" % (pkgin_path, package))
+
+        if query_package(module, pkgin_path, package):
+            module.fail_json(msg="failed to remove %s: %s" % (package, out))
+    
+        remove_c += 1
+
+    if remove_c > 0:
+
+        module.exit_json(changed=True, msg="removed %s package(s)" % remove_c)
+
+    module.exit_json(changed=False, msg="package(s) already absent")
+
+
+def install_packages(module, pkgin_path, packages, cached, pkgsite):
+
+    install_c = 0
+
+    if pkgsite != "":
+        pkgsite="PACKAGESITE=%s" % (pkgsite)
+
+    if cached == "no":
+        rc, out, err = module.run_command("%s %s update" % (pkgsite, pkgin_path))
+        if rc != 0:
+            module.fail_json(msg="Could not update catalogue")
+
+    for package in packages:
+        if query_package(module, pkgin_path, package):
+            continue
+
+        rc, out, err = module.run_command("%s %s install -U -y %s" % (pkgsite, pkgin_path, package))
+
+        if not query_package(module, pkgin_path, package):
+            module.fail_json(msg="failed to install %s: %s" % (package, out))
+
+        install_c += 1
+    
+    if install_c > 0:
+        module.exit_json(changed=True, msg="present %s package(s)" % (install_c))
+
+    module.exit_json(changed=False, msg="package(s) already present")
+
+
+def main():
+    module = AnsibleModule(
+            argument_spec    = dict(
+                state        = dict(default="present", choices=["present","absent"]),
+                name         = dict(aliases=["pkg"], required=True),
+                cached       = dict(default="no", required=False, choices=["yes","no"]),
+                pkgsite      = dict(default="", required=False)))
+
+    pkgin_path = module.get_bin_path('pkg', True)
+
+    p = module.params
+
+    pkgs = p["name"].split(",")
+
+    if p["state"] == "present":
+        install_packages(module, pkgin_path, pkgs, p["cached"], p["pkgsite"])
+
+    elif p["state"] == "absent":
+        remove_packages(module, pkgin_path, pkgs)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+    
+main()        

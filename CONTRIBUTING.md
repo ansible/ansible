@@ -49,11 +49,25 @@ We're not too strict on style considerations, but we require:
    * no single-line if statements, deeply nested list comprehensions, or clever use of metaclasses -- keep it simple
    * comments where appropriate
 
+Testing Requirements
+====================
+
+Automation tests are run by "make tests" and contain a mixture of integration and "unit" level tests.  To run the tests you need the following:
+
+   * nose must be installed - https://nose.readthedocs.org/en/latest/
+   * ansible tests require paramiko, PyYAML python modules, and python 2.6+.
+   * Some tests require additional components (facter, ohai) and will be skipped if not available.
+   * Your user environment should allow "ssh 127.0.0.1"
+     without a password - so a key held in ssh-agent and an authorized_keys entry.
+
+If your module does not require any additional dependencies beyond ansible-core, it is a good idea to write some
+tests for the module.
+
 Contributors License Agreement
 ==============================
 
 By contributing you agree that these contributions are your own (or approved by your employer) and you grant a full, complete, irrevocable
-copyright license to all users and developers of the project, present and future, persusant to the license of the project.
+copyright license to all users and developers of the project, present and future, pursuant to the license of the project.
 
 
 

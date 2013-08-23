@@ -1,0 +1,293 @@
+#!/usr/bin/python -tt
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: rax
+short_description: create / delete an instance in Rackspace Public Cloud
+description:
+     - creates / deletes a Rackspace Public Cloud instance and optionally waits for it to be 'running'.
+version_added: "1.2"
+options:
+  service:
+    description:
+     - Cloud service to interact with
+    choices: ['cloudservers']
+    default: cloudservers
+  state:
+    description:
+     - Indicate desired state of the resource
+    choices: ['present', 'active', 'absent', 'deleted']
+    default: present
+  credentials:
+    description:
+     - File to find the Rackspace credentials in (ignored if C(api_key) and
+       C(username) are provided)
+    default: null
+    aliases: ['creds_file']
+  api_key:
+    description:
+     - Rackspace API key (overrides C(credentials))
+  username:
+    description:
+     - Rackspace username (overrides C(credentials))
+  name:
+    description:
+     - Name to give the instance
+    default: null
+  flavor:
+    description:
+     - flavor to use for the instance
+    default: null
+  image:
+    description:
+     - image to use for the instance
+    default: null
+  meta:
+    description:
+     - A hash of metadata to associate with the instance
+    default: null
+  key_name:
+    description:
+     - key pair to use on the instance
+    default: null
+    aliases: ['keypair']
+  files:
+    description:
+     - Files to insert into the instance. remotefilename:localcontent
+    default: null
+  region:
+    description:
+     - Region to create an instance in
+    default: DFW
+  wait:
+    description:
+     - wait for the instance to be in state 'running' before returning
+    default: "no"
+    choices: [ "yes", "no" ]
+  wait_timeout:
+    description:
+     - how long before wait gives up, in seconds
+    default: 300
+requirements: [ "pyrax" ]
+author: Jesse Keating
+notes:
+  - The following environment variables can be used, C(RAX_USERNAME),
+    C(RAX_API_KEY), C(RAX_CREDS), C(RAX_CREDENTIALS), C(RAX_REGION).
+  - C(RAX_CREDENTIALS) and C(RAX_CREDS) points to a credentials file
+    appropriate for pyrax
+  - C(RAX_USERNAME) and C(RAX_API_KEY) obviate the use of a credentials file
+  - C(RAX_REGION) defines a Rackspace Public Cloud region (DFW, ORD, LON, ...)
+'''
+
+EXAMPLES = '''
+- name: Build a Cloud Server
+  gather_facts: False
+
+  tasks:
+    - name: Server build request
+      local_action:
+        module: rax
+        credentials: ~/.raxpub
+        service: cloudservers
+        name: rax-test1
+        flavor: 5
+        image: b11d9567-e412-4255-96b9-bd63ab23bcfe
+        files:
+          /root/.ssh/authorized_keys: /home/localuser/.ssh/id_rsa.pub
+          /root/test.txt: /home/localuser/test.txt
+        wait: yes
+        state: present
+'''
+
+import sys
+import time
+import os
+
+try:
+    import pyrax
+except ImportError:
+    print("failed=True msg='pyrax required for this module'")
+    sys.exit(1)
+
+# These are possible services, but only cloudservers is supported at this time
+#SUPPORTEDSERVICES = ['cloudservers', 'cloudfiles', 'cloud_blockstorage',
+#                     'cloud_databases', 'cloud_loadbalancers']
+SUPPORTEDSERVICES = ['cloudservers']
+
+def cloudservers(module, state, name, flavor, image, meta, key_name, files,
+                 wait, wait_timeout):
+    # Check our args (this could be done better)
+    for arg in (state, name, flavor, image):
+        if not arg:
+            module.fail_json(msg='%s is required for cloudservers' % arg)
+
+    instances = []
+    changed = False
+    servers = []
+    # See if we can find servers that match our options
+    for server in pyrax.cloudservers.list():
+        if  name != server.name:
+            continue
+        if int(flavor) != int(server.flavor['id']):
+            continue
+        if image != server.image['id']:
+            continue
+        if meta != server.metadata:
+            continue
+        # Nothing else ruled us not a match, so consider it a winner
+        servers.append(server)
+
+    # act on the state
+    if state in ('active', 'present'):
+        if not servers:
+            # Handle the file contents
+            for rpath in files.keys():
+                lpath = os.path.expanduser(files[rpath])
+                try:
+                    fileobj = open(lpath, 'r')
+                    files[rpath] = fileobj
+                except Exception, e:
+                    module.fail_json(msg = 'Failed to load %s' % lpath)
+            try:
+                servers = [pyrax.cloudservers.servers.create(name=name,
+                                                             image=image,
+                                                             flavor=flavor,
+                                                             key_name=key_name,
+                                                             meta=meta,
+                                                             files=files)]
+                changed = True
+            except Exception, e:
+                module.fail_json(msg = '%s' % e.message)
+
+        for server in servers:
+            # wait here until the instances are up
+            wait_timeout = time.time() + wait_timeout
+            while wait and wait_timeout > time.time():
+                # refresh the server details
+                server.get()
+                if server.status in ('ACTIVE', 'ERROR'):
+                    break
+                time.sleep(5)
+            if wait and wait_timeout <= time.time():
+                # waiting took too long
+                module.fail_json(msg = 'Timeout waiting on %s' % server.id)
+            # Get a fresh copy of the server details
+            server.get()
+            if server.status == 'ERROR':
+                module.fail_json(msg = '%s failed to build' % server.id)
+            instance = {'id': server.id,
+                        'accessIPv4': server.accessIPv4,
+                        'name': server.name,
+                        'status': server.status}
+            instances.append(instance)
+
+    elif state in ('absent', 'deleted'):
+        deleted = []
+        # See if we can find a server that matches our credentials
+        for server in servers:
+            if server.name == name:
+                if int(server.flavor['id']) == int(flavor) and \
+                server.image['id'] == image and \
+                server.metadata == meta:
+                    try:
+                        server.delete()
+                        deleted.append(server)
+                    except Exception, e:
+                        module.fail_json(msg = e.message)
+                    instance = {'id': server.id,
+                                'accessIPv4': server.accessIPv4,
+                                'name': server.name,
+                                'status': 'DELETING'}
+                    instances.append(instance)
+                    changed = True
+
+    module.exit_json(changed=changed, instances=instances)
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            service = dict(default='cloudservers', choices=SUPPORTEDSERVICES),
+            state = dict(default='present', choices=['active', 'present',
+                                                     'deleted', 'absent']),
+            credentials = dict(aliases = ['creds_file']),
+            api_key=dict(),
+            username=dict(),
+            name = dict(),
+            flavor = dict(),
+            image = dict(),
+            meta = dict(type='dict', default={}),
+            key_name = dict(aliases = ['keypair']),
+            files = dict(type='dict', default={}),
+            region = dict(),
+            wait = dict(type='bool', choices=BOOLEANS),
+            wait_timeout = dict(default=300),
+        )
+    )
+
+    service = module.params.get('service')
+    state = module.params.get('state')
+    credentials = module.params.get('credentials')
+    api_key = module.params.get('api_key')
+    username = module.params.get('username')
+    name = module.params.get('name')
+    flavor = module.params.get('flavor')
+    image = module.params.get('image')
+    meta = module.params.get('meta')
+    key_name = module.params.get('key_name')
+    files = module.params.get('files')
+    region = module.params.get('region')
+    wait = module.params.get('wait')
+    wait_timeout = int(module.params.get('wait_timeout'))
+
+    # Setup the credentials and region
+    try:
+        username = username or os.environ.get('RAX_USERNAME')
+        api_key = api_key or os.environ.get('RAX_API_KEY')
+        credentials = credentials or os.environ.get('RAX_CREDENTIALS') or \
+                                     os.environ.get('RAX_CREDS_FILE')
+        region = region or os.environ.get('RAX_REGION')
+
+    except KeyError, e:
+        module.fail_json(msg = 'Unable to load %s' % e.message)
+
+    # setup the auth
+    try:
+        pyrax.set_setting("identity_type", "rackspace")
+        if api_key and username:
+            pyrax.set_credentials(username, api_key=api_key, region=region)
+        elif credentials:
+            credentials = os.path.expanduser(credentials)
+            pyrax.set_credential_file(credentials, region=region)
+        else:
+            raise Exception('No credentials supplied!')
+    except Exception, e:
+        module.fail_json(msg = '%s' % e.message)
+
+    # Act based on service
+    if service == 'cloudservers':
+        cloudservers(module, state, name, flavor, image, meta, key_name, files,
+                     wait, wait_timeout)
+    elif service in ['cloudfiles', 'cloud_blockstorage',
+                     'cloud_databases', 'cloud_loadbalancers']:
+        module.fail_json(msg = 'Service %s is not supported at this time' %
+                         service)
+
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+main()

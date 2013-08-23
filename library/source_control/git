@@ -1,0 +1,392 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: git
+author: Michael DeHaan
+version_added: "0.0.1"
+short_description: Deploy software (or files) from git checkouts
+description:
+    - Manage I(git) checkouts of repositories to deploy files or software.
+options:
+    repo:
+        required: true
+        aliases: [ name ]
+        description:
+            - git, SSH, or HTTP protocol address of the git repository.
+    dest:
+        required: true
+        description:
+            - Absolute path of where the repository should be checked out to.
+    version:
+        required: false
+        default: "HEAD"
+        description:
+            - What version of the repository to check out.  This can be the
+              git I(SHA), the literal string C(HEAD), a branch name, or a tag name.
+    remote:
+        required: false
+        default: "origin"
+        description:
+            - Name of the remote.
+    force:
+        required: false
+        default: "yes"
+        choices: [ "yes", "no" ]
+        version_added: "0.7"
+        description:
+            - If C(yes), any modified files in the working
+              repository will be discarded.  Prior to 0.7, this was always
+              'yes' and could not be disabled.
+    depth:
+        required: false
+        default: null
+        version_added: "1.2"
+        description:
+            - Create a shallow clone with a history truncated to the specified
+              number or revisions. The minimum possible value is C(1), otherwise
+              ignored.
+    update:
+        required: false
+        default: "yes"
+        choices: [ "yes", "no" ]
+        version_added: "1.2"
+        description:
+            - If C(yes), repository will be updated using the supplied
+              remote.  Otherwise the repo will be left untouched.
+              Prior to 1.2, this was always 'yes' and could not be disabled.
+notes:
+    - If the task seems to be hanging, first verify remote host is in C(known_hosts).
+      SSH will prompt user to authorize the first contact with a remote host. One solution is to add
+      C(StrictHostKeyChecking no) in C(.ssh/config) which will accept and authorize the connection
+      on behalf of the user. However, if you run as a different user such as setting sudo to True),
+      for example, root will not look at the user .ssh/config setting.
+'''
+
+EXAMPLES = '''
+# Example git checkout from Ansible Playbooks
+- git: repo=git://foosball.example.org/path/to/repo.git
+       dest=/srv/checkout
+       version=release-0.22
+
+# Example read-write git checkout from github
+- git: repo=ssh://git@github.com/mylogin/hello.git dest=/home/mylogin/hello
+
+# Example just ensuring the repo checkout exists
+- git: repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout update=no
+'''
+
+import re
+import tempfile
+
+def get_version(git_path, dest):
+    ''' samples the version of the git repo '''
+    os.chdir(dest)
+    cmd = "%s show --abbrev-commit" % (git_path,)
+    sha = os.popen(cmd).read().split("\n")
+    sha = sha[0].split()[1]
+    return sha
+
+def clone(git_path, module, repo, dest, remote, depth, version):
+    ''' makes a new git repo if it does not already exist '''
+    dest_dirname = os.path.dirname(dest)
+    try:
+        os.makedirs(dest_dirname)
+    except:
+        pass
+    os.chdir(dest_dirname)
+    cmd = [ git_path, 'clone', '-o', remote, '--recursive' ]
+    if version and version != 'HEAD':
+        cmd.extend([ '--branch', str(version) ])
+    if depth:
+        cmd.extend([ '--depth', str(depth) ])
+    cmd.extend([ repo, dest ])
+    return module.run_command(cmd, check_rc=True)
+
+def has_local_mods(git_path, dest):
+    os.chdir(dest)
+    cmd = "%s status -s" % (git_path,)
+    lines = os.popen(cmd).read().splitlines()
+    lines = filter(lambda c: not re.search('^\\?\\?.*$', c), lines)
+    return len(lines) > 0
+
+def reset(git_path, module, dest, force):
+    '''
+    Resets the index and working tree to HEAD.
+    Discards any changes to tracked files in working
+    tree since that commit.
+    '''
+    os.chdir(dest)
+    if not force and has_local_mods(git_path, dest):
+        module.fail_json(msg="Local modifications exist in repository (force=no).")
+    cmd = "%s reset --hard HEAD" % (git_path,)
+    return module.run_command(cmd, check_rc=True)
+
+def get_remote_head(git_path, module, dest, version, remote):
+    cmd = ''
+    os.chdir(dest)
+    if version == 'HEAD':
+        version = get_head_branch(git_path, module, dest, remote)
+    if is_remote_branch(git_path, module, dest, remote, version):
+        cmd = '%s ls-remote %s -h refs/heads/%s' % (git_path, remote, version)
+    elif is_remote_tag(git_path, module, dest, remote, version):
+        cmd = '%s ls-remote %s -t refs/tags/%s' % (git_path, remote, version)
+    else:
+        # appears to be a sha1.  return as-is since it appears
+        # cannot check for a specific sha1 on remote
+        return version
+    (rc, out, err) = module.run_command(cmd, check_rc=True)
+    if len(out) < 1:
+        module.fail_json(msg="Could not determine remote revision for %s" % version)
+    rev = out.split()[0]
+    return rev
+
+def is_remote_tag(git_path, module, dest, remote, version):
+    os.chdir(dest)
+    cmd = '%s ls-remote %s -t refs/tags/%s' % (git_path, remote, version)
+    (rc, out, err) = module.run_command(cmd)
+    if version in out:
+        return True
+    else:
+        return False
+
+def get_branches(git_path, module, dest):
+    os.chdir(dest)
+    branches = []
+    cmd = '%s branch -a' % (git_path,)
+    (rc, out, err) = module.run_command(cmd)
+    if rc != 0:
+        module.fail_json(msg="Could not determine branch data - received %s" % out)
+    for line in out.split('\n'):
+        branches.append(line.strip())
+    return branches
+
+def is_remote_branch(git_path, module, dest, remote, branch):
+    branches = get_branches(git_path, module, dest)
+    rbranch = 'remotes/%s/%s' % (remote, branch)
+    if rbranch in branches:
+        return True
+    else:
+        return False
+
+def is_local_branch(git_path, module, dest, branch):
+    branches = get_branches(git_path, module, dest)
+    lbranch = '%s' % branch
+    if lbranch in branches:
+        return True
+    elif '* %s' % branch in branches:
+        return True
+    else:
+        return False
+
+def is_not_a_branch(git_path, module, dest):
+    branches = get_branches(git_path, module, dest)
+    for b in branches:
+        if b.startswith('* ') and 'no branch' in b:
+            return True
+    return False
+
+def get_head_branch(git_path, module, dest, remote):
+    '''
+    Determine what branch HEAD is associated with.  This is partly
+    taken from lib/ansible/utils/__init__.py.  It finds the correct
+    path to .git/HEAD and reads from that file the branch that HEAD is
+    associated with.  In the case of a detached HEAD, this will look
+    up the branch in .git/refs/remotes/<remote>/HEAD.
+    '''
+    repo_path = os.path.join(dest, '.git')
+    # Check if the .git is a file. If it is a file, it means that we are in a submodule structure.
+    if os.path.isfile(repo_path):
+        try:
+            gitdir = yaml.safe_load(open(repo_path)).get('gitdir')
+            # There is a posibility the .git file to have an absolute path.
+            if os.path.isabs(gitdir):
+                repo_path = gitdir
+            else:
+                repo_path = os.path.join(repo_path.split('.git')[0], gitdir)
+        except (IOError, AttributeError):
+            return ''
+    # Read .git/HEAD for the name of the branch.
+    # If we're in a detached HEAD state, look up the branch associated with
+    # the remote HEAD in .git/refs/remotes/<remote>/HEAD
+    f = open(os.path.join(repo_path, "HEAD"))
+    if is_not_a_branch(git_path, module, dest):
+        f.close()
+        f = open(os.path.join(repo_path, 'refs', 'remotes', remote, 'HEAD'))
+    branch = f.readline().split('/')[-1].rstrip("\n")
+    f.close()
+    return branch
+
+def fetch(git_path, module, repo, dest, version, remote):
+    ''' updates repo from remote sources '''
+    os.chdir(dest)
+    (rc, out1, err1) = module.run_command("%s fetch %s" % (git_path, remote))
+    if rc != 0:
+        module.fail_json(msg="Failed to download remote objects and refs")
+
+    (rc, out2, err2) = module.run_command("%s fetch --tags %s" % (git_path, remote))
+    if rc != 0:
+        module.fail_json(msg="Failed to download remote objects and refs")
+    (rc, out3, err3) = submodule_update(git_path, module, dest)
+    return (rc, out1 + out2 + out3, err1 + err2 + err3)
+
+def submodule_update(git_path, module, dest):
+    ''' init and update any submodules '''
+    os.chdir(dest)
+    # skip submodule commands if .gitmodules is not present
+    if not os.path.exists(os.path.join(dest, '.gitmodules')):
+        return (0, '', '')
+    cmd = [ git_path, 'submodule', 'sync' ]
+    (rc, out, err) = module.run_command(cmd, check_rc=True)
+    cmd = [ git_path, 'submodule', 'update', '--init', '--recursive' ]
+    (rc, out, err) = module.run_command(cmd)
+    if rc != 0:
+        module.fail_json(msg="Failed to init/update submodules")
+    return (rc, out, err)
+
+def switch_version(git_path, module, dest, remote, version):
+    ''' once pulled, switch to a particular SHA, tag, or branch '''
+    os.chdir(dest)
+    cmd = ''
+    if version != 'HEAD':
+        if is_remote_branch(git_path, module, dest, remote, version):
+            if not is_local_branch(git_path, module, dest, version):
+                cmd = "%s checkout --track -b %s %s/%s" % (git_path, version, remote, version)
+            else:
+                (rc, out, err) = module.run_command("%s checkout --force %s" % (git_path, version))
+                if rc != 0:
+                    module.fail_json(msg="Failed to checkout branch %s" % version)
+                cmd = "%s reset --hard %s/%s" % (git_path, remote, version)
+        else:
+            cmd = "%s checkout --force %s" % (git_path, version)
+    else:
+        branch = get_head_branch(git_path, module, dest, remote)
+        (rc, out, err) = module.run_command("%s checkout --force %s" % (git_path, branch))
+        if rc != 0:
+            module.fail_json(msg="Failed to checkout branch %s" % branch)
+        cmd = "%s reset --hard %s" % (git_path, remote)
+    (rc, out1, err1) = module.run_command(cmd)
+    if rc != 0:
+        if version != 'HEAD':
+            module.fail_json(msg="Failed to checkout %s" % (version))
+        else:
+            module.fail_json(msg="Failed to checkout branch %s" % (branch))
+    (rc, out2, err2) = submodule_update(git_path, module, dest)
+    return (rc, out1 + out2, err1 + err2)
+
+# ===========================================
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            dest=dict(required=True),
+            repo=dict(required=True, aliases=['name']),
+            version=dict(default='HEAD'),
+            remote=dict(default='origin'),
+            force=dict(default='yes', type='bool'),
+            depth=dict(default=None, type='int'),
+            update=dict(default='yes', type='bool'),
+        ),
+        supports_check_mode=True
+    )
+
+    dest    = os.path.abspath(os.path.expanduser(module.params['dest']))
+    repo    = module.params['repo']
+    version = module.params['version']
+    remote  = module.params['remote']
+    force   = module.params['force']
+    depth   = module.params['depth']
+    update  = module.params['update']
+
+    git_path = module.get_bin_path('git', True)
+    gitconfig = os.path.join(dest, '.git', 'config')
+
+    rc, out, err, status = (0, None, None, None)
+
+    # if there is no git configuration, do a clone operation
+    # else pull and switch the version
+    before = None
+    local_mods = False
+    if not os.path.exists(gitconfig):
+        if module.check_mode:
+            module.exit_json(changed=True)
+        (rc, out, err) = clone(git_path, module, repo, dest, remote, depth, version)
+    elif not update:
+        # Just return having found a repo already in the dest path
+        # this does no checking that the repo is the actual repo
+        # requested.
+        before = get_version(git_path, dest)
+        module.exit_json(changed=False, before=before, after=before)
+    else:
+        # else do a pull
+        local_mods = has_local_mods(git_path, dest)
+        before = get_version(git_path, dest)
+        # if force, do a reset
+        if local_mods and module.check_mode:
+            module.exit_json(changed=True, msg='Local modifications exist')
+        (rc, out, err) = reset(git_path, module, dest, force)
+        if rc != 0:
+            module.fail_json(msg=err)
+        # exit if already at desired sha version
+        # abbreviate version in case full sha is given
+        if before == str(version)[:7]:
+            module.exit_json(changed=False)
+        # check or get changes from remote
+        remote_head = get_remote_head(git_path, module, dest, version, remote)
+        if module.check_mode:
+            changed = False
+            if remote_head == version:
+                # get_remote_head returned version as-is
+                # were given a sha1 object, see if it is present
+                (rc, out, err) = module.run_command("%s show %s" % (git_path, version))
+                if version in out:
+                    changed = False
+                else:
+                    changed = True
+            else:
+                remote_head = remote_head[0:7]
+                if before != remote_head:
+                    changed = True
+                else:
+                    changed = False
+            module.exit_json(changed=changed, before=before, after=remote_head)
+        (rc, out, err) = fetch(git_path, module, repo, dest, version, remote)
+        if rc != 0:
+            module.fail_json(msg=err)
+
+    # switch to version specified regardless of whether
+    # we cloned or pulled
+    (rc, out, err) = switch_version(git_path, module, dest, remote, version)
+    if rc != 0:
+        module.fail_json(msg=err)
+
+    # determine if we changed anything
+    after = get_version(git_path, dest)
+    changed = False
+
+    if before != after or local_mods:
+        changed = True
+
+    module.exit_json(changed=changed, before=before, after=after)
+
+# include magic from lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()

@@ -2,7 +2,7 @@ Source: ansible
 Section: admin
 Priority: optional
 Maintainer: Henry Graham (hzgraham) <Henry.Graham@mail.wvu.edu>
-Build-Depends: cdbs, debhelper (>= 5.0.0)
+Build-Depends: cdbs, debhelper (>= 5.0.0), asciidoc
 Standards-Version: 3.9.1
 Homepage: http://ansible.github.com/
 

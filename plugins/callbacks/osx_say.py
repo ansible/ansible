@@ -67,13 +67,19 @@ class CallbackModule(object):
     def playbook_on_notify(self, host, handler):
         say("pew", LASER_VOICE)
 
+    def playbook_on_no_hosts_matched(self):
+        pass
+
+    def playbook_on_no_hosts_remaining(self):
+        pass
+
     def playbook_on_task_start(self, name, is_conditional):
         if not is_conditional:
             say("Starting task: %s" % name, REGULAR_VOICE)
         else:
             say("Notifying task: %s" % name, REGULAR_VOICE)
 
-    def playbook_on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None):
+    def playbook_on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
         pass
 
     def playbook_on_setup(self):

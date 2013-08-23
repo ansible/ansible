@@ -1,8 +1,50 @@
+ansible (1.3.1) unstable; urgency=low
+
+  * 1.3 release (PENDING)
+ 
+ -- Michael DeHaan <michael.dehaan@gmail.com>  Fri, 05 July 2013 21:45:01 -0500
+
+ansible (1.2.2) unstable; urgency=low
+  
+  * 1.2.2 release
+ 
+ -- Michael DeHaan <michael.dehaan@gmail.com>  Thu, 04 July 2013 21:45:01 -0500
+
+ansible (1.2.1) unstable; urgency=low
+
+  * 1.2.1 release
+ 
+ -- Michael DeHaan <michael.dehaan@gmail.com>  Thu, 04 July 2013 21:45:00 -0500
+
+ansible (1.2) unstable; urgency=low
+
+  * 1.2 release
+
+ -- Michael DeHaan <michael.dehaan@gmail.com>  Mon, 10 June 2013 15:00:00 -0500
+
+ansible (1.1) unstable; urgency=low
+
+  * 1.1 release
+
+ -- Michael DeHaan <michael.dehaan@gmail.com>  Tue, 02 Mar 2013 20:38:00 -0500
+
+ansible (1.0) unstable; urgency=low
+  
+  * 1.0 release 
+ 
+ -- Michael DeHaan <michael.dehaan@gmail.com>  Fri, 01 Feb 2013 21:34:34 -0500
+
+ansible (0.9) unstable; urgency=low
+  
+  * 0.9 release 
+ 
+ -- Michael DeHaan <michael.dehaan@gmail.com>  Fri, 30 Nov 2012 22:00:00 -0400
+
 ansible (0.8) unstable; urgency=low
   
-  * 0.8 release pending
+  * 0.8 update
  
- -- Michael DeHaan <michael.dehaan@gmail.com>  Thu, 06 Aug 2012 18:50:01 -0400
+ -- Michael DeHaan <michael.dehaan@gmail.com>  Fri, 19 Oct 2012 20:50:00 -0400
 
 ansible (0.7) unstable; urgency=low
   

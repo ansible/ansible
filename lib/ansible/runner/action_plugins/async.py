@@ -15,16 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import pwd
-import random
-import traceback
-import tempfile
-
-import ansible.constants as C
-from ansible import utils
-from ansible import errors
-from ansible import module_common
 from ansible.runner.return_data import ReturnData
 
 class ActionModule(object):
@@ -32,15 +22,18 @@ class ActionModule(object):
     def __init__(self, runner):
         self.runner = runner
 
-    def run(self, conn, tmp, module_name, module_args, inject):
+    def run(self, conn, tmp, module_name, module_args, inject, complex_args=None, **kwargs):
         ''' transfer the given module name, plus the async module, then run it '''
+
+        if self.runner.noop_on_check(inject):
+            return ReturnData(conn=conn, comm_ok=True, result=dict(skipped=True, msg='check mode not supported for this module'))
 
         # shell and command module are the same
         if module_name == 'shell':
             module_name = 'command'
             module_args += " #USE_SHELL"
 
-        (module_path, is_new_style) = self.runner._copy_module(conn, tmp, module_name, module_args, inject)
+        (module_path, is_new_style, shebang) = self.runner._copy_module(conn, tmp, module_name, module_args, inject, complex_args=complex_args)
         self.runner._low_level_exec_command(conn, "chmod a+rx %s" % module_path, tmp)
 
         return self.runner._execute_module(conn, tmp, 'async_wrapper', module_args,

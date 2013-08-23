@@ -1,6 +1,7 @@
 ---
 # Test iterating over lines of stdout stored in a register.
 - hosts: localhost
+  connection: local
   vars:
     small_file: /etc/resolv.conf
     temp_file: /tmp/ansible_result_list.tmp

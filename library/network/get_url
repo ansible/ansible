@@ -1,0 +1,319 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2012, Jan-Piet Mens <jpmens () gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+# see examples/playbooks/get_url.yml
+
+import shutil
+import datetime
+import tempfile
+
+DOCUMENTATION = '''
+---
+module: get_url
+short_description: Downloads files from HTTP, HTTPS, or FTP to node
+description:
+     - Downloads files from HTTP, HTTPS, or FTP to the remote server. The remote
+       server I(must) have direct access to the remote resource.
+     - By default, if an environment variable C(<protocol>_proxy) is set on
+       the target host, requests will be sent through that proxy. This
+       behaviour can be overridden by setting a variable for this task
+       (see `setting the environment
+       <http://www.ansibleworks.com/docs/playbooks2.html#setting-the-environment-and-working-with-proxies>`_),
+       or by using the use_proxy option.
+version_added: "0.6"
+options:
+  url:
+    description:
+      - HTTP, HTTPS, or FTP URL in the form (http|https|ftp)://[user[:pass]]@host.domain[:port]/path
+    required: true
+    default: null
+    aliases: []
+  dest:
+    description:
+      - absolute path of where to download the file to.
+      - If I(dest) is a directory, the basename of the file on the remote server will be used. If a directory, C(force=yes) must also be set.
+    required: true
+    default: null
+  force:
+    description:
+      - If C(yes), will download the file every time and replace the
+        file if the contents change. If C(no), the file will only be downloaded if
+        the destination does not exist. Generally should be C(yes) only for small
+        local files. Prior to 0.6, this module behaved as if C(yes) was the default.
+    version_added: "0.7"
+    required: false
+    choices: [ "yes", "no" ]
+    default: "no"
+    aliases: [ "thirsty" ]
+  sha256sum:
+    description:
+      - If a SHA-256 checksum is passed to this parameter, the digest of the
+        destination file will be calculated after it is downloaded to ensure
+        its integrity and verify that the transfer completed successfully.
+    version_added: "1.3"
+    required: false
+    default: null
+  use_proxy:
+    description:
+      - if C(no), it will not use a proxy, even if one is defined in
+        an environment variable on the target hosts.
+    required: false
+    default: 'yes'
+    choices: ['yes', 'no']
+  others:
+    description:
+      - all arguments accepted by the M(file) module also work here
+    required: false
+notes:
+    - This module doesn't yet support configuration for proxies.
+# informational: requirements for nodes
+requirements: [ urllib2, urlparse ]
+author: Jan-Piet Mens
+'''
+
+EXAMPLES='''
+- name: download foo.conf
+  get_url: url=http://example.com/path/file.conf dest=/etc/foo.conf mode=0440
+
+- name: download file with sha256 check
+  get_url: url=http://example.com/path/file.conf dest=/etc/foo.conf sha256sum=b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c
+'''
+
+try:
+    import hashlib
+    HAS_HASHLIB=True
+except ImportError:
+    HAS_HASHLIB=False
+
+try:
+    import urllib2
+    HAS_URLLIB2 = True
+except ImportError:
+    HAS_URLLIB2 = False
+
+try:
+    import urlparse
+    import socket
+    HAS_URLPARSE = True
+except ImportError:
+    HAS_URLPARSE=False
+
+# ==============================================================
+# url handling
+
+def url_filename(url):
+    fn = os.path.basename(urlparse.urlsplit(url)[2])
+    if fn == '':
+        return 'index.html'
+    return fn
+
+def url_do_get(module, url, dest, use_proxy):
+    """
+    Get url and return request and info
+    Credits: http://stackoverflow.com/questions/7006574/how-to-download-file-from-ftp
+    """
+
+    USERAGENT = 'ansible-httpget'
+    info = dict(url=url, dest=dest)
+    r = None
+    handlers = []
+
+    parsed = urlparse.urlparse(url)
+
+    if '@' in parsed[1]:
+        credentials, netloc = parsed[1].split('@', 1)
+        if ':' in credentials:
+            username, password = credentials.split(':', 1)
+        else:
+            username = credentials
+            password = ''
+        parsed = list(parsed)
+        parsed[1] = netloc
+
+        passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
+        # this creates a password manager
+        passman.add_password(None, netloc, username, password)
+        # because we have put None at the start it will always
+        # use this username/password combination for  urls
+        # for which `theurl` is a super-url
+
+        authhandler = urllib2.HTTPBasicAuthHandler(passman)
+        # create the AuthHandler
+        handlers.append(authhandler)
+
+        #reconstruct url without credentials
+        url = urlparse.urlunparse(parsed)
+
+    if not use_proxy:
+        proxyhandler = urllib2.ProxyHandler({})
+        handlers.append(proxyhandler)
+
+    opener = urllib2.build_opener(*handlers)
+    urllib2.install_opener(opener)
+    request = urllib2.Request(url)
+    request.add_header('User-agent', USERAGENT)
+
+    if os.path.exists(dest) and not module.params['force']:
+        t = datetime.datetime.utcfromtimestamp(os.path.getmtime(dest))
+        tstamp = t.strftime('%a, %d %b %Y %H:%M:%S +0000')
+        request.add_header('If-Modified-Since', tstamp)
+
+    try:
+        r = urllib2.urlopen(request)
+        info.update(r.info())
+        info.update(dict(msg="OK (%s bytes)" % r.headers.get('Content-Length', 'unknown'), status=200))
+    except urllib2.HTTPError, e:
+        # Must not fail_json() here so caller can handle HTTP 304 unmodified
+        info.update(dict(msg=str(e), status=e.code))
+        return r, info
+    except urllib2.URLError, e:
+        code = getattr(e, 'code', -1)
+        module.fail_json(msg="Request failed: %s" % str(e), status_code=code)
+
+    return r, info
+
+def url_get(module, url, dest, use_proxy):
+    """
+    Download url and store at dest.
+    If dest is a directory, determine filename from url.
+    Return (tempfile, info about the request)
+    """
+
+    req, info = url_do_get(module, url, dest, use_proxy)
+
+    # TODO: should really handle 304, but how? src file could exist (and be newer) but empty
+    if info['status'] == 304:
+        module.exit_json(url=url, dest=dest, changed=False, msg=info.get('msg', ''))
+
+    # create a temporary file and copy content to do md5-based replacement
+    if info['status'] != 200:
+        module.fail_json(msg="Request failed", status_code=info['status'], response=info['msg'], url=url, dest=dest)
+
+    fd, tempname = tempfile.mkstemp()
+    f = os.fdopen(fd, 'wb')
+    try:
+        shutil.copyfileobj(req, f)
+    except Exception, err:
+        os.remove(tempname)
+        module.fail_json(msg="failed to create temporary content file: %s" % str(err))
+    f.close()
+    req.close()
+    return tempname, info
+
+# ==============================================================
+# main
+
+def main():
+
+    # does this really happen on non-ancient python?
+    if not HAS_URLLIB2:
+        module.fail_json(msg="urllib2 is not installed")
+    if not HAS_URLPARSE:
+        module.fail_json(msg="urlparse is not installed")
+
+    module = AnsibleModule(
+        # not checking because of daisy chain to file module
+        argument_spec = dict(
+            url = dict(required=True),
+            dest = dict(required=True),
+            force = dict(default='no', aliases=['thirsty'], type='bool'),
+            sha256sum = dict(default=''),
+            use_proxy = dict(default='yes', type='bool')
+        ),
+        add_file_common_args=True
+    )
+
+    url  = module.params['url']
+    dest = os.path.expanduser(module.params['dest'])
+    force = module.params['force']
+    sha256sum = module.params['sha256sum']
+    use_proxy = module.params['use_proxy']
+
+    if os.path.isdir(dest):
+        dest = os.path.join(dest, url_filename(url))
+
+    if not force:
+        if os.path.exists(dest):
+            module.exit_json(msg="file already exists", dest=dest, url=url, changed=False)
+
+    # download to tmpsrc
+    tmpsrc, info = url_get(module, url, dest, use_proxy)
+    md5sum_src   = None
+    md5sum_dest  = None
+
+    # raise an error if there is no tmpsrc file
+    if not os.path.exists(tmpsrc):
+        os.remove(tmpsrc)
+        module.fail_json(msg="Request failed", status_code=info['status'], response=info['msg'])
+    if not os.access(tmpsrc, os.R_OK):
+        os.remove(tmpsrc)
+        module.fail_json( msg="Source %s not readable" % (tmpsrc))
+    md5sum_src = module.md5(tmpsrc)
+
+    # check if there is no dest file
+    if os.path.exists(dest):
+        # raise an error if copy has no permission on dest
+        if not os.access(dest, os.W_OK):
+            os.remove(tmpsrc)
+            module.fail_json( msg="Destination %s not writable" % (dest))
+        if not os.access(dest, os.R_OK):
+            os.remove(tmpsrc)
+            module.fail_json( msg="Destination %s not readable" % (dest))
+        md5sum_dest = module.md5(dest)
+    else:
+        if not os.access(os.path.dirname(dest), os.W_OK):
+            os.remove(tmpsrc)
+            module.fail_json( msg="Destination %s not writable" % (os.path.dirname(dest)))
+
+    if md5sum_src != md5sum_dest:
+        try:
+            shutil.copyfile(tmpsrc, dest)
+        except Exception, err:
+            os.remove(tmpsrc)
+            module.fail_json(msg="failed to copy %s to %s: %s" % (tmpsrc, dest, str(err)))
+        changed = True
+    else:
+        changed = False
+
+    # Check the digest of the destination file and ensure that it matches the 
+    # sha256sum parameter if it is present
+    if sha256sum != '':
+        if not HAS_HASHLIB:
+            os.remove(dest)
+            module.fail_json(msg="The sha256sum parameter requires hashlib, which is available in Python 2.5 and higher")
+        if sha256sum != module.sha256(dest):
+            os.remove(dest)
+            module.fail_json(msg="The SHA-256 checksum for %s did not match %s" % (dest, sha256sum))
+
+    os.remove(tmpsrc)
+
+    # allow file attribute changes
+    module.params['path'] = dest
+    file_args = module.load_file_common_arguments(module.params)
+    file_args['path'] = dest
+    changed = module.set_file_attributes_if_different(file_args, changed)
+
+    # Mission complete
+    module.exit_json(url=url, dest=dest, src=tmpsrc, md5sum=md5sum_src,
+        sha256sum=sha256sum, changed=changed, msg=info.get('msg', ''))
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()

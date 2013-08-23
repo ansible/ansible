@@ -1,13 +1,21 @@
 Ansible Releases at a Glance
 ============================
 
-0.8 "Cathedral" ------- pending
-0.7 "Panama" ---------- 9-06-2012
-0.6 "Cabo" ------------ 8-06-2012
-0.5 "Amsterdam" ------- 7-04-2012
-0.4 "Unchained" ------- 5-23-2012
-0.3 "Baluchitherium" -- 4-23-2012
-0.0.2 Untitled
-0.0.1 Untitled
+1.3    "Top of the World" ----- Release Pending
+1.2.3  "Hear About It Later" -- 08-21-2013
+1.2.2  "Hear About It Later" -- 07-05-2013
+1.2.1  "Hear About It Later" -- 07-04-2013
+1.2    "Right Now" ------------ 06-10-2013
+1.1    "Mean Street" ---------- 04-02-2013
+1.0    "Eruption" ------------- 02-01-2013
+0.9    "Dreams" --------------- 11-30-2012
+0.8    "Cathedral" ------------ 10-19-2012
+0.7    "Panama" --------------- 09-06-2012
+0.6    "Cabo" ----------------- 08-06-2012
+0.5    "Amsterdam" ------------ 07-04-2012
+0.4    "Unchained" ------------ 05-23-2012
+0.3    "Baluchitherium" ------- 04-23-2012
+0.0.2  Untitled
+0.0.1  Untitled
 
 

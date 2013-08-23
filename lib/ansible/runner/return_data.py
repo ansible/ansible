@@ -1,4 +1,4 @@
-# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2012-2013, Michael DeHaan <michael.dehaan@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -20,41 +20,44 @@ from ansible import utils
 class ReturnData(object):
     ''' internal return class for runner execute methods, not part of public API signature '''
 
-    __slots__ = [ 'result', 'comm_ok', 'host' ]
+    __slots__ = [ 'result', 'comm_ok', 'host', 'diff', 'flags' ]
 
-    def __init__(self, conn=None, host=None, result=None, comm_ok=True):
+    def __init__(self, conn=None, host=None, result=None, 
+        comm_ok=True, diff=dict(), flags=None):
 
         # which host is this ReturnData about?
         if conn is not None:
-            delegate_for = getattr(conn, '_delegate_for', None)
-            if delegate_for:
-                self.host = delegate_for
-            else:
-                self.host = conn.host
+            self.host = conn.host
+            delegate = getattr(conn, 'delegate', None)
+            if delegate is not None:
+                self.host = delegate
+
         else:
             self.host = host
 
         self.result = result
         self.comm_ok = comm_ok
 
+        # if these values are set and used with --diff we can show
+        # changes made to particular files
+        self.diff = diff
+
         if type(self.result) in [ str, unicode ]:
             self.result = utils.parse_json(self.result)
+
 
         if self.host is None:
             raise Exception("host not set")
         if type(self.result) != dict:
             raise Exception("dictionary result expected")
 
+        if flags is None:
+            flags = []
+        self.flags = []
+
     def communicated_ok(self):
         return self.comm_ok
 
     def is_successful(self):
-        return self.comm_ok and ('failed' not in self.result) and (self.result.get('rc',0) == 0)
-
-    def daisychain(self, module_name, module_args):
-        ''' request a module call follow this one '''
-        if self.is_successful():
-            self.result['daisychain'] = module_name
-            self.result['daisychain_args'] = module_args
-        return self
+        return self.comm_ok and (self.result.get('failed', False) == False) and (self.result.get('rc',0) == 0)
 

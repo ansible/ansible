@@ -15,25 +15,34 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import pwd
-import random
-import traceback
-import tempfile
+import re
 
 import ansible.constants as C
 from ansible import utils
 from ansible import errors
-from ansible import module_common
 from ansible.runner.return_data import ReturnData
 
 class ActionModule(object):
+    NEEDS_TMPPATH = False
 
     def __init__(self, runner):
         self.runner = runner
 
-    def run(self, conn, tmp, module_name, module_args, inject):
-        return ReturnData(conn=conn, result=dict(
-            stdout=self.runner._low_level_exec_command(conn, module_args.encode('utf-8'), tmp, sudoable=True)
-        ))
+    def run(self, conn, tmp, module_name, module_args, inject, complex_args=None, **kwargs):
 
+        if self.runner.noop_on_check(inject):
+            # in --check mode, always skip this module execution
+            return ReturnData(conn=conn, comm_ok=True, result=dict(skipped=True))
+
+        executable = ''
+        # From library/command, keep in sync
+        r = re.compile(r'(^|\s)(executable)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)\s|$)')
+        for m in r.finditer(module_args):
+            v = m.group(4).replace("\\", "")
+            if m.group(2) == "executable":
+                executable = v
+        module_args = r.sub("", module_args)
+
+        return ReturnData(conn=conn,
+            result=self.runner._low_level_exec_command(conn, module_args, tmp, sudoable=True, executable=executable)
+        )

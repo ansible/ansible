@@ -2,3 +2,4 @@ examples/hosts etc/ansible
 library/* usr/share/ansible
 docs/man/man1/*.1 usr/share/man/man1
 bin/* usr/bin
+examples/ansible.cfg etc/ansible

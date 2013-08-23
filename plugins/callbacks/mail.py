@@ -17,7 +17,7 @@
 
 import smtplib
 
-def mail(subject='Ansible error mail', sender='root', to='root', cc=None, bcc=None, body=None):
+def mail(subject='Ansible error mail', sender='<root>', to='root', cc=None, bcc=None, body=None):
     if not body:
         body = subject
 
@@ -51,33 +51,45 @@ class CallbackModule(object):
     def runner_on_failed(self, host, res, ignore_errors=False):
         if ignore_errors:
             return
-        sender = 'Ansible error on %s' % host
-        subject = 'Failure: %s' % res['msg'].split('\n')[0]
-        mail(sender=sender, subject=subject, 
-             body='''The following task failed for host %s:
-
-%s %s
-
-with the following error message:
-
-%s
-
-A complete dump of the error:
-
-%s''' % (host, res['invocation']['module_name'], res['invocation']['module_args'], res['msg'], res)
-        )
-
+        sender = '"Ansible: %s" <root>' % host
+        subject = 'Failed: %(module_name)s %(module_args)s' % res['invocation']
+        body = 'The following task failed for host ' + host + ':\n\n%(module_name)s %(module_args)s\n\n' % res['invocation']
+        if 'stdout' in res.keys() and res['stdout']:
+            subject = res['stdout'].strip('\r\n').split('\n')[-1]
+            body += 'with the following output in standard output:\n\n' + res['stdout'] + '\n\n'
+        if 'stderr' in res.keys() and res['stderr']:
+            subject = res['stderr'].strip('\r\n').split('\n')[-1]
+            body += 'with the following output in standard error:\n\n' + res['stderr'] + '\n\n'
+        if 'msg' in res.keys() and res['msg']:
+            subject = res['msg'].strip('\r\n').split('\n')[0]
+            body += 'with the following message:\n\n' + res['msg'] + '\n\n'
+        body += 'A complete dump of the error:\n\n' + str(res)
+        mail(sender=sender, subject=subject, body=body)
+                  
     def runner_on_error(self, host, msg):
-        sender = 'Ansible: %s <root>' % host
-        subject = 'Error: %s' % res['msg'].split('\n')[0]
-        mail(sender=sender, subject=subject, body=msg)
+        sender = '"Ansible: %s" <root>' % host
+        subject = 'Error: %s' % msg.strip('\r\n').split('\n')[0]
+        body = 'An error occured for host ' + host + ' with the following message:\n\n' + msg
+        mail(sender=sender, subject=subject, body=body)
 
     def runner_on_unreachable(self, host, res):
-        sender = 'Ansible: %s <root>' % host
-        subject = 'Unreachable: %s' % res.split('\n')[0]
-        mail(sender=sender, subject=subject, body=res)
+        sender = '"Ansible: %s" <root>' % host
+        if isinstance(res, basestring):
+            subject = 'Unreachable: %s' % res.strip('\r\n').split('\n')[-1]
+            body = 'An error occured for host ' + host + ' with the following message:\n\n' + res
+        else:
+            subject = 'Unreachable: %s' % res['msg'].strip('\r\n').split('\n')[0]
+            body = 'An error occured for host ' + host + ' with the following message:\n\n' + \
+                   res['msg'] + '\n\nA complete dump of the error:\n\n' + str(res)
+        mail(sender=sender, subject=subject, body=body)
 
     def runner_on_async_failed(self, host, res, jid):
-        sender = 'Ansible: %s <root>' % host
-        subject = 'Async failure: %s' % res.split('\n')[0]
-        mail(sender=sender, subject=subject, body=res)
+        sender = '"Ansible: %s" <root>' % host
+        if isinstance(res, basestring):
+            subject = 'Async failure: %s' % res.strip('\r\n').split('\n')[-1]
+            body = 'An error occured for host ' + host + ' with the following message:\n\n' + res
+        else:
+            subject = 'Async failure: %s' % res['msg'].strip('\r\n').split('\n')[0]
+            body = 'An error occured for host ' + host + ' with the following message:\n\n' + \
+                   res['msg'] + '\n\nA complete dump of the error:\n\n' + str(res)
+        mail(sender=sender, subject=subject, body=body)
