@@ -72,6 +72,10 @@ options:
         - S3 URL endpoint. If not specified then the S3_URL environment variable is used, if that variable is defined.
     default: null
     aliases: [ S3_URL ]
+<<<<<<< HEAD
+=======
+
+>>>>>>> yet another rebase attempt
   aws_secret_key:
     description:
       - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
