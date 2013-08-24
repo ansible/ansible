@@ -145,16 +145,22 @@ class DebianStrategy(GenericStrategy):
 
     def get_permanent_hostname(self):
         try:
-            with open(self.HOSTNAME_FILE) as f:
+            f = open(self.HOSTNAME_FILE)
+            try:
                 return f.read().split()
+            finally:
+                f.close()
         except Exception, err:
             self.module.fail_json(msg="failed to read hostname: %s" %
                 str(err))
 
     def set_permanent_hostname(self, name):
         try:
-            with open(self.HOSTNAME_FILE, 'w+') as f:
+            f = open(self.HOSTNAME_FILE, 'w+')
+            try:
                 f.write("%s\n" % name)
+            finally:
+                f.close()
         except Exception, err:
             self.module.fail_json(msg="failed to update hostname: %s" %
                 str(err))
@@ -180,11 +186,14 @@ class RedHatStrategy(GenericStrategy):
 
     def get_permanent_hostname(self):
         try:
-            with open(self.NETWORK_FILE, 'rb') as f:
+            f = open(self.NETWORK_FILE, 'rb')
+            try:
                 for line in f.readlines():
                     if line.startswith('HOSTNAME'):
                         k, v = line.split('=')
                         return v.strip()
+            finally:
+                f.close()
         except Exception, err:
             self.module.fail_json(msg="failed to read hostname: %s" %
                 str(err))
@@ -192,14 +201,20 @@ class RedHatStrategy(GenericStrategy):
     def set_permanent_hostname(self, name):
         try:
             lines = []
-            with open(self.NETWORK_FILE, 'rb') as f:
+            f = open(self.NETWORK_FILE, 'rb')
+            try:
                 for line in f.readlines():
                     if line.startswith('HOSTNAME'):
                         lines.append("HOSTNAME=%s\n" % name)
                     else:
                         lines.append(line)
-            with open(self.NETWORK_FILE, 'w+') as f:
+            finally:
+                f.close()
+            f = open(self.NETWORK_FILE, 'w+')
+            try:
                 f.writelines(lines)
+            finally:
+                f.close()
         except Exception, err:
             self.module.fail_json(msg="failed to update hostname: %s" %
                 str(err))
