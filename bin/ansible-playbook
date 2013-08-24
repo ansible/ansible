@@ -119,7 +119,7 @@ def main(args):
     for playbook in args:
         if not os.path.exists(playbook):
             raise errors.AnsibleError("the playbook: %s could not be found" % playbook)
-        if not ( os.path.isfile(playbook) or stat.S_ISFIFO(os.stat(playbook).st_mode) ):
+        if not (os.path.isfile(playbook) or stat.S_ISFIFO(os.stat(playbook).st_mode)):
             raise errors.AnsibleError("the playbook: %s does not appear to be a file" % playbook)
 
     # run all playbooks specified on the command line
