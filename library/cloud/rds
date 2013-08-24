@@ -73,12 +73,12 @@ options:
     required: false
     default: null
     aliases: []
-  ec2_region:
+  region:
     description:
-      - the EC2 region to use.  If not specified then the EC2_REGION environment variable is used.  If neither exist then the AWS is queried for the region that the host invoking the module is located in.
+      - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
     required: true
     default: null
-    aliases: []
+    aliases: [ 'aws_region', 'ec2_region' ]
   db_name:
     description:
       - Name of a database to create within the instance.  If not specified then no database is created. Used only when command=create.
@@ -165,7 +165,7 @@ options:
       - availability zone in which to launch the instance. Used only when command=create or command=replicate.
     required: false
     default: null
-    aliases: []
+    aliases: ['aws_zone', 'ec2_zone']
   subnet:
     description:
       - VPC subnet group.  If specified then a VPC instance is created. Used only when command=create.
@@ -178,18 +178,18 @@ options:
     required: false
     default: null
     aliases: []
-  ec2_secret_key:
+  aws_secret_key:
     description:
-      - EC2 secret key. If not specified then the EC2_SECRET_KEY environment variable is used.
+      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
     required: false
     default: null
-    aliases: []
-  ec2_access_key:
+    aliases: [ 'ec2_secret_key', 'secret_key' ]
+  aws_access_key:
     description:
-      - EC2 access key. If not specified then the EC2_ACCESS_KEY environment variable is used.
+      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
     required: false
     default: null
-    aliases: []
+    aliases: [ 'ec2_access_key', 'access_key' ]
   wait:
     description:
       - When command=create, replicate, or modify then wait for the database to enter the 'available' state.  When command=delete wait for the database to be terminated.
@@ -263,12 +263,6 @@ except ImportError:
     print "failed=True msg='boto required for this module'"
     sys.exit(1)
 
-try: 
-    import urllib2
-except ImportError:
-    print "failed=True msg='urllib2 required for this module'"
-    sys.exit(1)
-
 def main():
     module = AnsibleModule(
         argument_spec = dict(
@@ -293,11 +287,11 @@ def main():
             maint_window      = dict(required=False),
             backup_window     = dict(required=False),
             backup_retention  = dict(required=False), 
-            ec2_region        = dict(aliases=['EC2_REGION'], choices=AWS_REGIONS, required=False),
-            zone              = dict(required=False),
+            region            = dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS, required=False),
+            zone              = dict(aliases=['aws_zone', 'ec2_zone'], required=False),
             subnet            = dict(required=False),
-            ec2_secret_key    = dict(aliases=['EC2_SECRET_KEY'], no_log=True, required=False),
-            ec2_access_key    = dict(aliases=['EC2_ACCESS_KEY'], required=False),
+            aws_secret_key    = dict(aliases=['ec2_secret_key', 'secret_key'], no_log=True, required=False),
+            aws_access_key    = dict(aliases=['ec2_access_key', 'access_key'], required=False),
             wait              = dict(type='bool', default=False),
             wait_timeout      = dict(default=300),
             snapshot          = dict(required=False),
@@ -327,39 +321,40 @@ def main():
     subnet             = module.params.get('subnet')
     backup_window      = module.params.get('backup_window')
     backup_retention   = module.params.get('module_retention')
-    ec2_region         = module.params.get('ec2_region')
+    region             = module.params.get('region')
     zone               = module.params.get('zone')
-    ec2_secret_key     = module.params.get('ec2_secret_key')
-    ec2_access_key     = module.params.get('ec2_access_key')
+    aws_secret_key     = module.params.get('aws_secret_key')
+    aws_access_key     = module.params.get('aws_access_key')
     wait               = module.params.get('wait')
     wait_timeout       = int(module.params.get('wait_timeout'))
     snapshot           = module.params.get('snapshot')
     apply_immediately  = module.params.get('apply_immediately')
 
     # allow environment variables to be used if ansible vars aren't set
-    if not ec2_secret_key and 'EC2_SECRET_KEY' in os.environ:
-        ec2_secret_key = os.environ['EC2_SECRET_KEY']
-    if not ec2_access_key and 'EC2_ACCESS_KEY' in os.environ:
-        ec2_access_key = os.environ['EC2_ACCESS_KEY']
-    if not ec2_region and 'EC2_REGION' in os.environ:
-        ec2_region = os.environ['EC2_REGION']
+    if not region:
+        if   'AWS_REGION' in os.environ:
+            region = os.environ['AWS_REGION']
+        elif   'EC2_REGION' in os.environ:
+            region = os.environ['EC2_REGION']
 
-    # If region isn't set either as a param or environ variable then 
-    # look up the current region via the AWS URL
-    if not ec2_region:
-        response = urllib2.urlopen('http://169.254.169.254/latest/meta-data/placement/availability-zone')
-        az = response.read()
-        for r in AWS_REGIONS:
-            if az.startswith(r):
-                ec2_region = r
-                break
+    if not aws_secret_key:
+        if  'AWS_SECRET_KEY' in os.environ:
+            aws_secret_key = os.environ['AWS_SECRET_KEY']
+        elif 'EC2_SECRET_KEY' in os.environ:
+            aws_secret_key = os.environ['EC2_SECRET_KEY']
 
-        if not ec2_region:
-            module.fail_json(msg = str("ec2_region not specified and unable to determine region from AWS."))
+    if not aws_access_key:
+        if 'AWS_ACCESS_KEY' in os.environ:
+            aws_access_key = os.environ['AWS_ACCESS_KEY']
+        elif 'EC2_ACCESS_KEY' in os.environ:
+            aws_access_key = os.environ['EC2_ACCESS_KEY']
+
+    if not aws_region:
+        module.fail_json(msg = str("region not specified and unable to determine region from EC2_REGION."))
 
     # connect to the rds endpoint
     try:
-        conn = boto.rds.connect_to_region(ec2_region, aws_access_key_id=ec2_access_key, aws_secret_access_key=ec2_secret_key)
+        conn = boto.rds.connect_to_region(aws_region, aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key)
     except boto.exception.BotoServerError, e:
         module.fail_json(msg = e.error_message)
 
