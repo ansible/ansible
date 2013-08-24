@@ -1,0 +1,247 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2013, Hiroaki Nakamura <hnakamur@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: hostname
+author: Hiroaki Nakamura
+version_added: "1.3"
+short_description: Manage hostname
+requirements: [ hostname ]
+description:
+    - Set system's hostname
+    - Currently implemented on only Debian, Ubuntu, RedHat and CentOS.
+options:
+    name:
+        required: true
+        description:
+            - Name of the host
+'''
+
+EXAMPLES = '''
+- hostname: name=web01
+'''
+
+import os
+import syslog
+import platform
+
+# select whether we dump additional debug info through syslog
+syslogging = False
+
+def log(msg):
+    if syslogging:
+        syslog.openlog('ansible-%s' % os.path.basename(__file__))
+        syslog.syslog(syslog.LOG_NOTICE, msg)
+
+class Hostname(object):
+    """
+    This is a generic Hostname manipulation class that is subclassed
+    based on platform.
+
+    A subclass may wish to set different strategy instance to self.strategy.
+
+    All subclasses MUST define platform and distribution (which may be None).
+    """
+
+    platform = 'Generic'
+    distribution = None
+    strategy_class = None
+
+    def __new__(cls, *args, **kwargs):
+        return load_platform_subclass(Hostname, args, kwargs)
+
+    def __init__(self, module):
+        self.module   = module
+        self.name     = module.params['name']
+        self.strategy = self.strategy_class(module)
+
+    def get_current_hostname(self):
+        return self.strategy.get_current_hostname()
+
+    def set_current_hostname(self, name):
+        self.strategy.set_current_hostname(name)
+
+    def get_permanent_hostname(self):
+        return self.strategy.get_permanent_hostname()
+
+    def set_permanent_hostname(self, name):
+        self.strategy.set_permanent_hostname(name)
+
+class GenericStrategy(object):
+    """
+    This is a generic Hostname manipulation strategy class.
+
+    A subclass may wish to override some or all of these methods.
+      - get_current_hostname()
+      - get_permanent_hostname()
+      - set_current_hostname(name)
+      - set_permanent_hostname(name)
+    """
+    def __init__(self, module):
+        self.module = module
+
+    def execute_command(self, cmd):
+        if syslogging:
+            log('Command %s' % '|'.join(cmd))
+
+        return self.module.run_command(cmd)
+
+    HOSTNAME_CMD = '/bin/hostname'
+
+    def get_current_hostname(self):
+        cmd = [self.HOSTNAME_CMD]
+        rc, out, err = self.execute_command(cmd)
+        if rc != 0:
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
+                (rc, out, err))
+        return out.strip()
+
+    def set_current_hostname(self, name):
+        cmd = [self.HOSTNAME_CMD, name]
+        rc, out, err = self.execute_command(cmd)
+        if rc != 0:
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
+                (rc, out, err))
+
+    def get_permanent_hostname(self):
+        return None
+
+    def set_permanent_hostname(self, name):
+        pass
+
+# ===========================================
+
+class DebianStrategy(GenericStrategy):
+    """
+    This is a Debian family Hostname manipulation strategy class - it edits
+    the /etc/hostname file.
+    """
+
+    HOSTNAME_FILE = '/etc/hostname'
+
+    def get_permanent_hostname(self):
+        try:
+            with open(self.HOSTNAME_FILE) as f:
+                return f.read().split()
+        except Exception, err:
+            self.module.fail_json(msg="failed to read hostname: %s" %
+                str(err))
+
+    def set_permanent_hostname(self, name):
+        try:
+            with open(self.HOSTNAME_FILE, 'w+') as f:
+                f.write("%s\n" % name)
+        except Exception, err:
+            self.module.fail_json(msg="failed to update hostname: %s" %
+                str(err))
+
+class DebianHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Debian'
+    strategy_class = DebianStrategy
+
+class UbuntuHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Ubuntu'
+    strategy_class = DebianStrategy
+
+# ===========================================
+
+class RedHatStrategy(GenericStrategy):
+    """
+    This is a Redhat Hostname strategy class - it edits the
+    /etc/sysconfig/network file.
+    """
+    NETWORK_FILE = '/etc/sysconfig/network'
+
+    def get_permanent_hostname(self):
+        try:
+            with open(self.NETWORK_FILE, 'rb') as f:
+                for line in f.readlines():
+                    if line.startswith('HOSTNAME'):
+                        k, v = line.split('=')
+                        return v.strip()
+        except Exception, err:
+            self.module.fail_json(msg="failed to read hostname: %s" %
+                str(err))
+
+    def set_permanent_hostname(self, name):
+        try:
+            lines = []
+            with open(self.NETWORK_FILE, 'rb') as f:
+                for line in f.readlines():
+                    if line.startswith('HOSTNAME'):
+                        lines.append("HOSTNAME=%s\n" % name)
+                    else:
+                        lines.append(line)
+            with open(self.NETWORK_FILE, 'w+') as f:
+                f.writelines(lines)
+        except Exception, err:
+            self.module.fail_json(msg="failed to update hostname: %s" %
+                str(err))
+
+class RedHatHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Redhat'
+    strategy_class = RedHatStrategy
+
+class CentOSHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Centos'
+    strategy_class = RedHatStrategy
+
+# ===========================================
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            name=dict(required=True, type='str')
+        )
+    )
+
+    hostname = Hostname(module)
+    if syslogging:
+        log('Hostname instantiated - platform %s' % hostname.platform)
+        if hostname.distribution:
+            log('Hostname instantiated - distribution %s' %
+                hostname.distribution)
+
+    changed = False
+    name = module.params['name']
+    current_name = hostname.get_current_hostname()
+    if syslogging:
+        log('current_hostname=%s' % current_name)
+    if current_name != name:
+        hostname.set_current_hostname(name)
+        changed = True
+
+    permanent_name = hostname.get_permanent_hostname()
+    if syslogging:
+        log('permanent_hostname=%s' % permanent_name)
+    if permanent_name != name:
+        hostname.set_permanent_hostname(name)
+        changed = True
+
+    module.exit_json(changed=changed, name=name)
+
+# include magic from lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
