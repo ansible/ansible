@@ -51,6 +51,30 @@ def log(msg):
         syslog.openlog('ansible-%s' % os.path.basename(__file__))
         syslog.syslog(syslog.LOG_NOTICE, msg)
 
+class UnimplementedStrategy(object):
+    def __init__(self, module):
+        self.module = module
+
+    def get_current_hostname(self):
+        self.unimplemented_error()
+
+    def set_current_hostname(self, name):
+        self.unimplemented_error()
+
+    def get_permanent_hostname(self):
+        self.unimplemented_error()
+
+    def set_permanent_hostname(self, name):
+        self.unimplemented_error()
+
+    def unimplemented_error(self):
+        platform = get_platform()
+        distribution = get_distribution()
+        msg_platform = '%s (%s)' % (platform, distribution) \
+            if distribution is not None else platform
+        self.module.fail_json(
+            msg='hostname module cannot be used on platform %s' % msg_platform)
+
 class Hostname(object):
     """
     This is a generic Hostname manipulation class that is subclassed
@@ -63,7 +87,7 @@ class Hostname(object):
 
     platform = 'Generic'
     distribution = None
-    strategy_class = None
+    strategy_class = UnimplementedStrategy
 
     def __new__(cls, *args, **kwargs):
         return load_platform_subclass(Hostname, args, kwargs)
