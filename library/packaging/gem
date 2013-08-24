@@ -157,7 +157,9 @@ def install(module):
     else:
         if major and major < 2:
             cmd.append('--include-dependencies')
-    if not module.params['user_install']:
+    if module.params['user_install']:
+        cmd.append('--user-install')
+    else:
         cmd.append('--no-user-install')            
     cmd.append('--no-rdoc')
     cmd.append('--no-ri')
