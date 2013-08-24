@@ -1,37 +1,28 @@
 Ansible Changes By Release
 ==========================
 
-1.3 "Top of the World" - Release pending!
 
-Major new features:
+1.2.3 "Hear About It Later" (reprise) -- Aug 21, 2013
 
-* new /etc/ansible/facts.d allows JSON or INI style facts to be provided from the remote node, and supports executable fact programs in this dir. Files must end in *.fact.
-* ability to make undefined template variables raise errors, see ansible.cfg
+* Local security fixes for predictable file locations for ControlPersist and retry file paths on shared machines
+on operating systems without kernel symlink/hardlink protections.
 
-New modules:
+1.2.2 "Hear About It Later" (reprise) -- July 4, 2013
 
-* notifications: datadog_event -- send data to datadog
+* Added a configuration file option [paramiko_connection] record_host_keys which allows the code that paramiko uses
+to update known_hosts to be disabled.  This is done because paramiko can be very slow at doing this if you have a
+large number of hosts and some folks may not want this behavior.  This can be toggled independently of host key checking
+and does not affect the ssh transport plugin.  Use of the ssh transport plugin is preferred if you have ControlPersist
+capability, and Ansible by default in 1.2.1 and later will autodetect.
 
-Misc changes:
+1.2.1 "Hear About It Later" -- July 4, 2013
 
-* Added OpenRC support (Gentoo) to the service module
-* ansible_ssh_user value is available to templates
-* added placement_group parameter to ec2 module
-* new sha256 parameter to get_url module for validation
-* search for mount binaries in system path and sbin vs assuming path
-* allowed inventory file to be read from a pipe
-* added Solaris distribution facts
-* fixed bug along error path in quantum_network module
-* user password update mode is controllable in user module now (creation vs every time)
-* added check mode support to the OpenBSD package module
-* Fix for MySQL 5.6 compatibility
-* HP UX virtualization facts
-* fixed some executable bits in git
-* made rhn_register module compatible with EL5
-* fix for setup module epoch time in Solaris
-* sudo_user is now expanded later allowing to be set at inventory scope
-* mondodb_user module change to also support MongoDB 2.2
-* new state=hard option to the file module for hardlinks vs softlinks
+* Connection default is now "smart", which discovers if the system openssh can support ControlPersist, and uses
+  it if so, if not falls back to paramiko.
+* Host key checking is on by default.  Disable it if you like by adding host_key_checking=False in the [default]
+  section of /etc/ansible/ansible.cfg or ~/ansible.cfg or by exporting ANSIBLE_HOST_KEY_CHECKING=False
+* Paramiko now records host keys it was in contact with host key checking is on.  It is somewhat sluggish when doing this, 
+  so switch to the 'ssh' transport if this concerns you.
 
 1.2 "Right Now" -- June 10, 2013
 
@@ -43,7 +34,7 @@ Core Features:
 * ability to use variables from {{ }} syntax in mainline playbooks, new 'when' conditional, as detailed
   in documentation.  Can disable old style replacements in ansible.cfg if so desired, but are still active
   by default.
-* can set ansible_ssh_private_key_file as an inventory variable (similar to ansible_ssh_host, etc)
+* can set ansible_private_key_file as an inventory variable (similar to ansible_ssh_host, etc)
 * 'when' statement can be affixed to task includes to auto-affix the conditional to each task therein
 * cosmetic: "*****" banners in ansible-playbook output are now constant width
 * --limit can now be given a filename (--limit @filename) to constrain a run to a host list on disk
@@ -477,7 +468,7 @@ Highlighted Core Changes:
 
 Other Core Changes:
 
-* ansible config file can also go in 'ansible.cfg' in cwd in addition to ~/.ansible.cfg and /etc/ansible/ansible.cfg
+* ansible config file can also go in '.ansible.cfg' in cwd in addition to ~/.ansible.cfg and /etc/ansible/ansible.cfg
 * fix for inventory hosts at API level when hosts spec is a list and not a colon delimited string
 * ansible-pull example now sets up logrotate for the ansible-pull cron job log
 * negative host matching (!hosts) fixed for external inventory script usage

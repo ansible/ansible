@@ -19,7 +19,7 @@ import os
 import sys
 import glob
 import imp
-import ansible.constants as C
+from ansible import constants as C
 from ansible import errors
 
 MODULE_CACHE = {}

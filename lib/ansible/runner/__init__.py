@@ -30,7 +30,7 @@ import base64
 import sys
 import shlex
 import pipes
-import jinja2
+import subprocess
 
 import ansible.constants as C
 import ansible.inventory
@@ -50,10 +50,13 @@ except ImportError:
     HAS_ATFORK=False
 
 multiprocessing_runner = None
+        
+OUTPUT_LOCKFILE  = tempfile.TemporaryFile()
+PROCESS_LOCKFILE = tempfile.TemporaryFile()
 
 ################################################
 
-def _executor_hook(job_queue, result_queue):
+def _executor_hook(job_queue, result_queue, new_stdin):
 
     # attempt workaround of https://github.com/newsapps/beeswithmachineguns/issues/17
     # this function also not present in CentOS 6
@@ -64,7 +67,7 @@ def _executor_hook(job_queue, result_queue):
     while not job_queue.empty():
         try:
             host = job_queue.get(block=False)
-            return_data = multiprocessing_runner._executor(host)
+            return_data = multiprocessing_runner._executor(host, new_stdin)
             result_queue.put(return_data)
 
             if 'LEGACY_TEMPLATE_WARNING' in return_data.flags:
@@ -129,9 +132,12 @@ class Runner(object):
         check=False,                        # don't make any changes, just try to probe for potential changes
         diff=False,                         # whether to show diffs for template files that change
         environment=None,                   # environment variables (as dict) to use inside the command
-        complex_args=None,                  # structured data in addition to module_args, must be a dict
-        error_on_undefined_vars=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR # ex. False
+        complex_args=None                   # structured data in addition to module_args, must be a dict
         ):
+
+        # used to lock multiprocess inputs and outputs at various levels
+        self.output_lockfile  = OUTPUT_LOCKFILE
+        self.process_lockfile = PROCESS_LOCKFILE
 
         if not complex_args:
             complex_args = {}
@@ -165,9 +171,18 @@ class Runner(object):
         self.is_playbook      = is_playbook
         self.environment      = environment
         self.complex_args     = complex_args
-        self.error_on_undefined_vars = error_on_undefined_vars
-
         self.callbacks.runner = self
+
+        # if the transport is 'smart' see if SSH can support ControlPersist if not use paramiko
+        # 'smart' is the default since 1.2.1/1.3
+        if self.transport == 'smart':
+            cmd = subprocess.Popen(['ssh','-o','ControlPersist'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            (out, err) = cmd.communicate() 
+            if "Bad configuration option" in err:
+                self.transport = "paramiko"
+            else:
+                self.transport = "ssh" 
+
 
         # misc housekeeping
         if subset and self.inventory._subset is None:
@@ -331,7 +346,7 @@ class Runner(object):
 
     # *****************************************************
 
-    def _executor(self, host):
+    def _executor(self, host, new_stdin):
         ''' handler for multiprocessing library '''
 
         def get_flags():
@@ -344,7 +359,9 @@ class Runner(object):
             return flags
 
         try:
-            exec_rc = self._executor_internal(host)
+            self._new_stdin = new_stdin
+
+            exec_rc = self._executor_internal(host, new_stdin)
             if type(exec_rc) != ReturnData:
                 raise Exception("unexpected return type: %s" % type(exec_rc))
             exec_rc.flags = get_flags()
@@ -363,7 +380,7 @@ class Runner(object):
 
     # *****************************************************
 
-    def _executor_internal(self, host):
+    def _executor_internal(self, host, new_stdin):
         ''' executes any module one or more times '''
 
         host_variables = self.inventory.get_variables(host)
@@ -380,7 +397,6 @@ class Runner(object):
         inject = utils.combine_vars(inject, host_variables)
         inject = utils.combine_vars(inject, self.module_vars)
         inject = utils.combine_vars(inject, self.setup_cache[host])
-        inject.setdefault('ansible_ssh_user', self.remote_user)
         inject['hostvars'] = HostVars(self.setup_cache, self.inventory)
         inject['group_names'] = host_variables.get('group_names', [])
         inject['groups']      = self.inventory.groups_list()
@@ -389,10 +405,6 @@ class Runner(object):
 
         if self.inventory.basedir() is not None:
             inject['inventory_dir'] = self.inventory.basedir()
-
-        # late processing of parameterized sudo_user
-        if self.sudo_user is not None:
-            self.sudo_user = template.template(self.basedir, self.sudo_user, inject)
 
         # allow with_foo to work in playbooks...
         items = None
@@ -449,11 +461,11 @@ class Runner(object):
                     if type(complex_args) != dict:
                         raise errors.AnsibleError("args must be a dictionary, received %s" % complex_args)
                 result = self._executor_internal_inner(
-                     host,
-                     self.module_name,
-                     self.module_args,
-                     inject,
-                     port,
+                     host, 
+                     self.module_name, 
+                     self.module_args, 
+                     inject, 
+                     port, 
                      complex_args=complex_args
                 )
                 results.append(result.result)
@@ -579,12 +591,8 @@ class Runner(object):
             tmp = self._make_tmp_path(conn)
 
         # render module_args and complex_args templates
-        try:
-            module_args = template.template(self.basedir, module_args, inject, fail_on_undefined=self.error_on_undefined_vars)
-            complex_args = template.template(self.basedir, complex_args, inject, fail_on_undefined=self.error_on_undefined_vars)
-        except jinja2.exceptions.UndefinedError, e:
-            raise errors.AnsibleUndefinedVariable("One or more undefined variables: %s" % str(e))
-
+        module_args = template.template(self.basedir, module_args, inject)
+        complex_args = template.template(self.basedir, complex_args, inject)
 
         result = handler.run(conn, tmp, module_name, module_args, inject, complex_args)
 
@@ -651,7 +659,7 @@ class Runner(object):
         path = pipes.quote(path)
         # The following test needs to be SH-compliant.  BASH-isms will
         # not work if /bin/sh points to a non-BASH shell.
-        test = "rc=0; [ -r \"%s\" ] || rc=2; [ -f \"%s\" ] || rc=1; [ -d \"%s\" ] && rc=3" % ((path,) * 3)
+        test = "rc=0; [ -r \"%s\" ] || rc=2; [ -f \"%s\" ] || rc=1; [ -d \"%s\" ] && rc=3" % ((path,) * 3) 
         md5s = [
             "(/usr/bin/md5sum %s 2>/dev/null)" % path,  # Linux
             "(/sbin/md5sum -q %s 2>/dev/null)" % path,  # ?
@@ -692,7 +700,16 @@ class Runner(object):
         cmd += ' && echo %s' % basetmp
 
         result = self._low_level_exec_command(conn, cmd, None, sudoable=False)
+        if result['rc'] != 0:
+            raise errors.AnsibleError('could not create temporary directory: '
+                                      'SSH exited with return code %d' % result['rc'])
         rc = utils.last_non_blank_line(result['stdout']).strip() + '/'
+        # Catch any other failure conditions here; files should never be
+        # written directly to /.
+        if rc == '/':
+            raise errors.AnsibleError('failed to resolve remote temporary '
+                                      'directory from %s: `%s` returned '
+                                      'empty string' % (basetmp, cmd))
         return rc
 
 
@@ -771,8 +788,9 @@ class Runner(object):
 
         workers = []
         for i in range(self.forks):
+            new_stdin = os.fdopen(os.dup(sys.stdin.fileno()))
             prc = multiprocessing.Process(target=_executor_hook,
-                args=(job_queue, result_queue))
+                args=(job_queue, result_queue, new_stdin))
             prc.start()
             workers.append(prc)
 
@@ -783,7 +801,7 @@ class Runner(object):
             for worker in workers:
                 worker.terminate()
                 worker.join()
-
+        
         results = []
         try:
             while not result_queue.empty():
@@ -844,7 +862,7 @@ class Runner(object):
             # We aren't iterating over all the hosts in this
             # group. So, just pick the first host in our group to
             # construct the conn object with.
-            result_data = self._executor(hosts[0]).result
+            result_data = self._executor(hosts[0], None).result
             # Create a ResultData item for each host in this group
             # using the returned result. If we didn't do this we would
             # get false reports of dark hosts.
@@ -862,7 +880,8 @@ class Runner(object):
                     raise errors.AnsibleError("interrupted")
                 raise
         else:
-            results = [ self._executor(h) for h in hosts ]
+            results = [ self._executor(h, None) for h in hosts ]
+
         return self._partition_results(results)
 
     # *****************************************************
