@@ -39,18 +39,6 @@ EXAMPLES = '''
 - hostname: name=web01
 '''
 
-import os
-import syslog
-import platform
-
-# select whether we dump additional debug info through syslog
-syslogging = False
-
-def log(msg):
-    if syslogging:
-        syslog.openlog('ansible-%s' % os.path.basename(__file__))
-        syslog.syslog(syslog.LOG_NOTICE, msg)
-
 class UnimplementedStrategy(object):
     def __init__(self, module):
         self.module = module
@@ -122,17 +110,11 @@ class GenericStrategy(object):
     def __init__(self, module):
         self.module = module
 
-    def execute_command(self, cmd):
-        if syslogging:
-            log('Command %s' % '|'.join(cmd))
-
-        return self.module.run_command(cmd)
-
     HOSTNAME_CMD = '/bin/hostname'
 
     def get_current_hostname(self):
         cmd = [self.HOSTNAME_CMD]
-        rc, out, err = self.execute_command(cmd)
+        rc, out, err = self.module.run_command(cmd)
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
                 (rc, out, err))
@@ -140,7 +122,7 @@ class GenericStrategy(object):
 
     def set_current_hostname(self, name):
         cmd = [self.HOSTNAME_CMD, name]
-        rc, out, err = self.execute_command(cmd)
+        rc, out, err = self.module.run_command(cmd)
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
                 (rc, out, err))
@@ -242,24 +224,15 @@ def main():
     )
 
     hostname = Hostname(module)
-    if syslogging:
-        log('Hostname instantiated - platform %s' % hostname.platform)
-        if hostname.distribution:
-            log('Hostname instantiated - distribution %s' %
-                hostname.distribution)
 
     changed = False
     name = module.params['name']
     current_name = hostname.get_current_hostname()
-    if syslogging:
-        log('current_hostname=%s' % current_name)
     if current_name != name:
         hostname.set_current_hostname(name)
         changed = True
 
     permanent_name = hostname.get_permanent_hostname()
-    if syslogging:
-        log('permanent_hostname=%s' % permanent_name)
     if permanent_name != name:
         hostname.set_permanent_hostname(name)
         changed = True
