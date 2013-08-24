@@ -1,0 +1,144 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2013, Hiroaki Nakamura <hnakamur@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+DOCUMENTATION = '''
+---
+module: rpm
+short_description: Manages packages with the rpm package manager
+description:
+  - Will install, upgrade, and remove with the rpm package manager.
+version_added: "1.3"
+options:
+  name:
+    description:
+      - The package name
+    required: true
+    default: null
+  file:
+    description:
+      - The package file name or url. Required when C(state=present).
+    required: false
+    default: null
+  state:
+    required: false
+    choices: [ "present", "absent" ]
+    default: "present"
+    description:
+      - whether to install or upgrade (C(present)), or remove (C(absent)) a package.
+  force:
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
+    description:
+      - When used with C(state=present), behavior is as with
+        C(rpm -U --force).
+notes: []
+requirements: [ rpm ]
+author: Hiroaki Nakamura <hnakamur@gmail.com>
+'''
+
+EXAMPLES = '''
+- rpm: name=nginx state=present file=http://nginx.org/packages/centos/6/noarch/RPMS/nginx-release-centos-6-0.el6.ngx.noarch.rpm
+- rpm: name=nginx state=present file=http://nginx.org/packages/centos/6/noarch/RPMS/nginx-release-centos-6-0.el6.ngx.noarch.rpm force=yes
+- rpm: name=nginx state=absent
+'''
+
+# ==============================================================
+
+import os
+import syslog
+
+def log(msg):
+    syslog.openlog('ansible-%s' % os.path.basename(__file__))
+    syslog.syslog(syslog.LOG_NOTICE, msg)
+
+def execute_command(module, cmd):
+    log('Command %s' % '|'.join(cmd))
+    return module.run_command(cmd)
+
+RPMBIN='/bin/rpm'
+
+def is_package_installed(module, name):
+    cmd = [RPMBIN, '-q', name]
+    rc, out, err = execute_command(module, cmd)
+    return rc == 0
+
+def install_or_upgrade_package(module, file, force=False):
+    cmd = [RPMBIN, '-U']
+    if force:
+        cmd.append('--force')
+    cmd.append(file)
+    rc, out, err = execute_command(module, cmd)
+    if rc != 0:
+        module.fail_json(msg='Error from rpm command: %s: %s' % (cmd, err))
+    return rc
+
+def erase_package(module, name):
+    cmd = [RPMBIN, '-e', name]
+    rc, out, err = execute_command(module, cmd)
+    if rc != 0:
+        module.fail_json(msg='Error from rpm command: %s: %s' % (cmd, err))
+    return rc == 0
+
+# ==============================================================
+# main
+
+def main():
+
+    # defining module
+    module = AnsibleModule(
+        argument_spec = dict(
+            name=dict(required=True, type='str'),
+            file=dict(default=None, type='str'),
+            state=dict(default='present', choices=['absent','present']),
+            force=dict(default='no', type='bool')
+        )
+    )
+
+    changed = False
+    name = module.params['name']
+    file = module.params['file']
+    state = module.params['state']
+    force = module.params['force']
+
+    if state == 'present':
+        if force or not is_package_installed(module, name):
+            rc = install_or_upgrade_package(module, file, force)
+            if rc == 0:
+               changed = True 
+    elif state == 'absent':
+        if is_package_installed(module, name):
+            rc = erase_package(module, name)
+            if rc == 0:
+               changed = True 
+
+    module.exit_json(
+        changed=changed,
+        name=name,
+        file=file,
+        state=state,
+        force=force
+    )
+    sys.exit(0)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
