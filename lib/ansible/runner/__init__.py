@@ -110,26 +110,26 @@ class Runner(object):
     # see bin/ansible for how this is used...
 
     def __init__(self,
-        host_list=C.DEFAULT_HOST_LIST,      # ex: /etc/ansible/hosts, legacy usage
+        host_list=None,                     # ex: /etc/ansible/hosts, legacy usage
         module_path=None,                   # ex: /usr/share/ansible
-        module_name=C.DEFAULT_MODULE_NAME,  # ex: copy
-        module_args=C.DEFAULT_MODULE_ARGS,  # ex: "src=/tmp/a dest=/tmp/b"
-        forks=C.DEFAULT_FORKS,              # parallelism level
-        timeout=C.DEFAULT_TIMEOUT,          # SSH timeout
-        pattern=C.DEFAULT_PATTERN,          # which hosts?  ex: 'all', 'acme.example.org'
-        remote_user=C.DEFAULT_REMOTE_USER,  # ex: 'username'
-        remote_pass=C.DEFAULT_REMOTE_PASS,  # ex: 'password123' or None if using key
+        module_name=None,                   # ex: copy
+        module_args=None,                   # ex: "src=/tmp/a dest=/tmp/b"
+        forks=None,                         # parallelism level
+        timeout=None,                       # SSH timeout
+        pattern=None,                       # which hosts?  ex: 'all', 'acme.example.org'
+        remote_user=None,                   # ex: 'username'
+        remote_pass=None,                   # ex: 'password123' or None if using key
         remote_port=None,                   # if SSH on different ports
-        private_key_file=C.DEFAULT_PRIVATE_KEY_FILE, # if not using keys/passwords
-        sudo_pass=C.DEFAULT_SUDO_PASS,      # ex: 'password123' or None
+        private_key_file=None,              # if not using keys/passwords
+        sudo_pass=None,                     # ex: 'password123' or None
         background=0,                       # async poll every X seconds, else 0 for non-async
         basedir=None,                       # directory of playbook, if applicable
         setup_cache=None,                   # used to share fact data w/ other tasks
-        transport=C.DEFAULT_TRANSPORT,      # 'ssh', 'paramiko', 'local'
+        transport=None,                     # 'ssh', 'paramiko', 'local'
         conditional='True',                 # run only if this fact expression evals to true
         callbacks=None,                     # used for output
         sudo=False,                         # whether to run sudo or not
-        sudo_user=C.DEFAULT_SUDO_USER,      # ex: 'root'
+        sudo_user=None,                     # ex: 'root'
         module_vars=None,                   # a playbooks internals thing
         is_playbook=False,                  # running from playbook or not?
         inventory=None,                     # reference to Inventory object
@@ -138,8 +138,20 @@ class Runner(object):
         diff=False,                         # whether to show diffs for template files that change
         environment=None,                   # environment variables (as dict) to use inside the command
         complex_args=None,                  # structured data in addition to module_args, must be a dict
-        error_on_undefined_vars=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR # ex. False
+        error_on_undefined_vars=None        # ex. False
         ):
+
+        # Update variables from the defaults; this is implemented this way to allow the code
+        # to match the current constants (which may change due to code, or due to tests manipulating it).
+        for key in ('host_list', 'module_name', 'module_args', 'forks', 'timeout', 'pattern',
+           'remote_user', 'remote_pass', 'private_key_file', 'sudo_pass', 'transport', 'sudo_user',
+           ('error_on_undefined_vars', 'undefined_var_behavior')):
+           if isinstance(key, tuple):
+              key, src = key
+           else:
+              src = key
+           if locals()[key] is None:
+              locals()[key] = getattr(C, 'DEFAULT_%s' % src.upper())
 
         # used to lock multiprocess inputs and outputs at various levels
         self.output_lockfile  = OUTPUT_LOCKFILE
@@ -640,6 +652,18 @@ class Runner(object):
             data = result.result
             if 'item' in inject:
                 result.result['item'] = inject['item']
+
+            # Finalize the returned data, so that any failed renders (say for debug or set) are
+            # actually exposed rather than ignored; to do this, expose the injected environment along
+            # side what's being rendered.
+            d = inject.copy()
+            d.update(result.result)
+            for key, value in result.result.iteritems():
+                if isinstance(value, basestring):
+                    try:
+                        d[key] = result.result[key] = template.template_from_string(self.basedir, value, d, fail_on_undefined=self.error_on_undefined_vars)
+                    except errors.AnsibleError:
+                        result.result['failed'] = True
 
             result.result['invocation'] = dict(
                 module_args=module_args,
