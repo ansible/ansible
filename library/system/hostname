@@ -147,7 +147,7 @@ class DebianStrategy(GenericStrategy):
         try:
             f = open(self.HOSTNAME_FILE)
             try:
-                return f.read().split()
+                return f.read().strip()
             finally:
                 f.close()
         except Exception, err:
