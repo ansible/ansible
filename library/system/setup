@@ -1339,7 +1339,38 @@ class LinuxNetwork(Network):
         self.facts['default_ipv6'] = default_ipv6
         self.facts['all_ipv4_addresses'] = ips['all_ipv4_addresses']
         self.facts['all_ipv6_addresses'] = ips['all_ipv6_addresses']
+        cat_path = module.get_bin_path('cat')
+        self.facts['resolv_domain'] = None
+        self.facts['default_nameserver'] = None
+        self.facts['all_nameservers'] = []
+        if cat_path is not None:
+            result, resolv_domain, default_nameserver, all_nameservers = self.get_dns_info(cat_path)
+            if result:
+                self.facts['resolv_domain'] = resolv_domain
+                self.facts['default_nameserver'] = default_nameserver
+                self.facts['all_nameservers'] = all_nameservers
         return self.facts
+
+    def get_dns_info(self, cat_path):
+        rc, out, err = module.run_command([cat_path, "/etc/resolv.conf"])
+        if not out:
+            return False, None, None, None
+        lines = out.split('\n')
+        all_nameservers = []
+        resolv_domain = None
+        default_nameserver = None
+        if len(lines) > 0:
+            for line in lines:
+                if len(line) < 1 or line[0] == "#" or line[0] == " ":
+                    continue
+                words = line.split()
+                if words[0] == 'domain':
+                    resolv_domain = words[1]
+                elif words[0] == 'nameserver':
+                    all_nameservers.append(words[1])
+        if len(all_nameservers) > 0:
+            default_nameserver = all_nameservers[0]
+        return True, resolv_domain, default_nameserver, all_nameservers
 
     def get_default_interfaces(self, ip_path):
         # Use the commands:
@@ -1528,8 +1559,40 @@ class GenericBsdIfconfigNetwork(Network):
         self.facts['default_ipv6'] = default_ipv6
         self.facts['all_ipv4_addresses'] = ips['all_ipv4_addresses']
         self.facts['all_ipv6_addresses'] = ips['all_ipv6_addresses']
+        
+        cat_path = module.get_bin_path('cat')
+        self.facts['resolv_domain'] = None
+        self.facts['default_nameserver'] = None
+        self.facts['all_nameservers'] = []
+        if cat_path is not None:
+            result, resolv_domain, default_nameserver, all_nameservers = self.get_dns_info(cat_path)
+            if result:
+                self.facts['resolv_domain'] = resolv_domain
+                self.facts['default_nameserver'] = default_nameserver
+                self.facts['all_nameservers'] = all_nameservers
 
         return self.facts
+
+    def get_dns_info(self, cat_path):
+        rc, out, err = module.run_command([cat_path, "/etc/resolv.conf"])
+        if not out:
+            return False, None, None, None
+        lines = out.split('\n')
+        all_nameservers = []
+        resolv_domain = None
+        default_nameserver = None
+        if len(lines) > 0:
+            for line in lines:
+                if len(line) < 1 or line[0] == "#" or line[0] == " ":
+                    continue
+                words = line.split()
+                if words[0] == 'domain':
+                    resolv_domain = words[1]
+                elif words[0] == 'nameserver':
+                    all_nameservers.append(words[1])
+        if len(all_nameservers) > 0:
+            default_nameserver = all_nameservers[0]
+        return True, resolv_domain, default_nameserver, all_nameservers
 
     def get_default_interfaces(self, route_path):
 
