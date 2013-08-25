@@ -1313,6 +1313,39 @@ class Network(Facts):
     def populate(self):
         return self.facts
 
+class ResolvConfHelper(object):
+    """
+    Providies a helper method to parse name server information from
+    /etc/resolv.conf
+    """
+    @staticmethod
+    def get_nameserver_info():
+        resolv_domain = None
+        default_nameserver = None
+        all_nameservers = []
+        try:
+            resolv_handle = open('/etc/resolv.conf', 'r')
+            for line in resolv_handle.readlines():
+                if len(line) < 1 or line[0] == "#":
+                    continue
+                words = line.split()
+                if len(words) < 2:
+                    continue
+                if words[0] == "nameserver":
+                    all_nameservers.append(words[1])
+                elif words[0] == "domain":
+                    resolv_domain = words[1]
+        except IOError:
+            # If we catch an error, all the data we've read so far is
+            # suspect, so return nothing, rather than partial data
+            resolv_domain = None
+            all_nameservers = []
+        else:
+            resolv_handle.close()
+        if len(all_nameservers) > 0:
+            default_nameserver = all_nameservers[0]
+        return resolv_domain, default_nameserver, all_nameservers
+
 class LinuxNetwork(Network):
     """
     This is a Linux-specific subclass of Network.  It defines
@@ -1332,6 +1365,10 @@ class LinuxNetwork(Network):
             return self.facts
         default_ipv4, default_ipv6 = self.get_default_interfaces(ip_path)
         interfaces, ips = self.get_interfaces_info(ip_path, default_ipv4, default_ipv6)
+        resolv_domain, default_nameserver, all_nameservers = ResolvConfHelper.get_nameserver_info()
+        self.facts['resolv_domain'] = resolv_domain
+        self.facts['default_nameserver'] = default_nameserver
+        self.facts['all_nameservers'] = all_nameservers
         self.facts['interfaces'] = interfaces.keys()
         for iface in interfaces:
             self.facts[iface] = interfaces[iface]
@@ -1519,6 +1556,12 @@ class GenericBsdIfconfigNetwork(Network):
         interfaces, ips = self.get_interfaces_info(ifconfig_path)
         self.merge_default_interface(default_ipv4, interfaces, 'ipv4')
         self.merge_default_interface(default_ipv6, interfaces, 'ipv6')
+        
+        resolv_domain, default_nameserver, all_nameservers = ResolvConfHelper.get_nameserver_info()
+        self.facts['resolv_domain'] = resolv_domain
+        self.facts['default_nameserver'] = default_nameserver
+        self.facts['all_nameservers'] = all_nameservers
+        
         self.facts['interfaces'] = interfaces.keys()
 
         for iface in interfaces:
