@@ -34,7 +34,7 @@ description:
 options:
   name:
     description:
-      - "package name, or package specifier with version, like C(name-1.0) in state=latest this can be '*' which means run: yum -y update"
+      - "package name, or package specifier with version, like C(name-1.0) in state=latest this can be '*' which means run: yum -y update. also you can pass a url or a local path to a rpm file."
     required: true
     default: null
     aliases: []
@@ -97,6 +97,8 @@ EXAMPLES = '''
 - yum: name=httpd state=removed
 - yum: name=httpd enablerepo=testing state=installed
 - yum: name=* state=latest
+- yum: name=http://nginx.org/packages/centos/6/noarch/RPMS/nginx-release-centos-6-0.el6.ngx.noarch.rpm state=present
+- yum: name=/usr/local/src/nginx-release-centos-6-0.el6.ngx.noarch.rpm state=present
 '''
 
 def_qf = "%{name}-%{version}-%{release}.%{arch}"
