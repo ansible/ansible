@@ -153,26 +153,34 @@ def _get_full_name(name, version=None):
     return resp
 
 
-def _get_pip(module, env, executable=None):
-    if executable is None:
-        # Default pip executables.
-        # On Debian and Ubuntu, pip is pip.
-        # On Fedora18 and up, pip is python-pip.
-        # On Fedora17 and below, CentOS and RedHat 6 and 5, pip is pip-python.
-        # On Fedora, CentOS, and RedHat, the exception is in the virtualenv.
-        # There, pip is just pip.
-        # Try pip with the virtualenv directory first.
-        pip = module.get_bin_path('pip', False, ['%s/bin' % env])
-        for p in ['python-pip', 'pip-python']:
-            if not pip:
-                pip = module.get_bin_path(p, False, ['%s/bin' % env])
-        # pip should have been found by now.  The final call to get_bin_path
-        # will trigger fail_json.
-        if not pip:
-            pip = module.get_bin_path('pip', True, ['%s/bin' % env])
-    else:
-        # Explicit pip executable.
-        pip = module.get_bin_path(executable, True)
+def _get_pip(module, env=None, executable=None):
+    # On Debian and Ubuntu, pip is pip.
+    # On Fedora18 and up, pip is python-pip.
+    # On Fedora17 and below, CentOS and RedHat 6 and 5, pip is pip-python.
+    # On Fedora, CentOS, and RedHat, the exception is in the virtualenv.
+    # There, pip is just pip.
+    candidate_pip_basenames = ['pip', 'python-pip', 'pip-python']
+    pip = None
+    if executable is not None:
+        if os.path.isabs(executable):
+            pip = executable
+        else:
+            candidate_pip_basenames.insert(0, executable)
+    if pip is None:
+        if env is None:
+            opt_dirs = []
+        else:
+            # Try pip with the virtualenv directory first.
+            opt_dirs = ['%s/bin' % env]
+        for basename in candidate_pip_basenames:
+            pip = module.get_bin_path(basename, False, opt_dirs)
+            if pip is not None:
+                break
+    # pip should have been found by now.  The final call to get_bin_path will
+    # trigger fail_json.
+    if pip is None:
+        basename = candidate_pip_basenames[0]
+        pip = module.get_bin_path(basename, True, opt_dirs)
     return pip
 
 
