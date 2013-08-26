@@ -73,6 +73,11 @@ options:
     description:
      - Region to create an instance in
     default: DFW
+  disk_config:
+    description:
+     - Disk partitioning strategy
+    choices: ['auto', 'manual']
+    default: auto
   wait:
     description:
      - wait for the instance to be in state 'running' before returning
@@ -129,7 +134,7 @@ except ImportError:
 SUPPORTEDSERVICES = ['cloudservers']
 
 def cloudservers(module, state, name, flavor, image, meta, key_name, files,
-                 wait, wait_timeout):
+                 wait, wait_timeout, disk_config):
     # Check our args (this could be done better)
     for arg in (state, name, flavor, image):
         if not arg:
@@ -168,7 +173,8 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                                                              flavor=flavor,
                                                              key_name=key_name,
                                                              meta=meta,
-                                                             files=files)]
+                                                             files=files,
+                                                             disk_config=disk_config)]
                 changed = True
             except Exception, e:
                 module.fail_json(msg = '%s' % e.message)
@@ -229,6 +235,7 @@ def main():
             name = dict(),
             flavor = dict(),
             image = dict(),
+            disk_config = dict(default='auto', choices=['auto', 'manual']),
             meta = dict(type='dict', default={}),
             key_name = dict(aliases = ['keypair']),
             files = dict(type='dict', default={}),
@@ -252,6 +259,7 @@ def main():
     region = module.params.get('region')
     wait = module.params.get('wait')
     wait_timeout = int(module.params.get('wait_timeout'))
+    disk_config = module.params.get('disk_config').upper()
 
     # Setup the credentials and region
     try:
@@ -280,7 +288,7 @@ def main():
     # Act based on service
     if service == 'cloudservers':
         cloudservers(module, state, name, flavor, image, meta, key_name, files,
-                     wait, wait_timeout)
+                     wait, wait_timeout, disk_config)
     elif service in ['cloudfiles', 'cloud_blockstorage',
                      'cloud_databases', 'cloud_loadbalancers']:
         module.fail_json(msg = 'Service %s is not supported at this time' %

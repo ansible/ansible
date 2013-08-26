@@ -1,5 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+import traceback
+
 DOCUMENTATION = '''
 ---
 module: parted
@@ -10,12 +12,12 @@ description:
 options:
   size:
     description:
-      - Ensure that partition of this size exactly is created, will update facts if succesful
+      - Ensure that partition of this size exactly is created, will update facts if successful
     required: false
     default: null
   minsize:
     description:
-      - Ensure that partition of at least this size is created, will update facts if succesful
+      - Ensure that partition of at least this size is created, will update facts if successful
     required: false
     default: null
   minfree:
@@ -49,137 +51,154 @@ try:
 except ImportError:
     import simplejson as json
 
-def run_cmd(command):
-    try:
-        cmd = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = cmd.communicate()
-    except (OSError, IOError), e:
-        rc = 1
-        err = str(e)
-        out = ''
-    except:
-        rc = 1
-        err = traceback.format_exc()
-        out = ''
-    else:
-        rc = cmd.returncode
-    return rc, out, err
 
-def create(parted, disk, size=None, minsize=None, minfree=None, type=None, fs=None):
-    if not type:
-        type = parted.PARTITION_NORMAL
-    const_min = None
-    const_max = None
+def create_result(disk, part):
+    name = part.path.replace('/dev/', '', 1)
+    created = {'number': part.number,
+               'path': part.path,
+               'name': name,
+               'start': part.geometry.start,
+               'end': part.geometry.end,
+               'size': part.geometry.length * disk.device.sectorSize,
+               'fs': part.fileSystem.type if part.fileSystem else None}
+    return created
+
+
+def create(parted, disk, size=None, minsize=None, minfree=None, part_type=None, fs_type=None):
+    if not part_type:
+        part_type = parted.PARTITION_NORMAL
     if size:
+        size = int(size)
         size *= MBYTE / disk.device.sectorSize
-        const_min = size
-        const_max = size
     elif minsize:
+        minsize = int(minsize)
         minsize *= MBYTE / disk.device.sectorSize
-        const_min = minsize
-    const = parted.Constraint(device=disk.device)
-    if not const_max:
-        const_max = const.maxSize
-    if not const_min:
-        const_min = 0
-    if const_max < const_min:
-        return None
     if minfree:
+        minfree = int(minfree)
         minfree *= MBYTE / disk.device.sectorSize
-        max_length = 0
-        space = None
-        for f in disk.getFreeSpaceRegions():
-            length = f.length - minfree
+    else:
+        minfree = 0
+    max_length = 0
+    space = None
+    for f in disk.getFreeSpaceRegions():
+        length = f.length - minfree
+        if size:
+            if size < length:
+                max_length = size
+                space = f
+                break
+        elif minsize:
+            if max_length < length and length > minsize:
+                max_length = length
+                space = f
+        elif minfree:
             if max_length < length:
                 max_length = length
                 space = f
-        if not space:
+    if not space:
+        return None
+    max_geom = parted.Geometry(device=disk.device, start=space.start, length=max_length)
+    const = parted.Constraint(maxGeom=max_geom)
+    fs = None
+    if fs_type:
+        fs = parted.FileSystem(type=fs_type, geometry=const.solveMax())
+        if fs.type != fs_type:
             return None
-        max_geom = parted.Geometry(device=disk.device, start=space.start, length=max_length)
-        const2 = parted.Constraint(maxGeom=max_geom)
-    else:
-        const2 = parted.Constraint(startAlign=const.startAlign, endAlign=const.endAlign,
-            startRange=const.startRange, endRange=const.endRange,
-            minSize = const_min, maxSize=const_max)
-    if fs:
-        fs = parted.FileSystem(type=fs, geometry=const2.solveMax())
-    part = parted.Partition(disk=disk, type=type, geometry=const2.solveMax(), fs=fs)
     try:
-        disk.addPartition(partition=part, constraint=const2)
-        disk.commit()
-        created = {'number': part.number, 'path': part.path, 'start': part.geometry.start, 'end': part.geometry.end,
-                   'size': part.geometry.length * disk['sector'], 'fs': part.fileSystem.type}
-        return created
+        part = parted.Partition(disk=disk, type=part_type, geometry=const.solveMax(), fs=fs)
+    except ArithmeticError:
+        return None
+    try:
+        if not disk.addPartition(partition=part, constraint=const):
+            return None
+        if not disk.commit():
+            return None
+        return create_result(disk, part)
     except parted.PartitionException:
         return None
 
-def create_fs(created, fs=None, fsopts=None):
-    if not fs:
-        return
-    if 'ext3' in fs:
-        cmd = 'mkfs.ext3'
-    elif 'ext4' in fs:
-        cmd = 'mkfs.ext4'
-    elif 'xfs' in fs:
-        if not os.path.exists('/sbin/mkfs.xfs'):
-            module.fail_json(msg="Could not find mkfs.xfs. Please install xfsprogs package.")
-        cmd = 'mkfs.xfs'
-    else:
-        return
-    if fsopts:
-        cmd = '%s %s' % (cmd, fsopts)
-    cmd = '%s %s' % (cmd, created['path'])
-    rc, out, err = run_cmd(cmd)
-    if rc:
-        module.fail_json(msg="'%s' failed: %s" % (cmd, err))
-    else
-        created['mkfs'] = True
 
-def create_space(parted, size=None, minsize=None, minfree=None, fs=None, fsopts=None):
+def create_space(parted, size=None, minsize=None, minfree=None, fs_type=None, part_count=1):
+    created = []
+    if part_count < 1:
+        return []
     disks = [parted.Disk(d) for d in parted.getAllDevices()]
     for d in disks:
-        created = create(parted, d, size=size, minsize=minsize, minfree=minfree, fs=fs)
-        if created:
-            create_fs(created, fs=fs, fsopts=fsopts)
-            return created
-    return None
+        result = create(parted, d, size=size, minsize=minsize, minfree=minfree, fs_type=fs_type)
+        if result:
+            created.append(result)
+            part_count -= 1
+            if part_count == 0:
+                break
+    return created
+
+
+def ensure_space(parted, count=1, size=None, minsize=None, fs_type=None, repeated=False):
+    part_list = []
+    if minsize:
+        size = minsize
+    size = int(size)
+    size *= MBYTE
+    disks = [parted.Disk(d) for d in parted.getAllDevices()]
+    for d in disks:
+        if count == 0 and not repeated:
+            break
+        for p in d.getPrimaryPartitions():
+            if fs_type:
+                if p.fileSystem and p.fileSystem.type != fs_type:
+                    continue
+            length = p.getLength() * d.device.sectorSize
+            if length >= size:
+                count -= 1
+                part_list.append(create_result(d, p))
+                if count == 0 and not repeated:
+                    break
+    if repeated:
+        count = 0
+        for d in disks:
+            for f in d.getFreeSpacePartitions():
+                length = f.getLength() * d.device.sectorSize
+                if length >= size:
+                    count += 1
+    return {'missing': count, 'existing': part_list}
 
 
 def main():
     global module
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             size=dict(default=None),
             minsize=dict(default=None),
             minfree=dict(default=None),
             repeated=dict(default='no', choices=['yes', 'no']),
-            filesystem=dict(default=None, choices=['ext3', 'ext4', 'xfs']),
-            fsoptions=dict(default=None)
+            count=dict(default=1),
+            filesystem=dict(default=None, choices=['ext3', 'ext4', 'xfs'])
         )
     )
     size = module.params['size']
     minsize = module.params['minsize']
     minfree = module.params['minfree']
-    repeated = module.params['repeated']
+    part_count = module.params['count']
     filesystem = module.params['filesystem']
-    fsoptions = module.params['fsoptions']
-
+    repeated = 'yes' in module.params['repeated']
     try:
         import parted
     except ImportError:
         module.fail_json(msg="Could not import python module: parted. Please install python-parted package.")
-    created = None
-    if size or minsize or minfree:
-        created = [create_space(parted, size=size, minsize=minsize, minfree=minfree, fs=filesystem, fsopts=fsoptions)]
-        while created:
-            if 'no' in repeated:
-                break
-            created.append(create_space(parted, size=size, minsize=minsize, minfree=minfree, fs=filesystem, fsopts=fsoptions))
-    data = {}
-    if created:
+    if not size and not minsize:
+        module.fail_json(msg="One of the following must be supplied: size=, minsize=")
+    data = {'ansible_facts': {}, 'changed': False}
+    result = ensure_space(parted, count=part_count, size=size, minsize=minsize,
+                          fs_type=filesystem, repeated=repeated)
+    data['ansible_facts']['parted_existing'] = result['existing']
+    missing = result['missing']
+    created = create_space(parted, size=size, minsize=minsize, minfree=minfree,
+                           fs_type=filesystem, part_count=missing)
+    data['ansible_facts']['parted_created'] = created
+    missing -= len(created)
+    if len(created) > 0:
         data['changed'] = True
-        data['ansible_facts'] = {}
-        data['ansible_facts']['parted_created'] = created
+    data['ansible_facts']['parted_missing'] = missing
     module.exit_json(**data)
 
 # this is magic, see lib/ansible/module_common.py
