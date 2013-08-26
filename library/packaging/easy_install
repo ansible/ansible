@@ -19,6 +19,8 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import os.path
+
 DOCUMENTATION = '''
 ---
 module: easy_install
@@ -92,21 +94,47 @@ def _is_package_installed(module, name, easy_install):
     return not ('Reading' in status_stdout or 'Downloading' in status_stdout)
 
 
+def _get_easy_install(module, env=None, executable=None):
+    candidate_easy_inst_basenames = ['easy_install']
+    easy_install = None
+    if executable is not None:
+        if os.path.isabs(executable):
+            easy_install = executable
+        else:
+            candidate_easy_inst_basenames.insert(0, executable)
+    if easy_install is None:
+        if env is None:
+            opt_dirs = []
+        else:
+            # Try easy_install with the virtualenv directory first.
+            opt_dirs = ['%s/bin' % env]
+        for basename in candidate_easy_inst_basenames:
+            easy_install = module.get_bin_path(basename, False, opt_dirs)
+            if easy_install is not None:
+                break
+    # easy_install should have been found by now.  The final call to
+    # get_bin_path will trigger fail_json.
+    if easy_install is None:
+        basename = candidate_easy_inst_basenames[0]
+        easy_install = module.get_bin_path(basename, True, opt_dirs)
+    return easy_install
+
+
 def main():
     arg_spec = dict(
         name=dict(required=True),
         virtualenv=dict(default=None, required=False),
         virtualenv_site_packages=dict(default='no', type='bool'),
         virtualenv_command=dict(default='virtualenv', required=False),
-        executable=dict(default='easy_install', required=False),
+        executable=dict(default=None, required=False),
     )
 
     module = AnsibleModule(argument_spec=arg_spec, supports_check_mode=True)
 
     name = module.params['name']
     env = module.params['virtualenv']
-    easy_install = module.get_bin_path(module.params['executable'], True,
-                                       ['%s/bin' % env])
+    executable = module.params['executable']
+    easy_install = _get_easy_install(module, env, executable)
     site_packages = module.params['virtualenv_site_packages']
     virtualenv_command = module.params['virtualenv_command']
 
