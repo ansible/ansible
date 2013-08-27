@@ -207,7 +207,7 @@ def main():
             minsize=dict(default=None),
             minfree=dict(default=None),
             repeated=dict(default='no', choices=['yes', 'no']),
-            count=dict(default=1),
+            count=dict(default=1, type='int'),
             filesystem=dict(default=None, choices=['ext3', 'ext4', 'xfs']),
             label=dict(default='msdos', choices=['msdos', 'gpt'])
         )
