@@ -113,6 +113,7 @@ except KeyError, e:
     sys.exit(1)
 
 try:
+    pyrax.set_setting("identity_type", "rackspace")
     pyrax.set_credential_file(os.path.expanduser(creds_file),
                               region=region)
 except Exception, e:
