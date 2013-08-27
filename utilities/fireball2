@@ -60,12 +60,15 @@ EXAMPLES = '''
 '''
 
 import os
+import os.path
+import tempfile
 import sys
 import shutil
 import socket
 import struct
 import time
 import base64
+import getpass
 import syslog
 import signal
 import time
@@ -138,7 +141,6 @@ def daemonize_self(module, password, port, minutes):
     os.dup2(dev_null.fileno(), sys.stderr.fileno())
     log("daemonizing successful")
 
-#class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
 class ThreadedTCPServer(SocketServer.ThreadingTCPServer):
     def __init__(self, server_address, RequestHandlerClass, module, password):
         self.module = module
@@ -171,11 +173,14 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
 
     def handle(self):
         while True:
+            #log("waiting for data")
             data = self.recv_data()
             if not data:
                 break
             try:
+                #log("got data, decrypting")
                 data = self.server.key.Decrypt(data)
+                #log("decryption done")
             except:
                 log("bad decrypt, skipping...")
                 data2 = json.dumps(dict(rc=1))
@@ -183,6 +188,7 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
                 send_data(client, data2)
                 return
 
+            #log("loading json from the data")
             data = json.loads(data)
 
             mode = data['mode']
@@ -212,7 +218,8 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
             stdout = ''
         if stderr is None:
             stderr = ''
-        log("got stdout: %s" % stdout)
+        #log("got stdout: %s" % stdout)
+        #log("got stderr: %s" % stderr)
 
         return dict(rc=rc, stdout=stdout, stderr=stderr)
 
@@ -234,14 +241,32 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
         if 'out_path' not in data:
             return dict(failed=True, msg='internal error: out_path is required')
 
+        final_path = None
+        if 'user' in data and data.get('user') != getpass.getuser():
+            log("the target user doesn't match this user, we'll move the file into place via sudo")
+            (fd,out_path) = tempfile.mkstemp(prefix='ansible.', dir=os.path.expanduser('~/.ansible/tmp/'))
+            out_fd = os.fdopen(fd, 'w', 0)
+            final_path = data['out_path']
+        else:
+            out_path = data['out_path']
+            out_fd = open(out_path, 'w')
+
         # FIXME: should probably support chunked file transfer for binary files
         # at some point.  For now, just base64 encodes the file
         # so don't use it to move ISOs, use rsync.
 
-        fh = open(data['out_path'], 'w')
-        fh.write(base64.b64decode(data['data']))
-        fh.close()
+        try:
+            out_fd.write(base64.b64decode(data['data']))
+            out_fd.close()
+        except:
+            return dict(failed=True, stdout="Could not write the file")
 
+        if final_path:
+            log("moving %s to %s" % (out_path, final_path))
+            args = ['sudo','mv',out_path,final_path]
+            rc, stdout, stderr = self.server.module.run_command(args, close_fds=True)
+            if rc != 0:
+                return dict(failed=True, stdout="failed to copy the file into position with sudo")
         return dict()
 
 def daemonize(module, password, port, minutes):
@@ -257,6 +282,7 @@ def daemonize(module, password, port, minutes):
         server = ThreadedTCPServer(("0.0.0.0", port), ThreadedTCPRequestHandler, module, password)
         server.allow_reuse_address = True
         
+        log("serving!")
         server.serve_forever(poll_interval=1.0)
     except Exception, e:
         tb = traceback.format_exc()
