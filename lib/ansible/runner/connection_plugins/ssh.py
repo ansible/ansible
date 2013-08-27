@@ -160,15 +160,14 @@ class Connection(object):
 
         vvv("EXEC %s" % ssh_cmd, host=self.host)
 
-        not_in_host_file = self.not_in_host_file(self.host)
-
-        if C.HOST_KEY_CHECKING and not_in_host_file:
-            # lock around the initial SSH connectivity so the user prompt about whether to add 
-            # the host to known hosts is not intermingled with multiprocess output.
-            fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_EX)
-            fcntl.lockf(self.runner.output_lockfile, fcntl.LOCK_EX)
-        
-
+        dounlocking = False
+        if C.HOST_KEY_CHECKING:
+            if self.not_in_host_file(self.host):
+                dounlocking = True
+                # lock around the initial SSH connectivity so the user prompt about whether to add 
+                # the host to known hosts is not intermingled with multiprocess output.
+                fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_EX)
+                fcntl.lockf(self.runner.output_lockfile, fcntl.LOCK_EX)
 
         try:
             # Make sure stdin is a proper (pseudo) pty to avoid: tcgetattr errors
@@ -231,9 +230,7 @@ class Connection(object):
                 break
         stdin.close() # close stdin after we read from stdout (see also issue #848)
         
-        if C.HOST_KEY_CHECKING and not_in_host_file:
-            # lock around the initial SSH connectivity so the user prompt about whether to add 
-            # the host to known hosts is not intermingled with multiprocess output.
+        if dounlocking:
             fcntl.lockf(self.runner.output_lockfile, fcntl.LOCK_UN)
             fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_UN)
 

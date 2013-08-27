@@ -79,20 +79,18 @@ class MyAddPolicy(object):
             sys.stdin = self.runner._new_stdin
             fingerprint = hexlify(key.get_fingerprint())
             ktype = key.get_name()
-            
+
             # clear out any premature input on sys.stdin
             tcflush(sys.stdin, TCIFLUSH)
 
             inp = raw_input(AUTHENTICITY_MSG % (hostname, ktype, fingerprint))
             sys.stdin = old_stdin
-            if inp not in ['yes','y','']:
-                fcntl.flock(self.runner.output_lockfile, fcntl.LOCK_UN)
-                fcntl.flock(self.runner.process_lockfile, fcntl.LOCK_UN)
-                raise errors.AnsibleError("host connection rejected by user")
 
             fcntl.lockf(self.runner.output_lockfile, fcntl.LOCK_UN)
             fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_UN)
 
+            if inp not in ['yes','y','']:
+                raise errors.AnsibleError("host connection rejected by user")
 
         key._added_by_ansible_this_time = True
 
