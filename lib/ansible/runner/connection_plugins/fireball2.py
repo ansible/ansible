@@ -61,15 +61,25 @@ class Connection(object):
     def connect(self, allow_ssh=True):
         ''' activates the connection object '''
 
-        if self.is_connected:
-            return self
-
         try:
-            self.conn = socket.socket()
-            self.conn.connect((self.host,self.fbport))
+            if not self.is_connected:
+                # TODO: make the timeout and retries configurable?
+                tries = 10
+                self.conn = socket.socket()
+                self.conn.settimeout(30.0)
+                while tries > 0:
+                    try:
+                        self.conn.connect((self.host,self.fbport))
+                        break
+                    except:
+                        time.sleep(0.1)
+                        tries -= 1
+                if tries == 0:
+                    vvv("Could not connect via the fireball2 connection, exceeded # of tries")
+                    raise errors.AnsibleError("Failed to connect")
         except:
             if allow_ssh:
-                print "Falling back to ssh to startup accelerated mode"
+                vvv("Falling back to ssh to startup accelerated mode")
                 res = self._execute_fb_module()
                 return self.connect(allow_ssh=False)
             else:
@@ -84,22 +94,28 @@ class Connection(object):
     def recv_data(self):
         header_len = 8 # size of a packed unsigned long long
         data = b""
-        while len(data) < header_len:
-            d = self.conn.recv(1024)
-            if not d:
-                return None
-            data += d
-        data_len = struct.unpack('Q',data[:header_len])[0]
-        data = data[header_len:]
-        while len(data) < data_len:
-            d = self.conn.recv(1024)
-            if not d:
-                return None
-            data += d
-        return data
+        try:
+            while len(data) < header_len:
+                d = self.conn.recv(1024)
+                if not d:
+                    return None
+                data += d
+            data_len = struct.unpack('Q',data[:header_len])[0]
+            data = data[header_len:]
+            while len(data) < data_len:
+                d = self.conn.recv(1024)
+                if not d:
+                    return None
+                data += d
+            return data
+        except socket.timeout:
+            raise errors.AnsibleError("timed out while waiting to receive data")
 
     def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False, executable='/bin/sh'):
         ''' run a command on the remote host '''
+
+        if self.runner.sudo or sudoable and sudo_user:
+            cmd, prompt = utils.make_sudo_cmd(sudo_user, executable, cmd)
 
         vvv("EXEC COMMAND %s" % cmd)
 
@@ -112,12 +128,15 @@ class Connection(object):
         data = utils.jsonify(data)
         data = utils.encrypt(self.key, data)
         if self.send_data(data):
-            raise errors.AnisbleError("Failed to send command to %s:%s" % (self.host,self.port))
+            raise errors.AnisbleError("Failed to send command to %s" % self.host)
         
         response = self.recv_data()
+        if not response:
+            raise errors.AnsibleError("Failed to get a response from %s" % self.host)
         response = utils.decrypt(self.key, response)
         response = utils.parse_json(response)
 
+        vvv("COMMAND DONE: rc=%s" % str(response.get('rc',"<unknown>")))
         return (response.get('rc',None), '', response.get('stdout',''), response.get('stderr',''))
 
     def put_file(self, in_path, out_path):
@@ -132,17 +151,23 @@ class Connection(object):
         data = base64.b64encode(data)
         data = dict(mode='put', data=data, out_path=out_path)
 
+        if self.runner.sudo:
+            data['user'] = self.runner.sudo_user
+
         # TODO: support chunked file transfer
         data = utils.jsonify(data)
         data = utils.encrypt(self.key, data)
         if self.send_data(data):
-            raise errors.AnsibleError("failed to send the file to %s:%s" % (self.host,self.port))
+            raise errors.AnsibleError("failed to send the file to %s" % self.host)
 
         response = self.recv_data()
-        response = utils.decrypt(self.key, data)
+        if not response:
+            raise errors.AnsibleError("Failed to get a response from %s" % self.host)
+        response = utils.decrypt(self.key, response)
         response = utils.parse_json(response)
 
-        # no meaningful response needed for this
+        if response.get('failed',False):
+            raise errors.AnsibleError("failed to put the file in the requested location")
 
     def fetch_file(self, in_path, out_path):
         ''' save a remote file to the specified path '''
@@ -152,10 +177,12 @@ class Connection(object):
         data = utils.jsonify(data)
         data = utils.encrypt(self.key, data)
         if self.send_data(data):
-            raise errors.AnsibleError("failed to initiate the file fetch with %s:%s" % (self.host,self.port))
+            raise errors.AnsibleError("failed to initiate the file fetch with %s" % self.host)
 
         response = self.recv_data()
-        response = utils.decrypt(self.key, data)
+        if not response:
+            raise errors.AnsibleError("Failed to get a response from %s" % self.host)
+        response = utils.decrypt(self.key, response)
         response = utils.parse_json(response)
         response = response['data']
         response = base64.b64decode(response)        
