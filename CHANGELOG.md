@@ -9,11 +9,12 @@ Highlighted new features:
 * added the ability to make undefined template variables raise errors (see ansible.cfg)
 * (DOCS PENDING) sudo: True/False and sudo_user: True/False can be set at include and role level
 * added changed_when: (expression) which allows overriding whether a result is changed or not and can work with registered expressions
-* --extra-vars can now take a file as input, e.g., "-e @filename"
+* --extra-vars can now take a file as input, e.g., "-e @filename" and can also be formatted as YAML
 * external inventory scripts may now return host variables in one pass, which allows them to be much more efficient for large numbers of hosts
 * if --forks exceeds the numbers of hosts, it will be automatically reduced. Set forks to 0 and you get "as many forks as I have hosts" out of the box.
 * enabled error_on_undefined_vars by default, which will make errors in playbooks more obvious
 * role dependencies -- one role can now pull in another, with parameters of its own.
+* added the ability to have tasks execute even during a check run (always_run)
 
 New modules:
 
@@ -30,11 +31,18 @@ New modules:
 * system: stat -- reports on stat(istics) of remote files, for use with 'register'
 * web_infrastructure: htpasswd -- manipulate htpasswd files
 * packaging: rpm_key -- adds or removes RPM signing keys
+* packaging: apt_repository -- rewritten to remove dependencies 
 * monitoring: boundary_meter -- adds or removes boundary.com meters
 * net_infrastructure: dnsmadeeasy - manipulate DNS Made Easy records
+* files: xattr -- manages extended attributes on files
+* database: redis -- manages redis databases (slave mode and flushing data)
 
 Misc changes:
 
+* return 3 when there are hosts that were unreachable during a run
+* the yum module now supports wildcard values for the enablerepo argument
+* added an inventory script to pull host information from Zabbix
+* async mode no longer allows with_* lookup plugins due to incompatibilities
 * Added OpenRC support (Gentoo) to the service module
 * ansible_ssh_user value is available to templates
 * added placement_group parameter to ec2 module

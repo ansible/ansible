@@ -219,9 +219,9 @@ class TestInventory(unittest.TestCase):
     def test_complex_group_names(self):
         inventory = self.complex_inventory()
         tests = {
-            'host1': [ 'role1' ],
+            'host1': [ 'role1', 'role3' ],
             'host2': [ 'role1', 'role2' ],
-            'host3': [ 'role2' ]
+            'host3': [ 'role2', 'role3' ]
         }
         for host, roles in tests.iteritems():
             group_names = inventory.get_variables(host)['group_names']
@@ -270,6 +270,27 @@ class TestInventory(unittest.TestCase):
         hosts = inventory.list_hosts("nc:&triangle:!tri_c")
         self.compare(hosts, ['tri_a', 'tri_b'])
 
+    @raises(errors.AnsibleError)
+    def test_invalid_range(self):
+        Inventory(os.path.join(self.test_dir, 'inventory','test_incorrect_range'))
+
+    @raises(errors.AnsibleError)
+    def test_missing_end(self):
+        Inventory(os.path.join(self.test_dir, 'inventory','test_missing_end'))
+
+    @raises(errors.AnsibleError)
+    def test_incorrect_format(self):
+        Inventory(os.path.join(self.test_dir, 'inventory','test_incorrect_format'))
+
+    @raises(errors.AnsibleError)
+    def test_alpha_end_before_beg(self):
+        Inventory(os.path.join(self.test_dir, 'inventory','test_alpha_end_before_beg'))
+
+    def test_combined_range(self):
+        i = Inventory(os.path.join(self.test_dir, 'inventory','test_combined_range'))
+        hosts = i.list_hosts('test')
+        expected_hosts=['host1A','host2A','host1B','host2B']
+        assert sorted(hosts) == sorted(expected_hosts)
 
     ###################################################
     ### Inventory API tests

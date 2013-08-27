@@ -282,7 +282,7 @@ This makes a dynamic group of hosts matching certain criteria, even if that grou
 
    - hosts: all
      tasks:
-        - group_by: key=${ansible_distribution}
+        - group_by: key={{ ansible_distribution }}
 
    # now just on the CentOS hosts...
 

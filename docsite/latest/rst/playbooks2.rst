@@ -293,6 +293,9 @@ As of Ansible 1.3, extra vars can be loaded from a JSON file with the "@" syntax
 
     --extra-vars "@some_file.json"
 
+Also as of Ansible 1.3, extra vars can be formatted as YAML, either on the command line
+or in a file as above.
+
 Conditional Execution
 `````````````````````
 
@@ -512,7 +515,7 @@ As with the case of 'with_items' above, you can use previously defined variables
 Lookup Plugins - Accessing Outside Data
 ```````````````````````````````````````
 
-.. versionadded: 0.8
+.. versionadded:: 0.8
 
 Various *lookup plugins* allow additional ways to iterate over data.  Ansible will have more of these
 over time.  You can write your own, as is covered in the API section.  Each typically takes a list and
@@ -546,7 +549,7 @@ be used like this::
    specify a relative path (e.g., :file:`./foo`), Ansible resolves the path
    relative to the :file:`roles/<rolename>/files` directory.
 
-.. versionadded: 0.9
+.. versionadded:: 0.9
 
 Many new lookup abilities were added in 0.9.  Remember, lookup plugins are run on the *controlling* machine::
 
@@ -579,7 +582,7 @@ template)::
     tasks:
       - debug: msg="motd value is {{ motd_value }}"
 
-.. versionadded: 1.0
+.. versionadded:: 1.0
 
 ``with_sequence`` generates a sequence of items in ascending numerical order. You
 can specify a start, end, and an optional step value.
@@ -611,7 +614,7 @@ Negative numbers are not supported.  This works as follows::
         - group: name=group{{ item }} state=present
           with_sequence: count=4
 
-.. versionadded: 1.1
+.. versionadded:: 1.1
 
 ``with_password`` and associated lookup macro generate a random plaintext password and store it in
 a file at a given filepath.  Support for crypted save modes (as with vars_prompt) is pending.  If the
@@ -654,7 +657,7 @@ This length can be changed by passing an extra parameter::
 Setting the Environment (and Working With Proxies)
 ``````````````````````````````````````````````````
 
-.. versionadded: 1.1
+.. versionadded:: 1.1
 
 It is quite possible that you may need to get package updates through a proxy, or even get some package
 updates through a proxy and access other packages not through a proxy.  Ansible makes it easy for you

@@ -220,9 +220,9 @@ def prepare_writeable_dir(tree,mode=0777):
         try:
             os.makedirs(tree, mode)
         except (IOError, OSError), e:
-            exit("Could not make dir %s: %s" % (tree, e))
+            raise errors.AnsibleError("Could not make dir %s: %s" % (tree, e))
     if not os.access(tree, os.W_OK):
-        exit("Cannot write to path %s" % tree)
+        raise errors.AnsibleError("Cannot write to path %s" % tree)
     return tree
 
 def path_dwim(basedir, given):

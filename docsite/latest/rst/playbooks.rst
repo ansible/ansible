@@ -147,13 +147,9 @@ The `vars` section contains a list of variables and values that can be used in t
 
 These variables can be used later in the playbook like this::
 
-    $varname or ${varname} or {{ varname }}
+    {{ varname }}
 
-If you ever want to do anything complex like uppercasing a string, {{ varname }} is best, as it uses the Jinja2 templating engine.  It is a good idea to get in the habit of using this form most of the time when the output is to be a string.
-
-If just referencing the value of another simple variable though, it's fine to say $x or ${x}.  This is common for when a datastructure has a member that is the value of another datastructure.
-
-To learn more about Jinja2, you can optionally see the `Jinja2 docs <http://jinja.pocoo.org/docs/>`_ - though remember that Jinja2 loops and conditionals are only for 'templates' in Ansible, in playbooks, ansible has the 'when' and 'with' keywords for conditionals and loops.
+Variables are passed through the Jinja2 templating engine, and support the use of filters to modify the variable (for example: `{{ varname|int }}` ensures the variable is interpreted as an integer). To learn more about Jinja2, you can optionally see the `Jinja2 docs <http://jinja.pocoo.org/docs/>`_ - though remember that Jinja2 loops and conditionals are only for 'templates' in Ansible, in playbooks, ansible has the 'when' and 'with' keywords for conditionals and loops.
 
 If there are discovered variables about the system, called 'facts', these variables bubble up back into the playbook, and can be used on each system just like explicitly set variables.  Ansible provides several
 of these, prefixed with 'ansible', which are documented under 'setup' in the module documentation.  Additionally,
@@ -263,7 +259,7 @@ make more sense to break up tasks using the 'include:' directive.  We'll show th
 Action Shorthand
 ````````````````
 
-.. versionadded: 0.8
+.. versionadded:: 0.8
 
 Ansible prefers listing modules like this in 0.8 and later::
 
@@ -445,7 +441,7 @@ inside another.
 Roles
 `````
 
-.. versionadded: 1.2
+.. versionadded:: 1.2
 
 Now that you have learned about vars_files, tasks, and handlers, what is the best way to organize your playbooks?
 The short answer is to use roles!  Roles are ways of automatically loading certain vars_files, tasks, and
@@ -553,7 +549,7 @@ If you want to define certain tasks to happen before AND after roles are applied
 Role Dependencies
 `````````````````
 
-.. versionadded: 1.3
+.. versionadded:: 1.3
 
 Role dependencies allow you to automatically pull in other roles when using a role. Role dependencies are stored in the
 `meta/main.yml` file contained within the role directory. This file should contain 
