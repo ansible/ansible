@@ -19,47 +19,26 @@ author: Constantine Peresypkin
 '''
 
 MBYTE = 1024 * 1024
+MAX_MSDOS_SIZE = 1024 * 1024 * MBYTE
 
 try:
     import json
 except ImportError:
     import simplejson as json
 
-class FakeDisk(object):
-    
-    def __init__(self, parted, device):
-        self.type = None
-        self.device = device
-        self.parted = parted
-    
-    def getPrimaryPartitions(self):
-        return []
-  
-    def getExtendedPartition(self):
-        return None
-    
-    def getLogicalPartitions(self):
-        return []
-    
-    def getRaidPartitions(self):
-        return []
-    
-    def getLVMPartitions(self):
-        return []
 
-    def getFreeSpaceRegions(self):
-        free = self.parted.Geometry(device=self.device, start=0, length=self.device.length)
-        return [free]
-
-
-def run_parted(module, parted):
+def run_parted():
     try:
         disks = []
-	for d in parted.getAllDevices():
+        for d in parted.getAllDevices():
             try:
                 disk = parted.Disk(d)
             except parted.DiskLabelException:
-                disk = FakeDisk(parted, d)
+                device_size = d.sectorSize * d.length
+                label = 'msdos'
+                if device_size > MAX_MSDOS_SIZE:
+                    label = 'gpt'
+                disk = parted.freshDisk(d, label)
             disks.append(disk)
         parted_result = {'ansible_facts': {}}
         parted_result['ansible_facts']['parted'] = []
@@ -109,8 +88,9 @@ def run_parted(module, parted):
         return module.fail_json(msg=str(e))
     return parted_result
 
+
 def main():
-    global module
+    global module, parted
     module = AnsibleModule(
         argument_spec = dict()
     )
@@ -118,7 +98,7 @@ def main():
         import parted
     except ImportError:
         module.fail_json(msg="Could not import python module: parted. Please install python-parted package.")
-    data = run_parted(module, parted)
+    data = run_parted()
     module.exit_json(**data)
 
 # this is magic, see lib/ansible/module_common.py

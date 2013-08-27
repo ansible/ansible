@@ -8,7 +8,8 @@ module: parted
 short_description: Simple partition creator, geared towards fresh disk init
 description:
      - This module can be used to create partitions of needed size on physical disks.
-       The main idea is to intialize machines with lots of disks.
+     - The main idea is to initialize machines with lots of disks.
+     - Can be also used to quickly init new disk added to machine.
 options:
   size:
     description:
@@ -25,12 +26,31 @@ options:
       - Ensure this amount of free space will be left after creating the partition
     required: false
     default: null
+  count:
+    description:
+      - How many partitions of this geometry to create
+    required: false
+    default: 1
   repeated:
     description:
-      - Will try to repeat the operation for each disk on the machine, otherwise stops on first success
+      - Will try to repeat the operation for each disk on the machine
+      - Otherwise stops on first "count" of successes (on first success by default)
     required: false
     default: no
     choices: [ "yes", "no" ]
+  filesystem:
+    description:
+      - What filesystem to use when searching for existing, or creating new partitions
+    required: false
+    default: null
+    choices: [ "ext3", "ext4", "xfs" ]
+  label:
+    description:
+      - What label (partition table type) to use for NEW disks only
+      - Although default is "msdos", it will use "gpt" on disks over 1TB
+    required: false
+    default: "msdos"
+    choices: [ "msdos", "gpt" ]
 notes:
     - All parameters are in MiB
       If partition cannot be created facts will not contain the C(parted_created) attribute
@@ -45,11 +65,27 @@ author: Constantine Peresypkin
 '''
 
 MBYTE = 1024 * 1024
+MAX_MSDOS_SIZE = 1024 * 1024 * MBYTE
 
 try:
     import json
 except ImportError:
     import simplejson as json
+
+
+def get_all_disks():
+    disks = []
+    for dev in parted.getAllDevices():
+        try:
+            disk = parted.Disk(dev)
+        except parted.DiskLabelException:
+            device_size = dev.sectorSize * dev.length
+            if device_size > MAX_MSDOS_SIZE and 'msdos' in label:
+                disk = parted.freshDisk(dev, 'gpt')
+            else:
+                disk = parted.freshDisk(dev, label)
+        disks.append(disk)
+    return disks
 
 
 def create_result(disk, part):
@@ -64,7 +100,7 @@ def create_result(disk, part):
     return created
 
 
-def create(parted, disk, size=None, minsize=None, minfree=None, part_type=None, fs_type=None):
+def create(disk, size=None, minsize=None, minfree=None, part_type=None, fs_type=None):
     if not part_type:
         part_type = parted.PARTITION_NORMAL
     if size:
@@ -118,13 +154,13 @@ def create(parted, disk, size=None, minsize=None, minfree=None, part_type=None, 
         return None
 
 
-def create_space(parted, size=None, minsize=None, minfree=None, fs_type=None, part_count=1):
+def create_space(size=None, minsize=None, minfree=None, fs_type=None, part_count=1):
     created = []
     if part_count < 1:
         return []
-    disks = [parted.Disk(d) for d in parted.getAllDevices()]
+    disks = get_all_disks()
     for d in disks:
-        result = create(parted, d, size=size, minsize=minsize, minfree=minfree, fs_type=fs_type)
+        result = create(d, size=size, minsize=minsize, minfree=minfree, fs_type=fs_type)
         if result:
             created.append(result)
             part_count -= 1
@@ -133,13 +169,13 @@ def create_space(parted, size=None, minsize=None, minfree=None, fs_type=None, pa
     return created
 
 
-def ensure_space(parted, count=1, size=None, minsize=None, fs_type=None, repeated=False):
+def ensure_space(count=1, size=None, minsize=None, fs_type=None, repeated=False):
     part_list = []
     if minsize:
         size = minsize
     size = int(size)
     size *= MBYTE
-    disks = [parted.Disk(d) for d in parted.getAllDevices()]
+    disks = get_all_disks()
     for d in disks:
         if count == 0 and not repeated:
             break
@@ -164,7 +200,7 @@ def ensure_space(parted, count=1, size=None, minsize=None, fs_type=None, repeate
 
 
 def main():
-    global module
+    global module, parted, label
     module = AnsibleModule(
         argument_spec=dict(
             size=dict(default=None),
@@ -172,7 +208,8 @@ def main():
             minfree=dict(default=None),
             repeated=dict(default='no', choices=['yes', 'no']),
             count=dict(default=1),
-            filesystem=dict(default=None, choices=['ext3', 'ext4', 'xfs'])
+            filesystem=dict(default=None, choices=['ext3', 'ext4', 'xfs']),
+            label=dict(default='msdos', choices=['msdos', 'gpt'])
         )
     )
     size = module.params['size']
@@ -181,6 +218,7 @@ def main():
     part_count = module.params['count']
     filesystem = module.params['filesystem']
     repeated = 'yes' in module.params['repeated']
+    label = module.params['label']
     try:
         import parted
     except ImportError:
@@ -188,11 +226,11 @@ def main():
     if not size and not minsize:
         module.fail_json(msg="One of the following must be supplied: size=, minsize=")
     data = {'ansible_facts': {}, 'changed': False}
-    result = ensure_space(parted, count=part_count, size=size, minsize=minsize,
+    result = ensure_space(count=part_count, size=size, minsize=minsize,
                           fs_type=filesystem, repeated=repeated)
     data['ansible_facts']['parted_existing'] = result['existing']
     missing = result['missing']
-    created = create_space(parted, size=size, minsize=minsize, minfree=minfree,
+    created = create_space(size=size, minsize=minsize, minfree=minfree,
                            fs_type=filesystem, part_count=missing)
     data['ansible_facts']['parted_created'] = created
     missing -= len(created)
