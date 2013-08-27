@@ -31,29 +31,31 @@ class Connection(object):
 
     def __init__(self, runner, host, port, user, password, private_key_file, *args, **kwargs):
 
-        self.ssh = SSHConnection(
-            runner=runner,
-            host=host, 
-            port=port, 
-            user=user, 
-            password=password, 
-            private_key_file=private_key_file
-        )
-
         self.runner = runner
         self.host = host
         self.context = None
         self.conn = None
+        self.user = user
         self.key = utils.key_for_hostname(host)
-        self.fbport = constants.FIREBALL2_PORT
+        self.port = port[0]
+        self.fbport = port[1]
         self.is_connected = False
+
+        self.ssh = SSHConnection(
+            runner=self.runner,
+            host=self.host, 
+            port=self.port, 
+            user=self.user, 
+            password=password, 
+            private_key_file=private_key_file
+        )
 
         # attempt to work around shared-memory funness
         if getattr(self.runner, 'aes_keys', None):
             utils.AES_KEYS = self.runner.aes_keys
 
     def _execute_fb_module(self):
-        args = "password=%s" % base64.b64encode(self.key.__str__())
+        args = "password=%s port=%s" % (base64.b64encode(self.key.__str__()), str(self.fbport))
         self.ssh.connect()
         tmp_path = self.runner._make_tmp_path(self.ssh)
         return self.runner._execute_module(self.ssh, tmp_path, 'fireball2', args, inject={"password":self.key})

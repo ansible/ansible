@@ -140,6 +140,7 @@ class Runner(object):
         complex_args=None,                  # structured data in addition to module_args, must be a dict
         error_on_undefined_vars=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR, # ex. False
         accelerate=False,                   # use fireball acceleration
+        accelerate_port=None,               # port to use with fireball acceleration
         ):
 
         # used to lock multiprocess inputs and outputs at various levels
@@ -181,12 +182,15 @@ class Runner(object):
         self.complex_args     = complex_args
         self.error_on_undefined_vars = error_on_undefined_vars
         self.accelerate       = accelerate
+        self.accelerate_port  = accelerate_port
         self.callbacks.runner = self
 
         if self.accelerate:
             # if we're using accelerated mode, force the local
             # transport to fireball2
             self.transport = "fireball2"
+            if not self.accelerate_port:
+                self.accelerate_port = C.ACCELERATE_PORT
         elif self.transport == 'smart':
             # if the transport is 'smart' see if SSH can support ControlPersist if not use paramiko
             # 'smart' is the default since 1.2.1/1.3
@@ -606,7 +610,12 @@ class Runner(object):
         inject['ansible_ssh_user'] = actual_user
 
         try:
-            if actual_port is not None:
+            if self.transport == 'fireball2':
+                # for fireball2, we stuff both ports into a single
+                # variable so that we don't have to mangle other function
+                # calls just to accomodate this one case
+                actual_port = [port, self.accelerate_port]
+            elif actual_port is not None:
                 actual_port = int(actual_port)
         except ValueError, e:
             result = dict(failed=True, msg="FAILED: Configured port \"%s\" is not a valid port, expected integer" % actual_port)
