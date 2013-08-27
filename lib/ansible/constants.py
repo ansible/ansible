@@ -20,21 +20,12 @@ import pwd
 import sys
 import ConfigParser
 
-# copied from utils, avoid circular reference fun :)
-def mk_boolean(value):
-    if value is None:
-        return False
-    val = str(value)
-    if val.lower() in [ "true", "t", "y", "1", "yes" ]:
-        return True
-    else:
-        return False
 
 def get_config(p, section, key, env_var, default, boolean=False, integer=False):
     ''' return a configuration variable with casting '''
     value = _get_config(p, section, key, env_var, default)
     if boolean:
-        return mk_boolean(value)
+        return str(value).lower() in ("true", "t", "y", "1", "yes")
     if integer:
         return int(value)
     return value
