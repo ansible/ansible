@@ -136,7 +136,6 @@ class Connection(object):
         response = utils.decrypt(self.key, response)
         response = utils.parse_json(response)
 
-        vvv("COMMAND DONE: rc=%s" % str(response.get('rc',"<unknown>")))
         return (response.get('rc',None), '', response.get('stdout',''), response.get('stderr',''))
 
     def put_file(self, in_path, out_path):
