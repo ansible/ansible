@@ -299,7 +299,7 @@ def main():
     )
 
     password  = base64.b64decode(module.params['password'])
-    port      = module.params['port']
+    port      = int(module.params['port'])
     minutes   = int(module.params['minutes'])
 
     if not HAS_KEYCZAR:

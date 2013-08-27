@@ -29,7 +29,7 @@ class Play(object):
 
     __slots__ = [
        'hosts', 'name', 'vars', 'vars_prompt', 'vars_files',
-       'handlers', 'remote_user', 'remote_port', 'accelerate',
+       'handlers', 'remote_user', 'remote_port', 'accelerate', 'accelerate_port',
        'sudo', 'sudo_user', 'transport', 'playbook',
        'tags', 'gather_facts', 'serial', '_ds', '_handlers', '_tasks',
        'basedir', 'any_errors_fatal', 'roles', 'max_fail_pct'
@@ -39,7 +39,7 @@ class Play(object):
     # and don't line up 1:1 with how they are stored
     VALID_KEYS = [
        'hosts', 'name', 'vars', 'vars_prompt', 'vars_files',
-       'tasks', 'handlers', 'user', 'port', 'include', 'accelerate',
+       'tasks', 'handlers', 'user', 'port', 'include', 'accelerate', 'accelerate_port',
        'sudo', 'sudo_user', 'connection', 'tags', 'gather_facts', 'serial',
        'any_errors_fatal', 'roles', 'pre_tasks', 'post_tasks', 'max_fail_percentage' 
     ]
@@ -104,6 +104,7 @@ class Play(object):
         self.remote_port      = self.remote_port
         self.any_errors_fatal = ds.get('any_errors_fatal', False)
         self.accelerate       = ds.get('accelerate', False)
+        self.accelerate_port  = ds.get('accelerate_port', None)
         self.max_fail_pct     = int(ds.get('max_fail_percentage', 100))
 
         load_vars = {}
