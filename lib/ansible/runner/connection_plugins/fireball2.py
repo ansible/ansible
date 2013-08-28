@@ -26,6 +26,13 @@ from ansible import utils
 from ansible import errors
 from ansible import constants
 
+# the chunk size to read and send, assuming mtu 1500 and
+# leaving room for base64 (+33%) encoding and header (8 bytes)
+# ((1400-8)/4)*3) = 1044
+# which leaves room for the TCP/IP header. We set this to a 
+# multiple of the value to speed up file reads.
+CHUNK_SIZE=1044*20
+
 class Connection(object):
     ''' raw socket accelerated connection '''
 
@@ -148,27 +155,42 @@ class Connection(object):
         if not os.path.exists(in_path):
             raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
 
-        data = file(in_path).read()
-        data = base64.b64encode(data)
-        data = dict(mode='put', data=data, out_path=out_path)
+        fd = file(in_path, 'rb')
+        fstat = os.stat(in_path)
+        try:
+            vvv("PUT file is %d bytes" % fstat.st_size)
+            while fd.tell() < fstat.st_size:
+                data = fd.read(CHUNK_SIZE)
+                last = False
+                if fd.tell() >= fstat.st_size:
+                    last = True
+                data = dict(mode='put', data=base64.b64encode(data), out_path=out_path, last=last)
+                if self.runner.sudo:
+                    data['user'] = self.runner.sudo_user
+                data = utils.jsonify(data)
+                data = utils.encrypt(self.key, data)
 
-        if self.runner.sudo:
-            data['user'] = self.runner.sudo_user
+                if self.send_data(data):
+                    raise errors.AnsibleError("failed to send the file to %s" % self.host)
 
-        # TODO: support chunked file transfer
-        data = utils.jsonify(data)
-        data = utils.encrypt(self.key, data)
-        if self.send_data(data):
-            raise errors.AnsibleError("failed to send the file to %s" % self.host)
+                response = self.recv_data()
+                if not response:
+                    raise errors.AnsibleError("Failed to get a response from %s" % self.host)
+                response = utils.decrypt(self.key, response)
+                response = utils.parse_json(response)
 
-        response = self.recv_data()
-        if not response:
-            raise errors.AnsibleError("Failed to get a response from %s" % self.host)
-        response = utils.decrypt(self.key, response)
-        response = utils.parse_json(response)
+                if response.get('failed',False):
+                    raise errors.AnsibleError("failed to put the file in the requested location")
+        finally:
+            fd.close()
+            response = self.recv_data()
+            if not response:
+                raise errors.AnsibleError("Failed to get a response from %s" % self.host)
+            response = utils.decrypt(self.key, response)
+            response = utils.parse_json(response)
 
-        if response.get('failed',False):
-            raise errors.AnsibleError("failed to put the file in the requested location")
+            if response.get('failed',False):
+                raise errors.AnsibleError("failed to put the file in the requested location")
 
     def fetch_file(self, in_path, out_path):
         ''' save a remote file to the specified path '''
@@ -180,17 +202,36 @@ class Connection(object):
         if self.send_data(data):
             raise errors.AnsibleError("failed to initiate the file fetch with %s" % self.host)
 
-        response = self.recv_data()
-        if not response:
-            raise errors.AnsibleError("Failed to get a response from %s" % self.host)
-        response = utils.decrypt(self.key, response)
-        response = utils.parse_json(response)
-        response = response['data']
-        response = base64.b64decode(response)        
-
         fh = open(out_path, "w")
-        fh.write(response)
-        fh.close()
+        try:
+            bytes = 0
+            while True:
+                response = self.recv_data()
+                if not response:
+                    raise errors.AnsibleError("Failed to get a response from %s" % self.host)
+                response = utils.decrypt(self.key, response)
+                response = utils.parse_json(response)
+                if response.get('failed', False):
+                    raise errors.AnsibleError("Error during file fetch, aborting")
+                out = base64.b64decode(response['data'])
+                fh.write(out)
+                bytes += len(out)
+                # send an empty response back to signify we 
+                # received the last chunk without errors
+                data = utils.jsonify(dict())
+                data = utils.encrypt(self.key, data)
+                if self.send_data(data):
+                    raise errors.AnsibleError("failed to send ack during file fetch")
+                if response.get('last', False):
+                    break
+        finally:
+            # we don't currently care about this final response,
+            # we just receive it and drop it. It may be used at some
+            # point in the future or we may just have the put/fetch
+            # operations not send back a final response at all
+            response = self.recv_data()
+            vvv("FETCH wrote %d bytes to %s" % (bytes, out_path))
+            fh.close()
 
     def close(self):
         ''' terminate the connection '''

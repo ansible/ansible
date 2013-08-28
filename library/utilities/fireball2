@@ -80,6 +80,12 @@ import SocketServer
 syslog.openlog('ansible-%s' % os.path.basename(__file__))
 PIDFILE = os.path.expanduser("~/.fireball2.pid")
 
+# the chunk size to read and send, assuming mtu 1500 and 
+# leaving room for base64 (+33%) encoding and header (100 bytes)
+# 4 * (975/3) + 100 = 1400 
+# which leaves room for the TCP/IP header
+CHUNK_SIZE=10240
+
 def log(msg):
     syslog.syslog(syslog.LOG_NOTICE, msg)
 
@@ -227,13 +233,40 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
         if 'in_path' not in data:
             return dict(failed=True, msg='internal error: in_path is required')
 
-        # FIXME: should probably support chunked file transfer for binary files
-        # at some point.  For now, just base64 encodes the file
-        # so don't use it to move ISOs, use rsync.
+        try:
+            fd = file(data['in_path'], 'rb')
+            fstat = os.stat(data['in_path'])
+            log("FETCH file is %d bytes" % fstat.st_size)
+            while fd.tell() < fstat.st_size:
+                data = fd.read(CHUNK_SIZE)
+                last = False
+                if fd.tell() >= fstat.st_size:
+                    last = True
+                data = dict(data=base64.b64encode(data), last=last)
+                data = json.dumps(data)
+                data = self.server.key.Encrypt(data)
 
-        fh = open(data['in_path'])
-        data = base64.b64encode(fh.read())
-        return dict(data=data)
+                if self.send_data(data):
+                    return dict(failed=True, stderr="failed to send data")
+
+                response = self.recv_data()
+                if not response:
+                    log("failed to get a response, aborting")
+                    return dict(failed=True, stderr="Failed to get a response from %s" % self.host)
+                response = self.server.key.Decrypt(response)
+                response = json.loads(response)
+
+                if response.get('failed',False):
+                    log("got a failed response from the master")
+                    return dict(failed=True, stderr="Master reported failure, aborting transfer")
+        except Exception, e:
+            tb = traceback.format_exc()
+            log("failed to fetch the file: %s" % tb)
+            return dict(failed=True, stderr="Could not fetch the file: %s" % str(e))
+        finally:
+            fd.close()
+
+        return dict()
 
     def put(self, data):
         if 'data' not in data:
@@ -251,19 +284,33 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
             out_path = data['out_path']
             out_fd = open(out_path, 'w')
 
-        # FIXME: should probably support chunked file transfer for binary files
-        # at some point.  For now, just base64 encodes the file
-        # so don't use it to move ISOs, use rsync.
-
         try:
-            out_fd.write(base64.b64decode(data['data']))
-            out_fd.close()
+            bytes=0
+            while True:
+                out = base64.b64decode(data['data'])
+                bytes += len(out)
+                out_fd.write(out)
+                response = json.dumps(dict())
+                response = self.server.key.Encrypt(response)
+                self.send_data(response)
+                if data['last']:
+                    break
+                data = self.recv_data()
+                if not data:
+                    raise ""
+                data = self.server.key.Decrypt(data)
+                data = json.loads(data)
         except:
+            tb = traceback.format_exc()
+            log("failed to put the file: %s" % tb)
             return dict(failed=True, stdout="Could not write the file")
+        finally:
+            log("wrote %d bytes" % bytes)
+            out_fd.close()
 
         if final_path:
             log("moving %s to %s" % (out_path, final_path))
-            args = ['sudo','mv',out_path,final_path]
+            args = ['sudo','cp',out_path,final_path]
             rc, stdout, stderr = self.server.module.run_command(args, close_fds=True)
             if rc != 0:
                 return dict(failed=True, stdout="failed to copy the file into position with sudo")
