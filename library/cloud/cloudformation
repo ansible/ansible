@@ -159,7 +159,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             stack_name=dict(required=True),
-            template_parameters=dict(required=False),
+            template_parameters=dict(required=True),
             region=dict(aliases=['aws_region', 'ec2_region'], required=True, choices=AWS_REGIONS),
             state=dict(default='present', choices=['present', 'absent']),
             template=dict(default=None, required=True),
