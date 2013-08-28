@@ -50,6 +50,8 @@ class ActionModule(object):
         flat = utils.boolean(flat)
         fail_on_missing = options.get('fail_on_missing', False)
         fail_on_missing = utils.boolean(fail_on_missing)
+        ignore_md5_mismatch = options.get('ignore_md5_mismatch', False)
+        ignore_md5_mismatch = utils.boolean(ignore_md5_mismatch)
         if source is None or dest is None:
             results = dict(failed=True, msg="src and dest are required")
             return ReturnData(conn=conn, result=results)
@@ -112,10 +114,10 @@ class ActionModule(object):
                 f.write(remote_data)
                 f.close()
             new_md5 = utils.md5(dest)
-            if new_md5 != remote_md5:
-                result = dict(failed=True, md5sum=new_md5, msg="md5 mismatch", file=source, dest=dest)
+            if not ignore_md5_mismatch and new_md5 != remote_md5:
+                result = dict(failed=True, md5sum=new_md5, msg="md5 mismatch", file=source, dest=dest, remote_md5sum=remote_md5)
                 return ReturnData(conn=conn, result=result)
-            result = dict(changed=True, md5sum=new_md5, dest=dest)
+            result = dict(changed=True, md5sum=new_md5, dest=dest, remote_md5sum=remote_md5)
             return ReturnData(conn=conn, result=result)
         else:
             result = dict(changed=False, md5sum=local_md5, file=source, dest=dest)
