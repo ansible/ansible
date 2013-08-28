@@ -34,13 +34,13 @@ options:
     required: false
     choices: [ "yes", "no" ]
     default: "no"
-  ignore_md5_mismatch:
+  validate_md5:
     version_added: "1.3"
     description:
-      - Do not check the md5sum of the destination file. Useful if transferring files that may change during the transfer, such as log files.
+      - Verify that the source and destination md5sums match after the files are fetched.
     required: false
     choices: [ "yes", "no" ]
-    default: "no"
+    default: "yes"
   flat:
     version_added: "1.2"
     description:
