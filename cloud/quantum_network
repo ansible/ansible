@@ -44,6 +44,11 @@ options:
         - The tenant name of the login user
      required: true
      default: 'yes'
+   tenant_name:
+     description:
+        - The name of the tenant for whom the network is created
+     required: false
+     default: None
    auth_url:
      description:
         - The keystone url for authentication
@@ -99,15 +104,15 @@ requirements: ["quantumclient", "keystoneclient"]
 '''
 
 EXAMPLES = '''
-# Creates an external,public network
-- quantum_network: state=present login_username=admin login_password=admin
-                   provider_network_type=gre login_tenant_name=admin
-                   provider_segmentation_id=1  tenant_name=tenant1 name=t1network"
+# Create a GRE backed Quantum network with tunnel id 1 for tenant1
+- quantum_network: name=t1network tenant_name=tenant1 state=present
+                   provider_network_type=gre provider_segmentation_id=1
+                   login_username=admin login_password=admin login_tenant_name=admin
 
-# Createss a GRE nework with tunnel id of 1 for tenant 1
-- quantum_network: state=present login_username=admin login_password=admin
-                   provider_network_type=local login_tenant_name=admin
-                   provider_segmentation_id=1   router_external=yes name=external_network
+# Create an external network
+- quantum_network: name=external_network state=present
+                   provider_network_type=local router_external=yes
+                   login_username=admin login_password=admin login_tenant_name=admin
 '''
 
 _os_keystone = None
@@ -130,7 +135,7 @@ def _get_endpoint(module, ksclient):
     try:
         endpoint = ksclient.service_catalog.url_for(service_type='network', endpoint_type='publicURL')
     except Exception as e:
-        module.fail_json(msg = "Error getting endpoint for glance: %s " %e.message)
+        module.fail_json(msg = "Error getting endpoint for Quantum: %s " %e.message)
     return endpoint
 
 def _get_quantum_client(module, kwargs):
