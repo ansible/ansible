@@ -112,7 +112,10 @@ You can also login as you, and then sudo to different users than root::
 
 If you need to specify a password to sudo, run `ansible-playbook` with ``--ask-sudo-pass`` (`-K`).
 If you run a sudo playbook and the playbook seems to hang, it's probably stuck at the sudo prompt.
-Just `Control-C` to kill it and run it again with `-K`.
+Just `Control-C` to kill it and run it again with `-K`. 
+
+You should only specify a password when sudo will actually ask for one, as ansible will fail when
+you specify ``--ask-sudo-pass`` while sudo doesn't prompt for a password.
 
 .. important::
 
