@@ -28,7 +28,7 @@ import os
 class Play(object):
 
     __slots__ = [
-       'hosts', 'name', 'vars', 'vars_prompt', 'vars_files',
+       'hosts', 'name', 'vars', 'default_vars', 'vars_prompt', 'vars_files',
        'handlers', 'remote_user', 'remote_port',
        'sudo', 'sudo_user', 'transport', 'playbook',
        'tags', 'gather_facts', 'serial', '_ds', '_handlers', '_tasks',
@@ -70,7 +70,7 @@ class Play(object):
             self.tags = []
 
         ds = self._load_roles(self.roles, ds)
-        self.vars_files       = ds.get('vars_files', [])
+        self.vars_files = ds.get('vars_files', [])
 
         self._update_vars_files_for_host(None)
 
@@ -295,10 +295,7 @@ class Play(object):
         ds['handlers'] = new_handlers
         ds['vars_files'] = new_vars_files
 
-        defaults = self._load_role_defaults(defaults_files)
-        # merge default vars with self.vars, with vars taking precedence.
-        if defaults:
-            self.vars = utils.combine_vars(defaults, self.vars)
+        self.default_vars = self._load_role_defaults(defaults_files)
 
         return ds
 
