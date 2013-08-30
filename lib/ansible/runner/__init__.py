@@ -59,6 +59,12 @@ MULTIPROCESSING_MANAGER = multiprocessing.Manager()
 
 ################################################
 
+def sigint_signal_handler(signal, frame):
+    print('You pressed Ctrl+C, aborted...')
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, sigint_signal_handler)
+
 def _executor_hook(job_queue, result_queue, new_stdin):
 
     # attempt workaround of https://github.com/newsapps/beeswithmachineguns/issues/17
@@ -66,7 +72,6 @@ def _executor_hook(job_queue, result_queue, new_stdin):
     if HAS_ATFORK:
         atfork()
 
-    signal.signal(signal.SIGINT, signal.SIG_IGN)
     while not job_queue.empty():
         try:
             host = job_queue.get(block=False)
