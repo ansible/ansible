@@ -28,7 +28,7 @@ import os
 class Play(object):
 
     __slots__ = [
-       'hosts', 'name', 'vars', 'vars_prompt', 'vars_files',
+       'hosts', 'name', 'vars', 'default_vars', 'vars_prompt', 'vars_files',
        'handlers', 'remote_user', 'remote_port',
        'sudo', 'sudo_user', 'transport', 'playbook',
        'tags', 'gather_facts', 'serial', '_ds', '_handlers', '_tasks',
@@ -69,9 +69,17 @@ class Play(object):
         elif type(self.tags) != list:
             self.tags = []
 
-        ds = self._load_roles(self.roles, ds)
-        self.vars_files       = ds.get('vars_files', [])
+        # We first load the vars files from the datastructure
+        # so we have the default variables to pass into the roles
+        self.vars_files = ds.get('vars_files', [])
+        self._update_vars_files_for_host(None)
 
+        # now we load the roles into the datastructure
+        ds = self._load_roles(self.roles, ds)
+        
+        # and finally re-process the vars files as they may have
+        # been updated by the included roles
+        self.vars_files = ds.get('vars_files', [])
         self._update_vars_files_for_host(None)
 
         # template everything to be efficient, but do not pre-mature template
@@ -153,6 +161,13 @@ class Play(object):
             raise errors.AnsibleError("too many levels of recursion while resolving role dependencies")
         for role in roles:
             role_path,role_vars = self._get_role_path(role)
+            role_vars = utils.combine_vars(role_vars, passed_vars)
+            vars = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(role_path, 'vars')))
+            vars_data = {}
+            if os.path.isfile(vars):
+                vars_data = utils.parse_yaml_from_file(vars)
+                if vars_data:
+                    role_vars = utils.combine_vars(vars_data, role_vars)
             # the meta directory contains the yaml that should
             # hold the list of dependencies (if any)
             meta = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(role_path, 'meta')))
@@ -162,17 +177,14 @@ class Play(object):
                     dependencies = data.get('dependencies',[])
                     for dep in dependencies:
                         (dep_path,dep_vars) = self._get_role_path(dep)
+                        dep_vars = utils.combine_vars(passed_vars, dep_vars)
+                        dep_vars = utils.combine_vars(role_vars, dep_vars)
                         vars = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(dep_path, 'vars')))
                         vars_data = {}
                         if os.path.isfile(vars):
                             vars_data = utils.parse_yaml_from_file(vars)
-                        dep_vars.update(role_vars)
-                        for k in passed_vars.keys():
-                            if not k in dep_vars:
-                                dep_vars[k] = passed_vars[k]
-                        for k in vars_data.keys():
-                            if not k in dep_vars:
-                                dep_vars[k] = vars_data[k]
+                            if vars_data:
+                                dep_vars = utils.combine_vars(vars_data, dep_vars)
                         if 'role' in dep_vars:
                             del dep_vars['role']
                         self._build_role_dependencies([dep], dep_stack, passed_vars=dep_vars, level=level+1)
@@ -182,6 +194,20 @@ class Play(object):
             if level == 0:
                 dep_stack.append([role,role_path,role_vars])
         return dep_stack
+
+    def _load_role_defaults(self, defaults_files):
+        # process default variables
+        default_vars = {}
+        for filename in defaults_files:
+            if os.path.exists(filename):
+                new_default_vars = utils.parse_yaml_from_file(filename)
+                if new_default_vars:
+                    if type(new_default_vars) != dict:
+                        raise errors.AnsibleError("%s must be stored as dictonary/hash: %s" % (filename, type(new_default_vars)))
+
+                    default_vars = utils.combine_vars(default_vars, new_default_vars)
+
+        return default_vars
 
     def _load_roles(self, roles, ds):
         # a role is a name that auto-includes the following if they exist
@@ -199,6 +225,7 @@ class Play(object):
         new_tasks = []
         new_handlers = []
         new_vars_files = []
+        defaults_files = []
 
         pre_tasks = ds.get('pre_tasks', None)
         if type(pre_tasks) != list:
@@ -222,10 +249,13 @@ class Play(object):
             task_basepath    = utils.path_dwim(self.basedir, os.path.join(role_path, 'tasks'))
             handler_basepath = utils.path_dwim(self.basedir, os.path.join(role_path, 'handlers'))
             vars_basepath    = utils.path_dwim(self.basedir, os.path.join(role_path, 'vars'))
+            defaults_basepath    = utils.path_dwim(self.basedir, os.path.join(role_path, 'defaults'))
 
             task      = self._resolve_main(task_basepath)
             handler   = self._resolve_main(handler_basepath)
             vars_file = self._resolve_main(vars_basepath)
+            defaults_file = self._resolve_main(defaults_basepath)
+
             library   = utils.path_dwim(self.basedir, os.path.join(role_path, 'library'))
 
             if not os.path.isfile(task) and not os.path.isfile(handler) and not os.path.isfile(vars_file) and not os.path.isdir(library):
@@ -244,6 +274,8 @@ class Play(object):
                 new_handlers.append(nt)
             if os.path.isfile(vars_file):
                 new_vars_files.append(vars_file)
+            if os.path.isfile(defaults_file):
+                defaults_files.append(defaults_file)
             if os.path.isdir(library):
                 utils.plugins.module_finder.add_directory(library)
 
@@ -274,6 +306,8 @@ class Play(object):
         ds['tasks'] = new_tasks
         ds['handlers'] = new_handlers
         ds['vars_files'] = new_vars_files
+
+        self.default_vars = self._load_role_defaults(defaults_files)
 
         return ds
 

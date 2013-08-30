@@ -24,7 +24,7 @@ class Task(object):
 
     __slots__ = [
         'name', 'meta', 'action', 'only_if', 'when', 'async_seconds', 'async_poll_interval',
-        'notify', 'module_name', 'module_args', 'module_vars',
+        'notify', 'module_name', 'module_args', 'module_vars', 'default_vars',
         'play', 'notified_by', 'tags', 'register',
         'delegate_to', 'first_available_file', 'ignore_errors',
         'local_action', 'transport', 'sudo', 'sudo_user', 'sudo_pass',
@@ -100,8 +100,9 @@ class Task(object):
             elif not x in Task.VALID_KEYS:
                 raise errors.AnsibleError("%s is not a legal parameter in an Ansible task or handler" % x)
 
-        self.module_vars = module_vars
-        self.play        = play
+        self.module_vars  = module_vars
+        self.play         = play
+        self.default_vars = play.default_vars
 
         # load various attributes
         self.name         = ds.get('name', None)
