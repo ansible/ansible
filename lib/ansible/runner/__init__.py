@@ -139,8 +139,8 @@ class Runner(object):
         environment=None,                   # environment variables (as dict) to use inside the command
         complex_args=None,                  # structured data in addition to module_args, must be a dict
         error_on_undefined_vars=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR, # ex. False
-        accelerate=False,                   # use fireball acceleration
-        accelerate_port=None,               # port to use with fireball acceleration
+        accelerate=False,                   # use accelerated connection
+        accelerate_port=None,               # port to use with accelerated connection
         ):
 
         # used to lock multiprocess inputs and outputs at various levels
@@ -187,8 +187,8 @@ class Runner(object):
 
         if self.accelerate:
             # if we're using accelerated mode, force the local
-            # transport to fireball2
-            self.transport = "fireball2"
+            # transport to accelerate
+            self.transport = "accelerate"
             if not self.accelerate_port:
                 self.accelerate_port = C.ACCELERATE_PORT
         elif self.transport == 'smart':
@@ -406,7 +406,7 @@ class Runner(object):
 
         host_variables = self.inventory.get_variables(host)
         host_connection = host_variables.get('ansible_connection', self.transport)
-        if host_connection in [ 'paramiko', 'ssh', 'fireball2' ]:
+        if host_connection in [ 'paramiko', 'ssh', 'accelerate' ]:
             port = host_variables.get('ansible_ssh_port', self.remote_port)
             if port is None:
                 port = C.DEFAULT_REMOTE_PORT
@@ -569,7 +569,7 @@ class Runner(object):
         actual_pass = inject.get('ansible_ssh_pass', self.remote_pass)
         actual_transport = inject.get('ansible_connection', self.transport)
         actual_private_key_file = inject.get('ansible_ssh_private_key_file', self.private_key_file)
-        if actual_transport in [ 'paramiko', 'ssh', 'fireball2' ]:
+        if actual_transport in [ 'paramiko', 'ssh', 'accelerate' ]:
             actual_port = inject.get('ansible_ssh_port', port)
 
         # the delegated host may have different SSH port configured, etc
@@ -610,8 +610,8 @@ class Runner(object):
         inject['ansible_ssh_user'] = actual_user
 
         try:
-            if self.transport == 'fireball2':
-                # for fireball2, we stuff both ports into a single
+            if self.transport == 'accelerate':
+                # for accelerate, we stuff both ports into a single
                 # variable so that we don't have to mangle other function
                 # calls just to accomodate this one case
                 actual_port = [actual_port, self.accelerate_port]
