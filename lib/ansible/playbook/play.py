@@ -69,9 +69,17 @@ class Play(object):
         elif type(self.tags) != list:
             self.tags = []
 
-        ds = self._load_roles(self.roles, ds)
+        # We first load the vars files from the datastructure
+        # so we have the default variables to pass into the roles
         self.vars_files = ds.get('vars_files', [])
+        self._update_vars_files_for_host(None)
 
+        # now we load the roles into the datastructure
+        ds = self._load_roles(self.roles, ds)
+        
+        # and finally re-process the vars files as they may have
+        # been updated by the included roles
+        self.vars_files = ds.get('vars_files', [])
         self._update_vars_files_for_host(None)
 
         # template everything to be efficient, but do not pre-mature template
@@ -153,6 +161,13 @@ class Play(object):
             raise errors.AnsibleError("too many levels of recursion while resolving role dependencies")
         for role in roles:
             role_path,role_vars = self._get_role_path(role)
+            role_vars = utils.combine_vars(role_vars, passed_vars)
+            vars = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(role_path, 'vars')))
+            vars_data = {}
+            if os.path.isfile(vars):
+                vars_data = utils.parse_yaml_from_file(vars)
+                if vars_data:
+                    role_vars = utils.combine_vars(vars_data, role_vars)
             # the meta directory contains the yaml that should
             # hold the list of dependencies (if any)
             meta = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(role_path, 'meta')))
@@ -162,17 +177,14 @@ class Play(object):
                     dependencies = data.get('dependencies',[])
                     for dep in dependencies:
                         (dep_path,dep_vars) = self._get_role_path(dep)
+                        dep_vars = utils.combine_vars(passed_vars, dep_vars)
+                        dep_vars = utils.combine_vars(role_vars, dep_vars)
                         vars = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(dep_path, 'vars')))
                         vars_data = {}
                         if os.path.isfile(vars):
                             vars_data = utils.parse_yaml_from_file(vars)
-                        dep_vars.update(role_vars)
-                        for k in passed_vars.keys():
-                            if not k in dep_vars:
-                                dep_vars[k] = passed_vars[k]
-                        for k in vars_data.keys():
-                            if not k in dep_vars:
-                                dep_vars[k] = vars_data[k]
+                            if vars_data:
+                                dep_vars = utils.combine_vars(vars_data, dep_vars)
                         if 'role' in dep_vars:
                             del dep_vars['role']
                         self._build_role_dependencies([dep], dep_stack, passed_vars=dep_vars, level=level+1)
