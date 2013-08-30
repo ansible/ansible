@@ -20,13 +20,12 @@
 
 DOCUMENTATION = '''
 ---
-module: fireball2
-short_description: Enable fireball2 mode on remote node
+module: accelerate
+short_description: Enable accelerated mode on remote node
 description:
-     - This modules launches an ephemeral I(fireball2) daemon on the remote node which
+     - This modules launches an ephemeral I(accelerate) daemon on the remote node which
        Ansible can use to communicate with nodes at high speed.
      - The daemon listens on a configurable port for a configurable amount of time.
-     - Starting a new fireball2 as a given user terminates any existing user fireballs2.
      - Fireball mode is AES encrypted
 version_added: "1.3"
 options:
@@ -38,18 +37,18 @@ options:
     aliases: []
   minutes:
     description:
-      - The I(fireball2) listener daemon is started on nodes and will stay around for
+      - The I(accelerate) listener daemon is started on nodes and will stay around for
         this number of minutes before turning itself off.
     required: false
     default: 30
 notes:
-    - See the advanced playbooks chapter for more about using fireball2 mode.
-requirements: [ "pycrypto" ]
+    - See the advanced playbooks chapter for more about using accelerated mode.
+requirements: [ "python-keyczar" ]
 author: James Cammarata
 '''
 
 EXAMPLES = '''
-# To use fireball2 mode, simple add "accelerated: true" to your play. The initial
+# To use accelerate mode, simply add "accelerated: true" to your play. The initial
 # key exchange and starting up of the daemon will occur over SSH, but all commands and
 # subsequent actions will be conducted over the raw socket connection using AES encryption
 
@@ -78,7 +77,7 @@ import traceback
 import SocketServer
 
 syslog.openlog('ansible-%s' % os.path.basename(__file__))
-PIDFILE = os.path.expanduser("~/.fireball2.pid")
+PIDFILE = os.path.expanduser("~/.accelerate.pid")
 
 # the chunk size to read and send, assuming mtu 1500 and 
 # leaving room for base64 (+33%) encoding and header (100 bytes)
@@ -117,7 +116,7 @@ def daemonize_self(module, password, port, minutes):
         if pid > 0:
             log("exiting pid %s" % pid)
             # exit first parent
-            module.exit_json(msg="daemonized fireball2 on port %s for %s minutes" % (port, minutes))
+            module.exit_json(msg="daemonized accelerate on port %s for %s minutes" % (port, minutes))
     except OSError, e:
         log("fork #1 failed: %d (%s)" % (e.errno, e.strerror))
         sys.exit(1)
@@ -333,7 +332,7 @@ def daemonize(module, password, port, minutes):
         server.serve_forever(poll_interval=1.0)
     except Exception, e:
         tb = traceback.format_exc()
-        log("exception caught, exiting fireball mode: %s\n%s" % (e, tb))
+        log("exception caught, exiting accelerated mode: %s\n%s" % (e, tb))
         sys.exit(0)
 
 def main():
