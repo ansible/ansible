@@ -568,10 +568,10 @@ Role dependencies can also be specified as a full path, just like top level role
     dependencies:
        - { role: '/path/to/common/roles/foo', x: 1 }
 
-Roles dependencies are always executed before the role that includes them, and are recursive.
-
-Role dependencies may be included more than once. Continuing the above example, the 'car' role could 
-add 'wheel' dependencies as follows::
+Roles dependencies are always executed before the role that includes them, and are recursive. By default, 
+roles can also only be added as a dependency once - if another role also lists it as a dependency it will
+not be run again. This behavior can be overridden by adding `allow_duplicates: yes` to the `meta/main.yml` file.
+For example, a role named 'car' could add a role named 'wheel' to its dependencies as follows::
 
     ---
     dependencies:
@@ -580,7 +580,15 @@ add 'wheel' dependencies as follows::
     - { role: wheel, n: 3 }
     - { role: wheel, n: 4 }
 
-If the wheel role required tire and brake in turn, this would result in the following execution order::
+And the `meta/main.yml` for wheel contained the following::
+
+    ---
+    allow_duplicates: yes
+    dependencies:
+    - { role: tire }
+    - { role: brake }
+
+The resulting order of execution would be as follows::
 
     tire(n=1)
     brake(n=1)
