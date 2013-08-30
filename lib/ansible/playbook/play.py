@@ -29,7 +29,7 @@ class Play(object):
 
     __slots__ = [
        'hosts', 'name', 'vars', 'default_vars', 'vars_prompt', 'vars_files',
-       'handlers', 'remote_user', 'remote_port',
+       'handlers', 'remote_user', 'remote_port', 'included_roles',
        'sudo', 'sudo_user', 'transport', 'playbook',
        'tags', 'gather_facts', 'serial', '_ds', '_handlers', '_tasks',
        'basedir', 'any_errors_fatal', 'roles', 'max_fail_pct'
@@ -75,6 +75,7 @@ class Play(object):
         self._update_vars_files_for_host(None)
 
         # now we load the roles into the datastructure
+        self.included_roles = []
         ds = self._load_roles(self.roles, ds)
         
         # and finally re-process the vars files as they may have
@@ -177,6 +178,16 @@ class Play(object):
                     dependencies = data.get('dependencies',[])
                     for dep in dependencies:
                         (dep_path,dep_vars) = self._get_role_path(dep)
+                        meta = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(dep_path, 'meta')))
+                        if os.path.isfile(meta):
+                            meta_data = utils.parse_yaml_from_file(meta)
+                            if meta_data:
+                                allow_dupes = utils.boolean(meta_data.get('allow_duplicates',''))
+                                if not allow_dupes:
+                                    if dep.get('role') in self.included_roles:
+                                        continue
+                                    else:
+                                        self.included_roles.append(dep.get('role'))
                         dep_vars = utils.combine_vars(passed_vars, dep_vars)
                         dep_vars = utils.combine_vars(role_vars, dep_vars)
                         vars = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(dep_path, 'vars')))
