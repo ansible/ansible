@@ -546,6 +546,15 @@ If you want to define certain tasks to happen before AND after roles are applied
    be sure to also tag your pre_tasks and post_tasks and pass those along as well, especially if the pre
    and post tasks are used for monitoring outage window control or load balancing.
 
+Role Default Variables
+``````````````````````
+
+.. versionadded:: 1.3
+
+Role default variables allow you to set default variables for included or dependedent roles (see below). To create
+defaults, simply add a `defaults/main.yml` file in your role directory. These variables will have the lowest priority
+of any variables available, and can be easily overridden by any other variable, including inventory variables.
+
 Role Dependencies
 `````````````````
 
