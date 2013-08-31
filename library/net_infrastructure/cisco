@@ -1,0 +1,60 @@
+# this is a virtual module that is entirely implemented server side
+
+DOCUMENTATION = '''
+---
+module: cisco 
+short_description: Templates a cisco device configuration file and passes it on to cisco transport for execution.
+description:
+    - This module along with the cisco tranport plugin allows users/network_admins to configure
+      cisco devices via ansible, The implementation logic is quite straight forward, users/admins 
+      can create template files for thier usual network configurations and tell the module to execute
+      those configurations in all or certain subset of thier network infrastructure. The template file
+      is parsed by jinja and any variable substituations are carried out. This module has been tested on
+      Cisco IOS as well as NX-OS.   
+    - The cisco transport plugin supports telnet, ssh as means to communicating with the device, It also 
+      supports enabling preveilege mode transition(enable) on the target devices. Transport type can be set
+      at individual device level, so if a device uses telnet instead of ssh, while making the entry in inventory
+      for that host add a host variable similar to the follwing "R1 cisco_tranport=telnet", and plugin would use
+      telnet as the transport.          
+
+options:
+  src:
+    description:
+      - Path of a Jinja2 formatted cisco configuration template on the local server. This can be a relative or absolute path.
+    required: true
+    default: null
+    aliases: []
+  enable:
+    description:
+      - Tells Ansible that while running this task privileged access is required, so ansible switches to elevated acess mode 
+        The password to the "enable" command should be provided in hostvars/group_vars/task_vars.
+    required: false
+    choices: [ "yes", "no" ]
+    default: "no"
+  commit:
+    description:
+      - This would save the configurations changes made to the startup config with the filename specified.
+        This paramter is only applicable for IOS, In nexus you can directly add the command to the template.
+    required: false
+    default: "startup-config"
+
+notes:
+  - While running this module make sure the transport type is cisco in the task or playbook.
+  - If ssh is the cisco_transport make sure ansible.cfg has options compatible with cisco devices. 
+
+requirements: [telnet binary if telnet would be used]
+
+author: "Benno Joy"
+'''
+
+EXAMPLES = '''
+# Apply the configurations in interface.j2 to the network devices
+- cisco: src=/mytemplates/foo.j2 
+
+# Apply the configurations in interface.j2 to the network devices and copy the running config to startup config
+  in the file startup-config
+- cisco: src=/mytemplates/foo.j2 commit=startup-config
+
+# Apply the configurations in interface.j2 to the network devices with elevated access
+- cisco: src=/mytemplates/foo.j2 enable=yes
+'''
