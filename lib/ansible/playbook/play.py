@@ -169,6 +169,10 @@ class Play(object):
                 vars_data = utils.parse_yaml_from_file(vars)
                 if vars_data:
                     role_vars = utils.combine_vars(vars_data, role_vars)
+            defaults = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(role_path, 'defaults')))
+            defs_data = {}
+            if os.path.isfile(defaults):
+                defs_data = utils.parse_yaml_from_file(defaults)
             # the meta directory contains the yaml that should
             # hold the list of dependencies (if any)
             meta = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(role_path, 'meta')))
@@ -196,14 +200,18 @@ class Play(object):
                             vars_data = utils.parse_yaml_from_file(vars)
                             if vars_data:
                                 dep_vars = utils.combine_vars(vars_data, dep_vars)
+                        defaults = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(dep_path, 'defaults')))
+                        dep_defs_data = {}
+                        if os.path.isfile(defaults):
+                            dep_defs_data = utils.parse_yaml_from_file(defaults)
                         if 'role' in dep_vars:
                             del dep_vars['role']
                         self._build_role_dependencies([dep], dep_stack, passed_vars=dep_vars, level=level+1)
-                        dep_stack.append([dep,dep_path,dep_vars])
+                        dep_stack.append([dep,dep_path,dep_vars,dep_defs_data])
             # only add the current role when we're at the top level,
             # otherwise we'll end up in a recursive loop 
             if level == 0:
-                dep_stack.append([role,role_path,role_vars])
+                dep_stack.append([role,role_path,role_vars,defs_data])
         return dep_stack
 
     def _load_role_defaults(self, defaults_files):
@@ -249,7 +257,7 @@ class Play(object):
 
         roles = self._build_role_dependencies(roles, [], self.vars)
 
-        for role,role_path,role_vars in roles:
+        for (role,role_path,role_vars,def_vars) in roles:
             # special vars must be extracted from the dict to the included tasks
             special_keys = [ "sudo", "sudo_user", "when", "with_items" ]
             special_vars = {}
@@ -257,10 +265,10 @@ class Play(object):
                 if k in role_vars:
                     special_vars[k] = role_vars[k]
 
-            task_basepath    = utils.path_dwim(self.basedir, os.path.join(role_path, 'tasks'))
-            handler_basepath = utils.path_dwim(self.basedir, os.path.join(role_path, 'handlers'))
-            vars_basepath    = utils.path_dwim(self.basedir, os.path.join(role_path, 'vars'))
-            defaults_basepath    = utils.path_dwim(self.basedir, os.path.join(role_path, 'defaults'))
+            task_basepath     = utils.path_dwim(self.basedir, os.path.join(role_path, 'tasks'))
+            handler_basepath  = utils.path_dwim(self.basedir, os.path.join(role_path, 'handlers'))
+            vars_basepath     = utils.path_dwim(self.basedir, os.path.join(role_path, 'vars'))
+            defaults_basepath = utils.path_dwim(self.basedir, os.path.join(role_path, 'defaults'))
 
             task      = self._resolve_main(task_basepath)
             handler   = self._resolve_main(handler_basepath)
@@ -272,7 +280,7 @@ class Play(object):
             if not os.path.isfile(task) and not os.path.isfile(handler) and not os.path.isfile(vars_file) and not os.path.isdir(library):
                 raise errors.AnsibleError("found role at %s, but cannot find %s or %s or %s or %s" % (role_path, task, handler, vars_file, library))
             if os.path.isfile(task):
-                nt = dict(include=pipes.quote(task), vars=role_vars)
+                nt = dict(include=pipes.quote(task), vars=role_vars, def_vars=def_vars)
                 for k in special_keys:
                     if k in special_vars:
                         nt[k] = special_vars[k]
@@ -342,7 +350,7 @@ class Play(object):
 
     # *************************************************
 
-    def _load_tasks(self, tasks, vars={}, sudo_vars={}, additional_conditions=[], original_file=None):
+    def _load_tasks(self, tasks, vars={}, def_vars={}, sudo_vars={}, additional_conditions=[], original_file=None):
         ''' handle task and handler include statements '''
 
         results = []
@@ -388,11 +396,12 @@ class Play(object):
                         included_additional_conditions.insert(0, utils.compile_when_to_only_if("%s %s" % (k[5:], x[k])))
                     elif k == 'when':
                         included_additional_conditions.insert(0, utils.compile_when_to_only_if("jinja2_compare %s" % x[k]))
-                    elif k in ("include", "vars", "only_if", "sudo", "sudo_user"):
+                    elif k in ("include", "vars", "def_vars", "only_if", "sudo", "sudo_user"):
                         pass
                     else:
                         raise errors.AnsibleError("parse error: task includes cannot be used with other directives: %s" % k)
 
+                def_vars = utils.combine_vars(self.default_vars, x.get('def_vars', {}))
                 if 'vars' in x:
                     task_vars = utils.combine_vars(task_vars, x['vars'])
                 if 'only_if' in x:
@@ -410,9 +419,9 @@ class Play(object):
                     include_file = template(dirname, tokens[0], mv)
                     include_filename = utils.path_dwim(dirname, include_file)
                     data = utils.parse_yaml_from_file(include_filename)
-                    results += self._load_tasks(data, mv, included_sudo_vars, included_additional_conditions, original_file=include_filename)
+                    results += self._load_tasks(data, mv, def_vars, included_sudo_vars, included_additional_conditions, original_file=include_filename)
             elif type(x) == dict:
-                results.append(Task(self,x,module_vars=task_vars, additional_conditions=additional_conditions))
+                results.append(Task(self,x,module_vars=task_vars,default_vars=def_vars,additional_conditions=additional_conditions))
             else:
                 raise Exception("unexpected task type")
 
