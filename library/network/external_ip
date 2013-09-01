@@ -22,7 +22,7 @@ DOCUMENTATION = '''
 module: external_ip
 short_description: discover a machine's external IP address
 description:
-     - Connects to one of several external web sites that returns the external IP address of the machine. This can be useful when you need to dynamically add the IP address of the local machine to a firewall for example.
+  - Connects to one of several external web sites that returns the external IP address of the machine. This can be useful when you need to dynamically add the IP address of the local machine to a firewall for example.
 options:
   timeout:
     description:
@@ -30,7 +30,7 @@ options:
     required: false
     default: 30
 
-author: Ally Boosh
+author: Boosh
 '''
 
 EXAMPLES = '''
