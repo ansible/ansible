@@ -169,6 +169,12 @@ class Play(object):
                 vars_data = utils.parse_yaml_from_file(vars)
                 if vars_data:
                     role_vars = utils.combine_vars(vars_data, role_vars)
+            defaults = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(role_path, 'defaults')))
+            defs_data = {}
+            if os.path.isfile(defaults):
+                defs_data = utils.parse_yaml_from_file(defaults)
+                if defs_data:
+                    role_vars = utils.combine_vars(role_vars, defs_data)
             # the meta directory contains the yaml that should
             # hold the list of dependencies (if any)
             meta = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(role_path, 'meta')))
@@ -184,10 +190,10 @@ class Play(object):
                             if meta_data:
                                 allow_dupes = utils.boolean(meta_data.get('allow_duplicates',''))
                                 if not allow_dupes:
-                                    if dep.get('role') in self.included_roles:
+                                    if dep in self.included_roles:
                                         continue
                                     else:
-                                        self.included_roles.append(dep.get('role'))
+                                        self.included_roles.append(dep)
                         dep_vars = utils.combine_vars(passed_vars, dep_vars)
                         dep_vars = utils.combine_vars(role_vars, dep_vars)
                         vars = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(dep_path, 'vars')))
@@ -196,6 +202,12 @@ class Play(object):
                             vars_data = utils.parse_yaml_from_file(vars)
                             if vars_data:
                                 dep_vars = utils.combine_vars(vars_data, dep_vars)
+                        defaults = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(dep_path, 'defaults')))
+                        defs_data = {}
+                        if os.path.isfile(defaults):
+                            defs_data = utils.parse_yaml_from_file(defaults)
+                            if defs_data:
+                                dep_vars = utils.combine_vars(dep_vars, defs_data)
                         if 'role' in dep_vars:
                             del dep_vars['role']
                         self._build_role_dependencies([dep], dep_stack, passed_vars=dep_vars, level=level+1)
