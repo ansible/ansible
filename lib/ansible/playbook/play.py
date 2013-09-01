@@ -169,12 +169,6 @@ class Play(object):
                 vars_data = utils.parse_yaml_from_file(vars)
                 if vars_data:
                     role_vars = utils.combine_vars(vars_data, role_vars)
-            defaults = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(role_path, 'defaults')))
-            defs_data = {}
-            if os.path.isfile(defaults):
-                defs_data = utils.parse_yaml_from_file(defaults)
-                if defs_data:
-                    role_vars = utils.combine_vars(defs_data, role_vars)
             # the meta directory contains the yaml that should
             # hold the list of dependencies (if any)
             meta = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(role_path, 'meta')))
@@ -202,12 +196,6 @@ class Play(object):
                             vars_data = utils.parse_yaml_from_file(vars)
                             if vars_data:
                                 dep_vars = utils.combine_vars(vars_data, dep_vars)
-                        defaults = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(dep_path, 'defaults')))
-                        defs_data = {}
-                        if os.path.isfile(defaults):
-                            defs_data = utils.parse_yaml_from_file(defaults)
-                            if defs_data:
-                                dep_vars = utils.combine_vars(defs_data, dep_vars)
                         if 'role' in dep_vars:
                             del dep_vars['role']
                         self._build_role_dependencies([dep], dep_stack, passed_vars=dep_vars, level=level+1)
