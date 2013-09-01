@@ -20,6 +20,7 @@
 import fnmatch
 import os
 import re
+import sys
 
 import subprocess
 import ansible.constants as C
@@ -238,6 +239,8 @@ class Inventory(object):
     def implicit_localhost(self):
         if self._implicit_localhost is None:
             self._implicit_localhost = Host(name='localhost')
+            self._implicit_localhost.set_variable('ansible_connection', 'local')
+            self._implicit_localhost.set_variable('ansible_python_interpreter', sys.executable)
         return self._implicit_localhost
 
     def _host_match(self, host_name, pattern):
