@@ -31,6 +31,8 @@ from ansible.inventory.host import Host
 from ansible import errors
 from ansible import utils
 
+LOCALHOST_ALIASES = ('localhost', '127.0.0.1')
+
 class Inventory(object):
     """
     Host inventory for ansible.
@@ -109,11 +111,11 @@ class Inventory(object):
         self._vars_plugins = [ x for x in utils.plugins.vars_loader.all(self) ]
 
 
-    def _match(self, str, pattern_str):
+    def _match(self, strs, pattern_str):
         if pattern_str.startswith('~'):
-            return re.search(pattern_str[1:], str)
+            return any(re.search(pattern_str[1:], str) for str in strs)
         else:
-            return fnmatch.fnmatch(str, pattern_str)
+            return any(fnmatch.fnmatch(str, pattern_str) for str in strs)
 
     def get_hosts(self, pattern="all"):
         """ 
@@ -230,6 +232,12 @@ class Inventory(object):
         enumerated = [ h for (i,h) in enumerated if i>=left and i<=right ]
         return enumerated
 
+    def _host_match(self, host_name, pattern):
+        if host_name in LOCALHOST_ALIASES:
+            return self._match(LOCALHOST_ALIASES, pattern)
+        else:
+            return self._match([host_name], pattern)
+
     # TODO: cache this logic so if called a second time the result is not recalculated
     def _hosts_in_unenumerated_pattern(self, pattern):
         """ Get all host names matching the pattern """
@@ -241,7 +249,7 @@ class Inventory(object):
         groups = self.get_groups()
         for group in groups:
             for host in group.get_hosts():
-                if pattern == 'all' or self._match(group.name, pattern) or self._match(host.name, pattern):
+                if pattern == 'all' or self._host_match(group.name, pattern) or self._host_match(host.name, pattern):
                     hosts[host.name] = host
         return sorted(hosts.values(), key=lambda x: x.name)
 
@@ -276,16 +284,16 @@ class Inventory(object):
         return self._hosts_cache[hostname]
 
     def _get_host(self, hostname):
-        if hostname in ['localhost','127.0.0.1']:
-            for host in self.get_group('all').get_hosts():
-                if host.name in ['localhost', '127.0.0.1']:
-                    return host
+        if hostname in LOCALHOST_ALIASES:
+            return self.__get_host(LOCALHOST_ALIASES) or self.implicit_localhost()
         else:
-            for group in self.groups:
-                for host in group.get_hosts():
-                    if hostname == host.name:
-                        return host
-        return None
+            return self.__get_host([hostname])
+
+    def __get_host(self, hostnames):
+        for group in self.groups:
+            for host in group.get_hosts():
+                if host.name in hostnames:
+                    return host
 
     def get_group(self, groupname):
         for group in self.groups:
