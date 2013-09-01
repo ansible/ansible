@@ -462,7 +462,7 @@ def main():
         (backuph, backup_file) = tempfile.mkstemp(prefix='crontab')
         crontab.write(backup_file)
 
-    if crontab.cron_file and not do_install:
+    if crontab.cron_file and not do_install and not name:
         crontab.remove_job_file()
         changed = True
         module.exit_json(changed=changed,cron_file=cron_file,state=state)
