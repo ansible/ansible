@@ -167,13 +167,8 @@ class CronTab(object):
         # select whether we dump additional debug info through syslog
         self.syslogging = False
 
-        # some cron file outside /etc/cron.d/ , like /etc/crontab
-        specific_cron_files = [ '/etc/crontab' ]
         if cron_file:
-            if cron_file in specific_cron_files:
-                self.cron_file = cron_file
-            else:
-                self.cron_file = '/etc/cron.d/%s' % cron_file
+            self.cron_file = '/etc/cron.d/%s' % cron_file
         else:
             self.cron_file = None
 
