@@ -40,7 +40,7 @@ class Inventory(object):
 
     __slots__ = [ 'host_list', 'groups', '_restriction', '_also_restriction', '_subset', 
                   'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache', '_groups_list',
-                  '_vars_plugins', '_playbook_basedir']
+                  '_vars_plugins', '_playbook_basedir', '_implicit_localhost']
 
     def __init__(self, host_list=C.DEFAULT_HOST_LIST):
 
@@ -66,6 +66,9 @@ class Inventory(object):
         self._restriction = None
         self._also_restriction = None
         self._subset = None
+
+        # to avoid having localhost explicitly in inventory (see #3129)
+        self._implicit_localhost = None
 
         if isinstance(host_list, basestring):
             if "," in host_list:
@@ -117,7 +120,7 @@ class Inventory(object):
         else:
             return any(fnmatch.fnmatch(str, pattern_str) for str in strs)
 
-    def get_hosts(self, pattern="all"):
+    def get_hosts(self, pattern='all', full=False):
         """ 
         find all host names matching a pattern string, taking into account any inventory restrictions or
         applied subsets.
@@ -127,11 +130,11 @@ class Inventory(object):
         if isinstance(pattern, list):
             pattern = ';'.join(pattern)
         patterns = pattern.replace(";",":").split(":")
-        hosts = self._get_hosts(patterns)
+        hosts = self._get_hosts(patterns, full)
 
         # exclude hosts not in a subset, if defined
         if self._subset:
-            subset = self._get_hosts(self._subset)
+            subset = self._get_hosts(self._subset, full)
             hosts.intersection_update(subset)
 
         # exclude hosts mentioned in any restriction (ex: failed hosts)
@@ -142,7 +145,7 @@ class Inventory(object):
 
         return sorted(hosts, key=lambda x: x.name)
 
-    def _get_hosts(self, patterns):
+    def _get_hosts(self, patterns, full=False):
         """
         finds hosts that match a list of patterns. Handles negative
         matches as well as intersection matches.
@@ -173,23 +176,23 @@ class Inventory(object):
         for p in patterns:
             if p.startswith("!"):
                 # Discard excluded hosts
-                hosts.difference_update(self.__get_hosts(p))
+                hosts.difference_update(self.__get_hosts(p, full))
             elif p.startswith("&"):
                 # Only leave the intersected hosts
-                hosts.intersection_update(self.__get_hosts(p))
+                hosts.intersection_update(self.__get_hosts(p, full))
             else:
                 # Get all hosts from both patterns
-                hosts.update(self.__get_hosts(p))
+                hosts.update(self.__get_hosts(p, full))
         return hosts
 
-    def __get_hosts(self, pattern):
+    def __get_hosts(self, pattern, full=False):
         """ 
         finds hosts that postively match a particular pattern.  Does not
         take into account negative matches.
         """
 
         (name, enumeration_details) = self._enumeration_info(pattern)
-        hpat = self._hosts_in_unenumerated_pattern(name)
+        hpat = self._hosts_in_unenumerated_pattern(name, full)
         hpat = sorted(hpat, key=lambda x: x.name)
 
         return set(self._apply_ranges(pattern, hpat))
@@ -232,6 +235,11 @@ class Inventory(object):
         enumerated = [ h for (i,h) in enumerated if i>=left and i<=right ]
         return enumerated
 
+    def implicit_localhost(self):
+        if self._implicit_localhost is None:
+            self._implicit_localhost = Host(name='localhost')
+        return self._implicit_localhost
+
     def _host_match(self, host_name, pattern):
         if host_name in LOCALHOST_ALIASES:
             return self._match(LOCALHOST_ALIASES, pattern)
@@ -239,7 +247,7 @@ class Inventory(object):
             return self._match([host_name], pattern)
 
     # TODO: cache this logic so if called a second time the result is not recalculated
-    def _hosts_in_unenumerated_pattern(self, pattern):
+    def _hosts_in_unenumerated_pattern(self, pattern, full=False):
         """ Get all host names matching the pattern """
 
         hosts = {}
@@ -251,6 +259,12 @@ class Inventory(object):
             for host in group.get_hosts():
                 if pattern == 'all' or self._host_match(group.name, pattern) or self._host_match(host.name, pattern):
                     hosts[host.name] = host
+
+        if pattern in LOCALHOST_ALIASES and not hosts:
+            hosts['localhost'] = self.implicit_localhost()
+        elif pattern == 'all' and full and 'localhost' not in hosts:
+            hosts['localhost'] = self.implicit_localhost()
+
         return sorted(hosts.values(), key=lambda x: x.name)
 
     def groups_for_host(self, host):
@@ -338,8 +352,8 @@ class Inventory(object):
         self.groups.append(group)
         self._groups_list = None  # invalidate internal cache 
 
-    def list_hosts(self, pattern="all"):
-        return [ h.name for h in self.get_hosts(pattern) ]
+    def list_hosts(self, pattern='all', full=False):
+        return [ h.name for h in self.get_hosts(pattern, full) ]
 
     def list_groups(self):
         return sorted([ g.name for g in self.groups ], key=lambda x: x)
