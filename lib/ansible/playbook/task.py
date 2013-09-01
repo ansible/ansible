@@ -41,7 +41,7 @@ class Task(object):
          'any_errors_fatal', 'changed_when', 'always_run'
     ]
 
-    def __init__(self, play, ds, module_vars=None, additional_conditions=None):
+    def __init__(self, play, ds, module_vars=None, default_vars=None, additional_conditions=None):
         ''' constructor loads from a task or handler datastructure '''
 
         # meta directives are used to tell things like ansible/playbook to run
@@ -101,8 +101,8 @@ class Task(object):
                 raise errors.AnsibleError("%s is not a legal parameter in an Ansible task or handler" % x)
 
         self.module_vars  = module_vars
+        self.default_vars = default_vars
         self.play         = play
-        self.default_vars = play.default_vars
 
         # load various attributes
         self.name         = ds.get('name', None)
