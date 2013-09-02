@@ -305,7 +305,7 @@ def main():
         module.fail_json(rc=256, msg='Destination %s is a directory !' % dest)
 
     if params['state'] == 'present':
-        if 'line' not in params:
+        if params.get('line') is None:
             module.fail_json(msg='line= is required with state=present')
 
         # Deal with the insertafter default value manually, to avoid errors
