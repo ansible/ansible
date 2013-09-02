@@ -72,7 +72,10 @@ class InventoryScript(object):
                     self.host_vars_from_top = data['hostvars']
                     continue
 
-            group = groups[group_name] = Group(group_name)
+            if group_name != all.name:
+                group = groups[group_name] = Group(group_name)
+            else:
+                group = all
             host = None
 
             if not isinstance(data, dict):
