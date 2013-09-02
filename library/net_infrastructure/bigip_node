@@ -76,11 +76,17 @@ options:
         choices: []
     host:
         description:
-            - "Node IP. Required when state=present. Ignored when state=present."
+            - "Node IP. Required when state=present. Ignored when state=absent."
         required: true
         default: null
         choices: []
         aliases: ['address']
+    description:
+        description:
+            - "Optional node description."
+        required: false
+        default: null
+        choices: []
 '''
 
 EXAMPLES = '''
@@ -123,7 +129,19 @@ def node_exists(api, address):
     return result
 
 def create_node_address(api, address, name):
-    api.LocalLB.NodeAddressV2.create(nodes=[name], addresses=[address], limits=[0])
+    try:
+        api.LocalLB.NodeAddressV2.create(nodes=[name], addresses=[address], limits=[0])
+        return True, ""
+    except bigsuds.OperationFailed, e:
+        if "invalid node address" in str(e) and "already exists" in str(e):
+            return (False, "The referenced IP address is already in use.")
+        else:
+            # genuine exception
+            raise
+
+
+def get_node_address(api, name):
+    return api.LocalLB.NodeAddressV2.get_address(nodes=[name])[0]
 
 def delete_node_address(api, address):
     result = False
@@ -138,6 +156,14 @@ def delete_node_address(api, address):
             raise
     return result
 
+def set_node_description(api, name, description):
+    api.LocalLB.NodeAddressV2.set_description(nodes=[name],
+                                                  descriptions=[description])
+
+
+def get_node_description(api, name):
+    return api.LocalLB.NodeAddressV2.get_description(nodes=[name])[0]
+
 def main():
 
     module = AnsibleModule(
@@ -149,6 +175,7 @@ def main():
             partition = dict(type='str', default='Common'),
             name = dict(type='str', required=True),
             host = dict(type='str', aliases=['address', 'ip']),
+            description = dict(type='str', default='')
         ),
         supports_check_mode=True
     )
@@ -164,6 +191,7 @@ def main():
     host = module.params['host']
     name = module.params['name']
     address = "/%s/%s" % (partition, name)
+    description = module.params['description']
 
     # sanity check user supplied values
 
@@ -189,14 +217,24 @@ def main():
             if not node_exists(api, address):
                 if not module.check_mode:
                     if not node_exists(api, address):
-                        create_node_address(api, address=host, name=address)
+                        res, desc = create_node_address(api, address=host, name=address)
+                        if not res:
+                            module.fail_json(msg=desc)
                 result = {'changed': True}
             else:
                 # node exists -- potentially modify attributes
                 if host is not None:
+                    current_address = get_node_address(api, address)
+                    if current_address != host:
+                        module.fail_json(msg="""Changing the node address is not
+                                         supported by the API, delete and
+                                         recreate the node.""")
 
-
-                pass
+                    current_descrip = get_node_description(api, address)
+                    if current_descrip != description:
+                        if not module.check_mode:
+                            set_node_description(api, address, description)
+                        result = {'changed': True}
 
     except Exception, e:
         traceback.print_exc(file=sys.stdout)
