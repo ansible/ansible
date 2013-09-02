@@ -94,16 +94,45 @@ options:
         aliases: []
     send:
         description:
+            - The send string for the monitor call
         required: true
         default: null
         choices: []
         aliases: []
     receive:
         description:
+            - The receive string for the monitor call
         required: true
         default: null
         choices: []
         aliases: []
+    ip:
+        description: 
+            - IP address part of the ipport definition
+        required: false
+        default: '0.0.0.0'
+    port:
+        description: 
+            - port address part op the ipport definition
+        required: false
+        default: 0
+    interval:
+        description: 
+            - The interval specifying how frequently the monitor instance
+              of this template will run. By default, this interval is used for up and
+              down states
+        required: false
+        default: 5
+    timeout:
+        description:
+            - The number of seconds in which the node or service must respond to
+              the monitor request. If the target responds within the set time
+              period, it is considered up. If the target does not respond within
+              the set time period, it is considered down. You can change this
+              number to any number you want, however, it should be 3 times the
+              interval number of seconds plus 1 second.
+        required: true
+        default: 16
 '''
 
 EXAMPLES = '''
@@ -184,6 +213,32 @@ def set_string_property(api, monitor, str_property):
     api.LocalLB.Monitor.set_template_string_property(template_names=[monitor], values=[str_property])
 
 
+def check_integer_property(api, monitor, int_property):
+
+    return int_property == api.LocalLB.Monitor.get_template_integer_property([monitor], [int_property['type']])[0]
+
+
+def set_integer_property(api, monitor, int_property):
+
+    api.LocalLB.Monitor.set_template_int_property(template_names=[monitor], values=[int_property])
+
+def check_ipport(api, monitor, ipport):
+
+    return [ipport] == api.LocalLB.Monitor.get_template_destination(template_names=[monitor])
+
+def set_ipport(api, monitor, ipport):
+
+    try:
+        api.LocalLB.Monitor.set_template_destination(template_names=[monitor], destinations=[ipport])
+        return True, ""
+
+    except bigsuds.OperationFailed, e:
+        if "Cannot modify the address type of monitor" in str(e):
+            return False, "Cannot modify the address type of monitor if already assigned to a pool."
+        else:
+            # genuine exception
+            raise
+
 # ===========================================
 # main loop
 #
@@ -204,7 +259,11 @@ def main():
             parent    = dict(default=DEFAULT_PARENT_TYPE),
             parent_partition = dict(default='Common'),
             send      = dict(required=True),
-            receive   = dict(required=True)
+            receive   = dict(required=True),
+            ip        = dict(required=False, default='0.0.0.0'),
+            port      = dict(required=False, type='int', default=0),
+            interval  = dict(required=False, type='int', default=5),
+            timeout   = dict(required=False, type='int', default=16)
         ),
         supports_check_mode=True
     )
@@ -223,10 +282,23 @@ def main():
     monitor = "/%s/%s" % (partition, name)
     send = module.params['send']
     receive = module.params['receive']
+    ip = module.params['ip']
+    port = module.params['port']
+    interval = module.params['interval']
+    timeout = module.params['timeout']
+
+
+    if ip == '0.0.0.0' and port == 0:
+        address_type = 'ATYPE_STAR_ADDRESS_STAR_PORT'
+    elif ip == '0.0.0.0' and port != 0:
+        address_type = 'ATYPE_STAR_ADDRESS_EXPLICIT_PORT'
+    elif ip != '0.0.0.0' and port != 0:
+        address_type = 'ATYPE_EXPLICIT_ADDRESS_EXPLICIT_PORT'
+    else:
+        address_type = 'ATYPE_UNSET'
 
 
     # main logic 
-
 
     try:
         api = bigip_api(server, user, password)
@@ -239,13 +311,14 @@ def main():
                 result['changed'] = True
 
         else:
+            ipport = {'address_type': address_type,
+                      'ipport': {'address': ip,
+                                 'port': port}}
+
             template_attributes = {'parent_template': parent,
-                                   'dest_ipport': {'address_type': 'ATYPE_STAR_ADDRESS_STAR_PORT',
-                                                   'ipport': {'address': '0.0.0.0', 
-                                                              'port': 0}
-                                                  },
-                                   'interval': 5,
-                                   'timeout': 16,
+                                   'dest_ipport': ipport,
+                                   'interval': interval,
+                                   'timeout': timeout,
                                    'is_read_only': False,
                                    'is_directly_usable': True
                                   }
@@ -253,12 +326,28 @@ def main():
                                            'value': send},
                                           {'type': 'STYPE_RECEIVE',
                                            'value': receive}]
+            template_integer_properties = [{'type': 'ITYPE_INTERVAL',
+                                             'value': interval},
+                                            {'type': 'ITYPE_TIMEOUT',
+                                             'value': timeout}]
             if monitor_exists(module, api, monitor, parent):
                 for str_property in template_string_properties:
                     if not check_string_property(api, monitor, str_property):
                         if not module.check_mode:
                             set_string_property(api, monitor, str_property)
                         result['changed'] = True
+                for int_property in template_integer_properties:
+                    if not check_integer_property(api, monitor, int_property):
+                        if not module.check_mode:
+                            set_integer_property(api, monitor, int_property)
+                        result['changed'] = True
+                if not check_ipport(api, monitor, ipport):
+                    if not module.check_mode:
+                        res, msg = set_ipport(api, monitor, ipport)
+                        if not res:
+                            module.fail_json(msg=msg)
+                    result['changed'] = True
+
             elif not module.check_mode:
                 create_monitor(api, monitor, template_attributes)
                 for str_property in template_string_properties:
