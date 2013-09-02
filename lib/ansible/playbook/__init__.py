@@ -291,7 +291,7 @@ class PlayBook(object):
     def _list_available_hosts(self, *args):
         ''' returns a list of hosts that haven't failed and aren't dark '''
 
-        return [ h for h in self.inventory.list_hosts(*args) if (h not in self.stats.failures) and (h not in self.stats.dark)]
+        return [ h for h in self.inventory.list_hosts(*args, full=True) if (h not in self.stats.failures) and (h not in self.stats.dark)]
 
     # *****************************************************
 

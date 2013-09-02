@@ -16,6 +16,7 @@ class TestInventory(unittest.TestCase):
         self.complex_inventory_file     = os.path.join(self.test_dir, 'complex_hosts')
         self.inventory_script           = os.path.join(self.test_dir, 'inventory_api.py')
         self.inventory_dir              = os.path.join(self.test_dir, 'inventory_dir')
+        self.inventory_with_localhost   = os.path.join(self.test_dir, 'ansible_hosts')
 
         os.chmod(self.inventory_script, 0755)
 
@@ -44,6 +45,9 @@ class TestInventory(unittest.TestCase):
 
     def dir_inventory(self):
         return Inventory(self.inventory_dir)
+
+    def localhost_inventory(self):
+        return Inventory(self.inventory_with_localhost)
 
     all_simple_hosts=['jupiter', 'saturn', 'zeus', 'hera',
             'cerberus001','cerberus002','cerberus003',
@@ -102,6 +106,56 @@ class TestInventory(unittest.TestCase):
                         'cottus99','cottus100',
                         'thor', 'odin', 'loki']
         assert sorted(hosts) == sorted(expected_hosts)
+
+    def test_explicit_localhost(self):
+        inventory = self.localhost_inventory()
+        hosts = inventory.list_hosts("localhost")
+
+        self.assertEqual(hosts, ['localhost'])
+
+    def test_explicit_localhost_all(self):
+        inventory = self.localhost_inventory()
+        hosts = inventory.list_hosts("all")
+
+        self.assertEqual(hosts, ['localhost'])
+
+    def test_implicit_localhost(self):
+        inventory = self.simple_inventory()
+        hosts = inventory.list_hosts("localhost")
+
+        self.assertEqual(hosts, ['localhost'])
+
+    def test_implicit_localhost_instance(self):
+        inventory = self.simple_inventory()
+        host1 = inventory.get_hosts("localhost")[0]
+        host2 = inventory.get_hosts("localhost")[0]
+
+        assert host1 is host2
+
+    def test_implicit_localhost_all(self):
+        inventory = self.simple_inventory()
+        hosts = inventory.list_hosts("all")
+
+        assert 'localhost' not in hosts
+
+    def test_implicit_localhost_full(self):
+        inventory = self.simple_inventory()
+        # used in PlayBook._list_available_hosts
+        hosts = inventory.list_hosts("all", full=True)
+
+        assert 'localhost' in hosts
+
+    def test_implicit_localhost_ungrouped(self):
+        inventory = self.simple_inventory()
+        hosts = inventory.list_hosts("ungrouped")
+
+        assert 'localhost' not in hosts
+
+    def test_implicit_localhost_ungrouped_full(self):
+        inventory = self.simple_inventory()
+        hosts = inventory.list_hosts("ungrouped")
+
+        assert 'localhost' not in hosts
 
     def test_simple_restrict(self):
         inventory = self.simple_inventory()
