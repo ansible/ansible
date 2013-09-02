@@ -349,12 +349,12 @@ def main():
         elif 'EC2_ACCESS_KEY' in os.environ:
             aws_access_key = os.environ['EC2_ACCESS_KEY']
 
-    if not aws_region:
+    if not region:
         module.fail_json(msg = str("region not specified and unable to determine region from EC2_REGION."))
 
     # connect to the rds endpoint
     try:
-        conn = boto.rds.connect_to_region(aws_region, aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key)
+        conn = boto.rds.connect_to_region(region, aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key)
     except boto.exception.BotoServerError, e:
         module.fail_json(msg = e.error_message)
 
