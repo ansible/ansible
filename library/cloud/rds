@@ -438,7 +438,10 @@ def main():
         params["iops"] = iops
 
     if security_groups:
-        params["security_groups"] = security_groups.split(',')
+        if subnet:
+            params["vpc_security_groups"] = security_groups.split(',')
+        else:
+            params["security_groups"] = security_groups.split(',')
 
     try: 
         if command == 'create':
