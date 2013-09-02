@@ -285,7 +285,7 @@ Example::
 
 As of Ansible 1.2, you can also pass in extra vars as quoted JSON, like so::
 
-    --extra-vars "{'pacman':'mrs','ghosts':['inky','pinky','clyde','sue']}"
+    --extra-vars '{"pacman":"mrs","ghosts":["inky","pinky","clyde","sue"]}'
 
 The key=value form is obviously simpler, but it's there if you need it!
 
