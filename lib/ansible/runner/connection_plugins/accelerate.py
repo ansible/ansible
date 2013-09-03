@@ -74,7 +74,7 @@ class Connection(object):
         try:
             if not self.is_connected:
                 # TODO: make the timeout and retries configurable?
-                tries = 10
+                tries = 3
                 self.conn = socket.socket()
                 self.conn.settimeout(30.0)
                 while tries > 0:
@@ -91,6 +91,8 @@ class Connection(object):
             if allow_ssh:
                 vvv("Falling back to ssh to startup accelerated mode")
                 res = self._execute_fb_module()
+                if not res.is_successful():
+                    raise errors.AnsibleError("Failed to launch the accelerated daemon on %s (reason: %s)" % (self.host,res.result.get('msg')))
                 return self.connect(allow_ssh=False)
             else:
                 raise errors.AnsibleError("Failed to connect to %s:%s" % (self.host,self.fbport))
