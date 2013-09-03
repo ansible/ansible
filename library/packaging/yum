@@ -34,18 +34,18 @@ description:
 options:
   name:
     description:
-      - package name, or package specifier with version, like C(name-1.0).
+      - "Package name, or package specifier with version, like C(name-1.0). When using state=latest, this can be '*' which means run: yum -y update. You can also pass a url or a local path to a rpm file."
     required: true
     default: null
     aliases: []
   list:
     description:
-      - various non-idempotent commands for usage with C(/usr/bin/ansible) and I(not) playbooks. See examples.
+      - Various non-idempotent commands for usage with C(/usr/bin/ansible) and I(not) playbooks. See examples.
     required: false
     default: null
   state:
     description:
-      - whether to install (C(present), C(latest)), or remove (C(absent)) a package.
+      - Whether to install (C(present), C(latest)), or remove (C(absent)) a package.
     required: false
     choices: [ "present", "latest", "absent" ]
     default: "present"
@@ -96,6 +96,9 @@ EXAMPLES = '''
 - yum: name=httpd state=latest
 - yum: name=httpd state=removed
 - yum: name=httpd enablerepo=testing state=installed
+- yum: name=* state=latest
+- yum: name=http://nginx.org/packages/centos/6/noarch/RPMS/nginx-release-centos-6-0.el6.ngx.noarch.rpm state=present
+- yum: name=/usr/local/src/nginx-release-centos-6-0.el6.ngx.noarch.rpm state=present
 '''
 
 def_qf = "%{name}-%{version}-%{release}.%{arch}"
@@ -130,7 +133,7 @@ def po_to_nevra(po):
     else:
         return '%s-%s-%s.%s' % (po.name, po.version, po.release, po.arch)
 
-def is_installed(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=[], dis_repos=[]):
+def is_installed(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=[], dis_repos=[], is_pkg=False):
 
     if not repoq:
 
@@ -155,8 +158,12 @@ def is_installed(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=[], dis_
 
         cmd = repoq + ["--disablerepo=*", "--pkgnarrow=installed", "--qf", qf, pkgspec]
         rc,out,err = module.run_command(cmd)
-        cmd = repoq + ["--disablerepo=*", "--pkgnarrow=installed", "--qf", qf, "--whatprovides", pkgspec]
-        rc2,out2,err2 = module.run_command(cmd)
+        if not is_pkg:
+            cmd = repoq + ["--disablerepo=*", "--pkgnarrow=installed", "--qf", qf, "--whatprovides", pkgspec]
+            rc2,out2,err2 = module.run_command(cmd)
+        else:
+            rc2,out2,err2 = (0, '', '')
+            
         if rc == 0 and rc2 == 0:
             out += out2
             return [ p for p in out.split('\n') if p.strip() ]
@@ -406,6 +413,15 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
 
         # range requires or file-requires or pkgname :(
         else:
+            # most common case is the pkg is already installed and done
+            # short circuit all the bs - and search for it as a pkg in is_installed
+            # if you find it then we're done
+            if not set(['*','?']).intersection(set(spec)):
+                pkgs = is_installed(module, repoq, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos, is_pkg=True)
+                if pkgs:
+                    res['results'].append('%s providing %s is already installed' % (pkgs[0], spec))
+                    continue
+            
             # look up what pkgs provide this
             pkglist = what_provides(module, repoq, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos)
             if not pkglist:
@@ -417,7 +433,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
 
             found = False
             for this in pkglist:
-                if is_installed(module, repoq, this, conf_file, en_repos=en_repos, dis_repos=dis_repos):
+                if is_installed(module, repoq, this, conf_file, en_repos=en_repos, dis_repos=dis_repos, is_pkg=True):
                     found = True
                     res['results'].append('%s providing %s is already installed' % (this, spec))
                     break
@@ -531,9 +547,20 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
 
         pkg = None
         basecmd = 'update'
+        cmd = ''
         # groups, again
         if spec.startswith('@'):
             pkg = spec
+        
+        elif spec == '*': #update all
+            # use check-update to see if there is any need
+            rc,out,err = module.run_command(yum_basecmd + ['check-update'])
+            if rc == 100:
+                cmd = yum_basecmd + [basecmd]
+            else:
+                res['results'].append('All packages up to date')
+                continue
+        
         # dep/pkgname  - find it
         else:
             if is_installed(module, repoq, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos):
@@ -561,8 +588,8 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
                 continue
 
             pkg = spec
-
-        cmd = yum_basecmd + [basecmd, pkg]
+        if not cmd:
+            cmd = yum_basecmd + [basecmd, pkg]
 
         if module.check_mode:
             return module.exit_json(changed=True)
@@ -623,11 +650,16 @@ def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo,
             for r in dis_repos:
                 my.repos.disableRepo(r)
 
+            current_repos = my.repos.repos.keys()
             for r in en_repos:
                 try:
                     my.repos.enableRepo(r)
-                    rid = my.repos.getRepo(r)
-                    a = rid.repoXML.repoid
+                    new_repos = my.repos.repos.keys()
+                    for i in new_repos:
+                        if not i in current_repos:
+                            rid = my.repos.getRepo(i)
+                            a = rid.repoXML.repoid
+                    current_repos = new_repos
                 except yum.Errors.YumBaseError, e:
                     module.fail_json(msg="Error setting/accessing repo %s: %s" % (r, e))
         except yum.Errors.YumBaseError, e:

@@ -124,6 +124,7 @@ class Facts(object):
     PKG_MGRS = [ { 'path' : '/usr/bin/yum',         'name' : 'yum' },
                  { 'path' : '/usr/bin/apt-get',     'name' : 'apt' },
                  { 'path' : '/usr/bin/zypper',      'name' : 'zypper' },
+                 { 'path' : '/usr/sbin/urpmi',      'name' : 'urpmi' },
                  { 'path' : '/usr/bin/pacman',      'name' : 'pacman' },
                  { 'path' : '/bin/opkg',            'name' : 'opkg' },
                  { 'path' : '/opt/local/bin/pkgin', 'name' : 'pkgin' },
@@ -518,7 +519,9 @@ class LinuxHardware(Hardware):
     def get_cpu_facts(self):
         i = 0
         physid = 0
+        coreid = 0
         sockets = {}
+        cores = {}
         if not os.access("/proc/cpuinfo", os.R_OK):
             return
         self.facts['processor'] = []
@@ -536,14 +539,20 @@ class LinuxHardware(Hardware):
                 physid = data[1].strip()
                 if physid not in sockets:
                     sockets[physid] = 1
+            elif key == 'core id':
+                coreid = data[1].strip()
+                if coreid not in sockets:
+                    cores[coreid] = 1
             elif key == 'cpu cores':
                 sockets[physid] = int(data[1].strip())
-        if len(sockets) > 0:
-            self.facts['processor_count'] = len(sockets)
-            self.facts['processor_cores'] = reduce(lambda x, y: x + y, sockets.values())
-        else:
-            self.facts['processor_count'] = i
-            self.facts['processor_cores'] = 'NA'
+            elif key == 'siblings':
+                cores[coreid] = int(data[1].strip())
+        self.facts['processor_count'] = sockets and len(sockets) or i
+        self.facts['processor_cores'] = sockets.values() and sockets.values()[0] or 1
+        self.facts['processor_threads_per_core'] = ((cores.values() and
+            cores.values()[0] or 1) / self.facts['processor_cores'])
+        self.facts['processor_vcpus'] = (self.facts['processor_threads_per_core'] *
+            self.facts['processor_count'] * self.facts['processor_cores'])
 
     def get_dmi_facts(self):
         ''' learn dmi facts from system
@@ -618,15 +627,23 @@ class LinuxHardware(Hardware):
             if line.startswith('/'):
                 fields = line.rstrip('\n').split()
                 if(fields[2] != 'none'):
-                    statvfs_result = os.statvfs(fields[1])
+                    size_total = None
+                    size_available = None
+                    try:
+                        statvfs_result = os.statvfs(fields[1])
+                        size_total = statvfs_result.f_bsize * statvfs_result.f_blocks
+                        size_available = statvfs_result.f_bsize * (statvfs_result.f_bavail)
+                    except OSError, e:
+                        continue
+
                     self.facts['mounts'].append(
                         {'mount': fields[1],
                          'device':fields[0],
                          'fstype': fields[2],
                          'options': fields[3],
                          # statvfs data
-                         'size_total': statvfs_result.f_bsize * statvfs_result.f_blocks,
-                         'size_available': statvfs_result.f_bsize * (statvfs_result.f_bavail),
+                         'size_total': size_total,
+                         'size_available': size_available,
                          })
 
     def get_device_facts(self):
@@ -1131,7 +1148,9 @@ class HPUX(Hardware):
     - model
     - firmware
     """
+
     platform = 'HP-UX'
+
     def __init__(self):
         Hardware.__init__(self)
 
@@ -1179,7 +1198,7 @@ class HPUX(Hardware):
                     rc, out, err = module.run_command("/usr/contrib/bin/machinfo |grep Intel |cut -d' ' -f4-")
                     self.facts['processor'] = out.strip()
                 else:
-                    rc, out, err = module.run_command("/usr/contrib/bin/machinfo |egrep 'socket[s]?$' | tail -1");
+                    rc, out, err = module.run_command("/usr/contrib/bin/machinfo |egrep 'socket[s]?$' | tail -1")
                     self.facts['processor_count'] = int(out.strip().split(" ")[0])
                     rc, out, err = module.run_command("/usr/contrib/bin/machinfo |grep -e '[0-9] core' |tail -1")
                     self.facts['processor_cores'] = int(out.strip().split(" ")[0])
@@ -1515,13 +1534,13 @@ class GenericBsdIfconfigNetwork(Network):
     def get_default_interfaces(self, route_path):
 
         # Use the commands:
-        #     route -n get 8.8.8.8                     -> Google public DNS
-        #     route -n get 2404:6800:400a:800::1012    -> ipv6.google.com
+        #     route -n get 8.8.8.8                            -> Google public DNS
+        #     route -n get -inet6 2404:6800:400a:800::1012    -> ipv6.google.com
         # to find out the default outgoing interface, address, and gateway
 
         command = dict(
             v4 = [route_path, '-n', 'get', '8.8.8.8'],
-            v6 = [route_path, '-n', 'get', '2404:6800:400a:800::1012']
+            v6 = [route_path, '-n', 'get', '-inet6', '2404:6800:400a:800::1012']
         )
 
         interface = dict(v4 = {}, v6 = {})
@@ -1538,9 +1557,12 @@ class GenericBsdIfconfigNetwork(Network):
             lines = out.split('\n')
             for line in lines:
                 words = line.split()
-                # look for first word starting interface
-                if len(words) > 0 and words[0] == 'interface:':
-                    interface[v]['interface'] = words[1]
+                # Collect output from route command
+                if len(words) > 0:
+                    if words[0] == 'interface:':
+                        interface[v]['interface'] = words[1]
+                    if words[0] == 'gateway:':
+                        interface[v]['gateway'] = words[1]
 
         return interface['v4'], interface['v6']
 

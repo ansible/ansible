@@ -7,7 +7,6 @@ You can find some example playbooks illustrating these best practices in our `an
 
 .. contents::
    :depth: 2
-   :backlinks: top
 
 Content Organization
 ++++++++++++++++++++++
@@ -48,6 +47,8 @@ The top level of the directory would contain files and directories like so::
             files/            #
                 bar.txt       #  <-- files for use with the copy resource
                 foo.sh        #  <-- script files for use with the script resource
+            vars/             #
+                main.yml      #  <-- variables associated with this role
 
         webtier/              # same kind of structure as "common" was above, done for the webtier role
         monitoring/           # ""
@@ -100,7 +101,7 @@ Group And Host Variables
 ````````````````````````
 
 Now, groups are nice for organization, but that's not all groups are good for.  You can also assign variables to them!  For instance, atlanta
-has it's own NTP servers, so when settings up ntp.conf, we should use them.  Let's set those now::
+has its own NTP servers, so when setting up ntp.conf, we should use them.  Let's set those now::
 
     ---
     # file: group_vars/atlanta
@@ -129,11 +130,21 @@ We can define specific hardware variance in systems in a host_vars file, but avo
     foo_agent_port: 86
     bar_agent_port: 99
 
+Role Variables
+``````````````
+
+Variables that are associated with a given role can be defined in a main.yml file within the "vars" directory for that role. These variables are accessible not only to the role itself, but to all other roles and tasks that are part of the same playbook.::
+
+    ---
+    # file: roles/python/vars/main.yml
+    python_version: "2.7.5"
+    pip_version: "1.3.1"
+
 Top Level Playbooks Are Separated By Role
 `````````````````````````````````````````
 
 In site.yml, we include a playbook that defines our entire infrastructure.  Note this is SUPER short, because it's just including
-some other playbooks.  Remember playbooks are nothing more than lists of plays::
+some other playbooks.  Remember, playbooks are nothing more than lists of plays::
 
     ---
     # file: site.yml
@@ -152,7 +163,7 @@ In a file like webservers.yml (also at the top level), we simply map the configu
 Task And Handler Organization For A Role
 ````````````````````````````````````````
 
-Below is an example tasks file, that explains how a role works.  Our common role here just sets up NTP, but it could do more if we wanted::
+Below is an example tasks file that explains how a role works.  Our common role here just sets up NTP, but it could do more if we wanted::
 
     ---
     # file: roles/common/tasks/main.yml
@@ -162,7 +173,7 @@ Below is an example tasks file, that explains how a role works.  Our common role
       tags: ntp
 
     - name: be sure ntp is configured
-      template: src=common/templates/ntp.conf.j2 dest=/etc/ntp.conf
+      template: src=ntp.conf.j2 dest=/etc/ntp.conf
       notify:
         - restart ntpd
       tags: ntp
@@ -210,7 +221,7 @@ And of course just basic ad-hoc stuff is also possible.::
     ansible -i production -m ping
     ansible -i production -m command -a '/sbin/reboot' --limit boston 
 
-And there are some useful commands (at least in 1.1 to know)::
+And there are some useful commands to know (at least in 1.1 and higher)::
 
     # confirm what task names would be run if I ran this command and said "just ntp tasks"
     ansible-playbook -i production webservers.yml --tags ntp --list-tasks
@@ -231,7 +242,7 @@ keep the OS configuration in separate playbooks from the app deployment.
 Stage vs Production
 +++++++++++++++++++
 
-As also mentioned above, a good way to keep your stage (or testing) and production environments separate is to use a separate inventory file for stage and production.   This way you pick with -i what you are targetting.  Keeping them all in one file can lead to surprises!
+As also mentioned above, a good way to keep your stage (or testing) and production environments separate is to use a separate inventory file for stage and production.   This way you pick with -i what you are targeting.  Keeping them all in one file can lead to surprises!
 
 Testing things in a stage environment before trying in production is always a great idea.  Your environments need not be the same
 size and you can use group variables to control the differences between those environments.
@@ -271,7 +282,7 @@ This makes a dynamic group of hosts matching certain criteria, even if that grou
 
    - hosts: all
      tasks:
-        - group_by: key=${ansible_distribution}
+        - group_by: key={{ ansible_distribution }}
 
    # now just on the CentOS hosts...
 
@@ -280,7 +291,7 @@ This makes a dynamic group of hosts matching certain criteria, even if that grou
      tasks:
         - # tasks that only happen on CentOS go here
 
-If group specific settings are needed, this can also be done, for example::
+If group-specific settings are needed, this can also be done. For example::
 
     ---
     # file: group_vars/all
@@ -290,7 +301,7 @@ If group specific settings are needed, this can also be done, for example::
     # file: group_vars/CentOS
     asdf: 42
 
-In the above example, CentOS machines get the value of '42' for asdf, but other machines get 10.
+In the above example, CentOS machines get the value of '42' for asdf, but other machines get '10'.
 
 
 Bundling Ansible Modules With Playbooks
@@ -298,7 +309,7 @@ Bundling Ansible Modules With Playbooks
 
 .. versionadded:: 0.5
 
-If a playbook has a "./library" directory relative to it's YAML file, this directory can be used to add ansible modules that will
+If a playbook has a "./library" directory relative to its YAML file, this directory can be used to add ansible modules that will
 automatically be in the ansible module path.  This is a great way to keep modules that go with a playbook together.
 
 Whitespace and Comments
@@ -317,7 +328,7 @@ Keep It Simple
 
 When you can do something simply, do something simply.  Do not reach
 to use every feature of Ansible together, all at once.  Use what works
-for you.  For example, you should probably not need 'vars',
+for you.  For example, you will probably not need 'vars',
 'vars_files', 'vars_prompt' and '--extra-vars' all at once,
 while also using an external inventory file.
 
@@ -327,7 +338,7 @@ Version Control
 Use version control.  Keep your playbooks and inventory file in git
 (or another version control system), and commit when you make changes
 to them.  This way you have an audit trail describing when and why you
-changed the rules automating your infrastructure.
+changed the rules that are automating your infrastructure.
 
 .. seealso::
 

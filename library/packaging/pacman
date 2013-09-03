@@ -45,6 +45,15 @@ options:
         default: "no"
         choices: [ "yes", "no" ]
 
+    recurse:
+        description:
+            - remove all not explicitly installed dependencies not required
+              by other packages of the package to remove
+        required: false
+        default: "no"
+        choices: [ "yes", "no" ]
+        version_added: "1.3"
+
 author: Afterburn
 notes:  []
 '''
@@ -59,6 +68,9 @@ EXAMPLES = '''
 # Remove packages foo and bar 
 - pacman: name=foo,bar state=absent
 
+# Recursively remove package baz
+- pacman: name=baz state=absent recurse=yes
+
 # Update the package database (pacman -Syy) and install bar (bar will be the updated if a newer version exists) 
 - pacman: name=bar, state=installed, update_cache=yes
 '''
@@ -67,6 +79,7 @@ EXAMPLES = '''
 import json
 import shlex
 import os
+import re
 import sys
 
 PACMAN_PATH = "/usr/bin/pacman"
@@ -92,6 +105,10 @@ def update_package_db(module):
          
 
 def remove_packages(module, packages):
+    if module.params["recurse"]:
+        args = "Rs"
+    else:
+        args = "R"
     
     remove_c = 0
     # Using a for loop incase of error, we can report the package that failed
@@ -100,7 +117,7 @@ def remove_packages(module, packages):
         if not query_package(module, package):
             continue
 
-        rc = os.system("pacman -R %s --noconfirm > /dev/null" % (package))
+        rc = os.system("pacman -%s %s --noconfirm > /dev/null" % (args, package))
 
         if rc != 0:
             module.fail_json(msg="failed to remove %s" % (package))
@@ -114,15 +131,20 @@ def remove_packages(module, packages):
     module.exit_json(changed=False, msg="package(s) already absent")
 
 
-def install_packages(module, packages):
+def install_packages(module, packages, package_files):
 
     install_c = 0
 
-    for package in packages:
+    for i, package in enumerate(packages):
         if query_package(module, package):
             continue
 
-        rc = os.system("pacman -S %s --noconfirm > /dev/null" % (package))
+        if package_files[i]:
+            params = '-U %s' % package_files[i]
+        else:
+            params = '-S %s' % package
+
+        rc = os.system("pacman %s --noconfirm > /dev/null" % (params))
 
         if rc != 0:
             module.fail_json(msg="failed to install %s" % (package))
@@ -135,13 +157,30 @@ def install_packages(module, packages):
     module.exit_json(changed=False, msg="package(s) already installed")
 
 
+def check_packages(module, packages, state):
+    would_be_changed = []
+    for package in packages:
+        installed = query_package(module, package)
+        if ((state == "installed" and not installed) or
+                (state == "absent" and installed)):
+            would_be_changed.append(package)
+    if would_be_changed:
+        if state == "absent":
+            state = "removed"
+        module.exit_json(changed=True, msg="%s package(s) would be %s" % (
+            len(would_be_changed), state))
+    else:
+        module.exit_json(change=False, msg="package(s) already %s" % state)
+
 
 def main():
     module = AnsibleModule(
             argument_spec    = dict(
                 state        = dict(default="installed", choices=["installed","absent"]),
                 update_cache = dict(default="no", aliases=["update-cache"], type='bool'),
-                name         = dict(aliases=["pkg"], required=True)))
+                recurse      = dict(default="no", type='bool'),
+                name         = dict(aliases=["pkg"], required=True)),
+            supports_check_mode = True)
                 
 
     if not os.path.exists(PACMAN_PATH):
@@ -149,14 +188,26 @@ def main():
 
     p = module.params
 
-
-    if p["update_cache"]:
+    if p["update_cache"] and not module.check_mode:
         update_package_db(module)
 
     pkgs = p["name"].split(",")
 
+    pkg_files = []
+    for i, pkg in enumerate(pkgs):
+        if pkg.endswith('.pkg.tar.xz'):
+            # The package given is a filename, extract the raw pkg name from
+            # it and store the filename
+            pkg_files.append(pkg)
+            pkgs[i] = re.sub('-[0-9].*$', '', pkgs[i].split('/')[-1])
+        else:
+            pkg_files.append(None)
+
+    if module.check_mode:
+        check_packages(module, pkgs, p['state'])
+
     if p["state"] == "installed":
-        install_packages(module, pkgs)
+        install_packages(module, pkgs, pkg_files)
 
     elif p["state"] == "absent":
         remove_packages(module, pkgs)

@@ -36,7 +36,7 @@ class ActionModule(object):
     def run(self, conn, tmp, module_name, module_args, inject, complex_args=None, **kwargs):
         ''' handler for fetch operations '''
 
-        if self.runner.check:
+        if self.runner.noop_on_check(inject):
             return ReturnData(conn=conn, comm_ok=True, result=dict(skipped=True, msg='check mode not (yet) supported for this module'))
 
         # load up options
@@ -73,7 +73,7 @@ class ActionModule(object):
 
         # use slurp if sudo and permissions are lacking
         remote_data = None
-        if remote_md5 in ('1', '2') and self.runner.sudo:
+        if remote_md5 in ('1', '2') or self.runner.sudo:
             slurpres = self.runner._execute_module(conn, tmp, 'slurp', 'src=%s' % source, inject=inject)
             if slurpres.is_successful():
                 if slurpres.result['encoding'] == 'base64':

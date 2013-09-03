@@ -40,7 +40,10 @@ class VarsModule(object):
         """ main body of the plugin, does actual loading """
 
         inventory = self.inventory
-        self.pb_basedir = inventory.playbook_basedir()
+        basedir = inventory.playbook_basedir()
+        if basedir is not None: 
+            basedir = os.path.abspath(basedir)
+        self.pb_basedir = basedir
 
         # sort groups by depth so deepest groups can override the less deep ones
         groupz = sorted(inventory.groups_for_host(host.name), key=lambda g: g.depth)

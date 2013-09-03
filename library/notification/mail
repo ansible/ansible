@@ -103,7 +103,7 @@ options:
 
 EXAMPLES = '''
 # Example playbook sending mail to root
-- local_action: mail msg='System ${ansible_hostname} has been successfully provisioned.'
+- local_action: mail msg='System {{ ansible_hostname }} has been successfully provisioned.'
 
 # Send e-mail to a bunch of users, attaching files
 - local_action: mail

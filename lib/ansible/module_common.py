@@ -265,6 +265,11 @@ class AnsibleModule(object):
 
     def selinux_enabled(self):
         if not HAVE_SELINUX:
+            seenabled = self.get_bin_path('selinuxenabled')
+            if seenabled is not None:
+                (rc,out,err) = self.run_command(seenabled)
+                if rc == 0:
+                    self.fail_json(msg="Aborting, target uses selinux but python bindings (python-selinux) aren't installed!")
             return False
         if selinux.is_selinux_enabled() == 1:
             return True
@@ -430,7 +435,9 @@ class AnsibleModule(object):
                 else:
                     os.chmod(path, mode)
             except OSError, e:
-                if e.errno == errno.ENOENT: # Can't set mode on broken symbolic links
+                if os.path.islink(path) and e.errno == errno.EPERM:  # Can't set mode on symbolic links
+                    pass
+                elif e.errno == errno.ENOENT: # Can't set mode on broken symbolic links
                     pass
                 else:
                     raise e
@@ -840,7 +847,9 @@ class AnsibleModule(object):
                 sys.stderr.write("could not cleanup %s: %s" % (tmpfile, e))
 
     def atomic_move(self, src, dest):
-        '''atomically move src to dest, copying attributes from dest, returns true on success'''
+        '''atomically move src to dest, copying attributes from dest, returns true on success
+        it uses os.rename to ensure this as it is an atomic operation, rest of the function is
+        to work around limitations, corner cases and ensure selinux context is saved if possible'''
         context = None
         if os.path.exists(dest):
             try:
@@ -855,26 +864,35 @@ class AnsibleModule(object):
         else:
             if self.selinux_enabled():
                 context = self.selinux_default_context(dest)
-        # Ensure file is on same partition to make replacement atomic
-        dest_dir = os.path.dirname(dest)
-        dest_file = os.path.basename(dest)
-        tmp_dest = "%s/.%s.%s.%s" % (dest_dir,dest_file,os.getpid(),time.time())
 
-        try: # leaves tmp file behind when sudo and  not root
-            if os.getenv("SUDO_USER") and os.getuid() != 0:
-               # cleanup will happen by 'rm' of tempdir
-               shutil.copy(src, tmp_dest)
-            else:
-               shutil.move(src, tmp_dest)
-            if self.selinux_enabled():
-                self.set_context_if_different(tmp_dest, context, False)
-            os.rename(tmp_dest, dest)
-            if self.selinux_enabled():
-                # rename might not preserve context
-                self.set_context_if_different(dest, context, False)
-        except (shutil.Error, OSError, IOError), e:
-            self.cleanup(tmp_dest)
-            self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
+        try:
+            # Optimistically try a rename, solves some corner cases and can avoid useless work.
+            os.rename(src, dest)
+        except (IOError,OSError), e:
+            # only try workarounds for errno 18 (cross device), 1 (not permited) and 13 (permission denied)
+            if e.errno != errno.EPERM and e.errno != errno.EXDEV and e.errno != errno.EACCES:
+                self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
+
+            dest_dir = os.path.dirname(dest)
+            dest_file = os.path.basename(dest)
+            tmp_dest = "%s/.%s.%s.%s" % (dest_dir,dest_file,os.getpid(),time.time())
+
+            try: # leaves tmp file behind when sudo and  not root
+                if os.getenv("SUDO_USER") and os.getuid() != 0:
+                   # cleanup will happen by 'rm' of tempdir
+                   shutil.copy(src, tmp_dest)
+                else:
+                   shutil.move(src, tmp_dest)
+                if self.selinux_enabled():
+                    self.set_context_if_different(tmp_dest, context, False)
+                os.rename(tmp_dest, dest)
+            except (shutil.Error, OSError, IOError), e:
+                self.cleanup(tmp_dest)
+                self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
+
+        if self.selinux_enabled():
+            # rename might not preserve context
+            self.set_context_if_different(dest, context, False)
 
     def run_command(self, args, check_rc=False, close_fds=False, executable=None, data=None, binary_data=False):
         '''
@@ -927,8 +945,8 @@ class AnsibleModule(object):
 
     def pretty_bytes(self,size):
         ranges = (
-                (1<<50L, 'ZB'),
-                (1<<50L, 'EB'),
+                (1<<70L, 'ZB'),
+                (1<<60L, 'EB'),
                 (1<<50L, 'PB'),
                 (1<<40L, 'TB'),
                 (1<<30L, 'GB'),

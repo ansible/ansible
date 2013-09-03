@@ -101,9 +101,9 @@ EXAMPLES = """
 
 #Run syncdb on the application
 - django_manage: >
-      command=syncdb 
+      command=syncdb
       app_path={{ django_dir }}
-      settings={{ settings_app_name }} 
+      settings={{ settings_app_name }}
       pythonpath={{ settings_dir }}
       virtualenv={{ virtualenv_dir }}
 
@@ -131,7 +131,7 @@ def _ensure_virtualenv(module):
 
     virtualenv = module.get_bin_path('virtualenv', True)
 
-    vbin = os.path.join(venv_param, 'bin')
+    vbin = os.path.join(os.path.expanduser(venv_param), 'bin')
     activate = os.path.join(vbin, 'activate')
 
     if not os.path.exists(activate):
@@ -183,12 +183,12 @@ def main():
         )
 
     # These params are allowed for certain commands only
-    specific_params = ('apps', 'database', 'failfast', 'fixtures', 'liveserver', 'testrunner', )
+    specific_params = ('apps', 'database', 'failfast', 'fixtures', 'liveserver', 'testrunner')
 
     # These params are automatically added to the command if present
     general_params = ('settings', 'pythonpath', )
-    specific_boolean_params = ('failfast', 'skip', 'merge', 'link' )
-    end_of_command_params = ('apps', 'cache_table', 'fixtures', )
+    specific_boolean_params = ('failfast', 'skip', 'merge', 'link')
+    end_of_command_params = ('apps', 'cache_table', 'fixtures')
 
     module = AnsibleModule(
         argument_spec=dict(

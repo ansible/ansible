@@ -1,3 +1,7 @@
+%if 0%{?rhel} == 5
+%define __python /usr/bin/python26
+%endif
+
 %if 0%{?rhel} && 0%{?rhel} <= 5
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
@@ -116,8 +120,14 @@ rm -rf $RPM_BUILD_ROOT
 
 %changelog
 
-* Mon Jun 10 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.3-0
+* Fri Jul 05 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.3-0
 * (release pending)
+
+* Thu Jul 05 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.2-2
+* Release 1.2.2
+
+* Thu Jul 04 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.2-1
+* Release 1.2.1
 
 * Mon Jun 10 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.2-0
 * Release 1.2

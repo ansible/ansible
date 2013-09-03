@@ -70,7 +70,7 @@ options:
     description:
       - Waits for a riak service to come online before continuing.
     required: false
-    default: kv
+    default: None
     aliases: []
     choices: ['kv']
 '''
@@ -86,25 +86,23 @@ EXAMPLES = '''
 - riak: wait_for_service=kv
 '''
 
-
-import re
-import os.path
 import urllib2
 import json
 import time
+import socket
 
-
-def ring_check():
-    rc, out, err = module.run_command('riak-admin ringready 2> /dev/null')
-    if rc == 0 and out.find('TRUE All nodes agree on the ring') != -1:
+def ring_check(module, riak_admin_bin):
+    cmd = '%s ringready 2> /dev/null' % riak_admin_bin
+    rc, out, err = module.run_command(cmd)
+    if rc == 0 and 'TRUE All nodes agree on the ring' in out:
         return True
     else:
         return False
 
 def main():
 
-    ansible_facts = {}
-    arg_spec = dict(
+    module = AnsibleModule(
+        argument_spec=dict(
         command=dict(required=False, default=None, choices=[
                     'ping', 'kv_test', 'join', 'plan', 'commit']),
         config_dir=dict(default='/etc/riak'),
@@ -114,9 +112,8 @@ def main():
         wait_for_ring=dict(default=False, type='int'),
         wait_for_service=dict(
             required=False, default=None, choices=['kv'])
+        )
     )
-    global module
-    module = AnsibleModule(argument_spec=arg_spec)
 
 
     command = module.params.get('command')
@@ -127,18 +124,13 @@ def main():
     wait_for_ring = module.params.get('wait_for_ring')
     wait_for_service = module.params.get('wait_for_service')
 
-    rc = 0
-    err = ''
-    out = ''
 
     #make sure riak commands are on the path
-    for item in ['riak', 'riak-admin']:
-        rc, out, err = module.run_command('which %s' % item)
-        if rc == 1:
-            module.fail_json(msg='Could not find path to %s executable' % item)
+    riak_bin = module.get_bin_path('riak')
+    riak_admin_bin = module.get_bin_path('riak-admin')
 
-    rc, out, err = module.run_command(
-        "riak version 2> /dev/null |grep ^riak|cut -f2 -d' '|tr -d '('")
+    cmd = "%s version 2> /dev/null |grep ^riak|cut -f2 -d' '|tr -d '('" % riak_bin
+    rc, out, err = module.run_command(cmd)
     if rc == 0:
         version = out.strip()
     else:
@@ -157,35 +149,38 @@ def main():
             time.sleep(5)
         except urllib2.URLError, e:
             time.sleep(5)
+        except socket.timeout:
+            time.sleep(5)
         except Exception, e:
             module.fail_json(msg='Could not fetch Riak stats: %s' % e)
-
 
 # here we attempt to load those stats,
     try:
         stats = json.loads(stats_raw)
     except:
-        module.fail_json(msg='Timeout, could not parse Riak stats.')
+        module.fail_json(msg='Could not parse Riak stats.')
 
     node_name = stats['nodename']
     nodes = stats['ring_members']
     ring_size = stats['ring_creation_size']
 
 
-    result = {'node_name': node_name,
-              'nodes': nodes,
-              'ring_size': ring_size,
-              'version': version}
+    result = dict(node_name=node_name,
+              nodes=nodes,
+              ring_size=ring_size,
+              version=version)
 
     if command == 'ping':
-        rc, out, err = module.run_command('riak ping %s' % target_node)
+        cmd = '%s ping %s' % ( riak_bin, target_node )
+        rc, out, err = module.run_command(cmd)
         if rc == 0:
             result['ping'] = out
         else:
             module.fail_json(msg=out)
 
     elif command == 'kv_test':
-        rc, out, err = module.run_command('riak-admin test')
+        cmd = '%s test' % riak_admin_bin
+        rc, out, err = module.run_command(cmd)
         if rc == 0:
             result['kv_test'] = out
         else:
@@ -195,7 +190,8 @@ def main():
         if nodes.count(node_name) == 1 and len(nodes) > 1:
             result['join'] = 'Node is already in cluster or staged to be in cluster.'
         else:
-            rc, out, err = module.run_command('riak-admin cluster join %s' % target_node)
+            cmd = '%s cluster join %s' % (riak_admin_bin, target_node)
+            rc, out, err = module.run_command(cmd)
             if rc == 0:
                 result['join'] = out
                 result['changed'] = True
@@ -203,57 +199,52 @@ def main():
                 module.fail_json(msg=out)
 
     elif command == 'plan':
-        rc, out, err = module.run_command('riak-admin cluster plan %s' % target_node)
+        cmd = '%s cluster plan' % riak_admin_bin
+        rc, out, err = module.run_command(cmd)
         if rc == 0:
             result['plan'] = out
-            if out.find('Staged Changes') != -1:
+            if 'Staged Changes' in out:
                 result['changed'] = True
         else:
             module.fail_json(msg=out)
 
     elif command == 'commit':
-
-        rc, out, err = module.run_command('riak-admin cluster commit %s' % target_node)
+        cmd = '%s cluster commit' % riak_admin_bin
+        rc, out, err = module.run_command(cmd)
         if rc == 0:
             result['commit'] = out
             result['changed'] = True
         else:
             module.fail_json(msg=out)
 
-    rc = 0
-    err = ''
-    out = ''
-
 # this could take a while, recommend to run in async mode
     if wait_for_handoffs:
         timeout = time.time() + wait_for_handoffs
         while True:
-            rc, out, err = module.run_command('riak-admin transfers 2> /dev/null')
-            if out.find('No transfers active') != -1:
+            cmd = '%s transfers 2> /dev/null' % riak_admin_bin
+            rc, out, err = module.run_command(cmd)
+            if 'No transfers active' in out:
                 result['handoffs'] = 'No transfers active.'
                 break
             time.sleep(10)
             if time.time() > timeout:
                 module.fail_json(msg='Timeout waiting for handoffs.')
 
-# this could take a while, recommend to run in async mode
     if wait_for_service:
-        rc, out, err = module.run_command('riak-admin wait_for_service riak_%s %s' % (
-            wait_for_service, node_name))
+        cmd = '%s wait_for_service riak_%s %s' % ( riak_admin_bin, wait_for_service, node_name)
+        rc, out, err = module.run_command(cmd)
         result['service'] = out
-
 
     if wait_for_ring:
         timeout = time.time() + wait_for_ring
         while True:
-            if ring_check():
+            if ring_check(module, riak_admin_bin):
                 break
             time.sleep(10)
-            wait += 10
         if time.time() > timeout:
             module.fail_json(msg='Timeout waiting for nodes to agree on ring.')
 
-    result['ring_ready'] = ring_check()
+    result['ring_ready'] = ring_check(module, riak_admin_bin)
 
     module.exit_json(**result)
 

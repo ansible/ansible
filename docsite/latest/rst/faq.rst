@@ -5,7 +5,6 @@ Here are some commonly-asked questions and their answers.
 
 .. contents::
    :depth: 2
-   :backlinks: top
 
 How do I handle different machines needing different user accounts or ports to log in with?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -33,8 +32,9 @@ See the rest of the documentation for more information about how to organize var
 How do I get ansible to reuse connections, enable Kerberized SSH, or have Ansible pay attention to my local SSH config file?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Switch your default connectiont type in the configuration file to 'ssh', or use '-c ssh' to use
-Native OpenSSH for connections instead of the python paramiko library.
+Switch your default connection type in the configuration file to 'ssh', or use '-c ssh' to use
+Native OpenSSH for connections instead of the python paramiko library.  In Ansible 1.2.1 and later, 'ssh' will be used
+by default if OpenSSH is new enough to support ControlPersist as an option.
 
 Paramiko is great for starting out, but the OpenSSH type offers many advanced options.  You will want to run Ansible
 from a machine new enough to support ControlPersist, if you are using this connection type.  You can still manage
@@ -157,7 +157,7 @@ environment variable on management machine::
 
 If you need to set environment variables, see the Advanced Playbooks section about environments.
 
-Can I get training on Ansible or find commerical support?
+Can I get training on Ansible or find commercial support?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Yes!  See `AnsibleWorks.com <http://ansibleworks.com>`_ or email `info@ansibleworks.com <mailto:info@ansibleworks.com>`_.
@@ -165,8 +165,7 @@ Yes!  See `AnsibleWorks.com <http://ansibleworks.com>`_ or email `info@ansiblewo
 How do I submit a change to the documentation?
 ++++++++++++++++++++++++++++++++++++++++++++++
 
-Great question!  Documentation for the Ansible project is kept in `Github <https://github.com/ansible/ansible/tree/devel/docsite/latest/rst>`_ in restructured text format.  Simply send in a pull request for changes, or file a ticket if you found an error but do not have time to submit
-a change request.   Thanks!
+Great question!  Documentation for Ansible is kept in the main project git repository, and complete instructions for contributing can be found in the docs README `viewable on GitHub <https://github.com/ansible/ansible/tree/devel/docsite/latest#readme>`_.  Thanks!
 
 I don't see my question here
 ++++++++++++++++++++++++++++

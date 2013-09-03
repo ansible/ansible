@@ -20,7 +20,7 @@ try:
     from quantumclient.quantum import client
     from keystoneclient.v2_0 import client as ksclient
 except ImportError:
-    print("failed=True msg='quantunclient and keystone client are required'")
+    print("failed=True msg='quantumclient and keystone client are required'")
 
 DOCUMENTATION = '''
 ---
@@ -44,6 +44,11 @@ options:
         - The tenant name of the login user
      required: true
      default: 'yes'
+   tenant_name:
+     description:
+        - The name of the tenant for whom the network is created
+     required: false
+     default: None
    auth_url:
      description:
         - The keystone url for authentication
@@ -64,11 +69,11 @@ options:
         - Name to be assigned to the nework 
      required: true
      default: None
-   network_type:
+   provider_network_type:
      description:
-        - The type of the network to be created, gre, vlan, local.
+        - The type of the network to be created, gre, vlan, local. Available types depend on the plugin. The Quantum service decides if not specified.
      required: false
-     default: local
+     default: None
    provider_physical_network:
      description:
         - The physical network which would realize the virtual network for flat and vlan networks.
@@ -99,15 +104,15 @@ requirements: ["quantumclient", "keystoneclient"]
 '''
 
 EXAMPLES = '''
-# Creates an external,public network
-- quantum_network: state=present login_username=admin login_password=admin
-                   provider_network_type=gre login_tenant_name=admin
-                   provider_segmentation_id=1  tenant_name=tenant1 name=t1network"
+# Create a GRE backed Quantum network with tunnel id 1 for tenant1
+- quantum_network: name=t1network tenant_name=tenant1 state=present
+                   provider_network_type=gre provider_segmentation_id=1
+                   login_username=admin login_password=admin login_tenant_name=admin
 
-# Createss a GRE nework with tunnel id of 1 for tenant 1
-- quantum_network: state=present login_username=admin login_password=admin
-                   provider_network_type=local login_tenant_name=admin
-                   provider_segmentation_id=1   router_external=yes name=external_network
+# Create an external network
+- quantum_network: name=external_network state=present
+                   provider_network_type=local router_external=yes
+                   login_username=admin login_password=admin login_tenant_name=admin
 '''
 
 _os_keystone = None
@@ -130,7 +135,7 @@ def _get_endpoint(module, ksclient):
     try:
         endpoint = ksclient.service_catalog.url_for(service_type='network', endpoint_type='publicURL')
     except Exception as e:
-        module.fail_json(msg = "Error getting endpoint for glance: %s " %e.message)
+        module.fail_json(msg = "Error getting endpoint for Quantum: %s " %e.message)
     return endpoint
 
 def _get_quantum_client(module, kwargs):
@@ -199,7 +204,12 @@ def _create_network(module, quantum):
 
     if module.params['provider_network_type'] == 'gre':
         network.pop('provider:physical_network', None)
-                
+
+    if module.params['provider_network_type'] is None:
+        network.pop('provider:network_type', None)
+        network.pop('provider:physical_network', None)
+        network.pop('provider:segmentation_id', None)
+
     try:
         net = quantum.create_network({'network':network})
     except Exception as e:
@@ -225,7 +235,7 @@ def main():
             region_name                     = dict(default=None),
             name                            = dict(required=True),
             tenant_name                     = dict(default=None),
-            provider_network_type           = dict(default='local', choices=['local', 'vlan', 'flat', 'gre']), 
+            provider_network_type           = dict(default=None, choices=['local', 'vlan', 'flat', 'gre']),
             provider_physical_network       = dict(default=None), 
             provider_segmentation_id        = dict(default=None), 
             router_external                 = dict(default=False, type='bool'),

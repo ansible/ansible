@@ -29,7 +29,7 @@ version_added: "0.0.2"
 options:
   pkg:
     description:
-      - A package name or package specifier with version, like C(foo) or C(foo=1.0)
+      - A package name or package specifier with version, like C(foo) or C(foo=1.0). Shell like wildcards (fnmatch) like apt* are also supported.
     required: false
     default: null
   state:
@@ -169,8 +169,34 @@ def package_status(m, pkgname, version, cache, state):
             #assume older version of python-apt is installed
             return pkg.isInstalled, pkg.isUpgradable, has_files
 
+def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
+    new_pkgspec = []
+    for pkgname_or_fnmatch_pattern in pkgspec:
+        # note that any of these chars is not allowed in a (debian) pkgname
+        if [c for c in pkgname_or_fnmatch_pattern if c in "*?[]!"]:
+            if "=" in pkgname_or_fnmatch_pattern:
+                m.fail_json(msg="pkgname wildcard and version can not be mixed")
+            # handle multiarch pkgnames, the idea is that "apt*" should 
+            # only select native packages. But "apt*:i386" should still work
+            if not ":" in pkgname_or_fnmatch_pattern:
+                matches = fnmatch.filter(
+                    [pkg.name for pkg in cache
+                     if not ":" in pkg.name], pkgname_or_fnmatch_pattern)
+            else:
+                matches = fnmatch.filter(
+                    [pkg.name for pkg in cache], pkgname_or_fnmatch_pattern)
+
+            if len(matches) == 0:
+                m.fail_json(msg="No package(s) matching '%s' available" % str(pkgname_or_fnmatch_pattern))
+            else:
+                new_pkgspec.extend(matches)
+        else:
+            new_pkgspec.append(pkgname_or_fnmatch_pattern)
+    return new_pkgspec
+
 def install(m, pkgspec, cache, upgrade=False, default_release=None, install_recommends=True, force=False):
     packages = ""
+    pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache)
     for package in pkgspec:
         name, version = package_split(package)
         installed, upgradable, has_files = package_status(m, name, version, cache, state='install')
@@ -218,7 +244,7 @@ def remove(m, pkgspec, cache, purge=False):
             purge = '--purge'
         else:
             purge = ''
-        cmd = "%s -q -y %s remove %s" % (APT_GET_CMD, purge,packages)
+        cmd = "%s %s -q -y %s %s remove %s" % (APT_ENVVARS, APT_GET_CMD, DPKG_OPTIONS, purge, packages)
 
         if m.check_mode:
             m.exit_json(changed=True)
@@ -228,11 +254,13 @@ def remove(m, pkgspec, cache, purge=False):
             m.fail_json(msg="'apt-get remove %s' failed: %s" % (packages, err))
         m.exit_json(changed=True)
 
-def upgrade(m, mode="yes"):
+def upgrade(m, mode="yes", force=False):
     if m.check_mode:
         check_arg = '--simulate'
     else:
         check_arg = ''
+
+    apt_cmd = None
     if mode == "dist":
         # apt-get dist-upgrade
         apt_cmd = APT_GET_CMD
@@ -246,9 +274,14 @@ def upgrade(m, mode="yes"):
         apt_cmd = APTITUDE_CMD
         upgrade_command = "safe-upgrade"
 
+    if force:
+        force_yes = '--force-yes'
+    else:
+        force_yes = ''
+
     apt_cmd_path = m.get_bin_path(apt_cmd, required=True)
-    cmd = '%s %s -y %s %s %s' % (APT_ENVVARS, apt_cmd_path, DPKG_OPTIONS,
-                                check_arg, upgrade_command)
+    cmd = '%s %s -y %s %s %s %s' % (APT_ENVVARS, apt_cmd_path, DPKG_OPTIONS,
+                                    force_yes, check_arg, upgrade_command)
     rc, out, err = m.run_command(cmd)
     if rc:
         m.fail_json(msg="'%s %s' failed: %s" % (apt_cmd, upgrade_command, err))
@@ -287,6 +320,9 @@ def main():
     APT_GET_CMD = module.get_bin_path("apt-get")
 
     p = module.params
+    if not APTITUDE_CMD and p.get('upgrade', None) in [ 'full', 'safe', 'yes' ]:
+        module.fail_json(msg="Could not find aptitude. Please ensure it is installed.")
+
     install_recommends = p['install_recommends']
 
     try:
@@ -332,7 +368,7 @@ def main():
         force_yes = p['force']
 
         if p['upgrade']:
-            upgrade(module, p['upgrade'])
+            upgrade(module, p['upgrade'], force_yes)
 
         packages = p['package'].split(',')
         latest = p['state'] == 'latest'

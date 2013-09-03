@@ -19,6 +19,8 @@ import base64
 import json
 import os.path
 import yaml
+import types
+import pipes
 from ansible import errors
 
 def to_nice_yaml(*a, **kw):
@@ -32,16 +34,44 @@ def to_nice_json(*a, **kw):
 def failed(*a, **kw):
     item = a[0] 
     if type(item) != dict:
-       raise errors.AnsibleError("|failed expects a dictionary")
+        raise errors.AnsibleFilterError("|failed expects a dictionary")
     rc = item.get('rc',0)
     failed = item.get('failed',False)
     if rc != 0 or failed:
-       return True
+        return True
     else:
-       return False
+        return False
 
 def success(*a, **kw):
     return not failed(*a, **kw)
+
+def skipped(*a, **kw):
+    item = a[0]
+    if type(item) != dict:
+        raise errors.AnsibleFilterError("|skipped expects a dictionary")
+    skipped = item.get('skipped', False)
+    return skipped
+
+def mandatory(a):
+    ''' Make a variable mandatory '''
+    if not a:
+        raise errors.AnsibleFilterError('Mandatory variable not defined.')
+    return a
+
+def bool(a):
+    ''' return a bool for the arg '''
+    if a is None or type(a) == bool:
+        return a
+    if type(a) in types.StringTypes:
+        a = a.lower()
+    if a in ['yes', 'on', '1', 'true', 1]:
+        return True
+    else:
+        return False
+
+def quote(a):
+    ''' return its argument quoted for shell usage '''
+    return pipes.quote(a)
 
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
@@ -70,5 +100,16 @@ class FilterModule(object):
             'failed'  : failed,
             'success' : success,
 
+            # skip testing
+            'skipped' : skipped,
+
+            # variable existence
+            'mandatory': mandatory,
+
+            # value as boolean
+            'bool': bool,
+
+            # quote string for shell usage
+            'quote': quote,
         }
     

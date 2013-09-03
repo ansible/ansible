@@ -14,8 +14,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
 # ansible-pull is a script that runs ansible in local mode
-# after checking out a playbooks directory from git.  There is an
+# after checking out a playbooks directory from source repo.  There is an
 # example playbook to bootstrap this script in the examples/ dir which
 # installs ansible and sets it up to run on cron.
 
@@ -27,14 +28,14 @@
 # the -d and -U arguments are required; the -C argument is optional.
 #
 # ansible-pull accepts an optional argument to specify a playbook
-# location underneath the workdir and then searches the git repo
+# location underneath the workdir and then searches the source repo
 # for playbooks in the following order, stopping at the first match:
 #
 # 1. $workdir/path/playbook.yml, if specified
 # 2. $workdir/$hostname.yml
 # 3. $workdir/local.yml
 #
-# the git repo must contain at least one of these playbooks.
+# the source repo must contain at least one of these playbooks.
 
 import os
 import shutil
@@ -42,11 +43,13 @@ import subprocess
 import sys
 import datetime
 import socket
-from optparse import OptionParser
+from ansible import utils
 
+DEFAULT_REPO_TYPE = 'git'
 DEFAULT_PLAYBOOK = 'local.yml'
-PLAYBOOK_ERRORS = { 1: 'File does not exist',
-                    2: 'File is not readable' }
+PLAYBOOK_ERRORS = {1: 'File does not exist',
+                    2: 'File is not readable'}
+
 
 def _run(cmd):
     print >>sys.stderr, "Running: '%s'" % cmd
@@ -56,7 +59,8 @@ def _run(cmd):
     print out
     if cmd.returncode != 0:
         print >>sys.stderr, err
-    return cmd.returncode
+    return cmd.returncode, out
+
 
 def try_playbook(path):
     if not os.path.exists(path):
@@ -64,6 +68,7 @@ def try_playbook(path):
     if not os.access(path, os.R_OK):
         return 2
     return 0
+
 
 def select_playbook(path, args):
     playbook = None
@@ -89,29 +94,38 @@ def select_playbook(path, args):
             print >>sys.stderr, "\n".join(errors)
         return playbook
 
+
 def main(args):
     """ Set up and run a local playbook """
     usage = "%prog [options] [playbook.yml]"
-    parser = OptionParser(usage=usage)
+    parser = utils.SortedOptParser(usage=usage)
     parser.add_option('--purge', default=False, action='store_true',
-                      help='Purge git checkout after playbook run')
+                      help='purge checkout after playbook run')
+    parser.add_option('-o', '--only-if-changed', dest='ifchanged', default=False, action='store_true',
+                      help='only run the playbook if the repository has been updated')
     parser.add_option('-d', '--directory', dest='dest', default=None,
-                      help='Directory to clone git repository to')
+                      help='directory to checkout repository to')
     parser.add_option('-U', '--url', dest='url', default=None,
-                      help='URL of git repository')
+                      help='URL of the playbook repository')
     parser.add_option('-C', '--checkout', dest='checkout',
-                      default="HEAD",
-                      help='Branch/Tag/Commit to checkout.  Defaults to HEAD.')
+                      help='branch/tag/commit to checkout.  '
+                      'Defaults to behavior of repository module.')
     parser.add_option('-i', '--inventory-file', dest='inventory',
-                      help="specify inventory host file")
+                      help="location of the inventory host file")
+    parser.add_option('-m', '--module-name', dest='module_name',
+                      default=DEFAULT_REPO_TYPE,
+                      help='Module name used to check out repository.  '
+                      'Default is %s.' % DEFAULT_REPO_TYPE)
     options, args = parser.parse_args(args)
 
     if not options.dest:
         parser.error("Missing required directory argument")
         return 1
 
+    options.dest = os.path.abspath(options.dest)
+
     if not options.url:
-        parser.error("URL for git repo not specified, use -h for help")
+        parser.error("URL for repository not specified, use -h for help")
         return 1
 
     now = datetime.datetime.now()
@@ -119,13 +133,23 @@ def main(args):
 
     inv_opts = 'localhost,'
     limit_opts = 'localhost:%s:127.0.0.1' % socket.getfqdn()
-    git_opts = "repo=%s dest=%s version=%s" % (options.url, options.dest, options.checkout)
-    cmd = 'ansible all -c local -i "%s" --limit "%s" -m git -a "%s"' % (
-            inv_opts, limit_opts, git_opts
+    base_opts = '-c local --limit "%s"' % limit_opts
+    repo_opts = "name=%s dest=%s" % (options.url, options.dest)
+    if options.checkout:
+        repo_opts += ' version=%s' % options.checkout
+    path = utils.plugins.module_finder.find_plugin(options.module_name)
+    if path is None:
+        sys.stderr.write("module '%s' not found.\n" % options.module_name)
+        return 1
+    cmd = 'ansible all -i "%s" %s -m %s -a "%s"' % (
+            inv_opts, base_opts, options.module_name, repo_opts
             )
-    rc = _run(cmd)
+    rc, out = _run(cmd)
     if rc != 0:
         return rc
+    elif options.ifchanged and '"changed": true' not in out:
+        print "Repository has not changed, quitting."
+        return 0
 
     playbook = select_playbook(options.dest, args)
 
@@ -133,11 +157,11 @@ def main(args):
         print >>sys.stderr, "Could not find a playbook to run."
         return 1
 
-    cmd = 'ansible-playbook -c local --limit "%s" %s' % (limit_opts, playbook)
+    cmd = 'ansible-playbook %s %s' % (base_opts, playbook)
     if options.inventory:
         cmd += ' -i "%s"' % options.inventory
     os.chdir(options.dest)
-    rc = _run(cmd)
+    rc, out = _run(cmd)
 
     if options.purge:
         os.chdir('/')

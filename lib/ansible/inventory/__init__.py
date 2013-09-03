@@ -74,12 +74,21 @@ class Inventory(object):
             self.parser = None
             all = Group('all')
             self.groups = [ all ]
+            ipv6_re = re.compile('\[([a-f:A-F0-9]*[%[0-z]+]?)\](?::(\d+))?')
             for x in host_list:
-                if ":" in x:
-                    tokens = x.split(":", 1)
-                    all.add_host(Host(tokens[0], tokens[1]))
+                m = ipv6_re.match(x)
+                if m:
+                    all.add_host(Host(m.groups()[0], m.groups()[1]))
                 else:
-                    all.add_host(Host(x))
+                    if ":" in x:
+                        tokens = x.rsplit(":", 1)
+                        # if there is ':' in the address, then this is a ipv6
+                        if ':' in tokens[0]:
+                            all.add_host(Host(x))
+                        else:
+                            all.add_host(Host(tokens[0], tokens[1]))
+                    else:
+                        all.add_host(Host(x))
         elif os.path.exists(host_list):
             if os.path.isdir(host_list):
                 # Ensure basedir is inside the directory
@@ -136,6 +145,27 @@ class Inventory(object):
         finds hosts that match a list of patterns. Handles negative
         matches as well as intersection matches.
         """
+
+        # Host specifiers should be sorted to ensure consistent behavior
+        pattern_regular = []
+        pattern_intersection = []
+        pattern_exclude = []
+        for p in patterns:
+            if p.startswith("!"):
+                pattern_exclude.append(p)
+            elif p.startswith("&"):
+                pattern_intersection.append(p)
+            else:
+                pattern_regular.append(p)
+
+        # if no regular pattern was given, hence only exclude and/or intersection
+        # make that magically work
+        if pattern_regular == []:
+            pattern_regular = ['all']
+
+        # when applying the host selectors, run those without the "&" or "!"
+        # first, then the &s, then the !s.
+        patterns = pattern_regular + pattern_intersection + pattern_exclude
 
         hosts = set()
         for p in patterns:
@@ -371,10 +401,16 @@ class Inventory(object):
         if not self.is_file():
             return None
         dname = os.path.dirname(self.host_list)
-        if dname is None or dname == '':
+        if dname is None or dname == '' or dname == '.':
             cwd = os.getcwd()
             return cwd 
         return dname
+
+    def src(self):
+        """ if inventory came from a file, what's the directory and file name? """
+        if not self.is_file():
+            return None
+        return self.host_list
 
     def playbook_basedir(self):
         """ returns the directory of the current playbook """
