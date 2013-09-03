@@ -86,7 +86,7 @@ PIDFILE = os.path.expanduser("~/.accelerate.pid")
 CHUNK_SIZE=10240
 
 def log(msg):
-    syslog.syslog(syslog.LOG_NOTICE, msg)
+    syslog.syslog(syslog.LOG_NOTICE|syslog.LOG_DAEMON, msg)
 
 if os.path.exists(PIDFILE):
     try:
