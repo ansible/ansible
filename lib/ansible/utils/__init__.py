@@ -78,7 +78,7 @@ def key_for_hostname(hostname):
     # to use no persistent daemons or key management
 
     if not KEYCZAR_AVAILABLE:
-        raise errors.AnsibleError("python-keyczar must be installed to use fireball mode")
+        raise errors.AnsibleError("python-keyczar must be installed to use fireball/accelerated mode")
 
     key_path = os.path.expanduser("~/.fireball.keys")
     if not os.path.exists(key_path):
