@@ -43,8 +43,11 @@ class Connection(object):
         self.user = user
         self.password = password
         self.private_key_file = private_key_file
-        self.cp_dir = utils.prepare_writeable_dir('$HOME/.ansible/cp',mode=0700)
         self.HASHED_KEY_MAGIC = "|1|"
+
+        fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_EX)
+        self.cp_dir = utils.prepare_writeable_dir('$HOME/.ansible/cp',mode=0700)
+        fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_UN)
 
     def connect(self):
         ''' connect to the remote host '''
