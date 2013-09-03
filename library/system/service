@@ -1107,7 +1107,7 @@ def main():
     else:
         # as we may have just bounced the service the service command may not
         # report accurate state at this moment so just show what we ran
-        if service.module.params['state'] in ['started','restarted','running']:
+        if service.module.params['state'] in ['started','restarted','running','reloaded']:
             result['state'] = 'started'
         else:
             result['state'] = 'stopped'
