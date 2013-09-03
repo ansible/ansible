@@ -41,71 +41,58 @@ options:
             - BIG-IP host
         required: true
         default: null
-        choices: []
-        aliases: []
     user:
         description:
             - BIG-IP username
         required: true
         default: null
-        choices: []
-        aliases: []
     password:
         description:
             - BIG-IP password
         required: true
         default: null
-        choices: []
-        aliases: []
     state:
         description:
             - Monitor state
         required: false
         default: 'present'
         choices: ['present', 'absent']
-        aliases: []
     name:
         description:
             - Monitor name
         required: true
         default: null
-        choices: []
         aliases: ['monitor']
     partition:
         description:
             - Partition for the monitor
         required: false
         default: 'Common'
-        choices: []
-        aliases: []
     parent:
         description:
             - The parent template of this monitor template
         required: false
         default: 'http'
-        choices: []
-        aliases: []
     parent_partition:
         description:
             - Partition for the parent monitor
         required: false
         default: 'Common'
-        choices: []
-        aliases: []
     send:
         description:
             - The send string for the monitor call
         required: true
-        default: null
-        choices: []
-        aliases: []
+        default: ''
     receive:
         description:
             - The receive string for the monitor call
         required: true
-        default: null
-        choices: []
-        aliases: []
+        default: ''
+    receive_disable:
+        description:
+            - The receive disable string for the monitor call
+        required: true
+        default: ''
     ip:
         description: 
             - IP address part of the ipport definition
@@ -131,8 +118,16 @@ options:
               the set time period, it is considered down. You can change this
               number to any number you want, however, it should be 3 times the
               interval number of seconds plus 1 second.
-        required: true
+        required: false
         default: 16
+    time_until_up:
+        description:
+            - Specifies the amount of time in seconds after the first successful
+              response before a node will be marked up. A value of 0 will cause a
+              node to be marked up immediately after a valid response is received
+              from the node. The default setting is 0.
+        required: false
+        default: 0
 '''
 
 EXAMPLES = '''
@@ -258,12 +253,14 @@ def main():
             name      = dict(required=True),
             parent    = dict(default=DEFAULT_PARENT_TYPE),
             parent_partition = dict(default='Common'),
-            send      = dict(required=True),
-            receive   = dict(required=True),
+            send      = dict(required=True, default=''),
+            receive   = dict(required=True, default=''),
+            receive_disable   = dict(required=True, default=''),
             ip        = dict(required=False, default='0.0.0.0'),
             port      = dict(required=False, type='int', default=0),
             interval  = dict(required=False, type='int', default=5),
             timeout   = dict(required=False, type='int', default=16)
+            time_until_up = dict(required=False, type='int', default=0)
         ),
         supports_check_mode=True
     )
@@ -282,10 +279,12 @@ def main():
     monitor = "/%s/%s" % (partition, name)
     send = module.params['send']
     receive = module.params['receive']
+    receive_disable = module.params['receive_disable']
     ip = module.params['ip']
     port = module.params['port']
     interval = module.params['interval']
     timeout = module.params['timeout']
+    time_until_up = module.params['time_until_up']
 
 
     if ip == '0.0.0.0' and port == 0:
@@ -307,7 +306,8 @@ def main():
 
         if state == 'absent':
             if monitor_exists:
-                delete_monitor(api, monitor)
+                if not module.check_mode:
+                    delete_monitor(api, monitor)
                 result['changed'] = True
 
         else:
@@ -325,11 +325,15 @@ def main():
             template_string_properties = [{'type': 'STYPE_SEND',
                                            'value': send},
                                           {'type': 'STYPE_RECEIVE',
-                                           'value': receive}]
+                                           'value': receive}
+                                          {'type': 'STYPE_RECEIVE_DRAIN',
+                                           'value': receive_disable}]
             template_integer_properties = [{'type': 'ITYPE_INTERVAL',
                                              'value': interval},
-                                            {'type': 'ITYPE_TIMEOUT',
-                                             'value': timeout}]
+                                           {'type': 'ITYPE_TIMEOUT',
+                                            'value': timeout},
+                                           {'type': 'ITYPE_TIME_UNTIL_UP',
+                                            'value': interval}]
             if monitor_exists(module, api, monitor, parent):
                 for str_property in template_string_properties:
                     if not check_string_property(api, monitor, str_property):
