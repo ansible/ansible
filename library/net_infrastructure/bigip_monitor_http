@@ -182,10 +182,11 @@ def create_monitor(api, monitor, template_attributes):
         api.LocalLB.Monitor.create_template(templates=[{'template_name': monitor, 'template_type': TEMPLATE_TYPE}], template_attributes=[template_attributes])
     except bigsuds.OperationFailed, e:
         if "already exists" in str(e):
-            pass
+            return False
         else:
             # genuine exception
             raise
+    return True
 
 
 def delete_monitor(api, monitor):
@@ -194,9 +195,12 @@ def delete_monitor(api, monitor):
         api.LocalLB.Monitor.delete_template(template_names=[monitor])
     except bigsuds.OperationFailed, e:
         # maybe it was deleted since we checked
-        if not "was not found" in str(e):
+        if "was not found" in str(e):
+            return False
+        else:
             # genuine exception
             raise
+    return True
 
 def check_string_property(api, monitor, str_property):
 
@@ -307,8 +311,11 @@ def main():
         if state == 'absent':
             if monitor_exists:
                 if not module.check_mode:
-                    delete_monitor(api, monitor)
-                result['changed'] = True
+                    # possible race condition if same task 
+                    # on other node deleted it first
+                    result['changed'] = delete_monitor(api, monitor)
+                else:
+                    result['changed'] = True
 
         else:
             ipport = {'address_type': address_type,
@@ -353,10 +360,13 @@ def main():
                     result['changed'] = True
 
             elif not module.check_mode:
-                create_monitor(api, monitor, template_attributes)
+                # possible race condition if same task 
+                # on other node deleted it first
+                result['changed'] = create_monitor(api, monitor, template_attributes)
                 for str_property in template_string_properties:
                     set_string_property(api, monitor, str_property)
-                result['changed'] = True
+                for int_property in template_integer_properties:
+                    set_integer_property(api, monitor, int_property)
             else: # monitor does not exist and check mode
                 result['changed'] = True
 
