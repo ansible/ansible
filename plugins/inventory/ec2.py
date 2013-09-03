@@ -210,6 +210,11 @@ class Ec2Inventory(object):
         self.cache_path_index = cache_path + "/ansible-ec2.index"
         self.cache_max_age = config.getint('ec2', 'cache_max_age')
         
+        # Tag value expansion
+        if config.has_option('ec2', 'expanded_tag_names'):
+            self.expanded_tag_names = config.get('ec2', 'expanded_tag_names').split(',')
+        else:
+            self.expanded_tag_names = []
 
 
     def parse_cli_args(self):
@@ -346,8 +351,15 @@ class Ec2Inventory(object):
 
         # Inventory: Group by tag keys
         for k, v in instance.tags.iteritems():
-            key = self.to_safe("tag_" + k + "=" + v)
-            self.push(self.inventory, key, dest)
+            prefix = self.to_safe('tag_' + k)
+            if k in self.expanded_tag_names and v and len(v.split(',')) > 1:
+                values = map(lambda x: x.strip(), v.split(','))
+                for val in values:
+                    key = self.to_safe(prefix + "=" + val)
+                    self.push(self.inventory, key, dest)
+            else:  
+                key = self.to_safe(prefix + "=" + v)
+                self.push(self.inventory, key, dest)
 
 
     def add_rds_instance(self, instance, region):
