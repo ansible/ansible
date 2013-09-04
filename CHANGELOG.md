@@ -5,6 +5,8 @@ Ansible Changes By Release
 
 Highlighted new features:
 
+* accelerated mode: An enhanced fireball mode that requires zero bootstrapping and fewer requirements plus adds capabilities like sudo commands.
+* role defaults: Allows roles to define a set of variables at the lowest priority. These variables can be overridden by any other variable.
 * new /etc/ansible/facts.d allows JSON or INI-style facts to be provided from the remote node, and supports executable fact programs in this dir. Files must end in *.fact.
 * added the ability to make undefined template variables raise errors (see ansible.cfg)
 * (DOCS PENDING) sudo: True/False and sudo_user: True/False can be set at include and role level
