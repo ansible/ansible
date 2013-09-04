@@ -183,14 +183,13 @@ class Play(object):
                 if data:
                     dependencies = data.get('dependencies',[])
                     for dep in dependencies:
+                        allow_dupes = False
                         (dep_path,dep_vars) = self._get_role_path(dep)
                         meta = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(dep_path, 'meta')))
                         if os.path.isfile(meta):
                             meta_data = utils.parse_yaml_from_file(meta)
                             if meta_data:
                                 allow_dupes = utils.boolean(meta_data.get('allow_duplicates',''))
-                        else:
-                            allow_dupes = False
 
                         if not allow_dupes:
                             if dep in self.included_roles:
