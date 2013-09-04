@@ -25,6 +25,7 @@ class ActionModule(object):
 
     def __init__(self, runner):
         self.runner = runner
+        self.sudo = False
 
     def _process_origin(self, host, path, user):
 
@@ -35,8 +36,20 @@ class ActionModule(object):
 
     def setup(self, module_name, inject):
         ''' Always default to localhost as delegate if None defined '''
-        if inject.get('delegate_to') is None:
+        # Default action mode - we need to run rsync on local host.
+        if inject['delegate_to'] is None:
+            inject['ansible_connection'] = 'local'
             inject['delegate_to'] = '127.0.0.1'
+            self.mode = 'remote'
+            # If sudo is active, disable from the connection set self.sudo to True.
+            if self.runner.sudo:
+                self.runner.sudo = False
+                self.sudo = True
+        # Local action mode.
+        elif inject['delegate_to'] == '127.0.0.1':
+            self.mode = 'local'
+        else:
+            self.mode = 'other'
 
     def run(self, conn, tmp, module_name, module_args, 
         inject, complex_args=None, **kwargs):
@@ -52,16 +65,33 @@ class ActionModule(object):
 
         src = options.get('src', None)
         dest = options.get('dest', None)
+        src_host = options.get('src_host', None)
+        dest_host = options.get('dest_host', None)
 
         try:
             options['local_rsync_path'] = inject['ansible_rsync_path']
         except KeyError:
             pass
 
-        src_host = inject['delegate_to'] 
-        dest_host = inject.get('ansible_ssh_host', inject['inventory_hostname'])
+        # Determine src_host
+        if src_host is None:
+            if self.mode in ['local', 'remote']:
+                src_host = '127.0.0.1'
+            else:
+                src_host = inject['delegate_to']
+
+        # Determine dest_host
+        if dest_host is None:
+            if self.mode == 'local':
+                dest_host = '127.0.0.1'
+            elif self.mode == 'remote':
+                dest_host = inject.get('ansible_ssh_host', inject['inventory_hostname'])
+            else:
+                dest_host = inject['delegate_to']
+
         if options.get('mode', 'push') == 'pull':
             (dest_host, src_host) = (src_host, dest_host)
+
         if not dest_host is src_host:
             user = inject.get('ansible_ssh_user',
                               self.runner.remote_user)
@@ -76,10 +106,23 @@ class ActionModule(object):
         if 'mode' in options:
             del options['mode']
 
-        # run the synchronize module
+        if 'src_host' in options:
+            del options['src_host']
+        if 'dest_host' in options:
+            del options['dest_host']
+
+        rsync_path = options.get('rsync_path', None)
+
+        if not rsync_path and self.sudo:
+            rsync_path = 'sudo rsync'
+
+        # make sure rsync path is quoted.
+        if rsync_path:
+            options['rsync_path'] = '"' + rsync_path + '"'
 
         self.runner.module_args = ' '.join(['%s=%s' % (k, v) for (k,
                 v) in options.items()])
+        # run the synchronize module
         return self.runner._execute_module(conn, tmp, 'synchronize',
                 self.runner.module_args, inject=inject)
 

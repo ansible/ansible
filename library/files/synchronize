@@ -45,9 +45,57 @@ options:
       - An integer controlling the amount of information returned during processing. See the C(-v, --verbose) option of the rsync man page for details. If verbosity is not defined or a value of 0 is assumed, the C(--quiet) option is passed and information is supressed.
     required: false
     default: 0
+  recursive:
+    description:
+      - Recurse into directories.
+    choices: [ 'yes', 'no' ]
+    default: 'yes'
+    required: false
+  links:
+    description:
+      - Copy symlinks as symlinks.
+    choices: [ 'yes', 'no' ]
+    default: 'yes'
+    required: false
+  perms:
+    description:
+      - Preserve permissions.
+    choices: [ 'yes', 'no' ]
+    default: 'yes'
+    required: false
+  times:
+    description:
+      - Preserve modification times
+    choices: [ 'yes', 'no' ]
+    default: 'yes'
+    required: false
+  owner:
+    description:
+      - Preserve owner (super user only)
+    choices: [ 'yes', 'no' ]
+    default: 'no'
+    required: false
+  group:
+    description:
+      - Preserve group
+    choices: [ 'yes', 'no' ]
+    default: 'no'
+    required: false
+  archive:
+    description:
+      - Mirrors the rsync archive flag, enables recursive, links, perms, times, owner, group flags and -D.
+    choices: [ 'yes', 'no' ]
+    default: 'no'
+    required: false
   delete:
     description:
       - Delete files that don't exist (after transfer, not before) in the C(src) path.
+    choices: [ 'yes', 'no' ]
+    default: 'no'
+    required: false
+  dry_run:
+    description:
+      - Perform a trial run with no changes made.
     choices: [ 'yes', 'no' ]
     default: 'no'
     required: false
@@ -55,7 +103,7 @@ options:
     description:
       - Specify the rsync command to run on the remote machine. See C(--rsync-path) on the rsync man page.
     required: false
-author: Timothy Appnel
+author: Timothy Appnel / Ben Osman
 '''
 
 EXAMPLES = '''
@@ -92,6 +140,14 @@ def main():
             dest = dict(required=True),
             verbosity = dict(default=0),
             tmp_dir = dict(default=None),
+            recursive = dict(default='yes', type='bool'),
+            links = dict(default='yes', type='bool'),
+            perms = dict(default='yes', type='bool'),
+            times = dict(default='yes', type='bool'),
+            owner = dict(default='no', type='bool'),
+            group = dict(default='no', type='bool'),
+            archive = dict(default='no', type='bool'),
+            dry_run = dict(default='no', type='bool'),
             delete = dict(default='no', type='bool'),
             private_key = dict(default=None),
             rsync_path = dict(default=None),
@@ -101,40 +157,63 @@ def main():
     source = module.params['src']
     dest = module.params['dest']
     verbosity = module.params['verbosity']
+    recursive = module.params['recursive']
+    links = module.params['links']
+    perms = module.params['perms']
+    times = module.params['times']
+    owner = module.params['owner']
+    group = module.params['group']
+    archive = module.params['archive']
     delete = module.params['delete']
+    dry_run = module.params['dry_run']
     private_key = module.params['private_key']
     rsync_path = module.params['rsync_path']
     rsync = module.params.get('local_rsync_path', 'rsync')
-    temp = os.path.dirname(os.path.realpath(__file__))
+    temp =  module.params['tmp_dir']
 
-    cmd = '%s --archive --delay-updates --compress' % rsync
+    cmd = '%s --delay-updates --compress' % rsync
     if verbosity:
         cmd = '%s -%s' % (cmd, 'v' * int(verbosity))
-    else:
-        cmd = cmd + ' --quiet'
     if temp:
-        cmd = cmd + ' --temp-dir ' + temp
+        cmd += ' --temp-dir ' + temp
+    if archive:
+        cmd += ' --archive '
+    else:
+        if recursive:
+            cmd += ' -recursive'
+        if links:
+            cmd += ' --links'
+        if perms:
+            cmd += ' --perms'
+        if times:
+            cmd += ' --times'
+        if owner:
+            cmd += ' -owner'
+        if group:
+            cmd += ' -group'
     if delete:
-        cmd = cmd + ' --delete-after'
+        cmd +=  ' --delete-after'
+    if dry_run:
+        cmd +=  ' --dry-run'
     if private_key is None:
         private_key = ''
     else:
-        private_key = '-i '+ private_key 
-    cmd = cmd + " --rsh '%s %s -o %s'" % ('ssh', private_key,
+        private_key = '-i '+ private_key
+    cmd += " --rsh '%s %s -o %s'" % ('ssh', private_key,
                 'StrictHostKeyChecking=no')  # need ssh param
+    cmd += " --out-format='<changes>%i %n%L'"
     if rsync_path:
-        cmd = cmd + ' --rsync-path ' + rsync_path
+        cmd += " --rsync-path '%s'" %(rsync_path)
 
     cmd = ' '.join([cmd, source, dest])
     cmdstr = cmd
-    cmd = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
-                           stderr=subprocess.PIPE)
-    (out, err) = cmd.communicate()
-    if cmd.returncode:
-        return module.fail_json(msg=err, rc=cmd.returncode, cmd=cmdstr)
+    (rc, out, err) = module.run_command(cmd)
+    if rc:
+        return module.fail_json(msg=err, rc=rc, cmd=cmdstr)
     else:
-        return module.exit_json(changed=True, msg=out,
-                                rc=cmd.returncode, cmd=cmdstr)
+        changed =  '<changes>' in out
+        return module.exit_json(changed=changed, msg=out,
+                                rc=rc, cmd=cmdstr)
 
 
 # include magic from lib/ansible/module_common.py
