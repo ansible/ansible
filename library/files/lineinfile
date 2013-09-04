@@ -298,7 +298,8 @@ def main():
     create = module.params['create']
     backup = module.params['backup']
     backrefs = module.params['backrefs']
-    dest = os.path.expanduser(params['dest'])
+    # fix module.params['dest'] otherwise the call to file module will not work
+    dest = module.params['dest'] = os.path.expanduser(params['dest'])
 
 
     if os.path.isdir(dest):
