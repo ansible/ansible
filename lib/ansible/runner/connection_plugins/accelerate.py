@@ -76,7 +76,7 @@ class Connection(object):
                 # TODO: make the timeout and retries configurable?
                 tries = 3
                 self.conn = socket.socket()
-                self.conn.settimeout(30.0)
+                self.conn.settimeout(300.0)
                 while tries > 0:
                     try:
                         self.conn.connect((self.host,self.fbport))
