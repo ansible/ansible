@@ -114,6 +114,16 @@ If you need to specify a password to sudo, run `ansible-playbook` with ``--ask-s
 If you run a sudo playbook and the playbook seems to hang, it's probably stuck at the sudo prompt.
 Just `Control-C` to kill it and run it again with `-K`.
 
+Another option is to set the ``--ask-sudo-pass`` in your play::
+
+    ---
+    - hosts: webservers
+      user: yourname
+      sudo: yes
+      sudo_user: postgres
+      ask_sudo_pass: yes
+
+
 .. important::
 
    When using `sudo_user` to a user other than root, the module
