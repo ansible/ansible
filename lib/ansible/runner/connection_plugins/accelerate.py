@@ -46,7 +46,7 @@ class Connection(object):
         self.user = user
         self.key = utils.key_for_hostname(host)
         self.port = port[0]
-        self.fbport = port[1]
+        self.accport = port[1]
         self.is_connected = False
 
         self.ssh = SSHConnection(
@@ -62,11 +62,13 @@ class Connection(object):
         if getattr(self.runner, 'aes_keys', None):
             utils.AES_KEYS = self.runner.aes_keys
 
-    def _execute_fb_module(self):
-        args = "password=%s port=%s" % (base64.b64encode(self.key.__str__()), str(self.fbport))
+    def _execute_accelerate_module(self):
+        args = "password=%s port=%s" % (base64.b64encode(self.key.__str__()), str(self.accport))
+        inject = dict(password=self.key)
+        inject = utils.combine_vars(inject, self.runner.inventory.get_variables(self.host))
         self.ssh.connect()
         tmp_path = self.runner._make_tmp_path(self.ssh)
-        return self.runner._execute_module(self.ssh, tmp_path, 'accelerate', args, inject={"password":self.key})
+        return self.runner._execute_module(self.ssh, tmp_path, 'accelerate', args, inject=inject)
 
     def connect(self, allow_ssh=True):
         ''' activates the connection object '''
@@ -79,7 +81,7 @@ class Connection(object):
                 self.conn.settimeout(300.0)
                 while tries > 0:
                     try:
-                        self.conn.connect((self.host,self.fbport))
+                        self.conn.connect((self.host,self.accport))
                         break
                     except:
                         time.sleep(0.1)
@@ -90,12 +92,12 @@ class Connection(object):
         except:
             if allow_ssh:
                 vvv("Falling back to ssh to startup accelerated mode")
-                res = self._execute_fb_module()
+                res = self._execute_accelerate_module()
                 if not res.is_successful():
                     raise errors.AnsibleError("Failed to launch the accelerated daemon on %s (reason: %s)" % (self.host,res.result.get('msg')))
                 return self.connect(allow_ssh=False)
             else:
-                raise errors.AnsibleError("Failed to connect to %s:%s" % (self.host,self.fbport))
+                raise errors.AnsibleError("Failed to connect to %s:%s" % (self.host,self.accport))
         self.is_connected = True
         return self
 
