@@ -23,6 +23,7 @@ import struct
 import time
 from ansible.callbacks import vvv
 from ansible.runner.connection_plugins.ssh import Connection as SSHConnection
+from ansible.runner.connection_plugins.paramiko_ssh import Connection as ParamikoConnection
 from ansible import utils
 from ansible import errors
 from ansible import constants
@@ -49,14 +50,24 @@ class Connection(object):
         self.accport = port[1]
         self.is_connected = False
 
-        self.ssh = SSHConnection(
-            runner=self.runner,
-            host=self.host, 
-            port=self.port, 
-            user=self.user, 
-            password=password, 
-            private_key_file=private_key_file
-        )
+        if self.runner.original_transport == "paramiko":
+            self.ssh = ParamikoConnection(
+                runner=self.runner,
+                host=self.host,
+                port=self.port,
+                user=self.user,
+                password=password,
+                private_key_file=private_key_file
+            )
+        else:
+            self.ssh = SSHConnection(
+                runner=self.runner,
+                host=self.host,
+                port=self.port,
+                user=self.user,
+                password=password,
+                private_key_file=private_key_file
+            )
 
         if not self.accport:
             self.accport = constants.ACCELERATE_PORT
