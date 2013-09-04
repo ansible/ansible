@@ -189,13 +189,15 @@ class Play(object):
                             meta_data = utils.parse_yaml_from_file(meta)
                             if meta_data:
                                 allow_dupes = utils.boolean(meta_data.get('allow_duplicates',''))
-                                if not allow_dupes:
-                                    if dep in self.included_roles:
-                                        continue
-                                    else:
-                                        self.included_roles.append(dep)
                         else:
-                            continue
+                            allow_dupes = False
+
+                        if not allow_dupes:
+                            if dep in self.included_roles:
+                                continue
+                            else:
+                                self.included_roles.append(dep)
+
                         dep_vars = utils.combine_vars(passed_vars, dep_vars)
                         dep_vars = utils.combine_vars(role_vars, dep_vars)
                         vars = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(dep_path, 'vars')))
@@ -215,6 +217,7 @@ class Play(object):
             # only add the current role when we're at the top level,
             # otherwise we'll end up in a recursive loop 
             if level == 0:
+                self.included_roles.append(role)
                 dep_stack.append([role,role_path,role_vars,defaults_data])
         return dep_stack
 
