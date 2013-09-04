@@ -194,6 +194,8 @@ class Play(object):
                                         continue
                                     else:
                                         self.included_roles.append(dep)
+                        else:
+                            continue
                         dep_vars = utils.combine_vars(passed_vars, dep_vars)
                         dep_vars = utils.combine_vars(role_vars, dep_vars)
                         vars = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(dep_path, 'vars')))
