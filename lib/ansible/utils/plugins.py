@@ -29,6 +29,8 @@ PLUGIN_PATH_CACHE = {}
 _basedirs = []
 
 def push_basedir(basedir):
+    # avoid pushing the same absolute dir more than once
+    basedir = os.path.abspath(basedir)
     if basedir not in _basedirs:
         _basedirs.insert(0, basedir)
 
@@ -97,7 +99,7 @@ class PluginLoader(object):
         ret = []
         ret += self._extra_dirs
         for basedir in _basedirs:
-            fullpath = os.path.join(basedir, self.subdir)
+            fullpath = os.path.abspath(os.path.join(basedir, self.subdir))
             if os.path.isdir(fullpath):
                 files = glob.glob("%s/*" % fullpath)
                 for file in files:
@@ -109,12 +111,13 @@ class PluginLoader(object):
         # look in any configured plugin paths, allow one level deep for subcategories 
         configured_paths = self.config.split(os.pathsep)
         for path in configured_paths:
-            path = os.path.expanduser(path)
+            path = os.path.abspath(os.path.expanduser(path))
             contents = glob.glob("%s/*" % path)
             for c in contents:
-                if os.path.isdir(c):
+                if os.path.isdir(c) and c not in ret:
                     ret.append(c)       
-            ret.append(path)
+            if path not in ret:
+                ret.append(path)
 
         # look for any plugins installed in the package subtree
         ret.extend(self._get_package_paths())
@@ -128,6 +131,7 @@ class PluginLoader(object):
         ''' Adds an additional directory to the search path '''
 
         self._paths = None
+        directory = os.path.abspath(directory)
 
         if directory is not None:
             if with_subdir:
