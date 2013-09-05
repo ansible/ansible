@@ -349,7 +349,14 @@ class Runner(object):
             if not self.sudo or self.sudo_user == 'root':
                 # not sudoing or sudoing to root, so can cleanup files in the same step
                 cmd = cmd + "; rm -rf %s >/dev/null 2>&1" % tmp
-        res = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
+
+        sudoable = True
+        if module_name == "accelerate":
+            # always run the accelerate module as the user
+            # specified in the play, not the sudo_user
+            sudoable = False
+
+        res = self._low_level_exec_command(conn, cmd, tmp, sudoable=sudoable)
 
         if self.sudo and self.sudo_user != 'root':
             # not sudoing to root, so maybe can't delete files as that other user
