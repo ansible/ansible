@@ -98,7 +98,7 @@ Misc changes:
 * added IAM role support to EC2 module
 * fixes for OpenBSD package module to avoid shell expansion
 * git module upgrades to allow --depth and --version to be used together
-* new lookup plugin, "with_flat_list"
+* new lookup plugin, "with_flattened"
 * extra vars (-e) variables can be used in playbook include paths
 * improved reporting for invalid sudo passwords
 * improved reporting for inability to find a suitable tmp location
