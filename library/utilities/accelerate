@@ -217,7 +217,7 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
         if 'executable' not in data:
             return dict(failed=True, msg='internal error: executable is required')
 
-        log("executing: %s" % data['cmd'])
+        #log("executing: %s" % data['cmd'])
         rc, stdout, stderr = self.server.module.run_command(data['cmd'], executable=data['executable'], close_fds=True)
         if stdout is None:
             stdout = ''
@@ -306,7 +306,7 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
             log("failed to put the file: %s" % tb)
             return dict(failed=True, stdout="Could not write the file")
         finally:
-            log("wrote %d bytes" % bytes)
+            #log("wrote %d bytes" % bytes)
             out_fd.close()
 
         if final_path:
