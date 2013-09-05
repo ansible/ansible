@@ -274,11 +274,13 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
             return dict(failed=True, msg='internal error: out_path is required')
 
         final_path = None
+        final_user = None
         if 'user' in data and data.get('user') != getpass.getuser():
             log("the target user doesn't match this user, we'll move the file into place via sudo")
             (fd,out_path) = tempfile.mkstemp(prefix='ansible.', dir=os.path.expanduser('~/.ansible/tmp/'))
             out_fd = os.fdopen(fd, 'w', 0)
             final_path = data['out_path']
+            final_user = data['user']
         else:
             out_path = data['out_path']
             out_fd = open(out_path, 'w')
@@ -313,6 +315,10 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
             rc, stdout, stderr = self.server.module.run_command(args, close_fds=True)
             if rc != 0:
                 return dict(failed=True, stdout="failed to copy the file into position with sudo")
+            args = ['sudo','chown',final_user,out_path,final_path]
+            rc, stdout, stderr = self.server.module.run_command(args, close_fds=True)
+            if rc != 0:
+                return dict(failed=True, stdout="failed to chown the file via sudo")
         return dict()
 
 def daemonize(module, password, port, minutes):
