@@ -186,8 +186,8 @@ class Runner(object):
         self.accelerate_port  = accelerate_port
         self.callbacks.runner = self
 
-        if self.accelerate:
-            # if we're using accelerated mode, force the local
+        if self.accelerate and self.transport != 'local':
+            # if we're using accelerated mode, force the
             # transport to accelerate
             self.transport = "accelerate"
             if not self.accelerate_port:
