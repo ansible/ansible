@@ -49,7 +49,7 @@ options:
   volume_size:
     description:
       - size of volume (in GB) to create.
-    required: true
+    required: false
     default: null
     aliases: []
   iops:
@@ -77,6 +77,12 @@ options:
     required: false
     default: null
     aliases: ['aws_zone', 'ec2_zone']
+  snapshot:
+    description:
+      - snapshot the that the volume should be based off of.
+    required: false
+    default: null
+    aliases: []
 requirements: [ "boto" ]
 author: Lester Wade
 '''
@@ -140,7 +146,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             instance = dict(),
-            volume_size = dict(required=True),
+            volume_size = dict(),
             iops = dict(),
             device_name = dict(),
             region = dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS),
@@ -148,6 +154,7 @@ def main():
             ec2_url = dict(),
             aws_secret_key = dict(aliases=['ec2_secret_key', 'secret_key'], no_log=True),
             aws_access_key = dict(aliases=['ec2_access_key', 'access_key']),
+            snapshot = dict(),
         )
     )
 
@@ -160,6 +167,7 @@ def main():
     ec2_url = module.params.get('ec2_url')
     aws_secret_key = module.params.get('aws_secret_key')
     aws_access_key = module.params.get('aws_access_key')
+    snapshot = module.params.get('snapshot')
 
     # allow eucarc environment variables to be used if ansible vars aren't set
     if not ec2_url and 'EC2_URL' in os.environ:
@@ -225,7 +233,7 @@ def main():
     # If no instance supplied, try volume creation based on module parameters.
 
     try:
-        volume = ec2.create_volume(volume_size, zone, None, volume_type, iops)
+        volume = ec2.create_volume(volume_size, zone, snapshot, volume_type, iops)
         while volume.status != 'available':
             time.sleep(3)
             volume.update()
