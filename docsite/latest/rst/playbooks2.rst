@@ -307,7 +307,8 @@ Sometimes you will want to skip a particular step on a particular host.  This co
 as simple as not installing a certain package if the operating system is a particular version,
 or it could be something like performing some cleanup steps if a filesystem is getting full.
 
-This is easy to do in Ansible, with the `when` clause, which actually is a Python expression.
+This is easy to do in Ansible, with the `when` clause, which contains a Jinja2 expression (see chapter
+`Playbooks <http://www.ansibleworks.com/docs/playbooks.html#vars-section>`_ for more info).
 Don't panic -- it's actually pretty simple::
 
     tasks:
@@ -1130,8 +1131,8 @@ Running a task in check mode
 .. versionadded:: 1.3
 
 Sometimes you may want to have a task to be executed even in check
-mode. To achieve this use the `always_run` clause on the task. Its
-value is a Python expression, just like the `when` clause. In simple
+mode. To achieve this, use the `always_run` clause on the task. Its
+value is a Jinja2 expression, just like the `when` clause. In simple
 cases a boolean YAML value would be sufficient as a value.
 
 Example::
