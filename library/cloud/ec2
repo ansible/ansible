@@ -34,6 +34,12 @@ options:
     required: false
     default: null
     aliases: []
+  name:
+    description:
+      - tag identifier for this instance or set of instances, so that the module will be idempotent with respect to EC2 instances. Do not use this in combination with "id" (they are mutually exclusive).
+    required: false
+    default: null
+    aliases: []
   group:
     description:
       - security group (or list of groups) to use with the instance
@@ -347,6 +353,7 @@ def create_instances(module, ec2):
 
     key_name = module.params.get('key_name')
     id = module.params.get('id')
+    name = module.params.get('name')
     group_name = module.params.get('group')
     group_id = module.params.get('group_id')
     zone = module.params.get('zone')
@@ -397,6 +404,21 @@ def create_instances(module, ec2):
 
     running_instances = []
     count_remaining = int(count)
+
+    if name and id:
+        raise("Cannot have both name and id!")
+
+    if name != None:
+        tags = [tag for tag in ec2.get_all_tags({ "value": name })
+                if tag.res_type == "instance" and tag.name == "Name"]
+        instance_ids = [tag.res_id for tag in tags]
+        if len(instance_ids) > 0:
+            filter_dict = {'instance-state-name': 'running'}
+            previous_reservations = ec2.get_all_instances(instance_ids, filter_dict)
+            for res in previous_reservations:
+                for prev_instance in res.instances:
+                    running_instances.append(prev_instance)
+            count_remaining = count_remaining - len(running_instances)
 
     if id != None:
         filter_dict = {'client-token':id, 'instance-state-name' : 'running'}
@@ -449,6 +471,9 @@ def create_instances(module, ec2):
                     continue
                 else:
                     module.fail_json(msg = str(e))
+
+        if name:
+            ec2.create_tags(instids, {"Name": name})
 
         if instance_tags:
             try:
@@ -527,6 +552,7 @@ def main():
         argument_spec = dict(
             key_name = dict(aliases = ['keypair']),
             id = dict(),
+            name = dict(),
             group = dict(type='list'),
             group_id = dict(),
             region = dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS),
