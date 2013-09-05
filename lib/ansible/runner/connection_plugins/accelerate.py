@@ -49,6 +49,16 @@ class Connection(object):
         self.accport = port[1]
         self.is_connected = False
 
+        if not self.port:
+            self.port = constants.DEFAULT_REMOTE_PORT
+        elif not isinstance(self.port, int):
+            self.port = int(self.port)
+
+        if not self.accport:
+            self.accport = constants.ACCELERATE_PORT
+        elif not isinstance(self.accport, int):
+            self.accport = int(self.accport)
+
         self.ssh = SSHConnection(
             runner=self.runner,
             host=self.host, 
@@ -57,9 +67,6 @@ class Connection(object):
             password=password, 
             private_key_file=private_key_file
         )
-
-        if not self.accport:
-            self.accport = constants.ACCELERATE_PORT
 
         # attempt to work around shared-memory funness
         if getattr(self.runner, 'aes_keys', None):
