@@ -145,7 +145,7 @@ class Connection(object):
         data = utils.jsonify(data)
         data = utils.encrypt(self.key, data)
         if self.send_data(data):
-            raise errors.AnisbleError("Failed to send command to %s" % self.host)
+            raise errors.AnsibleError("Failed to send command to %s" % self.host)
         
         response = self.recv_data()
         if not response:
