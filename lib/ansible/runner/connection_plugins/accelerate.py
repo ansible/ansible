@@ -138,6 +138,9 @@ class Connection(object):
     def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False, executable='/bin/sh'):
         ''' run a command on the remote host '''
 
+        if executable == "":
+            executable = constants.DEFAULT_EXECUTABLE
+
         if self.runner.sudo or sudoable and sudo_user:
             cmd, prompt = utils.make_sudo_cmd(sudo_user, executable, cmd)
 
