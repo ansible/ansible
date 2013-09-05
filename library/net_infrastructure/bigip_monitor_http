@@ -82,34 +82,36 @@ options:
         description:
             - The send string for the monitor call
         required: true
-        default: ''
+        default: none
     receive:
         description:
             - The receive string for the monitor call
         required: true
-        default: ''
+        default: none
     receive_disable:
         description:
             - The receive disable string for the monitor call
         required: true
-        default: ''
+        default: none
     ip:
         description: 
-            - IP address part of the ipport definition
+            - IP address part of the ipport definition. The default API setting
+              is "0.0.0.0".
         required: false
-        default: '0.0.0.0'
+        default: none
     port:
         description: 
-            - port address part op the ipport definition
+            - port address part op the ipport definition. Tyhe default API
+              setting is 0.
         required: false
-        default: 0
+        default: none
     interval:
         description: 
             - The interval specifying how frequently the monitor instance
               of this template will run. By default, this interval is used for up and
-              down states
+              down states. The default API setting is 5.
         required: false
-        default: 5
+        default: none
     timeout:
         description:
             - The number of seconds in which the node or service must respond to
@@ -117,17 +119,18 @@ options:
               period, it is considered up. If the target does not respond within
               the set time period, it is considered down. You can change this
               number to any number you want, however, it should be 3 times the
-              interval number of seconds plus 1 second.
+              interval number of seconds plus 1 second. The default API setting
+              is 16.
         required: false
-        default: 16
+        default: none
     time_until_up:
         description:
             - Specifies the amount of time in seconds after the first successful
               response before a node will be marked up. A value of 0 will cause a
               node to be marked up immediately after a valid response is received
-              from the node. The default setting is 0.
+              from the node. The default API setting is 0.
         required: false
-        default: 0
+        default: none
 '''
 
 EXAMPLES = '''
@@ -156,7 +159,7 @@ def bigip_api(bigip, user, password):
     return api
 
 
-def monitor_exists(module, api, monitor, parent):
+def check_monitor_exists(module, api, monitor, parent):
 
     # hack to determine if monitor exists
     result = False
@@ -202,6 +205,7 @@ def delete_monitor(api, monitor):
             raise
     return True
 
+
 def check_string_property(api, monitor, str_property):
 
     return str_property == api.LocalLB.Monitor.get_template_string_property([monitor], [str_property['type']])[0]
@@ -221,9 +225,32 @@ def set_integer_property(api, monitor, int_property):
 
     api.LocalLB.Monitor.set_template_int_property(template_names=[monitor], values=[int_property])
 
-def check_ipport(api, monitor, ipport):
 
-    return [ipport] == api.LocalLB.Monitor.get_template_destination(template_names=[monitor])
+def update_monitor_properties(api, module, monitor, template_string_properties, template_integer_properties):
+
+    changed = False
+    for str_property in template_string_properties:
+        if str_property['value'] is not None and not check_string_property(api, monitor, str_property):
+            if not module.check_mode:
+                set_string_property(api, monitor, str_property)
+            changed = True
+    for int_property in template_integer_properties:
+        if int_property['value'] is not None and not check_integer_property(api, monitor, int_property):
+            if not module.check_mode:
+                set_integer_property(api, monitor, int_property)
+            changed = True
+
+    return changed
+
+
+# ===========================================
+# monitor specific function
+#
+
+def get_ipport(api, monitor):
+
+    return api.LocalLB.Monitor.get_template_destination(template_names=[monitor])[0]
+
 
 def set_ipport(api, monitor, ipport):
 
@@ -242,10 +269,11 @@ def set_ipport(api, monitor, ipport):
 # main loop
 #
 # writing a module for other monitor types should 
-# only need an updated main() 
+# only need an updated main() (and monitor specific functions)
 
 def main():
 
+    # monitor specific stuff
 
     module = AnsibleModule(
         argument_spec = dict(
@@ -257,20 +285,17 @@ def main():
             name      = dict(required=True),
             parent    = dict(default=DEFAULT_PARENT_TYPE),
             parent_partition = dict(default='Common'),
-            send      = dict(required=True, default=''),
-            receive   = dict(required=True, default=''),
-            receive_disable   = dict(required=True, default=''),
-            ip        = dict(required=False, default='0.0.0.0'),
-            port      = dict(required=False, type='int', default=0),
-            interval  = dict(required=False, type='int', default=5),
-            timeout   = dict(required=False, type='int', default=16)
+            send      = dict(required=False),
+            receive   = dict(required=False),
+            receive_disable   = dict(required=False),
+            ip        = dict(required=False),
+            port      = dict(required=False, type='int'),
+            interval  = dict(required=False, type='int'),
+            timeout   = dict(required=False, type='int'),
             time_until_up = dict(required=False, type='int', default=0)
         ),
         supports_check_mode=True
     )
-
-    if not bigsuds_found:
-        module.fail_json(msg="the python bigsuds module is required")
 
     server = module.params['server']
     user = module.params['user']
@@ -291,6 +316,27 @@ def main():
     time_until_up = module.params['time_until_up']
 
 
+    if not bigsuds_found:
+        module.fail_json(msg="the python bigsuds module is required")
+    api = bigip_api(server, user, password)
+    monitor_exists = check_monitor_exists(module, api, monitor, parent)
+
+
+    # ipport is a special setting
+    if monitor_exists: # make sure to not update current settings if not asked
+        cur_ipport = get_ipport(api, monitor)
+        if ip is None:
+            ip = cur_ipport['ipport']['address']
+        if port is None:
+            port = cur_ipport['ipport']['port']
+    else: # use API defaults if not defined to create it
+        if ip is None:              ip = '0.0.0.0'
+        if port is None:            port = 0
+        if send is None:            send = ''
+        if receive is None:         reveive = ''
+        if receive_disable is None: receive_disable = ''
+
+    # define and set address type
     if ip == '0.0.0.0' and port == 0:
         address_type = 'ATYPE_STAR_ADDRESS_STAR_PORT'
     elif ip == '0.0.0.0' and port != 0:
@@ -300,11 +346,33 @@ def main():
     else:
         address_type = 'ATYPE_UNSET'
 
+    ipport = {'address_type': address_type,
+              'ipport': {'address': ip,
+                         'port': port}}
 
-    # main logic 
+    template_attributes = {'parent_template': parent,
+                           'dest_ipport': ipport,
+                           'is_read_only': False,
+                           'is_directly_usable': True}
+
+    template_string_properties = [{'type': 'STYPE_SEND',
+                                   'value': send},
+                                  {'type': 'STYPE_RECEIVE',
+                                   'value': receive},
+                                  {'type': 'STYPE_RECEIVE_DRAIN',
+                                   'value': receive_disable}]
+
+    template_integer_properties = [{'type': 'ITYPE_INTERVAL',
+                                     'value': interval},
+                                   {'type': 'ITYPE_TIMEOUT',
+                                    'value': timeout},
+                                   {'type': 'ITYPE_TIME_UNTIL_UP',
+                                    'value': interval}]
+
+    # monitor specific stuff END
+    # main logic, mostly monitor generic
 
     try:
-        api = bigip_api(server, user, password)
         result = {'changed': False}  # default
 
 
@@ -313,62 +381,33 @@ def main():
                 if not module.check_mode:
                     # possible race condition if same task 
                     # on other node deleted it first
-                    result['changed'] = delete_monitor(api, monitor)
+                    result['changed'] |= delete_monitor(api, monitor)
                 else:
-                    result['changed'] = True
+                    result['changed'] |= True
 
-        else:
-            ipport = {'address_type': address_type,
-                      'ipport': {'address': ip,
-                                 'port': port}}
+        else: # state present
+            if not monitor_exists: # create it
+                if not module.check_mode: 
+                    # again, check changed status here b/c race conditions
+                    # if other task already created it
+                    result['changed'] |= create_monitor(api, monitor, template_attributes)
+                else: 
+                    result['changed'] |= True
 
-            template_attributes = {'parent_template': parent,
-                                   'dest_ipport': ipport,
-                                   'interval': interval,
-                                   'timeout': timeout,
-                                   'is_read_only': False,
-                                   'is_directly_usable': True
-                                  }
-            template_string_properties = [{'type': 'STYPE_SEND',
-                                           'value': send},
-                                          {'type': 'STYPE_RECEIVE',
-                                           'value': receive}
-                                          {'type': 'STYPE_RECEIVE_DRAIN',
-                                           'value': receive_disable}]
-            template_integer_properties = [{'type': 'ITYPE_INTERVAL',
-                                             'value': interval},
-                                           {'type': 'ITYPE_TIMEOUT',
-                                            'value': timeout},
-                                           {'type': 'ITYPE_TIME_UNTIL_UP',
-                                            'value': interval}]
-            if monitor_exists(module, api, monitor, parent):
-                for str_property in template_string_properties:
-                    if not check_string_property(api, monitor, str_property):
-                        if not module.check_mode:
-                            set_string_property(api, monitor, str_property)
-                        result['changed'] = True
-                for int_property in template_integer_properties:
-                    if not check_integer_property(api, monitor, int_property):
-                        if not module.check_mode:
-                            set_integer_property(api, monitor, int_property)
-                        result['changed'] = True
-                if not check_ipport(api, monitor, ipport):
-                    if not module.check_mode:
-                        res, msg = set_ipport(api, monitor, ipport)
-                        if not res:
-                            module.fail_json(msg=msg)
-                    result['changed'] = True
+            # whether it already existed, or was just created, now update
+            # attributes and properties
+            # the update functions need to check for check mode
+            result['changed'] |= update_monitor_properties(api, module, monitor,
+                                                           template_string_properties,
+                                                           template_integer_properties)
 
-            elif not module.check_mode:
-                # possible race condition if same task 
-                # on other node deleted it first
-                result['changed'] = create_monitor(api, monitor, template_attributes)
-                for str_property in template_string_properties:
-                    set_string_property(api, monitor, str_property)
-                for int_property in template_integer_properties:
-                    set_integer_property(api, monitor, int_property)
-            else: # monitor does not exist and check mode
-                result['changed'] = True
+# monitor specific stuff
+            # we just have to update the ipport if monitor already exists and it's different
+            if monitor_exists and cur_ipport != ipport:
+                if not monitor_exists:
+                    set_ipport(api, monitor, ipport)    
+                result['changed'] |= True
+# monitor specific stuff
 
 
     except Exception, e:
