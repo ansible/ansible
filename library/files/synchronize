@@ -51,6 +51,12 @@ options:
     choices: [ 'yes', 'no' ]
     default: 'yes'
     required: false
+  dirs:
+    description:
+      - Transfer directories without recursing
+    choices: [ 'yes', 'no' ]
+    default: 'no'
+    required: false
   links:
     description:
       - Copy symlinks as symlinks.
@@ -90,12 +96,6 @@ options:
   delete:
     description:
       - Delete files that don't exist (after transfer, not before) in the C(src) path.
-    choices: [ 'yes', 'no' ]
-    default: 'no'
-    required: false
-  dry_run:
-    description:
-      - Perform a trial run with no changes made.
     choices: [ 'yes', 'no' ]
     default: 'no'
     required: false
@@ -139,25 +139,26 @@ def main():
             src = dict(required=True),
             dest = dict(required=True),
             verbosity = dict(default=0),
-            tmp_dir = dict(default=None),
             recursive = dict(default='yes', type='bool'),
+            dirs  = dict(default='no', type='bool'),
             links = dict(default='yes', type='bool'),
             perms = dict(default='yes', type='bool'),
             times = dict(default='yes', type='bool'),
             owner = dict(default='no', type='bool'),
             group = dict(default='no', type='bool'),
             archive = dict(default='no', type='bool'),
-            dry_run = dict(default='no', type='bool'),
             delete = dict(default='no', type='bool'),
             private_key = dict(default=None),
             rsync_path = dict(default=None),
-        )
+        ),
+        supports_check_mode=True
     )
 
     source = module.params['src']
     dest = module.params['dest']
     verbosity = module.params['verbosity']
     recursive = module.params['recursive']
+    dirs  = module.params['dirs']
     links = module.params['links']
     perms = module.params['perms']
     times = module.params['times']
@@ -165,22 +166,20 @@ def main():
     group = module.params['group']
     archive = module.params['archive']
     delete = module.params['delete']
-    dry_run = module.params['dry_run']
     private_key = module.params['private_key']
     rsync_path = module.params['rsync_path']
     rsync = module.params.get('local_rsync_path', 'rsync')
-    temp =  module.params['tmp_dir']
 
     cmd = '%s --delay-updates --compress' % rsync
     if verbosity:
         cmd = '%s -%s' % (cmd, 'v' * int(verbosity))
-    if temp:
-        cmd += ' --temp-dir ' + temp
     if archive:
         cmd += ' --archive '
     else:
         if recursive:
-            cmd += ' -recursive'
+            cmd += ' --recursive'
+        if dirs:
+            cmd += ' --dirs'
         if links:
             cmd += ' --links'
         if perms:
@@ -188,12 +187,15 @@ def main():
         if times:
             cmd += ' --times'
         if owner:
-            cmd += ' -owner'
+            cmd += ' --owner'
         if group:
-            cmd += ' -group'
+            cmd += ' --group'
     if delete:
-        cmd +=  ' --delete-after'
-    if dry_run:
+        if recursive or dirs or archive:
+            cmd +=  ' --delete-after'
+        else:
+            module.fail_json(msg='delete parameter requires one of recursive, dirs or archive parameters to be enabled.')
+    if module.check_mode:
         cmd +=  ' --dry-run'
     if private_key is None:
         private_key = ''
@@ -201,7 +203,8 @@ def main():
         private_key = '-i '+ private_key
     cmd += " --rsh '%s %s -o %s'" % ('ssh', private_key,
                 'StrictHostKeyChecking=no')  # need ssh param
-    cmd += " --out-format='<changes>%i %n%L'"
+    changed_marker = '<<changed>>'
+    cmd += " --out-format='" + changed_marker + "%i %n%L'"
     if rsync_path:
         cmd += " --rsync-path '%s'" %(rsync_path)
 
@@ -211,8 +214,8 @@ def main():
     if rc:
         return module.fail_json(msg=err, rc=rc, cmd=cmdstr)
     else:
-        changed =  '<changes>' in out
-        return module.exit_json(changed=changed, msg=out,
+        changed = changed_marker in out
+        return module.exit_json(changed=changed, msg=out.replace(changed_marker,''),
                                 rc=rc, cmd=cmdstr)
 
 

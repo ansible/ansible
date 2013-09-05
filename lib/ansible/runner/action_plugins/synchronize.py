@@ -46,7 +46,7 @@ class ActionModule(object):
                 self.runner.sudo = False
                 self.sudo = True
         # Local action mode.
-        elif inject['delegate_to'] == '127.0.0.1':
+        elif inject['delegate_to'] in ['127.0.0.1', 'localhost']:
             self.mode = 'local'
         else:
             self.mode = 'other'
@@ -65,8 +65,6 @@ class ActionModule(object):
 
         src = options.get('src', None)
         dest = options.get('dest', None)
-        src_host = options.get('src_host', None)
-        dest_host = options.get('dest_host', None)
 
         try:
             options['local_rsync_path'] = inject['ansible_rsync_path']
@@ -74,20 +72,18 @@ class ActionModule(object):
             pass
 
         # Determine src_host
-        if src_host is None:
-            if self.mode in ['local', 'remote']:
-                src_host = '127.0.0.1'
-            else:
-                src_host = inject['delegate_to']
+        if self.mode in ['local', 'remote']:
+            src_host = '127.0.0.1'
+        else:
+            src_host = inject['delegate_to']
 
         # Determine dest_host
-        if dest_host is None:
-            if self.mode == 'local':
-                dest_host = '127.0.0.1'
-            elif self.mode == 'remote':
-                dest_host = inject.get('ansible_ssh_host', inject['inventory_hostname'])
-            else:
-                dest_host = inject['delegate_to']
+        if self.mode == 'local':
+            dest_host = '127.0.0.1'
+        elif self.mode == 'remote':
+            dest_host = inject.get('ansible_ssh_host', inject['inventory_hostname'])
+        else:
+            dest_host = inject['delegate_to']
 
         if options.get('mode', 'push') == 'pull':
             (dest_host, src_host) = (src_host, dest_host)
@@ -105,11 +101,6 @@ class ActionModule(object):
         options['dest'] = dest
         if 'mode' in options:
             del options['mode']
-
-        if 'src_host' in options:
-            del options['src_host']
-        if 'dest_host' in options:
-            del options['dest_host']
 
         rsync_path = options.get('rsync_path', None)
 
