@@ -261,7 +261,7 @@ def uri(module, url, dest, user, password, body, method, headers, redirects, soc
                 # and update dest with the new url filename
             except:
                 pass
-            if resp_redir['status'] in ["301", "302", "303", "307"]:
+            if 'status' in resp_redir and resp_redir['status'] in ["301", "302", "303", "307"]:
                 url = resp_redir['location']
                 redirected = True
             dest = os.path.join(dest, url_filename(url))
