@@ -929,10 +929,9 @@ class AnsibleModule(object):
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE)
             if data:
-                cmd.stdin.write(data)
                 if not binary_data:
-                    cmd.stdin.write('\\n')
-            out, err = cmd.communicate()
+                  data += '\\n'
+            out, err = cmd.communicate(input=data)
             rc = cmd.returncode
         except (OSError, IOError), e:
             self.fail_json(rc=e.errno, msg=str(e), cmd=args)
