@@ -884,6 +884,27 @@ use case, you can define how many hosts Ansible should manage at a single time b
 In the above example, if we had 100 hosts, 3 hosts in the group 'webservers'
 would complete the play completely before moving on to the next 3 hosts.
 
+Maximum Failure Percentage
+``````````````````````````
+
+.. versionadded:: 1.3
+
+By default, Ansible will continue executing actions as long as there are hosts in the group that have not yet failed.
+In some situations, such as with the rolling updates described above, it may be desireable to abort the play when a 
+certain threshold of failures have been reached. To acheive this, as of version 1.3 you can set a maximum failure 
+percentage on a play as follows::
+
+    - hosts: webservers
+      max_fail_percentage: 30
+      serial: 10
+
+In the above example, if more than 3 of the 10 servers in the group were to fail, the rest of the play would be aborted.
+
+.. note::
+
+     The percentage set must be exceeded, not equaled. For example, if serial were set to 4 and you wanted the task to abort 
+     when 2 of the systems failed, the percentage should be set at 49 rather than 50.
+
 Delegation
 ``````````
 
