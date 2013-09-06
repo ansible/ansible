@@ -81,13 +81,20 @@ def _executor_hook(job_queue, result_queue, new_stdin):
         except:
             traceback.print_exc()
 
-class HostVars(collections.Mapping):
+class HostVars(collections.MutableMapping):
     ''' A special view of setup_cache that adds values from the inventory when needed. '''
 
     def __init__(self, setup_cache, inventory):
         self.setup_cache = setup_cache
         self.inventory = inventory
-        self.lookup = {}
+        self.lookup = dict()
+        self.update(setup_cache)
+
+    def __setitem__(self, host, value):
+        self.lookup[host] = value
+
+    def __delitem__(self, host):
+        del self.lookup[host]
 
     def __getitem__(self, host):
         if not host in self.lookup:
@@ -97,10 +104,10 @@ class HostVars(collections.Mapping):
         return self.lookup[host]
 
     def __iter__(self):
-        return (host.name for host in self.inventory.get_group('all').hosts)
+        return iter(self.lookup)
 
     def __len__(self):
-        return len(self.inventory.get_group('all').hosts)
+        return len(self.lookup)
 
 
 class Runner(object):
@@ -186,13 +193,7 @@ class Runner(object):
         self.accelerate_port  = accelerate_port
         self.callbacks.runner = self
 
-        if self.accelerate:
-            # if we're using accelerated mode, force the local
-            # transport to accelerate
-            self.transport = "accelerate"
-            if not self.accelerate_port:
-                self.accelerate_port = C.ACCELERATE_PORT
-        elif self.transport == 'smart':
+        if self.transport == 'smart':
             # if the transport is 'smart' see if SSH can support ControlPersist if not use paramiko
             # 'smart' is the default since 1.2.1/1.3
             cmd = subprocess.Popen(['ssh','-o','ControlPersist'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -349,7 +350,14 @@ class Runner(object):
             if not self.sudo or self.sudo_user == 'root':
                 # not sudoing or sudoing to root, so can cleanup files in the same step
                 cmd = cmd + "; rm -rf %s >/dev/null 2>&1" % tmp
-        res = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
+
+        sudoable = True
+        if module_name == "accelerate":
+            # always run the accelerate module as the user
+            # specified in the play, not the sudo_user
+            sudoable = False
+
+        res = self._low_level_exec_command(conn, cmd, tmp, sudoable=sudoable)
 
         if self.sudo and self.sudo_user != 'root':
             # not sudoing to root, so maybe can't delete files as that other user
@@ -572,6 +580,14 @@ class Runner(object):
         actual_pass = inject.get('ansible_ssh_pass', self.remote_pass)
         actual_transport = inject.get('ansible_connection', self.transport)
         actual_private_key_file = inject.get('ansible_ssh_private_key_file', self.private_key_file)
+
+        if self.accelerate and actual_transport != 'local':
+            # if we're using accelerated mode, force the
+            # transport to accelerate
+            actual_transport = "accelerate"
+            if not self.accelerate_port:
+                self.accelerate_port = C.ACCELERATE_PORT
+
         if actual_transport in [ 'paramiko', 'ssh', 'accelerate' ]:
             actual_port = inject.get('ansible_ssh_port', port)
 
@@ -613,7 +629,7 @@ class Runner(object):
         inject['ansible_ssh_user'] = actual_user
 
         try:
-            if self.transport == 'accelerate':
+            if actual_transport == 'accelerate':
                 # for accelerate, we stuff both ports into a single
                 # variable so that we don't have to mangle other function
                 # calls just to accomodate this one case

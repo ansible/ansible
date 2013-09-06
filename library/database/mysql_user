@@ -223,7 +223,7 @@ def privileges_get(cursor, user,host):
         privileges = [ pick(x) for x in privileges]
         if "WITH GRANT OPTION" in res.group(4):
             privileges.append('GRANT')
-        db = res.group(2).replace('`', '')
+        db = res.group(2)
         output[db] = privileges
     return output
 
@@ -241,6 +241,13 @@ def privileges_unpack(priv):
     output = {}
     for item in priv.split('/'):
         pieces = item.split(':')
+        if pieces[0].find('.') != -1:
+            pieces[0] = pieces[0].split('.')
+            for idx, piece in enumerate(pieces):
+                if pieces[0][idx] != "*":
+                    pieces[0][idx] = "`" + pieces[0][idx] + "`"
+            pieces[0] = '.'.join(pieces[0])
+
         output[pieces[0]] = pieces[1].upper().split(',')
 
     if '*.*' not in output:

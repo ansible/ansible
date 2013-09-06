@@ -149,7 +149,17 @@ These variables can be used later in the playbook like this::
 
     {{ varname }}
 
-Variables are passed through the Jinja2 templating engine, and support the use of filters to modify the variable (for example: `{{ varname|int }}` ensures the variable is interpreted as an integer). To learn more about Jinja2, you can optionally see the `Jinja2 docs <http://jinja.pocoo.org/docs/>`_ - though remember that Jinja2 loops and conditionals are only for 'templates' in Ansible, in playbooks, ansible has the 'when' and 'with' keywords for conditionals and loops.
+Variables are passed through the Jinja2 templating engine. Any valid Jinja2
+expression can be used between the curly braces,  including the use of filters
+to modify the variable (for example, `{{ varname|int }}` ensures the variable is
+interpreted as an integer).
+
+Jinja2 expressions are very similar to Python and even if you are not working
+with Python you should feel comfortable with them. See the `Jinja2 documentation
+<http://jinja.pocoo.org/docs/templates/>`_ to learn more about the syntax.
+Please note that Jinja2 loops and conditionals are only useful in Ansible
+templates, not in playbooks. Use the 'when' and 'with' keywords for
+conditionals and loops in Ansible playbooks.
 
 If there are discovered variables about the system, called 'facts', these variables bubble up back into the playbook, and can be used on each system just like explicitly set variables.  Ansible provides several
 of these, prefixed with 'ansible', which are documented under 'setup' in the module documentation.  Additionally,
@@ -545,6 +555,15 @@ If you want to define certain tasks to happen before AND after roles are applied
    If using tags with tasks (described later as a means of only running part of a playbook),  
    be sure to also tag your pre_tasks and post_tasks and pass those along as well, especially if the pre
    and post tasks are used for monitoring outage window control or load balancing.
+
+Role Default Variables
+``````````````````````
+
+.. versionadded:: 1.3
+
+Role default variables allow you to set default variables for included or dependedent roles (see below). To create
+defaults, simply add a `defaults/main.yml` file in your role directory. These variables will have the lowest priority
+of any variables available, and can be easily overridden by any other variable, including inventory variables.
 
 Role Dependencies
 `````````````````

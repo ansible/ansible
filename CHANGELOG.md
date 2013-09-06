@@ -16,7 +16,8 @@ Highlighted new features:
 * if --forks exceeds the numbers of hosts, it will be automatically reduced. Set forks to 0 and you get "as many forks as I have hosts" out of the box.
 * enabled error_on_undefined_vars by default, which will make errors in playbooks more obvious
 * role dependencies -- one role can now pull in another, with parameters of its own.
-* added the ability to have tasks execute even during a check run (always_run)
+* added the ability to have tasks execute even during a check run (always_run).
+* added the ability to set the maximum failure percentage for a group of hosts.
 
 New modules:
 
@@ -26,6 +27,9 @@ New modules:
 * cloud: linode -- modules for Linode provisioning that also includes inventory support
 * cloud: route53 -- manage Amazon DNS entries 
 * cloud: ec2_ami -- manages (and creates!) ec2 AMIs
+* database: mysql_replication -- manages mysql replication settings for masters/slaves
+* database: mysql_variables -- manages mysql runtime variables
+* database: redis -- manages redis databases (slave mode and flushing data)
 * net_infrastructure: arista_interface
 * net_infrastructure: arista_lag
 * net_infrastructure: arista_l2interface
@@ -37,7 +41,6 @@ New modules:
 * monitoring: boundary_meter -- adds or removes boundary.com meters
 * net_infrastructure: dnsmadeeasy - manipulate DNS Made Easy records
 * files: xattr -- manages extended attributes on files
-* database: redis -- manages redis databases (slave mode and flushing data)
 
 Misc changes:
 

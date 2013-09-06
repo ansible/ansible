@@ -307,7 +307,8 @@ Sometimes you will want to skip a particular step on a particular host.  This co
 as simple as not installing a certain package if the operating system is a particular version,
 or it could be something like performing some cleanup steps if a filesystem is getting full.
 
-This is easy to do in Ansible, with the `when` clause, which actually is a Python expression.
+This is easy to do in Ansible, with the `when` clause, which contains a Jinja2 expression (see chapter
+`Playbooks <http://www.ansibleworks.com/docs/playbooks.html#vars-section>`_ for more info).
 Don't panic -- it's actually pretty simple::
 
     tasks:
@@ -883,6 +884,27 @@ use case, you can define how many hosts Ansible should manage at a single time b
 In the above example, if we had 100 hosts, 3 hosts in the group 'webservers'
 would complete the play completely before moving on to the next 3 hosts.
 
+Maximum Failure Percentage
+``````````````````````````
+
+.. versionadded:: 1.3
+
+By default, Ansible will continue executing actions as long as there are hosts in the group that have not yet failed.
+In some situations, such as with the rolling updates described above, it may be desireable to abort the play when a 
+certain threshold of failures have been reached. To acheive this, as of version 1.3 you can set a maximum failure 
+percentage on a play as follows::
+
+    - hosts: webservers
+      max_fail_percentage: 30
+      serial: 10
+
+In the above example, if more than 3 of the 10 servers in the group were to fail, the rest of the play would be aborted.
+
+.. note::
+
+     The percentage set must be exceeded, not equaled. For example, if serial were set to 4 and you wanted the task to abort 
+     when 2 of the systems failed, the percentage should be set at 49 rather than 50.
+
 Delegation
 ``````````
 
@@ -1130,8 +1152,8 @@ Running a task in check mode
 .. versionadded:: 1.3
 
 Sometimes you may want to have a task to be executed even in check
-mode. To achieve this use the `always_run` clause on the task. Its
-value is a Python expression, just like the `when` clause. In simple
+mode. To achieve this, use the `always_run` clause on the task. Its
+value is a Jinja2 expression, just like the `when` clause. In simple
 cases a boolean YAML value would be sufficient as a value.
 
 Example::
