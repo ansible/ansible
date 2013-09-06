@@ -84,7 +84,7 @@ active_user   = pwd.getpwuid(os.geteuid())[0]
 if getattr(sys, "real_prefix", None):
     DIST_MODULE_PATH = os.path.join(sys.prefix, 'share/ansible/')
 else:
-    DIST_MODULE_PATH = '/usr/share/ansible/'
+    DIST_MODULE_PATH = os.environ.get('ANSIBLE_LIBRARY', '/usr/share/ansible/')
 
 # sections in config file
 DEFAULTS='defaults'
