@@ -1086,26 +1086,27 @@ class AIX(Hardware):
 
 
         rc, out, err = module.run_command("/usr/sbin/lsdev -Cc processor")
-        i = 0
-        for line in out.split('\n'):
+        if out:
+            i = 0
+            for line in out.split('\n'):
 
-            if 'Available' in line:
-                if i == 0:
-                    data = line.split(' ')
-                    cpudev = data[0]
+                if 'Available' in line:
+                    if i == 0:
+                        data = line.split(' ')
+                        cpudev = data[0]
 
-                i += 1
-        self.facts['processor_count'] = int(i)
+                    i += 1
+            self.facts['processor_count'] = int(i)
 
-        rc, out, err = module.run_command("/usr/sbin/lsattr -El " + cpudev + " -a type")
+            rc, out, err = module.run_command("/usr/sbin/lsattr -El " + cpudev + " -a type")
 
-        data = out.split(' ')
-        self.facts['processor'] = data[1]
+            data = out.split(' ')
+            self.facts['processor'] = data[1]
 
-        rc, out, err = module.run_command("/usr/sbin/lsattr -El " + cpudev + " -a smt_threads")
+            rc, out, err = module.run_command("/usr/sbin/lsattr -El " + cpudev + " -a smt_threads")
 
-        data = out.split(' ')
-        self.facts['processor_cores'] = int(data[1])
+            data = out.split(' ')
+            self.facts['processor_cores'] = int(data[1])
 
     def get_memory_facts(self):
         pagesize = 4096
@@ -1123,12 +1124,13 @@ class AIX(Hardware):
         # /dev/ada0p3        314368        0   314368     0%
         #
         rc, out, err = module.run_command("/usr/sbin/lsps -s")
-        lines = out.split('\n')
-        data = lines[1].split()
-        swaptotal_mb = long(data[0].rstrip('MB'))
-        percused = int(data[1].rstrip('%'))
-        self.facts['swaptotal_mb'] = swaptotal_mb
-        self.facts['swapfree_mb'] = long(swaptotal_mb * ( 100 - percused ) / 100)
+        if out:
+            lines = out.split('\n')
+            data = lines[1].split()
+            swaptotal_mb = long(data[0].rstrip('MB'))
+            percused = int(data[1].rstrip('%'))
+            self.facts['swaptotal_mb'] = swaptotal_mb
+            self.facts['swapfree_mb'] = long(swaptotal_mb * ( 100 - percused ) / 100)
 
     def get_dmi_facts(self):
         rc, out, err = module.run_command("/usr/sbin/lsattr -El sys0 -a fwversion")
