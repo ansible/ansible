@@ -85,7 +85,7 @@ class Connection(object):
                                  "-o", "PubkeyAuthentication=no"]
         else:
             self.common_args += ["-o", "KbdInteractiveAuthentication=no",
-                                 "-o", "PreferredAuthentications=gssapi-with-mic,hostbased,publickey",
+                                 "-o", "PreferredAuthentications=gssapi-with-mic,gssapi-keyex,hostbased,publickey",
                                  "-o", "PasswordAuthentication=no"]
         if self.user != pwd.getpwuid(os.geteuid())[0]:
             self.common_args += ["-o", "User="+self.user]
