@@ -1,0 +1,110 @@
+#!/usr/bin/python
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: ec2_snapshot
+short_description:
+
+'''
+
+EXAMPLES = '''
+'''
+
+import sys
+import time
+
+try:
+    import boto.ec2
+    from boto.exception import EC2ResponseError
+except ImportError:
+    print "failed=True msg='boto required for this module'"
+    sys.exit(1)
+
+AWS_REGIONS = ['ap-northeast-1',
+               'ap-southeast-1',
+               'ap-southeast-2',
+               'eu-west-1',
+               'sa-east-1',
+               'us-east-1',
+               'us-west-1',
+               'us-west-2']
+
+def get_latest_snapshots(ec2, volumes, snapshot_ids=None, owner=None, restorable_by=None, filters=None):
+    snapshots = ec2.get_all_snapshots(snapshot_ids, owner, restorable_by, filters)
+    volume_list = [volume for volume in volumes]
+    snapshots.sort(key=lambda snapshot: snapshot.start_time, reverse=True)
+    snapshot_list = []
+    for snapshot in snapshots:
+        if snapshot.status == 'completed' and snapshot.volume_id in volume_list:
+            snapshot_list.append(snapshot.id)
+            volume_list.remove(snapshot.volume_id)
+            if len(volume_list) == 0:
+                return snapshot_list
+    return []
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            volumes = dict(),
+            snapshot_ids = dict(),
+            owner = dict(),
+            restorable_by = dict(),
+            filters = dict(),
+            ec2_url = dict(),
+            aws_secret_key = dict(aliases=['ec2_secret_key', 'secret_key'], no_log=True),
+            aws_access_key = dict(aliases=['ec2_access_key', 'access_key']),
+        )
+    )
+
+    volumes = module.params.get('volumes')
+    snapshot_ids = module.params.get('snapshot_ids')
+    owner = module.params.get('owner')
+    restorable_by = module.params.get('restorable_by')
+    filters = module.params.get('filters')
+    ec2_url = module.params.get('ec2_url')
+    aws_secret_key = module.params.get('aws_secret_key')
+    aws_access_key = module.params.get('aws_access_key')
+
+    if not ec2_url and 'EC2_URL' in os.environ:
+        ec2_url = os.environ['EC2_URL']
+
+    if not aws_secret_key:
+        if 'AWS_SECRET_KEY' in os.environ:
+            aws_secret_key = os.environ['AWS_SECRET_KEY']
+        elif 'EC2_SECRET_KEY' in os.environ:
+            aws_secret_key = os.environ['EC2_SECRET_KEY']
+
+    if ec2_url:
+        try:
+            ec2 = boto.connect_ec2_endpoint(ec2_url, aws_access_key, aws_secret_key)
+        except boto.exception.NoAuthHandlerFound, e:
+            module.fail_json(msg = str(e))
+    else:
+        try:
+            ec2 = boto.connect_ec2(aws_access_key, aws_secret_key)
+        except boto.exception.NoAuthHandlerFound, e:
+            module.fail_json(msg = str(e))
+
+    if volumes:
+        module.exit_json(snapshots=get_latest_snapshots(ec2, volumes, snapshot_ids, owner, restorable_by, filters))
+    else:
+        module.exit_json(**ec2.get_all_snapshots(snapshot_ids, owner, restorable_by, filters))
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+main()
