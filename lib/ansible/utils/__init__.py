@@ -393,8 +393,9 @@ def merge_hash(a, b):
 def md5s(data):
     ''' Return MD5 hex digest of data. '''
 
+    buf = StringIO.StringIO(data)
     digest = _md5()
-    digest.update(data.encode('utf-8'))
+    digest.update(buf.read())
     return digest.hexdigest()
 
 def md5(filename):
