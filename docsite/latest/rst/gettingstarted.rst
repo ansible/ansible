@@ -40,7 +40,7 @@ also need:
 .. note::
 
    If you have SELinux enabled on remote nodes, you will also want to install
-   python-selinux on them before using any copy/file/template related functions in
+   libselinux-python on them before using any copy/file/template related functions in
    Ansible. You can of course still use the yum module in Ansible to install this package on
    remote systems that do not have it.
 
