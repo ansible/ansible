@@ -24,12 +24,14 @@ module: bigip_pool_member
 short_description: "Manages F5 BIG-IP LTM pool members"
 description:
     - "Manages F5 BIG-IP LTM pool members via iControl SOAP API"
-version_added: "TBD"
+version_added: "1.3"
 author: Matt Hite
 notes:
     - "Requires BIG-IP software version >= 11"
     - "F5 developed module 'bigsuds' required (see http://devcentral.f5.com)"
     - "Best run as a local_action in your playbook"
+    - "Supersedes bigip_pool for managing pool members"
+
 requirements:
     - bigsuds
 options:
@@ -77,14 +79,14 @@ options:
         aliases: []
     host:
         description:
-            - "Pool member IP"
+            - Pool member IP
         required: true
         default: null
         choices: []
         aliases: ['address', 'name']
     port:
         description:
-            - "Pool member port"
+            - Pool member port
         required: true
         default: null
         choices: []
@@ -121,10 +123,54 @@ options:
 
 EXAMPLES = '''
 
-TBD
-TBD
-TBD
-TBD
+## playbook task examples:
+
+---
+# file bigip-test.yml
+# ...
+- hosts: bigip-test
+  tasks:
+  - name: Add pool member
+    local_action: >
+      bigip_pool_member
+      server=lb.mydomain.com
+      user=admin
+      password=mysecret
+      state=present
+      pool=matthite-pool
+      partition=matthite
+      host="{{ ansible_default_ipv4["address"] }}"
+      port=80
+      description="web server"
+      connection_limit=100
+      rate_limit=50
+      ratio=2
+
+  - name: Modify pool member ratio and description
+    local_action: >
+      bigip_pool_member
+      server=lb.mydomain.com
+      user=admin
+      password=mysecret
+      state=present
+      pool=matthite-pool
+      partition=matthite
+      host="{{ ansible_default_ipv4["address"] }}"
+      port=80
+      ratio=1
+      description="nginx server"
+
+  - name: Remove pool member from pool
+    local_action: >
+      bigip_pool_member
+      server=lb.mydomain.com
+      user=admin
+      password=mysecret
+      state=absent
+      pool=matthite-pool
+      partition=matthite
+      host="{{ ansible_default_ipv4["address"] }}"
+      port=80
 
 '''
 
@@ -231,7 +277,6 @@ def set_ratio(api, pool, address, port, ratio):
     api.LocalLB.Pool.set_member_ratio(pool_names=[pool], members=[members], ratios=[[ratio]])
 
 def main():
-
     module = AnsibleModule(
         argument_spec = dict(
             server = dict(type='str', required=True),
@@ -278,7 +323,7 @@ def main():
     try:
         api = bigip_api(server, user, password)
         if not pool_exists(api, pool):
-            module.fail_json(msg="pool does not exist")
+            module.fail_json(msg="pool %s does not exist" % pool)
         result = {'changed': False}  # default
 
         if state == 'absent':
