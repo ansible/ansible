@@ -43,16 +43,29 @@ options:
       - List of ELB names, required for registration. The ec2_elbs fact should be used if there was a previous de-register.
     required: false
     default: None
-  ec2_secret_key:
+  aws_secret_key:
     description:
-      - AWS Secret API key
+      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
+    required: false
+    def2ault: None
+    aliases: ['ec2_secret_key', 'secret_key' ]
+  aws_access_key:
+    description:
+      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
     required: false
     default: None
-  ec2_access_key:
+    aliases: ['ec2_access_key', 'access_key' ]
+  region:
     description:
-      - AWS Access API key
+      - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
     required: false
-    default: None
+    aliases: ['aws_region', 'ec2_region']
+  wait:
+    description:
+      - Wait for instance registration or deregistration to complete successfully before returning.  
+    required: false
+    default: yes
+    choices: [ "yes", "no" ] 
 
 """
 
@@ -73,31 +86,44 @@ post_tasks:
     local_action: ec2_elb
     args:
       instance_id: "{{ ansible_ec2_instance_id }}"
-      ec2_elbs: "{{ ec2_elbs }}"
+      ec2_elbs: "{{ item }}"
       state: 'present'
+    with_items: ec2_elbs
 """
 
 import time
 import sys
 import os
 
+AWS_REGIONS = ['ap-northeast-1',
+               'ap-southeast-1',
+               'ap-southeast-2',
+               'eu-west-1',
+               'sa-east-1',
+               'us-east-1',
+               'us-west-1',
+               'us-west-2']
+
 try:
     import boto
+    import boto.ec2.elb
+    from boto.regioninfo import RegionInfo
 except ImportError:
     print "failed=True msg='boto required for this module'"
     sys.exit(1)
-
 
 class ElbManager:
     """Handles EC2 instance ELB registration and de-registration"""
 
     def __init__(self, module, instance_id=None, ec2_elbs=None,
-                 ec2_access_key=None, ec2_secret_key=None):
-        self.ec2_access_key = ec2_access_key
-        self.ec2_secret_key = ec2_secret_key
+                 aws_access_key=None, aws_secret_key=None, region=None):
+        self.aws_access_key = aws_access_key
+        self.aws_secret_key = aws_secret_key
         self.module = module
         self.instance_id = instance_id
+        self.region = region
         self.lbs = self._get_instance_lbs(ec2_elbs)
+
         # if there are no ELBs to operate on
         # there will be no changes made
         if len(self.lbs) > 0:
@@ -105,21 +131,34 @@ class ElbManager:
         else:
             self.changed = False
 
-    def deregister(self):
+    def deregister(self, wait):
         """De-register the instance from all ELBs and wait for the ELB
         to report it out-of-service"""
 
         for lb in self.lbs:
             lb.deregister_instances([self.instance_id])
-            self._await_elb_instance_state(lb, 'OutOfService')
+            if wait: 
+                self._await_elb_instance_state(lb, 'OutOfService')
 
-    def register(self):
+    def register(self, wait):
         """Register the instance for all ELBs and wait for the ELB
         to report the instance in-service"""
 
         for lb in self.lbs:
             lb.register_instances([self.instance_id])
-            self._await_elb_instance_state(lb, 'InService')
+            if wait:
+                self._await_elb_instance_state(lb, 'InService')
+
+    def exists(self, lbtest):
+        """ Verify that the named ELB actually exists """
+        
+        found = False
+        for lb in self.lbs:
+            if lb.name == lbtest:
+                found=True
+                break
+        return found
+
 
     def _await_elb_instance_state(self, lb, awaited_state):
         """Wait for an ELB to change state
@@ -140,9 +179,12 @@ class ElbManager:
                   are attached to self.instance_id"""
 
         try:
-            elb = boto.connect_elb(self.ec2_access_key, self.ec2_secret_key)
+            endpoint="elasticloadbalancing.%s.amazonaws.com" % self.region
+            connect_region = RegionInfo(name=self.region, endpoint=endpoint)
+            elb = boto.ec2.elb.ELBConnection(self.aws_access_key, self.aws_secret_key, region=connect_region)
         except boto.exception.NoAuthHandlerFound, e:
             self.module.fail_json(msg=str(e))
+
         elbs = elb.get_all_load_balancers()
 
         if ec2_elbs:
@@ -163,32 +205,57 @@ def main():
             state={'required': True,
                     'choices': ['present', 'absent']},
             instance_id={'required': True},
-            ec2_elbs={'default': None, 'required': False},
-            ec2_secret_key={'default': None, 'aliases': ['EC2_SECRET_KEY']},
-            ec2_access_key={'default': None, 'aliases': ['EC2_ACCESS_KEY']}
+            ec2_elbs={'default': None, 'required': False, 'type':'list'},
+            aws_secret_key={'default': None, 'aliases': ['ec2_secret_key', 'secret_key'], 'no_log': True},
+            aws_access_key={'default': None, 'aliases': ['ec2_access_key', 'access_key']},
+            region={'default': None, 'required': False, 'aliases':['aws_region', 'ec2_region'], 'choices':AWS_REGIONS},
+            wait={'required': False, 'choices': BOOLEANS, 'default': True}
         )
     )
 
-    ec2_secret_key = module.params['ec2_secret_key']
-    ec2_access_key = module.params['ec2_access_key']
+    aws_secret_key = module.params['aws_secret_key']
+    aws_access_key = module.params['aws_access_key']
     ec2_elbs = module.params['ec2_elbs']
+    region = module.params['region']
+    wait = module.params['wait']
 
     if module.params['state'] == 'present' and 'ec2_elbs' not in module.params:
         module.fail_json(msg="ELBs are required for registration")
 
-    if not ec2_secret_key and 'EC2_SECRET_KEY' in os.environ:
-        ec2_secret_key = os.environ['EC2_SECRET_KEY']
-    if not ec2_access_key and 'EC2_ACCESS_KEY' in os.environ:
-        ec2_access_key = os.environ['EC2_ACCESS_KEY']
+    if not aws_secret_key:
+        if  'AWS_SECRET_KEY' in os.environ:
+            aws_secret_key = os.environ['AWS_SECRET_KEY']
+        elif 'EC2_SECRET_KEY' in os.environ:
+            aws_secret_key = os.environ['EC2_SECRET_KEY']
+
+    if not aws_access_key:
+        if 'AWS_ACCESS_KEY' in os.environ:
+            aws_access_key = os.environ['AWS_ACCESS_KEY']
+        elif 'EC2_ACCESS_KEY' in os.environ:
+            aws_access_key = os.environ['EC2_ACCESS_KEY']
+
+    if not region:
+        if 'AWS_REGION' in os.environ:
+            region = os.environ['AWS_REGION']
+        elif 'EC2_REGION' in os.environ:
+            region = os.environ['EC2_REGION']
+
+    if not region:
+        module.fail_json(msg=str("Either region or EC2_REGION environment variable must be set."))
 
     instance_id = module.params['instance_id']
-    elb_man = ElbManager(module, instance_id, ec2_elbs, ec2_access_key,
-                         ec2_secret_key)
+    elb_man = ElbManager(module, instance_id, ec2_elbs, aws_access_key,
+                         aws_secret_key, region=region)
+
+    for elb in ec2_elbs:
+        if not elb_man.exists(elb):
+            msg="ELB %s does not exist" % elb
+            module.fail_json(msg=msg)
 
     if module.params['state'] == 'present':
-        elb_man.register()
+        elb_man.register(wait)
     elif module.params['state'] == 'absent':
-        elb_man.deregister()
+        elb_man.deregister(wait)
 
     ansible_facts = {'ec2_elbs': [lb.name for lb in elb_man.lbs]}
     ec2_facts_result = dict(changed=elb_man.changed, ansible_facts=ansible_facts)

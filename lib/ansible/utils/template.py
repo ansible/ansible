@@ -28,6 +28,7 @@ import time
 import subprocess
 import datetime
 import pwd
+import ast
 
 class Globals(object):
 
@@ -295,42 +296,48 @@ def legacy_varReplace(basedir, raw, vars, lookup_fatal=True, depth=0, expand_lis
 
 # TODO: varname is misnamed here
 
-def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=True, convert_bare=False, fail_on_undefined=False):
+def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=True, convert_bare=False, fail_on_undefined=False, filter_fatal=True):
     ''' templates a data structure by traversing it and substituting for other data structures '''
 
-    if convert_bare and isinstance(varname, basestring):
-        first_part = varname.split(".")[0].split("[")[0]
-        if first_part in vars and '{{' not in varname and '$' not in varname:
-            varname = "{{%s}}" % varname
-
-    if isinstance(varname, basestring):
-        if '{{' in varname or '{%' in varname:
-            varname = template_from_string(basedir, varname, vars, fail_on_undefined)
-        if not '$' in varname:
-            return varname
-
-        m = _legacy_varFind(basedir, varname, vars, lookup_fatal, depth, expand_lists)
-        if not m:
-            return varname
-        if m['start'] == 0 and m['end'] == len(varname):
-            if m['replacement'] is not None:
-                Flags.LEGACY_TEMPLATE_WARNING = True
-                return template(basedir, m['replacement'], vars, lookup_fatal, depth, expand_lists)
-            else:
+    try:
+        if convert_bare and isinstance(varname, basestring):
+            first_part = varname.split(".")[0].split("[")[0]
+            if first_part in vars and '{{' not in varname and '$' not in varname:
+                varname = "{{%s}}" % varname
+    
+        if isinstance(varname, basestring):
+            if '{{' in varname or '{%' in varname:
+                varname = template_from_string(basedir, varname, vars, fail_on_undefined)
+            if not '$' in varname:
                 return varname
+    
+            m = _legacy_varFind(basedir, varname, vars, lookup_fatal, depth, expand_lists)
+            if not m:
+                return varname
+            if m['start'] == 0 and m['end'] == len(varname):
+                if m['replacement'] is not None:
+                    Flags.LEGACY_TEMPLATE_WARNING = True
+                    return template(basedir, m['replacement'], vars, lookup_fatal, depth, expand_lists)
+                else:
+                    return varname
+            else:
+                Flags.LEGACY_TEMPLATE_WARNING = True
+                return legacy_varReplace(basedir, varname, vars, lookup_fatal, depth, expand_lists)
+    
+        elif isinstance(varname, (list, tuple)):
+            return [template(basedir, v, vars, lookup_fatal, depth, expand_lists, fail_on_undefined=fail_on_undefined) for v in varname]
+        elif isinstance(varname, dict):
+            d = {}
+            for (k, v) in varname.iteritems():
+                d[k] = template(basedir, v, vars, lookup_fatal, depth, expand_lists, fail_on_undefined=fail_on_undefined)
+            return d
         else:
-            Flags.LEGACY_TEMPLATE_WARNING = True
-            return legacy_varReplace(basedir, varname, vars, lookup_fatal, depth, expand_lists)
-
-    elif isinstance(varname, (list, tuple)):
-        return [template(basedir, v, vars, lookup_fatal, depth, expand_lists) for v in varname]
-    elif isinstance(varname, dict):
-        d = {}
-        for (k, v) in varname.iteritems():
-            d[k] = template(basedir, v, vars, lookup_fatal, depth, expand_lists)
-        return d
-    else:
-        return varname
+            return varname
+    except errors.AnsibleFilterError:
+        if filter_fatal:
+            raise
+        else:
+            return varname
 
 
 class _jinja2_vars(object):
@@ -344,10 +351,11 @@ class _jinja2_vars(object):
     extras is a list of locals to also search for variables.
     '''
 
-    def __init__(self, basedir, vars, globals, *extras):
+    def __init__(self, basedir, vars, globals, fail_on_undefined, *extras):
         self.basedir = basedir
         self.vars = vars
         self.globals = globals
+        self.fail_on_undefined = fail_on_undefined
         self.extras = extras
 
     def __contains__(self, k):
@@ -374,7 +382,7 @@ class _jinja2_vars(object):
         if isinstance(var, dict) and type(var) != dict:
             return var
         else:
-            return template(self.basedir, var, self.vars)
+            return template(self.basedir, var, self.vars, fail_on_undefined=self.fail_on_undefined)
 
     def add_locals(self, locals):
         '''
@@ -383,7 +391,7 @@ class _jinja2_vars(object):
         '''
         if locals is None:
             return self
-        return _jinja2_vars(self.basedir, self.vars, self.globals, locals, *self.extras)
+        return _jinja2_vars(self.basedir, self.vars, self.globals, self.fail_on_undefined, locals, *self.extras)
 
 class J2Template(jinja2.environment.Template):
     '''
@@ -429,7 +437,7 @@ def template_from_file(basedir, path, vars):
         data = data[eol+1:]
         for pair in line.split(','):
             (key,val) = pair.split(':')
-            setattr(environment,key.strip(),val.strip())
+            setattr(environment,key.strip(),ast.literal_eval(val.strip()))
 
     environment.template_class = J2Template
     t = environment.from_string(data)
@@ -460,7 +468,7 @@ def template_from_file(basedir, path, vars):
     # Ideally, this could use some API where setting shared=True and the object won't get
     # passed through dict(o), but I have not found that yet.
     try:
-        res = jinja2.utils.concat(t.root_render_func(t.new_context(_jinja2_vars(basedir, vars, t.globals), shared=True)))
+        res = jinja2.utils.concat(t.root_render_func(t.new_context(_jinja2_vars(basedir, vars, t.globals, fail_on_undefined), shared=True)))
     except jinja2.exceptions.UndefinedError, e:
         raise errors.AnsibleUndefinedVariable("One or more undefined variables: %s" % str(e))
 
@@ -501,12 +509,11 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
 
         t.globals['lookup'] = my_lookup
 
-        res = jinja2.utils.concat(t.root_render_func(t.new_context(_jinja2_vars(basedir, vars, t.globals), shared=True)))
+        res = jinja2.utils.concat(t.root_render_func(t.new_context(_jinja2_vars(basedir, vars, t.globals, fail_on_undefined), shared=True)))
         return res
     except jinja2.exceptions.UndefinedError:
         if fail_on_undefined:
             raise
         else:
-        # this shouldn't happen due to undeclared check above
             return data
 

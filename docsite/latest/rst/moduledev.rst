@@ -9,7 +9,6 @@ by `ANSIBLE_LIBRARY` or the ``--module-path`` command line option.
 
 .. contents::
    :depth: 2
-   :backlinks: top
 
 
 Tutorial

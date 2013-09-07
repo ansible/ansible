@@ -25,6 +25,7 @@ import select
 import fcntl
 import hmac
 import pwd
+import gettext
 from hashlib import sha1
 import ansible.constants as C
 from ansible.callbacks import vvv
@@ -37,12 +38,16 @@ class Connection(object):
     def __init__(self, runner, host, port, user, password, private_key_file, *args, **kwargs):
         self.runner = runner
         self.host = host
+        self.ipv6 = ':' in self.host
         self.port = port
         self.user = user
         self.password = password
         self.private_key_file = private_key_file
-        self.cp_dir = utils.prepare_writeable_dir('$HOME/.ansible/cp',mode=0700)
         self.HASHED_KEY_MAGIC = "|1|"
+
+        fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_EX)
+        self.cp_dir = utils.prepare_writeable_dir('$HOME/.ansible/cp',mode=0700)
+        fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_UN)
 
     def connect(self):
         ''' connect to the remote host '''
@@ -83,6 +88,7 @@ class Connection(object):
                                  "-o", "PubkeyAuthentication=no"]
         else:
             self.common_args += ["-o", "KbdInteractiveAuthentication=no",
+                                 "-o", "PreferredAuthentications=gssapi-with-mic,gssapi-keyex,hostbased,publickey",
                                  "-o", "PasswordAuthentication=no"]
         if self.user != pwd.getpwuid(os.geteuid())[0]:
             self.common_args += ["-o", "User="+self.user]
@@ -97,7 +103,7 @@ class Connection(object):
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 p.communicate()
             except OSError:
-                raise errors.AnsibleError("to use -c ssh with passwords, you must install the sshpass program")
+                raise errors.AnsibleError("to use the 'ssh' connection type with passwords, you must install the sshpass program")
             (self.rfd, self.wfd) = os.pipe()
             return ["sshpass", "-d%d" % self.rfd]
         return []
@@ -141,7 +147,10 @@ class Connection(object):
         ''' run a command on the remote host '''
 
         ssh_cmd = self._password_cmd()
-        ssh_cmd += ["ssh", "-tt", "-q"] + self.common_args + [self.host]
+        ssh_cmd += ["ssh", "-tt", "-q"] + self.common_args
+        if self.ipv6:
+            ssh_cmd += ['-6']
+        ssh_cmd += [self.host]
 
         if not self.runner.sudo or not sudoable:
             if executable:
@@ -201,6 +210,14 @@ class Connection(object):
         stderr = ''
         while True:
             rfd, wfd, efd = select.select([p.stdout, p.stderr], [], [p.stdout, p.stderr], 1)
+
+            # fail early if the sudo password is wrong
+            if self.runner.sudo and sudoable and self.runner.sudo_pass:
+                incorrect_password = gettext.dgettext(
+                    "sudo", "Sorry, try again.")
+                if stdout.endswith("%s\r\n%s" % (incorrect_password, prompt)):
+                    raise errors.AnsibleError('Incorrect sudo password') 
+
             if p.stdout in rfd:
                 dat = os.read(p.stdout.fileno(), 9000)
                 stdout += dat
@@ -235,13 +252,17 @@ class Connection(object):
             raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
         cmd = self._password_cmd()
 
+        host = self.host
+        if self.ipv6:
+            host = '[%s]' % host
+
         if C.DEFAULT_SCP_IF_SSH:
             cmd += ["scp"] + self.common_args
-            cmd += [in_path,self.host + ":" + out_path]
+            cmd += [in_path,host + ":" + pipes.quote(out_path)]
             indata = None
         else:
-            cmd += ["sftp"] + self.common_args + [self.host]
-            indata = "put %s %s\n" % (in_path, out_path)
+            cmd += ["sftp"] + self.common_args + [host]
+            indata = "put %s %s\n" % (pipes.quote(in_path), pipes.quote(out_path))
 
         p = subprocess.Popen(cmd, stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -256,12 +277,16 @@ class Connection(object):
         vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host)
         cmd = self._password_cmd()
 
+        host = self.host
+        if self.ipv6:
+            host = '[%s]' % host
+
         if C.DEFAULT_SCP_IF_SSH:
             cmd += ["scp"] + self.common_args
-            cmd += [self.host + ":" + in_path, out_path]
+            cmd += [host + ":" + in_path, out_path]
             indata = None
         else:
-            cmd += ["sftp"] + self.common_args + [self.host]
+            cmd += ["sftp"] + self.common_args + [host]
             indata = "get %s %s\n" % (in_path, out_path)
 
         p = subprocess.Popen(cmd, stdin=subprocess.PIPE,

@@ -189,12 +189,14 @@ class Ec2Inventory(object):
         # Regions
         self.regions = []
         configRegions = config.get('ec2', 'regions')
+        configRegions_exclude = config.get('ec2', 'regions_exclude')
         if (configRegions == 'all'):
             if self.eucalyptus_host:
                 self.regions.append(boto.connect_euca(host=self.eucalyptus_host).region.name)
             else:
                 for regionInfo in ec2.regions():
-                    self.regions.append(regionInfo.name)
+                    if regionInfo.name not in configRegions_exclude:
+                        self.regions.append(regionInfo.name)
         else:
             self.regions = configRegions.split(",")
 
@@ -244,7 +246,12 @@ class Ec2Inventory(object):
                 conn.APIVersion = '2010-08-31'
             else:
                 conn = ec2.connect_to_region(region)
-            
+
+            # connect_to_region will fail "silently" by returning None if the region name is wrong or not supported
+            if conn is None:
+                print("region name: %s likely not supported, or AWS is down.  connection to region failed." % region)
+                sys.exit(1)
+ 
             reservations = conn.get_all_instances()
             for reservation in reservations:
                 for instance in reservation.instances:
@@ -278,6 +285,11 @@ class Ec2Inventory(object):
             conn.APIVersion = '2010-08-31'
         else:
             conn = ec2.connect_to_region(region)
+
+        # connect_to_region will fail "silently" by returning None if the region name is wrong or not supported
+        if conn is None:
+            print("region name: %s likely not supported, or AWS is down.  connection to region failed." % region)
+            sys.exit(1)
 
         reservations = conn.get_all_instances([instance_id])
         for reservation in reservations:
@@ -374,8 +386,9 @@ class Ec2Inventory(object):
         
         # Inventory: Group by security group
         try:
-            key = self.to_safe("security_group_" + instance.security_group.name)
-            self.push(self.inventory, key, dest)
+            if instance.security_group:
+                key = self.to_safe("security_group_" + instance.security_group.name)
+                self.push(self.inventory, key, dest)
         except AttributeError:
             print 'Package boto seems a bit older.'
             print 'Please upgrade boto >= 2.3.0.'

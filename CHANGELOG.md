@@ -1,6 +1,145 @@
 Ansible Changes By Release
 ==========================
 
+1.3 "Top of the World" - Release pending!
+
+Highlighted new features:
+
+* accelerated mode: An enhanced fireball mode that requires zero bootstrapping and fewer requirements plus adds capabilities like sudo commands.
+* role defaults: Allows roles to define a set of variables at the lowest priority. These variables can be overridden by any other variable.
+* new /etc/ansible/facts.d allows JSON or INI-style facts to be provided from the remote node, and supports executable fact programs in this dir. Files must end in *.fact.
+* added the ability to make undefined template variables raise errors (see ansible.cfg)
+* (DOCS PENDING) sudo: True/False and sudo_user: True/False can be set at include and role level
+* added changed_when: (expression) which allows overriding whether a result is changed or not and can work with registered expressions
+* --extra-vars can now take a file as input, e.g., "-e @filename" and can also be formatted as YAML
+* external inventory scripts may now return host variables in one pass, which allows them to be much more efficient for large numbers of hosts
+* if --forks exceeds the numbers of hosts, it will be automatically reduced. Set forks to 0 and you get "as many forks as I have hosts" out of the box.
+* enabled error_on_undefined_vars by default, which will make errors in playbooks more obvious
+* role dependencies -- one role can now pull in another, with parameters of its own.
+* added the ability to have tasks execute even during a check run (always_run).
+* added the ability to set the maximum failure percentage for a group of hosts.
+
+New modules:
+
+* notifications: datadog_event -- send data to datadog
+* cloud: digital_ocean -- module for DigitalOcean provisioning that also includes inventory support
+* cloud: rds -- Amazon Relational Database Service
+* cloud: linode -- modules for Linode provisioning that also includes inventory support
+* cloud: route53 -- manage Amazon DNS entries 
+* cloud: ec2_ami -- manages (and creates!) ec2 AMIs
+* database: mysql_replication -- manages mysql replication settings for masters/slaves
+* database: mysql_variables -- manages mysql runtime variables
+* database: redis -- manages redis databases (slave mode and flushing data)
+* net_infrastructure: arista_interface
+* net_infrastructure: arista_lag
+* net_infrastructure: arista_l2interface
+* net_infrastructure: arista_vlan
+* system: stat -- reports on stat(istics) of remote files, for use with 'register'
+* web_infrastructure: htpasswd -- manipulate htpasswd files
+* packaging: rpm_key -- adds or removes RPM signing keys
+* packaging: apt_repository -- rewritten to remove dependencies 
+* monitoring: boundary_meter -- adds or removes boundary.com meters
+* net_infrastructure: dnsmadeeasy - manipulate DNS Made Easy records
+* files: xattr -- manages extended attributes on files
+
+Misc changes:
+
+* return 3 when there are hosts that were unreachable during a run
+* the yum module now supports wildcard values for the enablerepo argument
+* added an inventory script to pull host information from Zabbix
+* async mode no longer allows with_* lookup plugins due to incompatibilities
+* Added OpenRC support (Gentoo) to the service module
+* ansible_ssh_user value is available to templates
+* added placement_group parameter to ec2 module
+* new sha256sum parameter added to get_url module for checksum validation
+* search for mount binaries in system path and sbin vs assuming path
+* allowed inventory file to be read from a pipe
+* added Solaris distribution facts
+* fixed bug along error path in quantum_network module
+* user password update mode is controllable in user module now (at creation vs. every time)
+* added check mode support to the OpenBSD package module
+* Fix for MySQL 5.6 compatibility
+* HP UX virtualization facts
+* fixed some executable bits in git
+* made rhn_register module compatible with EL5
+* fix for setup module epoch time on Solaris
+* sudo_user is now expanded later, allowing it to be set at inventory scope
+* mongodb_user module changed to also support MongoDB 2.2
+* new state=hard option added to the file module for hardlinks vs softlinks
+* fixes to apt module purging option behavior
+* fixes for device facts with multiple PCI domains
+* added "with_inventory_hostnames" lookup plugin, which can take a pattern and loop over hostnames matching the pattern and is great for use with delegate_to and so on
+* ec2 module supports adding to multiple security groups
+* cloudformation module includes fixes for the error path, and the 'wait_for' parameter was removed
+* added --only-if-changed to ansible-pull, which runs only if the repo has changes (not default)
+* added 'mandatory', a Jinja2 filter that checks if a variable is defined: {{ foo|mandatory }}
+* added support for multiple size formats to the lvol module
+* timing reporting on wait_for module now includes the delay time
+* IRC module can now send a server password
+* "~" now expanded on each component of configured plugin paths
+* fix for easy_install module when dealing with virtualenv
+* rackspace module now explicitly indicates rackspace vs vanilla openstack
+* add_host module does not report changed=True any longer
+* explanatory error message when using fireball with sudo has been improved
+* git module now automatically pulls down git submodules
+* negated patterns do not require "all:!foo", you can just say "!foo" now to select all not foos
+* fix for Debian services always reporting changed when toggling enablement bit
+* roles files now tolerate files named 'main.yaml' and 'main' in addition to main.yml
+* some help cleanup to command line flags on scripts
+* force option reinstated for file module so it can create symlinks to non-existent files, etc.
+* added termination support to ec2 module
+* --ask-sudo-pass or --sudo-user does not enable all options to use sudo in ansible-playbook
+* include/role conditionals are added ahead of task conditionals so they can short circuit properly
+* added pipes.quote in various places so paths with spaces are better tolerated
+* error handling while executing Jinja2 filters has been improved
+* upgrades to atomic replacement logic when copying files across partitions/etc
+* mysql user module can try to login before requiring explicit password
+* various additional options added to supervisorctl module
+* only add non unique parameter on group creation when required
+* allow rabbitmq_plugin to specify a non-standard RabbitMQ path
+* authentication fixes to keystone_user module
+* added IAM role support to EC2 module
+* fixes for OpenBSD package module to avoid shell expansion
+* git module upgrades to allow --depth and --version to be used together
+* new lookup plugin, "with_flattened"
+* extra vars (-e) variables can be used in playbook include paths
+* improved reporting for invalid sudo passwords
+* improved reporting for inability to find a suitable tmp location
+* require libselinux-python to perform file operations if SELinux is operational
+* ZFS module fixes for byte display constants and handling paths with spaces
+* setup module more tolerant of gathering facts against things it does not have permission to read
+* can specify name=* state=latest to update all yum modules
+* major speedups to the yum module for default cases
+* ec2_facts module will now run in check mode
+* sleep option on service module for sleeping between stop/restart
+* fix for IPv6 facts on BSD
+* added Jinja2 filters: skipped, whether a result was skipped
+* added Jinja2 filters: quote, quotes a string if it needs to be quoted
+* allow force=yes to affect apt upgrades
+* fix for saving conditionals in variable names
+* support for multiple host ranges in INI inventory, e.g., db[01:10:3]node-[01:10]
+* fixes/improvements to cron module
+* add user_install=no option to gem module to install gems system wide
+* added raw=yes to allow copying without python on remote machines
+* added with_indexed_items lookup plugin
+* Linode inventory plugin now significantly faster
+* added recurse=yes parameter to pacman module for package removal
+* apt_key module can now target specific keyrings (keyring=filename)
+* ec2 module change reporting improved
+* hg module now expands user paths (~)
+* SSH connection type known host checking now can process hashed known_host files
+* lvg module now checks for executables in more correct locations
+* copy module now works correctly with sudo_user
+* region parameter added to ec2_elb module
+* better default XMPP module message types
+* fixed conditional tests against raw booleans
+* mysql module grant removal is now smarter
+* apt-remove is now forced to be non-interactive
+* support ; comments in INI file module
+* fixes to callbacks WRT async output (fire and forget tasks now trigger callbacks!)
+* folder support for s3 module
+* added new example inventory plugin for Red Hat OpenShift
+* and other misc. bugfixes
 
 1.2.3 "Hear About It Later" (reprise) -- Aug 21, 2013
 
@@ -21,7 +160,7 @@ capability, and Ansible by default in 1.2.1 and later will autodetect.
   it if so, if not falls back to paramiko.
 * Host key checking is on by default.  Disable it if you like by adding host_key_checking=False in the [default]
   section of /etc/ansible/ansible.cfg or ~/ansible.cfg or by exporting ANSIBLE_HOST_KEY_CHECKING=False
-* Paramiko now records host keys it was in contact with host key checking is on.  It is somewhat sluggish when doing this, 
+* Paramiko now records host keys it was in contact with host key checking is on.  It is somewhat sluggish when doing this,
   so switch to the 'ssh' transport if this concerns you.
 
 1.2 "Right Now" -- June 10, 2013
@@ -34,7 +173,7 @@ Core Features:
 * ability to use variables from {{ }} syntax in mainline playbooks, new 'when' conditional, as detailed
   in documentation.  Can disable old style replacements in ansible.cfg if so desired, but are still active
   by default.
-* can set ansible_private_key_file as an inventory variable (similar to ansible_ssh_host, etc)
+* can set ansible_ssh_private_key_file as an inventory variable (similar to ansible_ssh_host, etc)
 * 'when' statement can be affixed to task includes to auto-affix the conditional to each task therein
 * cosmetic: "*****" banners in ansible-playbook output are now constant width
 * --limit can now be given a filename (--limit @filename) to constrain a run to a host list on disk
@@ -51,7 +190,7 @@ Core Features:
 * more filters: ability to say {{ foo|success }} and {{ foo|failed }} and when: foo|success and when: foo|failed
 * more filters: {{ path|basename }} and {{ path|dirname }}
 * lookup plugins now use the basedir of the file they have included from, avoiding needs of ../../../ in places and
-increasing the ease at which things can be reorganized.  
+increasing the ease at which things can be reorganized.
 
 Modules added:
 
@@ -224,7 +363,7 @@ Bugfixes and Misc Changes:
 * cowsay able to run out of macports (very important!)
 * improved logging for fireball mode
 * nicer error message when talking to an older system that needs a JSON module installed
-* 'magic' variable 'inventory_basedir' now gives path to inventory file
+* 'magic' variable 'inventory_dir' now gives path to inventory file
 * 'magic' variable 'vars' works like 'hostvars' but gives global scope variables, useful for debugging in templates mostly
 * conditionals can be used on plugins like add_host
 * developers: all callbacks now have access to a ".runner" and ".playbook", ".play", and ".task" object (use getattr, they may not always be set!)
@@ -468,7 +607,7 @@ Highlighted Core Changes:
 
 Other Core Changes:
 
-* ansible config file can also go in '.ansible.cfg' in cwd in addition to ~/.ansible.cfg and /etc/ansible/ansible.cfg
+* ansible config file can also go in 'ansible.cfg' in cwd in addition to ~/.ansible.cfg and /etc/ansible/ansible.cfg
 * fix for inventory hosts at API level when hosts spec is a list and not a colon delimited string
 * ansible-pull example now sets up logrotate for the ansible-pull cron job log
 * negative host matching (!hosts) fixed for external inventory script usage

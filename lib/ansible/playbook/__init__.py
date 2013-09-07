@@ -63,6 +63,7 @@ class PlayBook(object):
         sudo_user        = C.DEFAULT_SUDO_USER,
         extra_vars       = None,
         only_tags        = None,
+        skip_tags        = None,
         subset           = C.DEFAULT_SUBSET,
         inventory        = None,
         check            = False,
@@ -97,6 +98,8 @@ class PlayBook(object):
             extra_vars = {}
         if only_tags is None:
             only_tags = [ 'all' ]
+        if skip_tags is None:
+            skip_tags = []
 
         self.check            = check
         self.diff             = diff
@@ -117,6 +120,7 @@ class PlayBook(object):
         self.global_vars      = {}
         self.private_key_file = private_key_file
         self.only_tags        = only_tags
+        self.skip_tags        = skip_tags
         self.any_errors_fatal = any_errors_fatal
 
         self.callbacks.playbook = self
@@ -128,11 +132,18 @@ class PlayBook(object):
         else:
             self.inventory    = inventory
 
+        if self.module_path is not None:
+            utils.plugins.module_finder.add_directory(self.module_path)
+
         self.basedir     = os.path.dirname(playbook) or '.'
         utils.plugins.push_basedir(self.basedir)
-        vars = {}
+        vars = extra_vars.copy()
         if self.inventory.basedir() is not None:
             vars['inventory_dir'] = self.inventory.basedir()
+
+        if self.inventory.src() is not None:
+            vars['inventory_file'] = self.inventory.src()
+
         self.filename = playbook
         (self.playbook, self.play_basedirs) = self._load_playbook_from_file(playbook, vars)
         ansible.callbacks.load_callback_plugins()
@@ -216,10 +227,13 @@ class PlayBook(object):
         for (play_ds, play_basedir) in zip(self.playbook, self.play_basedirs):
             play = Play(self, play_ds, play_basedir)
             assert play is not None
-            
+
             matched_tags, unmatched_tags = play.compare_tags(self.only_tags)
             matched_tags_all = matched_tags_all | matched_tags
             unmatched_tags_all = unmatched_tags_all | unmatched_tags
+
+            # Remove tasks we wish to skip
+            matched_tags = matched_tags - set(self.skip_tags)
 
             # if we have matched_tags, the play must be run.
             # if the play contains no tasks, assume we just want to gather facts
@@ -228,9 +242,11 @@ class PlayBook(object):
             if (len(matched_tags) > 0 or len(play.tasks()) == 3):
                 plays.append(play)
 
-        # if the playbook is invoked with --tags that don't exist at all in the playbooks
-        # then we need to raise an error so that the user can correct the arguments.
-        unknown_tags = set(self.only_tags) - (matched_tags_all | unmatched_tags_all)
+        # if the playbook is invoked with --tags or --skip-tags that don't
+        # exist at all in the playbooks then we need to raise an error so that
+        # the user can correct the arguments.
+        unknown_tags = ((set(self.only_tags) | set(self.skip_tags)) -
+                        (matched_tags_all | unmatched_tags_all))
         unknown_tags.discard('all')
 
         if len(unknown_tags) > 0:
@@ -265,7 +281,7 @@ class PlayBook(object):
         # since these likely got killed by async_wrapper
         for host in poller.hosts_to_poll:
             reason = { 'failed' : 1, 'rc' : None, 'msg' : 'timed out' }
-            self.runner_callbacks.on_failed(host, reason)
+            self.runner_callbacks.on_async_failed(host, reason, poller.jid)
             results['contacted'][host] = reason
 
         return results
@@ -291,12 +307,14 @@ class PlayBook(object):
             remote_pass=self.remote_pass, module_path=self.module_path,
             timeout=self.timeout, remote_user=task.play.remote_user,
             remote_port=task.play.remote_port, module_vars=task.module_vars,
-            private_key_file=self.private_key_file,
+            default_vars=task.default_vars, private_key_file=self.private_key_file,
             setup_cache=self.SETUP_CACHE, basedir=task.play.basedir,
             conditional=task.only_if, callbacks=self.runner_callbacks,
             sudo=task.sudo, sudo_user=task.sudo_user,
             transport=task.transport, sudo_pass=task.sudo_pass, is_playbook=True,
-            check=self.check, diff=self.diff, environment=task.environment, complex_args=task.args
+            check=self.check, diff=self.diff, environment=task.environment, complex_args=task.args, 
+            accelerate=task.play.accelerate, accelerate_port=task.play.accelerate_port,
+            error_on_undefined_vars=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR
         )
 
         if task.async_seconds == 0:
@@ -307,6 +325,9 @@ class PlayBook(object):
             if task.async_poll_interval > 0:
                 # if not polling, playbook requested fire and forget, so don't poll
                 results = self._async_poll(poller, task.async_seconds, task.async_poll_interval)
+            else:
+                for (host, res) in results.get('contacted', {}).iteritems():
+                    self.runner_callbacks.on_async_ok(host, res, poller.jid)
 
         contacted = results.get('contacted',{})
         dark      = results.get('dark', {})
@@ -326,12 +347,12 @@ class PlayBook(object):
         ansible.callbacks.set_task(self.callbacks, task)
         ansible.callbacks.set_task(self.runner_callbacks, task)
 
-        self.callbacks.on_task_start(template(play.basedir, task.name, task.module_vars, lookup_fatal=False), is_handler)
+        self.callbacks.on_task_start(template(play.basedir, task.name, task.module_vars, lookup_fatal=False, filter_fatal=False), is_handler)
         if hasattr(self.callbacks, 'skip_task') and self.callbacks.skip_task:
             ansible.callbacks.set_task(self.callbacks, None)
             ansible.callbacks.set_task(self.runner_callbacks, None)
             return True
-        
+
         # load up an appropriate ansible runner to run the task in parallel
         results = self._run_task_internal(task)
 
@@ -340,18 +361,26 @@ class PlayBook(object):
         if results is None:
             hosts_remaining = False
             results = {}
- 
+
         contacted = results.get('contacted', {})
         self.stats.compute(results, ignore_errors=task.ignore_errors)
 
         # add facts to the global setup cache
         for host, result in contacted.iteritems():
-            facts = result.get('ansible_facts', {})
-            self.SETUP_CACHE[host].update(facts)
+            if 'results' in result:
+                # task ran with_ lookup plugin, so facts are encapsulated in
+                # multiple list items in the results key
+                for res in result['results']:
+                    if type(res) == dict:
+                        facts = res.get('ansible_facts', {})
+                        self.SETUP_CACHE[host].update(facts)
+            else:
+                facts = result.get('ansible_facts', {})
+                self.SETUP_CACHE[host].update(facts)
             # extra vars need to always trump - so update  again following the facts
             self.SETUP_CACHE[host].update(self.extra_vars)
             if task.register:
-                if 'stdout' in result:
+                if 'stdout' in result and 'stdout_lines' not in result:
                     result['stdout_lines'] = result['stdout'].splitlines()
                 self.SETUP_CACHE[host][task.register] = result
 
@@ -359,7 +388,7 @@ class PlayBook(object):
         if task.ignore_errors and task.register:
             failed = results.get('failed', {})
             for host, result in failed.iteritems():
-                if 'stdout' in result:
+                if 'stdout' in result and 'stdout_lines' not in result:
                     result['stdout_lines'] = result['stdout'].splitlines()
                 self.SETUP_CACHE[host][task.register] = result
 
@@ -408,7 +437,7 @@ class PlayBook(object):
 
         self.callbacks.on_setup()
         self.inventory.restrict_to(host_list)
-        
+
         ansible.callbacks.set_task(self.callbacks, None)
         ansible.callbacks.set_task(self.runner_callbacks, None)
 
@@ -419,7 +448,8 @@ class PlayBook(object):
             remote_pass=self.remote_pass, remote_port=play.remote_port, private_key_file=self.private_key_file,
             setup_cache=self.SETUP_CACHE, callbacks=self.runner_callbacks, sudo=play.sudo, sudo_user=play.sudo_user,
             transport=play.transport, sudo_pass=self.sudo_pass, is_playbook=True, module_vars=play.vars,
-            check=self.check, diff=self.diff
+            default_vars=play.default_vars, check=self.check, diff=self.diff, 
+            accelerate=play.accelerate, accelerate_port=play.accelerate_port
         ).run()
         self.stats.compute(setup_results, setup=True)
 
@@ -438,10 +468,10 @@ class PlayBook(object):
 
     def generate_retry_inventory(self, replay_hosts):
         '''
-        called by /usr/bin/ansible when a playbook run fails. It generates a inventory 
+        called by /usr/bin/ansible when a playbook run fails. It generates a inventory
         that allows re-running on ONLY the failed hosts.  This may duplicate some
         variable information in group_vars/host_vars but that is ok, and expected.
-        ''' 
+        '''
 
         buf = StringIO.StringIO()
         for x in replay_hosts:
@@ -501,7 +531,7 @@ class PlayBook(object):
 
                     # meta tasks are an internalism and are not valid for end-user playbook usage
                     # here a meta task is a placeholder that signals handlers should be run
- 
+
                     if task.meta == 'flush_handlers':
                         for handler in play.handlers():
                             if len(handler.notified_by) > 0:
@@ -524,11 +554,17 @@ class PlayBook(object):
                 for x in self.only_tags:
 
                     for y in task.tags:
-                        if (x==y):
+                        if x == y:
                             should_run = True
                             break
 
+                # Check for tags that we need to skip
                 if should_run:
+                    if any(x in task.tags for x in self.skip_tags):
+                        should_run = False
+
+                if should_run:
+
                     if not self._run_task(play, task, False):
                         # whether no hosts matched is fatal or not depends if it was on the initial step.
                         # if we got exactly no hosts on the first step (setup!) then the host group
@@ -540,19 +576,14 @@ class PlayBook(object):
                 if task.any_errors_fatal and len(host_list) < hosts_count:
                     host_list = None
 
+                # If threshold for max nodes failed is exceeded , bail out.
+                if (hosts_count - len(host_list)) > int((play.max_fail_pct)/100.0 * hosts_count):
+                    host_list = None
+                    
                 # if no hosts remain, drop out
                 if not host_list:
                     self.callbacks.on_no_hosts_remaining()
                     return False
-
-            # run notify actions
-            #for handler in play.handlers():
-            #    if len(handler.notified_by) > 0:
-            #        self.inventory.restrict_to(handler.notified_by)
-            #        self._run_task(play, handler, True)
-            #        self.inventory.lift_restriction()
-            #        handler.notified_by = []
-            #    handler.notified_by = []
 
             self.inventory.lift_also_restriction()
 

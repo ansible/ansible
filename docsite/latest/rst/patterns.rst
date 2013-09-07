@@ -9,7 +9,6 @@ Ansible's inventory file, which defaults to /etc/ansible/hosts.
 
 .. contents::
    :depth: 2
-   :backlinks: top
 
 .. _inventoryformat:
 
@@ -67,6 +66,42 @@ In 1.1 and later, you can also select the connection type and user on a per host
 
 All of these variables can of course also be set outside of the inventory file, in 'host_vars' if you wish
 to keep your inventory file simple.
+
+List of Reserved Inventory Parameters
++++++++++++++++++++++++++++++++++++++
+
+As a summary, you can set these parameters as host inventory variables.  (Some we have already
+mentioned).
+
+ansible_ssh_host
+  The name of the host to connect to, if different from the alias you wish to give to it.
+ansible_ssh_port
+  The ssh port number, if not 22
+ansible_ssh_user
+  The default ssh user name to use.
+ansible_ssh_pass
+  The ssh password to use (this is insecure, we strongly recommend using --ask-pass or SSH keys)
+ansible_connection
+  Connection type of the host. Candidates are local, ssh or paramiko.  The default is paramiko before Ansible 1.2, and 'smart' afterwards which detects whether usage of 'ssh' would be feasible based on whether ControlPersist is supported.
+ansible_ssh_private_key_file
+  Private key file used by ssh.  Useful if using multiple keys and you don't want to use SSH agent.
+ansible_syslog_facility
+  The syslog facility to log to.
+ansible_python_interpreter
+  The target host python path. This is userful for systems with more
+  than one Python or not located at "/usr/bin/python" such as \*BSD, or where /usr/bin/python
+  is not a 2.X series Python.
+ansible\_\*\_interpreter
+  Works for anything such as ruby or perl and works just like ansible_python_interpreter. 
+  This replaces shebang of modules which will run on that host.
+
+Examples from a host file::
+
+  some_host         ansible_ssh_port=2222     ansible_ssh_user=manager
+  aws_host          ansible_ssh_private_key_file=/home/example/.ssh/aws.pem
+  freebsd_host      ansible_python_interpreter=/usr/local/bin/python
+  ruby_module_host  ansible_ruby_interpreter=/usr/bin/ruby.1.9.3
+
 
 Selecting Targets
 +++++++++++++++++

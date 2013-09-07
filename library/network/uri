@@ -135,14 +135,14 @@ EXAMPLES = '''
   register: webpage
 
 - action: fail
-  when_string: '"AWESOME" not in "${webpage.content}"'
+  when: 'AWESOME' not in "{{ webpage.content }}"
 
 
 # Create a JIRA issue.
 - action: >
         uri url=https://your.jira.example.com/rest/api/2/issue/ 
         method=POST user=your_username password=your_pass 
-        body='$FILE(issue.json)' force_basic_auth=yes 
+        body="{{ lookup('file','issue.json') }}" force_basic_auth=yes 
         status_code=201 HEADER_Content-Type="application/json"  
 
 - action: > 
@@ -154,7 +154,7 @@ EXAMPLES = '''
 # Login to a form based webpage, then use the returned cookie to
 # access the app in later tasks.
 - action: uri url=https://your.form.based.auth.example.com/dashboard.php
-            method=GET return_content=yes HEADER_Cookie="${login.set_cookie}"
+            method=GET return_content=yes HEADER_Cookie="{{login.set_cookie}}"
 '''
 
 HAS_HTTPLIB2 = True
@@ -261,7 +261,7 @@ def uri(module, url, dest, user, password, body, method, headers, redirects, soc
                 # and update dest with the new url filename
             except:
                 pass
-            if resp_redir['status'] in ["301", "302", "303", "307"]:
+            if 'status' in resp_redir and resp_redir['status'] in ["301", "302", "303", "307"]:
                 url = resp_redir['location']
                 redirected = True
             dest = os.path.join(dest, url_filename(url))

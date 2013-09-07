@@ -1,3 +1,7 @@
+%if 0%{?rhel} == 5
+%define __python /usr/bin/python26
+%endif
+
 %if 0%{?rhel} && 0%{?rhel} <= 5
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
@@ -6,12 +10,12 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 Name: ansible
 Release: 1%{?dist}
 Summary: SSH-based configuration management, deployment, and orchestration engine
-Version: 1.2.3
+Version: 1.3
 
 Group: Development/Libraries
 License: GPLv3
-Source0: http://ansible.cc/releases/%{name}-%{version}.tar.gz
-Url: http://ansible.cc
+Source0: http://www.ansibleworks.com/releases/%{name}-%{version}.tar.gz
+Url: http://www.ansibleworks.com
 
 BuildArch: noarch
 %if 0%{?rhel} && 0%{?rhel} <= 5
@@ -116,8 +120,8 @@ rm -rf $RPM_BUILD_ROOT
 
 %changelog
 
-* Wed Aug 21 2013 James Cammarata <jcammarata@ansibleworks.com> - 1.2-3
-* Release 1.2.3
+* Fri Jul 05 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.3-0
+* (release pending)
 
 * Thu Jul 05 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.2-2
 * Release 1.2.2

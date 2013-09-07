@@ -74,7 +74,7 @@ def package_installed(module, name):
     cmd = [module.get_bin_path('pkginfo', True)]
     cmd.append('-q')
     cmd.append(name)
-    rc, out, err = module.run_command(' '.join(cmd), shell=False)
+    rc, out, err = module.run_command(' '.join(cmd))
     if rc == 0:
         return True
     else:

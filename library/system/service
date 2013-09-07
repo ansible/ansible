@@ -39,6 +39,14 @@ options:
             commands unless necessary.  C(restarted) will always bounce the
             service.  C(reloaded) will always reload. At least one of state
             and enabled are required.
+    sleep:
+        required: false
+        version_added: "1.3"
+        description:
+        - If the service is being C(restarted) then sleep this many seconds
+          between the stop and start command. This helps to workaround badly
+          behaving init scripts that exit immediately after signaling a process
+          to stop.
     pattern:
         required: false
         version_added: "0.7"
@@ -58,7 +66,7 @@ options:
         required: false
         default: 'default'
         description:
-        - For OpenRC init scripts (ex: Gentoo) only.  The runlevel that this service belongs to.
+        - "For OpenRC init scripts (ex: Gentoo) only.  The runlevel that this service belongs to."
     arguments:
         description:
         - Additional arguments provided on the command line
@@ -94,6 +102,7 @@ import re
 import tempfile
 import shlex
 import select
+import time
 
 class Service(object):
     """
@@ -119,6 +128,7 @@ class Service(object):
         self.module         = module
         self.name           = module.params['name']
         self.state          = module.params['state']
+        self.sleep          = module.params['sleep']
         self.pattern        = module.params['pattern']
         self.enable         = module.params['enabled']
         self.runlevel       = module.params['runlevel']
@@ -448,7 +458,7 @@ class LinuxService(Service):
             elif initctl_status_stdout.find("start/running") != -1:
                 self.running = True
 
-        if self.svc_cmd.endswith("rc-service") and self.running is None:
+        if self.svc_cmd and self.svc_cmd.endswith("rc-service") and self.running is None:
             openrc_rc, openrc_status_stdout, openrc_status_stderr = self.execute_command("%s %s status" % (self.svc_cmd, self.name))
             self.running = "started" in openrc_status_stdout
             self.crashed = "crashed" in openrc_status_stderr
@@ -547,6 +557,27 @@ class LinuxService(Service):
                 if not self.enable:
                     return
 
+        if self.enable_cmd.endswith("update-rc.d"):
+            if self.enable:
+                action = 'enable'
+            else:
+                action = 'disable'
+            (rc, out, err) = self.execute_command("%s -n %s %s" \
+                                                  % (self.enable_cmd, self.name, action))
+            self.changed = False
+            for line in out.splitlines():
+                if line.startswith('rename'):
+                    self.changed = True
+                    break
+
+            if self.module.check_mode:
+                self.module.exit_json(changed=self.changed)
+
+            if not self.changed:
+                return
+
+            return self.execute_command("%s %s %s" % (self.enable_cmd, self.name, action))
+
         # we change argument depending on real binary used:
         # - update-rc.d and systemctl wants enable/disable
         # - chkconfig wants on/off
@@ -561,9 +592,7 @@ class LinuxService(Service):
             enable_disable = "disable"
             add_delete = "delete"
 
-        if self.enable_cmd.endswith("update-rc.d"):
-            args = (self.enable_cmd, self.name, enable_disable)
-        elif self.enable_cmd.endswith("rc-update"):
+        if self.enable_cmd.endswith("rc-update"):
             args = (self.enable_cmd, add_delete, self.name + " " + self.runlevel)
         elif self.enable_cmd.endswith("systemctl"):
             args = (self.enable_cmd, enable_disable, self.name + ".service")
@@ -597,7 +626,7 @@ class LinuxService(Service):
 
         # In OpenRC, if a service crashed, we need to reset its status to
         # stopped with the zap command, before we can start it back.
-        if self.svc_cmd.endswith('rc-service') and self.action == 'start' and self.crashed:
+        if self.svc_cmd and self.svc_cmd.endswith('rc-service') and self.action == 'start' and self.crashed:
             self.execute_command("%s zap" % svc_cmd, daemonize=True)
 
         if self.action is not "restart":
@@ -618,6 +647,9 @@ class LinuxService(Service):
             else:
                 # SysV
                 rc1, stdout1, stderr1 = self.execute_command("%s %s %s" % ('stop', self.name, arguments), daemonize=True)
+
+            if self.sleep:
+                time.sleep(self.sleep)
 
             if svc_cmd != '':
                 # upstart or systemd
@@ -675,7 +707,14 @@ class FreeBsdService(Service):
             if os.path.isfile(rcfile):
                 self.rcconf_file = rcfile
 
-        self.rcconf_key = "%s_enable" % self.name
+        rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, 'rcvar', self.arguments))
+        rcvars = shlex.split(stdout, comments=True)
+        if not rcvars:
+            self.module.fail_json(msg="unable to determine rcvar")
+
+        # In rare cases, i.e. sendmail, rcvar can return several key=value pairs
+        # Usually there is just one, however.
+        self.rcconf_key = rcvars[0].split('=')[0]
 
         return self.service_enable_rcconf()
 
@@ -987,6 +1026,7 @@ def main():
         argument_spec = dict(
             name = dict(required=True),
             state = dict(choices=['running', 'started', 'stopped', 'restarted', 'reloaded']),
+            sleep = dict(required=False, type='int', default=None),
             pattern = dict(required=False, default=None),
             enabled = dict(choices=BOOLEANS, type='bool'),
             runlevel = dict(required=False, default='default'),
@@ -1067,7 +1107,7 @@ def main():
     else:
         # as we may have just bounced the service the service command may not
         # report accurate state at this moment so just show what we ran
-        if service.module.params['state'] in ['started','restarted','running']:
+        if service.module.params['state'] in ['started','restarted','running','reloaded']:
             result['state'] = 'started'
         else:
             result['state'] = 'stopped'

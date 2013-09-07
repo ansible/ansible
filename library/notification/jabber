@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 DOCUMENTATION = '''
@@ -100,7 +100,10 @@ def main():
     server = jid.getDomain()
     port = module.params['port']
     password = module.params['password']
-    to, nick = re.split( r'/', module.params['to'])
+    try:
+        to, nick = module.params['to'].split('/', 1)
+    except ValueError:
+        to, nick = module.params['to'], None
 
     if module.params['host']:
         host = module.params['host']
@@ -125,6 +128,8 @@ def main():
             msg.setTag('x', namespace='http://jabber.org/protocol/muc#user')
             conn.send(xmpp.Presence(to=module.params['to']))
             time.sleep(1)
+        else:
+            msg.setType('chat')
 
         msg.setTo(to)
         if not module.check_mode:

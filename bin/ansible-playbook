@@ -23,7 +23,7 @@ import os
 
 import ansible.playbook
 import ansible.constants as C
-import ansible.utils.template 
+import ansible.utils.template
 from ansible import errors
 from ansible import callbacks
 from ansible import utils
@@ -52,31 +52,29 @@ def main(args):
     ''' run ansible-playbook operations '''
 
     # create parser for CLI options
-    usage = "%prog playbook.yml"
     parser = utils.base_parser(
-        constants=C, 
-        usage=usage, 
-        connect_opts=True, 
-        runas_opts=True, 
-        subset_opts=True, 
+        constants=C,
+        usage = "%prog playbook.yml",
+        connect_opts=True,
+        runas_opts=True,
+        subset_opts=True,
         check_opts=True,
         diff_opts=True
     )
-    parser.add_option('-e', '--extra-vars', dest="extra_vars", default=None,
-        help="set additional key=value variables from the CLI")
+    parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
+        help="set additional variables as key=value or YAML/JSON", default=[])
     parser.add_option('-t', '--tags', dest='tags', default='all',
         help="only run plays and tasks tagged with these values")
-    # FIXME: list hosts is a common option and can be moved to utils/__init__.py
-    parser.add_option('--list-hosts', dest='listhosts', action='store_true',
-        help="dump out a list of hosts, each play will run against, does not run playbook!")
+    parser.add_option('--skip-tags', dest='skip_tags',
+        help="only run plays and tasks whose tags do not match these values")
     parser.add_option('--syntax-check', dest='syntax', action='store_true',
-        help="do a playbook syntax check on the playbook, do not execute the playbook")
+        help="perform a syntax check on the playbook, but do not execute it")
     parser.add_option('--list-tasks', dest='listtasks', action='store_true',
-        help="do list all tasks that would be executed")
+        help="list all tasks that would be executed")
     parser.add_option('--step', dest='step', action='store_true',
         help="one-step-at-a-time: confirm each task before running")
-    parser.add_option('--start-at-task', dest='start_at', 
-        help="start the playbook with a task matching this name")
+    parser.add_option('--start-at-task', dest='start_at',
+        help="start the playbook at the task matching this name")
 
     options, args = parser.parse_args(args)
 
@@ -93,16 +91,29 @@ def main(args):
     sudopass = None
     if not options.listhosts and not options.syntax and not options.listtasks:
         options.ask_pass = options.ask_pass or C.DEFAULT_ASK_PASS
+        # Never ask for an SSH password when we run with local connection
+        if options.connection == "local":
+            options.ask_pass = False
         options.ask_sudo_pass = options.ask_sudo_pass or C.DEFAULT_ASK_SUDO_PASS
-        ( sshpass, sudopass ) = utils.ask_passwords(ask_pass=options.ask_pass, ask_sudo_pass=options.ask_sudo_pass)
-        if options.sudo_user or options.ask_sudo_pass:
-            options.sudo = True
+        (sshpass, sudopass) = utils.ask_passwords(ask_pass=options.ask_pass, ask_sudo_pass=options.ask_sudo_pass)
         options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
-    if options.extra_vars and options.extra_vars[0] in '[{':
-        extra_vars = utils.json_loads(options.extra_vars)
-    else:
-        extra_vars = utils.parse_kv(options.extra_vars)
+
+    extra_vars = {}
+    for extra_vars_opt in options.extra_vars:
+        if extra_vars_opt.startswith("@"):
+            # Argument is a YAML file (JSON is a subset of YAML)
+            extra_vars = utils.combine_vars(extra_vars, utils.parse_yaml_from_file(extra_vars_opt[1:]))
+        elif extra_vars_opt and extra_vars_opt[0] in '[{':
+            # Arguments as YAML
+            extra_vars = utils.combine_vars(extra_vars, utils.parse_yaml(extra_vars_opt))
+        else:
+            # Arguments as Key-value
+            extra_vars = utils.combine_vars(extra_vars, utils.parse_kv(extra_vars_opt))
+
     only_tags = options.tags.split(",")
+    skip_tags = options.skip_tags
+    if options.skip_tags is not None:
+        skip_tags = options.skip_tags.split(",")
 
     for playbook in args:
         if not os.path.exists(playbook):
@@ -142,6 +153,7 @@ def main(args):
             extra_vars=extra_vars,
             private_key_file=options.private_key_file,
             only_tags=only_tags,
+            skip_tags=skip_tags,
             check=options.check,
             diff=options.diff
         )
@@ -162,13 +174,21 @@ def main(args):
                         print '    %s' % host
                 if options.listtasks:
                     matched_tags, unmatched_tags = play.compare_tags(pb.only_tags)
+
+                    # Remove skipped tasks
+                    matched_tags = matched_tags - set(pb.skip_tags)
+
                     unmatched_tags.discard('all')
-                    unknown_tags = set(pb.only_tags) - (matched_tags | unmatched_tags)
+                    unknown_tags = ((set(pb.only_tags) | set(pb.skip_tags)) -
+                                    (matched_tags | unmatched_tags))
+
                     if unknown_tags:
                         continue
-                    print '  play #%d (%s): task count=%d' % (playnum, label, len(play.tasks()))
+                    print '  play #%d (%s):' % (playnum, label)
+
                     for task in play.tasks():
-                        if set(task.tags).intersection(pb.only_tags):
+                        if (set(task.tags).intersection(pb.only_tags) and not
+                            set(task.tags).intersection(pb.skip_tags)):
                             if getattr(task, 'name', None) is not None:
                                 # meta tasks have no names
                                 print '    %s' % task.name
@@ -179,8 +199,9 @@ def main(args):
             # if we've not exited by now then we are fine.
             print 'Playbook Syntax is fine'
             return 0
-            
+
         failed_hosts = []
+        unreachable_hosts = []
 
         try:
 
@@ -192,11 +213,15 @@ def main(args):
 
             for h in hosts:
                 t = pb.stats.summarize(h)
-                if t['unreachable'] > 0 or t['failures'] > 0:
+                if t['failures'] > 0:
                     failed_hosts.append(h)
+                if t['unreachable'] > 0:
+                    unreachable_hosts.append(h)
 
-            if len(failed_hosts) > 0:
-                filename = pb.generate_retry_inventory(failed_hosts)
+            retries = failed_hosts + unreachable_hosts
+
+            if len(retries) > 0:
+                filename = pb.generate_retry_inventory(retries)
                 if filename:
                     display("           to retry, use: --limit @%s\n" % filename)
 
@@ -208,7 +233,7 @@ def main(args):
                     colorize('ok', t['ok'], 'green'),
                     colorize('changed', t['changed'], 'yellow'),
                     colorize('unreachable', t['unreachable'], 'red'),
-                    colorize('failed', t['failures'], 'red')), 
+                    colorize('failed', t['failures'], 'red')),
                     screen_only=True
                 )
 
@@ -217,14 +242,16 @@ def main(args):
                     colorize('ok', t['ok'], None),
                     colorize('changed', t['changed'], None),
                     colorize('unreachable', t['unreachable'], None),
-                    colorize('failed', t['failures'], None)), 
+                    colorize('failed', t['failures'], None)),
                     log_only=True
                 )
 
- 
+
             print ""
             if len(failed_hosts) > 0:
                 return 2
+            if len(unreachable_hosts) > 0:
+                return 3
 
         except errors.AnsibleError, e:
             display("ERROR: %s" % e, color='red')

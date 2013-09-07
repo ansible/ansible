@@ -22,6 +22,24 @@ description:
     - creates an EBS volume and optionally attaches it to an instance.  If both an instance ID and a device name is given and the instance has a device at the device name, then no volume is created and no attachment is made.  This module has a dependency on python-boto.
 version_added: "1.1"
 options:
+  aws_secret_key:
+    description:
+      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
+    required: false
+    default: None
+    aliases: ['ec2_secret_key', 'secret_key' ]
+  aws_access_key:
+    description:
+      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
+    required: false
+    default: None
+    aliases: ['ec2_access_key', 'access_key' ]
+  ec2_url:
+    description:
+      - Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints).  Must be specified if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used
+    required: false
+    default: null
+    aliases: []
   instance:
     description:
       - instance ID if you wish to attach the volume. 
@@ -34,6 +52,13 @@ options:
     required: true
     default: null
     aliases: []
+  iops:
+    description:
+      - the provisioned IOPs you want to associate with this volume (integer).
+    required: false
+    default: 100
+    aliases: []
+    version_added: "1.3"
   device_name:
     description:
       - device id to override device mapping. Assumes /dev/sdf for Linux/UNIX and /dev/xvdf for Windows.
@@ -42,16 +67,16 @@ options:
     aliases: []
   region:
     description:
-      - region in which to create the volume
+      - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
     required: false
     default: null
-    aliases: []
+    aliases: ['aws_region', 'ec2_region']
   zone:
     description:
       - zone in which to create the volume, if unset uses the zone the instance is in (if set) 
     required: false
     default: null
-    aliases: []
+    aliases: ['aws_zone', 'ec2_zone']
 requirements: [ "boto" ]
 author: Lester Wade
 '''
@@ -63,20 +88,28 @@ EXAMPLES = '''
     instance: XXXXXX 
     volume_size: 5 
     device_name: sdd
-   
+
+# Example using custom iops params   
+- local_action: 
+    module: ec2_vol 
+    instance: XXXXXX 
+    volume_size: 5 
+    iops: 200
+    device_name: sdd
+
 # Playbook example combined with instance launch 
 - local_action: 
     module: ec2 
-    keypair: $keypair 
-    image: $image 
+    keypair: "{{ keypair }}"
+    image: "{{ image }}"
     wait: yes 
     count: 3
     register: ec2
 - local_action: 
     module: ec2_vol 
-    instance: ${item.id} 
+    instance: "{{ item.id }} " 
     volume_size: 5
-    with_items: ${ec2.instances}
+    with_items: ec2.instances
     register: ec2_vol
 '''
 
@@ -94,52 +127,76 @@ except ImportError:
     print "failed=True msg='boto required for this module'"
     sys.exit(1)
 
+AWS_REGIONS = ['ap-northeast-1',
+               'ap-southeast-1',
+               'ap-southeast-2',
+               'eu-west-1',
+               'sa-east-1',
+               'us-east-1',
+               'us-west-1',
+               'us-west-2']
+
 def main():
     module = AnsibleModule(
         argument_spec = dict(
             instance = dict(),
             volume_size = dict(required=True),
+            iops = dict(),
             device_name = dict(),
-            region = dict(),
-            zone = dict(),
-            ec2_url = dict(aliases=['EC2_URL']),
-            ec2_secret_key = dict(aliases=['EC2_SECRET_KEY']),
-            ec2_access_key = dict(aliases=['EC2_ACCESS_KEY']),
+            region = dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS),
+            zone = dict(aliases=['availability_zone', 'aws_zone', 'ec2_zone']),
+            ec2_url = dict(),
+            aws_secret_key = dict(aliases=['ec2_secret_key', 'secret_key'], no_log=True),
+            aws_access_key = dict(aliases=['ec2_access_key', 'access_key']),
         )
     )
 
     instance = module.params.get('instance')
     volume_size = module.params.get('volume_size')
+    iops = module.params.get('iops')
     device_name = module.params.get('device_name')
     region = module.params.get('region')
     zone = module.params.get('zone')
     ec2_url = module.params.get('ec2_url')
-    ec2_secret_key = module.params.get('ec2_secret_key')
-    ec2_access_key = module.params.get('ec2_access_key')
+    aws_secret_key = module.params.get('aws_secret_key')
+    aws_access_key = module.params.get('aws_access_key')
 
     # allow eucarc environment variables to be used if ansible vars aren't set
     if not ec2_url and 'EC2_URL' in os.environ:
         ec2_url = os.environ['EC2_URL']
-    if not ec2_secret_key and 'EC2_SECRET_KEY' in os.environ:
-        ec2_secret_key = os.environ['EC2_SECRET_KEY']
-    if not ec2_access_key and 'EC2_ACCESS_KEY' in os.environ:
-        ec2_access_key = os.environ['EC2_ACCESS_KEY']
+
+    if not aws_secret_key:
+        if  'AWS_SECRET_KEY' in os.environ:
+            aws_secret_key = os.environ['AWS_SECRET_KEY']
+        elif 'EC2_SECRET_KEY' in os.environ:
+            aws_secret_key = os.environ['EC2_SECRET_KEY']
+
+    if not aws_access_key:
+        if 'AWS_ACCESS_KEY' in os.environ:
+            aws_access_key = os.environ['AWS_ACCESS_KEY']
+        elif 'EC2_ACCESS_KEY' in os.environ:
+            aws_access_key = os.environ['EC2_ACCESS_KEY']
+
+    if not region:
+        if 'AWS_REGION' in os.environ:
+            region = os.environ['AWS_REGION']
+        elif 'EC2_REGION' in os.environ:
+            region = os.environ['EC2_REGION']
     
     # If we have a region specified, connect to its endpoint.
     if region: 
         try:
-            ec2 = boto.ec2.connect_to_region(region, aws_access_key_id=ec2_access_key, aws_secret_access_key=ec2_secret_key)
+            ec2 = boto.ec2.connect_to_region(region, aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key)
         except boto.exception.NoAuthHandlerFound, e:
             module.fail_json(msg = str(e))
     # Otherwise, no region so we fallback to the old connection method
-    else: 
+    elif ec2_url:
         try:
-            if ec2_url: # if we have an URL set, connect to the specified endpoint 
-                ec2 = boto.connect_ec2_endpoint(ec2_url, ec2_access_key, ec2_secret_key)
-            else: # otherwise it's Amazon.
-                ec2 = boto.connect_ec2(ec2_access_key, ec2_secret_key)
+            ec2 = boto.connect_ec2_endpoint(ec2_url, aws_access_key, aws_secret_key)
         except boto.exception.NoAuthHandlerFound, e:
             module.fail_json(msg = str(e))
+    else:
+        module.fail_json(msg="Either region or ec2_url must be specified")
 
     # Here we need to get the zone info for the instance. This covers situation where 
     # instance is specified but zone isn't.
@@ -155,12 +212,20 @@ def main():
         if device_name:
             if device_name in inst.block_device_mapping:
                 module.exit_json(msg="Volume mapping for %s already exists on instance %s" % (device_name, instance),
+
                                  changed=False)
+
+    # If custom iops is defined we use volume_type "io1" rather than the default of "standard"
+
+    if iops:
+        volume_type = 'io1'
+    else:
+        volume_type = 'standard'
 
     # If no instance supplied, try volume creation based on module parameters.
 
     try:
-        volume = ec2.create_volume(volume_size, zone)
+        volume = ec2.create_volume(volume_size, zone, None, volume_type, iops)
         while volume.status != 'available':
             time.sleep(3)
             volume.update()

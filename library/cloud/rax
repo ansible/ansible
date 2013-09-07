@@ -1,4 +1,4 @@
-#!/usr/bin/env python -tt
+#!/usr/bin/python -tt
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -32,10 +32,18 @@ options:
      - Indicate desired state of the resource
     choices: ['present', 'active', 'absent', 'deleted']
     default: present
-  creds_file:
+  credentials:
     description:
-     - File to find the Rackspace Public Cloud credentials in
+     - File to find the Rackspace credentials in (ignored if C(api_key) and
+       C(username) are provided)
     default: null
+    aliases: ['creds_file']
+  api_key:
+    description:
+     - Rackspace API key (overrides C(credentials))
+  username:
+    description:
+     - Rackspace username (overrides C(credentials))
   name:
     description:
      - Name to give the instance
@@ -64,7 +72,7 @@ options:
   region:
     description:
      - Region to create an instance in
-    default: null
+    default: DFW
   wait:
     description:
      - wait for the instance to be in state 'running' before returning
@@ -77,22 +85,32 @@ options:
 requirements: [ "pyrax" ]
 author: Jesse Keating
 notes:
-  - Two environment variables can be used, RAX_CREDS and RAX_REGION.
-  - RAX_CREDS points to a credentials file appropriate for pyrax
-  - RAX_REGION defines a Rackspace Public Cloud region (DFW, ORD, LON, ...)
+  - The following environment variables can be used, C(RAX_USERNAME),
+    C(RAX_API_KEY), C(RAX_CREDS), C(RAX_CREDENTIALS), C(RAX_REGION).
+  - C(RAX_CREDENTIALS) and C(RAX_CREDS) points to a credentials file
+    appropriate for pyrax
+  - C(RAX_USERNAME) and C(RAX_API_KEY) obviate the use of a credentials file
+  - C(RAX_REGION) defines a Rackspace Public Cloud region (DFW, ORD, LON, ...)
 '''
 
 EXAMPLES = '''
-# Create a server
-- local_action:
-     module: rax
-     creds_file: ~/.raxpub
-     service: cloudservers
-     name: rax-test1
-     flavor: 5
-     image: b11d9567-e412-4255-96b9-bd63ab23bcfe
-     wait: yes
-     state: present
+- name: Build a Cloud Server
+  gather_facts: False
+
+  tasks:
+    - name: Server build request
+      local_action:
+        module: rax
+        credentials: ~/.raxpub
+        service: cloudservers
+        name: rax-test1
+        flavor: 5
+        image: b11d9567-e412-4255-96b9-bd63ab23bcfe
+        files:
+          /root/.ssh/authorized_keys: /home/localuser/.ssh/id_rsa.pub
+          /root/test.txt: /home/localuser/test.txt
+        wait: yes
+        state: present
 '''
 
 import sys
@@ -182,7 +200,7 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
         # See if we can find a server that matches our credentials
         for server in servers:
             if server.name == name:
-                if server.flavor['id'] == flavor and \
+                if int(server.flavor['id']) == int(flavor) and \
                 server.image['id'] == image and \
                 server.metadata == meta:
                     try:
@@ -205,7 +223,9 @@ def main():
             service = dict(default='cloudservers', choices=SUPPORTEDSERVICES),
             state = dict(default='present', choices=['active', 'present',
                                                      'deleted', 'absent']),
-            creds_file = dict(),
+            credentials = dict(aliases = ['creds_file']),
+            api_key=dict(),
+            username=dict(),
             name = dict(),
             flavor = dict(),
             image = dict(),
@@ -220,7 +240,9 @@ def main():
 
     service = module.params.get('service')
     state = module.params.get('state')
-    creds_file = module.params.get('creds_file')
+    credentials = module.params.get('credentials')
+    api_key = module.params.get('api_key')
+    username = module.params.get('username')
     name = module.params.get('name')
     flavor = module.params.get('flavor')
     image = module.params.get('image')
@@ -231,23 +253,27 @@ def main():
     wait = module.params.get('wait')
     wait_timeout = int(module.params.get('wait_timeout'))
 
-    # Setup the credentials file
-    if not creds_file:
-        try:
-            creds_file = os.environ['RAX_CREDS_FILE']
-        except KeyError, e:
-            module.fail_json(msg = 'Unable to load %s' % e.message)
+    # Setup the credentials and region
+    try:
+        username = username or os.environ.get('RAX_USERNAME')
+        api_key = api_key or os.environ.get('RAX_API_KEY')
+        credentials = credentials or os.environ.get('RAX_CREDENTIALS') or \
+                                     os.environ.get('RAX_CREDS_FILE')
+        region = region or os.environ.get('RAX_REGION')
 
-    # Define the region
-    if not region:
-        try:
-            region = os.environ['RAX_REGION']
-        except KeyError, e:
-            module.fail_json(msg = 'Unable to load %s' % e.message)
+    except KeyError, e:
+        module.fail_json(msg = 'Unable to load %s' % e.message)
 
     # setup the auth
     try:
-        pyrax.set_credential_file(creds_file, region=region)
+        pyrax.set_setting("identity_type", "rackspace")
+        if api_key and username:
+            pyrax.set_credentials(username, api_key=api_key, region=region)
+        elif credentials:
+            credentials = os.path.expanduser(credentials)
+            pyrax.set_credential_file(credentials, region=region)
+        else:
+            raise Exception('No credentials supplied!')
     except Exception, e:
         module.fail_json(msg = '%s' % e.message)
 

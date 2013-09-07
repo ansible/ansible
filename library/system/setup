@@ -124,6 +124,7 @@ class Facts(object):
     PKG_MGRS = [ { 'path' : '/usr/bin/yum',         'name' : 'yum' },
                  { 'path' : '/usr/bin/apt-get',     'name' : 'apt' },
                  { 'path' : '/usr/bin/zypper',      'name' : 'zypper' },
+                 { 'path' : '/usr/sbin/urpmi',      'name' : 'urpmi' },
                  { 'path' : '/usr/bin/pacman',      'name' : 'pacman' },
                  { 'path' : '/bin/opkg',            'name' : 'opkg' },
                  { 'path' : '/opt/local/bin/pkgin', 'name' : 'pkgin' },
@@ -518,7 +519,9 @@ class LinuxHardware(Hardware):
     def get_cpu_facts(self):
         i = 0
         physid = 0
+        coreid = 0
         sockets = {}
+        cores = {}
         if not os.access("/proc/cpuinfo", os.R_OK):
             return
         self.facts['processor'] = []
@@ -536,14 +539,20 @@ class LinuxHardware(Hardware):
                 physid = data[1].strip()
                 if physid not in sockets:
                     sockets[physid] = 1
+            elif key == 'core id':
+                coreid = data[1].strip()
+                if coreid not in sockets:
+                    cores[coreid] = 1
             elif key == 'cpu cores':
                 sockets[physid] = int(data[1].strip())
-        if len(sockets) > 0:
-            self.facts['processor_count'] = len(sockets)
-            self.facts['processor_cores'] = reduce(lambda x, y: x + y, sockets.values())
-        else:
-            self.facts['processor_count'] = i
-            self.facts['processor_cores'] = 'NA'
+            elif key == 'siblings':
+                cores[coreid] = int(data[1].strip())
+        self.facts['processor_count'] = sockets and len(sockets) or i
+        self.facts['processor_cores'] = sockets.values() and sockets.values()[0] or 1
+        self.facts['processor_threads_per_core'] = ((cores.values() and
+            cores.values()[0] or 1) / self.facts['processor_cores'])
+        self.facts['processor_vcpus'] = (self.facts['processor_threads_per_core'] *
+            self.facts['processor_count'] * self.facts['processor_cores'])
 
     def get_dmi_facts(self):
         ''' learn dmi facts from system
@@ -618,22 +627,30 @@ class LinuxHardware(Hardware):
             if line.startswith('/'):
                 fields = line.rstrip('\n').split()
                 if(fields[2] != 'none'):
-                    statvfs_result = os.statvfs(fields[1])
+                    size_total = None
+                    size_available = None
+                    try:
+                        statvfs_result = os.statvfs(fields[1])
+                        size_total = statvfs_result.f_bsize * statvfs_result.f_blocks
+                        size_available = statvfs_result.f_bsize * (statvfs_result.f_bavail)
+                    except OSError, e:
+                        continue
+
                     self.facts['mounts'].append(
                         {'mount': fields[1],
                          'device':fields[0],
                          'fstype': fields[2],
                          'options': fields[3],
                          # statvfs data
-                         'size_total': statvfs_result.f_bsize * statvfs_result.f_blocks,
-                         'size_available': statvfs_result.f_bsize * (statvfs_result.f_bavail),
+                         'size_total': size_total,
+                         'size_available': size_available,
                          })
 
     def get_device_facts(self):
         self.facts['devices'] = {}
         lspci = module.get_bin_path('lspci')
         if lspci:
-            rc, pcidata, err = module.run_command(lspci)
+            rc, pcidata, err = module.run_command([lspci, '-D'])
         else:
             pcidata = None
 
@@ -704,7 +721,9 @@ class LinuxHardware(Hardware):
             d['size'] = module.pretty_bytes(float(d['sectors']) * float(d['sectorsize']))
 
             d['host'] = ""
-            m = re.match(".+/[a-f0-9]+:([a-f0-9]+:[a-f0-9]+\.[a-f0-9]+)/host\d+/", sysdir)
+
+            # domains are numbered (0 to ffff), bus (0 to ff), slot (0 to 1f), and function (0 to 7).
+            m = re.match(".+/([a-f0-9]{4}:[a-f0-9]{2}:[0|1][a-f0-9]\.[0-7])/", sysdir)
             if m and pcidata:
                 pciid = m.group(1)
                 did = re.escape(pciid)
@@ -1067,29 +1086,27 @@ class AIX(Hardware):
 
 
         rc, out, err = module.run_command("/usr/sbin/lsdev -Cc processor")
-        if not out:
-            # CPU info may not be available (WPAR)
-            return
-        i = 0
-        for line in out.split('\n'):
+        if out:
+            i = 0
+            for line in out.split('\n'):
 
-            if 'Available' in line:
-                if i == 0:
-                    data = line.split(' ')
-                    cpudev = data[0]
+                if 'Available' in line:
+                    if i == 0:
+                        data = line.split(' ')
+                        cpudev = data[0]
 
-                i += 1
-        self.facts['processor_count'] = int(i)
+                    i += 1
+            self.facts['processor_count'] = int(i)
 
-        rc, out, err = module.run_command("/usr/sbin/lsattr -El " + cpudev + " -a type")
+            rc, out, err = module.run_command("/usr/sbin/lsattr -El " + cpudev + " -a type")
 
-        data = out.split(' ')
-        self.facts['processor'] = data[1]
+            data = out.split(' ')
+            self.facts['processor'] = data[1]
 
-        rc, out, err = module.run_command("/usr/sbin/lsattr -El " + cpudev + " -a smt_threads")
+            rc, out, err = module.run_command("/usr/sbin/lsattr -El " + cpudev + " -a smt_threads")
 
-        data = out.split(' ')
-        self.facts['processor_cores'] = int(data[1])
+            data = out.split(' ')
+            self.facts['processor_cores'] = int(data[1])
 
     def get_memory_facts(self):
         pagesize = 4096
@@ -1107,15 +1124,13 @@ class AIX(Hardware):
         # /dev/ada0p3        314368        0   314368     0%
         #
         rc, out, err = module.run_command("/usr/sbin/lsps -s")
-        if not out:
-            # swapinfo may not be available (WPAR)
-            return
-        lines = out.split('\n')
-        data = lines[1].split()
-        swaptotal_mb = long(data[0].rstrip('MB'))
-        percused = int(data[1].rstrip('%'))
-        self.facts['swaptotal_mb'] = swaptotal_mb
-        self.facts['swapfree_mb'] = long(swaptotal_mb * ( 100 - percused ) / 100)
+        if out:
+            lines = out.split('\n')
+            data = lines[1].split()
+            swaptotal_mb = long(data[0].rstrip('MB'))
+            percused = int(data[1].rstrip('%'))
+            self.facts['swaptotal_mb'] = swaptotal_mb
+            self.facts['swapfree_mb'] = long(swaptotal_mb * ( 100 - percused ) / 100)
 
     def get_dmi_facts(self):
         rc, out, err = module.run_command("/usr/sbin/lsattr -El sys0 -a fwversion")
@@ -1135,7 +1150,9 @@ class HPUX(Hardware):
     - model
     - firmware
     """
+
     platform = 'HP-UX'
+
     def __init__(self):
         Hardware.__init__(self)
 
@@ -1183,7 +1200,7 @@ class HPUX(Hardware):
                     rc, out, err = module.run_command("/usr/contrib/bin/machinfo |grep Intel |cut -d' ' -f4-")
                     self.facts['processor'] = out.strip()
                 else:
-                    rc, out, err = module.run_command("/usr/contrib/bin/machinfo |egrep 'socket[s]?$' | tail -1");
+                    rc, out, err = module.run_command("/usr/contrib/bin/machinfo |egrep 'socket[s]?$' | tail -1")
                     self.facts['processor_count'] = int(out.strip().split(" ")[0])
                     rc, out, err = module.run_command("/usr/contrib/bin/machinfo |grep -e '[0-9] core' |tail -1")
                     self.facts['processor_cores'] = int(out.strip().split(" ")[0])
@@ -1324,38 +1341,7 @@ class LinuxNetwork(Network):
         self.facts['default_ipv6'] = default_ipv6
         self.facts['all_ipv4_addresses'] = ips['all_ipv4_addresses']
         self.facts['all_ipv6_addresses'] = ips['all_ipv6_addresses']
-        cat_path = module.get_bin_path('cat')
-        self.facts['resolv_domain'] = None
-        self.facts['default_nameserver'] = None
-        self.facts['all_nameservers'] = []
-        if cat_path is not None:
-            result, resolv_domain, default_nameserver, all_nameservers = self.get_dns_info(cat_path)
-            if result:
-                self.facts['resolv_domain'] = resolv_domain
-                self.facts['default_nameserver'] = default_nameserver
-                self.facts['all_nameservers'] = all_nameservers
         return self.facts
-
-    def get_dns_info(self, cat_path):
-        rc, out, err = module.run_command([cat_path, "/etc/resolv.conf"])
-        if not out:
-            return False, None, None, None
-        lines = out.split('\n')
-        all_nameservers = []
-        resolv_domain = None
-        default_nameserver = None
-        if len(lines) > 0:
-            for line in lines:
-                if len(line) < 1 or line[0] == "#" or line[0] == " ":
-                    continue
-                words = line.split()
-                if words[0] == 'domain':
-                    resolv_domain = words[1]
-                elif words[0] == 'nameserver':
-                    all_nameservers.append(words[1])
-        if len(all_nameservers) > 0:
-            default_nameserver = all_nameservers[0]
-        return True, resolv_domain, default_nameserver, all_nameservers
 
     def get_default_interfaces(self, ip_path):
         # Use the commands:
@@ -1544,51 +1530,19 @@ class GenericBsdIfconfigNetwork(Network):
         self.facts['default_ipv6'] = default_ipv6
         self.facts['all_ipv4_addresses'] = ips['all_ipv4_addresses']
         self.facts['all_ipv6_addresses'] = ips['all_ipv6_addresses']
-        
-        cat_path = module.get_bin_path('cat')
-        self.facts['resolv_domain'] = None
-        self.facts['default_nameserver'] = None
-        self.facts['all_nameservers'] = []
-        if cat_path is not None:
-            result, resolv_domain, default_nameserver, all_nameservers = self.get_dns_info(cat_path)
-            if result:
-                self.facts['resolv_domain'] = resolv_domain
-                self.facts['default_nameserver'] = default_nameserver
-                self.facts['all_nameservers'] = all_nameservers
 
         return self.facts
-
-    def get_dns_info(self, cat_path):
-        rc, out, err = module.run_command([cat_path, "/etc/resolv.conf"])
-        if not out:
-            return False, None, None, None
-        lines = out.split('\n')
-        all_nameservers = []
-        resolv_domain = None
-        default_nameserver = None
-        if len(lines) > 0:
-            for line in lines:
-                if len(line) < 1 or line[0] == "#" or line[0] == " ":
-                    continue
-                words = line.split()
-                if words[0] == 'domain':
-                    resolv_domain = words[1]
-                elif words[0] == 'nameserver':
-                    all_nameservers.append(words[1])
-        if len(all_nameservers) > 0:
-            default_nameserver = all_nameservers[0]
-        return True, resolv_domain, default_nameserver, all_nameservers
 
     def get_default_interfaces(self, route_path):
 
         # Use the commands:
-        #     route -n get 8.8.8.8                     -> Google public DNS
-        #     route -n get 2404:6800:400a:800::1012    -> ipv6.google.com
+        #     route -n get 8.8.8.8                            -> Google public DNS
+        #     route -n get -inet6 2404:6800:400a:800::1012    -> ipv6.google.com
         # to find out the default outgoing interface, address, and gateway
 
         command = dict(
             v4 = [route_path, '-n', 'get', '8.8.8.8'],
-            v6 = [route_path, '-n', 'get', '2404:6800:400a:800::1012']
+            v6 = [route_path, '-n', 'get', '-inet6', '2404:6800:400a:800::1012']
         )
 
         interface = dict(v4 = {}, v6 = {})
@@ -1605,9 +1559,12 @@ class GenericBsdIfconfigNetwork(Network):
             lines = out.split('\n')
             for line in lines:
                 words = line.split()
-                # look for first word starting interface
-                if len(words) > 0 and words[0] == 'interface:':
-                    interface[v]['interface'] = words[1]
+                # Collect output from route command
+                if len(words) > 0:
+                    if words[0] == 'interface:':
+                        interface[v]['interface'] = words[1]
+                    if words[0] == 'gateway:':
+                        interface[v]['gateway'] = words[1]
 
         return interface['v4'], interface['v6']
 

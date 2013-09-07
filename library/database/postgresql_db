@@ -90,12 +90,12 @@ author: Lorin Hochstein
 
 EXAMPLES = '''
 # Create a new database with name "acme"
-- postgresql_db: db=acme
+- postgresql_db: name=acme
 
 # Create a new database with name "acme" and specific encoding and locale
 # settings. If a template different from "template0" is specified, encoding
 # and locale settings must match those of the template.
-- postgresql_db: db=acme
+- postgresql_db: name=acme
                  encoding='UTF-8'
                  lc_collate='de_DE.UTF-8'
                  lc_ctype='de_DE.UTF-8'
@@ -130,10 +130,10 @@ def get_encoding_id(cursor, encoding):
 
 def get_db_info(cursor, db):
     query = """
-    SELECT usename AS owner,
+    SELECT rolname AS owner,
     pg_encoding_to_char(encoding) AS encoding, encoding AS encoding_id,
     datcollate AS lc_collate, datctype AS lc_ctype
-    FROM pg_database JOIN pg_user ON pg_user.usesysid = pg_database.datdba
+    FROM pg_database JOIN pg_roles ON pg_roles.oid = pg_database.datdba
     WHERE datname = %(db)s
     """
     cursor.execute(query, {'db':db})

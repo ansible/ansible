@@ -1,0 +1,327 @@
+#!/usr/bin/python
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: ec2_ami
+short_description: create or destroy an image in ec2, return imageid
+description:
+     - Creates or deletes ec2 images. This module has a dependency on python-boto >= 2.5
+options:
+  ec2_url:
+    description:
+      - Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints).  Must be specified if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used
+    required: false
+    default: null
+    aliases: []
+  aws_secret_key:
+    description:
+      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
+    required: false
+    default: null
+    aliases: [ 'ec2_secret_key', 'secret_key' ]
+  aws_access_key:
+    description:
+      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
+    required: false
+    default: null
+    aliases: ['ec2_access_key', 'access_key' ]
+  instance_id:
+    description:
+      - instance id of the image to create
+    required: false
+    default: null
+    aliases: []
+  name:
+    description:
+      - The name of the new image to create
+    required: false
+    default: null
+    aliases: []
+  wait:
+    description:
+      - wait for the AMI to be in state 'available' before returning.
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
+    aliases: []
+  wait_timeout:
+    description:
+      - how long before wait gives up, in seconds
+    default: 300
+    aliases: []
+  state:
+    description:
+      - create or deregister/delete image
+    required: false
+    default: 'present'
+    aliases: []
+  region:
+    description:
+      - The AWS region to use.  Must be specified if ec2_url is not used. If not specified then the value of the EC2_REGION environment variable, if any, is used.
+    required: false
+    default: null
+    aliases: [ 'aws_region', 'ec2_region' ]
+  description:
+    description:
+      - An optional human-readable string describing the contents and purpose of the AMI.
+    required: false
+    default: null
+    aliases: []
+  no_reboot:
+    description:
+      - An optional flag indicating that the bundling process should not attempt to shutdown the instance before bundling. If this flag is True, the responsibility of maintaining file system integrity is left to the owner of the instance.
+    required: false
+    default: null
+    choices: [ "yes", "no" ]
+    aliases: []
+  image_id:
+    description:
+      - Image ID to be deregistered.
+    required: false
+    default: null
+    aliases: []
+  delete_snapshot:
+    description:
+      - Whether or not to deleted an AMI while deregistering it.
+    required: false
+    default: null
+    aliases: []
+
+requirements: [ "boto" ]
+author: Evan Duffield <eduffield@iacquire.com>
+'''
+
+# Thank you to iAcquire for sponsoring development of this module.
+# 
+# See http://alestic.com/2011/06/ec2-ami-security for more information about ensuring the security of your AMI.
+
+EXAMPLES = '''
+# Basic AMI Creation
+- local_action:
+    module: ec2_ami
+    aws_access_key: xxxxxxxxxxxxxxxxxxxxxxx
+    aws_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    instance_id: i-xxxxxx
+    wait: yes
+    name: newtest
+  register: instance
+
+# Basic AMI Creation, without waiting
+- local_action:
+    module: ec2_ami
+    aws_access_key: xxxxxxxxxxxxxxxxxxxxxxx
+    aws_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    region: xxxxxx
+    instance_id: i-xxxxxx
+    wait: no
+    name: newtest
+  register: instance
+
+# Deregister/Delete AMI
+- local_action:
+    module: ec2_ami
+    aws_access_key: xxxxxxxxxxxxxxxxxxxxxxx
+    aws_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    region: xxxxxx
+    image_id: ${instance.image_id}
+    delete_snapshot: True
+    state: absent
+
+# Deregister AMI
+- local_action:
+    module: ec2_ami
+    aws_access_key: xxxxxxxxxxxxxxxxxxxxxxx
+    aws_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    region: xxxxxx
+    image_id: ${instance.image_id}
+    delete_snapshot: False
+    state: absent
+
+'''
+import sys
+import time
+
+AWS_REGIONS = ['ap-northeast-1',
+               'ap-southeast-1',
+               'ap-southeast-2',
+               'eu-west-1',
+               'sa-east-1',
+               'us-east-1',
+               'us-west-1',
+               'us-west-2']
+
+try:
+    import boto.ec2
+except ImportError:
+    print "failed=True msg='boto required for this module'"
+    sys.exit(1)
+
+def create_image(module, ec2):
+    """
+    Creates new AMI
+
+    module : AnsibleModule object
+    ec2: authenticated ec2 connection object
+    """
+
+    instance_id = module.params.get('instance_id')
+    name = module.params.get('name')
+    wait = module.params.get('wait')
+    wait_timeout = int(module.params.get('wait_timeout'))
+    description = module.params.get('description')
+    no_reboot = module.params.get('no_reboot')
+
+    try:
+        params = {'instance_id': instance_id,
+                  'name': name,
+                  'description': description,
+                  'no_reboot': no_reboot}
+
+        image_id = ec2.create_image(**params)
+    except boto.exception.BotoServerError, e:
+        module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+
+    # wait here until the image is gone
+    img = ec2.get_image(image_id)
+    wait_timeout = time.time() + wait_timeout
+    while wait and wait_timeout > time.time() and (img is None or img.state != 'available'):
+        img = ec2.get_image(image_id)
+        time.sleep(3)
+    if wait and wait_timeout <= time.time():
+        # waiting took too long
+        module.fail_json(msg = "timed out waiting for image to be created")
+
+    module.exit_json(msg="AMI creation operation complete", image_id=image_id, state=img.state, changed=True)
+    sys.exit(0)
+
+
+def deregister_image(module, ec2):
+    """
+    Deregisters AMI
+    """
+
+    image_id = module.params.get('image_id')
+    delete_snapshot = module.params.get('delete_snapshot')
+    wait = module.params.get('wait')
+    wait_timeout = int(module.params.get('wait_timeout'))
+
+    img = ec2.get_image(image_id)
+    if img == None:
+        module.fail_json(msg = "Image %s does not exist" % image_id, changed=False)
+
+    try:
+        params = {'image_id': image_id,
+                  'delete_snapshot': delete_snapshot}
+
+        res = ec2.deregister_image(**params)
+    except boto.exception.BotoServerError, e:
+        module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+
+    # wait here until the image is gone
+    img = ec2.get_image(image_id)
+    wait_timeout = time.time() + wait_timeout
+    while wait and wait_timeout > time.time() and img is not None:
+        img = ec2.get_image(image_id)
+        time.sleep(3)
+    if wait and wait_timeout <= time.time():
+        # waiting took too long
+        module.fail_json(msg = "timed out waiting for image to be reregistered/deleted")
+
+    module.exit_json(msg="AMI deregister/delete operation complete", changed=True)
+    sys.exit(0)
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            ec2_url = dict(),
+            aws_secret_key = dict(aliases=['ec2_secret_key', 'secret_key'], no_log=True),
+            aws_access_key = dict(aliases=['ec2_access_key', 'access_key']),
+            instance_id = dict(),
+            image_id = dict(),
+            delete_snapshot = dict(),
+            name = dict(),
+            wait = dict(type="bool", default=False),
+            wait_timeout = dict(default=900),
+            description = dict(default=""),
+            no_reboot = dict(default=True, type="bool"),
+            state = dict(default='present'),
+            region = dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS)
+        )
+    )
+
+    ec2_url = module.params.get('ec2_url')
+    aws_secret_key = module.params.get('aws_secret_key')
+    aws_access_key = module.params.get('aws_access_key')
+    region = module.params.get('region')
+
+    # allow eucarc environment variables to be used if ansible vars aren't set
+    if not ec2_url and 'EC2_URL' in os.environ:
+        ec2_url = os.environ['EC2_URL']
+
+    if not aws_secret_key:
+        if  'AWS_SECRET_KEY' in os.environ:
+            aws_secret_key = os.environ['AWS_SECRET_KEY']
+        elif 'EC2_SECRET_KEY' in os.environ:
+            aws_secret_key = os.environ['EC2_SECRET_KEY']
+
+    if not aws_access_key:
+        if 'AWS_ACCESS_KEY' in os.environ:
+            aws_access_key = os.environ['AWS_ACCESS_KEY']
+        elif 'EC2_ACCESS_KEY' in os.environ:
+            aws_access_key = os.environ['EC2_ACCESS_KEY']
+
+    if not region:
+        if 'AWS_REGION' in os.environ:
+            region = os.environ['AWS_REGION']
+        elif 'EC2_REGION' in os.environ:
+            region = os.environ['EC2_REGION']
+
+    # If we have a region specified, connect to its endpoint.
+    if region:
+        try:
+            ec2 = boto.ec2.connect_to_region(region, aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key)
+        except boto.exception.NoAuthHandlerFound, e:
+            module.fail_json(msg = str(e))
+    # If we specified an ec2_url then try connecting to it
+    elif ec2_url:
+        try:
+            ec2 = boto.connect_ec2_endpoint(ec2_url, aws_access_key, aws_secret_key)
+        except boto.exception.NoAuthHandlerFound, e:
+            module.fail_json(msg = str(e))
+    else:
+        module.fail_json(msg="Either region or ec2_url must be specified")
+
+    if module.params.get('state') == 'absent':
+        if not module.params.get('image_id'):
+            module.fail_json(msg='image_id needs to be an ami image to registered/delete')
+
+        deregister_image(module, ec2)
+
+    elif module.params.get('state') == 'present':
+        # Changed is always set to true when provisioning new AMI
+        if not module.params.get('instance_id'):
+            module.fail_json(msg='instance_id parameter is required for new image')
+        if not module.params.get('name'):
+            module.fail_json(msg='name parameter is required for new image')
+        create_image(module, ec2)
+
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+main()
+

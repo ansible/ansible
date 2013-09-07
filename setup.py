@@ -15,14 +15,12 @@ data_files = []
 for i in dirs:
     data_files.append((DIST_MODULE_PATH + i, glob('./library/' + i + '/*')))
 
-print "DATA FILES=%s" % data_files
-
 setup(name='ansible',
       version=__version__,
-      description='Minimal SSH command and control',
+      description='Radically simple IT automation',
       author=__author__,
-      author_email='michael.dehaan@gmail.com',
-      url='http://ansible.github.com/',
+      author_email='michael@ansibleworks.com',
+      url='http://ansibleworks.com/',
       license='GPLv3',
       install_requires=['paramiko', 'jinja2', "PyYAML"],
       package_dir={ 'ansible': 'lib/ansible' },

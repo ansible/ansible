@@ -48,12 +48,10 @@ def load_callback_plugins():
     callback_plugins = [x for x in utils.plugins.callback_loader.all()]
 
 def get_cowsay_info():
-    if constants.ANSIBLE_NOCOWS is not None:
+    if constants.ANSIBLE_NOCOWS:
         return (None, None)
     cowsay = None
-    if os.getenv("ANSIBLE_NOCOWS") is not None:
-        cowsay = None
-    elif os.path.exists("/usr/bin/cowsay"):
+    if os.path.exists("/usr/bin/cowsay"):
         cowsay = "/usr/bin/cowsay"
     elif os.path.exists("/usr/games/cowsay"):
         cowsay = "/usr/games/cowsay"
@@ -84,21 +82,30 @@ def log_lockfile():
 LOG_LOCK = open(log_lockfile(), 'w')
 
 def log_flock(runner):
-    fcntl.lockf(LOG_LOCK, fcntl.LOCK_EX)
     if runner is not None:
         try:
             fcntl.lockf(runner.output_lockfile, fcntl.LOCK_EX)
-        except OSError, e:
+        except OSError:
             # already got closed?
             pass
+    else:
+        try:
+            fcntl.lockf(LOG_LOCK, fcntl.LOCK_EX)
+        except OSError:
+            pass
+        
 
 def log_unflock(runner):
-    fcntl.lockf(LOG_LOCK, fcntl.LOCK_UN)
     if runner is not None:
         try:
             fcntl.lockf(runner.output_lockfile, fcntl.LOCK_UN)
-        except OSError, e:
+        except OSError:
             # already got closed?
+            pass
+    else:
+        try:
+            fcntl.lockf(LOG_LOCK, fcntl.LOCK_UN)
+        except OSError:
             pass
 
 def set_play(callback, play):

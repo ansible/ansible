@@ -70,14 +70,15 @@ except ImportError:
     pass
 
 ###############################################################
-# abtractions around keyczar
+# Abstractions around keyczar
+###############################################################
 
 def key_for_hostname(hostname):
     # fireball mode is an implementation of ansible firing up zeromq via SSH
     # to use no persistent daemons or key management
 
     if not KEYCZAR_AVAILABLE:
-        raise errors.AnsibleError("python-keyczar must be installed to use fireball mode")
+        raise errors.AnsibleError("python-keyczar must be installed to use fireball/accelerated mode")
 
     key_path = os.path.expanduser("~/.fireball.keys")
     if not os.path.exists(key_path):
@@ -155,7 +156,27 @@ def is_changed(result):
 
     return (result.get('changed', False) in [ True, 'True', 'true'])
 
-def check_conditional(conditional):
+def check_conditional(conditional, basedir, inject, fail_on_undefined=False, jinja2=False):
+
+    if jinja2:
+        conditional = "jinja2_compare %s" % conditional
+
+    if conditional.startswith("jinja2_compare"):
+        conditional = conditional.replace("jinja2_compare ","")
+        # allow variable names
+        if conditional in inject:
+            conditional = inject[conditional]
+        conditional = template.template(basedir, conditional, inject, fail_on_undefined=fail_on_undefined)
+        # a Jinja2 evaluation that results in something Python can eval!
+        presented = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional
+        conditional = template.template(basedir, presented, inject)
+        val = conditional.lstrip().rstrip()
+        if val == "True":
+            return True
+        elif val == "False":
+            return False
+        else:
+            raise errors.AnsibleError("unable to evaluate conditional: %s" % conditional)
 
     if not isinstance(conditional, basestring):
         return conditional
@@ -200,9 +221,9 @@ def prepare_writeable_dir(tree,mode=0777):
         try:
             os.makedirs(tree, mode)
         except (IOError, OSError), e:
-            exit("Could not make dir %s: %s" % (tree, e))
+            raise errors.AnsibleError("Could not make dir %s: %s" % (tree, e))
     if not os.access(tree, os.W_OK):
-        exit("Cannot write to path %s" % tree)
+        raise errors.AnsibleError("Cannot write to path %s" % tree)
     return tree
 
 def path_dwim(basedir, given):
@@ -351,30 +372,30 @@ def parse_kv(args):
     return options
 
 def merge_hash(a, b):
-    ''' merges hash b into a
-    this means that if b has key k, the resulting has will have a key k
-    which value comes from b
-    said differently, all key/value combination from b will override a's '''
+    ''' recursively merges hash b into a
+    keys from b take precedence over keys from a '''
 
-    # and iterate over b keys
+    result = copy.deepcopy(a)
+
+    # next, iterate over b keys and values
     for k, v in b.iteritems():
-        if k in a and isinstance(a[k], dict):
-            # if this key is a hash and exists in a
-            # we recursively call ourselves with
-            # the key value of b
-            a[k] = merge_hash(a[k], v)
+        # if there's already such key in a
+        # and that key contains dict
+        if k in result and isinstance(result[k], dict):
+            # merge those dicts recursively
+            result[k] = merge_hash(a[k], v)
         else:
-            # k is not in a, no need to merge b, we just deecopy
-            # or k is not a dictionnary, no need to merge b either, we just deecopy it
-            a[k] = v
-    # finally, return the resulting hash when we're done iterating keys
-    return a
+            # otherwise, just copy a value from b to a
+            result[k] = v
+
+    return result
 
 def md5s(data):
     ''' Return MD5 hex digest of data. '''
 
+    buf = StringIO.StringIO(data)
     digest = _md5()
-    digest.update(data.encode('utf-8'))
+    digest.update(buf.read())
     return digest.hexdigest()
 
 def md5(filename):
@@ -486,6 +507,8 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
         help='use this file to authenticate the connection')
     parser.add_option('-K', '--ask-sudo-pass', default=False, dest='ask_sudo_pass', action='store_true',
         help='ask for sudo password')
+    parser.add_option('--list-hosts', dest='listhosts', action='store_true',
+        help='outputs a list of matching hosts; does not execute anything else')
     parser.add_option('-M', '--module-path', dest='module_path',
         help="specify path(s) to module library (default=%s)" % constants.DEFAULT_MODULE_PATH,
         default=None)
@@ -505,7 +528,7 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
             help='log output to this directory')
 
     if runas_opts:
-        parser.add_option("-s", "--sudo", default=False, action="store_true",
+        parser.add_option("-s", "--sudo", default=constants.DEFAULT_SUDO, action="store_true",
             dest='sudo', help="run operations with sudo (nopasswd)")
         parser.add_option('-U', '--sudo-user', dest='sudo_user', help='desired sudo user (default=root)',
             default=None)   # Can't default to root because we need to detect when this option was given
@@ -527,12 +550,12 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
 
     if check_opts:
         parser.add_option("-C", "--check", default=False, dest='check', action='store_true',
-            help="don't make any changes, instead try to predict some of the changes that may occur"
+            help="don't make any changes; instead, try to predict some of the changes that may occur"
         )
 
     if diff_opts:
         parser.add_option("-D", "--diff", default=False, dest='diff', action='store_true',
-            help="when changing (small) files and templates, show the differences in those files, works great with --check"
+            help="when changing (small) files and templates, show the differences in those files; works great with --check"
         )
 
 
@@ -620,7 +643,7 @@ def compile_when_to_only_if(expression):
     # when: int $x in $alist
     # when: float $x > 2 and $y <= $z
     # when: str $x != $y
-    # when: jinja2_compare asdf  # implies {{ asdf }} 
+    # when: jinja2_compare asdf  # implies {{ asdf }}
 
     if type(expression) not in [ str, unicode ]:
         raise errors.AnsibleError("invalid usage of when_ operator: %s" % expression)
@@ -682,9 +705,7 @@ def compile_when_to_only_if(expression):
 
     # the stock 'when' without qualification (new in 1.2), assumes Jinja2 terms
     elif tokens[0] == 'jinja2_compare':
-        # a Jinja2 evaluation that results in something Python can eval!
-        presented = "{% if " + " ".join(tokens[1:]).strip() + " %} True {% else %} False {% endif %}"
-        return presented
+        return " ".join(tokens)
     else:
         raise errors.AnsibleError("invalid usage of when_ operator: %s" % expression)
 
@@ -705,6 +726,13 @@ def make_sudo_cmd(sudo_user, executable, cmd):
         C.DEFAULT_SUDO_EXE, C.DEFAULT_SUDO_EXE, C.DEFAULT_SUDO_FLAGS,
         prompt, sudo_user, executable or '$SHELL', pipes.quote(cmd))
     return ('/bin/sh -c ' + pipes.quote(sudocmd), prompt)
+
+_TO_UNICODE_TYPES = (unicode, type(None))
+
+def to_unicode(value):
+    if isinstance(value, _TO_UNICODE_TYPES):
+        return value
+    return value.decode("utf-8")
 
 def get_diff(diff):
     # called by --diff usage in playbook and runner via callbacks
@@ -731,21 +759,21 @@ def get_diff(diff):
                     after_header = "after: %s" % diff['after_header']
                 else:
                     after_header = 'after'
-                differ = difflib.unified_diff(diff['before'].splitlines(True), diff['after'].splitlines(True), before_header, after_header, '', '', 10)
+                differ = difflib.unified_diff(to_unicode(diff['before']).splitlines(True), to_unicode(diff['after']).splitlines(True), before_header, after_header, '', '', 10)
                 for line in list(differ):
                     ret.append(line)
-            return "".join(ret)
+            return u"".join(ret)
     except UnicodeDecodeError:
         return ">> the files are different, but the diff library cannot compare unicode strings"
 
 def is_list_of_strings(items):
-    for x in items: 
+    for x in items:
         if not isinstance(x, basestring):
             return False
     return True
 
 def safe_eval(str):
-    ''' 
+    '''
     this is intended for allowing things like:
     with_items: {{ a_list_variable }}
     where Jinja2 would return a string
@@ -753,7 +781,7 @@ def safe_eval(str):
     the env is constrained)
     '''
     # FIXME: is there a more native way to do this?
-    
+
     def is_set(var):
         return not var.startswith("$") and not '{{' in var
 
@@ -778,7 +806,7 @@ def safe_eval(str):
 def listify_lookup_plugin_terms(terms, basedir, inject):
 
     if isinstance(terms, basestring):
-        # somewhat did:
+        # someone did:
         #    with_items: alist
         # OR
         #    with_items: {{ alist }}
@@ -792,7 +820,7 @@ def listify_lookup_plugin_terms(terms, basedir, inject):
                 if isinstance(new_terms, basestring) and new_terms.find("{{") != -1:
                     pass
                 else:
-                    terms = new_terms  
+                    terms = new_terms
             except:
                 pass
 

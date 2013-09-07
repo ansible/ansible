@@ -12,7 +12,6 @@ using `/usr/bin/ansible-playbook` -- the concepts port over directly.
 
 .. contents::
    :depth: 2
-   :backlinks: top
 
 
 Parallelism and Shell Commands

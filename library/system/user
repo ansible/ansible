@@ -161,10 +161,10 @@ options:
     update_password:
         required: false
         default: always
-        choices: ['always', 'on_creation']
+        choices: ['always', 'on_create']
         version_added: "1.3"
         description:
-            - C(always) will update passwords if they differ.  C(on_creation) will only set the password for newly created users.
+            - C(always) will update passwords if they differ.  C(on_create) will only set the password for newly created users.
 '''
 
 EXAMPLES = '''
@@ -270,8 +270,8 @@ class User(object):
             cmd.append('-u')
             cmd.append(self.uid)
 
-        if self.non_unique:
-            cmd.append('-o')
+            if self.non_unique:
+                cmd.append('-o')
 
         if self.group is not None:
             if not self.group_exists(self.group):
@@ -279,7 +279,7 @@ class User(object):
             cmd.append('-g')
             cmd.append(self.group)
 
-        if self.groups is not None:
+        if self.groups is not None and len(self.groups):
             groups = self.get_groups_set()
             cmd.append('-G')
             cmd.append(','.join(groups))
@@ -320,8 +320,8 @@ class User(object):
             cmd.append('-u')
             cmd.append(self.uid)
 
-        if self.non_unique:
-            cmd.append('-o')
+            if self.non_unique:
+                cmd.append('-o')
 
         if self.group is not None:
             if not self.group_exists(self.group):
@@ -578,8 +578,8 @@ class FreeBsdUser(User):
             cmd.append('-u')
             cmd.append(self.uid)
 
-        if self.non_unique:
-            cmd.append('-o')
+            if self.non_unique:
+                cmd.append('-o')
 
         if self.comment is not None:
             cmd.append('-c')
@@ -643,8 +643,8 @@ class FreeBsdUser(User):
             cmd.append('-u')
             cmd.append(self.uid)
 
-        if self.non_unique:
-            cmd.append('-o')
+            if self.non_unique:
+                cmd.append('-o')
 
         if self.comment is not None and info[4] != self.comment:
             cmd.append('-c')
@@ -739,8 +739,8 @@ class OpenBSDUser(User):
             cmd.append('-u')
             cmd.append(self.uid)
 
-        if self.non_unique:
-            cmd.append('-o')
+            if self.non_unique:
+                cmd.append('-o')
 
         if self.group is not None:
             if not self.group_exists(self.group):
@@ -794,8 +794,8 @@ class OpenBSDUser(User):
             cmd.append('-u')
             cmd.append(self.uid)
 
-        if self.non_unique:
-            cmd.append('-o')
+            if self.non_unique:
+                cmd.append('-o')
 
         if self.group is not None:
             if not self.group_exists(self.group):
@@ -889,8 +889,8 @@ class NetBSDUser(User):
             cmd.append('-u')
             cmd.append(self.uid)
 
-        if self.non_unique:
-            cmd.append('-o')
+            if self.non_unique:
+                cmd.append('-o')
 
         if self.group is not None:
             if not self.group_exists(self.group):
@@ -946,8 +946,8 @@ class NetBSDUser(User):
             cmd.append('-u')
             cmd.append(self.uid)
 
-        if self.non_unique:
-            cmd.append('-o')
+            if self.non_unique:
+                cmd.append('-o')
 
         if self.group is not None:
             if not self.group_exists(self.group):
@@ -1049,8 +1049,8 @@ class SunOS(User):
             cmd.append('-u')
             cmd.append(self.uid)
 
-        if self.non_unique:
-            cmd.append('-o')
+            if self.non_unique:
+                cmd.append('-o')
 
         if self.group is not None:
             if not self.group_exists(self.group):
@@ -1111,8 +1111,8 @@ class SunOS(User):
             cmd.append('-u')
             cmd.append(self.uid)
 
-        if self.non_unique:
-            cmd.append('-o')
+            if self.non_unique:
+                cmd.append('-o')
 
         if self.group is not None:
             if not self.group_exists(self.group):
@@ -1221,7 +1221,7 @@ class AIX(User):
             cmd.append('-g')
             cmd.append(self.group)
 
-        if self.groups is not None:
+        if self.groups is not None and len(self.groups):
             groups = self.get_groups_set()
             cmd.append('-G')
             cmd.append(','.join(groups))
@@ -1273,20 +1273,24 @@ class AIX(User):
 
         if self.groups is not None:
             current_groups = self.user_group_membership()
-            groups = self.get_groups_set()
-            group_diff = set(current_groups).symmetric_difference(groups)
             groups_need_mod = False
+            groups = []
 
-            if group_diff:
-                if self.append:
-                    for g in groups:
-                        if g in group_diff:
-                            groups.extend(current_groups)
-                            set(groups)
-                            groups_need_mod = True
-                            break
-                else:
+            if self.groups == '':
+                if current_groups and not self.append:
                     groups_need_mod = True
+            else:
+                groups = self.get_groups_set()
+                group_diff = set(current_groups).symmetric_difference(groups)
+
+                if group_diff:
+                    if self.append:
+                        for g in groups:
+                            if g in group_diff:
+                                groups_need_mod = True
+                                break
+                    else:
+                        groups_need_mod = True
 
             if groups_need_mod:
                 cmd.append('-G')

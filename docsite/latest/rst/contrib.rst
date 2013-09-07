@@ -13,7 +13,7 @@ Ansible modules are a way of adding new client-side logic to ansible.
 They can be written in any language.  Generally our goal is to include most modules in core ("batteries included!"),
 though a few may remain outside of core depending on use cases and implementations.
 
--  `Official "core" ansible modules <http://ansible.cc/docs/modules.html>`_ - various
+-  `Official "core" ansible modules <http://www.ansibleworks.com/docs/modules.html>`_ - various
 -  `Linode <https://github.com/lextoumbourou/ansible-linode>`_ - Lex Toumbourou
 -  `zypper (bash module example) <https://github.com/jpmens/ansible-zypp>`_ - jp\_mens
 -  `additional provisioning-related modules <https://github.com/ansible-provisioning>`_ - jhoekx and dagwieers
@@ -27,7 +27,7 @@ Not all modules above may take advantage of this feature. See the official docum
 Selected Playbooks
 ``````````````````
 
-`Playbooks <http://ansible.cc/docs/playbooks.html>`_ are Ansible's
+`Playbooks <http://www.ansibleworks.com/docs/playbooks.html>`_ are Ansible's
 configuration management language. It should be easy to write your own
 from scratch for most applications (we keep the language simple for EXACTLY that reason), but it can 
 be helpful to look at what others have done for reference and see what is possible.
@@ -100,9 +100,9 @@ Disclaimer
 
 Modules and playbooks here may not be using the latest in Ansible
 features. When in doubt to the features of a particular version of
-Ansbile, always consult `ansible.cc <http://ansible.cc>`_ and in
-particular see `Best Practices <http://ansible.cc/docs/bestpractices.html>`_ for some tips
-and tricks that may be useful.
+Ansible, always consult `ansibleworks.com <http://www.ansibleworks.com/>`_ and in
+particular see `Best Practices <http://www.ansibleworks.com/docs/bestpractices.html>`_ 
+for some tips and tricks that may be useful.
 
 Ansible is (C) 2012, `Michael DeHaan <http://twitter.com/laserllama>`_
 and others and is available under the GPLv3 license. Content here is as
