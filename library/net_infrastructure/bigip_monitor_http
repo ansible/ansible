@@ -386,6 +386,7 @@ def main():
                     result['changed'] |= True
 
         else: # state present
+            ## check for monitor itself
             if not monitor_exists: # create it
                 if not module.check_mode: 
                     # again, check changed status here b/c race conditions
@@ -394,19 +395,22 @@ def main():
                 else: 
                     result['changed'] |= True
 
+            ## check for monitor parameters
             # whether it already existed, or was just created, now update
-            # attributes and properties
-            # the update functions need to check for check mode
-            result['changed'] |= update_monitor_properties(api, module, monitor,
-                                                           template_string_properties,
-                                                           template_integer_properties)
+            # the update functions need to check for check mode but
+            # cannot update settings if it doesn't exist which happens in check mode
+            if monitor_exists and not module.check_mode:
+                result['changed'] |= update_monitor_properties(api, module, monitor,
+                                                               template_string_properties,
+                                                               template_integer_properties)
+            # else assume nothing changed
 
 # monitor specific stuff
             # we just have to update the ipport if monitor already exists and it's different
             if monitor_exists and cur_ipport != ipport:
-                if not monitor_exists:
-                    set_ipport(api, monitor, ipport)    
+                set_ipport(api, monitor, ipport)    
                 result['changed'] |= True
+            #else: monitor doesn't exist (check mode) or ipport is already ok
 # monitor specific stuff
 
 
