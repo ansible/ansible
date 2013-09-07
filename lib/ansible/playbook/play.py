@@ -39,7 +39,7 @@ class Play(object):
     # and don't line up 1:1 with how they are stored
     VALID_KEYS = [
        'hosts', 'name', 'vars', 'vars_prompt', 'vars_files',
-       'tasks', 'handlers', 'user', 'port', 'include', 'accelerate', 'accelerate_port',
+       'tasks', 'handlers', 'remote_user', 'user', 'port', 'include', 'accelerate', 'accelerate_port',
        'sudo', 'sudo_user', 'connection', 'tags', 'gather_facts', 'serial',
        'any_errors_fatal', 'roles', 'pre_tasks', 'post_tasks', 'max_fail_percentage' 
     ]
@@ -104,7 +104,7 @@ class Play(object):
         self.name             = ds.get('name', self.hosts)
         self._tasks           = ds.get('tasks', [])
         self._handlers        = ds.get('handlers', [])
-        self.remote_user      = ds.get('user', self.playbook.remote_user)
+        self.remote_user      = ds.get('remote_user', ds.get('user', self.playbook.remote_user))
         self.remote_port      = ds.get('port', self.playbook.remote_port)
         self.sudo             = ds.get('sudo', self.playbook.sudo)
         self.sudo_user        = ds.get('sudo_user', self.playbook.sudo_user)
