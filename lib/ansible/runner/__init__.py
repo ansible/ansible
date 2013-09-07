@@ -81,7 +81,7 @@ def _executor_hook(job_queue, result_queue, new_stdin):
         except:
             traceback.print_exc()
 
-class HostVars(collections.MutableMapping):
+class HostVars(dict):
     ''' A special view of setup_cache that adds values from the inventory when needed. '''
 
     def __init__(self, setup_cache, inventory):
@@ -90,24 +90,12 @@ class HostVars(collections.MutableMapping):
         self.lookup = dict()
         self.update(setup_cache)
 
-    def __setitem__(self, host, value):
-        self.lookup[host] = value
-
-    def __delitem__(self, host):
-        del self.lookup[host]
-
     def __getitem__(self, host):
-        if not host in self.lookup:
+        if host not in self.lookup:
             result = self.inventory.get_variables(host)
             result.update(self.setup_cache.get(host, {}))
             self.lookup[host] = result
         return self.lookup[host]
-
-    def __iter__(self):
-        return iter(self.lookup)
-
-    def __len__(self):
-        return len(self.lookup)
 
 
 class Runner(object):
