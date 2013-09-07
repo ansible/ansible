@@ -163,7 +163,7 @@ You can do this by using an external variables file, or files, just like this::
 
     ---
     - hosts: all
-      user: root
+      remote_useq: root
       vars:
         favcolor: blue
       vars_files:
@@ -197,7 +197,7 @@ in a push-script::
 
     ---
     - hosts: all
-      user: root
+      remote_useq: root
       vars:
         from: "camelot"
       vars_prompt:
@@ -276,7 +276,7 @@ This is useful, for, among other things, setting the hosts group or the user for
 Example::
 
     ---
-    - user: '{{ user }}'
+    - remote_useq: '{{ user }}'
       hosts: '{{ hosts }}'
       tasks:
          - ...
@@ -421,7 +421,7 @@ but it is easily handled with a minimum of syntax in an Ansible Playbook::
 
     ---
     - hosts: all
-      user: root
+      remote_useq: root
       vars_files:
         - "vars/common.yml"
         - [ "vars/{{ ansible_os_family }}.yml", "vars/os_defaults.yml" ]
@@ -467,7 +467,7 @@ Loops
 To save some typing, repeated tasks can be written in short-hand like so::
 
     - name: add several users
-      user: name={{ item }} state=present groups=wheel
+      remote_useq: name={{ item }} state=present groups=wheel
       with_items:
          - testuser1
          - testuser2
@@ -479,9 +479,9 @@ If you have defined a YAML list in a variables file, or the 'vars' section, you 
 The above would be the equivalent of::
 
     - name: add user testuser1
-      user: name=testuser1 state=present groups=wheel
+      remote_useq: name=testuser1 state=present groups=wheel
     - name: add user testuser2
-      user: name=testuser2 state=present groups=wheel
+      remote_useq: name=testuser2 state=present groups=wheel
 
 The yum and apt modules use with_items to execute fewer package manager transactions.
 
@@ -489,7 +489,7 @@ Note that the types of items you iterate over with 'with_items' do not have to b
 If you have a list of hashes, you can reference subkeys using things like::
 
     - name: add several users
-      user: name={{ item.name }} state=present groups={{ item.groups }}
+      remote_useq: name={{ item.name }} state=present groups={{ item.groups }}
       with_items:
         - { name: 'testuser1', groups: 'wheel' }
         - { name: 'testuser2', groups: 'root' }
@@ -603,7 +603,7 @@ Negative numbers are not supported.  This works as follows::
         - group: name=odds state=present
 
         # create some test users
-        - user: name={{ item }} state=present groups=evens
+        - remote_useq: name={{ item }} state=present groups=evens
           with_sequence: start=0 end=32 format=testuser%02x
 
         # create a series of directories with even numbers for some reason
@@ -649,7 +649,7 @@ This length can be changed by passing an extra parameter::
         (...)
 
         # create a user with a given password
-        - user: name=guestuser
+        - remote_useq: name=guestuser
                 state=present
                 uid=5000
                 password={{ item }}
@@ -665,7 +665,7 @@ updates through a proxy and access other packages not through a proxy.  Ansible 
 to configure your environment by using the 'environment' keyword.  Here is an example::
 
     - hosts: all
-      user: root
+      remote_useq: root
 
       tasks:
 
@@ -676,7 +676,7 @@ to configure your environment by using the 'environment' keyword.  Here is an ex
 The environment can also be stored in a variable, and accessed like so::
 
     - hosts: all
-      user: root
+      remote_useq: root
 
       # here we make a variable named "env" that is a dictionary
       vars:
@@ -751,7 +751,7 @@ poll value is 10 seconds if you do not specify a value for `poll`::
 
     ---
     - hosts: all
-      user: root
+      remote_useq: root
       tasks:
       - name: simulate long running op (15 sec), wait for up to 45, poll every 5
         command: /bin/sleep 15
@@ -768,7 +768,7 @@ Alternatively, if you do not need to wait on the task to complete, you may
 
     ---
     - hosts: all
-      user: root
+      remote_useq: root
       tasks:
       - name: simulate long running op, allow to run for 45, fire and forget
         command: /bin/sleep 15
