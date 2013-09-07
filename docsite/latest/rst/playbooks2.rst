@@ -285,7 +285,7 @@ Example::
 
 As of Ansible 1.2, you can also pass in extra vars as quoted JSON, like so::
 
-    --extra-vars "{'pacman':'mrs','ghosts':['inky','pinky','clyde','sue']}"
+    --extra-vars '{"pacman":"mrs","ghosts":["inky","pinky","clyde","sue"]}'
 
 The key=value form is obviously simpler, but it's there if you need it!
 
@@ -307,7 +307,8 @@ Sometimes you will want to skip a particular step on a particular host.  This co
 as simple as not installing a certain package if the operating system is a particular version,
 or it could be something like performing some cleanup steps if a filesystem is getting full.
 
-This is easy to do in Ansible, with the `when` clause, which actually is a Python expression.
+This is easy to do in Ansible, with the `when` clause, which contains a Jinja2 expression (see chapter
+`Playbooks <http://www.ansibleworks.com/docs/playbooks.html#vars-section>`_ for more info).
 Don't panic -- it's actually pretty simple::
 
     tasks:
@@ -883,6 +884,27 @@ use case, you can define how many hosts Ansible should manage at a single time b
 In the above example, if we had 100 hosts, 3 hosts in the group 'webservers'
 would complete the play completely before moving on to the next 3 hosts.
 
+Maximum Failure Percentage
+``````````````````````````
+
+.. versionadded:: 1.3
+
+By default, Ansible will continue executing actions as long as there are hosts in the group that have not yet failed.
+In some situations, such as with the rolling updates described above, it may be desireable to abort the play when a 
+certain threshold of failures have been reached. To acheive this, as of version 1.3 you can set a maximum failure 
+percentage on a play as follows::
+
+    - hosts: webservers
+      max_fail_percentage: 30
+      serial: 10
+
+In the above example, if more than 3 of the 10 servers in the group were to fail, the rest of the play would be aborted.
+
+.. note::
+
+     The percentage set must be exceeded, not equaled. For example, if serial were set to 4 and you wanted the task to abort 
+     when 2 of the systems failed, the percentage should be set at 49 rather than 50.
+
 Delegation
 ``````````
 
@@ -937,10 +959,71 @@ Here is an example::
 Note that you must have passphrase-less SSH keys or an ssh-agent configured for this to work, otherwise rsync
 will need to ask for a passphrase.
 
+Accelerated Mode
+````````````````
+
+.. versionadded:: 1.3
+
+While SSH using the ControlPersist feature is quite fast and scalable, there is a certain amount of overhead involved in
+creating connections. This can become something of a bottleneck when the number of hosts grows into the hundreds or 
+thousands. To help overcome this, Ansible offers an accelerated connection option. Accelerated mode can be anywhere from 
+2-6x faster than SSH with ControlPersist enabled, and 10x faster than paramiko.
+
+Accelerated mode works by launching a temporary daemon over SSH. Once the daemon is running, Ansible will connect directly
+to it via a raw socket connection. Ansible secures this communication by using a temporary AES key that is uploaded during
+the SSH connection (this key is different for every host, and is also regenerated every time the daemon is started). By default,
+Ansible will use port 5099 for the accelerated connection, though this is configurable. Once running, the daemon will accept
+connections for 30 minutes, after which time it will terminate itself and need to be restarted over SSH.
+
+Accelerated mode offers several improvments over the original fireball mode:
+
+* No bootstrapping is required, only a single line needs to be added to each play you wish to run in accelerated mode.
+* Support for sudo commands (see below for more details and caveats).
+* Fewer requirements! ZeroMQ is no longer required, nor are there any special packages beyond python-keyczar.
+
+In order to use accelerated mode, simply add `accelerate: true` to your play::
+
+    ---
+    - hosts: all
+      accelerate: true
+      tasks:
+      - name: some task
+        command: echo {{ item }}
+        with_items:
+        - foo
+        - bar
+        - baz
+
+If you wish to change the port Ansible will use for the accelerated connection, just add the `accelerated_port` option::
+
+    ---
+    - hosts: all
+      accelerate: true
+      # default port is 5099
+      accelerate_port: 10000
+
+The `accelerate_port` option can also be specified in the environment variable ACCELERATE_PORT, or in your `ansible.cfg` configuration::
+
+    [accelerate]
+    accelerate_port = 5099
+
+As noted above, accelerated mode also supports running tasks via sudo, however there are two important caveats:
+
+* You must remove requiretty from your sudoers options.
+* Prompting for the sudo password is not yet supported, so the NOPASSWD option is required for commands.
+
+
+
 Fireball Mode
 `````````````
 
-.. versionadded:: 0.8
+.. versionadded:: 0.8 (deprecated as of 1.3)
+
+.. note::
+
+    The following section has been deprecated as of Ansible 1.3 in favor of the accelerated mode described above. This
+    documentation is here for users who may still be using the original fireball connection method only, and should not
+    be used for any new deployments.
 
 Ansible's core connection types of 'local', 'paramiko', and 'ssh' are augmented in version 0.8 and later by a new extra-fast
 connection type called 'fireball'.  It can only be used with playbooks and does require some additional setup
@@ -1069,8 +1152,8 @@ Running a task in check mode
 .. versionadded:: 1.3
 
 Sometimes you may want to have a task to be executed even in check
-mode. To achieve this use the `always_run` clause on the task. Its
-value is a Python expression, just like the `when` clause. In simple
+mode. To achieve this, use the `always_run` clause on the task. Its
+value is a Jinja2 expression, just like the `when` clause. In simple
 cases a boolean YAML value would be sufficient as a value.
 
 Example::
