@@ -70,14 +70,15 @@ except ImportError:
     pass
 
 ###############################################################
-# abtractions around keyczar
+# Abstractions around keyczar
+###############################################################
 
 def key_for_hostname(hostname):
     # fireball mode is an implementation of ansible firing up zeromq via SSH
     # to use no persistent daemons or key management
 
     if not KEYCZAR_AVAILABLE:
-        raise errors.AnsibleError("python-keyczar must be installed to use fireball mode")
+        raise errors.AnsibleError("python-keyczar must be installed to use fireball/accelerated mode")
 
     key_path = os.path.expanduser("~/.fireball.keys")
     if not os.path.exists(key_path):
@@ -220,9 +221,9 @@ def prepare_writeable_dir(tree,mode=0777):
         try:
             os.makedirs(tree, mode)
         except (IOError, OSError), e:
-            exit("Could not make dir %s: %s" % (tree, e))
+            raise errors.AnsibleError("Could not make dir %s: %s" % (tree, e))
     if not os.access(tree, os.W_OK):
-        exit("Cannot write to path %s" % tree)
+        raise errors.AnsibleError("Cannot write to path %s" % tree)
     return tree
 
 def path_dwim(basedir, given):
@@ -392,8 +393,9 @@ def merge_hash(a, b):
 def md5s(data):
     ''' Return MD5 hex digest of data. '''
 
+    buf = StringIO.StringIO(data)
     digest = _md5()
-    digest.update(data.encode('utf-8'))
+    digest.update(buf.read())
     return digest.hexdigest()
 
 def md5(filename):

@@ -5,6 +5,8 @@ Ansible Changes By Release
 
 Highlighted new features:
 
+* accelerated mode: An enhanced fireball mode that requires zero bootstrapping and fewer requirements plus adds capabilities like sudo commands.
+* role defaults: Allows roles to define a set of variables at the lowest priority. These variables can be overridden by any other variable.
 * new /etc/ansible/facts.d allows JSON or INI-style facts to be provided from the remote node, and supports executable fact programs in this dir. Files must end in *.fact.
 * added the ability to make undefined template variables raise errors (see ansible.cfg)
 * (DOCS PENDING) sudo: True/False and sudo_user: True/False can be set at include and role level
@@ -14,7 +16,8 @@ Highlighted new features:
 * if --forks exceeds the numbers of hosts, it will be automatically reduced. Set forks to 0 and you get "as many forks as I have hosts" out of the box.
 * enabled error_on_undefined_vars by default, which will make errors in playbooks more obvious
 * role dependencies -- one role can now pull in another, with parameters of its own.
-* added the ability to have tasks execute even during a check run (always_run)
+* added the ability to have tasks execute even during a check run (always_run).
+* added the ability to set the maximum failure percentage for a group of hosts.
 
 New modules:
 
@@ -24,6 +27,9 @@ New modules:
 * cloud: linode -- modules for Linode provisioning that also includes inventory support
 * cloud: route53 -- manage Amazon DNS entries 
 * cloud: ec2_ami -- manages (and creates!) ec2 AMIs
+* database: mysql_replication -- manages mysql replication settings for masters/slaves
+* database: mysql_variables -- manages mysql runtime variables
+* database: redis -- manages redis databases (slave mode and flushing data)
 * net_infrastructure: arista_interface
 * net_infrastructure: arista_lag
 * net_infrastructure: arista_l2interface
@@ -35,7 +41,6 @@ New modules:
 * monitoring: boundary_meter -- adds or removes boundary.com meters
 * net_infrastructure: dnsmadeeasy - manipulate DNS Made Easy records
 * files: xattr -- manages extended attributes on files
-* database: redis -- manages redis databases (slave mode and flushing data)
 
 Misc changes:
 
@@ -96,7 +101,7 @@ Misc changes:
 * added IAM role support to EC2 module
 * fixes for OpenBSD package module to avoid shell expansion
 * git module upgrades to allow --depth and --version to be used together
-* new lookup plugin, "with_flat_list"
+* new lookup plugin, "with_flattened"
 * extra vars (-e) variables can be used in playbook include paths
 * improved reporting for invalid sudo passwords
 * improved reporting for inability to find a suitable tmp location

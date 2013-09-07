@@ -249,12 +249,21 @@ def partial(f, *args, **kwargs):
 class Connection(object):
     """Wrapper around a psycopg2 connection with some convenience methods"""
 
-    def __init__(self, host, port, login, password, database):
-        self.database = database
-        self.connection = psycopg2.connect(
-            host=host, port=port, user=login,
-            password=password, database=database
-        )
+    def __init__(self, params):
+        self.database = params.database
+        # To use defaults values, keyword arguments must be absent, so
+        # check which values are empty and don't include in the **kw
+        # dictionary
+        params_map = {
+            "host":"host",
+            "login":"user",
+            "password":"password",
+            "port":"port",
+            "database": "database",
+        }
+        kw = dict( (params_map[k], getattr(params, k)) for k in params_map
+                   if getattr(params, k) != '' )
+        self.connection = psycopg2.connect(**kw)
         self.cursor = self.connection.cursor()
 
 
@@ -503,10 +512,10 @@ def main():
             roles=dict(required=True, aliases=['role']),
             grant_option=dict(required=False, type='bool', 
                               aliases=['admin_option']),
-            host=dict(required=False, aliases=['login_host']),
+            host=dict(default='', aliases=['login_host']),
             port=dict(type='int', default=5432),
             login=dict(default='postgres', aliases=['login_user']),
-            password=dict(required=False, aliases=['login_password'])
+            password=dict(default='', aliases=['login_password'])
         ),
         supports_check_mode = True
     )
@@ -541,7 +550,7 @@ def main():
     if not psycopg2:
         module.fail_json(msg='Python module "psycopg2" must be installed.')
     try:
-        conn = Connection(p.host, p.port, p.login, p.password, p.database)
+        conn = Connection(p)
     except psycopg2.Error, e:
         module.fail_json(msg='Could not connect to database: %s' % e)
 
