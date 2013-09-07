@@ -103,7 +103,7 @@ def main(args):
         if extra_vars_opt.startswith("@"):
             # Argument is a YAML file (JSON is a subset of YAML)
             extra_vars = utils.combine_vars(extra_vars, utils.parse_yaml_from_file(extra_vars_opt[1:]))
-        elif extra_vars_opt[0] in '[{':
+        elif extra_vars_opt and extra_vars_opt[0] in '[{':
             # Arguments as YAML
             extra_vars = utils.combine_vars(extra_vars, utils.parse_yaml(extra_vars_opt))
         else:
