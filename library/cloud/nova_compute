@@ -220,7 +220,7 @@ def main():
         nics                            = dict(default=None),
         meta                            = dict(default=None),
         wait                            = dict(default='yes', choices=['yes', 'no']),
-        wait_for                        = dict(default=120),
+        wait_for                        = dict(default=180),
         state                           = dict(default='present', choices=['absent', 'present'])
         ),
     )
