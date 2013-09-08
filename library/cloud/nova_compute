@@ -135,7 +135,7 @@ def _delete_server(module, nova):
         module.fail_json( msg = "Error in deleting vm: %s" % e.message)
     if module.params['wait'] == 'no':
         module.exit_json(changed = True, result = "deleted")
-    expire = time.time() + module.params['wait_for']
+    expire = time.time() + int(module.params['wait_for'])
     while time.time() < expire:
         name = nova.servers.list(True, {'name': module.params['name']})
         if not name:
@@ -160,7 +160,7 @@ def _create_server(module, nova):
     except Exception as e:
             module.fail_json( msg = "Error in creating instance: %s " % e.message)
     if module.params['wait'] == 'yes':
-        expire = time.time() + module.params['wait_for']
+        expire = time.time() + int(module.params['wait_for'])
         while time.time() < expire:
             try:
                 server = nova.servers.get(server.id)
