@@ -164,7 +164,7 @@ class Play(object):
             raise errors.AnsibleError("too many levels of recursion while resolving role dependencies")
         for role in roles:
             role_path,role_vars = self._get_role_path(role)
-            role_vars = utils.combine_vars(role_vars, passed_vars)
+            role_vars = utils.combine_vars(passed_vars, role_vars)
             vars = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(role_path, 'vars')))
             vars_data = {}
             if os.path.isfile(vars):
