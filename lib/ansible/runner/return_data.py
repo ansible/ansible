@@ -59,5 +59,5 @@ class ReturnData(object):
         return self.comm_ok
 
     def is_successful(self):
-        return self.comm_ok and (self.result.get('failed', False) == False) and (self.result.get('rc',0) == 0)
+        return self.comm_ok and (self.result.get('failed', False) == False) and ('failed_when_result' in self.result and [not self.result['failed_when_result']] or [self.result.get('rc',0) == 0])[0]
 
