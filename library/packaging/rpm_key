@@ -86,7 +86,7 @@ class RpmKey:
             keyfile = self.fetch_key(key)
             keyid = self.getkeyid(keyfile)
             should_cleanup_keyfile = True
-        elif is_keyid(key):
+        elif self.is_keyid(key):
             keyid = key
         elif os.path.isfile(key):
             keyfile = key
@@ -147,7 +147,7 @@ class RpmKey:
                 return keyid
         self.json_fail(msg="Unexpected gpg output")
 
-    def is_keyid(keystr):
+    def is_keyid(self, keystr):
         """Verifies if a key, as provided by the user is a keyid"""
         return re.match('(0x)?(0-9a-f){8}', keystr, flags=re.IGNORECASE)
 
