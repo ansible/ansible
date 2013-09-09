@@ -111,7 +111,7 @@ class Play(object):
         self.transport        = ds.get('connection', self.playbook.transport)
         self.gather_facts     = ds.get('gather_facts', None)
         self.remote_port      = self.remote_port
-        self.any_errors_fatal = ds.get('any_errors_fatal', False)
+        self.any_errors_fatal = utils.boolean(ds.get('any_errors_fatal', 'false'))
         self.accelerate       = utils.boolean(ds.get('accelerate', 'false'))
         self.accelerate_port  = ds.get('accelerate_port', None)
         self.max_fail_pct     = int(ds.get('max_fail_percentage', 100))
