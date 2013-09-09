@@ -1,0 +1,8 @@
+---
+- hosts: all
+  connection: local
+  gather_facts: False
+
+  tasks:
+  - action: shell exit 1
+    ok_rc: [0, 1]

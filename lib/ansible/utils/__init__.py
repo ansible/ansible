@@ -149,7 +149,7 @@ def write_tree_file(tree, hostname, buf):
 def is_failed(result):
     ''' is a given JSON result a failed result? '''
 
-    return ((result.get('rc', 0) != 0) or (result.get('failed', False) in [ True, 'True', 'true']))
+    return ((result.get('rc', 0) not in (result('ok_rc') or [0])) or (result.get('failed', False) in [ True, 'True', 'true']))
 
 def is_changed(result):
     ''' is a given JSON result a changed result? '''

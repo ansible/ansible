@@ -189,7 +189,7 @@ class AggregateStats(object):
 
         for (host, value) in runner_results.get('contacted', {}).iteritems():
             if not ignore_errors and (('failed' in value and bool(value['failed'])) or
-                ('rc' in value and value['rc'] != 0)):
+                ('rc' in value and value['rc'] not in (value.get('ok_rc') or [0]))):
                 self._increment('failures', host)
             elif 'skipped' in value and bool(value['skipped']):
                 self._increment('skipped', host)
