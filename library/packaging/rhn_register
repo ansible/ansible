@@ -172,7 +172,7 @@ class Rhn(RegistrationBase):
         # configuration.  Yeah, I know this should be subclassed ... but, oh
         # well
         def get_option_default(self, key, default=''):
-            if 'key' in self:
+            if self.has_key(key):
                 return self[key]
             else:
                 return default
