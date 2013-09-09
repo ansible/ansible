@@ -300,17 +300,17 @@ class TestPlaybook(unittest.TestCase):
 
        assert utils.jsonify(expected, format=True) == utils.jsonify(actual, format=True)
 
-   def test_playbook_undefined_vars1_ignore(self):
-       self._test_playbook_undefined_vars('playbook1.yml', False)
+   #def test_playbook_undefined_vars1_ignore(self):
+   #    self._test_playbook_undefined_vars('playbook1.yml', False)
 
-   def test_playbook_undefined_vars1_fail(self):
-       self._test_playbook_undefined_vars('playbook1.yml', True)
+   #def test_playbook_undefined_vars1_fail(self):
+   #    self._test_playbook_undefined_vars('playbook1.yml', True)
 
-   def test_playbook_undefined_vars2_ignore(self):
-       self._test_playbook_undefined_vars('playbook2.yml', False)
+   #def test_playbook_undefined_vars2_ignore(self):
+   #    self._test_playbook_undefined_vars('playbook2.yml', False)
 
-   def test_playbook_undefined_vars2_fail(self):
-       self._test_playbook_undefined_vars('playbook2.yml', True)
+   #def test_playbook_undefined_vars2_fail(self):
+   #    self._test_playbook_undefined_vars('playbook2.yml', True)
 
    def test_yaml_hosts_list(self):
        # Make sure playbooks support hosts: [host1, host2]
