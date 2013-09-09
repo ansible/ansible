@@ -357,6 +357,8 @@ class Runner(object):
         data = utils.parse_json(res['stdout'])
         if 'parsed' in data and data['parsed'] == False:
             data['msg'] += res['stderr']
+        if 'ok_rc' in inject:
+            data['ok_rc'] = inject['ok_rc']
         return ReturnData(conn=conn, result=data)
 
     # *****************************************************
@@ -507,7 +509,7 @@ class Runner(object):
                 for x in results:
                     if x.get('changed') == True:
                         all_changed = True
-                    if (x.get('failed') == True) or (('rc' in x) and (x['rc'] != 0)):
+                    if (x.get('failed') == True) or (('rc' in x) and (x['rc'] not in (x.get('ok_rc') or [0]))):
                         all_failed = True
                         break
             msg = 'All items completed'
