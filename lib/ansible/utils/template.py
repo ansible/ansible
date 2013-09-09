@@ -430,7 +430,7 @@ def template_from_file(basedir, path, vars):
         raise errors.AnsibleError("unable to read %s" % realpath)
 
 
-# Get jinja env overrides from template
+    # Get jinja env overrides from template
     if data.startswith(JINJA2_OVERRIDE):
         eol = data.find('\n')
         line = data[len(JINJA2_OVERRIDE):eol]

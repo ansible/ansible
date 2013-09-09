@@ -170,8 +170,19 @@ def check_conditional(conditional, basedir, inject, fail_on_undefined=False, jin
         # a Jinja2 evaluation that results in something Python can eval!
         presented = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional
         conditional = template.template(basedir, presented, inject)
-        val = conditional.lstrip().rstrip()
-        if val == "True":
+        val = conditional.strip()
+        if val == presented:
+            # the templating failed, meaning most likely a 
+            # variable was undefined. If we happened to be 
+            # looking for an undefined variable, return True,
+            # otherwise fail
+            if conditional.find("is undefined") != -1:
+                return True
+            elif conditional.find("is defined") != -1:
+                return False
+            else:
+                raise errors.AnsibleError("error while evaluating conditional: %s" % conditional)
+        elif val == "True":
             return True
         elif val == "False":
             return False
