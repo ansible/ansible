@@ -397,7 +397,7 @@ class LinuxService(Service):
             # adjust the service name to account for template service unit files
             index = name.find('@')
             if index != -1:
-                name = name[:index+1]
+                self.name = name = name[:index+1]
 
             look_for = "%s.service" % name
             for line in out.splitlines():
@@ -419,6 +419,8 @@ class LinuxService(Service):
             elif os.path.exists("/etc/init.d/%s" % self.name):
                 # service is managed by with SysV init scripts, but with update-rc.d
                 self.enable_cmd = location['update-rc.d']
+            else:
+                self.module.fail_json(msg="update-rc.d found but couldn't determine how the service is managed")
         elif location.get('rc-service', None) and not location.get('systemctl', None):
             # service is managed by OpenRC
             self.svc_cmd = location['rc-service']
