@@ -99,6 +99,7 @@ EXAMPLES = '''
 - yum: name=* state=latest
 - yum: name=http://nginx.org/packages/centos/6/noarch/RPMS/nginx-release-centos-6-0.el6.ngx.noarch.rpm state=present
 - yum: name=/usr/local/src/nginx-release-centos-6-0.el6.ngx.noarch.rpm state=present
+- yum: name="@Development tools" state=present
 '''
 
 def_qf = "%{name}-%{version}-%{release}.%{arch}"
