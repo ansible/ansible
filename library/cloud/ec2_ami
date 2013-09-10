@@ -196,10 +196,19 @@ def create_image(module, ec2):
         module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
 
     # wait here until the image is gone
-    img = ec2.get_image(image_id)
-    wait_timeout = time.time() + wait_timeout
-    while wait and wait_timeout > time.time() and (img is None or img.state != 'available'):
+    try:
         img = ec2.get_image(image_id)
+    except: #if the image doesn't exist, we'll try once more before bailing.
+        time.sleep(10)
+        img = ec2.get_image(image_id)
+    wait_timeout = time.time() + wait_timeout
+    while wait and wait_timeout > time.time() and (img == None or img.state != 'available'):
+        try:
+            img = ec2.get_image(image_id)
+        except: #if the image doesn't exist, we'll try once more before bailing.
+            time.sleep(10)
+            img = ec2.get_image(image_id)
+
         time.sleep(3)
     if wait and wait_timeout <= time.time():
         # waiting took too long
@@ -257,7 +266,7 @@ def main():
             wait = dict(type="bool", default=False),
             wait_timeout = dict(default=900),
             description = dict(default=""),
-            no_reboot = dict(default=True, type="bool"),
+            no_reboot = dict(default=False, type="bool"),
             state = dict(default='present'),
             region = dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS)
         )
