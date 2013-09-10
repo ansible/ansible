@@ -66,7 +66,7 @@ class LookupModule(object):
                     elif name == 'chars':
                         use_chars=[]
                         if ",," in value: use_chars.append(',')
-                        use_chars.extend(value.replace(',,',',').replace('"','').replace("'",'').split(','))
+                        use_chars.extend(value.replace(',,',',').split(','))
                         paramvals['chars'] = use_chars
                     else:
                         paramvals[name] = value
@@ -83,7 +83,7 @@ class LookupModule(object):
                 pathdir = os.path.dirname(path)
                 if not os.path.isdir(pathdir):
                     os.makedirs(pathdir)
-                chars = "".join([getattr(string,c,c) for c in use_chars])
+                chars = "".join([getattr(string,c,c) for c in use_chars]).replace('"','').replace("'",'')
                 password = ''.join(random.choice(chars) for _ in range(length))
                 if encrypt is not None:
                     salt = self.random_salt()
