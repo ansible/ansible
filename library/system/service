@@ -387,38 +387,46 @@ class LinuxService(Service):
         for binary in binaries:
             location[binary] = self.module.get_bin_path(binary)
 
+        def check_systemd(name):
+            # verify service is managed by systemd
+            if not location.get('systemctl', None):
+                return False
+
+            rc, out, err = self.execute_command("%s list-unit-files" % (location['systemctl']))
+
+            # adjust the service name to account for template service unit files
+            index = name.find('@')
+            if index != -1:
+                name = name[:index+1]
+
+            look_for = "%s.service" % name
+            for line in out.splitlines():
+                if line.startswith(look_for):
+                    return True
+            return False
+
         # Locate a tool for enable options
         if location.get('chkconfig', None) and os.path.exists("/etc/init.d/%s" % self.name):
             # we are using a standard SysV service
             self.enable_cmd = location['chkconfig']
-        elif location.get('update-rc.d', None) and os.path.exists("/etc/init/%s.conf" % self.name):
-            # service is managed by upstart
-            self.enable_cmd = location['update-rc.d']
-        elif location.get('update-rc.d', None) and os.path.exists("/etc/init.d/%s" % self.name):
-            # service is managed by with SysV init scripts, but with update-rc.d
-            self.enable_cmd = location['update-rc.d']
+        elif location.get('update-rc.d', None):
+            if check_systemd(self.name):
+                # service is managed by systemd
+                self.enable_cmd = location['systemctl']
+            elif os.path.exists("/etc/init/%s.conf" % self.name):
+                # service is managed by upstart
+                self.enable_cmd = location['update-rc.d']
+            elif os.path.exists("/etc/init.d/%s" % self.name):
+                # service is managed by with SysV init scripts, but with update-rc.d
+                self.enable_cmd = location['update-rc.d']
         elif location.get('rc-service', None) and not location.get('systemctl', None):
             # service is managed by OpenRC
             self.svc_cmd = location['rc-service']
             self.enable_cmd = location['rc-update']
             return
-        elif location.get('systemctl', None):
-
-            # verify service is managed by systemd
-            rc, out, err = self.execute_command("%s list-unit-files" % (location['systemctl']))
-
-            # adjust the service name to account for template service unit files
-            index = self.name.find('@')
-            if index == -1:
-                name = self.name
-            else:
-                name = self.name[:index+1]
-
-            look_for = "%s.service" % name
-            for line in out.splitlines():
-                if line.startswith(look_for):
-                    self.enable_cmd = location['systemctl']
-                    break
+        elif check_systemd(self.name):
+            # service is managed by systemd
+            self.enable_cmd = location['systemctl']
 
         # Locate a tool for runtime service management (start, stop etc.)
         if location.get('service', None) and os.path.exists("/etc/init.d/%s" % self.name):
