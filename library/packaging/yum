@@ -109,6 +109,12 @@ if not os.path.exists(repoquery):
 
 yumbin='/usr/bin/yum'
 
+import syslog
+
+def log(msg):
+    syslog.openlog('ansible-yum', 0, syslog.LOG_USER)
+    syslog.syslog(syslog.LOG_NOTICE, msg)
+
 def yum_base(conf_file=None, cachedir=False):
 
     my = yum.YumBase()
@@ -464,9 +470,11 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
 
         rc, out, err = module.run_command(cmd)
 
-        if rc != 0 and 'Nothing to do' in err:
+        if (rc != 0 and 'Nothing to do' in err) or 'Nothing to do' in out:
             # avoid failing in the 'Nothing To Do' case
-            # this may happen with an URL spec
+            # this may happen with an URL spec.
+            # for an already installed group,
+            # we get rc = 0 and 'Nothing to do' in out, not in err.
             rc = 0
             err = ''
             out = '%s: Nothing to do' % spec
@@ -616,7 +624,8 @@ def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo,
     # take multiple args comma separated
     items = pkgspec.split(',')
 
-    yum_basecmd = [yumbin, '-d', '1', '-y']
+    # need debug level 2 to get 'Nothing to do' for groupinstall.
+    yum_basecmd = [yumbin, '-d', '2', '-y']
 
         
     if not repoquery:
