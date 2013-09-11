@@ -407,8 +407,12 @@ class LinuxService(Service):
 
         # Locate a tool for enable options
         if location.get('chkconfig', None) and os.path.exists("/etc/init.d/%s" % self.name):
-            # we are using a standard SysV service
-            self.enable_cmd = location['chkconfig']
+            if check_systemd(self.name):
+                # service is managed by systemd
+                self.enable_cmd = location['systemctl']
+            else:
+                # we are using a standard SysV service
+                self.enable_cmd = location['chkconfig']
         elif location.get('update-rc.d', None):
             if check_systemd(self.name):
                 # service is managed by systemd
@@ -420,7 +424,7 @@ class LinuxService(Service):
                 # service is managed by with SysV init scripts, but with update-rc.d
                 self.enable_cmd = location['update-rc.d']
             else:
-                self.module.fail_json(msg="update-rc.d found but couldn't determine how the service is managed")
+                self.module.fail_json(msg="service not found: %s" % self.name)
         elif location.get('rc-service', None) and not location.get('systemctl', None):
             # service is managed by OpenRC
             self.svc_cmd = location['rc-service']
