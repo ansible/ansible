@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # Support a YAML file hosts.yml as external inventory in Ansible
 
-# Copyright (C) 2012  Jeroen Hoekx <jeroen@hoekx.be>
+# Copyright (C) 2012-2013  Jeroen Hoekx <jeroen@hoekx.be>
+#                          Joost Cassee <joost@cassee.net>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -216,26 +217,27 @@ def parse_yaml(yaml_hosts):
 
     return groups, all_hosts
 
+
 parser = OptionParser()
-parser.add_option('-l', '--list', default=False, dest="list_hosts", action="store_true")
-parser.add_option('-H', '--host', default=None, dest="host")
-parser.add_option('-e', '--extra-vars', default=None, dest="extra")
+parser.add_option('-f', '--file', dest='hosts_file', default=None,
+        help='the YAML inventory file')
+parser.add_option('-l', '--list', dest='list_hosts', action='store_true',
+        default=True, help='output inventory groups (default)')
+parser.add_option('-H', '--host', dest='host', default=None,
+        help='output host variables')
 options, args = parser.parse_args()
 
-base_dir = os.path.dirname(os.path.realpath(__file__))
-hosts_file = os.path.join(base_dir, 'hosts.yml')
+
+hosts_file = options.hosts_file
+if hosts_file is None:
+    base_dir = os.path.dirname(os.path.realpath(__file__))
+    hosts_file = os.path.join(base_dir, 'hosts.yml')
 
 with open(hosts_file) as f:
     yaml_hosts = yaml.safe_load( f.read() )
 
 groups, all_hosts = parse_yaml(yaml_hosts)
 
-if options.list_hosts == True:
-    result = {}
-    for group in groups:
-        result[group.name] = [host.name for host in group.get_hosts()]
-    print json.dumps(result)
-    sys.exit(0)
 
 if options.host is not None:
     result = {}
@@ -244,12 +246,28 @@ if options.host is not None:
         if test_host.name == options.host:
             host = test_host
             break
+    if host is None:
+        print >> sys.stderr, 'host not in inventory:', options.host
+        sys.exit(1)
     result = host.get_variables()
-    if options.extra:
-        k,v = options.extra.split("=")
-        result[k] = v
-    print json.dumps(result)
-    sys.exit(0)
+    print json.dumps(result, sort_keys=True, indent=4)
 
-parser.print_help()
-sys.exit(1)
+else:
+    result = {}
+    for group in groups:
+        hosts = [host.name for host in group.get_hosts()]
+        variables = group.get_variables()
+        if variables:
+            result[group.name] = {
+                'hosts': hosts,
+                'vars': variables,
+            }
+        else:
+            result[group.name] = hosts
+    hostvars = {}
+    for host in all_hosts.get_hosts():
+        if host.vars:
+            hostvars[host.name] = host.vars
+    if hostvars:
+        result['_meta'] = {'hostvars': hostvars}
+    print json.dumps(result, sort_keys=True, indent=4)
