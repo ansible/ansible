@@ -195,7 +195,7 @@ def sysctl_check(current_step, **sysctl_args):
                 output = re.sub('(\s+)', ' ', output)
             
             # normal case, finded value must be equal to the submitted value :
-            if output != sysctl_args['value']:
+            if output.split() != sysctl_args['value'].split():
                 return 1, 'key seems not set to value even after update/sysctl, founded : <%s>, wanted : <%s>' % (output, sysctl_args['value'])
 
         return 0, ''
