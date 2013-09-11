@@ -89,19 +89,21 @@ import re
 
 # ==============================================================
 
-def reload_sysctl(**sysctl_args):
+def reload_sysctl(module, **sysctl_args):
     # update needed ?
     if not sysctl_args['reload']:
         return 0, ''
 
     # do it
-    cmd = [ '/sbin/sysctl', '-p', sysctl_args['sysctl_file']]
-    call = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = call.communicate()
-    if call.returncode == 0:
-        return 0, ''
+    if get_platform().lower() == 'freebsd':
+        # freebsd doesn't support -p, so reload the sysctl service
+        rc,out,err = module.run_command('/etc/rc.d/sysctl reload')
     else:
-        return call.returncode, out+err
+        # system supports reloading via the -p flag to sysctl, so we'll use that 
+        sysctl_cmd = module.get_bin_path('sysctl', required=True)
+        rc,out,err = module.run_command([sysctl_cmd, '-p', sysctl_args['sysctl_file']])
+        
+    return rc,out+err
 
 # ==============================================================
 
@@ -126,8 +128,13 @@ def write_sysctl(module, lines, **sysctl_args):
 # ==============================================================
 
 def sysctl_args_expand(**sysctl_args):
-    sysctl_args['key_path'] = sysctl_args['name'].replace('.' ,'/')
-    sysctl_args['key_path'] = '/proc/sys/' + sysctl_args['key_path']
+    if get_platform().lower() == 'freebsd':
+        # FreeBSD does not use the /proc file system, and instead
+        # just uses the sysctl command to set the values
+        sysctl_args['key_path'] = None
+    else:
+        sysctl_args['key_path'] = sysctl_args['name'].replace('.' ,'/')
+        sysctl_args['key_path'] = '/proc/sys/' + sysctl_args['key_path']
     return sysctl_args
 
 # ==============================================================
@@ -144,7 +151,7 @@ def sysctl_args_collapse(**sysctl_args):
 
 # ==============================================================
 
-def sysctl_check(current_step, **sysctl_args):
+def sysctl_check(module, current_step, **sysctl_args):
     
     # no smart checks at this step ?
     if sysctl_args['checks'] == 'none':
@@ -164,42 +171,51 @@ def sysctl_check(current_step, **sysctl_args):
     if not sysctl_args['reload'] and sysctl_args['checks'] in ['after', 'both']:
         return 1, 'checks cannot be set to after or both if reload=no'
 
-    # getting file stat
-    if not os.access(sysctl_args['key_path'], os.F_OK):
-        return 1, 'key_path is not an existing file, key seems invalid'
-    if not os.access(sysctl_args['key_path'], os.R_OK):
-        return 1, 'key_path is not a readable file, key seems to be uncheckable'
+    if sysctl_args['key_path'] is not None:
+        # getting file stat
+        if not os.access(sysctl_args['key_path'], os.F_OK):
+            return 1, 'key_path is not an existing file, key %s seems invalid' % sysctl_args['key_path']
+        if not os.access(sysctl_args['key_path'], os.R_OK):
+            return 1, 'key_path is not a readable file, key seems to be uncheckable'
 
     # checks before
     if current_step == 'before' and sysctl_args['checks'] in ['before', 'both']:
-        
-        if not os.access(sysctl_args['key_path'], os.W_OK):
+        if sysctl_args['key_path'] is not None and not os.access(sysctl_args['key_path'], os.W_OK):
             return 1, 'key_path is not a writable file, key seems to be read only'
         return 0, ''
 
     # checks after
     if current_step == 'after' and sysctl_args['checks'] in ['after', 'both']:
-
         if sysctl_args['value'] is not None:
-        
-            # reading the virtual file
-            f = open(sysctl_args['key_path'],'r')
-            output = f.read()
-            f.close()
+            if sysctl_args['key_path'] is not None:
+                # reading the virtual file
+                f = open(sysctl_args['key_path'],'r')
+                output = f.read()
+                f.close()
+            else:
+                # we're on a system without /proc (ie. freebsd), so just
+                # use the sysctl command to get the currently set value
+                sysctl_cmd = module.get_bin_path('sysctl', required=True)
+                rc,output,stderr = module.run_command("%s -n %s" % (sysctl_cmd, sysctl_args['name']))
+                if rc != 0:
+                    return 1, 'failed to lookup the value via the sysctl command'
+
             output = output.strip(' \t\n\r')
             output = re.sub(r'\s+', ' ', output)
-            
-            # multi positive integer values separated by spaces as described in issue #2004 :
-            if re.search('^([\d\s]+)$', sysctl_args['value']):
-                # replace all groups of spaces by one space
-                output = re.sub('(\s+)', ' ', output)
-            
-            # normal case, finded value must be equal to the submitted value :
+
+            # normal case, found value must be equal to the submitted value, and 
+            # we compare the exploded values to handle any whitepsace differences
             if output.split() != sysctl_args['value'].split():
                 return 1, 'key seems not set to value even after update/sysctl, founded : <%s>, wanted : <%s>' % (output, sysctl_args['value'])
 
-        return 0, ''
-    
+            return 0, ''
+        else:
+            # no value was supplied, so we're checking to make sure
+            # the associated name is absent. We just fudge this since 
+            # the sysctl isn't really gone, just removed from the conf 
+            # file meaning it will be whatever the system default is
+            return 0, ''
+
     # weird end
     return 1, 'unexpected position reached'
 
@@ -233,12 +249,17 @@ def main():
     
     # prepare vars
     sysctl_args = sysctl_args_expand(**sysctl_args)
-    new_line = "%s = %s\n" % (sysctl_args['name'], sysctl_args['value'])
+    if get_platform().lower() == 'freebsd':
+        # freebsd does not like spaces around the equal sign
+        pattern = "%s=%s\n"
+    else:
+        pattern = "%s = %s\n" 
+    new_line = pattern % (sysctl_args['name'], sysctl_args['value'])
     to_write = []
     founded = False
    
     # make checks before act
-    res,msg = sysctl_check('before', **sysctl_args)
+    res,msg = sysctl_check(module, 'before', **sysctl_args)
     if res != 0:
         module.fail_json(msg='checks_before failed with: ' + msg)
 
@@ -257,15 +278,10 @@ def main():
         if line.strip().startswith('#'):
             to_write.append(line)
             continue
-        if len(line.split('=')) != 2:
-            # not sure what this is or why it is here
-            # but it is not our fault so leave it be
-            to_write.append(line)
-            continue
 
         # write line if not the one searched
         ld = {}
-        ld['name'], ld['val'] = line.split('=')
+        ld['name'], ld['val'] = line.split('=',1)
         ld['name'] = ld['name'].strip()
 
         if ld['name'] != sysctl_args['name']:
@@ -303,10 +319,10 @@ def main():
     res = 0
     if sysctl_args['changed'] == True:
         sysctl_args = write_sysctl(module, to_write, **sysctl_args)
-        res,msg = reload_sysctl(**sysctl_args)
+        res,msg = reload_sysctl(module, **sysctl_args)
         
         # make checks after act
-        res,msg = sysctl_check('after', **sysctl_args)
+        res,msg = sysctl_check(module, 'after', **sysctl_args)
         if res != 0:
             module.fail_json(msg='checks_after failed with: ' + msg)
 
