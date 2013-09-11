@@ -392,16 +392,26 @@ class LinuxService(Service):
             if not location.get('systemctl', None):
                 return False
 
+            # default to .service if the unit type is not specified
+            if name.find('.') > 0:
+                unit_name, unit_type = name.rsplit('.', 1)
+                if unit_type not in ("service", "socket", "device", "mount", "automount",
+                                     "swap", "target", "path", "timer", "snapshot"):
+                    name = "%s.service" % name
+            else:
+                name = "%s.service" % name
+
             rc, out, err = self.execute_command("%s list-unit-files" % (location['systemctl']))
 
             # adjust the service name to account for template service unit files
             index = name.find('@')
             if index != -1:
-                self.name = name = name[:index+1]
+                name = name[:index+1]
 
-            look_for = "%s.service" % name
+            self.__systemd_unit = None
             for line in out.splitlines():
-                if line.startswith(look_for):
+                if line.startswith(name):
+                    self.__systemd_unit = name
                     return True
             return False
 
@@ -540,7 +550,7 @@ class LinuxService(Service):
                 return
 
         if self.enable_cmd.endswith("systemctl"):
-            (rc, out, err) = self.execute_command("%s show %s.service" % (self.enable_cmd, self.name))
+            (rc, out, err) = self.execute_command("%s show %s" % (self.enable_cmd, self.__systemd_unit))
 
             d = dict(line.split('=', 1) for line in out.splitlines())
             if "UnitFileState" in d:
@@ -626,7 +636,7 @@ class LinuxService(Service):
         if self.enable_cmd.endswith("rc-update"):
             args = (self.enable_cmd, add_delete, self.name + " " + self.runlevel)
         elif self.enable_cmd.endswith("systemctl"):
-            args = (self.enable_cmd, enable_disable, self.name + ".service")
+            args = (self.enable_cmd, enable_disable, self.__systemd_unit)
         else:
             args = (self.enable_cmd, self.name, on_off)
 
@@ -650,7 +660,7 @@ class LinuxService(Service):
             else:
                 # systemd commands take the form <cmd> <action> <name>
                 svc_cmd = self.svc_cmd
-                arguments = "%s %s" % (self.name, arguments)
+                arguments = "%s %s" % (self.__systemd_unit, arguments)
         elif self.svc_initscript:
             # upstart
             svc_cmd = "%s" % self.svc_initscript
