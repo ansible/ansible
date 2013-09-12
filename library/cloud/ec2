@@ -447,8 +447,7 @@ def create_instances(module, ec2):
             else:
                 if instance_profile_name is not None:
                     module.fail_json(
-                        msg="instance_profile_name is set but Boto library doesn't support it. " +
-                            "Please upgrade to Boto 2.5.0+ or remove this parameter.")
+                        msg="instance_profile_name parameter requires Boto version 2.5.0 or higher")
 
             if vpc_subnet_id:
                 params['security_group_ids'] = group_id
