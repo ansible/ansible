@@ -9,11 +9,12 @@ options:
   instance_id:
     description:
       - The EC2 instance id
-    required: true
+    required: false
   public_ip:
     description:
-      - The elastic IP address to associate with the instance
-    required: true
+      - The elastic IP address to associate with the instance.
+      - If absent, allocate a new address
+    required: false
   state:
     description:
       - If present, associate the IP with the instance.
@@ -47,12 +48,34 @@ options:
     aliases: [ ec2_region ]
 requirements: [ "boto" ]
 author: Lorin Hochstein <lorin@nimbisservices.com>
+notes:
+   - This module will return C(public_ip) on success, which will contain the
+     public IP address associated with the instance.
 '''
 
 EXAMPLES = '''
-- ec2_eip: instance_id=i-1212f003 ip=93.184.216.119
+- name: associate an elastic IP with an instance
+  ec2_eip: instance_id=i-1212f003 ip=93.184.216.119
 
-- ec2_eip: instance_id=i-1212f003 ip=93.184.216.119 state=absent
+- name: disassociate an elastic IP from an instance
+  ec2_eip: instance_id=i-1212f003 ip=93.184.216.119 state=absent
+
+- name: allocate a new elastic IP and associate it with an instance
+  ec2_eip: instance_id=i-1212f003
+
+- name: allocate a new elastic IP without associating it to anything
+  ec2_eip:
+  register: eip
+- name: output the IP
+  debug: msg="Allocated IP is {{ eip.public_ip }}"
+
+- name: provision new instances with ec2
+  ec2: keypair=mykey instance_type=c1.medium image=emi-40603AD1 wait=yes group=webserver count=3
+  register: ec2
+- name: associate new elastic IPs with each of the instances
+  ec2_eip: "instance_id={{ item }}"
+  with_items: ec2.instance_ids
+
 '''
 
 try:
@@ -96,7 +119,7 @@ def connect(ec2_url, ec2_secret_key, ec2_access_key, region):
 
 def associate_ip_and_instance(ec2, public_ip, instance_id, module):
     if ip_is_associated_with_instance(ec2, public_ip, instance_id):
-        module.exit_json(changed=False)
+        module.exit_json(changed=False, public_ip=public_ip)
 
     # If we're in check mode, nothing else to do
     if module.check_mode:
@@ -104,14 +127,14 @@ def associate_ip_and_instance(ec2, public_ip, instance_id, module):
 
     res = ec2.associate_address(instance_id, public_ip)
     if res:
-        module.exit_json(changed=True)
+        module.exit_json(changed=True, public_ip=public_ip)
     else:
         module.fail_json(msg="association failed")
 
 
 def disassociate_ip_and_instance(ec2, public_ip, instance_id, module):
     if not ip_is_associated_with_instance(ec2, public_ip, instance_id):
-        module.exit_json(changed=False)
+        module.exit_json(changed=False, public_ip=public_ip)
 
     # If we're in check mode, nothing else to do
     if module.check_mode:
@@ -132,11 +155,22 @@ def ip_is_associated_with_instance(ec2, public_ip, instance_id):
     else:
         return False
 
+
+def allocate_new_ip(ec2, module):
+    """ Allocate a new elastic IP and return the IP address"""
+    # If we're in check mode, nothing else to do
+    if module.check_mode:
+        module.exit_json(change=True)
+
+    ec2_address = ec2.allocate_address()
+    return ec2_address.public_ip
+
+
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            instance_id = dict(required=True),
-            public_ip = dict(required=True, aliases= ['ip'] ),
+            instance_id = dict(required=False),
+            public_ip = dict(required=False, aliases= ['ip'] ),
             state = dict(required=False, default='present',
                          choices=['present', 'absent']),
             ec2_url = dict(required=False, aliases=['EC2_URL']),
@@ -160,6 +194,10 @@ def main():
     state = module.params.get('state')
 
     if state == 'present':
+        if public_ip is None:
+            public_ip = allocate_new_ip(ec2, module)
+            if instance_id is None:
+                module.exit_json(changed=True, public_ip=public_ip)
         associate_ip_and_instance(ec2, public_ip, instance_id, module)
     else:
         disassociate_ip_and_instance(ec2, public_ip, instance_id, module)
