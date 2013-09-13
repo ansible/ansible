@@ -164,7 +164,7 @@ def check_conditional(conditional, basedir, inject, fail_on_undefined=False, jin
     if conditional.startswith("jinja2_compare"):
         conditional = conditional.replace("jinja2_compare ","")
         # allow variable names
-        if conditional in inject:
+        if conditional in inject and str(inject[conditional]).find('-') == -1:
             conditional = inject[conditional]
         conditional = template.template(basedir, conditional, inject, fail_on_undefined=fail_on_undefined)
         # a Jinja2 evaluation that results in something Python can eval!
