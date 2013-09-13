@@ -33,6 +33,7 @@ Requires: python-paramiko
 Requires: python-jinja2
 Requires: python-keyczar
 %endif
+Requires: sshpass
 
 %description
 
