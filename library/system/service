@@ -677,7 +677,7 @@ class LinuxService(Service):
             else:
                 # SysV
                 rc_state, stdout, stderr = self.execute_command("%s %s %s" % (self.action, self.name, arguments), daemonize=True)
-        elif self.svc_cmd.endswith('rc-service'):
+        elif self.svc_cmd and self.svc_cmd.endswith('rc-service'):
             # All services in OpenRC support restart.
             rc_state, stdout, stderr = self.execute_command("%s %s %s" % (svc_cmd, self.action, arguments), daemonize=True)
         else:
