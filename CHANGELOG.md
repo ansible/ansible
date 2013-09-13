@@ -1,7 +1,21 @@
 Ansible Changes By Release
 ==========================
 
-1.3 "Top of the World" - Release pending!
+1.4 "Could This Be Magic" - Release pending!
+
+Highlighted new features:
+
+* TBA
+
+New modules:
+
+* TBA
+
+Misc changes:
+
+* TBA
+
+1.3 "Top of the World" - September 13th, 2013
 
 Highlighted new features:
 
