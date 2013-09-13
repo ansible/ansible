@@ -254,7 +254,11 @@ def path_dwim_relative(original, dirname, source, playbook_base, check=True):
     # (used by roles code)
 
     basedir = os.path.dirname(original)
-    template2 = os.path.join(basedir, '..', dirname, source)
+    if os.path.islink(basedir):
+        basedir = unfrackpath(basedir)
+        template2 = os.path.join(basedir, dirname, source)
+    else:
+        template2 = os.path.join(basedir, '..', dirname, source)
     source2 = path_dwim(basedir, template2)
     if os.path.exists(source2):
         return source2
