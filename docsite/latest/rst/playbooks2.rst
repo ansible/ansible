@@ -831,11 +831,36 @@ Register Variables
 
 .. versionadded:: 0.7
 
-Often in a playbook it may be useful to store the result of a given command in a variable and access
-it later.  Use of the command module in this way can in many ways eliminate the need to write site specific facts, for
+
+It is often useful to store the result of a given task in a variable and
+access it later in the playbook.  The result returned by an Ansible module is
+a dictionary that contains one or more values. For example, the command module
+returns several values, the most interesting ones being:
+
+ * stdout: the output that appeared on standard out
+ * stderr: the output that appeared on standard error
+ * rc: the return code of the program that was executed
+
+The values returned will vary from module to module, and modules do not always
+return the same set of values. Currently, the possible return values for each
+module are not documented. The simplest way to identify the values that are
+output by a module is to either examine the source code of a module, or run
+ansible-playbook with the "-v" flag.
+
+When you run ansible-playbook with the "-v" flag, it will output the return
+values for each task. Here is some example output that shows values returned
+by the command module (changed, cmd, delta, end, rc, start, stderr, stdout)::
+
+    TASK: [command echo hello] ****************************************************
+    changed: [host.example.com] => {"changed": true, "cmd": ["echo", "hello"], "delta": "0:00:00.007314", "end": "2013-09-12 21:27:26.869801", "rc": 0, "start": "2013-09-12 21:27:26.862487", "stderr": "", "stdout": "hello"}
+
+
+Use of the command module in this way can in many ways eliminate the need to write site specific facts, for
 instance, you could test for the existence of a particular program.
 
-The 'register' keyword decides what variable to save a result in.  The resulting variables can be used in templates, action lines, or *when* statements.  It looks like this (in an obviously trivial example)::
+Use the 'register' keyword to save a result to a variable.  The resulting
+variables can be used in templates, action lines, or *when* statements.  It
+looks like this (in an obviously trivial example)::
 
     - name: test play
       hosts: all
@@ -867,6 +892,88 @@ fields::
             file: path=/mnt/bkspool/{{ item }} src=/home/{{ item }} state=link
             with_items: home_dirs.stdout_lines
             # with_items: home_dirs.stdout.split()
+
+If you register the result of a task that includes iteration (e.g.,
+with_items), then the returned values will have a different structure. The
+returned dictionary will have three values:
+
+ * msg: a string with information about whether all items have completed
+ * changed: a boolean indicating whether a change occurred for at least one of
+   the iterations
+ * results: a list of result dictionaries, one for each element of the iteration
+
+For example::
+
+    - name: registered the result of a task that uses with_items
+      hosts: all
+
+      tasks:
+
+        - name: echo several different strings
+          command: echo {{ item }}
+          with_items:
+            - foo
+            - bar
+            - baz
+          register: res
+
+In this example, res would have the value::
+
+    {
+       "msg" : "All items completed",
+       "changed" : True,
+       "results" : [
+          {
+             "rc" : 0,
+             "stderr" : "",
+             "cmd" : ["echo", "one"],
+             "item" : "one",
+             "end" : "2013-09-12 21:59:10.121799",
+             "changed" : True,
+             "delta" : "0:00:00.007670",
+             "stdout" : "one",
+             "invocation" : {
+                "module_name" : "command",
+                "module_args" : "echo one"
+             },
+             "start" : "2013-09-12 21:59:10.114129"
+          },
+          {
+             "rc" : 0,
+             "stderr" : "",
+             "cmd" : [
+                "echo",
+                "two"
+             ],
+             "item" : "two",
+             "end" : "2013-09-12 21:59:12.001485",
+             "changed" : True,
+             "delta" : "0:00:00.007374",
+             "stdout" : "two",
+             "invocation" : {
+                "module_name" : "command",
+                "module_args" : "echo two"
+             },
+             "start" : "2013-09-12 21:59:11.994111"
+          },
+          {
+             "rc" : 0,
+             "stderr" : "",
+             "cmd" : ["echo", "three"],
+             "item" : "three",
+             "end" : "2013-09-12 21:59:13.665708",
+             "changed" : True,
+             "delta" : "0:00:00.007417",
+             "stdout" : "three",
+             "invocation" : {
+                "module_name" : "command",
+                "module_args" : "echo three"
+             },
+             "start" : "2013-09-12 21:59:13.658291"
+          }
+       ]
+    }
+
 
 Rolling Updates
 ```````````````
