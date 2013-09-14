@@ -19,8 +19,8 @@ welcome to share slides on speakerdeck, sign up for a free account and tag it â€
 you can also share things with #ansible and may wish 
 to follow [@AnsibleWorks](https://twitter.com/ansibleworks).
 
-Sharing Tips and Tricks
------------------------
+Sharing Content and Tips
+------------------------
 
 Join the [Ansible project mailing list](https://groups.google.com/forum/#!forum/ansible-project) and you 
 can share playbooks you may have written and other interesting implementation stories. Put your Ansible 
