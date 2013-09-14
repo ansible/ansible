@@ -1,4 +1,3 @@
-
 Ansible Community  Information
 ------------------------------
 
@@ -75,11 +74,11 @@ Mailing lists
 
 Ansible has several mailing lists.  The first post to the mailing list will be moderated (to reduce spam), so please allow a day or less for your first post.
 
-ansible-announce@googlegroups.com is for release announcements and major news.  It is a low traffic read-only list and you should only get a few emails a month.
+(https://groups.google.com/forum/#!forum/ansible-announce) is for release announcements and major news.  It is a low traffic read-only list and you should only get a few emails a month.
 
-ansible-project@googlegroups.com is the main list, and is used for sharing cool projects you may have built, talking about Ansible ideas, and for users to ask questions or to help other users.
+(https://groups.google.com/forum/#!forum/ansible-project) is the main list, and is used for sharing cool projects you may have built, talking about Ansible ideas, and for users to ask questions or to help other users.
 
-ansible-devel@googlegroups.com is a technical list for developers working on Ansible and Ansible modules.  Join here to discuss how to build modules, prospective feature implementations, or technical challenges.
+(https://groups.google.com/forum/#!forum/ansible-devel) is a technical list for developers working on Ansible and Ansible modules.  Join here to discuss how to build modules, prospective feature implementations, or technical challenges.
 
 IRC
 ===
