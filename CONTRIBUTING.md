@@ -15,8 +15,9 @@ Sharing Ansible with Others
 
 You can help share Ansible with others by telling friends and colleagues, writing a blog post, 
 or presenting at user groups (like DevOps groups or the local LUG or BUG).  You are also 
-welcome to share slides on speakerdeck, sign up for a free account and tag it “Ansible”.   
-On Twitter, you can also share things with #ansible.
+welcome to share slides on speakerdeck, sign up for a free account and tag it “Ansible”.  
+On Twitter, you can also share things with #ansible and may wish to
+follow [@AnsibleWorks](https://twitter.com/ansibleworks).
 
 Sharing Tips and Tricks
 -----------------------
