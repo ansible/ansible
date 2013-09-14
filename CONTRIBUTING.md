@@ -48,8 +48,8 @@ on creating pull requests, please refer to the
 [github help guide](https://help.github.com/articles/using-pull-requests).
 
 
-Contributing Code
------------------
+Contributing Code (Features or Bugfixes)
+----------------------------------------
 
 The Ansible project keeps it’s source on github at 
 [github.com/ansible/ansible](http://github.com/ansible/ansible) 
@@ -76,7 +76,7 @@ and no tabs.
 Reporting A Bug
 ---------------
 
-Bugs can be reported to [github.com/ansible/ansible](http://github.com/ansible/ansible) after 
+Bugs should be reported to [github.com/ansible/ansible](http://github.com/ansible/ansible) after 
 signing up for a free github account.  Before reporting a bug, please use the bug/issue search 
 to see if the issue has already been reported.  
 
@@ -87,7 +87,7 @@ When filing a bug, please make sure to include the following information in the 
 * Expected results
 * Actual results.
 
-If you are not sure if something is a bug yet, you are welcome to ask about something on 
+If you are not sure if something is a bug yet, you are welcome and encouraged to ask about something on 
 the mailing list or IRC first.  As we are a very high volume project, if you determine that 
 you do have a bug, please be sure to open the issue yourself to ensure we have a record of
 it. Don’t rely on someone else in the community to file the bug report for you.
