@@ -1,8 +1,7 @@
 Ansible Community  Information
 ==============================
 
-The purpose of the Ansible community is to  unite developers, system administrators, operations, and IT managers to share and build great automation solutions.
-
+The purpose of the Ansible community is to  unite developers, system administrators, operations, and IT managers to share and build great automation solutions. 
 This document contains all sorts of information about how to contribute and interact with Ansible.  Welcome!
 
 Ways to Interact
@@ -18,7 +17,7 @@ You can help share Ansible with others by telling friends and colleagues ,  writ
 Sharing Tips and Tricks
 -----------------------
 
-Join the Ansible mailing list (https://groups.google.com/forum/#!forum/ansible-project) and  you can share playbooks you may have written and other interesting implementation stories.   Put your Ansible content up on places like github  to share with others.
+Join the [Ansible mailing list](https://groups.google.com/forum/#!forum/ansible-project) and  you can share playbooks you may have written and other interesting implementation stories.   Put your Ansible content up on places like github  to share with others.
 
 Sharing A Feature Idea
 ----------------------
