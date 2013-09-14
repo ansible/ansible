@@ -37,6 +37,11 @@ class ActionModule(object):
         ''' Always default to localhost as delegate if None defined '''
         if inject.get('delegate_to') is None:
             inject['delegate_to'] = '127.0.0.1'
+            inject['ansible_connection'] = 'local'
+            # If sudo is active, disable from the connection set self.sudo to True.
+            if self.runner.sudo:
+                self.runner.sudo = False
+                self.sudo = True
 
     def run(self, conn, tmp, module_name, module_args, 
         inject, complex_args=None, **kwargs):
@@ -76,7 +81,13 @@ class ActionModule(object):
         if 'mode' in options:
             del options['mode']
 
-        # run the synchronize module
+        rsync_path = options.get('rsync_path', None)
+        if not rsync_path and self.sudo:
+            rsync_path = 'sudo rsync'
+
+        # make sure rsync path is quoted.
+        if rsync_path:
+            options['rsync_path'] = '"' + rsync_path + '"'
 
         self.runner.module_args = ' '.join(['%s=%s' % (k, v) for (k,
                 v) in options.items()])
