@@ -17,12 +17,12 @@ You can help share Ansible with others by telling friends and colleagues ,  writ
 Sharing Tips and Tricks
 -----------------------
 
-Join the [Ansible mailing list](https://groups.google.com/forum/#!forum/ansible-project) and  you can share playbooks you may have written and other interesting implementation stories.   Put your Ansible content up on places like github  to share with others.
+Join the [Ansible project mailing list](https://groups.google.com/forum/#!forum/ansible-project) and  you can share playbooks you may have written and other interesting implementation stories.   Put your Ansible content up on places like github  to share with others.
 
 Sharing A Feature Idea
 ----------------------
 
-If you have an idea for a new feature, you can open a new ticket at (https://github.com/ansible/ansible), though in general we like to talk about feature ideas first and bring in lots of people into the discussion.   Consider stopping by Ansible project mailing list at (https://groups.google.com/forum/#!forum/ansible-project).  
+If you have an idea for a new feature, you can open a new ticket at [github.com/ansible/ansible](https://github.com/ansible/ansible), though in general we like to talk about feature ideas first and bring in lots of people into the discussion.   Consider stopping by Ansible project mailing list at (https://groups.google.com/forum/#!forum/ansible-project).  
 
 Helping with Documentation
 --------------------------
@@ -32,23 +32,24 @@ Ansible documentation is a community project too!  If you would like to help wit
 Contributing Code
 -----------------
 
-The Ansible project keeps it’s source on github at http://github.com/ansible/ansible 
-and takes contributions through github pull requests.   
-See https://help.github.com/articles/using-pull-requests.   
+The Ansible project keeps it’s source on github at [http://github.com/ansible/ansible](http://github.com/ansible/ansible) 
+and takes contributions through [github pull requests](https://help.github.com/articles/using-pull-requests).
+
 When submitting patches, be sure to run the unit tests first “make tests” and always use 
 “git rebase” vs “git merge” (aliasing git pull to git pull --rebase is a great idea) to 
-avoid merge commits in your submissions.  We’ll then review your contributions and engage 
-with you about questions and  so on.  Please be advised we have a very large and active community,
+avoid merge commits in your submissions.  
+
+We’ll then review your contributions and engage with you about questions and  so on.  Please be advised we have a very large and active community,
 so it may take awhile to get your contributions in!  Patches should be made against the 'devel' branch.
 
 Contributions can be for new features like modules, or to fix bugs you or others have found. If you are interested in writing new modules to be included in the core Ansible distribution, please refer to the Module Developers documentation on our website at http://www.ansibleworks.com/docs/moduledev.html.
 
-The proverbial 'Zen of Ansible' encourages simple, readable code and consistent, conservatively extending, backwards-compatible improvements.  Code developed for Ansible needs to support Python 2.6+, while code in modules must run under Python 2.4 or higher.
+Ansible's aesthetic encourages simple, readable code and consistent, conservatively extending, backwards-compatible improvements.  Code developed for Ansible needs to support Python 2.6+, while code in modules must run under Python 2.4 or higher.
 
 Reporting A Bug
 ---------------
 
-Bugs can be reported to http://github.com/ansible/ansible after signing up for a free github account.  Before reporting a bug, please use the bug/issue search to see if the issue has already been reported.  
+Bugs can be reported to [github.com/ansible/ansible](http://github.com/ansible/ansible) after signing up for a free github account.  Before reporting a bug, please use the bug/issue search to see if the issue has already been reported.  
 
 When filing a bug, please make sure to include the following information in the bug report:
 
@@ -65,18 +66,20 @@ Online Resources
 Documentation
 -------------
 
-The main ansible documentation can be found at http://ansibleworks.com/docs.   As mentioned above this is an open source project, so we accept contributions to the documentation.  You can also find some best practices examples that we recommend reading at http://github.com/ansible/ansible-examples.
+The main ansible documentation can be found at [ansibleworks.com/docs](http://ansibleworks.com/docs).   As mentioned above this is an open source project, so we accept contributions to the documentation.  You can also find some best practices examples that we recommend reading at http://github.com/ansible/ansible-examples.
 
 Mailing lists
 -------------
 
 Ansible has several mailing lists.  The first post to the mailing list will be moderated (to reduce spam), so please allow a day or less for your first post.
 
-(https://groups.google.com/forum/#!forum/ansible-announce) is for release announcements and major news.  It is a low traffic read-only list and you should only get a few emails a month.
+[ansible-announce](https://groups.google.com/forum/#!forum/ansible-announce) is for release announcements and major news.  It is a low traffic read-only list and you should only get a few emails a month.
 
-(https://groups.google.com/forum/#!forum/ansible-project) is the main list, and is used for sharing cool projects you may have built, talking about Ansible ideas, and for users to ask questions or to help other users.
+[ansible-project](https://groups.google.com/forum/#!forum/ansible-project) is the main list, and is used for sharing cool projects you may have built, talking about Ansible ideas, and for users to ask questions or to help other users.
 
-(https://groups.google.com/forum/#!forum/ansible-devel) is a technical list for developers working on Ansible and Ansible modules.  Join here to discuss how to build modules, prospective feature implementations, or technical challenges.
+[ansible-devel](https://groups.google.com/forum/#!forum/ansible-devel) is a technical list for developers working on Ansible and Ansible modules.  Join here to discuss how to build modules, prospective feature implementations, or technical challenges.
+
+To subscribe to a group from a non-google account, you can email the subscription address, for example ansible-devel+subscribe@googlegroups.com.
 
 IRC
 ---
