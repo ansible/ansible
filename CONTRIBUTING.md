@@ -1,10 +1,9 @@
 Ansible Community  Information
-------------------------------
-
-Purpose
-=======
+==============================
 
 The purpose of the Ansible community is to  unite developers, system administrators, operations, and IT managers to share and build great automation solutions.
+
+This document contains all sorts of information about how to contribute and interact with Ansible.  Welcome!
 
 Ways to Interact
 ================
@@ -12,27 +11,27 @@ Ways to Interact
 There are a lot of ways to join and  be a part  of the  Ansible community.
 
 Sharing Ansible with Others
-===========================
+---------------------------
 
 You can help share Ansible with others by telling friends and colleagues ,  writing a lblog post, or presenting at user groups (like DevOps groups or the local LUG or BUG).  You are also welcome to share slides on speakerdeck, sign up for a free account and tag it “Ansible”.   On Twitter, you can also share things with #ansible.
 
 Sharing Tips and Tricks
-=======================
+-----------------------
 
 Join the Ansible mailing list (https://groups.google.com/forum/#!forum/ansible-project) and  you can share playbooks you may have written and other interesting implementation stories.   Put your Ansible content up on places like github  to share with others.
 
 Sharing A Feature Idea
-======================
+----------------------
 
 If you have an idea for a new feature, you can open a new ticket at (https://github.com/ansible/ansible), though in general we like to talk about feature ideas first and bring in lots of people into the discussion.   Consider stopping by Ansible project mailing list at (https://groups.google.com/forum/#!forum/ansible-project).  
 
 Helping with Documentation
-==========================
+--------------------------
 
 Ansible documentation is a community project too!  If you would like to help with the documentation, whether correcting a typo or improving a section, or maybe even documenting a new feature, submit a github pull request to  the code that lives in the “docsite/latest/rst” subdirectory of the project.   Docs are in restructured text format.  If you aren’t comfortable with restructured text, you can also open a ticket on github about any errors you spot or sections you would like to see added. For more information on creating pull requests, please refer to the github help guide: https://help.github.com/articles/using-pull-requests.
 
 Contributing Code
-=================
+-----------------
 
 The Ansible project keeps it’s source on github at http://github.com/ansible/ansible 
 and takes contributions through github pull requests.   
@@ -48,7 +47,7 @@ Contributions can be for new features like modules, or to fix bugs you or others
 The proverbial 'Zen of Ansible' encourages simple, readable code and consistent, conservatively extending, backwards-compatible improvements.  Code developed for Ansible needs to support Python 2.6+, while code in modules must run under Python 2.4 or higher.
 
 Reporting A Bug
-===============
+---------------
 
 Bugs can be reported to http://github.com/ansible/ansible after signing up for a free github account.  Before reporting a bug, please use the bug/issue search to see if the issue has already been reported.  
 
@@ -62,15 +61,15 @@ When filing a bug, please make sure to include the following information in the 
 If you are not sure if something is a bug yet, you are welcome to ask about something on the mailing list or IRC first.  As we are a very high volume project, if you determine that you do have a bug, please be sure to open the issue yourself to ensure we have a record of it. Don’t rely on someone else in the community to file the bug report for you.
 
 Online Resources
-----------------
+================
 
 Documentation
-=============
+-------------
 
 The main ansible documentation can be found at http://ansibleworks.com/docs.   As mentioned above this is an open source project, so we accept contributions to the documentation.  You can also find some best practices examples that we recommend reading at http://github.com/ansible/ansible-examples.
 
 Mailing lists
-=============
+-------------
 
 Ansible has several mailing lists.  The first post to the mailing list will be moderated (to reduce spam), so please allow a day or less for your first post.
 
@@ -81,25 +80,28 @@ Ansible has several mailing lists.  The first post to the mailing list will be m
 (https://groups.google.com/forum/#!forum/ansible-devel) is a technical list for developers working on Ansible and Ansible modules.  Join here to discuss how to build modules, prospective feature implementations, or technical challenges.
 
 IRC
-===
+---
 
 Ansible has a general purpose IRC channel available at #ansible on irc.freenode.net.
 Use this channel for all types of conversations, including sharing tips, coordinating development work, or getting help from other users.
 
+Miscellaneous Information
+=========================
+
 AnsibleWorks Staff
-==================
+------------------
 
 AnsibleWorks is a company supporting Ansible and building additional solutions based on Ansible.  We also do services and support for those that are interested.   Our most important task however is enabling all the great things that happen in the Ansible community, including organizing software releases of Ansible.  For more information about any of these things, contact info@ansibleworks.com
 
 On IRC, you can find us as mdehaan, jimi_c, Tybstar, and others.   On the mailing list, we post with an @ansibleworks.com address.
 
 Community Code of Conduct
-=========================
+-------------------------
 
 Ansible’s community welcomes users of all types, backgrounds, and skill levels.    Please treat others as you expect to be treated, keep discussions positive, and avoid discrimination or engaging in controversial debates (except vi vs emacs is cool).  Posts to mailing lists should remain focused around Ansible and IT automation.   Abuse of these community guidelines will not be tolerated and may result in banning from community resources.
 
 Contributors License Agreement
-==============================
+------------------------------
 
 By contributing you agree that these contributions are your own (or approved by your employer) and you grant a full, complete, irrevocable
 copyright license to all users and developers of the project, present and future, pursuant to the license of the project.
