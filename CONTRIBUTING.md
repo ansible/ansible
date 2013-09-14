@@ -66,7 +66,7 @@ in!  Patches should be made against the 'devel' branch.
 
 Contributions can be for new features like modules, or to fix bugs you or others have found. If you 
 are interested in writing new modules to be included in the core Ansible distribution, please refer 
-to the Module Developers documentation on our website at http://www.ansibleworks.com/docs/moduledev.html.
+to the [Module Developers documentation on our website](http://www.ansibleworks.com/docs/moduledev.html).
 
 Ansible's aesthetic encourages simple, readable code and consistent, conservatively extending, 
 backwards-compatible improvements.  Code developed for Ansible needs to support Python 2.6+, 
