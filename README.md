@@ -25,7 +25,7 @@ Design Principles
 Get Involved
 ============
 
-   * [ansible-project mailing list](http://groups.google.com/group/ansible-project), rss: [here](https://groups.google.com/group/ansible-project/feed/rss_v2_0_msgs.xml?num=50&pli=1)
+   * Read [Contributing.md](https://github.com/ansible/ansible/blob/devel/CONTRIBUTING.md) for all kinds of ways to contribute to and interact with the project, including mailing list information and how to submit bug reports and code to Ansible.
    * irc.freenode.net: #ansible
 
 Branch Info
