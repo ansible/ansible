@@ -22,7 +22,7 @@ DOCUMENTATION = '''
 ---
 module: host
 author: René Moser
-version_added: "1.3"
+version_added: "1.4"
 short_description: Add or remove entries in /etc/hosts
 requirements:
 description:
