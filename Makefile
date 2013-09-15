@@ -39,14 +39,10 @@ ifneq ($(shell which git),)
 GIT_DATE := $(shell git log -n 1 --format="%ai")
 endif
 
-ifeq ($(OS), FreeBSD)
-DATE := $(shell date -j -f "%Y-%m-%d %H:%M:%s"  "$(GIT_DATE)" +%Y%m%d%H%M)
-else
-ifeq ($(OS), Darwin)
-DATE := $(shell date -j -f "%Y-%m-%d %H:%M:%S"  "$(GIT_DATE)" +%Y%m%d%H%M)
+ifeq ($(shell echo $(OS) | egrep -c 'Darwin|FreeBSD|OpenBSD'),1)
+DATE := $(shell date -j -r $(shell git log -n 1 --format="%at") +%Y%m%d%H%M)
 else
 DATE := $(shell date --utc --date="$(GIT_DATE)" +%Y%m%d%H%M)
-endif
 endif
 
 # RPM build parameters
