@@ -212,6 +212,8 @@ class AnsibleModule(object):
         if not no_log:
             self._log_invocation()
 
+        self._info_msg = ''
+
     def load_file_common_arguments(self, params):
         '''
         many modules deal with files, this encapsulates common
@@ -775,6 +777,9 @@ class AnsibleModule(object):
         else:
             self.fail_json(msg='Boolean %s not in either boolean list' % arg)
 
+    def add_info_message(self, info_msg):
+        self._info_msg += info_msg + ' '
+
     def jsonify(self, data):
         return json.dumps(data)
 
@@ -786,6 +791,7 @@ class AnsibleModule(object):
         self.add_path_info(kwargs)
         if not kwargs.has_key('changed'):
             kwargs['changed'] = False
+        kwargs['msg'] = self._info_msg
         print self.jsonify(kwargs)
         sys.exit(0)
 
@@ -794,6 +800,7 @@ class AnsibleModule(object):
         self.add_path_info(kwargs)
         assert 'msg' in kwargs, "implementation error -- msg to explain the error is required"
         kwargs['failed'] = True
+        kwargs['msg'] = self._info_msg + kwargs['msg']
         print self.jsonify(kwargs)
         sys.exit(1)
 
