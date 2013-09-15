@@ -222,6 +222,8 @@ class AnsibleModule(object):
         path = params.get('path', params.get('dest', None))
         if path is None:
             return {}
+        else:
+            path = os.path.expanduser(path)
 
         mode   = params.get('mode', None)
         owner  = params.get('owner', None)
