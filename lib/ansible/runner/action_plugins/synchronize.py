@@ -35,13 +35,12 @@ class ActionModule(object):
 
     def setup(self, module_name, inject):
         ''' Always default to localhost as delegate if None defined '''
-        if inject.get('delegate_to') is None:
+        if inject['delegate_to'] is None:
             inject['delegate_to'] = '127.0.0.1'
             inject['ansible_connection'] = 'local'
             # If sudo is active, disable from the connection set self.sudo to True.
             if self.runner.sudo:
                 self.runner.sudo = False
-                self.sudo = True
 
     def run(self, conn, tmp, module_name, module_args, 
         inject, complex_args=None, **kwargs):
@@ -63,8 +62,14 @@ class ActionModule(object):
         except KeyError:
             pass
 
-        src_host = inject['delegate_to'] 
+        # from the perspective of the rsync call the delegate is the localhost
+        src_host = '127.0.0.1'
         dest_host = inject.get('ansible_ssh_host', inject['inventory_hostname'])
+
+        # edge case: explicit delegate and dest_host are the same
+        if dest_host == inject['delegate_to']:
+            dest_host = '127.0.0.1'
+
         if options.get('mode', 'push') == 'pull':
             (dest_host, src_host) = (src_host, dest_host)
         if not dest_host is src_host:
@@ -82,7 +87,7 @@ class ActionModule(object):
             del options['mode']
 
         rsync_path = options.get('rsync_path', None)
-        if not rsync_path and self.sudo:
+        if not rsync_path and self.runner.sudo:
             rsync_path = 'sudo rsync'
 
         # make sure rsync path is quoted.
