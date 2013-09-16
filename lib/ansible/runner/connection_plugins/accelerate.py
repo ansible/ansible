@@ -23,6 +23,7 @@ import struct
 import time
 from ansible.callbacks import vvv
 from ansible.runner.connection_plugins.ssh import Connection as SSHConnection
+from ansible.runner.connection_plugins.paramiko_ssh import Connection as ParamikoConnection
 from ansible import utils
 from ansible import errors
 from ansible import constants
@@ -59,14 +60,24 @@ class Connection(object):
         elif not isinstance(self.accport, int):
             self.accport = int(self.accport)
 
-        self.ssh = SSHConnection(
-            runner=self.runner,
-            host=self.host, 
-            port=self.port, 
-            user=self.user, 
-            password=password, 
-            private_key_file=private_key_file
-        )
+        if self.runner.original_transport == "paramiko":
+            self.ssh = ParamikoConnection(
+                runner=self.runner,
+                host=self.host,
+                port=self.port,
+                user=self.user,
+                password=password,
+                private_key_file=private_key_file
+            )
+        else:
+            self.ssh = SSHConnection(
+                runner=self.runner,
+                host=self.host,
+                port=self.port,
+                user=self.user,
+                password=password,
+                private_key_file=private_key_file
+            )
 
         # attempt to work around shared-memory funness
         if getattr(self.runner, 'aes_keys', None):
