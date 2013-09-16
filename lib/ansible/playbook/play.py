@@ -391,6 +391,7 @@ class Play(object):
                 tokens = shlex.split(str(x['include']))
                 items = ['']
                 included_additional_conditions = list(additional_conditions)
+                include_vars = {}
                 for k in x:
                     if k.startswith("with_"):
                         plugin_name = k[5:]
@@ -403,13 +404,19 @@ class Play(object):
                     elif k == 'when':
                         included_additional_conditions.insert(0, utils.compile_when_to_only_if("jinja2_compare %s" % x[k]))
                     elif k in ("include", "vars", "default_vars", "only_if", "sudo", "sudo_user"):
-                        pass
+                        continue
                     else:
-                        raise errors.AnsibleError("parse error: task includes cannot be used with other directives: %s" % k)
+                        include_vars[k] = x[k]
 
                 default_vars = utils.combine_vars(self.default_vars, x.get('default_vars', {}))
+
+                # append the vars defined with the include (from above) 
+                # as well as the old-style 'vars' element. The old-style
+                # vars are given higher precedence here (just in case)
+                task_vars = utils.combine_vars(task_vars, include_vars)
                 if 'vars' in x:
                     task_vars = utils.combine_vars(task_vars, x['vars'])
+
                 if 'only_if' in x:
                     included_additional_conditions.append(x['only_if'])
 
