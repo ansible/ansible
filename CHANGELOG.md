@@ -5,6 +5,7 @@ Ansible Changes By Release
 
 Highlighted new features:
 
+* Added failed_when option for tasks, which can be used to specify logical statements that make it easier to determine when a task has failed, or to make it easier to ignore certain non-zero return codes for some commands.
 * Added the "subelement" lookup plugin, which allows iteration of the keys of a dictionary or items in a list.
 * Added the capability to use either paramiko or ssh for the inital setup connection of an accelerated playbook.
 
