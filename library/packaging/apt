@@ -136,6 +136,13 @@ APTITUDE_ZERO = "0 packages upgraded, 0 newly installed, 0 to remove and 0 not u
 APT_LISTS_PATH = "/var/lib/apt/lists"
 APT_UPDATE_SUCCESS_STAMP_PATH = "/var/lib/apt/periodic/update-success-stamp"
 
+HAS_PYTHON_APT = True
+try:
+    import apt
+    import apt_pkg
+except:
+    HAS_PYTHON_APT = False
+
 def package_split(pkgspec):
     parts = pkgspec.split('=')
     if len(parts) > 1:
@@ -145,7 +152,12 @@ def package_split(pkgspec):
 
 def package_status(m, pkgname, version, cache, state):
     try:
+        # get the package from the cache, as well as the
+        # the low-level apt_pkg.Package object which contains
+        # state fields not directly acccesible from the
+        # higher-level apt.package.Package object.
         pkg = cache[pkgname]
+        ll_pkg = cache._cache[pkgname] # the low-level package object
     except KeyError:
         if state == 'install':
             m.fail_json(msg="No package matching '%s' is available" % pkgname)
@@ -158,16 +170,18 @@ def package_status(m, pkgname, version, cache, state):
 
     if version:
         try :
-            return pkg.is_installed and fnmatch.fnmatch(pkg.installed.version, version), False, has_files
+            return ll_pkg.current_state == apt_pkg.CURSTATE_INSTALLED and \
+                   fnmatch.fnmatch(pkg.installed.version, version), False, has_files
         except AttributeError:
             #assume older version of python-apt is installed
-            return pkg.isInstalled and fnmatch.fnmatch(pkg.installedVersion, version), False, has_files
+            return ll_pkg.current_state == apt_pkg.CURSTATE_INSTALLED and \
+                   fnmatch.fnmatch(pkg.installedVersion, version), False, has_files
     else:
         try :
-            return pkg.is_installed, pkg.is_upgradable, has_files
+            return ll_pkg.current_state == apt_pkg.CURSTATE_INSTALLED, pkg.is_upgradable, has_files
         except AttributeError:
             #assume older version of python-apt is installed
-            return pkg.isInstalled, pkg.isUpgradable, has_files
+            return ll_pkg.current_state == apt_pkg.CURSTATE_INSTALLED, pkg.isUpgradable, has_files
 
 def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
     new_pkgspec = []
@@ -308,10 +322,7 @@ def main():
         supports_check_mode = True
     )
 
-    try:
-        import apt
-        import apt_pkg
-    except:
+    if not HAS_PYTHON_APT:
         module.fail_json(msg="Could not import python modules: apt, apt_pkg. Please install python-apt package.")
 
     global APTITUDE_CMD
