@@ -78,12 +78,15 @@ to target and what remote user to complete the steps (called tasks) as.
 
 The `hosts` line is a list of one or more groups or host patterns,
 separated by colons, as described in the :ref:`patterns`
-documentation.  The `user` is just the name of the user account::
+documentation.  The `remote_user` is just the name of the user account::
 
     ---
     - hosts: webservers
       remote_user: root
 
+.. Note::
+
+    The `remote_user` parameter was formerly called just `user`. It was renamed in Ansible 1.4 to make it more distinguishable from the `user` module (used to create users on remote systems).
 
 Support for running things from sudo is also available::
 
