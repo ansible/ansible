@@ -82,9 +82,12 @@ active_user   = pwd.getpwuid(os.geteuid())[0]
 # Needed so the RPM can call setup.py and have modules land in the
 # correct location. See #1277 for discussion
 if getattr(sys, "real_prefix", None):
+    # in a virtualenv
     DIST_MODULE_PATH = os.path.join(sys.prefix, 'share/ansible/')
 else:
     DIST_MODULE_PATH = '/usr/share/ansible/'
+# custom ansible location without a virtualenv
+DIST_MODULE_PATH = os.environ.get("ANSIBLE_DIST_MODULE_PATH", DIST_MODULE_PATH)
 
 # sections in config file
 DEFAULTS='defaults'
