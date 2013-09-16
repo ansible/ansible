@@ -408,7 +408,11 @@ class Play(object):
                     else:
                         include_vars[k] = x[k]
 
-                default_vars = utils.combine_vars(self.default_vars, x.get('default_vars', {}))
+                default_vars = x.get('default_vars', {})
+                if not default_vars:
+                    default_vars = self.default_vars
+                else:
+                    default_vars = utils.combine_vars(self.default_vars, default_vars)
 
                 # append the vars defined with the include (from above) 
                 # as well as the old-style 'vars' element. The old-style
