@@ -115,7 +115,8 @@ class Facts(object):
                     '/etc/openwrt_release': 'OpenWrt',
                     '/etc/system-release': 'OtherLinux',
                     '/etc/alpine-release': 'Alpine',
-                    '/etc/release': 'Solaris' }
+                    '/etc/release': 'Solaris',
+                    '/etc/arch-release': 'Archlinux' }
     SELINUX_MODE_DICT = { 1: 'enforcing', 0: 'permissive', -1: 'disabled' }
 
     # A list of dicts.  If there is a platform with more than one
