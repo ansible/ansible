@@ -180,6 +180,7 @@ class Runner(object):
         self.accelerate       = accelerate
         self.accelerate_port  = accelerate_port
         self.callbacks.runner = self
+        self.original_transport = self.transport
 
         if self.transport == 'smart':
             # if the transport is 'smart' see if SSH can support ControlPersist if not use paramiko
