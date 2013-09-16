@@ -15,6 +15,10 @@ Misc changes:
 
 * TBA
 
+1.3.1 "Top of the World" (reprise) - September 16th, 2013
+
+* Fixing a bug in accelerate mode whereby the gather_facts step would always be run via sudo regardless of the play settings.
+
 1.3 "Top of the World" - September 13th, 2013
 
 Highlighted new features:
