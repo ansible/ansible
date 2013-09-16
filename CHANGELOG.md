@@ -5,9 +5,10 @@ Ansible Changes By Release
 
 Highlighted new features:
 
-* Added failed_when option for tasks, which can be used to specify logical statements that make it easier to determine when a task has failed, or to make it easier to ignore certain non-zero return codes for some commands.
-* Added the "subelement" lookup plugin, which allows iteration of the keys of a dictionary or items in a list.
+* (docs pending) Added failed_when option for tasks, which can be used to specify logical statements that make it easier to determine when a task has failed, or to make it easier to ignore certain non-zero return codes for some commands.
+* (docs pending) Added the "subelement" lookup plugin, which allows iteration of the keys of a dictionary or items in a list.
 * Added the capability to use either paramiko or ssh for the inital setup connection of an accelerated playbook.
+* (docs pending) Swap the active user on a task in the middle of a play with the 'remote_user' parameter.
 
 New modules:
 
@@ -15,7 +16,7 @@ New modules:
 
 Misc changes:
 
-* Changed the `user:` parameter on plays to `remote_user:` to prevent confusion with the module of the same name.
+* Changed the `user:` parameter on plays to `remote_user:` to prevent confusion with the module of the same name.  Still backwards compatible on play parameters.
 * Added parameter to allow the fetch module to skip the md5 validation step ('validate_md5=false'). This is usefull when fetching files that are actively being written to, such as live log files.
 
 1.3 "Top of the World" - September 13th, 2013
