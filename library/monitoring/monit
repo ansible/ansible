@@ -118,7 +118,7 @@ def main():
             module.exit_json(changed=True)
         module.run_command('%s stop %s' % (MONIT, name))
         rc, out, err = module.run_command('%s start %s' % (MONIT, name))
-        if 'Initializing' in out:
+        if 'Initializing' in out or 'start pending' in out:
             module.exit_json(changed=True, name=name, state=state)
         module.fail_json(msg=out)
 
