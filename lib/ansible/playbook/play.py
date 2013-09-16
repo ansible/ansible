@@ -407,7 +407,12 @@ class Play(object):
                     else:
                         raise errors.AnsibleError("parse error: task includes cannot be used with other directives: %s" % k)
 
-                default_vars = utils.combine_vars(self.default_vars, x.get('default_vars', {}))
+                default_vars = x.get('default_vars', {})
+                if not default_vars:
+                    default_vars = self.default_vars
+                else:
+                    default_vars = utils.combine_vars(self.default_vars, default_vars)
+
                 if 'vars' in x:
                     task_vars = utils.combine_vars(task_vars, x['vars'])
                 if 'only_if' in x:
