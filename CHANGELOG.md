@@ -5,7 +5,8 @@ Ansible Changes By Release
 
 Highlighted new features:
 
-* TBA
+* Added the "subelement" lookup plugin, which allows iteration of the keys of a dictionary or items in a list.
+* Added the capability to use either paramiko or ssh for the inital setup connection of an accelerated playbook.
 
 New modules:
 
@@ -13,7 +14,8 @@ New modules:
 
 Misc changes:
 
-* TBA
+* Changed the `user:` parameter on plays to `remote_user:` to prevent confusion with the module of the same name.
+* Added parameter to allow the fetch module to skip the md5 validation step ('validate_md5=false'). This is usefull when fetching files that are actively being written to, such as live log files.
 
 1.3 "Top of the World" - September 13th, 2013
 
