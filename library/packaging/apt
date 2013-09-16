@@ -312,7 +312,12 @@ def main():
         import apt
         import apt_pkg
     except:
-        module.fail_json(msg="Could not import python modules: apt, apt_pkg. Please install python-apt package.")
+        try:
+            module.run_command('apt-get install python-apt -y')
+            import apt
+            import apt_pkg
+        except:
+            module.fail_json(msg="Could not import python modules: apt, apt_pkg. Please install python-apt package.")
 
     global APTITUDE_CMD
     APTITUDE_CMD = module.get_bin_path("aptitude", False)
