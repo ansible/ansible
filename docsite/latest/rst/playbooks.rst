@@ -51,7 +51,7 @@ For starters, here's a playbook that contains just one play::
       vars:
         http_port: 80
         max_clients: 200
-      user: root
+      remote_user: root
       tasks:
       - name: ensure apache is at the latest version
         yum: pkg=httpd state=latest
@@ -82,21 +82,21 @@ documentation.  The `user` is just the name of the user account::
 
     ---
     - hosts: webservers
-      user: root
+      remote_user: root
 
 
 Support for running things from sudo is also available::
 
     ---
     - hosts: webservers
-      user: yourname
+      remote_user: yourname
       sudo: yes
 
 You can also use sudo on a particular task instead of the whole play::
 
     ---
     - hosts: webservers
-      user: yourname
+      remote_user: yourname
       tasks:
         - service: name=nginx state=started
           sudo: yes
@@ -106,7 +106,7 @@ You can also login as you, and then sudo to different users than root::
 
     ---
     - hosts: webservers
-      user: yourname
+      remote_user: yourname
       sudo: yes
       sudo_user: postgres
 
@@ -134,7 +134,7 @@ The `vars` section contains a list of variables and values that can be used in t
 
     ---
     - hosts: webservers
-      user: root
+      remote_user: root
       vars:
          http_port: 80
          van_halen_port: 5150
@@ -387,7 +387,7 @@ which also supports structured variables::
 
       - include: wordpress.yml
         vars:
-            user: timmy
+            remote_user: timmy
             some_list_variable:
               - alpha
               - beta
@@ -424,7 +424,7 @@ For example::
 
     - name: this is a play at the top level of a file
       hosts: all
-      user: root
+      remote_user: root
       tasks:
       - name: say hi
         tags: foo
