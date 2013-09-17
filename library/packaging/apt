@@ -299,7 +299,6 @@ def upgrade(m, mode="yes", force=False):
     rc, out, err = m.run_command(cmd)
     if rc:
         m.fail_json(msg="'%s %s' failed: %s" % (apt_cmd, upgrade_command, err))
-        m.fail_json(msg="'aptitude safe-upgrade' failed: %s" % err)
     if (apt_cmd == APT_GET_CMD and APT_GET_ZERO in out) or (apt_cmd == APTITUDE_CMD and APTITUDE_ZERO in out):
         m.exit_json(changed=False, msg=out)
     m.exit_json(changed=True, msg=out)
