@@ -87,6 +87,20 @@ variable named:
 
 Security groups are comma-separated in 'ec2_security_group_ids' and
 'ec2_security_group_names'.
+
+Overriding convfiguration at run-time
+-------------------------------------
+
+It is possible to override ini file variables by setting environment variables
+to alternative values. Name the variable as per the ini file variable, but in
+upper case and prefixed INV_
+
+Thus to override destination_variable set INV_DESTINATION_VARIABLE
+
+This allows for making variations at run-time such as:
+
+    $ INV_VPC_DESTINATION_VARIABLE=ip_address ansible-playbook \
+      -i /path/to/ec2.py ...
 '''
 
 # (c) 2012, Peter Sankauskas
@@ -138,6 +152,7 @@ class Ec2Inventory(object):
         # Read settings and parse CLI arguments
         self.read_settings()
         self.parse_cli_args()
+        self.parse_environment()
 
         # Cache
         if self.args.refresh_cache:
@@ -173,10 +188,35 @@ class Ec2Inventory(object):
 
 
     def read_settings(self):
-        ''' Reads the settings from the ec2.ini file '''
+        ''' Reads the settings from the ec2.ini file
+        
+        The ini file is looked for in the following locations, in the following
+        order:
+
+          - in the file referenced by EC2_INI_FILE environment variable
+          - in the directory referenced by EC2_INI_DIR environment variable
+          - in the current working directory
+          - in the directory where ec2.py resides (the real file, not softlink)
+
+        thus you can set EC2_INI_FILE=/home/foo/myec2.ini or create an 
+        ec2.ini in a directory the path to which is assigned EC2_INI_DIR
+
+        The final option ensures backwards compatibility with the original
+        behaviour.
+        '''
+        _local_option = os.path.join(os.getcwd(), 'ec2.ini')
+        if 'EC2_INI_FILE' in os.environ:
+            source_file = os.environ['EC2_INI_FILE']
+        elif 'EC2_INI_DIR' in os.environ:
+            source_file = os.path.join(os.environ['EC2_INI_DIR'], 'ec2.ini')
+        elif os.path.exists(_local_option):
+            source_file = _local_option
+        else:
+            source_file = os.path.join(
+                os.path.dirname(os.path.realpath(__file__)), 'ec2.ini')
 
         config = ConfigParser.SafeConfigParser()
-        config.read(os.path.dirname(os.path.realpath(__file__)) + '/ec2.ini')
+        config.read(source_file)
 
         # is eucalyptus?
         self.eucalyptus_host = None
@@ -210,7 +250,33 @@ class Ec2Inventory(object):
         self.cache_path_index = cache_path + "/ansible-ec2.index"
         self.cache_max_age = config.getint('ec2', 'cache_max_age')
         
+    def parse_environment(self):
+        ''' Parse the environment for names prefixed INV_ and use as overrides.
 
+        Thus INV_DESTINATION_VARIABLE will override destination_variable
+        as set in the ini file.
+        '''
+        overrides = dict([(k.lower()[4:], os.environ[k])
+                          for k in os.environ.keys() if k.startswith('INV_')])
+
+        # we only assign known, safe names!
+        for name in ['destination_variable',
+                     'vpc_destination_variable',
+                     'cache_path']:
+            if name in overrides:
+                setattr(self, name, overrides[name])
+
+        regions_exclude = set()
+        if 'regions_exclude' in overrides:
+            regions_exclude = set(overrides['regions_exclude'].split(','))
+
+        if 'regions' in overrides:
+            regions = set(overrides['regions'].split(','))
+            regions -= regions_exclude
+            self.regions=list(regions)
+
+        if 'cache_max_age' in overrides:
+            self.cache_max_age = int(overrides['cache_max_age'])
 
     def parse_cli_args(self):
         ''' Command line argument processing '''
