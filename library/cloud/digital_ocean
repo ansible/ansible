@@ -33,7 +33,7 @@ options:
      - Indicate desired state of the target.
     default: present
     choices: ['present', 'active', 'absent', 'deleted']
-  client_id: 
+  client_id:
      description:
      - Digital Ocean manager id.
   api_key:
@@ -58,7 +58,7 @@ options:
     description:
      - Optional, comma separated list of ssh_key_ids that you would like to be added to the server
   wait:
-    description: 
+    description:
      - Wait for the droplet to be in state 'running' before returning.  If wait is "no" an ip_address may not be returned.
     default: "yes"
     choices: [ "yes", "no" ]
@@ -81,25 +81,25 @@ EXAMPLES = '''
 # If no existing key matches this name, a new key is created, the ssh key id is returned and changed = False
 
 - digital_ocean: >
-      state=present 
-      command=ssh 
-      name=my_ssh_key 
-      ssh_pub_key='ssh-rsa AAAA...' 
-      client_id=XXX 
+      state=present
+      command=ssh
+      name=my_ssh_key
+      ssh_pub_key='ssh-rsa AAAA...'
+      client_id=XXX
       api_key=XXX
 
 # Create a new Droplet
 # Will return the droplet details including the droplet id (used for idempotence)
 
 - digital_ocean: >
-      state=present 
-      command=droplet 
-      name=my_new_droplet 
-      client_id=XXX 
-      api_key=XXX 
-      size_id=1 
-      region_id=2 
-      image_id=3 
+      state=present
+      command=droplet
+      name=my_new_droplet
+      client_id=XXX
+      api_key=XXX
+      size_id=1
+      region_id=2
+      image_id=3
       wait_timeout=500
   register: my_droplet
 - debug: msg="ID: {{ my_droplet.droplet.id }} IP: {{ my_droplet.droplet.ip_address }}"
@@ -109,30 +109,30 @@ EXAMPLES = '''
 # If no droplet matches the id, a new droplet will be created and the droplet details (including the new id) are returned, changed = True.
 
 - digital_ocean: >
-      state=present 
-      command=droplet 
-      id=123 
-      name=my_new_droplet 
-      client_id=XXX 
-      api_key=XXX 
-      size_id=1 
-      region_id=2 
-      image_id=3 
+      state=present
+      command=droplet
+      id=123
+      name=my_new_droplet
+      client_id=XXX
+      api_key=XXX
+      size_id=1
+      region_id=2
+      image_id=3
       wait_timeout=500
 
 # Create a droplet with ssh key
-# The ssh key id can be passed as argument at the creation of a droplet (see ssh_key_ids). 
+# The ssh key id can be passed as argument at the creation of a droplet (see ssh_key_ids).
 # Several keys can be added to ssh_key_ids as id1,id2,id3
 # The keys are used to connect as root to the droplet.
 
 - digital_ocean: >
-      state=present 
+      state=present
       ssh_key_ids=id1,id2
-      name=my_new_droplet 
-      client_id=XXX 
-      api_key=XXX 
-      size_id=1 
-      region_id=2 
+      name=my_new_droplet
+      client_id=XXX
+      api_key=XXX
+      size_id=1
+      region_id=2
       image_id=3
 '''
 
@@ -198,7 +198,7 @@ class Droplet(JsonfyMixIn):
 
     def destroy(self):
         return self.manager.destroy_droplet(self.id)
-    
+
     @classmethod
     def setup(cls, client_id, api_key):
         cls.manager = DoManager(client_id, api_key)
@@ -283,10 +283,10 @@ def core(module):
             droplet = Droplet.find(module.params['id'])
             if not droplet:
                 droplet = Droplet.add(
-                        name=getkeyordie('name'), 
-                        size_id=getkeyordie('size_id'), 
-                        image_id=getkeyordie('image_id'), 
-                        region_id=getkeyordie('region_id'), 
+                        name=getkeyordie('name'),
+                        size_id=getkeyordie('size_id'),
+                        image_id=getkeyordie('image_id'),
+                        region_id=getkeyordie('region_id'),
                         ssh_key_ids=module.params['ssh_key_ids']
                     )
             if droplet.is_powered_on():
@@ -296,7 +296,7 @@ def core(module):
                         wait_timeout=getkeyordie('wait_timeout')
                     )
             module.exit_json(changed=changed, droplet=droplet.to_json())
-       
+
         elif state in ('absent', 'deleted'):
             droplet = Droplet.find(getkeyordie('id'))
             if not droplet:
