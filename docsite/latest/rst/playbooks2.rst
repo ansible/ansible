@@ -467,7 +467,7 @@ Loops
 To save some typing, repeated tasks can be written in short-hand like so::
 
     - name: add several users
-      remote_user: name={{ item }} state=present groups=wheel
+      user: name={{ item }} state=present groups=wheel
       with_items:
          - testuser1
          - testuser2
@@ -479,9 +479,9 @@ If you have defined a YAML list in a variables file, or the 'vars' section, you 
 The above would be the equivalent of::
 
     - name: add user testuser1
-      remote_user: name=testuser1 state=present groups=wheel
+      user: name=testuser1 state=present groups=wheel
     - name: add user testuser2
-      remote_user: name=testuser2 state=present groups=wheel
+      user: name=testuser2 state=present groups=wheel
 
 The yum and apt modules use with_items to execute fewer package manager transactions.
 
@@ -489,7 +489,7 @@ Note that the types of items you iterate over with 'with_items' do not have to b
 If you have a list of hashes, you can reference subkeys using things like::
 
     - name: add several users
-      remote_user: name={{ item.name }} state=present groups={{ item.groups }}
+      user: name={{ item.name }} state=present groups={{ item.groups }}
       with_items:
         - { name: 'testuser1', groups: 'wheel' }
         - { name: 'testuser2', groups: 'root' }
@@ -603,7 +603,7 @@ Negative numbers are not supported.  This works as follows::
         - group: name=odds state=present
 
         # create some test users
-        - remote_user: name={{ item }} state=present groups=evens
+        - user: name={{ item }} state=present groups=evens
           with_sequence: start=0 end=32 format=testuser%02x
 
         # create a series of directories with even numbers for some reason
@@ -649,7 +649,7 @@ This length can be changed by passing an extra parameter::
         (...)
 
         # create a user with a given password
-        - remote_user: name=guestuser
+        - user: name=guestuser
                 state=present
                 uid=5000
                 password={{ item }}
