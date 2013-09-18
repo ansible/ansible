@@ -69,6 +69,7 @@ import re
 import tempfile
 
 try:
+    import apt
     import apt_pkg
     import aptsources.distro
     distro = aptsources.distro.get_distro()
@@ -365,6 +366,8 @@ def main():
     if not module.check_mode and changed:
         try:
             sourceslist.save(module)
+            cache = apt.Cache()
+            cache.update()
         except OSError as err:
             module.fail_json(msg=unicode(err))
 
