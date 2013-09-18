@@ -42,6 +42,12 @@ options:
         default: "present"
         description:
             - A source string state.
+    update_cache:
+        description:
+            - Run the equivalent of C(apt-get update) if has changed.
+        required: false
+        default: "yes"
+        choices: [ "yes", "no" ]
 author: Alexander Saltanov
 version_added: "0.7"
 requirements: [ python-apt, python-pycurl ]
@@ -329,6 +335,7 @@ def main():
         argument_spec=dict(
             repo=dict(required=True),
             state=dict(choices=['present', 'absent'], default='present'),
+            update_cache = dict(aliases=['update-cache'], type='bool'),
         ),
         supports_check_mode=True,
     )
@@ -341,6 +348,7 @@ def main():
 
     repo = module.params['repo']
     state = module.params['state']
+    update_cache = module.params['update_cache']
     sourceslist = None
 
     if isinstance(distro, aptsources.distro.DebianDistribution):
@@ -366,8 +374,9 @@ def main():
     if not module.check_mode and changed:
         try:
             sourceslist.save(module)
-            cache = apt.Cache()
-            cache.update()
+            if update_cache:
+                cache = apt.Cache()
+                cache.update()
         except OSError as err:
             module.fail_json(msg=unicode(err))
 
