@@ -38,7 +38,7 @@ import ConfigParser
 try:
     from zabbix_api import ZabbixAPI
 except:
-    print "Error: Zabbix API library must be installed: pip install zabbix-api."
+    print >> sys.stderr, "Error: Zabbix API library must be installed: pip install zabbix-api."
     sys.exit(1)
 
 try:
@@ -111,7 +111,7 @@ class ZabbixInventory(object):
                 api = ZabbixAPI(server=self.zabbix_server)
                 api.login(user=self.zabbix_username, password=self.zabbix_password)
             except BaseException, e:
-                print "Error: Could not login to Zabbix server. Check your zabbix.ini."
+                print >> sys.stderr, "Error: Could not login to Zabbix server. Check your zabbix.ini."
                 sys.exit(1)
 
             if self.options.host:
@@ -123,11 +123,11 @@ class ZabbixInventory(object):
                 print json.dumps(data, indent=2)
 
             else:
-                print "usage: --list  ..OR.. --host <hostname>"
+                print >> sys.stderr, "usage: --list  ..OR.. --host <hostname>"
                 sys.exit(1)
 
         else:
-            print "Error: Configuration of server and credentials are required. See zabbix.ini."
+            print >> sys.stderr, "Error: Configuration of server and credentials are required. See zabbix.ini."
             sys.exit(1)
 
 ZabbixInventory()
