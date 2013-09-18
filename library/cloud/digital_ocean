@@ -134,30 +134,6 @@ EXAMPLES = '''
       size_id=1 
       region_id=2 
       image_id=3
-=======
-- digital_ocean: state=present command=ssh name=my_ssh_key ssh_pub_key='ssh-rsa AAAA...' client_id=XXX api_key=XXX
-
-If a key matches this name, will return the ssh key id and changed = False
-If no existing key matches this name, a new key is created, the ssh key id is returned and changed = False
-
-# Create a new Droplet
-- digital_ocean: state=present command=droplet name=my_new_droplet client_id=XXX api_key=XXX size_id=1 region_id=2 image_id=3 wait_timeout=500
-
-Will return the droplet details including the droplet id (used for idempotence)
-
-# Ensure a droplet is present
-- digital_ocean: state=present command=droplet id=123 name=my_new_droplet client_id=XXX api_key=XXX size_id=1 region_id=2 image_id=3 wait_timeout=500
-
-If droplet id already exist, will return the droplet details and changed = False
-If no droplet matches the id, a new droplet will be created and the droplet details (including the new id) are returned, changed = True.
-
-# Create a droplet with ssh key
-- digital_ocean: state=present ssh_key_ids=id name=my_new_droplet client_id=XXX api_key=XXX size_id=1 region_id=2 image_id=3
-
-The ssh key id can be passed as argument at the creation of a droplet (see ssh_key_ids). 
-Several keys can be added to ssh_key_ids as id1,id2,id3
-
-The keys are used to connect as root to the droplet.
 '''
 
 import sys
