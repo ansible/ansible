@@ -88,7 +88,7 @@ options:
     aliases: []
 notes: []
 # informational: requirements for nodes
-requirements: [ yum, rpm ]
+requirements: [ yum, rpm, yum-utils ]
 author: Seth Vidal
 '''
 
@@ -721,12 +721,12 @@ def main():
 
     params = module.params
 
+    if not repoquery:
+        module.fail_json(msg="repoquery is required for this module. Please install the yum-utils package.")
+
     if params['list']:
-        if not repoquery:
-            module.fail_json(msg="repoquery is required to use list= with this module. Please install the yum-utils package.")
         results = dict(results=list_stuff(module, params['conf_file'], params['list']))
         module.exit_json(**results)
-
     else:
         pkg = params['name']
         state = params['state']
