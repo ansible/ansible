@@ -144,6 +144,7 @@ class Service(object):
         self.rcconf_file    = None
         self.rcconf_key     = None
         self.rcconf_value   = None
+        self.svc_change     = False
 
         # select whether we dump additional debug info through syslog
         self.syslogging = False
@@ -271,18 +272,18 @@ class Service(object):
             self.module.fail_json(msg="failed determining service state, possible typo of service name?")
         # Find out if state has changed
         if not self.running and self.state in ["started", "running"]:
-            self.changed = True
+            self.svc_change = True
         elif self.running and self.state in ["stopped","reloaded"]:
-            self.changed = True
+            self.svc_change = True
         elif self.state == "restarted":
-            self.changed = True
-        if self.module.check_mode and self.changed:
+            self.svc_change = True
+        if self.module.check_mode and self.svc_change:
             self.module.exit_json(changed=True, msg='service state changed')
 
     def modify_service_state(self):
 
         # Only do something if state will change
-        if self.changed:
+        if self.svc_change:
             # Control service
             if self.state in ['started', 'running']:
                 self.action = "start"
@@ -1133,6 +1134,8 @@ def main():
             else:
                 module.fail_json(msg=out)
 
+    if service.svc_change is True:
+        service.changed = True
     result['changed'] = service.changed
     if service.module.params['enabled'] is not None:
         result['enabled'] = service.module.params['enabled']
