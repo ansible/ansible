@@ -92,7 +92,7 @@ class Connection(object):
                 # TODO: make the timeout and retries configurable?
                 tries = 3
                 self.conn = socket.socket()
-                self.conn.settimeout(300.0)
+                self.conn.settimeout(self.runner.accelerate_timeout)
                 vvvv("attempting connection to %s via the accelerated port %d" % (self.host,self.accport))
                 while tries > 0:
                     try:
