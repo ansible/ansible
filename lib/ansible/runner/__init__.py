@@ -776,6 +776,11 @@ class Runner(object):
         if result['rc'] != 0:
             if result['rc'] == 5:
                 output = 'Authentication failure.'
+            elif result['rc'] == 255:
+                if utils.VERBOSITY > 3:
+                    output = 'SSH encountered an unknown error. The output was:\n%s' % (result['stdout']+result['stderr'])
+                else:
+                    output = 'SSH encountered an unknown error during the connection. We recommend you re-run the command using -vvvv, which will enable SSH debugging output to help diagnose the issue'
             else:
                 output = 'Authentication or permission failure.  In some cases, you may have been able to authenticate and did not have permissions on the remote directory. Consider changing the remote temp path in ansible.cfg to a path rooted in "/tmp". Failed command was: %s, exited with result %d' % (cmd, result['rc'])
             if 'stdout' in result and result['stdout'] != '':

@@ -158,6 +158,9 @@ def vv(msg, host=None):
 def vvv(msg, host=None):
     return verbose(msg, host=host, caplevel=2)
 
+def vvvv(msg, host=None):
+    return verbose(msg, host=host, caplevel=3)
+
 def verbose(msg, host=None, caplevel=2):
     if utils.VERBOSITY > caplevel:
         if host is None:

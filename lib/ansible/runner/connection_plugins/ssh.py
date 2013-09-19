@@ -147,7 +147,13 @@ class Connection(object):
         ''' run a command on the remote host '''
 
         ssh_cmd = self._password_cmd()
-        ssh_cmd += ["ssh", "-tt", "-q"] + self.common_args
+        ssh_cmd += ["ssh", "-tt"]
+        if utils.VERBOSITY > 3:
+            ssh_cmd += ["-vvv"]
+        else:
+            ssh_cmd += ["-q"]
+        ssh_cmd += self.common_args
+
         if self.ipv6:
             ssh_cmd += ['-6']
         ssh_cmd += [self.host]
