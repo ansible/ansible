@@ -274,17 +274,20 @@ class Play(object):
             task_basepath     = utils.path_dwim(self.basedir, os.path.join(role_path, 'tasks'))
             handler_basepath  = utils.path_dwim(self.basedir, os.path.join(role_path, 'handlers'))
             vars_basepath     = utils.path_dwim(self.basedir, os.path.join(role_path, 'vars'))
+            meta_basepath     = utils.path_dwim(self.basedir, os.path.join(role_path, 'meta'))
             defaults_basepath = utils.path_dwim(self.basedir, os.path.join(role_path, 'defaults'))
 
             task      = self._resolve_main(task_basepath)
             handler   = self._resolve_main(handler_basepath)
             vars_file = self._resolve_main(vars_basepath)
+            meta_file = self._resolve_main(meta_basepath)
             defaults_file = self._resolve_main(defaults_basepath)
 
             library   = utils.path_dwim(self.basedir, os.path.join(role_path, 'library'))
 
-            if not os.path.isfile(task) and not os.path.isfile(handler) and not os.path.isfile(vars_file) and not os.path.isdir(library):
-                raise errors.AnsibleError("found role at %s, but cannot find %s or %s or %s or %s" % (role_path, task, handler, vars_file, library))
+            missing = lambda f: not os.path.isfile(f)
+            if missing(task) and missing(handler) and missing(vars_file) and missing(meta_file) and missing(library):
+                raise errors.AnsibleError("found role at %s, but cannot find %s or %s or %s or %s or %s" % (role_path, task, handler, vars_file, meta_file, library))
             if os.path.isfile(task):
                 nt = dict(include=pipes.quote(task), vars=role_vars, default_vars=default_vars)
                 for k in special_keys:
