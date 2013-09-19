@@ -2,7 +2,6 @@ include README.md packaging/rpm/ansible.spec COPYING
 include examples/hosts
 include examples/ansible.cfg
 graft examples/playbooks
-include packaging/distutils/setup.py
 recursive-include docs *
 recursive-include library *
 include Makefile
