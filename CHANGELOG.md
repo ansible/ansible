@@ -20,6 +20,7 @@ Misc changes:
 * The ControlPath variable for ssh connections is now configurable in the ansible.cfg (and via the environment variable ANSIBLE_SSH_CONTROL_PATH).
 * Added a -vvvv level, which will show SSH client debugging information in the event of a failure.
 * Fixed bug in apt_repository module where the repository cache was not being updated.
+* Fixed bug where "too many open files" errors would be encountered due to pseudo TTY's not being closed properly.
 
 1.3.1 "Top of the World" (reprise) - September 16th, 2013
 
