@@ -1134,9 +1134,7 @@ def main():
             else:
                 module.fail_json(msg=out)
 
-    if service.svc_change is True:
-        service.changed = True
-    result['changed'] = service.changed
+    result['changed'] = service.changed | service.svc_change
     if service.module.params['enabled'] is not None:
         result['enabled'] = service.module.params['enabled']
 
