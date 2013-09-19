@@ -27,7 +27,7 @@ short_description: Add and remove APT repositores
 description:
     - Add or remove an APT repositories in Ubuntu and Debian.
 notes:
-    - This module works on Debian and Ubuntu and requires only C(python-apt) package.
+    - This module works on Debian and Ubuntu and requires C(python-apt) and C(python-pycurl) packages.
     - This module supports Debian Squeeze (version 6) as well as its successors.
     - This module treats Debian and Ubuntu distributions separately. So PPA could be installed only on Ubuntu machines.
 options:
