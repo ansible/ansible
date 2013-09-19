@@ -35,6 +35,12 @@ options:
     required: false
     default: 5099
     aliases: []
+  timeout:
+    description:
+      - The number of seconds the socket will wait for data. If none is received when the timeout value is reached, the connection will be closed.
+    required: false
+    default: 300
+    aliases: []
   minutes:
     description:
       - The I(accelerate) listener daemon is started on nodes and will stay around for
@@ -175,11 +181,11 @@ class ThreadWithReturnValue(Thread):
         return self._return
 
 class ThreadedTCPServer(SocketServer.ThreadingTCPServer):
-    def __init__(self, server_address, RequestHandlerClass, module, password):
+    def __init__(self, server_address, RequestHandlerClass, module, password, timeout):
         self.module = module
         self.key = AesKey.Read(password)
         self.allow_reuse_address = True
-        self.timeout = None
+        self.timeout = timeout
         SocketServer.ThreadingTCPServer.__init__(self, server_address, RequestHandlerClass)
 
 class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
@@ -384,7 +390,7 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
                 return dict(failed=True, stdout="failed to chown the file via sudo")
         return dict()
 
-def daemonize(module, password, port, minutes):
+def daemonize(module, password, port, timeout, minutes):
     try:
         daemonize_self(module, password, port, minutes)
 
@@ -394,7 +400,7 @@ def daemonize(module, password, port, minutes):
         signal.signal(signal.SIGALRM, catcher)
         signal.setitimer(signal.ITIMER_REAL, 60 * minutes)
 
-        server = ThreadedTCPServer(("0.0.0.0", port), ThreadedTCPRequestHandler, module, password)
+        server = ThreadedTCPServer(("0.0.0.0", port), ThreadedTCPRequestHandler, module, password, timeout)
         server.allow_reuse_address = True
         
         vv("serving!")
@@ -409,6 +415,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             port=dict(required=False, default=5099),
+            timeout=dict(required=False, default=300),
             password=dict(required=True),
             minutes=dict(required=False, default=30),
             debug=dict(required=False, default=0, type='int')
@@ -418,6 +425,7 @@ def main():
 
     password  = base64.b64decode(module.params['password'])
     port      = int(module.params['port'])
+    timeout   = int(module.params['timeout'])
     minutes   = int(module.params['minutes'])
     debug     = int(module.params['debug'])
 
@@ -426,8 +434,7 @@ def main():
 
     DEBUG_LEVEL=debug
 
-    daemonize(module, password, port, minutes)
-
+    daemonize(module, password, port, timeout, minutes)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
