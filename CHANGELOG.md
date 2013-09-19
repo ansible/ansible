@@ -15,6 +15,12 @@ Misc changes:
 
 * TBA
 
+1.3.2 "Top of the World" (reprise) - September 19th, 2013
+
+* The ControlPath variable for ssh connections is now configurable in the ansible.cfg (and via the environment variable ANSIBLE_SSH_CONTROL_PATH).
+* Added a -vvvv level, which will show SSH client debugging information in the event of a failure.
+* Fixed bug in apt_repository module where the repository cache was not being updated.
+
 1.3.1 "Top of the World" (reprise) - September 16th, 2013
 
 * Fixing a bug in accelerate mode whereby the gather_facts step would always be run via sudo regardless of the play settings.

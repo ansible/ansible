@@ -771,7 +771,7 @@ class Runner(object):
         if result['rc'] != 0:
             if result['rc'] == 5:
                 output = 'Authentication failure.'
-            elif result['rc'] == 255:
+            elif result['rc'] == 255 and self.transport == 'ssh':
                 if utils.VERBOSITY > 3:
                     output = 'SSH encountered an unknown error. The output was:\n%s' % (result['stdout']+result['stderr'])
                 else:
