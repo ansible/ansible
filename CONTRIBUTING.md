@@ -73,6 +73,10 @@ backwards-compatible improvements.  Code developed for Ansible needs to support 
 while code in modules must run under Python 2.4 or higher.  Please also use a 4-space indent
 and no tabs.
 
+Tip: To easily run from a checkout, source "./hacking/env-setup" and that's it -- no install
+required.  You're now live!
+
+
 Reporting A Bug
 ---------------
 
