@@ -155,7 +155,7 @@ def main():
                 'StrictHostKeyChecking=no')  # need ssh param
     if rsync_path:
         cmd = cmd + " --rsync-path '%s'" %(rsync_path)
-    changed_marker = '<<changed>>'
+    changed_marker = '<<CHANGED>>'
     cmd = cmd + " --out-format='" + changed_marker + "%i %n%L'"
     cmd = ' '.join([cmd, source, dest])
     cmdstr = cmd
