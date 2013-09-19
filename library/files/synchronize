@@ -85,6 +85,14 @@ def main():
             delete = dict(default='no', type='bool'),
             private_key = dict(default=None),
             rsync_path = dict(default=None),
+            archive = dict(default='yes', type='bool'),
+            dirs  = dict(type='bool'),
+            recursive = dict(type='bool'),
+            links = dict(type='bool'),
+            perms = dict(type='bool'),
+            times = dict(type='bool'),
+            owner = dict(type='bool'),
+            group = dict(type='bool'),
         ),
         supports_check_mode = True
     )
@@ -95,12 +103,50 @@ def main():
     private_key = module.params['private_key']
     rsync_path = module.params['rsync_path']
     rsync = module.params.get('local_rsync_path', 'rsync')
+    archive = module.params['archive']
+    dirs = module.params['dirs']
+    # the default of these params depends on the value of archive
+    recursive = module.params['recursive']
+    links = module.params['links']
+    perms = module.params['perms']
+    times = module.params['times']
+    owner = module.params['owner']
+    group = module.params['group']
 
-    cmd = '%s --archive --delay-updates --compress' % rsync
+    cmd = '%s --delay-updates --compress' % rsync
     if module.check_mode:
         cmd = cmd + ' --dry-run'
     if delete:
         cmd = cmd + ' --delete-after'
+    if archive:
+        cmd = cmd + ' --archive'
+        if recursive is False:
+            cmd = cmd + ' --no-recursive'
+        if links is False:
+            cmd = cmd + ' --no-links'
+        if perms is False:
+            cmd = cmd + ' --no-perms'
+        if times is False:
+            cmd = cmd + ' --no-times'
+        if owner is False:
+            cmd = cmd + ' --no-owner'
+        if group is False:
+            cmd = cmd + ' --no-group'
+    else:
+        if recursive is True:
+            cmd = cmd + ' --recursive'
+        if links is True:
+            cmd = cmd + ' --links'
+        if perms is True:
+            cmd = cmd + ' --perms'
+        if times is True:
+            cmd = cmd + ' --times'
+        if owner is True:
+            cmd = cmd + ' --owner'
+        if group is True:
+            cmd = cmd + ' --group'
+    if dirs:
+        cmd = cmd + ' --dirs'
     if private_key is None:
         private_key = ''
     else:
