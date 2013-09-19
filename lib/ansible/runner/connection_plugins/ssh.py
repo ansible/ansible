@@ -26,6 +26,7 @@ import fcntl
 import hmac
 import pwd
 import gettext
+import pty
 from hashlib import sha1
 import ansible.constants as C
 from ansible.callbacks import vvv
@@ -181,11 +182,11 @@ class Connection(object):
 
         try:
             # Make sure stdin is a proper (pseudo) pty to avoid: tcgetattr errors
-            import pty
             master, slave = pty.openpty()
             p = subprocess.Popen(ssh_cmd, stdin=slave,
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdin = os.fdopen(master, 'w', 0)
+            os.close(slave)
         except:
             p = subprocess.Popen(ssh_cmd, stdin=subprocess.PIPE,
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
