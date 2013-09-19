@@ -40,11 +40,59 @@ options:
     required: false
     choices: [ 'push', 'pull' ]
     default: 'push'
+  archive:
+    description:
+      - Mirrors the rsync archive flag, enables recursive, links, perms, times, owner, group flags and -D.
+    choices: [ 'yes', 'no' ]
+    default: 'yes'
+    required: false
   delete:
     description:
       - Delete files that don't exist (after transfer, not before) in the C(src) path.
     choices: [ 'yes', 'no' ]
     default: 'no'
+    required: false
+  dirs:
+    description:
+      - Transfer directories without recursing
+    choices: [ 'yes', 'no' ]
+    default: 'no'
+    required: false
+  recursive:
+    description:
+      - Recurse into directories.
+    choices: [ 'yes', 'no' ]
+    default: the value of the archive option
+    required: false
+  links:
+    description:
+      - Copy symlinks as symlinks.
+    choices: [ 'yes', 'no' ]
+    default: the value of the archive option
+    required: false
+  perms:
+    description:
+      - Preserve permissions.
+    choices: [ 'yes', 'no' ]
+    default: the value of the archive option
+    required: false
+  times:
+    description:
+      - Preserve modification times
+    choices: [ 'yes', 'no' ]
+    default: the value of the archive option
+    required: false
+  owner:
+    description:
+      - Preserve owner (super user only)
+    choices: [ 'yes', 'no' ]
+    default: the value of the archive option
+    required: false
+  group:
+    description:
+      - Preserve group
+    choices: [ 'yes', 'no' ]
+    default: the value of the archive option
     required: false
   rsync_path:
     description:
@@ -54,8 +102,17 @@ author: Timothy Appnel
 '''
 
 EXAMPLES = '''
-# Synchronization of src on the control machien to dest on the remote hosts
+# Synchronization of src on the control machine to dest on the remote hosts
 synchronize: src=some/relative/path dest=/some/absolute/path
+
+# Synchronization without any --archive options enabled
+synchronize: src=some/relative/path dest=/some/absolute/path archive=no
+
+# Synchronization with --archive options enabled except for --recursive
+synchronize: src=some/relative/path dest=/some/absolute/path recursive=no
+
+# Synchronization without --archive options enabled except use --links
+synchronize: src=some/relative/path dest=/some/absolute/path archive=no links=yes
 
 # Synchronization of two paths both on the control machine
 local_action: synchronize src=some/relative/path dest=/some/absolute/path
@@ -86,7 +143,7 @@ def main():
             private_key = dict(default=None),
             rsync_path = dict(default=None),
             archive = dict(default='yes', type='bool'),
-            dirs  = dict(type='bool'),
+            dirs  = dict(default='no', type='bool'),
             recursive = dict(type='bool'),
             links = dict(type='bool'),
             perms = dict(type='bool'),
