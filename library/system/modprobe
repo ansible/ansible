@@ -57,9 +57,14 @@ def main():
 
     # Check if module is present
     try:
-        with open('/proc/modules') as modules:
-            present = any(module.startswith(args['name'] + ' ') for module in modules)
-    except IOError as e:
+        modules = open('/proc/modules')
+        present = False
+        for line in modules:
+            if line.startswith(args['name'] + ' '):
+                present = True
+                break
+        modules.close()
+    except IOError, e:
         module.fail_json(msg=str(e), **args)
 
     # Check only; don't modify
