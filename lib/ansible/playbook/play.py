@@ -30,7 +30,7 @@ class Play(object):
     __slots__ = [
        'hosts', 'name', 'vars', 'default_vars', 'vars_prompt', 'vars_files',
        'handlers', 'remote_user', 'remote_port', 'included_roles', 'accelerate',
-       'accelerate_port', 'sudo', 'sudo_user', 'transport', 'playbook',
+       'accelerate_port', 'accelerate_timeout', 'sudo', 'sudo_user', 'transport', 'playbook',
        'tags', 'gather_facts', 'serial', '_ds', '_handlers', '_tasks',
        'basedir', 'any_errors_fatal', 'roles', 'max_fail_pct'
     ]
@@ -40,7 +40,7 @@ class Play(object):
     VALID_KEYS = [
        'hosts', 'name', 'vars', 'vars_prompt', 'vars_files',
        'tasks', 'handlers', 'remote_user', 'user', 'port', 'include', 'accelerate', 'accelerate_port',
-       'sudo', 'sudo_user', 'connection', 'tags', 'gather_facts', 'serial',
+       'accelerate_timeout', 'sudo', 'sudo_user', 'connection', 'tags', 'gather_facts', 'serial',
        'any_errors_fatal', 'roles', 'pre_tasks', 'post_tasks', 'max_fail_percentage' 
     ]
 
@@ -114,6 +114,7 @@ class Play(object):
         self.any_errors_fatal = utils.boolean(ds.get('any_errors_fatal', 'false'))
         self.accelerate       = utils.boolean(ds.get('accelerate', 'false'))
         self.accelerate_port  = ds.get('accelerate_port', None)
+        self.accelerate_timeout = int(ds.get('accelerate_timeout', 300))
         self.max_fail_pct     = int(ds.get('max_fail_percentage', 100))
 
         load_vars = {}
