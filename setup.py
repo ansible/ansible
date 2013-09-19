@@ -23,7 +23,7 @@ setup(name='ansible',
       url='http://ansibleworks.com/',
       license='GPLv3',
       install_requires=['paramiko', 'jinja2', "PyYAML"],
-      package_dir={ 'ansible': 'lib/ansible' },
+      package_dir={ '': 'lib' },
       packages=[
          'ansible',
          'ansible.utils',
