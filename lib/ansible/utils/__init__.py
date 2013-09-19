@@ -509,7 +509,7 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
 
     parser = SortedOptParser(usage, version=version("%prog"))
     parser.add_option('-v','--verbose', default=False, action="callback",
-        callback=increment_debug, help="verbose mode (-vvv for more)")
+        callback=increment_debug, help="verbose mode (-vvv for more, -vvvv to enable connection debugging)")
 
     parser.add_option('-f','--forks', dest='forks', default=constants.DEFAULT_FORKS, type='int',
         help="specify number of parallel processes to use (default=%s)" % constants.DEFAULT_FORKS)
