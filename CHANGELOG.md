@@ -12,7 +12,7 @@ Highlighted new features:
 
 New modules:
 
-* TBA
+* cloud:rax_clb_nodes -- manage Rackspace cloud load balancers
 
 Misc changes:
 
