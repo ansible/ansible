@@ -371,6 +371,23 @@ class TestInventory(unittest.TestCase):
                         'inventory_hostname_short': 'zeus',
                         'group_names': ['greek', 'major-god']}
 
+    def test_host_dictionary(self):
+        # Test the case when the inventory is created starting from a
+        # dictionary
+        inventory_dict = {
+            'group':{
+                'host': {
+                    'key1': 'var1',
+                    'key2': 'var2'}
+                    }}
+        inventory = Inventory(inventory_dict)
+        hosts = inventory.list_hosts()
+        self.assertEqual(hosts, ['host'])
+        vars = inventory.get_variables('host')
+        self.assertEqual(vars['key1'], 'var1')
+        self.assertEqual(vars['key2'], 'var2')
+
+
     # test disabled as needs to be updated to model desired behavior
     #
     #def test_dir_inventory(self):
