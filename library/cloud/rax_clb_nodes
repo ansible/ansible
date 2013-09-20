@@ -100,8 +100,8 @@ options:
 requirements: [ "pyrax" ]
 author: Lukasz Kawczynski
 notes:
-  - The following environment variables can be used: C(RAX_USERNAME),
-    C(RAX_API_KEY), C(RAX_CREDENTIALS) and C(RAX_REGION).
+  - "The following environment variables can be used: C(RAX_USERNAME),
+    C(RAX_API_KEY), C(RAX_CREDENTIALS) and C(RAX_REGION)."
 '''
 
 EXAMPLES = '''
