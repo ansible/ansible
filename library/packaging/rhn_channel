@@ -89,7 +89,10 @@ def unsubscribe_channels(channels, client, session, sysname, sys_id):
 
 def base_channels(client, session, sys_id):
     basechan = client.channel.software.listSystemChannels(session, sys_id)
-    chans = [item['channel_label'] for item in basechan]
+    try:
+        chans = [item['label'] for item in basechan]
+    except KeyError:
+        chans = [item['channel_label'] for item in basechan]
     return chans
 
 # ------------------------------------------------------- #
