@@ -119,6 +119,7 @@ import os
 
 try:
     import pyrax
+    import pyrax.utils
 except ImportError:
     print("failed=True msg='pyrax required for this module'")
     sys.exit(1)
@@ -174,29 +175,27 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                 module.fail_json(msg = '%s' % e.message)
 
         for server in servers:
-            # wait here until the instances are up
-            wait_timeout = time.time() + wait_timeout
-            while wait and wait_timeout > time.time():
-                # refresh the server details
-                server.get()
-                if server.status in ('ACTIVE', 'ERROR'):
-                    break
-                time.sleep(5)
-            if wait and wait_timeout <= time.time():
-                # waiting took too long
-                module.fail_json(msg = 'Timeout waiting on %s' % server.id)
+            # If requested, wait for server activation
+            if wait:
+                pyrax.utils.wait_until(server, 'status', ('ACTIVE', 'ERROR'),
+                    interval=5, attempts=wait_timeout/5)
+
             # Get a fresh copy of the server details
             server.get()
-            if server.status == 'ERROR':
+            if server.status == 'ACTIVE':
+                instance = {'id': server.id,
+                            'accessIPv4': server.accessIPv4,
+                            'name': server.name,
+                            'status': server.status}
+                instances.append(instance)
+            elif server.status == 'ERROR':
                 module.fail_json(msg = '%s failed to build' % server.id)
-            instance = {'id': server.id,
-                        'accessIPv4': server.accessIPv4,
-                        'name': server.name,
-                        'status': server.status}
-            instances.append(instance)
+            elif wait:
+                # waiting took too long
+                module.fail_json(msg = 'Timeout waiting on %s' % server.id)
+
 
     elif state in ('absent', 'deleted'):
-        deleted = []
         # See if we can find a server that matches our credentials
         for server in servers:
             if server.name == name:
@@ -205,13 +204,28 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                 server.metadata == meta:
                     try:
                         server.delete()
-                        deleted.append(server)
                     except Exception, e:
                         module.fail_json(msg = e.message)
+
                     instance = {'id': server.id,
                                 'accessIPv4': server.accessIPv4,
                                 'name': server.name,
                                 'status': 'DELETING'}
+
+                    # If requested, wait for server deletion
+                    if wait:
+                        try:
+                            pyrax.utils.wait_until(server, 'status', '', interval=5,
+                                attempts=wait_timeout/5)
+                            # Get a fresh copy of the server details
+                            server.get()
+                        except Exception, e:
+                            # In this case, an exception means the server is NotFound
+                            instance['status'] = 'DELETED'
+                        else:
+                            # waiting took too long
+                            module.fail_json(msg = 'Timeout waiting on delete %s (%s)' % (server.id, server.status))
+
                     instances.append(instance)
                     changed = True
 
