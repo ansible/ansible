@@ -564,7 +564,7 @@ Role Default Variables
 
 .. versionadded:: 1.3
 
-Role default variables allow you to set default variables for included or dependedent roles (see below). To create
+Role default variables allow you to set default variables for included or dependent roles (see below). To create
 defaults, simply add a `defaults/main.yml` file in your role directory. These variables will have the lowest priority
 of any variables available, and can be easily overridden by any other variable, including inventory variables.
 
