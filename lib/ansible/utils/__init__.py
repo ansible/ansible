@@ -492,6 +492,9 @@ def getch():
 # option handling code for /usr/bin/ansible and ansible-playbook
 # below this line
 
+# mk_boolean is defined in constants to avoid circular imports
+boolean = C.mk_boolean
+
 class SortedOptParser(optparse.OptionParser):
     '''Optparser which sorts the options by opt before outputting --help'''
 
@@ -637,12 +640,6 @@ def filter_leading_non_json_lines(buf):
             filtered_lines.write(line + '\n')
     return filtered_lines.getvalue()
 
-def boolean(value):
-    val = str(value)
-    if val.lower() in [ "true", "t", "y", "1", "yes" ]:
-        return True
-    else:
-        return False
 
 def compile_when_to_only_if(expression):
     '''
