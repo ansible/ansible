@@ -347,7 +347,12 @@ class PlayBook(object):
         ansible.callbacks.set_task(self.callbacks, task)
         ansible.callbacks.set_task(self.runner_callbacks, task)
 
-        self.callbacks.on_task_start(template(play.basedir, task.name, task.module_vars, lookup_fatal=False, filter_fatal=False), is_handler)
+        if task.role_name:
+            name = '%s|%s' % (task.role_name, task.name)
+        else:
+            name = task.name
+
+        self.callbacks.on_task_start(template(play.basedir, name, task.module_vars, lookup_fatal=False, filter_fatal=False), is_handler)
         if hasattr(self.callbacks, 'skip_task') and self.callbacks.skip_task:
             ansible.callbacks.set_task(self.callbacks, None)
             ansible.callbacks.set_task(self.runner_callbacks, None)
