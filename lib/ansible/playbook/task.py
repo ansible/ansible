@@ -25,7 +25,7 @@ class Task(object):
     __slots__ = [
         'name', 'meta', 'action', 'only_if', 'when', 'async_seconds', 'async_poll_interval',
         'notify', 'module_name', 'module_args', 'module_vars', 'default_vars',
-        'play', 'notified_by', 'tags', 'register',
+        'play', 'notified_by', 'tags', 'register', 'role_name',
         'delegate_to', 'first_available_file', 'ignore_errors',
         'local_action', 'transport', 'sudo', 'sudo_user', 'sudo_pass',
         'items_lookup_plugin', 'items_lookup_terms', 'environment', 'args',
@@ -110,6 +110,7 @@ class Task(object):
         self.register     = ds.get('register', None)
         self.sudo         = utils.boolean(ds.get('sudo', play.sudo))
         self.environment  = ds.get('environment', {})
+        self.role_name    = role_name
 
         # rather than simple key=value args on the options line, these represent structured data and the values
         # can be hashes and lists, not just scalars
@@ -158,10 +159,6 @@ class Task(object):
         # if no name is specified, use the action line as the name
         if self.name is None:
             self.name = self.action
-
-        # prepend the role name this task is from, if there was one
-        if role_name:
-            self.name = "%s|%s" % (role_name, self.name)
 
         # load various attributes
         self.only_if = ds.get('only_if', 'True')
