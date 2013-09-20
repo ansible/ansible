@@ -49,7 +49,12 @@ options:
     description:
       - Purge existing availability zones on ELB that are not found in zones
     required: false
-    default: False
+    default: false
+  health_check:
+    description:
+      - An associative array of health check configuration settigs (see example)
+    require: false
+    default: None
   aws_secret_key:
     description:
       - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
@@ -83,14 +88,35 @@ EXAMPLES = """
       - us-east-1a
       - us-east-1d
     listeners:
-      - protocol: http
+      - protocol: http # options are http, https, ssl, tcp
         load_balancer_port: 80
         instance_port: 80
       - protocol: https
         load_balancer_port: 443
-        instance_protocol: http
+        instance_protocol: http # optional, defaults to value of protocol setting
         instance_port: 80
+        # ssl certificate required for https or ssl
         ssl_certificate_id: "arn:aws:iam::123456789012:server-certificate/company/servercerts/ProdServerCert"
+
+# Configure a health check
+- local_action:
+    module: ec2_elb_lb
+    name: "test-please-delete"
+    state: present
+    zones:
+      - us-east-1d
+    listeners:
+      - protocol: http
+        load_balancer_port: 80
+        instance_port: 80
+    health_check:
+        ping_protocol: http # options are http, https, ssl, tcp
+        ping_port: 80
+        ping_path: "/index.html" # not required for tcp or ssl
+        response_timeout: 5 # seconds
+        interval: 30 # seconds
+        unhealthy_threshold: 2
+        healthy_threshold: 10
 
 # Ensure ELB is gone
 - local_action:
@@ -146,6 +172,7 @@ AWS_REGIONS = ['ap-northeast-1',
 try:
     import boto
     import boto.ec2.elb
+    from boto.ec2.elb.healthcheck import HealthCheck
     from boto.regioninfo import RegionInfo
 except ImportError:
     print "failed=True msg='boto required for this module'"
@@ -156,14 +183,15 @@ class ElbManager(object):
     """Handles ELB creation and destruction"""
 
     def __init__(self, module, name, listeners=None, purge_listeners=None,
-                 zones=None, purge_zones=None, aws_access_key=None,
-                 aws_secret_key=None, region=None):
+                 zones=None, purge_zones=None, health_check=None,
+                 aws_access_key=None, aws_secret_key=None, region=None):
         self.module = module
         self.name = name
         self.listeners = listeners
         self.purge_listeners = purge_listeners
         self.zones = zones
         self.purge_zones = purge_zones
+        self.health_check = health_check
 
         self.aws_access_key = aws_access_key
         self.aws_secret_key = aws_secret_key
@@ -182,6 +210,7 @@ class ElbManager(object):
         else:
             self._set_zones()
             self._set_elb_listeners()
+        self._set_health_check()
 
     def ensure_gone(self):
         """Destroy the ELB"""
@@ -201,6 +230,16 @@ class ElbManager(object):
                 'zones': self.elb.availability_zones,
                 'status': self.status
             }
+
+            if self.elb.health_check:
+                info['health_check'] = {
+                    'target': self.elb.health_check.target,
+                    'interval': self.elb.health_check.interval,
+                    'timeout': self.elb.health_check.timeout,
+                    'healthy_threshold': self.elb.health_check.healthy_threshold,
+                    'unhealthy_threshold': self.elb.health_check.unhealthy_threshold,
+                }
+
             if self.elb.listeners:
                 info['listeners'] = [l.get_complex_tuple()
                                      for l in self.elb.listeners]
@@ -366,6 +405,46 @@ class ElbManager(object):
         if zones_to_disable:
             self._disable_zones(zones_to_disable)
 
+    def _set_health_check(self):
+        """Set health check values on ELB as needed"""
+        if self.health_check:
+            # This just makes it easier to compare each of the attributes
+            # and look for changes. Keys are attributes of the current
+            # health_check; values are desired values of new health_check
+            health_check_config = {
+                "target": self._get_health_check_target(),
+                "timeout": self.health_check['response_timeout'],
+                "interval": self.health_check['interval'],
+                "unhealthy_threshold": self.health_check['unhealthy_threshold'],
+                "healthy_threshold": self.health_check['healthy_threshold'],
+            }
+
+            update_health_check = False
+
+            # The health_check attribute is *not* set on newly created
+            # ELBs! So we have to create our own.
+            if not self.elb.health_check:
+                self.elb.health_check = HealthCheck()
+
+            for attr, desired_value in health_check_config.iteritems():
+                if getattr(self.elb.health_check, attr) != desired_value:
+                    setattr(self.elb.health_check, attr, desired_value)
+                    update_health_check = True
+
+            if update_health_check:
+                self.elb.configure_health_check(self.elb.health_check)
+                self.changed = True
+
+    def _get_health_check_target(self):
+        """Compose target string from healthcheck parameters"""
+        protocol = self.health_check['ping_protocol'].upper()
+        path = ""
+
+        if protocol in ['HTTP', 'HTTPS'] and 'ping_path' in self.health_check:
+            path = self.health_check['ping_path']
+
+        return "%s:%s%s" % (protocol, self.health_check['ping_port'], path)
+
 
 def main():
     module = AnsibleModule(
@@ -378,6 +457,7 @@ def main():
             zones={'default': None, 'required': False, 'type': 'list'},
             purge_zones={'default': False, 'required': False,
                          'choices': BOOLEANS, 'type': 'bool'},
+            health_check={'default': None, 'required': False, 'type': 'dict'},
             aws_secret_key={'default': None,
                             'aliases': ['ec2_secret_key', 'secret_key'],
                             'no_log': True},
@@ -398,6 +478,7 @@ def main():
     purge_listeners = module.params['purge_listeners']
     zones = module.params['zones']
     purge_zones = module.params['purge_zones']
+    health_check = module.params['health_check']
 
     if state == 'present' and not listeners:
         module.fail_json(msg="At least one port is required for ELB creation")
@@ -427,8 +508,8 @@ def main():
         module.fail_json(msg=str("Either region or EC2_REGION environment variable must be set."))
 
     elb_man = ElbManager(module, name, listeners, purge_listeners, zones,
-                         purge_zones, aws_access_key, aws_secret_key,
-                         region=region)
+                         purge_zones, health_check, aws_access_key,
+                         aws_secret_key, region=region)
 
     if state == 'present':
         elb_man.ensure_ok()
