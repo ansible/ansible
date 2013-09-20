@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
 # (c) 2013, René Moser <mail@renemoser.net>
@@ -23,7 +23,7 @@ DOCUMENTATION = '''
 module: host
 author: René Moser
 version_added: "1.4"
-short_description: Add or remove entries in /etc/hosts
+short_description: Add or remove entries in /etc/hosts.
 requirements:
 description:
     - Manage entries in /etc/hosts
@@ -60,7 +60,6 @@ EXAMPLES = '''
 import os
 import tempfile
 import fileinput
-import syslog
 
 class Host(object):
 
@@ -72,13 +71,12 @@ class Host(object):
         self.ip                 = module.params['ip']
         self.hostname           = module.params['hostname']
         self.aliases            = module.params['aliases']
-        self.changed            = False
-        self.ip_matches         = False
-        self.hostname_matches   = False
-        self.aliases_matches    = False
-        self.has_aliases        = False
-        self.found_on_line      = -1
-        self.syslogging         = False
+
+        self._ip_matches        = False
+        self._hostname_matches  = False
+        self._aliases_matches   = False
+        self._has_aliases       = False
+        self._found_on_line     = -1
 
     def validate_has_hostname_on_present(self):
         err = ''
@@ -95,18 +93,13 @@ class Host(object):
                 err = "Error: Either param 'hostnames' or 'ip' must be given in state 'absent'."
         return err
 
-    def log(self, msg):
-        if self.syslogging:
-            syslog.openlog('ansible-%s' % os.path.basename(__file__))
-            syslog.syslog(syslog.LOG_NOTICE, '' + msg)
-
     def proceed_hosts_entries(self):
 
         f = open(self.HOSTSFILE,'rb')
-        self.lines = f.readlines()
+        self._hostsfile_lines = f.readlines()
         f.close()
 
-        for lineno, line in enumerate(self.lines):
+        for lineno, line in enumerate(self._hostsfile_lines):
             if line.startswith("#"):
                 continue
 
@@ -115,34 +108,31 @@ class Host(object):
             aliases = ','.join(line.split()[2:])
 
             if self.ip and self.ip in ip: 
-                self.ip_matches = True
-                self.found_on_line = lineno
-                self.log(self.ip + ' found on line')
+                self._ip_matches = True
+                self._found_on_line = lineno
 
             if self.hostname and self.hostname in hostname:
-                self.hostname_matches = True
-                self.found_on_line = lineno
-                self.log(self.hostname + ' found on line')
+                self._hostname_matches = True
+                self._found_on_line = lineno
 
             # only look at aliases if we found hostname or ip
-            if self.hostname_matches or self.ip_matches:
+            if self._hostname_matches or self._ip_matches:
                 if aliases:
-                    self.log('aliases: ' + aliases)
-                    self.has_aliases = True
+                    self._has_aliases = True
                 if self.aliases and self.aliases == aliases:
-                    self.aliases_matches = True
+                    self._aliases_matches = True
                 break
 
     def full_entry_exists(self):
-        if self.has_aliases and not self.aliases_matches:
+        if self._has_aliases and not self._aliases_matches:
             return False
-        return self.ip_matches and self.hostname_matches
+        return self._ip_matches and self.hostname_matches
 
     def entry_exists(self):
-        return self.ip_matches or self.hostname_matches
+        return self._ip_matches or self.hostname_matches
 
     def remove_entry(self):
-        self.lines.pop(self.found_on_line)
+        self._hostsfile_lines.pop(self._found_on_line)
 
     def add_entry(self):
         aliases = ''
@@ -150,17 +140,16 @@ class Host(object):
             aliases = self.aliases.replace(',',' ')
         host_entry =  self.ip + " " + self.hostname + " " + aliases + "\n"
         if self.entry_exists():
-            self.lines[self.found_on_line] = host_entry
+            self._hostsfile_lines[self._found_on_line] = host_entry
         else:
-            self.lines.extend(host_entry)
+            self._hostsfile_lines.extend(host_entry)
 
     def write_changes(self):
         tmpfd, tmpfile = tempfile.mkstemp()
         f = os.fdopen(tmpfd,'wb')
-        f.writelines(self.lines)
+        f.writelines(self._hostsfile_lines)
         f.close()
         self.module.atomic_move(tmpfile, self.HOSTSFILE)
-        self.changed = True
 
 def main():
     module = AnsibleModule(
@@ -176,6 +165,7 @@ def main():
     result = {}
     host = Host(module)
     result['state'] = host.state
+    result['changed'] = false
 
     err = host.validate_has_hostname_on_present()
     if err:
@@ -188,22 +178,20 @@ def main():
     host.proceed_hosts_entries()
     if host.state == 'present':
         if not host.full_entry_exists():
-            host.log('Entry does not fully exist or may be missing.')
             if module.check_mode:
                 module.exit_json(changed=True)
-            host.log('Adding or replacing entry.')
             host.add_entry()
             host.write_changes()
+            result['changed'] = True
 
     elif host.state == 'absent':
         if host.entry_exists():
-            host.log('IP entry exists, removing.')
             if module.check_mode:
                 module.exit_json(changed=True)
             host.remove_entry()
             host.write_changes()
+            result['changed'] = True
 
-    result['changed'] = host.changed
     module.exit_json(**result)
 
 # include magic from lib/ansible/module_common.py
