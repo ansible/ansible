@@ -20,7 +20,7 @@ module: rax_clb_nodes
 short_description: add, modify and remove nodes from a Rackspace Cloud Load Balancer
 description:
   - Adds, modifies and removes nodes from a Rackspace Cloud Load Balancer
-version_added: "1.3"
+version_added: "1.4"
 options:
   address:
     required: false
