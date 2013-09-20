@@ -292,7 +292,7 @@ class Play(object):
                         nt[k] = special_vars[k]
                 new_tasks.append(nt)
             if os.path.isfile(handler):
-                nt = dict(include=pipes.quote(handler), vars=role_vars, role_name=role['role'])
+                nt = dict(include=pipes.quote(handler), vars=role_vars)
                 for k in special_keys:
                     if k in special_vars:
                         nt[k] = special_vars[k]
