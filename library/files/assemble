@@ -56,6 +56,11 @@ options:
     required: false
     choices: [ "yes", "no" ]
     default: "no"
+  delimiter:
+    description:
+      - A delimiter to seperate the file contents.
+    required: false
+    default: null
   others:
     description:
       - all arguments accepted by the M(file) module also work here
@@ -71,14 +76,18 @@ EXAMPLES = '''
 # ===========================================
 # Support method
 
-def assemble_from_fragments(src_path):
+def assemble_from_fragments(src_path, delimiter=''):
     ''' assemble a file from a directory of fragments '''
     tmpfd, temp_path = tempfile.mkstemp()
     tmp = os.fdopen(tmpfd,'w')
+    delimit_me = False
     for f in sorted(os.listdir(src_path)):
         fragment = "%s/%s" % (src_path, f)
+        if delimit_me:
+            tmp.write(delimiter)
         if os.path.isfile(fragment):
             tmp.write(file(fragment).read())
+        delimit_me = True
     tmp.close()
     return temp_path
 
@@ -91,6 +100,7 @@ def main():
         # not checking because of daisy chain to file module
         argument_spec = dict(
             src = dict(required=True),
+            delimiter = dict(required=False),
             dest = dict(required=True),
             backup=dict(default=False, type='bool'),
         ),
@@ -103,6 +113,7 @@ def main():
     src     = os.path.expanduser(module.params['src'])
     dest    = os.path.expanduser(module.params['dest'])
     backup  = module.params['backup']
+    delimiter  = module.params['delimiter']
 
     if not os.path.exists(src):
         module.fail_json(msg="Source (%s) does not exist" % src)
@@ -110,7 +121,7 @@ def main():
     if not os.path.isdir(src):
         module.fail_json(msg="Source (%s) is not a directory" % src)
 
-    path = assemble_from_fragments(src)
+    path = assemble_from_fragments(src, delimiter)
     pathmd5 = module.md5(path)
 
     if os.path.exists(dest):
