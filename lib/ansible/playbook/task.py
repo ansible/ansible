@@ -41,7 +41,7 @@ class Task(object):
          'any_errors_fatal', 'changed_when', 'failed_when', 'always_run'
     ]
 
-    def __init__(self, play, ds, module_vars=None, default_vars=None, additional_conditions=None):
+    def __init__(self, play, ds, module_vars=None, default_vars=None, additional_conditions=None, role_name=None):
         ''' constructor loads from a task or handler datastructure '''
 
         # meta directives are used to tell things like ansible/playbook to run
@@ -158,6 +158,10 @@ class Task(object):
         # if no name is specified, use the action line as the name
         if self.name is None:
             self.name = self.action
+
+        # prepend the role name this task is from, if there was one
+        if role_name:
+            self.name = "%s|%s" % (role_name, self.name)
 
         # load various attributes
         self.only_if = ds.get('only_if', 'True')
