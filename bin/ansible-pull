@@ -151,8 +151,7 @@ def main(args):
     rc, out = _run(cmd)
     if rc != 0:
         if options.force:
-            print("Unable to update repository.  Continuing with (forced) "
-                  "run of playbook.")
+            print "Unable to update repository. Continuing with (forced) run of playbook."
         else:
             return rc
     elif options.ifchanged and '"changed": true' not in out:
