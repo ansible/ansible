@@ -68,7 +68,8 @@ class PlayBook(object):
         inventory        = None,
         check            = False,
         diff             = False,
-        any_errors_fatal = False):
+        any_errors_fatal = False,
+        fail_on_undefined= C.DEFAULT_UNDEFINED_VAR_BEHAVIOR):
 
         """
         playbook:         path to a playbook file
@@ -122,6 +123,7 @@ class PlayBook(object):
         self.only_tags        = only_tags
         self.skip_tags        = skip_tags
         self.any_errors_fatal = any_errors_fatal
+        self.fail_on_undefined= fail_on_undefined
 
         self.callbacks.playbook = self
         self.runner_callbacks.playbook = self
@@ -314,7 +316,7 @@ class PlayBook(object):
             transport=task.transport, sudo_pass=task.sudo_pass, is_playbook=True,
             check=self.check, diff=self.diff, environment=task.environment, complex_args=task.args, 
             accelerate=task.play.accelerate, accelerate_port=task.play.accelerate_port,
-            error_on_undefined_vars=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR
+            error_on_undefined_vars=self.fail_on_undefined
         )
 
         if task.async_seconds == 0:
