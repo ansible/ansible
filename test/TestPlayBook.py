@@ -268,20 +268,16 @@ class TestPlaybook(unittest.TestCase):
 
    def _test_playbook_undefined_vars(self, playbook, fail_on_undefined):
        # save DEFAULT_UNDEFINED_VAR_BEHAVIOR so we can restore it in the end of the test
-       saved_undefined_var_behavior = C.DEFAULT_UNDEFINED_VAR_BEHAVIOR
-       C.DEFAULT_UNDEFINED_VAR_BEHAVIOR = fail_on_undefined
-
        test_callbacks = TestCallbacks()
        playbook = ansible.playbook.PlayBook(
            playbook=os.path.join(self.test_dir, 'test_playbook_undefined_vars', playbook),
            host_list='test/test_playbook_undefined_vars/hosts',
            stats=ans_callbacks.AggregateStats(),
            callbacks=test_callbacks,
-           runner_callbacks=test_callbacks
+           runner_callbacks=test_callbacks,
+           fail_on_undefined=fail_on_undefined
        )
        actual = playbook.run()
-
-       C.DEFAULT_UNDEFINED_VAR_BEHAVIOR = saved_undefined_var_behavior
 
        # if different, this will output to screen
        print "**ACTUAL**"
@@ -300,17 +296,17 @@ class TestPlaybook(unittest.TestCase):
 
        assert utils.jsonify(expected, format=True) == utils.jsonify(actual, format=True)
 
-   #def test_playbook_undefined_vars1_ignore(self):
-   #    self._test_playbook_undefined_vars('playbook1.yml', False)
+   def test_playbook_undefined_vars1_ignore(self):
+       self._test_playbook_undefined_vars('playbook1.yml', False)
 
-   #def test_playbook_undefined_vars1_fail(self):
-   #    self._test_playbook_undefined_vars('playbook1.yml', True)
+   def test_playbook_undefined_vars1_fail(self):
+       self._test_playbook_undefined_vars('playbook1.yml', True)
 
-   #def test_playbook_undefined_vars2_ignore(self):
-   #    self._test_playbook_undefined_vars('playbook2.yml', False)
+   def test_playbook_undefined_vars2_ignore(self):
+       self._test_playbook_undefined_vars('playbook2.yml', False)
 
-   #def test_playbook_undefined_vars2_fail(self):
-   #    self._test_playbook_undefined_vars('playbook2.yml', True)
+   def test_playbook_undefined_vars2_fail(self):
+       self._test_playbook_undefined_vars('playbook2.yml', True)
 
    def test_yaml_hosts_list(self):
        # Make sure playbooks support hosts: [host1, host2]
