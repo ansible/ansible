@@ -4,6 +4,7 @@ Test bundled filters
 
 import unittest, tempfile, shutil
 from ansible import playbook, inventory, callbacks
+import ansible.runner.filter_plugins.core
 
 INVENTORY = inventory.Inventory(['localhost'])
 
@@ -62,6 +63,26 @@ class TestFilters(unittest.TestCase):
             f.write(data)
         return name
 
+    def test_bool_none(self):
+        a = ansible.runner.filter_plugins.core.bool(None)
+        assert a == None
+
+    def test_bool_true(self):
+        a = ansible.runner.filter_plugins.core.bool(True)
+        assert a == True
+
+    def test_bool_yes(self):
+        a = ansible.runner.filter_plugins.core.bool('Yes')
+        assert a == True
+
+    def test_bool_no(self):
+        a = ansible.runner.filter_plugins.core.bool('Foo')
+        assert a == False
+
+    def test_quotes(self):
+        a = ansible.runner.filter_plugins.core.quote('ls | wc -l')
+        assert a == "'ls | wc -l'"
+
     #def test_filters(self):
 
         # this test is pretty low level using a playbook, hence I am disabling it for now -- MPD.
@@ -80,6 +101,6 @@ class TestFilters(unittest.TestCase):
         #    stats  = callbacks.AggregateStats(),
         #).run()
 
-        out = open(dest).read()
-        self.assertEqual(DEST, out)
+        #out = open(dest).read()
+        #self.assertEqual(DEST, out)
 
