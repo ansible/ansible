@@ -15,6 +15,12 @@ class TestUtils(unittest.TestCase):
     #####################################
     ### varReplace function tests
 
+    def test_unfrackpath(self):
+        os.symlink("/etc", "/tmp/etc")
+        a = ansible.utils.unfrackpath('$HOME/../../tmp/etc/')
+        assert a == '/etc'
+        os.unlink('/tmp/etc')
+
     def test_varReplace_simple(self):
         template = 'hello $who'
         vars = {
