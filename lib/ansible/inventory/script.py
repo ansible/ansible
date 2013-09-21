@@ -49,15 +49,15 @@ class InventoryScript(object):
     def _parse(self, err):
 
         all_hosts = {}
-        self.raw  = utils.parse_json(self.data)
         all       = Group('all')
         groups    = dict(all=all)
         group     = None
 
-
-        if 'failed' in self.raw:
+        try:
+            self.raw = utils.parse_yaml(self.data)
+        except Exception, e:
             sys.stderr.write(err + "\n")
-            raise errors.AnsibleError("failed to parse executable inventory script results: %s" % self.raw)
+            raise errors.AnsibleError("failed to parse executable inventory script results: %s" % e)
 
         for (group_name, data) in self.raw.items():
  
