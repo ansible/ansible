@@ -1,0 +1,211 @@
+#!/usr/bin/python
+DOCUMENTATION = '''
+---
+module: ec2_eip
+short_decription: associate an EC2 elastic IP with an instance.
+description:
+    - This module associates AWS EC2 elastic IP addresses with instances
+options:
+  instance_id:
+    description:
+      - The EC2 instance id
+    required: false
+  public_ip:
+    description:
+      - The elastic IP address to associate with the instance.
+      - If absent, allocate a new address
+    required: false
+  state:
+    description:
+      - If present, associate the IP with the instance.
+      - If absent, disassociate the IP with the instance.
+    required: false
+    choices: ['present', 'absent']
+    default: present
+  ec2_url:
+    description:
+      - URL to use to connect to EC2-compatible cloud (by default the module will use EC2 endpoints)
+    required: false
+    default: null
+    aliases: [ EC2_URL ]
+  ec2_access_key:
+    description:
+      - EC2 access key. If not specified then the EC2_ACCESS_KEY environment variable is used.
+    required: false
+    default: null
+    aliases: [ EC2_ACCESS_KEY ]
+  ec2_secret_key:
+    description:
+      - EC2 secret key. If not specified then the EC2_SECRET_KEY environment variable is used.
+    required: false
+    default: null
+    aliases: [ EC2_SECRET_KEY ]
+  region:
+    description:
+      - the EC2 region to use
+    required: false
+    default: null
+    aliases: [ ec2_region ]
+requirements: [ "boto" ]
+author: Lorin Hochstein <lorin@nimbisservices.com>
+notes:
+   - This module will return C(public_ip) on success, which will contain the
+     public IP address associated with the instance.
+'''
+
+EXAMPLES = '''
+- name: associate an elastic IP with an instance
+  ec2_eip: instance_id=i-1212f003 ip=93.184.216.119
+
+- name: disassociate an elastic IP from an instance
+  ec2_eip: instance_id=i-1212f003 ip=93.184.216.119 state=absent
+
+- name: allocate a new elastic IP and associate it with an instance
+  ec2_eip: instance_id=i-1212f003
+
+- name: allocate a new elastic IP without associating it to anything
+  ec2_eip:
+  register: eip
+- name: output the IP
+  debug: msg="Allocated IP is {{ eip.public_ip }}"
+
+- name: provision new instances with ec2
+  ec2: keypair=mykey instance_type=c1.medium image=emi-40603AD1 wait=yes group=webserver count=3
+  register: ec2
+- name: associate new elastic IPs with each of the instances
+  ec2_eip: "instance_id={{ item }}"
+  with_items: ec2.instance_ids
+
+'''
+
+try:
+    import boto.ec2
+except ImportError:
+    boto_found = False
+else:
+    boto_found = True
+
+
+def connect(ec2_url, ec2_secret_key, ec2_access_key, region):
+    """ Return an ec2 connection"""
+    # allow environment variables to be used if ansible vars aren't set
+    if not ec2_url and 'EC2_URL' in os.environ:
+        ec2_url = os.environ['EC2_URL']
+    if not ec2_secret_key and 'EC2_SECRET_KEY' in os.environ:
+        ec2_secret_key = os.environ['EC2_SECRET_KEY']
+    if not ec2_access_key and 'EC2_ACCESS_KEY' in os.environ:
+        ec2_access_key = os.environ['EC2_ACCESS_KEY']
+
+    # If we have a region specified, connect to its endpoint.
+    if region:
+        try:
+            ec2 = boto.ec2.connect_to_region(region,
+                                        aws_access_key_id=ec2_access_key,
+                                        aws_secret_access_key=ec2_secret_key)
+        except boto.exception.NoAuthHandlerFound, e:
+            module.fail_json(msg = str(" %s %s %s " % (region, ec2_access_key,
+                                                       ec2_secret_key)))
+    # Otherwise, no region so we fallback to the old connection method
+    else:
+        try:
+            if ec2_url: # if we have an URL set, connect to the specified endpoint
+                ec2 = boto.connect_ec2_endpoint(ec2_url, ec2_access_key, ec2_secret_key)
+            else: # otherwise it's Amazon.
+                ec2 = boto.connect_ec2(ec2_access_key, ec2_secret_key)
+        except boto.exception.NoAuthHandlerFound, e:
+            module.fail_json(msg = str(e))
+    return ec2
+
+
+def associate_ip_and_instance(ec2, public_ip, instance_id, module):
+    if ip_is_associated_with_instance(ec2, public_ip, instance_id):
+        module.exit_json(changed=False, public_ip=public_ip)
+
+    # If we're in check mode, nothing else to do
+    if module.check_mode:
+        module.exit_json(changed=True)
+
+    res = ec2.associate_address(instance_id, public_ip)
+    if res:
+        module.exit_json(changed=True, public_ip=public_ip)
+    else:
+        module.fail_json(msg="association failed")
+
+
+def disassociate_ip_and_instance(ec2, public_ip, instance_id, module):
+    if not ip_is_associated_with_instance(ec2, public_ip, instance_id):
+        module.exit_json(changed=False, public_ip=public_ip)
+
+    # If we're in check mode, nothing else to do
+    if module.check_mode:
+        module.exit_json(changed=True)
+
+    res = ec2.disassociate_address(public_ip)
+    if res:
+        module.exit_json(changed=True)
+    else:
+        module.fail_json(msg="disassociation failed")
+
+
+def ip_is_associated_with_instance(ec2, public_ip, instance_id):
+    """ Check if the elastic IP is currently associated with the instance """
+    addresses = ec2.get_all_addresses([public_ip])
+    if addresses:
+        return addresses[0].instance_id == instance_id
+    else:
+        return False
+
+
+def allocate_new_ip(ec2, module):
+    """ Allocate a new elastic IP and return the IP address"""
+    # If we're in check mode, nothing else to do
+    if module.check_mode:
+        module.exit_json(change=True)
+
+    ec2_address = ec2.allocate_address()
+    return ec2_address.public_ip
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            instance_id = dict(required=False),
+            public_ip = dict(required=False, aliases= ['ip'] ),
+            state = dict(required=False, default='present',
+                         choices=['present', 'absent']),
+            ec2_url = dict(required=False, aliases=['EC2_URL']),
+            ec2_secret_key = dict(required=False, aliases=['EC2_SECRET_KEY'], no_log=True),
+            ec2_access_key = dict(required=False, aliases=['EC2_ACCESS_KEY']),
+            region = dict(required=False, aliases=['ec2_region'])
+        ),
+        supports_check_mode=True
+    )
+
+    if not boto_found:
+        module.fail_json(msg="boto is required")
+
+    ec2 = connect(ec2_url=module.params.get('ec2_url'),
+                  ec2_secret_key=module.params.get('ec2_secret_key'),
+                  ec2_access_key=module.params.get('ec2_access_key'),
+                  region=module.params.get('region'))
+
+    instance_id = module.params.get('instance_id')
+    public_ip = module.params.get('public_ip')
+    state = module.params.get('state')
+
+    if state == 'present':
+        if public_ip is None:
+            public_ip = allocate_new_ip(ec2, module)
+            if instance_id is None:
+                module.exit_json(changed=True, public_ip=public_ip)
+        associate_ip_and_instance(ec2, public_ip, instance_id, module)
+    else:
+        disassociate_ip_and_instance(ec2, public_ip, instance_id, module)
+
+
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+if __name__ == '__main__':
+    main()
