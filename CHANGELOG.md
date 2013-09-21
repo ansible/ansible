@@ -12,6 +12,7 @@ Highlighted new features:
 
 New modules:
 
+* cloud:ec2_eip -- manage AWS elastic IP's
 * cloud:rax_clb_nodes -- manage Rackspace cloud load balancers
 
 Misc changes:
