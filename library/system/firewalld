@@ -24,7 +24,7 @@ module: firewalld
 short_description: Manage arbitrary ports/services with firewalld
 description:
   - This module allows for addition or deletion of services and ports either tcp or udp in either running or permanent firewalld rules
-version_added: "1.3"
+version_added: "1.4"
 options:
   service:
     description:
