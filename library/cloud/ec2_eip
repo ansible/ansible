@@ -170,7 +170,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             instance_id = dict(required=False),
-            public_ip = dict(required=False, aliases= ['ip'] ),
+            public_ip = dict(required=False, aliases= ['ip']),
             state = dict(required=False, default='present',
                          choices=['present', 'absent']),
             ec2_url = dict(required=False, aliases=['EC2_URL']),
