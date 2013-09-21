@@ -25,6 +25,7 @@ import subprocess
 import ansible.constants as C
 from ansible.inventory.ini import InventoryParser
 from ansible.inventory.script import InventoryScript
+from ansible.inventory.dict_parser import InventoryDictionary
 from ansible.inventory.dir import InventoryDirectory
 from ansible.inventory.group import Group
 from ansible.inventory.host import Host
@@ -36,7 +37,7 @@ class Inventory(object):
     Host inventory for ansible.
     """
 
-    __slots__ = [ 'host_list', 'groups', '_restriction', '_also_restriction', '_subset', 
+    __slots__ = [ 'host_list', 'groups', '_restriction', '_also_restriction', '_subset',
                   'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache', '_groups_list',
                   '_vars_plugins', '_playbook_basedir']
 
@@ -52,7 +53,7 @@ class Inventory(object):
         self._vars_per_host  = {}
         self._vars_per_group = {}
         self._hosts_cache    = {}
-        self._groups_list    = {} 
+        self._groups_list    = {}
 
         # to be set by calling set_playbook_basedir by ansible-playbook
         self._playbook_basedir = None
@@ -89,6 +90,9 @@ class Inventory(object):
                             all.add_host(Host(tokens[0], tokens[1]))
                     else:
                         all.add_host(Host(x))
+        elif isinstance(host_list, dict):
+            self.parser = InventoryDictionary(host_list)
+            self.groups = self.parser.groups.values()
         elif os.path.exists(host_list):
             if os.path.isdir(host_list):
                 # Ensure basedir is inside the directory
@@ -116,7 +120,7 @@ class Inventory(object):
             return fnmatch.fnmatch(str, pattern_str)
 
     def get_hosts(self, pattern="all"):
-        """ 
+        """
         find all host names matching a pattern string, taking into account any inventory restrictions or
         applied subsets.
         """
@@ -181,7 +185,7 @@ class Inventory(object):
         return hosts
 
     def __get_hosts(self, pattern):
-        """ 
+        """
         finds hosts that postively match a particular pattern.  Does not
         take into account negative matches.
         """
@@ -213,7 +217,7 @@ class Inventory(object):
         """
         given a pattern like foo, that matches hosts, return all of hosts
         given a pattern like foo[0:5], where foo matches hosts, return the first 6 hosts
-        """ 
+        """
 
         (loose_pattern, limits) = self._enumeration_info(pat)
         if not limits:
@@ -316,7 +320,7 @@ class Inventory(object):
             raise errors.AnsibleError("host not found: %s" % hostname)
 
         vars = {}
-        vars_results = [ plugin.run(host) for plugin in self._vars_plugins ] 
+        vars_results = [ plugin.run(host) for plugin in self._vars_plugins ]
         for updated in vars_results:
             if updated is not None:
                 vars.update(updated)
@@ -328,7 +332,7 @@ class Inventory(object):
 
     def add_group(self, group):
         self.groups.append(group)
-        self._groups_list = None  # invalidate internal cache 
+        self._groups_list = None  # invalidate internal cache
 
     def list_hosts(self, pattern="all"):
         return [ h.name for h in self.get_hosts(pattern) ]
@@ -341,7 +345,7 @@ class Inventory(object):
         return self._restriction
 
     def restrict_to(self, restriction):
-        """ 
+        """
         Restrict list operations to the hosts given in restriction.  This is used
         to exclude failed hosts in main playbook code, don't use this for other
         reasons.
@@ -358,14 +362,14 @@ class Inventory(object):
         if not isinstance(restriction, list):
             restriction = [ restriction ]
         self._also_restriction = restriction
-    
+
     def subset(self, subset_pattern):
-        """ 
+        """
         Limits inventory results to a subset of inventory that matches a given
         pattern, such as to select a given geographic of numeric slice amongst
-        a previous 'hosts' selection that only select roles, or vice versa.  
+        a previous 'hosts' selection that only select roles, or vice versa.
         Corresponds to --limit parameter to ansible-playbook
-        """        
+        """
         if subset_pattern is None:
             self._subset = None
         else:
@@ -385,7 +389,7 @@ class Inventory(object):
     def lift_restriction(self):
         """ Do not restrict list operations """
         self._restriction = None
-    
+
     def lift_also_restriction(self):
         """ Clears the also restriction """
         self._also_restriction = None
@@ -403,7 +407,7 @@ class Inventory(object):
         dname = os.path.dirname(self.host_list)
         if dname is None or dname == '' or dname == '.':
             cwd = os.getcwd()
-            return cwd 
+            return cwd
         return dname
 
     def src(self):
@@ -417,10 +421,8 @@ class Inventory(object):
         return self._playbook_basedir
 
     def set_playbook_basedir(self, dir):
-        """ 
+        """
         sets the base directory of the playbook so inventory plugins can use it to find
-        variable files and other things. 
+        variable files and other things.
         """
         self._playbook_basedir = dir
-
-
