@@ -50,10 +50,12 @@ options:
         exist, see the M(copy) or M(template) module if you want that behavior.
         If C(link), the symbolic link will be created or changed. Use C(hard)
         for hardlinks. If C(absent), directories will be recursively deleted,
-        and files or symlinks will be unlinked.
+        and files or symlinks will be unlinked. If C(touched), existing file and
+        directory will change file access and modification times, not existing 
+        file will be created.
     required: false
     default: file
-    choices: [ file, link, directory, hard, absent ]
+    choices: [ file, link, directory, hard, touched, absent ]
   mode:
     required: false
     default: null
@@ -139,7 +141,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec = dict(
-            state = dict(choices=['file','directory','link','hard','absent'], default='file'),
+            state = dict(choices=['file','directory','link','hard','touched','absent'], default='file'),
             path  = dict(aliases=['dest', 'name'], required=True),
             recurse  = dict(default='no', type='bool'),
             force = dict(required=False,default=False,type='bool'),
@@ -223,7 +225,7 @@ def main():
         module.exit_json(path=path, changed=True)
 
     if prev_state != 'absent' and prev_state != state:
-        if not (force and prev_state == 'file' and state == 'link'):
+        if not (force and prev_state == 'file' and state == 'link') and state != 'touched':
             module.fail_json(path=path, msg='refusing to convert between %s and %s for %s' % (prev_state, state, src))
 
     if prev_state == 'absent' and state == 'absent':
@@ -306,6 +308,21 @@ def main():
 
         changed = module.set_file_attributes_if_different(file_args, changed)
         module.exit_json(dest=path, src=src, changed=changed)
+
+    elif state == 'touched':
+        if prev_state not in ['file', 'directory', 'absent']:
+            module.fail_json(msg='Cannot touch other than files and directories')
+        if prev_state != 'absent':
+            try:
+                os.utime(path, None)
+            except OSError, e:
+                module.fail_json(path=path, msg='Error while touching existing target: %s' % str(e))
+        else:
+            try:
+                open(path, 'w').close()
+            except OSError, e:
+                module.fail_json(path=path, msg='Error while touching non-existing target: %s' % str(e))
+        module.exit_json(dest=path, changed=True)
 
     else:
         module.fail_json(path=path, msg='unexpected position reached')
