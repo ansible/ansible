@@ -14,6 +14,7 @@ New modules:
 
 * cloud:ec2_eip -- manage AWS elastic IP's
 * cloud:rax_clb_nodes -- manage Rackspace cloud load balancers
+* system: firewalld -- manage the firewalld configuration
 
 Misc changes:
 
