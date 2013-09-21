@@ -504,6 +504,8 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
                 # This test isn't great, but nothing better seems possible currently.
                 if 'no filter' in str(e) and fail_on_undefined:
                     raise errors.AnsibleError("Template rendering failed due to missing filter: %s" % e)
+            elif isinstance(e, jinja2.exceptions.TemplateSyntaxError):
+                raise errors.AnsibleError("Template syntax error for %r: %s" % (data, e))
             return data
 
         def my_lookup(*args, **kwargs):
