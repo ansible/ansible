@@ -334,6 +334,8 @@ def main():
             image_id = dict(type='int'),
             region_id = dict(type='int'),
             ssh_key_ids = dict(default=''),
+            virtio = dict(type='bool', choices=BOOLEANS, default='yes'),
+            private_networking = dict(type='bool', choices=BOOLEANS, default='no'),
             id = dict(aliases=['droplet_id'], type='int'),
             wait = dict(type='bool', choices=BOOLEANS, default='yes'),
             wait_timeout = dict(default=300, type='int'),
