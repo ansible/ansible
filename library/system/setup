@@ -273,9 +273,9 @@ class Facts(object):
             self.facts['distribution'] = 'OpenBSD'
             self.facts['distribution_release'] = platform.release()
             rc, out, err = module.run_command("/sbin/sysctl -n kern.version")
-            data = re.search('OpenBSD\s[0-9]+.[0-9]+(-\S+)?\s.*', out)
-            if data:
-                self.facts['distribution_version'] = data.groups()[0][1:]
+            match = re.match('OpenBSD\s[0-9]+.[0-9]+-(\S+)\s.*', out)
+            if match:
+                self.facts['distribution_version'] = match.groups()[0]
             else:
                 self.facts['distribution_version'] = 'release'
         else:
