@@ -259,7 +259,7 @@ make more sense to break up tasks using the 'include:' directive.  We'll show th
 Action Shorthand
 ````````````````
 
-.. versionadded: 0.8
+.. versionadded:: 0.8
 
 Ansible prefers listing modules like this in 0.8 and later::
 
@@ -441,7 +441,7 @@ inside another.
 Roles
 `````
 
-.. versionadded: 1.2
+.. versionadded:: 1.2
 
 Now that you have learned about vars_files, tasks, and handlers, what is the best way to organize your playbooks?
 The short answer is to use roles!  Roles are ways of automatically loading certain vars_files, tasks, and
@@ -549,7 +549,7 @@ If you want to define certain tasks to happen before AND after roles are applied
 Role Dependencies
 `````````````````
 
-.. versionadded: 1.3
+.. versionadded:: 1.3
 
 Role dependencies allow you to automatically pull in other roles when using a role. Role dependencies are stored in the
 `meta/main.yml` file contained within the role directory. This file should contain 
