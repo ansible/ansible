@@ -325,6 +325,7 @@ def main():
                 open(path, 'w').close()
             except OSError, e:
                 module.fail_json(path=path, msg='Error while touching non-existing target: %s' % str(e))
+        module.set_file_attributes_if_different(file_args, True)
         module.exit_json(dest=path, changed=True)
 
     else:
