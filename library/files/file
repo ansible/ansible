@@ -310,6 +310,9 @@ def main():
         module.exit_json(dest=path, src=src, changed=changed)
 
     elif state == 'touched':
+        if module.check_mode:
+            module.exit_json(path=path, skipped=True)
+
         if prev_state not in ['file', 'directory', 'absent']:
             module.fail_json(msg='Cannot touch other than files and directories')
         if prev_state != 'absent':
