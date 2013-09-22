@@ -297,7 +297,9 @@ def core(module):
                         size_id=getkeyordie('size_id'),
                         image_id=getkeyordie('image_id'),
                         region_id=getkeyordie('region_id'),
-                        ssh_key_ids=module.params['ssh_key_ids']
+                        ssh_key_ids=module.params['ssh_key_ids'],
+                        virtio=module.params['virtio'],
+                        private_networking=module.params['private_networking'],
                     )
             if droplet.is_powered_on():
                 changed = False
