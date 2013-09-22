@@ -57,6 +57,16 @@ options:
   ssh_key_ids:
     description:
      - Optional, comma separated list of ssh_key_ids that you would like to be added to the server
+  virtio:
+    description:
+      - Optional, Boolean, enables VirtIO, a virtualization driver for high performance network and disk operations
+    default: "yes"
+    choices: [ "yes", "no" ]
+  private_networking:
+    description:
+      - Optional, Boolean, enables a private network interface if the region supports private networking
+    default: "no"
+    choices: [ "yes", "no" ]
   wait:
     description:
      - Wait for the droplet to be in state 'running' before returning.  If wait is "no" an ip_address may not be returned.
@@ -204,8 +214,8 @@ class Droplet(JsonfyMixIn):
         cls.manager = DoManager(client_id, api_key)
 
     @classmethod
-    def add(cls, name, size_id, image_id, region_id, ssh_key_ids=None):
-        json = cls.manager.new_droplet(name, size_id, image_id, region_id, ssh_key_ids)
+    def add(cls, name, size_id, image_id, region_id, ssh_key_ids=None, virtio=True, private_networking=False):
+        json = cls.manager.new_droplet(name, size_id, image_id, region_id, ssh_key_ids, virtio, private_networking)
         droplet = cls(json)
         return droplet
 
