@@ -18,6 +18,7 @@ New modules:
 
 Misc changes:
 
+* Added `state=touch` to the file module, which functions similarly to the command-line version of `touch`
 * Added a -vvvv level, which will show SSH client debugging information in the event of a failure.
 * Includes now support the more standard syntax, similar to that of role includes and dependencies. It is no longer necessary to specify a special "vas" field for the variables passed to the include.
 * Changed the `user:` parameter on plays to `remote_user:` to prevent confusion with the module of the same name.  Still backwards compatible on play parameters.
