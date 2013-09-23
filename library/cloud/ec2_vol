@@ -103,6 +103,12 @@ EXAMPLES = '''
     iops: 200
     device_name: sdd
 
+# Example using snapshot id
+- local_action:
+    module: ec2_vol
+    instance: XXXXXX
+    snapshot: "{{ snapshot }}"
+
 # Playbook example combined with instance launch 
 - local_action: 
     module: ec2 
