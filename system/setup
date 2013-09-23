@@ -459,19 +459,9 @@ class Facts(object):
         self.facts['user_id'] = getpass.getuser()
 
     def get_env_facts(self):
-        env_bin = module.get_bin_path('env')
-        (rc, out, err) = module.run_command(env_bin)
-        if rc == 0:
-            self.facts['env'] = {}
-            i = 0
-            for line in out.split('\n'):
-                if len(line) > 0:
-                    try:
-                        (k,v) = line.strip().split('=',1)
-                        self.facts['env'][k] = v
-                    except ValueError, e:
-                        self.facts['env']['ansible_error#%d' % i] = line
-                        i = i + 1
+        self.facts['env'] = {}
+        for k,v in os.environ.iteritems():
+            self.facts['env'][k] = v
 
 class Hardware(Facts):
     """
