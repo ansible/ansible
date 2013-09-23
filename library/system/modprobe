@@ -20,6 +20,7 @@ DOCUMENTATION = '''
 module: modprobe
 short_description: Add or remove kernel modules
 requirements: []
+version_added: 1.4
 description:
     - Add or remove kernel modules.
 options:
