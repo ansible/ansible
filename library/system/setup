@@ -147,6 +147,7 @@ class Facts(object):
         self.get_date_time_facts()
         self.get_user_facts()
         self.get_local_facts()
+        self.get_env_facts()
 
     def populate(self):
         return self.facts
@@ -457,6 +458,10 @@ class Facts(object):
     def get_user_facts(self):
         self.facts['user_id'] = getpass.getuser()
 
+    def get_env_facts(self):
+        self.facts['env'] = {}
+        for k,v in os.environ.iteritems():
+            self.facts['env'][k] = v
 
 class Hardware(Facts):
     """
