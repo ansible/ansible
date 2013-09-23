@@ -116,6 +116,7 @@ from time import time
 import boto
 from boto import ec2
 from boto import rds
+from boto import route53
 import ConfigParser
 
 try:
@@ -204,6 +205,10 @@ class Ec2Inventory(object):
         self.destination_variable = config.get('ec2', 'destination_variable')
         self.vpc_destination_variable = config.get('ec2', 'vpc_destination_variable')
 
+        # Route53
+        self.route53_enabled = config.getboolean('ec2', 'route53')
+        self.route53_excluded_zones = config.get('ec2', 'route53_excluded_zones', '').split(',')
+
         # Cache related
         cache_path = config.get('ec2', 'cache_path')
         self.cache_path_cache = cache_path + "/ansible-ec2.cache"
@@ -227,6 +232,9 @@ class Ec2Inventory(object):
 
     def do_api_calls_update_cache(self):
         ''' Do API calls to each region, and save data in cache files '''
+
+        if self.route53_enabled:
+            self.get_route53_records()
 
         for region in self.regions:
             self.get_instances_by_region(region)
@@ -329,7 +337,7 @@ class Ec2Inventory(object):
         
         # Inventory: Group by instance type
         self.push(self.inventory, self.to_safe('type_' + instance.instance_type), dest)
-        
+
         # Inventory: Group by key pair
         if instance.key_name:
             self.push(self.inventory, self.to_safe('key_' + instance.key_name), dest)
@@ -348,6 +356,12 @@ class Ec2Inventory(object):
         for k, v in instance.tags.iteritems():
             key = self.to_safe("tag_" + k + "=" + v)
             self.push(self.inventory, key, dest)
+
+        # Inventory: Group by Route53 domain names if enabled
+        if self.route53_enabled:
+            route53_names = self.get_instance_route53_names(instance)
+            for name in route53_names:
+                self.push(self.inventory, name, dest)
 
 
     def add_rds_instance(self, instance, region):
@@ -399,6 +413,55 @@ class Ec2Inventory(object):
 
         # Inventory: Group by parameter group
         self.push(self.inventory, self.to_safe("rds_parameter_group_" + instance.parameter_group.name), dest)
+
+
+    def get_route53_records(self):
+        ''' Get and store the map of resource records to domain names that
+        point to them. '''
+
+        r53_conn = route53.Route53Connection()
+        all_zones = r53_conn.get_zones()
+
+        is_valid_zone = lambda zone: not zone.name in self.route53_excluded_zones
+
+        route53_zones = filter(is_valid_zone, all_zones)
+
+        self.route53_records = {}
+
+        for zone in route53_zones:
+            rrsets = r53_conn.get_all_rrsets(zone.id)
+
+            for record_set in rrsets:
+                record_name = record_set.name
+
+                if record_name.endswith('.'):
+                    record_name = record_name[:-1]
+
+                for resource in record_set.resource_records:
+                    self.route53_records.setdefault(resource, set())
+                    self.route53_records[resource].add(record_name)
+
+
+    def get_instance_route53_names(self, instance):
+        ''' Check if an instance is referenced in the records we have from
+        Route53. If it is, return the list of domain names pointing to said
+        instance. If nothing points to it, return an empty list. '''
+
+        instance_attributes = [ 'public_dns_name', 'private_dns_name',
+                                'ip_address', 'private_ip_address' ]
+
+        name_list = set()
+
+        for attrib in instance_attributes:
+            try:
+                value = getattr(instance, attrib)
+            except AttributeError:
+                continue
+
+            if value in self.route53_records:
+                name_list.update(self.route53_records[value])
+
+        return list(name_list)
 
 
     def get_host_info(self):
