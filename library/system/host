@@ -137,7 +137,7 @@ class Host(object):
         aliases = ''
         if self.aliases:
             aliases = self.aliases.replace(',',' ')
-        host_entry =  self.ip + " " + self.hostname + " " + aliases + "\n"
+        host_entry = self.ip + " " + self.hostname + " " + aliases + "\n"
         if self.entry_exists():
             self._hostsfile_lines[self._found_on_line] = host_entry
         else:
