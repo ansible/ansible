@@ -50,11 +50,10 @@ options:
 
 EXAMPLES = '''
 # Example host command from Ansible Playbooks
-- host: ip=127.0.0.1 hostname=localhost aliases=foobar.com,localhost.foobar.com
 - host: ip=127.0.0.1 hostname=localhost state=present
+- host: ip=127.0.0.1 hostname=localhost aliases=foobar.com,localhost.foobar.com
 - host: ip=192.168.1.1 state=absent
-- host: hostname=localhost state=absent
-- host: ip=::1 hostname=localhost aliases=ip6-localhost,ip6-loopback
+- host: ip=::1 hostname=localhost6 aliases=ip6-localhost,ip6-loopback
 '''
 
 import os
@@ -126,10 +125,10 @@ class Host(object):
     def full_entry_exists(self):
         if self._has_aliases and not self._aliases_matches:
             return False
-        return self._ip_matches and self.hostname_matches
+        return self._ip_matches and self._hostname_matches
 
     def entry_exists(self):
-        return self._ip_matches or self.hostname_matches
+        return self._ip_matches or self._hostname_matches
 
     def remove_entry(self):
         self._hostsfile_lines.pop(self._found_on_line)
@@ -165,7 +164,7 @@ def main():
     result = {}
     host = Host(module)
     result['state'] = host.state
-    result['changed'] = false
+    result['changed'] = False
 
     err = host.validate_has_hostname_on_present()
     if err:

@@ -15,6 +15,7 @@ New modules:
 * cloud:ec2_eip -- manage AWS elastic IP's
 * cloud:rax_clb_nodes -- manage Rackspace cloud load balancers
 * system: firewalld -- manage the firewalld configuration
+* system: host -- manage host file entries and aliases
 * system: modprobe -- manage kernel modules on systems that support modprobe/rmmod
 
 Misc changes:
