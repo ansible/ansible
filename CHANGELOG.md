@@ -19,6 +19,7 @@ New modules:
 
 Misc changes:
 
+* Added a `delimiter` field to the assemble module.
 * Added `ansible_env` to the list of facts returned by the setup module.
 * Added `state=touch` to the file module, which functions similarly to the command-line version of `touch`.
 * Added a -vvvv level, which will show SSH client debugging information in the event of a failure.
