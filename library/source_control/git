@@ -47,6 +47,11 @@ options:
         default: "origin"
         description:
             - Name of the remote.
+    recursive:
+        required: false
+        default: true
+        description:
+            - If you don't want "--recursive" option to be passed to the git-clone commaned, set this to false.
     force:
         required: false
         default: "yes"
@@ -105,7 +110,7 @@ def get_version(git_path, dest):
     sha = sha[0].split()[1]
     return sha
 
-def clone(git_path, module, repo, dest, remote, depth, version):
+def clone(git_path, module, repo, dest, remote, depth, version, recursive):
     ''' makes a new git repo if it does not already exist '''
     dest_dirname = os.path.dirname(dest)
     try:
@@ -113,7 +118,9 @@ def clone(git_path, module, repo, dest, remote, depth, version):
     except:
         pass
     os.chdir(dest_dirname)
-    cmd = [ git_path, 'clone', '-o', remote, '--recursive' ]
+    cmd = [ git_path, 'clone', '-o', remote ]
+    if recursive:
+        cmd.extend([ '--recursive'])
     if version and version != 'HEAD':
         cmd.extend([ '--branch', str(version) ])
     if depth:
@@ -235,7 +242,7 @@ def get_head_branch(git_path, module, dest, remote):
     f.close()
     return branch
 
-def fetch(git_path, module, repo, dest, version, remote):
+def fetch(git_path, module, repo, dest, version, remote, recursive):
     ''' updates repo from remote sources '''
     os.chdir(dest)
     (rc, out1, err1) = module.run_command("%s fetch %s" % (git_path, remote))
@@ -245,13 +252,15 @@ def fetch(git_path, module, repo, dest, version, remote):
     (rc, out2, err2) = module.run_command("%s fetch --tags %s" % (git_path, remote))
     if rc != 0:
         module.fail_json(msg="Failed to download remote objects and refs")
-    (rc, out3, err3) = submodule_update(git_path, module, dest)
+    (rc, out3, err3) = submodule_update(git_path, module, dest, recursive)
     return (rc, out1 + out2 + out3, err1 + err2 + err3)
 
-def submodule_update(git_path, module, dest):
+def submodule_update(git_path, module, dest, recursive):
     ''' init and update any submodules '''
     os.chdir(dest)
     # skip submodule commands if .gitmodules is not present
+    if not recursive:
+	return (0, '', '')
     if not os.path.exists(os.path.join(dest, '.gitmodules')):
         return (0, '', '')
     cmd = [ git_path, 'submodule', 'sync' ]
@@ -262,7 +271,7 @@ def submodule_update(git_path, module, dest):
         module.fail_json(msg="Failed to init/update submodules")
     return (rc, out, err)
 
-def switch_version(git_path, module, dest, remote, version):
+def switch_version(git_path, module, dest, remote, version, recursive):
     ''' once pulled, switch to a particular SHA, tag, or branch '''
     os.chdir(dest)
     cmd = ''
@@ -289,7 +298,7 @@ def switch_version(git_path, module, dest, remote, version):
             module.fail_json(msg="Failed to checkout %s" % (version))
         else:
             module.fail_json(msg="Failed to checkout branch %s" % (branch))
-    (rc, out2, err2) = submodule_update(git_path, module, dest)
+    (rc, out2, err2) = submodule_update(git_path, module, dest, recursive)
     return (rc, out1 + out2, err1 + err2)
 
 # ===========================================
@@ -304,6 +313,7 @@ def main():
             force=dict(default='yes', type='bool'),
             depth=dict(default=None, type='int'),
             update=dict(default='yes', type='bool'),
+	    recursive=dict(default='true', type='bool'),
         ),
         supports_check_mode=True
     )
@@ -315,6 +325,7 @@ def main():
     force   = module.params['force']
     depth   = module.params['depth']
     update  = module.params['update']
+    recursive = module.params['recursive']
 
     git_path = module.get_bin_path('git', True)
     gitconfig = os.path.join(dest, '.git', 'config')
@@ -328,7 +339,7 @@ def main():
     if not os.path.exists(gitconfig):
         if module.check_mode:
             module.exit_json(changed=True)
-        (rc, out, err) = clone(git_path, module, repo, dest, remote, depth, version)
+        (rc, out, err) = clone(git_path, module, repo, dest, remote, depth, version, recursive)
     elif not update:
         # Just return having found a repo already in the dest path
         # this does no checking that the repo is the actual repo
@@ -345,10 +356,6 @@ def main():
         (rc, out, err) = reset(git_path, module, dest, force)
         if rc != 0:
             module.fail_json(msg=err)
-        # exit if already at desired sha version
-        # abbreviate version in case full sha is given
-        if before == str(version)[:7]:
-            module.exit_json(changed=False)
         # check or get changes from remote
         remote_head = get_remote_head(git_path, module, dest, version, remote)
         if module.check_mode:
@@ -368,13 +375,13 @@ def main():
                 else:
                     changed = False
             module.exit_json(changed=changed, before=before, after=remote_head)
-        (rc, out, err) = fetch(git_path, module, repo, dest, version, remote)
+        (rc, out, err) = fetch(git_path, module, repo, dest, version, remote, recursive)
         if rc != 0:
             module.fail_json(msg=err)
 
     # switch to version specified regardless of whether
     # we cloned or pulled
-    (rc, out, err) = switch_version(git_path, module, dest, remote, version)
+    (rc, out, err) = switch_version(git_path, module, dest, remote, version, recursive)
     if rc != 0:
         module.fail_json(msg=err)
 
