@@ -1,0 +1,199 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+#
+# (c) 2013, René Moser <mail@renemoser.net>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: host
+author: René Moser
+version_added: "1.4"
+short_description: Add or remove entries in /etc/hosts.
+requirements:
+description:
+    - Manage entries in /etc/hosts
+options:
+    ip:
+        required: false
+        description:
+            - IP address. Required on state "present".
+    hostname:
+        required: false
+        description:
+            - name of host. Required on state "present".
+    aliases:
+        required: false
+        description:
+            - list of alias hostnames, comma separated.
+    state:
+        required: false
+        default: "present"
+        choices: [ present, absent ]
+        description:
+            - Whether the entries should be present or not in /etc/hosts.
+'''
+
+EXAMPLES = '''
+# Example host command from Ansible Playbooks
+- host: ip=127.0.0.1 hostname=localhost aliases=foobar.com,localhost.foobar.com
+- host: ip=127.0.0.1 hostname=localhost state=present
+- host: ip=192.168.1.1 state=absent
+- host: hostname=localhost state=absent
+- host: ip=::1 hostname=localhost aliases=ip6-localhost,ip6-loopback
+'''
+
+import os
+import tempfile
+import fileinput
+
+class Host(object):
+
+    HOSTSFILE = '/etc/hosts'
+
+    def __init__(self, module):
+        self.module             = module
+        self.state              = module.params['state']
+        self.ip                 = module.params['ip']
+        self.hostname           = module.params['hostname']
+        self.aliases            = module.params['aliases']
+
+        self._ip_matches        = False
+        self._hostname_matches  = False
+        self._aliases_matches   = False
+        self._has_aliases       = False
+        self._found_on_line     = -1
+
+    def validate_has_hostname_on_present(self):
+        err = ''
+        if self.state == 'present' and not (self.hostname and self.ip):
+            err = "Error: No param 'hostnames' or 'ip' given in state 'present'."
+        return err
+
+    def validate_has_ip_or_hostname_on_absent(self):
+        err = ''
+        if self.state == 'absent':
+            if not (self.hostname or self.ip):
+                err = "Error: Either param 'hostnames' or 'ip' must be given in state 'absent'."
+            if self.hostname and self.ip:
+                err = "Error: Either param 'hostnames' or 'ip' must be given in state 'absent'."
+        return err
+
+    def proceed_hosts_entries(self):
+
+        f = open(self.HOSTSFILE,'rb')
+        self._hostsfile_lines = f.readlines()
+        f.close()
+
+        for lineno, line in enumerate(self._hostsfile_lines):
+            if line.startswith("#"):
+                continue
+
+            ip = line.split()[0:1]
+            hostname = line.split()[1:2]
+            aliases = ','.join(line.split()[2:])
+
+            if self.ip and self.ip in ip: 
+                self._ip_matches = True
+                self._found_on_line = lineno
+
+            if self.hostname and self.hostname in hostname:
+                self._hostname_matches = True
+                self._found_on_line = lineno
+
+            # only look at aliases if we found hostname or ip
+            if self._hostname_matches or self._ip_matches:
+                if aliases:
+                    self._has_aliases = True
+                if self.aliases and self.aliases == aliases:
+                    self._aliases_matches = True
+                break
+
+    def full_entry_exists(self):
+        if self._has_aliases and not self._aliases_matches:
+            return False
+        return self._ip_matches and self.hostname_matches
+
+    def entry_exists(self):
+        return self._ip_matches or self.hostname_matches
+
+    def remove_entry(self):
+        self._hostsfile_lines.pop(self._found_on_line)
+
+    def add_entry(self):
+        aliases = ''
+        if self.aliases:
+            aliases = self.aliases.replace(',',' ')
+        host_entry =  self.ip + " " + self.hostname + " " + aliases + "\n"
+        if self.entry_exists():
+            self._hostsfile_lines[self._found_on_line] = host_entry
+        else:
+            self._hostsfile_lines.extend(host_entry)
+
+    def write_changes(self):
+        tmpfd, tmpfile = tempfile.mkstemp()
+        f = os.fdopen(tmpfd,'wb')
+        f.writelines(self._hostsfile_lines)
+        f.close()
+        self.module.atomic_move(tmpfile, self.HOSTSFILE)
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            state=dict(default='present', choices=['present', 'absent'], type='str'),
+            ip=dict(default=None, type='str'),
+            hostname=dict(default=None, type='str'),
+            aliases=dict(default=None, type='str'),
+        ),
+        supports_check_mode=True
+    )
+
+    result = {}
+    host = Host(module)
+    result['state'] = host.state
+    result['changed'] = false
+
+    err = host.validate_has_hostname_on_present()
+    if err:
+        module.fail_json(msg=err)
+
+    err = host.validate_has_ip_or_hostname_on_absent()
+    if err:
+        module.fail_json(msg=err)
+
+    host.proceed_hosts_entries()
+    if host.state == 'present':
+        if not host.full_entry_exists():
+            if module.check_mode:
+                module.exit_json(changed=True)
+            host.add_entry()
+            host.write_changes()
+            result['changed'] = True
+
+    elif host.state == 'absent':
+        if host.entry_exists():
+            if module.check_mode:
+                module.exit_json(changed=True)
+            host.remove_entry()
+            host.write_changes()
+            result['changed'] = True
+
+    module.exit_json(**result)
+
+# include magic from lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
