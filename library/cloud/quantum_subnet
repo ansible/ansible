@@ -89,6 +89,11 @@ options:
         - The ip that would be assigned to the gateway for this subnet
      required: false
      default: None
+   dns_nameservers:
+     description:
+        - DNS nameservers for this subnet, comma-separated
+     required: false
+     default: None
    allocation_pool_start:
      description:
         - From the subnet pool the starting address from which the IP should be allocated
@@ -197,13 +202,14 @@ def _get_subnet_id(module, quantum):
 def _create_subnet(module, quantum):
     quantum.format = 'json'
     subnet = {
-            'name':        module.params['name'],
-            'ip_version':  module.params['ip_version'],
-            'enable_dhcp': module.params['enable_dhcp'],
-            'tenant_id':   _os_tenant_id,
-            'gateway_ip':  module.params['gateway_ip'],
-            'network_id':  _os_network_id,
-            'cidr':        module.params['cidr'],
+            'name':            module.params['name'],
+            'ip_version':      module.params['ip_version'],
+            'enable_dhcp':     module.params['enable_dhcp'],
+            'tenant_id':       _os_tenant_id,
+            'gateway_ip':      module.params['gateway_ip'],
+            'dns_nameservers': module.params['dns_nameservers'],
+            'network_id':      _os_network_id,
+            'cidr':            module.params['cidr'],
     }
     if module.params['allocation_pool_start'] and module.params['allocation_pool_end']:
         allocation_pools = [
@@ -215,6 +221,10 @@ def _create_subnet(module, quantum):
         subnet.update({'allocation_pools': allocation_pools})
     if not module.params['gateway_ip']:
         subnet.pop('gateway_ip')
+    if module.params['dns_nameservers']:
+        subnet['dns_nameservers'] = module.params['dns_nameservers'].split(',')
+    else:
+        subnet.pop('dns_nameservers')
     try:
         new_subnet = quantum.create_subnet(dict(subnet=subnet))
     except Exception, e:
@@ -247,6 +257,7 @@ def main():
             ip_version              = dict(default='4', choices=['4', '6']),
             enable_dhcp             = dict(default='true', choices=BOOLEANS),
             gateway_ip              = dict(default=None),
+            dns_nameservers         = dict(default=None),
             allocation_pool_start   = dict(default=None),
             allocation_pool_end     = dict(default=None),
         ),
