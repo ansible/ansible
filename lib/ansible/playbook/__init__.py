@@ -542,6 +542,16 @@ class PlayBook(object):
                             if len(handler.notified_by) > 0:
                                 self.inventory.restrict_to(handler.notified_by)
                                 self._run_task(play, handler, True)
+
+                                host_list = self._list_available_hosts(play.hosts)
+                                if handler.any_errors_fatal and len(host_list) < hosts_count:
+                                    play.max_fail_pct = 0
+                                if (hosts_count - len(host_list)) > int((play.max_fail_pct)/100.0 * hosts_count):
+                                    host_list = None
+                                if not host_list:
+                                    self.callbacks.on_no_hosts_remaining()
+                                    return False
+
                                 self.inventory.lift_restriction()
                                 new_list = handler.notified_by[:]
                                 for host in handler.notified_by:
