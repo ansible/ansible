@@ -623,7 +623,7 @@ class Runner(object):
                 # calls just to accomodate this one case
                 actual_port = [actual_port, self.accelerate_port]
             elif actual_port is not None:
-                actual_port = int(actual_port)
+                actual_port = int(template.template(self.basedir, actual_port, inject))
         except ValueError, e:
             result = dict(failed=True, msg="FAILED: Configured port \"%s\" is not a valid port, expected integer" % actual_port)
             return ReturnData(host=host, comm_ok=False, result=result)
