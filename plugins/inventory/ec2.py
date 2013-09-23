@@ -87,6 +87,20 @@ variable named:
 
 Security groups are comma-separated in 'ec2_security_group_ids' and
 'ec2_security_group_names'.
+
+Overriding convfiguration at run-time
+-------------------------------------
+
+It is possible to override ini file variables by setting environment variables
+to alternative values. Name the variable as per the ini file variable, but in
+upper case and prefixed INV_
+
+Thus to override destination_variable set INV_DESTINATION_VARIABLE
+
+This allows for making variations at run-time such as:
+
+    $ INV_VPC_DESTINATION_VARIABLE=ip_address ansible-playbook \
+      -i /path/to/ec2.py ...
 '''
 
 # (c) 2012, Peter Sankauskas
@@ -105,6 +119,9 @@ Security groups are comma-separated in 'ec2_security_group_ids' and
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# Additional modifications added by Matthew Pontefract (ReThought) and
+# others as visible in VCS.
 
 ######################################################################
 
@@ -135,9 +152,16 @@ class Ec2Inventory(object):
         # Index of hostname (address) to instance ID
         self.index = {}
 
+        # Data for optional tag processing options
+        self.tag_processors = {}
+        self.tag_processors['list_value_tags'] = []
+        self.tag_processors['tag_to_group'] = {}
+        self.tag_processors['include_hosts_by_tag'] = {}
+
         # Read settings and parse CLI arguments
         self.read_settings()
         self.parse_cli_args()
+        self.parse_environment()
 
         # Cache
         if self.args.refresh_cache:
@@ -173,10 +197,35 @@ class Ec2Inventory(object):
 
 
     def read_settings(self):
-        ''' Reads the settings from the ec2.ini file '''
+        ''' Reads the settings from the ec2.ini file
+        
+        The ini file is looked for in the following locations, in the following
+        order:
+
+          - in the file referenced by EC2_INI_FILE environment variable
+          - in the directory referenced by EC2_INI_DIR environment variable
+          - in the current working directory
+          - in the directory where ec2.py resides (the real file, not softlink)
+
+        thus you can set EC2_INI_FILE=/home/foo/myec2.ini or create an 
+        ec2.ini in a directory the path to which is assigned EC2_INI_DIR
+
+        The final option ensures backwards compatibility with the original
+        behaviour.
+        '''
+        _local_option = os.path.join(os.getcwd(), 'ec2.ini')
+        if 'EC2_INI_FILE' in os.environ:
+            source_file = os.environ['EC2_INI_FILE']
+        elif 'EC2_INI_DIR' in os.environ:
+            source_file = os.path.join(os.environ['EC2_INI_DIR'], 'ec2.ini')
+        elif os.path.exists(_local_option):
+            source_file = _local_option
+        else:
+            source_file = os.path.join(
+                os.path.dirname(os.path.realpath(__file__)), 'ec2.ini')
 
         config = ConfigParser.SafeConfigParser()
-        config.read(os.path.dirname(os.path.realpath(__file__)) + '/ec2.ini')
+        config.read(source_file)
 
         # is eucalyptus?
         self.eucalyptus_host = None
@@ -209,8 +258,83 @@ class Ec2Inventory(object):
         self.cache_path_cache = cache_path + "/ansible-ec2.cache"
         self.cache_path_index = cache_path + "/ansible-ec2.index"
         self.cache_max_age = config.getint('ec2', 'cache_max_age')
-        
 
+        # Optional keys for filtering on, expanding and formatting tags/values
+        if config.has_option('ec2', 'list_value_tags'):
+            self._load_list_value_tags(config.get('ec2', 'list_value_tags'))
+
+        if config.has_option('ec2', 'tag_to_group'):
+            self._load_tag_to_group(config.get('ec2', 'tag_to_group'))
+
+        if config.has_option('ec2', 'include_hosts_by_tag'):
+            self._load_include_hosts_by_tag(
+                config.get('ec2', 'include_hosts_by_tag'))
+
+    def _load_list_value_tags(self, raw):
+        ''' Process the value of the list_value_tags setting as supplied in raw
+        '''
+        self.tag_processors['list_value_tags'] = \
+            [s.strip() for s in raw.split(',')]
+       
+    def _load_tag_to_group(self, raw):
+        ''' Process the value of the tag_to_group setting '''
+        # remove all leading/trailing whitespace and ensure no empty
+        # values as may be if a trailing ';' is left in
+        units = [u.strip() for u in raw.split(';') if u.strip()]
+        self.tag_processors['tag_to_group'] = \
+            dict([u.split(':') for u in units]) 
+
+    def _load_include_hosts_by_tag(self, raw):
+        ''' Process the value of the include_hosts_by_tag settings '''
+        # don't use split because ':' may appear in the value
+        split_index = raw.find(':')
+        if split_index < 1:
+            raise Exception("Invalid argument to include_hosts_by_tag "
+                            "setting: {0}".format(raw))
+        key = raw[:split_index]
+        value = raw[split_index+1:]
+
+        self.tag_processors['include_hosts_by_tag'] = dict(
+            key = key,
+            value = value
+            )
+        
+    def parse_environment(self):
+        ''' Parse the environment for names prefixed INV_ and use as overrides.
+
+        Thus INV_DESTINATION_VARIABLE will override destination_variable
+        as set in the ini file.
+        '''
+        overrides = dict([(k.lower()[4:], os.environ[k])
+                          for k in os.environ.keys() if k.startswith('INV_')])
+
+        # we only assign known, safe names!
+        for name in ['destination_variable',
+                     'vpc_destination_variable',
+                     'cache_path']:
+            if name in overrides:
+                setattr(self, name, overrides[name])
+
+        regions_exclude = set()
+        if 'regions_exclude' in overrides:
+            regions_exclude = set(overrides['regions_exclude'].split(','))
+
+        if 'regions' in overrides:
+            regions = set(overrides['regions'].split(','))
+            regions -= regions_exclude
+            self.regions=list(regions)
+
+        if 'cache_max_age' in overrides:
+            self.cache_max_age = int(overrides['cache_max_age'])
+
+        if 'list_value_tags' in overrides:
+            self._load_list_value_tags(overrides['list_value_tags'])
+
+        if 'tag_to_group' in overrides:
+            self._load_tag_to_group(overrides['tag_to_group'])
+
+        if 'include_hosts_by_tag' in overrides:
+            self._load_include_hosts_by_tag(overrides['include_hosts_by_tag'])
 
     def parse_cli_args(self):
         ''' Command line argument processing '''
@@ -224,7 +348,6 @@ class Ec2Inventory(object):
                            help='Force refresh of cache by making API requests to EC2 (default: False - use cache files)')
         self.args = parser.parse_args()
 
-
     def do_api_calls_update_cache(self):
         ''' Do API calls to each region, and save data in cache files '''
 
@@ -232,8 +355,29 @@ class Ec2Inventory(object):
             self.get_instances_by_region(region)
             self.get_rds_instances_by_region(region)
 
+        if self.tag_processors['include_hosts_by_tag']:
+            self.filter_instances()
+
         self.write_to_cache(self.inventory, self.cache_path_cache)
         self.write_to_cache(self.index, self.cache_path_index)
+
+
+    def filter_instances(self):
+        '''
+        Filter out instances that are not tagged by the pattern defined
+        in include_hosts_by_tag setting
+        '''
+        hostmatch = self.tag_processors['include_hosts_by_tag']
+        inventory_key = self._format_key(hostmatch['key'], 
+                                         hostmatch['value'])
+        valid_hosts = set(self.inventory[inventory_key])
+
+        for group, hosts in self.inventory.items():
+            selection = list(set(hosts).intersection(valid_hosts))
+            if selection:
+                self.inventory[group] =  selection
+            else:
+                del(self.inventory[group])
 
 
     def get_instances_by_region(self, region):
@@ -345,10 +489,33 @@ class Ec2Inventory(object):
             sys.exit(1)
 
         # Inventory: Group by tag keys
-        for k, v in instance.tags.iteritems():
-            key = self.to_safe("tag_" + k + "=" + v)
-            self.push(self.inventory, key, dest)
+        for tag, v in instance.tags.iteritems():
+            values = self._expand_tag_values(tag, v)
+            keys = [self._format_key(tag, v) for v in values]
+            
+            for key in keys:
+                self.push(self.inventory, key, dest)
 
+    def _expand_tag_values(self, tag, v):
+        ''' Expand tag values if tag is listed in list_value_tags setting
+        Returns list containing either just the original value or, if to
+        be expanded, the decomposed list.
+        '''
+        if tag in self.tag_processors['list_value_tags']:
+            return v.split(',')
+        return [v]
+
+    def _format_key(self, tag, value):
+        ''' Format key value as defined in tag_to_group if the tag has
+        a custom formatter, otherwise format as tag_<key>_<value>.
+        '''
+        if tag in self.tag_processors['tag_to_group']:
+            return self.to_safe(
+                self.tag_processors['tag_to_group'][tag].format(
+                    key=tag, value=value)
+                )
+        else:
+            return self.to_safe('tag_{0}_{1}'.format(tag, value))
 
     def add_rds_instance(self, instance, region):
         ''' Adds an RDS instance to the inventory and index, as long as it is
@@ -358,11 +525,6 @@ class Ec2Inventory(object):
         if instance.status != 'available':
             return
 
-        # Select the best destination address
-        #if instance.subnet_id:
-            #dest = getattr(instance, self.vpc_destination_variable)
-        #else:
-            #dest =  getattr(instance, self.destination_variable)
         dest = instance.endpoint[0]
 
         if not dest:
