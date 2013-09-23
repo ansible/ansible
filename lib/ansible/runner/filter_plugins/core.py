@@ -22,6 +22,7 @@ import yaml
 import types
 import pipes
 from ansible import errors
+from ansible.utils import md5s
 
 def to_nice_yaml(*a, **kw):
     '''Make verbose, human readable yaml'''
@@ -111,5 +112,8 @@ class FilterModule(object):
 
             # quote string for shell usage
             'quote': quote,
+
+            # md5 hex digest of string
+            'md5': md5s,
         }
     
