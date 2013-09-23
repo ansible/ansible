@@ -13,7 +13,7 @@ from ansible.constants import DEFAULT_MODULE_PATH
 dirs=os.listdir("./library/")
 data_files = []
 for i in dirs:
-    data_files.append((DEFAULT_MODULE_PATH + '/' + i, glob('./library/' + i + '/*')))
+    data_files.append((os.path.join(DEFAULT_MODULE_PATH, i), glob('./library/' + i + '/*')))
 
 setup(name='ansible',
       version=__version__,
