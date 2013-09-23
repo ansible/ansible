@@ -48,7 +48,7 @@ options:
     aliases: []
   volume_size:
     description:
-      - size of volume (in GB) to create.
+      - size of volume (in GB) to create. This is mutually exclusive with snapshot.
     required: false
     default: null
     aliases: []
@@ -79,7 +79,7 @@ options:
     aliases: ['aws_zone', 'ec2_zone']
   snapshot:
     description:
-      - snapshot the that the volume should be based off of.
+      - snapshot the that the volume should be based off of. This is mutually exclusive with volume_size.
     required: false
     default: null
     aliases: []
@@ -161,7 +161,8 @@ def main():
             aws_secret_key = dict(aliases=['ec2_secret_key', 'secret_key'], no_log=True),
             aws_access_key = dict(aliases=['ec2_access_key', 'access_key']),
             snapshot = dict(),
-        )
+        ),
+        mutually_exclusive = [['volume_size', 'snapshot']],
     )
 
     instance = module.params.get('instance')
