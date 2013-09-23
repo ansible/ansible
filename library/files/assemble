@@ -59,6 +59,7 @@ options:
   delimiter:
     description:
       - A delimiter to seperate the file contents.
+    version_added: "1.4"
     required: false
     default: null
   others:
@@ -71,6 +72,9 @@ author: Stephen Fromm
 EXAMPLES = '''
 # Example from Ansible Playbooks
 - assemble: src=/etc/someapp/fragments dest=/etc/someapp/someapp.conf
+
+# When a delimiter is specified, it will be inserted in between each fragment
+- assemble: src=/etc/someapp/fragments dest=/etc/someapp/someapp.conf delimiter='### START FRAGMENT ###'
 '''
 
 # ===========================================
