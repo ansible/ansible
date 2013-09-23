@@ -76,14 +76,14 @@ EXAMPLES = '''
 # ===========================================
 # Support method
 
-def assemble_from_fragments(src_path, delimiter=''):
+def assemble_from_fragments(src_path, delimiter=None):
     ''' assemble a file from a directory of fragments '''
     tmpfd, temp_path = tempfile.mkstemp()
     tmp = os.fdopen(tmpfd,'w')
     delimit_me = False
     for f in sorted(os.listdir(src_path)):
         fragment = "%s/%s" % (src_path, f)
-        if delimit_me:
+        if delimit_me and delimiter:
             tmp.write(delimiter)
         if os.path.isfile(fragment):
             tmp.write(file(fragment).read())
@@ -107,13 +107,13 @@ def main():
         add_file_common_args=True
     )
 
-    changed = False
-    pathmd5 = None
-    destmd5 = None
-    src     = os.path.expanduser(module.params['src'])
-    dest    = os.path.expanduser(module.params['dest'])
-    backup  = module.params['backup']
-    delimiter  = module.params['delimiter']
+    changed   = False
+    pathmd5   = None
+    destmd5   = None
+    src       = os.path.expanduser(module.params['src'])
+    dest      = os.path.expanduser(module.params['dest'])
+    backup    = module.params['backup']
+    delimiter = module.params['delimiter']
 
     if not os.path.exists(src):
         module.fail_json(msg="Source (%s) does not exist" % src)
