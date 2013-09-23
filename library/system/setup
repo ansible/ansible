@@ -147,6 +147,7 @@ class Facts(object):
         self.get_date_time_facts()
         self.get_user_facts()
         self.get_local_facts()
+        self.get_env_facts()
 
     def populate(self):
         return self.facts
@@ -457,6 +458,20 @@ class Facts(object):
     def get_user_facts(self):
         self.facts['user_id'] = getpass.getuser()
 
+    def get_env_facts(self):
+        env_bin = module.get_bin_path('env')
+        (rc, out, err) = module.run_command(env_bin)
+        if rc == 0:
+            self.facts['env'] = {}
+            i = 0
+            for line in out.split('\n'):
+                if len(line) > 0:
+                    try:
+                        (k,v) = line.strip().split('=',1)
+                        self.facts['env'][k] = v
+                    except ValueError, e:
+                        self.facts['env']['ansible_error#%d' % i] = line
+                        i = i + 1
 
 class Hardware(Facts):
     """
