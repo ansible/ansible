@@ -166,7 +166,7 @@ options:
   instance_profile_name:
     version_added: "1.3"
     description:
-      - Name of the IAM instance profile to use
+      - Name of the IAM instance profile to use. Boto library must be 2.5.0+
     required: false
     default: null
     aliases: []
@@ -307,30 +307,44 @@ def get_instance_info(inst):
     Retrieves instance information from an instance
     ID and returns it as a dictionary
     """
+    instance_info = {'id': inst.id,
+                     'ami_launch_index': inst.ami_launch_index,
+                     'private_ip': inst.private_ip_address,
+                     'private_dns_name': inst.private_dns_name,
+                     'public_ip': inst.ip_address,
+                     'dns_name': inst.dns_name,
+                     'public_dns_name': inst.public_dns_name,
+                     'state_code': inst.state_code,
+                     'architecture': inst.architecture,
+                     'image_id': inst.image_id,
+                     'key_name': inst.key_name,
+                     'placement': inst.placement,
+                     'kernel': inst.kernel,
+                     'ramdisk': inst.ramdisk,
+                     'launch_time': inst.launch_time,
+                     'instance_type': inst.instance_type,
+                     'root_device_type': inst.root_device_type,
+                     'root_device_name': inst.root_device_name,
+                     'state': inst.state,
+                     'hypervisor': inst.hypervisor}
+    try:
+        instance_info['virtualization_type'] = getattr(inst,'virtualization_type')
+    except AttributeError:
+        instance_info['virtualization_type'] = None
 
-    return({
-        'id': inst.id,
-        'ami_launch_index': inst.ami_launch_index,
-        'private_ip': inst.private_ip_address,
-        'private_dns_name': inst.private_dns_name,
-        'public_ip': inst.ip_address,
-        'dns_name': inst.dns_name,
-        'public_dns_name': inst.public_dns_name,
-        'state_code': inst.state_code,
-        'architecture': inst.architecture,
-        'image_id': inst.image_id,
-        'key_name': inst.key_name,
-        'virtualization_type': inst.virtualization_type,
-        'placement': inst.placement,
-        'kernel': inst.kernel,
-        'ramdisk': inst.ramdisk,
-        'launch_time': inst.launch_time,
-        'instance_type': inst.instance_type,
-        'root_device_type': inst.root_device_type,
-        'root_device_name': inst.root_device_name,
-        'state': inst.state,
-        'hypervisor': inst.hypervisor
-    })
+    return instance_info
+
+def boto_supports_profile_name_arg(ec2):
+    """
+    Check if Boto library has instance_profile_name argument. instance_profile_name has been added in Boto 2.5.0
+
+    ec2: authenticated ec2 connection object
+
+    Returns:
+        True if Boto library accept instance_profile_name argument, else false
+    """
+    run_instances_method = getattr(ec2, 'run_instances')
+    return 'instance_profile_name' in run_instances_method.func_code.co_varnames
 
 
 def create_instances(module, ec2):
@@ -426,8 +440,14 @@ def create_instances(module, ec2):
                       'ramdisk_id': ramdisk,
                       'subnet_id': vpc_subnet_id,
                       'private_ip_address': private_ip,
-                      'user_data': user_data,
-                      'instance_profile_name': instance_profile_name}
+                      'user_data': user_data}
+
+            if boto_supports_profile_name_arg(ec2):
+                params['instance_profile_name'] = instance_profile_name
+            else:
+                if instance_profile_name is not None:
+                    module.fail_json(
+                        msg="instance_profile_name parameter requires Boto version 2.5.0 or higher")
 
             if vpc_subnet_id:
                 params['security_group_ids'] = group_id
