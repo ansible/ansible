@@ -53,6 +53,7 @@ EXAMPLES = '''
 - host: ip=127.0.0.1 hostname=localhost state=present
 - host: ip=127.0.0.1 hostname=localhost aliases=foobar.com,localhost.foobar.com
 - host: ip=192.168.1.1 state=absent
+- host: hostname=www.example.com state=absent
 - host: ip=::1 hostname=localhost6 aliases=ip6-localhost,ip6-loopback
 '''
 
