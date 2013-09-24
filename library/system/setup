@@ -629,7 +629,8 @@ class LinuxHardware(Hardware):
                 if dmi_bin is not None:
                     (rc, out, err) = module.run_command('%s -s %s' % (dmi_bin, v))
                     if rc == 0:
-                        self.facts[k] = out.rstrip()
+                        # Strip out commented lines (specific dmidecode output)
+                        self.facts[k] = ''.join([ line for line in out.split('\n') if not line.startswith('#') ])
                     else:
                         self.facts[k] = 'NA'
                 else:
