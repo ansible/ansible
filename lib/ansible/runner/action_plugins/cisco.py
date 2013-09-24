@@ -31,10 +31,8 @@ class ActionModule(object):
     def run(self, conn, tmp, module_name, module_args, inject, complex_args=None, **kwargs):
         ''' handler for template operations '''
 
-        # note: since this module just calls the copy module, the --check mode support
-        # can be implemented entirely over there
 	if not self.runner.is_playbook:
-            raise errors.AnsibleError("in current versions of ansible, templates are only usable in playbooks")
+            raise errors.AnsibleError("Cisco module is only usable in playbooks")
 
         # load up options
         options  = {}

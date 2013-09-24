@@ -6,15 +6,15 @@ module: cisco
 short_description: Templates a cisco device configuration file and passes it on to cisco transport for execution.
 description:
     - This module along with the cisco tranport plugin allows users/network_admins to configure
-      cisco devices via ansible, The implementation logic is quite straight forward, users/admins 
-      can create template files for thier usual network configurations and tell the module to execute
+      cisco devices via ansible, The implementation logic is quite straight forward, Network users/admins 
+      can create template files for thier usual network configurations and instruct the module to execute
       those configurations in all or certain subset of thier network infrastructure. The template file
       is parsed by jinja and any variable substituations are carried out. This module has been tested on
       Cisco IOS as well as NX-OS.   
-    - The cisco transport plugin supports telnet, ssh as means to communicating with the device, It also 
+    - The cisco transport plugin supports telnet and ssh as means to communicating with the device, It also 
       supports enabling preveilege mode transition(enable) on the target devices. Transport type can be set
-      at individual device level, so if a device uses telnet instead of ssh, while making the entry in inventory
-      for that host add a host variable similar to the follwing "R1 cisco_tranport=telnet", and plugin would use
+      at individual device level, so if a device uses telnet instead of ssh while making the entry for the device in inventory
+      add a variable similar to the follwing "<device name> cisco_tranport=telnet", and plugin would use
       telnet as the transport.          
 
 options:
@@ -27,14 +27,15 @@ options:
   enable:
     description:
       - Tells Ansible that while running this task privileged access is required, so ansible switches to elevated acess mode 
-        The password to the "enable" command should be provided in hostvars/group_vars/task_vars.
+        The password to the "enable" command should be provided in hostvars/group_vars/task_vars via "cisco_enable_pass=<pass>".
     required: false
     choices: [ "yes", "no" ]
     default: "no"
   commit:
     description:
-      - This would save the configurations changes made to the startup config with the filename specified.
-        This paramter is only applicable for IOS, In nexus you can directly add the command to the template.
+      - This would save the configurations changes made to the startup config with the filename specified. In cisco terminology
+        this issues the "copy startup config command". This paramter is only applicable for IOS, In nexus the user 
+        can directly add the command to the template.
     required: false
     default: "startup-config"
 
@@ -44,17 +45,17 @@ notes:
 
 requirements: [telnet binary if telnet would be used]
 
-author: "Benno Joy"
+author: "Benno Joy benno@ansibleworks.com"
 '''
 
 EXAMPLES = '''
 # Apply the configurations in interface.j2 to the network devices
-- cisco: src=/mytemplates/foo.j2 
+- cisco: src=/net_templates/foo.j2 
 
 # Apply the configurations in interface.j2 to the network devices and copy the running config to startup config
   in the file startup-config
-- cisco: src=/mytemplates/foo.j2 commit=startup-config
+- cisco: src=/net_templates/foo.j2 commit=startup-config
 
 # Apply the configurations in interface.j2 to the network devices with elevated access
-- cisco: src=/mytemplates/foo.j2 enable=yes
+- cisco: src=/net_templates/foo.j2 enable=yes
 '''
