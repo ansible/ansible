@@ -337,7 +337,7 @@ class Ec2Inventory(object):
 
         # Inventory: Group by availability zone
         self.push(self.inventory, instance.placement, dest)
-        
+
         # Inventory: Group by instance type
         self.push(self.inventory, self.to_safe('type_' + instance.instance_type), dest)
 
@@ -425,7 +425,7 @@ class Ec2Inventory(object):
         r53_conn = route53.Route53Connection()
         all_zones = r53_conn.get_zones()
 
-        route53_zones = [ zone for zone in all_zones if zone.name[:-1] 
+        route53_zones = [ zone for zone in all_zones if zone.name[:-1]
                           not in self.route53_excluded_zones ]
 
         self.route53_records = {}
