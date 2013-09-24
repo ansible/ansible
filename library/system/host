@@ -23,19 +23,19 @@ DOCUMENTATION = '''
 module: host
 author: René Moser
 version_added: "1.4"
-short_description: Add or remove entries in /etc/hosts.
+short_description: Add, update or remove entries in C(/etc/hosts).
 requirements:
 description:
-    - Manage entries in /etc/hosts
+    - Manage entries in C(/etc/hosts).
 options:
     ip:
         required: false
         description:
-            - IP address. Required on state "present".
+            - IP address. Required if C(state=present).
     hostname:
         required: false
         description:
-            - name of host. Required on state "present".
+            - name of host. Required if C(state=present).
     aliases:
         required: false
         description:
@@ -45,7 +45,7 @@ options:
         default: "present"
         choices: [ present, absent ]
         description:
-            - Whether the entries should be present or not in /etc/hosts.
+            - Whether the entries should be present or not in C(/etc/hosts).
 '''
 
 EXAMPLES = '''
