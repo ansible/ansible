@@ -27,7 +27,13 @@ options:
   enable:
     description:
       - Tells Ansible that while running this task privileged access is required, so ansible switches to elevated acess mode 
-        The password to the "enable" command should be provided in hostvars/group_vars/task_vars via "cisco_enable_pass=<pass>".
+        The password to the "enable" command can also be provided in hostvars/group_vars/task_vars via "cisco_enable_pass=<pass>".
+    required: false
+    choices: [ "yes", "no" ]
+    default: "no"
+  enable_pass:
+    description:
+      - The password for the enable command
     required: false
     choices: [ "yes", "no" ]
     default: "no"

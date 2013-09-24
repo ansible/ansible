@@ -44,7 +44,9 @@ class ActionModule(object):
 	transport      = inject.get('cisco_transport', 'ssh')
         enable         = options.get('enable', None)
         commit         = options.get('commit', None)
-        enable_pass    = inject.get('cisco_enable_pass', "")
+        enable_pass    = options.get('enable_pass', None)
+        if enable and not enable_pass:
+            enable_pass    = inject.get('cisco_enable_pass', "")
 
         if (source is None and 'first_available_file' not in inject):
             result = dict(failed=True, msg="src and dest are required")

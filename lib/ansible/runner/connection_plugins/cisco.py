@@ -79,6 +79,11 @@ class Connection(object):
     def make_connection(self, tmp_path):
 	prompts = [">", "#", "\$", "}", ':', pexpect.TIMEOUT]
         enable_pass = tmp_path['enable_pass']
+	if tmp_path['enable'] != None:
+            if not enable_pass:
+                raise errors.AnsibleError("Enable has been requested but no password has been given, please specify a password")
+        if not self.password:
+            raise errors.AnsibleError("Currently cisco transport only supports password auth, please specify a password")
         if tmp_path['transport'] == 'telnet':
             if self.port == None:
                 self.port = 23
