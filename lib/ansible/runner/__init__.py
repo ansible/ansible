@@ -654,7 +654,7 @@ class Runner(object):
 
         result = handler.run(conn, tmp, module_name, module_args, inject, complex_args)
         # Code for do until feature
-        until_result = 0
+        until_result = 1
         until = self.module_vars.get('until', None)
         if until is not None and result.comm_ok:
             inject[self.module_vars.get('register')] = result.result
@@ -676,10 +676,9 @@ class Runner(object):
                     if utils.check_conditional(cond, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
                         until_result = 1
                         break;
-            if utils.check_conditional(cond, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
-                until_result = 1
-                result.result['until_result'] = until_result
-                             
+                    else:
+                        until_result = 0
+            result.result['until_result'] = until_result
         conn.close()
 
         if not result.comm_ok:
