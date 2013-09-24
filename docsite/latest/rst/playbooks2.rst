@@ -331,6 +331,18 @@ decide to do something conditionally based on success or failure::
       - command: /bin/still/something_else
         when: result|skipped
 
+Another use for filters is to override a boolean variable from the command line. Given::
+
+    vars:
+      - world_domination: false
+
+    tasks:
+      - command: /bin/true
+        when: world_domination|bool == true
+
+you can override the value with::
+
+    ansible-playbook playbook.yml -e 'world_domination=true'
 
 As a reminder, to see what derived variables are available, you can do::
 
