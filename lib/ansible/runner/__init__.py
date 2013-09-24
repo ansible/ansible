@@ -653,7 +653,33 @@ class Runner(object):
 
 
         result = handler.run(conn, tmp, module_name, module_args, inject, complex_args)
-
+        # Code for do until feature
+        until_result = 0
+        until = self.module_vars.get('until', None)
+        if until is not None and result.comm_ok:
+            inject[self.module_vars.get('register')] = result.result
+            cond = template.template(self.basedir, until, inject, expand_lists=False)
+            if not utils.check_conditional(cond,  self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
+                retries = self.module_vars.get('retries')
+                delay   = self.module_vars.get('delay')
+                for x in range(0, retries):
+                    time.sleep(delay)
+                    tmp = ''
+                    if getattr(handler, 'NEEDS_TMPPATH', True):
+                        tmp = self._make_tmp_path(conn)
+                    result = handler.run(conn, tmp, module_name, module_args, inject, complex_args)
+                    vv("Result from run %i is: %s" % (x, result.result))
+                    if not result.comm_ok:
+                        break;
+                    inject[self.module_vars.get('register')] = result.result
+                    cond = template.template(self.basedir, until, inject, expand_lists=False)
+                    if utils.check_conditional(cond, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
+                        until_result = 1
+                        break;
+            if utils.check_conditional(cond, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
+                until_result = 1
+                result.result['until_result'] = until_result
+                             
         conn.close()
 
         if not result.comm_ok:
