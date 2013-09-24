@@ -72,7 +72,7 @@ EXAMPLES = '''
 '''
 
 import re
-decimal_point = pattern = re.compile(r"(\.|,)")
+decimal_point = re.compile(r"(\.|,)")
 
 def parse_lvs(data):
     lvs = []
