@@ -207,7 +207,10 @@ class Ec2Inventory(object):
 
         # Route53
         self.route53_enabled = config.getboolean('ec2', 'route53')
-        self.route53_excluded_zones = config.get('ec2', 'route53_excluded_zones', '').split(',')
+        self.route53_excluded_zones = []
+        if config.has_option('ec2', 'route53_excluded_zones'):
+            self.route53_excluded_zones.extend(
+                config.get('ec2', 'route53_excluded_zones', '').split(','))
 
         # Cache related
         cache_path = config.get('ec2', 'cache_path')
@@ -422,9 +425,8 @@ class Ec2Inventory(object):
         r53_conn = route53.Route53Connection()
         all_zones = r53_conn.get_zones()
 
-        is_valid_zone = lambda zone: not zone.name in self.route53_excluded_zones
-
-        route53_zones = filter(is_valid_zone, all_zones)
+        route53_zones = [ zone for zone in all_zones if zone.name[:-1] 
+                          not in self.route53_excluded_zones ]
 
         self.route53_records = {}
 
