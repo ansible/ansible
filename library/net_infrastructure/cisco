@@ -35,8 +35,7 @@ options:
     description:
       - The password for the enable command
     required: false
-    choices: [ "yes", "no" ]
-    default: "no"
+    default: null
   commit:
     description:
       - This would save the configurations changes made to the startup config with the filename specified. In cisco terminology
