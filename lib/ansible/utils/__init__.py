@@ -410,7 +410,7 @@ def md5s(data):
 
     buf = StringIO.StringIO(data)
     digest = _md5()
-    digest.update(buf.read())
+    digest.update(buf.read().encode('utf-8'))
     return digest.hexdigest()
 
 def md5(filename):
