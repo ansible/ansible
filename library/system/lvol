@@ -71,13 +71,16 @@ EXAMPLES = '''
 - lvol: vg=firefly lv=test state=absent
 '''
 
+import re
+decimal_point = re.compile(r"(\.|,)")
+
 def parse_lvs(data):
     lvs = []
     for line in data.splitlines():
         parts = line.strip().split(';')
         lvs.append({
             'name': parts[0],
-            'size': int(parts[1].split('.')[0]),
+            'size': int(decimal_point.split(parts[1])[0]),
         })
     return lvs
 
