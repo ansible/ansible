@@ -86,7 +86,10 @@ class Connection(object):
     def _execute_accelerate_module(self):
         args = "password=%s port=%s" % (base64.b64encode(self.key.__str__()), str(self.accport))
         inject = dict(password=self.key)
-        inject = utils.combine_vars(inject, self.runner.inventory.get_variables(self.host))
+        if self.runner.accelerate_inventory_host:
+            inject = utils.combine_vars(inject, self.runner.inventory.get_variables(self.runner.accelerate_inventory_host))
+        else:
+            inject = utils.combine_vars(inject, self.runner.inventory.get_variables(self.host))
         self.ssh.connect()
         tmp_path = self.runner._make_tmp_path(self.ssh)
         return self.runner._execute_module(self.ssh, tmp_path, 'accelerate', args, inject=inject)
