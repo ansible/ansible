@@ -17,6 +17,7 @@ New modules:
 * system: firewalld -- manage the firewalld configuration
 * system: host -- manage host file entries and aliases
 * system: modprobe -- manage kernel modules on systems that support modprobe/rmmod
+* system: open_iscsi -- manage targets on an initiator using open-iscsi
 
 Misc changes:
 
