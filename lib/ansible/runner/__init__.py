@@ -675,11 +675,11 @@ class Runner(object):
                     result.result['attempts'] = x
                     vv("Result from run %i is: %s" % (x, result.result))
                     if not result.comm_ok:
-                        break;
+                        break
                     inject[self.module_vars.get('register')] = result.result
                     cond = template.template(self.basedir, until, inject, expand_lists=False)
                     if utils.check_conditional(cond, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
-                        break;
+                        break
             else:
                 result.result['attempts'] = 0
         conn.close()
