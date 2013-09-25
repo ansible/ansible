@@ -70,7 +70,9 @@ class Inventory(object):
                 host_list = host_list.split(",")
                 host_list = [ h for h in host_list if h and h.strip() ]
 
-        if isinstance(host_list, list):
+        if host_list is None:
+            self.parser = None
+        elif isinstance(host_list, list):
             self.parser = None
             all = Group('all')
             self.groups = [ all ]

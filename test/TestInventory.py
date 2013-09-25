@@ -30,6 +30,9 @@ class TestInventory(unittest.TestCase):
         print right
         assert left == right
 
+    def empty_inventory(self):
+        return Inventory(None)
+
     def simple_inventory(self):
         return Inventory(self.inventory_file)
 
@@ -53,6 +56,14 @@ class TestInventory(unittest.TestCase):
             'thrudgelmir3', 'thrudgelmir4', 'thrudgelmir5',
             'Hotep-a', 'Hotep-b', 'Hotep-c',
             'BastC', 'BastD', ]
+
+    #####################################
+    ### Empty inventory format tests
+
+    def test_empty(self):
+        inventory = self.empty_inventory()
+        hosts = inventory.list_hosts()
+        self.assertEqual(hosts, [])
 
     #####################################
     ### Simple inventory format tests
