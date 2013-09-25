@@ -461,6 +461,33 @@ from turning into arbitrary code with ugly nested ifs, conditionals, and so on -
 in more streamlined & auditable configuration rules -- especially because there are a
 minimum of decision points to track.
 
+Do/Until
+````````
+
+Sometimes you would want to retry a task till a certain condition is met, In such conditions the Do/Until feature will help.
+Here's an example which show's the syntax to be applied for the task.
+
+    - action: shell /usr/bin/foo
+      register: result
+      until: register.stdout.find("all systems go") != -1
+      retries: 5
+      delay: 10
+
+The above example run the shell module recursively till the module's result has "all systems go" in it's stdout or the task has 
+been retried for 5 times with a delay of 10 seconds. The default value for "retries" is 3 and "delay" is 5.
+
+The task returns the results returned by the last task run. The results of individual retries can be viewed by -vv option.
+The results will have a new key "attempts" which will have the number of the retries for the task.
+
+.. note::
+    The Do/Until does not take decision on whether to fail or pass the play when the maximum retries are completed, the user can
+    can do that in the next task as follows:
+    
+    - name: fail the play
+      fail: msg=" This play fails as the foo exceeded maximum retries"
+      fail_when: register.attempts >= 5
+
+
 Loops
 `````
 
