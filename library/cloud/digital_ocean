@@ -48,6 +48,7 @@ options:
   unique_name:
     description:
      - Bool, require unique hostnames.  By default, digital ocean allows multiple hosts with the same name.  Setting this to "yes" allows only one host per name.  Useful for idempotence.
+    version_added: "1.4"
     default: "no"
     choices: [ "yes", "no" ]
   size_id:
