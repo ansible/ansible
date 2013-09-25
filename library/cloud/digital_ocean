@@ -57,6 +57,16 @@ options:
   ssh_key_ids:
     description:
      - Optional, comma separated list of ssh_key_ids that you would like to be added to the server
+  virtio:
+    description:
+      - Optional, Boolean, enables VirtIO, a virtualization driver for high performance network and disk operations
+    default: "yes"
+    choices: [ "yes", "no" ]
+  private_networking:
+    description:
+      - Optional, Boolean, enables a private network interface if the region supports private networking
+    default: "no"
+    choices: [ "yes", "no" ]
   wait:
     description:
      - Wait for the droplet to be in state 'running' before returning.  If wait is "no" an ip_address may not be returned.
@@ -204,8 +214,8 @@ class Droplet(JsonfyMixIn):
         cls.manager = DoManager(client_id, api_key)
 
     @classmethod
-    def add(cls, name, size_id, image_id, region_id, ssh_key_ids=None):
-        json = cls.manager.new_droplet(name, size_id, image_id, region_id, ssh_key_ids)
+    def add(cls, name, size_id, image_id, region_id, ssh_key_ids=None, virtio=True, private_networking=False):
+        json = cls.manager.new_droplet(name, size_id, image_id, region_id, ssh_key_ids, virtio, private_networking)
         droplet = cls(json)
         return droplet
 
@@ -282,13 +292,18 @@ def core(module):
         if state in ('active', 'present'):
             droplet = Droplet.find(module.params['id'])
             if not droplet:
-                droplet = Droplet.add(
+                try:
+                    droplet = Droplet.add(
                         name=getkeyordie('name'),
                         size_id=getkeyordie('size_id'),
                         image_id=getkeyordie('image_id'),
                         region_id=getkeyordie('region_id'),
-                        ssh_key_ids=module.params['ssh_key_ids']
+                        ssh_key_ids=module.params['ssh_key_ids'],
+                        virtio=module.params['virtio'],
+                        private_networking=module.params['private_networking'],
                     )
+                except TypeError as e:
+                    module.fail_json(msg='dopy version >= 0.2.2 required')
             if droplet.is_powered_on():
                 changed = False
             droplet.ensure_powered_on(
@@ -334,6 +349,8 @@ def main():
             image_id = dict(type='int'),
             region_id = dict(type='int'),
             ssh_key_ids = dict(default=''),
+            virtio = dict(type='bool', choices=BOOLEANS, default='yes'),
+            private_networking = dict(type='bool', choices=BOOLEANS, default='no'),
             id = dict(aliases=['droplet_id'], type='int'),
             wait = dict(type='bool', choices=BOOLEANS, default='yes'),
             wait_timeout = dict(default=300, type='int'),
