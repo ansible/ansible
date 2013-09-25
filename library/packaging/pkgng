@@ -139,7 +139,7 @@ def main():
             argument_spec       = dict(
                 state           = dict(default="present", choices=["present","absent"]),
                 name            = dict(aliases=["pkg"], required=True),
-                cached          = dict(default="supports_check_modeno", required=False, choices=["yes","no"]),
+                cached          = dict(default="no", required=False, choices=["yes","no"]),
                 pkgsite         = dict(default="", required=False))
             supports_check_mode = True)
 
