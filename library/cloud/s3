@@ -261,7 +261,7 @@ def main():
     bucket = module.params.get('bucket')
     obj = module.params.get('object')
     src = module.params.get('src')
-    dest = module.params.get('dest')
+    dest = os.path.expanduser(module.params.get('dest'))
     mode = module.params.get('mode')
     expiry = int(module.params['expiry'])
     s3_url = module.params.get('s3_url')
