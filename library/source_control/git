@@ -73,6 +73,13 @@ options:
             - If C(yes), repository will be updated using the supplied
               remote.  Otherwise the repo will be left untouched.
               Prior to 1.2, this was always 'yes' and could not be disabled.
+    git_path:
+        required: false
+        default: null
+        version_added: "1.4"
+        description:
+            - Path to the git binary. If not supplied,
+            the normal mechanism for resolving binary paths will be used.
 notes:
     - If the task seems to be hanging, first verify remote host is in C(known_hosts).
       SSH will prompt user to authorize the first contact with a remote host. One solution is to add
