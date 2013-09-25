@@ -477,15 +477,24 @@ def create_instances(module, ec2):
                 module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
 
         # wait here until the instances are up
-        res_list = res.connection.get_all_instances(instids)
-        this_res = res_list[0]
+        this_res = []
         num_running = 0
         wait_timeout = time.time() + wait_timeout
-        while wait and wait_timeout > time.time() and num_running < len(instids):
+        while wait_timeout > time.time() and num_running < len(instids):
             res_list = res.connection.get_all_instances(instids)
-            this_res = res_list[0]
-            num_running = len([ i for i in this_res.instances if i.state=='running' ])
-            time.sleep(5)
+            if len(res_list) > 0:
+                this_res = res_list[0]
+                num_running = len([ i for i in this_res.instances if i.state=='running' ])
+            else:
+                # got a bad response of some sort, possibly due to 
+                # stale/cached data. Wait a second and then try again
+                time.sleep(1)
+                continue
+            if wait and num_running < len(instids):
+                time.sleep(5)
+            else:
+                break
+
         if wait and wait_timeout <= time.time():
             # waiting took too long
             module.fail_json(msg = "wait for instances running timeout on %s" % time.asctime())
