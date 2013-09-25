@@ -571,6 +571,11 @@ class Runner(object):
         actual_private_key_file = inject.get('ansible_ssh_private_key_file', self.private_key_file)
 
         if self.accelerate and actual_transport != 'local':
+            #Fix to get the inventory name of the host to accelerate plugin
+            if inject.get('ansible_ssh_host', None):
+                self.accelerate_inventory_host = host
+            else:
+                self.accelerate_inventory_host = None
             # if we're using accelerated mode, force the
             # transport to accelerate
             actual_transport = "accelerate"
