@@ -304,6 +304,7 @@ def main():
             force=dict(default='yes', type='bool'),
             depth=dict(default=None, type='int'),
             update=dict(default='yes', type='bool'),
+            git_path=dict(default=None),
         ),
         supports_check_mode=True
     )
@@ -315,8 +316,7 @@ def main():
     force   = module.params['force']
     depth   = module.params['depth']
     update  = module.params['update']
-
-    git_path = module.get_bin_path('git', True)
+    git_path = module.params['git_path'] or module.get_bin_path('git', True)
     gitconfig = os.path.join(dest, '.git', 'config')
 
     rc, out, err, status = (0, None, None, None)
