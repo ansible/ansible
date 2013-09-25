@@ -126,7 +126,7 @@ class Connection(object):
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to chroot '''
 
-        out_path = self._normalize_path(out_path, self.get_jail_path() )
+        out_path = self._normalize_path(out_path, self.get_jail_path())
         vvv("PUT %s TO %s" % (in_path, out_path), host=self.jail)
 
         self._copy_file(in_path, out_path)
