@@ -292,7 +292,8 @@ def core(module):
         if state in ('active', 'present'):
             droplet = Droplet.find(module.params['id'])
             if not droplet:
-                droplet = Droplet.add(
+                try:
+                    droplet = Droplet.add(
                         name=getkeyordie('name'),
                         size_id=getkeyordie('size_id'),
                         image_id=getkeyordie('image_id'),
@@ -301,6 +302,8 @@ def core(module):
                         virtio=module.params['virtio'],
                         private_networking=module.params['private_networking'],
                     )
+                except TypeError as e:
+                    module.fail_json(msg='dopy version >= 0.2.2 required')
             if droplet.is_powered_on():
                 changed = False
             droplet.ensure_powered_on(
