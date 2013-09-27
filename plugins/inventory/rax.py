@@ -112,6 +112,8 @@ except KeyError, e:
     sys.stderr.write('Unable to load %s\n' % e.message)
     sys.exit(1)
 
+pyrax.set_setting('identity_type', 'rackspace')
+
 try:
     pyrax.set_credential_file(os.path.expanduser(creds_file),
                               region=region)
