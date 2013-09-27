@@ -14,7 +14,21 @@ Requirements for the AWS modules are minimal.  All of the modules require and ar
 .. code-block:: bash
 
     $ yum install python-boto
+    
+.. Add localhost to inventoryfile
 
+.. code-block:: bash
+   [local]
+   localhost
+
+Below your hosts section in your playbook add:
+
+.. code-block:: bash
+   - name: Setup EC2 Instances ...
+     hosts: localhost
+     connection: local
+     gather_facts: false
+     
 Provisioning
 ````````````
 
@@ -32,6 +46,8 @@ The ec2 module provides the ability to provision instance(s) within EC2.  Typica
    can be set.  This is useful if using a private cloud like Eucalyptus, 
    exporting the variable as EC2_URL=https://myhost:8773/services/Eucalyptus.
    This can be set using the 'environment' keyword in Ansible if you like.
+
+
 
 Provisioning a number of instances in ad-hoc mode mode:
 
