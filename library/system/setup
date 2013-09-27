@@ -1440,6 +1440,15 @@ class LinuxNetwork(Network):
                     path = os.path.join(path, 'bonding', 'all_slaves_active')
                     if os.path.exists(path):
                         interfaces[device]['all_slaves_active'] = open(path).read() == '1'
+            #Check whether a interface is in promiscuous mode
+            if os.path.exists(os.path.join(path,'flags')):
+                promisc_mode = False
+                # The second byte indicates whether the interface is in promiscuous mode.
+                # 1 = promisc
+                # 0 = no promisc
+                data = int(open(os.path.join(path, 'flags')).read().strip(),16)
+                promisc_mode = (data & 0x0100 > 0)
+                interfaces[device]['promisc'] = promisc_mode
             ip_path = module.get_bin_path("ip")
             output = subprocess.Popen([ip_path, 'addr', 'show', device], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
             for line in output.split('\n'):
