@@ -392,16 +392,19 @@ def merge_hash(a, b):
 
     result = copy.deepcopy(a)
 
-    # next, iterate over b keys and values
-    for k, v in b.iteritems():
-        # if there's already such key in a
-        # and that key contains dict
-        if k in result and isinstance(result[k], dict):
-            # merge those dicts recursively
-            result[k] = merge_hash(a[k], v)
-        else:
-            # otherwise, just copy a value from b to a
-            result[k] = v
+    try:
+        # next, iterate over b keys and values
+        for k, v in b.iteritems():
+            # if there's already such key in a
+            # and that key contains dict
+            if k in result and isinstance(result[k], dict):
+                # merge those dicts recursively
+                result[k] = merge_hash(a[k], v)
+            else:
+                # otherwise, just copy a value from b to a
+                result[k] = v
+    except Exception as e:
+        raise erros.AnsibleError("Failed to merge hashes\n A: {}\n B: {}\n{}".format(a, b, e))
 
     return result
 
