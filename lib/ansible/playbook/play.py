@@ -21,6 +21,7 @@ from ansible.utils.template import template
 from ansible import utils
 from ansible import errors
 from ansible.playbook.task import Task
+import ansible.constants as C
 import pipes
 import shlex
 import os
@@ -148,16 +149,27 @@ class Play(object):
             role_vars = orig_path
             orig_path = role_name
 
-        path = utils.path_dwim(self.basedir, os.path.join('roles', orig_path))
-        if not os.path.isdir(path) and not orig_path.startswith(".") and not orig_path.startswith("/"):
-            path2 = utils.path_dwim(self.basedir, orig_path)
-            if not os.path.isdir(path2):
-                raise errors.AnsibleError("cannot find role in %s or %s" % (path, path2))
-            path = path2
-        elif not os.path.isdir(path):
-            raise errors.AnsibleError("cannot find role in %s" % (path))
+        role_path = None
 
-        return (path, role_vars)
+        possible_paths = [
+            utils.path_dwim(self.basedir, os.path.join('roles', orig_path)),
+            utils.path_dwim(self.basedir, orig_path)
+        ]
+
+        if C.DEFAULT_ROLES_PATH:
+            search_locations = C.DEFAULT_ROLES_PATH.split(os.pathsep)
+            for loc in search_locations:
+                possible_paths.append(utils.path_dwim(loc, orig_path))
+
+        for path_option in possible_paths:
+            if os.path.isdir(path_option):
+                role_path = path_option
+                break
+
+        if role_path is None:
+            raise errors.AnsibleError("cannot find role in %s" % " or ".join(possible_paths))
+
+        return (role_path, role_vars)
 
     def _build_role_dependencies(self, roles, dep_stack, passed_vars={}, level=0):
         # this number is arbitrary, but it seems sane
