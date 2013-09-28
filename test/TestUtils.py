@@ -16,10 +16,13 @@ class TestUtils(unittest.TestCase):
     ### varReplace function tests
 
     def test_unfrackpath(self):
-        os.symlink("/etc", "/tmp/etc")
-        a = ansible.utils.unfrackpath('$HOME/../../tmp/etc/')
-        assert a == '/etc'
-        os.unlink('/tmp/etc')
+        path = '/dev'
+        symlink_err = "Looks like {0} is already symlink".format(path)
+        assert os.path.islink(path) is False, symlink_err
+        os.symlink(path, "/tmp/dev")
+        a = ansible.utils.unfrackpath('$HOME/../../tmp/dev/')
+        assert a == path
+        os.unlink('/tmp/dev')
 
     def test_varReplace_simple(self):
         template = 'hello $who'
