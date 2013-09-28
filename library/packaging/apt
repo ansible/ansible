@@ -131,8 +131,8 @@ import fnmatch
 # APT related constants
 APT_ENVVARS = "DEBIAN_FRONTEND=noninteractive DEBIAN_PRIORITY=critical"
 DPKG_OPTIONS = '-o "Dpkg::Options::=--force-confdef" -o "Dpkg::Options::=--force-confold"'
-APT_GET_ZERO = "0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded."
-APTITUDE_ZERO = "0 packages upgraded, 0 newly installed, 0 to remove and 0 not upgraded."
+APT_GET_ZERO = "0 upgraded, 0 newly installed"
+APTITUDE_ZERO = "0 packages upgraded, 0 newly installed"
 APT_LISTS_PATH = "/var/lib/apt/lists"
 APT_UPDATE_SUCCESS_STAMP_PATH = "/var/lib/apt/periodic/update-success-stamp"
 
