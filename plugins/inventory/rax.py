@@ -70,9 +70,9 @@ notes:
 requirements: [ "pyrax" ]
 examples:
     - description: List server instances
-      code: RAX_CREDS=~/.raxpub RAX_REGION=ORD rax.py --list
+      code: RAX_CREDS_FILE=~/.raxpub RAX_REGION=ORD rax.py --list
     - description: List server instance properties
-      code: RAX_CREDS=~/.raxpub RAX_REGION=ORD rax.py --host <HOST_IP>
+      code: RAX_CREDS_FILE=~/.raxpub RAX_REGION=ORD rax.py --host <HOST_IP>
 '''
 
 import sys
@@ -111,6 +111,8 @@ try:
 except KeyError, e:
     sys.stderr.write('Unable to load %s\n' % e.message)
     sys.exit(1)
+
+pyrax.set_setting('identity_type', 'rackspace')
 
 try:
     pyrax.set_credential_file(os.path.expanduser(creds_file),
