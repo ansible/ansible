@@ -71,7 +71,7 @@ Special Topics In Playbooks
 
 Here are some playbook features that not everyone may need to learn, but can be quite useful for particular applications. 
 Browsing these topics is recommended as you may find some useful tips here, but feel free to learn Ansible first and adopt
-these only if they seem relevant or useful to your environment.
+these only if they seem relevant or useful to your environment::
 
    playbooks_acceleration
    playbooks_check_mode
@@ -82,7 +82,6 @@ these only if they seem relevant or useful to your environment.
    playbooks_prompts
    playbooks_strategies
     
-
 Detailed Guides
 ```````````````
 
@@ -104,7 +103,7 @@ Community Information
 
 Ansible is an open source project designed to bring together developers and administrators of all kinds to collaborate on building
 IT automation solutions that work well for them.   Should you wish to get more involved -- whether in terms of just asking a question, helping
-other users, introducing new people to Ansible, or helping with the software or documentation, we welcome your contributions to the project.
+other users, introducing new people to Ansible, or helping with the software or documentation, we welcome your contributions to the project::
 
    How to interact <https://github.com/ansible/ansible/blob/devel/CONTRIBUTING.md>
 
