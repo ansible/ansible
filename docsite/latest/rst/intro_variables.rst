@@ -2,13 +2,11 @@ Variables
 =========
 
 All of your systems are likely not the same.  On some systems you may want to set some behavior
-that is different from others.
-
-Some of the observed behavior of remote systems might need to influence how you configure those
-systems.
+or configuration that is slightly different from others. Also, some of the observed behavior or state 
+of remote systems might need to influence how you configure those systems.
 
 You might have some templates for configuration files that are mostly the same, but slightly different
-between those different systems.
+based on those variables.  
 
 Variables in Ansible are how we manage with differences between systems.  Once understanding variables you'll
 also want to dig into `playbooks_conditionals` and `playbooks_loops`.
@@ -27,25 +25,115 @@ See the `intro_inventory` document for multiple ways on how to define variables 
 Variables Defined in a Playbook
 ```````````````````````````````
 
-TODO: explain 'vars'
+In a playbook, it's possible to define variables directly inline like so::
+
+   - hosts: webservers
+     vars:
+       http_port: 80
+
+This can be nice as it's right there when you are reading the playbook.
+
+Variables defined from includes
+-------------------------------
+
+As described in `intro_roles`, variables can also be included in the playbook via include files, which may or may
+not be part of an "Ansible Role".  Usage of roles is preferred as it provides a nice organizational system.
 
 Using Variables: About Jinja2
 `````````````````````````````
 
-TODO: some background and examples, move complex var section up here
+We've referenced various ways to define variables above, but how do you reference them?  Ansible allows you to
+reference variables in your playbooks using the Jinja2 templating system.  While you can do a lot of complex
+things in Jinja, only the basics are things you really need to learn.
+
+For instance, in a simple template, you can do something like
+
+    My amp goes to {{ max_amp_value }}
+
+And that will provide the most basic form of variable substitution.
+
+This is also valid directly in playbooks, and you'll occasionally want to do things like:
+
+    template: src=foo.cfg.j2 dest={{ remote_install_path}}/foo.cfg
+
+.. note:: ansible allows Jinja2 loops and conditionals in templates, but in playbooks, we do not use them.  Ansible
+   templates are pure machine-parseable YAML.
+
+.. note:: YAML syntax requires that if you start a value with {{ foo }} you quote the whole line, since it wants to be
+   sure you aren't trying to start a YAML dictionary.  This is covered on the `YAMLSyntax` page.
 
 Information discovered from systems: Facts
 ``````````````````````````````````````````
 
-TODO: some background and links
+Facts are information derived from speaking with your remote systems.
 
+An example of this might be the ip address of the remote host, or what the operating system is. 
 
-TODO: move fact documentation up, also disabling facts, and fact modules and provide more background
+To see what information is available, try the following::
+
+    ansible hostname -m setup
+
+The results of this can be used to create dynamic groups of hosts that match particular critera, see the :doc:`group_by` for details,
+as well as in generalized conditional statements as discussed in the `playbook_conditionals` chapter.
+
+Turning Off Facts
+`````````````````
+
+If you know you don't need any fact data about your hosts, and know everything about your systems centrally, you
+can turn off fact gathering.  This has advantages in scaling Ansible in push mode with very large numbers of
+systems, mainly, or if you are using Ansible on experimental platforms.   In any play, just do this::
+
+    - hosts: whatever
+      gather_facts: no
+
+Local Facts (Facts.d)
+`````````````````````
+
+.. versionadded:: 1.3
+
+As discussed in the playbooks chapter, Ansible facts are a way of getting data about remote systems for use in playbook variables.
+Usually these are discovered automatically by the 'setup' module in Ansible. Users can also write custom facts modules, as described
+in the API guide.  However, what if you want to have a simple way to provide system or user
+provided data for use in Ansible variables, without writing a fact module?  For instance, what if you want users to be able to control some aspect about how their systems are managed? "Facts.d" is one such mechanism.
+
+If a remotely managed system has an "/etc/ansible/facts.d" directory, any files in this directory
+ending in ".fact", can be JSON, INI, or executable files returning JSON, and these can supply local facts in Ansible.
+
+For instance assume a /etc/ansible/facts.d/preferences.fact::
+
+    [general]
+    asdf=1
+    bar=2
+
+This will produce a hash variable fact named "general" with 'asdf' and 'bar' as members.
+To validate this, run the following::
+
+    ansible <hostname> -m setup -a "filter=ansible_local"
+
+And you will see the following fact added::
+
+    "ansible_local": {
+            "preferences": {
+                "general": {
+                    "asdf" : "1", 
+                    "bar"  : "2"
+                }
+            }
+     }
+
+And this data can be accessed in a template/playbook as::
+
+     {{ ansible_local.preferences.general.asdf }}
+
+The local namespace prevents any user supplied fact from overriding system facts
+or variables defined elsewhere in the playbook.
+
 
 Registered Variables
 ````````````````````
 
-TODO: add a duplicate explanation here, though this is also covered in conditionals
+The value of a task being executed in ansible can be saved in a variable and used later.  See some examples of this in the
+`playbooks_conditionals` chapter.
 
 Accessing Complex Variable Data
 ```````````````````````````````
@@ -305,143 +393,4 @@ Ansible's approach to configuration -- separating variables from tasks, keeps yo
 from turning into arbitrary code with ugly nested ifs, conditionals, and so on - and results
 in more streamlined & auditable configuration rules -- especially because there are a
 minimum of decision points to track.
-
-Lookup Plugins - Accessing Outside Data
-```````````````````````````````````````
-
-.. note:: This feature is very infrequently used in Ansible.  You may wish to skip this section.
-
-.. versionadded:: 0.8
-
-Various *lookup plugins* allow additional ways to iterate over data.  In `playbooks_loops` you will learn
-how to use them to walk over collections of numerous types.  However, they can also be used to pull in data
-from remote sources, such as shell commands or even key value stores. This section will cover lookup
-plugins in this capacity.
-
-Here are some examples::
-
-    ---
-    - hosts: all
-
-      tasks:
-
-         - debug: msg="{{ lookup('env','HOME') }} is an environment variable"
-
-         - debug: msg="{{ item }} is a line from the result of this command"
-           with_lines:
-             - cat /etc/motd
-
-         - debug: msg="{{ lookup('pipe','date') }} is the raw result of running this command"
-
-         - debug: msg="{{ lookup('redis_kv', 'redis://localhost:6379,somekey') }} is value in Redis for somekey"
-
-         - debug: msg="{{ lookup('dnstxt', 'example.com') }} is a DNS TXT record for example.com"
-
-         - debug: msg="{{ lookup('template', './some_template.j2') }} is a value from evaluation of this template"
-
-As an alternative you can also assign lookup plugins to variables or use them
-elsewhere.  This macros are evaluated each time they are used in a task (or
-template)::
-
-    vars:
-      motd_value: "{{ lookup('file', '/etc/motd') }}"
-
-    tasks:
-      - debug: msg="motd value is {{ motd_value }}"
-
-.. versionadded:: 1.1
-
-``password`` generates a random plaintext password and store it in
-a file at a given filepath.  Support for crypted save modes (as with vars_prompt) is pending.  If the
-file exists previously, it will retrieve its contents, behaving just like with_file. Usage of variables like "{{ inventory_hostname }}" in the filepath can be used to set
-up random passwords per host (what simplifies password management in 'host_vars' variables).
-
-Generated passwords contain a random mix of upper and lowercase ASCII letters, the
-numbers 0-9 and punctuation (". , : - _"). The default length of a generated password is 30 characters.
-This length can be changed by passing an extra parameter::
-
-    ---
-    - hosts: all
-
-      tasks:
-
-        # create a mysql user with a random password:
-        - mysql_user: name={{ client }}
-                      password="{{ lookup('password', 'credentials/' + client + '/' + tier + '/' + role + '/mysqlpassword length=15') }}"
-                      priv={{ client }}_{{ tier }}_{{ role }}.*:ALL
-
-        (...)
-
-Getting values from files
-`````````````````````````
-
-.. note:: this is technically a "lookup" plugin too, but it's used more frequently than a bit of the others.  You probably won't need to learn about the other lookup plugins but it's a good idea to understand 'file'.
-
-.. versionadded:: 0.8
-
-Sometimes you'll want to include the content of a file directly into a playbook.  You can do so using a macro.
-This syntax will remain in future versions, though we will also will provide ways to do this via lookup plugins (see "More Loops") as well.  What follows
-is an example using the authorized_key module, which requires the actual text of the SSH key as a parameter::
-
-    tasks:
-        - name: enable key-based ssh access for users
-          authorized_key: user={{ item }} key="{{ lookup('file', '/keys/' + item ) }}"
-          with_items:
-             - pinky
-             - brain
-             - snowball
-
-Turning Off Facts
-`````````````````
-
-If you know you don't need any fact data about your hosts, and know everything about your systems centrally, you
-can turn off fact gathering.  This has advantages in scaling Ansible in push mode with very large numbers of
-systems, mainly, or if you are using Ansible on experimental platforms.   In any play, just do this::
-
-    - hosts: whatever
-      gather_facts: no
-
-Local Facts (Facts.d)
-`````````````````````
-
-.. versionadded:: 1.3
-
-As discussed in the playbooks chapter, Ansible facts are a way of getting data about remote systems for use in playbook variables.
-Usually these are discovered automatically by the 'setup' module in Ansible. Users can also write custom facts modules, as described
-in the API guide.  However, what if you want to have a simple way to provide system or user 
-provided data for use in Ansible variables, without writing a fact module?  For instance, what if you want users to be able to control some aspect about how their systems are managed? "Facts.d" is one such mechanism.
-
-If a remotely managed system has an "/etc/ansible/facts.d" directory, any files in this directory
-ending in ".fact", can be JSON, INI, or executable files returning JSON, and these can supply local facts in Ansible.
-
-For instance assume a /etc/ansible/facts.d/preferences.fact::
-
-    [general]
-    asdf=1
-    bar=2
-
-This will produce a hash variable fact named "general" with 'asdf' and 'bar' as members.
-To validate this, run the following::
-
-    ansible <hostname> -m setup -a "filter=ansible_local"
-
-And you will see the following fact added::
-
-    "ansible_local": {
-            "preferences": {
-                "general": {
-                    "asdf" : "1", 
-                    "bar"  : "2"
-                }
-            }
-     }
-
-And this data can be accessed in a template/playbook as::
-
-     {{ ansible_local.preferences.general.asdf }}
-
-The local namespace prevents any user supplied fact from overriding system facts
-or variables defined elsewhere in the playbook.
-
-
 
