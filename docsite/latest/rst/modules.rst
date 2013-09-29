@@ -59,7 +59,7 @@ Let's see what's available in the Ansible module library, out of the box:
 Writing your own modules
 ````````````````````````
 
-See :doc:`moduledev`.
+See :doc:`developing_modules`.
 
 .. seealso::
 
@@ -69,7 +69,7 @@ See :doc:`moduledev`.
        Examples of using modules with /usr/bin/ansible-playbook
    :doc:`developing_modules`
        How to write your own modules
-   :doc:`api`
+   :doc:`developing_api`
        Examples of using modules with the Python API
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups

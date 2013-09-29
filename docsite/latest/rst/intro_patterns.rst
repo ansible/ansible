@@ -6,7 +6,7 @@ Patterns
 Patterns in Ansible are how we decide which hosts to manage.  This can mean what hosts to communicate with, but in terms
 of :doc:`playbooks` it actually means what hosts to apply a particular configuration or IT process to.
 
-We'll go over how to use the command line in :doc:`intro_examples` section, however, basically it looks like this::
+We'll go over how to use the command line in :doc:`intro_adhoc` section, however, basically it looks like this::
 
     ansible <pattern_goes_here> -m <module_name> -a <arguments>
 
