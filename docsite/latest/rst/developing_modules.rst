@@ -431,8 +431,6 @@ the program.   Stop by the mailing list to inquire about requirements.
 
    :doc:`modules`
        Learn about available modules
-   :doc:`contrib`
-       User contributed playbooks, modules, and articles
    `Github modules directory <https://github.com/ansible/ansible/tree/devel/library>`_
        Browse source of core modules
    `Mailing List <http://groups.google.com/group/ansible-project>`_

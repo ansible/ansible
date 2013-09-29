@@ -28,7 +28,7 @@ An Introduction
    intro_installation
    intro_getting_started
    intro_inventory
-   intro_inventory_dynamic
+   intro_dynamic_inventory
    intro_patterns
    intro_adhoc
    modules

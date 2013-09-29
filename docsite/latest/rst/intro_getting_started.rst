@@ -111,7 +111,7 @@ Also note that host key checking in paramiko mode is reasonably slow, therefore 
 
 .. seealso::
 
-   :doc:`examples`
+   :doc:`intro_ad_hoc`
        Examples of basic commands
    :doc:`playbooks`
        Learning ansible's configuration management language

@@ -325,13 +325,13 @@ can do this::
 
    :doc:`YAMLSyntax`
        Learn about YAML syntax
-   :doc:`bestpractices`
+   :doc:`playbooks_bestpractices`
        Various tips about managing playbooks in the real world
    :doc:`modules`
        Learn about available modules
-   :doc:`moduledev`
+   :doc:`developing_modules`
        Learn how to extend Ansible by writing your own modules
-   :doc:`patterns`
+   :doc:`intro_patterns`
        Learn about how to select hosts
    `Github examples directory <https://github.com/ansible/ansible/tree/devel/examples/playbooks>`_
        Complete playbook files from the github project source
