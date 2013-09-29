@@ -26,7 +26,7 @@ An Introduction
    :maxdepth: 1
 
    intro_installation
-   intro_gettingstarted
+   intro_getting_started
    intro_inventory
    intro_inventory_dynamic
    intro_patterns
@@ -117,17 +117,17 @@ with other solutions in your environment.
 .. toctree::
    :maxdepth: 1
 
-   developers_contributing
-   developers_code_standards
-   developers_api
-   developers_inventory
-   developers_modules
-   developers_plugins
-   developers_callbacks
-   developers_filters
-   developers_lookups
-   developers_transports
-   developers_modules
+   developing_contributing
+   developing_code_standards
+   developing_api
+   developing_inventory
+   developing_modules
+   developing_plugins
+   developing_callbacks
+   developing_filters
+   developing_lookups
+   developing_transports
+   developing_modules
    REST API <http://ansibleworks.com/ansibleworks-awx>
 
 Miscellaneous
