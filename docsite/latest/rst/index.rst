@@ -115,17 +115,10 @@ with other solutions in your environment.
 .. toctree::
    :maxdepth: 1
 
-   developing_contributing
-   developing_code_standards
    developing_api
    developing_inventory
    developing_modules
    developing_plugins
-   developing_callbacks
-   developing_filters
-   developing_lookups
-   developing_transports
-   developing_modules
    REST API <http://ansibleworks.com/ansibleworks-awx>
 
 Miscellaneous
