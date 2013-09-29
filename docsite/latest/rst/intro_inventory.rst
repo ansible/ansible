@@ -5,7 +5,12 @@ Inventory & Patterns
 
 Ansible works against multiple systems in your infrastructure at the
 same time.  It does this by selecting portions of systems listed in
-Ansible's inventory file, which defaults to /etc/ansible/hosts.
+Ansible's inventory file, which defaults to being saved in 
+the location /etc/ansible/hosts.
+
+Not only is this inventory configurable, but you can also use
+multiple inventory files at the same time (explained below) and also
+pull inventory from dynamic or cloud sources, as described in `intro_inventory_dynamic`.
 
 .. contents::
    :depth: 2
@@ -28,11 +33,11 @@ The format for /etc/ansible/hosts is an INI format and looks like this::
     two.example.com
     three.example.com
 
-The things in brackets are group names. You don't have to have them,
-but they are useful.
+The things in brackets are group names, which are used in classifying systems
+and deciding what systems you are controlling at what times and for what purpose.
 
 If you have hosts that run on non-standard SSH ports you can put the port number
-after the hostname with a colon.  Ports listed in any SSH config file won't be read,
+after the hostname with a colon.  Ports listed in your SSH config file won't be used,
 so it is important that you set them if things are not running on the default port::
 
     badwolf.example.com:5309
@@ -41,22 +46,21 @@ Suppose you have just static IPs and want to set up some aliases that don't live
 
     jumper ansible_ssh_port=5555 ansible_ssh_host=192.168.1.50
 
-In the above example, trying to ansible against the host alias "jumper" (which may not even be a real hostname) will contact 192.168.1.50 on port 5555.
+In the above example, trying to ansible against the host alias "jumper" (which may not even be a real hostname) will contact 192.168.1.50 on port 5555.  Note that this is using a feature of the inventory file to define some special variables.  Generally speaking this is not the best
+way to define variables that describe your system policy, but we'll share suggestions on doing this later.  We're just getting started.
 
-Adding a lot of hosts?  In 0.6 and later, if you have a lot of hosts following similar patterns you can do this rather than listing each hostname::
+Adding a lot of hosts?  If you have a lot of hosts following similar patterns you can do this rather than listing each hostname::
+
 
     [webservers]
     www[01:50].example.com
 
-
-In 1.0 and later, you can also do this for alphabetic ranges::
+For numeric patterns, leading zeros can be included or removed, as desired. Ranges are inclusive.  You can also define alphabetic ranges::
 
     [databases]
     db-[a:f].example.com
 
-For numeric patterns, leading zeros can be included or removed, as desired. Ranges are inclusive.
-
-In 1.1 and later, you can also select the connection type and user on a per host basis::
+You can also select the connection type and user on a per host basis::
 
    [targets]
 
@@ -64,120 +68,17 @@ In 1.1 and later, you can also select the connection type and user on a per host
    other1.example.com     ansible_connection=ssh        ansible_ssh_user=mpdehaan
    other2.example.com     ansible_connection=ssh        ansible_ssh_user=mdehaan
 
-All of these variables can of course also be set outside of the inventory file, in 'host_vars' if you wish
-to keep your inventory file simple.
-
-List of Reserved Inventory Parameters
-+++++++++++++++++++++++++++++++++++++
-
-As a summary, you can set these parameters as host inventory variables.  (Some we have already
-mentioned).
-
-ansible_ssh_host
-  The name of the host to connect to, if different from the alias you wish to give to it.
-ansible_ssh_port
-  The ssh port number, if not 22
-ansible_ssh_user
-  The default ssh user name to use.
-ansible_ssh_pass
-  The ssh password to use (this is insecure, we strongly recommend using --ask-pass or SSH keys)
-ansible_connection
-  Connection type of the host. Candidates are local, ssh or paramiko.  The default is paramiko before Ansible 1.2, and 'smart' afterwards which detects whether usage of 'ssh' would be feasible based on whether ControlPersist is supported.
-ansible_ssh_private_key_file
-  Private key file used by ssh.  Useful if using multiple keys and you don't want to use SSH agent.
-ansible_syslog_facility
-  The syslog facility to log to.
-ansible_python_interpreter
-  The target host python path. This is userful for systems with more
-  than one Python or not located at "/usr/bin/python" such as \*BSD, or where /usr/bin/python
-  is not a 2.X series Python.
-ansible\_\*\_interpreter
-  Works for anything such as ruby or perl and works just like ansible_python_interpreter. 
-  This replaces shebang of modules which will run on that host.
-
-Examples from a host file::
-
-  some_host         ansible_ssh_port=2222     ansible_ssh_user=manager
-  aws_host          ansible_ssh_private_key_file=/home/example/.ssh/aws.pem
-  freebsd_host      ansible_python_interpreter=/usr/local/bin/python
-  ruby_module_host  ansible_ruby_interpreter=/usr/bin/ruby.1.9.3
-
-
-Selecting Targets
-+++++++++++++++++
-
-We'll go over how to use the command line in :doc:`examples` section, however, basically it looks like this::
-
-    ansible <pattern_goes_here> -m <module_name> -a <arguments>
-
-Such as::
-
-    ansible webservers -m service -a "name=httpd state=restarted"
-
-Within :doc:`playbooks`, these patterns can be used for even greater purposes.
-
-Anyway, to use Ansible, you'll first need to know how to tell Ansible which hosts in your inventory file to talk to.
-This is done by designating particular host names or groups of hosts.
-
-The following patterns target all hosts in the inventory file::
-
-    all
-    *
-
-Basically 'all' is an alias for '*'.  It is also possible to address a specific host or hosts::
-
-    one.example.com
-    one.example.com:two.example.com
-    192.168.1.50
-    192.168.1.*
-
-The following patterns address one or more groups, which are denoted
-with the aforementioned bracket headers in the inventory file::
-
-    webservers
-    webservers:dbservers
-
-You can exclude groups as well, for instance, all webservers not in Phoenix::
-
-    webservers:!phoenix
-
-You can also specify the intersection of two groups::
-
-    webservers:&staging
-
-You can do combinations::
-
-    webservers:dbservers:!phoenix:&staging
-
-You can also use variables::
-
-    webservers:!{{excluded}}:&{{required}}
-
-Individual host names, IPs and groups, can also be referenced using
-wildcards::
-
-    *.example.com
-    *.com
-
-It's also ok to mix wildcard patterns and groups at the same time::
-
-    one*.com:dbservers
-
-And if the pattern starts with a '~' it is treated as a regular expression::
-
-    ~(web|db).*\.example\.com
-
-Easy enough.  See :doc:`examples` and then :doc:`playbooks` for how to do things to selected hosts.
+As mentioned above, setting these in the inventory file is only a shorthand, and we'll discuss how to store them in individual files
+in the 'host_vars' directory a bit later on.
 
 Host Variables
 ++++++++++++++
 
-It is easy to assign variables to hosts that will be used later in playbooks::
+As alluded to above, it is easy to assign variables to hosts that will be used later in playbooks::
 
    [atlanta]
    host1 http_port=80 maxRequestsPerChild=808
    host2 http_port=303 maxRequestsPerChild=909
-
 
 Group Variables
 +++++++++++++++
@@ -229,11 +130,13 @@ separate from the inventory file, see the next section.
 Splitting Out Host and Group Specific Data
 ++++++++++++++++++++++++++++++++++++++++++
 
-.. versionadded:: 0.6
+The preferred practice in Ansible is actually not to store variables in the main inventory file.
 
 In addition to the storing variables directly in the INI file, host
 and group variables can be stored in individual files relative to the
-inventory file.  These variable files are in YAML format.
+inventory file.  
+
+These variable files are in YAML format.  See `YAMLSyntax` if you are new to YAML.
 
 Assuming the inventory file path is::
 
@@ -254,7 +157,7 @@ the 'raleigh' group might look like::
     ntp_server: acme.example.org
     database_server: storage.example.org
 
-It is ok if these files do not exist, this is an optional feature.
+It is ok if these files do not exist, as this is an optional feature.
 
 Tip: In Ansible 1.2 or later the group_vars/ and host_vars/ directories can exist in either 
 the playbook directory OR the inventory directory. If both paths exist, variables in the playbook
@@ -263,14 +166,47 @@ directory will be loaded second.
 Tip: Keeping your inventory file and variables in a git repo (or other version control)
 is an excellent way to track changes to your inventory and host variables.
 
-.. versionadded:: 0.5
-   If you ever have two python interpreters on a system, or your Python version 2 interpreter is not found
-   at /usr/bin/python, set an inventory variable called 'ansible_python_interpreter' to the Python
-   interpreter path you would like to use.
+List of Behavioral Inventory Parameters
++++++++++++++++++++++++++++++++++++++++
+
+As aluded to above, setting the following variables controls how ansible interacts with remote hosts. Some we have already
+mentioned::
+
+ansible_ssh_host
+  The name of the host to connect to, if different from the alias you wish to give to it.
+ansible_ssh_port
+  The ssh port number, if not 22
+ansible_ssh_user
+  The default ssh user name to use.
+ansible_ssh_pass
+  The ssh password to use (this is insecure, we strongly recommend using --ask-pass or SSH keys)
+ansible_connection
+  Connection type of the host. Candidates are local, ssh or paramiko.  The default is paramiko before Ansible 1.2, and 'smart' afterwards which detects whether usage of 'ssh' would be feasible based on whether ControlPersist is supported.
+ansible_ssh_private_key_file
+  Private key file used by ssh.  Useful if using multiple keys and you don't want to use SSH agent.
+ansible_python_interpreter
+  The target host python path. This is userful for systems with more
+  than one Python or not located at "/usr/bin/python" such as \*BSD, or where /usr/bin/python
+  is not a 2.X series Python.  We do not use the "/usr/bin/env" mechanism as that requires the remote user's
+  path to be set right and also assumes the "python" executable is named python, where the executable might
+  be named something like "python26".
+ansible\_\*\_interpreter
+  Works for anything such as ruby or perl and works just like ansible_python_interpreter.
+  This replaces shebang of modules which will run on that host.
+
+Examples from a host file::
+
+  some_host         ansible_ssh_port=2222     ansible_ssh_user=manager
+  aws_host          ansible_ssh_private_key_file=/home/example/.ssh/aws.pem
+  freebsd_host      ansible_python_interpreter=/usr/local/bin/python
+  ruby_module_host  ansible_ruby_interpreter=/usr/bin/ruby.1.9.3
+
 
 .. seealso::
 
-   :doc:`examples`
+   :doc:`intro_inventory_dynamic`
+       Pulling inventory from dynamic sources, such as cloud providers
+   :doc:`intro_examples`
        Examples of basic commands
    :doc:`playbooks`
        Learning ansible's configuration management language
