@@ -1,5 +1,5 @@
-Amazon Web Services
-===================
+Amazon Web Services Guide
+=========================
 
 .. contents::
    :depth: 2

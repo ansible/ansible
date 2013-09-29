@@ -1,5 +1,5 @@
-Error Handling
-==============
+Error Handling In Playbooks
+===========================
 
 Sometimes a command that returns 0 isn't an error.  Sometimes a command might not always
 need to report that it 'changed' the remote system.  This section describes how to change
@@ -19,22 +19,8 @@ write a task that looks like this::
       command: /bin/false
       ignore_errors: yes
 
-Creates and Removes
-```````````````````
-
-The creates= and removes= flag on commands can say a command does not need to be run again
-when a file exists (or does not exist).  This can bring "idempotence" to commands that
-normally might produce errors when run a second time unneccessarily, or to avoid redundant
-command execution.
-
-    - name: install the foo
-      command: /usr/bin/install-the-foo.sh creates=/opt/foo
-      
-In the above example, when /opt/foo exists, the command would not be executed.  See the
-documentation for the command module in `modules` for more information.
-
-Overriding Changed Result
-`````````````````````````
+Overriding The Changed Result
+`````````````````````````````
 
 .. versionadded:: 1.3
 

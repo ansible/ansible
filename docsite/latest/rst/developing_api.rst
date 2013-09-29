@@ -1,5 +1,5 @@
-API & Integrations
-==================
+Python API
+==========
 
 There are several interesting ways to use Ansible from an API perspective.   You can use
 the Ansible python API to control nodes, you can extend Ansible to respond to various python events,
