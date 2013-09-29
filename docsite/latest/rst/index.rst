@@ -61,7 +61,6 @@ ways to organize playbooks and the files they include, and we'll offer up some s
    playbooks
    playbooks_roles
    playbooks_variables
-   playbooks_facts
    playbooks_loops
    playbooks_best_practices
    Example Playbooks <https://github.com/ansible/ansible-examples>
