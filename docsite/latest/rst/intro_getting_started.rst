@@ -85,7 +85,7 @@ Now run a live command on all of your nodes:
    $ ansible all -a "/bin/echo hello"
 
 Congratulations.  You've just contacted your nodes with Ansible.  It's
-soon going to be time to read some of the more real-world :doc:`examples`, and explore
+soon going to be time to read some of the more real-world :doc:`intro_adhoc`, and explore
 what you can do with different modules, as well as the Ansible
 :doc:`playbooks` language.  Ansible is not just about running commands, it
 also has powerful configuration management and deployment features.  There's more to

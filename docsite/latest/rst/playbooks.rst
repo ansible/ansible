@@ -325,7 +325,7 @@ can do this::
 
    :doc:`YAMLSyntax`
        Learn about YAML syntax
-   :doc:`playbooks_bestpractices`
+   :doc:`playbooks_best_practices`
        Various tips about managing playbooks in the real world
    :doc:`modules`
        Learn about available modules

@@ -10,7 +10,7 @@ the location /etc/ansible/hosts.
 
 Not only is this inventory configurable, but you can also use
 multiple inventory files at the same time (explained below) and also
-pull inventory from dynamic or cloud sources, as described in `intro_inventory_dynamic`.
+pull inventory from dynamic or cloud sources, as described in :doc:`intro_dynamic_inventory`.
 
 .. contents::
    :depth: 2
@@ -204,7 +204,7 @@ Examples from a host file::
 
 .. seealso::
 
-   :doc:`intro_inventory_dynamic`
+   :doc:`intro_dynamic_inventory`
        Pulling inventory from dynamic sources, such as cloud providers
    :doc:`intro_examples`
        Examples of basic commands

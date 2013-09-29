@@ -59,7 +59,7 @@ On the managed nodes, you only need Python 2.4 or later, but if you are are runn
    Python 3 is a slightly different language than Python 2 and most python programs (including
    Ansible) are not switching over yet.  However, some Linux distributions (Gentoo, Arch) may not have a 
    Python 2.X interpreter installed by default.  On those systems, you should install one, and set
-   the 'ansible_python_interpreter' variable in inventory (see :doc:`patterns`) to point at your 2.X python.  Distributions
+   the 'ansible_python_interpreter' variable in inventory (see :doc:`intro_inventory`) to point at your 2.X python.  Distributions
    like Red Hat Enterprise Linux, CentOS, Fedora, and Ubuntu all have a 2.X interpreter installed
    by default and this does not apply to those distributions.  This is also true of nearly all
    Unix systems.  If you need to bootstrap these remote systems by installing Python 2.X, 
@@ -110,7 +110,7 @@ Ansible also uses the the following Python modules that need to be installed::
     $ sudo pip install paramiko PyYAML jinja2
 
 Once running the env-setup script you'll be running from checkout and the default inventory file
-will be /etc/ansible/hosts.  You can optionally specify an inventory file (see :doc:`patterns`) 
+will be /etc/ansible/hosts.  You can optionally specify an inventory file (see :doc:`intro_inventroy`) 
 other than /etc/ansible/hosts:
 
 .. code-block:: bash

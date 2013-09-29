@@ -1,6 +1,6 @@
 
 The Ansible Configuration File
-==============================
+++++++++++++++++++++++++++++++
 
 .. highlight:: bash
 
