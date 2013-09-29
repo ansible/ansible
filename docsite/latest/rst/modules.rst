@@ -63,13 +63,11 @@ See :doc:`moduledev`.
 
 .. seealso::
 
-   :doc:`contrib`
-       User contributed playbooks, modules, and articles
-   :doc:`examples`
+   :doc:`intro_adhoc`
        Examples of using modules in /usr/bin/ansible
    :doc:`playbooks`
        Examples of using modules with /usr/bin/ansible-playbook
-   :doc:`moduledev`
+   :doc:`developing_modules`
        How to write your own modules
    :doc:`api`
        Examples of using modules with the Python API

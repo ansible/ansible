@@ -63,7 +63,7 @@ contain all of my wordpress tasks in a single wordpress.yml file, and use it lik
      - include: wordpress.yml user=alice
      - include: wordpress.yml user=bob
 
-Variables passed in can then be used in the included files.  We've already covered them a bit in :doc:`intro_variales`.
+Variables passed in can then be used in the included files.  We've already covered them a bit in :doc:`intro_variables`.
 You can reference them like this::
 
    {{ user }}
@@ -318,7 +318,7 @@ The resulting order of execution would be as follows::
        Learn about YAML syntax
    :doc:`playbooks`
        Review the basic Playbook language features
-   :doc:`bestpractices`
+   :doc:`playbooks_best_practices`
        Various tips about managing playbooks in the real world
    :doc:`modules`
        Learn about available modules

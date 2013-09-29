@@ -85,8 +85,7 @@ If a required variable has not been set, you can skip or fail using Jinja2's
 This is especially useful in combination with the conditional import of vars
 files (see below).
 
-.. note :: When combining `when` with `with_items`, be aware that the `when` statement is processed separately for each item.
-    This is by design::
+Note that when combining `when` with `with_items` (see :doc:`playbook_loops`), be aware that the `when` statement is processed separately for each item. This is by design::
 
     tasks:
         - command: echo {{ item }}
