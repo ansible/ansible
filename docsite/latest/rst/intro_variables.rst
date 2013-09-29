@@ -231,82 +231,6 @@ The contents of each variables file is a simple YAML dictionary, like this::
    It's also possible to keep per-host and per-group variables in very
    similar files, this is covered in :ref:`patterns`.
 
-Prompting For Sensitive Data
-````````````````````````````
-
-You may wish to prompt the user for certain input, and can
-do so with the similarly named 'vars_prompt' section.  This has uses
-beyond security, for instance, you may use the same playbook for all
-software releases and would prompt for a particular release version
-in a push-script::
-
-    ---
-    - hosts: all
-      remote_user: root
-      vars:
-        from: "camelot"
-      vars_prompt:
-        name: "what is your name?"
-        quest: "what is your quest?"
-        favcolor: "what is your favorite color?"
-
-There are full examples of both of these items in the github examples/playbooks directory.
-
-If you have a variable that changes infrequently, it might make sense to
-provide a default value that can be overridden.  This can be accomplished using
-the default argument::
-
-   vars_prompt:
-     - name: "release_version"
-       prompt: "Product release version"
-       default: "1.0"
-
-An alternative form of vars_prompt allows for hiding input from the user, and may later support
-some other options, but otherwise works equivalently::
-
-   vars_prompt:
-     - name: "some_password"
-       prompt: "Enter password"
-       private: yes
-     - name: "release_version"
-       prompt: "Product release version"
-       private: no
-
-If `Passlib <http://pythonhosted.org/passlib/>`_ is installed, vars_prompt can also crypt the
-entered value so you can use it, for instance, with the user module to define a password::
-
-   vars_prompt:
-     - name: "my_password2"
-       prompt: "Enter password2"
-       private: yes
-       encrypt: "md5_crypt"
-       confirm: yes
-       salt_size: 7
-
-You can use any crypt scheme supported by 'Passlib':
-
-- *des_crypt* - DES Crypt
-- *bsdi_crypt* - BSDi Crypt
-- *bigcrypt* - BigCrypt
-- *crypt16* - Crypt16
-- *md5_crypt* - MD5 Crypt
-- *bcrypt* - BCrypt
-- *sha1_crypt* - SHA-1 Crypt
-- *sun_md5_crypt* - Sun MD5 Crypt
-- *sha256_crypt* - SHA-256 Crypt
-- *sha512_crypt* - SHA-512 Crypt
-- *apr_md5_crypt* - Apache’s MD5-Crypt variant
-- *phpass* - PHPass’ Portable Hash
-- *pbkdf2_digest* - Generic PBKDF2 Hashes
-- *cta_pbkdf2_sha1* - Cryptacular’s PBKDF2 hash
-- *dlitz_pbkdf2_sha1* - Dwayne Litzenberger’s PBKDF2 hash
-- *scram* - SCRAM Hash
-- *bsd_nthash* - FreeBSD’s MCF-compatible nthash encoding
-
-However, the only parameters accepted are 'salt' or 'salt_size'. You can use you own salt using
-'salt', or have one generated automatically using 'salt_size'. If nothing is specified, a salt
-of size 8 will be generated.
-
 Passing Variables On The Command Line
 `````````````````````````````````````
 
@@ -393,4 +317,3 @@ Ansible's approach to configuration -- separating variables from tasks, keeps yo
 from turning into arbitrary code with ugly nested ifs, conditionals, and so on - and results
 in more streamlined & auditable configuration rules -- especially because there are a
 minimum of decision points to track.
-
