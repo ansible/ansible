@@ -1,10 +1,11 @@
-Advanced Playbooks
-==================
+Conditionals
+============
 
-Here are some advanced features of the playbooks language.  Using all of these features
-is not necessary, but many of them will prove useful.  If a feature doesn't seem immediately
-relevant, feel free to skip it.  For many people, the features documented in `playbooks` will
-be 90% or more of what they use in Ansible.
+Often the result of a play may depend on the value of a variable, fact, or previous task result.  In some cases,
+the values of variables may depend on other variables.  Further, additional groups can be created to manage hosts based on
+whether the hosts match other criteria.   There are many options to control execution flow in Ansible.
+
+Let's dig into what they are.
 
 .. contents::
    :depth: 2
