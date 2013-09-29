@@ -66,8 +66,8 @@ ways to organize playbooks and the files they include, and we'll offer up some s
    playbooks_best_practices
    Example Playbooks <https://github.com/ansible/ansible-examples>
 
-Special Topics In Playbooks
-```````````````````````````
+Advanced Topics In Playbooks
+````````````````````````````
 
 Here are some playbook features that not everyone may need to learn, but can be quite useful for particular applications. 
 Browsing these topics is recommended as you may find some useful tips here, but feel free to learn Ansible first and adopt
