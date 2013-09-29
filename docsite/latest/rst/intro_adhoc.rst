@@ -1,18 +1,28 @@
-Command Line Examples And Next Steps
-====================================
+
+An Introduction To Ad-Hoc Commands
+==================================
 
 .. highlight:: bash
 
 The following examples show how to use `/usr/bin/ansible` for running
-ad hoc tasks.  Start here.
+ad hoc tasks.  
 
-For configuration management and deployments, you'll want to pick up on
-using `/usr/bin/ansible-playbook` -- the concepts port over directly.
+This is a good place to start to understand the basics of what ansible can do
+prior to learning the playbooks language, but ad-hoc commands can also be used
+to do quick things that you might not neccessarily want to write a full playbook 
+for.  
+
+Why would you use ad-hoc tasks versus playbooks?
+
+For instance, if you wanted to power off all of your lab for Christmas vacation,
+you could execute a quick one-liner in Ansible without writing a playbook.
+
+For configuration management and deployments, though you'll want to pick up on
+using '/usr/bin/ansible-playbook' -- the concepts port over directly.
 (See :doc:`playbooks` for more information about those)
 
 .. contents::
    :depth: 2
-
 
 Parallelism and Shell Commands
 ``````````````````````````````
@@ -32,9 +42,8 @@ Now to run the command on all servers in a group, in this case,
 
     $ ansible atlanta -a "/sbin/reboot" -f 10
 
-In 0.7 and later, this will default to running from your user account.  If you do not like this
-behavior, pass in "-u username".  (In 0.6 and before, it defaulted to root.  Most folks prefered
-defaulting to the current user, so we changed it).
+/usr/bin/ansible will default to running from your user account.  If you do not like this
+behavior, pass in "-u username".
 
 If you want to run commands as a different user, it looks like this::
 
@@ -54,19 +63,20 @@ It is also possible to sudo to a user other than root using
 
     $ ansible atlanta -a "/usr/bin/foo" -u username -U otheruser [--ask-sudo-pass]
 
-Ok, so those are basics.  If you didn't read about patterns and groups yet, go back and read :doc:`patterns`.
+Ok, so those are basics.  If you didn't read about patterns and groups yet, go back and read :doc:`intro_patterns`.
 
 The ``-f 10`` in the above specifies the usage of 10 simultaneous
-processes.  Normally commands also take a ``-m`` for module name, but
+processes to use.   You can also set this in `intro_config` to avoid setting it again.
+
+Normally commands also take a ``-m`` for module name, but
 the default module name is 'command', so we didn't need to
 specify that all of the time.  We'll use ``-m`` in later examples to
 run some other :doc:`modules`.
 
 .. note::
-   The :ref:`command` module requires absolute paths and does not
-   support shell variables.  If we want to execute a module using a
-   shell, we can do those things, and also use pipe and redirection
-   operators.  Read more about the differences on the :doc:`modules`
+   The :ref:`command` module does not
+   support shell variables and things like piping.  If we want to execute a module using a
+   shell, use the 'shell' module instead. Read more about the differences on the :doc:`modules`
    page.
 
 Using the :ref:`shell` module looks like this::
@@ -75,14 +85,14 @@ Using the :ref:`shell` module looks like this::
 
 When running any command with the ansible *ad hoc* CLI (as opposed to
 :doc:`playbooks`), pay particular attention to shell quoting rules, so
-the shell doesn't eat a variable before it gets passed to Ansible.
+the local shell doesn't eat a variable before it gets passed to Ansible.
 For example, using double vs single quotes in the above example would
 evaluate the variable on the box you were on.
 
 So far we've been demoing simple command execution, but most Ansible modules usually do not work like
 simple scripts. They make the remote system look like you state, and run the commands necessary to
 get it there.  This is commonly referred to as 'idempotence', and is a core design goal of ansible.
-However, we also recognize that running *ad hoc* commands is equally important, so Ansible easily supports both.
+However, we also recognize that running arbitrary commands is equally important, so Ansible easily supports both.
 
 
 File Transfer
@@ -249,23 +259,10 @@ what their names or IP addresses are).
 
 Both of these methods can be used at the same time, and ranges can also be passed to the --limit parameter.
 
-Configuration & Defaults
-````````````````````````
-
-.. versionadded:: 0.7
-
-Ansible has an optional configuration file that can be used to tune settings and also eliminate the need to pass various command line flags. Ansible will look for the config file in the following order, using
-the first config file it finds present:
-
-1. File specified by the ``ANSIBLE_CONFIG`` environment variable
-2. ``~/.ansible.cfg``
-3. ``ansible.cfg`` in the current working directory. (version 0.8 and up)
-4. ``/etc/ansible/ansible.cfg``
-
-For those running from source, a sample configuration file lives in the examples/ directory.  The RPM will install configuration into /etc/ansible/ansible.cfg automatically.
-
 .. seealso::
 
+   :doc:`intro_configuration`
+       All about the ansible config file
    :doc:`modules`
        A list of available modules
    :doc:`playbooks`
