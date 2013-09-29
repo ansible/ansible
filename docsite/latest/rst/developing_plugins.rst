@@ -1,4 +1,4 @@
-Plugin Development
+Developing Plugins
 ==================
 
 Ansible is pluggable in a lot of other ways seperate from inventory scripts and callbacks.  Many of these features are there to cover

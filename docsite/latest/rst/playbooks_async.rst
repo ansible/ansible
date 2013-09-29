@@ -1,5 +1,3 @@
-
-
 Asynchronous Actions and Polling
 ================================
 

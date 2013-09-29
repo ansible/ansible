@@ -1,4 +1,4 @@
-Module Development
+Developing Modules
 ==================
 
 Ansible modules are reusable units of magic that can be used by the Ansible API,

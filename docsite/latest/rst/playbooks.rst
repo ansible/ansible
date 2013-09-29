@@ -1,11 +1,11 @@
-Playbooks
-=========
+Intro to Playbooks
+==================
 
 .. contents::
    :depth: 2
 
-Introduction
-````````````
+About Playbooks
+```````````````
 
 Playbooks are a completely different way to use ansible than in task execution mode, and are
 particularly powerful. Simply put, playbooks are the basis for a really simple

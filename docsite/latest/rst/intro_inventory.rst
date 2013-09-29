@@ -1,7 +1,7 @@
 .. _patterns:
 
-Inventory & Patterns
-====================
+Inventory
+=========
 
 Ansible works against multiple systems in your infrastructure at the
 same time.  It does this by selecting portions of systems listed in

@@ -1,6 +1,6 @@
 
-An Introduction To Ad-Hoc Commands
-==================================
+Introduction To Ad-Hoc Commands
+===============================
 
 .. highlight:: bash
 
