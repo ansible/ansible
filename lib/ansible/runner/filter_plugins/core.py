@@ -21,6 +21,7 @@ import os.path
 import yaml
 import types
 import pipes
+import glob
 from ansible import errors
 from ansible.utils import md5s
 
@@ -74,6 +75,10 @@ def quote(a):
     ''' return its argument quoted for shell usage '''
     return pipes.quote(a)
 
+def fileglob(pathname):
+    ''' return list of matched files for glob '''
+    return glob.glob(pathname)
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -115,5 +120,8 @@ class FilterModule(object):
 
             # md5 hex digest of string
             'md5': md5s,
+
+            # file glob
+            'fileglob': fileglob,
         }
     
