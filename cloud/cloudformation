@@ -67,6 +67,7 @@ options:
     required: false
     default: null
     aliases: []
+    version_added: "1.4"
 
 requirements: [ "boto" ]
 author: James S. Martin
