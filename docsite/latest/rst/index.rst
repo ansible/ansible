@@ -135,4 +135,6 @@ Miscellaneous
 
    faq
    glossary
+   YAMLSyntax
+
 
