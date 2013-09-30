@@ -430,7 +430,7 @@ class LinuxService(Service):
                 self.enable_cmd = location['systemctl']
             elif os.path.exists("/etc/init/%s.conf" % self.name):
                 # service is managed by upstart
-                self.enable_cmd = location['update-rc.d']
+                self.enable_cmd = location['initctl']
             elif os.path.exists("/etc/init.d/%s" % self.name):
                 # service is managed by with SysV init scripts, but with update-rc.d
                 self.enable_cmd = location['update-rc.d']
@@ -536,6 +536,37 @@ class LinuxService(Service):
         # FIXME: we use chkconfig or systemctl
         # to decide whether to run the command here but need something
         # similar for upstart
+
+        if self.enable_cmd.endswith("initctl"):
+            def write_to_override_file(file_name, file_contents, ):
+                override_file = open(file_name, 'w')
+                override_file.write(file_contents)
+                override_file.close()
+
+            initpath = '/etc/init'
+            manreg = re.compile('^manual\s*$', re.M | re.I)
+            conf_file_name = "%s/%s.conf" % (initpath, self.name)
+            override_file_name = "%s/%s.override" % (initpath, self.name)
+
+            # Check to see if files contain the manual line in .conf and fail if True
+            if manreg.search(open(conf_file_name).read()):
+                self.module.fail_json(msg="manual stanza not supported in a .conf file")
+
+            if os.path.exists(override_file_name):
+                override_file_contents = open(override_file_name).read()
+                # Remove manual stanza if present and service enabled
+                if self.enable and manreg.search(override_file_contents):
+                    write_to_override_file(override_file_name, manreg.sub('', override_file_contents))
+                # Add manual stanza if not present and service disabled
+                elif not (self.enable) and not (manreg.search(override_file_contents)):
+                    write_to_override_file(override_file_name, override_file_contents + '\nmanual\n')
+                else:
+                    return
+            # Add file with manual stanza if service disabled
+            elif not (self.enable):
+                write_to_override_file(override_file_name, 'manual\n')
+            else:
+                return
 
         if self.enable_cmd.endswith("chkconfig"):
             (rc, out, err) = self.execute_command("%s --list %s" % (self.enable_cmd, self.name))
