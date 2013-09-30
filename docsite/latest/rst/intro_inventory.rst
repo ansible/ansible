@@ -206,7 +206,7 @@ Examples from a host file::
 
    :doc:`intro_dynamic_inventory`
        Pulling inventory from dynamic sources, such as cloud providers
-   :doc:`intro_examples`
+   :doc:`intro_adhoc`
        Examples of basic commands
    :doc:`playbooks`
        Learning ansible's configuration management language
