@@ -262,7 +262,7 @@ parameter in your playbooks to make it clear, especially as some modules support
 Group By Roles
 ++++++++++++++
 
-A system can be in multiple groups.  See :doc:`patterns`.   Having groups named after things like
+A system can be in multiple groups.  See :doc:`intro_inventory` and :doc:`intro_patterns`.   Having groups named after things like
 *webservers* and *dbservers* is repeated in the examples because it's a very powerful concept.
 
 This allows playbooks to target machines based on role, as well as to assign role specific variables
@@ -348,9 +348,9 @@ changed the rules that are automating your infrastructure.
        Review the basic playbook features
    :doc:`modules`
        Learn about available modules
-   :doc:`moduledev`
+   :doc:`developing_modules`
        Learn how to extend Ansible by writing your own modules
-   :doc:`patterns`
+   :doc:`intro_patterns`
        Learn about how to select hosts
    `Github examples directory <https://github.com/ansible/ansible/tree/devel/examples/playbooks>`_
        Complete playbook files from the github project source
