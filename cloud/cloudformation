@@ -140,7 +140,7 @@ def stack_operation(cfn, stack_name, operation):
                           events = map(str, list(stack.describe_events())),
                           output = 'Stack %s complete' % operation)
             break
-        if '%s_ROLLBACK_COMPLETE' % operation == stack.stack_status:
+        if  'ROLLBACK_COMPLETE' == stack.stack_status or '%s_ROLLBACK_COMPLETE' % operation == stack.stack_status:
             result = dict(changed=True,
                           events = map(str, list(stack.describe_events())),
                           output = 'Problem with %s. Rollback complete' % operation)
