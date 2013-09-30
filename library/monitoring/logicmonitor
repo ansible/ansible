@@ -224,6 +224,7 @@ from datetime import datetime, time, tzinfo, timedelta
 from subprocess import call
 from subprocess import Popen
 
+
 class LogicMonitor(object):
 
     def __init__(self, module, **kwargs):
@@ -239,7 +240,7 @@ class LogicMonitor(object):
             m.update(self.password)
             self.password_digest    = m.hexdigest()
         self.fqdn           = socket.getfqdn()
-        
+
 
     def rpc(self, action, params):
         """Make a call to the LogicMonitor RPC library and return the response"""
@@ -255,7 +256,6 @@ class LogicMonitor(object):
             print ioe
             sys.exit(1)
 
-
     def do(self, action, params):
         """Make a call to the LogicMonitor server \"do\" function"""
         param_str = urllib.urlencode(params)
@@ -270,6 +270,7 @@ class LogicMonitor(object):
             print ioe
             sys.exit(1)
     
+    
     def get_collectors(self):
         """Returns a JSON object containing a list of LogicMonitor collectors"""
         resp = self.rpc("getAgents", {})
@@ -278,7 +279,6 @@ class LogicMonitor(object):
              return resp_json["data"]
         else:
             self.module.fail_json(msg=resp)
-
 
     def get_host_by_hostname(self, hostname, collector):
         hostlist_json = json.loads(self.rpc("getHosts", {"hostGroupId": 1}))
@@ -291,14 +291,12 @@ class LogicMonitor(object):
         else:
            return None
 
-
     def get_host_by_displayname(self, displayname):
         host_json = json.loads(self.rpc("getHost", {"displayName": displayname}))
         if host_json["status"] == 200:
             return host_json["data"]
         else:
            return None
-
     
     def get_collector_by_description(self, description):
         """return the collector json object for the collector with the matching FQDN (description) in your LogicMonitor account"""
@@ -308,7 +306,6 @@ class LogicMonitor(object):
                 if collector["description"] == description:
                     return collector
         return None
-
     
     def get_group(self, fullpath):
         """Return a JSON object with the current state of a group in your LogicMonitor account"""
@@ -321,7 +318,6 @@ class LogicMonitor(object):
         else:
            self.module.fail_json(msg="Error: Unable to retreive the list of host groups from the server.")
         return None
-
     
     def create_group(self, fullpath):
         """Recursively create a path of host groups. return value is the id of the newly created hostgroup in your LogicMonitor account"""
@@ -362,11 +358,9 @@ class LogicMonitor(object):
                 return resp["data"]["id"]
             else:
                self.module.fail_json(msg="Error: unable to create new hostgroup.\n%s" % resp["errmsg"])
-
     
 
 class Collector(LogicMonitor):
-    
     
     def __init__(self, module):
         """Initializor for the LogicMonitor Collector object"""
@@ -386,14 +380,7 @@ class Collector(LogicMonitor):
         self.is_64bits      = sys.maxsize > 2**32
         self.duration       = self.module.params['duration']
         self.starttime       = self.module.params['starttime']
-
-        
-    ####################################
-    #                                  #
-    #    Public methods                #
-    #                                  #
-    ####################################
-    
+            
     def create(self):
         """idempotent function to make sure that there is a running collector installed and registered in your LogicMonitor Account"""
         self._create()
@@ -401,13 +388,11 @@ class Collector(LogicMonitor):
         self.install()
         self.start()
 
-
     def destroy(self):
         """idempotent function to make sure that there is a running collector installed and registered in your LogicMonitor Account"""
         self.stop()
         self.uninstall()
         self._delete()
-
     
     def get_installer_binary(self):
         """Download the LogicMonitor collector installer binary"""
@@ -431,7 +416,6 @@ class Collector(LogicMonitor):
             self.module.fail_json(msg="Error: LogicMonitor Collector must be installed on a Linux device.")
         else:
             self.module.fail_json(msg="Error: Something went wrong. We were unable to retrieve the installer from the server")
-
     
     def install(self):
         """Execute the LogicMonitor installer if not already installed"""
@@ -448,7 +432,6 @@ class Collector(LogicMonitor):
         else:
             self.module.fail_json(msg="Error: LogicMonitor Collector must be installed on a Linux device.")
 
-
     def uninstall(self):
         """Uninstall LogicMontitor collector from the system"""
         uninstallfile = self.installdir + "/agent/bin/uninstall.pl"
@@ -461,7 +444,6 @@ class Collector(LogicMonitor):
                 self.module.fail_json(msg="There was an issue installing the collector")
         else:
             self.module.fail_json(msg="Unable to uninstall LogicMonitor Collector. Can not find LogicMonitor uninstaller.")
-
     
     def start(self):
         """Start the LogicMonitor collector"""
@@ -482,7 +464,6 @@ class Collector(LogicMonitor):
                 call(["service", "logicmonitor-watchdog", "start"])
         else:
             self.module.fail_json(msg="Error: LogicMonitor Collector must be installed on a Linux device.")
-
     
     def restart(self):
         """Restart the LogicMonitor collector"""
@@ -536,13 +517,6 @@ class Collector(LogicMonitor):
         else:
             self.module.fail_json(msg="Error: Unable to retrieve timezone offset")
 
-
-    ####################################
-    #                                  #
-    #    internal methods              #
-    #                                  #
-    ####################################    
-
     def _get(self):
         """Returns a JSON object representing the collector"""
         collector_list = self.get_collectors()
@@ -551,7 +525,6 @@ class Collector(LogicMonitor):
                 if collector["description"] == self.description:
                     return collector
         return None
-
         
     def _create(self):
         """Create a new collector in the LogicMonitor account associated with this device"""
@@ -572,7 +545,6 @@ class Collector(LogicMonitor):
             self.id = ret["id"]
             return ret
 
-
     def _delete(self):
         """Delete this collector from the associated LogicMonitor account"""
         if self._get is not None:
@@ -583,7 +555,6 @@ class Collector(LogicMonitor):
                 self.module.fail_json(msg=json.dumps(msg=delete_json))
         else:
             return None
-
 
 
 class Host(LogicMonitor):
@@ -611,19 +582,10 @@ class Host(LogicMonitor):
         self.starttime   = self.module.params["starttime"]
         self.duration    = self.module.params["duration"]
         self.change = False
-
-    
-    ####################################
-    #                                  #
-    #    Public methods                #
-    #                                  #
-    ####################################    
-    
     
     def create(self):
         """Idemopotent function to create if missing, update if changed, or skip"""
         self.update()
-        
     
     def get_properties(self):
         """Returns a hash of the properties associated with this LogicMonitor host"""
@@ -639,14 +601,12 @@ class Host(LogicMonitor):
             print "Unable to find LogicMonitor host which matches {0} ({1})".format(self.displayname, self.hostname) 
             return None
 
-
     def set_properties(self, propertyhash):
         """update the host to have the properties contained in the property hash"""
         self.change = True
         if self.module.check_mode:
             self.module.exit_json(changed=True)
         self.properties = propertyhash
-
 
     def add(self):
         """Add this device to monitoring in your LogicMonitor account"""
@@ -655,7 +615,6 @@ class Host(LogicMonitor):
             if self.module.check_mode:
                 self.module.exit_json(changed=True)
             return self.rpc("addHost", self._buildhosthash( self.hostname, self.displayname, self.collector, self.description, self.groups, self.properties, self.alertenable))
-
 
     def update(self):
         """This method takes changes made to this host and applies them to the corresponding host in your LogicMonitor account."""
@@ -680,7 +639,6 @@ class Host(LogicMonitor):
             if self.module.check_mode:
                 self.module.exit_json(changed=True)
             return self.rpc("addHost", self._buildhosthash( self.hostname, self.displayname, self.collector, self.description, self.groups, self.properties, self.alertenable))
-
         
     def remove(self):
         """remove this host from your LogicMonitor account"""
@@ -689,7 +647,6 @@ class Host(LogicMonitor):
             if self.module.check_mode:
                 self.module.exit_json(changed=True)
             return json.loads(self.rpc("deleteHost", {"id": self.info["id"], "deleteFromSystem": True, "hostGroupId": 1}))
-
     
     def is_changed(self):
         """Return true if the host doesn't match the LogicMonitor account"""
@@ -732,7 +689,6 @@ class Host(LogicMonitor):
         else:
             exit(1)
         return False
-
     
     def sdt(self):
         """create a scheduled down time (maintenance window) for this host"""
@@ -760,13 +716,6 @@ class Host(LogicMonitor):
                 return None
         else:
             self.module.fail_json("Error: Unable to retrieve timezone offset")
-
-
-    ####################################
-    #                                  #
-    #    internal utility methods      #
-    #                                  #
-    ####################################
     
     def _buildhosthash(self, hostname, displayname, collector, description, groups, properties, alertenable):
         """Return a property formated hash for the creation of a host using the rpc function"""
@@ -792,7 +741,6 @@ class Host(LogicMonitor):
                 propnum = propnum + 1
         h["alertEnable"] = alertenable
         return h
-
     
     def _verify_property(self, propname):
         """Check with LogicMonitor server to verify property is unchanged"""
@@ -807,7 +755,6 @@ class Host(LogicMonitor):
                    self.module.fail_json(msg="Error: unable to get verification from server.\n%s" % resp["errmsg"])
         else:
            self.module.fail_json(msg="Error: Can not verify properties of a host which doesn't exist")
-    
     
 
 class Hostgroup(LogicMonitor):
@@ -824,11 +771,6 @@ class Hostgroup(LogicMonitor):
         self.duration    = self.module.params["duration"]
         self.change = False
     
-    ####################################
-    #                                  #
-    #    Public methods                #
-    #                                  #
-    ####################################    
 
     def get_properties(self):
         """Returns a hash of the properties associated with this LogicMonitor host"""
@@ -843,14 +785,12 @@ class Hostgroup(LogicMonitor):
         else:
             return None
 
-
     def set_properties(self, propertyhash):
         """update the host to have the properties contained in the property hash"""
         self.change = True
         if self.module.check_mode:
             self.module.exit_json(changed=True)
         self.properties = propertyhash
-        
     
     def add(self):
         """Idempotent function to ensure that the host group exists in your LogicMonitor account"""
@@ -861,7 +801,6 @@ class Hostgroup(LogicMonitor):
             hgid = self.create_group(self.fullpath)
             self.info = self.get_group(self.fullpath)
             return self.info
-        
     
     def update(self):
         """Idempotent function to ensure the host group settings (alertenable, properties, etc) in the LogicMonitor account match the current object."""
@@ -879,7 +818,6 @@ class Hostgroup(LogicMonitor):
                 self.change = True
                 if self.module.check_mode:
                     self.module.exit_json(changed=True)
-                #end if
                 h =  self._build_host_group_hash( self.fullpath, self.description, self.properties, self.alertenable)
                 h["id"] = self.info["id"]
                 resp = json.loads(self.rpc("updateHostGroup", h))
@@ -895,7 +833,6 @@ class Hostgroup(LogicMonitor):
                 self.module.exit_json(changed=True)
             return self.add()
         
-        
     def remove(self):
         """Idempotent function to ensure the host group does not exist in your LogicMonitor account"""
         if self.info:
@@ -903,7 +840,6 @@ class Hostgroup(LogicMonitor):
             if self.module.check_mode:
                 self.module.exit_json(changed=True)
             resp = json.loads(self.rpc("deleteHostGroup", {"hgId": self.info["id"]}))
-    
     
     def is_changed(self):
         """Return true if the host doesn't match the LogicMonitor account"""
@@ -925,7 +861,6 @@ class Hostgroup(LogicMonitor):
             if set(p) != set(self.properties):
                 return True
         return False
-    
     
     def sdt(self, duration=30, starttime=None):
         """create a scheduled down time (maintenance window) for this host"""
@@ -951,18 +886,10 @@ class Hostgroup(LogicMonitor):
                 return None
         else:
             self.module.fail_json(msg="Error: Unable to retrieve timezone from server")
-    
 
     def create(self):
         """Wrapper for self.update()"""
         self.update()
-    
-
-    ####################################
-    #                                  #
-    #    internal utility methods      #
-    #                                  #
-    ####################################
     
     def _build_host_group_hash(self, fullpath, description, properties, alertenable):
         """Return a property formated hash for the creation of a hostgroup using the rpc function"""
@@ -987,7 +914,6 @@ class Hostgroup(LogicMonitor):
                 propnum = propnum + 1
         h["alertEnable"] = alertenable
         return h
-    
 
     def _verify_property(self, propname):
         """Check with LogicMonitor server to verify property is unchanged"""
@@ -1002,11 +928,10 @@ class Hostgroup(LogicMonitor):
                     self.module.fail_json(msg="Error: unable to get verification from server.")
         else:
             self.module.fail_json(msg="Error: Can not verify properties of a hostgroup which doesn't exist")
-    
-
 
 
 #========================================
+
 
 def selector(module):
     """Figure out which object and which actions to take given the right parameters"""
