@@ -73,8 +73,7 @@ To see what information is available, try the following::
 
     ansible hostname -m setup
 
-The results of this can be used to create dynamic groups of hosts that match particular critera, see the :doc:`group_by` for details,
-as well as in generalized conditional statements as discussed in the `playbook_conditionals` chapter.
+The results of this can be used to create dynamic groups of hosts that match particular critera, see the :doc:`modules` documentation on 'group_by' for details, as well as in generalized conditional statements as discussed in the `playbook_conditionals` chapter.
 
 Turning Off Facts
 `````````````````

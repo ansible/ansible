@@ -1,4 +1,4 @@
-.. _patterns:
+.. _dynamic_inventory:
 
 Dynamic Inventory
 =================
