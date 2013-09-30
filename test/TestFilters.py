@@ -2,6 +2,7 @@
 Test bundled filters
 '''
 
+import os.path
 import unittest, tempfile, shutil
 from ansible import playbook, inventory, callbacks
 import ansible.runner.filter_plugins.core
@@ -82,6 +83,11 @@ class TestFilters(unittest.TestCase):
     def test_quotes(self):
         a = ansible.runner.filter_plugins.core.quote('ls | wc -l')
         assert a == "'ls | wc -l'"
+
+    def test_fileglob(self):
+        pathname = os.path.join(os.path.dirname(__file__), '*')
+        a = ansible.runner.filter_plugins.core.fileglob(pathname)
+        assert __file__ in a
 
     #def test_filters(self):
 
