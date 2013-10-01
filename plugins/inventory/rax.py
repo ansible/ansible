@@ -57,22 +57,17 @@ options:
      - File to find the Rackspace Public Cloud credentials in
     required: true
     default: null
-  region_name:
-    description:
-      - Region name to use in request
-    required: false
-    default: DFW
-author: Jesse Keating
+authors:
+  - Jesse Keating <jesse.keating@rackspace.com>
+  - Paul Durivage <paul.durivage@rackspace.com>
 notes:
-  - Two environment variables need to be set, RAX_CREDS and RAX_REGION.
-  - RAX_CREDS points to a credentials file appropriate for pyrax
-  - RAX_REGION defines a Rackspace Public Cloud region (DFW, ORD, LON, ...)
+  - One environment variable needs to be set: RAX_CREDS_FILE.
+  - RAX_CREDS_FILE points to a credentials file appropriate for pyrax.
+  - See https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating
 requirements: [ "pyrax" ]
 examples:
     - description: List server instances
-      code: RAX_CREDS_FILE=~/.raxpub RAX_REGION=ORD rax.py --list
-    - description: List server instance properties
-      code: RAX_CREDS_FILE=~/.raxpub RAX_REGION=ORD rax.py --host <HOST_IP>
+      code: RAX_CREDS_FILE=~/.raxpub rax.py --list
 '''
 
 import sys
