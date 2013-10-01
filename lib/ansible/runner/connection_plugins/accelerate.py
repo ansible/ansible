@@ -169,11 +169,22 @@ class Connection(object):
         if self.send_data(data):
             raise errors.AnsibleError("Failed to send command to %s" % self.host)
         
-        response = self.recv_data()
-        if not response:
-            raise errors.AnsibleError("Failed to get a response from %s" % self.host)
-        response = utils.decrypt(self.key, response)
-        response = utils.parse_json(response)
+        while True:
+            # we loop here while waiting for the response, because a 
+            # long running command may cause us to receive keepalive packets
+            # ({"pong":"true"}) rather than the response we want. 
+            response = self.recv_data()
+            if not response:
+                raise errors.AnsibleError("Failed to get a response from %s" % self.host)
+            response = utils.decrypt(self.key, response)
+            response = utils.parse_json(response)
+            if "pong" in response:
+                # it's a keepalive, go back to waiting
+                vvvv("received a keepalive packet")
+                continue
+            else:
+                vvvv("received the response")
+                break
 
         return (response.get('rc',None), '', response.get('stdout',''), response.get('stderr',''))
 
