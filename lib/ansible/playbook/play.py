@@ -449,7 +449,7 @@ class Play(object):
                     include_file = template(dirname, tokens[0], mv)
                     include_filename = utils.path_dwim(dirname, include_file)
                     data = utils.parse_yaml_from_file(include_filename)
-                    if 'role_name' in x:
+                    if 'role_name' in x and data is not None:
                         for x in data:
                             if 'include' in x:
                                 x['role_name'] = new_role
