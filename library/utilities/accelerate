@@ -198,7 +198,7 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
         data = b""
         vvvv("in recv_data(), waiting for the header")
         while len(data) < header_len:
-            d = self.request.recv(1024)
+            d = self.request.recv(header_len - len(data))
             if not d:
                 vvv("received nothing, bailing out")
                 return None
@@ -208,7 +208,7 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
         data = data[header_len:]
         vvvv("data received so far (expecting %d): %d" % (data_len,len(data)))
         while len(data) < data_len:
-            d = self.request.recv(1024)
+            d = self.request.recv(data_len - len(data))
             if not d:
                 vvv("received nothing, bailing out")
                 return None
