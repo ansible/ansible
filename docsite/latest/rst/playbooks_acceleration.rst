@@ -4,8 +4,8 @@ Accelerated Mode
 .. versionadded:: 1.3
 
 While SSH using the ControlPersist feature is quite fast and scalable, there is a certain amount of overhead involved in
-creating connections. This can become something of a bottleneck when the number of hosts grows into the hundreds or 
-thousands. To help overcome this, Ansible offers an accelerated connection option. Accelerated mode can be anywhere from 
+creating connections. This can become something of a bottleneck when the number of hosts grows into the hundreds or
+thousands. To help overcome this, Ansible offers an accelerated connection option. Accelerated mode can be anywhere from
 2-6x faster than SSH with ControlPersist enabled, and 10x faster than paramiko.
 
 Accelerated mode works by launching a temporary daemon over SSH. Once the daemon is running, Ansible will connect directly
@@ -19,6 +19,7 @@ Accelerated mode offers several improvments over the original fireball mode:
 * No bootstrapping is required, only a single line needs to be added to each play you wish to run in accelerated mode.
 * Support for sudo commands (see below for more details and caveats).
 * Fewer requirements! ZeroMQ is no longer required, nor are there any special packages beyond python-keyczar.
+* On FreeBSD you will need security/py-keyczar and devel/py-asn1.
 
 In order to use accelerated mode, simply add `accelerate: true` to your play::
 
@@ -117,4 +118,3 @@ any platform.  You will also need gcc and zeromq-devel installed from your packa
 Fedora and EPEL also have Ansible RPM subpackages available for fireball-dependencies.
 
 Also see the module documentation section.
-
