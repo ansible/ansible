@@ -136,7 +136,6 @@ class Runner(object):
         error_on_undefined_vars=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR, # ex. False
         accelerate=False,                   # use accelerated connection
         accelerate_port=None,               # port to use with accelerated connection
-        accelerate_timeout=None,            # number of seconds to wait for a response on the accelerated connection
         ):
 
         # used to lock multiprocess inputs and outputs at various levels
@@ -180,7 +179,6 @@ class Runner(object):
         self.error_on_undefined_vars = error_on_undefined_vars
         self.accelerate       = accelerate
         self.accelerate_port  = accelerate_port
-        self.accelerate_timeout = accelerate_timeout
         self.callbacks.runner = self
         self.original_transport = self.transport
 
@@ -583,12 +581,6 @@ class Runner(object):
             actual_transport = "accelerate"
             if not self.accelerate_port:
                 self.accelerate_port = C.ACCELERATE_PORT
-            try:
-                if not self.accelerate_timeout:
-                    self.accelerate_timeout = C.ACCELERATE_TIMEOUT
-                self.accelerate_timeout = int(self.accelerate_timeout)
-            except:
-                raise errors.AnsibleError("invalid value for the accelerate_timeout parameter")
 
         if actual_transport in [ 'paramiko', 'ssh', 'accelerate' ]:
             actual_port = inject.get('ansible_ssh_port', port)

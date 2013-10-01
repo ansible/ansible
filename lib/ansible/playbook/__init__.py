@@ -314,7 +314,6 @@ class PlayBook(object):
             transport=task.transport, sudo_pass=task.sudo_pass, is_playbook=True,
             check=self.check, diff=self.diff, environment=task.environment, complex_args=task.args, 
             accelerate=task.play.accelerate, accelerate_port=task.play.accelerate_port,
-            accelerate_timeout=task.play.accelerate_timeout, 
             error_on_undefined_vars=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR
         )
 
@@ -456,7 +455,6 @@ class PlayBook(object):
             transport=play.transport, sudo_pass=self.sudo_pass, is_playbook=True, module_vars=play.vars,
             default_vars=play.default_vars, check=self.check, diff=self.diff, 
             accelerate=play.accelerate, accelerate_port=play.accelerate_port,
-            accelerate_timeout=play.accelerate_timeout
         ).run()
         self.stats.compute(setup_results, setup=True)
 
