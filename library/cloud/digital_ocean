@@ -27,7 +27,7 @@ options:
     description:
      - Which target you want to operate on.
     default: droplet
-    choices: ['droplet', 'ssh']
+    choices: ['droplet', 'ssh', 'domain']
   state:
     description:
      - Indicate desired state of the target.
@@ -44,7 +44,7 @@ options:
      - Numeric, the droplet id you want to operate on.
   name:
     description:
-     - String, this is the name of the droplet - must be formatted by hostname rules, or the name of a SSH key.
+     - String, this is the name of the droplet - must be formatted by hostname rules, or the name of a SSH key, or the name of a domain.
   unique_name:
     description:
      - Bool, require unique hostnames.  By default, digital ocean allows multiple hosts with the same name.  Setting this to "yes" allows only one host per name.  Useful for idempotence.
@@ -75,6 +75,9 @@ options:
   ssh_pub_key:
     description:
      - The public SSH key you want to add to your account.
+  ip:
+    description:
+     - The IP address to point a domain at.
 
 notes:
   - Two environment variables can be used, DO_CLIENT_ID and DO_API_KEY.
@@ -141,6 +144,31 @@ EXAMPLES = '''
       size_id=1
       region_id=2
       image_id=3
+
+# Create a domain record
+
+- digital_ocean: >
+      state=present
+      command=domain
+      name=my.digitalocean.domain
+      ip=127.0.0.1
+
+# Create a droplet and a corresponding domain record
+
+- digital_cean: >
+      state=present
+      command=droplet
+      name=test_droplet
+      size_id=1
+      region_id=2
+      image_id=3
+  register: test_droplet
+
+- digital_ocean: >
+      state=present
+      command=domain
+      name={{ test_droplet.name }}.my.domain
+      ip={{ test_droplet.ip_address }}
 '''
 
 import sys
@@ -275,6 +303,72 @@ class SSH(JsonfyMixIn):
         json = cls.manager.new_ssh_key(name, key_pub)
         return cls(json)
 
+class DomainRecord(JsonfyMixIn):
+    manager = None
+
+    def __init__(self, json):
+        self.__dict__.update(json)
+    update_attr = __init__
+
+    def update(self, data = None, record_type = None):
+        json = self.manager.edit_domain_record(self.domain_id,
+                                               self.id,
+                                               record_type if record_type is not None else self.record_type,
+                                               data if data is not None else self.data)
+        self.__dict__.update(json)
+        return self
+
+    def destroy(self):
+        json = self.manager.destroy_domain_record(self.domain_id, self.id)
+        return json
+
+class Domain(JsonfyMixIn):
+    manager = None
+
+    def __init__(self, domain_json):
+        self.__dict__.update(domain_json)
+
+    def destroy(self):
+        self.manager.destroy_domain(self.id)
+
+    def records(self):
+        json = self.manager.all_domain_records(self.id)
+        return map(DomainRecord, json)
+
+    @classmethod
+    def add(cls, name, ip):
+        json = cls.manager.new_domain(name, ip)
+        return cls(json)
+
+    @classmethod
+    def setup(cls, client_id, api_key):
+        cls.manager = DoManager(client_id, api_key)
+        DomainRecord.manager = cls.manager
+
+    @classmethod
+    def list_all(cls):
+        domains = cls.manager.all_domains()
+        return map(cls, domains)
+
+    @classmethod
+    def find(cls, name=None, id=None):
+        if name is None and id is None:
+            return False
+
+        domains = Domain.list_all()
+        
+        if id is not None:
+            for domain in domains:
+                if domain.id == id:
+                    return domain
+
+        if name is not None:
+            for domain in domains:
+                if domain.name == name:
+                    return domain
+
+        return False
+
 def core(module):
     def getkeyordie(k):
         v = module.params[k]
@@ -361,11 +455,50 @@ def core(module):
             key.destroy()
             module.exit_json(changed=True)
 
+    elif command == 'domain':
+        Domain.setup(client_id, api_key)
+        if state in ('present', 'active'):
+            domain = Domain.find(id=module.params["id"])
+
+            if not domain:
+                domain = Domain.find(name=getkeyordie("name"))
+            
+            if not domain:
+                domain = Domain.add(getkeyordie("name"),
+                                    getkeyordie("ip"))
+                module.exit_json(changed=True, domain=domain.to_json())
+            else:
+                records = domain.records()
+                at_record = None
+                for record in records:
+                    if record.name == "@":
+                        at_record = record
+
+                if not at_record.data == getkeyordie("ip"):
+                    record.update(data=getkeyordie("ip"), record_type='A')
+                    module.exit_json(changed=True, domain=Domain.find(id=record.domain_id).to_json())
+
+            module.exit_json(changed=False, domain=domain.to_json())
+
+        elif state in ('absent', 'deleted'):
+            domain = None
+            if "id" in module.params:
+                domain = Domain.find(id=module.params["id"])
+                
+            if not domain and "name" in module.params:
+                domain = Domain.find(name=module.params["name"])
+                
+            if not domain:
+                module.exit_json(changed=False, msg="Domain not found.")
+
+            event_json = domain.destroy()
+            module.exit_json(changed=True, event=event_json)
+
 
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            command = dict(choices=['droplet', 'ssh'], default='droplet'),
+            command = dict(choices=['droplet', 'ssh', 'domain'], default='droplet'),
             state = dict(choices=['active', 'present', 'absent', 'deleted'], default='present'),
             client_id = dict(aliases=['CLIENT_ID'], no_log=True),
             api_key = dict(aliases=['API_KEY'], no_log=True),
@@ -379,6 +512,7 @@ def main():
             wait = dict(type='bool', choices=BOOLEANS, default='yes'),
             wait_timeout = dict(default=300, type='int'),
             ssh_pub_key = dict(type='str'),
+            ip = dict(type='str'),
         ),
         required_together = (
             ['size_id', 'image_id', 'region_id'],
