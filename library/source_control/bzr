@@ -56,7 +56,7 @@ options:
         version_added: "1.4"
         description:
             - Path to bzr executable to use. If not supplied,
-            the normal mechanism for resolving binary paths will be used.
+              the normal mechanism for resolving binary paths will be used.
 '''
 
 EXAMPLES = '''

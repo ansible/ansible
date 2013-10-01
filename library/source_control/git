@@ -79,7 +79,7 @@ options:
         version_added: "1.4"
         description:
             - Path to git executable to use. If not supplied,
-            the normal mechanism for resolving binary paths will be used.
+              the normal mechanism for resolving binary paths will be used.
 notes:
     - If the task seems to be hanging, first verify remote host is in C(known_hosts).
       SSH will prompt user to authorize the first contact with a remote host. One solution is to add
