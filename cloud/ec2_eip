@@ -52,6 +52,10 @@ author: Lorin Hochstein <lorin@nimbisservices.com>
 notes:
    - This module will return C(public_ip) on success, which will contain the
      public IP address associated with the instance.
+   - There may be a delay between the time the Elastic IP is assigned and when
+     the cloud instance is reachable via the new address. Use wait_for and pause
+     to delay further playbook execution until the instance is reachable, if
+     necessary.
 '''
 
 EXAMPLES = '''
