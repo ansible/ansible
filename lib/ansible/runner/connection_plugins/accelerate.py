@@ -180,10 +180,10 @@ class Connection(object):
             response = utils.parse_json(response)
             if "pong" in response:
                 # it's a keepalive, go back to waiting
-                vvvv("received a keepalive packet")
+                vvvv("%s: received a keepalive packet" % self.host)
                 continue
             else:
-                vvvv("received the response")
+                vvvv("%s: received the response" % self.host)
                 break
 
         return (response.get('rc',None), '', response.get('stdout',''), response.get('stderr',''))
