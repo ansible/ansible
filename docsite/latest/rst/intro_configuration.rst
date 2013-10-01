@@ -109,6 +109,15 @@ different locations::
 
 Most users will not need to use this feature.  See `developing_plugins` for more details
 
+display_skipped_hosts
+=====================
+
+If set to `False`, ansible will not display any status for a task that is skipped. The default behavior is to display skipped tasks::
+
+    #display_skipped_hosts=True
+
+Note that Ansible will always show the task header for any task, regardless of whether or not the task is skipped.
+
 error_on_undefined_vars
 =======================
 
