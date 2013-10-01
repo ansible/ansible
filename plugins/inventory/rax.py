@@ -74,6 +74,7 @@ import sys
 import re
 import os
 import argparse
+import collections
 
 try:
     import json
@@ -86,69 +87,123 @@ except ImportError:
     print('pyrax required for this module')
     sys.exit(1)
 
-# Setup the parser
-parser = argparse.ArgumentParser(description='List active instances',
-                            epilog='List by itself will list all the active \
-                            instances. Listing a specific instance will show \
-                            all the details about the instance.')
 
-parser.add_argument('--list', action='store_true', default=True,
-                            help='List active servers')
-parser.add_argument('--host',
-                    help='List details about the specific host (IP address)')
+def host(hostname):
+    hostvars = {}
 
-args = parser.parse_args()
+    for region in pyrax.regions:
+        # Connect to the region
+        cs = pyrax.connect_to_cloudservers(region=region)
+        for server in cs.servers.list():
+            if server.name == hostname:
+                keys = [key for key in vars(server) if key not in ('manager', '_info')]
+                for key in keys:
+                    # Extract value
+                    value = getattr(server, key)
 
-# setup the auth
-try:
-    creds_file = os.environ['RAX_CREDS_FILE']
-    region = os.environ['RAX_REGION']
-except KeyError, e:
-    sys.stderr.write('Unable to load %s\n' % e.message)
-    sys.exit(1)
+                    # Generate sanitized key
+                    key = 'rax_' + (re.sub("[^A-Za-z0-9\-]", "_", key)
+                                      .lower()
+                                      .lstrip("_"))
+                    hostvars[key] = value
 
-pyrax.set_setting('identity_type', 'rackspace')
+                # And finally, add an IP address
+                hostvars['ansible_ssh_host'] = server.accessIPv4
+    print(json.dumps(hostvars, sort_keys=True, indent=4))
 
-try:
-    pyrax.set_setting("identity_type", "rackspace")
-    pyrax.set_credential_file(os.path.expanduser(creds_file),
-                              region=region)
-except Exception, e:
-    sys.stderr.write("%s: %s\n" % (e, e.message))
-    sys.exit(1)
 
-# Execute the right stuff
-if not args.host:
-    groups = {}
+def _list(region):
+    groups = collections.defaultdict(list)
+    hostvars = collections.defaultdict(dict)
 
-    # Cycle on servers
-    for server in pyrax.cloudservers.list():
-        # Define group (or set to empty string)
-        try:
-            group = server.metadata['group']
-        except KeyError:
-            group = 'undefined'
+    if region and region.upper() in pyrax.regions:
+        pyrax.regions = (region,)
 
-        # Create group if not exist and add the server
-        groups.setdefault(group, []).append(server.accessIPv4)
+    # Go through all the regions looking for servers
+    for region in pyrax.regions:
+        # Connect to the region
+        cs = pyrax.connect_to_cloudservers(region=region)
+        for server in cs.servers.list():
+            # Create a group on region
+            groups[region].append(server.name)
 
-    # Return server list
-    print(json.dumps(groups))
+            # Anything we can discern from the hostname?
+            try:
+                subdom = server.name.split('.')[0]
+            except IndexError:
+                pass
+            else:
+                for name in ('web', 'db', 'sql', 'lb', 'app'):
+                    if name in subdom:
+                        groups[name].append(server.name)
+
+            # Check if group metadata key in servers' metadata
+            try:
+                group = server.metadata['group']
+            except KeyError:
+                pass
+            else:
+                # Create group if not exist and add the server
+                groups[group].append(server.name)
+
+            # Add host metadata
+            keys = [key for key in vars(server) if key not in ('manager', '_info')]
+            for key in keys:
+                # Extract value
+                value = getattr(server, key)
+
+                # Generate sanitized key
+                key = 'rax_' + (re.sub("[^A-Za-z0-9\-]", "_", key)
+                                  .lower()
+                                  .lstrip('_'))
+                hostvars[server.name][key] = value
+
+            # And finally, add an IP address
+            hostvars[server.name]['ansible_ssh_host'] = server.accessIPv4
+
+    if hostvars:
+        groups['_meta'] = {'hostvars': hostvars}
+    print(json.dumps(groups, sort_keys=True, indent=4))
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='Ansible Rackspace Cloud '
+                                                 'inventory module')
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('--list', action='store_true',
+                        help='List active servers')
+    group.add_argument('--host', help='List details about the specific host')
+    return parser.parse_args()
+
+
+def setup():
+    try:
+        creds_file = os.environ['RAX_CREDS_FILE']
+        region = os.getenv('RAX_REGION')
+    except KeyError, e:
+        sys.stderr.write('Unable to load environment '
+                         'variable %s\n' % e.message)
+        sys.exit(1)
+
+    pyrax.set_setting('identity_type', 'rackspace')
+
+    try:
+        pyrax.set_credential_file(os.path.expanduser(creds_file))
+    except Exception, e:
+        sys.stderr.write("%s: %s\n" % (e, e.message))
+        sys.exit(1)
+
+    return region
+
+
+def main():
+    args = parse_args()
+    region = setup()
+    if args.list:
+        _list(region)
+    elif args.host:
+        host(args.host)
     sys.exit(0)
 
-# Get the deets for the instance asked for
-results = {}
-# This should be only one, but loop anyway
-for server in pyrax.cloudservers.list():
-    if server.accessIPv4 == args.host:
-        for key in [key for key in vars(server) if
-                    key not in ('manager', '_info')]:
-            # Extract value
-            value = getattr(server, key)
-    
-            # Generate sanitized key
-            key = 'rax_' + re.sub("[^A-Za-z0-9\-]", "_", key).lower()
-            results[key] = value
-
-print(json.dumps(results))
-sys.exit(0)
+if __name__ == '__main__':
+    main()
