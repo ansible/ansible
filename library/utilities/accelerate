@@ -311,14 +311,7 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
 
         if final_path:
             log("moving %s to %s" % (out_path, final_path))
-            args = ['sudo','cp',out_path,final_path]
-            rc, stdout, stderr = self.server.module.run_command(args, close_fds=True)
-            if rc != 0:
-                return dict(failed=True, stdout="failed to copy the file into position with sudo")
-            args = ['sudo','chown',final_user,out_path,final_path]
-            rc, stdout, stderr = self.server.module.run_command(args, close_fds=True)
-            if rc != 0:
-                return dict(failed=True, stdout="failed to chown the file via sudo")
+            self.server.module.atomic_move(out_path, final_path)
         return dict()
 
 def daemonize(module, password, port, minutes):
