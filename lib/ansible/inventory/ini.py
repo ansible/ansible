@@ -25,6 +25,7 @@ from ansible.inventory.expand_hosts import expand_hostname_range
 from ansible import errors
 import shlex
 import re
+import ast
 
 class InventoryParser(object):
     """
@@ -116,7 +117,7 @@ class InventoryParser(object):
                                 (k,v) = t.split("=")
                             except ValueError, e:
                                 raise errors.AnsibleError("Invalid ini entry: %s - %s" % (t, str(e)))
-                            host.set_variable(k,v)
+                            host.set_variable(k,ast.literal_eval(v))
                     self.groups[active_group_name].add_host(host)
 
     # [southeast:children]
