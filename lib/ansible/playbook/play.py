@@ -449,6 +449,10 @@ class Play(object):
                     include_file = template(dirname, tokens[0], mv)
                     include_filename = utils.path_dwim(dirname, include_file)
                     data = utils.parse_yaml_from_file(include_filename)
+                    if 'role_name' in x:
+                        for x in data:
+                            if 'include' in x:
+                                x['role_name'] = new_role
                     results += self._load_tasks(data, mv, default_vars, included_sudo_vars, included_additional_conditions, original_file=include_filename, role_name=new_role)
             elif type(x) == dict:
                 results.append(Task(self,x,module_vars=task_vars,default_vars=default_vars,additional_conditions=additional_conditions,role_name=role_name))
