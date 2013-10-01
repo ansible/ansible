@@ -22,6 +22,7 @@
 
 import shutil
 import datetime
+import re
 import tempfile
 
 DOCUMENTATION = '''
@@ -295,12 +296,19 @@ def main():
     # Check the digest of the destination file and ensure that it matches the 
     # sha256sum parameter if it is present
     if sha256sum != '':
+        # Remove any non-alphanumeric characters, including the infamous
+        # Unicode zero-width space
+        stripped_sha256sum = re.sub(r'\W+', '', sha256sum)
+
         if not HAS_HASHLIB:
             os.remove(dest)
             module.fail_json(msg="The sha256sum parameter requires hashlib, which is available in Python 2.5 and higher")
-        if sha256sum != module.sha256(dest):
+        else:
+            destination_checksum = module.sha256(dest)
+
+        if stripped_sha256sum != destination_checksum:
             os.remove(dest)
-            module.fail_json(msg="The SHA-256 checksum for %s did not match %s" % (dest, sha256sum))
+            module.fail_json(msg="The SHA-256 checksum for %s did not match %s; it was %s." % (dest, sha256sum, destination_checksum))
 
     os.remove(tmpsrc)
 
