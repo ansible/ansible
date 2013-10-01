@@ -127,7 +127,7 @@ class Connection(object):
         try:
             vvvv("%s: in recv_data(), waiting for the header" % self.host)
             while len(data) < header_len:
-                d = self.conn.recv(1024)
+                d = self.conn.recv(header_len - len(data))
                 if not d:
                     vvvv("%s: received nothing, bailing out" % self.host)
                     return None
@@ -137,7 +137,7 @@ class Connection(object):
             data = data[header_len:]
             vvvv("%s: data received so far (expecting %d): %d" % (self.host,data_len,len(data)))
             while len(data) < data_len:
-                d = self.conn.recv(1024)
+                d = self.conn.recv(data_len - len(data))
                 if not d:
                     vvvv("%s: received nothing, bailing out" % self.host)
                     return None
