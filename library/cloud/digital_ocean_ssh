@@ -56,7 +56,6 @@ EXAMPLES = '''
 
 - digital_ocean_ssh: >
       state=present
-      command=ssh
       name=my_ssh_key
       ssh_pub_key='ssh-rsa AAAA...'
       client_id=XXX
