@@ -89,7 +89,6 @@ class Connection(object):
 
         try:
             if not self.is_connected:
-                # TODO: make the timeout and retries configurable?
                 tries = 3
                 self.conn = socket.socket()
                 self.conn.settimeout(constants.ACCELERATE_CONNECT_TIMEOUT)
@@ -105,7 +104,7 @@ class Connection(object):
                 if tries == 0:
                     vvv("Could not connect via the accelerated connection, exceeded # of tries")
                     raise errors.AnsibleError("Failed to connect")
-                self.conn.settimeout(self.runner.accelerate_timeout)
+                self.conn.settimeout(constants.ACCELERATE_TIMEOUT)
         except:
             if allow_ssh:
                 vvv("Falling back to ssh to startup accelerated mode")
