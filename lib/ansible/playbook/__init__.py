@@ -348,7 +348,7 @@ class PlayBook(object):
         ansible.callbacks.set_task(self.runner_callbacks, task)
 
         if task.role_name:
-            name = '%s|%s' % (task.role_name, task.name)
+            name = '%s | %s' % (task.role_name, task.name)
         else:
             name = task.name
 
