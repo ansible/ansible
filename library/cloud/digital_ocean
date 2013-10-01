@@ -328,13 +328,15 @@ def core(module):
 
         elif state in ('absent', 'deleted'):
             # First, try to find a droplet by id.
-            droplet = Droplet.find(id=getkeyordie('id'))
+            droplet = None
+            if 'id' in module.params:
+                droplet = Droplet.find(id=module.params['id'])
 
             # If we couldn't find the droplet and the user is allowing unique
             # hostnames, then check to see if a droplet with the specified
             # hostname already exists.
-            if not droplet and module.params['unique_name']:
-                droplet = Droplet.find(name=getkeyordie('name'))
+            if not droplet and module.params['unique_name'] and 'name' in module.params:
+                droplet = Droplet.find(name=module.params['name'])
 
             if not droplet:
                 module.exit_json(changed=False, msg='The droplet is not found.')
