@@ -447,4 +447,19 @@ This is the port to use for accelerate mode::
   
    accelerate_port = 5099
 
+accelerate_timeout
+==================
+
+This setting controls the timeout for receiving data from a client. If no data is received during this time, the socket connection will be closed. A keepalive packet is sent back to the controller every 15 seconds, so this timeout should not be set lower than 15 (by default, the timeout is 30 seconds)::
+
+    accelerate_timeout = 30
+
+accelerate_connect_timeout
+==========================
+
+This setting controls the timeout for the socket connect call, and should be kept relatively low. The connection to the `accelerate_port` will be attempted 3 times before Ansible will fall back to ssh or paramiko (depending on your default connection setting) to try and start the accelerate daemon remotely. The default setting is 1.0 seconds::
+
+    accelerate_connect_timeout = 1.0
+
+Note, this value can be set to less than one second, however it is probably not a good idea to do so unless you're on a very fast and reliable LAN. If you're connecting to systems over the internet, it may be neccessary to increase this timeout.
 
