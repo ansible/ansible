@@ -122,7 +122,7 @@ def set_port_disabled_permanent(zone, port, protocol):
 ####################
 # service handling
 #
-def get_service_enabled(zone):
+def get_service_enabled(zone, service):
     if service in fw.getServices(zone):
         return True
     else:
