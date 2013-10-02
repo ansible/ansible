@@ -680,9 +680,9 @@ class Runner(object):
                     cond = template.template(self.basedir, until, inject, expand_lists=False)
                     if utils.check_conditional(cond, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
                         break
-                    if result.result['attempts'] == retries and not utils.check_conditional(cond, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
-                        result.result['failed'] = True 
-                        result.result['msg'] = "Task failed as maximum retries was encountered"
+                if result.result['attempts'] == retries and not utils.check_conditional(cond, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
+                    result.result['failed'] = True 
+                    result.result['msg'] = "Task failed as maximum retries was encountered"
             else:
                 result.result['attempts'] = 0
         conn.close()
