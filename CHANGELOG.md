@@ -22,6 +22,7 @@ New modules:
 
 Misc changes:
 
+* (docs pending) New features for accelerate mode: configurable timeouts and a keepalives for long running tasks.
 * Added a `delimiter` field to the assemble module.
 * Added `ansible_env` to the list of facts returned by the setup module.
 * Added `state=touch` to the file module, which functions similarly to the command-line version of `touch`.
