@@ -248,7 +248,7 @@ def main():
             bucket         = dict(required=True),
             object         = dict(),
             src            = dict(),
-            dest           = dict(),
+            dest           = dict(default=None),
             mode           = dict(choices=['get', 'put', 'delete', 'create', 'geturl', 'getstr'], required=True),
             expiry         = dict(default=600, aliases=['expiration']),
             s3_url         = dict(aliases=['S3_URL']),
@@ -261,7 +261,8 @@ def main():
     bucket = module.params.get('bucket')
     obj = module.params.get('object')
     src = module.params.get('src')
-    dest = os.path.expanduser(module.params.get('dest'))
+    if module.params.get('dest'):
+        dest = os.path.expanduser(module.params.get('dest'))
     mode = module.params.get('mode')
     expiry = int(module.params['expiry'])
     s3_url = module.params.get('s3_url')
@@ -404,7 +405,7 @@ def main():
                 if deletertn is True:
                     module.exit_json(msg="Bucket %s and all keys have been deleted."%bucket, changed=True)
             else:
-                module.fail_json(msg="Bucket does not exist.", failed=True)
+                module.fail_json(msg="Bucket does not exist.", Changed=False)
         else:
             module.fail_json(msg="Bucket parameter is required.", failed=True)
  
@@ -416,7 +417,7 @@ def main():
             if bucketrtn is True:
                 module.exit_json(msg="Bucket already exists.", changed=False)
             else:
-                created = create_bucket(module, s3, bucket)
+                module.exit_json(msg="Bucket created succesfully", changed=create_bucket(module, s3, bucket))
         if bucket and obj:
             bucketrtn = bucket_check(module, s3, bucket)
             if obj.endswith('/'):
