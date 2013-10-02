@@ -341,7 +341,7 @@ class DefaultRunnerCallbacks(object):
         call_callback_module('runner_on_async_failed', host, res, jid)
 
     def on_file_diff(self, host, diff):
-        call_callback_module('runner_on_file_diff', diff)
+        call_callback_module('runner_on_file_diff', host, diff)
 
 ########################################################################
 
