@@ -133,16 +133,14 @@ class SourcesList(object):
             return os.path.abspath(os.path.join(apt_pkg.config.find_dir('Dir::Etc::sourceparts'), filename))
 
     def _suggest_filename(self, line):
-        def _remove_protocol(s):
-            if '://' in s:
-                return s.split('://')[1]
-            else:
-                return s
-
         def _cleanup_filename(s):
             return '_'.join(re.sub('[^a-zA-Z0-9]', ' ', s).split())
 
-        parts = [_remove_protocol(part) for part in line.split() if part not in VALID_SOURCE_TYPES]
+        # Drop options and protocols.
+        line = re.sub('\[[^\]]+\]', '', line)
+        line = re.sub('\w+://', '', line)
+
+        parts = [part for part in line.split() if part not in VALID_SOURCE_TYPES]
         return '%s.list' % _cleanup_filename(' '.join(parts[:1]))
 
     def _parse(self, line, raise_if_invalid_or_disabled=False):
