@@ -674,7 +674,7 @@ class Runner(object):
                     result = handler.run(conn, tmp, module_name, module_args, inject, complex_args)
                     result.result['attempts'] = x
                     vv("Result from run %i is: %s" % (x, result.result))
-                    if "failed" in result.result::
+                    if "failed" in result.result:
                         break
                     inject[self.module_vars.get('register')] = result.result
                     cond = template.template(self.basedir, until, inject, expand_lists=False)
