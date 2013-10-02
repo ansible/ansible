@@ -129,7 +129,7 @@ class Connection(object):
         return self
 
     def send_data(self, data):
-        packed_len = struct.pack('Q',len(data))
+        packed_len = struct.pack('!Q',len(data))
         return self.conn.sendall(packed_len + data)
 
     def recv_data(self):
@@ -144,7 +144,7 @@ class Connection(object):
                     return None
                 data += d
             vvvv("%s: got the header, unpacking" % self.host)
-            data_len = struct.unpack('Q',data[:header_len])[0]
+            data_len = struct.unpack('!Q',data[:header_len])[0]
             data = data[header_len:]
             vvvv("%s: data received so far (expecting %d): %d" % (self.host,data_len,len(data)))
             while len(data) < data_len:

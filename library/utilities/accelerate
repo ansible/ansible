@@ -190,7 +190,7 @@ class ThreadedTCPServer(SocketServer.ThreadingTCPServer):
 
 class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
     def send_data(self, data):
-        packed_len = struct.pack('Q', len(data))
+        packed_len = struct.pack('!Q', len(data))
         return self.request.sendall(packed_len + data)
 
     def recv_data(self):
@@ -204,7 +204,7 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
                 return None
             data += d
         vvvv("in recv_data(), got the header, unpacking")
-        data_len = struct.unpack('Q',data[:header_len])[0]
+        data_len = struct.unpack('!Q',data[:header_len])[0]
         data = data[header_len:]
         vvvv("data received so far (expecting %d): %d" % (data_len,len(data)))
         while len(data) < data_len:
