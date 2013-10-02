@@ -104,7 +104,7 @@ def get_installed_versions(module, remote=False):
         if match:
             versions = match.group(1)
             for version in versions.split(', '):
-                installed_versions.append(version)
+                installed_versions.append(version.split()[0])
     return installed_versions
 
 def exists(module):
