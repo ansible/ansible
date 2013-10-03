@@ -50,7 +50,7 @@ options:
         description:
             - path used for local ansible facts (*.fact) - files in this dir
               will be run (if executable) and their results be added to ansible_local facts
-              if a file is not executable it is read. 
+              if a file is not executable it is read.
               File/results format can be json or ini-format
         required: false
         default: '/etc/ansible/facts.d'
@@ -191,7 +191,7 @@ class Facts(object):
         fact_path = module.params.get('fact_path', None)
         if not fact_path or not os.path.exists(fact_path):
             return
-            
+
         local = {}
         for fn in sorted(glob.glob(fact_path + '/*.fact')):
             # where it will sit under local facts
@@ -204,7 +204,7 @@ class Facts(object):
                 rc, out, err = module.run_command(fn)
             else:
                 out = open(fn).read()
-            
+
             # load raw json
             fact = 'loading %s' % fact_base
             try:
@@ -230,7 +230,7 @@ class Facts(object):
         if not local:
             return
         self.facts['local'] = local
-            
+
     # platform.dist() is deprecated in 2.6
     # in 2.6 and newer, you should use platform.linux_distribution()
     def get_distribution_facts(self):
@@ -1576,7 +1576,7 @@ class GenericBsdIfconfigNetwork(Network):
             for line in lines:
                 words = line.split()
                 # Collect output from route command
-                if len(words) > 0:
+                if len(words) > 1:
                     if words[0] == 'interface:':
                         interface[v]['interface'] = words[1]
                     if words[0] == 'gateway:':
