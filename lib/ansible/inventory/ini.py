@@ -65,8 +65,9 @@ class InventoryParser(object):
         active_group_name = 'ungrouped'
 
         for line in self.lines:
-            if line.startswith("[") and line.strip().endswith("]"):
-                active_group_name = line.split(" #")[0].replace("[","").replace("]","").strip()
+            line = line.split("#")[0].strip()
+            if line.startswith("[") and line.endswith("]"):
+                active_group_name = line.replace("[","").replace("]","")
                 if line.find(":vars") != -1 or line.find(":children") != -1:
                     active_group_name = active_group_name.rsplit(":", 1)[0]
                     if active_group_name not in self.groups:
@@ -76,10 +77,10 @@ class InventoryParser(object):
                 elif active_group_name not in self.groups:
                     new_group = self.groups[active_group_name] = Group(name=active_group_name)
                     all.add_child_group(new_group)
-            elif line.startswith("#") or line.startswith(";") or line == '':
+            elif line.startswith(";") or line == '':
                 pass
             elif active_group_name:
-                tokens = shlex.split(line.split(" #")[0])
+                tokens = shlex.split(line)
                 if len(tokens) == 0:
                     continue
                 hostname = tokens[0]
