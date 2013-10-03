@@ -228,20 +228,20 @@ def main():
     os.chdir(app_path)
     rebar_path = module.get_bin_path('rebar', True, opt_dirs=[app_path,])
     
-    cmd = "{rebar}".format(rebar=rebar_path)
+    cmd = rebar_path
 
     for param in general_params:
         if module.params[param]:
-            cmd = '{command} --{param}={value}'.format(command=cmd, param=param, value=module.params[param])
+            cmd = '%s --%s=%s' % (cmd, param, module.params[param])
     for param in general_boolen_params:
         if module.params[param]:
-            cmd = '{command} --{param}'.format(command=cmd, param=param)
+            cmd = '%s --%s' % (cmd, param)
 
-    cmd = "{command} {operation}".format(command=cmd, operation=command)
+    cmd = "%s %s" % (cmd, command)
 
     for param in specific_params:
         if module.params[param]:
-            cmd = '{command} {param}'.format(command=cmd, param=module.params[param])
+            cmd = '%s %s' %(cmd, module.params[param])
 
     if module.check_mode:
         module.exit_json(changed=True, cmd=cmd)

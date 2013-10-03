@@ -101,23 +101,19 @@ def main():
     try:
        _, address = node.split('@') 
     except ValueError:
-        module.fail_json(msg="Invalid Erlang Node Name Passed - {node}".format(node=node))
+        module.fail_json(msg="Invalid Erlang Node Name Passed - %s" % node)
 
-    tmp_name = "ansible_{0}@{1}".format(random.randint(1, 100), address)
+    tmp_name = "ansible_%s@%s" % (random.randint(1, 100), address)
 
     if is_valid_ip(address):
-        cmd = "{cmd} -name '{name}'".format(cmd=cmd, name=tmp_name)
+        cmd = "%s -name '%s'" % (cmd, tmp_name)
     else:
-        cmd = "{cmd} -sname '{name}'".format(cmd=cmd, name=tmp_name)
+        cmd = "%s -sname '%s'" % (cmd, tmp_name)
 
     if cookie:
-        cmd = "{cmd} -setcookie '{cookie}'".format(cmd=cmd, cookie=cookie)
+        cmd = "%s -setcookie '%s'" % (cmd, cookie)
 
-    cmd = "{cmd} -eval \"io:format(\\\"~p~n\\\", [rpc:call('{node}', '{module}', '{method}', [{args}])]).\" -s erlang halt ".format(cmd=cmd,
-                                                                                                                      node=node,
-                                                                                                                      module=erlang_module,
-                                                                                                                      method=method,
-                                                                                                                      args=args)
+    cmd = "%s -eval \"io:format(\\\"~p~n\\\", [rpc:call('%s', '%s', '%s', [%s])]).\" -s erlang halt " % (cmd, node, erlang_module, method, args)
     print cmd
     rc, out, err = module.run_command(cmd)
     if rc != 0:
