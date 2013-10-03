@@ -57,7 +57,7 @@ different locations::
 
    action_plugins = /usr/share/ansible_plugins/action_plugins
 
-Most users will not need to use this feature.  See `developing_plugins` for more details.
+Most users will not need to use this feature.  See :doc:`developing_plugins` for more details.
 
 ansible_managed
 ===============
@@ -100,7 +100,7 @@ different locations::
 
    action_plugins = /usr/share/ansible_plugins/action_plugins
 
-Most users will not need to use this feature.  See `developing_plugins` for more details
+Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
 connection_plugins
 ==================
@@ -110,7 +110,7 @@ different locations::
 
    action_plugins = /usr/share/ansible_plugins/action_plugins
 
-Most users will not need to use this feature.  See `developing_plugins` for more details
+Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
 display_skipped_hosts
 =====================
@@ -164,7 +164,7 @@ Note that /usr/bin/ansible always requires a host pattern and does not use this 
 poll_interval
 =============
 
-For asynchronous tasks in Ansible (covered in `playbooks_async`), this is how often to check back on the status of those
+For asynchronous tasks in Ansible (covered in :doc:`playbooks_async`), this is how often to check back on the status of those
 tasks when an explicit poll interval is not supplied.  The default is a reasonably moderate 15 seconds which is a tradeoff
 between checking in frequently and providing a quick turnaround when something may have completed::
 
@@ -173,7 +173,7 @@ between checking in frequently and providing a quick turnaround when something m
 hash_behavior
 =============
 
-Ansible by default will override variables in specific precedence orders, as described in `playbooks_variables`.  When a variable
+Ansible by default will override variables in specific precedence orders, as described in :doc:`playbooks_variables`.  When a variable
 of higher precedence wins, it will replace the other value.  
 
 Some users prefer that variables that are hashes (aka 'dictionaries' in Python terms) are merged together.  This setting is called 'merge'. This is not the default behavior and it does not affect variables whose values are scalars (integers, strings) or
@@ -195,7 +195,7 @@ to talk to::
 host_key_checking
 =================
 
-As described in `intro_gettingstarted`, host key checking is on by default in Ansible 1.3 and later.  If you understand the
+As described in :doc:`intro_gettingstarted`, host key checking is on by default in Ansible 1.3 and later.  If you understand the
 implications and wish to disable it, you may do so here by setting the value to False::
 
     host_key_checking=True
@@ -208,7 +208,7 @@ different locations::
 
    action_plugins = /usr/share/ansible_plugins/action_plugins
 
-Most users will not need to use this feature.  See `developing_plugins` for more details
+Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
 jinja2_extensions
 =================
@@ -259,7 +259,7 @@ different locations::
 
    action_plugins = /usr/share/ansible_plugins/action_plugins
 
-Most users will not need to use this feature.  See `developing_plugins` for more details
+Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
 module_name
 ===========
@@ -375,7 +375,7 @@ different locations::
 
    action_plugins = /usr/share/ansible_plugins/action_plugins
 
-Most users will not need to use this feature.  See `developing_plugins` for more details
+Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
 
 Paramiko Specific Settings
