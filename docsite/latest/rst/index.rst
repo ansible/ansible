@@ -65,7 +65,8 @@ ways to organize playbooks and the files they include, and we'll offer up some s
    playbooks_conditionals
    playbooks_loops
    playbooks_best_practices
-   Example Playbooks <https://github.com/ansible/ansible-examples>
+
+It is recommended to look at `Example Playbooks <https://github.com/ansible/ansible-examples>`_ while reading along with the playbook documentation.  These illustrate best practices as well as how to put many of the various concepts together.
 
 Advanced Topics In Playbooks
 ````````````````````````````
