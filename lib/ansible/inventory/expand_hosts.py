@@ -41,8 +41,7 @@ def detect_range(line = None):
 
     Returnes True if the given line contains a pattern, else False.
     '''
-    if (not line.startswith("[") and
-        line.find("[") != -1 and
+    if (line.find("[") != -1 and
         line.find(":") != -1 and
         line.find("]") != -1 and
         line.index("[") < line.index(":") < line.index("]")):
