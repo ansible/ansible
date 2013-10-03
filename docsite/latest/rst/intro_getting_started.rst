@@ -7,13 +7,13 @@ Getting Started
 About
 `````
 
-Now that you've read `intro_installation` and installed Ansible, it's time to dig in and get
+Now that you've read :doc:`intro_installation` and installed Ansible, it's time to dig in and get
 started with some commands.  
 
 What we are showing first are not the powerful configuration/deployment/orchestration of Ansible, called playbooks.
 Playbooks are covered in a seperate section.
 
-This is basically about how to get going initially.  Once you have this down, read `intro_adhoc` for some more
+This is basically about how to get going initially.  Once you have this down, read :doc:`intro_adhoc` for some more
 detail, and then you'll be ready to dive into playbooks.
 
 Remote Connection Information
@@ -28,12 +28,11 @@ OpenSSH called 'paramiko'.  If you wish to use features like Kerberized SSH and 
 
 In Ansible 1.2 and before, the default was strictly paramiko and native SSH had to be explicitly selected with -c ssh or set in the configuration file.
 
-If talking with some remote devices that don't support SFTP, you can switch to SCP mode in
-`intro_config`.
+If talking with some remote devices that don't support SFTP, you can switch to SCP mode in :doc:`intro_config`.
 
 When speaking with remote machines, Ansible will by default assume you are using SSH keys.  To enable password auth, supply the option --ask-pass where needed.  If using sudo features and when sudo requires a password, also supply --ask-sudo-pass as appropriate.
 
-Ansible also contains a feature called `playbooks_accelerate` which uses SSH for initial key exchange
+Ansible also contains a feature called :doc:`playbooks_accelerate` which uses SSH for initial key exchange
 and then communicates over a high speed encrypted connection.  
 
 While it may be common sense, it is worth sharing: Any management system benefits from being run near your machines you are being managed. If running in a cloud, onsider running Ansible from a machine inside that cloud.
@@ -52,7 +51,7 @@ which you have your SSH key in ``authorized_keys``::
     aserver.example.org
     bserver.example.org
 
-This is an inventory file, which is also explained in greater depth here:  `intro_inventory`.
+This is an inventory file, which is also explained in greater depth here:  :doc:`intro_inventory`.
 
 We'll assume you are using SSH keys for authentication.  Set up SSH agent to avoid retyping passwords:
 
