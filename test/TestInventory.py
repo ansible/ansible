@@ -294,6 +294,12 @@ class TestInventory(unittest.TestCase):
         expected_hosts=['host1A','host2A','host1B','host2B']
         assert sorted(hosts) == sorted(expected_hosts)
 
+    def test_leading_range(self):
+        i = Inventory(os.path.join(self.test_dir, 'inventory','test_leading_range'))
+        hosts = i.list_hosts('test')
+        expected_hosts=['1.host','2.host','A.host','B.host']
+        assert sorted(hosts) == sorted(expected_hosts)
+
     ###################################################
     ### Inventory API tests
 

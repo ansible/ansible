@@ -65,7 +65,7 @@ class InventoryParser(object):
         active_group_name = 'ungrouped'
 
         for line in self.lines:
-            if line.startswith("["):
+            if line.startswith("[") and line.strip().endswith("]"):
                 active_group_name = line.split(" #")[0].replace("[","").replace("]","").strip()
                 if line.find(":vars") != -1 or line.find(":children") != -1:
                     active_group_name = active_group_name.rsplit(":", 1)[0]
