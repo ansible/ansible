@@ -16,7 +16,7 @@
 
 DOCUMENTATION = '''
 ---
-module: rax_clb_nodes
+module: rax_clb
 short_description: add, modify and remove nodes from a Rackspace Cloud Load Balancer
 description:
   - Adds, modifies and removes nodes from a Rackspace Cloud Load Balancer
@@ -107,7 +107,7 @@ notes:
 EXAMPLES = '''
 # Add a new node to the load balancer
 - local_action:
-    module: rax_clb_nodes
+    module: rax_clb
     load_balancer_id: 71
     address: 10.2.2.3
     port: 80
@@ -118,7 +118,7 @@ EXAMPLES = '''
 
 # Drain connections from a node
 - local_action:
-    module: rax_clb_nodes
+    module: rax_clb
     load_balancer_id: 71
     node_id: 410
     condition: draining
@@ -127,7 +127,7 @@ EXAMPLES = '''
 
 # Remove a node from the load balancer
 - local_action:
-    module: rax_clb_nodes
+    module: rax_clb
     load_balancer_id: 71
     node_id: 410
     state: absent
