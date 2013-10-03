@@ -4,12 +4,15 @@ Accelerated Mode
 .. versionadded:: 1.3
 
 While SSH using the ControlPersist feature is quite fast and scalable, there is a certain amount of overhead involved in
-creating connections. This can become something of a bottleneck when the number of hosts grows into the hundreds or
-thousands. To help overcome this, Ansible offers an accelerated connection option. Accelerated mode can be anywhere from
+using SSH connections.  
+
+Accelerate mode is there to help connections work faster, but still uses SSH for initial secure key exchange.
+
+Accelerated mode can be anywhere from
 2-6x faster than SSH with ControlPersist enabled, and 10x faster than paramiko.
 
 Accelerated mode works by launching a temporary daemon over SSH. Once the daemon is running, Ansible will connect directly
-to it via a raw socket connection. Ansible secures this communication by using a temporary AES key that is uploaded during
+to it via a socket connection. Ansible secures this communication by using a temporary AES key that is uploaded during
 the SSH connection (this key is different for every host, and is also regenerated every time the daemon is started). By default,
 Ansible will use port 5099 for the accelerated connection, though this is configurable. Once running, the daemon will accept
 connections for 30 minutes, after which time it will terminate itself and need to be restarted over SSH.
