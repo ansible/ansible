@@ -1,6 +1,9 @@
 Error Handling In Playbooks
 ===========================
 
+Ansible normally has defaults that make sure to check the return codes of commands and modules and
+it fails fast -- forcing an error to be dealt with unless you decide otherwise.
+y
 Sometimes a command that returns 0 isn't an error.  Sometimes a command might not always
 need to report that it 'changed' the remote system.  This section describes how to change
 the default behavior of Ansible for certain tasks so output and error handling behavior is
