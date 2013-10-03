@@ -5,27 +5,40 @@ Introduction To Ad-Hoc Commands
 .. highlight:: bash
 
 The following examples show how to use `/usr/bin/ansible` for running
-ad hoc tasks.  
+ad hoc tasks. 
+
+What's an ad-hoc command?
+
+An ad-hoc command is something that you might type in to do something really
+quick, but don't want to save for later.   
 
 This is a good place to start to understand the basics of what ansible can do
-prior to learning the playbooks language, but ad-hoc commands can also be used
+prior to learning the playbooks language -- ad-hoc commands can also be used
 to do quick things that you might not neccessarily want to write a full playbook 
 for.  
 
+Generally speaking, the true power of Ansible lies in playbooks.
 Why would you use ad-hoc tasks versus playbooks?
 
 For instance, if you wanted to power off all of your lab for Christmas vacation,
 you could execute a quick one-liner in Ansible without writing a playbook.
 
-For configuration management and deployments, though you'll want to pick up on
-using '/usr/bin/ansible-playbook' -- the concepts port over directly.
+For configuration management and deployments, though, you'll want to pick up on
+using '/usr/bin/ansible-playbook' -- the concepts you will learn here will 
+port over directly to the playbook language.
+
 (See :doc:`playbooks` for more information about those)
+
+If you haven't read `intro_inventroy` already, please look that over a bit first
+and then we'll get going.
 
 .. contents::
    :depth: 2
 
 Parallelism and Shell Commands
 ``````````````````````````````
+
+Arbitrary example.
 
 Let's use ansible's command line tool to reboot all web servers in Atlanta, 10 at a time.  First, let's
 set up SSH-agent so it can remember our credentials::
@@ -43,13 +56,11 @@ Now to run the command on all servers in a group, in this case,
     $ ansible atlanta -a "/sbin/reboot" -f 10
 
 /usr/bin/ansible will default to running from your user account.  If you do not like this
-behavior, pass in "-u username".
-
-If you want to run commands as a different user, it looks like this::
+behavior, pass in "-u username".  If you want to run commands as a different user, it looks like this::
 
     $ ansible atlanta -a "/usr/bin/foo" -u username
 
-If you want to run commands through sudo::
+Often you'll not want to just do things from your user account.  If you want to run commands through sudo::
 
     $ ansible atlanta -a "/usr/bin/foo" -u username --sudo [--ask-sudo-pass]
 
@@ -66,9 +77,12 @@ It is also possible to sudo to a user other than root using
 Ok, so those are basics.  If you didn't read about patterns and groups yet, go back and read :doc:`intro_patterns`.
 
 The ``-f 10`` in the above specifies the usage of 10 simultaneous
-processes to use.   You can also set this in `intro_config` to avoid setting it again.
+processes to use.   You can also set this in `intro_config` to avoid setting it again.  The default is actually 5, which
+is really small and conservative.  You are probably going to want to talk to a lot more simultaneous hosts so feel free
+to crank this up.  If you have more hosts than the value set for the fork count, Ansible will talk to them, but it will
+take a little longer.  Feel free to push this value as high as your system can handle it!
 
-Normally commands also take a ``-m`` for module name, but
+You can also select what ansible "module" you want to urn.  Normally commands also take a ``-m`` for module name, but
 the default module name is 'command', so we didn't need to
 specify that all of the time.  We'll use ``-m`` in later examples to
 run some other :doc:`modules`.
@@ -229,11 +243,10 @@ system.  These can be used to implement conditional execution of tasks but also 
 
 Its also possible to filter this output to just export certain facts, see the "setup" module documentation for details.
 
+Read more about facts at `playbooks_variables` once you're ready to read up on `playbooks`. 
 
 Limiting Selected Hosts
 ```````````````````````
-
-.. versionadded:: 0.7
 
 What hosts you select to manage can be additionally constrained by using the '--limit' parameter or
 by using 'batch' (or 'range') selectors.
