@@ -2,8 +2,9 @@ Tags
 ====
 
 If you have a large playbook it may become useful to be able to run a
-specific part of the configuration.  Both plays and tasks support a
-"tags:" attribute for this reason.
+specific part of the configuration without running the whole playbook.  
+
+Both plays and tasks support a "tags:" attribute for this reason.
 
 Example::
 
