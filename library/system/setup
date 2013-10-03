@@ -48,10 +48,10 @@ options:
     fact_path:
         version_added: "1.3"
         description:
-            - path used for local ansible facts (*.fact) - files in this dir
-              will be run (if executable) and their results be added to ansible_local facts
-              if a file is not executable it is read.
-              File/results format can be json or ini-format
+            - Path used for local ansible facts (*.fact). Files in this dir
+              will be run, if executable. Results will be added to ansible_local facts.
+              If a file is not executable, it is read.
+              File/results format can be json or ini-format.
         required: false
         default: '/etc/ansible/facts.d'
 description:
