@@ -4,7 +4,14 @@ Installation
 .. contents::
    :depth: 2
 
-What Will Be Installed
+Getting Ansible
+```````````````
+
+You may also wish to follow the `Github project <https://github.com/ansible/ansible>`_ if
+you have a github account.  This is also where we keep the issue tracker for sharing
+bugs and feature ideas.
+
+Basics / What Will Be Installed
 ``````````````````````
 
 Ansible by default manages machines over the SSH protocol.
@@ -17,7 +24,12 @@ What Version To Pick?
 Because it runs so easily from source and does not require any installation of software on remote
 machines, many users will actually track the development version.  
 
-If you are wishing to run the latest released version of Ansible and you are running Red Hat Enterprise Linux (TM), CentOS, Fedora, Debian, or Ubuntu, we recommend using our OS package manager.
+Ansible's release cycles are usually about two months long.  Due to this
+short release cycle, minor bugs will generally be fixed in the next release versus maintaining 
+backports on the stable branch.  Major bugs will still have maintaince releases when needed, though
+these are infrequent.
+
+If you are wishing to run the latest released version of Ansible and you are running Red Hat Enterprise Linux (TM), CentOS, Fedora, Debian, or Ubuntu, we recommend using the OS package manager.
 
 For other installation options, we recommend installing via "pip", which is the Python package manager, though other options are also available.
 
@@ -35,7 +47,7 @@ This includes Red Hat, Debian, CentOS, OS X, any of the BSDs, and so on.
 Remote Node Requirements
 ````````````````````````
 
-On the managed nodes, you only need Python 2.4 or later, but if you are are running less than Python 2.6 on them, you will also need:
+On the managed nodes, you only need Python 2.4 or later, but if you are are running less than Python 2.5 on the remotes, you will also need:
 
 * ``python-simplejson`` 
 
@@ -65,22 +77,6 @@ On the managed nodes, you only need Python 2.4 or later, but if you are are runn
    Unix systems.  If you need to bootstrap these remote systems by installing Python 2.X, 
    using the 'raw' module will be able to do it remotely.
 
-Getting Ansible
-```````````````
-
-If you are interested in using all the latest features, you may wish to keep up to date
-with the development branch of the git checkout.  This also makes it easiest to contribute
-back to the project.  
-
-Instructions for installing from source are below.
-
-Ansible's release cycles are usually about two months long.  Due to this
-short release cycle, minor bugs will generally be fixed in the next release versus maintaining 
-backports on the stable branch.
-
-You may also wish to follow the `Github project <https://github.com/ansible/ansible>`_ if
-you have a github account.  This is also where we keep the issue tracker for sharing
-bugs and feature ideas.
 
 Running From Source
 +++++++++++++++++++
