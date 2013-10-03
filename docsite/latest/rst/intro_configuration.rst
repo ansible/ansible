@@ -4,7 +4,7 @@ The Ansible Configuration File
 
 .. highlight:: bash
 
-Certain things in Ansible are adjustable.  In general, the stock configuration is probably
+Certain things in Ansible are adjustable in a configuration file.  In general, the stock configuration is probably
 right for most users, but that doesn't mean you might not want to change them.
 
 The mechanism for doing this is the "ansible.cfg" file, which is looked for in the following locations:
@@ -13,7 +13,8 @@ The mechanism for doing this is the "ansible.cfg" file, which is looked for in t
     * ~/.ansible.cfg
     * ansible.cfg (in the playbook directory)
 
-If multiple file locations matching the above exist, the last location on the list is used.
+If multiple file locations matching the above exist, the last location on the list is used.  Settings are not merged.
+The last file in the list is found and the others will be ignored.
 
 .. contents::
    :depth: 2
@@ -34,7 +35,9 @@ Environmental configuration
 ```````````````````````````
 
 Ansible also allows configuration of settings via environment variables.  If these environment variables are set, they will
-override any setting loaded from the configuration file.
+override any setting loaded from the configuration file.  These variables are for brevity not defined here, but look in 'constants.py'
+in the source tree if you want to use these.  They are mostly considered to be a legacy system as compared to the config file, but
+are equally valid.
 
 Explanation of values by section
 ````````````````````````````````
@@ -468,4 +471,5 @@ This setting controls the timeout for the socket connect call, and should be kep
     accelerate_connect_timeout = 1.0
 
 Note, this value can be set to less than one second, however it is probably not a good idea to do so unless you're on a very fast and reliable LAN. If you're connecting to systems over the internet, it may be neccessary to increase this timeout.
+
 
