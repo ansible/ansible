@@ -46,7 +46,7 @@ description:
         rax_name
         rax_created
         rax_tenant_id
-        rax__loaded
+        rax_loaded
 
     where some item can have nested structure.
   - credentials are set in a credentials file
@@ -57,6 +57,11 @@ options:
      - File to find the Rackspace Public Cloud credentials in
     required: true
     default: null
+  region:
+    description:
+     - An optional value to narrow inventory scope, i.e. DFW, ORD, IAD, LON
+     required: false
+     default: null
 authors:
   - Jesse Keating <jesse.keating@rackspace.com>
   - Paul Durivage <paul.durivage@rackspace.com>
@@ -64,10 +69,16 @@ notes:
   - One environment variable needs to be set: RAX_CREDS_FILE.
   - RAX_CREDS_FILE points to a credentials file appropriate for pyrax.
   - See https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating
+  - RAX_REGION is an optional environment variable to narrow inventory search scope
+  - RAX_REGION, if used, needs a value like ORD, DFW, SYD (a Rackspace datacenter)
 requirements: [ "pyrax" ]
 examples:
     - description: List server instances
       code: RAX_CREDS_FILE=~/.raxpub rax.py --list
+    - description: List servers in ORD datacenter only
+      code: RAX_CREDS_FILE=~/.raxpub RAX_REGION=ORD rax.py --list
+    - description: Get server details for server named "server.example.com"
+      code: RAX_CREDS_FILE=~/.raxpub rax.py --host server.example.com
 '''
 
 import sys
