@@ -4,7 +4,8 @@ Dynamic Inventory
 =================
 
 Often a user of a configuration management system will want to keep inventory
-in a different system.  
+in a different software system.  Ansible provides a basic system as described in
+`intro_inventory` but what if you want to use something else?
 
 Frequent examples include pulling inventory from a cloud provider, LDAP, `Cobbler <http://cobbler.github.com>`_,
 or a piece of expensive enterprisey CMDB software.  
