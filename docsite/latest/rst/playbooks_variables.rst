@@ -443,6 +443,8 @@ While it's mentioned elsewhere in that document too, here's a quick syntax examp
         - shell: /usr/bin/bar
           when: foo_result.rc == 5
 
+Registered variables are valid on the host the remainder of the playbook run, which is the same as the lifetime of "facts"
+in Ansible.  Effectively registerd variables are just like facts.
 
 Accessing Complex Variable Data
 ```````````````````````````````
