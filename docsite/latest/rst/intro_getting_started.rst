@@ -10,6 +10,12 @@ About
 Now that you've read `intro_installation` and installed Ansible, it's time to dig in and get
 started with some commands.  
 
+What we are showing first are not the powerful configuration/deployment/orchestration of Ansible, called playbooks.
+Playbooks are covered in a seperate section.
+
+This is basically about how to get going initially.  Once you have this down, read `intro_adhoc` for some more
+detail, and then you'll be ready to dive into playbooks.
+
 Remote Connection Information
 `````````````````````````````
 
@@ -45,6 +51,8 @@ which you have your SSH key in ``authorized_keys``::
     192.168.1.50
     aserver.example.org
     bserver.example.org
+
+This is an inventory file, which is also explained in greater depth here:  `intro_inventory`.
 
 We'll assume you are using SSH keys for authentication.  Set up SSH agent to avoid retyping passwords:
 
@@ -111,6 +119,8 @@ Also note that host key checking in paramiko mode is reasonably slow, therefore 
 
 .. seealso::
 
+   :doc:`intro_inventory`
+       More information about inventory
    :doc:`intro_adhoc`
        Examples of basic commands
    :doc:`playbooks`
