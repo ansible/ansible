@@ -7,9 +7,10 @@ Intro to Playbooks
 About Playbooks
 ```````````````
 
-Playbooks are a completely different way to use ansible than in task execution mode, and are
-particularly powerful. Simply put, playbooks are the basis for a really simple
-configuration management and multi-machine deployment system,
+Playbooks are a completely different way to use ansible than in adhoc task execution mode, and are
+particularly powerful. 
+
+Simply put, playbooks are the basis for a really simple configuration management and multi-machine deployment system,
 unlike any that already exist, and one that is very well suited to deploying complex applications.
 
 Playbooks can declare configurations, but they can also orchestrate steps of
@@ -35,7 +36,9 @@ index after you're done with this section.
 Playbook Language Example
 `````````````````````````
 
-Playbooks are expressed in YAML format and have a minimum of syntax.
+Playbooks are expressed in YAML format (see :doc:`YAMLSyntax`) and have a minimum of syntax, which intentionally
+tries to not be a programming language or script, but rather a model of a configuration or a process.
+
 Each playbook is composed of one or more 'plays' in a list.
 
 The goal of a play is to map a group of hosts to some well defined roles, represented by
@@ -46,6 +49,10 @@ By composing a playbook of multiple 'plays', it is possible to
 orchestrate multi-machine deployments, running certain steps on all
 machines in the webservers group, then certain steps on the database
 server group, then more commands back on the webservers group, etc.
+
+"plays" are more or less a sports analogy.  You can have quite a lot of plays that affect your systems
+to do different things.  It's not as if you were just defining one particular state or model, and you
+can run different plays at different times.  
 
 For starters, here's a playbook that contains just one play::
 
