@@ -126,7 +126,7 @@ Sometimes you would want to retry a task until a certain condition is met.  Here
    
     - action: shell /usr/bin/foo
       register: result
-      until: register.stdout.find("all systems go") != -1
+      until: result.stdout.find("all systems go") != -1
       retries: 5
       delay: 10
 
@@ -141,7 +141,7 @@ can do that in the next task as follows::
    
    - action: shell /usr/bin/foo
      register: result
-     until: register.stdout.find("all systems go") != -1
+     until: result.stdout.find("all systems go") != -1
      retries: 5
      delay: 10
      failed_when: result.attempts == 5
