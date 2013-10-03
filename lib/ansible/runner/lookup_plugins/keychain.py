@@ -16,6 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import shlex
+import getpass
 from ansible import utils, errors
 
 try:
@@ -28,7 +29,7 @@ except ImportError:
 class LookupModule(object):
     """
     Looks up a password in the local system's keychain based on the given
-    service and username. Requires the 'keyring' module. Example:
+    service and (optional) username. Requires the 'keyring' module. Example:
 
         {{ lookup('keychain', 'service="My Service" username="johndoe"') }}
     """
@@ -55,9 +56,19 @@ class LookupModule(object):
                     service = value
                 elif key == 'username':
                     username = value
-            if service is None or username is None:
-                raise errors.AnsibleError("LOOKUP(keychain) requires 2 arguments: service and username")
+            if service is None:
+                raise errors.AnsibleError("LOOKUP(keychain) requires providing a service name")
+            if username is None:
+                username = getpass.getuser()
             # Looks up the password from the keychain
             password = keyring.get_password(service, username)
+            if password is None:
+                # Password not saved in keychain yet, so prompt the user for it
+                password = getpass.getpass('Enter password to save in keychain for service "%s" and username "%s": ' % (service, username))
+                if '\x03' in password:
+                    # Way-around a bug in Python where CTRL-C does not interrupt getpass()
+                    # See: http://bugs.python.org/issue11236
+                    raise KeyboardInterrupt
+                keyring.set_password(service, username, password)
             result.append(password)
         return result
