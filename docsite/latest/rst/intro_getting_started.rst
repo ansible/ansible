@@ -28,11 +28,11 @@ OpenSSH called 'paramiko'.  If you wish to use features like Kerberized SSH and 
 
 In Ansible 1.2 and before, the default was strictly paramiko and native SSH had to be explicitly selected with -c ssh or set in the configuration file.
 
-If talking with some remote devices that don't support SFTP, you can switch to SCP mode in :doc:`intro_config`.
+If talking with some remote devices that don't support SFTP, you can switch to SCP mode in :doc:`intro_configuration`.
 
 When speaking with remote machines, Ansible will by default assume you are using SSH keys.  To enable password auth, supply the option --ask-pass where needed.  If using sudo features and when sudo requires a password, also supply --ask-sudo-pass as appropriate.
 
-Ansible also contains a feature called :doc:`playbooks_accelerate` which uses SSH for initial key exchange
+Ansible also contains a feature called :doc:`playbooks_acceleration` which uses SSH for initial key exchange
 and then communicates over a high speed encrypted connection.  
 
 While it may be common sense, it is worth sharing: Any management system benefits from being run near your machines you are being managed. If running in a cloud, onsider running Ansible from a machine inside that cloud.

@@ -77,7 +77,7 @@ It is also possible to sudo to a user other than root using
 Ok, so those are basics.  If you didn't read about patterns and groups yet, go back and read :doc:`intro_patterns`.
 
 The ``-f 10`` in the above specifies the usage of 10 simultaneous
-processes to use.   You can also set this in :doc:`intro_config` to avoid setting it again.  The default is actually 5, which
+processes to use.   You can also set this in :doc:`intro_configuration` to avoid setting it again.  The default is actually 5, which
 is really small and conservative.  You are probably going to want to talk to a lot more simultaneous hosts so feel free
 to crank this up.  If you have more hosts than the value set for the fork count, Ansible will talk to them, but it will
 take a little longer.  Feel free to push this value as high as your system can handle it!

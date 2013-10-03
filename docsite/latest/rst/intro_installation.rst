@@ -12,7 +12,7 @@ you have a github account.  This is also where we keep the issue tracker for sha
 bugs and feature ideas.
 
 Basics / What Will Be Installed
-``````````````````````
+```````````````````````````````
 
 Ansible by default manages machines over the SSH protocol.
 
