@@ -1,8 +1,17 @@
 Delegation, Rolling Updates, and Local Actions
 ==============================================
 
-Ansible is great at doing things on one host on behalf of another, and in particular this is very applicable
-when setting up continuous deployment infrastructure or zero downtime rolling updates.
+Being designed for multi-tier deployments since the beginning, Ansible is great at doing things on one host on behalf of another, or doing
+local steps with reference to some remote hosts.
+
+This in particular this is very applicable when setting up continuous deployment infrastructure or zero downtime rolling updates, where you
+might be talking with load balancers or monitoring systems.
+
+Additional features allow for tuning the orders in which things complete, and assigning a batch window size for how many machines to process
+at once during a rolling update.
+
+This section covers all fo these features.  For examples of these items in use, please see the 'ansible-examples' repository in
+the 'ansible' github organization.  
 
 Rolling Update Batch Size
 `````````````````````````
