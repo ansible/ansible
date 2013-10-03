@@ -195,7 +195,7 @@ to talk to::
 host_key_checking
 =================
 
-As described in :doc:`intro_gettingstarted`, host key checking is on by default in Ansible 1.3 and later.  If you understand the
+As described in :doc:`intro_getting_started`, host key checking is on by default in Ansible 1.3 and later.  If you understand the
 implications and wish to disable it, you may do so here by setting the value to False::
 
     host_key_checking=True
