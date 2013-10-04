@@ -1576,7 +1576,7 @@ class GenericBsdIfconfigNetwork(Network):
             for line in lines:
                 words = line.split()
                 # Collect output from route command
-                if len(words) > 0:
+                if len(words) > 1:
                     if words[0] == 'interface:':
                         interface[v]['interface'] = words[1]
                     if words[0] == 'gateway:':
