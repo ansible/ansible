@@ -4,6 +4,8 @@ Intro to Playbooks
 .. contents::
    :depth: 2
 
+.. _about_playbooks:
+
 About Playbooks
 ```````````````
 
@@ -32,6 +34,8 @@ There are also some full sets of playbooks illustrating a lot of these technique
 
 There are also many jumping off points after you learn playbooks, so hop back to the documentation
 index after you're done with this section.
+
+.. _playbook_language_example:
 
 Playbook Language Example
 `````````````````````````
@@ -77,8 +81,12 @@ For starters, here's a playbook that contains just one play::
 
 Below, we'll break down what the various features of the playbook language are.
 
+.. _playbook_basics:
+
 Basics
 ``````
+
+.. _playbook_hosts_and_users:
 
 Hosts and Users
 +++++++++++++++
@@ -139,6 +147,8 @@ Just `Control-C` to kill it and run it again with `-K`.
    `sudo_user` set.  In other cases, '/tmp' is not used and this does
    not come into play. Ansible also takes care to not log password
    parameters.
+
+.. _tasks_list:
 
 Tasks list
 ++++++++++
@@ -227,6 +237,8 @@ Those same variables are usable in templates, which we'll get to later.
 Now in a very basic playbook all the tasks will be listed directly in that play, though it will usually
 make more sense to break up tasks using the 'include:' directive.  We'll show that a bit later.
 
+.. _action_shorthand:
+
 Action Shorthand
 ````````````````
 
@@ -241,6 +253,8 @@ You will notice in earlier versions, this was only available as::
     action: template src=templates/foo.j2 dest=/etc/foo.conf
 
 The old form continues to work in newer versions without any plan of deprecation.
+
+.. _handlers:
 
 Handlers: Running Operations On Change
 ``````````````````````````````````````
@@ -302,6 +316,8 @@ In the above example any queued up handlers would be processed early when the 'm
 statement was reached.  This is a bit of a niche case but can come in handy from
 time to time.
 
+.. _executing_a_playbook:
+
 Executing A Playbook
 ````````````````````
 
@@ -309,6 +325,8 @@ Now that you've learned playbook syntax, how do you run a playbook?  It's simple
 Let's run a playbook using a parallelism level of 10::
 
     ansible-playbook playbook.yml -f 10
+
+.. _tips_and_tricks:
 
 Tips and Tricks
 ```````````````
