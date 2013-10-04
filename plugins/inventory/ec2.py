@@ -12,6 +12,11 @@ variables needed for Boto have already been set:
     export AWS_ACCESS_KEY_ID='AK123'
     export AWS_SECRET_ACCESS_KEY='abc123'
 
+This script also assumes there is an ec2.ini file alongside it.  To specify a
+different path to ec2.ini, define the EC2_INI_PATH environment variable:
+
+    export EC2_INI_PATH=/path/to/my_ec2.ini
+
 If you're using eucalyptus you need to set the above variables and
 you need to define:
 
@@ -177,7 +182,9 @@ class Ec2Inventory(object):
         ''' Reads the settings from the ec2.ini file '''
 
         config = ConfigParser.SafeConfigParser()
-        config.read(os.path.dirname(os.path.realpath(__file__)) + '/ec2.ini')
+        ec2_default_ini_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ec2.ini')
+        ec2_ini_path = os.environ.get('EC2_INI_PATH', ec2_default_ini_path)
+        config.read(ec2_ini_path)
 
         # is eucalyptus?
         self.eucalyptus_host = None
