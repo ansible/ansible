@@ -79,7 +79,7 @@ It is recommended to look at `Example Playbooks <https://github.com/ansible/ansi
 Upgrading the Ansible Experience: AnsibleWorks AWX
 ``````````````````````````````````````````````````
 
-`AnsibleWorks <http://ansibleworks.com>`_, who also sponsors the AnsibleWorks community, also produces 'AWX', which is a web-based tool that makes Ansible even more easy to use for IT teams of all kinds.  It's designed to be the hub for all of your automation tasks.
+`AnsibleWorks <http://ansibleworks.com>`_, who also sponsors the Ansible community, also produces 'AWX', which is a web-based tool that makes Ansible even more easy to use for IT teams of all kinds.  It's designed to be the hub for all of your automation tasks.
 
 AWX allows you to control access to who can access what, even allowing sharing of SSH credentials without someone being able to transfer those credentials.  Inventory can be graphically managed or synced with a widde variety of cloud sources.  It logs all of your jobs, integrates well with LDAP, and has an amazing browseable REST API.
 
@@ -136,7 +136,8 @@ Ansible is an open source project designed to bring together developers and admi
 IT automation solutions that work well for them.   Should you wish to get more involved -- whether in terms of just asking a question, helping
 other users, introducing new people to Ansible, or helping with the software or documentation, we welcome your contributions to the project::
 
-   How to interact <https://github.com/ansible/ansible/blob/devel/CONTRIBUTING.md>
+    How to interact `<https://github.com/ansible/ansible/blob/devel/CONTRIBUTING.md>`_
+
 
 .. _developer_information:
 

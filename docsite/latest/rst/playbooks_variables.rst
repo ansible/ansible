@@ -106,6 +106,99 @@ it's more than that -- you can also read variables about other hosts.  We'll sho
    pieces of files, or to have other ecosystem tools read Ansible files.  Not everyone will need this but it can unlock
    possibilities.
 
+.. _jinja2_filters:
+
+Jinja2 Filters
+``````````````
+
+.. note: These are infrequently utilized features.  Use them if they fit a use case you have, but this is optional knowledge.
+
+Filters in Jinja2 are a way of transforming template expressions from one kind of data into another.  Jinja2
+ships with many of these as documented on `The official Jinja2 Templates Page <http://jinja.pocoo.org/docs/templates/>`_.  Scroll down and look for 'filters'.
+
+In addition to these, Ansible supplies many more.  
+
+.. _filters_for_formatting_data
+
+Filters For Formatting Data
++++++++++++++++++++++++++++
+
+The following filters will take a data structure in a template and render it in a slightly different format.  These
+are occasionally useful for debugging::
+
+    {{ some_variable | to_nice_json }}
+    {{ some_variable | to_nice_yaml }}
+
+.. _filters_used_with_conditionals:
+
+Filters Often Used With Conditionals
+++++++++++++++++++++++++++++++++++++
+
+The following tasks are illustrative of how filters can be used with conditionals::
+
+    tasks:
+      - shell: /usr/bin/foo
+        register: result
+        ignore_errors: True
+
+      - debug: msg="it failed"
+        when: result|failed
+
+      # in most cases you'll want a handler, but if you want to do something right now, this is nice
+      - debug: msg="it changed"
+        when: result|changed
+
+      - debug: msg="it succeeded"
+        when: result|success
+
+      - debug: msg="it was skipped"
+        when: result|skipped
+
+.. _forcing_variables_to_be_defined:
+
+Forcing Variables To Be Defined
++++++++++++++++++++++++++++++++
+
+The default behavior from ansible and ansible.cfg is to fail if variables are undefined, but you can turn this off.
+
+This allows an explicit check with this feature off::
+
+    {{ variable | mandatory }}
+
+The variable value will be used as is, but the template evaluation will raise an error if it is undefined.
+
+.. _other_useful_filters:
+
+Other Useful Filters
+++++++++++++++++++++
+
+To get the last name of a file path, like 'foo.txt' out of '/etc/asdf/foo.txt'::
+
+    {{ path | basename }} 
+
+To get the directory from a path::
+
+    {{ path | dirname }}
+
+To work with Base64 encoded strings::
+
+    {{ encoded | b64decode }}
+    {{ decoded | b64encode }}
+
+To take an md5sum of a filename::
+
+    {{ filename | md5 }}
+
+To cast values as certain types, such as when you input a string as "True" from a vars_prompt and the system
+doesn't know it is a boolean value::
+
+   - debug: msg=test
+     when: some_string_value | bool
+
+A few useful filters are typically added with each new Ansible release.  The development documentation shows
+how to extend Ansible filters by writing your own as plugins, though in general, we encourage new ones
+to be added to core so everyone can make use of them.
+
 .. _yaml_gotchas:
 
 Hey Wait, A YAML Gotcha
