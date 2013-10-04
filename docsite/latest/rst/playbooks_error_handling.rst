@@ -9,6 +9,8 @@ need to report that it 'changed' the remote system.  This section describes how 
 the default behavior of Ansible for certain tasks so output and error handling behavior is
 as desired.
 
+.. _ignoring_failed_commands:
+
 Ignoring Failed Commands
 ````````````````````````
 
@@ -21,6 +23,8 @@ write a task that looks like this::
     - name: this will not be counted as a failure
       command: /bin/false
       ignore_errors: yes
+
+.. _override_the_changed_result:
 
 Overriding The Changed Result
 `````````````````````````````

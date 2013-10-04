@@ -15,6 +15,8 @@ Example::
 
     ansible-playbook foo.yml --check
 
+.. _forcing_to_run_in_check_mode:
+
 Running a task in check mode
 ````````````````````````````
 
@@ -37,6 +39,7 @@ As a reminder, a task with a `when` clause evaluated to false, will
 still be skipped even if it has a `always_run` clause evaluated to
 true.
 
+.. _diff_mode:
 
 Showing Differences with --diff
 ```````````````````````````````

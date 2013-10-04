@@ -54,7 +54,7 @@ As noted above, accelerated mode also supports running tasks via sudo, however t
 * You must remove requiretty from your sudoers options.
 * Prompting for the sudo password is not yet supported, so the NOPASSWD option is required for commands.
 
-
+.. _fireball_mode:
 
 Fireball Mode
 `````````````

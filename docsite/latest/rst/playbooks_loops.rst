@@ -3,6 +3,7 @@ Loops
 
 All about how to use loops in playbooks.
 
+.. _standard_loops:
 
 Standard Loops
 ``````````````
@@ -37,6 +38,8 @@ If you have a list of hashes, you can reference subkeys using things like::
         - { name: 'testuser1', groups: 'wheel' }
         - { name: 'testuser2', groups: 'root' }
 
+.. _nested_loops:
+
 Nested Loops
 ````````````
 
@@ -55,6 +58,8 @@ As with the case of 'with_items' above, you can use previously defined variables
       with_nested:
         - users
         - [ 'clientdb', 'employeedb', 'providerdb' ]
+
+.. _looping_over_fileglobs:
 
 Looping over Fileglobs
 ``````````````````````
@@ -78,13 +83,56 @@ be used like this::
 Looping over Parallel Sets of Data
 ``````````````````````````````````
 
-Documentation for this feature is coming soon.
+.. note:: This is an uncommon thing to want to do, but we're documenting it for completeness.  You won't be reaching for this one often.
+
+Suppose you have the following variable data was loaded in via somewhere::
+
+    ---
+    alpha: [ 'a', 'b', 'c', 'd' ]
+    numbers:  [ 1, 2, 3, 4 ]
+
+And you want the set of '(a, 1)' and '(b, 2)' and so on.   Use 'with_together' to get this::
+
+    tasks:
+        - debug: msg="{{ item.0 }} and {{ item.1 }}"
+          with_together:
+            - alpha
+            - numbers
 
 Looping over Subelements
 ````````````````````````
 
-Documentation for this feature is coming soon.
+Suppose you want to do something like loop over a list of users, creating them, and allowing them to login by a certain set of
+SSH keys. 
 
+How might that be accomplished?  Let's assume you had the following defined and loaded in via "vars_files" or maybe a "group_vars/all" file::
+
+    ---
+    users:
+      - name: alice
+        authorized: 
+          - /tmp/alice/onekey.pub
+          - /tmp/alice/twokey.pub
+      - name: bob
+        authorized:
+          - /tmp/bob/id_rsa.pub
+
+It might happen like so::
+
+    - user: name={{ item.name }} state=present generate_ssh_key=yes
+      with_items: users
+
+    - authorized_key: user={{ item.0.name }} key={{ lookup('file', item.1) }}
+      with_subelements:
+         - users
+         - authorized
+
+Subelements walks a list of hashes (aka dictionaries) and then traverses a list with a given key inside of those
+records.
+
+The authorized_key pattern is exactly where it comes up most.
+
+.. _looping_over_integer_sequences:
 
 Looping over Integer Sequences
 ``````````````````````````````
@@ -118,6 +166,27 @@ Negative numbers are not supported.  This works as follows::
         # create 4 groups
         - group: name=group{{ item }} state=present
           with_sequence: count=4
+
+.. _random_choice:
+
+Random Choices
+``````````````
+
+The 'random_choice' feature can be used to pick something at random.  While it's not a load balancer, it can
+somewhat be used as a poor man's loadbalancer in a MacGyver like situation::
+
+    - debug: msg={{ item }}
+      with_random_choice:
+         - "go through the door"
+         - "drink from the goblet"
+         - "press the red button"
+         - "do nothing"
+
+One of the provided strings will be selected at random.  
+
+At a more basic level, they can be used to add chaos and excitement to otherwise predictable automation environments.
+
+.. _do_until_loops:
 
 Do-Until Loops
 ``````````````
