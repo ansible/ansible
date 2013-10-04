@@ -73,6 +73,12 @@ options:
             - If C(yes), repository will be updated using the supplied
               remote.  Otherwise the repo will be left untouched.
               Prior to 1.2, this was always 'yes' and could not be disabled.
+    hash_len:
+        required: false
+        default: null
+        version_added: "1.4"
+        description:
+            - Use an explicit length for the SHA-1 hash.
     executable:
         required: false
         default: null
@@ -104,10 +110,12 @@ EXAMPLES = '''
 import re
 import tempfile
 
-def get_version(git_path, dest):
+def get_version(git_path, dest, hash_len=None):
     ''' samples the version of the git repo '''
     os.chdir(dest)
     cmd = "%s show --abbrev-commit" % (git_path,)
+    if hash_len:
+        cmd += " --abbrev=%d" % (hash_len,)
     sha = os.popen(cmd).read().split("\n")
     sha = sha[0].split()[1]
     return sha
@@ -311,6 +319,7 @@ def main():
             force=dict(default='yes', type='bool'),
             depth=dict(default=None, type='int'),
             update=dict(default='yes', type='bool'),
+            hash_len=dict(default=None, type='int'),
             executable=dict(default=None),
         ),
         supports_check_mode=True
@@ -323,6 +332,7 @@ def main():
     force   = module.params['force']
     depth   = module.params['depth']
     update  = module.params['update']
+    hash_len = module.params['hash_len']
     git_path = module.params['executable'] or module.get_bin_path('git', True)
 
     gitconfig = os.path.join(dest, '.git', 'config')
@@ -341,12 +351,12 @@ def main():
         # Just return having found a repo already in the dest path
         # this does no checking that the repo is the actual repo
         # requested.
-        before = get_version(git_path, dest)
+        before = get_version(git_path, dest, hash_len)
         module.exit_json(changed=False, before=before, after=before)
     else:
         # else do a pull
         local_mods = has_local_mods(git_path, dest)
-        before = get_version(git_path, dest)
+        before = get_version(git_path, dest, hash_len)
         # if force, do a reset
         if local_mods and module.check_mode:
             module.exit_json(changed=True, msg='Local modifications exist')
@@ -387,7 +397,7 @@ def main():
         module.fail_json(msg=err)
 
     # determine if we changed anything
-    after = get_version(git_path, dest)
+    after = get_version(git_path, dest, hash_len)
     changed = False
 
     if before != after or local_mods:
