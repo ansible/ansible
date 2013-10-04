@@ -121,12 +121,12 @@ def grant_check(module, gs, obj):
             grant = [ x for x in acp.entries.entry_list if x.scope.type == 'AllUsers']
             if not grant:
                 obj.set_acl('public-read')
-                module.exit_json(changed=True, result="The object's permission as been set to public-read") 
+                module.exit_json(changed=True, result="The objects permission as been set to public-read") 
         if module.params.get('permission') == 'authenticated-read':
             grant = [ x for x in acp.entries.entry_list if x.scope.type == 'AllAuthenticatedUsers']
             if not grant:
                 obj.set_acl('authenticated-read')
-                module.exit_json(changed=True, result="The object's permission as been set to authenticated-read") 
+                module.exit_json(changed=True, result="The objects permission as been set to authenticated-read") 
     except gs.provider.storage_response_error, e:
         module.fail_json(msg= str(e))
     return True
