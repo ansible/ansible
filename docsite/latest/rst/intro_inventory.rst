@@ -71,6 +71,8 @@ You can also select the connection type and user on a per host basis::
 As mentioned above, setting these in the inventory file is only a shorthand, and we'll discuss how to store them in individual files
 in the 'host_vars' directory a bit later on.
 
+.. _host_variables:
+
 Host Variables
 ++++++++++++++
 
@@ -79,6 +81,8 @@ As alluded to above, it is easy to assign variables to hosts that will be used l
    [atlanta]
    host1 http_port=80 maxRequestsPerChild=808
    host2 http_port=303 maxRequestsPerChild=909
+
+.. _group_variables:
 
 Group Variables
 +++++++++++++++
@@ -92,6 +96,8 @@ Variables can also be applied to an entire group at once::
    [atlanta:vars]
    ntp_server=ntp.atlanta.example.com
    proxy=proxy.atlanta.example.com
+
+.. _subgroups:
 
 Groups of Groups, and Group Variables
 +++++++++++++++++++++++++++++++++++++
@@ -126,6 +132,8 @@ variables to groups.  These variables can be used by /usr/bin/ansible-playbook, 
 
 If you need to store lists or hash data, or prefer to keep host and group specific variables
 separate from the inventory file, see the next section.
+
+.. _splitting_out_vars:
 
 Splitting Out Host and Group Specific Data
 ++++++++++++++++++++++++++++++++++++++++++
@@ -165,6 +173,8 @@ directory will be loaded second.
 
 Tip: Keeping your inventory file and variables in a git repo (or other version control)
 is an excellent way to track changes to your inventory and host variables.
+
+.. _behavioral_parameters:
 
 List of Behavioral Inventory Parameters
 +++++++++++++++++++++++++++++++++++++++

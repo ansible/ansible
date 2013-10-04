@@ -4,6 +4,8 @@ Installation
 .. contents::
    :depth: 2
 
+.. _getting_ansible:
+
 Getting Ansible
 ```````````````
 
@@ -11,12 +13,16 @@ You may also wish to follow the `Github project <https://github.com/ansible/ansi
 you have a github account.  This is also where we keep the issue tracker for sharing
 bugs and feature ideas.
 
+.. _what_will_be_installed:
+
 Basics / What Will Be Installed
 ```````````````````````````````
 
 Ansible by default manages machines over the SSH protocol.
 
 Once ansible is installed, it will not add a database, and there will be no daemons to start or keep running.  You only need to install it on one machine (which could easily be a laptop) and it can manage an entire fleet of remote machines from that central point.  When Ansible manages remote machines, it does not leave software installed or running on them, so there's no real question about how to upgrade Ansible when moving to a new version.
+
+.. _what_version:
 
 What Version To Pick?
 `````````````````````
@@ -36,6 +42,8 @@ For other installation options, we recommend installing via "pip", which is the 
 If you wish to track the development release to use and test the latest features, we will share
 information about running from source.  It's not neccessary to install the program to run from source.
 
+.. _control_machine_requirements:
+
 Control Machine Requirements
 ````````````````````````````
 
@@ -43,9 +51,10 @@ Currently Ansible can be from any machine with Python 2.6 installed (Windows isn
 
 This includes Red Hat, Debian, CentOS, OS X, any of the BSDs, and so on.
   
+.. _managed_node_requirements:
 
-Remote Node Requirements
-````````````````````````
+Managed Node Requirements
+`````````````````````````
 
 On the managed nodes, you only need Python 2.4 or later, but if you are are running less than Python 2.5 on the remotes, you will also need:
 
@@ -77,6 +86,7 @@ On the managed nodes, you only need Python 2.4 or later, but if you are are runn
    Unix systems.  If you need to bootstrap these remote systems by installing Python 2.X, 
    using the 'raw' module will be able to do it remotely.
 
+.. _from_source:
 
 Running From Source
 +++++++++++++++++++
@@ -124,6 +134,8 @@ Now let's test things with a ping command:
 
 You can also use "sudo make install" if you wish.
 
+.. _from_yum:
+
 Latest Release Via Yum
 ++++++++++++++++++++++
 
@@ -150,6 +162,8 @@ You can also build an RPM yourself.  From the root of a checkout or tarball, use
     $ make rpm
     $ sudo rpm -Uvh ~/rpmbuild/ansible-*.noarch.rpm
 
+.. _from_apt:
+
 Latest Releases Via Apt (Ubuntu)
 ++++++++++++++++++++++++++++++++
 
@@ -171,6 +185,8 @@ Debian/Ubuntu packages can also be built from the source checkout, run:
 
 You may also wish to run from source to get the latest, which is covered above.
 
+.. _from_pip:
+
 Latest Releases Via Pip
 +++++++++++++++++++++++
 
@@ -185,6 +201,8 @@ Then install Ansible with::
 
 Readers that use virtualenv can also install Ansible under virtualenv, though we'd recommend to not worry about it and just install Ansible globally.  Do not use easy_install to install ansible directly.
 
+.. _tagged_releases:
+
 Tarballs of Tagged Releases
 +++++++++++++++++++++++++++
 
@@ -193,131 +211,6 @@ Packaging Ansible or wanting to build a local package yourself, but don't want t
 * `Ansible/downloads <http://ansibleworks.com/releases>`_
 
 These releases are also tagged in the git repository with the release version.
-
-Choosing Between Paramiko and Native SSH
-````````````````````````````````````````
-
-By default, ansible 1.3 and later will try to use native SSH for remote communication when possible.
-This is done when ControlPersist support is available.  Paramiko is however reasonably fast and makes
-a good default on versions of Enterprise Linux where ControlPersist is not available.  However, Paramiko 
-does not support some advanced SSH features that folks will want to use.  In Ansible 1.2 and before,
-the default was strictly paramiko and native SSH had to be explicitly selected with -c ssh or set in the
-configuration file.
-
-.. versionadded:: 0.5
-
-If you want to leverage more advanced SSH features (such as Kerberized
-SSH or jump hosts), pass the flag "--connection=ssh" to any ansible
-command, or set the ANSIBLE_TRANSPORT environment variable to
-'ssh'. This will cause Ansible to use openssh tools instead.
-
-If ANSIBLE_SSH_ARGS are not set, ansible will try to use some sensible ControlMaster options
-by default.  You are free to override this environment variable, but should still pass ControlMaster
-options to ensure performance of this transport.  With ControlMaster in use, both transports
-are roughly the same speed.  Without CM, the binary ssh transport is signficantly slower.
-
-If none of this makes sense to you, the default paramiko option is probably fine.
-
-
-Your first commands
-```````````````````
-
-Now that you've installed Ansible, it's time to test it.
-
-Edit (or create) /etc/ansible/hosts and put one or more remote systems in it, for
-which you have your SSH key in ``authorized_keys``::
-
-    192.168.1.50
-    aserver.example.org
-    bserver.example.org
-
-Set up SSH agent to avoid retyping passwords:
-
-.. code-block:: bash
-
-    $ ssh-agent bash
-    $ ssh-add ~/.ssh/id_rsa
-
-(Depending on your setup, you may wish to ansible's --private-key option to specify a pem file instead)
-
-Now ping all your nodes:
-
-.. code-block:: bash
-
-   $ ansible all -m ping
-
-Ansible will attempt to remote connect to the machines using your current
-user name, just like SSH would.  To override the remote user name, just use the '-u' parameter.
-
-If you would like to access sudo mode, there are also flags to do that:
-
-.. code-block:: bash
-
-    # as bruce
-    $ ansible all -m ping -u bruce
-    # as bruce, sudoing to root
-    $ ansible all -m ping -u bruce --sudo 
-    # as bruce, sudoing to batman
-    $ ansible all -m ping -u bruce --sudo --sudo-user batman
-
-(The sudo implementation is changeable in ansible's configuration file if you happen to want to use a sudo
-replacement.  Flags passed dot sudo can also be set.)
-
-Now run a live command on all of your nodes:
-  
-.. code-block:: bash
-
-   $ ansible all -a "/bin/echo hello"
-
-Congratulations.  You've just contacted your nodes with Ansible.  It's
-soon going to be time to read some of the more real-world :doc:`intro_adhoc`, and explore
-what you can do with different modules, as well as the Ansible
-:doc:`playbooks` language.  Ansible is not just about running commands, it
-also has powerful configuration management and deployment features.  There's more to
-explore, but you already have a fully working infrastructure!
-
-A note about Connection (Transport) Modes
-`````````````````````````````````````````
-
-Ansible has two major forms of SSH transport implemented, 'ssh' (OpenSSH) and 'paramiko'.  Paramiko is a python
-SSH implementation and 'ssh' simply calls OpenSSH behind the scenes.  There are additionally 'fireball' (an accelerated
-remote transport), 'local', and 'chroot' connection modes in Ansible that don't use SSH, but connecting by one of the two 
-SSH transports is the most common way to manage systems.  It is useful to understand the difference between the 'ssh' 
-and 'paramiko' modes.
-
-Paramiko is provided because older Enterprise Linux operating systems do not have an efficient OpenSSH that support
-ControlPersist technology, and in those cases, 'paramiko' is faster than 'ssh'.  Thus, until EL6 backports a newer
-SSH, 'paramiko' is the faster option on that platform. 
-
-However, if you have a newer 'ssh' that supports ControlPersist, usage of the 'ssh' transport unlocks additional
-configurability, including the option to use Kerberos.  For instance, the latest Fedora and Ubuntu releases
-all offer a sufficiently new OpenSSH.  With ControlPersist available, 'ssh' is usually about as fast as paramiko.
-If you'd like even more speed, read about 'fireball' in the Advanced Playbooks section.
-
-Starting with Ansible 1.2.1, the default transport mode for Ansible is 'smart', which means it will detect
-if OpenSSH supports ControlPersist, and will select 'ssh' if available, and otherwise pick 'paramiko'.
-Previous versions of Ansible defaulted to 'paramiko'.
-
-A note about Host Key Checking
-``````````````````````````````
-
-Ansible 1.2.1 and later have host key checking enabled by default.  
-
-If a host is reinstalled and has a different key in 'known_hosts', this will result in a error message until
-corrected.  If a host is not initially in 'known_hosts' this will result in prompting for confirmation of the key,
-which results in a interactive experience if using Ansible, from say, cron.
-
-If you wish to disable this behavior and understand the implications, you can do so by editing /etc/ansible/ansible.cfg or ~/.ansible.cfg::
-
-    [defaults]
-    host_key_checking = False
-
-Alternatively this can be set by an environment variable:
-
-    $ export ANSIBLE_HOST_KEY_CHECKING=False
-
-Also note that host key checking in paramiko mode is reasonably slow, therefore switching to 'ssh' is also recommended when using this
-feature.
 
 .. seealso::
 
