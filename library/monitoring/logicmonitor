@@ -160,34 +160,12 @@ EXAMPLES='''
         company: '{{ company }}'
         user: '{{ user }}'
         password: '{{ password }}'
-        properties:
-          snmp.community: 'n3wc0mm'
-        groups:
-          - '/test/asdf'
-          - '/ans/ible'
+        properties: {snmp.community: 'communitystr1'} 
+        groups: ['/test/asdf', '/ans/ible']
           
-#sdt a host
-- hosts: hosts
-  user: root
-  vars:
-    company: 'youcompany'
-    user: 'Luigi'
-#    password: 'ImaLuigi,number1!'
-    password: 'c82dbb33bef9e7382b9f39c2233a458b'
-    digest: True
-  tasks:
-  - name: schedule 5 hour downtime for 2012-11-10 09:08
-    logicmonitor:
-      target: host
-      action: sdt
-      duration: 3000
-      starttime: '2012-11-10 09:08'
-      company: '{{ company }}'
-      user: '{{ user }}'
-      password: '{{ password }}'
-
 #example of creating a hostgroup
-#sdt a hostgroup
+---
+
 - hosts: somemachine.superheroes.com
   user: root
   vars:
@@ -204,8 +182,7 @@ EXAMPLES='''
       company: '{{ company }}'
       user: '{{ user }}'
       password: '{{ password }}'
-      properties:
-        snmp.community: 'n3wc0mm'
+      properties: {snmp.community: 'communitystr2', mysql.user: 'superman'} 
 
 '''
 
@@ -232,7 +209,7 @@ class LogicMonitor(object):
         self.company                = kwargs["company"]
         self.user                   = kwargs["user"]
         self.password               = kwargs["password"]
-        self.digest                 = module.booleans(kwargs['digest'])
+        self.digest                 = module.boolean(kwargs['digest'])
         if self.digest:
             self.password_digest    = self.password
         else:
@@ -380,7 +357,8 @@ class Collector(LogicMonitor):
         self.is_64bits      = sys.maxsize > 2**32
         self.duration       = self.module.params['duration']
         self.starttime       = self.module.params['starttime']
-            
+    
+    
     def create(self):
         """idempotent function to make sure that there is a running collector installed and registered in your LogicMonitor Account"""
         self._create()
@@ -516,7 +494,8 @@ class Collector(LogicMonitor):
                 return None
         else:
             self.module.fail_json(msg="Error: Unable to retrieve timezone offset")
-
+    
+    
     def _get(self):
         """Returns a JSON object representing the collector"""
         collector_list = self.get_collectors()
@@ -582,6 +561,7 @@ class Host(LogicMonitor):
         self.starttime   = self.module.params["starttime"]
         self.duration    = self.module.params["duration"]
         self.change = False
+    
     
     def create(self):
         """Idemopotent function to create if missing, update if changed, or skip"""
@@ -654,10 +634,7 @@ class Host(LogicMonitor):
         hostresp = self.get_host_by_displayname(self.displayname) or self.get_host_by_hostname(self.hostname)
         propresp = self.get_properties()
         if propresp and hostresp:
-            if hostresp["alertEnable"] != self.alertenable 
-            or hostresp["description"] != self.description 
-            or hostresp["displayedAs"] != self.displayname 
-            or hostresp["agentId"] != self.collector["id"]:
+            if hostresp["alertEnable"] != self.alertenable or hostresp["description"] != self.description or hostresp["displayedAs"] != self.displayname or hostresp["agentId"] != self.collector["id"]:
                 return True
             g = []
             fullpathinids = hostresp["fullPathInIds"]
@@ -716,6 +693,7 @@ class Host(LogicMonitor):
                 return None
         else:
             self.module.fail_json("Error: Unable to retrieve timezone offset")
+    
     
     def _buildhosthash(self, hostname, displayname, collector, description, groups, properties, alertenable):
         """Return a property formated hash for the creation of a host using the rpc function"""
@@ -891,6 +869,7 @@ class Hostgroup(LogicMonitor):
         """Wrapper for self.update()"""
         self.update()
     
+    
     def _build_host_group_hash(self, fullpath, description, properties, alertenable):
         """Return a property formated hash for the creation of a hostgroup using the rpc function"""
         h = {}
@@ -982,8 +961,8 @@ def main():
             hostname=dict(required=False, default=None),
             displayname=dict(required=False, default=None),
             description=dict(required=False, default=""),
-            properties=dict(required=False, default={}),
-            groups=dict(required=False, default=[]),
+            properties=dict(type='dict', required=False, default={}),
+            groups=dict(type='list', required=False, default=[]),
             fullpath=dict(required=False, default=None),
             alertenable=dict(required=False, default=True, choices=BOOLEANS),
             starttime=dict(required=False, default=None),
