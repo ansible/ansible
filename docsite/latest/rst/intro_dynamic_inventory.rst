@@ -14,6 +14,8 @@ Ansible easily supports all of these options via an external inventory system.  
 
 For information about writing your own, see :doc:`developing_inventory`.
 
+.. _cobbler_example:
+
 Example: The Cobbler External Inventory Script
 ``````````````````````````````````````````````
 
@@ -70,6 +72,8 @@ And technically, though there is no major good reason to do it, this also works 
     ansible webserver -m shell -a "echo {{ a }}"
 
 So in other words, you can use those variables in arguments/actions as well.  
+
+.. _aws_example:
 
 Example: AWS EC2 External Inventory Script
 ``````````````````````````````````````````
@@ -182,6 +186,8 @@ To see the complete list of variables available for an instance, run the script 
 Note that the AWS inventory script will cache results to avoid repeated API calls, and this cache setting is configurable in ec2.ini.  To
 explicitly clear the cache, you can run the ec2.py script with the '--refresh-cache' parameter.
 
+.. _other_inventory_scripts:
+
 Other inventory scripts
 ```````````````````````
 
@@ -201,6 +207,8 @@ it should be very obvious how to use them.  The process for the AWS inventory sc
 
 If you develop an interesting inventory script that might be general purpose, please submit a pull request -- we'd likely be glad
 to include it in the project.
+
+.. _using_multiple_sources:
 
 Using Multiple Inventory Sources
 ````````````````````````````````

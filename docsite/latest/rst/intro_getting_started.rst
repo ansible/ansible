@@ -4,6 +4,8 @@ Getting Started
 .. contents::
    :depth: 2
 
+.. _gs_about:
+
 About
 `````
 
@@ -15,6 +17,8 @@ Playbooks are covered in a seperate section.
 
 This is basically about how to get going initially.  Once you have this down, read :doc:`intro_adhoc` for some more
 detail, and then you'll be ready to dive into playbooks.
+
+.. _remote_connection_information:
 
 Remote Connection Information
 `````````````````````````````
@@ -38,6 +42,8 @@ and then communicates over a high speed encrypted connection.
 While it may be common sense, it is worth sharing: Any management system benefits from being run near your machines you are being managed. If running in a cloud, onsider running Ansible from a machine inside that cloud.
 
 As an advanced topic, ansible doesn't just have to connect remotely over SSH.  The transports are pluggable, and there are options for managing things locally, as well as managing chroot, lxc, and jail containers.  A mode called 'ansible-pull' can also invert the system and have systems 'phone home' via scheduled git checkouts to pull configuration directives from a central repository.
+
+.. _your_first_commands:
 
 Your first commands
 ```````````````````
@@ -97,6 +103,8 @@ what you can do with different modules, as well as the Ansible
 :doc:`playbooks` language.  Ansible is not just about running commands, it
 also has powerful configuration management and deployment features.  There's more to
 explore, but you already have a fully working infrastructure!
+
+.. _a_note_about_host_key_checking:
 
 A note about Host Key Checking
 ``````````````````````````````

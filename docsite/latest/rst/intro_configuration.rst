@@ -19,6 +19,8 @@ The last file in the list is found and the others will be ignored.
 .. contents::
    :depth: 2
 
+.. _getting_the_latest_configuration:
+
 Getting the latest configuration
 ````````````````````````````````
 
@@ -31,6 +33,8 @@ default settings in Ansible.
 You may wish to consult the `ansible.cfg in source control <https://raw.github.com/ansible/ansible/devel/examples/ansible.cfg>_` for
 all of the possible latest values.
 
+.. _environmental_configuration:
+
 Environmental configuration
 ```````````````````````````
 
@@ -39,13 +43,19 @@ override any setting loaded from the configuration file.  These variables are fo
 in the source tree if you want to use these.  They are mostly considered to be a legacy system as compared to the config file, but
 are equally valid.
 
+.. _config_values_by_section:
+
 Explanation of values by section
 ````````````````````````````````
+
+.. _general_defaults:
 
 General defaults
 ----------------
 
 In the [defaults] section of ansible.cfg, the following settings are tunable:
+
+.. _action_plugins:
 
 action_plugins
 ==============
@@ -58,6 +68,8 @@ different locations::
    action_plugins = /usr/share/ansible_plugins/action_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details.
+
+.. _ansible_managed:
 
 ansible_managed
 ===============
@@ -73,6 +85,8 @@ The default configuration shows who modified a file and when::
 
 This is useful to tell users that a file has been placed by Ansible and manual changes are likely to be overwritten.
 
+.. _ask_pass:
+
 ask_pass
 ========
 
@@ -81,6 +95,8 @@ This controls whether an Ansible playbook should prompt for a password by defaul
     #ask_pass=True
 
 If using SSH keys for authentication, it's probably not needed to change this setting.
+
+.. _ask_sudo_pass:
 
 ask_sudo_pass
 =============
@@ -92,6 +108,8 @@ sudoing.  The default behavior is also no::
 
 Users on platforms where sudo passwords are enabled should consider changing this setting.
 
+.. _callback_plugins:
+
 callback_plugins
 ================
 
@@ -101,6 +119,8 @@ different locations::
    action_plugins = /usr/share/ansible_plugins/action_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
+
+.. _connection_plugins:
 
 connection_plugins
 ==================
@@ -112,6 +132,8 @@ different locations::
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
+.. _display_skipped_hosts:
+
 display_skipped_hosts
 =====================
 
@@ -120,6 +142,8 @@ If set to `False`, ansible will not display any status for a task that is skippe
     #display_skipped_hosts=True
 
 Note that Ansible will always show the task header for any task, regardless of whether or not the task is skipped.
+
+.. _error_on_undefined_vars:
 
 error_on_undefined_vars
 =======================
@@ -132,6 +156,8 @@ typoed::
 If set to False, any '{{ template_expression }}' that contains undefined variables will be rendered in a template
 or ansible action line exactly as written.
 
+.. _executable:
+
 executable
 ==========
 
@@ -139,6 +165,20 @@ This indicates the command to use to spawn a shell under a sudo environment.  Us
 rare instances to /bin/bash in rare instances wehn sudo is constrained, but in most cases it may be left as is::
 
    #executable = /bin/bash
+
+.. _filter_plugins:
+
+filter_plugins
+==============
+
+This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
+different locations::
+
+   action_plugins = /usr/share/ansible_plugins/action_plugins
+
+Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
+
+.. _forks:
 
 forks
 =====
@@ -151,24 +191,6 @@ is very very conservative::
 
    forks=5
 
-pattern
-=======
-
-This is the default group of hosts to talk to in a playbook if no "hosts:" stanza is supplied.  The default is to talk
-to all hosts.  You may wish to change this to protect yourself from surprises::
-
-   hosts=*
-
-Note that /usr/bin/ansible always requires a host pattern and does not use this setting, only /usr/bin/ansible-playbook.
-
-poll_interval
-=============
-
-For asynchronous tasks in Ansible (covered in :doc:`playbooks_async`), this is how often to check back on the status of those
-tasks when an explicit poll interval is not supplied.  The default is a reasonably moderate 15 seconds which is a tradeoff
-between checking in frequently and providing a quick turnaround when something may have completed::
-
-    poll_interval=15
 
 hash_behavior
 =============
@@ -184,6 +206,8 @@ official examples repos do not use this setting::
 
 The valid values are either 'replace' (the default) or 'merge'.
 
+.. _hostfile:
+
 hostfile
 ========
 
@@ -191,6 +215,8 @@ This is the default location of the inventory file, script, or directory that An
 to talk to::
 
     hostfile = /etc/ansible/hosts
+
+.. _host_key_checking:
 
 host_key_checking
 =================
@@ -200,15 +226,7 @@ implications and wish to disable it, you may do so here by setting the value to 
 
     host_key_checking=True
 
-filter_plugins
-==============
-
-This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
-different locations::
-
-   action_plugins = /usr/share/ansible_plugins/action_plugins
-
-Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
+.. _jinja2_extensions:
 
 jinja2_extensions
 =================
@@ -218,6 +236,8 @@ This is a developer-specific feature that allows enabling additional Jinja2 exte
     jinja2_extensions = jinja2.ext.do,jinja2.ext.i18n
 
 If you do not know what these do, you probably don't need to change this setting :)
+
+.. _legacy_playbook_variables:
 
 legacy_playbook_variables
 =========================
@@ -231,6 +251,8 @@ still enabled as of Ansible 1.4) can be disabled like so ::
 
     legacy_playbook_variables = no
 
+.. _library:
+
 library
 =======
 
@@ -240,6 +262,8 @@ This is the default location Ansible looks to find modules::
 
 Ansible knows how to look in multiple locations if you feed it a colon seperated path, and it also will look for modules in the
 "./library" directory alongside a playbook.
+
+.. _log_path:
 
 log_path
 ========
@@ -251,6 +275,8 @@ the user running Ansible has permissions on the logfile.
 
 This behavior is not on by default.
 
+.. _lookup_plugins:
+
 lookup_plugins
 ==============
 
@@ -261,6 +287,8 @@ different locations::
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
+.. _module_name:
+
 module_name
 ===========
 
@@ -270,6 +298,8 @@ it to 'shell'::
 
    module_name = command
 
+.. _nocolor:
+
 nocolor
 =======
 
@@ -277,6 +307,8 @@ By default ansible will try to colorize output to give a better indication of fa
 If you dislike this behavior you can turn it off by setting 'nocolor' to 0::
 
    nocolor=0
+
+.. _nocows:
 
 nocows
 ======
@@ -287,6 +319,31 @@ by setting 'nocows' to 1::
 
    nocows=0
 
+.. _pattern:
+
+pattern
+=======
+
+This is the default group of hosts to talk to in a playbook if no "hosts:" stanza is supplied.  The default is to talk
+to all hosts.  You may wish to change this to protect yourself from surprises::
+
+   hosts=*
+
+Note that /usr/bin/ansible always requires a host pattern and does not use this setting, only /usr/bin/ansible-playbook.
+
+.. _poll_interval:
+
+poll_interval
+=============
+
+For asynchronous tasks in Ansible (covered in :doc:`playbooks_async`), this is how often to check back on the status of those
+tasks when an explicit poll interval is not supplied.  The default is a reasonably moderate 15 seconds which is a tradeoff
+between checking in frequently and providing a quick turnaround when something may have completed::
+
+    poll_interval=15
+
+.. _private_key_file:
+
 private_key_file
 ================
 
@@ -295,6 +352,8 @@ value here to avoid re-specifying --ansible-private-keyfile with every invocatio
 
   private_key_file=/path/to/file.pem
 
+.. _remote_port:
+
 remote_port
 ===========
 
@@ -302,6 +361,8 @@ This sets the default SSH port on all of your systems, for systems that didn't s
 The default is the standard 22::
 
    remote_port = 22
+
+.. _remote_tmp:
 
 remote_tmp
 ==========
@@ -315,6 +376,8 @@ setting::
 The default is to use a subdirectory of the user's home directory.  Ansible will then choose a random directory name
 inside this location.
 
+.. _remote_user:
+
 remote_user
 ===========
 
@@ -323,6 +386,7 @@ always default to the current user::
 
     remote_user = root
 
+.. _sudo_exe:
 
 sudo_exe
 ========
@@ -331,6 +395,8 @@ If using an alternative sudo implementation on remote machines, the path to sudo
 the sudo implementation is matching CLI flags with the standard sudo::
 
    sudo_exe=sudo
+
+.. _sudo_flags:
 
 sudo_flags
 ==========
@@ -341,6 +407,8 @@ will not need to change this setting::
 
    sudo_flags=-H
 
+.. _sudo_user:
+
 sudo_user
 =========
 
@@ -349,6 +417,7 @@ playbook.  The default is the most logical: 'root'::
 
    sudo_user=root
 
+.. _timeout:
 
 timeout
 =======
@@ -356,6 +425,8 @@ timeout
 This is the default SSH timeout to use on connection attempts::
 
     timeout = 10
+
+.. _transport:
 
 transport
 =========
@@ -367,6 +438,8 @@ technology, and then will otherwise use 'paramiko'.  Other transport options inc
 Users should usually leave this setting as 'smart' and let their playbooks choose an alternate setting when needed with the
 'connection:' play parameter.
 
+.. _vars_plugins:
+
 vars_plugins
 ============
 
@@ -377,12 +450,15 @@ different locations::
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
+.. _paramiko_settings:
 
 Paramiko Specific Settings
 --------------------------
 
 Paramiko is the default SSH connection implementation on Enterprise Linux 6 or earlier, and is not used by default on other
 platforms.  Settings live under the [paramiko] header.
+
+.. _record_host_keys:
 
 record_host_keys
 ================
@@ -393,11 +469,15 @@ instead.  Setting it to False will improve performance and is recommended when h
 
    record_host_keys=True
 
+.. _openssh_settings:
+
 OpenSSH Specific Settings
 -------------------------
 
 Under the [ssh] header, the following settings are tunable for SSH connections.  OpenSSH is the default connection type for Ansible
 on OSes that are new enough to support ControlPersist.  (This means basically all operating systems except Enterprise Linux 6 or earlier).
+
+.. _ssh_args:
 
 ssh_args
 ========
@@ -408,6 +488,8 @@ If set, this will pass a specific set of options to Ansible rather than Ansible'
 
 In particular, users may wish to raise the ControlPersist time to encourage performance.  A value of 30 minutes may 
 be appropriate.  
+
+.. _control_path:
 
 control_path
 ============
@@ -427,6 +509,8 @@ Ansible 1.4 and later will instruct users to run with "-vvvv" in situations wher
 and if so it is easy to tell there is too long of a Control Path filename.  This may be frequently
 encountered on EC2.
 
+.. _scp_if_ssh:
+
 scp_if_ssh
 ==========
 
@@ -438,10 +522,14 @@ cause scp to be used to transfer remote files instead::
 There's really no reason to change this unless problems are encountered, and then there's also no real drawback
 to managing the switch.  Most environments support SFTP by default and this doesn't usually need to be changed.
 
+.. _accelerate_settings:
+
 Accelerate Mode Settings
 ------------------------
 
 Under the [accelerate] header, the following settings are tunable for :doc:`playbooks_acceleration`
+
+.. _accelerate_port:
 
 accelerate_port
 ===============
@@ -452,6 +540,8 @@ This is the port to use for accelerate mode::
   
    accelerate_port = 5099
 
+.. _accelerate_timeout:
+
 accelerate_timeout
 ==================
 
@@ -460,6 +550,8 @@ accelerate_timeout
 This setting controls the timeout for receiving data from a client. If no data is received during this time, the socket connection will be closed. A keepalive packet is sent back to the controller every 15 seconds, so this timeout should not be set lower than 15 (by default, the timeout is 30 seconds)::
 
     accelerate_timeout = 30
+
+.. _accelerate_connect_timeout:
 
 accelerate_connect_timeout
 ==========================

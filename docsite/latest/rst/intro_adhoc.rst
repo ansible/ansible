@@ -35,6 +35,8 @@ and then we'll get going.
 .. contents::
    :depth: 2
 
+.. _parallelism_and_shell_commands:
+
 Parallelism and Shell Commands
 ``````````````````````````````
 
@@ -108,6 +110,7 @@ simple scripts. They make the remote system look like you state, and run the com
 get it there.  This is commonly referred to as 'idempotence', and is a core design goal of ansible.
 However, we also recognize that running arbitrary commands is equally important, so Ansible easily supports both.
 
+.. _file_transfer:
 
 File Transfer
 `````````````
@@ -135,6 +138,7 @@ As well as delete directories (recursively) and delete files::
 
     $ ansible webservers -m file -a "dest=/path/to/c state=absent"
 
+.. _managing_packages:
 
 Managing Packages
 `````````````````
@@ -163,6 +167,8 @@ does not have a module available for it, you can install
 for other packages using the command module or (better!) contribute a module
 for other package managers.  Stop by the mailing list for info/details.
 
+.. _users_and_groups:
+
 Users and Groups
 ````````````````
 
@@ -177,6 +183,8 @@ exist::
 See the :doc:`modules` section for details on all of the available options, including
 how to manipulate groups and group membership.
 
+.. _from_source_control:
+
 Deploying From Source Control
 `````````````````````````````
 
@@ -188,6 +196,8 @@ Since ansible modules can notify change handlers it is possible to
 tell ansible to run specific tasks when the code is updated, such as
 deploying Perl/Python/PHP/Ruby directly from git and then restarting
 apache.
+
+.. _managing_services:
 
 Managing Services
 `````````````````
@@ -203,6 +213,8 @@ Alternatively, restart a service on all webservers::
 Ensure a service is stopped::
 
     $ ansible webservers -m service -a "name=httpd state=stopped"
+
+.. _time_limited_background_operations:
 
 Time Limited Background Operations
 ``````````````````````````````````
@@ -233,6 +245,8 @@ the remote nodes will be terminated.
 Typically you'll be only be backgrounding long-running
 shell commands or software upgrades only.  Backgrounding the copy module does not do a background file transfer.  :doc:`playbooks` also support polling, and have a simplified syntax for this.
 
+.. _checking_facts:
+
 Gathering Facts
 ```````````````
 
@@ -244,6 +258,8 @@ system.  These can be used to implement conditional execution of tasks but also 
 Its also possible to filter this output to just export certain facts, see the "setup" module documentation for details.
 
 Read more about facts at :doc:`playbooks_variables` once you're ready to read up on :doc:`playbooks`. 
+
+.. _limiting_hosts:
 
 Limiting Selected Hosts
 ```````````````````````
