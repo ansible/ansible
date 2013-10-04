@@ -103,6 +103,7 @@ import tempfile
 import shlex
 import select
 import time
+import string
 
 class Service(object):
     """
@@ -873,7 +874,7 @@ class NetBsdService(Service):
             if os.path.isfile(rcfile):
                 self.rcconf_file = rcfile
 
-        self.rcconf_key = "%s" % self.name
+        self.rcconf_key = "%s" % string.replace(self.name,"-","_");
 
         return self.service_enable_rcconf()
 
