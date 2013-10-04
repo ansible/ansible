@@ -7,6 +7,8 @@ in Ansible, and are typically used to load variables or templates with informati
 
 .. note:: This is considered an advanced feature, and many users will probably not rely on these features.  
 
+.. _getting_file_contents:
+
 Intro to Lookups: Getting File Contents
 ```````````````````````````````````````
 
@@ -19,6 +21,8 @@ Contents can be read off the filesystem as follows::
          contents: "{{ lookup('file', '/etc/foo.txt') }}"
       tasks:
          - debug: msg="the value of foo.txt is {{ contents }}"
+
+.. _password_lookup:
 
 The Password Lookup
 ```````````````````
@@ -44,6 +48,7 @@ This length can be changed by passing an extra parameter::
 
         (...)
 
+.. _more_lookups:
 
 More Lookups
 ````````````

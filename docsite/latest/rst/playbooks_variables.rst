@@ -24,6 +24,8 @@ It's highly recommended that you consult `the Ansible-Examples github repository
 .. contents::
    :depth: 2
 
+.. _valid_variable_names:
+
 What Makes A Valid Variable Name
 ````````````````````````````````
 
@@ -37,6 +39,8 @@ Variable names should be letters, numbers, and underscores.  Variables should al
 
 Easy enough, let's move on.
 
+.. _variables_in_inventory:
+
 Variables Defined in Inventory
 ``````````````````````````````
 
@@ -47,6 +51,8 @@ Often you'll want to set variables based on what groups a machine is in.  For in
 want to use 'boston.ntp.example.com' as an NTP server.
 
 See the `intro_inventory` document for multiple ways on how to define variables in inventory.  
+
+.. _playbook_variables:
 
 Variables Defined in a Playbook
 ```````````````````````````````
@@ -59,6 +65,8 @@ In a playbook, it's possible to define variables directly inline like so::
 
 This can be nice as it's right there when you are reading the playbook.
 
+.. _included_variables:
+
 Variables defined from included files and roles
 -----------------------------------------------
 
@@ -66,6 +74,8 @@ It turns out we've already talked about variables in another place too.
 
 As described in `intro_roles`, variables can also be included in the playbook via include files, which may or may
 not be part of an "Ansible Role".  Usage of roles is preferred as it provides a nice organizational system.
+
+.. _about_jinja2:
 
 Using Variables: About Jinja2
 `````````````````````````````
@@ -96,6 +106,8 @@ it's more than that -- you can also read variables about other hosts.  We'll sho
    pieces of files, or to have other ecosystem tools read Ansible files.  Not everyone will need this but it can unlock
    possibilities.
 
+.. _yaml_gotchas:
+
 Hey Wait, A YAML Gotcha
 ```````````````````````
 
@@ -114,6 +126,7 @@ Do it like this and you'll be fine::
       vars:
            app_path: "{{ base_path }}/22"
 
+.. _vars_and_facts:
 
 Information discovered from systems: Facts
 ``````````````````````````````````````````
@@ -371,6 +384,8 @@ Facts are frequently used in conditionals (see `playbook_conditionals`) and also
 
 Facts can be also used to create dynamic groups of hosts that match particular critera, see the :doc:`modules` documentation on 'group_by' for details, as well as in generalized conditional statements as discussed in the `playbook_conditionals` chapter.
 
+.. _disabling_facts:
+
 Turning Off Facts
 `````````````````
 
@@ -381,6 +396,8 @@ systems, mainly, or if you are using Ansible on experimental platforms.   In any
     - hosts: whatever
       gather_facts: no
 
+.. _local_facts::
+
 Local Facts (Facts.d)
 `````````````````````
 
@@ -389,7 +406,11 @@ Local Facts (Facts.d)
 As discussed in the playbooks chapter, Ansible facts are a way of getting data about remote systems for use in playbook variables.
 Usually these are discovered automatically by the 'setup' module in Ansible. Users can also write custom facts modules, as described
 in the API guide.  However, what if you want to have a simple way to provide system or user
-provided data for use in Ansible variables, without writing a fact module?  For instance, what if you want users to be able to control some aspect about how their systems are managed? "Facts.d" is one such mechanism.
+provided data for use in Ansible variables, without writing a fact module?  
+
+For instance, what if you want users to be able to control some aspect about how their systems are managed? "Facts.d" is one such mechanism.
+
+.. note:: Perhaps "local facts" is a bit of a misnomer, it means "locally supplied user values" as opposed to "centrally supplied user values", or what facts are -- "locally dynamically determined values".
 
 If a remotely managed system has an "/etc/ansible/facts.d" directory, any files in this directory
 ending in ".fact", can be JSON, INI, or executable files returning JSON, and these can supply local facts in Ansible.
@@ -423,6 +444,7 @@ And this data can be accessed in a template/playbook as::
 The local namespace prevents any user supplied fact from overriding system facts
 or variables defined elsewhere in the playbook.
 
+.. _registered_variables:
 
 Registered Variables
 ````````````````````
@@ -448,6 +470,8 @@ While it's mentioned elsewhere in that document too, here's a quick syntax examp
 Registered variables are valid on the host the remainder of the playbook run, which is the same as the lifetime of "facts"
 in Ansible.  Effectively registerd variables are just like facts.
 
+.. _accessing_complex_variable_data:
+
 Accessing Complex Variable Data
 ```````````````````````````````
 
@@ -465,6 +489,8 @@ OR alternatively::
 Similarly, this is how we access the first element of an array::
 
     {{ foo[0] }}
+
+.. _magic_variables_and_hostvars:
 
 Magic Variables, and How To Access Information About Other Hosts
 ````````````````````````````````````````````````````````````````
@@ -514,6 +540,8 @@ Don't worry about any of this unless you think you need it.  You'll know when yo
 
 Also available, *inventory_dir* is the pathname of the directory holding Ansible's inventory host file, *inventory_file* is the pathname and the filename pointing to the Ansible's inventory host file.
 
+.. _variable_file_seperation_details:
+
 Variable File Separation
 ````````````````````````
 
@@ -550,6 +578,8 @@ The contents of each variables file is a simple YAML dictionary, like this::
    It's also possible to keep per-host and per-group variables in very
    similar files, this is covered in :ref:`patterns`.
 
+.. _passing_variables_on_the_command_line:
+
 Passing Variables On The Command Line
 `````````````````````````````````````
 
@@ -583,6 +613,8 @@ As of Ansible 1.3, extra vars can be loaded from a JSON file with the "@" syntax
 
 Also as of Ansible 1.3, extra vars can be formatted as YAML, either on the command line
 or in a file as above.
+
+.. _conditional_imports:
 
 Conditional Imports
 ```````````````````
@@ -636,6 +668,8 @@ Ansible's approach to configuration -- separating variables from tasks, keeps yo
 from turning into arbitrary code with ugly nested ifs, conditionals, and so on - and results
 in more streamlined & auditable configuration rules -- especially because there are a
 minimum of decision points to track.
+
+.. _variable_precedence:
 
 Variable Precedence: Where Should I Put A Variable?
 ```````````````````````````````````````````````````
