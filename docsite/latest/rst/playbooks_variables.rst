@@ -19,7 +19,7 @@ Once understanding variables you'll also want to dig into `playbooks_conditional
 Useful things like the "group_by" module
 and the "when" conditional can also be used with variables, and to help manage differences between systems.
 
-It's highly recommended that you consult `the Ansible-Examples github repository <http://github.com/ansible/ansible-examples/>_` to see a lot of examples of variables put to use.
+It's highly recommended that you consult `the Ansible-Examples github repository <http://github.com/ansible/ansible-examples/>`_ to see a lot of examples of variables put to use.
 
 .. contents::
    :depth: 2
