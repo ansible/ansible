@@ -11,8 +11,11 @@ by `ANSIBLE_LIBRARY` or the ``--module-path`` command line option.
    :depth: 2
 
 
+.. _module_dev_tutorial:
+
 Tutorial
 ````````
+
 Let's build a module to get and set the system time.  For starters, let's build
 a module that just outputs the current time.
 
@@ -45,6 +48,8 @@ Ok, let's get going with an example.  We'll use Python.  For starters, save this
         "time" : date
     })
 
+.. _module_testing:
+
 Testing Modules
 ```````````````
 
@@ -62,6 +67,8 @@ You should see output that looks something like this::
     {u'time': u'2012-03-14 22:13:48.539183'}
 
 If you did not, you might have a typo in your module, so recheck it and try again.
+
+.. _reading_input:
 
 Reading Input
 `````````````
@@ -176,6 +183,8 @@ This should return something like::
 
     {"changed": true, "time": "2012-03-14 12:23:00.000307"}
 
+.. _module_provided_facts:
+
 Module Provided 'Facts'
 ```````````````````````
 
@@ -198,6 +207,8 @@ this, just have the module return a `ansible_facts` key, like so, along with oth
 These 'facts' will be available to all statements called after that module (but not before) in the playbook.
 A good idea might be make a module called 'site_facts' and always call it at the top of each playbook, though
 we're always open to improving the selection of core facts in Ansible as well.
+
+.. _common_module_boilerplate:
 
 Common Module Boilerplate
 `````````````````````````
@@ -248,6 +259,8 @@ can function outside of Ansible.
 If submitting a module to ansible's core code, which we encourage, use of the AnsibleModule
 class is required.
 
+.. _developing_for_check_mode:
+
 Check Mode
 ``````````
 .. versionadded:: 1.1
@@ -274,6 +287,8 @@ system state is altered when the user enables check mode.
 If your module does not support check mode, when the user runs Ansible in check
 mode, your module will simply be skipped.
 
+.. _module_dev_pitfalls:
+
 Common Pitfalls
 ```````````````
 
@@ -294,6 +309,8 @@ will still be shown in Ansible, but the command will not succeed.
 
 Always use the hacking/test-module script when developing modules and it will warn
 you about these kind of things.
+
+.. _module_dev_conventions:
 
 Conventions/Recommendations
 ```````````````````````````
@@ -321,6 +338,8 @@ and guidelines:
 
 * As results from many hosts will be aggregrated at once, modules should return only relevant output.  Returning the entire contents of a log file is generally bad form.
 
+.. _module_dev_shorthand:
+
 Shorthand Vs JSON
 `````````````````
 
@@ -334,6 +353,7 @@ will know what to do::
 If you're writing a module in Python or Ruby or whatever, though, returning
 JSON is probably the simplest way to go.
 
+.. _module_documenting:
 
 Documenting Your Module
 ```````````````````````
@@ -343,6 +363,8 @@ All modules included in the CORE distribution must have a
 which conforms to the schema defined below. You may find it easier to
 start writing your ``DOCUMENTATION`` string in an editor with YAML
 syntax highlighting before you include it in your Python file.
+
+.. _module_doc_example:
 
 Example
 +++++++
@@ -384,6 +406,8 @@ The ``module_formatter.py`` script and ``ansible-doc(1)`` append the
 ``EXAMPLES`` blob after any existing (deprecated) ``examples`` you may have in the
 YAML ``DOCUMENTATION`` string.
 
+.. _module_dev_testing:
+
 Building & Testing
 ++++++++++++++++++
 
@@ -418,6 +442,8 @@ output formats available:
     You can use ANSIBLE_KEEP_REMOTE_FILES=1 to prevent ansible from
     deleting the remote files so you can debug your module.
 
+.. _module_contribution:
+
 Getting Your Module Into Core
 `````````````````````````````
 
@@ -425,7 +451,8 @@ High-quality modules with minimal dependencies
 can be included in the core, but core modules (just due to the programming
 preferences of the developers) will need to be implemented in Python and use
 the AnsibleModule common code, and should generally use consistent arguments with the rest of
-the program.   Stop by the mailing list to inquire about requirements.
+the program.   Stop by the mailing list to inquire about requirements if you like, and submit
+a github pull request to the main project.
 
 .. seealso::
 

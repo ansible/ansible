@@ -8,6 +8,8 @@ How do we write a new one?
 Simple!  We just create a script or program that can return JSON in the right format when fed the proper arguments.
 You can do this in any language.
 
+.. _inventory_script_conventions:
+
 Script Conventions
 ``````````````````
 
@@ -45,6 +47,8 @@ if the script does not wish to do this, returning an empty hash/dictionary is th
         "ntpserver"  : "wolf.example.com",
         "monitoring" : "pack.example.com"
     }
+
+.. _inventory_script_tuning:
 
 Tuning the External Inventory Script
 ````````````````````````````````````
