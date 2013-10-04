@@ -4,6 +4,8 @@ Ansible Modules
 .. contents::
    :depth: 3
 
+.. _modules_intro:
+
 Introduction
 ````````````
 
@@ -55,23 +57,22 @@ Let's see what's available in the Ansible module library, out of the box:
 
 .. include:: modules/_list.rst
 
+.. _writing_modules:
 
 Writing your own modules
 ````````````````````````
 
-See :doc:`moduledev`.
+See :doc:`developing_modules`.
 
 .. seealso::
 
-   :doc:`contrib`
-       User contributed playbooks, modules, and articles
-   :doc:`examples`
+   :doc:`intro_adhoc`
        Examples of using modules in /usr/bin/ansible
    :doc:`playbooks`
        Examples of using modules with /usr/bin/ansible-playbook
-   :doc:`moduledev`
+   :doc:`developing_modules`
        How to write your own modules
-   :doc:`api`
+   :doc:`developing_api`
        Examples of using modules with the Python API
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups

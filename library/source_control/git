@@ -73,6 +73,13 @@ options:
             - If C(yes), repository will be updated using the supplied
               remote.  Otherwise the repo will be left untouched.
               Prior to 1.2, this was always 'yes' and could not be disabled.
+    executable:
+        required: false
+        default: null
+        version_added: "1.4"
+        description:
+            - Path to git executable to use. If not supplied,
+              the normal mechanism for resolving binary paths will be used.
 notes:
     - If the task seems to be hanging, first verify remote host is in C(known_hosts).
       SSH will prompt user to authorize the first contact with a remote host. One solution is to add
@@ -304,6 +311,7 @@ def main():
             force=dict(default='yes', type='bool'),
             depth=dict(default=None, type='int'),
             update=dict(default='yes', type='bool'),
+            executable=dict(default=None),
         ),
         supports_check_mode=True
     )
@@ -315,8 +323,8 @@ def main():
     force   = module.params['force']
     depth   = module.params['depth']
     update  = module.params['update']
+    git_path = module.params['executable'] or module.get_bin_path('git', True)
 
-    git_path = module.get_bin_path('git', True)
     gitconfig = os.path.join(dest, '.git', 'config')
 
     rc, out, err, status = (0, None, None, None)

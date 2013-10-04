@@ -1,0 +1,48 @@
+Setting the Environment (and Working With Proxies)
+==================================================
+
+.. versionadded:: 1.1
+
+It is quite possible that you may need to get package updates through a proxy, or even get some package
+updates through a proxy and access other packages not through a proxy.  
+
+Occasionally a script you might wish to call may also need certain environment variables set.
+
+Ansible makes it easy for you to configure your environment by using the 'environment' keyword.  Here is an example::
+
+    - hosts: all
+      remote_user: root
+
+      tasks:
+
+        - apt: name=cobbler state=installed
+          environment:
+            http_proxy: http://proxy.example.com:8080
+
+The environment can also be stored in a variable, and accessed like so::
+
+    - hosts: all
+      remote_user: root
+
+      # here we make a variable named "env" that is a dictionary
+      vars:
+        proxy_env:
+          http_proxy: http://proxy.example.com:8080
+
+      tasks:
+
+        - apt: name=cobbler state=installed
+          environment: proxy_env
+
+While just proxy settings were shown above, any number of settings can be supplied.  The most logical place
+to define an environment hash might be a group_vars file, like so::
+
+    ---
+    # file: group_vars/boston
+
+    ntp_server: ntp.bos.example.com
+    backup: bak.bos.example.com
+    proxy_env:
+      http_proxy: http://proxy.bos.example.com:8080
+      https_proxy: http://proxy.bos.example.com:8080
+

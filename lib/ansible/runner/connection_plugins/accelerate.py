@@ -21,7 +21,7 @@ import base64
 import socket
 import struct
 import time
-from ansible.callbacks import vvv
+from ansible.callbacks import vvv, vvvv
 from ansible.runner.connection_plugins.ssh import Connection as SSHConnection
 from ansible.runner.connection_plugins.paramiko_ssh import Connection as ParamikoConnection
 from ansible import utils
@@ -84,12 +84,13 @@ class Connection(object):
             utils.AES_KEYS = self.runner.aes_keys
 
     def _execute_accelerate_module(self):
-        args = "password=%s port=%s" % (base64.b64encode(self.key.__str__()), str(self.accport))
+        args = "password=%s port=%s debug=%d" % (base64.b64encode(self.key.__str__()), str(self.accport), int(utils.VERBOSITY))
         inject = dict(password=self.key)
         if self.runner.accelerate_inventory_host:
             inject = utils.combine_vars(inject, self.runner.inventory.get_variables(self.runner.accelerate_inventory_host))
         else:
             inject = utils.combine_vars(inject, self.runner.inventory.get_variables(self.host))
+        vvvv("attempting to start up the accelerate daemon...")
         self.ssh.connect()
         tmp_path = self.runner._make_tmp_path(self.ssh)
         return self.runner._execute_module(self.ssh, tmp_path, 'accelerate', args, inject=inject)
@@ -99,20 +100,22 @@ class Connection(object):
 
         try:
             if not self.is_connected:
-                # TODO: make the timeout and retries configurable?
                 tries = 3
                 self.conn = socket.socket()
-                self.conn.settimeout(300.0)
+                self.conn.settimeout(constants.ACCELERATE_CONNECT_TIMEOUT)
+                vvvv("attempting connection to %s via the accelerated port %d" % (self.host,self.accport))
                 while tries > 0:
                     try:
                         self.conn.connect((self.host,self.accport))
                         break
                     except:
+                        vvvv("failed, retrying...")
                         time.sleep(0.1)
                         tries -= 1
                 if tries == 0:
                     vvv("Could not connect via the accelerated connection, exceeded # of tries")
                     raise errors.AnsibleError("Failed to connect")
+                self.conn.settimeout(constants.ACCELERATE_TIMEOUT)
         except:
             if allow_ssh:
                 vvv("Falling back to ssh to startup accelerated mode")
@@ -126,25 +129,31 @@ class Connection(object):
         return self
 
     def send_data(self, data):
-        packed_len = struct.pack('Q',len(data))
+        packed_len = struct.pack('!Q',len(data))
         return self.conn.sendall(packed_len + data)
 
     def recv_data(self):
         header_len = 8 # size of a packed unsigned long long
         data = b""
         try:
+            vvvv("%s: in recv_data(), waiting for the header" % self.host)
             while len(data) < header_len:
-                d = self.conn.recv(1024)
+                d = self.conn.recv(header_len - len(data))
                 if not d:
+                    vvvv("%s: received nothing, bailing out" % self.host)
                     return None
                 data += d
-            data_len = struct.unpack('Q',data[:header_len])[0]
+            vvvv("%s: got the header, unpacking" % self.host)
+            data_len = struct.unpack('!Q',data[:header_len])[0]
             data = data[header_len:]
+            vvvv("%s: data received so far (expecting %d): %d" % (self.host,data_len,len(data)))
             while len(data) < data_len:
-                d = self.conn.recv(1024)
+                d = self.conn.recv(data_len - len(data))
                 if not d:
+                    vvvv("%s: received nothing, bailing out" % self.host)
                     return None
                 data += d
+            vvvv("%s: received all of the data, returning" % self.host)
             return data
         except socket.timeout:
             raise errors.AnsibleError("timed out while waiting to receive data")
@@ -171,11 +180,22 @@ class Connection(object):
         if self.send_data(data):
             raise errors.AnsibleError("Failed to send command to %s" % self.host)
         
-        response = self.recv_data()
-        if not response:
-            raise errors.AnsibleError("Failed to get a response from %s" % self.host)
-        response = utils.decrypt(self.key, response)
-        response = utils.parse_json(response)
+        while True:
+            # we loop here while waiting for the response, because a 
+            # long running command may cause us to receive keepalive packets
+            # ({"pong":"true"}) rather than the response we want. 
+            response = self.recv_data()
+            if not response:
+                raise errors.AnsibleError("Failed to get a response from %s" % self.host)
+            response = utils.decrypt(self.key, response)
+            response = utils.parse_json(response)
+            if "pong" in response:
+                # it's a keepalive, go back to waiting
+                vvvv("%s: received a keepalive packet" % self.host)
+                continue
+            else:
+                vvvv("%s: received the response" % self.host)
+                break
 
         return (response.get('rc',None), '', response.get('stdout',''), response.get('stderr',''))
 

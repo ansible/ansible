@@ -1,13 +1,20 @@
-Amazon Web Services
-===================
+Amazon Web Services Guide
+=========================
 
 .. contents::
    :depth: 2
 
+.. _aws_intro:
+
 Introduction
 ````````````
 
-Ansible contains a number of core modules for interacting with Amazon Web Services (AWS) and other API compatible private clouds, such as Eucalyptus.  (There are other supported cloud systems, but this documentation is about AWS ones).  This page illustrates some use cases for provisioning and managing hosts EC2 resources.
+.. note:: This section of the documentation is under construction.  We are in the process of adding more examples about all of the EC2 modules
+   and how they work together.  There's also an ec2 example in the language_features directory of the 'ansible-examples' github repository
+   that you may wish to consult.  Once complete, there will also be new examples of ec2 in ansible-examples.
+
+Ansible contains a number of core modules for interacting with Amazon Web Services (AWS).  These also work with Eucalyptus, which is an AWS compatible private cloud solution.  There are other supported cloud types, but this documentation chapter is about AWS API clouds.  The purpose of this
+section is to explain how to put Ansible modules together (and use inventory scripts) to use Ansible in AWS context.
 
 Requirements for the AWS modules are minimal.  All of the modules require and are tested against boto 2.5 or higher. You'll need this Python module installed on the execution host. If you are using Red Hat Enterprise Linux or CentOS, install boto from `EPEL <http://fedoraproject.org/wiki/EPEL>`_:
 
@@ -15,10 +22,14 @@ Requirements for the AWS modules are minimal.  All of the modules require and ar
 
     $ yum install python-boto
 
+You can also install it via pip if you want.
+
+.. _aws_provisioning:
+
 Provisioning
 ````````````
 
-The ec2 module provides the ability to provision instance(s) within EC2.  Typically the provisioning task will be performed against your Ansible master server as a local_action.  
+The ec2 module provides the ability to provision instances within EC2.  Typically the provisioning task will be performed against your Ansible master server as a local_action statement.  
 
 .. note::
 
@@ -33,27 +44,33 @@ The ec2 module provides the ability to provision instance(s) within EC2.  Typica
    exporting the variable as EC2_URL=https://myhost:8773/services/Eucalyptus.
    This can be set using the 'environment' keyword in Ansible if you like.
 
-Provisioning a number of instances in ad-hoc mode mode:
+Here is an example of provisioning a number of instances in ad-hoc mode mode:
 
 .. code-block:: bash
 
-    # ansible localhost -m ec2 -a "image=ami-6e649707 instance_type=m1.large keypair=mykey group=webservers wait=yes"
+    # ansible localhost -m ec2 -a "image=ami-6e649707 instance_type=m1.large keypair=mykey group=webservers wait=yes" -c local
 
 In a play, this might look like (assuming the parameters are held as vars)::
 
     tasks:
     - name: Provision a set of instances
-      local_action: ec2 keypair={{mykeypair}} group={{security_group}} instance_type={{instance_type}} image={{image}} wait=true count={{number}}
+      local_action: ec2 
+          keypair={{mykeypair}} 
+          group={{security_group}} 
+          instance_type={{instance_type}} 
+          image={{image}} 
+          wait=true 
+          count={{number}}
       register: ec2
-                  
-By registering the return its then possible to dynamically create a host group consisting of these new instances.  This facilitates performing configuration actions on the hosts immediately in a subsequent play::
 
-    tasks:
+        
+By registering the return its then possible to dynamically create a host group consisting of these new instances.  This facilitates performing configuration actions on the hosts immediately in a subsequent task::
+
     - name: Add all instance public IPs to host group
       local_action: add_host hostname={{ item.public_ip }} groupname=ec2hosts
       with_items: ec2.instances
 
-With the host group now created, the second play in your provision playbook might now have some configuration steps::
+With the host group now created, a second play in your provision playbook might now have some configuration steps::
 
     - name: Configuration play
       hosts: ec2hosts
@@ -64,10 +81,16 @@ With the host group now created, the second play in your provision playbook migh
       - name: Check NTP service
         action: service name=ntpd state=started
 
+Rather than include configuration inline, you may also choose to just do it as a task include or a role.
+
 The method above ties the configuration of a host with the provisioning step.  This isn't always ideal and leads us onto the next section.
+
+:: _aws_advanced:
 
 Advanced Usage
 ``````````````
+
+:: _aws_host_inventory:
 
 Host Inventory
 ++++++++++++++
@@ -84,6 +107,8 @@ You may wish to schedule a regular refresh of the inventory cache to accommodate
 
 Put this into a crontab as appropriate to make calls from your Ansible master server to the EC2 API endpoints and gather host information.  The aim is to keep the view of hosts as up-to-date as possible, so schedule accordingly. Playbook calls could then also be scheduled to act on the refreshed hosts inventory after each refresh.  This approach means that machine images can remain "raw", containing no payload and OS-only.  Configuration of the workload is handled entirely by Ansible.  
 
+:: _aws_pull:
+
 Pull Configuration
 ++++++++++++++++++
 
@@ -93,10 +118,26 @@ More information on pull-mode playbooks can be found `here <http://www.ansiblewo
 
 (Various developments around Ansible are also going to make this easier in the near future.  Stay tuned!)
 
+:: _aws_autoscale:
+
+AWX Autoscaling
++++++++++++++++
+
+AnsibleWorks's "AWX" product also contains a very nice feature for auto-scaling use cases.  In this mode, a simple curl script can call
+a defined URL and the server will "dial out" to the requester and configure an instance that is spinning up.  This can be a great way
+to reconfigure ephmeral nodes.  See the AWX documentation for more details.  Click on the AWX link in the sidebar for details.
+
+A benefit of using the callback in AWX over pull mode is that job results are still centrally recorded and less information has to be shared
+with remote hosts.
+
+:: _aws_use_cases:
+
 Use Cases
 `````````
 
 This section covers some usage examples built around a specific use case.
+
+:: _aws_cloudformation_example:
 
 Example 1
 +++++++++
@@ -105,12 +146,18 @@ Example 1
 
 Provision instances with your tool of choice and consider using the inventory plugin to group hosts based on particular tags or security group. Consider tagging instances you wish to managed with Ansible with a suitably unique key=value tag.
 
+.. note:: Ansible also has a cloudformation module you may wish to explore.
+
+:: _aws_autoscale_example:
+
 Example 2
 +++++++++
 
     Example 2: I'm using AutoScaling to dynamically scale up and scale down the number of instances. This means the number of hosts is constantly fluctuating but I'm letting EC2 automatically handle the provisioning of these instances.  I don't want to fully bake a machine image, I'd like to use Ansible to configure the hosts.
 
-There are two approaches to this use case.  The first is to use the inventory plugin to regularly refresh host information and then target hosts based on the latest inventory data.  The second is to use ansible-pull triggered by a user-data script (specified in the launch configuration) which would then mean that each instance would fetch Ansible and the latest playbook from a git repository and run locally to configure itself.
+There are several approaches to this use case.  The first is to use the inventory plugin to regularly refresh host information and then target hosts based on the latest inventory data.  The second is to use ansible-pull triggered by a user-data script (specified in the launch configuration) which would then mean that each instance would fetch Ansible and the latest playbook from a git repository and run locally to configure itself. You could also use the AWX callback feature.
+
+:: _aws_builds:
 
 Example 3
 +++++++++
@@ -125,34 +172,15 @@ And in your playbook::
 
     hosts: /chroot/path
 
+.. note:: more examples of this are pending.   You may also be interested in the ec2_ami module for taking AMIs of running instances.
+
+:: _aws_pending:
+
 Pending Information
 ```````````````````
 
 In the future look here for more topics.
 
-Using Ansible's S3 module
-+++++++++++++++++++++++++
 
-these modules are documented on the module page, more walk throughs coming soon
 
-Using Ansible's Elastic Load Balancer Support
-+++++++++++++++++++++++++++++++++++++++++++++
-
-these modules are documented on the module page, more walk throughs coming soon
-
-Using Ansible's Cloud Formation Module
-++++++++++++++++++++++++++++++++++++++
-
-these modules are documented on the module page, more walk throughs coming soon
-
-.. seealso::
-
-   :doc:`examples`
-       Examples of basic commands
-   :doc:`playbooks`
-       Learning ansible's configuration management language
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
-       Questions? Help? Ideas?  Stop by the list on Google Groups
-   `irc.freenode.net <http://irc.freenode.net>`_
-       #ansible IRC chat channel
 

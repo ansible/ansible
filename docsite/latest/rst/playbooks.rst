@@ -1,15 +1,18 @@
-Playbooks
-=========
+Intro to Playbooks
+==================
 
 .. contents::
    :depth: 2
 
-Introduction
-````````````
+.. _about_playbooks:
 
-Playbooks are a completely different way to use ansible than in task execution mode, and are
-particularly powerful. Simply put, playbooks are the basis for a really simple
-configuration management and multi-machine deployment system,
+About Playbooks
+```````````````
+
+Playbooks are a completely different way to use ansible than in adhoc task execution mode, and are
+particularly powerful. 
+
+Simply put, playbooks are the basis for a really simple configuration management and multi-machine deployment system,
 unlike any that already exist, and one that is very well suited to deploying complex applications.
 
 Playbooks can declare configurations, but they can also orchestrate steps of
@@ -29,10 +32,17 @@ another tab, so you can apply the theory to what things look like in practice.
 There are also some full sets of playbooks illustrating a lot of these techniques in the
 `ansible-examples repository <https://github.com/ansible/ansible-examples>`_.
 
+There are also many jumping off points after you learn playbooks, so hop back to the documentation
+index after you're done with this section.
+
+.. _playbook_language_example:
+
 Playbook Language Example
 `````````````````````````
 
-Playbooks are expressed in YAML format and have a minimum of syntax.
+Playbooks are expressed in YAML format (see :doc:`YAMLSyntax`) and have a minimum of syntax, which intentionally
+tries to not be a programming language or script, but rather a model of a configuration or a process.
+
 Each playbook is composed of one or more 'plays' in a list.
 
 The goal of a play is to map a group of hosts to some well defined roles, represented by
@@ -43,6 +53,10 @@ By composing a playbook of multiple 'plays', it is possible to
 orchestrate multi-machine deployments, running certain steps on all
 machines in the webservers group, then certain steps on the database
 server group, then more commands back on the webservers group, etc.
+
+"plays" are more or less a sports analogy.  You can have quite a lot of plays that affect your systems
+to do different things.  It's not as if you were just defining one particular state or model, and you
+can run different plays at different times.  
 
 For starters, here's a playbook that contains just one play::
 
@@ -67,8 +81,12 @@ For starters, here's a playbook that contains just one play::
 
 Below, we'll break down what the various features of the playbook language are.
 
+.. _playbook_basics:
+
 Basics
 ``````
+
+.. _playbook_hosts_and_users:
 
 Hosts and Users
 +++++++++++++++
@@ -130,57 +148,7 @@ Just `Control-C` to kill it and run it again with `-K`.
    not come into play. Ansible also takes care to not log password
    parameters.
 
-Vars section
-++++++++++++
-
-The `vars` section contains a list of variables and values that can be used in the plays, like this::
-
-    ---
-    - hosts: webservers
-      remote_user: root
-      vars:
-         http_port: 80
-         van_halen_port: 5150
-         other: 'magic'
-
-.. note::
-   You can also keep variables in separate files and include them alongside inline `vars` with a `vars_files` declaration
-   in the play. See the `Advanced Playbooks chapter <http://www.ansibleworks.com/docs/playbooks2.html#variable-file-separation>`_
-   for more info.
-
-These variables can be used later in the playbook like this::
-
-    {{ varname }}
-
-Variables are passed through the Jinja2 templating engine. Any valid Jinja2
-expression can be used between the curly braces,  including the use of filters
-to modify the variable (for example, `{{ varname|int }}` ensures the variable is
-interpreted as an integer).
-
-Jinja2 expressions are very similar to Python and even if you are not working
-with Python you should feel comfortable with them. See the `Jinja2 documentation
-<http://jinja.pocoo.org/docs/templates/>`_ to learn more about the syntax.
-Please note that Jinja2 loops and conditionals are only useful in Ansible
-templates, not in playbooks. Use the 'when' and 'with' keywords for
-conditionals and loops in Ansible playbooks.
-
-If there are discovered variables about the system, called 'facts', these variables bubble up back into the playbook, and can be used on each system just like explicitly set variables.  Ansible provides several
-of these, prefixed with 'ansible', which are documented under 'setup' in the module documentation.  Additionally,
-facts can be gathered by ohai and facter if they are installed.  Facter variables are prefixed with ``facter_`` and Ohai variables are prefixed with ``ohai_``.  These add extra dependencies and are only there for ease of users
-porting over from those other configuration systems.  Finally, it's possible to drop files
-on to the remote systems that provide additional sources of fact data, see "Facts.d" as documented
-in the Advanced Playbooks section.
-
-How about an example.  If I wanted to write the hostname into the /etc/motd file, I could say::
-
-   - name: write the motd
-     template: src=/srv/templates/motd.j2 dest=/etc/motd
-
-And in /srv/templates/motd.j2::
-
-   You are logged into {{ facter_hostname }}
-
-But we're getting ahead of ourselves, as that just showed a task in a playbook ahead of schedule.  Let's talk about tasks.
+.. _tasks_list:
 
 Tasks list
 ++++++++++
@@ -269,6 +237,8 @@ Those same variables are usable in templates, which we'll get to later.
 Now in a very basic playbook all the tasks will be listed directly in that play, though it will usually
 make more sense to break up tasks using the 'include:' directive.  We'll show that a bit later.
 
+.. _action_shorthand:
+
 Action Shorthand
 ````````````````
 
@@ -284,8 +254,10 @@ You will notice in earlier versions, this was only available as::
 
 The old form continues to work in newer versions without any plan of deprecation.
 
-Running Operations On Change
-````````````````````````````
+.. _handlers:
+
+Handlers: Running Operations On Change
+``````````````````````````````````````
 
 As we've mentioned, modules are written to be 'idempotent' and can relay  when
 they have made a change on the remote system.   Playbooks recognize this and
@@ -344,285 +316,7 @@ In the above example any queued up handlers would be processed early when the 'm
 statement was reached.  This is a bit of a niche case but can come in handy from
 time to time.
 
-Task Include Files And Encouraging Reuse
-````````````````````````````````````````
-
-Suppose you want to reuse lists of tasks between plays or playbooks.  You can use
-include files to do this.  Use of included task lists is a great way to define a role
-that system is going to fulfill.  Remember, the goal of a play in a playbook is to map
-a group of systems into multiple roles.  Let's see what this looks like...
-
-A task include file simply contains a flat list of tasks, like so::
-
-    ---
-    # possibly saved as tasks/foo.yml
-    - name: placeholder foo
-      command: /bin/foo
-    - name: placeholder bar
-      command: /bin/bar
-
-Include directives look like this, and can be mixed in with regular tasks in a playbook::
-
-   tasks:
-    - include: tasks/foo.yml
-
-You can also pass variables into includes.  We call this a 'parameterized include'.
-
-For instance, if deploying multiple wordpress instances, I could
-contain all of my wordpress tasks in a single wordpress.yml file, and use it like so::
-
-   tasks:
-     - include: wordpress.yml user=timmy
-     - include: wordpress.yml user=alice
-     - include: wordpress.yml user=bob
-
-Variables passed in can then be used in the included files.  You can reference them like this::
-
-   {{ user }}
-
-(In addition to the explicitly passed-in parameters, all variables from
-the vars section are also available for use here as well.)
-
-Starting in 1.0, variables can also be passed to include files using an alternative syntax,
-which also supports structured variables::
-
-    tasks:
-
-      - include: wordpress.yml
-        vars:
-            remote_user: timmy
-            some_list_variable:
-              - alpha
-              - beta
-              - gamma
-
-Playbooks can include other playbooks too, but that's mentioned in a later section.
-
-.. note::
-   As of 1.0, task include statements can be used at arbitrary depth.
-   They were previously limited to a single level, so task includes
-   could not include other files containing task includes.
-
-Includes can also be used in the 'handlers' section, for instance, if you
-want to define how to restart apache, you only have to do that once for all
-of your playbooks.  You might make a handlers.yml that looks like::
-
-   ---
-   # this might be in a file like handlers/handlers.yml
-   - name: restart apache
-     service: name=apache state=restarted
-
-And in your main playbook file, just include it like so, at the bottom
-of a play::
-
-   handlers:
-     - include: handlers/handlers.yml
-
-You can mix in includes along with your regular non-included tasks and handlers.
-
-Includes can also be used to import one playbook file into another. This allows
-you to define a top-level playbook that is composed of other playbooks.
-
-For example::
-
-    - name: this is a play at the top level of a file
-      hosts: all
-      remote_user: root
-      tasks:
-      - name: say hi
-        tags: foo
-        shell: echo "hi..."
-
-    - include: load_balancers.yml
-    - include: webservers.yml
-    - include: dbservers.yml
-
-Note that you cannot do variable substitution when including one playbook
-inside another.
-
-.. note::
-   You can not conditionally path the location to an include file,
-   like you can with 'vars_files'.  If you find yourself needing to do
-   this, consider how you can restructure your playbook to be more
-   class/role oriented.  This is to say you cannot use a 'fact' to
-   decide what include file to use.  All hosts contained within the
-   play are going to get the same tasks.  ('*when*' provides some
-   ability for hosts to conditionally skip tasks).
-
-.. _roles:
-
-Roles
-`````
-
-.. versionadded:: 1.2
-
-Now that you have learned about vars_files, tasks, and handlers, what is the best way to organize your playbooks?
-The short answer is to use roles!  Roles are ways of automatically loading certain vars_files, tasks, and
-handlers based on a known file structure.  Grouping content by roles also allows easy sharing of roles with other users.
-
-Roles are just automation around 'include' directives as redescribed above, and really don't contain much
-additional magic beyond some improvements to search path handling for referenced files.  However, that can be a big thing!
-
-Example project structure::
-
-    site.yml
-    webservers.yml
-    fooservers.yml
-    roles/
-       common/
-         files/
-         templates/
-         tasks/
-         handlers/
-         vars/
-         meta/
-       webservers/
-         files/
-         templates/
-         tasks/
-         handlers/
-         vars/
-         meta/
-
-In a playbook, it would look like this::
-
-    ---
-    - hosts: webservers
-      roles:
-         - common
-         - webservers
-
-This designates the following behaviors, for each role 'x':
-
-- If roles/x/tasks/main.yml exists, tasks listed therein will be added to the play
-- If roles/x/handlers/main.yml exists, handlers listed therein will be added to the play
-- If roles/x/vars/main.yml exists, variables listed therein will be added to the play
-- If roles/x/meta/main.yml exists, any role dependencies listed therein will be added to the list of roles (1.3 and later)
-- Any copy tasks can reference files in roles/x/files/ without having to path them relatively or absolutely
-- Any script tasks can reference scripts in roles/x/files/ without having to path them relatively or absolutely
-- Any template tasks can reference files in roles/x/templates/ without having to path them relatively or absolutely
-
-.. note::
-   Role dependencies are discussed below.
-
-If any files are not present, they are just ignored.  So it's ok to not have a 'vars/' subdirectory for the role,
-for instance.
-
-Note, you are still allowed to list tasks, vars_files, and handlers "loose" in playbooks without using roles,
-but roles are a good organizational feature and are highly recommended.  if there are loose things in the playbook,
-the roles are evaluated first.
-
-Also, should you wish to parameterize roles, by adding variables, you can do so, like this::
-
-    ---
-    - hosts: webservers
-      roles:
-        - common
-        - { role: foo_app_instance, dir: '/opt/a',  port: 5000 }
-        - { role: foo_app_instance, dir: '/opt/b',  port: 5001 }
-
-While it's probably not something you should do often, you can also conditionally apply roles like so::
-
-    ---
-    - hosts: webservers
-      roles:
-        - { role: some_role, when: "ansible_os_family == 'RedHat'" }
-
-This works by applying the conditional to every task in the role.  Conditionals are covered later on in
-the documentation.
-
-Finally, you may wish to assign tags to the roles you specify. You can do so inline:::
-
-    ---
-    - hosts: webservers
-      roles:
-        - { role: foo, tags: ["bar", "baz"] }
-
-
-If the play still has a 'tasks' section, those tasks are executed after roles are applied.
-
-If you want to define certain tasks to happen before AND after roles are applied, you can do this::
-
-    ---
-    - hosts: webservers
-      pre_tasks:
-        - shell: echo 'hello'
-      roles:
-        - { role: some_role }
-      tasks:
-        - shell: echo 'still busy'
-      post_tasks:
-        - shell: echo 'goodbye'
-
-.. note::
-   If using tags with tasks (described later as a means of only running part of a playbook),  
-   be sure to also tag your pre_tasks and post_tasks and pass those along as well, especially if the pre
-   and post tasks are used for monitoring outage window control or load balancing.
-
-Role Default Variables
-``````````````````````
-
-.. versionadded:: 1.3
-
-Role default variables allow you to set default variables for included or dependent roles (see below). To create
-defaults, simply add a `defaults/main.yml` file in your role directory. These variables will have the lowest priority
-of any variables available, and can be easily overridden by any other variable, including inventory variables.
-
-Role Dependencies
-`````````````````
-
-.. versionadded:: 1.3
-
-Role dependencies allow you to automatically pull in other roles when using a role. Role dependencies are stored in the
-`meta/main.yml` file contained within the role directory. This file should contain 
-a list of roles and parameters to insert before the specified role, such as the following in an example
-`roles/myapp/meta/main.yml`::
-
-    ---
-    dependencies:
-      - { role: common, some_parameter: 3 }
-      - { role: apache, port: 80 }
-      - { role: postgres, dbname: blarg, other_parameter: 12 }
-
-Role dependencies can also be specified as a full path, just like top level roles::
-
-    ---
-    dependencies:
-       - { role: '/path/to/common/roles/foo', x: 1 }
-
-Roles dependencies are always executed before the role that includes them, and are recursive. By default, 
-roles can also only be added as a dependency once - if another role also lists it as a dependency it will
-not be run again. This behavior can be overridden by adding `allow_duplicates: yes` to the `meta/main.yml` file.
-For example, a role named 'car' could add a role named 'wheel' to its dependencies as follows::
-
-    ---
-    dependencies:
-    - { role: wheel, n: 1 }
-    - { role: wheel, n: 2 }
-    - { role: wheel, n: 3 }
-    - { role: wheel, n: 4 }
-
-And the `meta/main.yml` for wheel contained the following::
-
-    ---
-    allow_duplicates: yes
-    dependencies:
-    - { role: tire }
-    - { role: brake }
-
-The resulting order of execution would be as follows::
-
-    tire(n=1)
-    brake(n=1)
-    wheel(n=1)
-    tire(n=2)
-    brake(n=2)
-    wheel(n=2)
-    ...
-    car
-
-.. note::
-   Variable inheritance and scope are detailed in the Advanced Playbook section.
+.. _executing_a_playbook:
 
 Executing A Playbook
 ````````````````````
@@ -631,6 +325,8 @@ Now that you've learned playbook syntax, how do you run a playbook?  It's simple
 Let's run a playbook using a parallelism level of 10::
 
     ansible-playbook playbook.yml -f 10
+
+.. _tips_and_tricks:
 
 Tips and Tricks
 ```````````````
@@ -642,10 +338,10 @@ kept separate in the counts.
 If you ever want to see detailed output from successful modules as well as unsuccessful ones,
 use the '--verbose' flag.  This is available in Ansible 0.5 and later.
 
-Also, in version 0.5 and later, Ansible playbook output is vastly upgraded if the cowsay
+Ansible playbook output is vastly upgraded if the cowsay
 package is installed.  Try it!
 
-In version 0.7 and later, to see what hosts would be affected by a playbook before you run it, you
+To see what hosts would be affected by a playbook before you run it, you
 can do this::
 
     ansible-playbook playbook.yml --list-hosts.
@@ -654,17 +350,13 @@ can do this::
 
    :doc:`YAMLSyntax`
        Learn about YAML syntax
-   :doc:`playbooks`
-       Review the basic Playbook language features
-   :doc:`playbooks2`
-       Learn about Advanced Playbook Features
-   :doc:`bestpractices`
+   :doc:`playbooks_best_practices`
        Various tips about managing playbooks in the real world
    :doc:`modules`
        Learn about available modules
-   :doc:`moduledev`
+   :doc:`developing_modules`
        Learn how to extend Ansible by writing your own modules
-   :doc:`patterns`
+   :doc:`intro_patterns`
        Learn about how to select hosts
    `Github examples directory <https://github.com/ansible/ansible/tree/devel/examples/playbooks>`_
        Complete playbook files from the github project source

@@ -1,21 +1,46 @@
-Command Line Examples And Next Steps
-====================================
+
+Introduction To Ad-Hoc Commands
+===============================
 
 .. highlight:: bash
 
 The following examples show how to use `/usr/bin/ansible` for running
-ad hoc tasks.  Start here.
+ad hoc tasks. 
 
-For configuration management and deployments, you'll want to pick up on
-using `/usr/bin/ansible-playbook` -- the concepts port over directly.
+What's an ad-hoc command?
+
+An ad-hoc command is something that you might type in to do something really
+quick, but don't want to save for later.   
+
+This is a good place to start to understand the basics of what ansible can do
+prior to learning the playbooks language -- ad-hoc commands can also be used
+to do quick things that you might not neccessarily want to write a full playbook 
+for.  
+
+Generally speaking, the true power of Ansible lies in playbooks.
+Why would you use ad-hoc tasks versus playbooks?
+
+For instance, if you wanted to power off all of your lab for Christmas vacation,
+you could execute a quick one-liner in Ansible without writing a playbook.
+
+For configuration management and deployments, though, you'll want to pick up on
+using '/usr/bin/ansible-playbook' -- the concepts you will learn here will 
+port over directly to the playbook language.
+
 (See :doc:`playbooks` for more information about those)
+
+If you haven't read :doc:`intro_inventory` already, please look that over a bit first
+and then we'll get going.
 
 .. contents::
    :depth: 2
 
+.. _parallelism_and_shell_commands:
 
 Parallelism and Shell Commands
 ``````````````````````````````
+
+Arbitrary example.
 
 Let's use ansible's command line tool to reboot all web servers in Atlanta, 10 at a time.  First, let's
 set up SSH-agent so it can remember our credentials::
@@ -32,15 +57,12 @@ Now to run the command on all servers in a group, in this case,
 
     $ ansible atlanta -a "/sbin/reboot" -f 10
 
-In 0.7 and later, this will default to running from your user account.  If you do not like this
-behavior, pass in "-u username".  (In 0.6 and before, it defaulted to root.  Most folks prefered
-defaulting to the current user, so we changed it).
-
-If you want to run commands as a different user, it looks like this::
+/usr/bin/ansible will default to running from your user account.  If you do not like this
+behavior, pass in "-u username".  If you want to run commands as a different user, it looks like this::
 
     $ ansible atlanta -a "/usr/bin/foo" -u username
 
-If you want to run commands through sudo::
+Often you'll not want to just do things from your user account.  If you want to run commands through sudo::
 
     $ ansible atlanta -a "/usr/bin/foo" -u username --sudo [--ask-sudo-pass]
 
@@ -54,19 +76,23 @@ It is also possible to sudo to a user other than root using
 
     $ ansible atlanta -a "/usr/bin/foo" -u username -U otheruser [--ask-sudo-pass]
 
-Ok, so those are basics.  If you didn't read about patterns and groups yet, go back and read :doc:`patterns`.
+Ok, so those are basics.  If you didn't read about patterns and groups yet, go back and read :doc:`intro_patterns`.
 
 The ``-f 10`` in the above specifies the usage of 10 simultaneous
-processes.  Normally commands also take a ``-m`` for module name, but
+processes to use.   You can also set this in :doc:`intro_configuration` to avoid setting it again.  The default is actually 5, which
+is really small and conservative.  You are probably going to want to talk to a lot more simultaneous hosts so feel free
+to crank this up.  If you have more hosts than the value set for the fork count, Ansible will talk to them, but it will
+take a little longer.  Feel free to push this value as high as your system can handle it!
+
+You can also select what ansible "module" you want to urn.  Normally commands also take a ``-m`` for module name, but
 the default module name is 'command', so we didn't need to
 specify that all of the time.  We'll use ``-m`` in later examples to
 run some other :doc:`modules`.
 
 .. note::
-   The :ref:`command` module requires absolute paths and does not
-   support shell variables.  If we want to execute a module using a
-   shell, we can do those things, and also use pipe and redirection
-   operators.  Read more about the differences on the :doc:`modules`
+   The :ref:`command` module does not
+   support shell variables and things like piping.  If we want to execute a module using a
+   shell, use the 'shell' module instead. Read more about the differences on the :doc:`modules`
    page.
 
 Using the :ref:`shell` module looks like this::
@@ -75,15 +101,16 @@ Using the :ref:`shell` module looks like this::
 
 When running any command with the ansible *ad hoc* CLI (as opposed to
 :doc:`playbooks`), pay particular attention to shell quoting rules, so
-the shell doesn't eat a variable before it gets passed to Ansible.
+the local shell doesn't eat a variable before it gets passed to Ansible.
 For example, using double vs single quotes in the above example would
 evaluate the variable on the box you were on.
 
 So far we've been demoing simple command execution, but most Ansible modules usually do not work like
 simple scripts. They make the remote system look like you state, and run the commands necessary to
 get it there.  This is commonly referred to as 'idempotence', and is a core design goal of ansible.
-However, we also recognize that running *ad hoc* commands is equally important, so Ansible easily supports both.
+However, we also recognize that running arbitrary commands is equally important, so Ansible easily supports both.
 
+.. _file_transfer:
 
 File Transfer
 `````````````
@@ -111,6 +138,7 @@ As well as delete directories (recursively) and delete files::
 
     $ ansible webservers -m file -a "dest=/path/to/c state=absent"
 
+.. _managing_packages:
 
 Managing Packages
 `````````````````
@@ -139,6 +167,8 @@ does not have a module available for it, you can install
 for other packages using the command module or (better!) contribute a module
 for other package managers.  Stop by the mailing list for info/details.
 
+.. _users_and_groups:
+
 Users and Groups
 ````````````````
 
@@ -153,6 +183,8 @@ exist::
 See the :doc:`modules` section for details on all of the available options, including
 how to manipulate groups and group membership.
 
+.. _from_source_control:
+
 Deploying From Source Control
 `````````````````````````````
 
@@ -164,6 +196,8 @@ Since ansible modules can notify change handlers it is possible to
 tell ansible to run specific tasks when the code is updated, such as
 deploying Perl/Python/PHP/Ruby directly from git and then restarting
 apache.
+
+.. _managing_services:
 
 Managing Services
 `````````````````
@@ -179,6 +213,8 @@ Alternatively, restart a service on all webservers::
 Ensure a service is stopped::
 
     $ ansible webservers -m service -a "name=httpd state=stopped"
+
+.. _time_limited_background_operations:
 
 Time Limited Background Operations
 ``````````````````````````````````
@@ -209,6 +245,8 @@ the remote nodes will be terminated.
 Typically you'll be only be backgrounding long-running
 shell commands or software upgrades only.  Backgrounding the copy module does not do a background file transfer.  :doc:`playbooks` also support polling, and have a simplified syntax for this.
 
+.. _checking_facts:
+
 Gathering Facts
 ```````````````
 
@@ -219,11 +257,12 @@ system.  These can be used to implement conditional execution of tasks but also 
 
 Its also possible to filter this output to just export certain facts, see the "setup" module documentation for details.
 
+Read more about facts at :doc:`playbooks_variables` once you're ready to read up on :doc:`playbooks`. 
+
+.. _limiting_hosts:
 
 Limiting Selected Hosts
 ```````````````````````
-
-.. versionadded:: 0.7
 
 What hosts you select to manage can be additionally constrained by using the '--limit' parameter or
 by using 'batch' (or 'range') selectors.
@@ -249,23 +288,10 @@ what their names or IP addresses are).
 
 Both of these methods can be used at the same time, and ranges can also be passed to the --limit parameter.
 
-Configuration & Defaults
-````````````````````````
-
-.. versionadded:: 0.7
-
-Ansible has an optional configuration file that can be used to tune settings and also eliminate the need to pass various command line flags. Ansible will look for the config file in the following order, using
-the first config file it finds present:
-
-1. File specified by the ``ANSIBLE_CONFIG`` environment variable
-2. ``~/.ansible.cfg``
-3. ``ansible.cfg`` in the current working directory. (version 0.8 and up)
-4. ``/etc/ansible/ansible.cfg``
-
-For those running from source, a sample configuration file lives in the examples/ directory.  The RPM will install configuration into /etc/ansible/ansible.cfg automatically.
-
 .. seealso::
 
+   :doc:`intro_configuration`
+       All about the ansible config file
    :doc:`modules`
        A list of available modules
    :doc:`playbooks`

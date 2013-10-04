@@ -22,10 +22,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import shutil
 import ConfigParser
-from subprocess import Popen, PIPE
 
 DOCUMENTATION = '''
 ---
@@ -68,6 +65,13 @@ options:
         required: false
         default: "no"
         choices: [ "yes", "no" ]
+    executable:
+        required: false
+        default: null
+        version_added: "1.4"
+        description:
+            - Path to hg executable to use. If not supplied,
+              the normal mechanism for resolving binary paths will be used.
 notes:
     - If the task seems to be hanging, first verify remote host is in C(known_hosts).
       SSH will prompt user to authorize the first contact with a remote host. One solution is to add
@@ -98,6 +102,7 @@ def _set_hgrc(hgrc, vals):
     parser.write(f)
     f.close()
 
+
 def _undo_hgrc(hgrc, vals):
     parser = ConfigParser.SafeConfigParser()
     parser.read(hgrc)
@@ -111,94 +116,105 @@ def _undo_hgrc(hgrc, vals):
     parser.write(f)
     f.close()
 
-def _hg_command(module, args_list):
-    (rc, out, err) = module.run_command(['hg'] + args_list)
-    return (rc, out, err)
 
-def _hg_list_untracked(module, dest):
-    return _hg_command(module, ['purge', '-R', dest, '--print'])
+class Hg(object):
 
-def get_revision(module, dest):
-    """
-    hg id -b -i -t returns a string in the format:
-       "<changeset>[+] <branch_name> <tag>" 
-    This format lists the state of the current working copy,
-    and indicates whether there are uncommitted changes by the
-    plus sign. Otherwise, the sign is omitted.
+    def __init__(self, module, dest, repo, revision, hg_path):
+        self.module = module
+        self.dest = dest
+        self.repo = repo
+        self.revision = revision
+        self.hg_path = self.hg_path
 
-    Read the full description via hg id --help
-    """
-    (rc, out, err) = _hg_command(module, ['id', '-b', '-i', '-t', '-R', dest])
-    if rc != 0:
-        module.fail_json(msg=err)
-    else:
-        return out.strip('\n')
+    def _command(self, args_list):
+        (rc, out, err) = self.module.run_command([self.hg_path] + args_list)
+        return (rc, out, err)
 
-def has_local_mods(module, dest):
-    now = get_revision(module, dest)
-    if '+' in now:
-        return True
-    else:
-        return False
+    def _list_untracked(self):
+        return self._command(['purge', '-R', self.dest, '--print'])
 
-def hg_discard(module, dest):
-    before = has_local_mods(module, dest)
-    if not before:
-        return False
+    def get_revision(self):
+        """
+        hg id -b -i -t returns a string in the format:
+           "<changeset>[+] <branch_name> <tag>"
+        This format lists the state of the current working copy,
+        and indicates whether there are uncommitted changes by the
+        plus sign. Otherwise, the sign is omitted.
 
-    (rc, out, err) = _hg_command(module, ['update', '-C', '-R', dest])
-    if rc != 0:
-        module.fail_json(msg=err)
-
-    after = has_local_mods(module, dest)
-    if before != after and not after:   # no more local modification
-        return True
-            
-def hg_purge(module, dest):
-    hgrc = os.path.join(dest, '.hg/hgrc')
-    purge_option = [('extensions', 'purge', '')]
-    _set_hgrc(hgrc, purge_option)   # enable purge extension
-    
-    # before purge, find out if there are any untracked files
-    (rc1, out1, err1) = _hg_list_untracked(module, dest)
-    if rc1 != 0:
-        module.fail_json(msg=err)
-    
-    # there are some untrackd files
-    if out1 != '':
-        (rc2, out2, err2) = _hg_command(module, ['purge', '-R', dest])
-        if rc2 == 0:
-            _undo_hgrc(hgrc, purge_option)
+        Read the full description via hg id --help
+        """
+        (rc, out, err) = self._command(['id', '-b', '-i', '-t', '-R', self.dest])
+        if rc != 0:
+            self.module.fail_json(msg=err)
         else:
-            module.fail_json(msg=err)
-        return True
-    else:
-        return False
+            return out.strip('\n')
 
-def hg_cleanup(module, dest, force, purge):
-    discarded = False
-    purged = False
+    def has_local_mods(self):
+        now = self.get_revision()
+        if '+' in now:
+            return True
+        else:
+            return False
 
-    if force:
-        discarded = hg_discard(module, dest)
-    if purge:
-        purged = hg_purge(module, dest)
-    if discarded or purged:
-        return True
-    else:
-        return False
+    def discard(self):
+        before = self.has_local_mods()
+        if not before:
+            return False
 
-def hg_pull(module, dest, revision, repo):
-    return _hg_command(module, ['pull', '-r', revision, '-R', dest, repo])
+        (rc, out, err) = self._command(['update', '-C', '-R', self.dest])
+        if rc != 0:
+            self.module.fail_json(msg=err)
 
-def hg_update(module, dest, revision):
-    return _hg_command(module, ['update', '-R', dest])
+        after = self.has_local_mods()
+        if before != after and not after:   # no more local modification
+            return True
+            
+    def purge(self):
+        hgrc = os.path.join(self.dest, '.hg/hgrc')
+        purge_option = [('extensions', 'purge', '')]
+        _set_hgrc(hgrc, purge_option)   # enable purge extension
+        
+        # before purge, find out if there are any untracked files
+        (rc1, out1, err1) = self._list_untracked()
+        if rc1 != 0:
+            self.module.fail_json(msg=err1)
+        
+        # there are some untrackd files
+        if out1 != '':
+            (rc2, out2, err2) = self._command(['purge', '-R', self.dest])
+            if rc2 == 0:
+                _undo_hgrc(hgrc, purge_option)
+            else:
+                self.module.fail_json(msg=err2)
+            return True
+        else:
+            return False
 
-def hg_clone(module, repo, dest, revision):
-    return _hg_command(module, ['clone', repo, dest, '-r', revision])
+    def cleanup(self, force, purge):
+        discarded = False
+        purged = False
 
-def switch_version(module, dest, revision):
-    return _hg_command(module, ['update', '-r', revision, '-R', dest])
+        if force:
+            discarded = self.discard()
+        if purge:
+            purged = self.purge()
+        if discarded or purged:
+            return True
+        else:
+            return False
+
+    def pull(self):
+        return self._command(
+            ['pull', '-r', self.revision, '-R', self.dest, self.repo])
+
+    def update(self):
+        return self._command(['update', '-R', self.dest])
+
+    def clone(self):
+        return self._command(['clone', self.repo, self.dest, '-r', self.revision])
+
+    def switch_version(self):
+        return self._command(['update', '-r', self.revision, '-R', self.dest])
 
 # ===========================================
 
@@ -209,7 +225,8 @@ def main():
             dest = dict(required=True),
             revision = dict(default="default", aliases=['version']),
             force = dict(default='yes', type='bool'),
-            purge = dict(default='no', type='bool')
+            purge = dict(default='no', type='bool'),
+            executable = dict(default=None),
         ),
     )
     repo = module.params['repo']
@@ -217,6 +234,7 @@ def main():
     revision = module.params['revision']
     force = module.params['force']
     purge = module.params['purge']
+    hg_path = module.parames['executable'] or module.get_bin_path('hg', True)
     hgrc = os.path.join(dest, '.hg/hgrc')
    
     # initial states
@@ -224,29 +242,31 @@ def main():
     changed = False
     cleaned = False
 
+    hg = Hg(module, dest, repo, revision, hg_path)
+
     # If there is no hgrc file, then assume repo is absent
     # and perform clone. Otherwise, perform pull and update.
     if not os.path.exists(hgrc):
-        (rc, out, err) = hg_clone(module, repo, dest, revision)
+        (rc, out, err) = hg.clone()
         if rc != 0:
             module.fail_json(msg=err)
     else:
         # get the current state before doing pulling
-        before = get_revision(module, dest)
+        before = hg.get_revision()
 
         # can perform force and purge
-        cleaned = hg_cleanup(module, dest, force, purge)
+        cleaned = hg.cleanup(force, purge)
 
-        (rc, out, err) = hg_pull(module, dest, revision, repo)
+        (rc, out, err) = hg.pull()
         if rc != 0:
             module.fail_json(msg=err)
 
-        (rc, out, err) = hg_update(module, dest, revision)
+        (rc, out, err) = hg.update()
         if rc != 0:
             module.fail_json(msg=err)
 
-    switch_version(module, dest, revision)
-    after = get_revision(module, dest)
+    hg.switch_version()
+    after = hg.get_revision()
     if before != after or cleaned:
         changed = True
     module.exit_json(before=before, after=after, changed=changed, cleaned=cleaned)
