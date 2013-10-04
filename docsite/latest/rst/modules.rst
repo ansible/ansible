@@ -4,6 +4,8 @@ Ansible Modules
 .. contents::
    :depth: 3
 
+.. _modules_intro:
+
 Introduction
 ````````````
 
@@ -55,6 +57,7 @@ Let's see what's available in the Ansible module library, out of the box:
 
 .. include:: modules/_list.rst
 
+.. _writing_modules:
 
 Writing your own modules
 ````````````````````````

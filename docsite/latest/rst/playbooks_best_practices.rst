@@ -8,6 +8,8 @@ You can find some example playbooks illustrating these best practices in our `an
 .. contents::
    :depth: 2
 
+.. _content_organization:
+
 Content Organization
 ++++++++++++++++++++++
 
@@ -16,6 +18,8 @@ so feel free to modify this approach and organize as you see fit.
 
 (One thing you will definitely want to do though, is use the "roles" organization feature, which is documented as part
 of the main playbooks page)
+
+.. _directory_layout:
 
 Directory Layout
 ````````````````
@@ -53,6 +57,8 @@ The top level of the directory would contain files and directories like so::
         webtier/              # same kind of structure as "common" was above, done for the webtier role
         monitoring/           # ""
         fooapp/               # "" 
+
+.. _stage_vs_prod:
 
 How to Arrange Inventory, Stage vs Production
 `````````````````````````````````````````````
@@ -97,6 +103,8 @@ data source as well, but this is just a basic example.  Define groups based on p
     boston-webservers
     boston-dbservers
 
+.. _groups_and_hosts:
+
 Group And Host Variables
 ````````````````````````
 
@@ -130,6 +138,8 @@ We can define specific hardware variance in systems in a host_vars file, but avo
     foo_agent_port: 86
     bar_agent_port: 99
 
+.. _role_vars:
+
 Role Variables
 ``````````````
 
@@ -139,6 +149,8 @@ Variables that are associated with a given role can be defined in a main.yml fil
     # file: roles/python/vars/main.yml
     python_version: "2.7.5"
     pip_version: "1.3.1"
+
+.. _split_by_role:
 
 Top Level Playbooks Are Separated By Role
 `````````````````````````````````````````
@@ -159,6 +171,8 @@ In a file like webservers.yml (also at the top level), we simply map the configu
       roles:
         - common
         - webtier
+
+.. _role_organization:
 
 Task And Handler Organization For A Role
 ````````````````````````````````````````
@@ -189,6 +203,8 @@ of each play::
     # file: roles/common/handlers/main.yml
     - name: restart ntpd
       service: name=ntpd state=restarted
+
+.. _organization_examples:
 
 What This Organization Enables (Examples)
 `````````````````````````````````````````
@@ -229,6 +245,8 @@ And there are some useful commands to know (at least in 1.1 and higher)::
     # confirm what hostnames might be communicated with if I said "limit to boston"
     ansible-playbook -i production webservers.yml --limit boston --list-hosts
 
+.. _dep_vs_config:
+
 Deployment vs Configuration Organization
 ````````````````````````````````````````
 
@@ -239,6 +257,8 @@ may be augmented by playbooks like 'deploy_exampledotcom.yml' but the general co
 Ansible allows you to deploy and configure using the same tool, so you would likely reuse groups and just
 keep the OS configuration in separate playbooks from the app deployment.
 
+.. _stage_vs_prod:
+
 Stage vs Production
 +++++++++++++++++++
 
@@ -247,17 +267,23 @@ As also mentioned above, a good way to keep your stage (or testing) and producti
 Testing things in a stage environment before trying in production is always a great idea.  Your environments need not be the same
 size and you can use group variables to control the differences between those environments.
 
+.. _rolling_update:
+
 Rolling Updates
 +++++++++++++++
 
 Understand the 'serial' keyword.  If updating a webserver farm you really want to use it to control how many machines you are
 updating at once in the batch.
 
+.. _mention_the_state:
+
 Always Mention The State
 ++++++++++++++++++++++++
 
 The 'state' parameter is optional to a lot of modules.  Whether 'state=present' or 'state=absent', it's always best to leave that
 parameter in your playbooks to make it clear, especially as some modules support additional states.
+
+.. _group_by_roles:
 
 Group By Roles
 ++++++++++++++
@@ -267,6 +293,8 @@ A system can be in multiple groups.  See :doc:`intro_inventory` and :doc:`intro_
 
 This allows playbooks to target machines based on role, as well as to assign role specific variables
 using the group variable system.
+
+.. _os_variance:
 
 Operating System and Distribution Variance
 ++++++++++++++++++++++++++++++++++++++++++
@@ -303,6 +331,7 @@ If group-specific settings are needed, this can also be done. For example::
 
 In the above example, CentOS machines get the value of '42' for asdf, but other machines get '10'.
 
+.. _ship_modules_with_playbooks:
 
 Bundling Ansible Modules With Playbooks
 +++++++++++++++++++++++++++++++++++++++
@@ -312,16 +341,22 @@ Bundling Ansible Modules With Playbooks
 If a playbook has a "./library" directory relative to its YAML file, this directory can be used to add ansible modules that will
 automatically be in the ansible module path.  This is a great way to keep modules that go with a playbook together.
 
+.. _whitespace:
+
 Whitespace and Comments
 +++++++++++++++++++++++
 
 Generous use of whitespace to break things up, and use of comments (which start with '#'), is encouraged.
+
+.. _name_tasks:
 
 Always Name Tasks
 +++++++++++++++++
 
 It is possible to leave off the 'name' for a given task, though it is recommended to provide a description 
 about why something is being done instead.  This name is shown when the playbook is run.
+
+.. _keep_it_simple:
 
 Keep It Simple
 ++++++++++++++
@@ -331,6 +366,8 @@ to use every feature of Ansible together, all at once.  Use what works
 for you.  For example, you will probably not need 'vars',
 'vars_files', 'vars_prompt' and '--extra-vars' all at once,
 while also using an external inventory file.
+
+.. _version_control:
 
 Version Control
 +++++++++++++++

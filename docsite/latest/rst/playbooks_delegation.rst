@@ -13,6 +13,8 @@ at once during a rolling update.
 This section covers all fo these features.  For examples of these items in use, please see the 'ansible-examples' repository in
 the 'ansible' github organization.  
 
+.. _rolling_update_batch_size:
+
 Rolling Update Batch Size
 `````````````````````````
 
@@ -28,6 +30,8 @@ use case, you can define how many hosts Ansible should manage at a single time b
 
 In the above example, if we had 100 hosts, 3 hosts in the group 'webservers'
 would complete the play completely before moving on to the next 3 hosts.
+
+.. _maximum_failure_percentage:
 
 Maximum Failure Percentage
 ``````````````````````````
@@ -49,6 +53,8 @@ In the above example, if more than 3 of the 10 servers in the group were to fail
 
      The percentage set must be exceeded, not equaled. For example, if serial were set to 4 and you wanted the task to abort 
      when 2 of the systems failed, the percentage should be set at 49 rather than 50.
+
+.. _delegation:
 
 Delegation
 ``````````
@@ -105,6 +111,8 @@ Here is an example::
 
 Note that you must have passphrase-less SSH keys or an ssh-agent configured for this to work, otherwise rsync
 will need to ask for a passphrase.
+
+.. _local_playbooks:
 
 Local Playbooks
 ```````````````
