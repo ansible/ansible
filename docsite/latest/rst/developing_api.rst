@@ -9,6 +9,8 @@ API so you have a considerable amount of power across the board.  This chapter d
 .. contents:: `Table of contents`
    :depth: 2
 
+.. _python_api:
+
 Python API
 ----------
 
@@ -42,6 +44,8 @@ expressed in the 'ansible-modules' documentation.::
 
 A module can return any type of JSON data it wants, so Ansible can
 be used as a framework to rapidly build powerful applications and scripts.
+
+.. _detailed_api_example:
 
 Detailed API Example
 ````````````````````
