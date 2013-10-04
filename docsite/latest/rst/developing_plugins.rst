@@ -7,6 +7,8 @@ in ansible and were most convient to be made pluggable.
 
 This section will explore these features, though they are generally not common in terms of things people would look to extend.
 
+.. _developing_connection_type_plugins:
+
 Connection Type Plugins
 -----------------------
 
@@ -20,6 +22,8 @@ directory.   The value of 'smart' for a connection allows selection of paramiko 
 More documentation on writing connection plugins is pending, though you can jump into lib/ansible/runner/connection_plugins and figure
 things out pretty easily.
 
+.. _developing_lookup_plugins:
+
 Lookup Plugins
 --------------
 
@@ -27,6 +31,8 @@ Language constructs like "with_fileglob" and "with_items" are implemented via lo
 
 More documentation on writing connection plugins is pending, though you can jump into lib/ansible/runner/lookup_plugins and figure
 things out pretty easily.
+
+.. _developing_vars_plugins:
 
 Vars Plugins
 ------------
@@ -40,6 +46,8 @@ things out pretty easily.
 
 If you find yourself wanting to write a vars_plugin, it's more likely you should write an inventory script instead.
 
+.. _developing_filter_plugins:
+
 Filter Plugins
 --------------
 
@@ -47,11 +55,14 @@ If you want more Jinja2 filters available in a Jinja2 template (filters like to_
 
 Jump into lib/ansible/runner/filter_plugins/ for details.
 
+.. _developing_callbacks:
 
 Callbacks
 ---------
 
 Callbacks are one of the more interesting plugin types.  Adding additional callback plugins to Ansible allows for adding new behaviors when responding to events.
+
+.. _callback_examples:
 
 Examples
 ++++++++
@@ -64,10 +75,14 @@ when playbooks complete.
 The 'osx_say' callback provided is particularly entertaining -- it will respond with computer synthesized speech on OS X in relation
 to playbook events, and is guaranteed to entertain and/or annoy coworkers.
 
+.. _configuring_callbacks:
+
 Configuring
 +++++++++++
 
 To active a callback drop it in a callback directory as configured in ansible.cfg.
+
+.. _callback_development:
 
 Development
 +++++++++++
@@ -75,11 +90,10 @@ Development
 More information will come later, though see the source of any of the existing callbacks and you should be able to get started quickly.  
 They should be reasonably self explanatory.
 
+.. _distributing_plugins:
 
 Distributing Plugins
 --------------------
-
-.. versionadded:: 0.8
 
 Plugins are loaded from both Python's site_packages (those that ship with ansible) and a configured plugins directory, which defaults
 to /usr/share/ansible/plugins, in a subfolder for each plugin type::

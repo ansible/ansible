@@ -19,6 +19,8 @@ Before we dive into playbooks, configuration management, deployment, and orchest
 basic information.  We'll go over how to execute ad-hoc commands in parallel across your nodes using /usr/bin/ansible.  We'll also see
 what sort of modules are available in Ansible's core (though you can also write your own, which we'll also show later).
 
+.. _an_introduction:
+
 An Introduction
 ```````````````
 
@@ -34,6 +36,8 @@ An Introduction
    intro_configuration
    modules
 
+.. _overview:
+
 Overview
 ````````
 
@@ -41,6 +45,8 @@ Overview
    :alt: ansible architecture diagram
    :width: 788px
    :height: 436px
+
+.. _introduction_to_playbooks:
 
 An Introduction to Playbooks
 ````````````````````````````
@@ -68,6 +74,21 @@ ways to organize playbooks and the files they include, and we'll offer up some s
 
 It is recommended to look at `Example Playbooks <https://github.com/ansible/ansible-examples>`_ while reading along with the playbook documentation.  These illustrate best practices as well as how to put many of the various concepts together.
 
+.. ansibleworks_awx:
+
+Upgrading the Ansible Experience: AnsibleWorks AWX
+``````````````````````````````````````````````````
+
+`AnsibleWorks <http://ansibleworks.com>`_, who also sponsors the AnsibleWorks community, also produces 'AWX', which is a web-based tool that makes Ansible even more easy to use for IT teams of all kinds.  It's designed to be the hub for all of your automation tasks.
+
+AWX allows you to control access to who can access what, even allowing sharing of SSH credentials without someone being able to transfer those credentials.  Inventory can be graphically managed or synced with a widde variety of cloud sources.  It logs all of your jobs, integrates well with LDAP, and has an amazing browseable REST API.
+
+Find out more about AWX features and how to download it on the `AWX webpage <http://ansibleworks.com/ansible-awx>`_.  AWX
+is free for usage for up to 10 nodes, and comes bundled with amazing support from AnsibleWorks.  As you would expect, AWX is 
+installed using Ansible playbooks!
+
+.. _advanced_topics_in_playbooks:
+
 Advanced Topics In Playbooks
 ````````````````````````````
 
@@ -87,7 +108,9 @@ these only if they seem relevant or useful to your environment.
    playbooks_lookups
    playbooks_prompts
    playbooks_tags
-    
+
+.. _detailed_guides:    
+
 Detailed Guides
 ```````````````
 
@@ -104,6 +127,8 @@ A chance to dive into some more topics in depth:
 Pending topics may include: Vagrant, Docker, Jenkins, Rackspace Cloud, Google Compute Engine, Linode/Digital Ocean, Continous Deployment, 
 and more.
 
+.. _community_information:
+
 Community Information
 `````````````````````
 
@@ -112,6 +137,8 @@ IT automation solutions that work well for them.   Should you wish to get more i
 other users, introducing new people to Ansible, or helping with the software or documentation, we welcome your contributions to the project::
 
    How to interact <https://github.com/ansible/ansible/blob/devel/CONTRIBUTING.md>
+
+.. _developer_information:
 
 Developer Information
 `````````````````````
@@ -127,6 +154,8 @@ with other solutions in your environment.
    developing_modules
    developing_plugins
    REST API <http://ansibleworks.com/ansibleworks-awx>
+
+.. _misc:
 
 Miscellaneous
 `````````````

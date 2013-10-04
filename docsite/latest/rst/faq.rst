@@ -6,6 +6,8 @@ Here are some commonly-asked questions and their answers.
 .. contents::
    :depth: 2
 
+.. _users_and_ports:
+
 How do I handle different machines needing different user accounts or ports to log in with?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -28,6 +30,7 @@ You can also dictate the connection type to be used, if you want::
 You may also wish to keep these in group variables instead, or file in them in a group_vars/<groupname> file.
 See the rest of the documentation for more information about how to organize variables.
 
+.. _use_ssh:
 
 How do I get ansible to reuse connections, enable Kerberized SSH, or have Ansible pay attention to my local SSH config file?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -44,11 +47,15 @@ consider managing from a Fedora or openSUSE client even though you are managing 
 We keep paramiko as the default as if you are first installing Ansible on an EL box, it offers a better experience
 for new users.
 
+.. _ec2_cloud_performance:
+
 How do I speed up management inside EC2?
 ++++++++++++++++++++++++++++++++++++++++
 
 Don't try to manage a fleet of EC2 machines from your laptop.  Connect to a management node inside EC2 first
 and run Ansible from there.
+
+.. _python_interpreters:
 
 How do I handle python pathing not having a Python 2.X in /usr/bin/python on a remote machine?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -71,6 +78,8 @@ Python 3.0 support will likely be addressed at a later point in time when usage 
 
 Do not replace the shebang lines of your python modules.  Ansible will do this for you automatically at deploy time.
 
+.. _use_roles:
+
 What is the best way to make content reusable/redistributable?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -79,16 +88,15 @@ self contained, and works will with things like git submodules for sharing conte
 
 If some of these plugin types look strange to you, see the API documentation for more details about ways Ansible can be extended.
 
+.. _configuration_file:
+
 Where does the configuration file live and what can I configure in it?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Technically ansible doesn't need a configuration file, but OS packages are likely to include a default one in /etc/ansible/ansible.cfg
-that you may customize.  You can also install your own copy in ~/.ansible.cfg or keep a copy in a directory relative to your playbook named "ansible.cfg".
 
-For what values you can use in this file, see `the configuration file on github <https://github.com/ansible/ansible/blob/devel/examples/ansible.cfg>`_.
+See `intro_configuration`.
 
-Generally you would configure the default module path or connection type here, among other things, though the defaults are usually
-good enough for starting out.
+.. _who_would_ever_want_to_disable_cowsay_but_ok_here_is_how:
 
 How do I disable cowsay?
 ++++++++++++++++++++++++
@@ -98,6 +106,8 @@ that you would like to work in a professional cow-free environment, you can eith
 
     export ANSIBLE_NOCOWS=1
 
+.. _browse_facts:
+
 How do I see a list of all of the ansible\_ variables?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -106,6 +116,8 @@ Ansible by default gathers "facts" about the machines under management, and thes
     ansible -m setup hostname
 
 This will print out a dictionary of all of the facts that are available for that particular host.
+
+.. _host_loops:
 
 How do I loop over a list of hosts in a group, inside of a template?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -129,6 +141,8 @@ Then you can use the facts inside your template, like this::
        {{ hostvars[host]['ansible_eth0']['ipv4']['address'] }}
     {% endfor %}
 
+.. _file_recursion:
+
 How do I copy files recursively onto a target host?
 +++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -144,6 +158,8 @@ Here is an example::
 
 Note that you'll need passphrase-less SSH or ssh-agent set up to let rsync copy without prompting for a passphase or password.
 
+.. _shell_env:
+
 How do I access shell environment variables?
 ++++++++++++++++++++++++++++++++++++++++++++
 
@@ -157,20 +173,40 @@ environment variable on management machine::
 
 If you need to set environment variables, see the Advanced Playbooks section about environments.
 
+Ansible 1.4 will also make remote environment variables available via facts in the 'ansible_env' variable::
+
+   {{ ansible_env.SOME_VARIABLE }}
+
+.. _commercial_support:
+
 Can I get training on Ansible or find commercial support?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Yes!  See `AnsibleWorks.com <http://ansibleworks.com>`_ or email `info@ansibleworks.com <mailto:info@ansibleworks.com>`_.
+
+.. _web_interface:
+
+Is there a web interface / REST API / etc?
+++++++++++++++++++++++++++++++++++++++++++
+
+Yes!  AnsibleWorks makes a great product that makes Ansible even more powerful
+and easy to use: `AnsibleWorks AWX <http://ansibleworks.com/ansible-awx/>`
+
+.. _docs_contributions:
 
 How do I submit a change to the documentation?
 ++++++++++++++++++++++++++++++++++++++++++++++
 
 Great question!  Documentation for Ansible is kept in the main project git repository, and complete instructions for contributing can be found in the docs README `viewable on GitHub <https://github.com/ansible/ansible/tree/devel/docsite/latest#readme>`_.  Thanks!
 
+.. _i_dont_see_my_question:
+
 I don't see my question here
 ++++++++++++++++++++++++++++
 
-See the "Resources" section of the documentation for a link to the IRC and Google Group.
+We're happy to help.
+
+See the "Resources" section of the documentation home page for a link to the IRC and Google Group.
 
 
 
