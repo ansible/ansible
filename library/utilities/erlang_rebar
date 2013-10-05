@@ -23,14 +23,14 @@ DOCUMENTATION = '''
 module: erlang_rebar
 short_description: Erlang Rebar Wrapper.
 description:
-     - Rebar provides support for the most commonly encountered development activities 
+     - Rebar provides support for the most commonly encountered development activities
 version_added: "-"
 options:
   command:
     choices: [ 'compile','eunit','doc','clean','check_deps','create','create_app','create_node','ct','delete_deps','escriptize','generate','generate_upgrade','get_deps','list_deps','update_deps','xref' ]
     description:
       - The name of the Erlang rebar command to run.
-        Allowed commands are 
+        Allowed commands are
         compile,
         eunit,
         doc,
@@ -95,8 +95,8 @@ options:
     required: false
   tests:
     description:
-      - bar - For every existing suite, run the first test 
-        whose name starts with bar and, if no such test exists, run the test 
+      - bar - For every existing suite, run the first test
+        whose name starts with bar and, if no such test exists, run the test
         whose name starts with bar in the suite's _tests module
     required: false
   case:
@@ -107,7 +107,7 @@ notes:
    - The Erlang (http://www.erlang.org/) and rebar (U(https://github.com/rebar/rebar)) must be installed on the remote host.
    - This module can operate only with one rebar command at once.
 requirements: [ "erlang", "rebar" ]
-author: Dmitry Fedorov 
+author: Dmitry Fedorov
 '''
 
 EXAMPLES = """
@@ -116,7 +116,7 @@ EXAMPLES = """
                 command=get_deps
 - erlang_rebar: app_path=/path/to/application
                 command=compile
-- erlang_rebar: app_path=/path/to/application 
+- erlang_rebar: app_path=/path/to/application
                 command=generate
 
 # Example build updated erlang release
@@ -124,13 +124,13 @@ EXAMPLES = """
                 command=update_deps
 - erlang_rebar: app_path=/path/to/application
                 command=compile
-- erlang_rebar: app_path=/path/to/application 
+- erlang_rebar: app_path=/path/to/application
                 command=generate
 - erlang_rebar: app_path=/path/to/application
-                command=generate_appups 
+                command=generate_appups
                 previous_release=/path/to/previous/release
 - erlang_rebar: app_path=/path/to/application
-                command=generate_upgrade 
+                command=generate_upgrade
                 previous_release=/path/to/previous/release
 """
 
@@ -138,7 +138,7 @@ EXAMPLES = """
 import os
 
 def main():
-   
+
     command_allowed_param_map = dict(
         clean=(),
         compile=(),
@@ -198,7 +198,7 @@ def main():
             force            = dict(default=None, required=False),
             profile          = dict(default=None, required=False),
 
-            template         = dict(default=None, required=False), 
+            template         = dict(default=None, required=False),
             appid            = dict(default=None, required=False),
             nodeid           = dict(default=None, required=False),
             dump_spec        = dict(default=None, required=False),
@@ -209,7 +209,6 @@ def main():
         ),
         supports_check_mode=True
     )
-
     command = module.params['command']
     app_path = module.params['app_path']
 
@@ -224,7 +223,7 @@ def main():
 
     os.chdir(app_path)
     rebar_path = module.get_bin_path('rebar', True, opt_dirs=[app_path,])
-    
+
     cmd = rebar_path
 
     for param in general_params:
@@ -241,7 +240,7 @@ def main():
 
     for param in specific_params:
         if module.params[param]:
-            cmd = '%s %s' %(cmd, module.params[param])
+            cmd = '%s %s=%s' %(cmd, param, module.params[param])
 
     if module.check_mode:
         module.exit_json(changed=True, cmd=cmd)
