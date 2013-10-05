@@ -325,6 +325,22 @@ Let's run a playbook using a parallelism level of 10::
 
 .. _tips_and_tricks:
 
+
+Ansible-Pull
+````````````
+
+Should you want to invert the architecture of Ansible, so that nodes check in to a central location, instead
+of pushing configuraiton out to them, you can.
+
+Ansible-pull is a small script that will checkout a repo of configuration instructions from git, and then
+run ansible-playbook against that content.
+
+Assuming you load balance your checkout location, ansible-pull scales essentially infinitely.
+
+Run 'ansible-pull --help' for details.
+
+There's also a `<clever playbook> https://github.com/ansible/ansible-examples/blob/master/language_features/ansible_pull.yml>`_ available to using ansible in push mode to configure ansible-pull via a crontab!
+
 Tips and Tricks
 ```````````````
 

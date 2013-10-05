@@ -10,24 +10,21 @@ Welcome to the Ansible documentation!
 Ansible is an IT automation tool.  It can configure systems, deploy software, and orchestrate more advanced IT tasks
 such as continuous deployments or zero downtime rolling updates.
 
-Ansible's goals are foremost those of simplicity and ease of use. It also has a strong focus on security and reliability, featuring
-a minimum of moving parts, usage of Open SSH for transport (with an accelerated socket mode as an alternative that uses SSH for key exchange), and a language that is designed around auditability by humans -- even those not familiar with the program.
+Ansible's goals are foremost those of simplicity and maximum ease of use. It also has a strong focus on security and reliability, featuring a minimum of moving parts, usage of Open SSH for transport (with an accelerated socket mode as an alternative that uses SSH for key exchange), and a language that is designed around auditability by humans -- even those not familiar with the program.
 
-Ansible manages machines in an agentless manner --  the intent here is to make things more reliable and 
-there are no additional open ports.   This also means there is never a question of how to
-upgrade the management software with the management software, or the problem of not being able to manage remote nodes because
-management daemons are not yet installed or not currently running.  As OpenSSH is one of the most peer reviewed open source components, the security exposure of using the tool is therefore also greatly reduced.  Ansible is decentralized, and relies on your existing OS credentials to control access to remote machines, rather than just who can edit configuration recipes in source control.
+Ansible manages machines in an agentless manner. There is never a question of how to
+upgrade remote daemons or the problem of not being able to manage systems because daemons are uninstalled.  As OpenSSH is one of the most peer reviewed open source components, the security exposure of using the tool is greatly reduced.  Ansible is decentralized -- it relies on your existing OS credentials to control access to remote machines; if needed it can easily connect with Kerberos, LDAP, and other centralized authentication management systems.
 
 You may be interested in reading about `some notable Ansible users <http://www.ansibleworks.com/users/>`_.
 
-This documentation covers the current released version of Ansible (1.3.X) and also some development version features (1.4).  For recent features, in each section, the version of Ansible where the feature is added is indicated.  Ansible produces a new major release approximately every 2 months.  The core project moves somewhat conservatively, valuing simplicity in language design and setup, while the community around new modules and plugins being developed and contributed moves very quickly, typically adding 20 or so new modules in each release.
-
-Before we dive into playbooks, configuration management, deployment, and orchestration, we'll learn how to get Ansible installed and some basic concepts.  We'll go over how to execute ad-hoc commands in parallel across your nodes using /usr/bin/ansible.  We'll also see what sort of modules are available in Ansible's core (though you can also write your own, which we'll also show later).
+This documentation covers the current released version of Ansible (1.3.X) and also some development version features (1.4).  For recent features, in each section, the version of Ansible where the feature is added is indicated.  AnsibleWorks releases a new major release of Ansible approximately every 2 months.  The core application evolves somewhat conservatively, valuing simplicity in language design and setup, while the community around new modules and plugins being developed and contributed moves very very quickly, typically adding 20 or so new modules in each release.
 
 .. _an_introduction:
 
 The Basics
 ``````````
+
+Before we dive into the really fun parts -- playbooks, configuration management, deployment, and orchestration, we'll learn how to get Ansible installed and some basic concepts.  We'll go over how to execute ad-hoc commands in parallel across your nodes using /usr/bin/ansible.  We'll also see what sort of modules are available in Ansible's core (though you can also write your own, which we'll also show later).
 
 .. toctree::
    :maxdepth: 1
@@ -50,6 +47,7 @@ that will work on your platform.  You may think of the module library as a toolb
 and playbooks as the instructions for buildilng something using those tools.
 
 .. toctree::
+   :maxdepth: 1
    modules
 
 .. _overview:
@@ -68,6 +66,8 @@ Playbooks
 `````````
 
 Playbooks are Ansible's configuration, deployment, and orchestration language.  They can describe a policy you want your remote systems to enforce, or a set of steps in a general IT process.
+
+If Ansible modules are your the tools in your workshop, playbooks are your design plans.
 
 At a basic level, playbooks can be used to manage configurations of and deployments to remote machines.  At a more advanced level, they can sequence multi-tier rollouts involving rolling updates, and can delegate actions to other hosts, interacting with monitoring servers and load balancers along the way.  
 
