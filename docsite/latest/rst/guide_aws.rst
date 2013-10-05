@@ -10,8 +10,7 @@ Introduction
 ````````````
 
 .. note:: This section of the documentation is under construction.  We are in the process of adding more examples about all of the EC2 modules
-   and how they work together.  There's also an ec2 example in the language_features directory of the 'ansible-examples' github repository
-   that you may wish to consult.  Once complete, there will also be new examples of ec2 in ansible-examples.
+   and how they work together.  There's also an ec2 example in the language_features directory of `the ansible-examples github repository <http://github.com/ansible/ansible-examples/>`_ that you may wish to consult.  Once complete, there will also be new examples of ec2 in ansible-examples.
 
 Ansible contains a number of core modules for interacting with Amazon Web Services (AWS).  These also work with Eucalyptus, which is an AWS compatible private cloud solution.  There are other supported cloud types, but this documentation chapter is about AWS API clouds.  The purpose of this
 section is to explain how to put Ansible modules together (and use inventory scripts) to use Ansible in AWS context.

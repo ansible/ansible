@@ -1,17 +1,17 @@
 Delegation, Rolling Updates, and Local Actions
 ==============================================
 
-Being designed for multi-tier deployments since the beginning, Ansible is great at doing things on one host on behalf of another, or doing
-local steps with reference to some remote hosts.
+Being designed for multi-tier deployments since the beginning, Ansible is great at doing things on one host on behalf of another, or doing local steps with reference to some remote hosts.
 
-This in particular this is very applicable when setting up continuous deployment infrastructure or zero downtime rolling updates, where you
-might be talking with load balancers or monitoring systems.
+This in particular this is very applicable when setting up continuous deployment infrastructure or zero downtime rolling updates, where you might be talking with load balancers or monitoring systems.
 
-Additional features allow for tuning the orders in which things complete, and assigning a batch window size for how many machines to process
-at once during a rolling update.
+Additional features allow for tuning the orders in which things complete, and assigning a batch window size for how many machines to process at once during a rolling update.
 
-This section covers all fo these features.  For examples of these items in use, please see the 'ansible-examples' repository in
-the 'ansible' github organization.  
+This section covers all of these features.  For examples of these items in use, `please see the ansible-examples repository <http://github.com/ansible/ansible-examples/>`_. There are quite a few examples of zero-downtime update procedures for different kinds of applications.
+
+You should also consult the :doc:`modules` section, various modules like 'ec2_elb', 'nagios', and 'bigip_pool', and 'netscaler' dovetail neatly with the concepts mentioned here.  
+
+You'll also want to read up on :doc:`playbooks_roles`, as the 'pre_task' and 'post_task' concepts are the places where you would typically call these modules. 
 
 .. _rolling_update_batch_size:
 
@@ -135,6 +135,8 @@ use the default remote connection type::
 
    :doc:`playbooks`
        An introduction to playbooks
+   `Ansible Examples on GitHub <http://github.com/ansible/ansible-examples>`_
+       Many examples of full-stack deployments
    `User Mailing List <http://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
