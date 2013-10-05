@@ -4,19 +4,24 @@ Developing Modules
 Ansible modules are reusable units of magic that can be used by the Ansible API,
 or by the `ansible` or `ansible-playbook` programs.
 
+See :doc:`modules` for a list of various ones developed in core.
+
 Modules can be written in any language and are found in the path specified
 by `ANSIBLE_LIBRARY` or the ``--module-path`` command line option.
 
+Should you develop an interesting Ansible module, consider sending a pull request to the
+`github project <http://github.com/ansible/ansible>`_ to see about getting your module
+included in the core project.
+
 .. contents::
    :depth: 2
-
 
 .. _module_dev_tutorial:
 
 Tutorial
 ````````
 
-Let's build a module to get and set the system time.  For starters, let's build
+Let's build a very-basic module to get and set the system time.  For starters, let's build
 a module that just outputs the current time.
 
 We are going to use Python here but any language is possible.  Only File I/O and outputing to standard

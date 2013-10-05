@@ -6,10 +6,12 @@ Accelerated Mode
 
 .. versionadded:: 1.3
 
-While SSH using the ControlPersist feature is quite fast and scalable, there is a certain amount of overhead involved in
-using SSH connections.  
+While OpenSSH using the ControlPersist feature is quite fast and scalable, there is a certain amount of overhead involved in
+using SSH connections.  If you are running on a platform that doesn't have ControlPersist support (such as an EL6 control
+machine), you'll probably be even more interested in options.
 
-Accelerate mode is there to help connections work faster, but still uses SSH for initial secure key exchange.
+Accelerate mode is there to help connections work faster, but still uses SSH for initial secure key exchange.  There is no
+additional public key infrastructure to manage, and this does not require things like NTP or even DNS.
 
 Accelerated mode can be anywhere from
 2-6x faster than SSH with ControlPersist enabled, and 10x faster than paramiko.

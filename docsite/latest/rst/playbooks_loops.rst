@@ -4,7 +4,10 @@ Loops
 .. contents::
    :depth: 2
 
-All about how to use loops in playbooks.
+Often you'll want to do many things in one task, such as create a lot of users, install a lot of packages, or
+repeat a polling step until a certain result is reached.
+
+This chapter is all about how to use loops in playbooks.
 
 .. _standard_loops:
 

@@ -4,7 +4,7 @@ Tags
 .. contents::
    :depth: 2
 
-If you have a large playbook it may become useful to be able to run a
+If you have a large playbook it may become useful to be able to run a 
 specific part of the configuration without running the whole playbook.  
 
 Both plays and tasks support a "tags:" attribute for this reason.
@@ -28,12 +28,12 @@ If you wanted to just run the "configuration" and "packages" part of a very long
 
     ansible-playbook example.yml --tags "configuration,packages"
 
-You may also apply takes to roles:
+You may also apply takes to roles::
 
     roles:
       - { role: webserver, port: 5000, tags: [ 'web', 'foo' ] }
 
-And you may also tag basic include statements:
+And you may also tag basic include statements::
 
     - include: foo.yml tags=web,foo
 
