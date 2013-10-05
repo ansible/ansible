@@ -118,7 +118,7 @@ ships with many of these as documented on the official Jinja2 template documenta
 
 In addition to these, Ansible supplies many more.  
 
-.. _filters_for_formatting_data
+.. _filters_for_formatting_data:
 
 Filters For Formatting Data
 ---------------------------
@@ -489,7 +489,7 @@ systems, mainly, or if you are using Ansible on experimental platforms.   In any
     - hosts: whatever
       gather_facts: no
 
-.. _local_facts::
+.. _local_facts:
 
 Local Facts (Facts.d)
 `````````````````````
