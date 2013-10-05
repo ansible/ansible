@@ -458,9 +458,15 @@ a github pull request to the main project.
 
    :doc:`modules`
        Learn about available modules
+   :doc:`developing_plugins`
+       Learn about developing plugins
+   :doc:`developing_api`
+       Learn about the Python API for playbook and task execution
    `Github modules directory <https://github.com/ansible/ansible/tree/devel/library>`_
        Browse source of core modules
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
-       Questions? Help? Ideas?  Stop by the list on Google Groups
+   `Mailing List <http://groups.google.com/group/ansible-devel>`_
+       Development mailing list
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
+
+

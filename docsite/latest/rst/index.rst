@@ -83,7 +83,7 @@ Upgrading the Ansible Experience: AnsibleWorks AWX
 
 AWX allows you to control access to who can access what, even allowing sharing of SSH credentials without someone being able to transfer those credentials.  Inventory can be graphically managed or synced with a widde variety of cloud sources.  It logs all of your jobs, integrates well with LDAP, and has an amazing browseable REST API.
 
-Find out more about AWX features and how to download it on the `AWX webpage <http://ansibleworks.com/ansible-awx>`_.  AWX
+Find out more about AWX features and how to download it on the `AWX webpage <http://ansibleworks.com/ansibleworks-awx>`_.  AWX
 is free for usage for up to 10 nodes, and comes bundled with amazing support from AnsibleWorks.  As you would expect, AWX is 
 installed using Ansible playbooks!
 
@@ -134,10 +134,9 @@ Community Information
 
 Ansible is an open source project designed to bring together developers and administrators of all kinds to collaborate on building
 IT automation solutions that work well for them.   Should you wish to get more involved -- whether in terms of just asking a question, helping
-other users, introducing new people to Ansible, or helping with the software or documentation, we welcome your contributions to the project::
+other users, introducing new people to Ansible, or helping with the software or documentation, we welcome your contributions to the project.
 
-    How to interact `<https://github.com/ansible/ansible/blob/devel/CONTRIBUTING.md>`_
-
+`Ways to interact <https://github.com/ansible/ansible/blob/devel/CONTRIBUTING.md>`_
 
 .. _developer_information:
 
@@ -154,7 +153,9 @@ with other solutions in your environment.
    developing_inventory
    developing_modules
    developing_plugins
-   REST API <http://ansibleworks.com/ansibleworks-awx>
+
+
+Developers will also likely be interested in the fully-discoverable `REST API <http://ansibleworks.com/ansibleworks-awx>`_ that is part of AnsibleWorks AWX.  It's great for embedding Ansible in all manner of applications.
 
 .. _misc:
 

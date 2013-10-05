@@ -131,4 +131,13 @@ use the default remote connection type::
     - hosts: 127.0.0.1
       connection: local
 
+.. seealso::
+
+   :doc:`playbooks`
+       An introduction to playbooks
+   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+       Have a question?  Stop by the google group!
+   `irc.freenode.net <http://irc.freenode.net>`_
+       #ansible IRC chat channel
+
 

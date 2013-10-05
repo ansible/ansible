@@ -85,3 +85,16 @@ Advanced programmers may also wish to read the source to ansible itself, for
 it uses the Runner() API (with all available options) to implement the
 command line tools ``ansible`` and ``ansible-playbook``.
 
+.. seealso::
+
+   :doc:`developing_inventory`
+       Developing dynamic inventory integrations
+   :doc:`developing_modules`
+       How to develop modules
+   :doc:`developing_plugins`
+       How to develop plugins
+   `Development Mailing List <http://groups.google.com/group/ansible-devel>`_
+       Mailing list for development topics
+   `irc.freenode.net <http://irc.freenode.net>`_
+       #ansible IRC chat channel
+

@@ -120,3 +120,13 @@ any platform.  You will also need gcc and zeromq-devel installed from your packa
 Fedora and EPEL also have Ansible RPM subpackages available for fireball-dependencies.
 
 Also see the module documentation section.
+
+.. seealso::
+
+   :doc:`playbooks`
+       Introductory playbook information
+   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+       Have a question?  Stop by the google group!
+   `irc.freenode.net <http://irc.freenode.net>`_
+       #ansible IRC chat channel
+

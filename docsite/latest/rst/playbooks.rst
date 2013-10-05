@@ -352,14 +352,16 @@ can do this::
        Learn about YAML syntax
    :doc:`playbooks_best_practices`
        Various tips about managing playbooks in the real world
+   :doc:`index`
+       Hop back to the documentation index for a lot of special topics about playbooks
    :doc:`modules`
        Learn about available modules
    :doc:`developing_modules`
        Learn how to extend Ansible by writing your own modules
    :doc:`intro_patterns`
        Learn about how to select hosts
-   `Github examples directory <https://github.com/ansible/ansible/tree/devel/examples/playbooks>`_
-       Complete playbook files from the github project source
+   `Github examples directory <https://github.com/ansible/ansible-examples>`_
+       Complete end-to-end playbook examples
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
 
