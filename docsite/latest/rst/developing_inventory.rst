@@ -1,6 +1,9 @@
 Developing Dynamic Inventory Sources
 ====================================
 
+.. contents:: `Table of contents`
+   :depth: 2
+
 As described in `intro_inventory_dynamic`, ansible can pull inventory information from dynamic sources, including cloud sources.
 
 How do we write a new one?

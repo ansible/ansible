@@ -1,6 +1,9 @@
 Check Mode ("Dry Run")
 ======================
 
+.. contents::
+   :depth: 2
+
 .. versionadded:: 1.1
 
 When ansible-playbook is executed with --check it will not make any changes on remote systems.  Instead, any module

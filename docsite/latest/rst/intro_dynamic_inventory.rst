@@ -14,6 +14,10 @@ Ansible easily supports all of these options via an external inventory system.  
 
 For information about writing your own, see :doc:`developing_inventory`.
 
+.. contents::
+   :depth: 2
+
+
 .. _cobbler_example:
 
 Example: The Cobbler External Inventory Script

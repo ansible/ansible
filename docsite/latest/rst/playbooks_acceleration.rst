@@ -1,6 +1,9 @@
 Accelerated Mode
 ================
 
+.. contents::
+   :depth: 2
+
 .. versionadded:: 1.3
 
 While SSH using the ControlPersist feature is quite fast and scalable, there is a certain amount of overhead involved in

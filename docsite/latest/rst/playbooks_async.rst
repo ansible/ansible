@@ -1,6 +1,9 @@
 Asynchronous Actions and Polling
 ================================
 
+.. contents::
+   :depth: 2
+
 By default tasks in playbooks block, meaning the connections stay open
 until the task is done on each node.  This may not always be desirable, or you may
 be running operations that take longer than the SSH timeout.
