@@ -49,7 +49,7 @@ IT tasks in the core distribution.  This means modules are well up-to-date and y
 that will work on your platform.  You may think of the module library as a toolbox full of useful system management tools, 
 and playbooks as the instructions for buildilng something using those tools.
 
-.. toctree:
+.. toctree::
    modules
 
 .. _overview:
@@ -130,7 +130,7 @@ installed using Ansible playbooks!
 Detailed Guides
 ```````````````
 
-This section is new and evolving.  The idea here is explore particular use cases in greater depth and provide a more "top down" explanation of some basic features::
+This section is new and evolving.  The idea here is explore particular use cases in greater depth and provide a more "top down" explanation of some basic features.
 
 .. toctree::
    :maxdepth: 1
