@@ -211,9 +211,6 @@ def main():
     )
 
     command = module.params['command']
-    if command in command_normalized_map:
-        command = command_normalized_map[command]
-
     app_path = module.params['app_path']
 
     for param in specific_params:
@@ -236,6 +233,9 @@ def main():
     for param in general_boolen_params:
         if module.params[param]:
             cmd = '%s --%s' % (cmd, param)
+
+    if command in command_normalized_map:
+        command = command_normalized_map[command]
 
     cmd = "%s %s" % (cmd, command)
 
