@@ -13,8 +13,8 @@ The mechanism for doing this is the "ansible.cfg" file, which is looked for in t
     * ~/.ansible.cfg
     * ansible.cfg (in the playbook directory)
 
-If multiple file locations matching the above exist, the last location on the list is used.  Settings are not merged.
-The last file in the list is found and the others will be ignored.
+If multiple file locations matching the above exist, the last location on the above list is used.  Settings in files
+are not merged together.  
 
 .. contents::
    :depth: 2
@@ -39,14 +39,15 @@ Environmental configuration
 ```````````````````````````
 
 Ansible also allows configuration of settings via environment variables.  If these environment variables are set, they will
-override any setting loaded from the configuration file.  These variables are for brevity not defined here, but look in 'constants.py'
-in the source tree if you want to use these.  They are mostly considered to be a legacy system as compared to the config file, but
-are equally valid.
+override any setting loaded from the configuration file.  These variables are for brevity not defined here, but look in 'constants.py' in the source tree if you want to use these.  They are mostly considered to be a legacy system as compared to the config file, but are equally valid.
 
 .. _config_values_by_section:
 
 Explanation of values by section
 ````````````````````````````````
+
+The configuration file is broken up into sections.  Most options are in the "general" section but some sections of the file
+are specific to certain connection types.
 
 .. _general_defaults:
 
