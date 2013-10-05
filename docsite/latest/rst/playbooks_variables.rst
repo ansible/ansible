@@ -19,7 +19,7 @@ Once understanding variables you'll also want to dig into `playbooks_conditional
 Useful things like the "group_by" module
 and the "when" conditional can also be used with variables, and to help manage differences between systems.
 
-It's highly recommended that you consult `the Ansible-Examples github repository <http://github.com/ansible/ansible-examples/>`_ to see a lot of examples of variables put to use.
+It's highly recommended that you consult the ansible-examples github repository to see a lot of examples of variables put to use.
 
 .. contents::
    :depth: 2
@@ -114,14 +114,14 @@ Jinja2 Filters
 .. note: These are infrequently utilized features.  Use them if they fit a use case you have, but this is optional knowledge.
 
 Filters in Jinja2 are a way of transforming template expressions from one kind of data into another.  Jinja2
-ships with many of these as documented on `The official Jinja2 Templates Page <http://jinja.pocoo.org/docs/templates/>`_.  Scroll down and look for 'filters'.
+ships with many of these as documented on the official Jinja2 template documentation.
 
 In addition to these, Ansible supplies many more.  
 
 .. _filters_for_formatting_data
 
 Filters For Formatting Data
-+++++++++++++++++++++++++++
+---------------------------
 
 The following filters will take a data structure in a template and render it in a slightly different format.  These
 are occasionally useful for debugging::
@@ -132,7 +132,7 @@ are occasionally useful for debugging::
 .. _filters_used_with_conditionals:
 
 Filters Often Used With Conditionals
-++++++++++++++++++++++++++++++++++++
+------------------------------------
 
 The following tasks are illustrative of how filters can be used with conditionals::
 
@@ -157,7 +157,7 @@ The following tasks are illustrative of how filters can be used with conditional
 .. _forcing_variables_to_be_defined:
 
 Forcing Variables To Be Defined
-+++++++++++++++++++++++++++++++
+-------------------------------
 
 The default behavior from ansible and ansible.cfg is to fail if variables are undefined, but you can turn this off.
 
@@ -170,7 +170,7 @@ The variable value will be used as is, but the template evaluation will raise an
 .. _other_useful_filters:
 
 Other Useful Filters
-++++++++++++++++++++
+--------------------
 
 To get the last name of a file path, like 'foo.txt' out of '/etc/asdf/foo.txt'::
 
