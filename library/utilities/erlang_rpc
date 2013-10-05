@@ -112,6 +112,9 @@ def main():
 
     if cookie:
         cmd = "%s -setcookie '%s'" % (cmd, cookie)
+    
+	if '"' in args:
+        args = args.replace('"', '\\\"')
 
     cmd = "%s -eval \"io:format(\\\"~p~n\\\", [rpc:call('%s', '%s', '%s', [%s])]).\" -s erlang halt " % (cmd, node, erlang_module, method, args)
     print cmd
