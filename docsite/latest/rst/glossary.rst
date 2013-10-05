@@ -1,6 +1,9 @@
 Glossary
 ========
 
+.. contents::
+   :depth: 2
+
 The following is a list (and re-explanation) of term definitions used elsewhere in the Ansible documentation.
 
 Consult the documentation home page for the full documentation and to see the terms in context, but this should be a good resource

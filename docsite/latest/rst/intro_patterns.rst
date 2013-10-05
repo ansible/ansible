@@ -1,5 +1,8 @@
 .. _patterns:
 
+.. contents::
+   :depth: 2
+
 Patterns
 ++++++++
 

@@ -1,6 +1,9 @@
 Prompts
 =======
 
+.. contents::
+   :depth: 2
+
 You may wish to prompt the user for certain input, and can
 do so with the similarly named 'vars_prompt' section.  
 

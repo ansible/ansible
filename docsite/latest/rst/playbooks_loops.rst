@@ -1,6 +1,9 @@
 Loops
 =====
 
+.. contents::
+   :depth: 2
+
 All about how to use loops in playbooks.
 
 .. _standard_loops:
