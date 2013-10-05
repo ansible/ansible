@@ -166,8 +166,8 @@ def main():
 
     command_required_param_map = dict(
         create=('template',),
-        generate_upgrade=('previous_release'),
-        generate_appups=('previous_release'),
+        generate_upgrade=('previous_release', ),
+        generate_appups=('previous_release', ),
     )
 
     command_normalized_map = dict(
