@@ -25,12 +25,9 @@ tasks, playbooks are more likely to be kept in source control and used
 to push out your configuration or assure the configurations of your
 remote systems are in spec.
 
-Let's dive in and see how they work.  As you go, you may wish to open
-the `github examples directory <https://github.com/ansible/ansible/tree/devel/examples/playbooks>`_ in
-another tab, so you can apply the theory to what things look like in practice.
-
 There are also some full sets of playbooks illustrating a lot of these techniques in the
-`ansible-examples repository <https://github.com/ansible/ansible-examples>`_.
+`ansible-examples repository <https://github.com/ansible/ansible-examples>`_.  We'd recommend
+looking at these in another tab as you go along.
 
 There are also many jumping off points after you learn playbooks, so hop back to the documentation
 index after you're done with this section.
