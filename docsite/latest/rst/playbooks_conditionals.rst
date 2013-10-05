@@ -238,4 +238,20 @@ fields::
             # same as with_items: home_dirs.stdout.split()
 
 
+.. seealso::
+
+   :doc:`playbooks`
+       An introduction to playbooks
+   :doc:`playbooks_roles`
+       Playbook organization by roles
+   :doc:`playbooks_best_practices`
+       Best practices in playbooks
+   :doc:`playbooks_conditionals`
+       Conditional statements in playbooks
+   :doc:`playbooks_variables`
+       All about variables
+   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+       Have a question?  Stop by the google group!
+   `irc.freenode.net <http://irc.freenode.net>`_
+       #ansible IRC chat channel
 

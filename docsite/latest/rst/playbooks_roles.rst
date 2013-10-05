@@ -320,6 +320,12 @@ The resulting order of execution would be as follows::
        Review the basic Playbook language features
    :doc:`playbooks_best_practices`
        Various tips about managing playbooks in the real world
+   :doc:`playbooks_variables`
+       All about variables in playbooks
+   :doc:`playbooks_conditionals`
+       Conditionals in playbooks
+   :doc:`playbooks_loops`
+       Loops in playbooks
    :doc:`modules`
        Learn about available modules
    :doc:`developing_modules`

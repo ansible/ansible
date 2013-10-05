@@ -46,3 +46,13 @@ to define an environment hash might be a group_vars file, like so::
       http_proxy: http://proxy.bos.example.com:8080
       https_proxy: http://proxy.bos.example.com:8080
 
+.. seealso::
+
+   :doc:`playbooks`
+       An introduction to playbooks
+   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+       Have a question?  Stop by the google group!
+   `irc.freenode.net <http://irc.freenode.net>`_
+       #ansible IRC chat channel
+
+

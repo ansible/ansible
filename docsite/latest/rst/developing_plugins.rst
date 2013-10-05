@@ -113,8 +113,14 @@ In addition, plugins can be shipped in a subdirectory relative to a top-level pl
 
    :doc:`modules`
        List of built-in modules
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
-       Questions? Help? Ideas?  Stop by the list on Google Groups
+   :doc:`developing_api`
+       Learn about the Python API for task execution
+   :doc:`developing_inventory`
+       Learn about how to develop dynamic inventory sources
+   :doc:`developing_modules`
+       Learn about how to write Ansible modules
+   `Mailing List <http://groups.google.com/group/ansible-devel>`_
+       The development mailing list
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
 

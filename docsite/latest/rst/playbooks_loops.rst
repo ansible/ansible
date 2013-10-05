@@ -215,6 +215,24 @@ can do that in the next task as follows::
      delay: 10
      failed_when: result.attempts == 5
 
+.. seealso::
+
+   :doc:`playbooks`
+       An introduction to playbooks
+   :doc:`playbooks_roles`
+       Playbook organization by roles
+   :doc:`playbooks_best_practices`
+       Best practices in playbooks
+   :doc:`playbooks_conditionals`
+       Conditional statements in playbooks
+   :doc:`playbooks_variables`
+       All about variables
+   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+       Have a question?  Stop by the google group!
+   `irc.freenode.net <http://irc.freenode.net>`_
+       #ansible IRC chat channel
+
+
 
 
 
