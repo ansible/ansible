@@ -7,9 +7,8 @@ Setting the Environment (and Working With Proxies)
 .. versionadded:: 1.1
 
 It is quite possible that you may need to get package updates through a proxy, or even get some package
-updates through a proxy and access other packages not through a proxy.  
-
-Occasionally a script you might wish to call may also need certain environment variables set.
+updates through a proxy and access other packages not through a proxy.  Or maybe a script you might wish to 
+call may also need certain environment variables set to run properly.
 
 Ansible makes it easy for you to configure your environment by using the 'environment' keyword.  Here is an example::
 

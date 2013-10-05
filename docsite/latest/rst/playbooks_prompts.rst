@@ -4,14 +4,16 @@ Prompts
 .. contents::
    :depth: 2
 
-You may wish to prompt the user for certain input, and can
-do so with the similarly named 'vars_prompt' section.  
+When running a playbook, you may wish to prompt the user for certain input, and can
+do so with the 'vars_prompt' section.  
 
-A common use for this might be for sensitive data.
+A common use for this might be for asking for sensitive data that you do not want to record.
 
 This has uses beyond security, for instance, you may use the same playbook for all
 software releases and would prompt for a particular release version
-in a push-script::
+in a push-script.
+
+Here is a most basic example::
 
     ---
     - hosts: all
@@ -22,8 +24,6 @@ in a push-script::
         name: "what is your name?"
         quest: "what is your quest?"
         favcolor: "what is your favorite color?"
-
-There are full examples of both of these items in the github examples/playbooks directory.
 
 If you have a variable that changes infrequently, it might make sense to
 provide a default value that can be overridden.  This can be accomplished using

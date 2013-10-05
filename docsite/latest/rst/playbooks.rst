@@ -92,7 +92,7 @@ For each play in a playbook, you get to choose which machines in your infrastruc
 to target and what remote user to complete the steps (called tasks) as.
 
 The `hosts` line is a list of one or more groups or host patterns,
-separated by colons, as described in the :ref:`patterns`
+separated by colons, as described in the :ref:`intro_patterns`
 documentation.  The `remote_user` is just the name of the user account::
 
     ---

@@ -4,11 +4,11 @@ Developing Plugins
 .. contents::
    :depth: 2
 
-Ansible is pluggable in a lot of other ways seperate from inventory scripts and callbacks.  Many of these features are there to cover
-fringe use cases and are infrequently needed, and others are pluggable simply because they are there to implement core features
+Ansible is pluggable in a lot of other ways seperate from inventory scripts and callbacks.  Many of these features are there to cover fringe use cases and are infrequently needed, and others are pluggable simply because they are there to implement core features
 in ansible and were most convient to be made pluggable.
 
-This section will explore these features, though they are generally not common in terms of things people would look to extend.
+This section will explore these features, though they are generally not common in terms of things people would look to extend quite
+as often.
 
 .. _developing_connection_type_plugins:
 
@@ -22,8 +22,7 @@ Carrier Pigeon?) it's as simple as copying the format of one of the existing mod
 directory.   The value of 'smart' for a connection allows selection of paramiko or openssh based on system capabilities, and chooses
 'ssh' if OpenSSH supports ControlPersist, in Ansible 1.2.1 an later.  Previous versions did not support 'smart'.
 
-More documentation on writing connection plugins is pending, though you can jump into lib/ansible/runner/connection_plugins and figure
-things out pretty easily.
+More documentation on writing connection plugins is pending, though you can jump into lib/ansible/runner/connection_plugins and figure things out pretty easily.
 
 .. _developing_lookup_plugins:
 
