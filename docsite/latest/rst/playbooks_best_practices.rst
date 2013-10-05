@@ -257,7 +257,7 @@ may be augmented by playbooks like 'deploy_exampledotcom.yml' but the general co
 Ansible allows you to deploy and configure using the same tool, so you would likely reuse groups and just
 keep the OS configuration in separate playbooks from the app deployment.
 
-.. _stage_vs_prod:
+.. _stage_vs_production:
 
 Stage vs Production
 +++++++++++++++++++

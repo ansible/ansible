@@ -28,7 +28,7 @@ more on the big picture and only dive down into the details when needed.
 We'll start with understanding includes so roles make more sense, but our ultimate goal should be understanding roles -- roles
 are great and you should use them every time you write playbooks.
 
-See the `ansible-examples repository on github <https://github.com/ansible/ansible-examples>`_ for lots of examples of all of this
+See the 'ansible-examples' repository on github for lots of examples of all of this
 put together.  You may wish to have this open in a seperate tab as you dive in.
 
 Task Include Files And Encouraging Reuse
