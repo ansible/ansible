@@ -46,7 +46,7 @@ Ansible modules are resources that are distributed to remote nodes to make them 
 state.  Ansible follows a "batteries included" philosophy, so you have a lot of great modules for all manner of
 IT tasks in the core distribution.  This means modules are well up-to-date and you don't have to hunt for an implementation
 that will work on your platform.  You may think of the module library as a toolbox full of useful system management tools, 
-and playbooks as the instructions for buildilng something using those tools.
+and playbooks as the instructions for building something using those tools.
 
 .. toctree::
    :maxdepth: 1
@@ -121,7 +121,7 @@ AnsibleWorks AWX
 
 `AnsibleWorks <http://ansibleworks.com>`_, who also sponsors the Ansible community, also produces 'AWX', which is a web-based solution that makes Ansible even more easy to use for IT teams of all kinds.  It's designed to be the hub for all of your automation tasks.
 
-AWX allows you to control access to who can access what, even allowing sharing of SSH credentials without someone being able to transfer those credentials.  Inventory can be graphically managed or synced with a widde variety of cloud sources.  It logs all of your jobs, integrates well with LDAP, and has an amazing browseable REST API.  Command line tools are available for easy integration
+AWX allows you to control access to who can access what, even allowing sharing of SSH credentials without someone being able to transfer those credentials.  Inventory can be graphically managed or synced with a wide variety of cloud sources.  It logs all of your jobs, integrates well with LDAP, and has an amazing browsable REST API.  Command line tools are available for easy integration
 with Jenkins as well.  
 
 Find out more about AWX features and how to download it on the `AWX webpage <http://ansibleworks.com/ansibleworks-awx>`_.  AWX
@@ -157,7 +157,7 @@ IT automation solutions that work well for them.   Should you wish to get more i
 Developer Information
 `````````````````````
 
-Learn how to build modules of your own in any language, and also how to extend ansible through several kinds of plugins. Explore Ansible's Python API and write Python plugins to integrate with other solutions in your environment.
+Learn how to build modules of your own in any language, and also how to extend Ansible through several kinds of plugins. Explore Ansible's Python API and write Python plugins to integrate with other solutions in your environment.
 
 .. toctree::
    :maxdepth: 1
