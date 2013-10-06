@@ -151,7 +151,7 @@ class ActionModule(object):
                 return ReturnData(conn=conn, result=dict(dest=dest, changed=True))
 
             # run the copy module
-            if 'raw' in module_args:
+            if raw:
                 # don't send down raw=no
                 module_args.pop('raw')
             module_args = "%s src=%s original_basename=%s" % (module_args, pipes.quote(tmp_src), pipes.quote(os.path.basename(source)))
@@ -168,7 +168,7 @@ class ActionModule(object):
                 return ReturnData(conn=conn, result=dict(dest=dest, changed=False))
 
             tmp_src = tmp + os.path.basename(source)
-            if 'raw' in module_args:
+            if raw:
                 # don't send down raw=no
                 module_args.pop('raw')
             module_args = "%s src=%s" % (module_args, pipes.quote(tmp_src))
