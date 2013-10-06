@@ -460,6 +460,32 @@ class TestRunner(unittest.TestCase):
         idx = artifact.index('communication. Typically it is depicted as a lunch-box sized object with some')
         assert artifact[idx - 1] == testline
 
+        # Testing validate
+        testline = 'Tenth: Testing with validate'
+        testcase = ('lineinfile', [
+                        "dest=%s" % sample,
+                        "regexp='^Tenth: '",
+                        "line='%s'" % testline,
+                        "validate='grep -q Tenth %s'",
+                    ])
+        result = self._run(*testcase)
+        assert result['changed'], "File wasn't changed when it should have been"
+        assert result['msg'] == 'line added', "msg was incorrect"
+        artifact = [ x.strip() for x in open(sample) ]
+        assert artifact[-1] == testline
+
+
+        # Testing validate
+        testline = '#11: Testing with validate'
+        testcase = ('lineinfile', [
+                        "dest=%s" % sample,
+                        "regexp='^#11: '",
+                        "line='%s'" % testline,
+                        "validate='grep -q #12# %s'",
+                    ])
+        result = self._run(*testcase)
+        assert result['failed']
+
         # cleanup
         os.unlink(sample)
 
