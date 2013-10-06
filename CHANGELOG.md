@@ -7,9 +7,10 @@ Highlighted new features:
 
 * Added do-until feature, which can be used to retry a failed task a specified number of times with a delay in-between the retries.
 * (docs pending) Added failed_when option for tasks, which can be used to specify logical statements that make it easier to determine when a task has failed, or to make it easier to ignore certain non-zero return codes for some commands.
-* (docs pending) Added the "subelement" lookup plugin, which allows iteration of the keys of a dictionary or items in a list.
+* Added the "subelement" lookup plugin, which allows iteration of the keys of a dictionary or items in a list.
 * Added the capability to use either paramiko or ssh for the inital setup connection of an accelerated playbook.
 * (docs pending) Swap the active user on a task in the middle of a play with the 'remote_user' parameter.
+* Automatically provide advice on common parser errors users encounter.
 
 New modules:
 
