@@ -32,7 +32,7 @@ machines, many users will actually track the development version.
 
 Ansible's release cycles are usually about two months long.  Due to this
 short release cycle, minor bugs will generally be fixed in the next release versus maintaining 
-backports on the stable branch.  Major bugs will still have maintaince releases when needed, though
+backports on the stable branch.  Major bugs will still have maintenance releases when needed, though
 these are infrequent.
 
 If you are wishing to run the latest released version of Ansible and you are running Red Hat Enterprise Linux (TM), CentOS, Fedora, Debian, or Ubuntu, we recommend using the OS package manager.
@@ -40,7 +40,7 @@ If you are wishing to run the latest released version of Ansible and you are run
 For other installation options, we recommend installing via "pip", which is the Python package manager, though other options are also available.
 
 If you wish to track the development release to use and test the latest features, we will share
-information about running from source.  It's not neccessary to install the program to run from source.
+information about running from source.  It's not necessary to install the program to run from source.
 
 .. _control_machine_requirements:
 

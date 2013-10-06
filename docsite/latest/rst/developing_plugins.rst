@@ -4,8 +4,8 @@ Developing Plugins
 .. contents::
    :depth: 2
 
-Ansible is pluggable in a lot of other ways seperate from inventory scripts and callbacks.  Many of these features are there to cover fringe use cases and are infrequently needed, and others are pluggable simply because they are there to implement core features
-in ansible and were most convient to be made pluggable.
+Ansible is pluggable in a lot of other ways separate from inventory scripts and callbacks.  Many of these features are there to cover fringe use cases and are infrequently needed, and others are pluggable simply because they are there to implement core features
+in ansible and were most convenient to be made pluggable.
 
 This section will explore these features, though they are generally not common in terms of things people would look to extend quite
 as often.

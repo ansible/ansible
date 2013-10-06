@@ -475,7 +475,7 @@ Similarly, the hostname as the system reports it is::
 
 Facts are frequently used in conditionals (see `playbook_conditionals`) and also in templates.
 
-Facts can be also used to create dynamic groups of hosts that match particular critera, see the :doc:`modules` documentation on 'group_by' for details, as well as in generalized conditional statements as discussed in the `playbook_conditionals` chapter.
+Facts can be also used to create dynamic groups of hosts that match particular criteria, see the :doc:`modules` documentation on 'group_by' for details, as well as in generalized conditional statements as discussed in the `playbook_conditionals` chapter.
 
 .. _disabling_facts:
 
@@ -561,7 +561,7 @@ While it's mentioned elsewhere in that document too, here's a quick syntax examp
           when: foo_result.rc == 5
 
 Registered variables are valid on the host the remainder of the playbook run, which is the same as the lifetime of "facts"
-in Ansible.  Effectively registerd variables are just like facts.
+in Ansible.  Effectively registered variables are just like facts.
 
 .. _accessing_complex_variable_data:
 
@@ -792,7 +792,7 @@ control you might want over values.
 First off, group variables are super powerful.
 
 Site wide defaults should be defined as a 'group_vars/all' setting.  Group variables are generally placed alongside
-your inventory file.  They can also be returned by a dynamic inventroy script (see `intro_dynamic_inventory`) or defined
+your inventory file.  They can also be returned by a dynamic inventory script (see `intro_dynamic_inventory`) or defined
 in things like AnsibleWorks AWX from the UI or API::
 
     ---
@@ -830,7 +830,7 @@ See `intro_roles` for more info about this::
     # if not overriden in inventory or as a parameter, this is the value that will be used
     http_port: 80
 
-if you are writing a role and want to ensure the value in the role is absolutely used in that role, and is not going to be overriden
+if you are writing a role and want to ensure the value in the role is absolutely used in that role, and is not going to be overridden
 by inventory, you should but it in roles/x/vars/main.yml like so, and inventory values cannot override it.  -e however, still will::
 
     ----
@@ -849,7 +849,7 @@ If you are using a role and want to override a default, pass it as a parameter t
     roles:
        - { name: apache, http_port: 8080 }
 
-This makes it clear to the playbook reader that you've made a concious choice to override some default in the role, or pass in some
+This makes it clear to the playbook reader that you've made a conscious choice to override some default in the role, or pass in some
 configuration that the role can't assume by itself.  It also allows you to pass something site-specific that isn't really part of the
 role you are sharing with others.
 
@@ -883,7 +883,7 @@ can set variables in there and make use of them in other roles and elsewhere in 
 
 So, that's precedence, explained in a more direct way.  Don't worry about precedence, just think about if your role is defining a
 variable that is a default, or a "live" variable you definitely want to use.  Inventory lies in precedence right in the middle, and
-if you want to forceably override something, use -e.
+if you want to forcibly override something, use -e.
 
 If you found that a little hard to understand, take a look at the "ansible-examples" repo on our github for a bit more about
 how all of these things can work together.

@@ -24,7 +24,7 @@ Tutorial
 Let's build a very-basic module to get and set the system time.  For starters, let's build
 a module that just outputs the current time.
 
-We are going to use Python here but any language is possible.  Only File I/O and outputing to standard
+We are going to use Python here but any language is possible.  Only File I/O and outputting to standard
 out are required.  So, bash, C++, clojure, Python, Ruby, whatever you want
 is fine.
 
@@ -224,7 +224,7 @@ only shorter in terms of code, they are actually FASTER in terms of execution ti
 
 Rather than mention these here, the best way to learn is to read some of the `source of the modules <https://github.com/ansible/ansible/tree/devel/library>`_ that come with Ansible.
 
-The 'group' and 'user' modules are reasonably non-trival and showcase what this looks like.
+The 'group' and 'user' modules are reasonably non-trivial and showcase what this looks like.
 
 Key parts include always ending the module file with::
 
@@ -341,7 +341,7 @@ and guidelines:
 
 * Return codes from modules are not actually not signficant, but continue on with 0=success and non-zero=failure for reasons of future proofing.
 
-* As results from many hosts will be aggregrated at once, modules should return only relevant output.  Returning the entire contents of a log file is generally bad form.
+* As results from many hosts will be aggregated at once, modules should return only relevant output.  Returning the entire contents of a log file is generally bad form.
 
 .. _module_dev_shorthand:
 
