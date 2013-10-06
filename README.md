@@ -7,7 +7,7 @@ multinode orchestration framework.
 Read the documentation and more at http://ansibleworks.com/
 
 Many users run straight from the development branch (it's generally fine to do so), but you might also wish to consume a release.  You can find 
-instructions on http://ansibleworks.com/docs/gettingstarted.html for a variety of platforms.  If you want a tarball of the last release, go to 
+instructions on http://ansibleworks.com/docs/intro_getting_started.html for a variety of platforms.  If you want a tarball of the last release, go to 
 http://ansibleworks.com/releases/ and you can also install with pip (though that will bring in some optional binary dependencies you normally do not need).
 
 Design Principles
