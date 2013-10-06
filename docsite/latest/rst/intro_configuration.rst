@@ -245,9 +245,9 @@ legacy_playbook_variables
 
 Ansible prefers to use Jinja2 syntax '{{ like_this }}' to indicate a variable should be substituted in a particular string.  However,
 older versions of playbooks used a more Perl-style syntax.  This syntax was undesirable as it frequently conflicted with bash and
-was hard to explain to new users when deferencing complicated variable hierarchies, so we have standardized on the '{{ jinja2 }}' way.
+was hard to explain to new users when referencing complicated variable hierarchies, so we have standardized on the '{{ jinja2 }}' way.
 
-To ensure a string like '$foo' is not inadvertedly replaced in a Perl or Bash script template, the old form of templating (which is
+To ensure a string like '$foo' is not indadvertedly replaced in a Perl or Bash script template, the old form of templating (which is
 still enabled as of Ansible 1.4) can be disabled like so ::
 
     legacy_playbook_variables = no
@@ -261,7 +261,7 @@ This is the default location Ansible looks to find modules::
 
      library = /usr/share/ansible
 
-Ansible knows how to look in multiple locations if you feed it a colon seperated path, and it also will look for modules in the
+Ansible knows how to look in multiple locations if you feed it a colon separated path, and it also will look for modules in the
 "./library" directory alongside a playbook.
 
 .. _log_path:
@@ -358,7 +358,7 @@ value here to avoid re-specifying --ansible-private-keyfile with every invocatio
 remote_port
 ===========
 
-This sets the default SSH port on all of your systems, for systems that didn't specify an alternative value in inventroy.
+This sets the default SSH port on all of your systems, for systems that didn't specify an alternative value in inventory.
 The default is the standard 22::
 
    remote_port = 22
@@ -563,6 +563,6 @@ This setting controls the timeout for the socket connect call, and should be kep
 
     accelerate_connect_timeout = 1.0
 
-Note, this value can be set to less than one second, however it is probably not a good idea to do so unless you're on a very fast and reliable LAN. If you're connecting to systems over the internet, it may be neccessary to increase this timeout.
+Note, this value can be set to less than one second, however it is probably not a good idea to do so unless you're on a very fast and reliable LAN. If you're connecting to systems over the internet, it may be necessary to increase this timeout.
 
 

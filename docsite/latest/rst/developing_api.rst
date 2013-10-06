@@ -6,7 +6,7 @@ the Ansible python API to control nodes, you can extend Ansible to respond to va
 write various plugins, and you can plug in inventory data from external data sources.  This document
 covers the Runner and Playbook API at a basic level.
 
-If you are looking to use Ansible programatically from something other than Python, trigger events asynchronously, 
+If you are looking to use Ansible programmatically from something other than Python, trigger events asynchronously, 
 or have access control and logging demands, take a look at `AnsibleWorks AWX <http://ansibleworks.com/ansibleworks-awx>`_ 
 as it has a very nice REST API that provides all of these things at a higher level.
 

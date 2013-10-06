@@ -179,7 +179,7 @@ is an excellent way to track changes to your inventory and host variables.
 List of Behavioral Inventory Parameters
 +++++++++++++++++++++++++++++++++++++++
 
-As aluded to above, setting the following variables controls how ansible interacts with remote hosts. Some we have already
+As alluded to above, setting the following variables controls how ansible interacts with remote hosts. Some we have already
 mentioned::
 
     ansible_ssh_host
@@ -195,7 +195,7 @@ mentioned::
     ansible_ssh_private_key_file
       Private key file used by ssh.  Useful if using multiple keys and you don't want to use SSH agent.
     ansible_python_interpreter
-      The target host python path. This is userful for systems with more
+      The target host python path. This is useful for systems with more
       than one Python or not located at "/usr/bin/python" such as \*BSD, or where /usr/bin/python
       is not a 2.X series Python.  We do not use the "/usr/bin/env" mechanism as that requires the remote user's
       path to be set right and also assumes the "python" executable is named python, where the executable might

@@ -156,7 +156,7 @@ Here is an example::
       - name: recursively copy files from management server to target
         local_action: command rsync -a /path/to/files $inventory_hostname:/path/to/target/
 
-Note that you'll need passphrase-less SSH or ssh-agent set up to let rsync copy without prompting for a passphase or password.
+Note that you'll need passphrase-less SSH or ssh-agent set up to let rsync copy without prompting for a passphrase or password.
 
 .. _shell_env:
 
