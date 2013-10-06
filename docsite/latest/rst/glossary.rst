@@ -284,7 +284,7 @@ A datacenter or cloud architecture is full of many systems, playing many parts -
 monitoring systems, continuous integration systems, etc.  In performing any process, it is necessary to touch systems in particular orders,
 often to simulate rolling updates or to deploy software correctly.  Some system may perform some steps, then others, then previous systems
 already processed may need to perform more steps.  Along the way, emails may need to be sent or web services contacted.  Ansible
-orchestration is all about modelling that kind of process.
+orchestration is all about modeling that kind of process.
 
 paramiko
 ++++++++
@@ -360,7 +360,7 @@ Runner
 ++++++
 
 A core software component of Ansible that is the power behind /usr/bin/ansible directly -- and corresponds to the invocation
-of each task in a playbook.  The Runner is something Ansible developers may talk about, but it's not really userland
+of each task in a playbook.  The Runner is something Ansible developers may talk about, but it's not really user land
 vocabulary.
 
 Serial
