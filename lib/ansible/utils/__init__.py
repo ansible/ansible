@@ -336,6 +336,48 @@ def parse_yaml(data):
     ''' convert a yaml string to a data structure '''
     return smush_ds(yaml.safe_load(data))
 
+def process_common_errors(msg, probline, column):
+    replaced = probline.replace(" ","")
+    if replaced.find(":{{") != -1 and replaced.find("}}") != -1:
+        msg = msg + """
+This one looks easy to fix.  YAML thought it was looking for the start of a 
+hash/dictionary and was confused to see a second "{".  Most likely this was
+meant to be an ansible template evaluation instead, so we have to give the 
+parser a small hint that we wanted a string instead. The solution here is to 
+just quote the entire value.
+
+For instance, if the original line was:
+
+    app_path: {{ base_path }}/foo
+
+It should be written as:
+
+    app_path: "{{ base_path }}/foo"
+"""
+
+    elif len(probline) and probline[column] == ":" and probline.find("=") != -1:
+        msg = msg + """
+This one looks easy to fix.  There is an extra unquoted colon in the line 
+and this is confusing the parser. It was only expecting to find one free 
+colon. The solution is just add some quotes around the colon, or quote the 
+entire line after the first colon.
+
+For instance, if the original line was:
+
+    copy: src=file dest=/path/filename:with_colon.txt
+
+It can be written as:
+
+    copy: src=file dest='/path/filename:with_colon.txt'
+
+Or:
+    
+    copy: 'src=file dest=/path/filename:with_colon.txt'
+
+
+"""
+    return msg
+
 def process_yaml_error(exc, data, path=None):
     if hasattr(exc, 'problem_mark'):
         mark = exc.problem_mark
@@ -351,6 +393,10 @@ Note: The error may actually appear before this position: line %s, column %s
 %s
 %s
 %s""" % (path, mark.line + 1, mark.column + 1, before_probline, probline, arrow)
+
+        msg = process_common_errors(msg, probline, mark.column)
+
+
     else:
         # No problem markers means we have to throw a generic
         # "stuff messed up" type message. Sry bud.
