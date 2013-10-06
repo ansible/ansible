@@ -12,7 +12,7 @@ or a piece of expensive enterprisey CMDB software.
 
 Ansible easily supports all of these options via an external inventory system.  The plugins directory contains some of these already -- including options for EC2/Eucalyptus, Rackspace Cloud, and OpenStack, examples of some of which will be detailed below.
 
-`AnsibleWorks AWX <http://ansibleworks.com/ansibleworks-awx/>`_ also provides a database to store inventory results that is both web and REST Accessible.  AWX syncs with all Ansible dynamic inventory sources. By having a database record of all of your hosts, it's easy to corrolate past event history and see which ones have had failures on their last playbook runs.
+`AnsibleWorks AWX <http://ansibleworks.com/ansibleworks-awx/>`_ also provides a database to store inventory results that is both web and REST Accessible.  AWX syncs with all Ansible dynamic inventory sources. By having a database record of all of your hosts, it's easy to correlate past event history and see which ones have had failures on their last playbook runs.
 
 For information about writing your own dynamic inventory source, see :doc:`developing_inventory`.
 
@@ -220,7 +220,7 @@ Using Multiple Inventory Sources
 ````````````````````````````````
 
 If the location given to -i in Ansible is a directory (or as so configured in ansible.cfg), Ansible can use multiple inventory sources
-at thes same time.  When doing so, it is possible to mix both dynamic and staticly managed inventory sources in the same ansible run.  Instant
+at thes same time.  When doing so, it is possible to mix both dynamic and statically managed inventory sources in the same ansible run.  Instant
 hybrid cloud!
 
 .. seealso::

@@ -42,8 +42,8 @@ Maximum Failure Percentage
 .. versionadded:: 1.3
 
 By default, Ansible will continue executing actions as long as there are hosts in the group that have not yet failed.
-In some situations, such as with the rolling updates described above, it may be desireable to abort the play when a 
-certain threshold of failures have been reached. To acheive this, as of version 1.3 you can set a maximum failure 
+In some situations, such as with the rolling updates described above, it may be desirable to abort the play when a 
+certain threshold of failures have been reached. To achieve this, as of version 1.3 you can set a maximum failure 
 percentage on a play as follows::
 
     - hosts: webservers

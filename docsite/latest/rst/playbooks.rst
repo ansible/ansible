@@ -180,7 +180,7 @@ is not provided though, the string fed to 'action' will be used for
 output.
 
 Tasks can be declared using the legacy "action: module options" format, but 
-it is recommeded that you use the more conventional "module: options" format.
+it is recommended that you use the more conventional "module: options" format.
 This recommended format is used throughout the documentation, but you may
 encounter the older format in some playbooks.
 
@@ -265,7 +265,7 @@ triggered once even if notified by multiple different tasks.
 
 For instance, multiple resources may indicate
 that apache needs to be restarted because they have changed a config file,
-but apache will only be bounced once to avoid unneccessary restarts.
+but apache will only be bounced once to avoid unnecessary restarts.
 
 Here's an example of restarting two services when the contents of a file
 change, but only if the file changes::
@@ -330,7 +330,7 @@ Ansible-Pull
 ````````````
 
 Should you want to invert the architecture of Ansible, so that nodes check in to a central location, instead
-of pushing configuraiton out to them, you can.
+of pushing configuration out to them, you can.
 
 Ansible-pull is a small script that will checkout a repo of configuration instructions from git, and then
 run ansible-playbook against that content.

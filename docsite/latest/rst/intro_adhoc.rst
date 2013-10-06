@@ -14,7 +14,7 @@ quick, but don't want to save for later.
 
 This is a good place to start to understand the basics of what ansible can do
 prior to learning the playbooks language -- ad-hoc commands can also be used
-to do quick things that you might not neccessarily want to write a full playbook 
+to do quick things that you might not necessarily want to write a full playbook 
 for.  
 
 Generally speaking, the true power of Ansible lies in playbooks.

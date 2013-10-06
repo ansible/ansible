@@ -13,7 +13,7 @@ Now that you've read :doc:`intro_installation` and installed Ansible, it's time 
 started with some commands.  
 
 What we are showing first are not the powerful configuration/deployment/orchestration of Ansible, called playbooks.
-Playbooks are covered in a seperate section.
+Playbooks are covered in a separate section.
 
 This section is about how to get going initially.  Once you have these concepts down, read :doc:`intro_adhoc` for some more
 detail, and then you'll be ready to dive into playbooks and explore the most interesting parts!
