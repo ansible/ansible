@@ -46,17 +46,17 @@ options:
     description:
       - Whether to install (C(present)), or remove (C(absent)) a package.
       - The upgrade (C(latest)) operation will update/install the package to the latest version available.
-      - "Beware: (C(latest)) only works for one package."
+      - "Note: The module has a limitation that (C(latest)) only works for one package, not lists of them."
     required: true
     choices: ["present", "absent", "latest"]
+'''
 
-examples:
-  - pkgutil: name=CSWcommon state=present
-    description: Install a package
-  - pkgutil: 'name=CSWnrpe site=ftp://myinternal.repo/opencsw/kiel state=latest'
-    description: If a package is not installed or not installed in the latest version, it will be installed with the newest version from a specified repository.
-  - pkgutil: name=CSWaspell state=absent
-    description: Ensure that a package is not installed.
+EXAMPLES = '''
+# Install a package
+pkgutil: name=CSWcommon state=present
+
+# Install a package from a specific repository
+pkgutil: name=CSWnrpe site='ftp://myinternal.repo/opencsw/kiel state=latest'
 '''
 import os
 
