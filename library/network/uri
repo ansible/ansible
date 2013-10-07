@@ -101,7 +101,7 @@ options:
     required: false
   status_code:
     description:
-      - A valid, numeric, HTTP status code that signifies success of the request.
+      - A valid, numeric, HTTP status code that signifies success of the request. Can also be comma separated list of status codes.
     required: false
     default: 200
   timeout:
@@ -411,7 +411,7 @@ def main():
                 uresp['json'] = js
             except:
                 pass
-    if resp['status'] != status_code:
+    if resp['status'] not in status_code:
         module.fail_json(msg="Status code was not " + status_code, content=content, **uresp)
     elif return_content:
         module.exit_json(changed=changed, content=content, **uresp)
