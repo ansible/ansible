@@ -660,7 +660,7 @@ class Runner(object):
         result = handler.run(conn, tmp, module_name, module_args, inject, complex_args)
         # Code for do until feature
         until = self.module_vars.get('until', None)
-        if until is not None and result.comm_ok:
+        if until is not None and result.comm_ok and "failed" not in result.result:
             inject[self.module_vars.get('register')] = result.result
             cond = template.template(self.basedir, until, inject, expand_lists=False)
             if not utils.check_conditional(cond,  self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
@@ -674,12 +674,15 @@ class Runner(object):
                     result = handler.run(conn, tmp, module_name, module_args, inject, complex_args)
                     result.result['attempts'] = x
                     vv("Result from run %i is: %s" % (x, result.result))
-                    if not result.comm_ok:
+                    if "failed" in result.result:
                         break
                     inject[self.module_vars.get('register')] = result.result
                     cond = template.template(self.basedir, until, inject, expand_lists=False)
                     if utils.check_conditional(cond, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
                         break
+                if result.result['attempts'] == retries and not utils.check_conditional(cond, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
+                    result.result['failed'] = True 
+                    result.result['msg'] = "Task failed as maximum retries was encountered"
             else:
                 result.result['attempts'] = 0
         conn.close()
