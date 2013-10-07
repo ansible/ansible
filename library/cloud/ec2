@@ -390,6 +390,8 @@ def create_instances(module, ec2):
         if group_name:
             grp_details = ec2.get_all_security_groups()
             if type(group_name) == list:
+                # FIXME: this should be a nice list comprehension
+                # also not py 2.4 compliant
                 group_id = list(filter(lambda grp: str(grp.id) if str(tmp) in str(grp) else None, grp_details) for tmp in group_name)
             elif type(group_name) == str:
                 for grp in grp_details:
@@ -557,7 +559,7 @@ def main():
             key_name = dict(aliases = ['keypair']),
             id = dict(),
             group = dict(type='list'),
-            group_id = dict(),
+            group_id = dict(type='list'),
             region = dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS),
             zone = dict(aliases=['aws_zone', 'ec2_zone']),
             instance_type = dict(aliases=['type']),
