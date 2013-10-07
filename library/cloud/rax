@@ -189,9 +189,13 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                 except Exception, e:
                     module.fail_json(msg = 'Failed to load %s' % lpath)
             try:
-                # This is a slightly complicated invocation because the final result needs to be in a nova-compatible format, which is what
-                # get_server_networks() does (it returns a 1-element list).
-                nics = [network.get_server_networks()[0] for network in pyrax.cloud_networks.list() if network.label in networks]
+                nics = []
+                if networks:
+                    # Nics should be in the nova_client format so utilize pyrax to give it to us, filtering
+                    # by the network name that the user specified
+                    for remote_network in pyrax.cloud_networks.list():
+                        if remote_network.label in networks:
+                            nics.append(remote_network.get_server_networks()[0])
                 
                 servers = [pyrax.cloudservers.servers.create(name=name,
                                                              image=image,
