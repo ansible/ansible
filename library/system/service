@@ -634,6 +634,12 @@ class LinuxService(Service):
                     self.changed = True
                     break
 
+            # Debian compatibility
+            for line in err.splitlines():
+                if self.enable and line.find('no runlevel symlinks to modify') != -1:
+                    self.changed = True
+                    break
+
             if self.module.check_mode:
                 self.module.exit_json(changed=self.changed)
 
