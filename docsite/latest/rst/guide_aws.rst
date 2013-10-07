@@ -23,6 +23,18 @@ Requirements for the AWS modules are minimal.  All of the modules require and ar
 
 You can also install it via pip if you want.
 
+The following steps will often execute outside the host loop, so it makes sense to add localhost to inventory.  Ansible
+may not require this step in the future::
+
+    [local]
+    localhost
+
+And in your playbook steps we'll typically be using the following pattern for provisioning steps::
+
+    - hosts: localhost
+      connection: local
+      gather_facts: False
+
 .. _aws_provisioning:
 
 Provisioning
