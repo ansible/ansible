@@ -405,7 +405,7 @@ def main():
                 if deletertn is True:
                     module.exit_json(msg="Bucket %s and all keys have been deleted."%bucket, changed=True)
             else:
-                module.fail_json(msg="Bucket does not exist.", Changed=False)
+                module.fail_json(msg="Bucket does not exist.", changed=False)
         else:
             module.fail_json(msg="Bucket parameter is required.", failed=True)
  
