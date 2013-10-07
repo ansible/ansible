@@ -101,7 +101,7 @@ options:
     required: false
   status_code:
     description:
-      - A valid, numeric, HTTP status code that signifies success of the request.
+      - A valid, numeric, HTTP status code that signifies success of the request. Can also be comma separated list of status codes.
     required: false
     default: 200
   timeout:
@@ -315,7 +315,7 @@ def main():
             follow_redirects = dict(required=False, default='no', type='bool'),
             creates = dict(required=False, default=None),
             removes = dict(required=False, default=None),
-            status_code = dict(required=False, default="200"),
+            status_code = dict(required=False, default="200", type='list'),
             timeout = dict(required=False, default=30, type='int'),
         ),
         check_invalid_arguments=False,
@@ -411,7 +411,7 @@ def main():
                 uresp['json'] = js
             except:
                 pass
-    if resp['status'] != status_code:
+    if resp['status'] not in status_code:
         module.fail_json(msg="Status code was not " + status_code, content=content, **uresp)
     elif return_content:
         module.exit_json(changed=changed, content=content, **uresp)
