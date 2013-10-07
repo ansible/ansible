@@ -315,7 +315,7 @@ def main():
             follow_redirects = dict(required=False, default='no', type='bool'),
             creates = dict(required=False, default=None),
             removes = dict(required=False, default=None),
-            status_code = dict(required=False, default="200"),
+            status_code = dict(required=False, default="200", type='list'),
             timeout = dict(required=False, default=30, type='int'),
         ),
         check_invalid_arguments=False,
