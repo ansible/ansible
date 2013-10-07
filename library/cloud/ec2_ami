@@ -165,6 +165,7 @@ AWS_REGIONS = ['ap-northeast-1',
                'us-west-2']
 
 try:
+    import boto
     import boto.ec2
 except ImportError:
     print "failed=True msg='boto required for this module'"
@@ -195,8 +196,22 @@ def create_image(module, ec2):
     except boto.exception.BotoServerError, e:
         module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
 
-    # wait here until the image is gone
-    img = ec2.get_image(image_id)
+    # Wait until the image is recognized. EC2 API has eventual consistency,
+    # such that a successful CreateImage API call doesn't guarantee the success
+    # of subsequent DescribeImages API call using the new image id returned.
+    for i in range(30):
+        try:
+            img = ec2.get_image(image_id)
+            break
+        except boto.exception.EC2ResponseError as e:
+            if e.error_code == 'InvalidAMIID.NotFound':
+                time.sleep(1)
+            else:
+                raise
+    else:
+        module.fail_json(msg = "timed out waiting for image to be recognized")
+
+    # wait here until the image is created
     wait_timeout = time.time() + wait_timeout
     while wait and wait_timeout > time.time() and (img is None or img.state != 'available'):
         img = ec2.get_image(image_id)
