@@ -335,7 +335,7 @@ def main():
         argument_spec=dict(
             repo=dict(required=True),
             state=dict(choices=['present', 'absent'], default='present'),
-            update_cache = dict(aliases=['update-cache'], type='bool'),
+            update_cache = dict(aliases=['update-cache'], type='bool', default=True),
         ),
         supports_check_mode=True,
     )
