@@ -53,11 +53,16 @@ class Group(object):
 
     def get_hosts(self):
 
-        hosts = set()
+        hosts = []
         for kid in self.child_groups:
-            hosts.update(kid.get_hosts())
-        hosts.update(self.hosts)
-        return list(hosts)
+            kid_hosts = kid.get_hosts()
+            for kk in kid_hosts:
+               if kk not in hosts:
+                   hosts.append(kk)
+        for mine in self.hosts:
+            if mine not in hosts:
+                hosts.append(mine)
+        return hosts
 
     def get_variables(self):
         return self.vars.copy()

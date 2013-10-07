@@ -14,7 +14,7 @@ Highlighted new features:
 
 New modules:
 
-* cloud:ec2_eip -- manage AWS elastic IP's
+* cloud:ec2_eip -- manage AWS elastic IPs
 * cloud:rax_clb -- manage Rackspace cloud load balancers
 * system: firewalld -- manage the firewalld configuration
 * system: host -- manage `/etc/hosts` file entries
@@ -28,9 +28,11 @@ Misc changes:
 * Added `ansible_env` to the list of facts returned by the setup module.
 * Added `state=touch` to the file module, which functions similarly to the command-line version of `touch`.
 * Added a -vvvv level, which will show SSH client debugging information in the event of a failure.
-* Includes now support the more standard syntax, similar to that of role includes and dependencies. It is no longer necessary to specify a special "vas" field for the variables passed to the include.
+* Includes now support the more standard syntax, similar to that of role includes and dependencies. It is no longer necessary to specify a special "vars" field for the variables passed to the include.
 * Changed the `user:` parameter on plays to `remote_user:` to prevent confusion with the module of the same name.  Still backwards compatible on play parameters.
 * Added parameter to allow the fetch module to skip the md5 validation step ('validate_md5=false'). This is usefull when fetching files that are actively being written to, such as live log files.
+* Inventory hosts are used in the order they appear in the inventory.
+* in hosts: foo[2-5] type syntax, the iterators now are zero indexed and the last index is non-inclusive, to match Python standards.
 
 1.3 "Top of the World" - September 13th, 2013
 
