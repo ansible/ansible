@@ -144,7 +144,7 @@ In addition to the storing variables directly in the INI file, host
 and group variables can be stored in individual files relative to the
 inventory file.  
 
-These variable files are in YAML format.  See `YAMLSyntax` if you are new to YAML.
+These variable files are in YAML format.  See :doc:`YAMLSyntax` if you are new to YAML.
 
 Assuming the inventory file path is::
 
