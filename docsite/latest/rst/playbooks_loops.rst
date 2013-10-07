@@ -136,16 +136,14 @@ been retried for 5 times with a delay of 10 seconds. The default value for "retr
 The task returns the results returned by the last task run. The results of individual retries can be viewed by -vv option.
 The registered variable will also have a new key "attempts" which will have the number of the retries for the task.
 
-The Do/Until feature does not take decision on whether to fail or pass the play when the maximum retries are completed, the user can 
-can do that in the next task as follows::
+The Do/Until feature will fail the task when maximum retries are completed, the user can override that as follows::
    
    - action: shell /usr/bin/foo
      register: result
      until: register.stdout.find("all systems go") != -1
      retries: 5
      delay: 10
-     failed_when: result.attempts == 5
-
+     ignore_errors: true
 
 
 
