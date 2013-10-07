@@ -17,7 +17,7 @@ options:
     description:
       - ID or name of the room.
     required: true
-  from:
+  msg_from:
     description:
       - Name the message will appear be sent from. max 15 characters.
         Over 15, will be shorten.
