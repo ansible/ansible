@@ -112,7 +112,7 @@ def main():
             token=dict(required=True),
             room=dict(required=True),
             msg=dict(required=True),
-            msg_from=dict(default="Ansible"),
+            msg_from=dict(default="Ansible", aliases=['from']),
             color=dict(default="yellow", choices=["yellow", "red", "green",
                                                   "purple", "gray", "random"]),
             msg_format=dict(default="text", choices=["text", "html"]),
