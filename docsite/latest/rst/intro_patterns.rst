@@ -69,11 +69,11 @@ It's also ok to mix wildcard patterns and groups at the same time::
 
     one*.com:dbservers
 
-Most people don't specify patterns as regular expressions, but you can.  Just start the pattern with a '~'.
+Most people don't specify patterns as regular expressions, but you can.  Just start the pattern with a '~'::
 
     ~(web|db).*\.example\.com
 
-While we're jumping a bit ahead, additionally, you can add an exclusion criteria just by supplying the "--limit" flag to /usr/bin/ansible or /usr/bin/ansible-playbook.
+While we're jumping a bit ahead, additionally, you can add an exclusion criteria just by supplying the "--limit" flag to /usr/bin/ansible or /usr/bin/ansible-playbook::
 
     ansible-playbook site.yml --limit datacenter2
 
