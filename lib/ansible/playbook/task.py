@@ -215,7 +215,9 @@ class Task(object):
             self.module_args = tokens[1]
 
         import_tags = self.module_vars.get('tags',[])
-        if type(import_tags) in [str,unicode]:
+        if type(import_tags) in [int,float]:
+            import_tags = str(import_tags)
+        elif type(import_tags) in [str,unicode]:
             # allow the user to list comma delimited tags
             import_tags = import_tags.split(",")
 
@@ -247,6 +249,8 @@ class Task(object):
         if apply_tags is not None:
             if type(apply_tags) in [ str, unicode ]:
                 self.tags.append(apply_tags)
+            elif type(apply_tags) in [ int, float ]:
+                self.tags.append(str(apply_tags))
             elif type(apply_tags) == list:
                 self.tags.extend(apply_tags)
         self.tags.extend(import_tags)
