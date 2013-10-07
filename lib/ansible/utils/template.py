@@ -150,7 +150,7 @@ def _legacy_varFind(basedir, text, vars, lookup_fatal, depth, expand_lists):
 
     # short circuit this whole function if we have specified we don't want
     # legacy var replacement
-    if C.DEFAULT_LEGACY_PLAYBOOK_VARIABLES == 'no':
+    if C.DEFAULT_LEGACY_PLAYBOOK_VARIABLES == False:
         return None
 
     start = text.find("$")
