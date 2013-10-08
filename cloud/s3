@@ -46,7 +46,6 @@ options:
     description:
       - The destination file path when downloading an object/key with a GET operation.
     required: false
-    default: 600
     aliases: []
     version_added: "1.3"
   overwrite:
@@ -61,11 +60,11 @@ options:
     required: true
     default: null
     aliases: []
-  expiry:
+  expiration:
     description:
       - Time limit (in seconds) for the URL generated and returned by S3/Walrus when performing a mode=put or mode=geturl operation. 
     required: false
-    default: null
+    default: 600
     aliases: []
   s3_url:
     description:
