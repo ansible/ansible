@@ -274,7 +274,10 @@ the user running Ansible has permissions on the logfile.
 
     log_path=/var/log/ansible.log
 
-This behavior is not on by default.
+This behavior is not on by default.  Note that ansible will, without this setting, record module arguments called to the
+syslog of managed machines.  Password arguments are excluded.
+
+For Enterprise users seeking more detailed logging history, you may be interested in `AnsibleWorks AWX <http://ansibleworks.com/ansibleworks-awx>`_.
 
 .. _lookup_plugins:
 
