@@ -78,6 +78,7 @@ options:
             - Optionally set the user's password to this crypted value.  See
               the user example in the github examples directory for what this looks
               like in a playbook.
+            - Passwords values can be generated with "openssl passwd -salt <salt> -1 <plaintext>"
     state:
         required: false
         default: "present"
