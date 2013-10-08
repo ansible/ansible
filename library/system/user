@@ -716,9 +716,7 @@ class FreeBsdUser(User):
 
             if groups_need_mod:
                 cmd.append('-G')
-                new_groups = groups
-                if self.append:
-                    new_groups.extend(current_groups)
+                new_groups = groups | set(current_groups) if self.append else groups
                 cmd.append(','.join(new_groups))
 
         # modify the user if cmd will do anything
