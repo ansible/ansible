@@ -105,8 +105,8 @@ explore, but you already have a fully working infrastructure!
 
 .. _a_note_about_host_key_checking:
 
-A note about Host Key Checking
-``````````````````````````````
+Host Key Checking
+`````````````````
 
 Ansible 1.2.1 and later have host key checking enabled by default.  
 
@@ -122,6 +122,11 @@ Alternatively this can be set by an environment variable:
     $ export ANSIBLE_HOST_KEY_CHECKING=False
 
 Also note that host key checking in paramiko mode is reasonably slow, therefore switching to 'ssh' is also recommended when using this feature.
+
+.. _a_note_about_logging:
+
+Ansible will log some information about module arguments on the remote system in the remote syslog.  To enable basic
+logging on the control machine see `intro_config` document and set the 'log_path' configuration file setting.  Enterprise users may also be interested in `AnsibleWorks AWX <http://ansibleworks.com/ansibleworks-awx>`_.  AWX provides a very robust database logging feature where it is possible to drill down and see history based on hosts, projects, and particular inventories over time -- explorable both graphically and through a REST API.
 
 .. seealso::
 
