@@ -72,6 +72,9 @@ Author: Eric Johnson <erjohnso@google.com>
 Version: 0.0.1
 '''
 
+USER_AGENT_PRODUCT="Ansible-gce_inventory_plugin"
+USER_AGENT_VERSION="v1beta15"
+
 import sys
 import os
 import argparse
@@ -146,8 +149,11 @@ class GceInventory(object):
                 config.get('gce','gce_service_account_pem_file_path')
             )
             kwargs = {'project': config.get('gce','gce_project_id')}
-            
-        return get_driver(Provider.GCE)(*args, **kwargs)
+
+        gce = get_driver(Provider.GCE)(*args, **kwargs)
+        gce.connection.user_agent_append("%s/%s" % (
+                USER_AGENT_PRODUCT, USER_AGENT_VERSION))
+        return gce
 
 
     def parse_cli_args(self):
