@@ -26,7 +26,7 @@ Remote Connection Information
 Before we get started, it's important to understand how Ansible is communicating with remote
 machines over SSH. 
 
-By default, ansible 1.3 and later will try to use native 
+By default, Ansible 1.3 and later will try to use native 
 OpenSSH for remote communication  when possible.  This enables both ControlPersist (a performance feature), Kerberos, and options in ~/.ssh/config such as Jump Host setup.  When using Enterprise Linux 6 operating systems as the control machine (Red Hat Enterprise Linux and derivatives such as CentOS), however, the version of OpenSSH may be too old to support Control Persist. On these operating systems, Ansible will fallback into using a high-quality python implementation of
 OpenSSH called 'paramiko'.  If you wish to use features like Kerberized SSH and more, consider using Fedora, OS X, or Ubuntu as your control machine until a newer version of OpenSSH is available for your platform -- or engage 'accelerated mode' in Ansible.  See :doc:`playbooks_acceleration`.
 
@@ -39,14 +39,14 @@ When speaking with remote machines, Ansible will by default assume you are using
 While it may be common sense, it is worth sharing: Any management system benefits from being run near your machines you are being managed. If running in a cloud, consider running Ansible from a machine inside that cloud.  It will work better than on the open
 intranet in most cases.
 
-As an advanced topic, ansible doesn't just have to connect remotely over SSH.  The transports are pluggable, and there are options for managing things locally, as well as managing chroot, lxc, and jail containers.  A mode called 'ansible-pull' can also invert the system and have systems 'phone home' via scheduled git checkouts to pull configuration directives from a central repository.
+As an advanced topic, Ansible doesn't just have to connect remotely over SSH.  The transports are pluggable, and there are options for managing things locally, as well as managing chroot, lxc, and jail containers.  A mode called 'ansible-pull' can also invert the system and have systems 'phone home' via scheduled git checkouts to pull configuration directives from a central repository.
 
 .. _your_first_commands:
 
 Your first commands
 ```````````````````
 
-Now that you've installed Ansible, it's time to get started with some basics/
+Now that you've installed Ansible, it's time to get started with some basics.
 
 Edit (or create) /etc/ansible/hosts and put one or more remote systems in it, for
 which you have your SSH key in ``authorized_keys``::
@@ -58,7 +58,7 @@ which you have your SSH key in ``authorized_keys``::
 This is an inventory file, which is also explained in greater depth here:  :doc:`intro_inventory`.
 
 We'll assume you are using SSH keys for authentication.  To set up SSH agent to avoid retyping passwords, you can
-do::
+do:
 
 .. code-block:: bash
 
@@ -87,7 +87,7 @@ If you would like to access sudo mode, there are also flags to do that:
     # as bruce, sudoing to batman
     $ ansible all -m ping -u bruce --sudo --sudo-user batman
 
-(The sudo implementation is changeable in ansible's configuration file if you happen to want to use a sudo
+(The sudo implementation is changeable in Ansible's configuration file if you happen to want to use a sudo
 replacement.  Flags passed to sudo (like -H) can also be set there.)
 
 Now run a live command on all of your nodes:
@@ -135,7 +135,7 @@ logging on the control machine see `intro_config` document and set the 'log_path
    :doc:`intro_adhoc`
        Examples of basic commands
    :doc:`playbooks`
-       Learning ansible's configuration management language
+       Learning Ansible's configuration management language
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
