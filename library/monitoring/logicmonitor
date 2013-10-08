@@ -52,7 +52,7 @@ options:
             - If an md5 hash is used, the digest flag must be set to true
         required: false
         default: false
-        choices: [true, false]
+        choices: [true, false, yes, no]
     collector:
         description:
             - The fully qualified domain name of a collector in your LogicMonitor account.
@@ -90,7 +90,7 @@ options:
         choices: null
     groups:
         description:
-            - The set of groups that the host should be a member of.
+            - A list of groups that the host should be a member of.
             - Used when managing LogicMonitor hosts (target=host)
         required: false
         default: []
@@ -98,7 +98,6 @@ options:
     fullpath:
         description:
             - The fullpath of the hostgroup object you would like to manage
-            - Recommend running on a single ansible host
             - Required for management of LogicMonitor host groups (target=hostgroup) 
         required: false
         default: null
@@ -108,7 +107,7 @@ options:
             - A boolean flag to turn on and off alerting for an object
         required: false
         default: true
-        choices: [true, false]
+        choices: [true, false, yes, no]
     starttime:
         description:
             - The starttime for putting an object into Scheduled Down Time (maintenance mode)
