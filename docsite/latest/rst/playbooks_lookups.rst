@@ -1,6 +1,9 @@
 Using Lookups
 =============
 
+.. contents::
+   :depth: 2
+
 Lookup plugins allow access of data in Ansible from outside sources.  This can include the filesystem
 but also external datastores.  These values are then made available using the standard templating system
 in Ansible, and are typically used to load variables or templates with information from those systems.
@@ -92,4 +95,21 @@ template)::
 
     tasks:
       - debug: msg="motd value is {{ motd_value }}"
+
+.. seealso::
+
+   :doc:`playbooks`
+       An introduction to playbooks
+   :doc:`playbooks_conditionals`
+       Conditional statements in playbooks
+   :doc:`playbooks_variables`
+       All about variables
+   :doc:`playbooks_loops`
+       Looping in playbooks
+   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+       Have a question?  Stop by the google group!
+   `irc.freenode.net <http://irc.freenode.net>`_
+       #ansible IRC chat channel
+
+
 

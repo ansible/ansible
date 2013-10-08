@@ -25,12 +25,9 @@ tasks, playbooks are more likely to be kept in source control and used
 to push out your configuration or assure the configurations of your
 remote systems are in spec.
 
-Let's dive in and see how they work.  As you go, you may wish to open
-the `github examples directory <https://github.com/ansible/ansible/tree/devel/examples/playbooks>`_ in
-another tab, so you can apply the theory to what things look like in practice.
-
 There are also some full sets of playbooks illustrating a lot of these techniques in the
-`ansible-examples repository <https://github.com/ansible/ansible-examples>`_.
+`ansible-examples repository <https://github.com/ansible/ansible-examples>`_.  We'd recommend
+looking at these in another tab as you go along.
 
 There are also many jumping off points after you learn playbooks, so hop back to the documentation
 index after you're done with this section.
@@ -95,7 +92,7 @@ For each play in a playbook, you get to choose which machines in your infrastruc
 to target and what remote user to complete the steps (called tasks) as.
 
 The `hosts` line is a list of one or more groups or host patterns,
-separated by colons, as described in the :ref:`patterns`
+separated by colons, as described in the :doc:`intro_patterns`
 documentation.  The `remote_user` is just the name of the user account::
 
     ---
@@ -183,7 +180,7 @@ is not provided though, the string fed to 'action' will be used for
 output.
 
 Tasks can be declared using the legacy "action: module options" format, but 
-it is recommeded that you use the more conventional "module: options" format.
+it is recommended that you use the more conventional "module: options" format.
 This recommended format is used throughout the documentation, but you may
 encounter the older format in some playbooks.
 
@@ -268,7 +265,7 @@ triggered once even if notified by multiple different tasks.
 
 For instance, multiple resources may indicate
 that apache needs to be restarted because they have changed a config file,
-but apache will only be bounced once to avoid unneccessary restarts.
+but apache will only be bounced once to avoid unnecessary restarts.
 
 Here's an example of restarting two services when the contents of a file
 change, but only if the file changes::
@@ -328,6 +325,22 @@ Let's run a playbook using a parallelism level of 10::
 
 .. _tips_and_tricks:
 
+
+Ansible-Pull
+````````````
+
+Should you want to invert the architecture of Ansible, so that nodes check in to a central location, instead
+of pushing configuration out to them, you can.
+
+Ansible-pull is a small script that will checkout a repo of configuration instructions from git, and then
+run ansible-playbook against that content.
+
+Assuming you load balance your checkout location, ansible-pull scales essentially infinitely.
+
+Run 'ansible-pull --help' for details.
+
+There's also a `clever playbook <https://github.com/ansible/ansible-examples/blob/master/language_features/ansible_pull.yml>`_ available to using ansible in push mode to configure ansible-pull via a crontab!
+
 Tips and Tricks
 ```````````````
 
@@ -352,14 +365,16 @@ can do this::
        Learn about YAML syntax
    :doc:`playbooks_best_practices`
        Various tips about managing playbooks in the real world
+   :doc:`index`
+       Hop back to the documentation index for a lot of special topics about playbooks
    :doc:`modules`
        Learn about available modules
    :doc:`developing_modules`
        Learn how to extend Ansible by writing your own modules
    :doc:`intro_patterns`
        Learn about how to select hosts
-   `Github examples directory <https://github.com/ansible/ansible/tree/devel/examples/playbooks>`_
-       Complete playbook files from the github project source
+   `Github examples directory <https://github.com/ansible/ansible-examples>`_
+       Complete end-to-end playbook examples
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
 

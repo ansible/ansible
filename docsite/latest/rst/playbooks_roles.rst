@@ -10,7 +10,7 @@ Introduction
 While it is possible to write a playbook in one very large file (and you might start out learning playbooks this way),
 eventually you'll want to reuse files and start to organize things.
 
-At a basic level, including task files allows you to break up bits of configuration policy into smaller files.  Taks includes 
+At a basic level, including task files allows you to break up bits of configuration policy into smaller files.  Task includes 
 pull in tasks from other files.  Since handlers are tasks too, you can also include handler files from the 'handlers:' section.
 
 See :doc:`playbooks` if you need a review of these concepts.
@@ -18,7 +18,7 @@ See :doc:`playbooks` if you need a review of these concepts.
 Playbooks can also include plays from other playbook files.  When that is done, the plays will be inserted into the playbook to form
 a longer list of plays.
 
-When you start to think about it -- tasks, handlers, variables, and so -- begin to form larger concepts.  You start to think about modelling
+When you start to think about it -- tasks, handlers, variables, and so -- begin to form larger concepts.  You start to think about modeling
 what something is, rather than how to make something look like something.  It's no longer "apply this handful of THINGS" to these hosts, you say "these hosts are a dbservers" or "these hosts are webservers".  In programming, we might call that 'encapsulating' how things work.  For instance,
 you can drive a car without knowing how the engine works.
 
@@ -28,8 +28,8 @@ more on the big picture and only dive down into the details when needed.
 We'll start with understanding includes so roles make more sense, but our ultimate goal should be understanding roles -- roles
 are great and you should use them every time you write playbooks.
 
-See the `ansible-examples repository on github <https://github.com/ansible/ansible-examples>`_ for lots of examples of all of this
-put together.  You may wish to have this open in a seperate tab as you dive in.
+See the 'ansible-examples' repository on github for lots of examples of all of this
+put together.  You may wish to have this open in a separate tab as you dive in.
 
 Task Include Files And Encouraging Reuse
 ````````````````````````````````````````
@@ -148,7 +148,7 @@ Now that you have learned about vars_files, tasks, and handlers, what is the bes
 The short answer is to use roles!  Roles are ways of automatically loading certain vars_files, tasks, and
 handlers based on a known file structure.  Grouping content by roles also allows easy sharing of roles with other users.
 
-Roles are just automation around 'include' directives as redescribed above, and really don't contain much
+Roles are just automation around 'include' directives as described above, and really don't contain much
 additional magic beyond some improvements to search path handling for referenced files.  However, that can be a big thing!
 
 Example project structure::
@@ -320,6 +320,12 @@ The resulting order of execution would be as follows::
        Review the basic Playbook language features
    :doc:`playbooks_best_practices`
        Various tips about managing playbooks in the real world
+   :doc:`playbooks_variables`
+       All about variables in playbooks
+   :doc:`playbooks_conditionals`
+       Conditionals in playbooks
+   :doc:`playbooks_loops`
+       Loops in playbooks
    :doc:`modules`
        Learn about available modules
    :doc:`developing_modules`

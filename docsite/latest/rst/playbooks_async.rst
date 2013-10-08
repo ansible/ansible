@@ -1,6 +1,9 @@
 Asynchronous Actions and Polling
 ================================
 
+.. contents::
+   :depth: 2
+
 By default tasks in playbooks block, meaning the connections stay open
 until the task is done on each node.  This may not always be desirable, or you may
 be running operations that take longer than the SSH timeout.
@@ -49,4 +52,14 @@ Alternatively, if you do not need to wait on the task to complete, you may
 .. note::
    Using a higher value for ``--forks`` will result in kicking off asynchronous
    tasks even faster.  This also increases the efficiency of polling.
+
+
+.. seealso::
+
+   :doc:`playbooks`
+       An introduction to playbooks
+   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+       Have a question?  Stop by the google group!
+   `irc.freenode.net <http://irc.freenode.net>`_
+       #ansible IRC chat channel
 

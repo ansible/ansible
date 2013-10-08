@@ -4,22 +4,27 @@ Developing Modules
 Ansible modules are reusable units of magic that can be used by the Ansible API,
 or by the `ansible` or `ansible-playbook` programs.
 
+See :doc:`modules` for a list of various ones developed in core.
+
 Modules can be written in any language and are found in the path specified
 by `ANSIBLE_LIBRARY` or the ``--module-path`` command line option.
 
+Should you develop an interesting Ansible module, consider sending a pull request to the
+`github project <http://github.com/ansible/ansible>`_ to see about getting your module
+included in the core project.
+
 .. contents::
    :depth: 2
-
 
 .. _module_dev_tutorial:
 
 Tutorial
 ````````
 
-Let's build a module to get and set the system time.  For starters, let's build
+Let's build a very-basic module to get and set the system time.  For starters, let's build
 a module that just outputs the current time.
 
-We are going to use Python here but any language is possible.  Only File I/O and outputing to standard
+We are going to use Python here but any language is possible.  Only File I/O and outputting to standard
 out are required.  So, bash, C++, clojure, Python, Ruby, whatever you want
 is fine.
 
@@ -219,7 +224,7 @@ only shorter in terms of code, they are actually FASTER in terms of execution ti
 
 Rather than mention these here, the best way to learn is to read some of the `source of the modules <https://github.com/ansible/ansible/tree/devel/library>`_ that come with Ansible.
 
-The 'group' and 'user' modules are reasonably non-trival and showcase what this looks like.
+The 'group' and 'user' modules are reasonably non-trivial and showcase what this looks like.
 
 Key parts include always ending the module file with::
 
@@ -336,7 +341,7 @@ and guidelines:
 
 * Return codes from modules are not actually not signficant, but continue on with 0=success and non-zero=failure for reasons of future proofing.
 
-* As results from many hosts will be aggregrated at once, modules should return only relevant output.  Returning the entire contents of a log file is generally bad form.
+* As results from many hosts will be aggregated at once, modules should return only relevant output.  Returning the entire contents of a log file is generally bad form.
 
 .. _module_dev_shorthand:
 
@@ -458,9 +463,15 @@ a github pull request to the main project.
 
    :doc:`modules`
        Learn about available modules
+   :doc:`developing_plugins`
+       Learn about developing plugins
+   :doc:`developing_api`
+       Learn about the Python API for playbook and task execution
    `Github modules directory <https://github.com/ansible/ansible/tree/devel/library>`_
        Browse source of core modules
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
-       Questions? Help? Ideas?  Stop by the list on Google Groups
+   `Mailing List <http://groups.google.com/group/ansible-devel>`_
+       Development mailing list
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
+
+

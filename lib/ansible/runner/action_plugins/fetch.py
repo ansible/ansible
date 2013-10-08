@@ -56,6 +56,8 @@ class ActionModule(object):
             results = dict(failed=True, msg="src and dest are required")
             return ReturnData(conn=conn, result=results)
 
+        source = os.path.expanduser(source)
+
         if flat:
             if dest.endswith("/"):
                 # if the path ends with "/", we'll use the source filename as the
@@ -68,7 +70,8 @@ class ActionModule(object):
         else:
             # files are saved in dest dir, with a subdir for each host, then the filename
             dest = "%s/%s/%s" % (utils.path_dwim(self.runner.basedir, dest), conn.host, source)
-        dest   = dest.replace("//","/")
+
+        dest = os.path.expanduser(dest.replace("//","/"))
 
         # calculate md5 sum for the remote file
         remote_md5 = self.runner._remote_md5(conn, tmp, source)

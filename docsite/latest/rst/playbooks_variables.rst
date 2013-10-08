@@ -19,7 +19,7 @@ Once understanding variables you'll also want to dig into `playbooks_conditional
 Useful things like the "group_by" module
 and the "when" conditional can also be used with variables, and to help manage differences between systems.
 
-It's highly recommended that you consult `the Ansible-Examples github repository <http://github.com/ansible/ansible-examples/>_` to see a lot of examples of variables put to use.
+It's highly recommended that you consult the ansible-examples github repository to see a lot of examples of variables put to use.
 
 .. contents::
    :depth: 2
@@ -105,6 +105,99 @@ it's more than that -- you can also read variables about other hosts.  We'll sho
    templates are pure machine-parseable YAML.  This is an rather important feature as it means it is possible to code-generate
    pieces of files, or to have other ecosystem tools read Ansible files.  Not everyone will need this but it can unlock
    possibilities.
+
+.. _jinja2_filters:
+
+Jinja2 Filters
+``````````````
+
+.. note: These are infrequently utilized features.  Use them if they fit a use case you have, but this is optional knowledge.
+
+Filters in Jinja2 are a way of transforming template expressions from one kind of data into another.  Jinja2
+ships with many of these as documented on the official Jinja2 template documentation.
+
+In addition to these, Ansible supplies many more.  
+
+.. _filters_for_formatting_data:
+
+Filters For Formatting Data
+---------------------------
+
+The following filters will take a data structure in a template and render it in a slightly different format.  These
+are occasionally useful for debugging::
+
+    {{ some_variable | to_nice_json }}
+    {{ some_variable | to_nice_yaml }}
+
+.. _filters_used_with_conditionals:
+
+Filters Often Used With Conditionals
+------------------------------------
+
+The following tasks are illustrative of how filters can be used with conditionals::
+
+    tasks:
+      - shell: /usr/bin/foo
+        register: result
+        ignore_errors: True
+
+      - debug: msg="it failed"
+        when: result|failed
+
+      # in most cases you'll want a handler, but if you want to do something right now, this is nice
+      - debug: msg="it changed"
+        when: result|changed
+
+      - debug: msg="it succeeded"
+        when: result|success
+
+      - debug: msg="it was skipped"
+        when: result|skipped
+
+.. _forcing_variables_to_be_defined:
+
+Forcing Variables To Be Defined
+-------------------------------
+
+The default behavior from ansible and ansible.cfg is to fail if variables are undefined, but you can turn this off.
+
+This allows an explicit check with this feature off::
+
+    {{ variable | mandatory }}
+
+The variable value will be used as is, but the template evaluation will raise an error if it is undefined.
+
+.. _other_useful_filters:
+
+Other Useful Filters
+--------------------
+
+To get the last name of a file path, like 'foo.txt' out of '/etc/asdf/foo.txt'::
+
+    {{ path | basename }} 
+
+To get the directory from a path::
+
+    {{ path | dirname }}
+
+To work with Base64 encoded strings::
+
+    {{ encoded | b64decode }}
+    {{ decoded | b64encode }}
+
+To take an md5sum of a filename::
+
+    {{ filename | md5 }}
+
+To cast values as certain types, such as when you input a string as "True" from a vars_prompt and the system
+doesn't know it is a boolean value::
+
+   - debug: msg=test
+     when: some_string_value | bool
+
+A few useful filters are typically added with each new Ansible release.  The development documentation shows
+how to extend Ansible filters by writing your own as plugins, though in general, we encourage new ones
+to be added to core so everyone can make use of them.
 
 .. _yaml_gotchas:
 
@@ -382,7 +475,7 @@ Similarly, the hostname as the system reports it is::
 
 Facts are frequently used in conditionals (see `playbook_conditionals`) and also in templates.
 
-Facts can be also used to create dynamic groups of hosts that match particular critera, see the :doc:`modules` documentation on 'group_by' for details, as well as in generalized conditional statements as discussed in the `playbook_conditionals` chapter.
+Facts can be also used to create dynamic groups of hosts that match particular criteria, see the :doc:`modules` documentation on 'group_by' for details, as well as in generalized conditional statements as discussed in the `playbook_conditionals` chapter.
 
 .. _disabling_facts:
 
@@ -396,7 +489,7 @@ systems, mainly, or if you are using Ansible on experimental platforms.   In any
     - hosts: whatever
       gather_facts: no
 
-.. _local_facts::
+.. _local_facts:
 
 Local Facts (Facts.d)
 `````````````````````
@@ -468,7 +561,7 @@ While it's mentioned elsewhere in that document too, here's a quick syntax examp
           when: foo_result.rc == 5
 
 Registered variables are valid on the host the remainder of the playbook run, which is the same as the lifetime of "facts"
-in Ansible.  Effectively registerd variables are just like facts.
+in Ansible.  Effectively registered variables are just like facts.
 
 .. _accessing_complex_variable_data:
 
@@ -576,7 +669,7 @@ The contents of each variables file is a simple YAML dictionary, like this::
 
 .. note::
    It's also possible to keep per-host and per-group variables in very
-   similar files, this is covered in :ref:`patterns`.
+   similar files, this is covered in :doc:`intro_patterns`.
 
 .. _passing_variables_on_the_command_line:
 
@@ -699,7 +792,7 @@ control you might want over values.
 First off, group variables are super powerful.
 
 Site wide defaults should be defined as a 'group_vars/all' setting.  Group variables are generally placed alongside
-your inventory file.  They can also be returned by a dynamic inventroy script (see `intro_dynamic_inventory`) or defined
+your inventory file.  They can also be returned by a dynamic inventory script (see `intro_dynamic_inventory`) or defined
 in things like AnsibleWorks AWX from the UI or API::
 
     ---
@@ -737,7 +830,7 @@ See `intro_roles` for more info about this::
     # if not overriden in inventory or as a parameter, this is the value that will be used
     http_port: 80
 
-if you are writing a role and want to ensure the value in the role is absolutely used in that role, and is not going to be overriden
+if you are writing a role and want to ensure the value in the role is absolutely used in that role, and is not going to be overridden
 by inventory, you should but it in roles/x/vars/main.yml like so, and inventory values cannot override it.  -e however, still will::
 
     ----
@@ -756,7 +849,7 @@ If you are using a role and want to override a default, pass it as a parameter t
     roles:
        - { name: apache, http_port: 8080 }
 
-This makes it clear to the playbook reader that you've made a concious choice to override some default in the role, or pass in some
+This makes it clear to the playbook reader that you've made a conscious choice to override some default in the role, or pass in some
 configuration that the role can't assume by itself.  It also allows you to pass something site-specific that isn't really part of the
 role you are sharing with others.
 
@@ -790,7 +883,26 @@ can set variables in there and make use of them in other roles and elsewhere in 
 
 So, that's precedence, explained in a more direct way.  Don't worry about precedence, just think about if your role is defining a
 variable that is a default, or a "live" variable you definitely want to use.  Inventory lies in precedence right in the middle, and
-if you want to forceably override something, use -e.
+if you want to forcibly override something, use -e.
 
 If you found that a little hard to understand, take a look at the "ansible-examples" repo on our github for a bit more about
 how all of these things can work together.
+
+.. seealso::
+
+   :doc:`playbooks`
+       An introduction to playbooks
+   :doc:`playbooks_conditionals`
+       Conditional statements in playbooks
+   :doc:`playbooks_loops`
+       Looping in playbooks
+   :doc:`playbooks_roles`
+       Playbook organization by roles
+   :doc:`playbooks_best_practices`
+       Best practices in playbooks
+   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+       Have a question?  Stop by the google group!
+   `irc.freenode.net <http://irc.freenode.net>`_
+       #ansible IRC chat channel
+
+

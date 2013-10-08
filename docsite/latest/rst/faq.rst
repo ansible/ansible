@@ -156,7 +156,7 @@ Here is an example::
       - name: recursively copy files from management server to target
         local_action: command rsync -a /path/to/files $inventory_hostname:/path/to/target/
 
-Note that you'll need passphrase-less SSH or ssh-agent set up to let rsync copy without prompting for a passphase or password.
+Note that you'll need passphrase-less SSH or ssh-agent set up to let rsync copy without prompting for a passphrase or password.
 
 .. _shell_env:
 
@@ -176,6 +176,15 @@ If you need to set environment variables, see the Advanced Playbooks section abo
 Ansible 1.4 will also make remote environment variables available via facts in the 'ansible_env' variable::
 
    {{ ansible_env.SOME_VARIABLE }}
+
+.. _user_passwords:
+
+How do I generate crypted passwords for the user module?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Crypted password values can be generated as follows::
+
+    openssl passwd -salt <salt> -1 <plaintext>
 
 .. _commercial_support:
 
@@ -207,6 +216,19 @@ I don't see my question here
 We're happy to help.
 
 See the "Resources" section of the documentation home page for a link to the IRC and Google Group.
+
+.. seealso::
+
+   :doc:`index`
+       The documentation index
+   :doc:`playbooks`
+       An introduction to playbooks
+   :doc:`playbooks_best_practices`
+       Best practices advice
+   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+       Have a question?  Stop by the google group!
+   `irc.freenode.net <http://irc.freenode.net>`_
+       #ansible IRC chat channel
 
 
 

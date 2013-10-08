@@ -13,10 +13,10 @@ Now that you've read :doc:`intro_installation` and installed Ansible, it's time 
 started with some commands.  
 
 What we are showing first are not the powerful configuration/deployment/orchestration of Ansible, called playbooks.
-Playbooks are covered in a seperate section.
+Playbooks are covered in a separate section.
 
-This is basically about how to get going initially.  Once you have this down, read :doc:`intro_adhoc` for some more
-detail, and then you'll be ready to dive into playbooks.
+This section is about how to get going initially.  Once you have these concepts down, read :doc:`intro_adhoc` for some more
+detail, and then you'll be ready to dive into playbooks and explore the most interesting parts!
 
 .. _remote_connection_information:
 
@@ -26,29 +26,27 @@ Remote Connection Information
 Before we get started, it's important to understand how Ansible is communicating with remote
 machines over SSH. 
 
-By default, ansible 1.3 and later will try to use native 
-OpenSSH for remote communication  when possible.  This enables both ControlPersist (a performance feature), Kerbos, and options in ~/.ssh/config such as Jump Host setup.  When using Enterprise Linux 6 operating systems as the control machine (Red Hat Enterprise Linux and derivatives such as CentOS), however, the version of OpenSSH may be too old to support Control Persist. On these operating systems, Ansible will fallback into using a high-quality python implementation of
-OpenSSH called 'paramiko'.  If you wish to use features like Kerberized SSH and more, consider using Fedora, OS X, or Ubuntu as your control machine until a newer version of OpenSSH is available for your platform.
+By default, Ansible 1.3 and later will try to use native 
+OpenSSH for remote communication  when possible.  This enables both ControlPersist (a performance feature), Kerberos, and options in ~/.ssh/config such as Jump Host setup.  When using Enterprise Linux 6 operating systems as the control machine (Red Hat Enterprise Linux and derivatives such as CentOS), however, the version of OpenSSH may be too old to support Control Persist. On these operating systems, Ansible will fallback into using a high-quality python implementation of
+OpenSSH called 'paramiko'.  If you wish to use features like Kerberized SSH and more, consider using Fedora, OS X, or Ubuntu as your control machine until a newer version of OpenSSH is available for your platform -- or engage 'accelerated mode' in Ansible.  See :doc:`playbooks_acceleration`.
 
 In Ansible 1.2 and before, the default was strictly paramiko and native SSH had to be explicitly selected with -c ssh or set in the configuration file.
 
-If talking with some remote devices that don't support SFTP, you can switch to SCP mode in :doc:`intro_configuration`.
+Occasionally you'll encounter a device that doesn't do SFTP. This is rare, but if talking with some remote devices that don't support SFTP, you can switch to SCP mode in :doc:`intro_configuration`.
 
-When speaking with remote machines, Ansible will by default assume you are using SSH keys.  To enable password auth, supply the option --ask-pass where needed.  If using sudo features and when sudo requires a password, also supply --ask-sudo-pass as appropriate.
+When speaking with remote machines, Ansible will by default assume you are using SSH keys -- which we encourage -- but passwords are fine too.  To enable password auth, supply the option --ask-pass where needed.  If using sudo features and when sudo requires a password, also supply --ask-sudo-pass as appropriate.
 
-Ansible also contains a feature called :doc:`playbooks_acceleration` which uses SSH for initial key exchange
-and then communicates over a high speed encrypted connection.  
+While it may be common sense, it is worth sharing: Any management system benefits from being run near your machines you are being managed. If running in a cloud, consider running Ansible from a machine inside that cloud.  It will work better than on the open
+intranet in most cases.
 
-While it may be common sense, it is worth sharing: Any management system benefits from being run near your machines you are being managed. If running in a cloud, onsider running Ansible from a machine inside that cloud.
-
-As an advanced topic, ansible doesn't just have to connect remotely over SSH.  The transports are pluggable, and there are options for managing things locally, as well as managing chroot, lxc, and jail containers.  A mode called 'ansible-pull' can also invert the system and have systems 'phone home' via scheduled git checkouts to pull configuration directives from a central repository.
+As an advanced topic, Ansible doesn't just have to connect remotely over SSH.  The transports are pluggable, and there are options for managing things locally, as well as managing chroot, lxc, and jail containers.  A mode called 'ansible-pull' can also invert the system and have systems 'phone home' via scheduled git checkouts to pull configuration directives from a central repository.
 
 .. _your_first_commands:
 
 Your first commands
 ```````````````````
 
-Now that you've installed Ansible, it's time to get started with some basic tests.
+Now that you've installed Ansible, it's time to get started with some basics.
 
 Edit (or create) /etc/ansible/hosts and put one or more remote systems in it, for
 which you have your SSH key in ``authorized_keys``::
@@ -59,7 +57,8 @@ which you have your SSH key in ``authorized_keys``::
 
 This is an inventory file, which is also explained in greater depth here:  :doc:`intro_inventory`.
 
-We'll assume you are using SSH keys for authentication.  Set up SSH agent to avoid retyping passwords:
+We'll assume you are using SSH keys for authentication.  To set up SSH agent to avoid retyping passwords, you can
+do:
 
 .. code-block:: bash
 
@@ -88,8 +87,8 @@ If you would like to access sudo mode, there are also flags to do that:
     # as bruce, sudoing to batman
     $ ansible all -m ping -u bruce --sudo --sudo-user batman
 
-(The sudo implementation is changeable in ansible's configuration file if you happen to want to use a sudo
-replacement.  Flags passed dot sudo can also be set.)
+(The sudo implementation is changeable in Ansible's configuration file if you happen to want to use a sudo
+replacement.  Flags passed to sudo (like -H) can also be set there.)
 
 Now run a live command on all of your nodes:
   
@@ -106,12 +105,12 @@ explore, but you already have a fully working infrastructure!
 
 .. _a_note_about_host_key_checking:
 
-A note about Host Key Checking
-``````````````````````````````
+Host Key Checking
+`````````````````
 
 Ansible 1.2.1 and later have host key checking enabled by default.  
 
-If a host is reinstalled and has a different key in 'known_hosts', this will result in a error message until corrected.  If a host is not initially in 'known_hosts' this will result in prompting for confirmation of the key, which results in a interactive experience if using Ansible, from say, cron.
+If a host is reinstalled and has a different key in 'known_hosts', this will result in a error message until corrected.  If a host is not initially in 'known_hosts' this will result in prompting for confirmation of the key, which results in a interactive experience if using Ansible, from say, cron.  You might not want this.
 
 If you wish to disable this behavior and understand the implications, you can do so by editing /etc/ansible/ansible.cfg or ~/.ansible.cfg::
 
@@ -124,6 +123,11 @@ Alternatively this can be set by an environment variable:
 
 Also note that host key checking in paramiko mode is reasonably slow, therefore switching to 'ssh' is also recommended when using this feature.
 
+.. _a_note_about_logging:
+
+Ansible will log some information about module arguments on the remote system in the remote syslog.  To enable basic
+logging on the control machine see `intro_config` document and set the 'log_path' configuration file setting.  Enterprise users may also be interested in `AnsibleWorks AWX <http://ansibleworks.com/ansibleworks-awx>`_.  AWX provides a very robust database logging feature where it is possible to drill down and see history based on hosts, projects, and particular inventories over time -- explorable both graphically and through a REST API.
+
 .. seealso::
 
    :doc:`intro_inventory`
@@ -131,7 +135,7 @@ Also note that host key checking in paramiko mode is reasonably slow, therefore 
    :doc:`intro_adhoc`
        Examples of basic commands
    :doc:`playbooks`
-       Learning ansible's configuration management language
+       Learning Ansible's configuration management language
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_

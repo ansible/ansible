@@ -30,13 +30,15 @@ def mk_boolean(value):
     else:
         return False
 
-def get_config(p, section, key, env_var, default, boolean=False, integer=False):
+def get_config(p, section, key, env_var, default, boolean=False, integer=False, floating=False):
     ''' return a configuration variable with casting '''
     value = _get_config(p, section, key, env_var, default)
     if boolean:
         return mk_boolean(value)
     if integer:
         return int(value)
+    if floating:
+        return float(value)
     return value
 
 def _get_config(p, section, key, env_var, default, boolean=True):
@@ -136,8 +138,9 @@ ANSIBLE_SSH_CONTROL_PATH       = get_config(p, 'ssh_connection', 'control_path',
 PARAMIKO_RECORD_HOST_KEYS      = get_config(p, 'paramiko_connection', 'record_host_keys', 'ANSIBLE_PARAMIKO_RECORD_HOST_KEYS', True, boolean=True)
 ZEROMQ_PORT                    = get_config(p, 'fireball_connection', 'zeromq_port', 'ANSIBLE_ZEROMQ_PORT', 5099, integer=True)
 ACCELERATE_PORT                = get_config(p, 'accelerate', 'accelerate_port', 'ACCELERATE_PORT', 5099, integer=True)
-ACCELERATE_TIMEOUT             = int(get_config(p, 'accelerate', 'accelerate_timeout', 'ACCELERATE_TIMEOUT', 30))
-ACCELERATE_CONNECT_TIMEOUT     = float(get_config(p, 'accelerate', 'accelerate_connect_timeout', 'ACCELERATE_CONNECT_TIMEOUT', 1.0))
+ACCELERATE_TIMEOUT             = get_config(p, 'accelerate', 'accelerate_timeout', 'ACCELERATE_TIMEOUT', 30, integer=True)
+ACCELERATE_CONNECT_TIMEOUT     = get_config(p, 'accelerate', 'accelerate_connect_timeout', 'ACCELERATE_CONNECT_TIMEOUT', 1.0, floating=True)
+PARAMIKO_PTY                   = get_config(p, 'paramiko_connection', 'pty', 'ANSIBLE_PARAMIKO_PTY', True, boolean=True)
 
 DEFAULT_UNDEFINED_VAR_BEHAVIOR = get_config(p, DEFAULTS, 'error_on_undefined_vars', 'ANSIBLE_ERROR_ON_UNDEFINED_VARS', True, boolean=True)
 HOST_KEY_CHECKING              = get_config(p, DEFAULTS, 'host_key_checking',  'ANSIBLE_HOST_KEY_CHECKING',    True, boolean=True)

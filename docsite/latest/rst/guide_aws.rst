@@ -10,8 +10,7 @@ Introduction
 ````````````
 
 .. note:: This section of the documentation is under construction.  We are in the process of adding more examples about all of the EC2 modules
-   and how they work together.  There's also an ec2 example in the language_features directory of the 'ansible-examples' github repository
-   that you may wish to consult.  Once complete, there will also be new examples of ec2 in ansible-examples.
+   and how they work together.  There's also an ec2 example in the language_features directory of `the ansible-examples github repository <http://github.com/ansible/ansible-examples/>`_ that you may wish to consult.  Once complete, there will also be new examples of ec2 in ansible-examples.
 
 Ansible contains a number of core modules for interacting with Amazon Web Services (AWS).  These also work with Eucalyptus, which is an AWS compatible private cloud solution.  There are other supported cloud types, but this documentation chapter is about AWS API clouds.  The purpose of this
 section is to explain how to put Ansible modules together (and use inventory scripts) to use Ansible in AWS context.
@@ -23,6 +22,18 @@ Requirements for the AWS modules are minimal.  All of the modules require and ar
     $ yum install python-boto
 
 You can also install it via pip if you want.
+
+The following steps will often execute outside the host loop, so it makes sense to add localhost to inventory.  Ansible
+may not require this step in the future::
+
+    [local]
+    localhost
+
+And in your playbook steps we'll typically be using the following pattern for provisioning steps::
+
+    - hosts: localhost
+      connection: local
+      gather_facts: False
 
 .. _aws_provisioning:
 
@@ -182,5 +193,16 @@ Pending Information
 In the future look here for more topics.
 
 
+.. seealso::
 
+   :doc:`modules`
+       All the documentation for Ansible modules
+   :doc:`playbooks`
+       An introduction to playbooks
+   :doc:`playbooks_delegation`
+       Delegation, useful for working with loud balancers, clouds, and locally executed steps.
+   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+       Have a question?  Stop by the google group!
+   `irc.freenode.net <http://irc.freenode.net>`_
+       #ansible IRC chat channel
 

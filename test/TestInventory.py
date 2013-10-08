@@ -126,15 +126,11 @@ class TestInventory(unittest.TestCase):
         inventory.restrict_to(restricted_hosts)
         hosts = inventory.list_hosts("norse:greek")
 
-        print "Hosts=%s" % hosts
-        print "Restricted=%s" % restricted_hosts
         assert sorted(hosts) == sorted(restricted_hosts)
 
         inventory.lift_restriction()
         hosts = inventory.list_hosts("norse:greek")
 
-        print hosts
-        print expected_hosts
         assert sorted(hosts) == sorted(expected_hosts)
 
     def test_simple_string_ipv4(self):
@@ -171,7 +167,6 @@ class TestInventory(unittest.TestCase):
         inventory = self.simple_inventory()
         vars = inventory.get_variables('thor')
 
-        print vars
         assert vars == {'group_names': ['norse'],
                         'inventory_hostname': 'thor',
                         'inventory_hostname_short': 'thor'}
@@ -180,12 +175,10 @@ class TestInventory(unittest.TestCase):
         inventory = self.simple_inventory()
         vars = inventory.get_variables('hera')
 
-        print vars
         expected = { 'ansible_ssh_port': 3000,
                      'group_names': ['greek'],
                      'inventory_hostname': 'hera',
                      'inventory_hostname_short': 'hera' }
-        print expected
         assert vars == expected
 
     def test_large_range(self):
@@ -257,21 +250,19 @@ class TestInventory(unittest.TestCase):
     def test_complex_enumeration(self):
 
 
-        expected1 = ['rtp_a', 'rtp_b']
-        expected2 = ['rtp_c', 'tri_a']
-        expected3 = ['rtp_b', 'rtp_c', 'tri_a', 'tri_b', 'tri_c']
-        expected4 = ['orlando', 'rtp_c', 'tri_a']
+        expected1 = ['rtp_b']
+        expected2 = ['rtp_a', 'rtp_b']
+        expected3 = ['rtp_a', 'rtp_b', 'rtp_c', 'tri_a', 'tri_b', 'tri_c']
+        expected4 = ['rtp_b', 'orlando' ]
 
         inventory = self.complex_inventory()
-        print "ALL NC=%s" % inventory.list_hosts("nc")
-        # use "-1" instead of 0-1 to test the syntax, on purpose
-        hosts = inventory.list_hosts("nc[-1]")
+        hosts = inventory.list_hosts("nc[1]")
         self.compare(hosts, expected1, sort=False)
-        hosts = inventory.list_hosts("nc[2-3]")
+        hosts = inventory.list_hosts("nc[0-2]")
         self.compare(hosts, expected2, sort=False)
-        hosts = inventory.list_hosts("nc[1-99999]")
+        hosts = inventory.list_hosts("nc[0-99999]")
         self.compare(hosts, expected3, sort=False)
-        hosts = inventory.list_hosts("nc[2-3]:florida[1-2]")
+        hosts = inventory.list_hosts("nc[1-2]:florida[0-1]")
         self.compare(hosts, expected4, sort=False)
 
     def test_complex_intersect(self):

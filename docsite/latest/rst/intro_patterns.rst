@@ -1,7 +1,8 @@
-.. _patterns:
-
 Patterns
 ++++++++
+
+.. contents::
+   :depth: 2
 
 Patterns in Ansible are how we decide which hosts to manage.  This can mean what hosts to communicate with, but in terms
 of :doc:`playbooks` it actually means what hosts to apply a particular configuration or IT process to.
@@ -14,22 +15,24 @@ Such as::
 
     ansible webservers -m service -a "name=httpd state=restarted"
 
+A pattern usually refers to a set of groups (which are sets of hosts) -- in the above case, machines in the "webservers" group.
+
 Anyway, to use Ansible, you'll first need to know how to tell Ansible which hosts in your inventory to talk to.
 This is done by designating particular host names or groups of hosts.
 
-The following patterns target all hosts in the inventory::
+The following patterns are equivalent and target all hosts in the inventory::
 
     all
     *
 
-Basically 'all' is an alias for '*'.  It is also possible to address a specific host or hosts::
+It is also possible to address a specific host or set of hosts by name::
 
     one.example.com
     one.example.com:two.example.com
     192.168.1.50
     192.168.1.*
 
-The following patterns address one or more groups.  Groups seperated by a colon indicate an "OR" configuration.
+The following patterns address one or more groups.  Groups separated by a colon indicate an "OR" configuration.
 This means the host may be in either one group or the other::
 
     webservers
@@ -66,11 +69,11 @@ It's also ok to mix wildcard patterns and groups at the same time::
 
     one*.com:dbservers
 
-And if the pattern starts with a '~' it is treated as a regular expression::
+Most people don't specify patterns as regular expressions, but you can.  Just start the pattern with a '~'::
 
     ~(web|db).*\.example\.com
 
-While we're jumping a bit ahead, additionally, you can add an exclusion criteria just by supplying the "--limit" flag to /usr/bin/ansible or /usr/bin/ansible-playbook.
+While we're jumping a bit ahead, additionally, you can add an exclusion criteria just by supplying the "--limit" flag to /usr/bin/ansible or /usr/bin/ansible-playbook::
 
     ansible-playbook site.yml --limit datacenter2
 

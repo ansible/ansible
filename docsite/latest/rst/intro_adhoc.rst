@@ -12,9 +12,9 @@ What's an ad-hoc command?
 An ad-hoc command is something that you might type in to do something really
 quick, but don't want to save for later.   
 
-This is a good place to start to understand the basics of what ansible can do
+This is a good place to start to understand the basics of what Ansible can do
 prior to learning the playbooks language -- ad-hoc commands can also be used
-to do quick things that you might not neccessarily want to write a full playbook 
+to do quick things that you might not necessarily want to write a full playbook 
 for.  
 
 Generally speaking, the true power of Ansible lies in playbooks.
@@ -42,7 +42,7 @@ Parallelism and Shell Commands
 
 Arbitrary example.
 
-Let's use ansible's command line tool to reboot all web servers in Atlanta, 10 at a time.  First, let's
+Let's use Ansible's command line tool to reboot all web servers in Atlanta, 10 at a time.  First, let's
 set up SSH-agent so it can remember our credentials::
 
     $ ssh-agent bash
@@ -84,7 +84,7 @@ is really small and conservative.  You are probably going to want to talk to a l
 to crank this up.  If you have more hosts than the value set for the fork count, Ansible will talk to them, but it will
 take a little longer.  Feel free to push this value as high as your system can handle it!
 
-You can also select what ansible "module" you want to urn.  Normally commands also take a ``-m`` for module name, but
+You can also select what Ansible "module" you want to run.  Normally commands also take a ``-m`` for module name, but
 the default module name is 'command', so we didn't need to
 specify that all of the time.  We'll use ``-m`` in later examples to
 run some other :doc:`modules`.
@@ -99,7 +99,7 @@ Using the :ref:`shell` module looks like this::
 
     $ ansible raleigh -m shell -a 'echo $TERM'
 
-When running any command with the ansible *ad hoc* CLI (as opposed to
+When running any command with the Ansible *ad hoc* CLI (as opposed to
 :doc:`playbooks`), pay particular attention to shell quoting rules, so
 the local shell doesn't eat a variable before it gets passed to Ansible.
 For example, using double vs single quotes in the above example would
@@ -107,7 +107,7 @@ evaluate the variable on the box you were on.
 
 So far we've been demoing simple command execution, but most Ansible modules usually do not work like
 simple scripts. They make the remote system look like you state, and run the commands necessary to
-get it there.  This is commonly referred to as 'idempotence', and is a core design goal of ansible.
+get it there.  This is commonly referred to as 'idempotence', and is a core design goal of Ansible.
 However, we also recognize that running arbitrary commands is equally important, so Ansible easily supports both.
 
 .. _file_transfer:
@@ -192,8 +192,8 @@ Deploy your webapp straight from git::
 
     $ ansible webservers -m git -a "repo=git://foo.example.org/repo.git dest=/srv/myapp version=HEAD"
 
-Since ansible modules can notify change handlers it is possible to
-tell ansible to run specific tasks when the code is updated, such as
+Since Ansible modules can notify change handlers it is possible to
+tell Ansible to run specific tasks when the code is updated, such as
 deploying Perl/Python/PHP/Ruby directly from git and then restarting
 apache.
 
@@ -291,11 +291,11 @@ Both of these methods can be used at the same time, and ranges can also be passe
 .. seealso::
 
    :doc:`intro_configuration`
-       All about the ansible config file
+       All about the Ansible config file
    :doc:`modules`
        A list of available modules
    :doc:`playbooks`
-       Using ansible for configuration management & deployment
+       Using Ansible for configuration management & deployment
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_

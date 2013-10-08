@@ -1,12 +1,14 @@
 Setting the Environment (and Working With Proxies)
 ==================================================
 
+.. contents::
+   :depth: 2
+
 .. versionadded:: 1.1
 
 It is quite possible that you may need to get package updates through a proxy, or even get some package
-updates through a proxy and access other packages not through a proxy.  
-
-Occasionally a script you might wish to call may also need certain environment variables set.
+updates through a proxy and access other packages not through a proxy.  Or maybe a script you might wish to 
+call may also need certain environment variables set to run properly.
 
 Ansible makes it easy for you to configure your environment by using the 'environment' keyword.  Here is an example::
 
@@ -45,4 +47,14 @@ to define an environment hash might be a group_vars file, like so::
     proxy_env:
       http_proxy: http://proxy.bos.example.com:8080
       https_proxy: http://proxy.bos.example.com:8080
+
+.. seealso::
+
+   :doc:`playbooks`
+       An introduction to playbooks
+   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+       Have a question?  Stop by the google group!
+   `irc.freenode.net <http://irc.freenode.net>`_
+       #ansible IRC chat channel
+
 

@@ -538,10 +538,14 @@ class PlayBook(object):
                     # here a meta task is a placeholder that signals handlers should be run
 
                     if task.meta == 'flush_handlers':
+                        fired_names = {}
                         for handler in play.handlers():
                             if len(handler.notified_by) > 0:
                                 self.inventory.restrict_to(handler.notified_by)
-                                self._run_task(play, handler, True)
+                                if handler.name not in fired_names:
+                                    self._run_task(play, handler, True)
+                                # prevent duplicate handler includes from running more than once
+                                fired_names[handler.name] = 1
                                 self.inventory.lift_restriction()
                                 new_list = handler.notified_by[:]
                                 for host in handler.notified_by:

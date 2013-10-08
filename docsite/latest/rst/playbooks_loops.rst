@@ -1,7 +1,13 @@
 Loops
 =====
 
-All about how to use loops in playbooks.
+.. contents::
+   :depth: 2
+
+Often you'll want to do many things in one task, such as create a lot of users, install a lot of packages, or
+repeat a polling step until a certain result is reached.
+
+This chapter is all about how to use loops in playbooks.
 
 .. _standard_loops:
 
@@ -46,7 +52,7 @@ Nested Loops
 Loops can be nested as well::
 
     - name: give users access to multiple databases
-      mysql_user: name={{ item[0] }} priv={{ item[1] }}.*:ALL password=foo
+      mysql_user: name={{ item[0] }} priv={{ item[1] }}.*:ALL append_privs=yes password=foo
       with_nested:
         - [ 'alice', 'bob', 'eve' ]
         - [ 'clientdb', 'employeedb', 'providerdb' ]
@@ -54,7 +60,7 @@ Loops can be nested as well::
 As with the case of 'with_items' above, you can use previously defined variables. Just specify the variable's name without templating it with '{{ }}'::
 
     - name: here, 'users' contains the above list of employees
-      mysql_user: name={{ item[0] }} priv={{ item[1] }}.*:ALL password=foo
+      mysql_user: name={{ item[0] }} priv={{ item[1] }}.*:ALL append_privs=yes password=foo
       with_nested:
         - users
         - [ 'clientdb', 'employeedb', 'providerdb' ]
@@ -205,16 +211,21 @@ been retried for 5 times with a delay of 10 seconds. The default value for "retr
 The task returns the results returned by the last task run. The results of individual retries can be viewed by -vv option.
 The registered variable will also have a new key "attempts" which will have the number of the retries for the task.
 
-The Do/Until feature does not take decision on whether to fail or pass the play when the maximum retries are completed, the user can 
-can do that in the next task as follows::
-   
-   - action: shell /usr/bin/foo
-     register: result
-     until: result.stdout.find("all systems go") != -1
-     retries: 5
-     delay: 10
-     failed_when: result.attempts == 5
+.. seealso::
 
-
+   :doc:`playbooks`
+       An introduction to playbooks
+   :doc:`playbooks_roles`
+       Playbook organization by roles
+   :doc:`playbooks_best_practices`
+       Best practices in playbooks
+   :doc:`playbooks_conditionals`
+       Conditional statements in playbooks
+   :doc:`playbooks_variables`
+       All about variables
+   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+       Have a question?  Stop by the google group!
+   `irc.freenode.net <http://irc.freenode.net>`_
+       #ansible IRC chat channel
 
 

@@ -1440,70 +1440,78 @@ class LinuxNetwork(Network):
                     path = os.path.join(path, 'bonding', 'all_slaves_active')
                     if os.path.exists(path):
                         interfaces[device]['all_slaves_active'] = open(path).read() == '1'
+
+            def parse_ip_output(output, secondary=False):
+                for line in output.split('\n'):
+                    if not line:
+                        continue
+                    words = line.split()
+                    if words[0] == 'inet':
+                        if '/' in words[1]:
+                            address, netmask_length = words[1].split('/')
+                        else:
+                            # pointopoint interfaces do not have a prefix
+                            address = words[1]
+                            netmask_length = "32"
+                        address_bin = struct.unpack('!L', socket.inet_aton(address))[0]
+                        netmask_bin = (1<<32) - (1<<32>>int(netmask_length))
+                        netmask = socket.inet_ntoa(struct.pack('!L', netmask_bin))
+                        network = socket.inet_ntoa(struct.pack('!L', address_bin & netmask_bin))
+                        iface = words[-1]
+                        if iface != device:
+                            interfaces[iface] = {}
+                            interfaces[iface].update(interfaces[device])
+                        if "ipv4_secondaries" not in interfaces[iface]:
+                            interfaces[iface]["ipv4_secondaries"] = []
+                        if not secondary or "ipv4" not in interfaces[iface]:
+                            interfaces[iface]['ipv4'] = {'address': address,
+                                                         'netmask': netmask,
+                                                         'network': network}
+                        else:
+                            interfaces[iface]["ipv4_secondaries"].append({
+                                'address': address,
+                                'netmask': netmask,
+                                'network': network,
+                            })
+                        # If this is the default address, update default_ipv4
+                        if 'address' in default_ipv4 and default_ipv4['address'] == address:
+                            default_ipv4['netmask'] = netmask
+                            default_ipv4['network'] = network
+                            default_ipv4['macaddress'] = macaddress
+                            default_ipv4['mtu'] = interfaces[device]['mtu']
+                            default_ipv4['type'] = interfaces[device].get("type", "unknown")
+                            default_ipv4['alias'] = words[-1]
+                        if not address.startswith('127.'):
+                            ips['all_ipv4_addresses'].append(address)
+                    elif words[0] == 'inet6':
+                        address, prefix = words[1].split('/')
+                        scope = words[3]
+                        if 'ipv6' not in interfaces[device]:
+                            interfaces[device]['ipv6'] = []
+                        interfaces[device]['ipv6'].append({
+                            'address' : address,
+                            'prefix'  : prefix,
+                            'scope'   : scope
+                        })
+                        # If this is the default address, update default_ipv6
+                        if 'address' in default_ipv6 and default_ipv6['address'] == address:
+                            default_ipv6['prefix']     = prefix
+                            default_ipv6['scope']      = scope
+                            default_ipv6['macaddress'] = macaddress
+                            default_ipv6['mtu']        = interfaces[device]['mtu']
+                            default_ipv6['type']       = interfaces[device].get("type", "unknown")
+                        if not address == '::1':
+                            ips['all_ipv6_addresses'].append(address)
+
             ip_path = module.get_bin_path("ip")
-            output = subprocess.Popen([ip_path, 'addr', 'show', device], stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
-            for line in output.split('\n'):
-
-                if not line:
-                    continue
-                words = line.split()
-                if words[0] == 'inet':
-                    if '/' in words[1]:
-                        address, netmask_length = words[1].split('/')
-                    else:
-                        # pointopoint interfaces do not have a prefix
-                        address = words[1]
-                        netmask_length = "32"
-                    address_bin = struct.unpack('!L', socket.inet_aton(address))[0]
-                    netmask_bin = (1<<32) - (1<<32>>int(netmask_length))
-                    netmask = socket.inet_ntoa(struct.pack('!L', netmask_bin))
-                    network = socket.inet_ntoa(struct.pack('!L', address_bin & netmask_bin))
-                    iface = words[-1]
-                    if iface != device:
-                        interfaces[iface] = {}
-                        interfaces[iface].update(interfaces[device])
-                    interfaces[iface]['ipv4'] = {'address': address,
-                                                 'netmask': netmask,
-                                                 'network': network}
-
-                    # If this is the default address, update default_ipv4
-                    if 'address' in default_ipv4 and default_ipv4['address'] == address:
-                        default_ipv4['netmask'] = netmask
-                        default_ipv4['network'] = network
-                        default_ipv4['macaddress'] = macaddress
-                        default_ipv4['mtu'] = interfaces[device]['mtu']
-                        default_ipv4['type'] = interfaces[device].get("type", "unknown")
-                        default_ipv4['alias'] = words[-1]
-
-                    if not address.startswith('127.'):
-                        ips['all_ipv4_addresses'].append(address)
-
-                elif words[0] == 'inet6':
-
-                    address, prefix = words[1].split('/')
-                    scope = words[3]
-
-                    if 'ipv6' not in interfaces[device]:
-                        interfaces[device]['ipv6'] = []
-
-                    interfaces[device]['ipv6'].append({
-                        'address' : address,
-                        'prefix'  : prefix,
-                        'scope'   : scope
-                    })
-
-                    # If this is the default address, update default_ipv6
-
-                    if 'address' in default_ipv6 and default_ipv6['address'] == address:
-                        default_ipv6['prefix']     = prefix
-                        default_ipv6['scope']      = scope
-                        default_ipv6['macaddress'] = macaddress
-                        default_ipv6['mtu']        = interfaces[device]['mtu']
-                        default_ipv6['type']       = interfaces[device].get("type", "unknown")
-
-                    if not address == '::1':
-                        ips['all_ipv6_addresses'].append(address)
-
+            primary_data = subprocess.Popen(
+                [ip_path, 'addr', 'show', 'primary', device], 
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
+            secondary_data = subprocess.Popen(
+                [ip_path, 'addr', 'show', 'secondary', device], 
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
+            parse_ip_output(primary_data)
+            parse_ip_output(secondary_data, secondary=True)
         return interfaces, ips
 
 class GenericBsdIfconfigNetwork(Network):

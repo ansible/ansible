@@ -1,6 +1,9 @@
 Conditionals
 ============
 
+.. contents::
+   :depth: 2
+
 Often the result of a play may depend on the value of a variable, fact (something learned about the remote system), 
 or previous task result.  In some cases, the values of variables may depend on other variables.  
 Further, additional groups can be created to manage hosts based on
@@ -19,7 +22,7 @@ as simple as not installing a certain package if the operating system is a parti
 or it could be something like performing some cleanup steps if a filesystem is getting full.
 
 This is easy to do in Ansible, with the `when` clause, which contains a Jinja2 expression (see `playbooks_variables`).
-It's actually pretty simple:
+It's actually pretty simple::
 
     tasks:
       - name: "shutdown Debian flavored systems"
@@ -103,24 +106,8 @@ there will be accessible to future tasks::
         - name: gather site specific fact data
           action: site_facts
         - command: /usr/bin/thingy
-          when: "{{ my_custom_fact_just_retrieved_from_the_remote_system }} == '1234'"
+          when: my_custom_fact_just_retrieved_from_the_remote_system == '1234'
                    
-The Register Keyword
-````````````````````
-
-The 'register' keyword saves the result of a command in a variable.  Use "-v" on the playbook command line to see
-what kind of values are available, but there are many. 
-
-One useful trick with *when* is to key off the result of a last command.  As an example::
-
-    tasks:
-        - template: src=/templates/foo.j2 dest=/etc/foo.conf
-          register: last_result
-        - command: echo 'the file has changed'
-          when: last_result.changed
-
-{{ last_result }} is a variable set by the register directive. This assumes Ansible 0.8 and later.
-
 Applying 'when' to roles and includes
 `````````````````````````````````````
 
@@ -216,8 +203,6 @@ The following example shows how to template out a configuration file that was ve
 Register Variables
 ``````````````````
 
-.. versionadded:: 0.7
-
 Often in a playbook it may be useful to store the result of a given command in a variable and access
 it later.  Use of the command module in this way can in many ways eliminate the need to write site specific facts, for
 instance, you could test for the existence of a particular program.
@@ -256,4 +241,20 @@ fields::
             # same as with_items: home_dirs.stdout.split()
 
 
+.. seealso::
+
+   :doc:`playbooks`
+       An introduction to playbooks
+   :doc:`playbooks_roles`
+       Playbook organization by roles
+   :doc:`playbooks_best_practices`
+       Best practices in playbooks
+   :doc:`playbooks_conditionals`
+       Conditional statements in playbooks
+   :doc:`playbooks_variables`
+       All about variables
+   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+       Have a question?  Stop by the google group!
+   `irc.freenode.net <http://irc.freenode.net>`_
+       #ansible IRC chat channel
 

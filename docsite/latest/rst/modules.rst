@@ -57,6 +57,25 @@ Let's see what's available in the Ansible module library, out of the box:
 
 .. include:: modules/_list.rst
 
+.. _ansible_doc:
+
+Reading Module Documentation Locally
+````````````````````````````````````
+
+ansible-doc is a friendly command line tool that allows you to access module documentation locally.
+It comes with Ansible.
+
+To list documentation for a particular module::
+
+   ansible-doc yum | less
+
+To list all modules available::
+
+   ansible-doc --list | less
+
+To access modules outside of the stock module path (such as custom modules that live in your playbook directory), 
+use the '--module-path' option to specify the directory where the module lives.
+
 .. _writing_modules:
 
 Writing your own modules
