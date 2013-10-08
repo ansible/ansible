@@ -90,6 +90,9 @@ EXAMPLES = '''
 
 import sys
 
+USER_AGENT_PRODUCT="Ansible-gce_pd"
+USER_AGENT_VERSION="v1beta15"
+
 try:                                                                            
     from libcloud.compute.types import Provider                                 
     from libcloud.compute.providers import get_driver                           
@@ -149,6 +152,8 @@ def main():
 
     try:
         gce = get_driver(Provider.GCE)(*ARGS, datacenter=zone, **KWARGS)
+        gce.connection.user_agent_append("%s/%s" % (
+                USER_AGENT_PRODUCT, USER_AGENT_VERSION))
     except Exception as e:
         module.fail_json(msg=unexpected_error_msg(e), changed=False)
 
