@@ -234,6 +234,16 @@ def main():
     pip = _get_pip(module, env)
 
     cmd = '%s %s' % (pip, state_map[state])
+    
+    # If there's a virtualenv we want things we install to be able to use other
+    # installations that exist as binaries within this virtualenv. Example: we 
+    # install cython and then gevent -- gevent needs to use the cython binary, 
+    # not just a python package that will be found by calling the right python. 
+    # So if there's a virtualenv, we add that bin/ to the beginning of the PATH
+    # in run_command by setting path_prefix here.
+    path_prefix = None
+    if env:
+        path_prefix="/".join(pip.split('/')[:-1])
 
     if extra_args:
         cmd += ' %s' % extra_args
@@ -279,7 +289,7 @@ def main():
     os.chdir(tempfile.gettempdir())
     if chdir:
         os.chdir(chdir)
-    rc, out_pip, err_pip = module.run_command(cmd)
+    rc, out_pip, err_pip = module.run_command(cmd, path_prefix=path_prefix)
     out += out_pip
     err += err_pip
     if rc == 1 and state == 'absent' and 'not installed' in out_pip:
