@@ -164,7 +164,7 @@ def main():
         syncdb=('database', ),
         test=('failfast', 'testrunner', 'liveserver', 'apps', ),
         validate=(),
-        migrate=('apps', 'skip', 'database', 'merge'),
+        migrate=('apps', 'skip', 'merge'),
         collectstatic=('link', ),
         )
 
