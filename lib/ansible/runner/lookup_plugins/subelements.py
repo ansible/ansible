@@ -38,6 +38,8 @@ class LookupModule(object):
                 "subelements lookup expects a list of two items, first a dict or a list, and second a string")
 
         if isinstance(terms[0], dict): # convert to list:
+            if terms[0].get('skipped',False) != False:
+                return []
             elementlist = []
             for key in terms[0].iterkeys():
                 elementlist.append(terms[0][key])
