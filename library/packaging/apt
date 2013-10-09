@@ -42,18 +42,18 @@ options:
     description:
       - Run the equivalent of C(apt-get update) before the operation. Can be run as part of the package installation or as a separate step
     required: false
-    default: "no"
+    default: no
     choices: [ "yes", "no" ]
   cache_valid_time:
     description:
       - If C(update_cache) is specified and the last run is less or equal than I(cache_valid_time) seconds ago, the C(update_cache) gets skipped.
     required: false
-    default: "no"
+    default: no
   purge:
     description:
      - Will force purging of configuration files if the module state is set to I(absent).
     required: false
-    default: "no"
+    default: no
     choices: [ "yes", "no" ]
   default_release:
     description:
@@ -64,7 +64,7 @@ options:
     description:
       - Corresponds to the C(--no-install-recommends) option for I(apt), default behavior works as apt's default behavior, C(no) does not install recommended packages. Suggested packages are never installed.
     required: false
-    default: "yes"
+    default: yes
     choices: [ "yes", "no" ]
   force:
     description:
