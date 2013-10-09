@@ -120,6 +120,7 @@ EXAMPLES = '''
 '''
 
 import sys
+import time
 
 try:
     import boto
@@ -128,6 +129,20 @@ try:
 except ImportError:
     print "failed=True msg='boto required for this module'"
     sys.exit(1)
+
+def commit(changes):
+    """Commit changes, but retry PriorRequestNotComplete errors."""
+    retry = 10
+    while True:
+        try:
+            retry -= 1
+            return changes.commit()
+        except boto.route53.exception.DNSServerError, e:
+            code = e.body.split("<Code>")[1]
+            code = code.split("</Code>")[0]
+            if code != 'PriorRequestNotComplete' or retry < 0:
+                raise e
+            time.sleep(500)
 
 def main():
     module = AnsibleModule(
@@ -240,7 +255,7 @@ def main():
             change.add_value(v)
 
     try:
-        result = changes.commit()
+        result = commit(changes)
     except boto.route53.exception.DNSServerError, e:
         txt = e.body.split("<Message>")[1]
         txt = txt.split("</Message>")[0]
