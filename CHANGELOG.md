@@ -34,6 +34,10 @@ Misc changes:
 * Inventory hosts are used in the order they appear in the inventory.
 * in hosts: foo[2-5] type syntax, the iterators now are zero indexed and the last index is non-inclusive, to match Python standards.
 
+1.3.3 "Top of the World" (reprise) - October 9, 2013
+
+Additional fixes for accelerate mode.
+
 1.3.2 "Top of the World" (reprise) - September 19th, 2013
 
 Multiple accelerate mode fixes:
