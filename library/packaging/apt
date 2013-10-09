@@ -307,13 +307,13 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             state = dict(default='installed', choices=['installed', 'latest', 'removed', 'absent', 'present']),
-            update_cache = dict(aliases=['update-cache'], type='bool'),
+            update_cache = dict(default=False, aliases=['update-cache'], type='bool'),
             cache_valid_time = dict(type='int'),
-            purge = dict(default='no', type='bool'),
+            purge = dict(default=False, type='bool'),
             package = dict(default=None, aliases=['pkg', 'name']),
             default_release = dict(default=None, aliases=['default-release']),
-            install_recommends = dict(default='yes', aliases=['install-recommends'], type='bool'),
-            force = dict(default='no', type='bool'),
+            install_recommends = dict(default=True, aliases=['install-recommends'], type='bool'),
+            force = dict(default=False, type='bool'),
             upgrade = dict(choices=['yes', 'safe', 'full', 'dist'])
         ),
         mutually_exclusive = [['package', 'upgrade']],
