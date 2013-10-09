@@ -378,7 +378,7 @@ def main():
                     if overwrite is True:
                         upload_s3file(module, s3, bucket, obj, src, expiry)
                     else:
-                        get_download_url(module, s3, bucket, obj, expiry, changed=False) ## PATCH
+                        get_download_url(module, s3, bucket, obj, expiry, changed=False)
                 else:
                     sum_matches = False
                     if overwrite is True:
