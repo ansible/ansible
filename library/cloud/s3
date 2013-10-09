@@ -52,7 +52,7 @@ options:
     description:
       - Force overwrite either locally on the filesystem or remotely with the object/key. Used with PUT and GET operations.
     required: false
-    default: false
+    default: true
     version_added: "1.2"
   mode:
     description:
@@ -93,9 +93,13 @@ EXAMPLES = '''
 # Simple GET operation
 - s3: bucket=mybucket object=/my/desired/key.txt dest=/usr/local/myfile.txt mode=get
 # GET/download and overwrite local file (trust remote)
-- s3: bucket=mybucket object=/my/desired/key.txt dest=/usr/local/myfile.txt mode=get overwrite=true
+- s3: bucket=mybucket object=/my/desired/key.txt dest=/usr/local/myfile.txt mode=get 
+# GET/download and do not overwrite local file (trust remote)
+- s3: bucket=mybucket object=/my/desired/key.txt dest=/usr/local/myfile.txt mode=get force=false
 # PUT/upload and overwrite remote file (trust local)
-- s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=put overwrite=true
+- s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=put 
+# PUT/upload and do not overwrite remote file (trust local)
+- s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=put force=false
 # Download an object as a string to use else where in your playbook
 - s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=getstr
 # Create an empty bucket
@@ -253,7 +257,7 @@ def main():
             s3_url         = dict(aliases=['S3_URL']),
             aws_secret_key  = dict(aliases=['ec2_secret_key', 'secret_key'], no_log=True, required=False),
             aws_access_key  = dict(aliases=['ec2_access_key', 'access_key'], required=False),
-            overwrite      = dict(default=False, type='bool'),
+            overwrite      = dict(aliases=['force'], default=True, type='bool'),
         ),
     )
 
