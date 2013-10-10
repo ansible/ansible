@@ -96,6 +96,10 @@ if len(sys.argv) == 2 and (sys.argv[1] == '--list'):
             # first DNS name but no further DNS names
             groups[cls].append(dns_name)
 
+        # handle hosts without mgmt_classes
+        if not classes:
+            groups['ungrouped'].append(dns_name)
+
     print json.dumps(groups)
     sys.exit(0)
 

@@ -42,18 +42,18 @@ options:
     description:
       - Run the equivalent of C(apt-get update) before the operation. Can be run as part of the package installation or as a separate step
     required: false
-    default: "no"
+    default: no
     choices: [ "yes", "no" ]
   cache_valid_time:
     description:
       - If C(update_cache) is specified and the last run is less or equal than I(cache_valid_time) seconds ago, the C(update_cache) gets skipped.
     required: false
-    default: "no"
+    default: no
   purge:
     description:
      - Will force purging of configuration files if the module state is set to I(absent).
     required: false
-    default: "no"
+    default: no
     choices: [ "yes", "no" ]
   default_release:
     description:
@@ -64,7 +64,7 @@ options:
     description:
       - Corresponds to the C(--no-install-recommends) option for I(apt), default behavior works as apt's default behavior, C(no) does not install recommended packages. Suggested packages are never installed.
     required: false
-    default: "yes"
+    default: yes
     choices: [ "yes", "no" ]
   force:
     description:
@@ -307,13 +307,13 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             state = dict(default='installed', choices=['installed', 'latest', 'removed', 'absent', 'present']),
-            update_cache = dict(aliases=['update-cache'], type='bool'),
+            update_cache = dict(default=False, aliases=['update-cache'], type='bool'),
             cache_valid_time = dict(type='int'),
-            purge = dict(default='no', type='bool'),
+            purge = dict(default=False, type='bool'),
             package = dict(default=None, aliases=['pkg', 'name']),
             default_release = dict(default=None, aliases=['default-release']),
-            install_recommends = dict(default='yes', aliases=['install-recommends'], type='bool'),
-            force = dict(default='no', type='bool'),
+            install_recommends = dict(default=True, aliases=['install-recommends'], type='bool'),
+            force = dict(default=False, type='bool'),
             upgrade = dict(choices=['yes', 'safe', 'full', 'dist'])
         ),
         mutually_exclusive = [['package', 'upgrade']],
