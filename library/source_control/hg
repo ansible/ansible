@@ -124,7 +124,7 @@ class Hg(object):
         self.dest = dest
         self.repo = repo
         self.revision = revision
-        self.hg_path = self.hg_path
+        self.hg_path = hg_path
 
     def _command(self, args_list):
         (rc, out, err) = self.module.run_command([self.hg_path] + args_list)
