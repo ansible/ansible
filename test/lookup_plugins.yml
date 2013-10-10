@@ -4,6 +4,9 @@
   connection: local
   vars:
     empty_list: []
+    empty_hash: {}
+    test_hash:
+        hello: world
   tasks:
   - name: test with_items
     action: command true
@@ -18,6 +21,29 @@
   - name: test with_file and FILE
     action: command test "$item" = "$FILE(sample.j2)"
     with_file: sample.j2
+
+  - name: test with_hash_items and empty hash
+    action: command true
+    with_hash_items: $empty_hash
+
+  - name: test with_hash_items and plain hash
+    action: >
+      shell test "${item.key}" = "hello" && test "${item.value}" = "world"
+    with_hash_items: {"hello":"world"}
+
+  - name: test with_hash_items and nested hash
+    action: >
+      shell
+      test "${item.key}" = "hello" \
+            && test "${item.value.en}" = "world" \
+            && test "${item.value.sw}" = "duniya"
+    with_hash_items: {"hello":{"en":"world", "sw":"duniya"}}
+
+  - name: test with_hash_items with template
+    action: >
+      shell
+      test "${item.key}" = "hello" && test "${item.value}" = "world" \
+    with_hash_items: "{{ test_hash }}"
 
   - name: test with_pipe
     action: command test "$item" = "$PIPE(cat sample.j2)"
