@@ -34,7 +34,8 @@ def to_nice_json(*a, **kw):
     return json.dumps(*a, indent=4, sort_keys=True, **kw)
 
 def failed(*a, **kw):
-    item = a[0] 
+    ''' Test if task result yields failed '''
+    item = a[0]
     if type(item) != dict:
         raise errors.AnsibleFilterError("|failed expects a dictionary")
     rc = item.get('rc',0)
@@ -45,9 +46,18 @@ def failed(*a, **kw):
         return False
 
 def success(*a, **kw):
+    ''' Test if task result yields success '''
     return not failed(*a, **kw)
 
+def changed(*a, **kw):
+    ''' Test if task result yields changed '''
+    item = a[0]
+    if type(item) != dict:
+        raise errors.AnsibleFilterError("|changed expects a dictionary")
+    return item.get('changed', False)
+
 def skipped(*a, **kw):
+    ''' Test if task result yields skipped '''
     item = a[0]
     if type(item) != dict:
         raise errors.AnsibleFilterError("|skipped expects a dictionary")
@@ -105,6 +115,9 @@ class FilterModule(object):
             # failure testing
             'failed'  : failed,
             'success' : success,
+
+            # changed testing
+            'changed' : changed,
 
             # skip testing
             'skipped' : skipped,
