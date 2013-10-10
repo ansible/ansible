@@ -72,8 +72,8 @@ EXAMPLES = '''
 # Examples from Ansible Playbooks
 - easy_install: name=pip
 
-# Install Flast into the specified virtualenv.
-- easy_install: name=flask virtualenv=/webapps/myapp/venv
+# Install foo into the specified virtualenv.
+- easy_install: name=foo virtualenv=/webapps/myapp/venv
 '''
 
 def _is_package_installed(module, name, easy_install):
