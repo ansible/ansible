@@ -431,10 +431,6 @@ class Runner(object):
         if self.inventory.src() is not None:
             inject['inventory_file'] = self.inventory.src()
 
-        # late processing of parameterized sudo_user
-        if self.sudo_user is not None:
-            self.sudo_user = template.template(self.basedir, self.sudo_user, inject)
-
         # allow with_foo to work in playbooks...
         items = None
         items_plugin = self.module_vars.get('items_lookup_plugin', None)
@@ -527,6 +523,9 @@ class Runner(object):
     def _executor_internal_inner(self, host, module_name, module_args, inject, port, is_chained=False, complex_args=None):
         ''' decides how to invoke a module '''
 
+        # late processing of parameterized sudo_user
+        if self.sudo_user is not None:
+            self.sudo_user = template.template(self.basedir, self.sudo_user, inject)
 
         # allow module args to work as a dictionary
         # though it is usually a string
