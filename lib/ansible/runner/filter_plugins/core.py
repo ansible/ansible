@@ -54,7 +54,16 @@ def changed(*a, **kw):
     item = a[0]
     if type(item) != dict:
         raise errors.AnsibleFilterError("|changed expects a dictionary")
-    return item.get('changed', False)
+    if not 'changed' in item:
+        changed = False
+        if ('results' in item    # some modules return a 'results' key
+                and type(item['results']) == list 
+                and type(item['results'][0]) == dict):
+            for result in item['results']:
+                changed = changed or result.get('changed', False)
+    else:
+        changed = item.get('changed', False)
+    return changed
 
 def skipped(*a, **kw):
     ''' Test if task result yields skipped '''
