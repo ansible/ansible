@@ -116,11 +116,11 @@ def do_ini(module, filename, section=None, option=None, value=None, state='prese
                     pass
 
     if state == 'present':
-        if cp.has_section(section) == False:
-            if section.upper() == 'DEFAULT':
-                module.fail_json(msg="[DEFAULT] is an illegal section name")
 
-            cp.add_section(section)
+        if cp.has_section(section) == False:
+
+            if section.upper() != 'DEFAULT':
+                cp.add_section(section)
             changed = True
 
         if option is not None and value is not None:
