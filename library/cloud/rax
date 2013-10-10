@@ -82,6 +82,11 @@ options:
     description:
      - how long before wait gives up, in seconds
     default: 300
+  networks:
+    description:
+     - The network names to give to the instance (only used on instance creation). If specified, you must include ALL networks (including the public and private (ServiceNet) interfaces).
+    default: ["public", "private"]
+
 requirements: [ "pyrax" ]
 author: Jesse Keating
 notes:
@@ -111,6 +116,26 @@ EXAMPLES = '''
           /root/test.txt: /home/localuser/test.txt
         wait: yes
         state: present
+
+- name: Build a Cloud Server with ServiceNet and custom network interfaces but no public IP
+  gather_facts: False
+
+  tasks:
+    - name: Server build request
+      local_action:
+        module: rax
+        credentials: ~/.raxpub
+        service: cloudservers
+        name: rax-test1
+        flavor: 5
+        image: b11d9567-e412-4255-96b9-bd63ab23bcfe
+        files:
+          /root/.ssh/authorized_keys: /home/localuser/.ssh/id_rsa.pub
+          /root/test.txt: /home/localuser/test.txt
+        wait: yes
+        state: present
+        networks: ['private', 'My Custom Network']
+        
 '''
 
 import sys
@@ -130,7 +155,7 @@ except ImportError:
 SUPPORTEDSERVICES = ['cloudservers']
 
 def cloudservers(module, state, name, flavor, image, meta, key_name, files,
-                 wait, wait_timeout):
+                 wait, wait_timeout, networks):
     # Check our args (this could be done better)
     for arg in (state, name, flavor, image):
         if not arg:
@@ -164,12 +189,22 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                 except Exception, e:
                     module.fail_json(msg = 'Failed to load %s' % lpath)
             try:
+                nics = []
+                if networks:
+                    # Nics should be in the nova_client format so utilize pyrax to give it to us, filtering
+                    # by the network name that the user specified
+                    for remote_network in pyrax.cloud_networks.list():
+                        if remote_network.label in networks:
+                            nics.append(remote_network.get_server_networks()[0])
+                
                 servers = [pyrax.cloudservers.servers.create(name=name,
                                                              image=image,
                                                              flavor=flavor,
                                                              key_name=key_name,
                                                              meta=meta,
-                                                             files=files)]
+                                                             files=files,
+                                                             nics=nics)]
+                                                                 
                 changed = True
             except Exception, e:
                 module.fail_json(msg = '%s' % e.message)
@@ -249,6 +284,7 @@ def main():
             region = dict(),
             wait = dict(type='bool', choices=BOOLEANS),
             wait_timeout = dict(default=300),
+            networks = dict(type='list')
         )
     )
 
@@ -266,7 +302,8 @@ def main():
     region = module.params.get('region')
     wait = module.params.get('wait')
     wait_timeout = int(module.params.get('wait_timeout'))
-
+    networks = module.params.get('networks')
+    
     # Setup the credentials and region
     try:
         username = username or os.environ.get('RAX_USERNAME')
@@ -294,7 +331,7 @@ def main():
     # Act based on service
     if service == 'cloudservers':
         cloudservers(module, state, name, flavor, image, meta, key_name, files,
-                     wait, wait_timeout)
+                     wait, wait_timeout, networks)
     elif service in ['cloudfiles', 'cloud_blockstorage',
                      'cloud_databases', 'cloud_loadbalancers']:
         module.fail_json(msg = 'Service %s is not supported at this time' %
