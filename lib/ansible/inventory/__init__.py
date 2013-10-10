@@ -38,7 +38,7 @@ class Inventory(object):
 
     __slots__ = [ 'host_list', 'groups', '_restriction', '_also_restriction', '_subset', 
                   'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache', '_groups_list',
-                  '_vars_plugins', '_playbook_basedir']
+                  '_pattern_hosts', '_vars_plugins', '_playbook_basedir']
 
     def __init__(self, host_list=C.DEFAULT_HOST_LIST):
 
@@ -53,6 +53,7 @@ class Inventory(object):
         self._vars_per_group = {}
         self._hosts_cache    = {}
         self._groups_list    = {} 
+        self._pattern_hosts  = {}
 
         # to be set by calling set_playbook_basedir by ansible-playbook
         self._playbook_basedir = None
@@ -247,7 +248,6 @@ class Inventory(object):
         else:
             return [ hosts[left] ]
 
-    # TODO: cache this logic so if called a second time the result is not recalculated
     def _hosts_in_unenumerated_pattern(self, pattern):
         """ Get all host names matching the pattern """
 
@@ -255,14 +255,16 @@ class Inventory(object):
         # ignore any negative checks here, this is handled elsewhere
         pattern = pattern.replace("!","").replace("&", "")
 
-        results = []
-        groups = self.get_groups()
-        for group in groups:
-            for host in group.get_hosts():
-                if pattern == 'all' or self._match(group.name, pattern) or self._match(host.name, pattern):
-                    if host not in results:
-                        results.append(host)
-        return results
+        if pattern not in self._pattern_hosts:
+            results = []
+            groups = self.get_groups()
+            for group in groups:
+                for host in group.get_hosts():
+                    if pattern == 'all' or self._match(group.name, pattern) or self._match(host.name, pattern):
+                        if host not in results:
+                            results.append(host)
+            self._pattern_hosts[pattern] = results
+        return self._pattern_hosts[pattern]
 
     def groups_for_host(self, host):
         results = []
