@@ -305,15 +305,15 @@ def main():
         masterstatus = get_master_status(cursor)
         try:
             module.exit_json( **masterstatus )
-        except TypeError, e:
-            module.fail_json(msg="Server is not configured as mysql master: %s" % e)
+        except TypeError:
+            module.fail_json(msg="Server is not configured as mysql master")
 
     elif mode in "getslave":
         slavestatus = get_slave_status(cursor)
         try:
             module.exit_json( **slavestatus )
-        except TypeError, e:
-            module.fail_json(msg="Server is not configured as mysql slave: %s" % e)
+        except TypeError:
+            module.fail_json(msg="Server is not configured as mysql slave")
 
     elif mode in "changemaster":
         print "Change master"
