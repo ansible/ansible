@@ -65,7 +65,8 @@ options:
     aliases: [ "thirsty" ]
   validate:
     description:
-      - validation to run before copying into place
+      - The validation command to run before copying into place.  The path to the file to
+        validate is passed in via '%s' which must be present as in the visudo example below.
     required: false
     default: ""
     version_added: "1.2"
