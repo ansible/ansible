@@ -46,14 +46,13 @@ options:
     description:
       - The destination file path when downloading an object/key with a GET operation.
     required: false
-    default: 600
     aliases: []
     version_added: "1.3"
   overwrite:
     description:
       - Force overwrite either locally on the filesystem or remotely with the object/key. Used with PUT and GET operations.
     required: false
-    default: false
+    default: true
     version_added: "1.2"
   mode:
     description:
@@ -61,11 +60,11 @@ options:
     required: true
     default: null
     aliases: []
-  expiry:
+  expiration:
     description:
       - Time limit (in seconds) for the URL generated and returned by S3/Walrus when performing a mode=put or mode=geturl operation. 
     required: false
-    default: null
+    default: 600
     aliases: []
   s3_url:
     description:
@@ -94,9 +93,13 @@ EXAMPLES = '''
 # Simple GET operation
 - s3: bucket=mybucket object=/my/desired/key.txt dest=/usr/local/myfile.txt mode=get
 # GET/download and overwrite local file (trust remote)
-- s3: bucket=mybucket object=/my/desired/key.txt dest=/usr/local/myfile.txt mode=get overwrite=true
+- s3: bucket=mybucket object=/my/desired/key.txt dest=/usr/local/myfile.txt mode=get 
+# GET/download and do not overwrite local file (trust remote)
+- s3: bucket=mybucket object=/my/desired/key.txt dest=/usr/local/myfile.txt mode=get force=false
 # PUT/upload and overwrite remote file (trust local)
-- s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=put overwrite=true
+- s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=put 
+# PUT/upload and do not overwrite remote file (trust local)
+- s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=put force=false
 # Download an object as a string to use else where in your playbook
 - s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=getstr
 # Create an empty bucket
@@ -232,12 +235,12 @@ def download_s3str(module, s3, bucket, obj):
     except s3.provider.storage_copy_error, e:
         module.fail_json(msg= str(e))
 
-def get_download_url(module, s3, bucket, obj, expiry):
+def get_download_url(module, s3, bucket, obj, expiry, changed=True):
     try:
         bucket = s3.lookup(bucket)
         key = bucket.lookup(obj)
         url = key.generate_url(expiry)
-        module.exit_json(msg="Download url:", url=url, expiry=expiry, changed=True)
+        module.exit_json(msg="Download url:", url=url, expiry=expiry, changed=changed)
         sys.exit(0)
     except s3.provider.storage_response_error, e:
         module.fail_json(msg= str(e))
@@ -254,7 +257,7 @@ def main():
             s3_url         = dict(aliases=['S3_URL']),
             aws_secret_key  = dict(aliases=['ec2_secret_key', 'secret_key'], no_log=True, required=False),
             aws_access_key  = dict(aliases=['ec2_access_key', 'access_key'], required=False),
-            overwrite      = dict(default=False, type='bool'),
+            overwrite      = dict(aliases=['force'], default=True, type='bool'),
         ),
     )
 
@@ -379,7 +382,7 @@ def main():
                     if overwrite is True:
                         upload_s3file(module, s3, bucket, obj, src, expiry)
                     else:
-                        module.exit_json(msg="Local and remote object are identical, ignoring. Use overwrite parameter to force.", changed=False)
+                        get_download_url(module, s3, bucket, obj, expiry, changed=False)
                 else:
                     sum_matches = False
                     if overwrite is True:

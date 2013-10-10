@@ -163,7 +163,7 @@ def main():
             zone=dict(required=False,default=None),
             permanent=dict(type='bool',required=True),
             state=dict(choices=['enabled', 'disabled'], required=True),
-            timeout=dict(required=False,default=0),
+            timeout=dict(type='int',required=False,default=0),
         ),
         supports_check_mode=True
     )

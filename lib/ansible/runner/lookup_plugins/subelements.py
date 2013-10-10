@@ -38,6 +38,9 @@ class LookupModule(object):
                 "subelements lookup expects a list of two items, first a dict or a list, and second a string")
 
         if isinstance(terms[0], dict): # convert to list:
+            if terms[0].get('skipped',False) != False:
+                # the registered result was completely skipped
+                return []
             elementlist = []
             for key in terms[0].iterkeys():
                 elementlist.append(terms[0][key])
@@ -49,6 +52,9 @@ class LookupModule(object):
         for item0 in elementlist:
             if not isinstance(item0, dict):
                 raise errors.AnsibleError("subelements lookup expects a dictionary, got '%s'" %item0)
+            if item0.get('skipped',False) != False:
+                # this particular item is to be skipped
+                continue 
             if not subelement in item0:
                 raise errors.AnsibleError("could not find '%s' key in iterated item '%s'" % (subelement, item0))
             if not isinstance(item0[subelement], list):

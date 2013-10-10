@@ -177,6 +177,15 @@ Ansible 1.4 will also make remote environment variables available via facts in t
 
    {{ ansible_env.SOME_VARIABLE }}
 
+.. _user_passwords:
+
+How do I generate crypted passwords for the user module?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Crypted password values can be generated as follows::
+
+    openssl passwd -salt <salt> -1 <plaintext>
+
 .. _commercial_support:
 
 Can I get training on Ansible or find commercial support?
