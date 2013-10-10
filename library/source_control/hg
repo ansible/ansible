@@ -47,7 +47,7 @@ options:
     revision:
         description:
             - Equivalent C(-r) option in hg command which could be the changeset, revision number,
-              branch name or even tag. 
+              branch name or even tag.
         required: false
         default: "default"
         aliases: [ version ]
@@ -97,7 +97,7 @@ def _set_hgrc(hgrc, vals):
         if not parser.has_section(section):
             parser.add_section(section)
         parser.set(section, option, value)
-    
+
     f = open(hgrc, 'w')
     parser.write(f)
     f.close()
@@ -106,7 +106,7 @@ def _set_hgrc(hgrc, vals):
 def _undo_hgrc(hgrc, vals):
     parser = ConfigParser.SafeConfigParser()
     parser.read(hgrc)
-     
+
     for each in vals:
         (section, option, value) = each
         if parser.has_section(section):
@@ -168,17 +168,17 @@ class Hg(object):
         after = self.has_local_mods()
         if before != after and not after:   # no more local modification
             return True
-            
+
     def purge(self):
         hgrc = os.path.join(self.dest, '.hg/hgrc')
         purge_option = [('extensions', 'purge', '')]
         _set_hgrc(hgrc, purge_option)   # enable purge extension
-        
+
         # before purge, find out if there are any untracked files
         (rc1, out1, err1) = self._list_untracked()
         if rc1 != 0:
             self.module.fail_json(msg=err1)
-        
+
         # there are some untrackd files
         if out1 != '':
             (rc2, out2, err2) = self._command(['purge', '-R', self.dest])
@@ -234,9 +234,9 @@ def main():
     revision = module.params['revision']
     force = module.params['force']
     purge = module.params['purge']
-    hg_path = module.parames['executable'] or module.get_bin_path('hg', True)
+    hg_path = module.params['executable'] or module.get_bin_path('hg', True)
     hgrc = os.path.join(dest, '.hg/hgrc')
-   
+
     # initial states
     before = ''
     changed = False
