@@ -44,13 +44,15 @@ class PluginLoader(object):
     The first match is used.
     '''
 
-    def __init__(self, class_name, package, config, subdir, aliases={}):
+    def __init__(self, class_name, package, config, subdir, aliases={},
+                 always_include_dir=None):
 
         self.class_name         = class_name
         self.package            = package
         self.config             = config
         self.subdir             = subdir
         self.aliases            = aliases
+        self.always_include_dir = always_include_dir
 
         if not class_name in MODULE_CACHE:
             MODULE_CACHE[class_name] = {}
@@ -108,8 +110,14 @@ class PluginLoader(object):
                 if fullpath not in ret:
                     ret.append(fullpath)
 
-        # look in any configured plugin paths, allow one level deep for subcategories 
+        # Look in any configured plugin paths, allow one level deep
+        # for subcategories.  always_include_dir is presently used to
+        # make sure Ansible's stock modules are always on the
+        # module_finder's path.
         configured_paths = self.config.split(os.pathsep)
+        if self.always_include_dir and \
+                self.always_include_dir not in configured_paths:
+            configured_paths.append(self.always_include_dir)
         for path in configured_paths:
             path = os.path.abspath(os.path.expanduser(path))
             contents = glob.glob("%s/*" % path)
@@ -216,7 +224,8 @@ module_finder = PluginLoader(
     '', 
     '', 
     C.DEFAULT_MODULE_PATH, 
-    'library'
+    'library',
+    always_include_dir=C.DIST_MODULE_PATH
 )
 
 lookup_loader = PluginLoader(
