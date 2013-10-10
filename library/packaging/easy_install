@@ -72,7 +72,7 @@ EXAMPLES = '''
 # Examples from Ansible Playbooks
 - easy_install: name=pip
 
-# Install Flast into the specified virtualenv.
+# Install Flask into the specified virtualenv.
 - easy_install: name=flask virtualenv=/webapps/myapp/venv
 '''
 
