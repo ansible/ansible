@@ -262,6 +262,8 @@ def legacy_varReplace(basedir, raw, vars, lookup_fatal=True, depth=0, expand_lis
     ''' Perform variable replacement of $variables in string raw using vars dictionary '''
     # this code originally from yum
 
+    orig = raw
+
     if not isinstance(raw, unicode):
         raw = raw.decode("utf-8")
 
@@ -294,7 +296,7 @@ def legacy_varReplace(basedir, raw, vars, lookup_fatal=True, depth=0, expand_lis
 
     result = ''.join(done)
 
-    if result != raw:
+    if result != orig:
         from ansible import utils
         utils.deprecated("Legacy variable subsitution, such as using ${foo} or $foo instead of {{ foo }} is currently valid but will be phased out and has been out of favor since version 1.2. This is the last of legacy features on our deprecation list. You may continue to use this if you have specific needs for now","1.6")
     return result
