@@ -118,8 +118,7 @@ import hashlib
 try:
     import boto
 except ImportError:
-    print "failed=True msg='boto required for this module'"
-    sys.exit(1)
+    module.fail_json(msg="boto required for this module")
 
 def key_check(module, s3, bucket, obj):
     try:
@@ -140,7 +139,6 @@ def keysum(module, s3, bucket, obj):
         etag_multipart = md5_remote.find('-')!=-1 #Check for multipart, etag is not md5
         if etag_multipart is True:
             module.fail_json(msg="Files uploaded with multipart of s3 are not supported with checksum, unable to compute checksum.")
-            sys.exit(0)
     return md5_remote
 
 def bucket_check(module, s3, bucket):
@@ -195,7 +193,6 @@ def upload_file_check(src):
         file_exists is False
     if os.path.isdir(src):
         module.fail_json(msg="Specifying a directory is not a valid source for upload.", failed=True)
-        sys.exit(0)
     return file_exists
 
 def path_check(path):
@@ -211,7 +208,6 @@ def upload_s3file(module, s3, bucket, obj, src, expiry):
         key.set_contents_from_filename(src)
         url = key.generate_url(expiry)
         module.exit_json(msg="PUT operation complete", url=url, changed=True)
-        sys.exit(0)
     except s3.provider.storage_copy_error, e:
         module.fail_json(msg= str(e))
 
@@ -221,7 +217,6 @@ def download_s3file(module, s3, bucket, obj, dest):
         key = bucket.lookup(obj)
         key.get_contents_to_filename(dest)
         module.exit_json(msg="GET operation complete", changed=True)
-        sys.exit(0)
     except s3.provider.storage_copy_error, e:
         module.fail_json(msg= str(e))
 
@@ -231,7 +226,6 @@ def download_s3str(module, s3, bucket, obj):
         key = bucket.lookup(obj)
         contents = key.get_contents_as_string()
         module.exit_json(msg="GET operation complete", contents=contents, changed=True)
-        sys.exit(0)
     except s3.provider.storage_copy_error, e:
         module.fail_json(msg= str(e))
 
@@ -241,7 +235,6 @@ def get_download_url(module, s3, bucket, obj, expiry, changed=True):
         key = bucket.lookup(obj)
         url = key.generate_url(expiry)
         module.exit_json(msg="Download url:", url=url, expiry=expiry, changed=changed)
-        sys.exit(0)
     except s3.provider.storage_response_error, e:
         module.fail_json(msg= str(e))
 
@@ -312,13 +305,11 @@ def main():
         bucketrtn = bucket_check(module, s3, bucket)
         if bucketrtn is False:
             module.fail_json(msg="Target bucket cannot be found", failed=True)
-            sys.exit(0)
 
         # Next, we check to see if the key in the bucket exists. If it exists, it also returns key_matches md5sum check.
         keyrtn = key_check(module, s3, bucket, obj)    
         if keyrtn is False:
             module.fail_json(msg="Target key cannot be found", failed=True)
-            sys.exit(0)
 
         # If the destination path doesn't exist, no need to md5um etag check, so just download.
         pathrtn = path_check(dest)
@@ -367,7 +358,6 @@ def main():
         pathrtn = path_check(src)
         if pathrtn is False:
             module.fail_json(msg="Local object for PUT does not exist", failed=True)
-            sys.exit(0)
         
         # Lets check to see if bucket exists to get ground truth.
         bucketrtn = bucket_check(module, s3, bucket)
@@ -452,7 +442,6 @@ def main():
                     module.fail_json(msg="Key %s does not exist."%obj, failed=True)
         else:
             module.fail_json(msg="Bucket and Object parameters must be set", failed=True)
-            sys.exit(0)
 
     if mode == 'getstr':
         if bucket and obj:
@@ -466,7 +455,8 @@ def main():
                 else:
                     module.fail_json(msg="Key %s does not exist."%obj, failed=True)
 
-    sys.exit(0)
+    module.exit_json(failed=False)
+
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
