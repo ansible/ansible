@@ -313,9 +313,28 @@ class User(object):
         return self.execute_command(cmd)
 
 
+    def _check_usermod_append(self):
+        # check if this version of usermod can append groups
+
+        cmd = [self.module.get_bin_path('usermod', True)]
+        cmd.append('--help')
+        rc, data1, data2 = self.execute_command(cmd)
+        helpout = data1 + data2
+
+        # check if --append exists
+        lines = helpout.split('\n')
+        for line in lines:
+            if line.strip().startswith('-a, --append'):
+                return True
+
+        return False
+
+
+
     def modify_user_usermod(self):
         cmd = [self.module.get_bin_path('usermod', True)]
         info = self.user_info()
+        has_append = self._check_usermod_append()
 
         if self.uid is not None and info[2] != int(self.uid):
             cmd.append('-u')
@@ -348,15 +367,21 @@ class User(object):
                     if self.append:
                         for g in groups:
                             if g in group_diff:
-                                cmd.append('-a')
+                                if has_append:
+                                    cmd.append('-a')
                                 groups_need_mod = True
                                 break
                     else:
                         groups_need_mod = True
 
             if groups_need_mod:
-                cmd.append('-G')
-                cmd.append(','.join(groups))
+                if self.append and not has_append:
+                    cmd.append('-A')
+                    cmd.append(','.join(group_diff))
+                else:
+                    cmd.append('-G')
+                    cmd.append(','.join(groups))
+
 
         if self.comment is not None and info[4] != self.comment:
             cmd.append('-c')
