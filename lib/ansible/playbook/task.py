@@ -81,6 +81,10 @@ class Task(object):
 
             # code to allow "with_glob" and to reference a lookup plugin named glob
             elif x.startswith("with_"):
+
+                if isinstance(ds[x], basestring) and '{{' in ds[x]:
+                    utils.warning("It is unneccessary to use '{{' in loops, leave variables in loop expressions bare.")
+
                 plugin_name = x.replace("with_","")
                 if plugin_name in utils.plugins.lookup_loader:
                     ds['items_lookup_plugin'] = plugin_name
@@ -90,6 +94,8 @@ class Task(object):
                     raise errors.AnsibleError("cannot find lookup plugin named %s for usage in with_%s" % (plugin_name, plugin_name))
 
             elif x in [ 'changed_when', 'failed_when', 'when']:
+                if isinstance(ds[x], basestring) and '{{' in ds[x]:
+                    utils.warning("It is unneccessary to use '{{' in conditionals, leave variables in loop expressions bare.")
                 ds[x] = "jinja2_compare %s" % (ds[x])
             elif x.startswith("when_"):
                 utils.deprecated("The 'when_' conditional is a deprecated syntax as of 1.2. Switch to using the regular unified 'when' statements as described in ansibleworks.com/docs/.","1.5")

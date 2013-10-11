@@ -295,7 +295,7 @@ def legacy_varReplace(basedir, raw, vars, lookup_fatal=True, depth=0, expand_lis
     result = ''.join(done)
 
     if result != raw:
-        import utils
+        from ansible import utils
         utils.deprecated("Legacy variable subsitution, such as using ${foo} or $foo instead of {{ foo }} is currently valid but will be phased out and has been out of favor since version 1.2. This is the last of legacy features on our deprecation list. You may continue to use this if you have specific needs for now","1.6")
     return result
 
