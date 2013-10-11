@@ -331,28 +331,13 @@ def main():
             md5_local = hashlib.md5(open(dest, 'rb').read()).hexdigest()
             if md5_local == md5_remote:
                 sum_matches = True
-                if overwrite is True:
-                    download_s3file(module, s3, bucket, obj, dest)
-                else:
-                    module.exit_json(msg="Local and remote object are identical, ignoring. Use overwrite parameter to force.", changed=False)
+                module.exit_json(msg="Local and remote object are identical, ignoring.", changed=False)
             else:
                 sum_matches = False
                 if overwrite is True:
                     download_s3file(module, s3, bucket, obj, dest)
                 else:
-                    module.fail_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force download.", failed=True)
-        
-        # If destination file doesn't already exist we can go ahead and download.
-        if pathrtn is False:
-            download_s3file(module, s3, bucket, obj, dest)
-   
-        # Firstly, if key_matches is TRUE and overwrite is not enabled, we EXIT with a helpful message. 
-        if sum_matches is True and overwrite is False:
-            module.exit_json(msg="Local and remote object are identical, ignoring. Use overwrite parameter to force.", changed=False)
-
-        # At this point explicitly define the overwrite condition.
-        if sum_matches is True and pathrtn is True and overwrite is True:
-            download_s3file(module, s3, bucket, obj, dest)
+                    module.fail_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force download.", changed=True)
 
         # If sum does not match but the destination exists, we 
                
@@ -371,7 +356,8 @@ def main():
         
         # Lets check to see if bucket exists to get ground truth.
         bucketrtn = bucket_check(module, s3, bucket)
-        keyrtn = key_check(module, s3, bucket, obj)
+        if bucketrtn is True:
+            keyrtn = key_check(module, s3, bucket, obj)
 
         # Lets check key state. Does it exist and if it does, compute the etag md5sum.
         if bucketrtn is True and keyrtn is True:
@@ -379,17 +365,14 @@ def main():
                 md5_local = hashlib.md5(open(src, 'rb').read()).hexdigest()
                 if md5_local == md5_remote:
                     sum_matches = True
-                    if overwrite is True:
-                        upload_s3file(module, s3, bucket, obj, src, expiry)
-                    else:
-                        get_download_url(module, s3, bucket, obj, expiry, changed=False)
+                    get_download_url(module, s3, bucket, obj, expiry, changed=False)
                 else:
                     sum_matches = False
                     if overwrite is True:
                         upload_s3file(module, s3, bucket, obj, src, expiry)
                     else:
-                        module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force upload.", failed=True)
-                                                                                                            
+                        module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force upload.", changed=False)
+
         # If neither exist (based on bucket existence), we can create both.
         if bucketrtn is False and pathrtn is True:      
             create_bucket(module, s3, bucket)
