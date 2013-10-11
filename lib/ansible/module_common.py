@@ -118,6 +118,7 @@ FILE_COMMON_ARGUMENTS=dict(
     content = dict(),
     backup = dict(),
     force = dict(),
+    state = dict()
 )
 
 def get_platform():
