@@ -371,7 +371,8 @@ def main():
         
         # Lets check to see if bucket exists to get ground truth.
         bucketrtn = bucket_check(module, s3, bucket)
-        keyrtn = key_check(module, s3, bucket, obj)
+        if bucketrtn is True:
+            keyrtn = key_check(module, s3, bucket, obj)
 
         # Lets check key state. Does it exist and if it does, compute the etag md5sum.
         if bucketrtn is True and keyrtn is True:
