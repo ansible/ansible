@@ -27,6 +27,7 @@ from ansible import errors
 from ansible import __version__
 from ansible.utils.plugins import *
 from ansible.utils import template
+from ansible.callbacks import display
 import ansible.constants as C
 import time
 import StringIO
@@ -39,8 +40,13 @@ import difflib
 import warnings
 import traceback
 import getpass
+import sys
+import textwrap
 
 VERBOSITY=0
+
+# list of all deprecation messages to prevent duplicate display
+deprecations = {}
 
 MAX_FILE_SIZE_FOR_DIFF=1*1024*1024
 
@@ -385,10 +391,14 @@ Or:
         if len(parts) > 1:
             middle = parts[1].strip()
             match = False
-            if middle.startswith("'") and not middle.endswith('"'):
+            unbalanced = False
+            if middle.startswith("'") and not middle.endswith("'"):
                 match = True
             elif middle.startswith('"') and not middle.endswith('"'):
                 match = True
+            if middle[0] in [ '"', "'" ] and middle[-1] in [ '"', "'" ]:
+                unbalanced = True
+
             if match:
                 msg = msg + """
 This one looks easy to fix.  It seems that there is a value started 
@@ -404,6 +414,22 @@ Could be written as:
 or equivalently:
 
    when: "'ok' in result.stdout"
+
+"""
+                return msg
+
+            if unbalanced:
+                msg = msg + """
+We could be wrong, but this one looks like it might be an issue with 
+unbalanced quotes.  If starting a value with a quote, make sure the 
+line ends with the same set of quotes.  For instance this arbitrary 
+example:
+
+    foo: "bad" "wolf"
+
+Could be written as:
+
+    foo: '"bad" "wolf"'
 
 """
                 return msg
@@ -929,6 +955,19 @@ def listify_lookup_plugin_terms(terms, basedir, inject):
             terms = [ terms ]
 
     return terms
+
+def deprecated(msg, version):
+    ''' used to print out a deprecation message.'''
+    if not C.DEPRECATION_WARNINGS:
+        return
+    new_msg = "\n[DEPRECATION WARNING]: %s. This feature will be removed in version %s." % (msg, version)
+    new_msg = new_msg + " Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.\n\n"
+    wrapped = textwrap.wrap(new_msg, 79)
+    new_msg = "\n".join(wrapped) + "\n"
+
+    if new_msg not in deprecations:
+        display(new_msg, color='purple', stderr=True)
+        deprecations[new_msg] = 1
 
 def combine_vars(a, b):
     if C.DEFAULT_HASH_BEHAVIOUR == "merge":

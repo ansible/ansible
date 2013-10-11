@@ -427,7 +427,7 @@ class Play(object):
                 include_vars = {}
                 for k in x:
                     if k.startswith("with_"):
-                        sys.stderr.write("DEPRECATION: include + with_items is unsupported/undocumented and will be removed in Ansible 1.5, it will likely not do what you think it does.\n")
+                        utils.deprecated("include + with_items is an unsupported feature and has been undocumented for many releases because of this", "1.5")
                         plugin_name = k[5:]
                         if plugin_name not in utils.plugins.lookup_loader:
                             raise errors.AnsibleError("cannot find lookup plugin named %s for usage in with_%s" % (plugin_name, plugin_name))

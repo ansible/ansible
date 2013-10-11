@@ -421,7 +421,11 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
 class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
     ''' callbacks used for Runner() from /usr/bin/ansible-playbook '''
 
-    def __init__(self, stats, verbose=utils.VERBOSITY):
+    def __init__(self, stats, verbose=None):
+
+        if verbose is None:
+            verbose = utils.VERBOSITY
+
         self.verbose = verbose
         self.stats = stats
         self._async_notified = {}
