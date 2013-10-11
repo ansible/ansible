@@ -144,7 +144,7 @@ def main():
             payload = dict(required = True),
             client_id = dict(default = None),
             qos = dict(default="0", choices=["0", "1", "2"]),
-            retain = dict(default='no', choices=BOOLEANS, type='bool'),
+            retain = dict(default=False, type='bool'),
             username = dict(default = None),
             password = dict(default = None),
         ),

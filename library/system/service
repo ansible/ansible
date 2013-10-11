@@ -1108,7 +1108,7 @@ def main():
             state = dict(choices=['running', 'started', 'stopped', 'restarted', 'reloaded']),
             sleep = dict(required=False, type='int', default=None),
             pattern = dict(required=False, default=None),
-            enabled = dict(choices=BOOLEANS, type='bool'),
+            enabled = dict(type='bool'),
             runlevel = dict(required=False, default='default'),
             arguments = dict(aliases=['args'], default=''),
         ),

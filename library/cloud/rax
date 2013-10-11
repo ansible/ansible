@@ -247,7 +247,7 @@ def main():
             key_name = dict(aliases = ['keypair']),
             files = dict(type='dict', default={}),
             region = dict(),
-            wait = dict(type='bool', choices=BOOLEANS),
+            wait = dict(type='bool'),
             wait_timeout = dict(default=300),
         )
     )
