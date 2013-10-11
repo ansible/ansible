@@ -277,17 +277,6 @@ class TestUtils(unittest.TestCase):
         res = template2.template(None, template, vars)
         assert res == 'result'
 
-    def test_template_varReplace_iterated(self):
-        template = 'hello $who'
-        vars = {
-            'who': 'oh great $person',
-            'person': 'one',
-        }
-
-        res = template2.template(None, template, vars)
-
-        assert res == u'hello oh great one'
-
     def test_varReplace_include(self):
         template = 'hello $FILE(world) $LOOKUP(file, $filename)'
 
