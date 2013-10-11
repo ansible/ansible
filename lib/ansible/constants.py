@@ -34,8 +34,8 @@ def get_config(p, section, key, env_var, default):
 
 def load_config_file():
     p = ConfigParser.ConfigParser()
-    path1 = os.path.expanduser(os.environ.get('ANSIBLE_CONFIG', "~/.ansible.cfg"))
-    path2 = os.getcwd() + "/ansible.cfg"
+    path1 = os.getcwd() + "/ansible.cfg"
+    path2 = os.path.expanduser(os.environ.get('ANSIBLE_CONFIG', "~/.ansible.cfg"))
     path3 = "/etc/ansible/ansible.cfg"
 
     if os.path.exists(path1):
