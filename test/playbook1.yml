@@ -61,7 +61,7 @@
 
   - name: this should be skipped
     action: shell echo 'if you see this, this is wrong ($facter_operatingsystem)'
-    only_if: "'$facter_operatingsystem' == 'Imaginary'"
+    when: 2 == 3
 
   handlers:
 
