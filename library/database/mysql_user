@@ -61,6 +61,7 @@ options:
       - Port of the MySQL server
     required: false
     default: 3306
+    version_added: '1.4'
   login_unix_socket:
     description:
       - The path to a Unix domain socket for local connections
