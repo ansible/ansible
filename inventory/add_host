@@ -10,12 +10,12 @@ description:
 version_added: "0.9"
 options:
   name:
-    aliases: [ 'hostname' ]
+    aliases: [ 'hostname', 'host' ]
     description:
     - The hostname/ip of the host to add to the inventory, can include a colon and a port number.
     required: true     
   groups:
-    aliases: [ 'groupname' ]
+    aliases: [ 'groupname', 'group' ]
     description:
     - The groups to add the hostname to, comma separated.
     required: false
