@@ -432,6 +432,13 @@ def parse_kv(args):
                 options[k]=v
     return options
 
+def parse_dict(args):
+    ''' convert a dict to a key/value string'''
+    options = ''
+    if args is not None:
+        options = ''.join('{}={} '.format(key, val) for key, val in args.items())
+    return options
+
 def merge_hash(a, b):
     ''' recursively merges hash b into a
     keys from b take precedence over keys from a '''

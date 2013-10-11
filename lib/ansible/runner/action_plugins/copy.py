@@ -49,6 +49,7 @@ class ActionModule(object):
         source  = options.get('src', None)
         content = options.get('content', None)
         dest    = options.get('dest', None)
+        state   = options.get('state', None)
         raw     = utils.boolean(options.get('raw', 'no'))
         force   = utils.boolean(options.get('force', 'yes'))
 
@@ -58,6 +59,15 @@ class ActionModule(object):
         elif (source is not None or 'first_available_file' in inject) and content is not None:
             result=dict(failed=True, msg="src and content are mutually exclusive")
             return ReturnData(conn=conn, result=result)
+
+        if state == 'absent':
+          return self.runner._execute_module(conn, tmp, 'file', module_args, inject=inject, complex_args=complex_args)
+        elif state != None:
+          # remove state argument
+          state = None
+          module_args_d = utils.parse_kv(module_args)
+          module_args_d.pop('state')
+          module_args = utils.parse_dict(module_args_d)
 
         # if we have first_available_file in our vars
         # look up the files and use the first one we find as src
