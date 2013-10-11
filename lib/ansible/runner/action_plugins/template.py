@@ -45,6 +45,10 @@ class ActionModule(object):
 
         source   = options.get('src', None)
         dest     = options.get('dest', None)
+        state     = options.get('state', None)
+        
+        if state == 'absent':
+            return self.runner._execute_module(conn, tmp, 'file', module_args, inject=inject, complex_args=complex_args)
 
         if (source is None and 'first_available_file' not in inject) or dest is None:
             result = dict(failed=True, msg="src and dest are required")
