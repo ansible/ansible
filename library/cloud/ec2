@@ -121,7 +121,7 @@ options:
     required: False
     default: 1
     aliases: []
-  monitor:
+  monitoring:
     version_added: "1.1"
     description:
       - enable detailed monitoring (CloudWatch) for instance
@@ -213,7 +213,8 @@ EXAMPLES = '''
     wait: yes
     wait_timeout: 500
     count: 5
-    instance_tags: '{"db":"postgres"}' monitoring=yes'
+    instance_tags: '{"db":"postgres"}'
+    monitoring=yes
 
 # Multiple groups example
 local_action:
@@ -225,7 +226,8 @@ local_action:
     wait: yes
     wait_timeout: 500
     count: 5
-    instance_tags: '{"db":"postgres"}' monitoring=yes'
+    instance_tags: '{"db":"postgres"}'
+    monitoring=yes
 
 # VPC example
 - local_action:
