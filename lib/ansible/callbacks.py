@@ -571,8 +571,9 @@ class PlaybookCallbacks(object):
         call_callback_module('playbook_on_notify', host, handler)
 
     def on_no_hosts_matched(self):
-        display("skipping: no hosts matched", color='cyan')
-        call_callback_module('playbook_on_no_hosts_matched')
+        if constants.DISPLAY_SKIPPED_HOSTS:
+            display("skipping: no hosts matched", color='cyan')
+            call_callback_module('playbook_on_no_hosts_matched')
 
     def on_no_hosts_remaining(self):
         display("\nFATAL: all hosts have already failed -- aborting", color='red')
