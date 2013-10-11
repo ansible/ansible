@@ -14,7 +14,7 @@
 
   vars_files:
     - common_vars.yml
-    - [ '$facter_operatingsystem.yml', 'default_os.yml' ]
+    - [ '{{facter_operatingsystem.yml}}', 'default_os.yml' ]
 
   tasks:
 
@@ -25,10 +25,10 @@
     action: command true
 
   - name: test basic shell, plus two ways to dereference a variable
-    action: shell echo $HOME $port
+    action: shell echo $HOME {{port}}
 
   - name: test vars_files imports
-    action: shell echo $duck $cow $testing
+    action: shell echo {{duck}} {{cow}} {{testing}}
 
 # in the command below, the test file should contain a valid template
 # and trigger the change handler
@@ -42,7 +42,7 @@
 # not be triggered twice because it's already triggered
 
   - name: test template
-    action: template src=$item dest=/tmp/ansible_test_data_template.out
+    action: template src={{item}} dest=/tmp/ansible_test_data_template.out
     first_available_file:
     - nonexistantfile
     - sample.j2
@@ -60,7 +60,7 @@
 # the following command should be skipped
 
   - name: this should be skipped
-    action: shell echo 'if you see this, this is wrong ($facter_operatingsystem)'
+    action: shell echo 'if you see this, this is wrong'
     when: 2 == 3
 
   handlers:

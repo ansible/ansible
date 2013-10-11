@@ -182,7 +182,7 @@ class Task(object):
         # load various attributes
         self.only_if = ds.get('only_if', 'True')
 
-        if self.only_if != True:
+        if self.only_if != 'True':
             utils.deprecated("only_if is a very old feature and has been obsolete since 0.9, please switch to the 'when' conditional as described at http://ansibleworks.com/docs","1.5")
 
         self.when    = ds.get('when', None)
