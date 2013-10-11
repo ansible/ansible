@@ -47,6 +47,7 @@ VERBOSITY=0
 
 # list of all deprecation messages to prevent duplicate display
 deprecations = {}
+warnings = {}
 
 MAX_FILE_SIZE_FOR_DIFF=1*1024*1024
 
@@ -969,7 +970,16 @@ def deprecated(msg, version):
         display(new_msg, color='purple', stderr=True)
         deprecations[new_msg] = 1
 
+def warning(msg):
+    new_msg = "\n[WARNING]: %s" % msg
+    wrapped = textwrap.wrap(new_msg, 79)
+    new_msg = "\n".join(wrapped) + "\n"
+    if new_msg not in warnings:
+        display(new_msg, color='bright purple', stderr=True)
+        warnings[new_msg] = 1
+
 def combine_vars(a, b):
+
     if C.DEFAULT_HASH_BEHAVIOUR == "merge":
         return merge_hash(a, b)
     else:
