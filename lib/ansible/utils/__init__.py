@@ -338,6 +338,7 @@ def parse_yaml(data):
 
 def process_common_errors(msg, probline, column):
     replaced = probline.replace(" ","")
+
     if replaced.find(":{{") != -1 and replaced.find("}}") != -1:
         msg = msg + """
 This one looks easy to fix.  YAML thought it was looking for the start of a 
@@ -355,9 +356,9 @@ It should be written as:
     app_path: "{{ base_path }}/foo"
 """
 
-    elif len(probline) and probline[column] == ":" and probline.find("=") != -1:
+    elif len(probline) and len(probline) >= column and probline[column] == ":" and probline.count(':') > 1:
         msg = msg + """
-This one looks easy to fix.  There is an extra unquoted colon in the line 
+This one looks easy to fix.  There seems to be an extra unquoted colon in the line 
 and this is confusing the parser. It was only expecting to find one free 
 colon. The solution is just add some quotes around the colon, or quote the 
 entire line after the first colon.
