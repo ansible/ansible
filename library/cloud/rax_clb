@@ -196,7 +196,7 @@ def main():
             type=dict(choices=['primary', 'secondary']),
             username=dict(),
             virtualenv=dict(),
-            wait=dict(default=False, choices=BOOLEANS, type='bool'),
+            wait=dict(default=False, type='bool'),
             wait_timeout=dict(default=30, type='int'),
             weight=dict(type='int'),
         ),

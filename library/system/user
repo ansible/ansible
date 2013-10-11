@@ -1372,7 +1372,7 @@ def main():
             # following options are specific to usermod
             append=dict(default='no', type='bool'),
             # following are specific to ssh key generation
-            generate_ssh_key=dict(choices=BOOLEANS, type='bool'),
+            generate_ssh_key=dict(type='bool'),
             ssh_key_bits=dict(default=ssh_defaults['bits'], type='str'),
             ssh_key_type=dict(default=ssh_defaults['type'], type='str'),
             ssh_key_file=dict(default=None, type='str'),

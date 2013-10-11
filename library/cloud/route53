@@ -155,7 +155,7 @@ def main():
             value           = dict(required=False), 
             aws_secret_key  = dict(aliases=['ec2_secret_key', 'secret_key'], no_log=True, required=False),
             aws_access_key  = dict(aliases=['ec2_access_key', 'access_key'], required=False),
-            overwrite       = dict(required=False, choices=BOOLEANS, type='bool')
+            overwrite       = dict(required=False, type='bool')
         )
     )
 
