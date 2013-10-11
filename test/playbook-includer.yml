@@ -1,4 +1,0 @@
----
-- include: playbook-included.yml variable=foobar
-- include: playbook-included.yml variable=foofoo
-- include: playbook-included.yml variable=foo
