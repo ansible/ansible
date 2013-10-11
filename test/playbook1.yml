@@ -25,7 +25,7 @@
     action: command true
 
   - name: test basic shell, plus two ways to dereference a variable
-    action: shell echo {{HOME}} {{port}}
+    action: shell echo {{port}}
 
   - name: test vars_files imports
     action: shell echo {{duck}} {{cow}} {{testing}}
@@ -37,18 +37,6 @@
     action: copy src=sample.j2 dest=/tmp/ansible_test_data_copy.out
     notify:
     - on change 1
-
-# this should trigger two change handlers, but the 2nd should
-# not be triggered twice because it's already triggered
-
-  - name: test template
-    action: template src={{item}} dest=/tmp/ansible_test_data_template.out
-    first_available_file:
-    - nonexistantfile
-    - sample.j2
-    notify:
-    - on change 1
-    - on change 2
 
 # there should be various poll events within the range
 

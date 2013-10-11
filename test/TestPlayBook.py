@@ -144,47 +144,6 @@ class TestPlaybook(unittest.TestCase):
        result = self.playbook.run()
        return result
 
-   def test_one(self):
-       pb = 'test/playbook1.yml'
-       actual = self._run(pb)
-
-       expected =  {
-            "localhost": {
-                "changed": 9,
-                "failures": 0,
-                "ok": 11,
-                "skipped": 1,
-                "unreachable": 0
-            }
-       }
-
-       assert utils.jsonify(expected, format=True) == utils.jsonify(actual,format=True)
-
-       # make sure the template module took options from the vars section
-       data = file('/tmp/ansible_test_data_template.out').read()
-       assert data.find("ears") != -1, "template success"
-
-   def test_task_includes(self):
-       pb = os.path.join(self.test_dir, 'task-includer.yml')
-       actual = self._run(pb)
-
-       # if different, this will output to screen
-       print "**ACTUAL**"
-       print utils.jsonify(actual, format=True)
-       expected =  {
-           "localhost": {
-               "changed": 0,
-               "failures": 0,
-               "ok": 1,
-               "skipped": 0,
-               "unreachable": 0
-           }
-       }
-       print "**EXPECTED**"
-       print utils.jsonify(expected, format=True)
-
-       assert utils.jsonify(expected, format=True) == utils.jsonify(actual,format=True)
-
    def test_playbook_vars(self):
        test_callbacks = TestCallbacks()
        playbook = ansible.playbook.PlayBook(
