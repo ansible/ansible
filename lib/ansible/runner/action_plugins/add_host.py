@@ -68,14 +68,14 @@ class ActionModule(object):
             # only groups can be added directly to inventory
             inventory._hosts_cache[new_name] = new_host
             allgroup.add_host(new_host)
- 
+
         # Add any variables to the new_host
         for k in args.keys():
             if not k in [ 'name', 'hostname', 'groupname', 'groups' ]:
                 new_host.set_variable(k, args[k]) 
                 
         
-        groupnames = args.get('groupname', args.get('groups', '')) 
+        groupnames = args.get('groupname', args.get('groups', args.get('group', ''))) 
         # add it to the group if that was specified
         if groupnames != '':
             for group_name in groupnames.split(","):
@@ -88,6 +88,10 @@ class ActionModule(object):
             result['new_groups'] = groupnames.split(",")
             
         result['new_host'] = new_name
+
+        # clear pattern caching completely since it's unpredictable what
+        # patterns may have referenced the group
+        inventory.clear_pattern_cache()
         
         return ReturnData(conn=conn, comm_ok=True, result=result)
 

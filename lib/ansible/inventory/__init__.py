@@ -266,6 +266,10 @@ class Inventory(object):
             self._pattern_hosts[pattern] = results
         return self._pattern_hosts[pattern]
 
+    def clear_pattern_cache(self):
+        ''' called exclusively by the add_host plugin to allow patterns to be recalculated '''
+        self._pattern_hosts = {}
+
     def groups_for_host(self, host):
         results = []
         groups = self.get_groups()
