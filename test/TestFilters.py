@@ -89,6 +89,33 @@ class TestFilters(unittest.TestCase):
         a = ansible.runner.filter_plugins.core.fileglob(pathname)
         assert __file__ in a
 
+    def test_regex(self):
+        a = ansible.runner.filter_plugins.core.regex('ansible', 'ansible',
+                                                     match_type='findall')
+        assert a == True
+
+    def test_match_case_sensitive(self):
+        a = ansible.runner.filter_plugins.core.match('ansible', 'ansible')
+        assert a == True
+
+    def test_match_case_insensitive(self):
+        a = ansible.runner.filter_plugins.core.match('ANSIBLE', 'ansible',
+                                                     True)
+        assert a == True
+
+    def test_match_no_match(self):
+        a = ansible.runner.filter_plugins.core.match(' ansible', 'ansible')
+        assert a == False
+
+    def test_search_case_sensitive(self):
+        a = ansible.runner.filter_plugins.core.search(' ansible ', 'ansible')
+        assert a == True
+
+    def test_search_case_insensitive(self):
+        a = ansible.runner.filter_plugins.core.search(' ANSIBLE ', 'ansible',
+                                                      True)
+        assert a == True
+
     #def test_filters(self):
 
         # this test is pretty low level using a playbook, hence I am disabling it for now -- MPD.

@@ -22,6 +22,7 @@ import yaml
 import types
 import pipes
 import glob
+import re
 from ansible import errors
 from ansible.utils import md5s
 
@@ -98,6 +99,27 @@ def fileglob(pathname):
     ''' return list of matched files for glob '''
     return glob.glob(pathname)
 
+def regex(value='', pattern='', ignorecase=False, match_type='search'):
+    ''' Expose `re` as a boolean filter using the `search` method by default.
+        This is likely only useful for `search` and `match` which already
+        have their own filters.
+    '''
+    if ignorecase:
+        flags = re.I
+    else:
+        flags = 0
+    _re = re.compile(pattern, flags=flags)
+    _bool = __builtins__.get('bool')
+    return _bool(getattr(_re, match_type, 'search')(value))
+
+def match(value, pattern='', ignorecase=False):
+    ''' Perform a `re.match` returning a boolean '''
+    return regex(value, pattern, ignorecase, 'match')
+
+def search(value, pattern='', ignorecase=False):
+    ''' Perform a `re.search` returning a boolean '''
+    return regex(value, pattern, ignorecase, 'search')
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -145,5 +167,10 @@ class FilterModule(object):
 
             # file glob
             'fileglob': fileglob,
+
+            # regex
+            'match': match,
+            'search': search,
+            'regex': regex,
         }
     
