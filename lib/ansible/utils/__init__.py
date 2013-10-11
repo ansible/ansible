@@ -355,6 +355,7 @@ It should be written as:
 
     app_path: "{{ base_path }}/foo"
 """
+        return msg
 
     elif len(probline) and len(probline) >= column and probline[column] == ":" and probline.count(':') > 1:
         msg = msg + """
@@ -365,18 +366,48 @@ entire line after the first colon.
 
 For instance, if the original line was:
 
-    copy: src=file dest=/path/filename:with_colon.txt
+    copy: src=file.txt dest=/path/filename:with_colon.txt
 
 It can be written as:
 
-    copy: src=file dest='/path/filename:with_colon.txt'
+    copy: src=file.txt dest='/path/filename:with_colon.txt'
 
 Or:
     
-    copy: 'src=file dest=/path/filename:with_colon.txt'
+    copy: 'src=file.txt dest=/path/filename:with_colon.txt'
 
 
 """
+        return msg
+    else:
+        parts = probline.split(":")
+        print parts
+        if len(parts) > 1:
+            middle = parts[1].strip()
+            match = False
+            if middle.startswith("'") and not middle.endswith('"'):
+                match = True
+            elif middle.startswith('"') and not middle.endswith('"'):
+                match = True
+            if match:
+                msg = msg + """
+This one looks easy to fix.  It seems that there is a value started 
+with a quote, and the YAML parser is expecting to see the line ended 
+with the same kind of quote.  For instance:
+
+    when: "ok" in result.stdout
+
+Could be written as:
+
+   when: '"ok" in result.stdout'
+
+or equivalently:
+
+   when: "'ok' in result.stdout"
+
+"""
+                return msg
+
     return msg
 
 def process_yaml_error(exc, data, path=None):
