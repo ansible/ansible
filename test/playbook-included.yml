@@ -3,7 +3,7 @@
   connection: local
   gather_facts: no
   tasks:
-  - action: debug msg="$variable"
+  - action: debug msg="{{ variable }}"
 
 - hosts: all
   connection: local
@@ -11,4 +11,4 @@
   - ugly: var
   gather_facts: no
   tasks:
-  - action: debug msg="$variable"
+  - action: debug msg="{{ variable }}"

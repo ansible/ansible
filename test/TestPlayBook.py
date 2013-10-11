@@ -164,76 +164,6 @@ class TestPlaybook(unittest.TestCase):
        data = file('/tmp/ansible_test_data_template.out').read()
        assert data.find("ears") != -1, "template success"
 
-   # disabling until we have a nice way of using lookup plugins inside '{{' and '}}'
-
-   #def test_lookups(self):
-   #    pb = os.path.join(self.test_dir, 'lookup_plugins.yml')
-   #    actual = self._run(pb)
-   #
-   #    # if different, this will output to screen
-   #    print "**ACTUAL**"
-   #    print utils.jsonify(actual, format=True)
-   #    expected =  {
-   #        "localhost": {
-   #            "changed": 16,
-   #            "failures": 0,
-   #            "ok": 21,
-   #            "skipped": 1,
-   #            "unreachable": 0
-   #        }
-   #    }
-   #    print "**EXPECTED**"
-   #    print utils.jsonify(expected, format=True)
-   #
-   #    assert utils.jsonify(expected, format=True) == utils.jsonify(actual,format=True)
-   #
-   #    print "len(EVENTS) = %d" % len(EVENTS)
-   #   assert len(EVENTS) == 74
-
-   def test_includes(self):
-       pb = os.path.join(self.test_dir, 'playbook-includer.yml')
-       actual = self._run(pb)
-
-       # if different, this will output to screen
-       print "**ACTUAL**"
-       print utils.jsonify(actual, format=True)
-       expected =  {
-           "localhost": {
-               "changed": 0,
-               "failures": 0,
-               "ok": 6,
-               "skipped": 0,
-               "unreachable": 0
-           }
-       }
-       print "**EXPECTED**"
-       print utils.jsonify(expected, format=True)
-
-       assert utils.jsonify(expected, format=True) == utils.jsonify(actual,format=True)
-
-   def test_templated_includes(self):
-       pb = os.path.join(self.test_dir, 'playbook-templated-includer.yml')
-       actual = self._run(pb, extra_vars={ 'dir': self.test_dir })
-
-       # if different, this will output to screen
-       print "**ACTUAL**"
-       actual_json = utils.jsonify(actual, format=True)
-       print actual_json
-       expected =  {
-           "localhost": {
-               "changed": 0,
-               "failures": 0,
-               "ok": 2,
-               "skipped": 0,
-               "unreachable": 0
-           }
-       }
-       expected_json = utils.jsonify(expected, format=True)
-       print "**EXPECTED**"
-       print expected_json 
-
-       assert actual_json == expected_json
-
    def test_task_includes(self):
        pb = os.path.join(self.test_dir, 'task-includer.yml')
        actual = self._run(pb)
@@ -325,35 +255,6 @@ class TestPlaybook(unittest.TestCase):
        )
        play = ansible.playbook.Play(playbook, playbook.playbook[0], os.getcwd())
        assert play.hosts == ';'.join(('host1', 'host2', 'host3'))
-
-   def test_playbook_when(self):
-       test_callbacks = TestCallbacks()
-       playbook = ansible.playbook.PlayBook(
-           playbook=os.path.join(self.test_dir, 'playbook-when.yml'),
-           host_list='test/ansible_hosts',
-           extra_vars={ 'external' : 'xyz', 'identity': 'identity' },
-           stats=ans_callbacks.AggregateStats(),
-           callbacks=test_callbacks,
-           runner_callbacks=test_callbacks
-       )
-       actual = playbook.run()
-
-       # if different, this will output to screen
-       print "**ACTUAL**"
-       print utils.jsonify(actual, format=True)
-       expected =  {
-           "localhost": {
-               "changed": 0,
-               "failures": 0,
-               "ok": 3,
-               "skipped": 3,
-               "unreachable": 0
-           }
-       }
-       print "**EXPECTED**"
-       print utils.jsonify(expected, format=True)
-
-       assert utils.jsonify(expected, format=True) == utils.jsonify(actual,format=True)
 
    def test_playbook_hash_replace(self):
       # save default hash behavior so we can restore it in the end of the test
