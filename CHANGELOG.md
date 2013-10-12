@@ -11,8 +11,14 @@ Highlighted new features:
 * Added the capability to use either paramiko or ssh for the inital setup connection of an accelerated playbook.
 * (docs pending) Swap the active user on a task in the middle of a play with the 'remote_user' parameter.
 * Automatically provide advice on common parser errors users encounter.
+* Deprecation warnings are now shown for legacy features: when_integer/etc, only_if, include+with_items, etc.  Can be disabled in ansible.cfg
+* The system will now provide helpful tips around possible YAML syntax errors increasing ease of use for new users.
+* warnings are now shown for using {{ foo }} in loops and conditionals, and suggest leaving the variable expressions bare as per docs.
+* The roles search path is now configurable in ansible.cfg.  'roles_path' in the config setting.
+* (DOCS PENDING) includes with parameters can now be done like roles for consistency:  - { include: song.yml, year:1984, song:'jump' }
+* The name of each role is now shown before each task if roles are being used
 
-New modules:
+New modules and plugins:
 
 * cloud:ec2_eip -- manage AWS elastic IPs
 * cloud:rax_clb -- manage Rackspace cloud load balancers
@@ -21,6 +27,15 @@ New modules:
 * system: modprobe -- manage kernel modules on systems that support modprobe/rmmod
 * system: open_iscsi -- manage targets on an initiator using open-iscsi
 
+Plugins:
+
+* jail connection module (FreeBSD)
+* lxc connection module
+* added inventory script for listing FreeBSD jails 
+* added md5 as a Jinja2 filter:  {{ path | md5 }}
+* added a fileglob filter that will return files matching a glob pattern.  with_items: "/foo/pattern/*.txt | fileglob"
+* 'changed' filter returns whether a previous step was changed easier.  when: registered_result | changed
+
 Misc changes:
 
 * (docs pending) New features for accelerate mode: configurable timeouts and a keepalives for long running tasks.
@@ -28,11 +43,20 @@ Misc changes:
 * Added `ansible_env` to the list of facts returned by the setup module.
 * Added `state=touch` to the file module, which functions similarly to the command-line version of `touch`.
 * Added a -vvvv level, which will show SSH client debugging information in the event of a failure.
-* Includes now support the more standard syntax, similar to that of role includes and dependencies. It is no longer necessary to specify a special "vars" field for the variables passed to the include.
+* Includes now support the more standard syntax, similar to that of role includes and dependencies. 
 * Changed the `user:` parameter on plays to `remote_user:` to prevent confusion with the module of the same name.  Still backwards compatible on play parameters.
 * Added parameter to allow the fetch module to skip the md5 validation step ('validate_md5=false'). This is usefull when fetching files that are actively being written to, such as live log files.
 * Inventory hosts are used in the order they appear in the inventory.
 * in hosts: foo[2-5] type syntax, the iterators now are zero indexed and the last index is non-inclusive, to match Python standards.
+* There's now a way for a callback plugin to disable itself.  See osx_say example code for an example.
+* Many bugfixes to modules of all types.
+* Complex arguments now can be used with async tasks
+* SSH ControlPath is now configurable in ansible.cfg.  There's a limit to the lengths of these paths, see how to shorten them in ansible.cfg.
+* md5sum support on AIX with csum.
+* Extremely large documentation refactor into subchapters
+* Added 'append_privs' option to the mysql_user module
+* Can now update (temporarily change) host variables using the "add_host" module for existing hosts.
+* Fixes for IPv6 addresses in inventory text files
 
 1.3.3 "Top of the World" (reprise) - October 9, 2013
 
