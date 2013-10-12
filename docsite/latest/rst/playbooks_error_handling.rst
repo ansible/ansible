@@ -27,6 +27,35 @@ write a task that looks like this::
       command: /bin/false
       ignore_errors: yes
 
+.. _controlling_what_defines_failure
+
+Controlling What Defines Failure
+````````````````````````````````
+
+.. versionadded:: 1.4
+
+Suppose the erorr code of a command is meaningless and to tell if there
+is a failure what really matters is the output of the command, for instance
+if the string "FAILED" is in the output.  
+
+Ansible in 1.4 and later provides a way to specify this behavior as follows::
+
+    - name: this command prints FAILED when it fails
+      command: /usr/bin/example-command -x -y -z
+      register: command_result
+      failed_when: "'FAILED' in command_result.stderr"
+
+In previous version of Ansible, this can be still be accomplished as follows::
+
+    - name: this command prints FAILED when it fails
+      command: /usr/bin/example-command -x -y -z
+      register: command_result
+      ignore_errors: True
+
+    - name: fail the play if the previous command did not succeed
+      fail: msg="the command failed"
+      when: "'FAILED' in command_result.stderr"
+
 .. _override_the_changed_result:
 
 Overriding The Changed Result
