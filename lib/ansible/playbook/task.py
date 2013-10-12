@@ -41,7 +41,7 @@ class Task(object):
          'sudo_pass', 'when', 'connection', 'environment', 'args',
          'any_errors_fatal', 'changed_when', 'failed_when', 'always_run', 'delay', 'retries', 'until'
     ]
-    
+
     def __init__(self, play, ds, module_vars=None, default_vars=None, additional_conditions=None, role_name=None):
         ''' constructor loads from a task or handler datastructure '''
 

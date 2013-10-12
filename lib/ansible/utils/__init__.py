@@ -165,6 +165,7 @@ def is_changed(result):
 
 def check_conditional(conditional, basedir, inject, fail_on_undefined=False, jinja2=False):
 
+
     if jinja2:
         conditional = "jinja2_compare %s" % conditional
 
@@ -174,6 +175,7 @@ def check_conditional(conditional, basedir, inject, fail_on_undefined=False, jin
         if conditional in inject and str(inject[conditional]).find('-') == -1:
             conditional = inject[conditional]
         conditional = template.template(basedir, conditional, inject, fail_on_undefined=fail_on_undefined)
+        original = conditional.replace("jinja2_compare ","")
         # a Jinja2 evaluation that results in something Python can eval!
         presented = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional
         conditional = template.template(basedir, presented, inject)
@@ -188,13 +190,13 @@ def check_conditional(conditional, basedir, inject, fail_on_undefined=False, jin
             elif conditional.find("is defined") != -1:
                 return False
             else:
-                raise errors.AnsibleError("error while evaluating conditional: %s" % conditional)
+                raise errors.AnsibleError("error while evaluating conditional: %s" % original)
         elif val == "True":
             return True
         elif val == "False":
             return False
         else:
-            raise errors.AnsibleError("unable to evaluate conditional: %s" % conditional)
+            raise errors.AnsibleError("unable to evaluate conditional: %s" % original)
 
     if not isinstance(conditional, basestring):
         return conditional
