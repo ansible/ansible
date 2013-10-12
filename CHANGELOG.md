@@ -6,16 +6,15 @@ Ansible Changes By Release
 Highlighted new features:
 
 * Added do-until feature, which can be used to retry a failed task a specified number of times with a delay in-between the retries.
-* (docs pending) Added failed_when option for tasks, which can be used to specify logical statements that make it easier to determine when a task has failed, or to make it easier to ignore certain non-zero return codes for some commands.
+* Added failed_when option for tasks, which can be used to specify logical statements that make it easier to determine when a task has failed, or to make it easier to ignore certain non-zero return codes for some commands.
 * Added the "subelement" lookup plugin, which allows iteration of the keys of a dictionary or items in a list.
 * Added the capability to use either paramiko or ssh for the inital setup connection of an accelerated playbook.
-* (docs pending) Swap the active user on a task in the middle of a play with the 'remote_user' parameter.
 * Automatically provide advice on common parser errors users encounter.
 * Deprecation warnings are now shown for legacy features: when_integer/etc, only_if, include+with_items, etc.  Can be disabled in ansible.cfg
 * The system will now provide helpful tips around possible YAML syntax errors increasing ease of use for new users.
 * warnings are now shown for using {{ foo }} in loops and conditionals, and suggest leaving the variable expressions bare as per docs.
 * The roles search path is now configurable in ansible.cfg.  'roles_path' in the config setting.
-* (DOCS PENDING) includes with parameters can now be done like roles for consistency:  - { include: song.yml, year:1984, song:'jump' }
+* Includes with parameters can now be done like roles for consistency:  - { include: song.yml, year:1984, song:'jump' }
 * The name of each role is now shown before each task if roles are being used
 
 New modules and plugins:
