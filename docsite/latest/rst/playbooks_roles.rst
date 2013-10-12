@@ -63,7 +63,12 @@ contain all of my wordpress tasks in a single wordpress.yml file, and use it lik
      - include: wordpress.yml user=alice
      - include: wordpress.yml user=bob
 
-Variables passed in can then be used in the included files.  We've already covered them a bit in :doc:`playbooks_variables`.
+If you are running Ansible 1.4 and later, include syntax is streamlined to match roles, and also allows passing list and dictionary parameters::
+   
+    tasks:
+     - { include: wordpress.yml, user: timmy, ssh_keys: [ 'keys/one.txt', 'keys/two.txt' ] }
+
+Using either syntax, variables passed in can then be used in the included files.  We've already covered them a bit in :doc:`playbooks_variables`.
 You can reference them like this::
 
    {{ user }}
