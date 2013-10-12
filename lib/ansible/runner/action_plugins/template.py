@@ -49,6 +49,9 @@ class ActionModule(object):
         if (source is None and 'first_available_file' not in inject) or dest is None:
             result = dict(failed=True, msg="src and dest are required")
             return ReturnData(conn=conn, comm_ok=False, result=result)
+          
+        if options.get('state', None) == 'absent':
+            return self.runner._execute_module(conn, tmp, 'file', module_args, inject=inject, complex_args=complex_args)
 
         # if we have first_available_file in our vars
         # look up the files and use the first one we find as src

@@ -142,7 +142,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec = dict(
-            state = dict(choices=['file','directory','link','hard','touch','absent'], default='file'),
+            state = dict(choices=['file','directory','link','hard','touch','absent','present'], default='file'),
             path  = dict(aliases=['dest', 'name'], required=True),
             recurse  = dict(default='no', type='bool'),
             force = dict(required=False,default=False,type='bool'),
@@ -154,6 +154,8 @@ def main():
     )
 
     params = module.params
+    if params['state'] == 'present':
+        params['state'] = 'file'
     state  = params['state']
     force = params['force']
     params['path'] = path = os.path.expanduser(params['path'])
