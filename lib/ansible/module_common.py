@@ -835,9 +835,38 @@ class AnsibleModule(object):
 
     def backup_local(self, fn):
         '''make a date-marked backup of the specified file, return True or False on success or failure'''
-        # backups named basename-YYYY-MM-DD@HH:MM~
-        ext = time.strftime("%Y-%m-%d@%H:%M~", time.localtime(time.time()))
-        backupdest = '%s.%s' % (fn, ext)
+        # first backup name is basename.orig, then basename.YYYYMMDD@HHMMSS or basename.YYYYMMDD@HHMMSS.<index>
+        # where index is 1,2,3 etc.
+        # backup directory is /var/lib/ansible.backups
+
+        backupdir   = '/var/lib/ansible.backups'
+        backupsuffix = ''  # you can add suffix like "~" etc.
+        useorigext = 1     # use .orig as first-time backup ext
+
+        if not os.path.exists(backupdir):
+            os.makedirs(backupdir, 0700)
+            
+        backupdestdir = os.path.dirname('%s/%s' % (backupdir, fn))
+        if not os.path.exists(backupdestdir):
+            os.makedirs(backupdestdir, 0700)
+
+        backupext = "orig"
+        backupdest = '%s/%s.%s%s' % (backupdir, fn, backupext, backupsuffix)
+
+        if not useorigext or os.path.exists(backupdest):
+            backupidx = 0
+            backupdestexists = 1
+            backupext = time.strftime("%Y%m%d-%H%M%S", time.localtime(time.time()))
+
+            while backupdestexists:
+                if ( backupidx == 0 ):
+                    backupidxsuffix = ''
+                else:
+                    backupidxsuffix = '.%d' % ( backupidx )
+
+                backupdest = '%s/%s.%s%s%s' % (backupdir, fn, backupext, backupidxsuffix, backupsuffix)
+                backupdestexists = os.path.exists(backupdest)
+                backupidx = backupidx+1
 
         try:
             shutil.copy2(fn, backupdest)
