@@ -181,8 +181,8 @@ def main():
         tagdict[tag.name] = tag.value
 
     if state == 'present':
-        if set(tags) == set(tagdict):
-            module.exit_json(msg="Tags already match for %s." %resource, changed=False)
+        if set(tags).issubset(set(tagdict)):
+            module.exit_json(msg="Tags already exists in %s." %resource, changed=False)
         else:
             for (key, value) in set(tags.items()): 
                 if (key, value) not in set(tagdict.items()):
