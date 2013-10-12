@@ -178,8 +178,8 @@ Negative numbers are not supported.  This works as follows::
 Random Choices
 ``````````````
 
-The 'random_choice' feature can be used to pick something at random.  While it's not a load balancer, it can
-somewhat be used as a poor man's loadbalancer in a MacGyver like situation::
+The 'random_choice' feature can be used to pick something at random.  While it's not a load balancer (there are modules
+for those), it can somewhat be used as a poor man's loadbalancer in a MacGyver like situation::
 
     - debug: msg={{ item }}
       with_random_choice:
