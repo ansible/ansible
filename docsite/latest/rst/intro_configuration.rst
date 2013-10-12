@@ -408,7 +408,7 @@ always default to the current user::
 roles_path
 ==========
 
-.. version_added: '1.4'
+.. versionadded: '1.4'
 
 The roles path indicate additional directories beyond the 'roles/' subdirectory of a playbook project to search to find Ansible
 roles.  For instance, if there was a source control repository of common roles and a different repository of playbooks, you might
