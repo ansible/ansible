@@ -403,7 +403,7 @@ always default to the current user::
 
     remote_user = root
 
-.. _roles_path
+.. _roles_path:
 
 roles_path
 ==========

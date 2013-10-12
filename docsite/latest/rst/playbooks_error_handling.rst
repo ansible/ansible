@@ -27,7 +27,7 @@ write a task that looks like this::
       command: /bin/false
       ignore_errors: yes
 
-.. _controlling_what_defines_failure
+.. _controlling_what_defines_failure:
 
 Controlling What Defines Failure
 ````````````````````````````````
