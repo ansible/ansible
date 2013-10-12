@@ -315,7 +315,7 @@ def main():
             follow_redirects = dict(required=False, default='no', type='bool'),
             creates = dict(required=False, default=None),
             removes = dict(required=False, default=None),
-            status_code = dict(required=False, default="200"),
+            status_code = dict(required=False, default=200, type='int'),
             timeout = dict(required=False, default=30, type='int'),
         ),
         check_invalid_arguments=False,
@@ -338,7 +338,7 @@ def main():
     follow_redirects = module.params['follow_redirects']
     creates = module.params['creates']
     removes = module.params['removes']
-    status_code = module.params['status_code']
+    status_code = int(module.params['status_code'])
     socket_timeout = module.params['timeout']
 
     # Grab all the http headers. Need this hack since passing multi-values is currently a bit ugly. (e.g. headers='{"Content-Type":"application/json"}')
@@ -380,11 +380,12 @@ def main():
 
     # Make the request
     resp, content, dest = uri(module, url, dest, user, password, body, method, dict_headers, redirects, socket_timeout)
+    resp['status'] = int(resp['status'])
 
     # Write the file out if requested
     if dest is not None:
-        if resp['status'] == "304":
-            status_code = "304"
+        if resp['status'] == 304:
+            status_code = 304
             changed = False
         else:
             write_file(module, url, dest, content)
@@ -412,7 +413,7 @@ def main():
             except:
                 pass
     if resp['status'] != status_code:
-        module.fail_json(msg="Status code was not " + status_code, content=content, **uresp)
+        module.fail_json(msg="Status code was not " + str(status_code), content=content, **uresp)
     elif return_content:
         module.exit_json(changed=changed, content=content, **uresp)
     else:
