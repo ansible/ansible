@@ -144,6 +144,10 @@ def display(msg, color=None, stderr=False, screen_only=False, log_only=False, ru
 def call_callback_module(method_name, *args, **kwargs):
 
     for callback_plugin in callback_plugins:
+        # a plugin that set self.disabled to True will not be called
+        # see osx_say.py example for such a plugin
+        if getattr(callback_plugin, 'disabled', False):
+            continue
         methods = [
             getattr(callback_plugin, method_name, None),
             getattr(callback_plugin, 'on_any', None)
