@@ -89,7 +89,7 @@ be used like this::
 Looping over Parallel Sets of Data
 ``````````````````````````````````
 
-.. note:: This is an uncommon thing to want to do, but we're documenting it for completeness.  You won't be reaching for this one often.
+.. note:: This is an uncommon thing to want to do, but we're documenting it for completeness.  You probably won't be reaching for this one often.
 
 Suppose you have the following variable data was loaded in via somewhere::
 
@@ -216,6 +216,8 @@ The registered variable will also have a new key "attempts" which will have the 
 Finding First Matched Files
 ```````````````````````````
 
+.. note:: This is an uncommon thing to want to do, but we're documenting it for completeness.  You probably won't be reaching for this one often.
+
 This isn't exactly a loop, but it's close.  What if you want to use a reference to a file based on the first file found
 that matches a given criteria, and some of the filenames are determined by variable names?  Yes, you can do that as follows::
 
@@ -231,7 +233,7 @@ This tool also has a long form version that allows for configurable search paths
       template: src={{ item }} dest=/etc/file.cfg mode=0444 owner=root group=root
       with_first_found:
         - files:
-           - ${inventory_hostname}/etc/file.cfg
+           - "{{inventory_hostname}}/etc/file.cfg"
           paths:
            - ../../../templates.overwrites
            - ../../../templates
@@ -244,6 +246,8 @@ This tool also has a long form version that allows for configurable search paths
 
 Iterating Over The Results of a Program Execution
 `````````````````````````````````````````````````
+
+.. note:: This is an uncommon thing to want to do, but we're documenting it for completeness.  You probably won't be reaching for this one often.
 
 Sometimes you might want to execute a program, and based on the output of that program, loop over the results of that line by line.
 Ansible provides a neat way to do that, though you should remember, this is always executed on the control machine, not the local
@@ -271,6 +275,8 @@ Should you ever need to execute a command remotely, you would not use the above 
 Looping Over A List With An Index
 `````````````````````````````````
 
+.. note:: This is an uncommon thing to want to do, but we're documenting it for completeness.  You probably won't be reaching for this one often.
+
 .. versionadded: 1.3
 
 If you want to loop over an array and also get the numeric index of where you are in the array as you go, you can also do that.
@@ -284,6 +290,8 @@ It's uncommonly used::
 
 Flattening A List
 `````````````````
+
+.. note:: This is an uncommon thing to want to do, but we're documenting it for completeness.  You probably won't be reaching for this one often.
 
 In rare instances you might have several lists of lists, and you just want to iterate over every item in all of those lists.  Assume
 a really crazy hypothetical datastructure::
