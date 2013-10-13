@@ -185,6 +185,9 @@ def parseoptions(options):
     if options:
         options_list = options.strip().split(",")
         for option in options_list:
+            # happen when there is comma at the end
+            if option == '':
+                continue
             if option.find("=") != -1:
                 (arg,val) = option.split("=", 1)
             else:
