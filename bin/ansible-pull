@@ -80,10 +80,12 @@ def select_playbook(path, args):
             return None
         return playbook
     else:
-        hostpb = "%s/%s.yml" % (path, socket.getfqdn())
+        fqdn = socket.getfqdn()
+        hostpb = "%s/%s.yml" % (path, fqdn)
+        shorthostpb = "%s/%s.yml" % (path, fqdn.split('.')[0])
         localpb = "%s/%s" % (path, DEFAULT_PLAYBOOK)
         errors = []
-        for pb in [hostpb, localpb]:
+        for pb in [hostpb, shorthostpb, localpb]:
             rc = try_playbook(pb)
             if rc == 0:
                 playbook = pb
