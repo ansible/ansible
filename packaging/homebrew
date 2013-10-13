@@ -24,7 +24,7 @@ author: Andrew Dunham
 short_description: Package manager for Homebrew
 description:
     - Manages Homebrew packages
-version_added: "1.1"
+version_added: "1.4"
 options:
     name:
         description:
