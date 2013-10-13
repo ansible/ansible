@@ -178,7 +178,7 @@ def main():
     if src:
         src = os.path.expanduser(src)
 
-    if src is not None and os.path.isdir(path) and state != "link":
+    if src is not None and os.path.isdir(path) and state not in ["link", "absent"]:
         params['path'] = path = os.path.join(path, os.path.basename(src))
 
     file_args = module.load_file_common_arguments(params)
