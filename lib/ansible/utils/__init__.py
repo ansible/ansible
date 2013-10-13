@@ -175,7 +175,7 @@ def check_conditional(conditional, basedir, inject, fail_on_undefined=False, jin
         if conditional in inject and str(inject[conditional]).find('-') == -1:
             conditional = inject[conditional]
         conditional = template.template(basedir, conditional, inject, fail_on_undefined=fail_on_undefined)
-        original = conditional.replace("jinja2_compare ","")
+        original = str(conditional).replace("jinja2_compare ","")
         # a Jinja2 evaluation that results in something Python can eval!
         presented = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional
         conditional = template.template(basedir, presented, inject)
