@@ -32,8 +32,9 @@
 # for playbooks in the following order, stopping at the first match:
 #
 # 1. $workdir/path/playbook.yml, if specified
-# 2. $workdir/$hostname.yml
-# 3. $workdir/local.yml
+# 2. $workdir/$fqdn.yml
+# 3. $workdir/$hostname.yml
+# 4. $workdir/local.yml
 #
 # the source repo must contain at least one of these playbooks.
 
