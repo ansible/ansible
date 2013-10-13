@@ -254,7 +254,7 @@ def writekeys(module, filename, keys):
                 option_str = ""
                 if options:
                     option_strings = []
-                    for option_key in options.keys():
+                    for option_key in sorted(options.keys()):
                         if options[option_key]:
                             option_strings.append("%s=%s" % (option_key, options[option_key]))
                         else:
