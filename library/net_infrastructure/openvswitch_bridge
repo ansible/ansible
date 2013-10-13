@@ -92,19 +92,19 @@ class OVSBridge(object):
 
     def run(self):
         '''Make the necessary changes'''
-        result = {'changed': False}
+        changed = False
         try:
             if self.state == 'absent':
                 if self.exists():
                     self.delete()
-                    result['changed'] = True
+                    changed = True
             elif self.state == 'present':
                 if not self.exists():
                     self.add()
-                    result['changed'] = True
+                    changed = True
         except Exception, e:
             self.module.fail_json(msg=str(e))
-        self.module.exit_json(**result)
+        self.module.exit_json(changed=changed)
 
 
 def main():
