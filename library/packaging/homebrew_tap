@@ -76,6 +76,9 @@ def add_tap(module, brew_path, tap):
         msg = 'not a valid tap: %s' % tap
 
     elif not already_tapped(module, brew_path, tap):
+        if module.check_mode:
+            module.exit_json(changed=True)
+
         rc, out, err = module.run_command([
             brew_path,
             'tap',
@@ -128,6 +131,9 @@ def remove_tap(module, brew_path, tap):
         msg = 'not a valid tap: %s' % tap
 
     elif already_tapped(module, brew_path, tap):
+        if module.check_mode:
+            module.exit_json(changed=True)
+
         rc, out, err = module.run_command([
             brew_path,
             'untap',
