@@ -43,6 +43,7 @@ import subprocess
 import sys
 import datetime
 import socket
+import tempfile
 from ansible import utils
 
 DEFAULT_REPO_TYPE = 'git'
@@ -122,15 +123,16 @@ def main(args):
                       'Default is %s.' % DEFAULT_REPO_TYPE)
     options, args = parser.parse_args(args)
 
-    if not options.dest:
-        parser.error("Missing required directory argument")
-        return 1
-
-    options.dest = os.path.abspath(options.dest)
-
     if not options.url:
         parser.error("URL for repository not specified, use -h for help")
         return 1
+
+    if not options.dest:
+        print >>sys.stderr, "No directory given, using temporary location"
+        options.dest = tempfile.mkdtemp(prefix='ansible-pull')
+        options.purge = True
+
+    options.dest = os.path.abspath(options.dest)
 
     now = datetime.datetime.now()
     print >>sys.stderr, now.strftime("Starting ansible-pull at %F %T")

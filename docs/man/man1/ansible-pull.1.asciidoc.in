@@ -52,7 +52,8 @@ OPTIONS
 
 *-d* 'DEST', *--directory=*'DEST'::
 
-Directory to checkout repository into.
+Directory to checkout repository into. If not provided, a temporary directory
+is used and is removed if the playbook ran successfully.
 
 *-U* 'URL', *--url=*'URL'::
 
