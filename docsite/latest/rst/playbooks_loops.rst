@@ -211,6 +211,109 @@ been retried for 5 times with a delay of 10 seconds. The default value for "retr
 The task returns the results returned by the last task run. The results of individual retries can be viewed by -vv option.
 The registered variable will also have a new key "attempts" which will have the number of the retries for the task.
 
+.. _with_first_found:
+
+Finding First Matched Files
+```````````````````````````
+
+This isn't exactly a loop, but it's close.  What if you want to use a reference to a file based on the first file found
+that matches a given criteria, and some of the filenames are determined by variable names?  Yes, you can do that as follows::
+
+    - name: INTERFACES | Create Ansible header for /etc/network/interfaces
+      template: src={{ item }} dest=/etc/foo.conf
+      with_first_found:
+        - "{{ansible_virtualization_type}_foo.conf"
+        - "default_foo.conf"
+
+This tool also has a long form version that allows for configurable search paths.  Here's an example::
+
+    - name: some configuration template
+      template: src={{ item }} dest=/etc/file.cfg mode=0444 owner=root group=root
+      with_first_found:
+        - files:
+           - ${inventory_hostname}/etc/file.cfg
+          paths:
+           - ../../../templates.overwrites
+           - ../../../templates
+        - files:
+            - etc/file.cfg
+          paths:
+            - templates
+
+.. _looping_over_the_results_of_a_program_execution:
+
+Iterating Over The Results of a Program Execution
+`````````````````````````````````````````````````
+
+Sometimes you might want to execute a program, and based on the output of that program, loop over the results of that line by line.
+Ansible provides a neat way to do that, though you should remember, this is always executed on the control machine, not the local
+machine::
+
+    - name: Example of looping over a command result
+      shell: /usr/bin/frobnicate {{ item }}
+      with_lines: /usr/bin/frobnications_per_host --param {{ inventory_hostname }}
+
+Ok, that was a bit arbitrary.  In fact, if you're doing something that is inventory related you might just want to write a dynamic
+inventory source instead (see :doc:`intro_dynamic_inventory`), but this can be occasionally useful in quick-and-dirty implementations.
+
+Should you ever need to execute a command remotely, you would not use the above method.  Instead do this::
+
+    - name: Example of looping over a REMOTE command result
+      shell: /usr/bin/something
+      register: command_result
+
+    - name: Do something with each result
+      shell: /usr/bin/something_else --param {{ item }}
+      with_items: command_result.stdout_lines
+
+.. _indexed_lists:
+
+Looping Over A List With An Index
+`````````````````````````````````
+
+.. versionadded: 1.3
+
+If you want to loop over an array and also get the numeric index of where you are in the array as you go, you can also do that.
+It's uncommonly used::
+
+    - name: indexed loop demo
+      debug: msg="at array position {{ item.0 }} there is a value {{ item.1 }}"
+      with_indexed_items: some_list
+
+.. _flattening_a_list:
+
+Flattening A List
+`````````````````
+
+In rare instances you might have several lists of lists, and you just want to iterate over every item in all of those lists.  Assume
+a really crazy hypothetical datastructure::
+
+    ----
+    # file: roles/foo/vars/main.yml
+    packages_base:
+      - [ 'foo-package', 'bar-package' ]
+    packages_apps:
+      - [ ['one-package', 'two-package' ]]
+      - [ ['red-package'], ['blue-package']]
+
+As you can see the formatting of packages in these lists is all over the place.  How can we install all of the packages in both lists?::
+
+    - name: flattened loop demo
+      yum: name={{ item }} state=installed 
+      with_flattened:
+         - packages_base
+         - packages_apps
+
+That's how!
+
+.. _writing_your_own_iterators:
+
+Writing Your Own Iterators
+``````````````````````````
+
+While you ordinarily shouldn't have to, should you wish to write your own ways to loop over arbitrary datastructures, you can read `developing_plugins` for some starter
+information.  Each of the above features are implemented as plugins in ansible, so there are many implementations to reference.
+
 .. seealso::
 
    :doc:`playbooks`
