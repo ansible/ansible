@@ -46,7 +46,7 @@ options:
         description:
             - options flags to install a package
         required: false
-        default: ""
+        default: null
 notes:  []
 '''
 EXAMPLES = '''
@@ -116,7 +116,10 @@ def install_packages(module, brew_path, packages, options):
         if module.check_mode:
             module.exit_json(changed=True)
 
-        rc, out, err = module.run_command([brew_path, 'install', package, options])
+        if options:
+            rc, out, err = module.run_command([brew_path, 'install', package, options])
+        else:
+            rc, out, err = module.run_command([brew_path, 'install', package])
 
         if not query_package(module, brew_path, package):
             module.fail_json(msg="failed to install %s: %s" % (package, out.strip()))
@@ -129,6 +132,9 @@ def install_packages(module, brew_path, packages, options):
     module.exit_json(changed=False, msg="package(s) already present")
 
 def generate_options_string(install_options):
+    if install_options is None:
+        return ''
+
     options_str =  ''
 
     for option in install_options:
@@ -143,7 +149,7 @@ def main():
             name = dict(aliases=["pkg"], required=True),
             state = dict(default="present", choices=["present", "installed", "absent", "removed"]),
             update_homebrew = dict(default="no", aliases=["update-brew"], type='bool'),
-            install_options = dict(default="", aliases=["options"], type='list')
+            install_options = dict(default=None, aliases=["options"], type='list')
         ),
         supports_check_mode=True
     )
