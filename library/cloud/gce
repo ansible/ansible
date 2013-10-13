@@ -52,9 +52,8 @@ options:
     aliases: []
   name:
     description:
-      - instance name (or name prefix) to be used for each created instance
+      - identifier when working with a single instance
     required: false
-    default: "gce"
     aliases: []
   network:
     description:
@@ -344,7 +343,7 @@ def main():
             instance_names = dict(),
             machine_type = dict(default='n1-standard-1'),
             metadata = dict(),
-            name = dict(),
+            name = dict(default='gce'),
             network = dict(default='default'),
             persistent_boot_disk = dict(type='bool', choices=BOOLEANS, default=False),
             state = dict(choices=['active', 'present', 'absent', 'deleted'],
