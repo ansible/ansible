@@ -22,45 +22,48 @@
 DOCUMENTATION = '''
 ---
 module: sysctl
-short_description: Permit to handle sysctl.conf entries
+short_description: Manage entries in sysctl.conf.
 description:
-    - This module manipulates sysctl entries and performs a I(/sbin/sysctl -p) after changing them.
+    - This module manipulates sysctl entries and optionally performs a C(/sbin/sysctl -p) after changing them.
 version_added: "1.0"
 options:
     name:
         description:
-            - this is the short path, decimal separated, to the sysctl entry
+            - The dot-separated path (aka I(key)) specifying the sysctl variable.
         required: true
         default: null
         aliases: [ 'key' ]
     value:
         description:
-            - set the sysctl value to this entry
+            - Desired value of the sysctl key.
         required: false
         default: null
         aliases: [ 'val' ]
     state:
         description:
-            - whether the entry should be present or absent
+            - Whether the entry should be present or absent.
         choices: [ "present", "absent" ]
         default: present
     checks:
         description:
-            - if C(checks)=I(none) no smart/facultative checks will be made
-            - if C(checks)=I(before) some checks performed before any update (ie. does the sysctl key is writable ?)
-            - if C(checks)=I(after) some checks performed after an update (ie. does kernel give back the set value ?)
-            - if C(checks)=I(both) all the smart checks I(before and after) are performed
+            - If C(none), no smart/facultative checks will be made. If
+              C(before), some checks are performed before any update (i.e. is
+              the sysctl key writable?). If C(after), some checks are performed
+              after an update (i.e. does kernel return the set value?). If
+              C(both), all of the smart checks (C(before) and C(after)) are
+              performed.
         choices: [ "none", "before", "after", "both" ]
         default: both
     reload:
         description:
-            - if C(reload=yes), performs a I(/sbin/sysctl -p) if the C(sysctl_file) is updated
-            - if C(reload=no), does not reload I(sysctl) even if the C(sysctl_file) is updated
+            - If C(yes), performs a I(/sbin/sysctl -p) if the C(sysctl_file) is
+              updated. If C(no), does not reload I(sysctl) even if the
+              C(sysctl_file) is updated.
         choices: [ "yes", "no" ]
         default: "yes"
     sysctl_file:
         description:
-            - specifies the absolute path to C(sysctl.conf), if not /etc/sysctl.conf
+            - Specifies the absolute path to C(sysctl.conf), if not C(/etc/sysctl.conf).
         required: false
         default: /etc/sysctl.conf
 notes: []
