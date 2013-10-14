@@ -262,7 +262,7 @@ class Rhn(RegistrationBase):
             Register system to RHN.  If enable_eus=True, extended update
             support will be requested.
         '''
-        register_cmd = "rhnreg_ks --username '%s' --password '%s' --force" % (self.username, self.password)
+        register_cmd = "/usr/sbin/rhnreg_ks --username '%s' --password '%s' --force" % (self.username, self.password)
         if enable_eus:
             register_cmd += " --use-eus-channel"
         if activationkey is not None:
