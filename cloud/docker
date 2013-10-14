@@ -27,7 +27,7 @@ DOCUMENTATION = '''
 module: docker
 short_description: manage docker containers
 description:
-     - Manage the life cycle of docker containers.
+     - Manage the life cycle of docker containers. This module has a dependency on the docker-py python module.
 options:
   count:
     description:
@@ -133,7 +133,6 @@ options:
     required: false
     default:
     aliases: []
-requirements: [ "docker-py" ]
 author: Cove Schneider
 '''
 
@@ -183,7 +182,6 @@ Stop and remove all of the running tomcat containers:
 
 try:
     import sys
-    import json
     import docker.client
     from requests.exceptions import *
     from urlparse import urlparse
@@ -282,7 +280,7 @@ class AnsibleDocker:
            
         def do_create(count, params):
             results = []
-            for i in range(count):
+            for _ in range(count):
                 result = self.client.create_container(**params)
                 self.increment_counter('created')
                 results.append(result)
