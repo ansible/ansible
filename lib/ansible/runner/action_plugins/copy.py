@@ -118,7 +118,7 @@ class ActionModule(object):
 
         changed = False
         diffs = []
-        module_result = None
+        module_result = {"changed": False}
         for source_full, source_rel in source_files:
             # We need to get a new tmp path for each file, otherwise the copy module deletes the folder.
             tmp = self.runner._make_tmp_path(conn)
@@ -164,6 +164,8 @@ class ActionModule(object):
                     if content is not None:
                         os.remove(tmp_content)
                     diffs.append(diff)
+                    changed = True
+                    module_result = dict(changed=True)
                     continue
 
 
