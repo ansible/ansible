@@ -27,7 +27,7 @@ DOCUMENTATION = '''
 module: docker
 short_description: manage docker containers
 description:
-     - Manage the life cycle of docker containers. This module has a dependency on the docker-py python module.
+     - Manage the life cycle of docker containers.
 options:
   count:
     description:
@@ -133,6 +133,7 @@ options:
     required: false
     default:
     aliases: []
+requirements: [ "docker-py" ]
 author: Cove Schneider
 '''
 
