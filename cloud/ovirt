@@ -24,7 +24,7 @@ author: Vincent Van der Kussen
 short_description: oVirt/RHEV platform management
 description:
     - allows you to create new instances from scratch or image. delete / stop / start instances on the oVirt/RHEV platform
-version_added: "1.3"
+version_added: "1.4"
 options:
   user:
     description:
