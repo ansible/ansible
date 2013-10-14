@@ -200,8 +200,13 @@ def main():
         elif os.stat(path).st_nlink > 1:
             prev_state = 'hard'
         else:
-            # could be many other tings, but defaulting to file
+            # could be many other things, but defaulting to file
             prev_state = 'file'
+
+    recurse = params['recurse']
+
+    if recurse and state == 'file' and prev_state == 'directory':
+        state = 'directory'
 
     if prev_state != 'absent' and state == 'absent':
         try:
@@ -248,7 +253,6 @@ def main():
             changed = True
 
         changed = module.set_directory_attributes_if_different(file_args, changed)
-        recurse = params['recurse']
         if recurse:
             for root,dirs,files in os.walk( file_args['path'] ):
                 for dir in dirs:
