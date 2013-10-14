@@ -30,7 +30,7 @@ as a ".rpmnew" file (or other) as appropriate in the case of updates.
 If you have installed from pip or from source, however, you may want to create this file in order to override
 default settings in Ansible.
 
-You may wish to consult the `ansible.cfg in source control <https://raw.github.com/ansible/ansible/devel/examples/ansible.cfg>_` for
+You may wish to consult the `ansible.cfg in source control <https://raw.github.com/ansible/ansible/devel/examples/ansible.cfg>` for
 all of the possible latest values.
 
 .. _environmental_configuration:
@@ -176,7 +176,7 @@ executable
 ==========
 
 This indicates the command to use to spawn a shell under a sudo environment.  Users may need to change this in
-rare instances to /bin/bash in rare instances wehn sudo is constrained, but in most cases it may be left as is::
+rare instances to /bin/bash in rare instances when sudo is constrained, but in most cases it may be left as is::
 
    #executable = /bin/bash
 
@@ -365,7 +365,7 @@ private_key_file
 ================
 
 If you are using a pem file to authenticate with machines rather than SSH agent or passwords, you can set the default
-value here to avoid re-specifying --ansible-private-keyfile with every invocation::
+value here to avoid re-specifying ``--ansible-private-keyfile`` with every invocation::
 
   private_key_file=/path/to/file.pem
 
@@ -445,7 +445,7 @@ will not need to change this setting::
 sudo_user
 =========
 
-This is the default user to sudo to if --sudo-user is not specified or 'sudo_user' is not specified in an Ansible
+This is the default user to sudo to if ``--sudo-user`` is not specified or 'sudo_user' is not specified in an Ansible
 playbook.  The default is the most logical: 'root'::
 
    sudo_user=root
@@ -464,7 +464,7 @@ This is the default SSH timeout to use on connection attempts::
 transport
 =========
 
-This is the default transport ot use if "-c <transport_name>" is not specified to /usr/bin/ansible or /usr/bin/ansible-playbook.
+This is the default transport to use if "-c <transport_name>" is not specified to /usr/bin/ansible or /usr/bin/ansible-playbook.
 The default is 'smart', which will use 'ssh' (OpenSSH based) if the local operating system is new enough to support ControlPersist
 technology, and then will otherwise use 'paramiko'.  Other transport options include 'local', 'chroot', 'jail', and so on.
 
