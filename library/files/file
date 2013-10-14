@@ -144,6 +144,7 @@ def main():
         argument_spec = dict(
             state = dict(choices=['file','directory','link','hard','touch','absent'], default='file'),
             path  = dict(aliases=['dest', 'name'], required=True),
+            original_basename = dict(required=False), # Internal use only, for recursive ops
             recurse  = dict(default='no', type='bool'),
             force = dict(required=False,default=False,type='bool'),
             diff_peek = dict(default=None),
@@ -179,7 +180,11 @@ def main():
         src = os.path.expanduser(src)
 
     if src is not None and os.path.isdir(path) and state != "link":
-        params['path'] = path = os.path.join(path, os.path.basename(src))
+        if params['original_basename']:
+            basename = params['original_basename']
+        else:
+            basename = os.path.basename(src)
+        params['path'] = path = os.path.join(path, basename)
 
     file_args = module.load_file_common_arguments(params)
 
