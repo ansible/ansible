@@ -136,6 +136,50 @@ options:
 author: Cove Schneider
 '''
 
+EXAMPLES = '''
+Start one docker container running tomcat in each host of the web group and bind tomcat's listening port to 8080
+on the host:
+
+- hosts: web
+  sudo: yes
+  tasks:
+  - name: run tomcat servers
+    docker: image=centos command="service tomcat6 start" ports=:8080
+
+The tomcat server's port is NAT'ed to a dynamic port on the host, but you can determine which port the server was
+mapped to using $DockerContainers:
+
+- hosts: web
+  sudo: yes
+  tasks:
+  - name: run tomcat servers
+    docker: image=centos command="service tomcat6 start" ports=8080 count=5
+  - name: Display IP address and port mappings for containers
+    debug: msg="Mapped to {{inventory_hostname}}:{{item.NetworkSettings.PortMapping.Tcp['8080']}}"
+    with_items: $DockerContainers
+
+Just as in the previous example, but iterates over the list of docker containers with a sequence:
+
+- hosts: web
+  sudo: yes
+  vars:
+    start_containers_count: 5
+  tasks:
+  - name: run tomcat servers
+    docker: image=centos command="service tomcat6 start" ports=8080 count={{start_containers_count}}
+  - name: Display IP address and port mappings for containers
+    debug: msg="Mapped to {{inventory_hostname}}:{{DockerContainers[{{item}}].NetworkSettings.PortMapping.Tcp['8080']}}"
+    with_sequence: start=0 end={{start_containers_count - 1}}
+
+Stop and remove all of the running tomcat containers:
+
+- hosts: web
+  sudo: yes
+  tasks:
+  - name: stop tomcat servers
+    docker: image=centos command="service tomcat6 start" state=absent
+'''
+
 try:
     import sys
     import json
