@@ -197,6 +197,8 @@ At a more basic level, they can be used to add chaos and excitement to otherwise
 Do-Until Loops
 ``````````````
 
+.. versionadded: 1.4
+
 Sometimes you would want to retry a task until a certain condition is met.  Here's an example::
    
     - action: shell /usr/bin/foo
