@@ -113,6 +113,10 @@ class ActionModule(object):
                     full_path = os.path.join(base_path, file)
                     rel_path = full_path[sz:]
                     source_files.append((full_path, rel_path))
+            # If it's recursive copy, destination is always a dir,
+            # explictly mark it so (note - copy module relies on this).
+            if not dest.endswith("/"):
+                dest += "/"
         else:
             source_files.append((source, os.path.basename(source)))
 
@@ -192,7 +196,11 @@ class ActionModule(object):
                     # don't send down raw=no
                     module_args.pop('raw')
 
-                module_args_tmp = "%s src=%s original_basename=%s" % (module_args, pipes.quote(tmp_src), pipes.quote(source_rel))
+                # src and dest here come after original and override them
+                # we pass dest only to make sure it includes trailing slash
+                # in case of recursive copy
+                module_args_tmp = "%s src=%s dest=%s original_basename=%s" % (module_args,
+                                  pipes.quote(tmp_src), pipes.quote(dest), pipes.quote(source_rel))
                 module_return = self.runner._execute_module(conn, tmp, 'copy', module_args_tmp, inject=inject, complex_args=complex_args)
 
             else:
