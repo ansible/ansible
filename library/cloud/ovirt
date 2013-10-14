@@ -23,7 +23,7 @@ module: ovirt
 author: Vincent Van der Kussen
 short_description: oVirt/RHEV platform management
 description:
-    - allows you to create new instances from scratch or image. delete / stop / start instances on the oVirt/RHEV platform
+    - allows you to create new instances, either from scratch or an image, in addition to deleting or stopping instances on the oVirt/RHEV platform
 version_added: "1.4"
 options:
   user:
@@ -58,14 +58,14 @@ options:
     aliases: []
   resource_type:
     description:
-     - wether you want to deploy an image or create an instance from scratch.
+     - whether you want to deploy an image or create an instance from scratch.
     default: null
     required: false
     aliases: []
     choices: [ 'new', 'template' ]
   zone:
     description:
-     - the name of the oVirt cluster you want to deploy the instance
+     - deploy the image to this oVirt cluster
     default: null
     required: false
     aliases: []
