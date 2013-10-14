@@ -189,8 +189,9 @@ class ActionModule(object):
                 if raw:
                     # don't send down raw=no
                     module_args.pop('raw')
-                module_args = "%s src=%s original_basename=%s" % (module_args, pipes.quote(tmp_src), pipes.quote(source_rel))
-                module_return = self.runner._execute_module(conn, tmp, 'copy', module_args, inject=inject, complex_args=complex_args)
+
+                module_args_tmp = "%s src=%s original_basename=%s" % (module_args, pipes.quote(tmp_src), pipes.quote(source_rel))
+                module_return = self.runner._execute_module(conn, tmp, 'copy', module_args_tmp, inject=inject, complex_args=complex_args)
 
             else:
                 # no need to transfer the file, already correct md5, but still need to call
@@ -206,10 +207,10 @@ class ActionModule(object):
                 if raw:
                     # don't send down raw=no
                     module_args.pop('raw')
-                module_args = "%s src=%s" % (module_args, pipes.quote(tmp_src))
+                module_args_tmp = "%s src=%s" % (module_args, pipes.quote(tmp_src))
                 if self.runner.noop_on_check(inject):
-                    module_args = "%s CHECKMODE=True" % module_args
-                module_return = self.runner._execute_module(conn, tmp, 'file', module_args, inject=inject, complex_args=complex_args)
+                    module_args_tmp = "%s CHECKMODE=True" % module_args_tmp
+                module_return = self.runner._execute_module(conn, tmp, 'file', module_args_tmp, inject=inject, complex_args=complex_args)
 
             module_result = module_return.result
             if module_result.get('failed') == True:
