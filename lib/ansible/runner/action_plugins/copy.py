@@ -217,7 +217,8 @@ class ActionModule(object):
                 if raw:
                     # don't send down raw=no
                     module_args.pop('raw')
-                module_args_tmp = "%s src=%s" % (module_args, pipes.quote(tmp_src))
+                module_args_tmp = "%s src=%s original_basename=%s" % (module_args,
+                                  pipes.quote(tmp_src), pipes.quote(source_rel))
                 if self.runner.noop_on_check(inject):
                     module_args_tmp = "%s CHECKMODE=True" % module_args_tmp
                 module_return = self.runner._execute_module(conn, tmp, 'file', module_args_tmp, inject=inject, complex_args=complex_args)
