@@ -70,7 +70,8 @@ def get_acl(module,path,entry,follow):
     if not follow:
         cmd.append('-h')
     # prevents absolute path warnings and removes headers
-    cmd.append('-cp')
+    cmd.append('--omit-header')
+    cmd.append('--absolute-names')
     cmd.append(path)
 
     return _run_acl(module,cmd)
