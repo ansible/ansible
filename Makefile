@@ -178,5 +178,5 @@ modulepages:
 # because this requires Sphinx it is not run as part of every build, those building the RPM and so on can ignore this
 
 webdocs:
-	(cd docsite/latest; make docs)
+	(cd docsite/; make docs)
 
