@@ -17,51 +17,50 @@
 DOCUMENTATION = '''
 ---
 module: acl
-version_added: "1.3"
-short_description: set and retrieve file acl
+version_added: "1.4"
+short_description: Sets and retrieves file ACL information.
 description:
-     - Sets and retrivies acl for a file
+     - Sets and retrieves file ACL information.
 options:
   name:
     required: true
     default: None
     description:
-      - The full path of the file/object to get the facts of
+      - The full path of the file or object.
     aliases: ['path']
   entry:
     required: false
     default: None
     description:
-      - The acl to set/remove. MUST always quote! In form of '<type>:<qualifier>:<perms>', qualifier may be empty for some types but type and perms are always requried. '-' can be used as placeholder when you don't care about permissions.
+      - The acl to set or remove.  This must always be quoted in the form of '<type>:<qualifier>:<perms>'.  The qualifier may be empty for some types, but the type and perms are always requried. '-' can be used as placeholder when you do not care about permissions.
+
   state:
     required: false
     default: query
     choices: [ 'query', 'present', 'absent' ]
     description:
-      - defines which operation you want to do. C(query) get the current acl C(present) sets/changes the acl, requires permissions field C(absent) deletes the acl, requires permissions field
+      - defines whether the ACL should be present or not.  The C(query) state gets the current acl C(present) without changing it, for use in 'register' operations.
   follow:
     required: false
     default: yes
     choices: [ 'yes', 'no' ]
     description:
-      - if yes, dereferences symlinks and sets/gets attributes on symlink target, otherwise acts on symlink itself.
+      - whether to follow symlinks on the path if a symlink is encountered.
 author: Brian Coca
 notes:
-    - The "acl" module requires that acl is enabled on the target filesystem and that the setfacl and getfacl binaries are installed.
-author: Brian Coca
-notes:
-    - The "acl" module requires the acl command line utilities be installed on the target machine and  that acl is enabled on the target filesystem.
+    - The "acl" module requires that acls are enabled on the target filesystem and that the setfacl and getfacl binaries are installed.
 '''
 
 EXAMPLES = '''
-# Obtain the acl of /etc/foo.conf
-- acl: name=/etc/foo.conf
-
-# Grants joe read access to foo
+# Grant user Joe read access to a file
 - acl: name=/etc/foo.conf entry="user:joe:r" state=present
 
-# Removes the acl for joe
+# Removes the acl for Joe on a specific file
 - acl: name=/etc/foo.conf entry="user:joe:-" state=absent
+
+# Obtain the acl for a specific file
+- acl: name=/etc/foo.conf
+  register: acl_info
 '''
 
 def get_acl(module,path,entry,follow):
