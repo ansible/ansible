@@ -134,6 +134,7 @@ options:
     default:
     aliases: []
 author: Cove Schneider
+requirements: [ "docker-py" ]
 '''
 
 EXAMPLES = '''
