@@ -21,6 +21,7 @@ New modules and plugins:
 
 * cloud:ec2_eip -- manage AWS elastic IPs
 * cloud:rax_clb -- manage Rackspace cloud load balancers
+* files: acl -- set or get acls on a file
 * system: firewalld -- manage the firewalld configuration
 * system: host -- manage `/etc/hosts` file entries
 * system: modprobe -- manage kernel modules on systems that support modprobe/rmmod
