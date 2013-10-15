@@ -896,15 +896,19 @@ def is_list_of_strings(items):
             return False
     return True
 
-def safe_eval(str):
+def safe_eval(str, locals=None, include_exceptions=False, template_call=False):
     '''
     this is intended for allowing things like:
-    with_items: {{ a_list_variable }}
+    with_items: a_list_variable
     where Jinja2 would return a string
     but we do not want to allow it to call functions (outside of Jinja2, where
     the env is constrained)
     '''
     # FIXME: is there a more native way to do this?
+
+    if template_call:
+        # for the debug module in Ansible, allow debug of the form foo.bar.baz versus Python dictionary form
+        str = template.template(None, "{{ %s }}" % str, locals)
 
     def is_set(var):
         return not var.startswith("$") and not '{{' in var
@@ -922,8 +926,18 @@ def safe_eval(str):
     if re.search(r'import \w+', str):
         return str
     try:
-        return eval(str)
+        result = None
+        if not locals:
+            result = eval(str)
+        else:
+            result = eval(str, None, locals)
+        if include_exceptions:
+            return (result, None)
+        else:
+            return result
     except Exception, e:
+        if include_exceptions:
+            return (str, e)
         return str
 
 

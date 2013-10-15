@@ -35,7 +35,10 @@ options:
         message.
     required: false
     default: "Hello world!"
-author: Dag Wieers
+  var:
+    description:
+      - A variable name to debug.  Mutually exclusive with the 'msg' option.
+author: Dag Wieers, Michael DeHaan
 '''
 
 EXAMPLES = '''
@@ -44,4 +47,9 @@ EXAMPLES = '''
 
 - debug: msg="System {{ inventory_hostname }} has gateway {{ ansible_default_ipv4.gateway }}"
   when: ansible_default_ipv4.gateway is defined
+
+- shell: /usr/bin/uptime
+  register: result
+- debug: var=result
+
 '''
