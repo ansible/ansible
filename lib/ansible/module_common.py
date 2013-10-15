@@ -900,7 +900,7 @@ class AnsibleModule(object):
             # rename might not preserve context
             self.set_context_if_different(dest, context, False)
 
-    def run_command(self, args, check_rc=False, close_fds=False, executable=None, data=None, binary_data=False):
+    def run_command(self, args, check_rc=False, close_fds=False, executable=None, data=None, binary_data=False, path_prefix=None):
         '''
         Execute a command, returns rc, stdout, and stderr.
         args is the command to run
@@ -924,6 +924,10 @@ class AnsibleModule(object):
         rc = 0
         msg = None
         st_in = None
+        env=os.environ
+        if path_prefix:
+            env['PATH']="%s:%s" % (path_prefix, env['PATH'])
+
         if data:
             st_in = subprocess.PIPE
         try:
@@ -933,7 +937,8 @@ class AnsibleModule(object):
                                    close_fds=close_fds,
                                    stdin=st_in,
                                    stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE)
+                                   stderr=subprocess.PIPE,
+                                   env=env)
             if data:
                 if not binary_data:
                     data += '\\n'
