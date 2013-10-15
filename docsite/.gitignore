@@ -11,3 +11,4 @@ ansible*.xml
 .buildinfo
 objects.inv
 .doctrees
+rst/modules/*.rst
