@@ -16,6 +16,7 @@ Highlighted new features:
 * The roles search path is now configurable in ansible.cfg.  'roles_path' in the config setting.
 * Includes with parameters can now be done like roles for consistency:  - { include: song.yml, year:1984, song:'jump' }
 * The name of each role is now shown before each task if roles are being used
+* Adds a "var=" option to the debug module for debugging variable data.  "debug: var=hostvars['hostname']" and "debug: var=foo" are all valid syntax.
 
 New modules and plugins:
 

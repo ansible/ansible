@@ -38,13 +38,21 @@ class ActionModule(object):
 
         kv = utils.parse_kv(module_args)
         args.update(kv)
-        if not 'msg' in args:
+
+        if not 'msg' in args and not 'var' in args:
             args['msg'] = 'Hello world!'
 
-        if 'fail' in args and utils.boolean(args['fail']):
-            result = dict(failed=True, msg=args['msg'])
-        else:
-            result = dict(msg=args['msg'])
+        result = {}
+        if 'msg' in args:
+            if 'fail' in args and utils.boolean(args['fail']):
+                result = dict(failed=True, msg=args['msg'])
+            else:
+                result = dict(msg=args['msg'])
+        elif 'var' in args:
+            (intermediate, exception) = utils.safe_eval(args['var'], inject, include_exceptions=True, template_call=True)
+            if exception is not None:
+                intermediate = "failed to evaluate: %s" % str(exception)
+            result[args['var']] = intermediate
 
         # force flag to make debug output module always verbose
         result['verbose_always'] = True
