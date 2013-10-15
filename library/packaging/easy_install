@@ -126,7 +126,7 @@ def main():
         virtualenv=dict(default=None, required=False),
         virtualenv_site_packages=dict(default='no', type='bool'),
         virtualenv_command=dict(default='virtualenv', required=False),
-        executable=dict(default=None, required=False),
+        executable=dict(default='easy_install', required=False),
     )
 
     module = AnsibleModule(argument_spec=arg_spec, supports_check_mode=True)
