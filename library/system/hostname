@@ -233,6 +233,64 @@ class CentOSHostname(Hostname):
 
 # ===========================================
 
+class FedoraStrategy(GenericStrategy):
+    """
+    This is a Fedora family Hostname manipulation strategy class - it uses
+    the hostnamectl command.
+    """
+
+    def get_current_hostname(self):
+        cmd = ['hostname']
+        rc, out, err = self.module.run_command(cmd)
+        if rc != 0:
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
+                (rc, out, err))
+        return out.strip()
+
+    def set_current_hostname(self, name):
+        cmd = ['hostnamectl', '--transient', 'set-hostname', name]
+        rc, out, err = self.module.run_command(cmd)
+        if rc != 0:
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
+                (rc, out, err))
+
+    def get_permanent_hostname(self):
+        cmd = 'hostnamectl status | awk \'/^ *Static hostname:/{printf("%s", $3)}\''
+        rc, out, err = self.module.run_command(cmd)
+        if rc != 0:
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
+                (rc, out, err))
+	return out
+
+    def set_permanent_hostname(self, name):
+        cmd = ['hostnamectl', '--pretty', 'set-hostname', name]
+        rc, out, err = self.module.run_command(cmd)
+        if rc != 0:
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
+                (rc, out, err))
+        cmd = ['hostnamectl', '--static', 'set-hostname', name]
+        rc, out, err = self.module.run_command(cmd)
+        if rc != 0:
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
+                (rc, out, err))
+
+class FedoraHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Fedora'
+    strategy_class = FedoraStrategy
+
+class OpenSUSEHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Opensuse '
+    strategy_class = FedoraStrategy
+
+class ArchHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Arch'
+    strategy_class = FedoraStrategy
+
+# ===========================================
+
 def main():
     module = AnsibleModule(
         argument_spec = dict(
