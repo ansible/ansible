@@ -207,6 +207,11 @@ def parsekey(raw_key):
         # this line is just 'type key user@host'
         (type,key,comment) = key_parts
         options = None
+    elif len(key_parts) == 2:
+        # assuming just a type/key with no comment
+        (type,key) = key_parts
+        comment = ""
+        options = None
     else:
         # invalid key, maybe a comment?
         return None
