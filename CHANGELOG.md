@@ -16,11 +16,14 @@ Highlighted new features:
 * The roles search path is now configurable in ansible.cfg.  'roles_path' in the config setting.
 * Includes with parameters can now be done like roles for consistency:  - { include: song.yml, year:1984, song:'jump' }
 * The name of each role is now shown before each task if roles are being used
+* Adds a "var=" option to the debug module for debugging variable data.  "debug: var=hostvars['hostname']" and "debug: var=foo" are all valid syntax.
 
 New modules and plugins:
 
 * cloud:ec2_eip -- manage AWS elastic IPs
 * cloud:rax_clb -- manage Rackspace cloud load balancers
+* cloud:ovirt -- VM lifecycle controls for ovirt
+* files: acl -- set or get acls on a file
 * system: firewalld -- manage the firewalld configuration
 * system: host -- manage `/etc/hosts` file entries
 * system: modprobe -- manage kernel modules on systems that support modprobe/rmmod

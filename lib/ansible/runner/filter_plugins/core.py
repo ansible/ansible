@@ -120,6 +120,7 @@ class FilterModule(object):
             # path
             'basename': os.path.basename,
             'dirname': os.path.dirname,
+            'realpath': os.path.realpath,
 
             # failure testing
             'failed'  : failed,
