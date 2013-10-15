@@ -54,6 +54,7 @@ options:
     description:
       - HTTP[s] proxy to be used if C(src) is a URL.
   response_file:
+    version_added: "1.4"
     description:
       - Specifies the location of a response file to be used if package expects input on install.
 '''
