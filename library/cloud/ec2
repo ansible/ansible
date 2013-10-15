@@ -184,9 +184,17 @@ options:
     required: false
     default: 'present'
     aliases: []
+  root_ebs_size:
+    version_added: "1.4"
+    type: "int"
+    desription:
+      - size of the root volume in gigabytes, only applicable when the instance has an ebs backed root
+      required: false
+      default: null
+      aliases: []
 
 requirements: [ "boto" ]
-author: Seth Vidal, Tim Gerla, Lester Wade
+author: Seth Vidal, Tim Gerla, Lester Wade, John Jarvis
 '''
 
 EXAMPLES = '''
@@ -202,6 +210,17 @@ EXAMPLES = '''
     wait: yes
     group: webserver
     count: 3
+
+# Basic provisioning example with setting the root volume size to 50GB
+- local_action:
+    module: ec2
+    keypair: mykey
+    instance_type: c1.medium
+    image: emi-40603AD1
+    wait: yes
+    group: webserver
+    count: 3
+    root_ebs_size: 50
 
 # Advanced example with tagging and CloudWatch
 - local_action:
@@ -380,7 +399,15 @@ def create_instances(module, ec2):
     vpc_subnet_id = module.params.get('vpc_subnet_id')
     private_ip = module.params.get('private_ip')
     instance_profile_name = module.params.get('instance_profile_name')
+    root_ebs_size = module.params.get('root_ebs_size')
 
+    if root_ebs_size:
+        dev_sda1 = boto.ec2.blockdevicemapping.EBSBlockDeviceType()
+        dev_sda1.size = root_ebs_size
+        bdm = boto.ec2.blockdevicemapping.BlockDeviceMapping()
+        bdm['/dev/sda1'] = dev_sda1
+    else:
+        bdm = None
 
     # group_id and group_name are exclusive of each other
     if group_id and group_name:
@@ -442,7 +469,8 @@ def create_instances(module, ec2):
                       'ramdisk_id': ramdisk,
                       'subnet_id': vpc_subnet_id,
                       'private_ip_address': private_ip,
-                      'user_data': user_data}
+                      'user_data': user_data,
+                      'block_device_map': bdm}
 
             if boto_supports_profile_name_arg(ec2):
                 params['instance_profile_name'] = instance_profile_name
@@ -607,6 +635,7 @@ def main():
             instance_profile_name = dict(),
             instance_ids = dict(type='list'),
             state = dict(default='present'),
+            root_ebs_size = dict(default=None, type='int'),
         )
     )
 
