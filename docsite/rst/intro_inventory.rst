@@ -128,7 +128,7 @@ variables to groups.  These variables can be used by /usr/bin/ansible-playbook, 
    southeast
    northeast
    southwest
-   southeast
+   northwest
 
 If you need to store lists or hash data, or prefer to keep host and group specific variables
 separate from the inventory file, see the next section.
