@@ -58,8 +58,10 @@ class UnimplementedStrategy(object):
     def unimplemented_error(self):
         platform = get_platform()
         distribution = get_distribution()
-        msg_platform = '%s (%s)' % (platform, distribution) \
-            if distribution is not None else platform
+        if distribution is not None:
+            msg_platform = '%s (%s)' % (platform, distribution)
+        else:
+            msg_platform = platform
         self.module.fail_json(
             msg='hostname module cannot be used on platform %s' % msg_platform)
 
