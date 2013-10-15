@@ -1,6 +1,6 @@
 #!/usr/bin/make
 SITELIB = $(shell python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
-FORMATTER=../../hacking/module_formatter.py
+FORMATTER=../hacking/module_formatter.py
 
 all: clean docs
 
@@ -26,7 +26,7 @@ clean:
 
 .PHONEY: docs clean
 
-modules: $(FORMATTER) ../../hacking/templates/rst.j2
-	PYTHONPATH=../../lib $(FORMATTER) -t rst --template-dir=../../hacking/templates --module-dir=../../library -o rst/modules/ --includes-file=rst/modules/_list.rst
+modules: $(FORMATTER) ../hacking/templates/rst.j2
+	PYTHONPATH=../lib $(FORMATTER) -t rst --template-dir=../hacking/templates --module-dir=../library -o rst/modules/ --includes-file=rst/modules/_list.rst
 
 
