@@ -238,6 +238,16 @@ def get_download_url(module, s3, bucket, obj, expiry, changed=True):
     except s3.provider.storage_response_error, e:
         module.fail_json(msg= str(e))
 
+def is_walrus(s3_url):
+    """ Return True if it's Walrus endpoint, not S3
+
+    We assume anything other than *.amazonaws.com is Walrus"""
+    if s3_url is not None:
+        o = urlparse.urlparse(s3_url)
+        return not o.hostname.endswith('amazonaws.com')
+    else:
+        return False
+
 def main():
     module = AnsibleModule(
         argument_spec = dict(
@@ -286,7 +296,7 @@ def main():
             aws_access_key = os.environ['EC2_ACCESS_KEY']
 
     # If we have an S3_URL env var set, this is likely to be Walrus, so change connection method
-    if 'S3_URL' in os.environ:
+    if is_walrus(s3_url):
         try:
             walrus = urlparse.urlparse(s3_url).hostname
             s3 = boto.connect_walrus(walrus, aws_access_key, aws_secret_key)
