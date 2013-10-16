@@ -161,7 +161,7 @@ def main():
                 continue
 
             filename = utils.plugins.module_finder.find_plugin(module)
-            if os.path.isdir(filename):
+            if filename is None:
                 continue
             try:
                 doc, plainexamples = module_docs.get_docstring(filename)
