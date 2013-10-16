@@ -76,10 +76,10 @@ EXAMPLES = '''
 # Remove an Apt signing key, uses whichever key is at the URL
 - apt_key: url=https://ftp-master.debian.org/keys/archive-key-6.0.asc state=absent
 
-# Remove a Apt specific signing key
-- apt_key: id=473041FA state=absent
+# Remove a Apt specific signing key, leading 0x is valid
+- apt_key: id=0x473041FA state=absent
 
-# Add a key from a file on the Ansible server    
+# Add a key from a file on the Ansible server
 - apt_key: data="{{ lookup('file', 'apt.gpg') }}" state=present
 
 # Add an Apt signing key to a specific keyring file
@@ -187,7 +187,13 @@ def main():
     keyring         = module.params['keyring']
     state           = module.params['state']
     changed         = False
-    
+
+    try:
+        _ = int(key_id, 16)
+        key_id = key_id.lstrip('0x')
+    except ValueError:
+        module.fail_json("Invalid key_id")
+
     # FIXME: I think we have a common facility for this, if not, want
     check_missing_binaries(module)
 
