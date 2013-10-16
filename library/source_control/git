@@ -41,7 +41,8 @@ options:
         default: "HEAD"
         description:
             - What version of the repository to check out.  This can be the
-              git I(SHA), the literal string C(HEAD), a branch name, or a tag name.
+              full 40-character I(SHA-1) hash, the literal string C(HEAD), a
+              branch name, or a tag name.
     remote:
         required: false
         default: "origin"
@@ -117,7 +118,7 @@ def get_version(git_path, dest, ref="HEAD"):
     os.chdir(dest)
     cmd = "%s rev-parse %s" % (git_path, ref)
     sha = os.popen(cmd).read().rstrip("\n")
-    return sha
+    return str(sha)
 
 def clone(git_path, module, repo, dest, remote, depth, version, bare):
     ''' makes a new git repo if it does not already exist '''
@@ -158,11 +159,11 @@ def reset(git_path, module, dest, force, bare):
     cmd = "%s reset --hard HEAD" % (git_path,)
     return module.run_command(cmd, check_rc=True)
 
-def get_remote_head(git_path, module, dest, version, remote):
+def get_remote_head(git_path, module, dest, version, remote, bare):
     cmd = ''
     os.chdir(dest)
     if version == 'HEAD':
-        version = get_head_branch(git_path, module, dest, remote)
+        version = get_head_branch(git_path, module, dest, remote, bare)
     if is_remote_branch(git_path, module, dest, remote, version):
         cmd = '%s ls-remote %s -h refs/heads/%s' % (git_path, remote, version)
     elif is_remote_tag(git_path, module, dest, remote, version):
@@ -175,7 +176,7 @@ def get_remote_head(git_path, module, dest, version, remote):
     if len(out) < 1:
         module.fail_json(msg="Could not determine remote revision for %s" % version)
     rev = out.split()[0]
-    return rev
+    return str(rev)
 
 def is_remote_tag(git_path, module, dest, remote, version):
     os.chdir(dest)
@@ -222,7 +223,7 @@ def is_not_a_branch(git_path, module, dest):
             return True
     return False
 
-def get_head_branch(git_path, module, dest, remote, bare):
+def get_head_branch(git_path, module, dest, remote, bare=False):
     '''
     Determine what branch HEAD is associated with.  This is partly
     taken from lib/ansible/utils/__init__.py.  It finds the correct
@@ -254,7 +255,7 @@ def get_head_branch(git_path, module, dest, remote, bare):
         f = open(os.path.join(repo_path, 'refs', 'remotes', remote, 'HEAD'))
     branch = f.readline().split('/')[-1].rstrip("\n")
     f.close()
-    return branch
+    return str(branch)
 
 def fetch(git_path, module, repo, dest, version, remote):
     ''' updates repo from remote sources '''
@@ -373,12 +374,13 @@ def main():
         if rc != 0:
             module.fail_json(msg=err)
         # exit if already at desired sha version
-        # match given abbreviated version
+        # expand given version to full SHA-1
         actual_version = get_version(git_path, dest, version)
         if before == actual_version:
-            module.exit_json(changed=False)
+            # Note that we clobbered localmods, so it did change
+            module.exit_json(changed=local_mods)
         # check or get changes from remote
-        remote_head = get_remote_head(git_path, module, dest, version, remote)
+        remote_head = get_remote_head(git_path, module, dest, version, remote, bare)
         if module.check_mode:
             changed = False
             if remote_head == actual_version:

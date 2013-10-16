@@ -178,6 +178,7 @@ class TestRunner(unittest.TestCase):
         self._run('command', ['git add *', 'chdir=/tmp/gitdemo'])
         self._run('command', ['git commit -m "test commit 2"', 'chdir=/tmp/gitdemo'])
         result = self._run('git', ["repo=\"file:///tmp/gitdemo\"", "dest=/tmp/gd"])
+        print result
         assert result['changed']
         # test the force option not set
         self._run('file', ['path=/tmp/gd/a', 'state=absent'])
