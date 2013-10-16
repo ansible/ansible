@@ -356,7 +356,7 @@ def main():
     if not os.path.exists(gitconfig):
         if module.check_mode:
             module.exit_json(changed=True)
-        (rc, out, err) = clone(git_path, module, repo, dest, remote, depth, version, bare)
+        clone(git_path, module, repo, dest, remote, depth, version, bare)
     elif not update:
         # Just return having found a repo already in the dest path
         # this does no checking that the repo is the actual repo
@@ -370,9 +370,7 @@ def main():
         # if force, do a reset
         if local_mods and module.check_mode:
             module.exit_json(changed=True, msg='Local modifications exist')
-        (rc, out, err) = reset(git_path, module, dest, force)
-        if rc != 0:
-            module.fail_json(msg=err)
+        reset(git_path, module, dest, force)
         # exit if already at desired sha version
         # expand given version to full SHA-1
         actual_version = get_version(git_path, dest, version)
@@ -397,16 +395,12 @@ def main():
                 else:
                     changed = False
             module.exit_json(changed=changed, before=before, after=remote_head)
-        (rc, out, err) = fetch(git_path, module, repo, dest, version, remote)
-        if rc != 0:
-            module.fail_json(msg=err)
+        fetch(git_path, module, repo, dest, version, remote)
 
     # switch to version specified regardless of whether
     # we cloned or pulled
     if not bare:
-        (rc, out, err) = switch_version(git_path, module, dest, remote, version)
-        if rc != 0:
-            module.fail_json(msg=err)
+        switch_version(git_path, module, dest, remote, version)
 
     # determine if we changed anything
     after = get_version(git_path, dest)
