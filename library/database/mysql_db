@@ -118,9 +118,11 @@ def db_delete(cursor, db):
 
 def db_dump(module, host, user, password, db_name, target, socket=None):
     cmd = module.get_bin_path('mysqldump', True)
-    cmd += " --quick --host=%s --user=%s --password=%s" %(host, user, password)
+    cmd += " --quick --user=%s --password=%s" %(user, password)
     if socket is not None:
         cmd += " --socket=%s" % socket
+    else:
+        cmd += " --host=%s" % host
     cmd += " %s" % db_name
     cmd += " > %s" % target
     rc, stdout, stderr = module.run_command(cmd)
@@ -128,9 +130,11 @@ def db_dump(module, host, user, password, db_name, target, socket=None):
 
 def db_import(module, host, user, password, db_name, target, socket=None):
     cmd = module.get_bin_path('mysqldump', True)
-    cmd += " --host=%s --user=%s --password=%s" %(host, user, password)
+    cmd += " --user=%s --password=%s" %(user, password)
     if socket is not None:
         cmd += " --socket=%s" % socket
+    else:
+        cmd += " --host=%s" % host
     cmd += " %s" % db_name
     cmd += " < %s" % target
     rc, stdout, stderr = module.run_command(cmd)
