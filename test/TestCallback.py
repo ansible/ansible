@@ -41,7 +41,9 @@ class TestInventory(unittest.TestCase):
         os.chdir(self.cwd)
 
     def run_ansible_playbook(self):
-        subprocess.call('source ../../hacking/env-setup 2>&1 >/dev/null; ansible-playbook -i "127.0.0.1," test_playbook.yml 2>&1 >/dev/null', shell=True)
+        subprocess.call(('source ../../hacking/env-setup 2>&1 >/dev/null;'
+                         'ansible-playbook -i "127.0.0.1," test_playbook.yml 2>&1 >/dev/null'),
+                        shell=True, executable='/bin/bash')
 
     def test_callback(self):
         self.clean_file()
