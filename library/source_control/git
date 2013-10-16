@@ -160,11 +160,19 @@ def reset(git_path, module, dest, force, bare):
     return module.run_command(cmd, check_rc=True)
 
 def get_remote_head(git_path, module, dest, version, remote, bare):
-    cmd = ''
-    os.chdir(dest)
+    cloning = False
+    if remote == module.params['repo']:
+        cloning = True
+    else:
+        os.chdir(dest)
     if version == 'HEAD':
-        version = get_head_branch(git_path, module, dest, remote, bare)
-    if is_remote_branch(git_path, module, dest, remote, version):
+        if cloning:
+            # cloning the repo, just get the remote's HEAD version
+            cmd = '%s ls-remote %s -h HEAD' % (git_path, remote)
+        else:
+            head_branch = get_head_branch(git_path, module, dest, remote, bare)
+            cmd = '%s ls-remote %s -h refs/heads/%s' % (git_path, remote, head_branch)
+    elif is_remote_branch(git_path, module, dest, remote, version):
         cmd = '%s ls-remote %s -h refs/heads/%s' % (git_path, remote, version)
     elif is_remote_tag(git_path, module, dest, remote, version):
         cmd = '%s ls-remote %s -t refs/tags/%s' % (git_path, remote, version)
@@ -179,7 +187,6 @@ def get_remote_head(git_path, module, dest, version, remote, bare):
     return str(rev)
 
 def is_remote_tag(git_path, module, dest, remote, version):
-    os.chdir(dest)
     cmd = '%s ls-remote %s -t refs/tags/%s' % (git_path, remote, version)
     (rc, out, err) = module.run_command(cmd)
     if version in out:
@@ -198,10 +205,10 @@ def get_branches(git_path, module, dest):
         branches.append(line.strip())
     return branches
 
-def is_remote_branch(git_path, module, dest, remote, branch):
-    branches = get_branches(git_path, module, dest)
-    rbranch = 'remotes/%s/%s' % (remote, branch)
-    if rbranch in branches:
+def is_remote_branch(git_path, module, dest, remote, version):
+    cmd = '%s ls-remote %s -h refs/heads/%s' % (git_path, remote, version)
+    (rc, out, err) = module.run_command(cmd)
+    if version in out:
         return True
     else:
         return False
