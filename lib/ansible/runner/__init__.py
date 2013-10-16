@@ -320,6 +320,11 @@ class Runner(object):
             else:
                 argsfile = self._transfer_str(conn, tmp, 'arguments', args)
 
+            if self.sudo and self.sudo_user != 'root':
+                # deal with possible umask issues once sudo'ed to other user
+                cmd_args_chmod = "chmod a+r %s" % argsfile
+                self._low_level_exec_command(conn, cmd_args_chmod, tmp, sudoable=False)
+
             if async_jid is None:
                 cmd = "%s %s" % (remote_module_path, argsfile)
             else:
