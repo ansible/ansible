@@ -41,7 +41,8 @@ options:
         default: "HEAD"
         description:
             - What version of the repository to check out.  This can be the
-              git I(SHA), the literal string C(HEAD), a branch name, or a tag name.
+              full 40-character I(SHA-1) hash, the literal string C(HEAD), a
+              branch name, or a tag name.
     remote:
         required: false
         default: "origin"
@@ -107,7 +108,7 @@ import tempfile
 def get_version(git_path, dest):
     ''' samples the version of the git repo '''
     os.chdir(dest)
-    cmd = "%s show --abbrev-commit" % (git_path,)
+    cmd = "%s show" % (git_path,)
     sha = os.popen(cmd).read().split("\n")
     sha = sha[0].split()[1]
     return sha
@@ -354,8 +355,7 @@ def main():
         if rc != 0:
             module.fail_json(msg=err)
         # exit if already at desired sha version
-        # abbreviate version in case full sha is given
-        if before == str(version)[:7]:
+        if before == version:
             module.exit_json(changed=False)
         # check or get changes from remote
         remote_head = get_remote_head(git_path, module, dest, version, remote)
@@ -370,7 +370,6 @@ def main():
                 else:
                     changed = True
             else:
-                remote_head = remote_head[0:7]
                 if before != remote_head:
                     changed = True
                 else:
