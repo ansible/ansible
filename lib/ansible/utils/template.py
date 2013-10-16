@@ -20,6 +20,7 @@ import re
 import codecs
 import jinja2
 from jinja2.runtime import StrictUndefined
+from jinja2.exceptions import TemplateSyntaxError
 import yaml
 import json
 from ansible import errors
@@ -448,7 +449,15 @@ def template_from_file(basedir, path, vars):
             setattr(environment,key.strip(),ast.literal_eval(val.strip()))
 
     environment.template_class = J2Template
-    t = environment.from_string(data)
+    try:
+        t = environment.from_string(data)
+    except TemplateSyntaxError, e:
+        # Throw an exception which includes a more user friendly error message
+        values = {'name': realpath, 'lineno': e.lineno, 'error': str(e)}
+        msg = 'file: %(name)s, line number: %(lineno)s, error: %(error)s' % \
+               values
+        error = errors.AnsibleError(msg)
+        raise error
     vars = vars.copy()
     try:
         template_uid = pwd.getpwuid(os.stat(realpath).st_uid).pw_name
