@@ -60,6 +60,11 @@ On the managed nodes, you only need Python 2.4 or later, but if you are are runn
 
 * ``python-simplejson`` 
 
+For apt related modules in Debian, you will also need:
+
+* ``python-apt``
+* ``python-pycurl``
+
 .. note::
 
    Ansible's "raw" module (for executing commands in a quick and dirty
