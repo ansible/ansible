@@ -80,6 +80,14 @@ options:
         description:
             - Path to git executable to use. If not supplied,
               the normal mechanism for resolving binary paths will be used.
+    bare:
+        required: false
+        default: "no"
+        choices: [ "yes", "no" ]
+        version_added: "1.3.2"
+        description:
+            - if C(yes), repository will be created as a bare repo, otherwise
+              it will be a standard repo with a workspace.
 notes:
     - If the task seems to be hanging, first verify remote host is in C(known_hosts).
       SSH will prompt user to authorize the first contact with a remote host. One solution is to add
@@ -104,15 +112,14 @@ EXAMPLES = '''
 import re
 import tempfile
 
-def get_version(git_path, dest):
+def get_version(git_path, dest, ref="HEAD"):
     ''' samples the version of the git repo '''
     os.chdir(dest)
-    cmd = "%s show --abbrev-commit" % (git_path,)
-    sha = os.popen(cmd).read().split("\n")
-    sha = sha[0].split()[1]
+    cmd = "%s rev-parse %s" % (git_path, ref)
+    sha = os.popen(cmd).read().rstrip("\n")
     return sha
 
-def clone(git_path, module, repo, dest, remote, depth, version):
+def clone(git_path, module, repo, dest, remote, depth, version, bare):
     ''' makes a new git repo if it does not already exist '''
     dest_dirname = os.path.dirname(dest)
     try:
@@ -121,28 +128,32 @@ def clone(git_path, module, repo, dest, remote, depth, version):
         pass
     os.chdir(dest_dirname)
     cmd = [ git_path, 'clone', '-o', remote, '--recursive' ]
-    if version and version != 'HEAD':
+    if bare:
+        cmd.append('--bare')
+    elif version and version != 'HEAD':
         cmd.extend([ '--branch', str(version) ])
     if depth:
         cmd.extend([ '--depth', str(depth) ])
     cmd.extend([ repo, dest ])
     return module.run_command(cmd, check_rc=True)
 
-def has_local_mods(git_path, dest):
+def has_local_mods(git_path, dest, bare):
+    if bare:
+        return False
     os.chdir(dest)
     cmd = "%s status -s" % (git_path,)
     lines = os.popen(cmd).read().splitlines()
     lines = filter(lambda c: not re.search('^\\?\\?.*$', c), lines)
     return len(lines) > 0
 
-def reset(git_path, module, dest, force):
+def reset(git_path, module, dest, force, bare):
     '''
     Resets the index and working tree to HEAD.
     Discards any changes to tracked files in working
     tree since that commit.
     '''
     os.chdir(dest)
-    if not force and has_local_mods(git_path, dest):
+    if not force and has_local_mods(git_path, dest, bare):
         module.fail_json(msg="Local modifications exist in repository (force=no).")
     cmd = "%s reset --hard HEAD" % (git_path,)
     return module.run_command(cmd, check_rc=True)
@@ -211,7 +222,7 @@ def is_not_a_branch(git_path, module, dest):
             return True
     return False
 
-def get_head_branch(git_path, module, dest, remote):
+def get_head_branch(git_path, module, dest, remote, bare):
     '''
     Determine what branch HEAD is associated with.  This is partly
     taken from lib/ansible/utils/__init__.py.  It finds the correct
@@ -219,7 +230,10 @@ def get_head_branch(git_path, module, dest, remote):
     associated with.  In the case of a detached HEAD, this will look
     up the branch in .git/refs/remotes/<remote>/HEAD.
     '''
-    repo_path = os.path.join(dest, '.git')
+    if bare:
+        repo_path = dest
+    else:
+        repo_path = os.path.join(dest, '.git')
     # Check if the .git is a file. If it is a file, it means that we are in a submodule structure.
     if os.path.isfile(repo_path):
         try:
@@ -312,6 +326,7 @@ def main():
             depth=dict(default=None, type='int'),
             update=dict(default='yes', type='bool'),
             executable=dict(default=None),
+            bare=dict(default='no', type='bool'),
         ),
         supports_check_mode=True
     )
@@ -323,9 +338,13 @@ def main():
     force   = module.params['force']
     depth   = module.params['depth']
     update  = module.params['update']
+    bare    = module.params['bare']
     git_path = module.params['executable'] or module.get_bin_path('git', True)
 
-    gitconfig = os.path.join(dest, '.git', 'config')
+    if bare:
+        gitconfig = os.path.join(dest, 'config')
+    else:
+        gitconfig = os.path.join(dest, '.git', 'config')
 
     rc, out, err, status = (0, None, None, None)
 
@@ -336,7 +355,7 @@ def main():
     if not os.path.exists(gitconfig):
         if module.check_mode:
             module.exit_json(changed=True)
-        (rc, out, err) = clone(git_path, module, repo, dest, remote, depth, version)
+        (rc, out, err) = clone(git_path, module, repo, dest, remote, depth, version, bare)
     elif not update:
         # Just return having found a repo already in the dest path
         # this does no checking that the repo is the actual repo
@@ -354,23 +373,23 @@ def main():
         if rc != 0:
             module.fail_json(msg=err)
         # exit if already at desired sha version
-        # abbreviate version in case full sha is given
-        if before == str(version)[:7]:
+        # match given abbreviated version
+        actual_version = get_version(git_path, dest, version)
+        if before == actual_version:
             module.exit_json(changed=False)
         # check or get changes from remote
         remote_head = get_remote_head(git_path, module, dest, version, remote)
         if module.check_mode:
             changed = False
-            if remote_head == version:
+            if remote_head == actual_version:
                 # get_remote_head returned version as-is
                 # were given a sha1 object, see if it is present
                 (rc, out, err) = module.run_command("%s show %s" % (git_path, version))
-                if version in out:
+                if actual_version in out:
                     changed = False
                 else:
                     changed = True
             else:
-                remote_head = remote_head[0:7]
                 if before != remote_head:
                     changed = True
                 else:
@@ -382,9 +401,10 @@ def main():
 
     # switch to version specified regardless of whether
     # we cloned or pulled
-    (rc, out, err) = switch_version(git_path, module, dest, remote, version)
-    if rc != 0:
-        module.fail_json(msg=err)
+    if not bare:
+        (rc, out, err) = switch_version(git_path, module, dest, remote, version)
+        if rc != 0:
+            module.fail_json(msg=err)
 
     # determine if we changed anything
     after = get_version(git_path, dest)
