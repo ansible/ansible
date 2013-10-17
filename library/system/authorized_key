@@ -226,16 +226,17 @@ def readkeys(filename):
     if not os.path.isfile(filename):
         return []
 
-    keys = []
+    keys = {}
     f = open(filename)
     for line in f.readlines():
         key_data = parsekey(line)
         if key_data:
-            keys.append(key_data)
+            # use key as identifier
+            keys[key_data[0]] = key_data
         else:
             # for an invalid line, just append the line
             # to the array so it will be re-output later
-            keys.append(line)
+            keys[line] = line
     f.close()
     return keys
 
@@ -244,16 +245,20 @@ def writekeys(module, filename, keys):
     fd, tmp_path = tempfile.mkstemp('', 'tmp', os.path.dirname(filename))
     f = open(tmp_path,"w")
     try:
-        for key in keys:
+        for index, key in keys.items():
             try:
                 (keyhash,type,options,comment) = key
                 option_str = ""
                 if options:
+                    option_strings = []
                     for option_key in options.keys():
                         if options[option_key]:
-                            option_str += "%s=%s " % (option_key, options[option_key])
+                            option_strings.append("%s=%s" % (option_key, options[option_key]))
                         else:
-                            option_str += "%s " % option_key
+                            option_strings.append("%s " % option_key)
+
+                    option_str = ",".join(option_strings)
+                    option_str += " "
                 key_line = "%s%s %s %s\n" % (option_str, type, keyhash, comment)
             except:
                 key_line = key
@@ -295,39 +300,35 @@ def enforce_state(module, params):
         present = False
         matched = False
         non_matching_keys = []
-        for existing_key in existing_keys:
-            # skip bad entries or bad input
-            if len(parsed_new_key) == 0 or len(existing_key) == 0:
-                continue
-            # the first element in the array after parsing
-            # is the actual key hash, which we check first
-            if parsed_new_key[0] == existing_key[0]:
-                present = True
-                # Then we check if everything matches, including
-                # the key type and options. If not, we append this
-                # existing key to the non-matching list
-                if parsed_new_key != existing_key:
-                    non_matching_keys.append(existing_key)
-                else:
-                    matched = True
+
+        if parsed_new_key[0] in existing_keys:
+            present = True
+            # Then we check if everything matches, including
+            # the key type and options. If not, we append this
+            # existing key to the non-matching list
+            # We only want it to match everything when the state
+            # is present
+            if parsed_new_key != existing_keys[parsed_new_key[0]] and state == "present":
+                non_matching_keys.append(existing_keys[parsed_new_key[0]])
+            else:
+                matched = True
+
 
         # handle idempotent state=present
         if state=="present":
             if unique and len(non_matching_keys) > 0:
                 for non_matching_key in non_matching_keys:
-                    existing_keys.remove(non_matching_key)
+                    del existing_keys[non_matching_key[0]]
                 do_write = True
 
             if not matched:
-                existing_keys.append(parsed_new_key)
+                existing_keys[parsed_new_key[0]] = parsed_new_key
                 do_write = True
 
         elif state=="absent":
-            # currently, we only remove keys when 
-            # they are an exact match
             if not matched:
                 continue
-            existing_keys.remove(parsed_new_key)
+            del existing_keys[parsed_new_key[0]]
             do_write = True
 
     if do_write:
