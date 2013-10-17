@@ -79,6 +79,7 @@ class ActionModule(object):
         # add it to the group if that was specified
         if groupnames != '':
             for group_name in groupnames.split(","):
+                group_name = group_name.strip()
                 if not inventory.get_group(group_name):
                     new_group = Group(group_name)
                     inventory.add_group(new_group)
