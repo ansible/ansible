@@ -61,6 +61,10 @@ options:
     description:
       - Version of the gem to be installed/removed.
     required: false
+  executable:
+    description:
+      - executable path to gem.
+    required: false
 author: Johan Wiren
 '''
 
@@ -73,12 +77,21 @@ EXAMPLES = '''
 
 # Installs rake version 1.0 from a local gem on disk.
 - gem: name=rake gem_source=/path/to/gems/rake-1.0.gem state=present
+
+# Installs using the gem installed by fluentd.
+- gem: name=fluent-plugin-something executable=/usr/lib64/fluent/ruby/bin/fluent-gem state=present
 '''
 
 import re
 
+def get_gem_bin_path(module):
+    if module.params['executable']:
+        return module.params['executable']
+    else:
+        return module.get_bin_path('gem', True)
+
 def get_rubygems_version(module):
-    cmd = [module.get_bin_path('gem', True), '--version']
+    cmd = [get_gem_bin_path(module), '--version']
     (rc, out, err) = module.run_command(cmd, check_rc=True)
 
     match = re.match(r'^(\d+)\.(\d+)\.(\d+)', out)
@@ -89,7 +102,7 @@ def get_rubygems_version(module):
 
 def get_installed_versions(module, remote=False):
 
-    cmd = [ module.get_bin_path('gem', True) ]
+    cmd = [ get_gem_bin_path(module) ]
     cmd.append('query')
     if remote:
         cmd.append('--remote')
@@ -126,7 +139,7 @@ def uninstall(module):
 
     if module.check_mode:
         return
-    cmd = [ module.get_bin_path('gem', True) ]
+    cmd = [ get_gem_bin_path(module) ]
     cmd.append('uninstall')
     if module.params['version']:
         cmd.extend([ '--version', module.params['version'] ])
@@ -146,7 +159,7 @@ def install(module):
     else:
         major = None
 
-    cmd = [ module.get_bin_path('gem', True) ]
+    cmd = [ get_gem_bin_path(module) ]
     cmd.append('install')
     if module.params['version']:
         cmd.extend([ '--version', module.params['version'] ])
@@ -177,6 +190,7 @@ def main():
             state                = dict(required=False, choices=['present','absent','latest'], type='str'),
             user_install         = dict(required=False, default=True, type='bool'),
             version              = dict(required=False, type='str'),
+            executable           = dict(required=False, type='str'),
         ),
         supports_check_mode = True,
         mutually_exclusive = [ ['gem_source','repository'], ['gem_source','version'] ],
