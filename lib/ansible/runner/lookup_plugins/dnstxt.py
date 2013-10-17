@@ -44,7 +44,7 @@ class LookupModule(object):
 
         terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
 
-        if isinstance(basestring, terms):
+        if isinstance(terms, basestring):
             terms = [ terms ]
 
         ret = []
