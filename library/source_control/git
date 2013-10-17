@@ -150,15 +150,13 @@ def has_local_mods(git_path, dest, bare):
     lines = filter(lambda c: not re.search('^\\?\\?.*$', c), lines)
     return len(lines) > 0
 
-def reset(git_path, module, dest, force, bare):
+def reset(git_path, module, dest):
     '''
     Resets the index and working tree to HEAD.
     Discards any changes to tracked files in working
     tree since that commit.
     '''
     os.chdir(dest)
-    if not force and has_local_mods(git_path, dest, bare):
-        module.fail_json(msg="Local modifications exist in repository (force=no).")
     cmd = "%s reset --hard HEAD" % (git_path,)
     return module.run_command(cmd, check_rc=True)
 
@@ -205,7 +203,7 @@ def get_branches(git_path, module, dest):
     if rc != 0:
         module.fail_json(msg="Could not determine branch data - received %s" % out)
     for line in out.split('\n'):
-        branches.append(line.strip())
+        branches.append(str(line.strip()))
     return branches
 
 def is_remote_branch(git_path, module, dest, remote, version):
@@ -376,9 +374,8 @@ def main():
         module.exit_json(changed=False, before=before, after=before)
     else:
         # else do a pull
-        local_mods = has_local_mods(git_path, dest)
+        local_mods = has_local_mods(git_path, dest, bare)
         before = get_version(git_path, dest)
-        remote_head = get_remote_head(git_path, module, dest, version, remote, bare)
         if local_mods:
             # failure should happen regardless of check mode
             if not force:
@@ -387,6 +384,7 @@ def main():
             if not module.check_mode:
                 reset(git_path, module, dest)
         # exit if already at desired sha version
+        remote_head = get_remote_head(git_path, module, dest, version, remote, bare)
         if before == remote_head:
             if local_mods:
                 module.exit_json(changed=True, before=before, after=remote_head,

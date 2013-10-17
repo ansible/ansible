@@ -170,6 +170,7 @@ class TestRunner(unittest.TestCase):
     def test_git(self):
         self._run('file', ['path=/tmp/gitdemo', 'state=absent'])
         self._run('file', ['path=/tmp/gd', 'state=absent'])
+        self._run('file', ['path=/tmp/gdbare', 'state=absent'])
         self._run('command', ['git init gitdemo', 'chdir=/tmp'])
         self._run('command', ['touch a', 'chdir=/tmp/gitdemo'])
         self._run('command', ['git add *', 'chdir=/tmp/gitdemo'])
@@ -178,7 +179,6 @@ class TestRunner(unittest.TestCase):
         self._run('command', ['git add *', 'chdir=/tmp/gitdemo'])
         self._run('command', ['git commit -m "test commit 2"', 'chdir=/tmp/gitdemo'])
         result = self._run('git', ["repo=\"file:///tmp/gitdemo\"", "dest=/tmp/gd"])
-        print result
         assert result['changed']
         # test the force option not set
         self._run('file', ['path=/tmp/gd/a', 'state=absent'])
@@ -186,6 +186,9 @@ class TestRunner(unittest.TestCase):
         assert result['failed']
         # test the force option when set
         result = self._run('git', ["repo=\"file:///tmp/gitdemo\"", "dest=/tmp/gd", "force=yes"])
+        assert result['changed']
+        # test the bare option
+        result = self._run('git', ["repo=\"file:///tmp/gitdemo\"", "dest=/tmp/gdbare", "bare=yes"])
         assert result['changed']
 
     def test_file(self):
