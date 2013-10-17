@@ -197,10 +197,12 @@ def main():
         module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or ~/.my.cnf has the credentials")
     if mysqlvar is None:
         module.fail_json(msg="Cannot run without variable to operate with")
-    if value is None and mysqlvar is not None:
-        mysqlvar_val = getvariable(cursor, mysqlvar)
+    mysqlvar_val = getvariable(cursor, mysqlvar)
+    if value is None:
         module.exit_json(msg=mysqlvar_val)
     else:
+        if value == mysqlvar_val[0][1]:
+            module.exit_json(msg="Variable already set to requested value", changed=False)
         result = setvariable(cursor, mysqlvar, value)
         if result is True:
             module.exit_json(msg="Variable change succeeded", changed=True)
