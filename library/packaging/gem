@@ -65,6 +65,7 @@ options:
     description:
       - executable path to gem.
     required: false
+    version_added: "1.4"
 author: Johan Wiren
 '''
 
@@ -79,7 +80,7 @@ EXAMPLES = '''
 - gem: name=rake gem_source=/path/to/gems/rake-1.0.gem state=present
 
 # Installs using the gem installed by fluentd.
-- gem: name=fluent-plugin-something executable=/usr/lib64/fluent/ruby/bin/fluent-gem state=present
+- gem: name=fluent-plugin-something executable=/usr/lib64/fluent/ruby/bin/fluent-gem state=present user_install=no
 '''
 
 import re
