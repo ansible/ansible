@@ -188,11 +188,12 @@ def main():
     state           = module.params['state']
     changed         = False
 
-    try:
-        _ = int(key_id, 16)
-        key_id = key_id.lstrip('0x')
-    except ValueError:
-        module.fail_json("Invalid key_id")
+    if key_id:
+        try:
+            _ = int(key_id, 16)
+            key_id = key_id.lstrip('0x')
+        except ValueError:
+            module.fail_json("Invalid key_id")
 
     # FIXME: I think we have a common facility for this, if not, want
     check_missing_binaries(module)
