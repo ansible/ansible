@@ -34,7 +34,7 @@ Controlling What Defines Failure
 
 .. versionadded:: 1.4
 
-Suppose the erorr code of a command is meaningless and to tell if there
+Suppose the error code of a command is meaningless and to tell if there
 is a failure what really matters is the output of the command, for instance
 if the string "FAILED" is in the output.  
 
