@@ -17,9 +17,10 @@
 DOCUMENTATION = '''
 ---
 module: gc_storage
-short_description: This module help users manage objects/buckets in GCS (Google Cloud Storage). 
+version_added: "1.4"
+short_description: This module manages objects/buckets in Google Cloud Storage. 
 description:
-    - This module allows users to manage their objects/buckets in GCS in an idempotent way. Users can do operations like PUT, GET and set some pre-canned permissions on those objects.Users can also retrieve the urls to their objects to be used in playbooks. They can also use the module to get the string contents of the objects. Please note that this module is compatible with API version 1 of GCS. so it expects the user to set the default project before using this module, Have a lookt at "https://developers.google.com/storage/docs/reference/v1/apiversion1" to set the default project.
+    - This module allows users to manage their objects/buckets in Google Cloud Storage.  It allows upload and download operations and can set some canned permissions. It also allows retrieval of URLs for objects for use in playbooks, and retrieval of string contents of objects.  This module requires setting the default project in GCS prior to playbook usage.  See U(https://developers.google.com/storage/docs/reference/v1/apiversion1) for information about setting the default project.
 
 options:
   bucket:
@@ -30,7 +31,7 @@ options:
     aliases: []
   object:
     description:
-      - Keyname of the object inside the bucket. Can be also be used to create "virtual directories", see examples.
+      - Keyname of the object inside the bucket. Can be also be used to create "virtual directories" (see examples).
     required: false
     default: null
     aliases: []
@@ -45,28 +46,30 @@ options:
       - The destination file path when downloading an object/key with a GET operation.
     required: false
     aliases: []
-  overwrite:
+  force:
     description:
-      - Force overwrite either locally on the filesystem or remotely with the object/key. Used with PUT and GET operations.
+      - Forces an overwrite either locally on the filesystem or remotely with the object/key. Used with PUT and GET operations.
     required: false
-    default: false
+    default: true
+    aliases: [ 'overwrite' ]
   permission:
     description:
       - This option let's the user set the canned permissions on the object/bucket that are created. The permissions that can be set are 'private', 'public-read', 'authenticated-read'.
     required: false
     default: private 
-  expiry:
+  expiration:
     description:
-      - Time limit (in seconds) for the URL generated and returned by GCA when performing a mode=put or mode=geturl operation. This url is only avaialbe when public-read is the acl for the object.
+      - Time limit (in seconds) for the URL generated and returned by GCA when performing a mode=put or mode=get_url operation. This url is only avaialbe when public-read is the acl for the object.
     required: false
     default: null
     aliases: []
   mode:
     description:
-      - Switches the module behaviour between put (upload), get (download), geturl (return download url) , getstr (download object as string), create (bucket) and delete (bucket). 
+      - Switches the module behaviour between upload, download, get_url (return download url) , get_str (download object as string), create (bucket) and delete (bucket). 
     required: true
     default: null
     aliases: []
+    choices: [ 'upload', 'download', 'get_url', 'get_str' ]
   gcs_secret_key:
     description:
       - GCS secret key. If not set then the value of the GCS_SECRET_KEY environment variable is used. 
@@ -85,22 +88,23 @@ author: benno@ansibleworks.com Note. Most of the code has been taken from the S3
 '''
 
 EXAMPLES = '''
-# Simple PUT operation
-- gcs: bucket=mybucket object=key.txt src=/usr/local/myfile.txt mode=put permission=public-read
-# Simple GET operation
-- gs: bucket=mybucket object=key.txt dest=/usr/local/myfile.txt mode=get
-# GET/download and overwrite local file (trust remote)
-- gs: bucket=mybucket object=key.txt dest=/usr/local/myfile.txt mode=get overwrite=true
-# PUT/upload and overwrite remote file (trust local)
-- gs: bucket=mybucket object=key.txt src=/usr/local/myfile.txt mode=put overwrite=true
+# upload some content
+- gc_storage: bucket=mybucket object=key.txt src=/usr/local/myfile.txt mode=upload permission=public-read
+
+# download some content
+- gc_storage: bucket=mybucket object=key.txt dest=/usr/local/myfile.txt mode=download
+
 # Download an object as a string to use else where in your playbook
-- gs: bucket=mybucket object=key.txt mode=getstr
+- gc_storage: bucket=mybucket object=key.txt mode=get_str
+
 # Create an empty bucket
-- gs: bucket=mybucket mode=create
+- gc_storage: bucket=mybucket mode=create
+
 # Create a bucket with key as directory
-- gs: bucket=mybucket object=/my/directory/path mode=create
+- gc_storage: bucket=mybucket object=/my/directory/path mode=create
+
 # Delete a bucket and all contents
-- gs: bucket=mybucket mode=delete
+- gc_storage: bucket=mybucket mode=delete
 '''
 
 import sys
@@ -252,22 +256,19 @@ def get_download_url(module, gs, bucket, obj, expiry):
         bucket = gs.lookup(bucket)
         key = bucket.lookup(obj)
         url = key.generate_url(expiry)
-        module.exit_json(msg="Download url:", url=url, expiry=expiry, changed=True)
+        module.exit_json(msg="Download url:", url=url, expiration=expiry, changed=True)
     except gs.provider.storage_response_error, e:
         module.fail_json(msg= str(e))
 
 def handle_get(module, gs, bucket, obj, overwrite, dest):
     md5_remote = keysum(module, gs, bucket, obj)
     md5_local = hashlib.md5(open(dest, 'rb').read()).hexdigest()
-    if md5_local == md5_remote:
-        module.exit_json(msg="Local and remote object are identical", changed=False)
+    if md5_local == md5_remote and not overwrite:
+        module.exit_json(changed=False)
     else:
-        if overwrite is True:
-            download_gsfile(module, gs, bucket, obj, dest)
-        else:
-            module.fail_json(msg="Destination file exists and is diffrent. Use overwrite parameter to force download.", failed=True)
+        download_gsfile(module, gs, bucket, obj, dest)
 
-def handle_put(module, gs, bucket, obj, overwrite, src, expiry):
+def handle_put(module, gs, bucket, obj, overwrite, src, expiration):
     # Lets check to see if bucket exists to get ground truth.
     bucket_rc = bucket_check(module, gs, bucket)
     key_rc    = key_check(module, gs, bucket, obj)
@@ -280,17 +281,17 @@ def handle_put(module, gs, bucket, obj, overwrite, src, expiry):
             module.exit_json(msg="Local and remote object are identical.", changed=False)
         else:
             if overwrite:
-                upload_gsfile(module, gs, bucket, obj, src, expiry)
+                upload_gsfile(module, gs, bucket, obj, src, expiration)
             else:
                 module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force upload.", failed=True)
                                                                                                             
     if not bucket_rc:      
         create_bucket(module, gs, bucket)
-        upload_gsfile(module, gs, bucket, obj, src, expiry)
+        upload_gsfile(module, gs, bucket, obj, src, expiration)
 
     # If bucket exists but key doesn't, just upload.
     if bucket_rc and not key_rc:
-            upload_gsfile(module, gs, bucket, obj, src, expiry)
+            upload_gsfile(module, gs, bucket, obj, src, expiration)
     
 def handle_delete(module, gs, bucket, obj):
     if bucket and not obj:
@@ -336,12 +337,12 @@ def main():
             object         = dict(default=None),
             src            = dict(default=None),
             dest           = dict(default=None),
-            expiry         = dict(default=600, aliases=['expiration']),
-            mode           = dict(choices=['get', 'put', 'delete', 'create', 'geturl', 'getstr'], required=True),
+            expiration     = dict(default=600, aliases=['expiry']),
+            mode           = dict(choices=['get', 'put', 'delete', 'create', 'get_url', 'get_str'], required=True),
             permission     = dict(choices=['private', 'public-read', 'authenticated-read'], default='private'),
             gs_secret_key  = dict(no_log=True, required=True),
             gs_access_key  = dict(required=True),
-            overwrite      = dict(default=False, type='bool'),
+            overwrite      = dict(default=True, type='bool', aliases=['force']),
         ),
     )
 
@@ -366,13 +367,11 @@ def main():
     if obj:
         obj = os.path.expanduser(module.params['object'])
 
-    # ---------------- Get the Conection object for GCS operations --------------------
     try:
         gs = boto.connect_gs(gs_access_key, gs_secret_key)
     except boto.exception.NoAuthHandlerFound, e:
         module.fail_json(msg = str(e))
  
-    #-------------- Code for GET Operation -------------------------
     if mode == 'get':
         if not bucket_check(module, gs, bucket) or not key_check(module, gs, bucket, obj):
             module.fail_json(msg="Target bucket/key cannot be found", failed=True)
@@ -381,7 +380,6 @@ def main():
         else:
             handle_get(module, gs, bucket, obj, overwrite, dest)
         
-    # ----------------------Code for PUT operation ---------------        
     if mode == 'put':
         if not path_check(src):
             module.fail_json(msg="Local object for PUT does not exist", failed=True)
@@ -391,27 +389,25 @@ def main():
     if mode == 'delete':
         handle_delete(module, gs, bucket, obj)
     
-    # ---------- Code for mode is create -------------------------
     if mode == 'create':
         handle_create(module, gs, bucket, obj)
     
-    # ------------- Get the url of an object --------------------------
-    if mode == 'geturl':
+    if mode == 'get_url':
         if bucket and obj:
             if bucket_check(module, gs, bucket) and key_check(module, gs, bucket, obj):
                 get_download_url(module, gs, bucket, obj, expiry)
             else:
-                module.fail_json(msg="Key/Bucket doesnt exist", failed=True)
+                module.fail_json(msg="Key/Bucket does not exist", failed=True)
         else:
             module.fail_json(msg="Bucket and Object parameters must be set", failed=True)
 
     # --------------------------- Get the String contents of an Object -------------------------
-    if mode == 'getstr':
+    if mode == 'get_str':
         if bucket and obj:
             if bucket_check(module, gs, bucket) and key_check(module, gs, bucket, obj):
                 download_gsstr(module, gs, bucket, obj)
             else:
-                module.fail_json(msg="Key/Bucket doesnt exists", failed=True)
+                module.fail_json(msg="Key/Bucket does not exist", failed=True)
         else:
             module.fail_json(msg="Bucket and Object parameters must be set", failed=True)
 
