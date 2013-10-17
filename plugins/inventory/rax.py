@@ -141,16 +141,6 @@ def _list(region):
             # Create a group on region
             groups[region].append(server.name)
 
-            # Anything we can discern from the hostname?
-            try:
-                subdom = server.name.split('.')[0]
-            except IndexError:
-                pass
-            else:
-                for name in ('web', 'db', 'sql', 'lb', 'app'):
-                    if name in subdom:
-                        groups[name].append(server.name)
-
             # Check if group metadata key in servers' metadata
             try:
                 group = server.metadata['group']
