@@ -70,13 +70,15 @@ notes:
   - RAX_CREDS_FILE points to a credentials file appropriate for pyrax.
   - See https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating
   - RAX_REGION is an optional environment variable to narrow inventory search scope
-  - RAX_REGION, if used, needs a value like ORD, DFW, SYD (a Rackspace datacenter)
+  - RAX_REGION, if used, needs a value like ORD, DFW, SYD (a Rackspace datacenter) and optionally accepts a comma-separated list
 requirements: [ "pyrax" ]
 examples:
     - description: List server instances
       code: RAX_CREDS_FILE=~/.raxpub rax.py --list
     - description: List servers in ORD datacenter only
       code: RAX_CREDS_FILE=~/.raxpub RAX_REGION=ORD rax.py --list
+    - description: List servers in ORD and DFW datacenters
+      code: RAX_CREDS_FILE=~/.raxpub RAX_REGION=ORD,DFW rax.py --list
     - description: Get server details for server named "server.example.com"
       code: RAX_CREDS_FILE=~/.raxpub rax.py --host server.example.com
 '''
@@ -128,7 +130,8 @@ def _list(region):
     hostvars = collections.defaultdict(dict)
 
     if region and region.upper() in pyrax.regions:
-        pyrax.regions = (region,)
+        pyrax.regions = (region.upper() for region in region.split(','))
+
 
     # Go through all the regions looking for servers
     for region in pyrax.regions:
