@@ -92,7 +92,8 @@ options:
         choices: [ "yes", "no" ]
         description:
             - Unless set to C(no), a home directory will be made for the user
-              when the account is created.
+              when the account is created or if the home directory does not
+              exist. 
     system:
         required: false
         default: "no"
@@ -562,6 +563,32 @@ class User(object):
     def modify_user(self):
         # by default we use the modify_user_usermod method
         return self.modify_user_usermod()
+
+    def create_homedir(self, path):
+        if not os.path.exists(path):
+            # use /etc/skel if possible
+            if os.path.exists('/etc/skel'):
+                try:
+                    shutil.copytree('/etc/skel', path, symlinks=True)
+                except OSError, e:
+                    self.module.exit_json(failed=True, msg="%s" % e)
+        else:
+            try:
+                os.makedirs(path)
+            except OSError, e:
+                self.module.exit_json(failed=True, msg="%s" % e)
+
+    def chown_homedir(self, uid, gid, path):
+        try:
+            os.chown(path, uid, gid)
+            for root, dirs, files in os.walk(path):
+                for d in dirs:
+                    os.chown(path, uid, gid)
+                for f in files:
+                    os.chown(os.path.join(root, f), uid, gid)
+        except OSError, e:
+            self.module.exit_json(failed=True, msg="%s" % e)
+           
 
 # ===========================================
 
@@ -1485,6 +1512,13 @@ def main():
             result['ssh_key_file'] = user.get_ssh_key_path()
             result['ssh_public_key'] = user.get_ssh_public_key()
 
+        # handle missing homedirs
+        if not os.path.exists(user.home) and user.createhome:
+            if not module.check_mode:
+                info = user.user_info()
+                user.create_homedir(user.home)
+                user.chown_homedir(info[2], info[3], user.home)
+            result['changed'] = True
 
     module.exit_json(**result)
 
