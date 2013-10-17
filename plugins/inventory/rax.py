@@ -66,8 +66,8 @@ authors:
   - Jesse Keating <jesse.keating@rackspace.com>
   - Paul Durivage <paul.durivage@rackspace.com>
 notes:
-  - One environment variable needs to be set: RAX_CREDS_FILE.
-  - RAX_CREDS_FILE points to a credentials file appropriate for pyrax.
+  - RAX_CREDS_FILE is an optional environment variable that points to a pyrax-compatible credentials file.
+  - If RAX_CREDS_FILE is not supplied, rax.py will look for a credentials file at ~/.rackspace_cloud_credentials.
   - See https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating
   - RAX_REGION is an optional environment variable to narrow inventory search scope
   - RAX_REGION, if used, needs a value like ORD, DFW, SYD (a Rackspace datacenter) and optionally accepts a comma-separated list
@@ -181,14 +181,22 @@ def parse_args():
 
 
 def setup():
+    default_creds_file = os.path.expanduser('~/.rackspace_cloud_credentials')
+
+    # Attempt to grab credentials from environment first
     try:
         creds_file = os.environ['RAX_CREDS_FILE']
-        region = os.getenv('RAX_REGION')
     except KeyError, e:
-        sys.stderr.write('Unable to load environment '
-                         'variable %s\n' % e.message)
-        sys.exit(1)
+        # But if that fails, use the default location of ~/.rackspace_cloud_credentials
+        if os.path.isfile(default_creds_file):
+            creds_file = default_creds_file
+        else:
+            sys.stderr.write('No value in environment variable %s and/or no '
+                             'credentials file at %s\n'
+                             % (e.message, default_creds_file))
+            sys.exit(1)
 
+    region = os.getenv('RAX_REGION')
     pyrax.set_setting('identity_type', 'rackspace')
 
     try:
