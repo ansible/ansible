@@ -74,6 +74,8 @@ class Play(object):
         # We first load the vars files from the datastructure
         # so we have the default variables to pass into the roles
         self.vars_files = ds.get('vars_files', [])
+        if not isinstance(self.vars_files, list):
+            raise errors.AnsibleError('vars_files must be a list')
         self._update_vars_files_for_host(None)
 
         # now we load the roles into the datastructure
@@ -83,6 +85,8 @@ class Play(object):
         # and finally re-process the vars files as they may have
         # been updated by the included roles
         self.vars_files = ds.get('vars_files', [])
+        if not isinstance(self.vars_files, list):
+            raise errors.AnsibleError('vars_files must be a list')
         self._update_vars_files_for_host(None)
 
         # template everything to be efficient, but do not pre-mature template
