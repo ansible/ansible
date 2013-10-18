@@ -349,7 +349,8 @@ def main():
     update_cache = module.params['update_cache']
     sourceslist = None
 
-    if isinstance(distro, aptsources.distro.DebianDistribution):
+    if isinstance(distro, aptsources.distro.DebianDistribution) or \
+            isinstance(distro, aptsources.distro.Distribution):
         sourceslist = SourcesList()
     elif isinstance(distro, aptsources.distro.UbuntuDistribution):
         sourceslist = UbuntuSourcesList(add_ppa_signing_keys_callback=get_add_ppa_signing_key_callback(module))
