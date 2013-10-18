@@ -174,7 +174,7 @@ class TestRunner(unittest.TestCase):
         self._run('command', ['git init gitdemo', 'chdir=/tmp'])
         self._run('command', ['touch a', 'chdir=/tmp/gitdemo'])
         self._run('command', ['git add *', 'chdir=/tmp/gitdemo'])
-        self._run('command', ['git commit -m "test commit 2"', 'chdir=/tmp/gitdemo'])
+        self._run('command', ['git commit -m "test commit 1"', 'chdir=/tmp/gitdemo'])
         self._run('command', ['touch b', 'chdir=/tmp/gitdemo'])
         self._run('command', ['git add *', 'chdir=/tmp/gitdemo'])
         self._run('command', ['git commit -m "test commit 2"', 'chdir=/tmp/gitdemo'])
@@ -188,6 +188,15 @@ class TestRunner(unittest.TestCase):
         result = self._run('git', ["repo=\"file:///tmp/gitdemo\"", "dest=/tmp/gd", "force=yes"])
         assert result['changed']
         # test the bare option
+        result = self._run('git', ["repo=\"file:///tmp/gitdemo\"", "dest=/tmp/gdbare", "bare=yes"])
+        assert result['changed']
+        # test a no-op fetch
+        result = self._run('git', ["repo=\"file:///tmp/gitdemo\"", "dest=/tmp/gdbare", "bare=yes"])
+        assert not result['changed']
+        # test whether fetch is working for bare repos
+        self._run('command', ['touch c', 'chdir=/tmp/gitdemo'])
+        self._run('command', ['git add *', 'chdir=/tmp/gitdemo'])
+        self._run('command', ['git commit -m "test commit 3"', 'chdir=/tmp/gitdemo'])
         result = self._run('git', ["repo=\"file:///tmp/gitdemo\"", "dest=/tmp/gdbare", "bare=yes"])
         assert result['changed']
 

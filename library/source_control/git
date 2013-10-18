@@ -132,15 +132,18 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare):
     if bare:
         cmd.append('--bare')
     else:
-        cmd.extend([ '-o', remote, '--recursive' ])
+        cmd.extend([ '--origin', remote, '--recursive' ])
         if is_remote_branch(git_path, module, dest, repo, version) \
         or is_remote_tag(git_path, module, dest, repo, version):
             cmd.extend([ '--branch', version ])
     if depth:
         cmd.extend([ '--depth', str(depth) ])
     cmd.extend([ repo, dest ])
-    return module.run_command(cmd, check_rc=True)
-
+    module.run_command(cmd, check_rc=True)
+    if bare:
+        os.chdir(dest)
+        module.run_command([git_path, 'remote', 'set-url', remote, repo], check_rc=True)
+  
 def has_local_mods(git_path, dest, bare):
     if bare:
         return False
@@ -265,14 +268,20 @@ def get_head_branch(git_path, module, dest, remote, bare=False):
     f.close()
     return str(branch)
 
-def fetch(git_path, module, repo, dest, version, remote):
+def fetch(git_path, module, repo, dest, version, remote, bare):
     ''' updates repo from remote sources '''
     os.chdir(dest)
-    (rc, out1, err1) = module.run_command("%s fetch %s" % (git_path, remote))
+    if bare:
+        (rc, out1, err1) = module.run_command([git_path, 'fetch', remote, '+refs/heads/*:refs/heads/*'])
+    else:
+        (rc, out1, err1) = module.run_command("%s fetch %s" % (git_path, remote))
     if rc != 0:
         module.fail_json(msg="Failed to download remote objects and refs")
 
-    (rc, out2, err2) = module.run_command("%s fetch --tags %s" % (git_path, remote))
+    if bare:
+        (rc, out2, err2) = module.run_command([git_path, 'fetch', remote, '+refs/tags/*:refs/tags/*'])
+    else:
+        (rc, out2, err2) = module.run_command("%s fetch --tags %s" % (git_path, remote))
     if rc != 0:
         module.fail_json(msg="Failed to download remote objects and refs")
     (rc, out3, err3) = submodule_update(git_path, module, dest)
@@ -393,7 +402,7 @@ def main():
                 module.exit_json(changed=False, before=before, after=remote_head)
         if module.check_mode:
             module.exit_json(changed=True, before=before, after=remote_head)
-        fetch(git_path, module, repo, dest, version, remote)
+        fetch(git_path, module, repo, dest, version, remote, bare)
 
     # switch to version specified regardless of whether
     # we cloned or pulled
