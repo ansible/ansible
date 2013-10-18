@@ -118,7 +118,7 @@ def get_version(git_path, dest, ref="HEAD"):
     os.chdir(dest)
     cmd = "%s rev-parse %s" % (git_path, ref)
     sha = os.popen(cmd).read().rstrip("\n")
-    return str(sha)
+    return sha
 
 def clone(git_path, module, repo, dest, remote, depth, version, bare):
     ''' makes a new git repo if it does not already exist '''
@@ -189,7 +189,7 @@ def get_remote_head(git_path, module, dest, version, remote, bare):
     if len(out) < 1:
         module.fail_json(msg="Could not determine remote revision for %s" % version)
     rev = out.split()[0]
-    return str(rev)
+    return rev
 
 def is_remote_tag(git_path, module, dest, remote, version):
     cmd = '%s ls-remote %s -t refs/tags/%s' % (git_path, remote, version)
@@ -207,7 +207,7 @@ def get_branches(git_path, module, dest):
     if rc != 0:
         module.fail_json(msg="Could not determine branch data - received %s" % out)
     for line in out.split('\n'):
-        branches.append(str(line.strip()))
+        branches.append(line.strip())
     return branches
 
 def is_remote_branch(git_path, module, dest, remote, version):
@@ -267,7 +267,7 @@ def get_head_branch(git_path, module, dest, remote, bare=False):
         f = open(os.path.join(repo_path, 'refs', 'remotes', remote, 'HEAD'))
     branch = f.readline().split('/')[-1].rstrip("\n")
     f.close()
-    return str(branch)
+    return branch
 
 def fetch(git_path, module, repo, dest, version, remote, bare):
     ''' updates repo from remote sources '''
