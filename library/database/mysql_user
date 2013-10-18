@@ -134,6 +134,7 @@ password=n<_665{vS43y
 
 import ConfigParser
 import getpass
+import tempfile
 try:
     import MySQLdb
 except ImportError:
@@ -316,6 +317,32 @@ def config_get(config, section, option):
     return strip_quotes(config.get(section, option))
 
 
+def _safe_cnf_load(config, path):
+
+    data = {'user':'', 'password':''}
+
+    # read in user/pass
+    f = open(path, 'r')
+    for line in f.readlines():
+        line = line.strip()
+        if line.startswith('user='):
+            data['user'] = line.split('=', 1)[1].strip()
+        if line.startswith('password=') or line.startswith('pass='):
+            data['password'] = line.split('=', 1)[1].strip()
+    f.close()
+
+    # write out a new cnf file with only user/pass   
+    fh, newpath = tempfile.mkstemp(prefix=path + '.')
+    f = open(newpath, 'wb')
+    f.write('[client]\n')
+    f.write('user=%s\n' % data['user'])
+    f.write('password=%s\n' % data['password'])
+    f.close()
+
+    config.readfp(open(newpath))
+    os.remove(newpath)
+    return config
+
 def load_mycnf():
     config = ConfigParser.RawConfigParser()
     mycnf = os.path.expanduser('~/.my.cnf')
@@ -325,6 +352,9 @@ def load_mycnf():
         config.readfp(open(mycnf))
     except (IOError):
         return False
+    except:
+        config = _safe_cnf_load(config, mycnf)
+
     # We support two forms of passwords in .my.cnf, both pass= and password=,
     # as these are both supported by MySQL.
     try:
