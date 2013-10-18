@@ -188,7 +188,7 @@ class TestRunner(unittest.TestCase):
         result = self._run('git', ["repo=\"file:///tmp/gitdemo\"", "dest=/tmp/gd", "force=yes"])
         assert result['changed']
         # test the bare option
-        result = self._run('git', ["repo=\"file:///tmp/gitdemo\"", "dest=/tmp/gdbare", "bare=yes"])
+        result = self._run('git', ["repo=\"file:///tmp/gitdemo\"", "dest=/tmp/gdbare", "bare=yes", "remote=test"])
         assert result['changed']
         # test a no-op fetch
         result = self._run('git', ["repo=\"file:///tmp/gitdemo\"", "dest=/tmp/gdbare", "bare=yes"])

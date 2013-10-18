@@ -142,7 +142,8 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare):
     module.run_command(cmd, check_rc=True)
     if bare:
         os.chdir(dest)
-        module.run_command([git_path, 'remote', 'set-url', remote, repo], check_rc=True)
+        if remote != 'origin':
+            module.run_command([git_path, 'remote', 'add', remote, repo], check_rc=True)
   
 def has_local_mods(git_path, dest, bare):
     if bare:
