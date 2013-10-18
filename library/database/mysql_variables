@@ -76,14 +76,48 @@ else:
     mysqldb_found = True
 
 
+def typedvalue(value):
+    """
+    Convert value to number whenever possible, return same value
+    otherwise.
+
+    >>> typedvalue('3')
+    3
+    >>> typedvalue('3.0')
+    3.0
+    >>> typedvalue('foobar')
+    'foobar'
+
+    """
+    try:
+        return int(value)
+    except ValueError:
+        pass
+
+    try:
+        return float(value)
+    except ValueError:
+        pass
+
+    return value
+
+
 def getvariable(cursor, mysqlvar):
     cursor.execute("SHOW VARIABLES LIKE '" + mysqlvar + "'")
     mysqlvar_val = cursor.fetchall()
     return mysqlvar_val
 
+
 def setvariable(cursor, mysqlvar, value):
+    """ Set a global mysql variable to a given value
+
+    The DB driver will handle quoting of the given value based on its
+    type, thus numeric strings like '3.0' or '8' are illegal, they
+    should be passed as numeric literals.
+
+    """
     try:
-        cursor.execute("SET GLOBAL " + mysqlvar + "=" + value)
+        cursor.execute("SET GLOBAL " + mysqlvar + " = %s", (value,))
         cursor.fetchall()
         result = True
     except Exception, e:
@@ -203,11 +237,14 @@ def main():
     else:
         if len(mysqlvar_val) < 1:
             module.fail_json(msg="Variable not available", changed=False)
-        if value == mysqlvar_val[0][1]:
+        # Type values before using them
+        value_wanted = typedvalue(value)
+        value_actual = typedvalue(mysqlvar_val[0][1])
+        if value_wanted == value_actual:
             module.exit_json(msg="Variable already set to requested value", changed=False)
-        result = setvariable(cursor, mysqlvar, value)
+        result = setvariable(cursor, mysqlvar, value_wanted)
         if result is True:
-            module.exit_json(msg="Variable change succeeded", changed=True)
+            module.exit_json(msg="Variable change succeeded prev_value=%s" % value_actual, changed=True)
         else:
             module.fail_json(msg=result, changed=False)
 
