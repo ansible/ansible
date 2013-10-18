@@ -154,15 +154,22 @@ def associate_ip_and_instance(ec2, address, instance_id, module):
         module.fail_json(msg="association failed")
 
 
-def disassociate_ip_and_instance(ec2, public_ip, instance_id, module):
-    if not ip_is_associated_with_instance(ec2, public_ip, instance_id, module):
-        module.exit_json(changed=False, public_ip=public_ip)
+def disassociate_ip_and_instance(ec2, address, instance_id, module):
+    if not ip_is_associated_with_instance(ec2, address.public_ip, instance_id, module):
+        module.exit_json(changed=False, public_ip=address.public_ip)
 
     # If we're in check mode, nothing else to do
     if module.check_mode:
         module.exit_json(changed=True)
 
-    res = ec2.disassociate_address(public_ip)
+    try:
+        if address.domain == "vpc":
+            res = ec2.disassociate_address(association_id=address.association_id)
+        else:
+            res = ec2.disassociate_address(public_ip=address.public_ip)
+    except boto.exception.EC2ResponseError, e:
+        module.fail_json(msg=str(e))
+
     if res:
         module.exit_json(changed=True)
     else:
@@ -279,7 +286,8 @@ def main():
         if instance_id is None:
             release_address(ec2, public_ip, module)
         else:
-            disassociate_ip_and_instance(ec2, public_ip, instance_id, module)
+            address = find_address(ec2, public_ip, module)
+            disassociate_ip_and_instance(ec2, address, instance_id, module)
 
 
 
