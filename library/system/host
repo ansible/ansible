@@ -124,7 +124,7 @@ class Host(object):
                 break
 
     def full_entry_exists(self):
-        if self._has_aliases and not self._aliases_matches:
+        if self.aliases and not self._aliases_matches:
             return False
         return self._ip_matches and self._hostname_matches
 
