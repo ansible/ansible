@@ -201,6 +201,8 @@ def main():
     if value is None:
         module.exit_json(msg=mysqlvar_val)
     else:
+        if len(mysqlvar_val) < 1:
+            module.fail_json(msg="Variable not available", changed=False)
         if value == mysqlvar_val[0][1]:
             module.exit_json(msg="Variable already set to requested value", changed=False)
         result = setvariable(cursor, mysqlvar, value)
