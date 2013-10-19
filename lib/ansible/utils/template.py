@@ -70,9 +70,6 @@ def _get_extensions():
 
     return jinja_exts
 
-class Flags:
-    LEGACY_TEMPLATE_WARNING = False
-
 # TODO: refactor this file
 
 FILTER_PLUGINS = None
@@ -97,9 +94,12 @@ def _legacy_varFindLimitSpace(basedir, vars, space, part, lookup_fatal, depth, e
     templating for part and a few more things
 
     DEPRECATED
-    LEGACY VARIABLES ARE SLATED FOR REMOVAL IN ANSIBLE 1.6
+    LEGACY VARIABLES ARE SLATED FOR REMOVAL IN ANSIBLE 1.5
     use {{ foo }} INSTEAD
     '''
+
+    if not C.DEFAULT_LEGACY_PLAYBOOK_VARIABLES:
+        raise Exception("we should not be here")
 
     # Previous part couldn't be found, nothing to limit to
     if space is None:
@@ -153,14 +153,14 @@ def _legacy_varFind(basedir, text, vars, lookup_fatal, depth, expand_lists):
     original data in the caller.
 
     DEPRECATED
-    LEGACY VARIABLES ARE SLATED FOR REMOVAL IN ANSIBLE 1.6
+    LEGACY VARIABLES ARE SLATED FOR REMOVAL IN ANSIBLE 1.5
     use {{ foo }} INSTEAD
     '''
 
     # short circuit this whole function if we have specified we don't want
     # legacy var replacement
-    if C.DEFAULT_LEGACY_PLAYBOOK_VARIABLES == False:
-        return None
+    if not C.DEFAULT_LEGACY_PLAYBOOK_VARIABLES:
+        raise Exception("we should not be here")
 
     start = text.find("$")
     if start == -1:
@@ -271,9 +271,12 @@ def legacy_varReplace(basedir, raw, vars, lookup_fatal=True, depth=0, expand_lis
     ''' Perform variable replacement of $variables in string raw using vars dictionary
     
     DEPRECATED
-    LEGACY VARIABLES ARE SLATED FOR REMOVAL IN ANSIBLE 1.6
+    LEGACY VARIABLES ARE SLATED FOR REMOVAL IN ANSIBLE 1.5
     use {{ foo }} INSTEAD
     '''
+
+    if not C.DEFAULT_LEGACY_PLAYBOOK_VARIABLES:
+        raise Exception("we should not be here")
 
     # this code originally from yum (and later modified a lot)
 
@@ -313,17 +316,26 @@ def legacy_varReplace(basedir, raw, vars, lookup_fatal=True, depth=0, expand_lis
 
     if result != orig:
         from ansible import utils
-        utils.deprecated("Legacy variable subsitution, such as using ${foo} or $foo instead of {{ foo }} is currently valid but will be phased out and has been out of favor since version 1.2. This is the last of legacy features on our deprecation list. You may continue to use this if you have specific needs for now","1.6")
+        utils.deprecated("Legacy variable subsitution, such as using ${foo} or $foo instead of {{ foo }} is currently valid but will be phased out and has been out of favor since version 1.2. This is the last of legacy features on our deprecation list. You may continue to use this if you have specific needs for now","1.5")
     return result
 
 
-def template(basedir, input_value, vars, lookup_fatal=True, depth=-1, expand_lists=True, convert_bare=False):
+def template(basedir, input_value, vars, lookup_fatal=True, depth=-1, expand_lists=True, convert_bare=False, fail_on_undefined=False, filter_fatal=True):
     last_time = input_value
     result = None
     changed = True
     while changed:
         result = _template(
-            basedir, last_time, vars, lookup_fatal=lookup_fatal, depth=depth, expand_lists=expand_lists, convert_bare=convert_bare)
+            basedir, 
+            last_time, 
+            vars, 
+            lookup_fatal=lookup_fatal, 
+            depth=depth, 
+            expand_lists=expand_lists, 
+            convert_bare=convert_bare, 
+            fail_on_undefined=fail_on_undefined,
+            filter_fatal=filter_fatal,
+        )
         if last_time != result:
             changed = True
         else:
@@ -334,7 +346,7 @@ def template(basedir, input_value, vars, lookup_fatal=True, depth=-1, expand_lis
             raise errors.AnsibleError("template recursion depth exceeded")
     return result 
 
-def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=True, convert_bare=False, fail_on_undefined=False, filter_fatal=True):
+def _template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=True, convert_bare=False, fail_on_undefined=False, filter_fatal=True):
     ''' templates a data structure by traversing it and substituting for other data structures '''
 
     try:
@@ -346,24 +358,25 @@ def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=Tr
         if isinstance(varname, basestring):
             if '{{' in varname or '{%' in varname:
                 varname = template_from_string(basedir, varname, vars, fail_on_undefined)
+    
+            if not C.DEFAULT_LEGACY_PLAYBOOK_VARIABLES:
+                return varname
+ 
             if not '$' in varname:
                 return varname
-    
             m = _legacy_varFind(basedir, varname, vars, lookup_fatal, depth, expand_lists)
             if not m:
                 return varname
             if m['start'] == 0 and m['end'] == len(varname):
                 if m['replacement'] is not None:
-                    Flags.LEGACY_TEMPLATE_WARNING = True
                     return template(basedir, m['replacement'], vars, lookup_fatal, depth, expand_lists)
                 else:
                     return varname
             else:
-                Flags.LEGACY_TEMPLATE_WARNING = True
                 return legacy_varReplace(basedir, varname, vars, lookup_fatal, depth, expand_lists)
-    
+
         elif isinstance(varname, (list, tuple)):
-            return [template(basedir, v, vars, lookup_fatal, depth, expand_lists, fail_on_undefined=fail_on_undefined) for v in varname]
+            return [ template(basedir, v, vars, lookup_fatal, depth, expand_lists, fail_on_undefined=fail_on_undefined) for v in varname]
         elif isinstance(varname, dict):
             d = {}
             for (k, v) in varname.iteritems():
@@ -371,6 +384,7 @@ def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=Tr
             return d
         else:
             return varname
+
     except errors.AnsibleFilterError:
         if filter_fatal:
             raise
@@ -394,7 +408,6 @@ def template_from_file(basedir, path, vars):
     environment.filters.update(_get_filters())
     environment.globals['lookup'] = my_lookup
     if fail_on_undefined:
-        print "DEBUG: fail on undefined is engaged"
         environment.undefined = StrictUndefined
 
     try:
@@ -414,7 +427,6 @@ def template_from_file(basedir, path, vars):
             (key,val) = pair.split(':')
             setattr(environment,key.strip(),ast.literal_eval(val.strip()))
 
-    t = environment.from_string(data)
     vars = vars.copy()
     try:
         template_uid = pwd.getpwuid(os.stat(realpath).st_uid).pw_name
@@ -439,9 +451,16 @@ def template_from_file(basedir, path, vars):
     )
 
     try:
+        t = environment.from_string(data)
         res = t.render(vars)
     except jinja2.exceptions.UndefinedError, e:
         raise errors.AnsibleUndefinedVariable("One or more undefined variables: %s" % str(e))
+    except TemplateSyntaxError, e:
+        # Throw an exception which includes a more user friendly error message
+        values = dict(name=realpath, lineno=e.lineno, error=str(e)) 
+        msg = 'file: %(name)s, line number: %(lineno)s, error: %(error)s' % values
+        error = errors.AnsibleError(msg)
+        raise error
 
     if data.endswith('\n') and not res.endswith('\n'):
         res = res + '\n'
@@ -449,14 +468,15 @@ def template_from_file(basedir, path, vars):
 
 def template_from_string(basedir, data, vars, fail_on_undefined=False):
     ''' run a string through the (Jinja2) templating engine '''
+    
+    def my_lookup(*args, **kwargs):
+        kwargs['vars'] = vars
+        return lookup(*args, basedir=basedir, **kwargs)
 
     if type(data) == str:
         data = unicode(data, 'utf-8')
     environment = jinja2.Environment(trim_blocks=True, undefined=StrictUndefined, extensions=_get_extensions())
     environment.filters.update(_get_filters())
-    if fail_on_undefined:
-        print "DEBUG: fail on undefined is engaged, 2"
-        environment.undefined = StrictUndefined
 
     if '_original_file' in vars:
         basedir = os.path.dirname(vars['_original_file'])
@@ -467,6 +487,21 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
     # TODO: may need some way of using lookup plugins here seeing we aren't calling
     # the legacy engine, lookup() as a function, perhaps?
 
+    if type(data) == str:
+        data = unicode(data, 'utf-8')
+    environment = jinja2.Environment(trim_blocks=True, undefined=StrictUndefined, extensions=_get_extensions())
+    environment.filters.update(_get_filters())
+
+    if '_original_file' in vars:
+        basedir = os.path.dirname(vars['_original_file'])
+        filesdir = os.path.abspath(os.path.join(basedir, '..', 'files'))
+        if os.path.exists(filesdir):
+            basedir = filesdir
+
+    # TODO: may need some way of using lookup plugins here seeing we aren't calling
+    # the legacy engine, lookup() as a function, perhaps?
+
+    data = data.decode('utf-8')
     try:
         t = environment.from_string(data)
     except Exception, e:
@@ -475,19 +510,11 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
         else:
             return data
 
-    def my_lookup(*args, **kwargs):
-        kwargs['vars'] = vars
-        return lookup(*args, basedir=basedir, **kwargs)
-
-    t.globals['lookup'] = my_lookup
-
     try:
         return t.render(vars)
-
     except jinja2.exceptions.UndefinedError:
         if fail_on_undefined:
             raise
         else:
-            # this shouldn't happen due to undeclared check above
             return data
 
