@@ -81,15 +81,6 @@ class TestUtils(unittest.TestCase):
 
         assert res == 'hello world'
 
-    def test_template_whitespace(self):
-        vars = {
-            'who': 'world',
-        }
-
-        res = template2.template_from_file("test", "template-whitespace", vars)
-
-        assert res == 'hello world\n'
-
     def test_template_unicode(self):
         vars = {
             'who': u'wórld',
