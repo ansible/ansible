@@ -303,7 +303,9 @@ def legacy_varReplace(basedir, raw, vars, lookup_fatal=True, depth=0, expand_lis
 
     result = ''.join(done)
 
-    if result != orig:
+    previous_old_style_vars = orig.count('$')
+    new_old_style_vars = result.count('$')
+    if previous_old_style_vars != new_old_style_vars:
         from ansible import utils
         utils.deprecated("Legacy variable substitution, such as using ${foo} or $foo instead of {{ foo }} is currently valid but will be phased out and has been out of favor since version 1.2. This is the last of legacy features on our deprecation list. You may continue to use this if you have specific needs for now","1.5")
     return result
