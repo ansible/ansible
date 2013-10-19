@@ -116,7 +116,7 @@ options:
     choices: [ "reboot", "yearly", "annually", "monthly", "weekly", "daily", "hourly" ]
   env:
     description:
-      - Adding environment variables. More than one variables separated by ';'.
+      - Adding environment variables. More than one variables separated by ','.
     required: false
     default: null
 requirements:
@@ -143,7 +143,7 @@ EXAMPLES = '''
         cron_file=ansible_yum-autoupdate
 
 #creat a cron with env 
-- cron: name="djstellar_getmodels" job="/home/djstellar/bin/getmodels.sh > /dev/null 2>&1" env=MAILTO=ops@gmail.com;SHELL=/bin/bash hour=1 minute=9
+- cron: name="djstellar_getmodels" job="/home/djstellar/bin/getmodels.sh > /dev/null 2>&1" env=MAILTO=ops@gmail.com,SHELL=/bin/bash hour=1 minute=9
 
 # Removes a cron file from under /etc/cron.d
 - cron: cron_file=ansible_yum-autoupdate state=absent
@@ -253,9 +253,9 @@ class CronTab(object):
     def add_job(self, name, job, env_list):
         # Add the comment
         self.lines.append("%s%s" % (self.ansible, name))
-	
-	for e in env_list:
-		self.lines.append("%s" % (e))
+
+        for e in env_list:
+            self.lines.append("%s" % (e))
 
         # Add the job
         self.lines.append("%s" % (job))
@@ -267,7 +267,7 @@ class CronTab(object):
         lines.append(comment)
 
         for e in env_list:
-		lines.append("%s" % (e))
+	    lines.append("%s" % (e))
 
         lines.append("%s" % (job))
 
@@ -292,11 +292,11 @@ class CronTab(object):
         for l in self.lines:
             if comment is not None:  #found Ansible cron job
                 if comment == name:  #found the specific cron job
-		    if not job:  #job empty list
-			job.append(comment)
-	
-		    if re.match('[\w]+=.*', l): #match env line
-			job.append(l)
+                    if not job:  #job empty list
+	                job.append(comment)
+
+                    if re.match('[\w]+=.*', l): #match env line
+		        job.append(l)
 		        #return [comment, l]
 		    elif not re.match('^\s|^#', l):
 			job.append(l)
@@ -309,7 +309,7 @@ class CronTab(object):
                 comment = re.sub( r'%s' % self.ansible, '', l)
 
 	if job: #job is not empty
-		return job
+	    return job
 
         return []
 
@@ -341,17 +341,17 @@ class CronTab(object):
         newlines = []
         comment = None
         added = False
-	count = 0
+        count = 0
 
         for l in self.lines:
             if comment is not None:  #the same cron job
-		count += 1
-                if not added:  
-			addlinesfunction(newlines, comment, job, env)
-			added = True
-
+	        count += 1		        
+		if not added:
+		    addlinesfunction(newlines, comment, job, env)
+		    added = True
+				
 		if length == count:
-                	comment = None
+		    comment = None
 
             elif l == ansiblename:
                 comment = l
@@ -360,7 +360,7 @@ class CronTab(object):
                 newlines.append(l)
 
 	self.lines = newlines
-	
+
         if len(newlines) == 0:
             return True
         else:
@@ -469,12 +469,17 @@ def main():
     res_args     = dict()
 
     if env:
-	env_list = sorted(env.split(';'))
-	if len(env_list) == 1:
-	    result = re.findall(r'=', env)
-	    if len(result) > 1:	
-            	module.fail_json(msg='env variables are seperated by ;')
+        if type(env) is str:
+            env_list = sorted(env.split(','))
 	    
+            if len(env_list) == 1:
+	        result = re.findall(r'=', env)
+
+                if len(result) > 1:
+                    module.fail_json(msg='env variables are seperated by ,')
+
+        elif type(env) is list:
+            env_list = sorted(env)
 
     crontab = CronTab(module, user, cron_file)
 
@@ -534,32 +539,30 @@ def main():
         #    changed = True
 
 	if old_line_count > 0:
-		if env_list: #we have environment
-			if old_job[-1] != job: #job != the last line of old_job
-				crontab.update_job(name, job, old_line_count, env_list)
-            			changed = True
-			else: # same job and name
-				#env_list[0] != old_job[1]: #env is not matched
-				if (old_line_count - 2) > 0: 
-					old_env = old_job[1:-1]	
-					if len(env_list) == len(old_env):
-						for e,o in zip(sorted(env_list), sorted(old_env)):
-							if e != o:
-								crontab.update_job(name, job, old_line_count, env_list)
-								changed = True
-					else:
-						crontab.update_job(name, job, 
-							old_line_count, env_list)
-						changed = True
-				else:
-					crontab.update_job(name, job, 
-							old_line_count, env_list)
-					changed = True
+	    if env_list: #we have environment
+	        if old_job[-1] != job: #job != the last line of old_job
+	            crontab.update_job(name, job, old_line_count, env_list)
+        	    changed = True
+	        else: # same job and name
+	            #env_list[0] != old_job[1]: #env is not matched
+	    	    if (old_line_count - 2) > 0:
+	    	        old_env = old_job[1:-1]
+                        
+                        if len(env_list) == len(old_env):
+	    	            for e,o in zip(env_list, sorted(old_env)):
+	    		        if e != o:
+	    		            crontab.update_job(name, job, old_line_count, env_list)
+	    			    changed = True
+	    	        else: #not same len
+	    	            crontab.update_job(name, job, old_line_count, env_list)
+	    		    changed = True
+	    	    else:
+                        crontab.update_job(name, job, old_line_count, env_list)
+	    	        changed = True
 
-
-		elif old_job[-1] != job:
-			crontab.update_job(name, job, old_line_count, env_list)
-            		changed = True
+	    elif old_job[-1] != job:
+	        crontab.update_job(name, job, old_line_count, env_list)
+                changed = True
     else:
         if old_line_count > 0:
             crontab.remove_job(name, old_line_count)
