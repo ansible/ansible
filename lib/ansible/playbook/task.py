@@ -101,7 +101,7 @@ class Task(object):
                 utils.deprecated("The 'when_' conditional is a deprecated syntax as of 1.2. Switch to using the regular unified 'when' statements as described in ansibleworks.com/docs/.","1.5")
 
                 if 'when' in ds:
-                   raise errors.AnsibleError("multiple when_* statements specified in task %s" % (ds.get('name', ds['action'])))
+                    raise errors.AnsibleError("multiple when_* statements specified in task %s" % (ds.get('name', ds['action'])))
                 when_name = x.replace("when_","")
                 ds['when'] = "%s %s" % (when_name, ds[x])
                 ds.pop(x)
