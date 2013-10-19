@@ -82,7 +82,7 @@ class Task(object):
             # code to allow "with_glob" and to reference a lookup plugin named glob
             elif x.startswith("with_"):
 
-                if isinstance(ds[x], basestring) and '{{' in ds[x]:
+                if isinstance(ds[x], basestring) and ds[x].lstrip().startswith("{{"):
                     utils.warning("It is unneccessary to use '{{' in loops, leave variables in loop expressions bare.")
 
                 plugin_name = x.replace("with_","")
@@ -94,7 +94,7 @@ class Task(object):
                     raise errors.AnsibleError("cannot find lookup plugin named %s for usage in with_%s" % (plugin_name, plugin_name))
 
             elif x in [ 'changed_when', 'failed_when', 'when']:
-                if isinstance(ds[x], basestring) and '{{' in ds[x]:
+                if isinstance(ds[x], basestring) and ds[x].lstrip().startswith("{{"):
                     utils.warning("It is unneccessary to use '{{' in conditionals, leave variables in loop expressions bare.")
                 ds[x] = "jinja2_compare %s" % (ds[x])
             elif x.startswith("when_"):
