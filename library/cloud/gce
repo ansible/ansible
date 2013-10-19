@@ -178,7 +178,7 @@ except ImportError:
 ARGS = getattr(secrets, 'GCE_PARAMS', ())
 KWARGS = getattr(secrets, 'GCE_KEYWORD_PARAMS', {})
 
-if not ARGS or not KWARGS.has_key('project'):
+if not ARGS or not 'project' in KWARGS:
     print("failed=True " + \
         "msg='Missing GCE connection parametres in libcloud secrets file.'")
     sys.exit(1)
@@ -196,7 +196,7 @@ def get_instance_info(inst):
 
     """
     metadata = {}
-    if inst.extra.has_key('metadata') and inst.extra['metadata'].has_key('items'):
+    if 'metadata' in inst.extra and 'items' in inst.extra['metadata']:
         for md in inst.extra['metadata']['items']:
             metadata[md['key']] = md['value']
 
@@ -212,9 +212,9 @@ def get_instance_info(inst):
         'network': netname,
         'private_ip': inst.private_ip[0],
         'public_ip': inst.public_ip[0],
-        'status': inst.extra.has_key('status') and inst.extra['status'] or None,
-        'tags': inst.extra.has_key('tags') and inst.extra['tags'] or [],
-        'zone': inst.extra.has_key('zone') and inst.extra['zone'].name or None,
+        'status': ('status' in inst.extra) and inst.extra['status'] or None,
+        'tags': ('tags' in inst.extra) and inst.extra['tags'] or [],
+        'zone': ('zone' in inst.extra) and inst.extra['zone'].name or None,
     })
 
 def create_instances(module, gce, instance_names):

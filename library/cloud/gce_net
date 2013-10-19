@@ -117,7 +117,7 @@ except ImportError:
 ARGS = getattr(secrets, 'GCE_PARAMS', ())                                       
 KWARGS = getattr(secrets, 'GCE_KEYWORD_PARAMS', {})                             
 
-if not ARGS or not KWARGS.has_key('project'):
+if not ARGS or not 'project' in KWARGS:
     print("failed=True msg='Missing GCE connection " + \
             "parameters in libcloud secrets file.'")
     sys.exit(1)
