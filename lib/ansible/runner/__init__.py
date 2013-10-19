@@ -71,11 +71,6 @@ def _executor_hook(job_queue, result_queue, new_stdin):
             host = job_queue.get(block=False)
             return_data = multiprocessing_runner._executor(host, new_stdin)
             result_queue.put(return_data)
-
-            if 'LEGACY_TEMPLATE_WARNING' in return_data.flags:
-                # pass data back up across the multiprocessing fork boundary
-                template.Flags.LEGACY_TEMPLATE_WARNING = True
-
         except Queue.Empty:
             pass
         except:
@@ -371,15 +366,6 @@ class Runner(object):
     def _executor(self, host, new_stdin):
         ''' handler for multiprocessing library '''
 
-        def get_flags():
-            # flags are a way of passing arbitrary event information
-            # back up the chain, since multiprocessing forks and doesn't
-            # allow state exchange
-            flags = []
-            if template.Flags.LEGACY_TEMPLATE_WARNING:
-                flags.append('LEGACY_TEMPLATE_WARNING')
-            return flags
-
         try:
             if not new_stdin:
                 self._new_stdin = os.fdopen(os.dup(sys.stdin.fileno()))
@@ -389,7 +375,6 @@ class Runner(object):
             exec_rc = self._executor_internal(host, new_stdin)
             if type(exec_rc) != ReturnData:
                 raise Exception("unexpected return type: %s" % type(exec_rc))
-            exec_rc.flags = get_flags()
             # redundant, right?
             if not exec_rc.comm_ok:
                 self.callbacks.on_unreachable(host, exec_rc.result)
@@ -397,11 +382,11 @@ class Runner(object):
         except errors.AnsibleError, ae:
             msg = str(ae)
             self.callbacks.on_unreachable(host, msg)
-            return ReturnData(host=host, comm_ok=False, result=dict(failed=True, msg=msg), flags=get_flags())
+            return ReturnData(host=host, comm_ok=False, result=dict(failed=True, msg=msg))
         except Exception:
             msg = traceback.format_exc()
             self.callbacks.on_unreachable(host, msg)
-            return ReturnData(host=host, comm_ok=False, result=dict(failed=True, msg=msg), flags=get_flags())
+            return ReturnData(host=host, comm_ok=False, result=dict(failed=True, msg=msg))
 
     # *****************************************************
 
