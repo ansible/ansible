@@ -135,7 +135,7 @@ def generate_options_string(install_options):
     if install_options is None:
         return ''
 
-    options_str =  ''
+    options_str = ''
 
     for option in install_options:
         options_str += ' --%s' % option
