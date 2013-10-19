@@ -86,6 +86,7 @@ examples:
 import sys
 import re
 import os
+
 import argparse
 import collections
 
@@ -192,6 +193,14 @@ def setup():
                              % (e.message, default_creds_file))
             sys.exit(1)
 
+    pyrax.set_setting('identity_type', 'rackspace')
+
+    try:
+        pyrax.set_credential_file(os.path.expanduser(creds_file))
+    except Exception, e:
+        sys.stderr.write("%s: %s\n" % (e, e.message))
+        sys.exit(1)
+
     regions = []
     for region in os.getenv('RAX_REGION', 'all').split(','):
         region = region.strip().upper()
@@ -203,14 +212,6 @@ def setup():
             sys.exit(1)
         elif region not in regions:
             regions.append(region)
-
-    pyrax.set_setting('identity_type', 'rackspace')
-
-    try:
-        pyrax.set_credential_file(os.path.expanduser(creds_file))
-    except Exception, e:
-        sys.stderr.write("%s: %s\n" % (e, e.message))
-        sys.exit(1)
 
     return regions
 
