@@ -390,7 +390,6 @@ Or:
         return msg
     else:
         parts = probline.split(":")
-        print parts
         if len(parts) > 1:
             middle = parts[1].strip()
             match = False
@@ -399,9 +398,8 @@ Or:
                 match = True
             elif middle.startswith('"') and not middle.endswith('"'):
                 match = True
-            if middle[0] in [ '"', "'" ] and middle[-1] in [ '"', "'" ]:
+            if middle[0] in [ '"', "'" ] and middle[-1] in [ '"', "'" ] and probline.count("'") > 2 or probline.count("'") > 2:
                 unbalanced = True
-
             if match:
                 msg = msg + """
 This one looks easy to fix.  It seems that there is a value started 
