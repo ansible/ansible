@@ -9,6 +9,7 @@ from nose.plugins.skip import SkipTest
 
 import ansible.utils
 import ansible.utils.template as template2
+import ansible.constants as C
 
 class TestUtils(unittest.TestCase):
 
@@ -16,6 +17,10 @@ class TestUtils(unittest.TestCase):
     ### varReplace function tests
 
     def test_varReplace_var_complex_var(self):
+
+        old_setting = C.DEFAULT_LEGACY_PLAYBOOK_VARIABLES
+        C.DEFAULT_LEGACY_PLAYBOOK_VARIABLES = True
+
         vars = {
             'x': '$y',
             'y': {
@@ -25,6 +30,8 @@ class TestUtils(unittest.TestCase):
         template = '${x.foo}'
         res = template2.template(None, template, vars)
         assert res == 'result'
+
+        C.DEFAULT_LEGACY_PLAYBOOK_VARIABLES = old_setting
 
     #####################################
     ### template_ds function tests
@@ -53,6 +60,9 @@ class TestUtils(unittest.TestCase):
             ],
         }
 
+        old_setting = C.DEFAULT_LEGACY_PLAYBOOK_VARIABLES
+        C.DEFAULT_LEGACY_PLAYBOOK_VARIABLES = True
+
         template = '${data.var}'
         res = template2.template(None, template, vars)
         assert sorted(res) == sorted(vars['data']['var'])
@@ -68,6 +78,8 @@ class TestUtils(unittest.TestCase):
         template = '${data.nonexisting}'
         res = template2.template(None, template, vars)
         assert res == template
+
+        C.DEFAULT_LEGACY_PLAYBOOK_VARIABLES = old_setting
 
     #####################################
     ### Template function tests
