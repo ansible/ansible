@@ -21,15 +21,16 @@ import codecs
 import jinja2
 from jinja2.runtime import StrictUndefined
 from jinja2.exceptions import TemplateSyntaxError
-import yaml
-import json
 from ansible import errors
 import ansible.constants as C
 import time
-import subprocess
 import datetime
 import pwd
 import ast
+
+FILTER_PLUGINS = None
+_LISTRE = re.compile(r"(\w+)\[(\d+)\]")
+JINJA2_OVERRIDE='#jinja2:'
 
 class Globals(object):
 
@@ -55,26 +56,14 @@ def _get_filters():
 
 def _get_extensions():
     ''' return jinja2 extensions to load '''
-
-    '''
-    if some extensions are set via jinja_extensions in ansible.cfg, we try
-    to load them with the jinja environment
-    '''
+    # if some extensions are set via jinja_extensions in ansible.cfg, we try
+    # to load them with the jinja environment
     jinja_exts = []
     if C.DEFAULT_JINJA2_EXTENSIONS:
-        '''
-        Let's make sure the configuration directive doesn't contain spaces
-        and split extensions in an array
-        '''
+        # Let's make sure the configuration directive doesn't contain spaces
+        # and split extensions in an array
         jinja_exts = C.DEFAULT_JINJA2_EXTENSIONS.replace(" ", "").split(',')
-
     return jinja_exts
-
-# TODO: refactor this file
-
-FILTER_PLUGINS = None
-_LISTRE = re.compile(r"(\w+)\[(\d+)\]")
-JINJA2_OVERRIDE='#jinja2:'
 
 def lookup(name, *args, **kwargs):
     from ansible import utils
@@ -336,9 +325,7 @@ def template(basedir, input_value, vars, lookup_fatal=True, depth=-1, expand_lis
             fail_on_undefined=fail_on_undefined,
             filter_fatal=filter_fatal,
         )
-        if last_time != result:
-            changed = True
-        else:
+        if last_time == result:
             changed = False
         last_time = result
         depth = depth + 1
@@ -378,10 +365,11 @@ def _template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=T
         elif isinstance(varname, (list, tuple)):
             return [ template(basedir, v, vars, lookup_fatal, depth, expand_lists, fail_on_undefined=fail_on_undefined) for v in varname]
         elif isinstance(varname, dict):
-            d = {}
-            for (k, v) in varname.iteritems():
-                d[k] = template(basedir, v, vars, lookup_fatal, depth, expand_lists, fail_on_undefined=fail_on_undefined)
-            return d
+            return dict([
+                (k, template(
+                     basedir, v, vars, lookup_fatal, depth, expand_lists, fail_on_undefined=fail_on_undefined)
+                ) for (k,v) in varname.iteritems() 
+            ])
         else:
             return varname
 
@@ -432,12 +420,15 @@ def template_from_file(basedir, path, vars):
         template_uid = pwd.getpwuid(os.stat(realpath).st_uid).pw_name
     except:
         template_uid = os.stat(realpath).st_uid
-    vars['template_host']   = os.uname()[1]
-    vars['template_path']   = realpath
-    vars['template_mtime']  = datetime.datetime.fromtimestamp(os.path.getmtime(realpath))
-    vars['template_uid']    = template_uid
-    vars['template_fullpath'] = os.path.abspath(realpath)
-    vars['template_run_date'] = datetime.datetime.now()
+
+    vars.update(dict(
+       template_host     = os.uname()[1],
+       template_path     = realpath,
+       template_mtime    = datetime.datetime.fromtimestamp(os.path.getmtime(realpath)),
+       template_uid      = template_uid,
+       template_fullpath = os.path.abspath(realpath),
+       template_run_date = datetime.datetime.now(),
+    ))
 
     managed_default = C.DEFAULT_MANAGED_STR
     managed_str = managed_default.format(
@@ -450,6 +441,8 @@ def template_from_file(basedir, path, vars):
         time.localtime(os.path.getmtime(realpath))
     )
 
+    # this double template pass is here to detect errors while we still have context
+    # actual recursion is handled by the mainline template function further down
     try:
         t = environment.from_string(data)
         res = t.render(vars)
@@ -464,7 +457,7 @@ def template_from_file(basedir, path, vars):
 
     if data.endswith('\n') and not res.endswith('\n'):
         res = res + '\n'
-    return template(basedir, res, vars)
+    return template(basedir, res, vars) 
 
 def template_from_string(basedir, data, vars, fail_on_undefined=False):
     ''' run a string through the (Jinja2) templating engine '''
@@ -501,9 +494,8 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
     # TODO: may need some way of using lookup plugins here seeing we aren't calling
     # the legacy engine, lookup() as a function, perhaps?
 
-    data = data.decode('utf-8')
     try:
-        t = environment.from_string(data)
+        t = environment.from_string(data.decode('utf-8'))
     except Exception, e:
         if 'recursion' in str(e):
             raise errors.AnsibleError("recursive loop detected in template string: %s" % data)
