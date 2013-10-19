@@ -1515,7 +1515,15 @@ class LinuxNetwork(Network):
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
             parse_ip_output(primary_data)
             parse_ip_output(secondary_data, secondary=True)
-        return interfaces, ips
+
+        # replace : by _ in interface name since they are hard to use in template 
+        new_interfaces = {}
+        for i in interfaces:
+            if ':' in i:
+                new_interfaces[i.replace(':','_')] = interfaces[i]
+            else:
+                new_interfaces[i] = interfaces[i]
+        return new_interfaces, ips
 
 class GenericBsdIfconfigNetwork(Network):
     """
