@@ -119,8 +119,14 @@ EXAMPLES = '''
 # Install (Bottle) python package on version 0.11.
 - pip: name=bottle version=0.11
 
-# Install (MyApp) using one of the remote protocols (bzr+,hg+,git+,svn+) or tarballs (zip, gz, bz2) (pip) supports. You do not have to supply '-e' option in extra_args. For these source names, (use_mirrors) is ignored and not applicable.
+# Install (MyApp) using one of the remote protocols (bzr+,hg+,git+,svn+) or tarballs (zip, gz, bz2) (pip) supports. For these source names, (use_mirrors) is ignored and not applicable.
 - pip: name='svn+http://myrepo/svn/MyApp#egg=MyApp'
+
+# Install (MyApp) using one of the remote protocols (bzr+,hg+,git+,svn+) or tarballs (zip, gz, bz2) (pip) supports in 'editable' mode.
+- pip: name='svn+http://myrepo/svn/MyApp#egg=MyApp' extra_args='-e'
+
+# Install (MyApp) using remote protocols 'git+git@...' supports. You do not have to supply '-e' option in extra_args, but MyApp will be installed in 'editable' mode implicitly.
+- pip: name='git+git@myrepo.org:MyApp#egg=MyApp'
 
 # Install (Bottle) into the specified (virtualenv), inheriting none of the globally installed modules
 - pip: name=bottle virtualenv=/my_app/venv
@@ -261,8 +267,7 @@ def main():
 
     cmd = '%s %s' % (pip, state_map[state])
 
-    if extra_args:
-        cmd += ' %s' % extra_args
+    generated_args = ''
     if name:
         # pip can accept a path to a local project or a VCS url beginning
         # with svn+, git+, hg+, or bz+ and these sources usually do not qualify
@@ -275,13 +280,19 @@ def main():
         is_vcs = False
         is_tar = False
         is_local_path = False
+        is_editable_arg_required = False
         if name.endswith('.tar.gz') or name.endswith('.tar.bz2') or name.endswith('.zip'):
             is_tar = True
-        elif name.startswith('svn+') or name.startswith('git+') or \
-                name.startswith('hg+') or name.startswith('bzr+'):
+        elif name.startswith('svn+') or name.startswith('hg+') or \
+                name.startswith('bzr+'):
             is_vcs = True
-        # If is_vcs=True, we must add -e option (we assume users won't add that to extra_args).
-        if is_vcs:
+        elif name.startswith('git+'):
+            is_vcs = True
+            if name.startswith('git+git@'):
+                is_editable_arg_required = True
+
+        # If is_editable_arg_required=True, we must add -e option (we assume users won't add that to extra_args).
+        if is_editable_arg_required:
             args_list = []  # used if extra_args is not used at all
             if extra_args:
                 args_list = extra_args.split(' ')
@@ -290,15 +301,19 @@ def main():
                 # Ok, we will reconstruct the option string
                 extra_args = ' '.join(args_list)
 
-        if name.startswith(('.','/')):
+        if name.startswith(('.', '/')):
             is_local_path = True
         # for tarball or vcs source, applying --use-mirrors doesn't really make sense
         is_package = is_vcs or is_tar or is_local_path       # just a shortcut for bool
         if not is_package and state != 'absent' and use_mirrors:
-            cmd += ' --use-mirrors'
-        cmd += ' %s' % _get_full_name(name, version)
+            generated_args += ' --use-mirrors'
+        generated_args += ' %s' % _get_full_name(name, version)
     elif requirements:
-        cmd += ' -r %s' % requirements
+        generated_args += ' -r %s' % requirements
+
+    if extra_args:
+        cmd += ' %s' % extra_args
+    cmd += generated_args
 
     if module.check_mode:
         module.exit_json(changed=True)
