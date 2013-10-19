@@ -394,6 +394,7 @@ def template_from_file(basedir, path, vars):
     environment.filters.update(_get_filters())
     environment.globals['lookup'] = my_lookup
     if fail_on_undefined:
+        print "DEBUG: fail on undefined is engaged"
         environment.undefined = StrictUndefined
 
     try:
@@ -438,7 +439,7 @@ def template_from_file(basedir, path, vars):
     )
 
     try:
-        res = template.render(vars)
+        res = t.render(vars)
     except jinja2.exceptions.UndefinedError, e:
         raise errors.AnsibleUndefinedVariable("One or more undefined variables: %s" % str(e))
 
@@ -453,6 +454,9 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
         data = unicode(data, 'utf-8')
     environment = jinja2.Environment(trim_blocks=True, undefined=StrictUndefined, extensions=_get_extensions())
     environment.filters.update(_get_filters())
+    if fail_on_undefined:
+        print "DEBUG: fail on undefined is engaged, 2"
+        environment.undefined = StrictUndefined
 
     if '_original_file' in vars:
         basedir = os.path.dirname(vars['_original_file'])
