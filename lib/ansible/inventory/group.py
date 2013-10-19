@@ -57,8 +57,8 @@ class Group(object):
         for kid in self.child_groups:
             kid_hosts = kid.get_hosts()
             for kk in kid_hosts:
-               if kk not in hosts:
-                   hosts.append(kk)
+                if kk not in hosts:
+                    hosts.append(kk)
         for mine in self.hosts:
             if mine not in hosts:
                 hosts.append(mine)
