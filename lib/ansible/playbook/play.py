@@ -268,7 +268,7 @@ class Play(object):
                 new_default_vars = utils.parse_yaml_from_file(filename)
                 if new_default_vars:
                     if type(new_default_vars) != dict:
-                        raise errors.AnsibleError("%s must be stored as dictonary/hash: %s" % (filename, type(new_default_vars)))
+                        raise errors.AnsibleError("%s must be stored as dictionary/hash: %s" % (filename, type(new_default_vars)))
 
                     default_vars = utils.combine_vars(default_vars, new_default_vars)
 
@@ -326,8 +326,8 @@ class Play(object):
             library   = utils.path_dwim(self.basedir, os.path.join(role_path, 'library'))
 
             missing = lambda f: not os.path.isfile(f)
-            if missing(task) and missing(handler) and missing(vars_file) and missing(meta_file) and missing(library):
-                raise errors.AnsibleError("found role at %s, but cannot find %s or %s or %s or %s or %s" % (role_path, task, handler, vars_file, meta_file, library))
+            if missing(task) and missing(handler) and missing(vars_file) and missing(defaults_file) and missing(meta_file) and missing(library):
+                raise errors.AnsibleError("found role at %s, but cannot find %s or %s or %s or %s or %s or %s" % (role_path, task, handler, vars_file, defaults_file, meta_file, library))
 
             if isinstance(role, dict):
                 role_name = role['role']
