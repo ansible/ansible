@@ -101,10 +101,10 @@ except ImportError:
     sys.exit(1)
 
 
-def host(hostname):
+def host(regions, hostname):
     hostvars = {}
 
-    for region in pyrax.regions:
+    for region in regions:
         # Connect to the region
         cs = pyrax.connect_to_cloudservers(region=region)
         for server in cs.servers.list():
@@ -125,16 +125,12 @@ def host(hostname):
     print(json.dumps(hostvars, sort_keys=True, indent=4))
 
 
-def _list(region):
+def _list(regions):
     groups = collections.defaultdict(list)
     hostvars = collections.defaultdict(dict)
 
-    if region and region.upper() in pyrax.regions:
-        pyrax.regions = (region.upper() for region in region.split(','))
-
-
     # Go through all the regions looking for servers
-    for region in pyrax.regions:
+    for region in regions:
         # Connect to the region
         cs = pyrax.connect_to_cloudservers(region=region)
         for server in cs.servers.list():
@@ -196,7 +192,18 @@ def setup():
                              % (e.message, default_creds_file))
             sys.exit(1)
 
-    region = os.getenv('RAX_REGION')
+    regions = []
+    for region in os.getenv('RAX_REGION', 'all').split(','):
+        region = region.strip().upper()
+        if region == 'ALL':
+            regions = pyrax.regions
+            break
+        elif region not in pyrax.regions:
+            sys.stderr.write('Unsupported region %s' % region)
+            sys.exit(1)
+        elif region not in regions:
+            regions.append(region)
+
     pyrax.set_setting('identity_type', 'rackspace')
 
     try:
@@ -205,16 +212,16 @@ def setup():
         sys.stderr.write("%s: %s\n" % (e, e.message))
         sys.exit(1)
 
-    return region
+    return regions
 
 
 def main():
     args = parse_args()
-    region = setup()
+    regions = setup()
     if args.list:
-        _list(region)
+        _list(regions)
     elif args.host:
-        host(args.host)
+        host(regions, args.host)
     sys.exit(0)
 
 if __name__ == '__main__':
