@@ -28,7 +28,7 @@ If you wanted to just run the "configuration" and "packages" part of a very long
 
     ansible-playbook example.yml --tags "configuration,packages"
 
-You may also apply takes to roles::
+You may also apply tags to roles::
 
     roles:
       - { role: webserver, port: 5000, tags: [ 'web', 'foo' ] }
