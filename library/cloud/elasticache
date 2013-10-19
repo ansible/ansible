@@ -400,7 +400,7 @@ class ElastiCacheManager(object):
             'node_type': self.data['CacheNodeType'],
             'engine': self.data['Engine'],
             'zone': self.data['PreferredAvailabilityZone'],
-            'cache_port': self.data['ConfigurationEndpoint']['Port']
+            'cache_port': self._get_port()
         }
         for key, value in unmodifiable_data.iteritems():
             if getattr(self, key) != value:
@@ -417,6 +417,15 @@ class ElastiCacheManager(object):
                                          region=connect_region)
         except boto.exception.NoAuthHandlerFound, e:
             self.module.fail_json(msg=e.message)
+
+    def _get_port(self):
+        """Get the port. Where this information is retrieved from is engine dependent."""
+        if self.data['Engine'] == 'memcached':
+            return self.data['ConfigurationEndpoint']['Port']
+        elif self.data['Engine'] == 'redis':
+            # Redis only supports a single node (presently) so just use
+            # the first and only
+            return self.data['CacheNodes'][0]['Endpoint']['Port']
 
     def _refresh_data(self, cache_cluster_data=None):
         """Refresh data about this cache cluster"""
