@@ -880,7 +880,7 @@ class NetBsdService(Service):
             if os.path.isfile(rcfile):
                 self.rcconf_file = rcfile
 
-        self.rcconf_key = "%s" % string.replace(self.name,"-","_");
+        self.rcconf_key = "%s" % string.replace(self.name,"-","_")
 
         return self.service_enable_rcconf()
 

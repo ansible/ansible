@@ -377,7 +377,8 @@ def main():
                 create_vm_template(c, vmname, image, zone)
                 module.exit_json(changed=True, msg="deployed VM %s from template %s"  % (vmname,image))
             elif resource_type == 'new':
-                create_vm(c, vmtype, vmname, zone, vmdisk_size, vmcpus, vmnic, vmnetwork, vmmem, vmdisk_alloc, sdomain, vmcores, vmos, vmdisk_int )
+                # FIXME: refactor, use keyword args.
+                create_vm(c, vmtype, vmname, zone, vmdisk_size, vmcpus, vmnic, vmnetwork, vmmem, vmdisk_alloc, sdomain, vmcores, vmos, vmdisk_int)
                 module.exit_json(changed=True, msg="deployed VM %s from scratch"  % vmname)
             else:
                 module.exit_json(changed=False, msg="You did not specify a resource type")
