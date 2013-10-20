@@ -399,9 +399,11 @@ class ElastiCacheManager(object):
         unmodifiable_data = {
             'node_type': self.data['CacheNodeType'],
             'engine': self.data['Engine'],
-            'zone': self.data['PreferredAvailabilityZone'],
             'cache_port': self._get_port()
         }
+        # Only check for modifications if zone is specified
+        if self.zone is not None:
+            unmodifiable_data['zone'] = self.data['PreferredAvailabilityZone']
         for key, value in unmodifiable_data.iteritems():
             if getattr(self, key) != value:
                 return True
@@ -506,8 +508,6 @@ def main():
 
     if state == 'present' and not num_nodes:
         module.fail_json(msg="'num_nodes' is a required parameter. Please specify num_nodes > 0")
-    if state == 'present' and not zone:
-        module.fail_json(msg="'zone' is a required parameter. Please specify an availability zone")
 
     if not aws_secret_key:
         if 'AWS_SECRET_KEY' in os.environ:
