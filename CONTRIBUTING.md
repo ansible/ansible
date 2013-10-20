@@ -84,14 +84,26 @@ Bugs should be reported to [github.com/ansible/ansible](http://github.com/ansibl
 signing up for a free github account.  Before reporting a bug, please use the bug/issue search 
 to see if the issue has already been reported.  
 
-When filing a bug, please make sure to include the following information in the bug report:
+When filing a bug, the following information is required:
 
+* A good name for the bug ("Foo module raises exception when xyz=glork is used", vs "foo doesn't work")
+* A succint description of the problem
 * What version of ansible you are using (ansible --version)
 * Steps to reproduce the problem
 * Expected results
-* Actual results.
+* Actual results
 
-If you are not sure if something is a bug yet, you are welcome and encouraged to ask about something on 
+Do not use the issue tracker for "how do I do this" type questions.  These are great candidates
+for IRC or the mailing list instead where things are likely to be more of a discussion.
+
+To be respectful of reviewers time and allow us to help everyone efficiently, please 
+provide minimal well-reduced and well-commented examples versus sharing your entire production
+playbook.  Include playbook snippets and output where possible.  
+
+Content in the GitHub bug tracker can be indented four spaces to preserve formatting.  
+For multiple-file content, we encourage use of gist.github.com.  Online pastebin content can expire.
+
+If you are not sure if something is a bug yet, you are welcome to ask about something on 
 the mailing list or IRC first.  As we are a very high volume project, if you determine that 
 you do have a bug, please be sure to open the issue yourself to ensure we have a record of
 it. Don’t rely on someone else in the community to file the bug report for you.
