@@ -1,4 +1,3 @@
-
 Introduction To Ad-Hoc Commands
 ===============================
 
@@ -100,7 +99,7 @@ Using the :ref:`shell` module looks like this::
     $ ansible raleigh -m shell -a 'echo $TERM'
 
 When running any command with the Ansible *ad hoc* CLI (as opposed to
-:doc:`playbooks`), pay particular attention to shell quoting rules, so
+:doc:`Playbooks <playbooks>`), pay particular attention to shell quoting rules, so
 the local shell doesn't eat a variable before it gets passed to Ansible.
 For example, using double vs single quotes in the above example would
 evaluate the variable on the box you were on.
@@ -243,7 +242,7 @@ very quickly. After the time limit (in seconds) runs out (``-B``), the process o
 the remote nodes will be terminated.
 
 Typically you'll be only be backgrounding long-running
-shell commands or software upgrades only.  Backgrounding the copy module does not do a background file transfer.  :doc:`playbooks` also support polling, and have a simplified syntax for this.
+shell commands or software upgrades only.  Backgrounding the copy module does not do a background file transfer.  :doc:`Playbooks <playbooks>` also support polling, and have a simplified syntax for this.
 
 .. _checking_facts:
 
@@ -257,36 +256,7 @@ system.  These can be used to implement conditional execution of tasks but also 
 
 Its also possible to filter this output to just export certain facts, see the "setup" module documentation for details.
 
-Read more about facts at :doc:`playbooks_variables` once you're ready to read up on :doc:`playbooks`. 
-
-.. _limiting_hosts:
-
-Limiting Selected Hosts
-```````````````````````
-
-What hosts you select to manage can be additionally constrained by using the '--limit' parameter or
-by using 'batch' (or 'range') selectors.
-
-As mentioned above, patterns can be strung together to select hosts in more than one group::
-
-    $ ansible webservers:dbservers -m command -a "/bin/foo xyz"
-
-This is an "or" condition.  If you want to further constrain the selection, use --limit, which
-also works with ``ansible-playbook``::
-
-    $ ansible webservers:dbservers -m command -a "/bin/foo xyz" --limit region
-
-Assuming version 0.9 or later, as with other host patterns, values to limit can be separated with ";", ":", or ",".
-
-Now let's talk about range selection.   Suppose you have 1000 servers in group 'datacenter', but only want to target one at a time.  This is also easy::
-
-    $ ansible webservers[0-99] -m command -a "/bin/foo xyz"
-    $ ansible webservers[100-199] -m command -a "/bin/foo xyz"
-
-This will select the first 100, then the second 100, host entries in the webservers group.  (It does not matter
-what their names or IP addresses are).
-
-Both of these methods can be used at the same time, and ranges can also be passed to the --limit parameter.
+Read more about facts at :doc:`playbooks_variables` once you're ready to read up on :doc:`Playbooks <playbooks>`. 
 
 .. seealso::
 
