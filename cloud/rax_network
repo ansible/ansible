@@ -25,7 +25,7 @@ options:
   state:
     description:
      - Indicate desired state of the resource
-    choices: ['present', 'absent', 'deleted']
+    choices: ['present', 'absent']
     default: present
   credentials:
     description:
@@ -93,9 +93,9 @@ def cloud_network(module, state, label, cidr):
         if not arg:
             module.fail_json(msg='%s is required for cloud_networks' % arg)
 
-    instances = []
     changed = False
     network = None
+    networks = []
 
     if state == 'present':
         try:
@@ -109,7 +109,7 @@ def cloud_network(module, state, label, cidr):
         except Exception:
             module.fail_json(msg='%s' % e.message)
 
-    elif state in ('absent', 'deleted'):
+    elif state == 'absent':
         try:
             network = pyrax.cloud_networks.find_network_by_label(label)
             network.delete()
@@ -120,19 +120,19 @@ def cloud_network(module, state, label, cidr):
             module.fail_json(msg='%s' % e.message)
 
     if network:
-        instance = {'id': network.id,
-                    'label': network.label,
-                    'cidr': network.cidr}
-        instances.append(instance)
+        instance = dict(id=network.id,
+                        label=network.label,
+                        cidr=network.cidr)
+        networks.append(instance)
 
-    module.exit_json(changed=changed, instances=instances)
+    module.exit_json(changed=changed, networks=networks)
 
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
             state=dict(default='present',
-                       choices=['present', 'deleted', 'absent']),
+                       choices=['present', 'absent']),
             credentials=dict(aliases=['creds_file']),
             api_key=dict(),
             username=dict(),
@@ -153,9 +153,9 @@ def main():
     try:
         username = username or os.environ.get('RAX_USERNAME')
         api_key = api_key or os.environ.get('RAX_API_KEY')
-        credentials = credentials or \
-            os.environ.get('RAX_CREDENTIALS') or \
-            os.environ.get('RAX_CREDS_FILE')
+        credentials = (credentials or
+                       os.environ.get('RAX_CREDENTIALS') or
+                       os.environ.get('RAX_CREDS_FILE'))
         region = region or os.environ.get('RAX_REGION')
 
     except KeyError, e:
