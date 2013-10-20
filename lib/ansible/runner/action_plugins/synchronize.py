@@ -20,6 +20,7 @@ import os.path
 
 from ansible import utils
 from ansible.runner.return_data import ReturnData
+import ansible.utils.template as template
 
 class ActionModule(object):
 
@@ -56,6 +57,9 @@ class ActionModule(object):
 
         src = options.get('src', None)
         dest = options.get('dest', None)
+
+        src = template.template(self.runner.basedir, src, inject)
+        dest = template.template(self.runner.basedir, dest, inject)
 
         try:
             options['local_rsync_path'] = inject['ansible_rsync_path']
