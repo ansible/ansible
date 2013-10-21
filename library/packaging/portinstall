@@ -66,14 +66,16 @@ import sys
 
 def query_package(module, name):
 
-    rc, out, err = module.run_command("pkg_info -e `pkg_glob %s`" % (name))
+    pkg_info_path = module.get_bin_path('pkg_info', True)
+    pkg_glob_path = module.get_bin_path('pkg_glob', True)
+    rc, out, err = module.run_command("%s -e `pkg_glob %s`" % (pkg_info_path, name))
     if rc != 0:
         # databases/mysql55-client installs as mysql-client, so try solving
         # that the ugly way. Pity FreeBSD doesn't have a fool proof way of checking
         # some package is installed
         name_without_digits = re.sub('[0-9]', '', name)
         if name != name_without_digits:
-            rc, out, err = module.run_command("pkg_info -e `pkg_glob %s`" % (name_without_digits))
+            rc, out, err = module.run_command("%s -e `%s %s`" % (pkg_info_path, pkg_glob_path, name_without_digits))
 
     if rc == 0:
         return True
@@ -83,32 +85,35 @@ def query_package(module, name):
 
 def matching_packages(module, name):
 
-    rc, out, err = module.run_command("ports_glob %s | wc" % (name))
+    ports_glob_path = module.get_bin_path('ports_glob', True)
+    rc, out, err = module.run_command("%s %s | wc" % (ports_glob_path, name))
     parts = out.split()
     occurrences = int(parts[0])
     if occurrences == 0:
         name_without_digits = re.sub('[0-9]', '', name)
         if name != name_without_digits:
-            rc, out, err = module.run_command("ports_glob %s | wc" % (name_without_digits))
+            rc, out, err = module.run_command("%s %s | wc" % (ports_glob_path, name_without_digits))
             parts = out.split()
             occurrences = int(parts[0])
     return occurrences
 
 
-def remove_packages(module, portinstall_path, packages):
+def remove_packages(module, packages):
 
     remove_c = 0
+    pkg_glob_path = module.get_bin_path('pkg_glob', True)
+    pkg_delete_path = module.get_bin_path('pkg_delete', True)
     # Using a for loop incase of error, we can report the package that failed
     for package in packages:
         # Query the package first, to see if we even need to remove
         if not query_package(module, package):
             continue
 
-        rc, out, err = module.run_command("pkg_delete `pkg_glob %s`" % (name))
+        rc, out, err = module.run_command("%s `%s %s`" % (pkg_delete_path, pkg_glob_path, name))
 
         if query_package(module, package):
             name_without_digits = re.sub('[0-9]', '', package)
-            rc, out, err = module.run_command("pkg_delete `pkg_glob %s`" % (name_without_digits))
+            rc, out, err = module.run_command("%s `%s %s`" % (pkg_delete_path, pkg_glob_path, name_without_digits))
             if query_package(module, package):
                 module.fail_json(msg="failed to remove %s: %s" % (package, out))
 
@@ -121,9 +126,10 @@ def remove_packages(module, portinstall_path, packages):
     module.exit_json(changed=False, msg="package(s) already absent")
 
 
-def install_packages(module, portinstall_path, packages, use_packages):
+def install_packages(module, packages, use_packages):
 
     install_c = 0
+    portinstall_path = module.get_bin_path('portinstall', True)
 
     if use_packages == "yes":
         portinstall_params="--use-packages"
@@ -158,19 +164,17 @@ def main():
             argument_spec    = dict(
                 state        = dict(default="present", choices=["present","absent"]),
                 name         = dict(aliases=["pkg"], required=True),
-                use_packages = dict(default="yes", required=False, choices=["yes","no"])))
-
-    portinstall_path = module.get_bin_path('portinstall', True)
+                use_packages = dict(type='bool', choices=BOOLEANS, default='yes')
 
     p = module.params
 
     pkgs = p["name"].split(",")
 
     if p["state"] == "present":
-        install_packages(module, portinstall_path, pkgs, p["use_packages"])
+        install_packages(module, pkgs, p["use_packages"])
 
     elif p["state"] == "absent":
-        remove_packages(module, portinstall_path, pkgs)
+        remove_packages(module, pkgs)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
