@@ -135,7 +135,13 @@ class Task(object):
         # can be hashes and lists, not just scalars
         self.args         = ds.get('args', {})
 
-        self.remote_user      = ds.get('remote_user', play.playbook.remote_user)
+        # get remote_user for task, then play, then playbook
+        if ds.get('remote_user') is not None:
+            self.remote_user      = ds.get('remote_user')
+        elif ds.get('remote_user', play.remote_user) is not None:
+            self.remote_user      = ds.get('remote_user', play.remote_user)
+        else:
+            self.remote_user      = ds.get('remote_user', play.playbook.remote_user)
 
         if self.sudo:
             self.sudo_user    = ds.get('sudo_user', play.sudo_user)
