@@ -793,8 +793,17 @@ class FreeBsdService(Service):
             self.module.fail_json(msg="unable to determine rcvar")
 
         # In rare cases, i.e. sendmail, rcvar can return several key=value pairs
-        # Usually there is just one, however.
-        self.rcconf_key = rcvars[0].split('=')[0]
+        # Usually there is just one, however.  In other rare cases, i.e. uwsgi,
+        # rcvar can return extra uncommented data that is not at all related to
+        # the rcvar.  We will just take the first key=value pair we come across
+        # and hope for the best.
+        for rcvar in rcvars:
+            if '=' in rcvar:
+                self.rcconf_key = rcvar.split('=')[0]
+                break
+
+        if self.rcconf_key is None:
+            self.module.fail_json(msg="unable to determine rcvar")
 
         return self.service_enable_rcconf()
 
