@@ -26,7 +26,7 @@ module: bigip_monitor_http
 short_description: "Manages F5 BIG-IP LTM http monitors"
 description:
     - "Manages F5 BIG-IP LTM monitors via iControl SOAP API"
-version_added: "1.3"
+version_added: "1.4"
 author: Serge van Ginderachter
 notes:
     - "Requires BIG-IP software version >= 11"
@@ -134,7 +134,25 @@ options:
 '''
 
 EXAMPLES = '''
-
+- name: BIGIP F5 | Create HTTP Monitor
+  local_action:
+    module:             bigip_monitor_http
+    state:              present
+    server:             "{{ f5server }}"
+    user:               "{{ f5user }}"
+    password:           "{{ f5password }}"
+    name:               "{{ item.monitorname }}"
+    send:               "{{ item.send }}"
+    receive:            "{{ item.receive }}"
+  with_items: f5monitors
+- name: BIGIP F5 | Remove HTTP Monitor
+  local_action:
+    module:             bigip_monitor_http
+    state:              absent
+    server:             "{{ f5server }}"
+    user:               "{{ f5user }}"
+    password:           "{{ f5password }}"
+    name:               "{{ monitorname }}"
 '''
 
 try:
