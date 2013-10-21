@@ -54,6 +54,7 @@ class LookupModule(object):
         # this code is common with 'items.py' consider moving to utils if we need it again
 
         terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
+        terms = utils.resolve_nested_lookup_plugin_terms(terms, self.basedir, inject)
         terms = self.__lookup_injects(terms, inject)
 
         my_list = terms[:]

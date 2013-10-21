@@ -1156,6 +1156,30 @@ def listify_lookup_plugin_terms(terms, basedir, inject):
 
     return terms
 
+def resolve_nested_lookup_plugin_terms(terms, basedir, inject):
+
+    if isinstance(terms, list):
+        newterms=[]
+        for term in terms:
+            if isinstance(term, basestring) and term.startswith('lookup('):
+                if not term.endswith(')'):
+                    raise errors.AnsibleError("missing bracket ')'")
+                lookup_params = term.replace('lookup(','').replace(')', '').split(',')
+                plugin_name = lookup_params[0].strip("' ")
+                subterms = lookup_params[1:]
+                for n in range(0, len(subterms)):
+                    subterms[n] = template.template(basedir, subterms[n].strip("' "), inject)
+                if plugin_name in plugins.lookup_loader:
+                    subterms = template.template(basedir, subterms, inject)
+                    subterms = safe_eval(listify_lookup_plugin_terms(subterms, basedir, inject))
+                    term = plugins.lookup_loader.get(plugin_name, basedir=basedir).run(subterms, inject=inject)
+                else:
+                    raise errors.AnsibleError("cannot find lookup plugin named %s for usage in with_%s" % (plugin_name, plugin_name))
+            newterms.append(term)
+        return newterms
+
+    return terms
+
 def combine_vars(a, b):
 
     if C.DEFAULT_HASH_BEHAVIOUR == "merge":
