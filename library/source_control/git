@@ -43,6 +43,12 @@ options:
             - What version of the repository to check out.  This can be the
               full 40-character I(SHA-1) hash, the literal string C(HEAD), a
               branch name, or a tag name.
+    reference:
+        required: false
+        default: null
+        version_added: "1.4"
+        description:
+            - Reference repository (see "git clone --reference ...")
     remote:
         required: false
         default: "origin"
@@ -85,7 +91,7 @@ options:
         required: false
         default: "no"
         choices: [ "yes", "no" ]
-        version_added: "1.3.2"
+        version_added: "1.4"
         description:
             - if C(yes), repository will be created as a bare repo, otherwise
               it will be a standard repo with a workspace.
@@ -120,7 +126,7 @@ def get_version(git_path, dest, ref="HEAD"):
     sha = os.popen(cmd).read().rstrip("\n")
     return sha
 
-def clone(git_path, module, repo, dest, remote, depth, version, bare):
+def clone(git_path, module, repo, dest, remote, depth, version, bare, reference):
     ''' makes a new git repo if it does not already exist '''
     dest_dirname = os.path.dirname(dest)
     try:
@@ -138,6 +144,8 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare):
             cmd.extend([ '--branch', version ])
     if depth:
         cmd.extend([ '--depth', str(depth) ])
+    if reference:
+        cmd.extend([ '--reference', str(reference) ])
     cmd.extend([ repo, dest ])
     module.run_command(cmd, check_rc=True)
     if bare:
@@ -341,6 +349,7 @@ def main():
             repo=dict(required=True, aliases=['name']),
             version=dict(default='HEAD'),
             remote=dict(default='origin'),
+            reference=dict(default=None),
             force=dict(default='yes', type='bool'),
             depth=dict(default=None, type='int'),
             update=dict(default='yes', type='bool'),
@@ -350,15 +359,16 @@ def main():
         supports_check_mode=True
     )
 
-    dest    = os.path.abspath(os.path.expanduser(module.params['dest']))
-    repo    = module.params['repo']
-    version = module.params['version']
-    remote  = module.params['remote']
-    force   = module.params['force']
-    depth   = module.params['depth']
-    update  = module.params['update']
-    bare    = module.params['bare']
-    git_path = module.params['executable'] or module.get_bin_path('git', True)
+    dest      = os.path.abspath(os.path.expanduser(module.params['dest']))
+    repo      = module.params['repo']
+    version   = module.params['version']
+    remote    = module.params['remote']
+    force     = module.params['force']
+    depth     = module.params['depth']
+    update    = module.params['update']
+    bare      = module.params['bare']
+    reference = module.params['reference']
+    git_path  = module.params['executable'] or module.get_bin_path('git', True)
 
     if bare:
         gitconfig = os.path.join(dest, 'config')
@@ -375,7 +385,7 @@ def main():
         if module.check_mode:
             remote_head = get_remote_head(git_path, module, dest, version, repo)
             module.exit_json(changed=True, before=before, after=remote_head)
-        clone(git_path, module, repo, dest, remote, depth, version, bare)
+        clone(git_path, module, repo, dest, remote, depth, version, bare, reference)
     elif not update:
         # Just return having found a repo already in the dest path
         # this does no checking that the repo is the actual repo

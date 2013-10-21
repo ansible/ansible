@@ -171,6 +171,8 @@ class TestRunner(unittest.TestCase):
         self._run('file', ['path=/tmp/gitdemo', 'state=absent'])
         self._run('file', ['path=/tmp/gd', 'state=absent'])
         self._run('file', ['path=/tmp/gdbare', 'state=absent'])
+        self._run('file', ['path=/tmp/gdreference', 'state=absent'])
+        self._run('file', ['path=/tmp/gdreftest', 'state=absent'])
         self._run('command', ['git init gitdemo', 'chdir=/tmp'])
         self._run('command', ['touch a', 'chdir=/tmp/gitdemo'])
         self._run('command', ['git add *', 'chdir=/tmp/gitdemo'])
@@ -199,6 +201,16 @@ class TestRunner(unittest.TestCase):
         self._run('command', ['git commit -m "test commit 3"', 'chdir=/tmp/gitdemo'])
         result = self._run('git', ["repo=\"file:///tmp/gitdemo\"", "dest=/tmp/gdbare", "bare=yes"])
         assert result['changed']
+        # test reference repos
+        result = self._run('git', ["repo=\"file:///tmp/gdbare\"", "dest=/tmp/gdreference", "bare=yes"])
+        assert result['changed']
+        result = self._run('git', ["repo=\"file:///tmp/gitdemo\"", "dest=/tmp/gdreftest", "reference=/tmp/gdreference/"])
+        assert result['changed']
+        assert os.path.isfile('/tmp/gdreftest/a')
+        result = self._run('command', ['ls', 'chdir=/tmp/gdreference/objects/pack'])
+        assert result['stdout'] != ''
+        result = self._run('command', ['ls', 'chdir=/tmp/gdreftest/.git/objects/pack'])
+        assert result['stdout'] == ''
 
     def test_file(self):
         filedemo = tempfile.mkstemp()[1]
