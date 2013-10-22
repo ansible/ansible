@@ -504,6 +504,8 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
         else:
             return data
 
+    t.globals['lookup'] = my_lookup
+
     try:
         return t.render(vars)
     except jinja2.exceptions.UndefinedError:
