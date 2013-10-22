@@ -231,7 +231,7 @@ def main():
         module.exit_json(path=path, changed=True)
 
     if prev_state != 'absent' and prev_state != state:
-        if not (force and (prev_state == 'file' or prev_state == 'directory') and state == 'link') and state != 'touch':
+        if not (force and (prev_state == 'file' or prev_state == 'directory') and (state in ('link', 'hard')) and state != 'touch':
             module.fail_json(path=path, msg='refusing to convert between %s and %s for %s' % (prev_state, state, src))
 
     if prev_state == 'absent' and state == 'absent':
