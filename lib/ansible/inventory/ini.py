@@ -20,12 +20,24 @@
 import ansible.constants as C
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
-from ansible.inventory.expand_hosts import detect_range
 from ansible.inventory.expand_hosts import expand_hostname_range
 from ansible import errors
 import shlex
 import re
-import ast
+
+
+def hostname_has_port(hostname):
+    # foobar[0:10]:8080
+    return (
+        hostname.find("[") != -1 and
+        hostname.find("]") != -1 and
+        hostname.find(":") != -1 and
+        (hostname.rindex("]") < hostname.rindex(":"))
+    # foobar:80
+    ) or (
+        hostname.find("]") == -1 and hostname.find(":") != -1
+    )
+
 
 class InventoryParser(object):
     """
@@ -47,7 +59,6 @@ class InventoryParser(object):
         self._parse_group_variables()
         return self.groups
 
-
     # [webservers]
     # alpha
     # beta:2345
@@ -55,79 +66,23 @@ class InventoryParser(object):
     # delta asdf=jkl favcolor=red
 
     def _parse_base_groups(self):
-        # FIXME: refactor
-
         ungrouped = Group(name='ungrouped')
-        all = Group(name='all')
-        all.add_child_group(ungrouped)
+        self.all = Group(name='all')
+        self.all.add_child_group(ungrouped)
 
-        self.groups = dict(all=all, ungrouped=ungrouped)
+        self.groups = dict(all=self.all, ungrouped=ungrouped)
         active_group_name = 'ungrouped'
 
         for line in self.lines:
+            # comment or empty line
+            if line.startswith("#") or line.startswith(";") or line == '':
+                continue
+            # set active_group_name (None if not in a base group)
             if line.startswith("["):
-                active_group_name = line.split(" #")[0].replace("[","").replace("]","").strip()
-                if line.find(":vars") != -1 or line.find(":children") != -1:
-                    active_group_name = active_group_name.rsplit(":", 1)[0]
-                    if active_group_name not in self.groups:
-                        new_group = self.groups[active_group_name] = Group(name=active_group_name)
-                        all.add_child_group(new_group)
-                    active_group_name = None
-                elif active_group_name not in self.groups:
-                    new_group = self.groups[active_group_name] = Group(name=active_group_name)
-                    all.add_child_group(new_group)
-            elif line.startswith("#") or line.startswith(";") or line == '':
-                pass
+                active_group_name = self._group_name_from_line(line)
+            # process line in body of base group
             elif active_group_name:
-                tokens = shlex.split(line.split(" #")[0])
-                if len(tokens) == 0:
-                    continue
-                hostname = tokens[0]
-                port = C.DEFAULT_REMOTE_PORT
-                # Three cases to check:
-                # 0. A hostname that contains a range pesudo-code and a port
-                # 1. A hostname that contains just a port
-                if hostname.count(":") > 1:
-                    # probably an IPv6 addresss, so check for the format
-                    # XXX:XXX::XXX.port, otherwise we'll just assume no
-                    # port is set 
-                    if hostname.find(".") != -1:
-                        (hostname, port) = hostname.rsplit(".", 1)
-                elif (hostname.find("[") != -1 and
-                    hostname.find("]") != -1 and
-                    hostname.find(":") != -1 and
-                    (hostname.rindex("]") < hostname.rindex(":")) or
-                    (hostname.find("]") == -1 and hostname.find(":") != -1)):
-                        (hostname, port) = hostname.rsplit(":", 1)
-
-                hostnames = []
-                if detect_range(hostname):
-                    hostnames = expand_hostname_range(hostname)
-                else:
-                    hostnames = [hostname]
-
-                for hn in hostnames:
-                    host = None
-                    if hn in self.hosts:
-                        host = self.hosts[hn]
-                    else:
-                        host = Host(name=hn, port=port)
-                        self.hosts[hn] = host
-                    if len(tokens) > 1:
-                        for t in tokens[1:]:
-                            if t.startswith('#'):
-                                break
-                            try:
-                                (k,v) = t.split("=")
-                            except ValueError, e:
-                                raise errors.AnsibleError("Invalid ini entry: %s - %s" % (t, str(e)))
-                            try:
-                                host.set_variable(k,ast.literal_eval(v))
-                            except:
-                                # most likely a string that literal_eval
-                                # doesn't like, so just set it
-                                host.set_variable(k,v)
-                    self.groups[active_group_name].add_host(host)
+                self._base_group_body_line(line, active_group_name)
 
     # [southeast:children]
     # atlanta
@@ -155,7 +110,6 @@ class InventoryParser(object):
                     raise errors.AnsibleError("child group is not defined: (%s)" % line)
                 else:
                     group.add_child_group(kid_group)
-
 
     # [webservers:vars]
     # http_port=1234
@@ -190,3 +144,44 @@ class InventoryParser(object):
 
     def get_host_variables(self, host):
         return {}
+
+    def _group_name_from_line(self, line):
+        active_group_name = line.split(
+            " #")[0].replace("[", "").replace("]", "").strip()
+        if line.find(":vars") != -1 or line.find(":children") != -1:
+            active_group_name = active_group_name.rsplit(":", 1)[0]
+            new_group = Group(name=active_group_name)
+            if active_group_name not in self.groups:
+                self.groups[active_group_name] = new_group
+                self.all.add_child_group(new_group)
+            active_group_name = None
+        elif active_group_name not in self.groups:
+            new_group = Group(name=active_group_name)
+            self.groups[active_group_name] = new_group
+            self.all.add_child_group(new_group)
+        return active_group_name
+
+    def _base_group_body_line(self, line, active_group_name):
+        tokens = shlex.split(line.split(" #")[0])
+        if len(tokens) == 0:
+            return
+        hostname = tokens[0]
+        port = C.DEFAULT_REMOTE_PORT
+        # Three cases to check:
+        # 0. A hostname that contains a range pesudo-code and a port
+        # 1. A hostname that contains just a port
+        if hostname.count(":") > 1:
+            # probably an IPv6 addresss, so check for the format
+            # XXX:XXX::XXX.port, otherwise we'll just assume no
+            # port is set
+            if hostname.find(".") != -1:
+                (hostname, port) = hostname.rsplit(".", 1)
+        elif hostname_has_port(hostname):
+            (hostname, port) = hostname.rsplit(":", 1)
+
+        hostnames = expand_hostname_range(hostname)
+
+        for hn in hostnames:
+            host = self.hosts.setdefault(hn, Host(name=hn, port=port))
+            host.set_variables_from_tokens(tokens[1:])
+            self.groups[active_group_name].add_host(host)

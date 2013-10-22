@@ -14,8 +14,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+import ast
 
+from ansible import errors
 import ansible.constants as C
+
 
 class Host(object):
     ''' a single ansible host '''
@@ -36,6 +39,23 @@ class Host(object):
     def add_group(self, group):
 
         self.groups.append(group)
+
+    def set_variables_from_tokens(self, tokens):
+        for t in tokens:
+            if t.startswith('#'):
+                break
+            try:
+                (k, v) = t.split("=")
+            except ValueError, e:
+                raise errors.AnsibleError(
+                    "Invalid ini entry: %s - %s" % (t, e)
+                )
+            try:
+                self.set_variable(k, ast.literal_eval(v))
+            except:
+                # most likely a string that literal_eval
+                # doesn't like, so just set it
+                self.set_variable(k, v)
 
     def set_variable(self, key, value):
 

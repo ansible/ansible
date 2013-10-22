@@ -34,7 +34,8 @@ import string
 
 from ansible import errors
 
-def detect_range(line = None):
+
+def detect_range(line):
     '''
     A helper function that checks a given host line to see if it contains
     a range pattern descibed in the docstring above.
@@ -50,7 +51,8 @@ def detect_range(line = None):
     else:
         return False
 
-def expand_hostname_range(line = None):
+
+def expand_hostname_range(line=None):
     '''
     A helper function that expands a given line that contains a pattern
     specified in top docstring, and returns a list that consists of the
@@ -64,6 +66,8 @@ def expand_hostname_range(line = None):
     '''
     all_hosts = []
     if line:
+        if not detect_range(line):
+            return [line]
         # A hostname such as db[1:6]-node is considered to consists
         # three parts:
         # head: 'db'
