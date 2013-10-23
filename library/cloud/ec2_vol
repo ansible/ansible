@@ -52,6 +52,12 @@ options:
     required: true
     default: null
     aliases: []
+  tag_id_name:
+    description:
+      - idempotent tag id attached to the volume so it can outlive instances
+    required: true
+    default: null
+    aliases: []
   iops:
     description:
       - the provisioned IOPs you want to associate with this volume (integer).
@@ -148,6 +154,7 @@ def main():
             ec2_url = dict(),
             aws_secret_key = dict(aliases=['ec2_secret_key', 'secret_key'], no_log=True),
             aws_access_key = dict(aliases=['ec2_access_key', 'access_key']),
+            tag_id_name = dict(),
         )
     )
 
@@ -160,6 +167,7 @@ def main():
     ec2_url = module.params.get('ec2_url')
     aws_secret_key = module.params.get('aws_secret_key')
     aws_access_key = module.params.get('aws_access_key')
+    tag_id_name = module.params.get('tag_id_name')
 
     # allow eucarc environment variables to be used if ansible vars aren't set
     if not ec2_url and 'EC2_URL' in os.environ:
@@ -223,6 +231,27 @@ def main():
         volume_type = 'standard'
 
     # If no instance supplied, try volume creation based on module parameters.
+    volume = None
+    tags   = None
+    # Try to find a volume based on tag name
+    if tag_id_name:
+        tags = [tag for tag in ec2.get_all_tags({ "value": tag_id_name })
+                if tag.res_type == "volume" and tag.name == "Name"]
+        volume_ids = [tag.res_id for tag in tags]
+        if len(volume_ids) > 0:
+            try:
+                volume = ec2.get_all_volumes(volume_ids)[0]
+            except boto.exception.EC2ResponseError, e: pass
+
+    # If not found, create instance
+    if volume is None:
+        try:
+            volume = ec2.create_volume(volume_size, zone, None, volume_type, iops)
+            while volume.status != 'available':
+                time.sleep(3)
+                volume.update()
+        except boto.exception.BotoServerError, e:
+            module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
 
     try:
         volume = ec2.create_volume(volume_size, zone, None, volume_type, iops)
@@ -231,6 +260,12 @@ def main():
             volume.update()
     except boto.exception.BotoServerError, e:
         module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+
+    # Set tags
+    if tag_id_name and (tags is None or len(tags) == 0):
+        ec2.create_tags([volume.id], {
+            "Name": tag_id_name
+        })
 
     # Attach the created volume.
 
