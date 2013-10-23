@@ -165,8 +165,9 @@ def main():
     if backup_file:
         res_args['backup_file'] = backup_file
 
-    module.params['dest'] = dest
+    module.params['path'] = dest
     file_args = module.load_file_common_arguments(module.params)
+    file_args['path'] = dest
     res_args['changed'] = module.set_file_attributes_if_different(file_args, res_args['changed'])
 
     module.exit_json(**res_args)
