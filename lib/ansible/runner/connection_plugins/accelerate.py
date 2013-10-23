@@ -200,9 +200,10 @@ class Connection(object):
         fstat = os.stat(in_path)
         try:
             vvv("PUT file is %d bytes" % fstat.st_size)
-            while fd.tell() < fstat.st_size:
+            last = False
+            while fd.tell() <= fstat.st_size and not last:
+                vvvv("file position currently %ld, file size is %ld" % (fd.tell(), fstat.st_size))
                 data = fd.read(CHUNK_SIZE)
-                last = False
                 if fd.tell() >= fstat.st_size:
                     last = True
                 data = dict(mode='put', data=base64.b64encode(data), out_path=out_path, last=last)
@@ -224,6 +225,7 @@ class Connection(object):
                     raise errors.AnsibleError("failed to put the file in the requested location")
         finally:
             fd.close()
+            vvvv("waiting for final response after PUT")
             response = self.recv_data()
             if not response:
                 raise errors.AnsibleError("Failed to get a response from %s" % self.host)
