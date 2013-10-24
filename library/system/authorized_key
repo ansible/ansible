@@ -185,6 +185,9 @@ def parseoptions(options):
     if options:
         options_list = options.strip().split(",")
         for option in options_list:
+            # happen when there is comma at the end
+            if option == '':
+                continue
             if option.find("=") != -1:
                 (arg,val) = option.split("=", 1)
             else:
@@ -251,9 +254,9 @@ def writekeys(module, filename, keys):
                 option_str = ""
                 if options:
                     option_strings = []
-                    for option_key in options.keys():
+                    for option_key in sorted(options.keys()):
                         if options[option_key]:
-                            option_strings.append("%s=%s" % (option_key, options[option_key]))
+                            option_strings.append("%s=\"%s\"" % (option_key, options[option_key]))
                         else:
                             option_strings.append("%s " % option_key)
 
