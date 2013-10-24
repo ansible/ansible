@@ -52,6 +52,7 @@ options:
       - allocate an EIP inside a VPC or not
     required: false
     default: false
+    version_added: "1.4"
 requirements: [ "boto" ]
 author: Lorin Hochstein <lorin@nimbisservices.com>
 notes:
