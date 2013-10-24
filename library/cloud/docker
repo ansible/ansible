@@ -213,6 +213,13 @@ def _human_to_bytes(number):
 def _ansible_facts(container_list):
     return {"docker_containers": container_list}
 
+def _docker_id_quirk(inspect):
+    # XXX: some quirk in docker
+    if 'ID' in inspect:
+        inspect['Id'] = inspect['ID']
+        del inspect['ID']
+    return inspect
+
 class DockerManager:
     
     counters = {'created':0, 'started':0, 'stopped':0, 'killed':0, 'removed':0, 'restarted':0, 'pull':0}
@@ -220,9 +227,45 @@ class DockerManager:
     def __init__(self, module):
         self.module = module
     
+        self.binds = None
+        self.volumes = None
+        if self.module.params.get('volumes'):
+            self.binds = {}
+            self.volumes = {}
+            vols = self.module.params.get('volumes').split(" ")
+            for vol in vols:
+                parts = vol.split(":")
+                # host mount (e.g. /mnt:/tmp, bind mounts host's /tmp to /mnt in the container)
+                if len(parts) == 2:
+                    self.volumes[parts[1]] = {}
+                    self.binds[parts[0]] = parts[1]
+                # docker mount (e.g. /www, mounts a docker volume /www on the container at the same location)
+                else:
+                    self.volumes[parts[0]] = {}
+
+        self.lxc_conf = None
+        if self.module.params.get('lxc_conf'):
+            self.lxc_conf = []
+            options = self.module.params.get('lxc_conf').split(" ")
+            for option in options:
+                parts = option.split(':')
+                self.lxc_conf.append({"Key": parts[0], "Value": parts[1]})
+
+        self.ports = None
+        if self.module.params.get('ports'):
+            self.ports = self.module.params.get('ports').split(",")
+
         # connect to docker server
         docker_url = urlparse(module.params.get('docker_url'))
         self.client = docker.Client(base_url=docker_url.geturl())
+    
+    
+    def get_split_image_tag(self, image):
+        tag = None
+        if image.find(':') > 0:
+            return image.split(':')
+        else:
+            return image, tag 
     
     def get_summary_counters_msg(self):
         msg = ""
@@ -240,21 +283,36 @@ class DockerManager:
                 return True
 
         return False
+    
+    def get_inspect_containers(self, containers):
+        inspect = []
+        for i in containers:
+            details = self.client.inspect_container(i['Id'])
+            details = _docker_id_quirk(details)
+            inspect.append(details)
+
+        return inspect
 
     def get_deployed_containers(self):
         # determine which images/commands are running already
         containers = self.client.containers()
         image      = self.module.params.get('image')
         command    = self.module.params.get('command')
+        if command:
+            command = command.strip()
         deployed   = []
 
+        # if we weren't given a tag with the image, we need to only compare on the image name, as that
+        # docker will give us back the full image name including a tag in the container list if one exists.
+        image, tag = self.get_split_image_tag(image)
+        
         for i in containers:
-            if i["Image"].split(":")[0] == image.split(":")[0] and (not command or i["Command"].strip() == command.strip()):
+            running_image, running_tag = self.get_split_image_tag(image)
+            running_command = i['Command'].strip()
+
+            if running_image == image and (not tag or tag == running_tag) and (not command or running_command == command):
                 details = self.client.inspect_container(i['Id'])
-                # XXX: some quirk in docker
-                if 'ID' in details:
-                    details['Id'] = details['ID']
-                    del details['ID']
+                details = _docker_id_quirk(details)
                 deployed.append(details)
 
         return deployed
@@ -262,7 +320,7 @@ class DockerManager:
     def get_running_containers(self):
         running = []
         for i in self.get_deployed_containers():
-            if i['State']['Running'] == True:
+            if i['State']['Running'] == True and i['State']['Ghost'] == False:
                 running.append(i)
 
         return running
@@ -270,6 +328,8 @@ class DockerManager:
     def create_containers(self, count=1):
         params = {'image':        self.module.params.get('image'),
                   'command':      self.module.params.get('command'),
+                  'ports':        self.ports,
+                  'volumes':      self.volumes,
                   'volumes_from': self.module.params.get('volumes_from'),
                   'mem_limit':    _human_to_bytes(self.module.params.get('memory_limit')),
                   'environment':  self.module.params.get('env'),
@@ -279,9 +339,6 @@ class DockerManager:
                   'privileged':   self.module.params.get('privileged'),
                   }
 
-        if self.module.params.get('ports'):
-            params['ports'] = self.module.params.get('ports').split(",")
-           
         def do_create(count, params):
             results = []
             for _ in range(count):
@@ -301,24 +358,8 @@ class DockerManager:
         return containers
 
     def start_containers(self, containers):
-        binds = None
-        if self.module.params.get('volumes'):
-            binds = {}
-            vols = self.module.params.get('volumes').split(" ")
-            for vol in vols:
-                parts = vol.split(":")
-                binds[parts[0]] = parts[1]
-
-        lxc_conf = None
-        if self.module.params.get('lxc_conf'):
-            lxc_conf = []
-            options = self.module.params.get('lxc_conf').split(" ")
-            for option in options:
-                parts = option.split(':')
-                lxc_conf.append({"Key": parts[0], "Value": parts[1]})
-
         for i in containers:
-                self.client.start(i['Id'], lxc_conf=lxc_conf, binds=binds)
+                self.client.start(i['Id'], lxc_conf=self.lxc_conf, binds=self.binds)
                 self.increment_counter('started')
 
     def stop_containers(self, containers):
@@ -387,7 +428,7 @@ def main():
 
         # start/stop containers
         if state == "present":
-    
+
             # start more containers if we don't have enough
             if delta > 0:
                 containers = manager.create_containers(delta)
@@ -395,15 +436,15 @@ def main():
                 
             # stop containers if we have too many
             elif delta < 0:
-                manager.stop_containers(running_containers[0:abs(delta)])
-                manager.remove_containers(running_containers[0:abs(delta)])
-            
+                containers = manager.stop_containers(running_containers[0:abs(delta)])
+                manager.remove_containers(containers)
+
             facts = manager.get_running_containers()
     
         # stop and remove containers
         elif state == "absent":
             facts = manager.stop_containers(deployed_containers)
-            manager.remove_containers(containers)
+            manager.remove_containers(deployed_containers)
     
         # stop containers
         elif state == "stopped":
@@ -415,8 +456,9 @@ def main():
     
         # restart containers
         elif state == "restarted":
-            manager.restart_containers(running_containers)        
-    
+            manager.restart_containers(running_containers)
+            facts = manager.get_inspect_containers(running_containers)
+
         msg = "%s container(s) running image %s with command %s" % \
                 (manager.get_summary_counters_msg(), module.params.get('image'), module.params.get('command'))
         changed = manager.has_changed()
