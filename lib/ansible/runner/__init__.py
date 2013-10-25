@@ -415,6 +415,7 @@ class Runner(object):
         inject['vars']        = self.module_vars
         inject['defaults']    = self.default_vars
         inject['environment'] = self.environment
+        inject['playbook_dir'] = self.basedir
 
         if self.inventory.basedir() is not None:
             inject['inventory_dir'] = self.inventory.basedir()
