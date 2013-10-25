@@ -311,7 +311,7 @@ def legacy_varReplace(basedir, raw, vars, lookup_fatal=True, depth=0, expand_lis
     return result
 
 
-def template(basedir, input_value, vars, lookup_fatal=True, depth=-1, expand_lists=True, convert_bare=False, fail_on_undefined=False, filter_fatal=True):
+def template(basedir, input_value, vars, lookup_fatal=True, depth=-1, expand_lists=True, convert_bare=False, fail_on_undefined=False, filter_fatal=True, lookups=True):
     last_time = input_value
     result = None
     changed = True
@@ -326,6 +326,7 @@ def template(basedir, input_value, vars, lookup_fatal=True, depth=-1, expand_lis
             convert_bare=convert_bare, 
             fail_on_undefined=fail_on_undefined,
             filter_fatal=filter_fatal,
+            lookups=lookups,
         )
         if last_time == result:
             changed = False
@@ -335,7 +336,7 @@ def template(basedir, input_value, vars, lookup_fatal=True, depth=-1, expand_lis
             raise errors.AnsibleError("template recursion depth exceeded")
     return result 
 
-def _template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=True, convert_bare=False, fail_on_undefined=False, filter_fatal=True):
+def _template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=True, convert_bare=False, fail_on_undefined=False, filter_fatal=True, lookups=True):
     ''' templates a data structure by traversing it and substituting for other data structures '''
 
     try:
@@ -346,7 +347,7 @@ def _template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=T
     
         if isinstance(varname, basestring):
             if '{{' in varname or '{%' in varname:
-                varname = template_from_string(basedir, varname, vars, fail_on_undefined)
+                varname = template_from_string(basedir, varname, vars, fail_on_undefined, lookups=lookups)
     
             if not C.DEFAULT_LEGACY_PLAYBOOK_VARIABLES:
                 return varname
@@ -461,7 +462,7 @@ def template_from_file(basedir, path, vars):
         res = res + '\n'
     return template(basedir, res, vars) 
 
-def template_from_string(basedir, data, vars, fail_on_undefined=False):
+def template_from_string(basedir, data, vars, fail_on_undefined=False, lookups=True):
     ''' run a string through the (Jinja2) templating engine '''
     
     def my_lookup(*args, **kwargs):
@@ -504,7 +505,8 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
         else:
             return data
 
-    t.globals['lookup'] = my_lookup
+    if lookups:
+        t.globals['lookup'] = my_lookup
 
     try:
         return t.render(vars)
