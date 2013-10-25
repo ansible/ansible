@@ -138,6 +138,7 @@ class PlayBook(object):
         self.basedir     = os.path.dirname(playbook) or '.'
         utils.plugins.push_basedir(self.basedir)
         vars = extra_vars.copy()
+        vars['playbook_dir'] = self.basedir
         if self.inventory.basedir() is not None:
             vars['inventory_dir'] = self.inventory.basedir()
 

@@ -123,6 +123,7 @@ class Play(object):
         self.max_fail_pct     = int(ds.get('max_fail_percentage', 100))
 
         load_vars = {}
+        load_vars['playbook_dir'] = self.basedir
         if self.playbook.inventory.basedir() is not None:
             load_vars['inventory_dir'] = self.playbook.inventory.basedir()
 
