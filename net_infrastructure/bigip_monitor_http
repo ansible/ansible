@@ -261,10 +261,6 @@ def update_monitor_properties(api, module, monitor, template_string_properties, 
     return changed
 
 
-# ===========================================
-# monitor specific function
-#
-
 def get_ipport(api, monitor):
 
     return api.LocalLB.Monitor.get_template_destination(template_names=[monitor])[0]
@@ -291,7 +287,7 @@ def set_ipport(api, monitor, ipport):
 
 def main():
 
-    # monitor specific stuff
+    # begin monitor specific stuff
 
     module = AnsibleModule(
         argument_spec = dict(
@@ -333,6 +329,7 @@ def main():
     timeout = module.params['timeout']
     time_until_up = module.params['time_until_up']
 
+    # end monitor specific stuff
 
     if not bigsuds_found:
         module.fail_json(msg="the python bigsuds module is required")
@@ -377,6 +374,7 @@ def main():
                            'is_read_only': False,
                            'is_directly_usable': True}
 
+    # monitor specific stuff
     template_string_properties = [{'type': 'STYPE_SEND',
                                    'value': send},
                                   {'type': 'STYPE_RECEIVE',
@@ -391,8 +389,7 @@ def main():
                                    {'type': 'ITYPE_TIME_UNTIL_UP',
                                     'value': interval}]
 
-    # monitor specific stuff END
-    # main logic, mostly monitor generic
+    # main logic, monitor generic
 
     try:
         result = {'changed': False}  # default
@@ -427,13 +424,11 @@ def main():
                                                                template_integer_properties)
             # else assume nothing changed
 
-# monitor specific stuff
             # we just have to update the ipport if monitor already exists and it's different
             if monitor_exists and cur_ipport != ipport:
                 set_ipport(api, monitor, ipport)    
                 result['changed'] |= True
             #else: monitor doesn't exist (check mode) or ipport is already ok
-# monitor specific stuff
 
 
     except Exception, e:
