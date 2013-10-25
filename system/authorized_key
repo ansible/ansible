@@ -199,15 +199,25 @@ def parsekey(raw_key):
     of ssh-key options at the beginning
     '''
 
+    VALID_SSH2_KEY_TYPES = [
+        'ecdsa-sha2-nistp256',
+        'ecdsa-sha2-nistp384',
+        'ecdsa-sha2-nistp521', 
+        'ssh-dss',
+        'ssh-rsa',
+    ]
+
     key_parts = shlex.split(raw_key)
-    if len(key_parts) == 4:
+    if len(key_parts) >= 4 and key_parts[1] in VALID_SSH2_KEY_TYPES:
         # this line contains options
-        (options,type,key,comment) = key_parts
-    elif len(key_parts) == 3:
+        (options,type,key) = key_parts[0:3]
+        comment = " ".join(key_parts[3:])
+    elif len(key_parts) >= 3 and key_parts[0] in VALID_SSH2_KEY_TYPES:
         # this line is just 'type key user@host'
-        (type,key,comment) = key_parts
+        (type,key) = key_parts[0:2]
+        comment = " ".join(key_parts[2:])
         options = None
-    elif len(key_parts) == 2:
+    elif len(key_parts) == 2 and key_parts[0] in VALID_SSH2_KEY_TYPES:
         # assuming just a type/key with no comment
         (type,key) = key_parts
         comment = ""
