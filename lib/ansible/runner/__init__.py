@@ -55,7 +55,6 @@ multiprocessing_runner = None
         
 OUTPUT_LOCKFILE  = tempfile.TemporaryFile()
 PROCESS_LOCKFILE = tempfile.TemporaryFile()
-MULTIPROCESSING_MANAGER = multiprocessing.Manager()
 
 ################################################
 
@@ -72,36 +71,26 @@ def _executor_hook(job_queue, result_queue, new_stdin):
             host = job_queue.get(block=False)
             return_data = multiprocessing_runner._executor(host, new_stdin)
             result_queue.put(return_data)
-
-            if 'LEGACY_TEMPLATE_WARNING' in return_data.flags:
-                # pass data back up across the multiprocessing fork boundary
-                template.Flags.LEGACY_TEMPLATE_WARNING = True
-
         except Queue.Empty:
             pass
         except:
             traceback.print_exc()
 
-class HostVars(collections.Mapping):
+class HostVars(dict):
     ''' A special view of setup_cache that adds values from the inventory when needed. '''
 
     def __init__(self, setup_cache, inventory):
         self.setup_cache = setup_cache
         self.inventory = inventory
-        self.lookup = {}
+        self.lookup = dict()
+        self.update(setup_cache)
 
     def __getitem__(self, host):
-        if not host in self.lookup:
+        if host not in self.lookup:
             result = self.inventory.get_variables(host)
             result.update(self.setup_cache.get(host, {}))
             self.lookup[host] = result
         return self.lookup[host]
-
-    def __iter__(self):
-        return (host.name for host in self.inventory.get_group('all').hosts)
-
-    def __len__(self):
-        return len(self.inventory.get_group('all').hosts)
 
 
 class Runner(object):
@@ -131,6 +120,7 @@ class Runner(object):
         sudo=False,                         # whether to run sudo or not
         sudo_user=C.DEFAULT_SUDO_USER,      # ex: 'root'
         module_vars=None,                   # a playbooks internals thing
+        default_vars=None,                  # ditto
         is_playbook=False,                  # running from playbook or not?
         inventory=None,                     # reference to Inventory object
         subset=None,                        # subset pattern
@@ -138,7 +128,9 @@ class Runner(object):
         diff=False,                         # whether to show diffs for template files that change
         environment=None,                   # environment variables (as dict) to use inside the command
         complex_args=None,                  # structured data in addition to module_args, must be a dict
-        error_on_undefined_vars=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR # ex. False
+        error_on_undefined_vars=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR, # ex. False
+        accelerate=False,                   # use accelerated connection
+        accelerate_port=None,               # port to use with accelerated connection
         ):
 
         # used to lock multiprocess inputs and outputs at various levels
@@ -159,6 +151,7 @@ class Runner(object):
         self.inventory        = utils.default(inventory, lambda: ansible.inventory.Inventory(host_list))
 
         self.module_vars      = utils.default(module_vars, lambda: {})
+        self.default_vars     = utils.default(default_vars, lambda: {})
         self.always_run       = None
         self.connector        = connection.Connection(self)
         self.conditional      = conditional
@@ -173,17 +166,21 @@ class Runner(object):
         self.private_key_file = private_key_file
         self.background       = background
         self.sudo             = sudo
-        self.sudo_user        = sudo_user
+        self.sudo_user_var    = sudo_user
+        self.sudo_user        = None
         self.sudo_pass        = sudo_pass
         self.is_playbook      = is_playbook
         self.environment      = environment
         self.complex_args     = complex_args
         self.error_on_undefined_vars = error_on_undefined_vars
+        self.accelerate       = accelerate
+        self.accelerate_port  = accelerate_port
         self.callbacks.runner = self
+        self.original_transport = self.transport
 
-        # if the transport is 'smart' see if SSH can support ControlPersist if not use paramiko
-        # 'smart' is the default since 1.2.1/1.3
         if self.transport == 'smart':
+            # if the transport is 'smart' see if SSH can support ControlPersist if not use paramiko
+            # 'smart' is the default since 1.2.1/1.3
             cmd = subprocess.Popen(['ssh','-o','ControlPersist'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             (out, err) = cmd.communicate() 
             if "Bad configuration option" in err:
@@ -318,6 +315,11 @@ class Runner(object):
             else:
                 argsfile = self._transfer_str(conn, tmp, 'arguments', args)
 
+            if self.sudo and self.sudo_user != 'root':
+                # deal with possible umask issues once sudo'ed to other user
+                cmd_args_chmod = "chmod a+r %s" % argsfile
+                self._low_level_exec_command(conn, cmd_args_chmod, tmp, sudoable=False)
+
             if async_jid is None:
                 cmd = "%s %s" % (remote_module_path, argsfile)
             else:
@@ -338,7 +340,14 @@ class Runner(object):
             if not self.sudo or self.sudo_user == 'root':
                 # not sudoing or sudoing to root, so can cleanup files in the same step
                 cmd = cmd + "; rm -rf %s >/dev/null 2>&1" % tmp
-        res = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
+
+        sudoable = True
+        if module_name == "accelerate":
+            # always run the accelerate module as the user
+            # specified in the play, not the sudo_user
+            sudoable = False
+
+        res = self._low_level_exec_command(conn, cmd, tmp, sudoable=sudoable)
 
         if self.sudo and self.sudo_user != 'root':
             # not sudoing to root, so maybe can't delete files as that other user
@@ -357,15 +366,6 @@ class Runner(object):
     def _executor(self, host, new_stdin):
         ''' handler for multiprocessing library '''
 
-        def get_flags():
-            # flags are a way of passing arbitrary event information
-            # back up the chain, since multiprocessing forks and doesn't
-            # allow state exchange
-            flags = []
-            if template.Flags.LEGACY_TEMPLATE_WARNING:
-                flags.append('LEGACY_TEMPLATE_WARNING')
-            return flags
-
         try:
             if not new_stdin:
                 self._new_stdin = os.fdopen(os.dup(sys.stdin.fileno()))
@@ -375,7 +375,6 @@ class Runner(object):
             exec_rc = self._executor_internal(host, new_stdin)
             if type(exec_rc) != ReturnData:
                 raise Exception("unexpected return type: %s" % type(exec_rc))
-            exec_rc.flags = get_flags()
             # redundant, right?
             if not exec_rc.comm_ok:
                 self.callbacks.on_unreachable(host, exec_rc.result)
@@ -383,11 +382,11 @@ class Runner(object):
         except errors.AnsibleError, ae:
             msg = str(ae)
             self.callbacks.on_unreachable(host, msg)
-            return ReturnData(host=host, comm_ok=False, result=dict(failed=True, msg=msg), flags=get_flags())
+            return ReturnData(host=host, comm_ok=False, result=dict(failed=True, msg=msg))
         except Exception:
             msg = traceback.format_exc()
             self.callbacks.on_unreachable(host, msg)
-            return ReturnData(host=host, comm_ok=False, result=dict(failed=True, msg=msg), flags=get_flags())
+            return ReturnData(host=host, comm_ok=False, result=dict(failed=True, msg=msg))
 
     # *****************************************************
 
@@ -396,7 +395,7 @@ class Runner(object):
 
         host_variables = self.inventory.get_variables(host)
         host_connection = host_variables.get('ansible_connection', self.transport)
-        if host_connection in [ 'paramiko', 'ssh' ]:
+        if host_connection in [ 'paramiko', 'ssh', 'accelerate' ]:
             port = host_variables.get('ansible_ssh_port', self.remote_port)
             if port is None:
                 port = C.DEFAULT_REMOTE_PORT
@@ -405,6 +404,7 @@ class Runner(object):
             port = self.remote_port
 
         inject = {}
+        inject = utils.combine_vars(inject, self.default_vars)
         inject = utils.combine_vars(inject, host_variables)
         inject = utils.combine_vars(inject, self.module_vars)
         inject = utils.combine_vars(inject, self.setup_cache[host])
@@ -413,17 +413,15 @@ class Runner(object):
         inject['group_names'] = host_variables.get('group_names', [])
         inject['groups']      = self.inventory.groups_list()
         inject['vars']        = self.module_vars
+        inject['defaults']    = self.default_vars
         inject['environment'] = self.environment
+        inject['playbook_dir'] = self.basedir
 
         if self.inventory.basedir() is not None:
             inject['inventory_dir'] = self.inventory.basedir()
 
         if self.inventory.src() is not None:
             inject['inventory_file'] = self.inventory.src()
-
-        # late processing of parameterized sudo_user
-        if self.sudo_user is not None:
-            self.sudo_user = template.template(self.basedir, self.sudo_user, inject)
 
         # allow with_foo to work in playbooks...
         items = None
@@ -498,7 +496,7 @@ class Runner(object):
                 for x in results:
                     if x.get('changed') == True:
                         all_changed = True
-                    if (x.get('failed') == True) or (('rc' in x) and (x['rc'] != 0)):
+                    if (x.get('failed') == True) or ('failed_when_result' in x and [x['failed_when_result']] or [('rc' in x) and (x['rc'] != 0)])[0]:
                         all_failed = True
                         break
             msg = 'All items completed'
@@ -517,6 +515,9 @@ class Runner(object):
     def _executor_internal_inner(self, host, module_name, module_args, inject, port, is_chained=False, complex_args=None):
         ''' decides how to invoke a module '''
 
+        # late processing of parameterized sudo_user (with_items,..)
+        if self.sudo_user_var is not None:
+            self.sudo_user = template.template(self.basedir, self.sudo_user_var, inject)
 
         # allow module args to work as a dictionary
         # though it is usually a string
@@ -559,7 +560,20 @@ class Runner(object):
         actual_pass = inject.get('ansible_ssh_pass', self.remote_pass)
         actual_transport = inject.get('ansible_connection', self.transport)
         actual_private_key_file = inject.get('ansible_ssh_private_key_file', self.private_key_file)
-        if actual_transport in [ 'paramiko', 'ssh' ]:
+
+        if self.accelerate and actual_transport != 'local':
+            #Fix to get the inventory name of the host to accelerate plugin
+            if inject.get('ansible_ssh_host', None):
+                self.accelerate_inventory_host = host
+            else:
+                self.accelerate_inventory_host = None
+            # if we're using accelerated mode, force the
+            # transport to accelerate
+            actual_transport = "accelerate"
+            if not self.accelerate_port:
+                self.accelerate_port = C.ACCELERATE_PORT
+
+        if actual_transport in [ 'paramiko', 'ssh', 'accelerate' ]:
             actual_port = inject.get('ansible_ssh_port', port)
 
         # the delegated host may have different SSH port configured, etc
@@ -600,8 +614,13 @@ class Runner(object):
         inject['ansible_ssh_user'] = actual_user
 
         try:
-            if actual_port is not None:
-                actual_port = int(actual_port)
+            if actual_transport == 'accelerate':
+                # for accelerate, we stuff both ports into a single
+                # variable so that we don't have to mangle other function
+                # calls just to accomodate this one case
+                actual_port = [actual_port, self.accelerate_port]
+            elif actual_port is not None:
+                actual_port = int(template.template(self.basedir, actual_port, inject))
         except ValueError, e:
             result = dict(failed=True, msg="FAILED: Configured port \"%s\" is not a valid port, expected integer" % actual_port)
             return ReturnData(host=host, comm_ok=False, result=result)
@@ -630,7 +649,33 @@ class Runner(object):
 
 
         result = handler.run(conn, tmp, module_name, module_args, inject, complex_args)
-
+        # Code for do until feature
+        until = self.module_vars.get('until', None)
+        if until is not None and result.comm_ok and "failed" not in result.result:
+            inject[self.module_vars.get('register')] = result.result
+            cond = template.template(self.basedir, until, inject, expand_lists=False)
+            if not utils.check_conditional(cond,  self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
+                retries = self.module_vars.get('retries')
+                delay   = self.module_vars.get('delay')
+                for x in range(1, retries + 1):
+                    time.sleep(delay)
+                    tmp = ''
+                    if getattr(handler, 'NEEDS_TMPPATH', True):
+                        tmp = self._make_tmp_path(conn)
+                    result = handler.run(conn, tmp, module_name, module_args, inject, complex_args)
+                    result.result['attempts'] = x
+                    vv("Result from run %i is: %s" % (x, result.result))
+                    if "failed" in result.result:
+                        break
+                    inject[self.module_vars.get('register')] = result.result
+                    cond = template.template(self.basedir, until, inject, expand_lists=False)
+                    if utils.check_conditional(cond, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
+                        break
+                if result.result['attempts'] == retries and not utils.check_conditional(cond, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
+                    result.result['failed'] = True 
+                    result.result['msg'] = "Task failed as maximum retries was encountered"
+            else:
+                result.result['attempts'] = 0
         conn.close()
 
         if not result.comm_ok:
@@ -647,13 +692,17 @@ class Runner(object):
             )
 
             changed_when = self.module_vars.get('changed_when')
-            if changed_when is not None:
+            failed_when = self.module_vars.get('failed_when')
+            if changed_when is not None or failed_when is not None:
                 register = self.module_vars.get('register')
                 if  register is not None:
                     if 'stdout' in data:
                         data['stdout_lines'] = data['stdout'].splitlines()
                     inject[register] = data
-                data['changed'] = utils.check_conditional(changed_when, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars)
+                if changed_when is not None:
+                    data['changed'] = utils.check_conditional(changed_when, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars)
+                if failed_when is not None:
+                    data['failed_when_result'] = data['failed'] = utils.check_conditional(failed_when, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars)
 
             if is_chained:
                 # no callbacks
@@ -710,7 +759,8 @@ class Runner(object):
             "(/usr/bin/digest -a md5 %s 2>/dev/null)" % path,   # Solaris 10+
             "(/sbin/md5 -q %s 2>/dev/null)" % path,     # Freebsd
             "(/usr/bin/md5 -n %s 2>/dev/null)" % path,  # Netbsd
-            "(/bin/md5 -q %s 2>/dev/null)" % path       # Openbsd
+            "(/bin/md5 -q %s 2>/dev/null)" % path,      # Openbsd
+            "(/usr/bin/csum -h MD5 %s 2>/dev/null)" % path # AIX
         ]
 
         cmd = " || ".join(md5s)
@@ -749,6 +799,11 @@ class Runner(object):
         if result['rc'] != 0:
             if result['rc'] == 5:
                 output = 'Authentication failure.'
+            elif result['rc'] == 255 and self.transport == 'ssh':
+                if utils.VERBOSITY > 3:
+                    output = 'SSH encountered an unknown error. The output was:\n%s' % (result['stdout']+result['stderr'])
+                else:
+                    output = 'SSH encountered an unknown error during the connection. We recommend you re-run the command using -vvvv, which will enable SSH debugging output to help diagnose the issue'
             else:
                 output = 'Authentication or permission failure.  In some cases, you may have been able to authenticate and did not have permissions on the remote directory. Consider changing the remote temp path in ansible.cfg to a path rooted in "/tmp". Failed command was: %s, exited with result %d' % (cmd, result['rc'])
             if 'stdout' in result and result['stdout'] != '':
@@ -830,7 +885,7 @@ class Runner(object):
     def _parallel_exec(self, hosts):
         ''' handles mulitprocessing when more than 1 fork is required '''
 
-        manager = MULTIPROCESSING_MANAGER
+        manager = multiprocessing.Manager()
         job_queue = manager.Queue()
         for host in hosts:
             job_queue.put(host)

@@ -100,7 +100,7 @@ def main():
             module.exit_json(changed=True)
         module.run_command('%s stop %s' % (MONIT, name))
         rc, out, err = module.run_command('%s summary | grep %s' % (MONIT, name))
-        if 'Not monitored' in out or 'stop pending' in out:
+        if 'not monitored' in out.lower() or 'stop pending' in out.lower():
             module.exit_json(changed=True, name=name, state=state)
         module.fail_json(msg=out)
 
@@ -109,16 +109,16 @@ def main():
             module.exit_json(changed=True)
         module.run_command('%s unmonitor %s' % (MONIT, name))
         rc, out, err = module.run_command('%s summary | grep %s' % (MONIT, name))
-        if 'Not monitored' in out:
+        if 'not monitored' in out.lower():
             module.exit_json(changed=True, name=name, state=state)
         module.fail_json(msg=out)
 
     elif state == 'restarted':
         if module.check_mode:
             module.exit_json(changed=True)
-        module.run_command('%s stop %s' % (MONIT, name))
-        rc, out, err = module.run_command('%s start %s' % (MONIT, name))
-        if 'Initializing' in out:
+        module.run_command('%s restart %s' % (MONIT, name))
+        rc, out, err = module.run_command('%s summary | grep %s' % (MONIT, name))
+        if 'initializing' in out.lower() or 'restart pending' in out.lower():
             module.exit_json(changed=True, name=name, state=state)
         module.fail_json(msg=out)
 
@@ -127,7 +127,7 @@ def main():
             module.exit_json(changed=True)
         module.run_command('%s start %s' % (MONIT, name))
         rc, out, err = module.run_command('%s summary | grep %s' % (MONIT, name))
-        if 'Initializing' in out or 'start pending' in out:
+        if 'initializing' in out.lower() or 'start pending' in out.lower():
             module.exit_json(changed=True, name=name, state=state)
         module.fail_json(msg=out)
 
@@ -136,7 +136,7 @@ def main():
             module.exit_json(changed=True)
         module.run_command('%s monitor %s' % (MONIT, name))
         rc, out, err = module.run_command('%s summary | grep %s' % (MONIT, name))
-        if 'Initializing' in out or 'start pending' in out:
+        if 'initializing' in out.lower() or 'start pending' in out.lower():
             module.exit_json(changed=True, name=name, state=state)
         module.fail_json(msg=out)
 

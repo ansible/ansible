@@ -56,6 +56,12 @@ options:
       - Host running the database
     required: false
     default: localhost
+  login_port:
+    description:
+      - Port of the MySQL server
+    required: false
+    default: 3306
+    version_added: '1.4'
   login_unix_socket:
     description:
       - The path to a Unix domain socket for local connections
@@ -66,6 +72,14 @@ options:
       - "MySQL privileges string in the format: C(db.table:priv1,priv2)"
     required: false
     default: null
+  append_privs:
+    description:
+      - Append the privileges defined by priv to the existing ones for this
+        user instead of overwriting existing ones.
+    required: false
+    choices: [ "yes", "no" ]
+    default: "no"
+    version_added: "1.4"
   state:
     description:
       - Whether the user should exist.  When C(absent), removes
@@ -120,6 +134,7 @@ password=n<_665{vS43y
 
 import ConfigParser
 import getpass
+import tempfile
 try:
     import MySQLdb
 except ImportError:
@@ -143,7 +158,7 @@ def user_add(cursor, user, host, password, new_priv):
             privileges_grant(cursor, user,host,db_table,priv)
     return True
 
-def user_mod(cursor, user, host, password, new_priv):
+def user_mod(cursor, user, host, password, new_priv, append_privs):
     changed = False
     grant_option = False
 
@@ -168,7 +183,7 @@ def user_mod(cursor, user, host, password, new_priv):
             if "GRANT" in priv:
                 grant_option = True
             if db_table not in new_priv:
-                if user != "root" and "PROXY" not in priv:
+                if user != "root" and "PROXY" not in priv and not append_privs:
                     privileges_revoke(cursor, user,host,db_table,grant_option)
                     changed = True
 
@@ -223,7 +238,7 @@ def privileges_get(cursor, user,host):
         privileges = [ pick(x) for x in privileges]
         if "WITH GRANT OPTION" in res.group(4):
             privileges.append('GRANT')
-        db = res.group(2).replace('`', '')
+        db = res.group(2)
         output[db] = privileges
     return output
 
@@ -241,6 +256,13 @@ def privileges_unpack(priv):
     output = {}
     for item in priv.split('/'):
         pieces = item.split(':')
+        if pieces[0].find('.') != -1:
+            pieces[0] = pieces[0].split('.')
+            for idx, piece in enumerate(pieces):
+                if pieces[0][idx] != "*":
+                    pieces[0][idx] = "`" + pieces[0][idx] + "`"
+            pieces[0] = '.'.join(pieces[0])
+
         output[pieces[0]] = pieces[1].upper().split(',')
 
     if '*.*' not in output:
@@ -295,6 +317,32 @@ def config_get(config, section, option):
     return strip_quotes(config.get(section, option))
 
 
+def _safe_cnf_load(config, path):
+
+    data = {'user':'', 'password':''}
+
+    # read in user/pass
+    f = open(path, 'r')
+    for line in f.readlines():
+        line = line.strip()
+        if line.startswith('user='):
+            data['user'] = line.split('=', 1)[1].strip()
+        if line.startswith('password=') or line.startswith('pass='):
+            data['password'] = line.split('=', 1)[1].strip()
+    f.close()
+
+    # write out a new cnf file with only user/pass   
+    fh, newpath = tempfile.mkstemp(prefix=path + '.')
+    f = open(newpath, 'wb')
+    f.write('[client]\n')
+    f.write('user=%s\n' % data['user'])
+    f.write('password=%s\n' % data['password'])
+    f.close()
+
+    config.readfp(open(newpath))
+    os.remove(newpath)
+    return config
+
 def load_mycnf():
     config = ConfigParser.RawConfigParser()
     mycnf = os.path.expanduser('~/.my.cnf')
@@ -304,6 +352,9 @@ def load_mycnf():
         config.readfp(open(mycnf))
     except (IOError):
         return False
+    except:
+        config = _safe_cnf_load(config, mycnf)
+
     # We support two forms of passwords in .my.cnf, both pass= and password=,
     # as these are both supported by MySQL.
     try:
@@ -326,7 +377,7 @@ def connect(module, login_user, login_password):
     if module.params["login_unix_socket"]:
         db_connection = MySQLdb.connect(host=module.params["login_host"], unix_socket=module.params["login_unix_socket"], user=login_user, passwd=login_password, db="mysql")
     else:
-        db_connection = MySQLdb.connect(host=module.params["login_host"], user=login_user, passwd=login_password, db="mysql")
+        db_connection = MySQLdb.connect(host=module.params["login_host"], port=int(module.params["login_port"]), user=login_user, passwd=login_password, db="mysql")
     return db_connection.cursor()
 
 # ===========================================
@@ -339,12 +390,14 @@ def main():
             login_user=dict(default=None),
             login_password=dict(default=None),
             login_host=dict(default="localhost"),
+            login_port=dict(default="3306"),
             login_unix_socket=dict(default=None),
             user=dict(required=True, aliases=['name']),
             password=dict(default=None),
             host=dict(default="localhost"),
             state=dict(default="present", choices=["absent", "present"]),
             priv=dict(default=None),
+            append_privs=dict(type="bool", default="no"),
             check_implicit_admin=dict(default=False),
         )
     )
@@ -354,6 +407,7 @@ def main():
     state = module.params["state"]
     priv = module.params["priv"]
     check_implicit_admin = module.params['check_implicit_admin']
+    append_privs = module.boolean(module.params["append_privs"])
 
     if not mysqldb_found:
         module.fail_json(msg="the python mysqldb module is required")
@@ -395,7 +449,7 @@ def main():
 
     if state == "present":
         if user_exists(cursor, user, host):
-            changed = user_mod(cursor, user, host, password, priv)
+            changed = user_mod(cursor, user, host, password, priv, append_privs)
         else:
             if password is None:
                 module.fail_json(msg="password parameter required when adding a user")

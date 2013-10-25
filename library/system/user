@@ -78,6 +78,7 @@ options:
             - Optionally set the user's password to this crypted value.  See
               the user example in the github examples directory for what this looks
               like in a playbook.
+            - Passwords values can be generated with "openssl passwd -salt <salt> -1 <plaintext>"
     state:
         required: false
         default: "present"
@@ -91,7 +92,8 @@ options:
         choices: [ "yes", "no" ]
         description:
             - Unless set to C(no), a home directory will be made for the user
-              when the account is created.
+              when the account is created or if the home directory does not
+              exist. 
     system:
         required: false
         default: "no"
@@ -312,9 +314,28 @@ class User(object):
         return self.execute_command(cmd)
 
 
+    def _check_usermod_append(self):
+        # check if this version of usermod can append groups
+
+        cmd = [self.module.get_bin_path('usermod', True)]
+        cmd.append('--help')
+        rc, data1, data2 = self.execute_command(cmd)
+        helpout = data1 + data2
+
+        # check if --append exists
+        lines = helpout.split('\n')
+        for line in lines:
+            if line.strip().startswith('-a, --append'):
+                return True
+
+        return False
+
+
+
     def modify_user_usermod(self):
         cmd = [self.module.get_bin_path('usermod', True)]
         info = self.user_info()
+        has_append = self._check_usermod_append()
 
         if self.uid is not None and info[2] != int(self.uid):
             cmd.append('-u')
@@ -347,21 +368,28 @@ class User(object):
                     if self.append:
                         for g in groups:
                             if g in group_diff:
-                                cmd.append('-a')
+                                if has_append:
+                                    cmd.append('-a')
                                 groups_need_mod = True
                                 break
                     else:
                         groups_need_mod = True
 
             if groups_need_mod:
-                cmd.append('-G')
-                cmd.append(','.join(groups))
+                if self.append and not has_append:
+                    cmd.append('-A')
+                    cmd.append(','.join(group_diff))
+                else:
+                    cmd.append('-G')
+                    cmd.append(','.join(groups))
+
 
         if self.comment is not None and info[4] != self.comment:
             cmd.append('-c')
             cmd.append(self.comment)
 
         if self.home is not None and info[5] != self.home:
+            cmd.append('-m')
             cmd.append('-d')
             cmd.append(self.home)
 
@@ -536,6 +564,32 @@ class User(object):
         # by default we use the modify_user_usermod method
         return self.modify_user_usermod()
 
+    def create_homedir(self, path):
+        if not os.path.exists(path):
+            # use /etc/skel if possible
+            if os.path.exists('/etc/skel'):
+                try:
+                    shutil.copytree('/etc/skel', path, symlinks=True)
+                except OSError, e:
+                    self.module.exit_json(failed=True, msg="%s" % e)
+        else:
+            try:
+                os.makedirs(path)
+            except OSError, e:
+                self.module.exit_json(failed=True, msg="%s" % e)
+
+    def chown_homedir(self, uid, gid, path):
+        try:
+            os.chown(path, uid, gid)
+            for root, dirs, files in os.walk(path):
+                for d in dirs:
+                    os.chown(path, uid, gid)
+                for f in files:
+                    os.chown(os.path.join(root, f), uid, gid)
+        except OSError, e:
+            self.module.exit_json(failed=True, msg="%s" % e)
+           
+
 # ===========================================
 
 class FreeBsdUser(User):
@@ -651,6 +705,7 @@ class FreeBsdUser(User):
             cmd.append(self.comment)
 
         if self.home is not None and info[5] != self.home:
+            cmd.append('-m')
             cmd.append('-d')
             cmd.append(self.home)
 
@@ -837,6 +892,7 @@ class OpenBSDUser(User):
             cmd.append(self.comment)
 
         if self.home is not None and info[5] != self.home:
+            cmd.append('-m')
             cmd.append('-d')
             cmd.append(self.home)
 
@@ -990,6 +1046,7 @@ class NetBSDUser(User):
             cmd.append(self.comment)
 
         if self.home is not None and info[5] != self.home:
+            cmd.append('-m')
             cmd.append('-d')
             cmd.append(self.home)
 
@@ -1149,6 +1206,7 @@ class SunOS(User):
                 cmd.append(self.comment)
 
         if self.home is not None and info[5] != self.home:
+            cmd.append('-m')
             cmd.append('-d')
             cmd.append(self.home)
 
@@ -1273,20 +1331,24 @@ class AIX(User):
 
         if self.groups is not None:
             current_groups = self.user_group_membership()
-            groups = self.get_groups_set()
-            group_diff = set(current_groups).symmetric_difference(groups)
             groups_need_mod = False
+            groups = []
 
-            if group_diff:
-                if self.append:
-                    for g in groups:
-                        if g in group_diff:
-                            groups.extend(current_groups)
-                            set(groups)
-                            groups_need_mod = True
-                            break
-                else:
+            if self.groups == '':
+                if current_groups and not self.append:
                     groups_need_mod = True
+            else:
+                groups = self.get_groups_set()
+                group_diff = set(current_groups).symmetric_difference(groups)
+
+                if group_diff:
+                    if self.append:
+                        for g in groups:
+                            if g in group_diff:
+                                groups_need_mod = True
+                                break
+                    else:
+                        groups_need_mod = True
 
             if groups_need_mod:
                 cmd.append('-G')
@@ -1297,6 +1359,7 @@ class AIX(User):
                 cmd.append(self.comment)
 
         if self.home is not None and info[5] != self.home:
+            cmd.append('-m')
             cmd.append('-d')
             cmd.append(self.home)
 
@@ -1361,7 +1424,7 @@ def main():
             # following options are specific to usermod
             append=dict(default='no', type='bool'),
             # following are specific to ssh key generation
-            generate_ssh_key=dict(choices=BOOLEANS, type='bool'),
+            generate_ssh_key=dict(type='bool'),
             ssh_key_bits=dict(default=ssh_defaults['bits'], type='str'),
             ssh_key_type=dict(default=ssh_defaults['type'], type='str'),
             ssh_key_file=dict(default=None, type='str'),
@@ -1449,6 +1512,15 @@ def main():
             result['ssh_key_file'] = user.get_ssh_key_path()
             result['ssh_public_key'] = user.get_ssh_public_key()
 
+        # handle missing homedirs
+        info = user.user_info()
+        if user.home is None:
+            user.home = info[5]
+        if not os.path.exists(user.home) and user.createhome:
+            if not module.check_mode:
+                user.create_homedir(user.home)
+                user.chown_homedir(info[2], info[3], user.home)
+            result['changed'] = True
 
     module.exit_json(**result)
 

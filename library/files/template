@@ -14,7 +14,7 @@ description:
        which can be used to describe the template name, host, modification time of the
        template file and the owner uid, C(template_host) contains the node name of 
        the template's machine, C(template_uid) the owner, C(template_path) the
-       relative path of the template, C(template_fullpath) is the absolute path of the 
+       absolute path of the template, C(template_fullpath) is the absolute path of the 
        template, and C(template_run_date) is the date that the template was rendered."
 options:
   src:

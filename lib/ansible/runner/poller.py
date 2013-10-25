@@ -59,6 +59,7 @@ class AsyncPoller(object):
         self.runner.module_args = "jid=%s" % self.jid
         self.runner.pattern = "*"
         self.runner.background = 0
+        self.runner.complex_args = None
 
         self.runner.inventory.restrict_to(self.hosts_to_poll)
         results = self.runner.run()

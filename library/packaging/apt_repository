@@ -27,7 +27,7 @@ short_description: Add and remove APT repositores
 description:
     - Add or remove an APT repositories in Ubuntu and Debian.
 notes:
-    - This module works on Debian and Ubuntu and requires only C(python-apt) package.
+    - This module works on Debian and Ubuntu and requires C(python-apt) and C(python-pycurl) packages.
     - This module supports Debian Squeeze (version 6) as well as its successors.
     - This module treats Debian and Ubuntu distributions separately. So PPA could be installed only on Ubuntu machines.
 options:
@@ -42,6 +42,12 @@ options:
         default: "present"
         description:
             - A source string state.
+    update_cache:
+        description:
+            - Run the equivalent of C(apt-get update) if has changed.
+        required: false
+        default: "yes"
+        choices: [ "yes", "no" ]
 author: Alexander Saltanov
 version_added: "0.7"
 requirements: [ python-apt, python-pycurl ]
@@ -69,6 +75,7 @@ import re
 import tempfile
 
 try:
+    import apt
     import apt_pkg
     import aptsources.distro
     distro = aptsources.distro.get_distro()
@@ -126,16 +133,14 @@ class SourcesList(object):
             return os.path.abspath(os.path.join(apt_pkg.config.find_dir('Dir::Etc::sourceparts'), filename))
 
     def _suggest_filename(self, line):
-        def _remove_protocol(s):
-            if '://' in s:
-                return s.split('://')[1]
-            else:
-                return s
-
         def _cleanup_filename(s):
             return '_'.join(re.sub('[^a-zA-Z0-9]', ' ', s).split())
 
-        parts = [_remove_protocol(part) for part in line.split() if part not in VALID_SOURCE_TYPES]
+        # Drop options and protocols.
+        line = re.sub('\[[^\]]+\]', '', line)
+        line = re.sub('\w+://', '', line)
+
+        parts = [part for part in line.split() if part not in VALID_SOURCE_TYPES]
         return '%s.list' % _cleanup_filename(' '.join(parts[:1]))
 
     def _parse(self, line, raise_if_invalid_or_disabled=False):
@@ -299,7 +304,7 @@ class UbuntuSourcesList(SourcesList):
 
             if self.add_ppa_signing_keys_callback is not None:
                 info = self._get_ppa_info(ppa_owner, ppa_name)
-                command = ['apt-key', 'adv', '--recv-keys', '--keyserver', 'keyserver.ubuntu.com', info['signing_key_fingerprint']]
+                command = ['apt-key', 'adv', '--recv-keys', '--keyserver', 'hkp://keyserver.ubuntu.com:80', info['signing_key_fingerprint']]
                 self.add_ppa_signing_keys_callback(command)
 
             file = file or self._suggest_filename('%s_%s' % (line, distro.codename))
@@ -328,6 +333,7 @@ def main():
         argument_spec=dict(
             repo=dict(required=True),
             state=dict(choices=['present', 'absent'], default='present'),
+            update_cache = dict(aliases=['update-cache'], type='bool'),
         ),
         supports_check_mode=True,
     )
@@ -340,12 +346,14 @@ def main():
 
     repo = module.params['repo']
     state = module.params['state']
+    update_cache = module.params['update_cache']
     sourceslist = None
 
-    if isinstance(distro, aptsources.distro.DebianDistribution):
-        sourceslist = SourcesList()
-    elif isinstance(distro, aptsources.distro.UbuntuDistribution):
+    if isinstance(distro, aptsources.distro.UbuntuDistribution):
         sourceslist = UbuntuSourcesList(add_ppa_signing_keys_callback=get_add_ppa_signing_key_callback(module))
+    elif isinstance(distro, aptsources.distro.DebianDistribution) or \
+            isinstance(distro, aptsources.distro.Distribution):
+        sourceslist = SourcesList()
     else:
         module.fail_json(msg='Module apt_repository supports only Debian and Ubuntu.')
 
@@ -365,6 +373,9 @@ def main():
     if not module.check_mode and changed:
         try:
             sourceslist.save(module)
+            if update_cache:
+                cache = apt.Cache()
+                cache.update()
         except OSError as err:
             module.fail_json(msg=unicode(err))
 

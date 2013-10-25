@@ -25,6 +25,7 @@ from ansible.inventory.expand_hosts import expand_hostname_range
 from ansible import errors
 import shlex
 import re
+import ast
 
 class InventoryParser(object):
     """
@@ -83,17 +84,21 @@ class InventoryParser(object):
                     continue
                 hostname = tokens[0]
                 port = C.DEFAULT_REMOTE_PORT
-                # Two cases to check:
+                # Three cases to check:
                 # 0. A hostname that contains a range pesudo-code and a port
                 # 1. A hostname that contains just a port
-                if (hostname.find("[") != -1 and
+                if hostname.count(":") > 1:
+                    # probably an IPv6 addresss, so check for the format
+                    # XXX:XXX::XXX.port, otherwise we'll just assume no
+                    # port is set 
+                    if hostname.find(".") != -1:
+                        (hostname, port) = hostname.rsplit(".", 1)
+                elif (hostname.find("[") != -1 and
                     hostname.find("]") != -1 and
                     hostname.find(":") != -1 and
                     (hostname.rindex("]") < hostname.rindex(":")) or
                     (hostname.find("]") == -1 and hostname.find(":") != -1)):
-                        tokens2  = hostname.rsplit(":", 1)
-                        hostname = tokens2[0]
-                        port     = tokens2[1]
+                        (hostname, port) = hostname.rsplit(":", 1)
 
                 hostnames = []
                 if detect_range(hostname):
@@ -116,7 +121,12 @@ class InventoryParser(object):
                                 (k,v) = t.split("=")
                             except ValueError, e:
                                 raise errors.AnsibleError("Invalid ini entry: %s - %s" % (t, str(e)))
-                            host.set_variable(k,v)
+                            try:
+                                host.set_variable(k,ast.literal_eval(v))
+                            except:
+                                # most likely a string that literal_eval
+                                # doesn't like, so just set it
+                                host.set_variable(k,v)
                     self.groups[active_group_name].add_host(host)
 
     # [southeast:children]

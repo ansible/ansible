@@ -341,7 +341,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             name=dict(required=True, type='str'),
             gid=dict(default=None, type='str'),
-            system=dict(default='no', choices=['yes', 'no'], type='bool'),
+            system=dict(default=False, type='bool'),
         ),
         supports_check_mode=True
     )

@@ -55,10 +55,22 @@ options:
     version_added: "1.2"
   state:
     description:
-      - Whether the given key should or should not be in the file
+      - Whether the given key (with the given key_options) should or should not be in the file
     required: false
     choices: [ "present", "absent" ]
     default: "present"
+  key_options:
+    description:
+      - A string of ssh key options to be prepended to the key in the authorized_keys file
+    required: false
+    default: null
+    version_added: "1.4"
+  unique:
+    description:
+      - Ensure that there is only one key matching the specified key in the file
+    required: false
+    default: false
+    version_added: "1.4"
 description:
     - "Adds or removes authorized keys for particular user accounts"
 author: Brad Olson
@@ -81,6 +93,11 @@ EXAMPLES = '''
   with_file:
     - public_keys/doe-jane
     - public_keys/doe-john
+
+# Using key_options:
+- authorized_key: user=charlie
+                  key="{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
+                  key_options='no-port-forwarding,host="10.0.1.1"'
 '''
 
 # Makes sure the public key line is present or absent in the user's .ssh/authorized_keys.
@@ -100,7 +117,7 @@ import os
 import pwd
 import os.path
 import tempfile
-import shutil
+import shlex
 
 def keyfile(module, user, write=False, path=None, manage_dir=True):
     """
@@ -159,12 +176,80 @@ def keyfile(module, user, write=False, path=None, manage_dir=True):
 
     return keysfile
 
+def parseoptions(options):
+    ''' 
+    reads a string containing ssh-key options 
+    and returns a dictionary of those options
+    '''
+    options_dict = {}
+    if options:
+        options_list = options.strip().split(",")
+        for option in options_list:
+            # happen when there is comma at the end
+            if option == '':
+                continue
+            if option.find("=") != -1:
+                (arg,val) = option.split("=", 1)
+            else:
+                arg = option
+                val = None
+            options_dict[arg] = val
+    return options_dict
+
+def parsekey(raw_key):
+    '''
+    parses a key, which may or may not contain a list
+    of ssh-key options at the beginning
+    '''
+
+    VALID_SSH2_KEY_TYPES = [
+        'ecdsa-sha2-nistp256',
+        'ecdsa-sha2-nistp384',
+        'ecdsa-sha2-nistp521', 
+        'ssh-dss',
+        'ssh-rsa',
+    ]
+
+    key_parts = shlex.split(raw_key)
+    if len(key_parts) >= 4 and key_parts[1] in VALID_SSH2_KEY_TYPES:
+        # this line contains options
+        (options,type,key) = key_parts[0:3]
+        comment = " ".join(key_parts[3:])
+    elif len(key_parts) >= 3 and key_parts[0] in VALID_SSH2_KEY_TYPES:
+        # this line is just 'type key user@host'
+        (type,key) = key_parts[0:2]
+        comment = " ".join(key_parts[2:])
+        options = None
+    elif len(key_parts) == 2 and key_parts[0] in VALID_SSH2_KEY_TYPES:
+        # assuming just a type/key with no comment
+        (type,key) = key_parts
+        comment = ""
+        options = None
+    else:
+        # invalid key, maybe a comment?
+        return None
+
+    if options:
+        # parse the options and store them
+        options = parseoptions(options)
+    return (key, type, options, comment)
+
 def readkeys(filename):
 
     if not os.path.isfile(filename):
         return []
+
+    keys = {}
     f = open(filename)
-    keys = [line.rstrip() for line in f.readlines()]
+    for line in f.readlines():
+        key_data = parsekey(line)
+        if key_data:
+            # use key as identifier
+            keys[key_data[0]] = key_data
+        else:
+            # for an invalid line, just append the line
+            # to the array so it will be re-output later
+            keys[line] = line
     f.close()
     return keys
 
@@ -173,7 +258,24 @@ def writekeys(module, filename, keys):
     fd, tmp_path = tempfile.mkstemp('', 'tmp', os.path.dirname(filename))
     f = open(tmp_path,"w")
     try:
-        f.writelines( (key + "\n" for key in keys) )
+        for index, key in keys.items():
+            try:
+                (keyhash,type,options,comment) = key
+                option_str = ""
+                if options:
+                    option_strings = []
+                    for option_key in sorted(options.keys()):
+                        if options[option_key]:
+                            option_strings.append("%s=\"%s\"" % (option_key, options[option_key]))
+                        else:
+                            option_strings.append("%s " % option_key)
+
+                    option_str = ",".join(option_strings)
+                    option_str += " "
+                key_line = "%s%s %s %s\n" % (option_str, type, keyhash, comment)
+            except:
+                key_line = key
+            f.writelines(key_line)
     except IOError, e:
         module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, str(e)))
     f.close()
@@ -184,38 +286,67 @@ def enforce_state(module, params):
     Add or remove key.
     """
 
-    user       = params["user"]
-    key        = params["key"]
-    path       = params.get("path", None)
-    manage_dir = params.get("manage_dir", True)
-    state      = params.get("state", "present")
+    user        = params["user"]
+    key         = params["key"]
+    path        = params.get("path", None)
+    manage_dir  = params.get("manage_dir", True)
+    state       = params.get("state", "present")
+    key_options = params.get("key_options", None)
+    unique      = params.get("unique",False)
 
     key = key.split('\n')
 
     # check current state -- just get the filename, don't create file
-    write = False
-    params["keyfile"] = keyfile(module, user, write, path, manage_dir)
-    keys = readkeys(params["keyfile"])
+    do_write = False
+    params["keyfile"] = keyfile(module, user, do_write, path, manage_dir)
+    existing_keys = readkeys(params["keyfile"])
 
     # Check our new keys, if any of them exist we'll continue.
     for new_key in key:
-        present = new_key in keys
+        if key_options is not None:
+            new_key = "%s %s" % (key_options, new_key)
+
+        parsed_new_key = parsekey(new_key)
+        if not parsed_new_key:
+            module.fail_json(msg="invalid key specified: %s" % new_key)
+
+        present = False
+        matched = False
+        non_matching_keys = []
+
+        if parsed_new_key[0] in existing_keys:
+            present = True
+            # Then we check if everything matches, including
+            # the key type and options. If not, we append this
+            # existing key to the non-matching list
+            # We only want it to match everything when the state
+            # is present
+            if parsed_new_key != existing_keys[parsed_new_key[0]] and state == "present":
+                non_matching_keys.append(existing_keys[parsed_new_key[0]])
+            else:
+                matched = True
+
+
         # handle idempotent state=present
         if state=="present":
-            if present:
-                continue
-            keys.append(new_key)
-            write = True
-            writekeys(module, keyfile(module, user, write, path, manage_dir), keys)
-            params['changed'] = True
+            if unique and len(non_matching_keys) > 0:
+                for non_matching_key in non_matching_keys:
+                    del existing_keys[non_matching_key[0]]
+                do_write = True
+
+            if not matched:
+                existing_keys[parsed_new_key[0]] = parsed_new_key
+                do_write = True
 
         elif state=="absent":
-            if not present:
+            if not matched:
                 continue
-            keys.remove(new_key)
-            write = True
-            writekeys(module, keyfile(module, user, write, path, manage_dir), keys)
-            params['changed'] = True
+            del existing_keys[parsed_new_key[0]]
+            do_write = True
+
+    if do_write:
+        writekeys(module, keyfile(module, user, do_write, path, manage_dir), existing_keys)
+        params['changed'] = True
 
     return params
 
@@ -223,11 +354,13 @@ def main():
 
     module = AnsibleModule(
         argument_spec = dict(
-           user       = dict(required=True, type='str'),
-           key        = dict(required=True, type='str'),
-           path       = dict(required=False, type='str'),
-           manage_dir = dict(required=False, type='bool', default=True),
-           state      = dict(default='present', choices=['absent','present'])
+           user        = dict(required=True, type='str'),
+           key         = dict(required=True, type='str'),
+           path        = dict(required=False, type='str'),
+           manage_dir  = dict(required=False, type='bool', default=True),
+           state       = dict(default='present', choices=['absent','present']),
+           key_options = dict(required=False, type='str'),
+           unique      = dict(default=False, type='bool'),
         )
     )
 

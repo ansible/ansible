@@ -138,6 +138,7 @@ class PlayBook(object):
         self.basedir     = os.path.dirname(playbook) or '.'
         utils.plugins.push_basedir(self.basedir)
         vars = extra_vars.copy()
+        vars['playbook_dir'] = self.basedir
         if self.inventory.basedir() is not None:
             vars['inventory_dir'] = self.inventory.basedir()
 
@@ -305,14 +306,15 @@ class PlayBook(object):
             pattern=task.play.hosts, inventory=self.inventory, module_name=task.module_name,
             module_args=task.module_args, forks=self.forks,
             remote_pass=self.remote_pass, module_path=self.module_path,
-            timeout=self.timeout, remote_user=task.play.remote_user,
+            timeout=self.timeout, remote_user=task.remote_user,
             remote_port=task.play.remote_port, module_vars=task.module_vars,
-            private_key_file=self.private_key_file,
+            default_vars=task.default_vars, private_key_file=self.private_key_file,
             setup_cache=self.SETUP_CACHE, basedir=task.play.basedir,
             conditional=task.only_if, callbacks=self.runner_callbacks,
             sudo=task.sudo, sudo_user=task.sudo_user,
             transport=task.transport, sudo_pass=task.sudo_pass, is_playbook=True,
-            check=self.check, diff=self.diff, environment=task.environment, complex_args=task.args,
+            check=self.check, diff=self.diff, environment=task.environment, complex_args=task.args, 
+            accelerate=task.play.accelerate, accelerate_port=task.play.accelerate_port,
             error_on_undefined_vars=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR
         )
 
@@ -346,7 +348,12 @@ class PlayBook(object):
         ansible.callbacks.set_task(self.callbacks, task)
         ansible.callbacks.set_task(self.runner_callbacks, task)
 
-        self.callbacks.on_task_start(template(play.basedir, task.name, task.module_vars, lookup_fatal=False, filter_fatal=False), is_handler)
+        if task.role_name:
+            name = '%s | %s' % (task.role_name, task.name)
+        else:
+            name = task.name
+
+        self.callbacks.on_task_start(template(play.basedir, name, task.module_vars, lookup_fatal=False, filter_fatal=False), is_handler)
         if hasattr(self.callbacks, 'skip_task') and self.callbacks.skip_task:
             ansible.callbacks.set_task(self.callbacks, None)
             ansible.callbacks.set_task(self.runner_callbacks, None)
@@ -447,7 +454,8 @@ class PlayBook(object):
             remote_pass=self.remote_pass, remote_port=play.remote_port, private_key_file=self.private_key_file,
             setup_cache=self.SETUP_CACHE, callbacks=self.runner_callbacks, sudo=play.sudo, sudo_user=play.sudo_user,
             transport=play.transport, sudo_pass=self.sudo_pass, is_playbook=True, module_vars=play.vars,
-            check=self.check, diff=self.diff
+            default_vars=play.default_vars, check=self.check, diff=self.diff, 
+            accelerate=play.accelerate, accelerate_port=play.accelerate_port,
         ).run()
         self.stats.compute(setup_results, setup=True)
 
@@ -531,10 +539,14 @@ class PlayBook(object):
                     # here a meta task is a placeholder that signals handlers should be run
 
                     if task.meta == 'flush_handlers':
+                        fired_names = {}
                         for handler in play.handlers():
                             if len(handler.notified_by) > 0:
                                 self.inventory.restrict_to(handler.notified_by)
-                                self._run_task(play, handler, True)
+                                if handler.name not in fired_names:
+                                    self._run_task(play, handler, True)
+                                # prevent duplicate handler includes from running more than once
+                                fired_names[handler.name] = 1
                                 self.inventory.lift_restriction()
                                 new_list = handler.notified_by[:]
                                 for host in handler.notified_by:
@@ -571,8 +583,9 @@ class PlayBook(object):
 
                 host_list = self._list_available_hosts(play.hosts)
 
+                # Set max_fail_pct to 0, So if any hosts fails, bail out
                 if task.any_errors_fatal and len(host_list) < hosts_count:
-                    host_list = None
+                    play.max_fail_pct = 0
 
                 # If threshold for max nodes failed is exceeded , bail out.
                 if (hosts_count - len(host_list)) > int((play.max_fail_pct)/100.0 * hosts_count):

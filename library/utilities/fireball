@@ -259,7 +259,8 @@ def main():
             port=dict(required=False, default=5099),
             password=dict(required=True),
             minutes=dict(required=False, default=30),
-        )
+        ),
+        supports_check_mode=True
     )
 
     password  = base64.b64decode(module.params['password'])

@@ -74,7 +74,7 @@ def get_cowsay_info():
 cowsay, noncow = get_cowsay_info()
 
 def log_lockfile():
-    tempdir = tempfile.gettempdir() 
+    tempdir = tempfile.gettempdir()
     uid = os.getuid()
     path = os.path.join(tempdir, ".ansible-lock.%s" % uid)
     return path
@@ -93,7 +93,7 @@ def log_flock(runner):
             fcntl.lockf(LOG_LOCK, fcntl.LOCK_EX)
         except OSError:
             pass
-        
+
 
 def log_unflock(runner):
     if runner is not None:
@@ -144,6 +144,10 @@ def display(msg, color=None, stderr=False, screen_only=False, log_only=False, ru
 def call_callback_module(method_name, *args, **kwargs):
 
     for callback_plugin in callback_plugins:
+        # a plugin that set self.disabled to True will not be called
+        # see osx_say.py example for such a plugin
+        if getattr(callback_plugin, 'disabled', False):
+            continue
         methods = [
             getattr(callback_plugin, method_name, None),
             getattr(callback_plugin, 'on_any', None)
@@ -157,6 +161,9 @@ def vv(msg, host=None):
 
 def vvv(msg, host=None):
     return verbose(msg, host=host, caplevel=2)
+
+def vvvv(msg, host=None):
+    return verbose(msg, host=host, caplevel=3)
 
 def verbose(msg, host=None, caplevel=2):
     if utils.VERBOSITY > caplevel:
@@ -189,7 +196,7 @@ class AggregateStats(object):
 
         for (host, value) in runner_results.get('contacted', {}).iteritems():
             if not ignore_errors and (('failed' in value and bool(value['failed'])) or
-                ('rc' in value and value['rc'] != 0)):
+                ('failed_when_result' in value and [value['failed_when_result']] or ['rc' in value and value['rc'] != 0])[0]):
                 self._increment('failures', host)
             elif 'skipped' in value and bool(value['skipped']):
                 self._increment('skipped', host)
@@ -338,7 +345,7 @@ class DefaultRunnerCallbacks(object):
         call_callback_module('runner_on_async_failed', host, res, jid)
 
     def on_file_diff(self, host, diff):
-        call_callback_module('runner_on_file_diff', diff)
+        call_callback_module('runner_on_file_diff', host, diff)
 
 ########################################################################
 
@@ -418,7 +425,11 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
 class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
     ''' callbacks used for Runner() from /usr/bin/ansible-playbook '''
 
-    def __init__(self, stats, verbose=utils.VERBOSITY):
+    def __init__(self, stats, verbose=None):
+
+        if verbose is None:
+            verbose = utils.VERBOSITY
+
         self.verbose = verbose
         self.stats = stats
         self._async_notified = {}
@@ -468,12 +479,12 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         super(PlaybookRunnerCallbacks, self).on_failed(host, results, ignore_errors=ignore_errors)
 
     def on_ok(self, host, host_result):
-        
+
         item = host_result.get('item', None)
 
         host_result2 = host_result.copy()
         host_result2.pop('invocation', None)
-        verbose_always = host_result2.pop('verbose_always', None)
+        verbose_always = host_result2.pop('verbose_always', False)
         changed = host_result.get('changed', False)
         ok_or_changed = 'ok'
         if changed:
@@ -482,7 +493,7 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         # show verbose output for non-setup module results if --verbose is used
         msg = ''
         if (not self.verbose or host_result2.get("verbose_override",None) is not
-                None) and verbose_always is None:
+                None) and not verbose_always:
             if item:
                 msg = "%s: [%s] => (item=%s)" % (ok_or_changed, host, item)
             else:
@@ -491,10 +502,10 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         else:
             # verbose ...
             if item:
-                msg = "%s: [%s] => (item=%s) => %s" % (ok_or_changed, host, item, utils.jsonify(host_result2))
+                msg = "%s: [%s] => (item=%s) => %s" % (ok_or_changed, host, item, utils.jsonify(host_result2, format=verbose_always))
             else:
                 if 'ansible_job_id' not in host_result or 'finished' in host_result2:
-                    msg = "%s: [%s] => %s" % (ok_or_changed, host, utils.jsonify(host_result2))
+                    msg = "%s: [%s] => %s" % (ok_or_changed, host, utils.jsonify(host_result2, format=verbose_always))
 
         if msg != '':
             if not changed:
@@ -516,13 +527,14 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         super(PlaybookRunnerCallbacks, self).on_error(host, err)
 
     def on_skipped(self, host, item=None):
-        msg = ''
-        if item:
-            msg = "skipping: [%s] => (item=%s)" % (host, item)
-        else:
-            msg = "skipping: [%s]" % host
-        display(msg, color='cyan', runner=self.runner)
-        super(PlaybookRunnerCallbacks, self).on_skipped(host, item)
+        if constants.DISPLAY_SKIPPED_HOSTS:
+            msg = ''
+            if item:
+                msg = "skipping: [%s] => (item=%s)" % (host, item)
+            else:
+                msg = "skipping: [%s]" % host
+            display(msg, color='cyan', runner=self.runner)
+            super(PlaybookRunnerCallbacks, self).on_skipped(host, item)
 
     def on_no_hosts(self):
         display("FATAL: no hosts matched or all hosts have already failed -- aborting\n", color='red', runner=self.runner)
@@ -578,7 +590,7 @@ class PlaybookCallbacks(object):
         msg = "TASK: [%s]" % name
         if is_conditional:
             msg = "NOTIFIED: [%s]" % name
-        
+
         if hasattr(self, 'start_at'):
             if name == self.start_at or fnmatch.fnmatch(name, self.start_at):
                 # we found out match, we can get rid of this now

@@ -345,7 +345,7 @@ class CronTab(object):
         """
         Returns the command line for reading a crontab
         """
-        return "%s -l%s" % (CRONCMD, self._user_execute())
+        return "%s -l %s" % (CRONCMD, self._user_execute())
 
     def _read_user_execute(self):
         """
@@ -357,14 +357,14 @@ class CronTab(object):
         """
         Return the command line for writing a crontab
         """
-        return "%s %s %s" % (CRONCMD, path, self._user_execute())
+        return "%s %s %s" % (CRONCMD, self._user_execute(), path)
 
     def _user_execute(self):
         """
         User command switches to append to the read and write commands.
         """
         if self.user:
-            return "%s %s" % (' -u ', str(self.user))
+            return "%s %s" % ('-u', str(self.user))
         return ''
 
 #==================================================

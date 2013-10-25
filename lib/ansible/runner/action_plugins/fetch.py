@@ -50,9 +50,13 @@ class ActionModule(object):
         flat = utils.boolean(flat)
         fail_on_missing = options.get('fail_on_missing', False)
         fail_on_missing = utils.boolean(fail_on_missing)
+        validate_md5 = options.get('validate_md5', True)
+        validate_md5 = utils.boolean(validate_md5)
         if source is None or dest is None:
             results = dict(failed=True, msg="src and dest are required")
             return ReturnData(conn=conn, result=results)
+
+        source = os.path.expanduser(source)
 
         if flat:
             if dest.endswith("/"):
@@ -66,14 +70,15 @@ class ActionModule(object):
         else:
             # files are saved in dest dir, with a subdir for each host, then the filename
             dest = "%s/%s/%s" % (utils.path_dwim(self.runner.basedir, dest), conn.host, source)
-        dest   = dest.replace("//","/")
+
+        dest = os.path.expanduser(dest.replace("//","/"))
 
         # calculate md5 sum for the remote file
         remote_md5 = self.runner._remote_md5(conn, tmp, source)
 
         # use slurp if sudo and permissions are lacking
         remote_data = None
-        if remote_md5 in ('1', '2') and self.runner.sudo:
+        if remote_md5 in ('1', '2') or self.runner.sudo:
             slurpres = self.runner._execute_module(conn, tmp, 'slurp', 'src=%s' % source, inject=inject)
             if slurpres.is_successful():
                 if slurpres.result['encoding'] == 'base64':
@@ -112,10 +117,10 @@ class ActionModule(object):
                 f.write(remote_data)
                 f.close()
             new_md5 = utils.md5(dest)
-            if new_md5 != remote_md5:
-                result = dict(failed=True, md5sum=new_md5, msg="md5 mismatch", file=source, dest=dest)
+            if validate_md5 and new_md5 != remote_md5:
+                result = dict(failed=True, md5sum=new_md5, msg="md5 mismatch", file=source, dest=dest, remote_md5sum=remote_md5)
                 return ReturnData(conn=conn, result=result)
-            result = dict(changed=True, md5sum=new_md5, dest=dest)
+            result = dict(changed=True, md5sum=new_md5, dest=dest, remote_md5sum=remote_md5)
             return ReturnData(conn=conn, result=result)
         else:
             result = dict(changed=False, md5sum=local_md5, file=source, dest=dest)

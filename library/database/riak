@@ -87,9 +87,14 @@ EXAMPLES = '''
 '''
 
 import urllib2
-import json
 import time
 import socket
+import sys
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 
 def ring_check(module, riak_admin_bin):
     cmd = '%s ringready 2> /dev/null' % riak_admin_bin
@@ -129,21 +134,17 @@ def main():
     riak_bin = module.get_bin_path('riak')
     riak_admin_bin = module.get_bin_path('riak-admin')
 
-    cmd = "%s version 2> /dev/null |grep ^riak|cut -f2 -d' '|tr -d '('" % riak_bin
-    rc, out, err = module.run_command(cmd)
-    if rc == 0:
-        version = out.strip()
-    else:
-        module.fail_json(msg='Could not determine Riak version')
-
-# here we attempt to get stats from the http stats interface for 120 seconds.
     timeout = time.time() + 120
     while True:
         if time.time() > timeout:
             module.fail_json(msg='Timeout, could not fetch Riak stats.')
         try:
-            stats_raw = urllib2.urlopen(
-                'http://%s/stats' % (http_conn), None, 5).read()
+            if sys.version_info<(2,6,0):
+                stats_raw = urllib2.urlopen(
+                    'http://%s/stats' % (http_conn), None).read()
+            else:
+                stats_raw = urllib2.urlopen(
+                    'http://%s/stats' % (http_conn), None, 5).read()
             break
         except urllib2.HTTPError, e:
             time.sleep(5)
@@ -163,7 +164,7 @@ def main():
     node_name = stats['nodename']
     nodes = stats['ring_members']
     ring_size = stats['ring_creation_size']
-
+    version = stats['riak_core_version']
 
     result = dict(node_name=node_name,
               nodes=nodes,

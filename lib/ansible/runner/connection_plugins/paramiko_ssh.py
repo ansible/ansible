@@ -196,11 +196,12 @@ class Connection(object):
             chan.exec_command(quoted_command)
         else:
             # sudo usually requires a PTY (cf. requiretty option), therefore
-            # we give it one, and we try to initialise from the calling
-            # environment
-            chan.get_pty(term=os.getenv('TERM', 'vt100'),
-                         width=int(os.getenv('COLUMNS', 0)),
-                         height=int(os.getenv('LINES', 0)))
+            # we give it one by default (pty=True in ansble.cfg), and we try
+            # to initialise from the calling environment
+            if C.PARAMIKO_PTY:
+                chan.get_pty(term=os.getenv('TERM', 'vt100'),
+                             width=int(os.getenv('COLUMNS', 0)),
+                             height=int(os.getenv('LINES', 0)))
             shcmd, prompt = utils.make_sudo_cmd(sudo_user, executable, cmd)
             vvv("EXEC %s" % shcmd, host=self.host)
             sudo_output = ''

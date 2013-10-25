@@ -1,10 +1,94 @@
 Ansible Changes By Release
 ==========================
 
-1.3 "Top of the World" - Release pending!
+1.4 "Could This Be Magic" - Release pending!
 
 Highlighted new features:
 
+* Added do-until feature, which can be used to retry a failed task a specified number of times with a delay in-between the retries.
+* Added failed_when option for tasks, which can be used to specify logical statements that make it easier to determine when a task has failed, or to make it easier to ignore certain non-zero return codes for some commands.
+* Added the "subelement" lookup plugin, which allows iteration of the keys of a dictionary or items in a list.
+* Added the capability to use either paramiko or ssh for the inital setup connection of an accelerated playbook.
+* Automatically provide advice on common parser errors users encounter.
+* Deprecation warnings are now shown for legacy features: when_integer/etc, only_if, include+with_items, etc.  Can be disabled in ansible.cfg
+* The system will now provide helpful tips around possible YAML syntax errors increasing ease of use for new users.
+* warnings are now shown for using {{ foo }} in loops and conditionals, and suggest leaving the variable expressions bare as per docs.
+* The roles search path is now configurable in ansible.cfg.  'roles_path' in the config setting.
+* Includes with parameters can now be done like roles for consistency:  - { include: song.yml, year:1984, song:'jump' }
+* The name of each role is now shown before each task if roles are being used
+* Adds a "var=" option to the debug module for debugging variable data.  "debug: var=hostvars['hostname']" and "debug: var=foo" are all valid syntax.
+* Variables in {{ format }} can fully reference each other and preserve types, template engine is 2x as fast.
+
+New modules and plugins:
+
+* cloud:ec2_eip -- manage AWS elastic IPs
+* cloud:rax_clb -- manage Rackspace cloud load balancers
+* cloud:ovirt -- VM lifecycle controls for ovirt
+* files: acl -- set or get acls on a file
+* system: firewalld -- manage the firewalld configuration
+* system: host -- manage `/etc/hosts` file entries
+* system: modprobe -- manage kernel modules on systems that support modprobe/rmmod
+* system: open_iscsi -- manage targets on an initiator using open-iscsi
+
+Plugins:
+
+* jail connection module (FreeBSD)
+* lxc connection module
+* added inventory script for listing FreeBSD jails 
+* added md5 as a Jinja2 filter:  {{ path | md5 }}
+* added a fileglob filter that will return files matching a glob pattern.  with_items: "/foo/pattern/*.txt | fileglob"
+* 'changed' filter returns whether a previous step was changed easier.  when: registered_result | changed
+
+Misc changes:
+
+* (docs pending) New features for accelerate mode: configurable timeouts and a keepalives for long running tasks.
+* Added a `delimiter` field to the assemble module.
+* Added `ansible_env` to the list of facts returned by the setup module.
+* Added `state=touch` to the file module, which functions similarly to the command-line version of `touch`.
+* Added a -vvvv level, which will show SSH client debugging information in the event of a failure.
+* Includes now support the more standard syntax, similar to that of role includes and dependencies. 
+* Changed the `user:` parameter on plays to `remote_user:` to prevent confusion with the module of the same name.  Still backwards compatible on play parameters.
+* Added parameter to allow the fetch module to skip the md5 validation step ('validate_md5=false'). This is usefull when fetching files that are actively being written to, such as live log files.
+* Inventory hosts are used in the order they appear in the inventory.
+* in hosts: foo[2-5] type syntax, the iterators now are zero indexed and the last index is non-inclusive, to match Python standards.
+* There's now a way for a callback plugin to disable itself.  See osx_say example code for an example.
+* Many bugfixes to modules of all types.
+* Complex arguments now can be used with async tasks
+* SSH ControlPath is now configurable in ansible.cfg.  There's a limit to the lengths of these paths, see how to shorten them in ansible.cfg.
+* md5sum support on AIX with csum.
+* Extremely large documentation refactor into subchapters
+* Added 'append_privs' option to the mysql_user module
+* Can now update (temporarily change) host variables using the "add_host" module for existing hosts.
+* Fixes for IPv6 addresses in inventory text files
+* name of executable can be passed to pip/gem etc, for installing under *different* interpreters
+* copy of ./hacking/env-setup added for fish users, ./hacking/env-setup.fish
+
+1.3.3 "Top of the World" (reprise) - October 9, 2013
+
+Additional fixes for accelerate mode.
+
+1.3.2 "Top of the World" (reprise) - September 19th, 2013
+
+Multiple accelerate mode fixes:
+Make packet reception less greedy, so multiple frames of data are not consumed by one call.
+Adding two timeout values (one for connection and one for data reception timeout).
+Added keepalive packets, so async mode is no longer required for long-running tasks.
+Modified accelerate daemon to use the verbose logging level of the ansible command that started it.
+Fixed bug where accelerate would not work in check-mode.
+Added a -vvvv level, which will show SSH client debugging information in the event of a failure.
+Fixed bug in apt_repository module where the repository cache was not being updated.
+Fixed bug where "too many open files" errors would be encountered due to pseudo TTY's not being closed properly.
+
+1.3.1 "Top of the World" (reprise) - September 16th, 2013
+
+Fixing a bug in accelerate mode whereby the gather_facts step would always be run via sudo regardless of the play settings.
+
+1.3 "Top of the World" - September 13th, 2013
+
+Highlighted new features:
+
+* accelerated mode: An enhanced fireball mode that requires zero bootstrapping and fewer requirements plus adds capabilities like sudo commands.
+* role defaults: Allows roles to define a set of variables at the lowest priority. These variables can be overridden by any other variable.
 * new /etc/ansible/facts.d allows JSON or INI-style facts to be provided from the remote node, and supports executable fact programs in this dir. Files must end in *.fact.
 * added the ability to make undefined template variables raise errors (see ansible.cfg)
 * (DOCS PENDING) sudo: True/False and sudo_user: True/False can be set at include and role level
@@ -14,7 +98,8 @@ Highlighted new features:
 * if --forks exceeds the numbers of hosts, it will be automatically reduced. Set forks to 0 and you get "as many forks as I have hosts" out of the box.
 * enabled error_on_undefined_vars by default, which will make errors in playbooks more obvious
 * role dependencies -- one role can now pull in another, with parameters of its own.
-* added the ability to have tasks execute even during a check run (always_run)
+* added the ability to have tasks execute even during a check run (always_run).
+* added the ability to set the maximum failure percentage for a group of hosts.
 
 New modules:
 
@@ -24,6 +109,9 @@ New modules:
 * cloud: linode -- modules for Linode provisioning that also includes inventory support
 * cloud: route53 -- manage Amazon DNS entries 
 * cloud: ec2_ami -- manages (and creates!) ec2 AMIs
+* database: mysql_replication -- manages mysql replication settings for masters/slaves
+* database: mysql_variables -- manages mysql runtime variables
+* database: redis -- manages redis databases (slave mode and flushing data)
 * net_infrastructure: arista_interface
 * net_infrastructure: arista_lag
 * net_infrastructure: arista_l2interface
@@ -35,7 +123,6 @@ New modules:
 * monitoring: boundary_meter -- adds or removes boundary.com meters
 * net_infrastructure: dnsmadeeasy - manipulate DNS Made Easy records
 * files: xattr -- manages extended attributes on files
-* database: redis -- manages redis databases (slave mode and flushing data)
 
 Misc changes:
 
@@ -96,7 +183,7 @@ Misc changes:
 * added IAM role support to EC2 module
 * fixes for OpenBSD package module to avoid shell expansion
 * git module upgrades to allow --depth and --version to be used together
-* new lookup plugin, "with_flat_list"
+* new lookup plugin, "with_flattened"
 * extra vars (-e) variables can be used in playbook include paths
 * improved reporting for invalid sudo passwords
 * improved reporting for inability to find a suitable tmp location

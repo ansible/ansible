@@ -26,6 +26,7 @@ import fcntl
 import hmac
 import pwd
 import gettext
+import pty
 from hashlib import sha1
 import ansible.constants as C
 from ansible.callbacks import vvv
@@ -43,8 +44,11 @@ class Connection(object):
         self.user = user
         self.password = password
         self.private_key_file = private_key_file
-        self.cp_dir = utils.prepare_writeable_dir('$HOME/.ansible/cp',mode=0700)
         self.HASHED_KEY_MAGIC = "|1|"
+
+        fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_EX)
+        self.cp_dir = utils.prepare_writeable_dir('$HOME/.ansible/cp',mode=0700)
+        fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_UN)
 
     def connect(self):
         ''' connect to the remote host '''
@@ -58,7 +62,7 @@ class Connection(object):
         else:
             self.common_args += ["-o", "ControlMaster=auto",
                                  "-o", "ControlPersist=60s",
-                                 "-o", "ControlPath=%s/ansible-ssh-%%h-%%p-%%r" % self.cp_dir]
+                                 "-o", "ControlPath=%s" % (C.ANSIBLE_SSH_CONTROL_PATH % dict(directory=self.cp_dir))]
 
         cp_in_use = False
         cp_path_set = False
@@ -69,7 +73,7 @@ class Connection(object):
                 cp_path_set = True
 
         if cp_in_use and not cp_path_set:
-            self.common_args += ["-o", "ControlPath=%s/ansible-ssh-%%h-%%p-%%r" % self.cp_dir]
+            self.common_args += ["-o", "ControlPath=%s" % (C.ANSIBLE_SSH_CONTROL_PATH % dict(directory=self.cp_dir))]
 
         if not C.HOST_KEY_CHECKING:
             self.common_args += ["-o", "StrictHostKeyChecking=no"]
@@ -85,7 +89,7 @@ class Connection(object):
                                  "-o", "PubkeyAuthentication=no"]
         else:
             self.common_args += ["-o", "KbdInteractiveAuthentication=no",
-                                 "-o", "PreferredAuthentications=hostbased,publickey",
+                                 "-o", "PreferredAuthentications=gssapi-with-mic,gssapi-keyex,hostbased,publickey",
                                  "-o", "PasswordAuthentication=no"]
         if self.user != pwd.getpwuid(os.geteuid())[0]:
             self.common_args += ["-o", "User="+self.user]
@@ -144,7 +148,13 @@ class Connection(object):
         ''' run a command on the remote host '''
 
         ssh_cmd = self._password_cmd()
-        ssh_cmd += ["ssh", "-tt", "-q"] + self.common_args
+        ssh_cmd += ["ssh", "-tt"]
+        if utils.VERBOSITY > 3:
+            ssh_cmd += ["-vvv"]
+        else:
+            ssh_cmd += ["-q"]
+        ssh_cmd += self.common_args
+
         if self.ipv6:
             ssh_cmd += ['-6']
         ssh_cmd += [self.host]
@@ -172,11 +182,11 @@ class Connection(object):
 
         try:
             # Make sure stdin is a proper (pseudo) pty to avoid: tcgetattr errors
-            import pty
             master, slave = pty.openpty()
             p = subprocess.Popen(ssh_cmd, stdin=slave,
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdin = os.fdopen(master, 'w', 0)
+            os.close(slave)
         except:
             p = subprocess.Popen(ssh_cmd, stdin=subprocess.PIPE,
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE)

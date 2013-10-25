@@ -34,18 +34,18 @@ description:
 options:
   name:
     description:
-      - "package name, or package specifier with version, like C(name-1.0) in state=latest this can be '*' which means run: yum -y update"
+      - "Package name, or package specifier with version, like C(name-1.0). When using state=latest, this can be '*' which means run: yum -y update. You can also pass a url or a local path to a rpm file."
     required: true
     default: null
     aliases: []
   list:
     description:
-      - various non-idempotent commands for usage with C(/usr/bin/ansible) and I(not) playbooks. See examples.
+      - Various non-idempotent commands for usage with C(/usr/bin/ansible) and I(not) playbooks. See examples.
     required: false
     default: null
   state:
     description:
-      - whether to install (C(present), C(latest)), or remove (C(absent)) a package.
+      - Whether to install (C(present), C(latest)), or remove (C(absent)) a package.
     required: false
     choices: [ "present", "latest", "absent" ]
     default: "present"
@@ -97,6 +97,9 @@ EXAMPLES = '''
 - yum: name=httpd state=removed
 - yum: name=httpd enablerepo=testing state=installed
 - yum: name=* state=latest
+- yum: name=http://nginx.org/packages/centos/6/noarch/RPMS/nginx-release-centos-6-0.el6.ngx.noarch.rpm state=present
+- yum: name=/usr/local/src/nginx-release-centos-6-0.el6.ngx.noarch.rpm state=present
+- yum: name="@Development tools" state=present
 '''
 
 def_qf = "%{name}-%{version}-%{release}.%{arch}"
@@ -106,6 +109,12 @@ if not os.path.exists(repoquery):
     repoquery = None
 
 yumbin='/usr/bin/yum'
+
+import syslog
+
+def log(msg):
+    syslog.openlog('ansible-yum', 0, syslog.LOG_USER)
+    syslog.syslog(syslog.LOG_NOTICE, msg)
 
 def yum_base(conf_file=None, cachedir=False):
 
@@ -462,9 +471,11 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
 
         rc, out, err = module.run_command(cmd)
 
-        if rc != 0 and 'Nothing to do' in err:
+        if (rc != 0 and 'Nothing to do' in err) or 'Nothing to do' in out:
             # avoid failing in the 'Nothing To Do' case
-            # this may happen with an URL spec
+            # this may happen with an URL spec.
+            # for an already installed group,
+            # we get rc = 0 and 'Nothing to do' in out, not in err.
             rc = 0
             err = ''
             out = '%s: Nothing to do' % spec
@@ -614,7 +625,8 @@ def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo,
     # take multiple args comma separated
     items = pkgspec.split(',')
 
-    yum_basecmd = [yumbin, '-d', '1', '-y']
+    # need debug level 2 to get 'Nothing to do' for groupinstall.
+    yum_basecmd = [yumbin, '-d', '2', '-y']
 
         
     if not repoquery:
@@ -699,8 +711,7 @@ def main():
             disablerepo=dict(),
             list=dict(),
             conf_file=dict(default=None),
-            disable_gpg_check=dict(required=False, default="no",
-                                   choices=BOOLEANS, type='bool'),
+            disable_gpg_check=dict(required=False, default="no", type='bool'),
         ),
         required_one_of = [['name','list']],
         mutually_exclusive = [['name','list']],

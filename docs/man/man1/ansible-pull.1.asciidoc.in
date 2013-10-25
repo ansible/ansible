@@ -63,6 +63,12 @@ URL of the playbook repository to checkout.
 Branch/Tag/Commit to checkout.  If not provided, uses default behavior
 of module used to check out playbook repository.
 
+*-f*, *--force*::
+
+Force running of playbook even if unable to update playbook repository.  This
+can be useful, for example, to enforce run-time state when a network
+connection may not always be up or possible.
+
 *-i* 'PATH', *--inventory=*'PATH'::
 
 The 'PATH' to the inventory hosts file.  This can be a relative path within

@@ -36,7 +36,11 @@ class ActionModule(object):
             # in check mode, always skip this module
             return ReturnData(conn=conn, comm_ok=True, result=dict(skipped=True, msg='check mode not supported for this module'))
 
-        tokens  = shlex.split(module_args)
+        # Decode the result of shlex.split() to UTF8 to get around a bug in that's been fixed in Python 2.7 but not Python 2.6.
+        # See: http://bugs.python.org/issue6988
+        tokens  = shlex.split(module_args.encode('utf8'))
+        tokens = [s.decode('utf8') for s in tokens]
+
         source  = tokens[0]
         # FIXME: error handling
         args    = " ".join(tokens[1:])
@@ -54,15 +58,18 @@ class ActionModule(object):
 
         conn.put_file(source, tmp_src)
 
-        # fix file permissions when the copy is done as a different user
+        sudoable=True
+        # set file permissions, more permisive when the copy is done as a different user
         if self.runner.sudo and self.runner.sudo_user != 'root':
-            prepcmd = 'chmod a+rx %s' % tmp_src
+            cmd_args_chmod = "chmod a+rx %s" % tmp_src
+            sudoable=False
         else:
-            prepcmd = 'chmod +x %s' % tmp_src
+            cmd_args_chmod = "chmod +rx %s" % tmp_src
+        self.runner._low_level_exec_command(conn, cmd_args_chmod, tmp, sudoable=sudoable)
 
         # add preparation steps to one ssh roundtrip executing the script
         env_string = self.runner._compute_environment_string(inject)
-        module_args = prepcmd + '; ' + env_string + tmp_src + ' ' + args
+        module_args = env_string + tmp_src + ' ' + args
 
         handler = utils.plugins.action_loader.get('raw', self.runner)
         result = handler.run(conn, tmp, 'raw', module_args, inject)
@@ -70,5 +77,7 @@ class ActionModule(object):
         # clean up after
         if tmp.find("tmp") != -1 and not C.DEFAULT_KEEP_REMOTE_FILES:
             self.runner._low_level_exec_command(conn, 'rm -rf %s >/dev/null 2>&1' % tmp, tmp)
+
+        result.result['changed'] = True
 
         return result

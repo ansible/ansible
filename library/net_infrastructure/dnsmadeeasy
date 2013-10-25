@@ -263,8 +263,6 @@ def main():
                              'A', 'AAAA', 'CNAME', 'HTTPRED', 'MX', 'NS', 'PTR', 'SRV', 'TXT']),
             record_value=dict(required=False),
             record_ttl=dict(required=False, default=1800, type='int'),
-            #redirecttype=dict(required=False,default='Hidden Frame Masked',choices=[ 'Hidden Frame Masked', 'Standard 301', 'Standard 302' ]),
-            #hardlink=dict(requred=False, default=False, type='bool', choices=BOOLEANS)
         ),
         required_together=(
             ['record_value', 'record_ttl', 'record_type']

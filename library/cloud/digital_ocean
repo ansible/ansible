@@ -33,7 +33,7 @@ options:
      - Indicate desired state of the target.
     default: present
     choices: ['present', 'active', 'absent', 'deleted']
-  client_id: 
+  client_id:
      description:
      - Digital Ocean manager id.
   api_key:
@@ -45,6 +45,12 @@ options:
   name:
     description:
      - String, this is the name of the droplet - must be formatted by hostname rules, or the name of a SSH key.
+  unique_name:
+    description:
+     - Bool, require unique hostnames.  By default, digital ocean allows multiple hosts with the same name.  Setting this to "yes" allows only one host per name.  Useful for idempotence.
+    version_added: "1.4"
+    default: "no"
+    choices: [ "yes", "no" ]
   size_id:
     description:
      - Numeric, this is the id of the size you would like the droplet created at.
@@ -57,8 +63,20 @@ options:
   ssh_key_ids:
     description:
      - Optional, comma separated list of ssh_key_ids that you would like to be added to the server
+  virtio:
+    description:
+     - "Bool, turn on virtio driver in droplet for improved network and storage I/O"
+    version_added: "1.4"
+    default: "yes"
+    choices: [ "yes", "no" ]
+  private_networking:
+    description:
+     - "Bool, add an additional, private network interface to droplet for inter-droplet communication"
+    version_added: "1.4"
+    default: "no"
+    choices: [ "yes", "no" ]
   wait:
-    description: 
+    description:
      - Wait for the droplet to be in state 'running' before returning.  If wait is "no" an ip_address may not be returned.
     default: "yes"
     choices: [ "yes", "no" ]
@@ -81,83 +99,60 @@ EXAMPLES = '''
 # If no existing key matches this name, a new key is created, the ssh key id is returned and changed = False
 
 - digital_ocean: >
-      state=present 
-      command=ssh 
-      name=my_ssh_key 
-      ssh_pub_key='ssh-rsa AAAA...' 
-      client_id=XXX 
+      state=present
+      command=ssh
+      name=my_ssh_key
+      ssh_pub_key='ssh-rsa AAAA...'
+      client_id=XXX
       api_key=XXX
 
 # Create a new Droplet
 # Will return the droplet details including the droplet id (used for idempotence)
 
 - digital_ocean: >
-      state=present 
-      command=droplet 
-      name=my_new_droplet 
-      client_id=XXX 
-      api_key=XXX 
-      size_id=1 
-      region_id=2 
-      image_id=3 
+      state=present
+      command=droplet
+      name=my_new_droplet
+      client_id=XXX
+      api_key=XXX
+      size_id=1
+      region_id=2
+      image_id=3
       wait_timeout=500
   register: my_droplet
-- debug: msg="ID: {{ my_droplet.droplet.id }} IP: {{ my_droplet.droplet.ip_address }}"
+- debug: msg="ID is {{ my_droplet.droplet.id }}"
+- debug: msg="IP is {{ my_droplet.droplet.ip_address }}"
 
 # Ensure a droplet is present
 # If droplet id already exist, will return the droplet details and changed = False
 # If no droplet matches the id, a new droplet will be created and the droplet details (including the new id) are returned, changed = True.
 
 - digital_ocean: >
-      state=present 
-      command=droplet 
-      id=123 
-      name=my_new_droplet 
-      client_id=XXX 
-      api_key=XXX 
-      size_id=1 
-      region_id=2 
-      image_id=3 
+      state=present
+      command=droplet
+      id=123
+      name=my_new_droplet
+      client_id=XXX
+      api_key=XXX
+      size_id=1
+      region_id=2
+      image_id=3
       wait_timeout=500
 
 # Create a droplet with ssh key
-# The ssh key id can be passed as argument at the creation of a droplet (see ssh_key_ids). 
+# The ssh key id can be passed as argument at the creation of a droplet (see ssh_key_ids).
 # Several keys can be added to ssh_key_ids as id1,id2,id3
 # The keys are used to connect as root to the droplet.
 
 - digital_ocean: >
-      state=present 
+      state=present
       ssh_key_ids=id1,id2
-      name=my_new_droplet 
-      client_id=XXX 
-      api_key=XXX 
-      size_id=1 
-      region_id=2 
+      name=my_new_droplet
+      client_id=XXX
+      api_key=XXX
+      size_id=1
+      region_id=2
       image_id=3
-=======
-- digital_ocean: state=present command=ssh name=my_ssh_key ssh_pub_key='ssh-rsa AAAA...' client_id=XXX api_key=XXX
-
-If a key matches this name, will return the ssh key id and changed = False
-If no existing key matches this name, a new key is created, the ssh key id is returned and changed = False
-
-# Create a new Droplet
-- digital_ocean: state=present command=droplet name=my_new_droplet client_id=XXX api_key=XXX size_id=1 region_id=2 image_id=3 wait_timeout=500
-
-Will return the droplet details including the droplet id (used for idempotence)
-
-# Ensure a droplet is present
-- digital_ocean: state=present command=droplet id=123 name=my_new_droplet client_id=XXX api_key=XXX size_id=1 region_id=2 image_id=3 wait_timeout=500
-
-If droplet id already exist, will return the droplet details and changed = False
-If no droplet matches the id, a new droplet will be created and the droplet details (including the new id) are returned, changed = True.
-
-# Create a droplet with ssh key
-- digital_ocean: state=present ssh_key_ids=id name=my_new_droplet client_id=XXX api_key=XXX size_id=1 region_id=2 image_id=3
-
-The ssh key id can be passed as argument at the creation of a droplet (see ssh_key_ids). 
-Several keys can be added to ssh_key_ids as id1,id2,id3
-
-The keys are used to connect as root to the droplet.
 '''
 
 import sys
@@ -165,9 +160,14 @@ import os
 import time
 
 try:
+    import dopy
     from dopy.manager import DoError, DoManager
 except ImportError as e:
-    print "failed=True msg='dopy required for this module'"
+    print "failed=True msg='dopy >= 0.2.2 required for this module'"
+    sys.exit(1)
+
+if dopy.__version__ < '0.2.2':
+    print "failed=True msg='dopy >= 0.2.2 required for this module'"
     sys.exit(1)
 
 class TimeoutError(DoError):
@@ -210,9 +210,9 @@ class Droplet(JsonfyMixIn):
             self.power_on()
 
         if wait:
-            end_time = time.time()+wait_timeout
+            end_time = time.time() + wait_timeout
             while time.time() < end_time:
-                time.sleep(min(20, end_time-time.time()))
+                time.sleep(min(20, end_time - time.time()))
                 self.update_attr()
                 if self.is_powered_on():
                     if not self.ip_address:
@@ -222,25 +222,34 @@ class Droplet(JsonfyMixIn):
 
     def destroy(self):
         return self.manager.destroy_droplet(self.id)
-    
+
     @classmethod
     def setup(cls, client_id, api_key):
         cls.manager = DoManager(client_id, api_key)
 
     @classmethod
-    def add(cls, name, size_id, image_id, region_id, ssh_key_ids=None):
-        json = cls.manager.new_droplet(name, size_id, image_id, region_id, ssh_key_ids)
+    def add(cls, name, size_id, image_id, region_id, ssh_key_ids=None, virtio=True, private_networking=False):
+        json = cls.manager.new_droplet(name, size_id, image_id, region_id, ssh_key_ids, virtio, private_networking)
         droplet = cls(json)
         return droplet
 
     @classmethod
-    def find(cls, id):
-        if not id:
+    def find(cls, id=None, name=None):
+        if not id and not name:
             return False
+
         droplets = cls.list_all()
+
+        # Check first by id.  digital ocean requires that it be unique
         for droplet in droplets:
             if droplet.id == id:
                 return droplet
+
+        # Failing that, check by hostname.
+        for droplet in droplets:
+            if droplet.name == name:
+                return droplet
+
         return False
 
     @classmethod
@@ -304,27 +313,51 @@ def core(module):
     if command == 'droplet':
         Droplet.setup(client_id, api_key)
         if state in ('active', 'present'):
-            droplet = Droplet.find(module.params['id'])
+
+            # First, try to find a droplet by id.
+            droplet = Droplet.find(id=module.params['id'])
+
+            # If we couldn't find the droplet and the user is allowing unique
+            # hostnames, then check to see if a droplet with the specified
+            # hostname already exists.
+            if not droplet and module.params['unique_name']:
+                droplet = Droplet.find(name=getkeyordie('name'))
+
+            # If both of those attempts failed, then create a new droplet.
             if not droplet:
                 droplet = Droplet.add(
-                        name=getkeyordie('name'), 
-                        size_id=getkeyordie('size_id'), 
-                        image_id=getkeyordie('image_id'), 
-                        region_id=getkeyordie('region_id'), 
-                        ssh_key_ids=module.params['ssh_key_ids']
-                    )
+                    name=getkeyordie('name'),
+                    size_id=getkeyordie('size_id'),
+                    image_id=getkeyordie('image_id'),
+                    region_id=getkeyordie('region_id'),
+                    ssh_key_ids=module.params['ssh_key_ids'],
+                    virtio=module.params['virtio'],
+                    private_networking=module.params['private_networking']
+                )
+
             if droplet.is_powered_on():
                 changed = False
+
             droplet.ensure_powered_on(
-                        wait=getkeyordie('wait'),
-                        wait_timeout=getkeyordie('wait_timeout')
-                    )
+                wait=getkeyordie('wait'),
+                wait_timeout=getkeyordie('wait_timeout')
+            )
+
             module.exit_json(changed=changed, droplet=droplet.to_json())
-       
+
         elif state in ('absent', 'deleted'):
-            droplet = Droplet.find(getkeyordie('id'))
+            # First, try to find a droplet by id.
+            droplet = Droplet.find(id=getkeyordie('id'))
+
+            # If we couldn't find the droplet and the user is allowing unique
+            # hostnames, then check to see if a droplet with the specified
+            # hostname already exists.
+            if not droplet and module.params['unique_name']:
+                droplet = Droplet.find(name=getkeyordie('name'))
+
             if not droplet:
                 module.exit_json(changed=False, msg='The droplet is not found.')
+
             event_json = droplet.destroy()
             module.exit_json(changed=True, event_id=event_json['event_id'])
 
@@ -358,8 +391,11 @@ def main():
             image_id = dict(type='int'),
             region_id = dict(type='int'),
             ssh_key_ids = dict(default=''),
+            virtio = dict(type='bool', choices=BOOLEANS, default='yes'),
+            private_networking = dict(type='bool', choices=BOOLEANS, default='no'),
             id = dict(aliases=['droplet_id'], type='int'),
-            wait = dict(type='bool', choices=BOOLEANS, default='yes'),
+            unique_name = dict(type='bool', default='no'),
+            wait = dict(type='bool', default=True),
             wait_timeout = dict(default=300, type='int'),
             ssh_pub_key = dict(type='str'),
         ),

@@ -56,24 +56,30 @@ class ActionModule(object):
             new_name, new_port = new_name.split(":")
             args['ansible_ssh_port'] = new_port
         
-        # create host and get inventory    
-        new_host = Host(new_name)
+        # redefine inventory and get group "all"
         inventory = self.runner.inventory
-        
+        allgroup = inventory.get_group('all')
+
+        # check if host in cache, add if not
+        if new_name in inventory._hosts_cache:
+            new_host = inventory._hosts_cache[new_name]
+        else:
+            new_host = Host(new_name)
+            # only groups can be added directly to inventory
+            inventory._hosts_cache[new_name] = new_host
+            allgroup.add_host(new_host)
+
         # Add any variables to the new_host
         for k in args.keys():
             if not k in [ 'name', 'hostname', 'groupname', 'groups' ]:
                 new_host.set_variable(k, args[k]) 
                 
         
-        # add the new host to the 'all' group
-        allgroup = inventory.get_group('all')
-        allgroup.add_host(new_host)
-       
-        groupnames = args.get('groupname', args.get('groups', '')) 
+        groupnames = args.get('groupname', args.get('groups', args.get('group', ''))) 
         # add it to the group if that was specified
         if groupnames != '':
             for group_name in groupnames.split(","):
+                group_name = group_name.strip()
                 if not inventory.get_group(group_name):
                     new_group = Group(group_name)
                     inventory.add_group(new_group)
@@ -83,6 +89,10 @@ class ActionModule(object):
             result['new_groups'] = groupnames.split(",")
             
         result['new_host'] = new_name
+
+        # clear pattern caching completely since it's unpredictable what
+        # patterns may have referenced the group
+        inventory.clear_pattern_cache()
         
         return ReturnData(conn=conn, comm_ok=True, result=result)
 

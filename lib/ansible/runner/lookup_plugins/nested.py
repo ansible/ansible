@@ -45,12 +45,8 @@ class LookupModule(object):
     def __lookup_injects(self, terms, inject):
         results = []
         for x in terms:
-            if isinstance(x, basestring) and x in inject:
-                results.append(inject[x])
-            elif isinstance(x, basestring):
-                raise errors.AnsibleError("cannot resolve: %s" % x)
-            else:
-                results.append(x)
+            intermediate = utils.listify_lookup_plugin_terms(x, self.basedir, inject)
+            results.append(intermediate)
         return results
 
     def run(self, terms, inject=None, **kwargs):

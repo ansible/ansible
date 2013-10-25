@@ -23,7 +23,7 @@ DOCUMENTATION = '''
 module: subversion
 short_description: Deploys a subversion repository.
 description:
-   - Deploy given repository URL / revision to dest.
+   - Deploy given repository URL / revision to dest. If dest exists, update to the specified revision, otherwise perform a checkout.
 version_added: "0.7"
 author: Dane Summers, njharman@gmail.com
 notes:
@@ -63,6 +63,13 @@ options:
       - --password parameter passed to svn.
     required: false
     default: null
+  executable:
+    required: false
+    default: null
+    version_added: "1.4"
+    description:
+      - Path to svn executable to use. If not supplied,
+        the normal mechanism for resolving binary paths will be used.
 '''
 
 EXAMPLES = '''
@@ -71,19 +78,27 @@ EXAMPLES = '''
 '''
 
 import re
+import tempfile
 
 
 class Subversion(object):
-    def __init__(self, module, dest, repo, revision, username, password):
+    def __init__(
+            self, module, dest, repo, revision, username, password, svn_path):
         self.module = module
         self.dest = dest
         self.repo = repo
         self.revision = revision
         self.username = username
         self.password = password
+        self.svn_path = svn_path
 
     def _exec(self, args):
-        bits = ["svn --non-interactive --trust-server-cert --no-auth-cache", ]
+        bits = [
+            self.svn_path,
+            '--non-interactive',
+            '--trust-server-cert',
+            '--no-auth-cache',
+        ]
         if self.username:
             bits.append("--username '%s'" % self.username)
         if self.password:
@@ -147,6 +162,7 @@ def main():
             force=dict(default='yes', type='bool'),
             username=dict(required=False),
             password=dict(required=False),
+            executable=dict(default=None),
         ),
         supports_check_mode=True
     )
@@ -157,8 +173,9 @@ def main():
     force = module.params['force']
     username = module.params['username']
     password = module.params['password']
+    svn_path = module.params['executable'] or module.get_bin_path('svn', True)
 
-    svn = Subversion(module, dest, repo, revision, username, password)
+    svn = Subversion(module, dest, repo, revision, username, password, svn_path)
 
     if not os.path.exists(dest):
         before = None

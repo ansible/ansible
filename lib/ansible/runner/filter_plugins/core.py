@@ -21,7 +21,9 @@ import os.path
 import yaml
 import types
 import pipes
+import glob
 from ansible import errors
+from ansible.utils import md5s
 
 def to_nice_yaml(*a, **kw):
     '''Make verbose, human readable yaml'''
@@ -32,7 +34,8 @@ def to_nice_json(*a, **kw):
     return json.dumps(*a, indent=4, sort_keys=True, **kw)
 
 def failed(*a, **kw):
-    item = a[0] 
+    ''' Test if task result yields failed '''
+    item = a[0]
     if type(item) != dict:
         raise errors.AnsibleFilterError("|failed expects a dictionary")
     rc = item.get('rc',0)
@@ -43,9 +46,27 @@ def failed(*a, **kw):
         return False
 
 def success(*a, **kw):
+    ''' Test if task result yields success '''
     return not failed(*a, **kw)
 
+def changed(*a, **kw):
+    ''' Test if task result yields changed '''
+    item = a[0]
+    if type(item) != dict:
+        raise errors.AnsibleFilterError("|changed expects a dictionary")
+    if not 'changed' in item:
+        changed = False
+        if ('results' in item    # some modules return a 'results' key
+                and type(item['results']) == list 
+                and type(item['results'][0]) == dict):
+            for result in item['results']:
+                changed = changed or result.get('changed', False)
+    else:
+        changed = item.get('changed', False)
+    return changed
+
 def skipped(*a, **kw):
+    ''' Test if task result yields skipped '''
     item = a[0]
     if type(item) != dict:
         raise errors.AnsibleFilterError("|skipped expects a dictionary")
@@ -73,6 +94,10 @@ def quote(a):
     ''' return its argument quoted for shell usage '''
     return pipes.quote(a)
 
+def fileglob(pathname):
+    ''' return list of matched files for glob '''
+    return glob.glob(pathname)
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -95,10 +120,14 @@ class FilterModule(object):
             # path
             'basename': os.path.basename,
             'dirname': os.path.dirname,
+            'realpath': os.path.realpath,
 
             # failure testing
             'failed'  : failed,
             'success' : success,
+
+            # changed testing
+            'changed' : changed,
 
             # skip testing
             'skipped' : skipped,
@@ -111,5 +140,11 @@ class FilterModule(object):
 
             # quote string for shell usage
             'quote': quote,
+
+            # md5 hex digest of string
+            'md5': md5s,
+
+            # file glob
+            'fileglob': fileglob,
         }
     
