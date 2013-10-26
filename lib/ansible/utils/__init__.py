@@ -23,12 +23,6 @@ import yaml
 import copy
 import optparse
 import operator
-from ansible import errors
-from ansible import __version__
-from ansible.utils.plugins import *
-from ansible.utils import template
-from ansible.callbacks import display
-import ansible.constants as C
 import time
 import StringIO
 import stat
@@ -42,6 +36,15 @@ import traceback
 import getpass
 import sys
 import textwrap
+
+# ansible
+from ansible import errors
+from ansible import __version__
+from ansible.utils.plugins import *
+from ansible.utils import template
+from ansible.callbacks import display
+import ansible.constants as C
+import filesystem
 
 VERBOSITY=0
 
@@ -224,7 +227,7 @@ def unfrackpath(path):
     example:
     '$HOME/../../var/mail' becomes '/var/spool/mail'
     '''
-    return os.path.normpath(os.path.realpath(os.path.expandvars(os.path.expanduser(path))))
+    return filesystem.unfrackpath(path)
 
 def prepare_writeable_dir(tree,mode=0777):
     ''' make sure a directory exists and is writeable '''
@@ -250,33 +253,11 @@ def path_dwim(basedir, given):
     '''
     make relative paths work like folks expect.
     '''
-
-    if given.startswith("/"):
-        return os.path.abspath(given)
-    elif given.startswith("~"):
-        return os.path.abspath(os.path.expanduser(given))
-    else:
-        return os.path.abspath(os.path.join(basedir, given))
+    return filesystem.path_dwim(basedir, given)
 
 def path_dwim_relative(original, dirname, source, playbook_base, check=True):
     ''' find one file in a directory one level up in a dir named dirname relative to current '''
-    # (used by roles code)
-
-    basedir = os.path.dirname(original)
-    if os.path.islink(basedir):
-        basedir = unfrackpath(basedir)
-        template2 = os.path.join(basedir, dirname, source)
-    else:
-        template2 = os.path.join(basedir, '..', dirname, source)
-    source2 = path_dwim(basedir, template2)
-    if os.path.exists(source2):
-        return source2
-    obvious_local_path = path_dwim(playbook_base, source)
-    if os.path.exists(obvious_local_path):
-        return obvious_local_path
-    if check:
-        raise errors.AnsibleError("input file not found at %s or %s" % (source2, obvious_local_path))
-    return source2 # which does not exist
+    return filesystem.path_dwim_relative(original, dirname, source, playbook_base, check=True)
 
 def json_loads(data):
     ''' parse a JSON string and return a data structure '''

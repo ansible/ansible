@@ -27,6 +27,8 @@ import time
 import datetime
 import pwd
 import ast
+import plugins
+import filesystem
 
 FILTER_PLUGINS = None
 _LISTRE = re.compile(r"(\w+)\[(\d+)\]")
@@ -45,10 +47,9 @@ def _get_filters():
     if Globals.FILTERS is not None:
         return Globals.FILTERS
 
-    from ansible import utils
-    plugins = [ x for x in utils.plugins.filter_loader.all()]
+    my_plugins = [ x for x in plugins.filter_loader.all()]
     filters = {}
-    for fp in plugins:
+    for fp in my_plugins:
         filters.update(fp.filters())
     Globals.FILTERS = filters
 
@@ -66,8 +67,7 @@ def _get_extensions():
     return jinja_exts
 
 def lookup(name, *args, **kwargs):
-    from ansible import utils
-    instance = utils.plugins.lookup_loader.get(name.lower(), basedir=kwargs.get('basedir',None))
+    instance = plugins.lookup_loader.get(name.lower(), basedir=kwargs.get('basedir',None))
     vars = kwargs.get('vars', None)
 
     if instance is not None:
@@ -221,7 +221,6 @@ def _legacy_varFind(basedir, text, vars, lookup_fatal, depth, expand_lists):
         if basedir is None:
             return {'replacement': None, 'start': start, 'end': end}
         var_end -= 1
-        from ansible import utils
         args = text[part_start:var_end]
         if lookup_plugin_name == 'LOOKUP':
             lookup_plugin_name, args = args.split(",", 1)
@@ -233,7 +232,7 @@ def _legacy_varFind(basedir, text, vars, lookup_fatal, depth, expand_lists):
             return None
 
 
-        instance = utils.plugins.lookup_loader.get(lookup_plugin_name.lower(), basedir=basedir)
+        instance = plugins.lookup_loader.get(lookup_plugin_name.lower(), basedir=basedir)
         if instance is not None:
             try:
                 replacement = instance.run(args, inject=vars)
@@ -411,8 +410,7 @@ def template_from_file(basedir, path, vars):
 
     fail_on_undefined = C.DEFAULT_UNDEFINED_VAR_BEHAVIOR
 
-    from ansible import utils
-    realpath = utils.path_dwim(basedir, path)
+    realpath = filesystem.path_dwim(basedir, path)
     loader=jinja2.FileSystemLoader([basedir,os.path.dirname(realpath)])
 
     def my_lookup(*args, **kwargs):
