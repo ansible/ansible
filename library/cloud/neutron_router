@@ -17,14 +17,14 @@
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
 try:
-    from quantumclient.quantum import client
+    from neutronclient.neutron import client
     from keystoneclient.v2_0 import client as ksclient
 except ImportError:
-    print("failed=True msg='quantumclient and keystone client are required'")
+    print("failed=True msg='neutronclient and keystone client are required'")
 
 DOCUMENTATION = '''
 ---
-module: quantum_router
+module: neutron_router
 short_description: Create or Remove router from openstack
 description:
    - Create or Delete routers from OpenStack
@@ -74,12 +74,12 @@ options:
         - desired admin state of the created router .
      required: false
      default: true
-requirements: ["quantumclient", "keystoneclient"]
+requirements: ["neutronclient", "keystoneclient"]
 '''
 
 EXAMPLES = '''
 # Creates a router for tenant admin
-- quantum_router: state=present
+- neutron_router: state=present
                 login_username=admin
                 login_password=admin
                 login_tenant_name=admin
@@ -109,7 +109,7 @@ def _get_endpoint(module, ksclient):
         module.fail_json(msg = "Error getting endpoint for glance: %s" % e.message)
     return endpoint
 
-def _get_quantum_client(module, kwargs):
+def _get_neutron_client(module, kwargs):
     _ksclient = _get_ksclient(module, kwargs)
     token = _ksclient.auth_token
     endpoint = _get_endpoint(module, _ksclient)
@@ -118,10 +118,10 @@ def _get_quantum_client(module, kwargs):
             'endpoint_url': endpoint
     }
     try:
-        quantum = client.Client('2.0', **kwargs)
+        neutron = client.Client('2.0', **kwargs)
     except Exception as e:
-        module.fail_json(msg = "Error in connecting to quantum: %s " % e.message)
-    return quantum
+        module.fail_json(msg = "Error in connecting to neutron: %s " % e.message)
+    return neutron
 
 def _set_tenant_id(module):
     global _os_tenant_id
@@ -138,34 +138,34 @@ def _set_tenant_id(module):
             module.fail_json(msg = "The tenant id cannot be found, please check the paramters")
 
 
-def _get_router_id(module, quantum):
+def _get_router_id(module, neutron):
     kwargs = {
             'name': module.params['name'],
             'tenant_id': _os_tenant_id,
     }
     try:
-        routers = quantum.list_routers(**kwargs)
+        routers = neutron.list_routers(**kwargs)
     except Exception as e:
         module.fail_json(msg = "Error in getting the router list: %s " % e.message)
     if not routers['routers']:
         return None
     return routers['routers'][0]['id']
 
-def _create_router(module, quantum):
+def _create_router(module, neutron):
     router = {
             'name': module.params['name'],
             'tenant_id': _os_tenant_id,
             'admin_state_up': module.params['admin_state_up'],
     }
     try:
-        new_router = quantum.create_router(dict(router=router))
+        new_router = neutron.create_router(dict(router=router))
     except Exception as e:
         module.fail_json( msg = "Error in creating router: %s" % e.message)
     return new_router['router']['id']
 
-def _delete_router(module, quantum, router_id):
+def _delete_router(module, neutron, router_id):
     try:
-        quantum.delete_router(router_id)
+        neutron.delete_router(router_id)
     except:
         module.fail_json("Error in deleting the router")
     return True
@@ -185,23 +185,23 @@ def main():
         ),
     )
                 
-    quantum = _get_quantum_client(module, module.params)
+    neutron = _get_neutron_client(module, module.params)
     _set_tenant_id(module)
 
     if module.params['state'] == 'present':
-        router_id = _get_router_id(module, quantum)
+        router_id = _get_router_id(module, neutron)
         if not router_id:
-            router_id = _create_router(module, quantum)
+            router_id = _create_router(module, neutron)
             module.exit_json(changed=True, result="Created", id=router_id)
         else:
             module.exit_json(changed=False, result="success" , id=router_id)
 
     else:
-        router_id = _get_router_id(module, quantum)
+        router_id = _get_router_id(module, neutron)
         if not router_id:
             module.exit_json(changed=False, result="success")
         else:
-            _delete_router(module, quantum, router_id)
+            _delete_router(module, neutron, router_id)
             module.exit_json(changed=True, result="deleted")
                 
 # this is magic, see lib/ansible/module.params['common.py
