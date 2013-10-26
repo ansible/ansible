@@ -43,7 +43,7 @@ options:
     default: null
   password:
     description:
-      - set the user's password
+      - set the user's password, before 1.4 this was requried.
     required: false
     default: null
   db:
