@@ -310,8 +310,32 @@ def legacy_varReplace(basedir, raw, vars, lookup_fatal=True, depth=0, expand_lis
         utils.deprecated("Legacy variable substitution, such as using ${foo} or $foo instead of {{ foo }} is currently valid but will be phased out and has been out of favor since version 1.2. This is the last of legacy features on our deprecation list. You may continue to use this if you have specific needs for now","1.5")
     return result
 
+def fix_ds(basedir, vars, original, depth=0):
+    ''' used to massage the input directory to avoid surprises later and minimize more complex recursive problems '''
+    while (depth < 20):
+        depth = depth + 1 
+        vars2 = _fix_ds(basedir, vars, original, depth=depth)
+        if vars2 == vars:
+            return vars
+        vars = vars2
+    return vars
+
+def _fix_ds(basedir, vars, original, depth=0):
+    if isinstance(vars, dict):
+        return dict([ (k, fix_ds(basedir, v, original, depth=depth+1)) for (k,v) in vars.iteritems() ])
+    if isinstance(vars, (dict, tuple)):
+        return [ fix_ds(basedir, x,original, depth=depth+1) for x in vars ]
+    if isinstance(vars, basestring) and "{{" in vars and not "|" in vars:
+        return lightweight_var_template(basedir, vars, original)
+    return vars
+
+def lightweight_var_template(basedir, input, vars):
+    return template_from_string(basedir, input, vars, fail_on_undefined=False, lookups=True, filters=True)
 
 def template(basedir, input_value, vars, lookup_fatal=True, depth=-1, expand_lists=True, convert_bare=False, fail_on_undefined=False, filter_fatal=True, lookups=True):
+
+    vars = fix_ds(basedir, vars, vars.copy())
+
     last_time = input_value
     result = None
     changed = True
