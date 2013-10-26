@@ -95,11 +95,13 @@ options:
       - denotes if the password is already encrypted. boolean.
     required: false
     default: false
+    version_added: '1.4'
   expires:
     description:
       - sets the user's password expiration.
     required: false
     default: null
+    version_added: '1.4'
 notes:
    - The default authentication assumes that you are either logging in as or
      sudo'ing to the postgres account on the host.
@@ -131,6 +133,9 @@ EXAMPLES = '''
 
 # Example privileges string format
 INSERT,UPDATE/table:SELECT/anothertable:ALL
+
+# Remove an existing user's password
+- postgresql_user: db=test user=test password=NULL
 '''
 
 import re
