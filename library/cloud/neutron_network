@@ -17,14 +17,14 @@
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
 try:
-    from quantumclient.quantum import client
+    from neutronclient.neutron import client
     from keystoneclient.v2_0 import client as ksclient
 except ImportError:
-    print("failed=True msg='quantumclient and keystone client are required'")
+    print("failed=True msg='neutronclient and keystone client are required'")
 
 DOCUMENTATION = '''
 ---
-module: quantum_network
+module: neutron_network
 short_description: Creates/Removes networks from OpenStack
 description:
    - Add or Remove network from OpenStack.
@@ -71,7 +71,7 @@ options:
      default: None
    provider_network_type:
      description:
-        - The type of the network to be created, gre, vlan, local. Available types depend on the plugin. The Quantum service decides if not specified.
+        - The type of the network to be created, gre, vlan, local. Available types depend on the plugin. The Neutron service decides if not specified.
      required: false
      default: None
    provider_physical_network:
@@ -99,18 +99,18 @@ options:
         - Whether the state should be marked as up or down
      required: false
      default: true
-requirements: ["quantumclient", "keystoneclient"]
+requirements: ["neutronclient", "keystoneclient"]
 
 '''
 
 EXAMPLES = '''
-# Create a GRE backed Quantum network with tunnel id 1 for tenant1
-- quantum_network: name=t1network tenant_name=tenant1 state=present
+# Create a GRE backed Neutron network with tunnel id 1 for tenant1
+- neutron_network: name=t1network tenant_name=tenant1 state=present
                    provider_network_type=gre provider_segmentation_id=1
                    login_username=admin login_password=admin login_tenant_name=admin
 
 # Create an external network
-- quantum_network: name=external_network state=present
+- neutron_network: name=external_network state=present
                    provider_network_type=local router_external=yes
                    login_username=admin login_password=admin login_tenant_name=admin
 '''
@@ -135,10 +135,10 @@ def _get_endpoint(module, ksclient):
     try:
         endpoint = ksclient.service_catalog.url_for(service_type='network', endpoint_type='publicURL')
     except Exception as e:
-        module.fail_json(msg = "Error getting endpoint for Quantum: %s " %e.message)
+        module.fail_json(msg = "Error getting endpoint for Neutron: %s " %e.message)
     return endpoint
 
-def _get_quantum_client(module, kwargs):
+def _get_neutron_client(module, kwargs):
     _ksclient = _get_ksclient(module, kwargs)
     token = _ksclient.auth_token
     endpoint = _get_endpoint(module, _ksclient)
@@ -147,10 +147,10 @@ def _get_quantum_client(module, kwargs):
             'endpoint_url': endpoint
     }
     try:
-        quantum = client.Client('2.0', **kwargs)
+        neutron = client.Client('2.0', **kwargs)
     except Exception as e:
-        module.fail_json(msg = " Error in connecting to quantum: %s " %e.message)
-    return quantum
+        module.fail_json(msg = " Error in connecting to neutron: %s " %e.message)
+    return neutron
 
 def _set_tenant_id(module):
     global _os_tenant_id
@@ -167,22 +167,22 @@ def _set_tenant_id(module):
         module.fail_json(msg = "The tenant id cannot be found, please check the paramters")
 
 
-def _get_net_id(quantum, module):
+def _get_net_id(neutron, module):
     kwargs = {
             'tenant_id': _os_tenant_id,
             'name': module.params['name'],
     }
     try:
-        networks = quantum.list_networks(**kwargs)
+        networks = neutron.list_networks(**kwargs)
     except Exception as e:
-        module.fail_json(msg = "Error in listing quantum networks: %s" % e.message)
+        module.fail_json(msg = "Error in listing neutron networks: %s" % e.message)
     if not networks['networks']:        
         return None
     return networks['networks'][0]['id']
 
-def _create_network(module, quantum):
+def _create_network(module, neutron):
 
-    quantum.format = 'json'
+    neutron.format = 'json'
 
     network = {
         'name':                      module.params.get('name'),
@@ -211,15 +211,15 @@ def _create_network(module, quantum):
         network.pop('provider:segmentation_id', None)
 
     try:
-        net = quantum.create_network({'network':network})
+        net = neutron.create_network({'network':network})
     except Exception as e:
         module.fail_json(msg = "Error in creating network: %s" % e.message)
     return net['network']['id']
                 
-def _delete_network(module, net_id, quantum):
+def _delete_network(module, net_id, neutron):
 
     try:
-        id = quantum.delete_network(net_id)
+        id = neutron.delete_network(net_id)
     except Exception as e: 
         module.fail_json(msg = "Error in deleting the network: %s" % e.message)
     return True
@@ -253,24 +253,24 @@ def main():
             if not module.params['provider_segmentation_id']:
                 module.fail_json(msg = " for vlan & gre networks, variable provider_segmentation_id should be set.")
 
-    quantum = _get_quantum_client(module, module.params)
+    neutron = _get_neutron_client(module, module.params)
 
     _set_tenant_id(module)      
 
     if module.params['state'] == 'present':     
-        network_id = _get_net_id(quantum, module)
+        network_id = _get_net_id(neutron, module)
         if not network_id:
-            network_id = _create_network(module, quantum)
+            network_id = _create_network(module, neutron)
             module.exit_json(changed = True, result = "Created", id = network_id)
         else:
             module.exit_json(changed = False, result = "Success", id = network_id)
 
     if module.params['state'] == 'absent':
-        network_id = _get_net_id(quantum, module)
+        network_id = _get_net_id(neutron, module)
         if not network_id:
             module.exit_json(changed = False, result = "Success")
         else:
-            _delete_network(module, network_id, quantum)
+            _delete_network(module, network_id, neutron)
             module.exit_json(changed = True, result = "Deleted")
 
 # this is magic, see lib/ansible/module.params['common.py
