@@ -36,6 +36,7 @@ setup(name='ansible',
          'ansible.runner.connection_plugins',
          'ansible.runner.filter_plugins',
          'ansible.callback_plugins',
+         'ansible.module_utils'
       ],
       scripts=[
          'bin/ansible',
