@@ -69,7 +69,7 @@ options:
     required: true
     default: null
     aliases: []
-    choices: [ 'upload', 'download', 'get_url', 'get_str' ]
+    choices: [ 'get', 'put', 'get_url', 'get_str', 'delete', 'create' ]
   gcs_secret_key:
     description:
       - GCS secret key. If not set then the value of the GCS_SECRET_KEY environment variable is used. 
@@ -89,10 +89,10 @@ author: benno@ansibleworks.com Note. Most of the code has been taken from the S3
 
 EXAMPLES = '''
 # upload some content
-- gc_storage: bucket=mybucket object=key.txt src=/usr/local/myfile.txt mode=upload permission=public-read
+- gc_storage: bucket=mybucket object=key.txt src=/usr/local/myfile.txt mode=put permission=public-read
 
 # download some content
-- gc_storage: bucket=mybucket object=key.txt dest=/usr/local/myfile.txt mode=download
+- gc_storage: bucket=mybucket object=key.txt dest=/usr/local/myfile.txt mode=get
 
 # Download an object as a string to use else where in your playbook
 - gc_storage: bucket=mybucket object=key.txt mode=get_str
@@ -263,8 +263,10 @@ def get_download_url(module, gs, bucket, obj, expiry):
 def handle_get(module, gs, bucket, obj, overwrite, dest):
     md5_remote = keysum(module, gs, bucket, obj)
     md5_local = hashlib.md5(open(dest, 'rb').read()).hexdigest()
-    if md5_local == md5_remote and not overwrite:
+    if md5_local == md5_remote:
         module.exit_json(changed=False)
+    if md5_local != md5_remote and not overwrite:
+        module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force download.", failed=True)
     else:
         download_gsfile(module, gs, bucket, obj, dest)
 
@@ -278,12 +280,11 @@ def handle_put(module, gs, bucket, obj, overwrite, src, expiration):
         md5_remote = keysum(module, gs, bucket, obj)
         md5_local = hashlib.md5(open(src, 'rb').read()).hexdigest()
         if md5_local == md5_remote:
-            module.exit_json(msg="Local and remote object are identical.", changed=False)
+            module.exit_json(msg="Local and remote object are identical", changed=False)
+        if md5_local != md5_remote and not overwrite:
+            module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force upload.", failed=True)
         else:
-            if overwrite:
-                upload_gsfile(module, gs, bucket, obj, src, expiration)
-            else:
-                module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force upload.", failed=True)
+            upload_gsfile(module, gs, bucket, obj, src, expiration)
                                                                                                             
     if not bucket_rc:      
         create_bucket(module, gs, bucket)
@@ -353,7 +354,7 @@ def main():
     if dest:
         dest      = os.path.expanduser(dest)
     mode          = module.params.get('mode')
-    expiry        = module.params.get('expiry')
+    expiry        = module.params.get('expiration')
     gs_secret_key = module.params.get('gs_secret_key')
     gs_access_key = module.params.get('gs_access_key')
     overwrite     = module.params.get('overwrite')
