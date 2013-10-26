@@ -462,7 +462,7 @@ def template_from_file(basedir, path, vars):
         res = res + '\n'
     return template(basedir, res, vars) 
 
-def template_from_string(basedir, data, vars, fail_on_undefined=False, lookups=True):
+def template_from_string(basedir, data, vars, fail_on_undefined=False, lookups=True, filters=True):
     ''' run a string through the (Jinja2) templating engine '''
     
     def my_lookup(*args, **kwargs):
@@ -472,7 +472,9 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False, lookups=T
     if type(data) == str:
         data = unicode(data, 'utf-8')
     environment = jinja2.Environment(trim_blocks=True, undefined=StrictUndefined, extensions=_get_extensions())
-    environment.filters.update(_get_filters())
+
+    if filters:
+        environment.filters.update(_get_filters())
 
     if '_original_file' in vars:
         basedir = os.path.dirname(vars['_original_file'])
