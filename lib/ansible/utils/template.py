@@ -310,7 +310,7 @@ def legacy_varReplace(basedir, raw, vars, lookup_fatal=True, depth=0, expand_lis
     return result
 
 def fix_ds(basedir, vars, original, depth=0):
-    ''' used to massage the input directory to avoid surprises later and minimize more complex recursive problems '''
+    ''' used to massage the input dictionary to avoid surprises later and minimize more complex recursive problems '''
     while (depth < 20):
         depth = depth + 1 
         vars2 = _fix_ds(basedir, vars, original, depth=depth)
