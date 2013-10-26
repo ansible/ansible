@@ -17,14 +17,14 @@
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
 try:
-    from quantumclient.quantum import client
+    from neutronclient.neutron import client
     from keystoneclient.v2_0 import client as ksclient
 except ImportError:
-    print("failed=True msg='quantum and keystone client are required'")
+    print("failed=True msg='neutron and keystone client are required'")
 
 DOCUMENTATION = '''
 ---
-module: quantum_subnet
+module: neutron_subnet
 short_description: Add/Remove floating IP from an instance
 description:
    - Add or Remove a floating IP to an instance
@@ -104,12 +104,12 @@ options:
         - From the subnet pool the last IP that should be assigned to the virtual machines
      required: false
      default: None
-requirements: ["quantum", "keystoneclient"]
+requirements: ["neutron", "keystoneclient"]
 '''
 
 EXAMPLES = '''
 # Create a subnet for a tenant with the specified subnet
-- quantum_subnet: state=present login_username=admin login_password=admin
+- neutron_subnet: state=present login_username=admin login_password=admin
                   login_tenant_name=admin tenant_name=tenant1
                   network_name=network1 name=net1subnet cidr=192.168.0.0/24"
 '''
@@ -138,7 +138,7 @@ def _get_endpoint(module, ksclient):
         module.fail_json(msg = "Error getting endpoint for glance: %s" % e.message)
     return endpoint
 
-def _get_quantum_client(module, kwargs):
+def _get_neutron_client(module, kwargs):
     _ksclient = _get_ksclient(module, kwargs)
     token     = _ksclient.auth_token
     endpoint  = _get_endpoint(module, _ksclient)
@@ -147,10 +147,10 @@ def _get_quantum_client(module, kwargs):
             'endpoint_url': endpoint
     }
     try:
-        quantum = client.Client('2.0', **kwargs)
+        neutron = client.Client('2.0', **kwargs)
     except Exception as e:
-        module.fail_json(msg = " Error in connecting to quantum: %s" % e.message)
-    return quantum
+        module.fail_json(msg = " Error in connecting to neutron: %s" % e.message)
+    return neutron
 
 def _set_tenant_id(module):
     global _os_tenant_id
@@ -166,24 +166,24 @@ def _set_tenant_id(module):
     if not _os_tenant_id:
             module.fail_json(msg = "The tenant id cannot be found, please check the paramters")
 
-def _get_net_id(quantum, module):
+def _get_net_id(neutron, module):
     kwargs = {
         'tenant_id': _os_tenant_id,
         'name': module.params['network_name'],
     }
     try:
-        networks = quantum.list_networks(**kwargs)
+        networks = neutron.list_networks(**kwargs)
     except Exception as e:
-        module.fail_json("Error in listing quantum networks: %s" % e.message)
+        module.fail_json("Error in listing neutron networks: %s" % e.message)
     if not networks['networks']:
             return None
     return networks['networks'][0]['id']
 
 
-def _get_subnet_id(module, quantum):
+def _get_subnet_id(module, neutron):
     global _os_network_id
     subnet_id = None
-    _os_network_id = _get_net_id(quantum, module)
+    _os_network_id = _get_net_id(neutron, module)
     if not _os_network_id:
         module.fail_json(msg = "network id of network not found.")
     else:
@@ -192,15 +192,15 @@ def _get_subnet_id(module, quantum):
             'name': module.params['name'],
         }
         try:
-            subnets = quantum.list_subnets(**kwargs)
+            subnets = neutron.list_subnets(**kwargs)
         except Exception as e:
             module.fail_json( msg = " Error in getting the subnet list:%s " % e.message)
         if not subnets['subnets']:
             return None
         return subnets['subnets'][0]['id']
 
-def _create_subnet(module, quantum):
-    quantum.format = 'json'
+def _create_subnet(module, neutron):
+    neutron.format = 'json'
     subnet = {
             'name':            module.params['name'],
             'ip_version':      module.params['ip_version'],
@@ -226,15 +226,15 @@ def _create_subnet(module, quantum):
     else:
         subnet.pop('dns_nameservers')
     try:
-        new_subnet = quantum.create_subnet(dict(subnet=subnet))
+        new_subnet = neutron.create_subnet(dict(subnet=subnet))
     except Exception, e:
         module.fail_json(msg = "Failure in creating subnet: %s" % e.message) 
     return new_subnet['subnet']['id']
         
                 
-def _delete_subnet(module, quantum, subnet_id):
+def _delete_subnet(module, neutron, subnet_id):
     try:
-        quantum.delete_subnet(subnet_id)
+        neutron.delete_subnet(subnet_id)
     except Exception as e:
         module.fail_json( msg = "Error in deleting subnet: %s" % e.message)
     return True
@@ -262,21 +262,21 @@ def main():
             allocation_pool_end     = dict(default=None),
         ),
     )
-    quantum = _get_quantum_client(module, module.params)
+    neutron = _get_neutron_client(module, module.params)
     _set_tenant_id(module)
     if module.params['state'] == 'present':
-        subnet_id = _get_subnet_id(module, quantum)
+        subnet_id = _get_subnet_id(module, neutron)
         if not subnet_id:
-            subnet_id = _create_subnet(module, quantum)
+            subnet_id = _create_subnet(module, neutron)
             module.exit_json(changed = True, result = "Created" , id = subnet_id)
         else:
             module.exit_json(changed = False, result = "success" , id = subnet_id)
     else:
-        subnet_id = _get_subnet_id(module, quantum)
+        subnet_id = _get_subnet_id(module, neutron)
         if not subnet_id:
             module.exit_json(changed = False, result = "success")
         else:
-            _delete_subnet(module, quantum, subnet_id)
+            _delete_subnet(module, neutron, subnet_id)
             module.exit_json(changed = True, result = "deleted")
                 
 # this is magic, see lib/ansible/module.params['common.py
