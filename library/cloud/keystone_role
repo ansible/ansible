@@ -1,0 +1,160 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2013, Christian Berendt <berendt@b1-systems.de>
+#
+# based on keystone_user by Lorin Hochstein and on quantum_* by Benno Joy
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: keystone_role
+short_description: Add/Remove a role on the OpenStack Identity Service (Keystone)
+description:
+   - Add/Remove a role on the OpenStack Identity Service (Keystone).
+options:
+   login_username:
+     description:
+        - login username to authenticate to keystone
+     required: true
+     default: admin
+   login_password:
+     description:
+        - password of login user
+     required: true
+     default: 'password'
+   login_tenant_name:
+     description:
+        - the tenant name of the login user
+     required: true
+     default: 'admin'
+   auth_url:
+     description:
+        - the keystone url for authentication
+     required: false
+     default: 'http://127.0.0.1:5000/v2.0/'
+   region_name:
+     description:
+        - name of the region
+     required: false
+     default: None
+   name:
+     description:
+        - the name of the role that should be added/removed
+     required: true
+     default: None
+   state:
+     description:
+        - indicate desired state of the resource
+     choices: ['present', 'absent']
+     default: present
+requirements: [ "python-keystoneclient" ]
+'''
+
+EXAMPLES = '''
+- keystone_role: state=present login_username=admin login_password=password
+                 login_tenantname=admin auth_url=http://keystone:5000/v2.0
+                 name=testing
+
+- keystone_role: state=present auth_url=http://keystone:35357/v2.0 login_token=ADMIN
+                 name=testing
+'''
+
+try:
+    from keystoneclient.v2_0 import client
+except ImportError:
+    print("failed=True msg='python-keystoneclient is required'")
+
+def _get_ksclient(module, kwargs):
+    try:
+        if kwargs.get('login_token'):
+            ksclient = client.Client(token=kwargs.get('login_token'),
+                                     endpoint=kwargs.get('auth_url'))
+        else:
+            ksclient = client.Client(username=kwargs.get('login_username'),
+                                      password=kwargs.get('login_password'),
+                                      tenant_name=kwargs.get('login_tenantname'),
+                                      auth_url=kwargs.get('auth_url'))
+    except Exception as e:
+        module.fail_json(msg = "error authenticating to the keystone: %s" %e.message)
+
+    return ksclient
+
+
+def _get_role(module, ksclient):
+    roles = [x for x in ksclient.roles.list() if x.name == module.params['name']]
+    count = len(roles)
+    if count == 0:
+        return None
+    elif count > 1:
+        module.fail_json( msg = " %d roles with name %s found " % (count, module.params['name']))
+    else:
+        return roles[0]
+
+def _delete_role(module, ksclient):
+    try:
+        role = _get_role(module, ksclient)
+        role.delete()
+    except Exception as e:
+        module.fail_json( msg = "Error in deleting role: %s" % e.message)
+
+    return True
+
+def _create_role(module, ksclient):
+    try:
+        role = ksclient.roles.create(name=module.params['name'])
+    except Exception as e:
+        module.fail_json(msg = "Failure in creating role: %s" % e.message)
+
+    return role
+
+
+def main():
+
+    module = AnsibleModule(
+        argument_spec = dict(
+            login_username          = dict(default=None),
+            login_password          = dict(default=None),
+            login_token             = dict(default=None),
+            login_tenantname        = dict(default=None),
+            auth_url                = dict(default='http://127.0.0.1:5000/v2.0/'),
+            region_name             = dict(default=None),
+            name                    = dict(required=True),
+            state                   = dict(default='present', choices=['absent', 'present']),
+        )
+    )
+
+    ksclient = _get_ksclient(module, module.params)
+
+    if module.params['state'] == 'present':
+        role = _get_role(module, ksclient)
+
+        if not role:
+            role = _create_role(module, ksclient)
+            module.exit_json(changed = True, result = "Created" , id = role.id)
+        else:
+            module.exit_json(changed = False, result = "success" , id = role.id)
+    else:
+        role = _get_role(module, ksclient)
+        if not role:
+            module.exit_json(changed = False, result = "success")
+        else:
+            _delete_role(module, ksclient)
+            module.exit_json(changed = True, result = "deleted")
+
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
