@@ -107,6 +107,13 @@ options:
      description:
        - Create a backup file including the timestamp information so you can
          get the original file back if you somehow clobbered it incorrectly.
+  validate:
+     required: false
+     description:
+       - validation to run before copying into place
+     required: false
+     default: None
+     version_added: "1.4"
   others:
      description:
        - All arguments accepted by the M(file) module also work here.
@@ -128,6 +135,9 @@ EXAMPLES = r"""
 - lineinfile: "dest=/etc/sudoers state=present regexp='^%wheel' line='%wheel ALL=(ALL) NOPASSWD: ALL'"
 
 - lineinfile: dest=/opt/jboss-as/bin/standalone.conf regexp='^(.*)Xms(\d+)m(.*)$' line='\1Xms${xms}m\3' backrefs=yes
+
+# Validate a the sudoers file before saving
+- lineinfile: dest=/etc/sudoers state=present regexp='^%ADMIN ALL\=' line='%ADMIN ALL=(ALL) NOPASSWD:ALL' validate='visudo -cf %s'
 """
 
 def write_changes(module,lines,dest):
@@ -137,7 +147,16 @@ def write_changes(module,lines,dest):
     f.writelines(lines)
     f.close()
 
-    module.atomic_move(tmpfile, dest)
+    validate = module.params.get('validate', None)
+    valid = not validate
+    if validate:
+        (rc, out, err) = module.run_command(validate % tmpfile)
+        valid = rc == 0
+        if rc != 0:
+            module.fail_json(msg='failed to validate: '
+                                 'rc:%s error:%s' % (rc,err))
+    if valid:
+        module.atomic_move(tmpfile, dest)
 
 def check_file_attrs(module, changed, message):
 
@@ -166,8 +185,6 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         f = open(dest, 'rb')
         lines = f.readlines()
         f.close()
-
-    msg = ""
 
     mre = re.compile(regexp)
 
@@ -289,6 +306,7 @@ def main():
             backrefs=dict(default=False, type='bool'),
             create=dict(default=False, type='bool'),
             backup=dict(default=False, type='bool'),
+            validate=dict(default=None, type='str'),
         ),
         mutually_exclusive=[['insertbefore', 'insertafter']],
         add_file_common_args=True,
