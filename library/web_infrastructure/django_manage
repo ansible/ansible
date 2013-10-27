@@ -192,7 +192,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            command     = dict(default=None, required=True, choices=command_allowed_param_map.keys()),
+            command     = dict(default=None, required=True),
             app_path    = dict(default=None, required=True),
             settings    = dict(default=None, required=False),
             pythonpath  = dict(default=None, required=False, aliases=['python_path']),
@@ -254,6 +254,8 @@ def main():
         if command == 'createcachetable' and 'table' in err and 'already exists' in err:
             out = 'Already exists.'
         else:
+            if "Unknown command:" in err:
+                _fail(module, cmd, err, "Unknown django command: %s" % command)
             _fail(module, cmd, out, err, path=os.environ["PATH"], syspath=sys.path)
 
     changed = False
