@@ -1411,6 +1411,10 @@ class LinuxNetwork(Network):
                     interfaces[device]['macaddress'] = macaddress
             if os.path.exists(os.path.join(path, 'mtu')):
                 interfaces[device]['mtu'] = int(open(os.path.join(path, 'mtu')).read().strip())
+            if os.path.exists(os.path.join(path, 'speed')) and not os.path.exists(os.path.join(path, 'bonding'))  and macaddress != '00:00:00:00:00:00':
+                interfaces[device]['speed'] = int(open(os.path.join(path, 'speed')).read().strip())
+            if os.path.exists(os.path.join(path, 'duplex')) and not os.path.exists(os.path.join(path, 'bonding')) and macaddress != '00:00:00:00:00:00':
+                interfaces[device]['duplex'] = open(os.path.join(path, 'duplex')).read().strip()
             if os.path.exists(os.path.join(path, 'operstate')):
                 interfaces[device]['active'] = open(os.path.join(path, 'operstate')).read().strip() != 'down'
 #            if os.path.exists(os.path.join(path, 'carrier')):
