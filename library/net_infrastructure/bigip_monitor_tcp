@@ -135,6 +135,42 @@ options:
 
 EXAMPLES = '''
 
+- name: BIGIP F5 | Create TCP Monitor
+  local_action:
+    module:             bigip_monitor_tcp
+    state:              present
+    server:             "{{ f5server }}"
+    user:               "{{ f5user }}"
+    password:           "{{ f5password }}"
+    name:               "{{ item.monitorname }}"
+    type:               tcp
+    send:               "{{ item.send }}"
+    receive:            "{{ item.receive }}"
+  with_items: f5monitors-tcp
+- name: BIGIP F5 | Create TCP half open Monitor
+  local_action:
+    module:             bigip_monitor_tcp
+    state:              present
+    server:             "{{ f5server }}"
+    user:               "{{ f5user }}"
+    password:           "{{ f5password }}"
+    name:               "{{ item.monitorname }}"
+    type:               tcp
+    send:               "{{ item.send }}"
+    receive:            "{{ item.receive }}"
+  with_items: f5monitors-halftcp
+- name: BIGIP F5 | Remove TCP Monitor
+  local_action:
+    module:             bigip_monitor_tcp
+    state:              absent
+    server:             "{{ f5server }}"
+    user:               "{{ f5user }}"
+    password:           "{{ f5password }}"
+    name:               "{{ monitorname }}"
+  with_flattened:
+  - f5monitors-tcp
+  - f5monitors-halftcp
+
 '''
 
 try:
