@@ -1,0 +1,44 @@
+# -*- mode: python -*-
+
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+author: Benno Joy
+module: include_files
+short_description: Load variables in a file from a task 
+description:
+     - This module allows loading variables from a yaml file similar to vars_files but from a task.
+        it would be specially useful for conditionally loading vars file from a role. 
+     - These variables will survive between plays.
+options:
+  free-form:
+    description:
+       - Add the file name from which variables should be loaded, if called from a role it will look for 
+         the file in files directory else the path would be relative to playbook. An absolute path can 
+         also be provided.
+    required: false
+version_added: "1.4"
+'''
+
+EXAMPLES = '''
+# Example loading variable conditionally based on os distribution
+- include_files: "{{ ansible_os_distribution }}.yml"
+
+# Example loading multiple variable files
+- include_files: "{{ item }}"
+  with_fileglob: "*.yml"
+
+#Example loading the first available file
+- include_files: 
+  first_available_file: 
+   - "foo.yml"
+   - "bar.yml"
+ 
+'''
