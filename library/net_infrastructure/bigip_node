@@ -24,7 +24,7 @@ module: bigip_node
 short_description: "Manages F5 BIG-IP LTM nodes"
 description:
     - "Manages F5 BIG-IP LTM nodes via iControl SOAP API"
-version_added: "1.3"
+version_added: "1.4"
 author: Matt Hite
 notes:
     - "Requires BIG-IP software version >= 11"
@@ -145,7 +145,6 @@ except ImportError:
     bigsuds_found = False
 else:
     bigsuds_found = True
-import traceback
 
 # ==========================
 # bigip_node module specific
@@ -285,7 +284,6 @@ def main():
                         result = {'changed': True}
 
     except Exception, e:
-        traceback.print_exc(file=sys.stdout)
         module.fail_json(msg="received exception: %s" % e)
 
     module.exit_json(**result)
