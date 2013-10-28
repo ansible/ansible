@@ -655,7 +655,7 @@ class Runner(object):
         result = handler.run(conn, tmp, module_name, module_args, inject, complex_args)
         # Code for do until feature
         until = self.module_vars.get('until', None)
-        if until is not None and result.comm_ok and "failed" not in result.result:
+        if until is not None and result.comm_ok:
             inject[self.module_vars.get('register')] = result.result
             cond = template.template(self.basedir, until, inject, expand_lists=False)
             if not utils.check_conditional(cond,  self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
@@ -669,8 +669,6 @@ class Runner(object):
                     result = handler.run(conn, tmp, module_name, module_args, inject, complex_args)
                     result.result['attempts'] = x
                     vv("Result from run %i is: %s" % (x, result.result))
-                    if "failed" in result.result:
-                        break
                     inject[self.module_vars.get('register')] = result.result
                     cond = template.template(self.basedir, until, inject, expand_lists=False)
                     if utils.check_conditional(cond, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
