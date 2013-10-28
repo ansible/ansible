@@ -309,12 +309,6 @@ def main():
         if params.get('line', None) is None:
             module.fail_json(msg='line= is required with state=present')
 
-        # Deal with the insertafter default value manually, to avoid errors
-        # because of the mutually_exclusive mechanism.
-        ins_bef, ins_aft = params['insertbefore'], params['insertafter']
-        if ins_bef is None and ins_aft is None:
-            ins_aft = 'EOF'
-
         present(module, dest, params['regexp'], params['line'],
                 ins_aft, ins_bef, create, backup, backrefs)
     else:
