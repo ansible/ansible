@@ -19,7 +19,6 @@
 from cStringIO import StringIO
 import inspect
 import os
-import jinja2
 import shlex
 
 # from Ansible
@@ -48,9 +47,7 @@ class ModuleReplacer(object):
 
     from ansible.module_utils.basic import * 
 
-    will result in a template evaluation of
-
-    {{ include 'basic.py' }} 
+    will result in a slurping in of basic.py
 
     from the module_utils/ directory in the source tree.
 
@@ -64,6 +61,16 @@ class ModuleReplacer(object):
         this_file = inspect.getfile(inspect.currentframe())
         self.snippet_path = os.path.join(os.path.dirname(this_file), 'module_utils')
         self.strip_comments = strip_comments # TODO: implement
+
+    # ******************************************************************************
+
+    def slurp(self, path):
+        if not os.path.exists(path):
+            raise errors.AnsibleError("imported module support code does not exist at %s" % path)
+        fd = open(path)
+        data = fd.read()
+        fd.close()
+        return data
 
     # ******************************************************************************
 
@@ -88,7 +95,7 @@ class ModuleReplacer(object):
         for line in lines:
 
             if line.find(REPLACER) != -1:
-                output.write("{% include 'basic.py' %}\n\n")
+                output.write(self.slurp(os.path.join(self.snippet_path, "basic.py")))
                 snippet_names.append('basic')
             elif line.startswith('from ansible.module_utils.'):
                 tokens=line.split(".")
@@ -101,7 +108,7 @@ class ModuleReplacer(object):
                     raise errors.AnsibleError("error importing module in %s, expecting format like 'from ansible.module_utils.basic import *'" % module_path)
                 snippet_name = tokens[2].split()[0]
                 snippet_names.append(snippet_name)
-                output.write("{% include '" + snippet_name + ".py' %}\n\n")
+                output.write(self.slurp(os.path.join(self.snippet_path, snippet_name + ".py")))
             else:
                 if self.strip_comments and line.startswith("#") or line == '':
                     pass
@@ -115,21 +122,6 @@ class ModuleReplacer(object):
 
     # ******************************************************************************
 
-    def _template_imports(self, module_data):
-
-        loader = jinja2.FileSystemLoader([self.snippet_path])
-        environment = jinja2.Environment(loader=loader) # trim_blocks=True) 
-        t = environment.from_string(module_data)
-        vars_input = {}
-        try:
-            return t.render(vars_input)
-        except jinja2.TemplateNotFound, tnf:
-            raise errors.AnsibleError("failure to find one of the imported module utilities, an ansible.module_utils import is likely referencing a module that does not exist. Original exception was: %s" % str(tnf))
-           
-              
-
-    # ******************************************************************************
-
     def modify_module(self, module_path, complex_args, module_args, inject):
 
         with open(module_path) as f:
@@ -138,7 +130,6 @@ class ModuleReplacer(object):
             module_data = f.read()
 
             (module_data, module_style) = self._find_snippet_imports(module_data, module_path)
-            module_data = self._template_imports(module_data)
 
             complex_args_json = utils.jsonify(complex_args)
             # We force conversion of module_args to str because module_common calls shlex.split,
