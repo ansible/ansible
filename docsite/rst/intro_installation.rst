@@ -186,7 +186,7 @@ Debian/Ubuntu packages can also be built from the source checkout, run:
 
 .. code-block:: bash
 
-    $ make debian
+    $ make deb
 
 You may also wish to run from source to get the latest, which is covered above.
 
