@@ -324,7 +324,7 @@ def _fix_ds(basedir, vars, original, depth=0):
         return dict([ (k, fix_ds(basedir, v, original, depth=depth+1)) for (k,v) in vars.iteritems() ])
     if isinstance(vars, (dict, tuple)):
         return [ fix_ds(basedir, x,original, depth=depth+1) for x in vars ]
-    if isinstance(vars, basestring) and "{{" in vars and not "|" in vars:
+    if isinstance(vars, basestring) and "{{" in vars and not "|" in vars and not "lookup(" in vars:
         return lightweight_var_template(basedir, vars, original)
     return vars
 
