@@ -300,10 +300,11 @@ def main():
     elb_man = ElbManager(module, instance_id, ec2_elbs, aws_access_key,
                          aws_secret_key, region=region)
 
-    for elb in ec2_elbs:
-        if not elb_man.exists(elb):
-            msg="ELB %s does not exist" % elb
-            module.fail_json(msg=msg)
+    if ec2_elbs is not None:
+        for elb in ec2_elbs:
+            if not elb_man.exists(elb):
+                msg="ELB %s does not exist" % elb
+                module.fail_json(msg=msg)
 
     if module.params['state'] == 'present':
         elb_man.register(wait, enable_availability_zone)
