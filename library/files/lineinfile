@@ -76,7 +76,6 @@ options:
         the expanded line parameter.
   insertafter:
     required: false
-    default: EOF
     description:
       - Used with C(state=present). If specified, the line will be inserted
         after the specified regular expression. A special value is
