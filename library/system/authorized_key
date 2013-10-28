@@ -65,12 +65,6 @@ options:
     required: false
     default: null
     version_added: "1.4"
-  unique:
-    description:
-      - Ensure that there is only one key matching the specified key in the file
-    required: false
-    default: false
-    version_added: "1.4"
 description:
     - "Adds or removes authorized keys for particular user accounts"
 author: Brad Olson
@@ -210,34 +204,41 @@ def parsekey(raw_key):
         'ssh-rsa',
     ]
 
-    key_parts = shlex.split(raw_key)
-    if len(key_parts) >= 4 and key_parts[1] in VALID_SSH2_KEY_TYPES:
-        # this line contains options
-        (options,type,key) = key_parts[0:3]
-        comment = " ".join(key_parts[3:])
-    elif len(key_parts) >= 3 and key_parts[0] in VALID_SSH2_KEY_TYPES:
-        # this line is just 'type key user@host'
-        (type,key) = key_parts[0:2]
-        comment = " ".join(key_parts[2:])
-        options = None
-    elif len(key_parts) == 2 and key_parts[0] in VALID_SSH2_KEY_TYPES:
-        # assuming just a type/key with no comment
-        (type,key) = key_parts
-        comment = ""
-        options = None
-    else:
-        # invalid key, maybe a comment?
-        return None
+    options    = None   # connection options
+    key        = None   # encrypted key string
+    key_type   = None   # type of ssh key
+    type_index = None   # index of keytype in key string|list
 
-    if options:
+    key_parts = shlex.split(raw_key)
+    for i in range(0, len(key_parts)):
+        if key_parts[i] in VALID_SSH2_KEY_TYPES:
+            type_index = i
+            key_type = key_parts[i]
+            break
+
+    # check for options
+    if type_index is None:
+        return None
+    elif type_index == 1:
         # parse the options and store them
-        options = parseoptions(options)
-    return (key, type, options, comment)
+        options = key_parts[0]
+
+    # parse the options (if any)
+    options = parseoptions(options)
+
+    # get key after the type index
+    key = key_parts[(type_index + 1)]
+
+    # set comment to everything after the key
+    if len(key_parts) > (type_index + 1):
+        comment = " ".join(key_parts[(type_index + 2):])
+
+    return (key, key_type, options, comment)
 
 def readkeys(filename):
 
     if not os.path.isfile(filename):
-        return []
+        return {}
 
     keys = {}
     f = open(filename)
@@ -268,7 +269,7 @@ def writekeys(module, filename, keys):
                         if options[option_key]:
                             option_strings.append("%s=\"%s\"" % (option_key, options[option_key]))
                         else:
-                            option_strings.append("%s " % option_key)
+                            option_strings.append("%s" % option_key)
 
                     option_str = ",".join(option_strings)
                     option_str += " "
@@ -292,7 +293,6 @@ def enforce_state(module, params):
     manage_dir  = params.get("manage_dir", True)
     state       = params.get("state", "present")
     key_options = params.get("key_options", None)
-    unique      = params.get("unique",False)
 
     key = key.split('\n')
 
@@ -329,10 +329,11 @@ def enforce_state(module, params):
 
         # handle idempotent state=present
         if state=="present":
-            if unique and len(non_matching_keys) > 0:
+            if len(non_matching_keys) > 0:
                 for non_matching_key in non_matching_keys:
-                    del existing_keys[non_matching_key[0]]
-                do_write = True
+                    if non_matching_key[0] in existing_keys:
+                        del existing_keys[non_matching_key[0]]
+                        do_write = True
 
             if not matched:
                 existing_keys[parsed_new_key[0]] = parsed_new_key
