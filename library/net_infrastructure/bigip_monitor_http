@@ -350,7 +350,7 @@ def main():
         if ip is None:              ip = '0.0.0.0'
         if port is None:            port = 0
         if send is None:            send = ''
-        if receive is None:         reveive = ''
+        if receive is None:         receive = ''
         if receive_disable is None: receive_disable = ''
 
     # define and set address type
