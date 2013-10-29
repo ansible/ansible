@@ -135,7 +135,7 @@ def _delete_server(module, nova):
             server = [x for x in server_list if x.name == module.params['name']]
             nova.servers.delete(server.pop())
     except Exception as e:
-        module.fail_json( msg = "Error in deleting vm: %s" % e.message)
+        module.fail_json( msg = "Error in deleting vm: %s" % unicode(e))
     if module.params['wait'] == 'no':
         module.exit_json(changed = True, result = "deleted")
     expire = time.time() + int(module.params['wait_for'])
@@ -161,14 +161,14 @@ def _create_server(module, nova):
         server = nova.servers.create(*bootargs, **bootkwargs)
         server = nova.servers.get(server.id)
     except Exception as e:
-            module.fail_json( msg = "Error in creating instance: %s " % e.message)
+            module.fail_json( msg = "Error in creating instance: %s " % unicode(e))
     if module.params['wait'] == 'yes':
         expire = time.time() + int(module.params['wait_for'])
         while time.time() < expire:
             try:
                 server = nova.servers.get(server.id)
             except Exception as e:
-                    module.fail_json( msg = "Error in getting info from instance: %s " % e.message)
+                    module.fail_json( msg = "Error in getting info from instance: %s " % unicode(e))
             if server.status == 'ACTIVE':
                 private = [ x['addr'] for x in getattr(server, 'addresses').itervalues().next() if 'OS-EXT-IPS:type' in x and x['OS-EXT-IPS:type'] == 'fixed']
                 public  = [ x['addr'] for x in getattr(server, 'addresses').itervalues().next() if 'OS-EXT-IPS:type' in x and x['OS-EXT-IPS:type'] == 'floating']
@@ -192,7 +192,7 @@ def _get_server_state(module, nova):
         if servers:
             server = [x for x in servers if x.name == module.params['name']]
     except Exception as e:
-        module.fail_json(msg = "Error in getting the server list: %s" % e.message)
+        module.fail_json(msg = "Error in getting the server list: %s" % unicode(e))
     if server and module.params['state'] == 'present':
         if server.status != 'ACTIVE':
             module.fail_json( msg="The VM is available but not Active. state:" + server.status)
@@ -235,7 +235,7 @@ def main():
                                            module.params['auth_url'], 
                                            service_type='compute')
     except Exception as e:
-        module.fail_json( msg = "Error in authenticating to nova: %s" % e.message)
+        module.fail_json( msg = "Error in authenticating to nova: %s" % unicode(e))
     if module.params['state'] == 'present':
         if not module.params['image_id']:
             module.fail_json( msg = "Parameter 'image_id' is required if state == 'present'")

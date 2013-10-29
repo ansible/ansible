@@ -468,7 +468,7 @@ def main():
         try:
             api_key = os.environ['LINODE_API_KEY']
         except KeyError, e:
-            module.fail_json(msg = 'Unable to load %s' % e.message)
+            module.fail_json(msg = 'Unable to load %s' % unicode(e))
 
     # setup the auth
     try:

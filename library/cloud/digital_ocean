@@ -304,7 +304,7 @@ def core(module):
         client_id = module.params['client_id'] or os.environ['DO_CLIENT_ID']
         api_key = module.params['api_key'] or os.environ['DO_API_KEY']
     except KeyError, e:
-        module.fail_json(msg='Unable to load %s' % e.message)
+        module.fail_json(msg='Unable to load %s' % unicode(e))
 
     changed = True
     command = module.params['command']

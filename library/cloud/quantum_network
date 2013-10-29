@@ -125,7 +125,7 @@ def _get_ksclient(module, kwargs):
                                  tenant_name=kwargs.get('login_tenant_name'),
                                  auth_url=kwargs.get('auth_url'))
     except Exception as e:   
-        module.fail_json(msg = "Error authenticating to the keystone: %s" %e.message)
+        module.fail_json(msg = "Error authenticating to the keystone: %s" %unicode(e))
     global _os_keystone 
     _os_keystone = kclient
     return kclient 
@@ -135,7 +135,7 @@ def _get_endpoint(module, ksclient):
     try:
         endpoint = ksclient.service_catalog.url_for(service_type='network', endpoint_type='publicURL')
     except Exception as e:
-        module.fail_json(msg = "Error getting endpoint for Quantum: %s " %e.message)
+        module.fail_json(msg = "Error getting endpoint for Quantum: %s " %unicode(e))
     return endpoint
 
 def _get_quantum_client(module, kwargs):
@@ -149,7 +149,7 @@ def _get_quantum_client(module, kwargs):
     try:
         quantum = client.Client('2.0', **kwargs)
     except Exception as e:
-        module.fail_json(msg = " Error in connecting to quantum: %s " %e.message)
+        module.fail_json(msg = " Error in connecting to quantum: %s " %unicode(e))
     return quantum
 
 def _set_tenant_id(module):
@@ -175,7 +175,7 @@ def _get_net_id(quantum, module):
     try:
         networks = quantum.list_networks(**kwargs)
     except Exception as e:
-        module.fail_json(msg = "Error in listing quantum networks: %s" % e.message)
+        module.fail_json(msg = "Error in listing quantum networks: %s" % unicode(e))
     if not networks['networks']:        
         return None
     return networks['networks'][0]['id']
@@ -213,7 +213,7 @@ def _create_network(module, quantum):
     try:
         net = quantum.create_network({'network':network})
     except Exception as e:
-        module.fail_json(msg = "Error in creating network: %s" % e.message)
+        module.fail_json(msg = "Error in creating network: %s" % unicode(e))
     return net['network']['id']
                 
 def _delete_network(module, net_id, quantum):
@@ -221,7 +221,7 @@ def _delete_network(module, net_id, quantum):
     try:
         id = quantum.delete_network(net_id)
     except Exception as e: 
-        module.fail_json(msg = "Error in deleting the network: %s" % e.message)
+        module.fail_json(msg = "Error in deleting the network: %s" % unicode(e))
     return True
 
 def main():

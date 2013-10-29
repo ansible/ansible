@@ -86,7 +86,7 @@ def _get_ksclient(module, kwargs):
                                  tenant_name=kwargs.get('login_tenant_name'),
                                  auth_url=kwargs.get('auth_url'))
     except Exception as e:   
-        module.fail_json(msg = "Error authenticating to the keystone: %s " % e.message)
+        module.fail_json(msg = "Error authenticating to the keystone: %s " % unicode(e))
     global _os_keystone 
     _os_keystone = kclient
     return kclient 
@@ -96,7 +96,7 @@ def _get_endpoint(module, ksclient):
     try:
         endpoint = ksclient.service_catalog.url_for(service_type='network', endpoint_type='publicURL')
     except Exception as e:
-        module.fail_json(msg = "Error getting endpoint for glance: %s" % e.message)
+        module.fail_json(msg = "Error getting endpoint for glance: %s" % unicode(e))
     return endpoint
 
 def _get_quantum_client(module, kwargs):
@@ -110,7 +110,7 @@ def _get_quantum_client(module, kwargs):
     try:
         quantum = client.Client('2.0', **kwargs)
     except Exception as e:
-        module.fail_json(msg = "Error in connecting to quantum: %s " % e.message)
+        module.fail_json(msg = "Error in connecting to quantum: %s " % unicode(e))
     return quantum
 
 def _get_router_id(module, quantum):
@@ -120,7 +120,7 @@ def _get_router_id(module, quantum):
     try:
         routers = quantum.list_routers(**kwargs)
     except Exception as e:
-        module.fail_json(msg = "Error in getting the router list: %s " % e.message)
+        module.fail_json(msg = "Error in getting the router list: %s " % unicode(e))
     if not routers['routers']:
             return None
     return routers['routers'][0]['id']
@@ -133,7 +133,7 @@ def _get_net_id(quantum, module):
     try:
         networks = quantum.list_networks(**kwargs)
     except Exception as e:
-        module.fail_json("Error in listing quantum networks: %s" % e.message)
+        module.fail_json("Error in listing quantum networks: %s" % unicode(e))
     if not networks['networks']:
         return None
     return networks['networks'][0]['id']
@@ -146,7 +146,7 @@ def _get_port_id(quantum, module, router_id, network_id):
     try:
         ports = quantum.list_ports(**kwargs)
     except Exception as e:
-        module.fail_json( msg = "Error in listing ports: %s" % e.message)
+        module.fail_json( msg = "Error in listing ports: %s" % unicode(e))
     if not ports['ports']:
         return None
     return ports['ports'][0]['id']
@@ -158,14 +158,14 @@ def _add_gateway_router(quantum, module, router_id, network_id):
     try:
         quantum.add_gateway_router(router_id, kwargs)
     except Exception as e:
-        module.fail_json(msg = "Error in adding gateway to router: %s" % e.message)
+        module.fail_json(msg = "Error in adding gateway to router: %s" % unicode(e))
     return True
                 
 def  _remove_gateway_router(quantum, module, router_id):
     try:
         quantum.remove_gateway_router(router_id)
     except Exception as e:
-        module.fail_json(msg = "Error in removing gateway to router: %s" % e.message)
+        module.fail_json(msg = "Error in removing gateway to router: %s" % unicode(e))
     return True
         
 def main():

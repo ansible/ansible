@@ -109,7 +109,7 @@ try:
     creds_file = os.environ['RAX_CREDS_FILE']
     region = os.environ['RAX_REGION']
 except KeyError, e:
-    sys.stderr.write('Unable to load %s\n' % e.message)
+    sys.stderr.write('Unable to load %s\n' % unicode(e))
     sys.exit(1)
 
 pyrax.set_setting('identity_type', 'rackspace')
@@ -119,7 +119,7 @@ try:
     pyrax.set_credential_file(os.path.expanduser(creds_file),
                               region=region)
 except Exception, e:
-    sys.stderr.write("%s: %s\n" % (e, e.message))
+    sys.stderr.write("%s: %s\n" % (e, unicode(e)))
     sys.exit(1)
 
 # Execute the right stuff
