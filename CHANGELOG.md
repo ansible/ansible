@@ -15,6 +15,15 @@ Misc changes:
 
 * TBA
 
+1.3.4 "Top of the World" (reprise) - October 29, 2013
+
+Fixed a bug in the copy module, where a filename containing the string "raw" was handled incorrectly
+Fixed a bug in accelerate mode, where copying a zero-length file out would fail
+
+1.3.3 "Top of the World" (reprise) - October 9, 2013
+
+Additional fixes for accelerate mode.
+
 1.3.2 "Top of the World" (reprise) - September 19th, 2013
 
 * Multiple accelerate mode fixes:
