@@ -174,7 +174,9 @@ class ActionModule(object):
             module_args = "%s src=%s" % (module_args, pipes.quote(tmp_src))
             if self.runner.noop_on_check(inject):
                 module_args = "%s CHECKMODE=True" % module_args
-            return self.runner._execute_module(conn, tmp, 'file', module_args, inject=inject, complex_args=complex_args)
+            results = self.runner._execute_module(conn, tmp, 'file', module_args, inject=inject, complex_args=complex_args)
+            results = self._result_key_merge(options, results)
+            return results
 
     def _get_diff_data(self, conn, tmp, inject, destination, source):
         peek_result = self.runner._execute_module(conn, tmp, 'file', "path=%s diff_peek=1" % destination, inject=inject, persist_files=True)
@@ -213,3 +215,10 @@ class ActionModule(object):
             diff['after'] = src.read()
 
         return diff
+    
+    def _result_key_merge(self, options, results):
+        # add keys to file module results to mimic copy
+        if 'path' in results.result and 'dest' not in results.result:
+            results.result['dest'] = results.result['path']
+            del results.result['path']
+        return results
