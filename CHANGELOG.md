@@ -63,6 +63,11 @@ Misc changes:
 * name of executable can be passed to pip/gem etc, for installing under *different* interpreters
 * copy of ./hacking/env-setup added for fish users, ./hacking/env-setup.fish
 
+1.3.4 "Top of the World" (reprise) - October 29, 2013
+
+Fixed a bug in the copy module, where a filename containing the string "raw" was handled incorrectly
+Fixed a bug in accelerate mode, where copying a zero-length file out would fail
+
 1.3.3 "Top of the World" (reprise) - October 9, 2013
 
 Additional fixes for accelerate mode.
