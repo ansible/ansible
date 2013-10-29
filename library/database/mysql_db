@@ -129,13 +129,13 @@ def db_dump(module, host, user, password, db_name, target, socket=None):
     return rc, stdout, stderr
 
 def db_import(module, host, user, password, db_name, target, socket=None):
-    cmd = module.get_bin_path('mysqldump', True)
+    cmd = module.get_bin_path('mysql', True)
     cmd += " --user=%s --password=%s" %(user, password)
     if socket is not None:
         cmd += " --socket=%s" % socket
     else:
         cmd += " --host=%s" % host
-    cmd += " %s" % db_name
+    cmd += " -D %s" % db_name
     cmd += " < %s" % target
     rc, stdout, stderr = module.run_command(cmd)
     return rc, stdout, stderr
