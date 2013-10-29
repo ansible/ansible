@@ -290,7 +290,7 @@ def main():
                 # Ok, we will reconstruct the option string
                 extra_args = ' '.join(args_list)
 
-        if name.startswith(('.','/')):
+        if name.startswith('.') or name.startswith('/'):
             is_local_path = True
         # for tarball or vcs source, applying --use-mirrors doesn't really make sense
         is_package = is_vcs or is_tar or is_local_path       # just a shortcut for bool
