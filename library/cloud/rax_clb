@@ -250,7 +250,7 @@ def main():
         else:
             module.fail_json(msg='Credentials not set')
     except pyrax.exc.PyraxException, e:
-        module.fail_json(msg='%s' % e.message)
+        module.fail_json(msg='%s' % unicode(e))
 
     if not pyrax.cloud_loadbalancers:
         module.fail_json(msg='Failed to instantiate load balancer client '
@@ -259,7 +259,7 @@ def main():
     try:
         lb = pyrax.cloud_loadbalancers.get(load_balancer_id)
     except pyrax.exc.PyraxException, e:
-        module.fail_json(msg='%s' % e.message)
+        module.fail_json(msg='%s' % unicode(e))
 
     if node_id:
         node = _get_node(lb, node_id)
@@ -284,7 +284,7 @@ def main():
         except pyrax.exc.NotFound:
             module.exit_json(changed=False, state=state)
         except pyrax.exc.PyraxException, e:
-            module.fail_json(msg='%s' % e.message)
+            module.fail_json(msg='%s' % unicode(e))
     else:  # present
         if not node:
             if node_id:  # Updating a non-existent node
@@ -301,7 +301,7 @@ def main():
                     resp, body = lb.add_nodes([node])
                     result.update(body['nodes'][0])
                 except pyrax.exc.PyraxException, e:
-                    module.fail_json(msg='%s' % e.message)
+                    module.fail_json(msg='%s' % unicode(e))
         else:  # Updating an existing node
             immutable = {
                 'address': address,
@@ -332,7 +332,7 @@ def main():
                 lb.update_node(node, diff=mutable)
                 result.update(mutable)
             except pyrax.exc.PyraxException, e:
-                module.fail_json(msg='%s' % e.message)
+                module.fail_json(msg='%s' % unicode(e))
 
     if wait:
         pyrax.utils.wait_until(lb, "status", "ACTIVE", interval=1,

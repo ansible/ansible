@@ -591,12 +591,12 @@ def main():
 
     except Error, e:
         conn.rollback()
-        module.fail_json(msg=e.message)
+        module.fail_json(msg=unicode(e))
 
     except psycopg2.Error, e:
         conn.rollback()
         # psycopg2 errors come in connection encoding, reencode
-        msg = e.message.decode(conn.encoding).encode(errors='replace')
+        msg = unicode(e).decode(conn.encoding).encode(errors='replace')
         module.fail_json(msg=msg)
 
     if module.check_mode:

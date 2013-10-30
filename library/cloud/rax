@@ -179,7 +179,7 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                                                              disk_config=disk_config)]
                 changed = True
             except Exception, e:
-                module.fail_json(msg = '%s' % e.message)
+                module.fail_json(msg = '%s' % unicode(e))
 
         for server in servers:
             # If requested, wait for server activation
@@ -212,7 +212,7 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                     try:
                         server.delete()
                     except Exception, e:
-                        module.fail_json(msg = e.message)
+                        module.fail_json(msg = unicode(e))
 
                     instance = {'id': server.id,
                                 'accessIPv4': server.accessIPv4,
@@ -285,7 +285,7 @@ def main():
         region = region or os.environ.get('RAX_REGION')
 
     except KeyError, e:
-        module.fail_json(msg = 'Unable to load %s' % e.message)
+        module.fail_json(msg = 'Unable to load %s' % unicode(e))
 
     # setup the auth
     try:
@@ -298,7 +298,7 @@ def main():
         else:
             raise Exception('No credentials supplied!')
     except Exception, e:
-        module.fail_json(msg = '%s' % e.message)
+        module.fail_json(msg = '%s' % unicode(e))
 
     # Act based on service
     if service == 'cloudservers':

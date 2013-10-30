@@ -183,7 +183,7 @@ def find_address(ec2, public_ip, module):
     try:
         addresses = ec2.get_all_addresses([public_ip])
     except boto.exception.EC2ResponseError, e:
-        module.fail_json(msg=str(e.message))
+        module.fail_json(msg=unicode(e))
         
     return addresses[0]
 

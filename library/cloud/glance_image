@@ -133,7 +133,7 @@ def _get_ksclient(module, kwargs):
                                  tenant_name=kwargs.get('login_tenant_name'),
                                  auth_url=kwargs.get('auth_url'))
     except Exception as e:   
-        module.fail_json(msg = "Error authenticating to the keystone: %s " % e.message)
+        module.fail_json(msg = "Error authenticating to the keystone: %s " % unicode(e))
     return client 
  
 
@@ -141,7 +141,7 @@ def _get_endpoint(module, client):
     try:
         endpoint = client.service_catalog.url_for(service_type='image', endpoint_type='publicURL')
     except Exception as e:
-        module.fail_json(msg = "Error getting endpoint for glance: %s" % e.message)
+        module.fail_json(msg = "Error getting endpoint for glance: %s" % unicode(e))
     return endpoint
 
 def _get_glance_client(module, kwargs):
@@ -154,7 +154,7 @@ def _get_glance_client(module, kwargs):
     try:
         client = glanceclient.Client('1', endpoint, **kwargs)
     except Exception as e:
-        module.fail_json(msg = "Error in connecting to glance: %s" %e.message)
+        module.fail_json(msg = "Error in connecting to glance: %s" %unicode(e))
     return client
 
 def _glance_image_present(module, params, client):
@@ -164,7 +164,7 @@ def _glance_image_present(module, params, client):
                 return image.id 
         return None 
     except Exception as e:
-        module.fail_json(msg = "Error in fetching image list: %s" %e.message)
+        module.fail_json(msg = "Error in fetching image list: %s" %unicode(e))
 
 def _glance_image_create(module, params, client):
     kwargs = {
@@ -187,7 +187,7 @@ def _glance_image_create(module, params, client):
                 break
             time.sleep(5)
     except Exception as e:              
-        module.fail_json(msg = "Error in creating image: %s" %e.message)                
+        module.fail_json(msg = "Error in creating image: %s" %unicode(e))                
     if image.status == 'active':
         module.exit_json(changed = True, result = image.status, id=image.id)
     else:
@@ -199,7 +199,7 @@ def _glance_delete_image(module, params, client):
             if image.name == params['name']:
                 client.images.delete(image)
     except Exception as e:
-        module.fail_json(msg = "Error in deleting image: %s" %e.message)
+        module.fail_json(msg = "Error in deleting image: %s" %unicode(e))
     module.exit_json(changed = True, result = "Deleted")
         
 def main():

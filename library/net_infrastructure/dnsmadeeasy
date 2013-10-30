@@ -178,7 +178,7 @@ class DME2:
                 msg="%s returned %s, with body: %s" % (url, e.code, e.read()))
         except Exception, e:
             self.module.fail_json(
-                msg="Failed contacting: %s : Exception %s" % (url, e.message()))
+                msg="Failed contacting: %s : Exception %s" % (url, unicode(e)))
 
         try:
             return json.load(response)

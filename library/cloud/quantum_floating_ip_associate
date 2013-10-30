@@ -92,7 +92,7 @@ def _get_ksclient(module, kwargs):
                                  tenant_name=kwargs.get('login_tenant_name'),
                                  auth_url=kwargs.get('auth_url'))
     except Exception as e:
-        module.fail_json(msg = "Error authenticating to the keystone: %s " % e.message)
+        module.fail_json(msg = "Error authenticating to the keystone: %s " % unicode(e))
     global _os_keystone
     _os_keystone = kclient
     return kclient
@@ -102,7 +102,7 @@ def _get_endpoint(module, ksclient):
     try:
         endpoint = ksclient.service_catalog.url_for(service_type='network', endpoint_type='publicURL')
     except Exception as e:
-        module.fail_json(msg = "Error getting endpoint for glance: %s" % e.message)
+        module.fail_json(msg = "Error getting endpoint for glance: %s" % unicode(e))
     return endpoint
 
 def _get_quantum_client(module, kwargs):
@@ -116,7 +116,7 @@ def _get_quantum_client(module, kwargs):
     try:
         quantum = client.Client('2.0', **kwargs)
     except Exception as e:
-        module.fail_json(msg = "Error in connecting to quantum: %s " % e.message)
+        module.fail_json(msg = "Error in connecting to quantum: %s " % unicode(e))
     return quantum       
 
 def _get_server_state(module, nova):
@@ -132,7 +132,7 @@ def _get_server_state(module, nova):
                     server_info = info
                     break
     except Exception as e:
-            module.fail_json(msg = "Error in getting the server list: %s" % e.message)
+            module.fail_json(msg = "Error in getting the server list: %s" % unicode(e))
     return server_info, server          
                                  
 def _get_port_id(quantum, module, instance_id):
@@ -140,7 +140,7 @@ def _get_port_id(quantum, module, instance_id):
     try:
         ports = quantum.list_ports(**kwargs)
     except Exception as e:
-        module.fail_json( msg = "Error in listing ports: %s" % e.message)
+        module.fail_json( msg = "Error in listing ports: %s" % unicode(e))
     if not ports['ports']:
         return None
     return ports['ports'][0]['id']
@@ -152,7 +152,7 @@ def _get_floating_ip_id(module, quantum):
     try:
         ips = quantum.list_floatingips(**kwargs)
     except Exception as e:
-        module.fail_json(msg = "error in fetching the floatingips's %s" % e.message)
+        module.fail_json(msg = "error in fetching the floatingips's %s" % unicode(e))
     if not ips['floatingips']:
         module.fail_json(msg = "Could find the ip specified in parameter, Please check")
     ip = ips['floatingips'][0]['id']
@@ -169,7 +169,7 @@ def _update_floating_ip(quantum, module, port_id, floating_ip_id):
     try:
         result = quantum.update_floatingip(floating_ip_id, {'floatingip': kwargs})
     except Exception as e:
-        module.fail_json(msg = "There was an error in updating the floating ip address: %s" % e.message)
+        module.fail_json(msg = "There was an error in updating the floating ip address: %s" % unicode(e))
     module.exit_json(changed = True, result = result, public_ip=module.params['ip_address'])
 
 def main():
@@ -190,7 +190,7 @@ def main():
     try:
         nova = nova_client.Client(module.params['login_username'], module.params['login_password'],                                                                          module.params['login_tenant_name'], module.params['auth_url'], service_type='compute')
     except Exception as e:
-        module.fail_json( msg = " Error in authenticating to nova: %s" % e.message)
+        module.fail_json( msg = " Error in authenticating to nova: %s" % unicode(e))
     quantum = _get_quantum_client(module, module.params)
     state, floating_ip_id = _get_floating_ip_id(module, quantum)        
     if module.params['state'] == 'present':

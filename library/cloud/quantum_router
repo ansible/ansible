@@ -96,7 +96,7 @@ def _get_ksclient(module, kwargs):
                                  tenant_name=kwargs.get('login_tenant_name'),
                                  auth_url=kwargs.get('auth_url'))
     except Exception as e:   
-        module.fail_json(msg = "Error authenticating to the keystone: %s " % e.message)
+        module.fail_json(msg = "Error authenticating to the keystone: %s " % unicode(e))
     global _os_keystone 
     _os_keystone = kclient
     return kclient 
@@ -106,7 +106,7 @@ def _get_endpoint(module, ksclient):
     try:
         endpoint = ksclient.service_catalog.url_for(service_type='network', endpoint_type='publicURL')
     except Exception as e:
-        module.fail_json(msg = "Error getting endpoint for glance: %s" % e.message)
+        module.fail_json(msg = "Error getting endpoint for glance: %s" % unicode(e))
     return endpoint
 
 def _get_quantum_client(module, kwargs):
@@ -120,7 +120,7 @@ def _get_quantum_client(module, kwargs):
     try:
         quantum = client.Client('2.0', **kwargs)
     except Exception as e:
-        module.fail_json(msg = "Error in connecting to quantum: %s " % e.message)
+        module.fail_json(msg = "Error in connecting to quantum: %s " % unicode(e))
     return quantum
 
 def _set_tenant_id(module):
@@ -146,7 +146,7 @@ def _get_router_id(module, quantum):
     try:
         routers = quantum.list_routers(**kwargs)
     except Exception as e:
-        module.fail_json(msg = "Error in getting the router list: %s " % e.message)
+        module.fail_json(msg = "Error in getting the router list: %s " % unicode(e))
     if not routers['routers']:
         return None
     return routers['routers'][0]['id']
@@ -160,7 +160,7 @@ def _create_router(module, quantum):
     try:
         new_router = quantum.create_router(dict(router=router))
     except Exception as e:
-        module.fail_json( msg = "Error in creating router: %s" % e.message)
+        module.fail_json( msg = "Error in creating router: %s" % unicode(e))
     return new_router['router']['id']
 
 def _delete_router(module, quantum, router_id):
