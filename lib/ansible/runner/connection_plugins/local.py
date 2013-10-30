@@ -49,7 +49,7 @@ class Connection(object):
             else:
                 local_cmd = cmd
         else:
-            local_cmd, prompt = utils.make_sudo_cmd(sudo_user, executable, cmd)
+            local_cmd, prompt, success_key = utils.make_sudo_cmd(sudo_user, executable, cmd)
 
         vvv("EXEC %s" % (local_cmd), host=self.host)
         p = subprocess.Popen(local_cmd, shell=isinstance(local_cmd, basestring),
@@ -63,7 +63,7 @@ class Connection(object):
             fcntl.fcntl(p.stderr, fcntl.F_SETFL,
                         fcntl.fcntl(p.stderr, fcntl.F_GETFL) | os.O_NONBLOCK)
             sudo_output = ''
-            while not sudo_output.endswith(prompt):
+            while not sudo_output.endswith(prompt) and success_key not in sudo_output:
                 rfd, wfd, efd = select.select([p.stdout, p.stderr], [],
                                               [p.stdout, p.stderr], self.runner.timeout)
                 if p.stdout in rfd:
@@ -77,7 +77,8 @@ class Connection(object):
                     stdout, stderr = p.communicate()
                     raise errors.AnsibleError('sudo output closed while waiting for password prompt:\n' + sudo_output)
                 sudo_output += chunk
-            p.stdin.write(self.runner.sudo_pass + '\n')
+            if success_key not in sudo_output:
+                p.stdin.write(self.runner.sudo_pass + '\n')
             fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
             fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) & ~os.O_NONBLOCK)
 
