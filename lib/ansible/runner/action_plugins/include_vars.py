@@ -29,31 +29,19 @@ class ActionModule(object):
         self.runner = runner
 
     def run(self, conn, tmp, module_name, module_args, inject, complex_args=None, **kwargs):
-        if not module_args and not 'first_available_file' in inject:
-            result = dict(failed=True, msg="No Source file Given.")
+
+        if not module_args:
+            result = dict(failed=True, msg="No source file given")
             return ReturnData(conn=conn, comm_ok=True, result=result)
-        if 'first_available_file' in inject:
-            found = False
-            for fn in self.runner.module_vars.get('first_available_file'):
-                fn_orig = fn
-                fnt = template.template(self.runner.basedir, fn, inject)
-                fnd = utils.path_dwim(self.runner.basedir, fnt)
-                if not os.path.exists(fnd) and '_original_file' in inject:
-                    fnd = utils.path_dwim_relative(inject['_original_file'], 'templates', fnt, self.runner.basedir, check=False)
-                if os.path.exists(fnd):
-                    source = fnd
-                    found = True
-                    break
-            if not found:
-                result = dict(failed=True, msg="could not find src in first_available_file list")
-                return ReturnData(conn=conn, comm_ok=False, result=result)
-        if not found:
-            source = module_args
+
+        source = module_args
         source = template.template(self.runner.basedir, source, inject)
+
         if '_original_file' in inject:
             source = utils.path_dwim_relative(inject['_original_file'], 'files', source, self.runner.basedir)
         else:
             source = utils.path_dwim(self.runner.basedir, source)
+
         if os.path.exists(source):
             data = utils.parse_yaml_from_file(source)
             if type(data) != dict:
