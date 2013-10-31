@@ -85,12 +85,8 @@ def _load_vars_from_path(path, results):
     # directory
     if stat.S_ISDIR(pathstat.st_mode):
 
-        # we ignore directories. however in the future it may be useful to
-        # allow variables to be contained in multiple files in the named
-        # directory, so that users can better organize large variables
-        # across multiple files.
-        raise errors.AnsibleError("Expected a variable file at path %s "
-            "but found a directory instead." % (path, ))
+        # support organizing variables across multiple files in a directory
+        return True, _load_vars_from_folder(path, results)
 
     # regular file
     elif stat.S_ISREG(pathstat.st_mode):
@@ -106,9 +102,33 @@ def _load_vars_from_path(path, results):
 
     # something else? could be a fifo, socket, device, etc.
     else:
-        raise errors.AnsibleError("Expected a variable file but found a "
-            "non-file object at path %s" % (path, ))
+        raise errors.AnsibleError("Expected a variable file or directory "
+            "but found a non-file object at path %s" % (path, ))
 
+def _load_vars_from_folder(folder_path, results):
+    """
+    Load all variables within a folder recursively.
+    """
+
+    # this function and _load_vars_from_path are mutually recursive
+
+    try:
+        names = os.listdir(folder_path)
+    except os.error, err:
+        raise errors.AnsibleError(
+            "This folder cannot be listed: %s: %s." 
+             % ( folder_path, err.strerror))
+        
+    # evaluate files in a stable order rather than whatever order the
+    # filesystem lists them.
+    names.sort() 
+
+    paths = [os.path.join(folder_path, name) for name in names]
+    for path in paths:
+        _found, results = _load_vars_from_path(path, results)
+    return results
+
+            
 class VarsModule(object):
 
     """
