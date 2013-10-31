@@ -92,11 +92,11 @@ except ImportError:
     pass
 
 try:
-  from systemd import journal
-  has_journal = True
+    from systemd import journal
+    has_journal = True
 except ImportError:
-  import syslog
-  has_journal = False
+    import syslog
+    has_journal = False
 
 FILE_COMMON_ARGUMENTS=dict(
     src = dict(),
@@ -561,8 +561,8 @@ class AnsibleModule(object):
     def _count_terms(self, check):
         count = 0
         for term in check:
-           if term in self.params:
-               count += 1
+            if term in self.params:
+                count += 1
         return count
 
     def _check_mutually_exclusive(self, spec):
@@ -706,16 +706,16 @@ class AnsibleModule(object):
                 self.fail_json(msg="argument %s is of invalid type: %s, required: %s" % (k, type(value), wanted))
 
     def _set_defaults(self, pre=True):
-         for (k,v) in self.argument_spec.iteritems():
-             default = v.get('default', None)
-             if pre == True:
-                 # this prevents setting defaults on required items
-                 if default is not None and k not in self.params:
-                     self.params[k] = default
-             else:
-                 # make sure things without a default still get set None
-                 if k not in self.params:
-                     self.params[k] = default
+        for (k,v) in self.argument_spec.iteritems():
+            default = v.get('default', None)
+            if pre == True:
+                # this prevents setting defaults on required items
+                if default is not None and k not in self.params:
+                    self.params[k] = default
+            else:
+                # make sure things without a default still get set None
+                if k not in self.params:
+                    self.params[k] = default
 
     def _load_params(self):
         ''' read the input and return a dictionary and the arguments string '''
@@ -825,7 +825,7 @@ class AnsibleModule(object):
     def exit_json(self, **kwargs):
         ''' return from the module, without error '''
         self.add_path_info(kwargs)
-        if not kwargs.has_key('changed'):
+        if not 'changed' in kwargs:
             kwargs['changed'] = False
         print self.jsonify(kwargs)
         sys.exit(0)
@@ -922,10 +922,10 @@ class AnsibleModule(object):
 
             try: # leaves tmp file behind when sudo and  not root
                 if os.getenv("SUDO_USER") and os.getuid() != 0:
-                   # cleanup will happen by 'rm' of tempdir
-                   shutil.copy(src, tmp_dest)
+                    # cleanup will happen by 'rm' of tempdir
+                    shutil.copy(src, tmp_dest)
                 else:
-                   shutil.move(src, tmp_dest)
+                    shutil.move(src, tmp_dest)
                 if self.selinux_enabled():
                     self.set_context_if_different(tmp_dest, context, False)
                 os.rename(tmp_dest, dest)
