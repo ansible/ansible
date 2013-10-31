@@ -463,7 +463,7 @@ class Runner(object):
                 for x in items:
                     inject['item'] = x
                     if not self.conditional or utils.check_conditional(self.conditional, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
-                        use_these_items.append(item)
+                        use_these_items.append(x)
                 inject['item'] = ",".join(use_these_items)
                 items = None
 
