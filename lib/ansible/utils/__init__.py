@@ -917,11 +917,17 @@ def safe_eval(str, locals=None, include_exceptions=False, template_call=False):
     # do not allow method calls to modules
     if not isinstance(str, basestring):
         # already templated to a datastructure, perhaps?
+        if include_exceptions:
+            return (str, None)
         return str
     if re.search(r'\w\.\w+\(', str):
+        if include_exceptions:
+            return (str, None)
         return str
     # do not allow imports
     if re.search(r'import \w+', str):
+        if include_exceptions:
+            return (str, None)
         return str
     try:
         result = None
