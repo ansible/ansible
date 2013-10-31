@@ -431,8 +431,8 @@ class Inventory(object):
         dname = os.path.dirname(self.host_list)
         if dname is None or dname == '' or dname == '.':
             cwd = os.getcwd()
-            return cwd 
-        return dname
+            return os.path.abspath(cwd) 
+        return os.path.abspath(dname)
 
     def src(self):
         """ if inventory came from a file, what's the directory and file name? """
