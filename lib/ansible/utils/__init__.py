@@ -899,7 +899,7 @@ def is_list_of_strings(items):
             return False
     return True
 
-def safe_eval(str, locals=None, include_exceptions=False, template_call=False):
+def safe_eval(str, locals=None, include_exceptions=False):
     '''
     this is intended for allowing things like:
     with_items: a_list_variable
@@ -908,10 +908,6 @@ def safe_eval(str, locals=None, include_exceptions=False, template_call=False):
     the env is constrained)
     '''
     # FIXME: is there a more native way to do this?
-
-    if template_call:
-        # for the debug module in Ansible, allow debug of the form foo.bar.baz versus Python dictionary form
-        str = template.template(None, "{{ %s }}" % str, locals)
 
     def is_set(var):
         return not var.startswith("$") and not '{{' in var

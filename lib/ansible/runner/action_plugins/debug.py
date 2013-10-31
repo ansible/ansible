@@ -49,9 +49,11 @@ class ActionModule(object):
             else:
                 result = dict(msg=args['msg'])
         elif 'var' in args:
-            results = utils.safe_eval(args['var'], inject, include_exceptions=True, template_call=True)
+
+            results = utils.safe_eval(args['var'], inject, include_exceptions=True)
             intermediate = results[0]
             exception = results[1]
+            print exception
             if exception is not None:
                 intermediate = "failed to evaluate: %s" % str(exception)
             result[args['var']] = intermediate
