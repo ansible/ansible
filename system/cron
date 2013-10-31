@@ -341,12 +341,6 @@ class CronTab(object):
             result += '\n'
         return result
 
-    def _read_file_execute(self):
-        """
-        Returns the command line for reading a crontab
-        """
-        return "%s -l %s" % (CRONCMD, self._user_execute())
-
     def _read_user_execute(self):
         """
         Returns the command line for reading a crontab
