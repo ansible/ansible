@@ -476,7 +476,7 @@ def create_instances(module, ec2):
 
         if instance_tags:
             try:
-                ec2.create_tags(instids, module.from_json(instance_tags))
+                ec2.create_tags(instids, instance_tags)
             except boto.exception.EC2ResponseError as e:
                 module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
 
@@ -577,7 +577,7 @@ def main():
             aws_access_key = dict(aliases=['ec2_access_key', 'access_key']),
             placement_group = dict(),
             user_data = dict(),
-            instance_tags = dict(),
+            instance_tags = dict(type='dict'),
             vpc_subnet_id = dict(),
             private_ip = dict(),
             instance_profile_name = dict(),
