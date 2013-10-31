@@ -197,7 +197,7 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
 
     def recv_data(self):
         header_len = 8 # size of a packed unsigned long long
-        data = b""
+        data = ""
         vvvv("in recv_data(), waiting for the header")
         while len(data) < header_len:
             d = self.request.recv(header_len - len(data))
