@@ -144,7 +144,7 @@ def return_data(text, options, outputname, module):
 
 def boilerplate():
     if not os.path.exists(EXAMPLE_YAML):
-        print >>sys.stderr, "Missing example boiler plate: %S" % EXAMPLE_YAML
+        print >>sys.stderr, "Missing example boiler plate: %s" % EXAMPLE_YAML
     print "DOCUMENTATION = '''"
     print file(EXAMPLE_YAML).read()
     print "'''"
