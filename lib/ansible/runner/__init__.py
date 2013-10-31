@@ -459,7 +459,12 @@ class Runner(object):
 
             if len(items) and utils.is_list_of_strings(items) and self.module_name in [ 'apt', 'yum', 'pkgng' ]:
                 # hack for apt, yum, and pkgng so that with_items maps back into a single module call
-                inject['item'] = ",".join(items)
+                use_these_items = []
+                for x in items:
+                    inject['item'] = x
+                    if not self.conditional or utils.check_conditional(self.conditional, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
+                        use_these_items.append(item)
+                inject['item'] = ",".join(use_these_items)
                 items = None
 
         # logic to replace complex args if possible
