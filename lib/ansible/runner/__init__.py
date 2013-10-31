@@ -44,6 +44,9 @@ import poller
 import connection
 from return_data import ReturnData
 from ansible.callbacks import DefaultRunnerCallbacks, vv
+from ansible.module_common import ModuleReplacer
+
+module_replacer = ModuleReplacer(strip_comments=False)
 
 HAS_ATFORK=True
 try:
@@ -841,11 +844,6 @@ class Runner(object):
     def _copy_module(self, conn, tmp, module_name, module_args, inject, complex_args=None):
         ''' transfer a module over SFTP, does not run it '''
 
-        # FIXME if complex args is none, set to {}
-
-        if module_name.startswith("/"):
-            raise errors.AnsibleFileNotFound("%s is not a module" % module_name)
-
         # Search module path(s) for named module.
         in_path = utils.plugins.module_finder.find_plugin(module_name)
         if in_path is None:
@@ -853,45 +851,10 @@ class Runner(object):
 
         out_path = os.path.join(tmp, module_name)
 
-        module_data = ""
-        module_style = 'old'
-
-        with open(in_path) as f:
-            module_data = f.read()
-            if module_common.REPLACER in module_data:
-                module_style = 'new'
-            if 'WANT_JSON' in module_data:
-                module_style = 'non_native_want_json'
-
-            complex_args_json = utils.jsonify(complex_args)
-            # We force conversion of module_args to str because module_common calls shlex.split,
-            # a standard library function that incorrectly handles Unicode input before Python 2.7.3.
-            encoded_args = repr(module_args.encode('utf-8'))
-            encoded_lang = repr(C.DEFAULT_MODULE_LANG)
-            encoded_complex = repr(complex_args_json)
-
-            module_data = module_data.replace(module_common.REPLACER, module_common.MODULE_COMMON)
-            module_data = module_data.replace(module_common.REPLACER_ARGS, encoded_args)
-            module_data = module_data.replace(module_common.REPLACER_LANG, encoded_lang)
-            module_data = module_data.replace(module_common.REPLACER_COMPLEX, encoded_complex)
-
-            if module_style == 'new':
-                facility = C.DEFAULT_SYSLOG_FACILITY
-                if 'ansible_syslog_facility' in inject:
-                    facility = inject['ansible_syslog_facility']
-                module_data = module_data.replace('syslog.LOG_USER', "syslog.%s" % facility)
-
-        lines = module_data.split("\n")
-        shebang = None
-        if lines[0].startswith("#!"):
-            shebang = lines[0].strip()
-            args = shlex.split(str(shebang[2:]))
-            interpreter = args[0]
-            interpreter_config = 'ansible_%s_interpreter' % os.path.basename(interpreter)
-
-            if interpreter_config in inject:
-                lines[0] = shebang = "#!%s %s" % (inject[interpreter_config], " ".join(args[1:]))
-                module_data = "\n".join(lines)
+        # insert shared code and arguments into the module
+        (module_data, module_style, shebang) = module_replacer.modify_module(
+            in_path, complex_args, module_args, inject
+        )
 
         self._transfer_str(conn, tmp, module_name, module_data)
 
