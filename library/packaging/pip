@@ -247,7 +247,7 @@ def main():
             if module.params['virtualenv_site_packages']:
                 cmd = '%s --system-site-packages %s' % (virtualenv, env)
             else:
-                cmd = '%s %s' % (virtualenv, env)
+                cmd = '%s --no-site-packages %s' % (virtualenv, env)
             os.chdir(tempfile.gettempdir())
             if chdir:
                 os.chdir(chdir)
