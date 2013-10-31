@@ -68,6 +68,7 @@ import ConfigParser
 import os
 import warnings
 
+
 try:
     import MySQLdb
 except ImportError:
@@ -77,9 +78,10 @@ else:
 
 
 def getvariable(cursor, mysqlvar):
-    cursor.execute("SHOW VARIABLES LIKE '" + mysqlvar + "'")
+    cursor.execute("SHOW VARIABLES LIKE %s", (mysqlvar,))
     mysqlvar_val = cursor.fetchall()
     return mysqlvar_val
+
 
 def setvariable(cursor, mysqlvar, value):
     try:
