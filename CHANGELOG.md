@@ -65,8 +65,8 @@ Misc changes:
 
 1.3.4 "Top of the World" (reprise) - October 29, 2013
 
-Fixed a bug in the copy module, where a filename containing the string "raw" was handled incorrectly
-Fixed a bug in accelerate mode, where copying a zero-length file out would fail
+* Fixed a bug in the copy module, where a filename containing the string "raw" was handled incorrectly
+* Fixed a bug in accelerate mode, where copying a zero-length file out would fail
 
 1.3.3 "Top of the World" (reprise) - October 9, 2013
 
@@ -75,14 +75,15 @@ Additional fixes for accelerate mode.
 1.3.2 "Top of the World" (reprise) - September 19th, 2013
 
 Multiple accelerate mode fixes:
-Make packet reception less greedy, so multiple frames of data are not consumed by one call.
-Adding two timeout values (one for connection and one for data reception timeout).
-Added keepalive packets, so async mode is no longer required for long-running tasks.
-Modified accelerate daemon to use the verbose logging level of the ansible command that started it.
-Fixed bug where accelerate would not work in check-mode.
-Added a -vvvv level, which will show SSH client debugging information in the event of a failure.
-Fixed bug in apt_repository module where the repository cache was not being updated.
-Fixed bug where "too many open files" errors would be encountered due to pseudo TTY's not being closed properly.
+
+* Make packet reception less greedy, so multiple frames of data are not consumed by one call.
+* Adding two timeout values (one for connection and one for data reception timeout).
+* Added keepalive packets, so async mode is no longer required for long-running tasks.
+* Modified accelerate daemon to use the verbose logging level of the ansible command that started it.
+* Fixed bug where accelerate would not work in check-mode.
+* Added a -vvvv level, which will show SSH client debugging information in the event of a failure.
+* Fixed bug in apt_repository module where the repository cache was not being updated.
+* Fixed bug where "too many open files" errors would be encountered due to pseudo TTY's not being closed properly.
 
 1.3.1 "Top of the World" (reprise) - September 16th, 2013
 
