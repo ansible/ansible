@@ -137,6 +137,8 @@ def main():
         shutil.copy(path, dest)
         changed = True
 
+    os.remove(path)
+
     file_args = module.load_file_common_arguments(module.params)
     changed = module.set_file_attributes_if_different(file_args, changed)
     # Mission complete
