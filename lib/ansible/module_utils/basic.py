@@ -616,6 +616,39 @@ class AnsibleModule(object):
             else:
                 self.fail_json(msg="internal error: do not know how to interpret argument_spec")
 
+    def safe_eval(self, str, locals=None, include_exceptions=False):
+
+        # do not allow method calls to modules
+        if not isinstance(str, basestring):
+            # already templated to a datastructure, perhaps?
+            if include_exceptions:
+                return (str, None)
+            return str
+        if re.search(r'\w\.\w+\(', str):
+            if include_exceptions:
+                return (str, None)
+            return str
+        # do not allow imports
+        if re.search(r'import \w+', str):
+            if include_exceptions:
+                return (str, None)
+            return str
+        try:
+            result = None
+            if not locals:
+                result = eval(str)
+            else:
+                result = eval(str, None, locals)
+            if include_exceptions:
+                return (result, None)
+            else:
+                return result
+        except Exception, e:
+            if include_exceptions:
+                return (str, e)
+            return str
+
+
     def _check_argument_types(self):
         ''' ensure all arguments have the requested type '''
         for (k, v) in self.argument_spec.iteritems():
@@ -640,7 +673,18 @@ class AnsibleModule(object):
             elif wanted == 'dict':
                 if not isinstance(value, dict):
                     if isinstance(value, basestring):
-                        self.params[k] = dict([x.split("=", 1) for x in value.split(",")])
+                        if value.startswith("{"):
+                            try:
+                                self.params[k] = json.loads(value)
+                            except:
+                                (result, exc) = self.safe_eval(value, dict(), include_exceptions=True)
+                                if exc is not None:
+                                    self.fail_json(msg="unable to evaluate dictionary for %s" % k)
+                                self.params[k] = result
+                        elif '=' in value:
+                            self.params[k] = dict([x.split("=", 1) for x in value.split(",")])
+                        else:
+                            self.fail_json(msg="dictionary requested, could not parse JSON or key=value")
                     else:
                         is_invalid = True
             elif wanted == 'bool':
@@ -682,7 +726,7 @@ class AnsibleModule(object):
             try:
                 (k, v) = x.split("=",1)
             except Exception, e:
-                self.fail_json(msg="this module requires key=value arguments (%s)" % items)
+                self.fail_json(msg="this module requires key=value arguments (%s)" % (items))
             params[k] = v
         params2 = json.loads(MODULE_COMPLEX_ARGS)
         params2.update(params)
