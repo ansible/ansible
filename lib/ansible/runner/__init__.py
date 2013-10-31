@@ -457,12 +457,10 @@ class Runner(object):
             if type(items) != list:
                 raise errors.AnsibleError("lookup plugins have to return a list: %r" % items)
 
-            # hack for apt, yum, and pkgng so that with_items maps back into a single module call
             if len(items) and utils.is_list_of_strings(items) and self.module_name in [ 'apt', 'yum', 'pkgng' ]:
-                # only join the item/package names if this task is not conditional
-                if not self.conditional:
-                    inject['item'] = ",".join(items)
-                    items = None
+                # hack for apt, yum, and pkgng so that with_items maps back into a single module call
+                inject['item'] = ",".join(items)
+                items = None
 
         # logic to replace complex args if possible
         complex_args = self.complex_args
