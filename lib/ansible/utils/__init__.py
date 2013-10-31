@@ -165,6 +165,11 @@ def is_changed(result):
 
 def check_conditional(conditional, basedir, inject, fail_on_undefined=False, jinja2=False):
 
+    if isinstance(conditional, list):
+        for x in conditional:
+            if not check_conditional(x, basedir, inject, fail_on_undefined=fail_on_undefined, jinja2=jinja2):
+                return False
+        return True
 
     if jinja2:
         conditional = "jinja2_compare %s" % conditional
