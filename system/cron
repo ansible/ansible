@@ -144,6 +144,7 @@ EXAMPLES = '''
 import os
 import re
 import tempfile
+import platform
 
 CRONCMD = "/usr/bin/crontab"
 
@@ -345,21 +346,27 @@ class CronTab(object):
         """
         Returns the command line for reading a crontab
         """
-        return "%s -l %s" % (CRONCMD, self._user_execute())
+        user = ''
+        if self.user:
+            if platform.system() == 'SunOS':
+                return "su '%s' -c '%s -l'" % (self.user, CRONCMD)
+            else:
+                user = '-u %s' % self.user
+        return "%s %s %s" % (CRONCMD , user, '-l')
 
     def _write_execute(self, path):
         """
         Return the command line for writing a crontab
         """
-        return "%s %s %s" % (CRONCMD, self._user_execute(), path)
-
-    def _user_execute(self):
-        """
-        User command switches to append to the read and write commands.
-        """
+        user = ''
         if self.user:
-            return "%s %s" % ('-u', str(self.user))
-        return ''
+            if platform.system() == 'SunOS':
+                return "chown %s %s ; su '%s' -c '%s %s'" % (self.user, path, self.user, CRONCMD, path)
+            else:
+                user = '-u %s' % self.user
+        return "%s %s %s" % (CRONCMD , user, path)
+
+
 
 #==================================================
 
