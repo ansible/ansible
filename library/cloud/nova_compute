@@ -190,7 +190,7 @@ def _get_server_state(module, nova):
     try:
         servers = nova.servers.list(True, {'name': module.params['name']})
         if servers:
-            server = [x for x in servers if x.name == module.params['name']]
+            server = [x for x in servers if x.name == module.params['name']][0]
     except Exception as e:
         module.fail_json(msg = "Error in getting the server list: %s" % e.message)
     if server and module.params['state'] == 'present':
