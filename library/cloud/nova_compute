@@ -61,7 +61,7 @@ options:
      default: present
    name:
      description:
-        - Name that has to be given to the image
+        - Name that has to be given to the instance
      required: true
      default: None
    image_id:
