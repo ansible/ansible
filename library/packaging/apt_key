@@ -191,7 +191,8 @@ def main():
     if key_id:
         try:
             _ = int(key_id, 16)
-            key_id = key_id.lstrip('0x')
+            if key_id.startswith('0x'):
+                key_id = key_id[2:]
         except ValueError:
             module.fail_json("Invalid key_id")
 
