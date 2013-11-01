@@ -258,10 +258,14 @@ def main():
     if not boto_found:
         module.fail_json(msg="boto is required")
 
-    ec2 = connect(ec2_url=module.params.get('ec2_url'),
-                  ec2_secret_key=module.params.get('ec2_secret_key'),
-                  ec2_access_key=module.params.get('ec2_access_key'),
-                  region=module.params.get('region'))
+    # def get_ec2_creds(module):
+    #   return ec2_url, ec2_access_key, ec2_secret_key, region
+    ec2_url, ec2_access_key, ec2_secret_key, region = get_ec2_creds(module)
+
+    ec2 = connect(ec2_url=ec2_url,
+                  ec2_access_key=ec2_access_key,
+                  ec2_secret_key=ec2_secret_key,
+                  region=region)
 
     instance_id = module.params.get('instance_id')
     public_ip = module.params.get('public_ip')
@@ -292,8 +296,9 @@ def main():
 
 
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
+from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()

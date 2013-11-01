@@ -265,8 +265,10 @@ def main():
         )
     )
 
-    aws_secret_key = module.params['aws_secret_key']
-    aws_access_key = module.params['aws_access_key']
+    # def get_ec2_creds(module):
+    #   return ec2_url, ec2_access_key, ec2_secret_key, region
+    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
+
     ec2_elbs = module.params['ec2_elbs']
     region = module.params['region']
     wait = module.params['wait']
@@ -274,27 +276,6 @@ def main():
 
     if module.params['state'] == 'present' and 'ec2_elbs' not in module.params:
         module.fail_json(msg="ELBs are required for registration")
-
-    if not aws_secret_key:
-        if  'AWS_SECRET_KEY' in os.environ:
-            aws_secret_key = os.environ['AWS_SECRET_KEY']
-        elif 'EC2_SECRET_KEY' in os.environ:
-            aws_secret_key = os.environ['EC2_SECRET_KEY']
-
-    if not aws_access_key:
-        if 'AWS_ACCESS_KEY' in os.environ:
-            aws_access_key = os.environ['AWS_ACCESS_KEY']
-        elif 'EC2_ACCESS_KEY' in os.environ:
-            aws_access_key = os.environ['EC2_ACCESS_KEY']
-
-    if not region:
-        if 'AWS_REGION' in os.environ:
-            region = os.environ['AWS_REGION']
-        elif 'EC2_REGION' in os.environ:
-            region = os.environ['EC2_REGION']
-
-    if not region:
-        module.fail_json(msg=str("Either region or EC2_REGION environment variable must be set."))
 
     instance_id = module.params['instance_id']
     elb_man = ElbManager(module, instance_id, ec2_elbs, aws_access_key,
@@ -316,7 +297,8 @@ def main():
 
     module.exit_json(**ec2_facts_result)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
+from ansible.module_utils.ec2 import *
 
 main()
