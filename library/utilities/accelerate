@@ -330,12 +330,12 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
                     log("got a failed response from the master")
                     return dict(failed=True, stderr="Master reported failure, aborting transfer")
         except Exception, e:
+            fd.close()
             tb = traceback.format_exc()
             log("failed to fetch the file: %s" % tb)
             return dict(failed=True, stderr="Could not fetch the file: %s" % str(e))
-        finally:
-            fd.close()
 
+        fd.close()
         return dict()
 
     def put(self, data):
@@ -373,12 +373,13 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
                 data = self.server.key.Decrypt(data)
                 data = json.loads(data)
         except:
+            out_fd.close()
             tb = traceback.format_exc()
             log("failed to put the file: %s" % tb)
             return dict(failed=True, stdout="Could not write the file")
-        finally:
-            vvvv("wrote %d bytes" % bytes)
-            out_fd.close()
+
+        vvvv("wrote %d bytes" % bytes)
+        out_fd.close()
 
         if final_path:
             vvv("moving %s to %s" % (out_path, final_path))
