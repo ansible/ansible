@@ -83,6 +83,11 @@ options:
     required: false
     default: null
     aliases: [ 'ec2_access_key', 'access_key' ]
+  metadata:
+    description:
+      - Metadata for PUT operation, as a dictionary of 'key=value' and 'key=value,key=value'.
+    required: false
+    default: null
 requirements: [ "boto" ]
 author: Lester Wade, Ralph Tice
 '''
@@ -97,7 +102,9 @@ EXAMPLES = '''
 # GET/download and do not overwrite local file (trust remote)
 - s3: bucket=mybucket object=/my/desired/key.txt dest=/usr/local/myfile.txt mode=get force=false
 # PUT/upload and overwrite remote file (trust local)
-- s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=put 
+- s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=put
+# PUT/upload with metadata
+- s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=put metadata='Content-Encoding=gzip'
 # PUT/upload and do not overwrite remote file (trust local)
 - s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=put force=false
 # Download an object as a string to use else where in your playbook
@@ -201,10 +208,14 @@ def path_check(path):
     else:
         return False
 
-def upload_s3file(module, s3, bucket, obj, src, expiry):
+def upload_s3file(module, s3, bucket, obj, src, expiry, metadata):
     try:
         bucket = s3.lookup(bucket)
-        key = bucket.new_key(obj)  
+        key = bucket.new_key(obj)
+        if metadata:
+            for meta_key in metadata.keys():
+                key.set_metadata(meta_key, metadata[meta_key])
+
         key.set_contents_from_filename(src)
         url = key.generate_url(expiry)
         module.exit_json(msg="PUT operation complete", url=url, changed=True)
@@ -266,7 +277,8 @@ def main():
             expiry         = dict(default=600, aliases=['expiration']),
             s3_url         = dict(aliases=['S3_URL']),
             overwrite      = dict(aliases=['force'], default=True, type='bool'),
-        )
+            metadata      = dict(type='dict'),
+        ),
     )
     module = AnsibleModule(argument_spec=argument_spec)
 
@@ -279,6 +291,7 @@ def main():
     expiry = int(module.params['expiry'])
     s3_url = module.params.get('s3_url')
     overwrite = module.params.get('overwrite')
+    metadata = module.params.get('metadata')
 
     ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
     
@@ -385,24 +398,24 @@ def main():
                 if md5_local == md5_remote:
                     sum_matches = True
                     if overwrite is True:
-                        upload_s3file(module, s3, bucket, obj, src, expiry)
+                        upload_s3file(module, s3, bucket, obj, src, expiry, metadata)
                     else:
                         get_download_url(module, s3, bucket, obj, expiry, changed=False)
                 else:
                     sum_matches = False
                     if overwrite is True:
-                        upload_s3file(module, s3, bucket, obj, src, expiry)
+                        upload_s3file(module, s3, bucket, obj, src, expiry, metadata)
                     else:
                         module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force upload.", failed=True)
                                                                                                             
         # If neither exist (based on bucket existence), we can create both.
         if bucketrtn is False and pathrtn is True:      
             create_bucket(module, s3, bucket)
-            upload_s3file(module, s3, bucket, obj, src, expiry)
+            upload_s3file(module, s3, bucket, obj, src, expiry, metadata)
 
         # If bucket exists but key doesn't, just upload.
         if bucketrtn is True and pathrtn is True and keyrtn is False:
-            upload_s3file(module, s3, bucket, obj, src, expiry)
+            upload_s3file(module, s3, bucket, obj, src, expiry, metadata)
     
     # Support for deleting an object if we have both params.  
     if mode == 'delete':
