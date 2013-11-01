@@ -223,7 +223,7 @@ class RedHatStrategy(GenericStrategy):
 
 class RedHatHostname(Hostname):
     platform = 'Linux'
-    distribution = 'Redhat'
+    distribution = 'Red hat enterprise linux server'
     strategy_class = RedHatStrategy
 
 class CentOSHostname(Hostname):
