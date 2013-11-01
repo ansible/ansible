@@ -511,6 +511,8 @@ class AnsibleModule(object):
                 kwargs['state'] = 'link'
             elif os.path.isdir(path):
                 kwargs['state'] = 'directory'
+            elif os.stat(path).st_nlink > 1:
+                kwargs['state'] = 'hard'
             else:
                 kwargs['state'] = 'file'
             if HAVE_SELINUX and self.selinux_enabled():
