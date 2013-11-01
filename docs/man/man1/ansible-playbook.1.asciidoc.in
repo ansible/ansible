@@ -105,7 +105,7 @@ Connection timeout to use when trying to talk to hosts, in 'SECONDS'.
 Force all plays to use sudo, even if not marked as such.
 
 
-*-u* 'USERNAME', *--remote-user=*'USERNAME'::
+*-u* 'USERNAME', *--user=*'USERNAME'::
 
 Use this remote user name on playbook steps that do not indicate a
 user name to run as.
