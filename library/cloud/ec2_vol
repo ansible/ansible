@@ -212,7 +212,8 @@ def main():
         if device_name:
             if device_name in inst.block_device_mapping:
                 module.exit_json(msg="Volume mapping for %s already exists on instance %s" % (device_name, instance),
-
+                                 volume_id=inst.block_device_mapping[device_name].volume_id,
+                                 device=device_name,
                                  changed=False)
 
     # If custom iops is defined we use volume_type "io1" rather than the default of "standard"
