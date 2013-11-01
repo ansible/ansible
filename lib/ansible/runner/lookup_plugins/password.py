@@ -20,7 +20,6 @@
 from ansible import utils, errors
 import os
 import errno
-import random
 from string import ascii_letters, digits
 
 
@@ -33,10 +32,7 @@ class LookupModule(object):
 
     def random_salt(self):
         salt_chars = ascii_letters + digits + './'
-        salt = []
-        for _ in range(8):
-            salt.append(random.choice(salt_chars))
-        return ''.join(salt)
+        return utils.random_password(length=8, chars=salt_chars)
 
     def run(self, terms, inject=None, **kwargs):
 
@@ -76,7 +72,7 @@ class LookupModule(object):
                 if not os.path.isdir(pathdir):
                     os.makedirs(pathdir)
                 chars = ascii_letters + digits + ".,:-_"
-                password = ''.join(random.choice(chars) for _ in range(length))
+                password = utils.random_password(length)
                 if encrypt is not None:
                     salt = self.random_salt()
                     content = '%s salt=%s' % (password, salt)
