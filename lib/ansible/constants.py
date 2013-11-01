@@ -19,6 +19,7 @@ import os
 import pwd
 import sys
 import ConfigParser
+from string import ascii_letters, digits
 
 # copied from utils, avoid circular reference fun :)
 def mk_boolean(value):
@@ -148,6 +149,8 @@ ACCELERATE_TIMEOUT             = get_config(p, 'accelerate', 'accelerate_timeout
 ACCELERATE_CONNECT_TIMEOUT     = get_config(p, 'accelerate', 'accelerate_connect_timeout', 'ACCELERATE_CONNECT_TIMEOUT', 1.0, floating=True)
 PARAMIKO_PTY                   = get_config(p, 'paramiko_connection', 'pty', 'ANSIBLE_PARAMIKO_PTY', True, boolean=True)
 
+# characters included in auto-generated passwords
+DEFAULT_PASSWORD_CHARS = ascii_letters + digits + ".,:-_"
 
 # non-configurable things
 DEFAULT_SUDO_PASS         = None
