@@ -61,6 +61,7 @@ Testing Modules
 There's a useful test script in the source checkout for ansible::
 
     git clone git@github.com:ansible/ansible.git
+    source ansible/hacking/env-setup
     chmod +x ansible/hacking/test-module
 
 Let's run the script you just wrote with that::
