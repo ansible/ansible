@@ -77,7 +77,7 @@ def main():
             st = os.lstat(path)
     except OSError, e:
         if e.errno == errno.ENOENT:
-            d = { 'exists' : False }
+            d = {'exists': False}
             module.exit_json(changed=False, stat=d)
        
         module.fail_json(msg = e.strerror)
@@ -115,7 +115,7 @@ def main():
         'xoth'     : bool(mode & stat.S_IXOTH),
         'isuid'    : bool(mode & stat.S_ISUID),
         'isgid'    : bool(mode & stat.S_ISGID),
-        }
+    }
 
     if S_ISLNK(mode):
         d['lnk_source'] = os.path.realpath(path)

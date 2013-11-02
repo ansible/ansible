@@ -97,9 +97,9 @@ def build_url(name, apiid, action, meter_id=None, cert_type=None):
     elif action == "certificates":
         return "https://%s/%s/meters/%s/%s.pem" % (api_host, apiid, meter_id, cert_type)
     elif action == "tags":
-        return  "https://%s/%s/meters/%s/tags" % (api_host, apiid, meter_id)
+        return "https://%s/%s/meters/%s/tags" % (api_host, apiid, meter_id)
     elif action == "delete":
-        return  "https://%s/%s/meters/%s" % (api_host, apiid, meter_id)
+        return "https://%s/%s/meters/%s" % (api_host, apiid, meter_id)
 
 def http_request(name, apiid, apikey, action, meter_id=None, cert_type=None):
     
@@ -153,7 +153,7 @@ def create_meter(module, name, apiid, apikey):
             except IOError:
                 # Now download the file...
                 rc = download_request(module, name, apiid, apikey, cert_type)
-                if rc == False:
+                if rc is False:
                     module.fail_json("Download request for " + cert_type + ".pem failed")
 
         return 0, "Meter " + name + " created"
@@ -243,10 +243,10 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-        state=dict(required=True, choices=['present', 'absent']),
-        name=dict(required=False),
-        apikey=dict(required=True),
-        apiid=dict(required=True),
+            state=dict(required=True, choices=['present', 'absent']),
+            name=dict(required=False),
+            apikey=dict(required=True),
+            apiid=dict(required=True),
         )
     )
 

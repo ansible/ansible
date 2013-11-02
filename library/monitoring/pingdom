@@ -102,11 +102,11 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-        state=dict(required=True, choices=['running', 'paused', 'started', 'stopped']),
-        checkid=dict(required=True),
-        uid=dict(required=True),
-        passwd=dict(required=True),
-        key=dict(required=True)
+            state=dict(required=True, choices=['running', 'paused', 'started', 'stopped']),
+            checkid=dict(required=True),
+            uid=dict(required=True),
+            passwd=dict(required=True),
+            key=dict(required=True)
         )
     )
 

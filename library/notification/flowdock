@@ -161,7 +161,7 @@ def main():
         module.fail_json(msg="%s is required for the 'inbox' type" % item)
 
     # required params for the 'inbox' type
-    for item in [ 'from_address', 'source', 'subject' ]:
+    for item in ['from_address', 'source', 'subject']:
         if module.params[item]:
             if type == 'chat':
                 module.fail_json(msg="%s is not valid for the 'chat' type" % item)
@@ -175,7 +175,7 @@ def main():
         params['tags'] = module.params["tags"]
 
     # optional params for the 'inbox' type
-    for item in [ 'from_name', 'reply_to', 'project', 'link' ]:
+    for item in ['from_name', 'reply_to', 'project', 'link']:
         if module.params[item]:
             if type == 'chat':
                 module.fail_json(msg="%s is not valid for the 'chat' type" % item)

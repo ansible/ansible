@@ -97,7 +97,7 @@ if not os.path.exists(logdir):
 def _run_command(wrapped_cmd, jid, log_path):
 
     logfile = open(log_path, "w")
-    logfile.write(json.dumps({ "started" : 1, "ansible_job_id" : jid }))
+    logfile.write(json.dumps({ "started" : 1, "ansible_job_id" : jid}))
     logfile.close()
     logfile = open(log_path, "w")
     result = {}
@@ -106,7 +106,7 @@ def _run_command(wrapped_cmd, jid, log_path):
     try:
         cmd = shlex.split(wrapped_cmd)
         script = subprocess.Popen(cmd, shell=False,
-            stdin=None, stdout=logfile, stderr=logfile)
+                                  stdin=None, stdout=logfile, stderr=logfile)
         script.communicate()
         outdata = file(log_path).read()
         result = json.loads(outdata)
@@ -154,7 +154,7 @@ try:
         # the argsfile at the very first start of their execution anyway
         time.sleep(1)
         debug("Return async_wrapper task started.")
-        print json.dumps({ "started" : 1, "ansible_job_id" : jid, "results_file" : log_path })
+        print json.dumps({ "started": 1, "ansible_job_id": jid, "results_file": log_path})
         sys.stdout.flush()
         sys.exit(0)
     else:
@@ -174,27 +174,27 @@ try:
             # set the child process group id to kill all children
             os.setpgid(sub_pid, sub_pid)
 
-            debug("Start watching %s (%s)"%(sub_pid, remaining))
+            debug("Start watching %s (%s)" % (sub_pid, remaining))
             time.sleep(5)
             while os.waitpid(sub_pid, os.WNOHANG) == (0, 0):
-                debug("%s still running (%s)"%(sub_pid, remaining))
+                debug("%s still running (%s)" % (sub_pid, remaining))
                 time.sleep(5)
                 remaining = remaining - 5
                 if remaining == 0:
-                    debug("Now killing %s"%(sub_pid))
+                    debug("Now killing %s" % (sub_pid))
                     os.killpg(sub_pid, signal.SIGKILL)
-                    debug("Sent kill to group %s"%sub_pid)
+                    debug("Sent kill to group %s" % sub_pid)
                     time.sleep(1)
                     sys.exit(0)
             debug("Done in kid B.")
             os._exit(0)
         else:
             # the child process runs the actual module
-            debug("Start module (%s)"%os.getpid())
+            debug("Start module (%s)" % os.getpid())
             _run_command(cmd, jid, log_path)
-            debug("Module complete (%s)"%os.getpid())
+            debug("Module complete (%s)" % os.getpid())
             sys.exit(0)
 
 except Exception, err:
-    debug("error: %s"%(err))
+    debug("error: %s" % (err))
     raise err
