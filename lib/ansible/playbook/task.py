@@ -24,7 +24,8 @@ import sys
 class Task(object):
 
     __slots__ = [
-        'name', 'meta', 'action', 'only_if', 'when', 'async_seconds', 'async_poll_interval',
+        'name', 'meta', 'action', 'only_if', 'when', 
+        'async', 'async_seconds', 'async_poll_interval',
         'notify', 'module_name', 'module_args', 'module_vars', 'default_vars',
         'play', 'notified_by', 'tags', 'register', 'role_name',
         'delegate_to', 'first_available_file', 'ignore_errors',
@@ -204,6 +205,7 @@ class Task(object):
         if self.failed_when is not None:
             self.failed_when = utils.compile_when_to_only_if(self.failed_when)
 
+        self.async = 'async' in ds
         self.async_seconds = int(ds.get('async', 0))  # not async by default
         self.async_poll_interval = int(ds.get('poll', 10))  # default poll = 10 seconds
         self.notify = ds.get('notify', [])

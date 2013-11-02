@@ -319,7 +319,7 @@ class PlayBook(object):
             error_on_undefined_vars=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR
         )
 
-        if task.async_seconds == 0:
+        if not task.async:
             results = runner.run()
         else:
             results, poller = runner.run_async(task.async_seconds)
