@@ -62,7 +62,7 @@ options:
     required: false
     choices: [ "yes", "no" ]
     default: "yes"
-    aliases: [ "thirsty" ]
+    aliases: [ "thirsty", "replace" ]
   validate:
     description:
       - The validation command to run before copying into place.  The path to the file to
@@ -101,7 +101,7 @@ def main():
             content           = dict(required=False, no_log=True),
             dest              = dict(required=True),
             backup            = dict(default=False, type='bool'),
-            force             = dict(default=True, aliases=['thirsty'], type='bool'),
+            force             = dict(default=True, aliases=['thirsty','replace'], type='bool'),
             validate          = dict(required=False, type='str'),
         ),
         add_file_common_args=True,
