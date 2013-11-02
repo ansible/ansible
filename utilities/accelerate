@@ -250,7 +250,7 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
                     vv("bad decrypt, skipping...")
                     data2 = json.dumps(dict(rc=1))
                     data2 = self.server.key.Encrypt(data2)
-                    send_data(client, data2)
+                    self.send_data(data2)
                     return
 
                 vvvv("loading json from the data")
