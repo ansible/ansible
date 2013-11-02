@@ -20,7 +20,6 @@
 import fnmatch
 import os
 import re
-import subprocess
 
 import ansible.constants as C
 from ansible.inventory.ini import InventoryParser
@@ -256,7 +255,6 @@ class Inventory(object):
     def _hosts_in_unenumerated_pattern(self, pattern):
         """ Get all host names matching the pattern """
 
-        hosts = []
         # ignore any negative checks here, this is handled elsewhere
         pattern = pattern.replace("!","").replace("&", "")
 

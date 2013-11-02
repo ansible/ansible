@@ -38,9 +38,7 @@ import pipes
 import random
 import difflib
 import warnings
-import traceback
 import getpass
-import sys
 import textwrap
 
 VERBOSITY=0

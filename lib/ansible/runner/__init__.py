@@ -28,7 +28,6 @@ import collections
 import socket
 import base64
 import sys
-import shlex
 import pipes
 import jinja2
 import subprocess
@@ -39,7 +38,6 @@ from ansible import utils
 from ansible.utils import template
 from ansible.utils import check_conditional
 from ansible import errors
-from ansible import module_common
 import poller
 import connection
 from return_data import ReturnData
@@ -296,7 +294,6 @@ class Runner(object):
 
         environment_string = self._compute_environment_string(inject)
 
-        cmd_mod = ""
         if self.sudo and self.sudo_user != 'root':
             # deal with possible umask issues once sudo'ed to other user
             cmd_chmod = "chmod a+r %s" % remote_module_path
@@ -489,7 +486,6 @@ class Runner(object):
             if self.background > 0:
                 raise errors.AnsibleError("lookup plugins (with_*) cannot be used with async tasks")
 
-            aggregrate = {}
             all_comm_ok = True
             all_changed = False
             all_failed = False
