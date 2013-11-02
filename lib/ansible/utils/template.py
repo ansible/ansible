@@ -21,16 +21,12 @@ import codecs
 import jinja2
 from jinja2.runtime import StrictUndefined
 from jinja2.exceptions import TemplateSyntaxError
-import yaml
-import json
 from ansible import errors
 import ansible.constants as C
 import time
-import subprocess
 import datetime
 import pwd
 import ast
-import traceback
 
 class Globals(object):
 

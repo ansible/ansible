@@ -25,7 +25,6 @@ import ansible.constants as C
 import pipes
 import shlex
 import os
-import sys
 
 class Play(object):
 

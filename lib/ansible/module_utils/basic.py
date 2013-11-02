@@ -95,7 +95,6 @@ try:
     from systemd import journal
     has_journal = True
 except ImportError:
-    import syslog
     has_journal = False
 
 FILE_COMMON_ARGUMENTS=dict(
@@ -727,7 +726,7 @@ class AnsibleModule(object):
         for x in items:
             try:
                 (k, v) = x.split("=",1)
-            except Exception, e:
+            except Exception:
                 self.fail_json(msg="this module requires key=value arguments (%s)" % (items))
             params[k] = v
         params2 = json.loads(MODULE_COMPLEX_ARGS)
@@ -769,7 +768,7 @@ class AnsibleModule(object):
                 journal_args.append(arg.upper() + "=" + str(log_args[arg]))
             try:
                 journal.sendv(*journal_args)
-            except IOError, e:
+            except IOError:
                 # fall back to syslog since logging to journal failed
                 syslog.openlog(module, 0, syslog.LOG_USER)
                 syslog.syslog(syslog.LOG_NOTICE, msg)

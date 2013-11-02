@@ -17,11 +17,9 @@
 
 import os
 import os.path
-import sys
 import glob
 import imp
 from ansible import constants as C
-from ansible import errors
 
 MODULE_CACHE = {}
 PATH_CACHE = {}

@@ -18,8 +18,6 @@
 from ansible import errors
 from ansible import utils
 import os
-import ansible.utils.template as template
-import sys
 
 class Task(object):
 

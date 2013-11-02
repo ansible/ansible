@@ -27,7 +27,6 @@ import shlex
 import collections
 from play import Play
 import StringIO
-import pipes
 
 SETUP_CACHE = collections.defaultdict(dict)
 
@@ -482,7 +481,6 @@ class PlayBook(object):
         buf = StringIO.StringIO()
         for x in replay_hosts:
             buf.write("%s\n" % x)
-        basedir = self.inventory.basedir()
         filename = "%s.retry" % os.path.basename(self.filename)
         filename = filename.replace(".yml","")
         filename = os.path.join(os.path.expandvars('$HOME/'), filename)

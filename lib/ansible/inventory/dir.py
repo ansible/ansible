@@ -19,12 +19,9 @@
 
 import os
 import ansible.constants as C
-from ansible.inventory.host import Host
-from ansible.inventory.group import Group
 from ansible.inventory.ini import InventoryParser
 from ansible.inventory.script import InventoryScript
 from ansible import utils
-from ansible import errors
 
 class InventoryDirectory(object):
     ''' Host inventory parser for ansible using a directory of inventories. '''
