@@ -17,8 +17,8 @@ Highlighted new features:
 * Includes with parameters can now be done like roles for consistency:  - { include: song.yml, year:1984, song:'jump' }
 * The name of each role is now shown before each task if roles are being used
 * Adds a "var=" option to the debug module for debugging variable data.  "debug: var=hostvars['hostname']" and "debug: var=foo" are all valid syntax.
-* Variables in {{ format }} can fully reference each other and preserve types, template engine is 2x as fast.
-
+* Variables in {{ format }} can be used as references even if they are structured data
+* 
 New modules and plugins:
 
 * cloud:ec2_eip -- manage AWS elastic IPs
