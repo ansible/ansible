@@ -65,7 +65,7 @@ EXAMPLES = '''
 
 def get_acl(module,path,entry,follow):
 
-    cmd = [ module.get_bin_path('getfacl', True) ]
+    cmd = [module.get_bin_path('getfacl', True)]
     if not follow:
         cmd.append('-h')
     # prevents absolute path warnings and removes headers
@@ -77,7 +77,7 @@ def get_acl(module,path,entry,follow):
 
 def set_acl(module,path,entry,follow):
 
-    cmd = [ module.get_bin_path('setfacl', True) ]
+    cmd = [module.get_bin_path('setfacl', True)]
     if not follow:
         cmd.append('-h')
     cmd.append('-m "%s"' % entry)
@@ -87,7 +87,7 @@ def set_acl(module,path,entry,follow):
 
 def rm_acl(module,path,entry,follow):
 
-    cmd = [ module.get_bin_path('setfacl', True) ]
+    cmd = [module.get_bin_path('setfacl', True)]
     if not follow:
         cmd.append('-h')
     entry = entry[0:entry.rfind(':')]
@@ -110,7 +110,7 @@ def main():
         argument_spec = dict(
             name = dict(required=True,aliases=['path']),
             entry = dict(required=False, default=None),
-            state = dict(required=False, default='query', choices=[ 'query', 'present', 'absent' ], type='str'),
+            state = dict(required=False, default='query', choices=['query', 'present', 'absent'], type='str'),
             follow = dict(required=False, type='bool', default=True),
         ),
         supports_check_mode=True,
@@ -154,13 +154,13 @@ def main():
                     if not olde[2] == newe[2]:
                         diff = True
             if diff:
-                changes=changes+1
+                changes = changes + 1
                 if not module.check_mode:
                     set_acl(module,path,entry,follow)
             if matched:
                 break
         if not matched:
-            changes=changes+1
+            changes = changes + 1
             if not module.check_mode:
                 set_acl(module,path,entry,follow)
         msg="%s is present" % (entry)
@@ -171,12 +171,12 @@ def main():
             if olde[0] == rme[0]:
                 if rme[0] in ['user', 'group']:
                     if olde[1] == rme[1]:
-                        changes=changes+1
+                        changes = changes + 1
                         if not module.check_mode:
                             rm_acl(module,path,entry,follow)
                         break
                 else:
-                    changes=changes+1
+                    changes = changes + 1
                     if not module.check_mode:
                         rm_acl(module,path,entry,follow)
                     break

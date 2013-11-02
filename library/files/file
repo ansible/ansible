@@ -265,7 +265,7 @@ def main():
 
         changed = module.set_directory_attributes_if_different(file_args, changed)
         if recurse:
-            for root,dirs,files in os.walk( file_args['path'] ):
+            for root,dirs,files in os.walk(file_args['path']):
                 for dir in dirs:
                     dirname=os.path.join(root,dir)
                     tmp_file_args = file_args.copy()

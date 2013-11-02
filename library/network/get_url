@@ -320,7 +320,7 @@ def main():
 
     # Mission complete
     module.exit_json(url=url, dest=dest, src=tmpsrc, md5sum=md5sum_src,
-        sha256sum=sha256sum, changed=changed, msg=info.get('msg', ''))
+                     sha256sum=sha256sum, changed=changed, msg=info.get('msg', ''))
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>

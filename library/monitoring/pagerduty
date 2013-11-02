@@ -128,13 +128,13 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-        state=dict(required=True, choices=['running', 'started', 'ongoing']),
-        name=dict(required=True),
-        user=dict(required=True),
-        passwd=dict(required=True),
-        service=dict(required=False),
-        hours=dict(default='1', required=False),
-        desc=dict(default='Created by Ansible', required=False)
+            state=dict(required=True, choices=['running', 'started', 'ongoing']),
+            name=dict(required=True),
+            user=dict(required=True),
+            passwd=dict(required=True),
+            service=dict(required=False),
+            hours=dict(default='1', required=False),
+            desc=dict(default='Created by Ansible', required=False)
         )
     )
 

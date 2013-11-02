@@ -118,7 +118,7 @@ def do_ini(module, filename, section=None, option=None, value=None, state='prese
     if state == 'present':
 
         # DEFAULT section is always there by DEFAULT, so never try to add it.
-        if cp.has_section(section) == False and section.upper() != 'DEFAULT':
+        if cp.has_section(section) is False and section.upper() != 'DEFAULT':
 
             cp.add_section(section)
             changed = True

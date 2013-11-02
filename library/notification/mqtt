@@ -106,7 +106,7 @@ except ImportError:
 import os
 
 def publish(module, topic, payload, server='localhost', port='1883', qos='0',
-        client_id='', retain=False, username=None, password=None):
+            client_id='', retain=False, username=None, password=None):
     '''Open connection to MQTT broker and publish the topic'''
 
     mqttc = mosquitto.Mosquitto(client_id, clean_session=True)

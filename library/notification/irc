@@ -84,7 +84,7 @@ from time import sleep
 import socket
 
 def send_msg(channel, msg, server='localhost', port='6667',
-        nick="ansible", color='black', passwd=False):
+             nick="ansible", color='black', passwd=False):
     '''send message to IRC'''
 
     colornumbers = {
@@ -102,18 +102,18 @@ def send_msg(channel, msg, server='localhost', port='6667',
 
     message = "\x03" + colornumber + msg
 
-    irc = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
-    irc.connect( ( server, int(port) ) )
+    irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    irc.connect(( server, int(port)))
     if passwd:
-        irc.send( 'PASS %s\r\n' % passwd )
-    irc.send( 'NICK %s\r\n' % nick )
-    irc.send( 'USER %s %s %s :ansible IRC\r\n' % (nick, nick, nick))
+        irc.send('PASS %s\r\n' % passwd)
+    irc.send('NICK %s\r\n' % nick)
+    irc.send('USER %s %s %s :ansible IRC\r\n' % (nick, nick, nick))
     time.sleep(1)
-    irc.send( 'JOIN %s\r\n' % channel )
-    irc.send( 'PRIVMSG %s :%s\r\n' % (channel, message))
+    irc.send('JOIN %s\r\n' % channel)
+    irc.send('PRIVMSG %s :%s\r\n' % (channel, message))
     time.sleep(1)
-    irc.send( 'PART %s\r\n' % channel)
-    irc.send( 'QUIT\r\n' )
+    irc.send('PART %s\r\n' % channel)
+    irc.send('QUIT\r\n')
     time.sleep(1)
     irc.close()
 
@@ -130,7 +130,7 @@ def main():
             nick = dict(default = 'ansible'),
             msg = dict(required = True),
             color = dict(default="black", choices=["yellow", "red", "green",
-                                                  "blue", "black"]),
+                                                   "blue", "black"]),
             channel = dict(required = True),
             passwd = dict()
         ),

@@ -106,13 +106,13 @@ def post_event(module):
         priority=module.params['priority'],
         alert_type=module.params['alert_type']
     )
-    if module.params['date_happened'] != None:
+    if module.params['date_happened'] is not None:
         body['date_happened'] = module.params['date_happened']
-    if module.params['tags'] != None:
+    if module.params['tags'] is not None:
         body['tags'] = module.params['tags'].split(",")
-    if module.params['aggregation_key'] != None:
+    if module.params['aggregation_key'] is not None:
         body['aggregation_key'] = module.params['aggregation_key']
-    if module.params['source_type_name'] != None:
+    if module.params['source_type_name'] is not None:
         body['source_type_name'] = module.params['source_type_name']
 
     json_body = module.jsonify(body)

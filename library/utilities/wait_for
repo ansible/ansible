@@ -105,7 +105,7 @@ def main():
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.settimeout(connect_timeout)
             try:
-                s.connect( (host, port) )
+                s.connect((host, port))
                 s.shutdown(socket.SHUT_RDWR)
                 s.close()
                 time.sleep(1)
@@ -123,7 +123,7 @@ def main():
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.settimeout(connect_timeout)
             try:
-                s.connect( (host, port) )
+                s.connect((host, port))
                 s.shutdown(socket.SHUT_RDWR)
                 s.close()
                 break
