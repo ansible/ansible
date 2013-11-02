@@ -72,9 +72,9 @@ EXAMPLES = '''
 
 import base64
 import getpass
+import json
 import os
 import os.path
-import shutil
 import signal
 import socket
 import struct
