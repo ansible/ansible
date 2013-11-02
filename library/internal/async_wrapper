@@ -170,6 +170,9 @@ try:
         if sub_pid:
             # the parent stops the process after the time limit
             remaining = int(time_limit)
+            if remaining == 0:
+                sys.exit(0)
+                os._exit(0)
 
             # set the child process group id to kill all children
             os.setpgid(sub_pid, sub_pid)
@@ -180,7 +183,7 @@ try:
                 debug("%s still running (%s)"%(sub_pid, remaining))
                 time.sleep(5)
                 remaining = remaining - 5
-                if remaining == 0:
+                if remaining <= 0:
                     debug("Now killing %s"%(sub_pid))
                     os.killpg(sub_pid, signal.SIGKILL)
                     debug("Sent kill to group %s"%sub_pid)
