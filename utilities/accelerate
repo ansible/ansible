@@ -425,7 +425,7 @@ def main():
     debug     = int(module.params['debug'])
 
     if not HAS_KEYCZAR:
-        module.fail_json(msg="keyczar is not installed")
+        module.fail_json(msg="keyczar is not installed (on the remote side)")
 
     DEBUG_LEVEL=debug
 
