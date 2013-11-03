@@ -102,7 +102,8 @@ else:
     boto_found = True
 
 
-def connect(ec2_url, ec2_secret_key, ec2_access_key, region, module):
+def connect(ec2_url, ec2_access_key, ec2_secret_key, region, module):
+
     """ Return an ec2 connection"""
     # allow environment variables to be used if ansible vars aren't set
     if not ec2_url and 'EC2_URL' in os.environ:
