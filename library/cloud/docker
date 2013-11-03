@@ -1,26 +1,24 @@
 #!/usr/bin/env python
 #
-# The MIT License (MIT)
+
+# (c) 2013, Cove Schneider
 #
-# Copyright (c) 2013 Cove Schneider
+# This file is part of Ansible,
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 #
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+######################################################################
 
 DOCUMENTATION = '''
 ---
@@ -98,7 +96,7 @@ options:
     aliases: []
   env:
     description:
-      - Set environment variables
+      - Set environment variables (e.g. env="PASSWORD=sEcRe7,WORKERS=4")
     required: false
     default: null
     aliases: []
@@ -156,7 +154,7 @@ mapped to using docker_containers:
   - name: run tomcat servers
     docker: image=centos command="service tomcat6 start" ports=8080 count=5
   - name: Display IP address and port mappings for containers
-    debug: msg="Mapped to {{inventory_hostname}}:{{item.NetworkSettings.PortMapping.Tcp['8080']}}"
+    debug: msg={{inventory_hostname}}:{{item.NetworkSettings.Ports['8080/tcp'][0].HostPort}}
     with_items: docker_containers
 
 Just as in the previous example, but iterates over the list of docker containers with a sequence:
@@ -169,7 +167,7 @@ Just as in the previous example, but iterates over the list of docker containers
   - name: run tomcat servers
     docker: image=centos command="service tomcat6 start" ports=8080 count={{start_containers_count}}
   - name: Display IP address and port mappings for containers
-    debug: msg="Mapped to {{inventory_hostname}}:{{docker_containers[{{item}}].NetworkSettings.PortMapping.Tcp['8080']}}"
+    debug: msg={{inventory_hostname}}:{{docker_containers[{{item}}].NetworkSettings.Ports['8080/tcp'][0].HostPort}}"
     with_sequence: start=0 end={{start_containers_count - 1}}
 
 Stop, remove all of the running tomcat containers and list the exit code from the stopped containers:
@@ -255,6 +253,10 @@ class DockerManager:
         if self.module.params.get('ports'):
             self.ports = self.module.params.get('ports').split(",")
 
+        self.env = None
+        if self.module.params.get('env'):
+            self.env = dict(map(lambda x: x.split("="), self.module.params.get('env').split(",")))
+
         # connect to docker server
         docker_url = urlparse(module.params.get('docker_url'))
         self.client = docker.Client(base_url=docker_url.geturl())
@@ -307,7 +309,7 @@ class DockerManager:
         image, tag = self.get_split_image_tag(image)
         
         for i in containers:
-            running_image, running_tag = self.get_split_image_tag(image)
+            running_image, running_tag = self.get_split_image_tag(i['Image'])
             running_command = i['Command'].strip()
 
             if running_image == image and (not tag or tag == running_tag) and (not command or running_command == command):
@@ -332,7 +334,7 @@ class DockerManager:
                   'volumes':      self.volumes,
                   'volumes_from': self.module.params.get('volumes_from'),
                   'mem_limit':    _human_to_bytes(self.module.params.get('memory_limit')),
-                  'environment':  self.module.params.get('env'),
+                  'environment':  self.env,
                   'dns':          self.module.params.get('dns'),
                   'hostname':     self.module.params.get('hostname'),
                   'detach':       self.module.params.get('detach'),
@@ -436,8 +438,9 @@ def main():
                 
             # stop containers if we have too many
             elif delta < 0:
-                containers = manager.stop_containers(running_containers[0:abs(delta)])
-                manager.remove_containers(containers)
+                containers_to_stop = running_containers[0:abs(delta)]
+                containers = manager.stop_containers(containers_to_stop)
+                manager.remove_containers(containers_to_stop)
 
             facts = manager.get_running_containers()
     
