@@ -35,9 +35,9 @@ using Cobbler's XMLRPC API.
 To tie Ansible's inventory to Cobbler (optional), copy `this script <https://raw.github.com/ansible/ansible/devel/plugins/inventory/cobbler.py>`_ to /etc/ansible and `chmod +x` the file.  cobblerd will now need
 to be running when you are using Ansible.  
 
-When running Ansible, to use this inventory, then path the script with the "-i /etc/ansible/cobbler.py" parameter.
+When running Ansible, to use this inventory, execute ansible with the "-i /etc/ansible/cobbler.py" parameter.
 
-First test the script by running `./etc/ansible/hosts` directly.   You should see some JSON data output, but it may not have
+First test the script by running `/etc/ansible/cobbler.py` directly.   You should see some JSON data output, but it may not have
 anything in it just yet.
 
 Let's explore what this does.  In cobbler, assume a scenario somewhat like the following::
