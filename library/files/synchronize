@@ -150,6 +150,7 @@ def main():
             times = dict(type='bool'),
             owner = dict(type='bool'),
             group = dict(type='bool'),
+            rsync_timeout = dict(type='int', default=10)
         ),
         supports_check_mode = True
     )
@@ -160,6 +161,7 @@ def main():
     private_key = module.params['private_key']
     rsync_path = module.params['rsync_path']
     rsync = module.params.get('local_rsync_path', 'rsync')
+    rsync_timeout = module.params.get('rsync_timeout', 'rsync_timeout')
     archive = module.params['archive']
     dirs = module.params['dirs']
     # the default of these params depends on the value of archive
@@ -170,7 +172,7 @@ def main():
     owner = module.params['owner']
     group = module.params['group']
 
-    cmd = '%s --delay-updates --compress' % rsync
+    cmd = '%s --delay-updates --compress --timeout=%s' % (rsync, rsync_timeout)
     if module.check_mode:
         cmd = cmd + ' --dry-run'
     if delete:
