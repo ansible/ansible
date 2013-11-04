@@ -690,7 +690,7 @@ def start_instances(module, ec2, instance_ids):
 
 def stop_instances(ec2, instance_ids):
     """
-    Starts a list of existing instances
+    Stops a list of existing instances
 
     module: Ansible module object
     ec2: authenticated ec2 connection object
@@ -698,9 +698,9 @@ def stop_instances(ec2, instance_ids):
       [ {id: <inst-id>}, ..]
 
     Returns a dictionary of instance information
-    about the instances started.
+    about the instances stopped.
 
-    If the instance was not able to starts "changed" will be set to False.
+    If the instance was not able to stop, "changed" will be set to False.
 
     """
 
