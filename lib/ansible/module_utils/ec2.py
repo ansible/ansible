@@ -16,8 +16,8 @@ def get_ec2_creds(module):
     if not ec2_access_key:
         if 'EC2_ACCESS_KEY' in os.environ:
             ec2_access_key = os.environ['EC2_ACCESS_KEY']
-        elif 'AWS_ACESS_KEY' in os.environ:
-            ec2_access_key = os.environ['AWS_ACESS_KEY']
+        elif 'AWS_ACCESS_KEY' in os.environ:
+            ec2_access_key = os.environ['AWS_ACCESS_KEY']
         else:
             module.fail_json(msg="Please specify an ec2_access_key")
 
