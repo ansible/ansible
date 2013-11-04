@@ -180,7 +180,7 @@ try:
                 debug("%s still running (%s)"%(sub_pid, remaining))
                 time.sleep(5)
                 remaining = remaining - 5
-                if remaining == 0:
+                if remaining <= 0:
                     debug("Now killing %s"%(sub_pid))
                     os.killpg(sub_pid, signal.SIGKILL)
                     debug("Sent kill to group %s"%sub_pid)
