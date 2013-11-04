@@ -457,7 +457,6 @@ class PlayBook(object):
             transport=play.transport, sudo_pass=self.sudo_pass, is_playbook=True, module_vars=play.vars,
             default_vars=play.default_vars, check=self.check, diff=self.diff, 
             accelerate=play.accelerate, accelerate_port=play.accelerate_port,
-            accelerate_ipv6=accelerate_ipv6,
         ).run()
         self.stats.compute(setup_results, setup=True)
 
