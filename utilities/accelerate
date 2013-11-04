@@ -47,6 +47,12 @@ options:
         this number of minutes before turning itself off.
     required: false
     default: 30
+  ipv6:
+    description:
+      - The listener daemon on the remote host will bind to the ipv6 localhost socket
+        if this parameter is set to true.
+    required: false
+    default: false
 notes:
     - See the advanced playbooks chapter for more about using accelerated mode.
 requirements: [ "python-keyczar" ]
@@ -137,7 +143,7 @@ def daemonize_self(module, password, port, minutes):
         if pid > 0:
             vvv("exiting pid %s" % pid)
             # exit first parent
-            module.exit_json(msg="daemonized accelerate on port %s for %s minutes" % (port, minutes))
+            module.exit_json(msg="daemonized accelerate on port %s for %s minutes with pid %s" % (port, minutes, str(pid)))
     except OSError, e:
         log("fork #1 failed: %d (%s)" % (e.errno, e.strerror))
         sys.exit(1)
@@ -185,6 +191,15 @@ class ThreadWithReturnValue(Thread):
 class ThreadedTCPServer(SocketServer.ThreadingTCPServer):
     def __init__(self, server_address, RequestHandlerClass, module, password, timeout):
         self.module = module
+        self.key = AesKey.Read(password)
+        self.allow_reuse_address = True
+        self.timeout = timeout
+        SocketServer.ThreadingTCPServer.__init__(self, server_address, RequestHandlerClass)
+
+class ThreadedTCPV6Server(SocketServer.ThreadingTCPServer):
+    def __init__(self, server_address, RequestHandlerClass, module, password, timeout):
+        self.module = module
+        self.address_family = socket.AF_INET6
         self.key = AesKey.Read(password)
         self.allow_reuse_address = True
         self.timeout = timeout
@@ -385,7 +400,7 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
             self.server.module.atomic_move(out_path, final_path)
         return dict()
 
-def daemonize(module, password, port, timeout, minutes):
+def daemonize(module, password, port, timeout, minutes, ipv6):
     try:
         daemonize_self(module, password, port, minutes)
 
@@ -395,7 +410,10 @@ def daemonize(module, password, port, timeout, minutes):
         signal.signal(signal.SIGALRM, catcher)
         signal.setitimer(signal.ITIMER_REAL, 60 * minutes)
 
-        server = ThreadedTCPServer(("0.0.0.0", port), ThreadedTCPRequestHandler, module, password, timeout)
+        if ipv6:
+            server = ThreadedTCPV6Server(("::", port), ThreadedTCPRequestHandler, module, password, timeout)
+        else:
+            server = ThreadedTCPServer(("0.0.0.0", port), ThreadedTCPRequestHandler, module, password, timeout)
         server.allow_reuse_address = True
         
         vv("serving!")
@@ -410,6 +428,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             port=dict(required=False, default=5099),
+            ipv6=dict(required=False, default=False),
             timeout=dict(required=False, default=300),
             password=dict(required=True),
             minutes=dict(required=False, default=30),
@@ -423,13 +442,14 @@ def main():
     timeout   = int(module.params['timeout'])
     minutes   = int(module.params['minutes'])
     debug     = int(module.params['debug'])
+    ipv6      = bool(module.params['ipv6'])
 
     if not HAS_KEYCZAR:
         module.fail_json(msg="keyczar is not installed (on the remote side)")
 
     DEBUG_LEVEL=debug
 
-    daemonize(module, password, port, timeout, minutes)
+    daemonize(module, password, port, timeout, minutes, ipv6)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
