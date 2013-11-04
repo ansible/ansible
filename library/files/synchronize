@@ -98,6 +98,11 @@ options:
     description:
       - Specify the rsync command to run on the remote machine. See C(--rsync-path) on the rsync man page.
     required: false
+  rsync_timeout:
+    description:
+      - Specify a --timeout for the rsync command in seconds. 
+    default: 10 
+    required: false
 author: Timothy Appnel
 '''
 
