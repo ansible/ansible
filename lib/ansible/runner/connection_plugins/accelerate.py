@@ -84,7 +84,7 @@ class Connection(object):
             utils.AES_KEYS = self.runner.aes_keys
 
     def _execute_accelerate_module(self):
-        args = "password=%s port=%s debug=%d" % (base64.b64encode(self.key.__str__()), str(self.accport), int(utils.VERBOSITY))
+        args = "password=%s port=%s debug=%d ipv6=%s" % (base64.b64encode(self.key.__str__()), str(self.accport), int(utils.VERBOSITY), self.runner.accelerate_ipv6)
         inject = dict(password=self.key)
         if self.runner.accelerate_inventory_host:
             inject = utils.combine_vars(inject, self.runner.inventory.get_variables(self.runner.accelerate_inventory_host))

@@ -138,6 +138,7 @@ class Runner(object):
         complex_args=None,                  # structured data in addition to module_args, must be a dict
         error_on_undefined_vars=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR, # ex. False
         accelerate=False,                   # use accelerated connection
+        accelerate_ipv6=False,              # accelerated connection w/ IPv6
         accelerate_port=None,               # port to use with accelerated connection
         ):
 
@@ -183,6 +184,7 @@ class Runner(object):
         self.error_on_undefined_vars = error_on_undefined_vars
         self.accelerate       = accelerate
         self.accelerate_port  = accelerate_port
+        self.accelerate_ipv6  = accelerate_ipv6
         self.callbacks.runner = self
         self.original_transport = self.transport
 
