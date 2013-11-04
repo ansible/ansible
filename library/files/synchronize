@@ -103,6 +103,12 @@ options:
       - Specify a --timeout for the rsync command in seconds. 
     default: 10 
     required: false
+notes:
+   - Inspect the verbose output to validate the destination user/host/path
+     are what was expected.
+   - The remote user for the dest path will always be the remote_user, not
+     the sudo_user. 
+   - Expect that dest=~/x will be ~<remote_user>/x even if using sudo.
 author: Timothy Appnel
 '''
 
