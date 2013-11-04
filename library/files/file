@@ -293,8 +293,6 @@ def main():
             changed = True
         elif prev_state == 'link':
             old_src = os.readlink(path)
-            if not os.path.isabs(old_src):
-                old_src = os.path.join(os.path.dirname(path), old_src)
             if old_src != src:
                 changed = True
         elif prev_state == 'hard':
