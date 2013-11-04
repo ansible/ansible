@@ -119,6 +119,7 @@ class Runner(object):
         remote_port=None,                   # if SSH on different ports
         private_key_file=C.DEFAULT_PRIVATE_KEY_FILE, # if not using keys/passwords
         sudo_pass=C.DEFAULT_SUDO_PASS,      # ex: 'password123' or None
+        async=False,                        # whether to run the job asynchronously
         background=0,                       # async poll every X seconds, else 0 for non-async
         basedir=None,                       # directory of playbook, if applicable
         setup_cache=None,                   # used to share fact data w/ other tasks
@@ -173,6 +174,7 @@ class Runner(object):
         self.remote_port      = remote_port
         self.private_key_file = private_key_file
         self.background       = background
+        self.async            = async or background > 0
         self.sudo             = sudo
         self.sudo_user_var    = sudo_user
         self.sudo_user        = None
@@ -486,7 +488,7 @@ class Runner(object):
             # executing using with_items, so make multiple calls
             # TODO: refactor
 
-            if self.background > 0:
+            if self.async:
                 raise errors.AnsibleError("lookup plugins (with_*) cannot be used with async tasks")
 
             aggregrate = {}
@@ -554,10 +556,10 @@ class Runner(object):
         module_name  = template.template(self.basedir, module_name, inject)
 
         if module_name in utils.plugins.action_loader:
-            if self.background != 0:
+            if self.async:
                 raise errors.AnsibleError("async mode is not supported with the %s module" % module_name)
             handler = utils.plugins.action_loader.get(module_name, self)
-        elif self.background == 0:
+        elif not self.async:
             handler = utils.plugins.action_loader.get('normal', self)
         else:
             handler = utils.plugins.action_loader.get('async', self)
@@ -983,6 +985,7 @@ class Runner(object):
         ''' Run this module asynchronously and return a poller. '''
 
         self.background = time_limit
+        self.async = True
         results = self.run()
         return results, poller.AsyncPoller(results, self)
 
