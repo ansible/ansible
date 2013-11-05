@@ -251,6 +251,27 @@ class Play(object):
                             else:
                                 self.included_roles.append(dep)
 
+                        # pass along conditionals from roles to dep roles
+                        if type(role) is dict:
+                            if 'when' in passed_vars:
+                                if 'when' in dep_vars:
+                                    tmpcond = []
+
+                                    if type(passed_vars['when']) is str:
+                                        tmpcond.append(passed_vars['when'])
+                                    elif type(passed_vars['when']) is list:
+                                        tmpcond.join(passed_vars['when'])
+
+                                    if type(dep_vars['when']) is str:
+                                        tmpcond.append(dep_vars['when'])
+                                    elif type(dep_vars['when']) is list:
+                                        tmpcond.join(dep_vars['when'])
+
+                                    if len(tmpcond) > 0:
+                                        dep_vars['when'] = tmpcond
+                                else:
+                                    dep_vars['when'] = passed_vars['when']
+
                         self._build_role_dependencies([dep], dep_stack, passed_vars=dep_vars, level=level+1)
                         dep_stack.append([dep,dep_path,dep_vars,dep_defaults_data])
 
@@ -467,7 +488,11 @@ class Play(object):
                     elif k.startswith("when_"):
                         included_additional_conditions.insert(0, utils.compile_when_to_only_if("%s %s" % (k[5:], x[k])))
                     elif k == 'when':
-                        included_additional_conditions.insert(0, utils.compile_when_to_only_if("jinja2_compare %s" % x[k]))
+                        if type(x[k]) is str:
+                            included_additional_conditions.insert(0, utils.compile_when_to_only_if("jinja2_compare %s" % x[k]))
+                        elif type(x[k]) is list:
+                            for i in x[k]:
+                                included_additional_conditions.insert(0, utils.compile_when_to_only_if("jinja2_compare %s" % i))
                     elif k in ("include", "vars", "default_vars", "only_if", "sudo", "sudo_user", "role_name"):
                         continue
                     else:
