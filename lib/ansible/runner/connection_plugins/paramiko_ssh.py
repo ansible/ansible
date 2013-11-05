@@ -202,13 +202,13 @@ class Connection(object):
                 chan.get_pty(term=os.getenv('TERM', 'vt100'),
                              width=int(os.getenv('COLUMNS', 0)),
                              height=int(os.getenv('LINES', 0)))
-            shcmd, prompt = utils.make_sudo_cmd(sudo_user, executable, cmd)
+            shcmd, prompt, success_key = utils.make_sudo_cmd(sudo_user, executable, cmd)
             vvv("EXEC %s" % shcmd, host=self.host)
             sudo_output = ''
             try:
                 chan.exec_command(shcmd)
                 if self.runner.sudo_pass:
-                    while not sudo_output.endswith(prompt):
+                    while not sudo_output.endswith(prompt) and success_key not in sudo_output:
                         chunk = chan.recv(bufsize)
                         if not chunk:
                             if 'unknown user' in sudo_output:
@@ -218,7 +218,8 @@ class Connection(object):
                                 raise errors.AnsibleError('ssh connection ' +
                                     'closed waiting for password prompt')
                         sudo_output += chunk
-                    chan.sendall(self.runner.sudo_pass + '\n')
+                    if success_key not in sudo_output:
+                        chan.sendall(self.runner.sudo_pass + '\n')
             except socket.timeout:
                 raise errors.AnsibleError('ssh timed out waiting for sudo.\n' + sudo_output)
 

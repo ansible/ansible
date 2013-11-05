@@ -585,6 +585,7 @@ class Runner(object):
         actual_pass = inject.get('ansible_ssh_pass', self.remote_pass)
         actual_transport = inject.get('ansible_connection', self.transport)
         actual_private_key_file = inject.get('ansible_ssh_private_key_file', self.private_key_file)
+        self.sudo_pass = inject.get('ansible_sudo_pass', self.sudo_pass)
 
         if self.accelerate and actual_transport != 'local':
             #Fix to get the inventory name of the host to accelerate plugin
@@ -624,6 +625,7 @@ class Runner(object):
                 actual_pass = delegate_info.get('ansible_ssh_pass', actual_pass)
                 actual_private_key_file = delegate_info.get('ansible_ssh_private_key_file', self.private_key_file)
                 actual_transport = delegate_info.get('ansible_connection', self.transport)
+                self.sudo_pass = delegate_info.get('ansible_sudo_pass', self.sudo_pass)
                 for i in delegate_info:
                     if i.startswith("ansible_") and i.endswith("_interpreter"):
                         inject[i] = delegate_info[i]
