@@ -122,9 +122,10 @@ def main(args):
                       'Default is %s.' % DEFAULT_REPO_TYPE)
     options, args = parser.parse_args(args)
 
+    hostname = socket.getfqdn()
     if not options.dest:
-        parser.error("Missing required directory argument")
-        return 1
+        # use a hostname dependent directory, in case of $HOME on nfs
+        options.dest = utils.prepare_writeable_dir('~/.ansible/pull/%s' % hostname)
 
     options.dest = os.path.abspath(options.dest)
 
@@ -136,7 +137,7 @@ def main(args):
     print >>sys.stderr, now.strftime("Starting ansible-pull at %F %T")
 
     inv_opts = 'localhost,'
-    limit_opts = 'localhost:%s:127.0.0.1' % socket.getfqdn()
+    limit_opts = 'localhost:%s:127.0.0.1' % hostname
     base_opts = '-c local --limit "%s"' % limit_opts
     repo_opts = "name=%s dest=%s" % (options.url, options.dest)
     if options.checkout:
