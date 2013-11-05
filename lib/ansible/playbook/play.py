@@ -265,7 +265,7 @@ class Play(object):
                                     if type(dep_vars['when']) is str:
                                         tmpcond.append(dep_vars['when'])
                                     elif type(dep_vars['when']) is list:
-                                        tmpcond.join(dep_vars['when'])
+                                        tmpcond += dep_vars['when']
 
                                     if len(tmpcond) > 0:
                                         dep_vars['when'] = tmpcond
