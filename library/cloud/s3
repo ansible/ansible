@@ -343,10 +343,6 @@ def main():
                 else:
                     module.fail_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force download.", failed=True)
         
-        # If destination file doesn't already exist we can go ahead and download.
-        if pathrtn is False:
-            download_s3file(module, s3, bucket, obj, dest)
-   
         # Firstly, if key_matches is TRUE and overwrite is not enabled, we EXIT with a helpful message. 
         if sum_matches is True and overwrite is False:
             module.exit_json(msg="Local and remote object are identical, ignoring. Use overwrite parameter to force.", changed=False)
