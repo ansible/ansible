@@ -52,7 +52,8 @@ OPTIONS
 
 *-d* 'DEST', *--directory=*'DEST'::
 
-Directory to checkout repository into.
+Directory to checkout repository into. If not provided, a subdirectory of
+~/.ansible/pull/ will be used.
 
 *-U* 'URL', *--url=*'URL'::
 
