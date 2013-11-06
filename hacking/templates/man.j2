@@ -1,16 +1,16 @@
 .TH ANSIBLE.@{ module | upper }@ 3 "@{ now_date }@" "@{ ansible_version }@" "ANSIBLE MODULES"
-." generated from @{ filename }@
+.\" generated from @{ filename }@
 .SH NAME
 @{ module }@ \- @{ short_description }@
-." ------ DESCRIPTION
+.\" ------ DESCRIPTION
 .SH DESCRIPTION
 {% for desc in description %}
 .PP
 @{ desc | jpfunc }@ 
 {% endfor %}
-." ------ OPTIONS
-."
-."
+.\" ------ OPTIONS
+.\"
+.\"
 {% if options %}
 .SH OPTIONS
 {% for k in option_keys %}
@@ -30,9 +30,9 @@
 {% endif %}
 {% endfor %}
 {% endif %}
-."
-."
-." ------ NOTES
+.\"
+.\"
+.\" ------ NOTES
 {% if notes %}
 .SH NOTES
 {% for note in notes %}
@@ -40,9 +40,9 @@
 @{ note | jpfunc }@ 
 {% endfor %}
 {% endif %}
-."
-."
-." ------ EXAMPLES
+.\"
+.\"
+.\" ------ EXAMPLES
 {% if examples is defined %}
 .SH EXAMPLES
 {% for e in examples %}
@@ -56,14 +56,15 @@
 .fi
 {% endfor %}
 {% endif %}
-." ------ PLAINEXAMPLES
+.\" ------ PLAINEXAMPLES
 {% if plainexamples is defined %}
+.SH EXAMPLES
 .nf
 @{ plainexamples }@
 .fi
 {% endif %}
 
-." ------- AUTHOR
+.\" ------- AUTHOR
 {% if author is defined %}
 .SH AUTHOR
 @{ author }@
