@@ -1732,14 +1732,17 @@ class GenericBsdIfconfigNetwork(Network):
     def merge_default_interface(self, defaults, interfaces, ip_type):
         if not 'interface' in defaults.keys():
             return
-        ifinfo = interfaces[defaults['interface']]
-        # copy all the interface values across except addresses
-        for item in ifinfo.keys():
-            if item != 'ipv4' and item != 'ipv6':
-                defaults[item] = ifinfo[item]
-        if len(ifinfo[ip_type]) > 0:
-            for item in ifinfo[ip_type][0].keys():
-                defaults[item] = ifinfo[ip_type][0][item]
+        try:
+            ifinfo = interfaces[defaults['interface']]
+            # copy all the interface values across except addresses
+            for item in ifinfo.keys():
+                if item != 'ipv4' and item != 'ipv6':
+                    defaults[item] = ifinfo[item]
+                if len(ifinfo[ip_type]) > 0:
+                    for item in ifinfo[ip_type][0].keys():
+                        defaults[item] = ifinfo[ip_type][0][item]
+        except KeyError:
+            pass
 
 class DarwinNetwork(GenericBsdIfconfigNetwork, Network):
     """
