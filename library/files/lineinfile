@@ -40,7 +40,7 @@ options:
     description:
       - The file to modify.
   regexp:
-    required: true
+    required: false
     description:
       - The regular expression to look for in every line of the file. For
         C(state=present), the pattern to replace if found; only the last line
@@ -186,7 +186,10 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         lines = f.readlines()
         f.close()
 
-    mre = re.compile(regexp)
+    msg = ""
+
+    if regexp is not None:
+        mre = re.compile(regexp)
 
     if insertafter not in (None, 'BOF', 'EOF'):
         insre = re.compile(insertafter)
@@ -200,7 +203,10 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
     index = [-1, -1]
     m = None
     for lineno, cur_line in enumerate(lines):
-        match_found = mre.search(cur_line)
+        if regexp is not None:
+            match_found = mre.search(cur_line)
+        else:
+            match_found = line == cur_line.rstrip('\r\n')
         if match_found:
             index[0] = lineno
             m = match_found
@@ -260,7 +266,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
     module.exit_json(changed=changed, msg=msg)
 
 
-def absent(module, dest, regexp, backup):
+def absent(module, dest, regexp, line, backup):
 
     if not os.path.exists(dest):
         module.exit_json(changed=False, msg="file not present")
@@ -270,15 +276,18 @@ def absent(module, dest, regexp, backup):
     f = open(dest, 'rb')
     lines = f.readlines()
     f.close()
-    cre = re.compile(regexp)
+    if regexp is not None:
+        cre = re.compile(regexp)
     found = []
 
-    def matcher(line):
-        if cre.search(line):
-            found.append(line)
-            return False
+    def matcher(cur_line):
+        if regexp is not None:
+            match_found = cre.search(cur_line)
         else:
-            return True
+            match_found = line == cur_line.rstrip('\r\n')
+        if match_found:
+            found.append(cur_line)
+        return not match_found
 
     lines = filter(matcher, lines)
     changed = len(found) > 0
@@ -299,7 +308,7 @@ def main():
         argument_spec=dict(
             dest=dict(required=True, aliases=['name', 'destfile']),
             state=dict(default='present', choices=['absent', 'present']),
-            regexp=dict(required=True),
+            regexp=dict(default=None),
             line=dict(aliases=['value']),
             insertafter=dict(default=None),
             insertbefore=dict(default=None),
@@ -324,6 +333,9 @@ def main():
         module.fail_json(rc=256, msg='Destination %s is a directory !' % dest)
 
     if params['state'] == 'present':
+        if backrefs and params['regexp'] is None:
+            module.fail_json(msg='regexp= is required with backrefs=true')
+
         if params.get('line', None) is None:
             module.fail_json(msg='line= is required with state=present')
 
@@ -336,7 +348,10 @@ def main():
         present(module, dest, params['regexp'], params['line'],
                 ins_aft, ins_bef, create, backup, backrefs)
     else:
-        absent(module, dest, params['regexp'], backup)
+        if params['regexp'] is None and params.get('line', None) is None:
+            module.fail_json(msg='one of line= or regexp= is required with state=absent')
+
+        absent(module, dest, params['regexp'], params.get('line', None), backup)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
