@@ -206,8 +206,8 @@ is very very conservative::
    forks=5
 
 
-hash_behavior
-=============
+hash_behaviour
+==============
 
 Ansible by default will override variables in specific precedence orders, as described in :doc:`playbooks_variables`.  When a variable
 of higher precedence wins, it will replace the other value.  
@@ -216,7 +216,7 @@ Some users prefer that variables that are hashes (aka 'dictionaries' in Python t
 arrays.  We generally recommend not using this setting unless you think you have an absolute need for it, and playbooks in the
 official examples repos do not use this setting::
 
-    #hash_behavior=replace
+    #hash_behaviour=replace
 
 The valid values are either 'replace' (the default) or 'merge'.
 
