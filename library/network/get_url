@@ -78,6 +78,16 @@ options:
     required: false
     default: 'yes'
     choices: ['yes', 'no']
+  username:
+    description:
+      - A username passed using HTTPBasicAuth
+    required: false
+    default: ''
+  username:
+    description:
+      - A password passed using HTTPBasicAuth
+    required: false
+    default: ''
   others:
     description:
       - all arguments accepted by the M(file) module also work here
