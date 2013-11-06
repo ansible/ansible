@@ -81,8 +81,8 @@ class Cli(object):
             inventory_manager.subset(options.subset)
         hosts = inventory_manager.list_hosts(pattern)
         if len(hosts) == 0:
-            callbacks.display("No hosts matched", stderr=True)
-            sys.exit(1)
+            callbacks.display("No hosts matched")
+            sys.exit(0)
 
         if options.listhosts:
             for host in hosts:
