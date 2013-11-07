@@ -36,7 +36,7 @@ file exists previously, it will retrieve its contents, behaving just like with_f
 up random passwords per host (what simplifies password management in 'host_vars' variables).
 
 Generated passwords contain a random mix of upper and lowercase ASCII letters, the
-numbers 0-9 and punctuation (". , : - _"). The default length of a generated password is 30 characters.
+numbers 0-9 and punctuation (". , : - _"). The default length of a generated password is 20 characters.
 This length can be changed by passing an extra parameter::
 
     ---
@@ -50,6 +50,8 @@ This length can be changed by passing an extra parameter::
                       priv={{ client }}_{{ tier }}_{{ role }}.*:ALL
 
         (...)
+
+.. note:: If the file already exists, no data will be written to it. If the file has contents, those contents will be read in as the password. Empty files cause the password to return as an empty string        
 
 .. _more_lookups:
 
