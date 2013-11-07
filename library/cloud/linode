@@ -174,6 +174,8 @@ def randompass():
     # we play it safe :)
     import random
     import string
+    # as of python 2.4, this reseeds the PRNG from urandom
+    random.seed() 
     lower = ''.join(random.choice(string.ascii_lowercase) for x in range(6))
     upper = ''.join(random.choice(string.ascii_uppercase) for x in range(6))
     number = ''.join(random.choice(string.digits) for x in range(6))
