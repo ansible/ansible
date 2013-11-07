@@ -265,6 +265,8 @@ def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
                 attempts = wait_timeout / 5
                 pyrax.utils.wait_until(balancer, 'status', ('DELETED'),
                                        interval=5, attempts=attempts)
+        else:
+            instance = {}
 
     module.exit_json(changed=changed, balancer=instance)
 
