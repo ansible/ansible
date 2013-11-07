@@ -82,6 +82,12 @@ options:
     required: false
     default: "yes"
     choices: [ "yes", "safe", "full", "dist"]
+  dpkg_options:
+    description:
+      - Add dpkg options to apt command. Defaults to '-o "Dpkg::Options::=--force-confdef" -o "Dpkg::Options::=--force-confold"'
+      - Options should be supplied as comma separated list
+    required: false
+    default: 'force-confdef,force-confold'
 requirements: [ python-apt, aptitude ]
 author: Matthew Williams
 notes:
@@ -105,7 +111,7 @@ EXAMPLES = '''
 # Update the repository cache and update package "nginx" to latest version using default release squeeze-backport
 - apt: pkg=nginx state=latest default_release=squeeze-backports update_cache=yes
 
-# Install latest version of "openjdk-6-jdk" ignoring "install-reccomends"
+# Install latest version of "openjdk-6-jdk" ignoring "install-recommends"
 - apt: pkg=openjdk-6-jdk state=latest install_recommends=no
 
 # Update all packages to the latest version
@@ -116,6 +122,9 @@ EXAMPLES = '''
 
 # Only run "update_cache=yes" if the last one is more than more than 3600 seconds ago
 - apt: update_cache=yes cache_valid_time=3600
+
+# Pass options to dpkg on run
+- apt: upgrade=dist update_cache=yes dpkg_options='force-confold,force-confdef'
 '''
 
 
@@ -130,7 +139,7 @@ import fnmatch
 
 # APT related constants
 APT_ENVVARS = "DEBIAN_FRONTEND=noninteractive DEBIAN_PRIORITY=critical"
-DPKG_OPTIONS = '-o "Dpkg::Options::=--force-confdef" -o "Dpkg::Options::=--force-confold"'
+DPKG_OPTIONS = 'force-confdef,force-confold'
 APT_GET_ZERO = "0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded."
 APTITUDE_ZERO = "0 packages upgraded, 0 newly installed, 0 to remove and 0 not upgraded."
 APT_LISTS_PATH = "/var/lib/apt/lists"
@@ -183,6 +192,14 @@ def package_status(m, pkgname, version, cache, state):
             #assume older version of python-apt is installed
             return ll_pkg.current_state == apt_pkg.CURSTATE_INSTALLED, pkg.isUpgradable, has_files
 
+def expand_dpkg_options(dpkg_options_compressed):
+    options_list = dpkg_options_compressed.split(',')
+    dpkg_options = ""
+    for dpkg_option in options_list:
+        dpkg_options = '%s -o "Dpkg::Options::=--%s"' \
+                       % (dpkg_options, dpkg_option)
+    return dpkg_options.strip()
+
 def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
     new_pkgspec = []
     for pkgname_or_fnmatch_pattern in pkgspec:
@@ -190,7 +207,7 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
         if [c for c in pkgname_or_fnmatch_pattern if c in "*?[]!"]:
             if "=" in pkgname_or_fnmatch_pattern:
                 m.fail_json(msg="pkgname wildcard and version can not be mixed")
-            # handle multiarch pkgnames, the idea is that "apt*" should 
+            # handle multiarch pkgnames, the idea is that "apt*" should
             # only select native packages. But "apt*:i386" should still work
             if not ":" in pkgname_or_fnmatch_pattern:
                 matches = fnmatch.filter(
@@ -208,7 +225,9 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
             new_pkgspec.append(pkgname_or_fnmatch_pattern)
     return new_pkgspec
 
-def install(m, pkgspec, cache, upgrade=False, default_release=None, install_recommends=True, force=False):
+def install(m, pkgspec, cache, upgrade=False, default_release=None,
+            install_recommends=True, force=False,
+            dpkg_options=expand_dpkg_options(DPKG_OPTIONS)):
     packages = ""
     pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache)
     for package in pkgspec:
@@ -228,7 +247,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None, install_reco
         else:
             check_arg = ''
 
-        cmd = "%s %s -y %s %s %s install %s" % (APT_ENVVARS, APT_GET_CMD, DPKG_OPTIONS, force_yes, check_arg, packages)
+        cmd = "%s %s -y %s %s %s install %s" % (APT_ENVVARS, APT_GET_CMD, dpkg_options, force_yes, check_arg, packages)
 
         if default_release:
             cmd += " -t '%s'" % (default_release,)
@@ -243,7 +262,8 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None, install_reco
     else:
         m.exit_json(changed=False)
 
-def remove(m, pkgspec, cache, purge=False):
+def remove(m, pkgspec, cache, purge=False,
+           dpkg_options=expand_dpkg_options(DPKG_OPTIONS)):
     packages = ""
     for package in pkgspec:
         name, version = package_split(package)
@@ -258,7 +278,7 @@ def remove(m, pkgspec, cache, purge=False):
             purge = '--purge'
         else:
             purge = ''
-        cmd = "%s %s -q -y %s %s remove %s" % (APT_ENVVARS, APT_GET_CMD, DPKG_OPTIONS, purge, packages)
+        cmd = "%s %s -q -y %s %s remove %s" % (APT_ENVVARS, APT_GET_CMD, dpkg_options, purge, packages)
 
         if m.check_mode:
             m.exit_json(changed=True)
@@ -268,7 +288,8 @@ def remove(m, pkgspec, cache, purge=False):
             m.fail_json(msg="'apt-get remove %s' failed: %s" % (packages, err))
         m.exit_json(changed=True)
 
-def upgrade(m, mode="yes", force=False):
+def upgrade(m, mode="yes", force=False,
+            dpkg_options=expand_dpkg_options(DPKG_OPTIONS)):
     if m.check_mode:
         check_arg = '--simulate'
     else:
@@ -279,7 +300,7 @@ def upgrade(m, mode="yes", force=False):
         # apt-get dist-upgrade
         apt_cmd = APT_GET_CMD
         upgrade_command = "dist-upgrade"
-    elif mode == "full": 
+    elif mode == "full":
         # aptitude full-upgrade
         apt_cmd = APTITUDE_CMD
         upgrade_command = "full-upgrade"
@@ -294,7 +315,7 @@ def upgrade(m, mode="yes", force=False):
         force_yes = ''
 
     apt_cmd_path = m.get_bin_path(apt_cmd, required=True)
-    cmd = '%s %s -y %s %s %s %s' % (APT_ENVVARS, apt_cmd_path, DPKG_OPTIONS,
+    cmd = '%s %s -y %s %s %s %s' % (APT_ENVVARS, apt_cmd_path, dpkg_options,
                                     force_yes, check_arg, upgrade_command)
     rc, out, err = m.run_command(cmd)
     if rc:
@@ -312,9 +333,10 @@ def main():
             purge = dict(default=False, type='bool'),
             package = dict(default=None, aliases=['pkg', 'name']),
             default_release = dict(default=None, aliases=['default-release']),
-            install_recommends = dict(default=True, aliases=['install-recommends'], type='bool'),
-            force = dict(default=False, type='bool'),
-            upgrade = dict(choices=['yes', 'safe', 'full', 'dist'])
+            install_recommends = dict(default='yes', aliases=['install-recommends'], type='bool'),
+            force = dict(default='no', type='bool'),
+            upgrade = dict(choices=['yes', 'safe', 'full', 'dist']),
+            dpkg_options = dict(default=DPKG_OPTIONS)
         ),
         mutually_exclusive = [['package', 'upgrade']],
         required_one_of = [['package', 'upgrade', 'update_cache']],
@@ -334,6 +356,7 @@ def main():
         module.fail_json(msg="Could not find aptitude. Please ensure it is installed.")
 
     install_recommends = p['install_recommends']
+    dpkg_options = expand_dpkg_options(p['dpkg_options'])
 
     try:
         cache = apt.Cache()
@@ -378,7 +401,7 @@ def main():
         force_yes = p['force']
 
         if p['upgrade']:
-            upgrade(module, p['upgrade'], force_yes)
+            upgrade(module, p['upgrade'], force_yes, dpkg_options)
 
         packages = p['package'].split(',')
         latest = p['state'] == 'latest'
@@ -392,12 +415,13 @@ def main():
             install(module, packages, cache, upgrade=True,
                     default_release=p['default_release'],
                     install_recommends=install_recommends,
-                    force=force_yes)
+                    force=force_yes, dpkg_options=dpkg_options)
         elif p['state'] in [ 'installed', 'present' ]:
             install(module, packages, cache, default_release=p['default_release'],
-                      install_recommends=install_recommends,force=force_yes)
+                      install_recommends=install_recommends,force=force_yes,
+                      dpkg_options=dpkg_options)
         elif p['state'] in [ 'removed', 'absent' ]:
-            remove(module, packages, cache, p['purge'])
+            remove(module, packages, cache, p['purge'], dpkg_options)
 
     except apt.cache.LockFailedException:
         module.fail_json(msg="Failed to lock apt for exclusive operation")
