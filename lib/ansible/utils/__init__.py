@@ -79,7 +79,7 @@ except ImportError:
 # Regex to test shorthand keyvalue syntax 
 # You can see how it works here : 
 #    - https://gist.github.com/llou/7335064#file-gistfile1-py
-keyvalue_regex = re.compile(r"^\s*\w+=(\w+|\"([^\"]|\\\")*\"|\'([^\']|\\\')*\')(\s+\w+=(\w+|\"([^\"]|\\\")*\"|\'([^\']|\\\')*\'))*\s*$")
+keyvalue_regex = re.compile(r"^\s*\w+=")
 
 
 ###############################################################
