@@ -507,7 +507,7 @@ instead.  Setting it to False will improve performance and is recommended when h
 OpenSSH Specific Settings
 -------------------------
 
-Under the [ssh] header, the following settings are tunable for SSH connections.  OpenSSH is the default connection type for Ansible
+Under the [ssh_connection] header, the following settings are tunable for SSH connections.  OpenSSH is the default connection type for Ansible
 on OSes that are new enough to support ControlPersist.  (This means basically all operating systems except Enterprise Linux 6 or earlier).
 
 .. _ssh_args:
