@@ -280,20 +280,19 @@ def main():
 
     elif state in ['link','hard']:
 
-        if os.path.isabs(src):
-            abs_src = src
-        else:
-            module.fail_json(msg="absolute paths are required")
+        if state == 'hard':
+            if os.path.isabs(src):
+                abs_src = src
+            else:
+                module.fail_json(msg="absolute paths are required")
 
-        if not os.path.exists(abs_src) and not force:
-            module.fail_json(path=path, src=src, msg='src file does not exist')
+            if not os.path.exists(abs_src) and not force:
+                module.fail_json(path=path, src=src, msg='src file does not exist')
 
         if prev_state == 'absent':
             changed = True
         elif prev_state == 'link':
             old_src = os.readlink(path)
-            if not os.path.isabs(old_src):
-                old_src = os.path.join(os.path.dirname(path), old_src)
             if old_src != src:
                 changed = True
         elif prev_state == 'hard':
