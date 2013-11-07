@@ -380,6 +380,8 @@ can do this::
        Learn about YAML syntax
    :doc:`playbooks_best_practices`
        Various tips about managing playbooks in the real world
+   :doc:`playbooks_tasks`
+       An index of formats and keywords for tasks
    :doc:`index`
        Hop back to the documentation index for a lot of special topics about playbooks
    :doc:`modules`
