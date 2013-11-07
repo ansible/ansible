@@ -1,4 +1,3 @@
-
 The Ansible Configuration File
 ++++++++++++++++++++++++++++++
 
@@ -7,7 +6,7 @@ The Ansible Configuration File
 Certain things in Ansible are adjustable in a configuration file.  In general, the stock configuration is probably
 right for most users, but that doesn't mean you might not want to change them.
 
-The mechanism for doing this is the "ansible.cfg" file, which is looked for in the following locations:
+The mechanism for doing this is the "ansible.cfg" file, which is looked for in the following locations::
 
     * /etc/ansible/ansible.cfg
     * ~/.ansible.cfg
@@ -30,8 +29,7 @@ as a ".rpmnew" file (or other) as appropriate in the case of updates.
 If you have installed from pip or from source, however, you may want to create this file in order to override
 default settings in Ansible.
 
-You may wish to consult the `ansible.cfg in source control <https://raw.github.com/ansible/ansible/devel/examples/ansible.cfg>` for
-all of the possible latest values.
+You may wish to consult the `ansible.cfg in source control <https://raw.github.com/ansible/ansible/devel/examples/ansible.cfg>`_ for all of the possible latest values.
 
 .. _environmental_configuration:
 
@@ -283,7 +281,7 @@ log_path
 ========
 
 If present and configured in ansible.cfg, Ansible will log information about executions at the designated location.  Be sure
-the user running Ansible has permissions on the logfile.
+the user running Ansible has permissions on the logfile::
 
     log_path=/var/log/ansible.log
 
