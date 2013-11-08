@@ -73,32 +73,9 @@ Most people don't specify patterns as regular expressions, but you can.  Just st
 
     ~(web|db).*\.example\.com
 
-Limiting Selected Hosts
-```````````````````````
+While we're jumping a bit ahead, additionally, you can add an exclusion criteria just by supplying the "--limit" flag to /usr/bin/ansible or /usr/bin/ansible-playbook::
 
-What hosts you select to manage can be additionally constrained by using the '--limit' parameter or
-by using 'batch' (or 'range') selectors.
-
-As mentioned above, patterns can be strung together to select hosts in more than one group::
-
-    $ ansible webservers:dbservers -m command -a "/bin/foo xyz"
-
-This is an "or" condition.  If you want to further constrain the selection, use --limit, which
-also works with ``ansible-playbook``::
-
-    $ ansible webservers:dbservers -m command -a "/bin/foo xyz" --limit region
-
-Assuming version 0.9 or later, as with other host patterns, values to limit can be separated with ";", ":", or ",".
-
-Now let's talk about range selection.   Suppose you have 1000 servers in group 'datacenter', but only want to target one at a time.  This is also easy::
-
-    $ ansible webservers[0-99] -m command -a "/bin/foo xyz"
-    $ ansible webservers[100-199] -m command -a "/bin/foo xyz"
-
-This will select the first 100, then the second 100, host entries in the webservers group.  (It does not matter
-what their names or IP addresses are).
-
-Both of these methods can be used at the same time, and ranges can also be passed to the --limit parameter.
+    ansible-playbook site.yml --limit datacenter2
 
 Easy enough.  See :doc:`intro_adhoc` and then :doc:`playbooks` for how to apply this knowledge.
 
