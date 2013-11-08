@@ -183,11 +183,11 @@ def url_do_get(module, url, dest, use_proxy, last_mod_time):
     try:
         r = urllib2.urlopen(request)
         info.update(r.info())
+        info['url'] = r.geturl()  # The URL goes in too, because of redirects.
         info.update(dict(msg="OK (%s bytes)" % r.headers.get('Content-Length', 'unknown'), status=200))
     except urllib2.HTTPError, e:
         # Must not fail_json() here so caller can handle HTTP 304 unmodified
         info.update(dict(msg=str(e), status=e.code))
-        return r, info
     except urllib2.URLError, e:
         code = getattr(e, 'code', -1)
         module.fail_json(msg="Request failed: %s" % str(e), status_code=code)
@@ -287,11 +287,14 @@ def main():
 
     # Now the request has completed, we can finally generate the final
     # destination file name from the info dict.
+
     if dest_is_dir:
         filename = extract_filename_from_headers(info)
         if not filename:
             # Fall back to extracting the filename from the URL.
-            filename = url_filename(url)
+            # Pluck the URL from the info, since a redirect could have changed
+            # it.
+            filename = url_filename(info['url'])
         dest = os.path.join(dest, filename)
 
     md5sum_src   = None
