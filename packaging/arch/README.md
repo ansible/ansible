@@ -6,8 +6,8 @@ You should use AUR to install [ansible-git][1], using `yaourt` for instance :
 
     yaourt -S ansible-git
 
-You can also find a stable AUR package for the stable version of [ansible][1].
+You can also find a stable AUR package for the stable version of [ansible][2].
 
-  [1]: https://github.com/ramaze/ramaze
-  [2]: https://github.com/paulasmuth/fnordmetric
+  [1]: https://aur.archlinux.org/packages/ansible-git/
+  [2]: https://aur.archlinux.org/packages/ansible/
 
