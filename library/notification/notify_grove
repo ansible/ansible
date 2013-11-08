@@ -1,0 +1,89 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+DOCUMENTATION = '''
+---
+module: notify_grove
+short_description: Sends a notification to a grove.io channel
+description:
+     - The M(notify_grove) modules sends a message for a service to a Grove.io
+       channel.
+options:
+  channel_token:
+    description:
+      - Token of the channel to post to.
+    required: true
+  service:
+    description:
+      - Name of the service (displayed in the message)
+    required: true
+  message:
+    description:
+      - Message content
+    required: true
+  url:
+    description:
+      - Service URL for the web client 
+    required: false
+  icon_url:
+    description:
+      -  Icon for the service 
+    required: false
+author: Jonas Pfenniger <zimbatm@zimbatm.com>
+'''
+
+EXAMPLES = '''
+# Creates a json file for chef-solo
+- notify_grove:
+  args:
+    channel_token: 6Ph62VBBJOccmtTPZbubiPzdrhipZXtg
+    service: my-app
+    message: deployed {{ target }}
+'''
+
+import urllib
+
+BASE_URL = 'https://grove.io/api/notice/%s/'
+
+# ==============================================================
+# do_notify_grove
+
+def do_notify_grove(module, channel_token, service, message, url=None, icon_url=None):
+    my_url = BASE_URL % (channel_token,)
+
+    my_data = dict(service=service, message=message)
+    if url is not None:
+        my_data['url'] = url
+    if icon_url is not None:
+        my_data['icon_url'] = icon_url
+
+    urllib.urlopen(my_url, urllib.urlencode(my_data))
+
+# ==============================================================
+# main
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            channel_token = dict(type='str', required=True),
+            message = dict(type='str', required=True),
+            service = dict(type='str', required=True),
+            url = dict(type='str', default=None),
+            icon_url = dict(type='str', default=None),
+        )
+    )
+
+    channel_token = module.params['channel_token']
+    service = module.params['service']
+    message = module.params['message']
+    url = module.params['url']
+    icon_url = module.params['icon_url']
+
+    do_notify_grove(module, channel_token, service, message, url, icon_url)
+
+    # Mission complete
+    module.exit_json(msg="OK")
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
