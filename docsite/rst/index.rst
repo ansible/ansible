@@ -111,7 +111,6 @@ and adopt these only if they seem relevant or useful to your environment.
    playbooks_error_handling
    playbooks_lookups
    playbooks_prompts
-   playbooks_tasks
    playbooks_tags
 
 .. _ansibleworks_awx:
@@ -182,6 +181,5 @@ Some additional topics you may be interested in:
    faq
    glossary
    YAMLSyntax
-
 
 
