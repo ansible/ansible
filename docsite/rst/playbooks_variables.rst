@@ -144,20 +144,15 @@ The following tasks are illustrative of how filters can be used with conditional
       - debug: msg="it failed"
         when: result|failed
 
+      # in most cases you'll want a handler, but if you want to do something right now, this is nice
+      - debug: msg="it changed"
+        when: result|changed
+
       - debug: msg="it succeeded"
         when: result|success
 
       - debug: msg="it was skipped"
         when: result|skipped
-
-      # in most cases you'll want a handler, but if you want to do something right now, this is nice
-      - debug: msg="it changed"
-        when: result|changed
-
-      # in 1.4 and above, properties of registered variables can be called as well;
-      # eliminating the need to use filters in some cases.
-      - debug: msg="it changed"
-        when: result.changed
 
 .. _forcing_variables_to_be_defined:
 
