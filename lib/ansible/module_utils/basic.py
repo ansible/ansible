@@ -348,10 +348,12 @@ class AnsibleModule(object):
         # argument context, which may have selevel.
 
         for i in range(len(cur_context)):
-            if context[i] is not None and context[i] != cur_context[i]:
-                new_context[i] = context[i]
-            if context[i] is None:
-                new_context[i] = cur_context[i]
+            if len(context) > i:
+                if context[i] is not None and context[i] != cur_context[i]:
+                    new_context[i] = context[i]
+                if context[i] is None:
+                    new_context[i] = cur_context[i]
+
         if cur_context != new_context:
             try:
                 if self.check_mode:
