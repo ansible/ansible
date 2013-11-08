@@ -16,10 +16,21 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import pwd
 import sys
 import ConfigParser
 from string import ascii_letters, digits
+try:
+  import pwd
+except ImportError:
+  import getpass
+  pwd = None
+
+
+def get_active_user():
+  if pwd:
+    return pwd.getpwuid(os.geteuid()).pw_name
+  else:
+    return getpass.getuser()
 
 # copied from utils, avoid circular reference fun :)
 def mk_boolean(value):
@@ -80,7 +91,7 @@ def shell_expand_path(path):
 
 p = load_config_file()
 
-active_user   = pwd.getpwuid(os.geteuid())[0]
+active_user = get_active_user()
 
 # Needed so the RPM can call setup.py and have modules land in the
 # correct location. See #1277 for discussion
