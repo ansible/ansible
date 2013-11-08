@@ -197,9 +197,8 @@ def main():
     if err:
         module.fail_json(msg=err)
 
-    err = host.proceed_hosts_entries()
-    if err:
-        module.fail_json(msg=err)
+    host.proceed_hosts_entries()
+    
     if host.state == 'present':
         if not host.full_entry_exists():
             if module.check_mode:
