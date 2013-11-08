@@ -46,11 +46,16 @@ options:
         choices: [ present, absent ]
         description:
             - Whether the entries should be present or not in C(/etc/hosts).
+
+    comment:
+        required: false
+        description:
+            - add a comment at the end of the host entry line
 '''
 
 EXAMPLES = '''
 # Example host command from Ansible Playbooks
-- host: ip=127.0.0.1 hostname=localhost state=present
+- host: ip=127.0.0.1 hostname=localhost state=present comment="localhost entry"
 - host: ip=127.0.0.1 hostname=localhost aliases=foobar.com,localhost.foobar.com
 - host: ip=192.168.1.1 state=absent
 - host: hostname=www.example.com state=absent
@@ -71,11 +76,14 @@ class Host(object):
         self.ip                 = module.params['ip']
         self.hostname           = module.params['hostname']
         self.aliases            = module.params['aliases']
+        self.comment            = module.params['comment']
 
         self._ip_matches        = False
         self._hostname_matches  = False
         self._aliases_matches   = False
+        self._comment_matches   = False
         self._has_aliases       = False
+        self._has_comment       = False
         self._found_on_line     = -1
 
     def validate_has_hostname_on_present(self):
@@ -103,6 +111,9 @@ class Host(object):
             if line.startswith("#"):
                 continue
 
+            # split at # / comments at the end of the line
+            comment = line.split('#',1)[1:]
+            line = ' '.join(line.split('#',1)[0:1]).rstrip()
             ip = line.split()[0:1]
             hostname = line.split()[1:2]
             aliases = ','.join(line.split()[2:])
@@ -115,16 +126,23 @@ class Host(object):
                 self._hostname_matches = True
                 self._found_on_line = lineno
 
-            # only look at aliases if we found hostname or ip
+            # only look at aliases and/or comment if we found hostname or ip
             if self._hostname_matches or self._ip_matches:
                 if aliases:
                     self._has_aliases = True
                 if self.aliases and self.aliases == aliases:
                     self._aliases_matches = True
+                if comment:
+                    comment = comment[0].strip()
+                    self._has_comment = True
+                if self.comment and self.comment == comment:
+                    self._comment_matches = True
                 break
 
     def full_entry_exists(self):
-        if self.aliases and not self._aliases_matches:
+        if self._has_aliases and not self._aliases_matches:
+            return False
+        if self._has_comment and not self._comment_matches:
             return False
         return self._ip_matches and self._hostname_matches
 
@@ -136,9 +154,12 @@ class Host(object):
 
     def add_entry(self):
         aliases = ''
+        comment = ''
         if self.aliases:
-            aliases = self.aliases.replace(',',' ')
-        host_entry = self.ip + " " + self.hostname + " " + aliases + "\n"
+            aliases =  " " + self.aliases.replace(',',' ')
+        if self.comment:
+            comment = " # " + self.comment
+        host_entry = self.ip + " " + self.hostname + aliases + comment + "\n"
         if self.entry_exists():
             self._hostsfile_lines[self._found_on_line] = host_entry
         else:
@@ -158,6 +179,7 @@ def main():
             ip=dict(default=None, type='str'),
             hostname=dict(default=None, type='str'),
             aliases=dict(default=None, type='str'),
+            comment=dict(default=None, type='str'),
         ),
         supports_check_mode=True
     )
@@ -175,7 +197,9 @@ def main():
     if err:
         module.fail_json(msg=err)
 
-    host.proceed_hosts_entries()
+    err = host.proceed_hosts_entries()
+    if err:
+        module.fail_json(msg=err)
     if host.state == 'present':
         if not host.full_entry_exists():
             if module.check_mode:
