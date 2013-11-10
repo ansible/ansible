@@ -136,6 +136,29 @@ PROTOCOLS = ['DNS_TCP', 'DNS_UDP', 'FTP', 'HTTP', 'HTTPS', 'IMAPS', 'IMAPv4',
              'TCP_CLIENT_FIRST', 'UDP', 'UDP_STREAM', 'SFTP']
 
 
+def to_dict(obj):
+    instance = {}
+    for key in dir(obj):
+        value = getattr(obj, key)
+        if key == 'virtual_ips':
+            instance[key] = []
+            for vip in value:
+                vip_dict = {}
+                for vip_key, vip_value in vars(vip).iteritems():
+                    if isinstance(vip_value, NON_CALLABLES):
+                        vip_dict[vip_key] = vip_value
+                instance[key].append(vip_dict)
+        elif key == 'nodes':
+            instance[key] = []
+            for node in value:
+                instance[key].append(node.to_dict())
+        elif (isinstance(value, NON_CALLABLES) and
+                not key.startswith('_')):
+            instance[key] = value
+
+    return instance
+
+
 def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
                         vip_type, timeout, wait, wait_timeout):
     for arg in (state, name, port, protocol, vip_type):
@@ -210,20 +233,7 @@ def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
             pyrax.utils.wait_for_build(balancer, interval=5, attempts=attempts)
 
         balancer.get()
-        instance = {}
-        for key, value in vars(balancer).iteritems():
-            if key == 'virtual_ips':
-                virtual_ips = []
-                instance[key] = []
-                for vip in value:
-                    vip_dict = {}
-                    for vip_key, vip_value in vars(vip).iteritems():
-                        if isinstance(vip_value, NON_CALLABLES):
-                            vip_dict[vip_key] = vip_value
-                    instance[key].append(vip_dict)
-            elif (isinstance(value, NON_CALLABLES) and
-                    not key.startswith('_')):
-                instance[key] = value
+        instance = to_dict(balancer)
 
         result = dict(changed=changed, balancer=instance)
 
@@ -246,20 +256,7 @@ def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
             except Exception, e:
                 module.fail_json(msg='%s' % e.message)
 
-            instance = {}
-            for key, value in vars(balancer).iteritems():
-                if key == 'virtual_ips':
-                    virtual_ips = []
-                    instance[key] = []
-                    for vip in value:
-                        vip_dict = {}
-                        for vip_key, vip_value in vars(vip).iteritems():
-                            if isinstance(vip_value, NON_CALLABLES):
-                                vip_dict[vip_key] = vip_value
-                        instance[key].append(vip_dict)
-                elif (isinstance(value, NON_CALLABLES) and
-                        not key.startswith('_')):
-                    instance[key] = value
+            instance = to_dict(balancer)
 
             if wait:
                 attempts = wait_timeout / 5
