@@ -80,10 +80,7 @@ class LookupModule(object):
                 pathdir = os.path.dirname(path)
                 if not os.path.isdir(pathdir):
                     os.makedirs(pathdir)
-                """
-                chars = ascii_letters + digits + ".,:-_"
-                password = utils.random_password(length)
-                """
+
                 chars = "".join([getattr(string,c,c) for c in use_chars]).replace('"','').replace("'",'')
                 password = ''.join(random.choice(chars) for _ in range(length))
 
