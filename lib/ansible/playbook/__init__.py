@@ -544,12 +544,23 @@ class PlayBook(object):
                         for handler in play.handlers():
                             if len(handler.notified_by) > 0:
                                 self.inventory.restrict_to(handler.notified_by)
+
                                 # Resolve the variables first
                                 handler_name = template(play.basedir, handler.name, handler.module_vars)
                                 if handler_name not in fired_names:
                                     self._run_task(play, handler, True)
                                 # prevent duplicate handler includes from running more than once
                                 fired_names[handler_name] = 1
+
+                                host_list = self._list_available_hosts(play.hosts)
+                                if handler.any_errors_fatal and len(host_list) < hosts_count:
+                                    play.max_fail_pct = 0
+                                if (hosts_count - len(host_list)) > int((play.max_fail_pct)/100.0 * hosts_count):
+                                    host_list = None
+                                if not host_list:
+                                    self.callbacks.on_no_hosts_remaining()
+                                    return False
+
                                 self.inventory.lift_restriction()
                                 new_list = handler.notified_by[:]
                                 for host in handler.notified_by:
