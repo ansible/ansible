@@ -67,7 +67,7 @@ Starting in version 1.4, password accepts a "chars" parameter to allow defining 
 
         # create a mysql user with a random password using only digits:
         - mysql_user: name={{ client }}
-                      password="{{ lookup('password', '/tmp/passwordfile chars=digits,') }}"
+                      password="{{ lookup('password', '/tmp/passwordfile chars=digits') }}"
                       priv={{ client }}_{{ tier }}_{{ role }}.*:ALL
 
         # create a mysql user with a random password using many different char sets:
@@ -77,7 +77,7 @@ Starting in version 1.4, password accepts a "chars" parameter to allow defining 
 
         (...)
 
-To enter comma use two commas ',,' somewhere - preferably at the end Qoutes and double qoutes are not supported
+To enter comma use two commas ',,' somewhere - preferably at the end. Quotes and double qoutes are not supported.
 
 .. _more_lookups:
 
