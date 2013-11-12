@@ -140,8 +140,8 @@ import fnmatch
 # APT related constants
 APT_ENVVARS = "DEBIAN_FRONTEND=noninteractive DEBIAN_PRIORITY=critical"
 DPKG_OPTIONS = 'force-confdef,force-confold'
-APT_GET_ZERO = "0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded."
-APTITUDE_ZERO = "0 packages upgraded, 0 newly installed, 0 to remove and 0 not upgraded."
+APT_GET_ZERO = "0 upgraded, 0 newly installed"
+APTITUDE_ZERO = "0 packages upgraded, 0 newly installed"
 APT_LISTS_PATH = "/var/lib/apt/lists"
 APT_UPDATE_SUCCESS_STAMP_PATH = "/var/lib/apt/periodic/update-success-stamp"
 
@@ -256,9 +256,9 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
 
         rc, out, err = m.run_command(cmd)
         if rc:
-            m.fail_json(msg="'apt-get install %s' failed: %s" % (packages, err))
+            m.fail_json(msg="'apt-get install %s' failed: %s" % (packages, err), stdout=out, stderr=err)
         else:
-            m.exit_json(changed=True)
+            m.exit_json(changed=True, stdout=out, stderr=err)
     else:
         m.exit_json(changed=False)
 
@@ -285,8 +285,8 @@ def remove(m, pkgspec, cache, purge=False,
 
         rc, out, err = m.run_command(cmd)
         if rc:
-            m.fail_json(msg="'apt-get remove %s' failed: %s" % (packages, err))
-        m.exit_json(changed=True)
+            m.fail_json(msg="'apt-get remove %s' failed: %s" % (packages, err), stdout=out, stderr=err)
+        m.exit_json(changed=True, stdout=out, stderr=err)
 
 def upgrade(m, mode="yes", force=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS)):
@@ -319,10 +319,10 @@ def upgrade(m, mode="yes", force=False,
                                     force_yes, check_arg, upgrade_command)
     rc, out, err = m.run_command(cmd)
     if rc:
-        m.fail_json(msg="'%s %s' failed: %s" % (apt_cmd, upgrade_command, err))
+        m.fail_json(msg="'%s %s' failed: %s" % (apt_cmd, upgrade_command, err), stdout=out)
     if (apt_cmd == APT_GET_CMD and APT_GET_ZERO in out) or (apt_cmd == APTITUDE_CMD and APTITUDE_ZERO in out):
-        m.exit_json(changed=False, msg=out)
-    m.exit_json(changed=True, msg=out)
+        m.exit_json(changed=False, msg=out, stdout=out, stderr=err)
+    m.exit_json(changed=True, msg=out, stdout=out, stderr=err)
 
 def main():
     module = AnsibleModule(
@@ -344,7 +344,13 @@ def main():
     )
 
     if not HAS_PYTHON_APT:
-        module.fail_json(msg="Could not import python modules: apt, apt_pkg. Please install python-apt package.")
+        try:
+            module.run_command('apt-get install python-apt -y -q')
+            global apt, apt_pkg
+            import apt
+            import apt_pkg
+        except:
+            module.fail_json(msg="Could not import python modules: apt, apt_pkg. Please install python-apt package.")
 
     global APTITUDE_CMD
     APTITUDE_CMD = module.get_bin_path("aptitude", False)
