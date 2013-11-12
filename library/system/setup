@@ -50,7 +50,7 @@ options:
         description:
             - path used for local ansible facts (*.fact) - files in this dir
               will be run (if executable) and their results be added to ansible_local facts
-              if a file is not executable it is read. 
+              if a file is not executable it is read.
               File/results format can be json or ini-format
         required: false
         default: '/etc/ansible/facts.d'
@@ -191,7 +191,7 @@ class Facts(object):
         fact_path = module.params.get('fact_path', None)
         if not fact_path or not os.path.exists(fact_path):
             return
-            
+
         local = {}
         for fn in sorted(glob.glob(fact_path + '/*.fact')):
             # where it will sit under local facts
@@ -204,7 +204,7 @@ class Facts(object):
                 rc, out, err = module.run_command(fn)
             else:
                 out = open(fn).read()
-            
+
             # load raw json
             fact = 'loading %s' % fact_base
             try:
@@ -230,7 +230,7 @@ class Facts(object):
         if not local:
             return
         self.facts['local'] = local
-            
+
     # platform.dist() is deprecated in 2.6
     # in 2.6 and newer, you should use platform.linux_distribution()
     def get_distribution_facts(self):
@@ -376,27 +376,45 @@ class Facts(object):
 
     def get_lsb_facts(self):
         lsb_path = module.get_bin_path('lsb_release')
-        if lsb_path is None:
-            return self.facts
-        rc, out, err = module.run_command([lsb_path, "-a"])
-        if rc == 0:
+        if lsb_path:
+            rc, out, err = module.run_command([lsb_path, "-a"])
+            if rc == 0:
+                self.facts['lsb'] = {}
+            for line in out.split('\n'):
+                if len(line) < 1:
+                    continue
+                value = line.split(':', 1)[1].strip()
+                if 'LSB Version:' in line:
+                    self.facts['lsb']['release'] = value
+                elif 'Distributor ID:' in line:
+                    self.facts['lsb']['id'] = value
+                elif 'Description:' in line:
+                    self.facts['lsb']['description'] = value
+                elif 'Release:' in line:
+                    self.facts['lsb']['release'] = value
+                elif 'Codename:' in line:
+                    self.facts['lsb']['codename'] = value
+            if 'lsb' in self.facts and 'release' in self.facts['lsb']:
+                self.facts['lsb']['major_release'] = self.facts['lsb']['release'].split('.')[0]
+        elif lsb_path is None and os.path.exists('/etc/lsb-release'):
             self.facts['lsb'] = {}
-        for line in out.split('\n'):
-            if len(line) < 1:
-                continue
-            value = line.split(':', 1)[1].strip()
-            if 'LSB Version:' in line:
-                self.facts['lsb']['release'] = value
-            elif 'Distributor ID:' in line:
-                self.facts['lsb']['id'] = value
-            elif 'Description:' in line:
-                self.facts['lsb']['description'] = value
-            elif 'Release:' in line:
-                self.facts['lsb']['release'] = value
-            elif 'Codename:' in line:
-                self.facts['lsb']['codename'] = value
+            with open('/etc/lsb-release', 'r') as f:
+                for line in f.readlines():
+                    value = line.split('=',1)[1].strip()
+                    if 'DISTRIB_ID' in line:
+                        self.facts['lsb']['id'] = value
+                    elif 'DISTRIB_RELEASE' in line:
+                        self.facts['lsb']['release'] = value
+                    elif 'DISTRIB_DESCRIPTION' in line:
+                        self.facts['lsb']['description'] = value
+                    elif 'DISTRIB_CODENAME' in line:
+                        self.facts['lsb']['codename'] = value
+        else:
+            return self.facts
+
         if 'lsb' in self.facts and 'release' in self.facts['lsb']:
             self.facts['lsb']['major_release'] = self.facts['lsb']['release'].split('.')[0]
+
 
     def get_selinux_facts(self):
         if not HAVE_SELINUX:
@@ -1509,15 +1527,15 @@ class LinuxNetwork(Network):
 
             ip_path = module.get_bin_path("ip")
             primary_data = subprocess.Popen(
-                [ip_path, 'addr', 'show', 'primary', device], 
+                [ip_path, 'addr', 'show', 'primary', device],
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
             secondary_data = subprocess.Popen(
-                [ip_path, 'addr', 'show', 'secondary', device], 
+                [ip_path, 'addr', 'show', 'secondary', device],
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
             parse_ip_output(primary_data)
             parse_ip_output(secondary_data, secondary=True)
 
-        # replace : by _ in interface name since they are hard to use in template 
+        # replace : by _ in interface name since they are hard to use in template
         new_interfaces = {}
         for i in interfaces:
             if ':' in i:
