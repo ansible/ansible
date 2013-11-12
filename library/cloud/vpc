@@ -494,10 +494,9 @@ def main():
         )
     )
 
-    region = module.params.get('region')
     state = module.params.get('state')
-    aws_secret_key = module.params.get('aws_secret_key')
-    aws_access_key = module.params.get('aws_access_key')
+
+    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
 
     if not aws_secret_key:
         if  'AWS_SECRET_KEY' in os.environ:
@@ -546,7 +545,8 @@ def main():
 
     module.exit_json(changed=changed, vpc_id=new_vpc_id, vpc=vpc_dict, subnets=subnets_changed)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
+from ansible.module_utils.ec2 import *
 
 main()
