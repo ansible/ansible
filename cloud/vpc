@@ -497,25 +497,7 @@ def main():
     state = module.params.get('state')
 
     ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
-
-    if not aws_secret_key:
-        if  'AWS_SECRET_KEY' in os.environ:
-            aws_secret_key = os.environ['AWS_SECRET_KEY']
-        elif 'EC2_SECRET_KEY' in os.environ:
-            aws_secret_key = os.environ['EC2_SECRET_KEY']
-
-    if not aws_access_key:
-        if 'AWS_ACCESS_KEY' in os.environ:
-            aws_access_key = os.environ['AWS_ACCESS_KEY']
-        elif 'EC2_ACCESS_KEY' in os.environ:
-            aws_access_key = os.environ['EC2_ACCESS_KEY']
-
-    if not region:
-        if 'AWS_REGION' in os.environ:
-            region = os.environ['AWS_REGION']
-        elif 'EC2_REGION' in os.environ:
-            region = os.environ['EC2_REGION']
-    
+   
     # If we have a region specified, connect to its endpoint.
     if region: 
         try:
