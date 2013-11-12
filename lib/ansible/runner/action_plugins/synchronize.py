@@ -98,8 +98,8 @@ class ActionModule(object):
         if rsync_path:
             options['rsync_path'] = '"' + rsync_path + '"'
 
-        self.runner.module_args = ' '.join(['%s=%s' % (k, v) for (k,
+        module_items = ' '.join(['%s=%s' % (k, v) for (k,
                 v) in options.items()])
         return self.runner._execute_module(conn, tmp, 'synchronize',
-                self.runner.module_args, inject=inject)
+                module_items, inject=inject)
 
