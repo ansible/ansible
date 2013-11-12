@@ -53,6 +53,32 @@ This length can be changed by passing an extra parameter::
 
 .. note:: If the file already exists, no data will be written to it. If the file has contents, those contents will be read in as the password. Empty files cause the password to return as an empty string        
 
+Starting in version 1.4, password accepts a "chars" parameter to allow defining a custom character set in the generated passwords. It accepts comma separated list of names that are either string module attributes (ascii_letters,digits, etc) or are used literally::
+
+    ---
+    - hosts: all
+
+      tasks:
+
+        # create a mysql user with a random password using only ascii letters:
+        - mysql_user: name={{ client }}
+                      password="{{ lookup('password', '/tmp/passwordfile chars=ascii') }}"
+                      priv={{ client }}_{{ tier }}_{{ role }}.*:ALL
+
+        # create a mysql user with a random password using only digits:
+        - mysql_user: name={{ client }}
+                      password="{{ lookup('password', '/tmp/passwordfile chars=digits') }}"
+                      priv={{ client }}_{{ tier }}_{{ role }}.*:ALL
+
+        # create a mysql user with a random password using many different char sets:
+        - mysql_user: name={{ client }}
+                      password="{{ lookup('password', '/tmp/passwordfile chars=ascii,numbers,digits,hexdigits,punctuation') }}"
+                      priv={{ client }}_{{ tier }}_{{ role }}.*:ALL
+
+        (...)
+
+To enter comma use two commas ',,' somewhere - preferably at the end. Quotes and double qoutes are not supported.
+
 .. _more_lookups:
 
 More Lookups

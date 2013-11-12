@@ -24,8 +24,7 @@ DOCUMENTATION = '''
 module: async_status
 short_description: Obtain status of asynchronous task
 description:
-     - "This module gets the status of an asynchronous task. See:
-       U(http://www.ansibleworks.com/docs/playbooks2.html#asynchronous-actions-and-polling)"
+     - "This module gets the status of an asynchronous task."
 version_added: "0.5"
 options:
   jid:
@@ -42,7 +41,7 @@ options:
     choices: [ "status", "cleanup" ]
     default: "status"
 notes:
-    - See U(http://www.ansibleworks.com/docs/playbooks2.html#asynchronous-actions-and-polling)
+    - See also U(http://www.ansibleworks.com/docs/playbooks_async.html#asynchronous-actions-and-polling)
 requirements: []
 author: Michael DeHaan
 '''
