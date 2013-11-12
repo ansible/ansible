@@ -186,12 +186,8 @@ def main():
             prev_state = 'file'
 
     if prev_state is not None and state is None:
-        if not params.get('src', None):
-            # idempotent exit if state is not specified
-            module.exit_json(path=path, changed=False)
-        else:
-            # src is defined, need to process other operations
-            state = prev_state
+        # set state to current type of file
+        state = prev_state
     elif state is None:
         # set default state to file
         state = 'file'
