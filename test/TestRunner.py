@@ -625,3 +625,56 @@ class TestRunner(unittest.TestCase):
         assert result['failed']
 
         os.unlink(sample)
+
+    def test_replace(self):
+        origin = self._get_test_file('known_hosts.txt')
+        scratch = self._get_stage_file('known_hosts.tmp')
+        shutil.copy(origin, scratch)
+
+        # regexp should not match
+        testcase = ('replace', [
+                    "dest=%s" % scratch,
+                    "regexp='^zeta.example.com(.+)$'"
+                    r"replace='zulu.example.com\1'"
+                    ])
+        result = self._run(*testcase)
+        assert result['changed'] == False
+        assert result['msg'] == ''
+
+        # regexp w one match, replace w backref
+        teststr = 'omega.example.com'
+        testip = '10.11.12.14'
+        testcase = ('replace', [
+                    "dest=%s" % scratch,
+                    "regexp='^[^,]+(,%s\s+.+)$'" % testip,
+                    r"replace='%s\1'" % teststr
+                    ])
+        result = self._run(*testcase)
+        assert result['changed']
+        assert result['msg'] == '1 replacements made'
+        assert file(scratch).read().find(teststr) != -1
+        assert file(scratch).read().find(testip) != -1
+
+        # regexp w multiple match, simple replace
+        teststr = '10.11.12.13'
+        testcase = ('replace', [
+                    "dest=%s" % scratch,
+                    "regexp='%s'" % teststr,
+                    "replace='11.12.13.14'"
+                    ])
+        result = self._run(*testcase)
+        assert result['changed']
+        assert result['msg'] == '2 replacements made'
+        assert file(scratch).read().find(teststr) == -1
+
+        # no replace should remove all matches
+        testcase = ('replace', [
+                    "dest=%s" % scratch,
+                    "regexp='^[^,]+,'"
+                    ])
+        result = self._run(*testcase)
+        assert result['changed']
+        assert result['msg'] == '3 replacements made'
+        assert file(scratch).read().find('.example.com') == -1
+
+        os.unlink(scratch)
