@@ -120,6 +120,12 @@ def search(value, pattern='', ignorecase=False):
     ''' Perform a `re.search` returning a boolean '''
     return regex(value, pattern, ignorecase, 'search')
 
+def unique(a):
+    return set(a)
+
+def intersect(a, b):
+    return set(a).intersection(b)
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -173,5 +179,9 @@ class FilterModule(object):
             'match': match,
             'search': search,
             'regex': regex,
+
+            # list
+            'unique' : unique,
+            'intersect': intersect,
         }
     
