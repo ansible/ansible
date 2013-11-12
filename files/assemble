@@ -31,9 +31,9 @@ description:
      - Assembles a configuration file from fragments. Often a particular
        program will take a single configuration file and does not support a
        C(conf.d) style structure where it is easy to build up the configuration
-       from multiple sources. M(assemble) will take a directory of files that have
-       already been transferred to the system, and concatenate them together to
-       produce a destination file. Files are assembled in string sorting order.
+       from multiple sources. M(assemble) will take a directory of files that can be
+       local or have already been transferred to the system, and concatenate them
+       together to produce a destination file. Files are assembled in string sorting order.
        Puppet calls this idea I(fragments).
 version_added: "0.5"
 options:
@@ -62,6 +62,14 @@ options:
     version_added: "1.4"
     required: false
     default: null
+  remote_src:
+    description:
+      - If False, it will search for src at originating/master machine, if True it will
+        go to the remote/target machine for the src.
+    choices: [ "True", "False" ]
+    required: false
+    default: "True"
+    version_added: "1.4"
   others:
     description:
       - all arguments accepted by the M(file) module also work here
@@ -107,6 +115,7 @@ def main():
             delimiter = dict(required=False),
             dest = dict(required=True),
             backup=dict(default=False, type='bool'),
+            remote_src=dict(default=False, type='bool'),
         ),
         add_file_common_args=True
     )
