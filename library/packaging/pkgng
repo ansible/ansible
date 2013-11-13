@@ -123,8 +123,8 @@ def install_packages(module, pkgin_path, packages, cached, pkgsite):
         if not module.check_mode:
             rc, out, err = module.run_command("%s %s install -U -y %s" % (pkgsite, pkgin_path, package))
 
-        if not module.check_mode and query_package(module, pkgin_path, package):
-            module.fail_json(msg="failed to install %s: %s" % (package, out))
+        if not module.check_mode and not query_package(module, pkgin_path, package):
+            module.fail_json(msg="failed to install %s: %s" % (package, out), stderr=err)
 
         install_c += 1
     
