@@ -165,8 +165,8 @@ def main():
     record_in             = module.params.get('record')
     type_in               = module.params.get('type')
     value_in              = module.params.get('value')
-    aws_secret_key        = module.params.get('aws_secret_key')
-    aws_access_key        = module.params.get('aws_access_key')
+
+    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
 
     value_list = ()
 
@@ -185,19 +185,6 @@ def main():
     if command_in == 'create' or command_in == 'delete':
         if not value_in:
             module.fail_json(msg = "parameter 'value' required for create/delete")
-
-    # allow environment variables to be used if ansible vars aren't set
-    if not aws_secret_key:
-        if  'AWS_SECRET_KEY' in os.environ:
-            aws_secret_key = os.environ['AWS_SECRET_KEY']
-        elif 'EC2_SECRET_KEY' in os.environ:
-            aws_secret_key = os.environ['EC2_SECRET_KEY']
-
-    if not aws_access_key:
-        if 'AWS_ACCESS_KEY' in os.environ:
-            aws_access_key = os.environ['AWS_ACCESS_KEY']
-        elif 'EC2_ACCESS_KEY' in os.environ:
-            aws_access_key = os.environ['EC2_ACCESS_KEY']
 
     # connect to the route53 endpoint 
     try:
@@ -263,7 +250,8 @@ def main():
 
     module.exit_json(changed=True)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
+from ansible.module_utils.ec2 import *
 
 main()
