@@ -18,10 +18,10 @@
     - copy: src={{filesdir}}/subdir/subdir2/subdir3/test1 dest={{testdir}}/file1
       register: res
     - command: test -f {{testdir}}/file1
-    - command: test "{{res.changed}}" == "True"
+    - command: test "{{res.changed}}" = "True"
     - copy: src={{filesdir}}/subdir/subdir2/subdir3/test1 dest={{testdir}}/file1
       register: res
-    - command: test "{{res.changed}}" == "False"
+    - command: test "{{res.changed}}" = "False"
 
     - name: "src single file, dest dir w/trailing slash"
       command: rm -rf {{testdir}}
@@ -29,10 +29,10 @@
     - copy: src={{filesdir}}/subdir/subdir2/subdir3/test1 dest={{testdir}}/
       register: res
     - command: test -f {{testdir}}/test1
-    - command: test "{{res.changed}}" == "True"
+    - command: test "{{res.changed}}" = "True"
     - copy: src={{filesdir}}/subdir/subdir2/subdir3/test1 dest={{testdir}}/
       register: res
-    - command: test "{{res.changed}}" == "False"
+    - command: test "{{res.changed}}" = "False"
 
     - name: "src single file, dest dir wo/trailing slash - doesn't behave in sane way"
       command: rm -rf {{testdir}}
@@ -40,10 +40,10 @@
     - copy: src={{filesdir}}/subdir/subdir2/subdir3/test1 dest={{testdir}}
       register: res
     - shell: test -f {{testdir}}/test1
-    - command: test "{{res.changed}}" == "True"
+    - command: test "{{res.changed}}" = "True"
     - copy: src={{filesdir}}/subdir/subdir2/subdir3/test1 dest={{testdir}}
       register: res
-    - command: test "{{res.changed}}" == "False"
+    - command: test "{{res.changed}}" = "False"
 
     #
     # Now, test recursive behavior
@@ -59,10 +59,10 @@
     - command: test -d {{testdir}}/subdir2/subdir3
     - command: test -f {{testdir}}/subdir2/subdir3/test1
     - command: test -f {{testdir}}/subdir2/subdir3/test2
-    - command: test "{{res.changed}}" == "True"
+    - command: test "{{res.changed}}" = "True"
     - copy: src={{filesdir}}/subdir/ dest={{testdir}}/
       register: res
-    - command: test "{{res.changed}}" == "False"
+    - command: test "{{res.changed}}" = "False"
 
     # Expecting the same behavior
     - name: "src dir w/trailing slash, dest wo/trailing slash"
@@ -75,10 +75,10 @@
     - command: test -d {{testdir}}/subdir2/subdir3
     - command: test -f {{testdir}}/subdir2/subdir3/test1
     - command: test -f {{testdir}}/subdir2/subdir3/test2
-    - command: test "{{res.changed}}" == "True"
+    - command: test "{{res.changed}}" = "True"
     - copy: src={{filesdir}}/subdir/ dest={{testdir}}
       register: res
-    - command: test "{{res.changed}}" == "False"
+    - command: test "{{res.changed}}" = "False"
 
     - name: "src dir wo/trailing slash, dest w/trailing slash"
       command: rm -rf {{testdir}}
@@ -90,10 +90,10 @@
     - command: test -d {{testdir}}/subdir/subdir2/subdir3
     - command: test -f {{testdir}}/subdir/subdir2/subdir3/test1
     - command: test -f {{testdir}}/subdir/subdir2/subdir3/test2
-    - command: test "{{res.changed}}" == "True"
+    - command: test "{{res.changed}}" = "True"
     - copy: src={{filesdir}}/subdir dest={{testdir}}/
       register: res
-    - command: test "{{res.changed}}" == "False"
+    - command: test "{{res.changed}}" = "False"
 
     # Expecting the same behavior
     - name: "src dir wo/trailing slash, dest wo/trailing slash"
@@ -106,10 +106,10 @@
     - command: test -d {{testdir}}/subdir/subdir2/subdir3
     - command: test -f {{testdir}}/subdir/subdir2/subdir3/test1
     - command: test -f {{testdir}}/subdir/subdir2/subdir3/test2
-    - command: test "{{res.changed}}" == "True"
+    - command: test "{{res.changed}}" = "True"
     - copy: src={{filesdir}}/subdir dest={{testdir}}
       register: res
-    - command: test "{{res.changed}}" == "False"
+    - command: test "{{res.changed}}" = "False"
 
 
     - name: "Verifying notify handling for recursive files"
