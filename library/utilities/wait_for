@@ -22,16 +22,20 @@ import socket
 import datetime
 import time
 import sys
+import re
 
 DOCUMENTATION = '''
 ---
 module: wait_for
-short_description: Waits for a given port to become accessible on a server.
+short_description: Waits for a condition before continuing.
 description:
-     - This is useful for when services are not immediately available after
-       their init scripts return - which is true of certain Java application
-       servers. It is also useful when starting guests with the M(virt) module and
-       needing to pause until they are ready.
+     - Waiting for a port to become available is useful for when services 
+       are not immediately available after their init scripts return - 
+       which is true of certain Java application servers. It is also 
+       useful when starting guests with the M(virt) module and
+       needing to pause until they are ready. This module can 
+       also be used to wait for a file to be available on the filesystem
+       or with a regex match a string to be present in a file.
 version_added: "0.7"
 options:
   host:
@@ -53,21 +57,41 @@ options:
   port:
     description:
       - port number to poll
-    required: true
+    required: false
   state:
     description:
-      - either C(started), or C(stopped) depending on whether the module should 
-        poll for the port being open or closed.
-    choices: [ "started", "stopped" ]
+      - either C(present), C(started), or C(stopped) 
+      - When checking a port C(started) will ensure the port is open, C(stopped) will check that it is closed
+      - When checking for a file or a search string C(present) or C(started) will ensure that the file or string is present before continuing
+    choices: [ "present", "started", "stopped" ]
     default: "started"
+  path:
+    version_added: "1.4"
+    required: false
+    description:
+      - path to a file on the filesytem that must exist before continuing
+  search_regex:
+    version_added: "1.4"
+    required: false
+    description:
+      - with the path option can be used match a string in the file that must match before continuing.  Defaults to a multiline regex.
+   
 notes: []
 requirements: []
-author: Jeroen Hoekx
+author: Jeroen Hoekx, John Jarvis
 '''
 
 EXAMPLES = '''
+
 # wait 300 seconds for port 8000 to become open on the host, don't start checking for 10 seconds
 - wait_for: port=8000 delay=10"
+
+# wait until the file /tmp/foo is present before continuing
+- wait_for: path=/tmp/foo
+
+# wait until the string "completed" is in the file /tmp/foo before continuing
+- wait_for: path=/tmp/foo search_regex=completed
+
 '''
 
 def main():
@@ -78,8 +102,10 @@ def main():
             timeout=dict(default=300),
             connect_timeout=dict(default=5),
             delay=dict(default=0),
-            port=dict(required=True),
-            state=dict(default='started', choices=['started', 'stopped']),
+            port=dict(default=None),
+            path=dict(default=None),
+            search_regex=dict(default=None),
+            state=dict(default='started', choices=['started', 'stopped', 'present']),
         ),
     )
 
@@ -89,16 +115,26 @@ def main():
     timeout = int(params['timeout'])
     connect_timeout = int(params['connect_timeout'])
     delay = int(params['delay'])
-    port = int(params['port'])
+    if params['port']:
+        port = int(params['port'])
+    else:
+        port = None
     state = params['state']
-
+    path = params['path']
+    search_regex = params['search_regex']
+    
+    if port and path:
+        module.fail_json(msg="port and path parameter can not both be passed to wait_for")
+    if path and state == 'stopped':
+        module.fail_json(msg="state=stopped should only be used for checking a port in the wait_for module")
+        
     start = datetime.datetime.now()
 
     if delay:
         time.sleep(delay)
 
     if state == 'stopped':
-        ### first wait for the host to go down
+        ### first wait for the stop condition
         end = start + datetime.timedelta(seconds=timeout)
 
         while datetime.datetime.now() < end:
@@ -115,27 +151,47 @@ def main():
             elapsed = datetime.datetime.now() - start
             module.fail_json(msg="Timeout when waiting for %s:%s to stop." % (host, port), elapsed=elapsed.seconds)
 
-    elif state == 'started':
-        ### wait for the host to come up
+    elif state in ['started', 'present']:
+        ### wait for start condition
         end = start + datetime.timedelta(seconds=timeout)
-
         while datetime.datetime.now() < end:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(connect_timeout)
-            try:
-                s.connect( (host, port) )
-                s.shutdown(socket.SHUT_RDWR)
-                s.close()
-                break
-            except:
-                time.sleep(1)
-                pass
+            if path:
+                try:
+                    with open(path) as f:
+                        if search_regex:
+                            if re.search(search_regex, f.read(), re.MULTILINE):
+                                break
+                            else:
+                                time.sleep(1)
+                        else:
+                            break
+                except IOError:
+                    time.sleep(1)
+                    pass
+            elif port:
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.settimeout(connect_timeout)
+                try:
+                    s.connect( (host, port) )
+                    s.shutdown(socket.SHUT_RDWR)
+                    s.close()
+                    break
+                except:
+                    time.sleep(1)
+                    pass
         else:
             elapsed = datetime.datetime.now() - start
-            module.fail_json(msg="Timeout when waiting for %s:%s" % (host, port), elapsed=elapsed.seconds)
+            if port:
+                module.fail_json(msg="Timeout when waiting for %s:%s" % (host, port), elapsed=elapsed.seconds)
+            elif path:
+                if search_regex:
+                    module.fail_json(msg="Timeout when waiting for search string %s in %s" % (search_regex, path), elapsed=elapsed.seconds)
+                else:
+                    module.fail_json(msg="Timeout when waiting for file %s" % (path), elapsed=elapsed.seconds)
+
 
     elapsed = datetime.datetime.now() - start
-    module.exit_json(state=state, port=port, elapsed=elapsed.seconds)
+    module.exit_json(state=state, port=port, search_regex=search_regex, path=path, elapsed=elapsed.seconds)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
