@@ -31,7 +31,7 @@ options:
             - the name of the user to manage
         required: true
     host:
-        descrption:
+        description:
             - the ejabberd host associated with this username
         required: true
     password:
