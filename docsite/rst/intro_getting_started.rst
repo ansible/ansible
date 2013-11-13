@@ -65,7 +65,7 @@ do:
     $ ssh-agent bash
     $ ssh-add ~/.ssh/id_rsa
 
-(Depending on your setup, you may wish to ansible's --private-key option to specify a pem file instead)
+(Depending on your setup, you may wish to use Ansible's --private-key option to specify a pem file instead)
 
 Now ping all your nodes:
 
@@ -118,6 +118,8 @@ If you wish to disable this behavior and understand the implications, you can do
     host_key_checking = False
 
 Alternatively this can be set by an environment variable:
+
+.. code-block:: bash
 
     $ export ANSIBLE_HOST_KEY_CHECKING=False
 

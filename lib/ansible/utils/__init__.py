@@ -1007,4 +1007,13 @@ def combine_vars(a, b):
     else:
         return dict(a.items() + b.items())
 
+def random_password(length=20, chars=C.DEFAULT_PASSWORD_CHARS):
+    '''Return a random password string of length containing only chars.'''
 
+    password = []
+    while len(password) < length:
+        new_char = os.urandom(1)
+        if new_char in chars:
+            password.append(new_char)
+
+    return ''.join(password)

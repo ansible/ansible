@@ -1445,6 +1445,16 @@ class LinuxNetwork(Network):
                     if os.path.exists(path):
                         interfaces[device]['all_slaves_active'] = open(path).read() == '1'
 
+            # Check whether a interface is in promiscuous mode
+            if os.path.exists(os.path.join(path,'flags')):
+                promisc_mode = False
+                # The second byte indicates whether the interface is in promiscuous mode.
+                # 1 = promisc
+                # 0 = no promisc
+                data = int(open(os.path.join(path, 'flags')).read().strip(),16)
+                promisc_mode = (data & 0x0100 > 0)
+                interfaces[device]['promisc'] = promisc_mode
+
             def parse_ip_output(output, secondary=False):
                 for line in output.split('\n'):
                     if not line:
@@ -1731,6 +1741,8 @@ class GenericBsdIfconfigNetwork(Network):
 
     def merge_default_interface(self, defaults, interfaces, ip_type):
         if not 'interface' in defaults.keys():
+            return
+        if not defaults['interface'] in interfaces:
             return
         ifinfo = interfaces[defaults['interface']]
         # copy all the interface values across except addresses
