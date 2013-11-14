@@ -1,0 +1,198 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2013, Dylan Martin <dmartin@seattlecentral.edu>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: unarchive
+short_description: Copies archive to remote locations and unpacks them
+description:
+     - The M(unarchive) module copies an archive file on the local box to remote locations and unpacks them.
+options:
+  src:
+    description:
+      - Local path to archive file to copy to the remote server; can be absolute or relative.
+    required: true
+    default: null
+  dest:
+    description:
+      - Remote absolute path where the archive should be unpacked
+    required: true
+    default: null
+author: Dylan Martin 
+todo:
+    - detect changed/unchanged for .zip files
+    - handle common unarchive args, like preserve owner/timestamp etc...
+notes:
+    - requires tar/unzip command on host
+    - can handle gzip, bzip2 and xz compressed as well as uncompressed tar files
+    - detects type of archive automatically
+    - uses tar's --diff arg to calculate if changed or not.  If this arg is not
+      supported, it will always unpack the archive
+    - does not detect if a .zip file is different from destination - always unzips
+    - existing files/directories in the destination which are not in the archvie
+      are not touched.  This is the same behavior as a normal archive extraction
+    - existing files/directories in the destination which are not in the archvie
+      are ignored for purposes of deciding if the archive should be unpacked or not
+'''
+
+EXAMPLES = '''
+# Example from Ansible Playbooks
+- unarchive: src=foo.tgz dest=/var/lib/foo
+'''
+
+
+import os
+# class to handle .zip files
+class _zipfile(object):
+    
+    def __init__(self,src,dest,module):
+        self.src = src
+        self.dest = dest
+        self.module = module
+
+    def is_unarchived(self):
+        return dict(bool = False)
+
+    def unarchive(self):
+        cmd = 'unzip "%s" -d "%s" -o'  % (self.src,self.dest)
+        rc, out, err = self.module.run_command(cmd)
+        return dict(cmd = cmd, rc=rc, out=out, err=err)
+
+    def can_handle_archive(self):
+        cmd = 'unzip -l "%s"' % (self.src)
+        rc, out, err = self.module.run_command(cmd)
+        if rc == 0:
+            return True
+        return False
+
+# class to handle gzipped tar files
+class _tgzfile(object):
+    
+    def __init__(self,src,dest,module):
+        self.src = src
+        self.dest = dest
+        self.module = module
+        self.zipflag = 'z'
+
+    def is_unarchived(self):
+        dirof = os.path.dirname(self.dest)
+        destbase = os.path.basename(self.dest)
+        cmd = 'tar -v -C "%s" --diff -%sf "%s"'  % (self.dest, self.zipflag,self.src )
+        rc, out, err = self.module.run_command(cmd)
+        bool = True if rc == 0 else False
+        return dict( bool = bool, rc = rc , out = out, err = err, cmd = cmd)
+
+    def unarchive(self):
+        cmd = 'tar -C "%s" -x%sf "%s"' % (self.dest,self.zipflag,self.src)
+        rc, out, err = self.module.run_command(cmd)
+        return dict(cmd = cmd, rc=rc, out=out, err=err)
+
+    def can_handle_archive(self):
+        cmd = 'tar -t%sf "%s"' % (self.zipflag,self.src)
+        rc, out, err = self.module.run_command(cmd)
+        if rc == 0:
+            return True
+        return False
+
+# class to handle tar files that aren't compressed
+class _tarfile(_tgzfile):
+    def __init__(self,src,dest,module):
+        self.src = src
+        self.dest = dest
+        self.module = module
+        self.zipflag = ''
+
+# class to handle bzip2 compressed tar files
+class _tarbzip(_tgzfile):
+    def __init__(self,src,dest,module):
+        self.src = src
+        self.dest = dest
+        self.module = module
+        self.zipflag = 'j'
+
+# class to handle xz compressed tar files
+class _tarxz(_tgzfile):
+    def __init__(self,src,dest,module):
+        self.src = src
+        self.dest = dest
+        self.module = module
+        self.zipflag = 'J'
+
+# try handlers in order and return the one that works or bail if none work
+def pick_handler (src,dest,module):
+    handlers = [_tgzfile, _zipfile, _tarfile, _tarbzip, _tarxz]
+    for handler in handlers:
+        obj = handler(src,dest,module)
+        if obj.can_handle_archive():
+            return obj
+    raise RuntimeError('Failed to find handler to unarchive "%s"' % src)
+
+def main():
+    module = AnsibleModule(
+        # not checking because of daisy chain to file module
+        argument_spec = dict(
+            src               = dict(required=False),
+            original_basename = dict(required=False), # used to handle 'dest is a directory' via template, a slight hack
+            dest              = dict(required=True),
+        ),
+        add_file_common_args=True,
+    )
+
+    src    = os.path.expanduser(module.params['src'])
+    dest   = os.path.expanduser(module.params['dest'])
+
+    # did tar file arrive?
+    if not os.path.exists(src):
+        module.fail_json(msg="Source '%s' failed to transfer" % (src))
+    if not os.access(src, os.R_OK):
+        module.fail_json(msg="Source '%s' not readable" % (src))
+
+    # is dest OK to recieve tar file?
+    if not os.path.exists(os.path.dirname(dest)):
+        module.fail_json(msg="Destination directory '%s' does not exist" % (os.path.dirname(dest)))
+    if not os.access(os.path.dirname(dest), os.W_OK):
+        module.fail_json(msg="Destination '%s' not writable" % (os.path.dirname(dest)))
+
+    handler = pick_handler(src,dest,module)
+
+    res_args = dict( handler=handler.__class__.__name__, dest = dest, src = src )
+
+    # do we need to do unpack?
+    namelist = ['bool','rc','out','err','cmd']
+    res_args['check_results'] = handler.is_unarchived()
+    if res_args['check_results']['bool']:
+        res_args['changed'] = False
+        module.exit_json(**res_args)
+
+    # do the unpack
+    try:
+        results = handler.unarchive()
+        #results = (src,dest,module)
+    except IOError:
+        module.fail_json(msg="failed to unpack %s to %s" % (src, dest))
+
+    res_args['changed'] = True
+
+    module.exit_json(**res_args)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
