@@ -16,12 +16,16 @@ def get_ec2_creds(module):
     if not ec2_access_key:
         if 'EC2_ACCESS_KEY' in os.environ:
             ec2_access_key = os.environ['EC2_ACCESS_KEY']
+        elif 'AWS_ACCESS_KEY_ID' in os.environ:
+            ec2_access_key = os.environ['AWS_ACCESS_KEY_ID']
         elif 'AWS_ACCESS_KEY' in os.environ:
             ec2_access_key = os.environ['AWS_ACCESS_KEY']
 
     if not ec2_secret_key:
         if 'EC2_SECRET_KEY' in os.environ:
             ec2_secret_key = os.environ['EC2_SECRET_KEY']
+        elif 'AWS_SECRET_ACCESS_KEY' in os.environ:
+            ec2_secret_key = os.environ['AWS_SECRET_ACCESS_KEY']
         elif 'AWS_SECRET_KEY' in os.environ:
             ec2_secret_key = os.environ['AWS_SECRET_KEY']
 
