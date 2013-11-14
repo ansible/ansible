@@ -1,27 +1,26 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2013, Phillip Gentry <phillip@cx.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
 import json
 import urllib2
 import base64
-
-"""
-Ansible module to add authorized_keys for ssh logins.
-(c) 2013, Phillip Gentry <phillip@cx.com>
-
-This file is part of Ansible
-
-Ansible is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Ansible is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-"""
 
 DOCUMENTATION = '''
 ---
@@ -29,7 +28,7 @@ module: githooks
 short_description: Manages github service hooks.
 description:
      - Adds service hooks and removes service hooks that have an error status.
-version_added: "1.3.4"
+version_added: "1.4"
 options:
   user:
     description:
@@ -62,7 +61,6 @@ EXAMPLES = '''
 # Cleaning all hooks for this repo that had an error on the last update. Since this works for all hooks in a repo it is probably best that this would be called from a handler.
 - local_action: githooks action=cleanall user={{ gituser }} oauthkey={{ oauthkey }} repo={{ repo }}
 '''
-
 
 def list(hookurl, oauthkey, repo, user):
     url = "%s/hooks" % repo
