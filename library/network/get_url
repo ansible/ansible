@@ -83,7 +83,7 @@ options:
       - A username passed using HTTPBasicAuth
     required: false
     default: ''
-  username:
+  password:
     description:
       - A password passed using HTTPBasicAuth
     required: false
@@ -147,7 +147,7 @@ def url_do_get(module, url, dest, use_proxy, username, password):
     handlers = []
 
     parsed = urlparse.urlparse(url)
-
+    credentials, netloc = ('', url)
     if '@' in parsed[1]:
         credentials, netloc = parsed[1].split('@', 1)
         if ':' in credentials:
@@ -247,8 +247,8 @@ def main():
             dest = dict(required=True),
             force = dict(default='no', aliases=['thirsty'], type='bool'),
             sha256sum = dict(default=''),
-            use_proxy = dict(default='yes', type='bool')
-            username = dict(default='')
+            use_proxy = dict(default='yes', type='bool'),
+            username = dict(default=''),
             password = dict(default='')
         ),
         add_file_common_args=True
