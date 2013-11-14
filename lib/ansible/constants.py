@@ -90,6 +90,10 @@ if getattr(sys, "real_prefix", None):
 else:
     DIST_MODULE_PATH = '/usr/share/ansible/'
 
+# check all of these extensions when looking for yaml files for things like
+# group variables
+YAML_FILENAME_EXTENSIONS = [ "", ".yml", ".yaml" ]
+
 # sections in config file
 DEFAULTS='defaults'
 
