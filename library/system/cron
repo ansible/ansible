@@ -455,6 +455,9 @@ def main():
     if job is None and do_install:
         module.fail_json(msg="You must specify 'job' to install a new cron job")
 
+    if job and name is None and not do_install:
+        module.fail_json(msg="You must specify 'name' to remove a cron job")
+
     if reboot:
         if special_time:
             module.fail_json(msg="reboot and special_time are mutually exclusive")
