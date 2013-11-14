@@ -159,7 +159,7 @@ def main(args):
             diff=options.diff
         )
 
-        if options.listhosts or options.listtasks:
+        if options.listhosts or options.listtasks or options.syntax:
             print ''
             print 'playbook: %s' % playbook
             print ''
