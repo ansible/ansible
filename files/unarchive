@@ -149,7 +149,7 @@ def main():
     module = AnsibleModule(
         # not checking because of daisy chain to file module
         argument_spec = dict(
-            src               = dict(required=False),
+            src               = dict(required=True),
             original_basename = dict(required=False), # used to handle 'dest is a directory' via template, a slight hack
             dest              = dict(required=True),
         ),
