@@ -41,7 +41,7 @@ options:
     required: true
   repo:
     description:
-      - This is the API url for the repository you want to manage hooks for. It should be in the form of: https://api.github.com/repos/user:/repo:. Note this is different than the normal repo url.
+      - "This is the API url for the repository you want to manage hooks for. It should be in the form of: https://api.github.com/repos/user:/repo:. Note this is different than the normal repo url."
     required: true
   hookurl:
     description:
