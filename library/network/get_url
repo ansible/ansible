@@ -78,6 +78,16 @@ options:
     required: false
     default: 'yes'
     choices: ['yes', 'no']
+  username:
+    description:
+      - A username passed using HTTPBasicAuth
+    required: false
+    default: ''
+  password:
+    description:
+      - A password passed using HTTPBasicAuth
+    required: false
+    default: ''
   others:
     description:
       - all arguments accepted by the M(file) module also work here
@@ -125,7 +135,7 @@ def url_filename(url):
         return 'index.html'
     return fn
 
-def url_do_get(module, url, dest, use_proxy):
+def url_do_get(module, url, dest, use_proxy, username, password):
     """
     Get url and return request and info
     Credits: http://stackoverflow.com/questions/7006574/how-to-download-file-from-ftp
@@ -137,7 +147,7 @@ def url_do_get(module, url, dest, use_proxy):
     handlers = []
 
     parsed = urlparse.urlparse(url)
-
+    credentials, netloc = ('', url)
     if '@' in parsed[1]:
         credentials, netloc = parsed[1].split('@', 1)
         if ':' in credentials:
@@ -148,6 +158,7 @@ def url_do_get(module, url, dest, use_proxy):
         parsed = list(parsed)
         parsed[1] = netloc
 
+    if username != '' and password != '':
         passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
         # this creates a password manager
         passman.add_password(None, netloc, username, password)
@@ -190,14 +201,14 @@ def url_do_get(module, url, dest, use_proxy):
 
     return r, info
 
-def url_get(module, url, dest, use_proxy):
+def url_get(module, url, dest, use_proxy, username, password):
     """
     Download url and store at dest.
     If dest is a directory, determine filename from url.
     Return (tempfile, info about the request)
     """
 
-    req, info = url_do_get(module, url, dest, use_proxy)
+    req, info = url_do_get(module, url, dest, use_proxy, username, password)
 
     # TODO: should really handle 304, but how? src file could exist (and be newer) but empty
     if info['status'] == 304:
@@ -236,7 +247,9 @@ def main():
             dest = dict(required=True),
             force = dict(default='no', aliases=['thirsty'], type='bool'),
             sha256sum = dict(default=''),
-            use_proxy = dict(default='yes', type='bool')
+            use_proxy = dict(default='yes', type='bool'),
+            username = dict(default=''),
+            password = dict(default='')
         ),
         add_file_common_args=True
     )
@@ -246,7 +259,9 @@ def main():
     force = module.params['force']
     sha256sum = module.params['sha256sum']
     use_proxy = module.params['use_proxy']
-
+    username = module.params['username']
+    password = module.params['password']
+    
     if os.path.isdir(dest):
         dest = os.path.join(dest, url_filename(url))
 
@@ -255,7 +270,7 @@ def main():
             module.exit_json(msg="file already exists", dest=dest, url=url, changed=False)
 
     # download to tmpsrc
-    tmpsrc, info = url_get(module, url, dest, use_proxy)
+    tmpsrc, info = url_get(module, url, dest, use_proxy, username, password)
     md5sum_src   = None
     md5sum_dest  = None
 
