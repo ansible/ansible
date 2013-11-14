@@ -163,7 +163,9 @@ class Npm(object):
         data = self._exec(['outdated'], True, False)
         for dep in data.splitlines():
             if dep:
-                pkg, other = dep.split('@', 1)
+                # node.js v0.10.22 changed the `npm outdated` module separator
+                # from "@" to " ". Split on both for backwards compatibility.
+                pkg, other = re.split('\s|@', dep, 1)
                 outdated.append(pkg)
 
         return outdated
