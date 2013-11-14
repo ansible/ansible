@@ -114,7 +114,7 @@ def main():
         argument_spec = dict(
             name = dict(aliases=['pkg'], required=True),
             state = dict(choices=['present', 'absent', 'latest'], required=True),
-            depot = dict(default=None, requied=False)
+            depot = dict(default=None, required=False)
         ),
         supports_check_mode=True
     )
