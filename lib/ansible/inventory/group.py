@@ -55,13 +55,10 @@ class Group(object):
 
         hosts = []
         for kid in self.child_groups:
-            kid_hosts = kid.get_hosts()
-            for kk in kid_hosts:
-               if kk not in hosts:
-                   hosts.append(kk)
-        for mine in self.hosts:
-            if mine not in hosts:
-                hosts.append(mine)
+            a = [h for h in kid.get_hosts() if h not in hosts]
+            hosts.extend(a)
+        a = [h for h in self.hosts if h not in hosts]
+        hosts.extend(a)
         return hosts
 
     def get_variables(self):
