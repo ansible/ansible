@@ -1,0 +1,194 @@
+#!/usr/bin/python -tt
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: rax_facts
+short_description: Gather facts for Rackspace Cloud Servers
+description:
+     - Gather facts for Rackspace Cloud Servers.
+version_added: "1.4"
+options:
+  address:
+    description:
+      - Server IP address to retrieve facts for, will match any IP assigned to
+        the server
+  api_key:
+    description:
+      - Rackspace API key (overrides C(credentials))
+  credentials:
+    description:
+      - File to find the Rackspace credentials in (ignored if C(api_key) and
+        C(username) are provided)
+    default: null
+    aliases: ['creds_file']
+  id:
+    description:
+      - Server ID to retrieve facts for
+  name:
+    description:
+      - Server name to retrieve facts for
+    default: null
+  region:
+    description:
+      - Region to create the load balancer in
+    default: DFW
+  username:
+    description:
+      - Rackspace username (overrides C(credentials))
+requirements: [ "pyrax" ]
+author: Matt Martz
+notes:
+  - The following environment variables can be used, C(RAX_USERNAME),
+    C(RAX_API_KEY), C(RAX_CREDS_FILE), C(RAX_CREDENTIALS), C(RAX_REGION).
+  - C(RAX_CREDENTIALS) and C(RAX_CREDS_FILE) points to a credentials file
+    appropriate for pyrax. See U(https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating)
+  - C(RAX_USERNAME) and C(RAX_API_KEY) obviate the use of a credentials file
+  - C(RAX_REGION) defines a Rackspace Public Cloud region (DFW, ORD, LON, ...)
+'''
+
+EXAMPLES = '''
+- name: Gather info about servers
+  hosts: all
+  gather_facts: False
+  tasks:
+    - name: Get facts about servers
+      local_action:
+        module: rax_facts
+        credentials: ~/.raxpub
+        name: "{{ inventory_hostname }}"
+        region: DFW
+    - name: Map some facts
+      set_fact:
+        ansible_ssh_host: "{{ rax_accessipv4 }}"
+'''
+
+import sys
+import os
+
+from types import NoneType
+
+try:
+    import pyrax
+except ImportError:
+    print("failed=True msg='pyrax required for this module'")
+    sys.exit(1)
+
+NON_CALLABLES = (basestring, bool, dict, int, list, NoneType)
+
+
+def rax_slugify(value):
+    return 'rax_%s' % (re.sub('[^\w-]', '_', value).lower().lstrip('_'))
+
+
+def pyrax_object_to_dict(obj):
+    instance = {}
+    for key in dir(obj):
+        value = getattr(obj, key)
+        if (isinstance(value, NON_CALLABLES) and not key.startswith('_')):
+            key = rax_slugify(key)
+            instance[key] = value
+    return instance
+
+
+def rax_facts(module, address, name, server_id):
+    changed = False
+
+    cs = pyrax.cloudservers
+    ansible_facts = {}
+
+    search_opts = {}
+    if name:
+        search_opts = dict(name=name)
+        try:
+            servers = cs.servers.list(search_opts=search_opts)
+        except Exception, e:
+            module.fail_json(msg='%s' % e.message)
+    elif address:
+        servers = []
+        try:
+            for server in cs.servers.list():
+                for addresses in server.networks.values():
+                    if address in addresses:
+                        servers.append(server)
+                        break
+        except Exception, e:
+            module.fail_json(msg='%s' % e.message)
+    elif server_id:
+        servers = []
+        try:
+            servers.append(cs.servers.get(server_id))
+        except Exception, e:
+            pass
+
+    if len(servers) > 1:
+        module.fail_json(msg='Multiple servers found matching provided '
+                             'search parameters')
+    elif len(servers) == 1:
+        ansible_facts = pyrax_object_to_dict(servers[0])
+
+    module.exit_json(changed=changed, ansible_facts=ansible_facts)
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            address=dict(),
+            api_key=dict(),
+            credentials=dict(aliases=['creds_file']),
+            id=dict(),
+            name=dict(),
+            region=dict(),
+            username=dict(),
+        ),
+        mutually_exclusive=[['address', 'id', 'name']],
+        required_one_of=[['address', 'id', 'name']],
+    )
+
+    address = module.params.get('address')
+    api_key = module.params.get('api_key')
+    credentials = module.params.get('credentials')
+    server_id = module.params.get('id')
+    name = module.params.get('name')
+    region = module.params.get('region')
+    username = module.params.get('username')
+
+    try:
+        username = username or os.environ.get('RAX_USERNAME')
+        api_key = api_key or os.environ.get('RAX_API_KEY')
+        credentials = (credentials or os.environ.get('RAX_CREDENTIALS') or
+                       os.environ.get('RAX_CREDS_FILE'))
+        region = region or os.environ.get('RAX_REGION')
+    except KeyError, e:
+        module.fail_json(msg='Unable to load %s' % e.message)
+
+    try:
+        pyrax.set_setting('identity_type', 'rackspace')
+        if api_key and username:
+            pyrax.set_credentials(username, api_key=api_key, region=region)
+        elif credentials:
+            credentials = os.path.expanduser(credentials)
+            pyrax.set_credential_file(credentials, region=region)
+        else:
+            raise Exception('No credentials supplied!')
+    except Exception, e:
+        module.fail_json(msg='%s' % e.message)
+
+    rax_facts(module, address, name, server_id)
+
+from ansible.module_utils.basic import *
+
+main()
