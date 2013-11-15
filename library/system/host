@@ -100,7 +100,7 @@ class Host(object):
         f.close()
 
         for lineno, line in enumerate(self._hostsfile_lines):
-            if line.startswith("#"):
+            if line.startswith("#") or line.startswith("\n"):
                 continue
 
             ip = line.split()[0:1]
