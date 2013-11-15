@@ -75,7 +75,6 @@ class Host(object):
         self._ip_matches        = False
         self._hostname_matches  = False
         self._aliases_matches   = False
-        self._has_aliases       = False
         self._found_on_line     = -1
 
     def validate_has_hostname_on_present(self):
@@ -100,7 +99,7 @@ class Host(object):
         f.close()
 
         for lineno, line in enumerate(self._hostsfile_lines):
-            if line.startswith("#"):
+            if line.startswith("#") or line.startswith("\n"):
                 continue
 
             ip = line.split()[0:1]
@@ -117,16 +116,12 @@ class Host(object):
 
             # only look at aliases if we found hostname or ip
             if self._hostname_matches or self._ip_matches:
-                if aliases:
-                    self._has_aliases = True
-                if self.aliases and self.aliases == aliases:
+                if self.aliases == aliases:
                     self._aliases_matches = True
                 break
 
     def full_entry_exists(self):
-        if self.aliases and not self._aliases_matches:
-            return False
-        return self._ip_matches and self._hostname_matches
+        return self._ip_matches and self._hostname_matches and self._aliases_matches
 
     def entry_exists(self):
         return self._ip_matches or self._hostname_matches
@@ -157,7 +152,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             ip=dict(default=None, type='str'),
             hostname=dict(default=None, type='str'),
-            aliases=dict(default=None, type='str'),
+            aliases=dict(default='', type='str'),
         ),
         supports_check_mode=True
     )
@@ -167,13 +162,13 @@ def main():
     result['state'] = host.state
     result['changed'] = False
 
-    err = host.validate_has_hostname_on_present()
-    if err:
-        module.fail_json(msg=err)
+    result['msg'] = host.validate_has_hostname_on_present()
+    if result['msg']:
+        module.fail_json(**result)
 
-    err = host.validate_has_ip_or_hostname_on_absent()
-    if err:
-        module.fail_json(msg=err)
+    result['msg'] = host.validate_has_ip_or_hostname_on_absent()
+    if result['msg']:
+        module.fail_json(**result)
 
     host.proceed_hosts_entries()
     if host.state == 'present':
