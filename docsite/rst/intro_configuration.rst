@@ -1,4 +1,3 @@
-
 The Ansible Configuration File
 ++++++++++++++++++++++++++++++
 
@@ -7,7 +6,7 @@ The Ansible Configuration File
 Certain things in Ansible are adjustable in a configuration file.  In general, the stock configuration is probably
 right for most users, but that doesn't mean you might not want to change them.
 
-The mechanism for doing this is the "ansible.cfg" file, which is looked for in the following locations:
+The mechanism for doing this is the "ansible.cfg" file, which is looked for in the following locations::
 
     * /etc/ansible/ansible.cfg
     * ~/.ansible.cfg
@@ -30,8 +29,7 @@ as a ".rpmnew" file (or other) as appropriate in the case of updates.
 If you have installed from pip or from source, however, you may want to create this file in order to override
 default settings in Ansible.
 
-You may wish to consult the `ansible.cfg in source control <https://raw.github.com/ansible/ansible/devel/examples/ansible.cfg>` for
-all of the possible latest values.
+You may wish to consult the `ansible.cfg in source control <https://raw.github.com/ansible/ansible/devel/examples/ansible.cfg>`_ for all of the possible latest values.
 
 .. _environmental_configuration:
 
@@ -206,8 +204,8 @@ is very very conservative::
    forks=5
 
 
-hash_behavior
-=============
+hash_behaviour
+==============
 
 Ansible by default will override variables in specific precedence orders, as described in :doc:`playbooks_variables`.  When a variable
 of higher precedence wins, it will replace the other value.  
@@ -216,7 +214,7 @@ Some users prefer that variables that are hashes (aka 'dictionaries' in Python t
 arrays.  We generally recommend not using this setting unless you think you have an absolute need for it, and playbooks in the
 official examples repos do not use this setting::
 
-    #hash_behavior=replace
+    #hash_behaviour=replace
 
 The valid values are either 'replace' (the default) or 'merge'.
 
@@ -283,7 +281,7 @@ log_path
 ========
 
 If present and configured in ansible.cfg, Ansible will log information about executions at the designated location.  Be sure
-the user running Ansible has permissions on the logfile.
+the user running Ansible has permissions on the logfile::
 
     log_path=/var/log/ansible.log
 
@@ -507,7 +505,7 @@ instead.  Setting it to False will improve performance and is recommended when h
 OpenSSH Specific Settings
 -------------------------
 
-Under the [ssh] header, the following settings are tunable for SSH connections.  OpenSSH is the default connection type for Ansible
+Under the [ssh_connection] header, the following settings are tunable for SSH connections.  OpenSSH is the default connection type for Ansible
 on OSes that are new enough to support ControlPersist.  (This means basically all operating systems except Enterprise Linux 6 or earlier).
 
 .. _ssh_args:

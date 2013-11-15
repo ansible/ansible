@@ -43,8 +43,8 @@ options:
     default: null
   password:
     description:
-      - set the user's password
-    required: true
+      - set the user's password, before 1.4 this was required.
+    required: false
     default: null
   db:
     description:
@@ -90,6 +90,18 @@ options:
     required: false
     default: present
     choices: [ "present", "absent" ]
+  encrypted:
+    description:
+      - denotes if the password is already encrypted. boolean.
+    required: false
+    default: false
+    version_added: '1.4'
+  expires:
+    description:
+      - sets the user's password expiration.
+    required: false
+    default: null
+    version_added: '1.4'
 notes:
    - The default authentication assumes that you are either logging in as or
      sudo'ing to the postgres account on the host.
@@ -108,19 +120,22 @@ author: Lorin Hochstein
 
 EXAMPLES = '''
 # Create django user and grant access to database and products table
-- postgresql_user: db=acme user=django password=ceec4eif7ya priv=CONNECT/products:ALL
+- postgresql_user: db=acme name=django password=ceec4eif7ya priv=CONNECT/products:ALL
 
 # Create rails user, grant privilege to create other databases and demote rails from super user status
-- postgresql_user: user=rails password=secret role_attr_flags=CREATEDB,NOSUPERUSER
+- postgresql_user: name=rails password=secret role_attr_flags=CREATEDB,NOSUPERUSER
 
 # Remove test user privileges from acme
-- postgresql_user: db=acme user=test priv=ALL/products:ALL state=absent fail_on_user=no
+- postgresql_user: db=acme name=test priv=ALL/products:ALL state=absent fail_on_user=no
 
 # Remove test user from test database and the cluster
-- postgresql_user: db=test user=test priv=ALL state=absent
+- postgresql_user: db=test name=test priv=ALL state=absent
 
 # Example privileges string format
 INSERT,UPDATE/table:SELECT/anothertable:ALL
+
+# Remove an existing user's password
+- postgresql_user: db=test user=test password=NULL
 '''
 
 import re
@@ -146,15 +161,18 @@ def user_exists(cursor, user):
     return cursor.rowcount > 0
 
 
-def user_add(cursor, user, password, role_attr_flags):
+def user_add(cursor, user, password, role_attr_flags,  encrypted, expires):
     """Create a new database user (role)."""
-    query = 'CREATE USER "%(user)s" WITH PASSWORD %%(password)s %(role_attr_flags)s' % {
-        "user": user, "role_attr_flags": role_attr_flags
-    }
-    cursor.execute(query, {"password": password})
+    query = 'CREATE USER "%(user)s"' % { "user": user}
+    if password is not None:
+        query = query + " WITH %(crypt)s PASSWORD '%(password)s'" % { "crypt": encrypted, "password": password }
+    if expires is not None:
+        query = query + " VALID UNTIL '%(expires)s'" % { "exipres": expires }
+    query = query + " " + role_attr_flags
+    cursor.execute(query)
     return True
 
-def user_alter(cursor, user, password, role_attr_flags):
+def user_alter(cursor, user, password, role_attr_flags, encrypted, expires):
     """Change user password and/or attributes. Return True if changed, False otherwise."""
     changed = False
 
@@ -174,16 +192,18 @@ def user_alter(cursor, user, password, role_attr_flags):
         # Grab current role attributes.
         current_role_attrs = cursor.fetchone()
 
+        alter = 'ALTER USER "%(user)s"' % {"user": user}
         if password is not None:
-            # Update the role attributes, including password.
-            alter = 'ALTER USER "%(user)s" WITH PASSWORD %%(password)s %(role_attr_flags)s' % {
-                "user": user, "role_attr_flags": role_attr_flags
+            alter = alter + " WITH %(crypt)s PASSWORD '%(password)s' %(flags)s" % {
+                "crypt": encrypted, "password": password, "flags": role_attr_flags
             }
-            cursor.execute(alter, {"password": password})
-        else:
-            # Update the role attributes, excluding password.
-            alter = "ALTER USER \"%(user)s\" WITH %(role_attr_flags)s"
-            cursor.execute(alter % {"user": user, "role_attr_flags": role_attr_flags})
+        elif role_attr_flags:
+            alter = alter + ' WITH ' + role_attr_flags
+        if expires is not None:
+            alter = alter + " VALID UNTIL '%(expires)s'" % { "exipres": expires }
+
+        cursor.execute(alter)
+
         # Grab new role attributes.
         cursor.execute(select, {"user": user})
         new_role_attrs = cursor.fetchone()
@@ -383,8 +403,10 @@ def main():
             priv=dict(default=None),
             db=dict(default=''),
             port=dict(default='5432'),
-            fail_on_user=dict(default='yes'),
-            role_attr_flags=dict(default='')
+            fail_on_user=dict(type='bool', choices=BOOLEANS, default='yes'),
+            role_attr_flags=dict(default=''),
+            encrypted=dict(type='bool', choices=BOOLEANS, default='no'),
+            expires=dict(default=None)
         ),
         supports_check_mode = True
     )
@@ -392,13 +414,18 @@ def main():
     user = module.params["user"]
     password = module.params["password"]
     state = module.params["state"]
-    fail_on_user = module.params["fail_on_user"] == 'yes'
+    fail_on_user = module.params["fail_on_user"]
     db = module.params["db"]
     if db == '' and module.params["priv"] is not None:
         module.fail_json(msg="privileges require a database to be specified")
     privs = parse_privs(module.params["priv"], db)
     port = module.params["port"]
     role_attr_flags = parse_role_attrs(module.params["role_attr_flags"])
+    if module.params["encrypted"]:
+        encrypted = "ENCRYPTED"
+    else:
+        encrypted = "UNENCRYPTED"
+    expires = module.params["expires"]
 
     if not postgresqldb_found:
         module.fail_json(msg="the python psycopg2 module is required")
@@ -424,44 +451,32 @@ def main():
     kw = dict(user=user)
     changed = False
     user_removed = False
-        
+
     if state == "present":
-
         if user_exists(cursor, user):
-            if  module.check_mode:  
-                kw['changed'] = True 
-                module.exit_json(**kw)
-
-            changed = user_alter(cursor, user, password, role_attr_flags)
+            changed = user_alter(cursor, user, password, role_attr_flags, encrypted, expires)
         else:
-            if password is None:
-                msg = "password parameter required when adding a user"
-                module.fail_json(msg=msg)
-
-            if  module.check_mode:  
-                kw['changed'] = True 
-                module.exit_json(**kw)
-
-            changed = user_add(cursor, user, password, role_attr_flags)
+            changed = user_add(cursor, user, password, role_attr_flags, encrypted, expires)
         changed = grant_privileges(cursor, user, privs) or changed
     else:
-
         if user_exists(cursor, user):
-            if  module.check_mode:  
-                kw['changed'] = True 
-                kw['user_removed'] = True 
-                module.exit_json(**kw)
-
-            changed = revoke_privileges(cursor, user, privs)
-            user_removed = user_delete(cursor, user)
-            changed = changed or user_removed
-            if fail_on_user and not user_removed:
-                msg = "unable to remove user"
-                module.fail_json(msg=msg)
-            kw['user_removed'] = user_removed
+            if  module.check_mode:
+                changed = True
+                kw['user_removed'] = True
+            else:
+                changed = revoke_privileges(cursor, user, privs)
+                user_removed = user_delete(cursor, user)
+                changed = changed or user_removed
+                if fail_on_user and not user_removed:
+                    msg = "unable to remove user"
+                    module.fail_json(msg=msg)
+                kw['user_removed'] = user_removed
 
     if changed:
-        db_connection.commit()
+        if module.check_mode:
+            db_connection.rollback()
+        else:
+            db_connection.commit()
 
     kw['changed'] = changed
     module.exit_json(**kw)

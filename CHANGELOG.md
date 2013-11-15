@@ -17,8 +17,8 @@ Highlighted new features:
 * Includes with parameters can now be done like roles for consistency:  - { include: song.yml, year:1984, song:'jump' }
 * The name of each role is now shown before each task if roles are being used
 * Adds a "var=" option to the debug module for debugging variable data.  "debug: var=hostvars['hostname']" and "debug: var=foo" are all valid syntax.
-* Variables in {{ format }} can fully reference each other and preserve types, template engine is 2x as fast.
-
+* Variables in {{ format }} can be used as references even if they are structured data
+* 
 New modules and plugins:
 
 * cloud:ec2_eip -- manage AWS elastic IPs
@@ -63,6 +63,7 @@ Misc changes:
 * Fixes for IPv6 addresses in inventory text files
 * name of executable can be passed to pip/gem etc, for installing under *different* interpreters
 * copy of ./hacking/env-setup added for fish users, ./hacking/env-setup.fish
+* openbsd_pkg can handle "flavoured" packages like vim--no_x11
 
 1.3.4 "Top of the World" (reprise) - October 29, 2013
 

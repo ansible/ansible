@@ -53,6 +53,10 @@ options:
   proxy:
     description:
       - HTTP[s] proxy to be used if C(src) is a URL.
+  response_file:
+    description:
+      - Specifies the location of a response file to be used if package expects input on install. (added in Ansible 1.4)
+    required: false
 '''
 
 EXAMPLES = '''
@@ -61,6 +65,9 @@ EXAMPLES = '''
 
 # Install a package directly from an http site
 - svr4pkg: name=CSWpkgutil src=http://get.opencsw.org/now state=present
+
+# Install a package with a response file
+- svr4pkg: name=CSWggrep src=/tmp/third-party.pkg response_file=/tmp/ggrep.response state=present
 
 # Ensure that a package is not installed.
 - svr4pkg: name=SUNWgnome-sound-recorder state=absent
@@ -109,11 +116,13 @@ def run_command(module, cmd):
     cmd[0] = module.get_bin_path(progname, True)
     return module.run_command(cmd)
 
-def package_install(module, name, src, proxy):
+def package_install(module, name, src, proxy, response_file):
     adminfile = create_admin_file()
     cmd = [ 'pkgadd', '-na', adminfile, '-d', src ]
     if proxy is not None:
         cmd += [ '-x', proxy ]
+    if response_file is not None:
+        cmd += [ '-r', response_file ]
     cmd.append(name)
     (rc, out, err) = run_command(module, cmd)
     os.unlink(adminfile)
@@ -132,7 +141,8 @@ def main():
             name = dict(required = True),
             state = dict(required = True, choices=['present', 'absent']),
             src = dict(default = None),
-            proxy = dict(default = None)
+            proxy = dict(default = None),
+            response_file = dict(default = None)
         ),
         supports_check_mode=True
     )
@@ -140,6 +150,7 @@ def main():
     name = module.params['name']
     src = module.params['src']
     proxy = module.params['proxy']
+    response_file = module.params['response_file']
     rc = None
     out = ''
     err = ''
@@ -154,7 +165,7 @@ def main():
         if not package_installed(module, name):
             if module.check_mode:
                 module.exit_json(changed=True)
-            (rc, out, err) = package_install(module, name, src, proxy)
+            (rc, out, err) = package_install(module, name, src, proxy, response_file)
             # Stdout is normally empty but for some packages can be
             # very long and is not often useful
             if len(out) > 75:

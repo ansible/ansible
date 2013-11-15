@@ -43,8 +43,8 @@ OPTIONAL ARGUMENT
 
 The name of one the YAML format files to run as an ansible playbook.  This can
 be a relative path within the checkout.  If not provided, ansible-pull
-will look for a playbook based on the host's fully-qualified domain name and
-finally a playbook named *local.yml*.
+will look for a playbook based on the host's fully-qualified domain name, on the
+host hostname and finally a playbook named *local.yml*.
 
 
 OPTIONS
@@ -52,7 +52,8 @@ OPTIONS
 
 *-d* 'DEST', *--directory=*'DEST'::
 
-Directory to checkout repository into.
+Directory to checkout repository into. If not provided, a subdirectory of
+~/.ansible/pull/ will be used.
 
 *-U* 'URL', *--url=*'URL'::
 

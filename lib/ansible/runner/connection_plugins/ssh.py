@@ -165,7 +165,7 @@ class Connection(object):
             else:
                 ssh_cmd.append(cmd)
         else:
-            sudocmd, prompt = utils.make_sudo_cmd(sudo_user, executable, cmd)
+            sudocmd, prompt, success_key = utils.make_sudo_cmd(sudo_user, executable, cmd)
             ssh_cmd.append(sudocmd)
 
         vvv("EXEC %s" % ssh_cmd, host=self.host)
@@ -198,7 +198,7 @@ class Connection(object):
             fcntl.fcntl(p.stdout, fcntl.F_SETFL,
                         fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
             sudo_output = ''
-            while not sudo_output.endswith(prompt):
+            while not sudo_output.endswith(prompt) and success_key not in sudo_output:
                 rfd, wfd, efd = select.select([p.stdout], [],
                                               [p.stdout], self.runner.timeout)
                 if p.stdout in rfd:
@@ -209,7 +209,8 @@ class Connection(object):
                 else:
                     stdout = p.communicate()
                     raise errors.AnsibleError('ssh connection error waiting for sudo password prompt')
-            stdin.write(self.runner.sudo_pass + '\n')
+            if success_key not in sudo_output:
+                stdin.write(self.runner.sudo_pass + '\n')
             fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
 
         # We can't use p.communicate here because the ControlMaster may have stdout open as well

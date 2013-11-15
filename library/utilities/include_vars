@@ -19,7 +19,7 @@ options:
   free-form:
     description:
        - The file name from which variables should be loaded, if called from a role it will look for 
-         the file in files/ subdirectory of the role, otherwise the path would be relative to playbook. An absolute path can also be provided.
+         the file in vars/ subdirectory of the role, otherwise the path would be relative to playbook. An absolute path can also be provided.
     required: true
 version_added: "1.4"
 '''

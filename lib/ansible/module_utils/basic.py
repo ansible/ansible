@@ -348,10 +348,12 @@ class AnsibleModule(object):
         # argument context, which may have selevel.
 
         for i in range(len(cur_context)):
-            if context[i] is not None and context[i] != cur_context[i]:
-                new_context[i] = context[i]
-            if context[i] is None:
-                new_context[i] = cur_context[i]
+            if len(context) > i:
+                if context[i] is not None and context[i] != cur_context[i]:
+                    new_context[i] = context[i]
+                if context[i] is None:
+                    new_context[i] = cur_context[i]
+
         if cur_context != new_context:
             try:
                 if self.check_mode:
@@ -939,7 +941,7 @@ class AnsibleModule(object):
             # rename might not preserve context
             self.set_context_if_different(dest, context, False)
 
-    def run_command(self, args, check_rc=False, close_fds=False, executable=None, data=None, binary_data=False):
+    def run_command(self, args, check_rc=False, close_fds=False, executable=None, data=None, binary_data=False, path_prefix=None):
         '''
         Execute a command, returns rc, stdout, and stderr.
         args is the command to run
@@ -963,16 +965,33 @@ class AnsibleModule(object):
         rc = 0
         msg = None
         st_in = None
+
+        # Set a temporart env path if a prefix is passed
+        env=os.environ
+        if path_prefix:
+            env['PATH']="%s:%s" % (path_prefix, env['PATH'])
+
         if data:
             st_in = subprocess.PIPE
         try:
-            cmd = subprocess.Popen(args,
-                                   executable=executable,
-                                   shell=shell,
-                                   close_fds=close_fds,
-                                   stdin=st_in,
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE)
+            if path_prefix is not None:
+                cmd = subprocess.Popen(args,
+                                       executable=executable,
+                                       shell=shell,
+                                       close_fds=close_fds,
+                                       stdin=st_in,
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE,
+                                       env=env)
+            else:
+                cmd = subprocess.Popen(args,
+                                       executable=executable,
+                                       shell=shell,
+                                       close_fds=close_fds,
+                                       stdin=st_in,
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE)
+            
             if data:
                 if not binary_data:
                     data += '\\n'

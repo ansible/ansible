@@ -170,10 +170,13 @@ class TestRunner(unittest.TestCase):
     def test_git(self):
         self._run('file', ['path=/tmp/gitdemo', 'state=absent'])
         self._run('file', ['path=/tmp/gd', 'state=absent'])
+        self._run('file', ['path=/tmp/gdbare', 'state=absent'])
+        self._run('file', ['path=/tmp/gdreference', 'state=absent'])
+        self._run('file', ['path=/tmp/gdreftest', 'state=absent'])
         self._run('command', ['git init gitdemo', 'chdir=/tmp'])
         self._run('command', ['touch a', 'chdir=/tmp/gitdemo'])
         self._run('command', ['git add *', 'chdir=/tmp/gitdemo'])
-        self._run('command', ['git commit -m "test commit 2"', 'chdir=/tmp/gitdemo'])
+        self._run('command', ['git commit -m "test commit 1"', 'chdir=/tmp/gitdemo'])
         self._run('command', ['touch b', 'chdir=/tmp/gitdemo'])
         self._run('command', ['git add *', 'chdir=/tmp/gitdemo'])
         self._run('command', ['git commit -m "test commit 2"', 'chdir=/tmp/gitdemo'])
@@ -186,6 +189,29 @@ class TestRunner(unittest.TestCase):
         # test the force option when set
         result = self._run('git', ["repo=\"file:///tmp/gitdemo\"", "dest=/tmp/gd", "force=yes"])
         assert result['changed']
+        # test the bare option
+        result = self._run('git', ["repo=\"file:///tmp/gitdemo\"", "dest=/tmp/gdbare", "bare=yes", "remote=test"])
+        assert result['changed']
+        # test a no-op fetch, add origin for el6 versions of git
+        self._run('command', ['git remote add origin file:///tmp/gitdemo', 'chdir=/tmp/gdbare'])
+        result = self._run('git', ["repo=\"file:///tmp/gitdemo\"", "dest=/tmp/gdbare", "bare=yes"])
+        assert not result['changed']
+        # test whether fetch is working for bare repos
+        self._run('command', ['touch c', 'chdir=/tmp/gitdemo'])
+        self._run('command', ['git add *', 'chdir=/tmp/gitdemo'])
+        self._run('command', ['git commit -m "test commit 3"', 'chdir=/tmp/gitdemo'])
+        result = self._run('git', ["repo=\"file:///tmp/gitdemo\"", "dest=/tmp/gdbare", "bare=yes"])
+        assert result['changed']
+        # test reference repos
+        result = self._run('git', ["repo=\"file:///tmp/gdbare\"", "dest=/tmp/gdreference", "bare=yes"])
+        assert result['changed']
+        result = self._run('git', ["repo=\"file:///tmp/gitdemo\"", "dest=/tmp/gdreftest", "reference=/tmp/gdreference/"])
+        assert result['changed']
+        assert os.path.isfile('/tmp/gdreftest/a')
+        result = self._run('command', ['ls', 'chdir=/tmp/gdreference/objects/pack'])
+        assert result['stdout'] != ''
+        result = self._run('command', ['ls', 'chdir=/tmp/gdreftest/.git/objects/pack'])
+        assert result['stdout'] == ''
 
     def test_file(self):
         filedemo = tempfile.mkstemp()[1]

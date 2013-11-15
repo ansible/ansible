@@ -19,6 +19,7 @@ import os
 import pwd
 import sys
 import ConfigParser
+from string import ascii_letters, digits
 
 # copied from utils, avoid circular reference fun :)
 def mk_boolean(value):
@@ -89,6 +90,10 @@ if getattr(sys, "real_prefix", None):
 else:
     DIST_MODULE_PATH = '/usr/share/ansible/'
 
+# check all of these extensions when looking for yaml files for things like
+# group variables
+YAML_FILENAME_EXTENSIONS = [ "", ".yml", ".yaml" ]
+
 # sections in config file
 DEFAULTS='defaults'
 
@@ -148,6 +153,11 @@ ACCELERATE_TIMEOUT             = get_config(p, 'accelerate', 'accelerate_timeout
 ACCELERATE_CONNECT_TIMEOUT     = get_config(p, 'accelerate', 'accelerate_connect_timeout', 'ACCELERATE_CONNECT_TIMEOUT', 1.0, floating=True)
 PARAMIKO_PTY                   = get_config(p, 'paramiko_connection', 'pty', 'ANSIBLE_PARAMIKO_PTY', True, boolean=True)
 
+# characters included in auto-generated passwords
+DEFAULT_PASSWORD_CHARS = ascii_letters + digits + ".,:-_"
+
+# LOOKUP PLUGIN RELATED
+ANSIBLE_ETCD_URL               = get_config(p, DEFAULTS, 'etcd_url', 'ANSIBLE_ETCD_URL', 'http://127.0.0.1:4001')
 
 # non-configurable things
 DEFAULT_SUDO_PASS         = None

@@ -80,7 +80,8 @@ options:
     default: null
     choices: []
     description:
-      - path of the file to link to (applies only to C(state=link)).
+      - path of the file to link to (applies only to C(state=link)). Will accept absolute,
+        relative and nonexisting paths. Relative paths are not expanded.
   seuser:
     required: false
     default: null
@@ -144,6 +145,7 @@ def main():
         argument_spec = dict(
             state = dict(choices=['file','directory','link','hard','touch','absent'], default=None),
             path  = dict(aliases=['dest', 'name'], required=True),
+            original_basename = dict(required=False), # Internal use only, for recursive ops
             recurse  = dict(default='no', type='bool'),
             force = dict(required=False,default=False,type='bool'),
             diff_peek = dict(default=None),
@@ -185,12 +187,8 @@ def main():
             prev_state = 'file'
 
     if prev_state is not None and state is None:
-        if not params.get('src', None):
-            # idempotent exit if state is not specified
-            module.exit_json(path=path, changed=False)
-        else:
-            # src is defined, need to process other operations
-            state = prev_state
+        # set state to current type of file
+        state = prev_state
     elif state is None:
         # set default state to file
         state = 'file'
@@ -203,7 +201,11 @@ def main():
         src = os.path.expanduser(src)
 
     if src is not None and os.path.isdir(path) and state not in ["link", "absent"]:
-        params['path'] = path = os.path.join(path, os.path.basename(src))
+        if params['original_basename']:
+            basename = params['original_basename']
+        else:
+            basename = os.path.basename(src)
+        params['path'] = path = os.path.join(path, basename)
 
     file_args = module.load_file_common_arguments(params)
 
@@ -280,20 +282,19 @@ def main():
 
     elif state in ['link','hard']:
 
-        if os.path.isabs(src):
-            abs_src = src
-        else:
-            module.fail_json(msg="absolute paths are required")
+        if state == 'hard':
+            if os.path.isabs(src):
+                abs_src = src
+            else:
+                module.fail_json(msg="absolute paths are required")
 
-        if not os.path.exists(abs_src) and not force:
-            module.fail_json(path=path, src=src, msg='src file does not exist')
+            if not os.path.exists(abs_src) and not force:
+                module.fail_json(path=path, src=src, msg='src file does not exist')
 
         if prev_state == 'absent':
             changed = True
         elif prev_state == 'link':
             old_src = os.readlink(path)
-            if not os.path.isabs(old_src):
-                old_src = os.path.join(os.path.dirname(path), old_src)
             if old_src != src:
                 changed = True
         elif prev_state == 'hard':

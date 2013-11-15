@@ -36,7 +36,7 @@ description:
        the target host, requests will be sent through that proxy. This
        behaviour can be overridden by setting a variable for this task
        (see `setting the environment
-       <http://www.ansibleworks.com/docs/playbooks2.html#setting-the-environment-and-working-with-proxies>`_),
+       <http://www.ansibleworks.com/docs/playbooks_environment.html#setting-the-environment-and-working-with-proxies>`_),
        or by using the use_proxy option.
 version_added: "0.6"
 options:
@@ -49,15 +49,20 @@ options:
   dest:
     description:
       - absolute path of where to download the file to.
-      - If I(dest) is a directory, the basename of the file on the remote server will be used. If a directory, C(force=yes) must also be set.
+      - If C(dest) is a directory, either the server provided filename or, if
+        none provided, the base name of the URL on the remote server will be
+        used. If a directory, C(force) has no effect.
     required: true
     default: null
   force:
     description:
-      - If C(yes), will download the file every time and replace the
-        file if the contents change. If C(no), the file will only be downloaded if
-        the destination does not exist. Generally should be C(yes) only for small
-        local files. Prior to 0.6, this module behaved as if C(yes) was the default.
+      - If C(yes) and C(dest) is not a directory, will download the file every
+        time and replace the file if the contents change. If C(no), the file
+        will only be downloaded if the destination does not exist. Generally
+        should be C(yes) only for small local files. Prior to 0.6, this module
+        behaved as if C(yes) was the default.
+        Has no effect if C(dest) is a directory - the file will always be
+        downloaded, but replaced only if the contents changed.
     version_added: "0.7"
     required: false
     choices: [ "yes", "no" ]
@@ -125,7 +130,7 @@ def url_filename(url):
         return 'index.html'
     return fn
 
-def url_do_get(module, url, dest, use_proxy):
+def url_do_get(module, url, dest, use_proxy, last_mod_time):
     """
     Get url and return request and info
     Credits: http://stackoverflow.com/questions/7006574/how-to-download-file-from-ftp
@@ -171,33 +176,32 @@ def url_do_get(module, url, dest, use_proxy):
     request = urllib2.Request(url)
     request.add_header('User-agent', USERAGENT)
 
-    if os.path.exists(dest) and not module.params['force']:
-        t = datetime.datetime.utcfromtimestamp(os.path.getmtime(dest))
-        tstamp = t.strftime('%a, %d %b %Y %H:%M:%S +0000')
+    if last_mod_time:
+        tstamp = last_mod_time.strftime('%a, %d %b %Y %H:%M:%S +0000')
         request.add_header('If-Modified-Since', tstamp)
 
     try:
         r = urllib2.urlopen(request)
         info.update(r.info())
+        info['url'] = r.geturl()  # The URL goes in too, because of redirects.
         info.update(dict(msg="OK (%s bytes)" % r.headers.get('Content-Length', 'unknown'), status=200))
     except urllib2.HTTPError, e:
         # Must not fail_json() here so caller can handle HTTP 304 unmodified
         info.update(dict(msg=str(e), status=e.code))
-        return r, info
     except urllib2.URLError, e:
         code = getattr(e, 'code', -1)
         module.fail_json(msg="Request failed: %s" % str(e), status_code=code)
 
     return r, info
 
-def url_get(module, url, dest, use_proxy):
+def url_get(module, url, dest, use_proxy, last_mod_time):
     """
-    Download url and store at dest.
-    If dest is a directory, determine filename from url.
+    Download data from the url and store in a temporary file.
+
     Return (tempfile, info about the request)
     """
 
-    req, info = url_do_get(module, url, dest, use_proxy)
+    req, info = url_do_get(module, url, dest, use_proxy, last_mod_time)
 
     # TODO: should really handle 304, but how? src file could exist (and be newer) but empty
     if info['status'] == 304:
@@ -217,6 +221,25 @@ def url_get(module, url, dest, use_proxy):
     f.close()
     req.close()
     return tempname, info
+
+def extract_filename_from_headers(headers):
+    """
+    Extracts a filename from the given dict of HTTP headers.
+
+    Looks for the content-disposition header and applies a regex.
+    Returns the filename if successful, else None."""
+    cont_disp_regex = 'attachment; ?filename="(.+)"'
+    res = None
+
+    if 'content-disposition' in headers:
+        cont_disp = headers['content-disposition']
+        match = re.match(cont_disp_regex, cont_disp)
+        if match:
+            res = match.group(1)
+            # Try preventing any funny business.
+            res = os.path.basename(res)
+
+    return res
 
 # ==============================================================
 # main
@@ -247,15 +270,33 @@ def main():
     sha256sum = module.params['sha256sum']
     use_proxy = module.params['use_proxy']
 
-    if os.path.isdir(dest):
-        dest = os.path.join(dest, url_filename(url))
+    dest_is_dir = os.path.isdir(dest)
+    last_mod_time = None
 
-    if not force:
-        if os.path.exists(dest):
+    if not dest_is_dir and os.path.exists(dest):
+        if not force:
             module.exit_json(msg="file already exists", dest=dest, url=url, changed=False)
 
+        # If the file already exists, prepare the last modified time for the
+        # request.
+        mtime = os.path.getmtime(dest)
+        last_mod_time = datetime.datetime.utcfromtimestamp(mtime)
+
     # download to tmpsrc
-    tmpsrc, info = url_get(module, url, dest, use_proxy)
+    tmpsrc, info = url_get(module, url, dest, use_proxy, last_mod_time)
+
+    # Now the request has completed, we can finally generate the final
+    # destination file name from the info dict.
+
+    if dest_is_dir:
+        filename = extract_filename_from_headers(info)
+        if not filename:
+            # Fall back to extracting the filename from the URL.
+            # Pluck the URL from the info, since a redirect could have changed
+            # it.
+            filename = url_filename(info['url'])
+        dest = os.path.join(dest, filename)
+
     md5sum_src   = None
     md5sum_dest  = None
 

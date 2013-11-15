@@ -72,7 +72,7 @@ import sys
 
 def query_package(module, pkgin_path, name):
 
-    rc, out, err = module.run_command("%s info -e %s" % (pkgin_path, name))
+    rc, out, err = module.run_command("%s info -g -e %s" % (pkgin_path, name))
 
     if rc == 0:
         return True
@@ -89,9 +89,10 @@ def remove_packages(module, pkgin_path, packages):
         if not query_package(module, pkgin_path, package):
             continue
 
-        rc, out, err = module.run_command("%s delete -y %s" % (pkgin_path, package))
+        if not module.check_mode:
+            rc, out, err = module.run_command("%s delete -y %s" % (pkgin_path, package))
 
-        if query_package(module, pkgin_path, package):
+        if not module.check_mode and query_package(module, pkgin_path, package):
             module.fail_json(msg="failed to remove %s: %s" % (package, out))
     
         remove_c += 1
@@ -110,7 +111,7 @@ def install_packages(module, pkgin_path, packages, cached, pkgsite):
     if pkgsite != "":
         pkgsite="PACKAGESITE=%s" % (pkgsite)
 
-    if cached == "no":
+    if not module.check_mode and cached == "no":
         rc, out, err = module.run_command("%s %s update" % (pkgsite, pkgin_path))
         if rc != 0:
             module.fail_json(msg="Could not update catalogue")
@@ -119,10 +120,11 @@ def install_packages(module, pkgin_path, packages, cached, pkgsite):
         if query_package(module, pkgin_path, package):
             continue
 
-        rc, out, err = module.run_command("%s %s install -U -y %s" % (pkgsite, pkgin_path, package))
+        if not module.check_mode:
+            rc, out, err = module.run_command("%s %s install -g -U -y %s" % (pkgsite, pkgin_path, package))
 
-        if not query_package(module, pkgin_path, package):
-            module.fail_json(msg="failed to install %s: %s" % (package, out))
+        if not module.check_mode and not query_package(module, pkgin_path, package):
+            module.fail_json(msg="failed to install %s: %s" % (package, out), stderr=err)
 
         install_c += 1
     
@@ -134,11 +136,12 @@ def install_packages(module, pkgin_path, packages, cached, pkgsite):
 
 def main():
     module = AnsibleModule(
-            argument_spec    = dict(
-                state        = dict(default="present", choices=["present","absent"]),
-                name         = dict(aliases=["pkg"], required=True),
-                cached       = dict(default="no", required=False, choices=["yes","no"]),
-                pkgsite      = dict(default="", required=False)))
+            argument_spec       = dict(
+                state           = dict(default="present", choices=["present","absent"]),
+                name            = dict(aliases=["pkg"], required=True),
+                cached          = dict(default=False, type='bool'),
+                pkgsite         = dict(default="", required=False)),
+            supports_check_mode = True)
 
     pkgin_path = module.get_bin_path('pkg', True)
 
