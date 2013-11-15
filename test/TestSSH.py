@@ -23,13 +23,13 @@ class TestSSHConnection(unittest.TestCase):
         script_guts = ('''
 import sys
 import os
-os.write(1, 'a')
-os.flush(1)
+sys.stdout.write('a')
+sys.stdout.flush()
 
 os.write(2, 'b')
 os.close(2)
 
-os.write(1, 'End')
+sys.stdout.write('End')
 ''')
         script_name = os.path.join(tmpdir, 'script.py')
         fh = open(script_name, 'w')
