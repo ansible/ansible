@@ -167,13 +167,13 @@ def main():
     result['state'] = host.state
     result['changed'] = False
 
-    err = host.validate_has_hostname_on_present()
-    if err:
-        module.fail_json(msg=err)
+    result['msg'] = host.validate_has_hostname_on_present()
+    if result['msg']:
+        module.fail_json(**result)
 
-    err = host.validate_has_ip_or_hostname_on_absent()
-    if err:
-        module.fail_json(msg=err)
+    result['msg'] = host.validate_has_ip_or_hostname_on_absent()
+    if result['msg']:
+        module.fail_json(**result)
 
     host.proceed_hosts_entries()
     if host.state == 'present':
