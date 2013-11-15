@@ -116,14 +116,12 @@ class Host(object):
 
             # only look at aliases if we found hostname or ip
             if self._hostname_matches or self._ip_matches:
-                if self.aliases and self.aliases == aliases:
+                if self.aliases == aliases:
                     self._aliases_matches = True
                 break
 
     def full_entry_exists(self):
-        if self.aliases and not self._aliases_matches:
-            return False
-        return self._ip_matches and self._hostname_matches
+        return self._ip_matches and self._hostname_matches and self._aliases_matches
 
     def entry_exists(self):
         return self._ip_matches or self._hostname_matches
@@ -154,7 +152,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             ip=dict(default=None, type='str'),
             hostname=dict(default=None, type='str'),
-            aliases=dict(default=None, type='str'),
+            aliases=dict(default='', type='str'),
         ),
         supports_check_mode=True
     )
