@@ -299,11 +299,11 @@ local_action:
   tasks:
     - name: Start the sandbox instances
       local_action:
-	module: ec2
-	instance_ids: {{ instance_ids }}
-	region: {{ region }}
-	state: running
-	wait: True
+	    module: ec2
+	    instance_ids: '{{ instance_ids }}'
+	    region: '{{ region }}'
+	    state: running
+	    wait: True
   role:
     - do_neat_stuff
     - do_more_neat_stuff
@@ -321,11 +321,11 @@ local_action:
   tasks:
     - name: Stop the sanbox instances
       local_action:
-	module: e2
-	isntance_ids: {{ instance_ids }}
-	region: {{ region }}
-	state: stopped
-
+	   module: e2
+  	   instance_ids: '{{ instance_ids }}'
+	   region: {'{ region }}'
+	   state: stopped
+       wait: True
 '''
 
 import sys
@@ -598,9 +598,9 @@ def terminate_instances(module, ec2, instance_ids):
     return (changed, instance_dict_array, terminated_instance_ids)
 
 
-def start_instances(module, ec2, instance_ids):
+def startstop_instances(module, ec2, instance_ids):
     """
-    Starts a list of existing instances
+    Starts or stops a list of existing instances
 
     module: Ansible module object
     ec2: authenticated ec2 connection object
@@ -610,7 +610,8 @@ def start_instances(module, ec2, instance_ids):
     Returns a dictionary of instance information
     about the instances started.
 
-    If the instance was not able to starts "changed" will be set to False.
+    If the instance was not able to change state,
+    "changed" will be set to False.
 
     """
     
@@ -622,19 +623,25 @@ def start_instances(module, ec2, instance_ids):
     if not isinstance(instance_ids, list) or len(instance_ids) < 1:
         module.fail_json(msg='instance_ids should be a list of instances, aborting')
 
+    dest_state = module.params.get('state')
+    dest_state_ec2 = 'stop' if dest_state == 'stopped' else 'running'
+
     # Check that our instances are not running, and sart them
     running_instances_array = []
     for res in ec2.get_all_instances(instance_ids):
         for inst in res.instances:
-            if not inst.state == 'running':
-                instance_dict_array.append(get_instance_info(inst))
-                try:
-                    inst.start()
-                except EC2ResponseError as e:
-                    module.fail_json(msg='Unable to start instance {0}, error: {1}'.format(inst.id, e))
-                changed = True
+           if not inst.state == dest_state_ec2
+               instance_dict_array.append(get_instance_info(inst))
+               try:
+                   if dest_state == 'running':
+                       inst.start()
+                   else:
+                       inst.stop()
+               except EC2ResponseError as e:
+                   module.fail_json(msg='Unable to change state for instance {0}, error: {1}'.format(inst.id, e))
+               changed = True
 
-    ## Wait for all the instances to finish starting
+    ## Wait for all the instances to finish starting or stopping
     instids = [ i.id for i in res.instances ]
     this_res = []
     num_running = 0
@@ -643,7 +650,7 @@ def start_instances(module, ec2, instance_ids):
         res_list = res.connection.get_all_instances(instids)
         if len(res_list) > 0:
             this_res = res_list[0]
-            num_running = len([ i for i in this_res.instances if i.state=='running' ])
+            num_running = len([ i for i in this_res.instances if i.state == dest_state_ec2 ])
         else:
             # got a bad response of some sort, possibly due to 
             # stale/cached data. Wait a second and then try again
@@ -660,43 +667,6 @@ def start_instances(module, ec2, instance_ids):
 
     for inst in this_res.instances:
         running_instances_array.append(inst.id)
-
-    return (changed, instance_dict_array, running_instances_array)
-
-
-def stop_instances(ec2, instance_ids):
-    """
-    Stops a list of existing instances
-
-    module: Ansible module object
-    ec2: authenticated ec2 connection object
-    instance_ids: The list of instances to start in the form of
-      [ {id: <inst-id>}, ..]
-
-    Returns a dictionary of instance information
-    about the instances stopped.
-
-    If the instance was not able to stop, "changed" will be set to False.
-
-    """
-
-    changed = False
-    instance_dict_array = []
-
-    if not isinstance(instance_ids, list) or len(instance_ids) < 1:
-        module.fail_json(msg='instance_ids should be a list of instances, aborting')
-
-    running_instances_array = []
-    for res in ec2.get_all_instances(instance_ids):
-        for inst in res.instances:
-            if not inst.state == 'stopped':
-                running_instances_array.append(inst.id)
-                instance_dict_array.append(get_instance_info(inst))
-                try:
-                    inst.stop()
-                except EC2ResponseError as e:
-                    module.fail_json(msg='Unable to stop instance {0}, error: {1}'.format(inst.id, e))
-                changed = True
 
     return (changed, instance_dict_array, running_instances_array)
 
@@ -782,19 +752,12 @@ def main():
 
         (changed, instance_dict_array, new_instance_ids) = terminate_instances(module, ec2, instance_ids)
 
-    elif module.params.get('state') == 'running':
+    elif module.params.get('state') == 'running' or module.params.get('state') == 'stopped':
         instance_ids = module.params.get('instance_ids')
         if not isinstance(instance_ids, list):
             module.fail_json(msg='running list needs to be a list of instances to run: %s' % instance_ids)
 
-        (changed, instance_dict_array, new_instance_ids) = start_instances(module, ec2, instance_ids)
-
-    elif module.params.get('state') == 'stopped':
-        instance_ids = module.params.get('instance_ids')
-        if not isinstance(instance_ids, list):
-            module.fail_json(msg='stopped list needs to be a list of instances to stop')
-
-        (changed, instance_dict_array, new_instance_ids) = stop_instances(ec2, instance_ids)
+        (changed, instance_dict_array, new_instance_ids) = startstop_instances(module, ec2, instance_ids)
 
     elif module.params.get('state') == 'present':
         # Changed is always set to true when provisioning new instances
