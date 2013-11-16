@@ -155,7 +155,7 @@ Just `Control-C` to kill it and run it again with `-K`.
    only occurs when sudoing from a user like 'bob' to 'timmy', not
    when going from 'bob' to 'root', or logging in directly as 'bob' or
    'root'.  If this concerns you that this data is briefly readable
-   (not writeable), avoid transferring uncrypted passwords with
+   (not writable), avoid transferring uncrypted passwords with
    `sudo_user` set.  In other cases, '/tmp' is not used and this does
    not come into play. Ansible also takes care to not log password
    parameters.
