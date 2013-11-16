@@ -60,7 +60,7 @@ Tuning the External Inventory Script
 
 The stock inventory script system detailed above works for all versions of Ansible, but calling
 '--host' for every host can be rather expensive,  especially if it involves expensive API calls to
-a remote subsystemm.  In Ansible 
+a remote subsystem.  In Ansible
 1.3 or later, if the inventory script returns a top level element called "_meta", it is possible
 to return all of the host variables in one inventory script call.  When this meta element contains
 a value for "hostvars", the inventory script will not be invoked with "--host" for each host.  This

@@ -77,7 +77,7 @@ Starting in version 1.4, password accepts a "chars" parameter to allow defining 
 
         (...)
 
-To enter comma use two commas ',,' somewhere - preferably at the end. Quotes and double qoutes are not supported.
+To enter comma use two commas ',,' somewhere - preferably at the end. Quotes and double quotes are not supported.
 
 .. _more_lookups:
 
