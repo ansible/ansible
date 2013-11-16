@@ -62,7 +62,7 @@ NOSETESTS := nosetests
 all: clean python
 
 tests:
-	PYTHONPATH=./lib $(NOSETESTS) -d -v
+	PYTHONPATH=./lib ANSIBLE_LIBRARY=./library  $(NOSETESTS) -d -v
 
 # To force a rebuild of the docs run 'touch VERSION && make docs'
 docs: $(MANPAGES) modulepages
