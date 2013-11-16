@@ -579,7 +579,8 @@ class PlaybookCallbacks(object):
         call_callback_module('playbook_on_notify', host, handler)
 
     def on_no_hosts_matched(self):
-        display("skipping: no hosts matched", color='cyan')
+        if constants.DISPLAY_UNMATCHED_HOSTS:
+            display("skipping: no hosts matched", color='cyan')
         call_callback_module('playbook_on_no_hosts_matched')
 
     def on_no_hosts_remaining(self):
@@ -674,8 +675,9 @@ class PlaybookCallbacks(object):
         display(msg, color='cyan')
         call_callback_module('playbook_on_not_import_for_host', host, missing_file)
 
-    def on_play_start(self, pattern):
-        display(banner("PLAY [%s]" % pattern))
+    def on_play_start(self, pattern, matched):
+        if matched or constants.DISPLAY_UNMATCHED_HOSTS:
+            display(banner("PLAY [%s]" % pattern))
         call_callback_module('playbook_on_play_start', pattern)
 
     def on_stats(self, stats):
