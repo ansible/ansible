@@ -229,7 +229,6 @@ def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
 
         if wait:
             attempts = wait_timeout / 5
-            print attempts
             pyrax.utils.wait_for_build(balancer, interval=5, attempts=attempts)
 
         balancer.get()
