@@ -373,6 +373,9 @@ class Ec2Inventory(object):
             for name in route53_names:
                 self.push(self.inventory, name, dest)
 
+        # Global Tag: tag all EC2 instances
+        self.push(self.inventory, 'ec2', dest)
+
 
     def add_rds_instance(self, instance, region):
         ''' Adds an RDS instance to the inventory and index, as long as it is
@@ -423,6 +426,9 @@ class Ec2Inventory(object):
 
         # Inventory: Group by parameter group
         self.push(self.inventory, self.to_safe("rds_parameter_group_" + instance.parameter_group.name), dest)
+
+        # Global Tag: all RDS instances
+        self.push(self.inventory, 'rds', dest)
 
 
     def get_route53_records(self):

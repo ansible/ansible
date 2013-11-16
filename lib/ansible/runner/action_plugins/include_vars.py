@@ -38,7 +38,7 @@ class ActionModule(object):
         source = template.template(self.runner.basedir, source, inject)
 
         if '_original_file' in inject:
-            source = utils.path_dwim_relative(inject['_original_file'], 'files', source, self.runner.basedir)
+            source = utils.path_dwim_relative(inject['_original_file'], 'vars', source, self.runner.basedir)
         else:
             source = utils.path_dwim(self.runner.basedir, source)
 

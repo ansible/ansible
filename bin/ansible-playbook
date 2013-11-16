@@ -20,6 +20,7 @@
 
 import sys
 import os
+import stat
 
 import ansible.playbook
 import ansible.constants as C
@@ -118,7 +119,7 @@ def main(args):
     for playbook in args:
         if not os.path.exists(playbook):
             raise errors.AnsibleError("the playbook: %s could not be found" % playbook)
-        if not os.path.isfile(playbook):
+        if not (os.path.isfile(playbook) or stat.S_ISFIFO(os.stat(playbook).st_mode)):
             raise errors.AnsibleError("the playbook: %s does not appear to be a file" % playbook)
 
     # run all playbooks specified on the command line
@@ -158,7 +159,7 @@ def main(args):
             diff=options.diff
         )
 
-        if options.listhosts or options.listtasks:
+        if options.listhosts or options.listtasks or options.syntax:
             print ''
             print 'playbook: %s' % playbook
             print ''

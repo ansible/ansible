@@ -436,9 +436,7 @@ def create_instances(module, ec2):
         if group_name:
             grp_details = ec2.get_all_security_groups()
             if type(group_name) == list:
-                # FIXME: this should be a nice list comprehension
-                # also not py 2.4 compliant
-                group_id = list(filter(lambda grp: str(grp.id) if str(tmp) in str(grp) else None, grp_details) for tmp in group_name)
+                group_id = [ str(grp.id) for grp in grp_details if str(grp.name) in group_name ]
             elif type(group_name) == str:
                 for grp in grp_details:
                     if str(group_name) in str(grp):
@@ -577,6 +575,10 @@ def terminate_instances(module, ec2, instance_ids):
 
     """
 
+    # Whether to wait for termination to complete before returning
+    wait = module.params.get('wait')
+    wait_timeout = int(module.params.get('wait_timeout'))
+
     changed = False
     instance_dict_array = []
 
@@ -595,8 +597,30 @@ def terminate_instances(module, ec2, instance_ids):
                     module.fail_json(msg='Unable to terminate instance {0}, error: {1}'.format(inst.id, e))
                 changed = True
 
-    return (changed, instance_dict_array, terminated_instance_ids)
+    # wait here until the instances are 'terminated'
+    if wait:
+        num_terminated = 0
+        wait_timeout = time.time() + wait_timeout
+        while wait_timeout > time.time() and num_terminated < len(terminated_instance_ids):
+            response = ec2.get_all_instances( \
+                instance_ids=terminated_instance_ids, \
+                filters={'instance-state-name':'terminated'})
+            try:
+                num_terminated = len(response.pop().instances)
+            except Exception, e:
+                # got a bad response of some sort, possibly due to
+                # stale/cached data. Wait a second and then try again
+                time.sleep(1)
+                continue
 
+            if num_terminated < len(terminated_instance_ids):
+                time.sleep(5)
+
+        # waiting took too long
+        if wait_timeout < time.time() and num_terminated < len(terminated_instance_ids):
+            module.fail_json(msg = "wait for instance termination timeout on %s" % time.asctime())
+
+    return (changed, instance_dict_array, terminated_instance_ids)
 
 def startstop_instances(module, ec2, instance_ids):
     """

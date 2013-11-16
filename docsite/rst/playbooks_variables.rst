@@ -825,7 +825,7 @@ Ok, so if you are writing a redistributable role with reasonable defaults, put t
 the role will bring along a default value but ANYTHING in Ansible will override it.  It's just a default.  That's why it says "defaults" :)
 See `intro_roles` for more info about this::
 
-    ----
+    ---
     # file: roles/x/defaults/main.yml
     # if not overriden in inventory or as a parameter, this is the value that will be used
     http_port: 80
@@ -833,7 +833,7 @@ See `intro_roles` for more info about this::
 if you are writing a role and want to ensure the value in the role is absolutely used in that role, and is not going to be overridden
 by inventory, you should but it in roles/x/vars/main.yml like so, and inventory values cannot override it.  -e however, still will::
 
-    ----
+    ---
     # file: roles/x/vars/main.yml
     # this will absolutely be used in this role
     http_port: 80

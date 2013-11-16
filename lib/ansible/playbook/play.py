@@ -32,7 +32,7 @@ class Play(object):
     __slots__ = [
        'hosts', 'name', 'vars', 'default_vars', 'vars_prompt', 'vars_files',
        'handlers', 'remote_user', 'remote_port', 'included_roles', 'accelerate',
-       'accelerate_port', 'sudo', 'sudo_user', 'transport', 'playbook',
+       'accelerate_port', 'accelerate_ipv6', 'sudo', 'sudo_user', 'transport', 'playbook',
        'tags', 'gather_facts', 'serial', '_ds', '_handlers', '_tasks',
        'basedir', 'any_errors_fatal', 'roles', 'max_fail_pct'
     ]
@@ -41,7 +41,7 @@ class Play(object):
     # and don't line up 1:1 with how they are stored
     VALID_KEYS = [
        'hosts', 'name', 'vars', 'vars_prompt', 'vars_files',
-       'tasks', 'handlers', 'remote_user', 'user', 'port', 'include', 'accelerate', 'accelerate_port',
+       'tasks', 'handlers', 'remote_user', 'user', 'port', 'include', 'accelerate', 'accelerate_port', 'accelerate_ipv6',
        'sudo', 'sudo_user', 'connection', 'tags', 'gather_facts', 'serial',
        'any_errors_fatal', 'roles', 'pre_tasks', 'post_tasks', 'max_fail_percentage' 
     ]
@@ -104,7 +104,6 @@ class Play(object):
             raise errors.AnsibleError('hosts declaration is required')
         elif isinstance(hosts, list):
             hosts = ';'.join(hosts)
-
         self.serial           = int(ds.get('serial', 0))
         self.hosts            = hosts
         self.name             = ds.get('name', self.hosts)
@@ -120,6 +119,7 @@ class Play(object):
         self.any_errors_fatal = utils.boolean(ds.get('any_errors_fatal', 'false'))
         self.accelerate       = utils.boolean(ds.get('accelerate', 'false'))
         self.accelerate_port  = ds.get('accelerate_port', None)
+        self.accelerate_ipv6  = ds.get('accelerate_ipv6', False)
         self.max_fail_pct     = int(ds.get('max_fail_percentage', 100))
 
         load_vars = {}
@@ -250,6 +250,27 @@ class Play(object):
                                 continue
                             else:
                                 self.included_roles.append(dep)
+
+                        # pass along conditionals from roles to dep roles
+                        if type(role) is dict:
+                            if 'when' in passed_vars:
+                                if 'when' in dep_vars:
+                                    tmpcond = []
+
+                                    if type(passed_vars['when']) is str:
+                                        tmpcond.append(passed_vars['when'])
+                                    elif type(passed_vars['when']) is list:
+                                        tmpcond.join(passed_vars['when'])
+
+                                    if type(dep_vars['when']) is str:
+                                        tmpcond.append(dep_vars['when'])
+                                    elif type(dep_vars['when']) is list:
+                                        tmpcond += dep_vars['when']
+
+                                    if len(tmpcond) > 0:
+                                        dep_vars['when'] = tmpcond
+                                else:
+                                    dep_vars['when'] = passed_vars['when']
 
                         self._build_role_dependencies([dep], dep_stack, passed_vars=dep_vars, level=level+1)
                         dep_stack.append([dep,dep_path,dep_vars,dep_defaults_data])
@@ -467,7 +488,11 @@ class Play(object):
                     elif k.startswith("when_"):
                         included_additional_conditions.insert(0, utils.compile_when_to_only_if("%s %s" % (k[5:], x[k])))
                     elif k == 'when':
-                        included_additional_conditions.insert(0, utils.compile_when_to_only_if("jinja2_compare %s" % x[k]))
+                        if type(x[k]) is str:
+                            included_additional_conditions.insert(0, utils.compile_when_to_only_if("jinja2_compare %s" % x[k]))
+                        elif type(x[k]) is list:
+                            for i in x[k]:
+                                included_additional_conditions.insert(0, utils.compile_when_to_only_if("jinja2_compare %s" % i))
                     elif k in ("include", "vars", "default_vars", "only_if", "sudo", "sudo_user", "role_name"):
                         continue
                     else:

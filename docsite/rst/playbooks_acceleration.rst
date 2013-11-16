@@ -24,7 +24,8 @@ Accelerated mode offers several improvements over the original fireball mode fro
 
 * No bootstrapping is required, only a single line needs to be added to each play you wish to run in accelerated mode.
 * Support for sudo commands (see below for more details and caveats) is available.
-* There are fewer requirements. ZeroMQ is no longer required, nor are there any special packages beyond python-keyczar.
+* There are fewer requirements. ZeroMQ is no longer required, nor are there any special packages beyond python-keyczar 
+* python 2.5 or higher is required.
 
 In order to use accelerated mode, simply add `accelerate: true` to your play::
 

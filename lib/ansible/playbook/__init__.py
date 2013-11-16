@@ -313,8 +313,9 @@ class PlayBook(object):
             conditional=task.only_if, callbacks=self.runner_callbacks,
             sudo=task.sudo, sudo_user=task.sudo_user,
             transport=task.transport, sudo_pass=task.sudo_pass, is_playbook=True,
-            check=self.check, diff=self.diff, environment=task.environment, complex_args=task.args, 
+            check=self.check, diff=self.diff, environment=task.environment, complex_args=task.args,
             accelerate=task.play.accelerate, accelerate_port=task.play.accelerate_port,
+            accelerate_ipv6=task.play.accelerate_ipv6,
             error_on_undefined_vars=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR
         )
 
@@ -454,7 +455,7 @@ class PlayBook(object):
             remote_pass=self.remote_pass, remote_port=play.remote_port, private_key_file=self.private_key_file,
             setup_cache=self.SETUP_CACHE, callbacks=self.runner_callbacks, sudo=play.sudo, sudo_user=play.sudo_user,
             transport=play.transport, sudo_pass=self.sudo_pass, is_playbook=True, module_vars=play.vars,
-            default_vars=play.default_vars, check=self.check, diff=self.diff, 
+            default_vars=play.default_vars, check=self.check, diff=self.diff,
             accelerate=play.accelerate, accelerate_port=play.accelerate_port,
         ).run()
         self.stats.compute(setup_results, setup=True)
@@ -543,10 +544,23 @@ class PlayBook(object):
                         for handler in play.handlers():
                             if len(handler.notified_by) > 0:
                                 self.inventory.restrict_to(handler.notified_by)
-                                if handler.name not in fired_names:
+
+                                # Resolve the variables first
+                                handler_name = template(play.basedir, handler.name, handler.module_vars)
+                                if handler_name not in fired_names:
                                     self._run_task(play, handler, True)
                                 # prevent duplicate handler includes from running more than once
-                                fired_names[handler.name] = 1
+                                fired_names[handler_name] = 1
+
+                                host_list = self._list_available_hosts(play.hosts)
+                                if handler.any_errors_fatal and len(host_list) < hosts_count:
+                                    play.max_fail_pct = 0
+                                if (hosts_count - len(host_list)) > int((play.max_fail_pct)/100.0 * hosts_count):
+                                    host_list = None
+                                if not host_list:
+                                    self.callbacks.on_no_hosts_remaining()
+                                    return False
+
                                 self.inventory.lift_restriction()
                                 new_list = handler.notified_by[:]
                                 for host in handler.notified_by:
@@ -590,7 +604,7 @@ class PlayBook(object):
                 # If threshold for max nodes failed is exceeded , bail out.
                 if (hosts_count - len(host_list)) > int((play.max_fail_pct)/100.0 * hosts_count):
                     host_list = None
-                    
+
                 # if no hosts remain, drop out
                 if not host_list:
                     self.callbacks.on_no_hosts_remaining()

@@ -33,12 +33,9 @@ been referred to as a 'lightweight CMDB' by some admins.   This particular scrip
 using Cobbler's XMLRPC API.
 
 To tie Ansible's inventory to Cobbler (optional), copy `this script <https://raw.github.com/ansible/ansible/devel/plugins/inventory/cobbler.py>`_ to /etc/ansible and `chmod +x` the file.  cobblerd will now need
-to be running when you are using Ansible.  
+to be running when you are using Ansible and you'll need to use Ansible's  ``-i`` command line option (e.g. ``-i /etc/ansible/cobbler.py``).
 
-When running Ansible, to use this inventory, then path the script with the "-i /etc/ansible/cobbler.py" parameter.
-
-First test the script by running `./etc/ansible/hosts` directly.   You should see some JSON data output, but it may not have
-anything in it just yet.
+First test the script by running ``/etc/ansible/cobbler.py`` directly.   You should see some JSON data output, but it may not have anything in it just yet.
 
 Let's explore what this does.  In cobbler, assume a scenario somewhat like the following::
 
@@ -87,18 +84,18 @@ Example: AWS EC2 External Inventory Script
 If you use Amazon Web Services EC2, maintaining an inventory file might not be the best approach, because hosts may come and go over time, be managed by external applications, or you might even be using AWS autoscaling. For this reason, you can use the `EC2 external inventory  <https://raw.github.com/ansible/ansible/devel/plugins/inventory/ec2.py>`_ script.
 
 You can use this script in one of two ways. The easiest is to use Ansible's ``-i`` command line option and specify the path to the script after
-marking it executable.
+marking it executable::
 
     ansible -i ec2.py -u ubuntu us-east-1d -m ping
 
 The second option is to copy the script to `/etc/ansible/hosts` and `chmod +x` it. You will also need to copy the `ec2.ini  <https://raw.github.com/ansible/ansible/devel/plugins/inventory/ec2.ini>`_ file to `/etc/ansible/ec2.ini`. Then you can run ansible as you would normally.
 
-To successfully make an API call to AWS, you will need to configure Boto (the Python interface to AWS). There are a `variety of methods <http://docs.pythonboto.org/en/latest/boto_config_tut.html>`_ available, but the simplest is just to export two environment variables:
+To successfully make an API call to AWS, you will need to configure Boto (the Python interface to AWS). There are a `variety of methods <http://docs.pythonboto.org/en/latest/boto_config_tut.html>`_ available, but the simplest is just to export two environment variables::
 
     export AWS_ACCESS_KEY_ID='AK123'
     export AWS_SECRET_ACCESS_KEY='abc123'
 
-You can test the script by itself to make sure your config is correct
+You can test the script by itself to make sure your config is correct::
 
     cd plugins/inventory
     ./ec2.py --list

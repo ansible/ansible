@@ -20,8 +20,9 @@
 from ansible import utils, errors
 import os
 import errno
-import random
 from string import ascii_letters, digits
+import string
+import random
 
 
 class LookupModule(object):
@@ -33,10 +34,7 @@ class LookupModule(object):
 
     def random_salt(self):
         salt_chars = ascii_letters + digits + './'
-        salt = []
-        for _ in range(8):
-            salt.append(random.choice(salt_chars))
-        return ''.join(salt)
+        return utils.random_password(length=8, chars=salt_chars)
 
     def run(self, terms, inject=None, **kwargs):
 
@@ -52,6 +50,7 @@ class LookupModule(object):
             paramvals = {
                 'length': LookupModule.LENGTH,
                 'encrypt': None,
+                'chars': ['ascii_letters','digits',".,:-_"],
             }
 
             # get non-default parameters if specified
@@ -61,6 +60,11 @@ class LookupModule(object):
                     assert(name in paramvals)
                     if name == 'length':
                         paramvals[name] = int(value)
+                    elif name == 'chars':
+                        use_chars=[]
+                        if ",," in value: use_chars.append(',')
+                        use_chars.extend(value.replace(',,',',').split(','))
+                        paramvals['chars'] = use_chars
                     else:
                         paramvals[name] = value
             except (ValueError, AssertionError) as e:
@@ -68,6 +72,7 @@ class LookupModule(object):
 
             length  = paramvals['length']
             encrypt = paramvals['encrypt']
+            use_chars = paramvals['chars']
 
             # get password or create it if file doesn't exist
             path = utils.path_dwim(self.basedir, relpath)
@@ -75,8 +80,10 @@ class LookupModule(object):
                 pathdir = os.path.dirname(path)
                 if not os.path.isdir(pathdir):
                     os.makedirs(pathdir)
-                chars = ascii_letters + digits + ".,:-_"
+
+                chars = "".join([getattr(string,c,c) for c in use_chars]).replace('"','').replace("'",'')
                 password = ''.join(random.choice(chars) for _ in range(length))
+
                 if encrypt is not None:
                     salt = self.random_salt()
                     content = '%s salt=%s' % (password, salt)

@@ -85,7 +85,7 @@ def key_for_hostname(hostname):
     # to use no persistent daemons or key management
 
     if not KEYCZAR_AVAILABLE:
-        raise errors.AnsibleError("python-keyczar must be installed to use fireball/accelerated mode")
+        raise errors.AnsibleError("python-keyczar must be installed on the control machine to use accelerated modes")
 
     key_path = os.path.expanduser("~/.fireball.keys")
     if not os.path.exists(key_path):
@@ -849,10 +849,11 @@ def make_sudo_cmd(sudo_user, executable, cmd):
     # the -p option.
     randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
     prompt = '[sudo via ansible, key=%s] password: ' % randbits
+    success_key = 'SUDO-SUCCESS-%s' % randbits
     sudocmd = '%s -k && %s %s -S -p "%s" -u %s %s -c %s' % (
         C.DEFAULT_SUDO_EXE, C.DEFAULT_SUDO_EXE, C.DEFAULT_SUDO_FLAGS,
-        prompt, sudo_user, executable or '$SHELL', pipes.quote(cmd))
-    return ('/bin/sh -c ' + pipes.quote(sudocmd), prompt)
+        prompt, sudo_user, executable or '$SHELL', pipes.quote('echo %s; %s' % (success_key, cmd)))
+    return ('/bin/sh -c ' + pipes.quote(sudocmd), prompt, success_key)
 
 _TO_UNICODE_TYPES = (unicode, type(None))
 
@@ -1006,4 +1007,13 @@ def combine_vars(a, b):
     else:
         return dict(a.items() + b.items())
 
+def random_password(length=20, chars=C.DEFAULT_PASSWORD_CHARS):
+    '''Return a random password string of length containing only chars.'''
 
+    password = []
+    while len(password) < length:
+        new_char = os.urandom(1)
+        if new_char in chars:
+            password.append(new_char)
+
+    return ''.join(password)

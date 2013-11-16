@@ -102,7 +102,8 @@ else:
     boto_found = True
 
 
-def connect(ec2_url, ec2_secret_key, ec2_access_key, region):
+def connect(ec2_url, ec2_access_key, ec2_secret_key, region, module):
+
     """ Return an ec2 connection"""
     # allow environment variables to be used if ansible vars aren't set
     if not ec2_url and 'EC2_URL' in os.environ:
@@ -258,14 +259,13 @@ def main():
     if not boto_found:
         module.fail_json(msg="boto is required")
 
-    # def get_ec2_creds(module):
-    #   return ec2_url, ec2_access_key, ec2_secret_key, region
     ec2_url, ec2_access_key, ec2_secret_key, region = get_ec2_creds(module)
 
-    ec2 = connect(ec2_url=ec2_url,
-                  ec2_access_key=ec2_access_key,
-                  ec2_secret_key=ec2_secret_key,
-                  region=region)
+    ec2 = connect(ec2_url,
+                  ec2_access_key,
+                  ec2_secret_key,
+                  region,
+                  module)
 
     instance_id = module.params.get('instance_id')
     public_ip = module.params.get('public_ip')
