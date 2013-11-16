@@ -258,7 +258,7 @@ Ansible prefers to use Jinja2 syntax '{{ like_this }}' to indicate a variable sh
 older versions of playbooks used a more Perl-style syntax.  This syntax was undesirable as it frequently conflicted with bash and
 was hard to explain to new users when referencing complicated variable hierarchies, so we have standardized on the '{{ jinja2 }}' way.
 
-To ensure a string like '$foo' is not indadvertedly replaced in a Perl or Bash script template, the old form of templating (which is
+To ensure a string like '$foo' is not inadvertently replaced in a Perl or Bash script template, the old form of templating (which is
 still enabled as of Ansible 1.4) can be disabled like so ::
 
     legacy_playbook_variables = no

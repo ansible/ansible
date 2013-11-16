@@ -136,7 +136,7 @@ AWX Autoscaling
 
 AnsibleWorks's "AWX" product also contains a very nice feature for auto-scaling use cases.  In this mode, a simple curl script can call
 a defined URL and the server will "dial out" to the requester and configure an instance that is spinning up.  This can be a great way
-to reconfigure ephmeral nodes.  See the AWX documentation for more details.  Click on the AWX link in the sidebar for details.
+to reconfigure ephemeral nodes.  See the AWX documentation for more details.  Click on the AWX link in the sidebar for details.
 
 A benefit of using the callback in AWX over pull mode is that job results are still centrally recorded and less information has to be shared
 with remote hosts.
