@@ -90,6 +90,13 @@ def query_package(module, name):
     else:
         return False
 
+def query_package_provides(module, name):
+
+    # rpm -q returns 0 if the package is installed,
+    # 1 if it is not installed
+    rc = os.system("rpm -q --provides %s >/dev/null" % (name))
+    return rc == 0
+
 
 def update_package_db(module):
     rc = os.system("urpmi.update -a -q")
@@ -125,7 +132,8 @@ def install_packages(module, pkgspec, force=True, no_suggests=True):
 
     packages = ""
     for package in pkgspec:
-        packages += "'%s' " % package
+        if not query_package_provides(module, package):
+            packages += "'%s' " % package
 
     if len(packages) != 0:
         if no_suggests:
