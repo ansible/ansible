@@ -16,21 +16,25 @@ options:
       - Ensure that partition of this exact size is created, will update facts if successful
     required: false
     default: null
+    aliases: []
   minsize:
     description:
       - Ensure that partition of at least this size is created, will update facts if successful
     required: false
     default: null
+    aliases: []
   minfree:
     description:
       - Ensure this amount of free space will be left after creating the partition
     required: false
     default: null
+    aliases: []
   count:
     description:
       - How many partitions of this geometry to create
     required: false
     default: 1
+    aliases: []
   repeated:
     description:
       - Will try to repeat the operation for each disk on the machine
@@ -38,12 +42,14 @@ options:
     required: false
     default: no
     choices: [ "yes", "no" ]
+    aliases: []
   filesystem:
     description:
       - What filesystem to use when searching for existing, or creating new partitions
     required: false
     default: null
     choices: [ "ext3", "ext4", "xfs" ]
+    aliases: []
   label:
     description:
       - What label (partition table type) to use for NEW disks only
@@ -51,17 +57,69 @@ options:
     required: false
     default: "msdos"
     choices: [ "msdos", "gpt" ]
+    aliases: []
 notes:
     - All parameters are in MiB
-      If partition cannot be created facts will not contain the C(parted_created) attribute
-examples:
-    - code: ansible all -s -m parted -a size=1024
-      description: Will create the partition of exactly 1GiB in size, if possible
-    - code: ansible all -s -m parted -a size=1024 minfree=1024
-      description: Will create the partition of exactly 1GiB in size and leave at least 1GiB more as a free space
-    - code: ansible all -s -m parted -a minsize=1024 minfree=1024
-      description: Will create partition of at least 1GiB and leave at least 1GiB more as a free space 
-author: Constantine Peresypkin <constantine.peresypk@rackspace.com>
+      If partitions were not created facts will not contain the C(parted_created) attribute
+    - The result is returned as json dictionary:
+
+        {
+            "parted_created": [
+                {
+                    "number": 1,
+                    "path": "/dev/sda1",
+                    "name": "sda1",
+                    "start": 0, # in sectors
+                    "end": 2097152, # in sectors
+                    "size": 1073741824, # in bytes
+                    "fs": "ext4"
+                }
+            ],
+            "parted_existing": [],
+            "parted_missing": 0
+        }
+
+        "parted_created" is a list of created (new) partitions
+        "parted_existing" is a list of existing partitions
+        "parted_missing" is a count of partitions we were not able to create
+requirements: [ "python-parted" ]
+author: Constantine Peresypkin
+'''
+
+EXAMPLES = '''
+# Create a partition of exactly 1GiB in size
+- parted: size=1024
+
+# Create a partition of exactly 1GiB in size and leave at least 1GiB more as a free space
+- parted: size=1024 minfree=1024
+
+# Create a partition of at least 1GiB and leave at least 1GiB more as a free space
+- parted: minsize=1024 minfree=1024
+
+
+# Full flow for the new disk init
+# Create xfs partition of 20GB or more on each HDD that has enough free space
+- name: Create partitions
+  parted: minsize=20000 repeated=yes filesystem=xfs
+
+# Create xfs filesystem on all "new" partitions
+- name: Create filesystems
+  filesystem: dev={{ item.path }} fstype=xfs
+  with_items: parted_created
+
+# Ensure that xfs is used on all existing partitions that satisfy fs=xfs parted output
+- name: Test existing filesystems
+  filesystem: dev={{ item.path }} fstype=xfs
+  with_items: parted_existing
+
+# Rerun the parted to prepare for remount
+- name: Recheck partitions
+  parted: minsize=20000 repeated=yes filesystem=xfs
+
+# Remount everything
+- name: Remount all
+  mount: src={{ item.path }} state=mounted name=/srv/node/{{ item.name }} fstype=xfs opts='noatime,nodiratime,nobarrier,logbufs=8'
+  with_items: parted_existing
 '''
 
 MBYTE = 1024 * 1024
@@ -78,7 +136,7 @@ def get_all_disks():
     for dev in parted.getAllDevices():
         try:
             disk = parted.Disk(dev)
-        except parted.DiskLabelException: 
+        except parted.DiskLabelException:  # will be raised if the disk has no partition table (new disk)
             device_size = dev.sectorSize * dev.length
             if device_size > MAX_MSDOS_SIZE and 'msdos' in label:
                 disk = parted.freshDisk(dev, 'gpt')
@@ -190,7 +248,7 @@ def ensure_space(count=1, size=None, minsize=None, fs_type=None, repeated=False)
                 if count == 0 and not repeated:
                     break
     if repeated:
-        count = 0
+        count = 0  # count of missing is ignored for repeated operation
         for d in disks:
             for f in d.getFreeSpacePartitions():
                 length = f.getLength() * d.device.sectorSize
