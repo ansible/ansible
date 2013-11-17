@@ -13,7 +13,7 @@ description:
 options:
   size:
     description:
-      - Ensure that partition of this size exactly is created, will update facts if successful
+      - Ensure that partition of this exact size is created, will update facts if successful
     required: false
     default: null
   minsize:
@@ -47,7 +47,7 @@ options:
   label:
     description:
       - What label (partition table type) to use for NEW disks only
-      - Although default is "msdos", it will use "gpt" on disks over 1TB
+      - Although default is "msdos",  "gpt" will be used automatically for disks over 1TB in size
     required: false
     default: "msdos"
     choices: [ "msdos", "gpt" ]
@@ -61,7 +61,7 @@ examples:
       description: Will create the partition of exactly 1GiB in size and leave at least 1GiB more as a free space
     - code: ansible all -s -m parted -a minsize=1024 minfree=1024
       description: Will create partition of at least 1GiB and leave at least 1GiB more as a free space 
-author: Constantine Peresypkin
+author: Constantine Peresypkin <constantine.peresypk@rackspace.com>
 '''
 
 MBYTE = 1024 * 1024
@@ -78,7 +78,7 @@ def get_all_disks():
     for dev in parted.getAllDevices():
         try:
             disk = parted.Disk(dev)
-        except parted.DiskLabelException:
+        except parted.DiskLabelException: 
             device_size = dev.sectorSize * dev.length
             if device_size > MAX_MSDOS_SIZE and 'msdos' in label:
                 disk = parted.freshDisk(dev, 'gpt')
