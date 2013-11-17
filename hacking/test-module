@@ -29,6 +29,10 @@
 #
 # dump the generated module file to a path:
 #    test-module -m ../libary/command -o module-file
+#
+# specify complex args for a module as json:
+#    test-module -m module-foo -j '{"foo": {"bar": 10}}'
+#
 
 import sys
 import base64
@@ -62,6 +66,9 @@ def parse():
     parser.add_option("-o","--output",dest="output_path",
         help="path to dump the generated runnable boilerplate module"
         )
+    parser.add_option("-j","--json-data",dest="complex_args",
+        help="pass json_data string as complex args to the module"
+        )
     options, args = parser.parse_args()
     if not options.module_path:
         parser.print_help()
@@ -80,7 +87,7 @@ def write_argsfile(argstring, json=False):
     argsfile.close()
     return argspath
 
-def boilerplate_module(modfile, args, output_path=None):
+def boilerplate_module(modfile, args, complex_args, output_path=None):
     """ simulate what ansible does with new style modules """
 
     #module_fh = open(modfile)
@@ -91,7 +98,6 @@ def boilerplate_module(modfile, args, output_path=None):
 
     #included_boilerplate = module_data.find(module_common.REPLACER) != -1 or module_data.find("import ansible.module_utils") != -1
 
-    complex_args = {}
     inject = {}
     (module_data, module_style, shebang) = replacer.modify_module(
         modfile, 
@@ -150,7 +156,15 @@ def rundebug(debugger, modfile, argspath):
 def main(): 
 
     options, args = parse()
-    (modfile, module_style) = boilerplate_module(options.module_path, options.module_args,output_path=options.output_path)
+    if options.complex_args:
+        complex_args = utils.json_loads(options.complex_args)
+    else:
+        complex_args = {}
+
+    (modfile, module_style) = boilerplate_module(
+        options.module_path, options.module_args, complex_args,
+        output_path=options.output_path
+        )
 
     if options.output_path:
         return
