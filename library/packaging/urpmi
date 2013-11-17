@@ -76,11 +76,18 @@ import json
 import shlex
 import os
 import sys
+try:
+    import rpm
+    USE_PYTHON = True
+except ImportError:
+    USE_PYTHON = False
 
 URPMI_PATH = '/usr/sbin/urpmi'
 URPME_PATH = '/usr/sbin/urpme'
 
 def query_package(module, name):
+    if USE_PYTHON:
+        return rpm.TransactionSet().dbMatch(rpm.RPMTAG_NAME, name).count() != 0
 
     # rpm -q returns 0 if the package is installed,
     # 1 if it is not installed
@@ -89,6 +96,15 @@ def query_package(module, name):
         return True
     else:
         return False
+
+def query_package_provides(module, name):
+    if USE_PYTHON:
+        return rpm.TransactionSet().dbMatch(rpm.RPMTAG_PROVIDES, name).count() != 0
+
+    # rpm -q returns 0 if the package is installed,
+    # 1 if it is not installed
+    rc = os.system("rpm -q --provides %s >/dev/null" % (name))
+    return rc == 0
 
 
 def update_package_db(module):
@@ -125,7 +141,8 @@ def install_packages(module, pkgspec, force=True, no_suggests=True):
 
     packages = ""
     for package in pkgspec:
-        packages += "'%s' " % package
+        if not query_package_provides(module, package):
+            packages += "'%s' " % package
 
     if len(packages) != 0:
         if no_suggests:
