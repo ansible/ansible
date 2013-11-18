@@ -19,6 +19,7 @@
 DOCUMENTATION = '''
 ---
 module: glance_image
+version_added: "1.2"
 short_description: Add/Delete images from glance
 description:
    - Add or Remove images from the glance repository.

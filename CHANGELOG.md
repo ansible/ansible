@@ -35,6 +35,7 @@ New modules and plugins.
 * cloud: docker - instantiates/removes/manages docker containers
 * cloud: ovirt -- VM lifecycle controls for ovirt
 * files: acl -- set or get acls on a file
+* files: unarchive: pushes and extracts tarballs
 * system: firewalld -- manage the firewalld configuration
 * system: host -- manage `/etc/hosts` file entries
 * system: modprobe -- manage kernel modules on systems that support modprobe/rmmod
@@ -49,9 +50,11 @@ New modules and plugins.
 * web_infrastructure: ejabberd_user: add and remove users to ejabberd
 * web_infrastructure: jboss: deploys or undeploys apps to jboss
 * source_control: github_hooks: manages GitHub service hooks 
-* network: bigip_monitor_tcp: manages F5 BIG-IP LTM TCP monitors
-* network: bigip_pool_member: manages F5 BIG-IP LTM pool members
-* network: bigip_node: manages F5 BIG-IP LTM nodes
+* net_infrastructure: bigip_monitor_tcp: manages F5 BIG-IP LTM TCP monitors
+* net_infrastructure: bigip_pool_member: manages F5 BIG-IP LTM pool members
+* net_infrastructure: bigip_node: manages F5 BIG-IP LTM nodes
+* net_infrastructure: openvswitch_port
+* net_infrastructure: openvswitch_bridge
 
 Plugins:
 

@@ -19,6 +19,7 @@
 DOCUMENTATION = '''
 ---
 module: arista_lag
+version_added: "1.3"
 author: Peter Sprygada
 short_description: Manage port channel (lag) interfaces
 requirements:

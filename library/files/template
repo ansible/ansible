@@ -3,6 +3,7 @@
 DOCUMENTATION = '''
 ---
 module: template
+version_added: historical
 short_description: Templates a file out to a remote server.
 description:
      - Templates are processed by the Jinja2 templating language

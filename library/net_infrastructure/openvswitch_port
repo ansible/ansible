@@ -17,6 +17,7 @@
 DOCUMENTATION = '''
 ---
 module: openvswitch_port
+version_added: 1.4
 short_description: Manage Open vSwitch ports
 requirements: [ ovs-vsctl ]
 description:

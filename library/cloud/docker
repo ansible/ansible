@@ -23,6 +23,7 @@
 DOCUMENTATION = '''
 ---
 module: docker
+version_added: "1.4"
 short_description: manage docker containers
 description:
      - Manage the life cycle of docker containers.
