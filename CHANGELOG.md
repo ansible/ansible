@@ -18,7 +18,8 @@ Highlighted new features:
 * The name of each role is now shown before each task if roles are being used
 * Adds a "var=" option to the debug module for debugging variable data.  "debug: var=hostvars['hostname']" and "debug: var=foo" are all valid syntax.
 * Variables in {{ format }} can be used as references even if they are structured data
-* 
+* Can force binding of accelerate to ipv6 ports.
+
 New modules and plugins:
 
 * cloud:ec2_eip -- manage AWS elastic IPs
@@ -30,6 +31,7 @@ New modules and plugins:
 * system: modprobe -- manage kernel modules on systems that support modprobe/rmmod
 * system: open_iscsi -- manage targets on an initiator using open-iscsi
 * utilities: include_vars -- dynamically load variables based on conditions.
+* cloud: ec2_vpc -- manage ec2 virtual private clouds
 
 Plugins:
 
@@ -63,6 +65,10 @@ Misc changes:
 * Fixes for IPv6 addresses in inventory text files
 * name of executable can be passed to pip/gem etc, for installing under *different* interpreters
 * copy of ./hacking/env-setup added for fish users, ./hacking/env-setup.fish
+* file module more tolerant of non-absolute paths in softlinks.
+* miscellaneous fixes/upgrades to async polling logic.
+* conditions on roles now pass to dependent roles
+* 
 
 1.3.4 "Top of the World" (reprise) - October 29, 2013
 

@@ -16,7 +16,7 @@
 
 DOCUMENTATION = '''
 ---
-module: vpc 
+module: ec2_vpc 
 short_description: configure AWS virtual private clouds
 description:
     - Create or terminates AWS virtual private clouds.  This module has a dependency on python-boto.
