@@ -27,7 +27,7 @@
 #    test-module -m ../library/service -a "name=httpd ensure=restarted"
 #    test-module -m ../library/service -a "name=httpd ensure=restarted" --debugger /usr/bin/pdb
 #
-# dump the generated module file to a path:
+# save the generated module file to a path:
 #    test-module -m ../libary/command -o module-file
 #
 # specify complex args for a module as json:
@@ -64,7 +64,7 @@ def parse():
     parser.add_option('-D', '--debugger', dest='debugger', 
         help="path to python debugger (e.g. /usr/bin/pdb)")
     parser.add_option("-o","--output",dest="output_path",
-        help="path to dump the generated runnable boilerplate module"
+        help="path to save the generated module, but do not execute it"
         )
     parser.add_option("-j","--json-data",dest="complex_args",
         help="pass json_data string as complex args to the module"
