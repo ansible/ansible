@@ -63,7 +63,6 @@ Misc changes:
 * Fixes for IPv6 addresses in inventory text files
 * name of executable can be passed to pip/gem etc, for installing under *different* interpreters
 * copy of ./hacking/env-setup added for fish users, ./hacking/env-setup.fish
-* openbsd_pkg can handle "flavoured" packages like vim--no_x11
 
 1.3.4 "Top of the World" (reprise) - October 29, 2013
 
