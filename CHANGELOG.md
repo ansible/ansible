@@ -65,7 +65,7 @@ Plugins:
 * DOCS NEEDED: new lookup plugin added for etcd
 * a 'func' connection type to help people migrating from func/certmaster.
 
-Misc changes:
+Misc changes (all module additions/fixes may not listed):
 
 * (docs pending) New features for accelerate mode: configurable timeouts and a keepalives for long running tasks.
 * Added a `delimiter` field to the assemble module.
