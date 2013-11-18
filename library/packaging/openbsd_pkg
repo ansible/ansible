@@ -52,9 +52,6 @@ EXAMPLES = '''
 
 # Make sure nmap is not installed
 - openbsd_pkg: name=nmap state=absent
-
-# Make sure vim is installed using no_x11 flavour
-- openbsd_pkg name=vim--no_x11 state=present
 '''
 
 # Function used for executing commands.
@@ -84,23 +81,13 @@ def get_current_name(name, specific_version, module):
     return current_name
 
 # Function used to find out if a package is currently installed.
-# OpenBSD packages can contain "flavours"
-# For example vim is distributed as a "gtk2":
-#   - vim--gtk2
-# and "no_x11" flavour:
-#   - vim--no_x11
 def get_package_state(name, specific_version, module):
     info_cmd = 'pkg_info -e'
 
     if specific_version:
         syntax = "%s %s"
     else:
-        if "--" in name:
-            (name, flavour) = name.split("--", 1)
         syntax = "%s %s-*"
-        if flavour:
-            syntax += "-%s" % (flavour, )
-        syntax = "%s-"
 
     rc, stdout, stderr = execute_command(syntax % (info_cmd, name), module)
 
