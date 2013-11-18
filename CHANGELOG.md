@@ -36,6 +36,7 @@ New modules and plugins.
 * cloud: ovirt -- VM lifecycle controls for ovirt
 * files: acl -- set or get acls on a file
 * files: unarchive: pushes and extracts tarballs
+* files: synchronize: a useful wraper around rsyncing trees of files
 * system: firewalld -- manage the firewalld configuration
 * system: host -- manage `/etc/hosts` file entries
 * system: modprobe -- manage kernel modules on systems that support modprobe/rmmod
