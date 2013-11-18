@@ -17,6 +17,7 @@
 DOCUMENTATION = '''
 ---
 module: ec2_ami
+version_added: "1.3"
 short_description: create or destroy an image in ec2, return imageid
 description:
      - Creates or deletes ec2 images. This module has a dependency on python-boto >= 2.5

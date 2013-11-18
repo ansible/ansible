@@ -20,10 +20,10 @@
 
 DOCUMENTATION = """
 module: jboss
+version_added: "1.4"
 short_description: deploy applications to JBoss
 description:
   - Deploy applications to JBoss standalone using the filesystem
-version_added: "1.4"
 options:
   deployment:
     required: true

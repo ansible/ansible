@@ -24,6 +24,7 @@ import time
 DOCUMENTATION = '''
 ---
 module: copy
+version_added: "historical"
 short_description: Copies files to remote locations.
 description:
      - The M(copy) module copies a file on the local box to remote locations.

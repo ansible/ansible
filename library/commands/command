@@ -28,6 +28,7 @@ import os
 DOCUMENTATION = '''
 ---
 module: command
+version_added: historical
 short_description: Executes a command on a remote node
 description:
      - The M(command) module takes the command name followed by a list of space-delimited arguments.

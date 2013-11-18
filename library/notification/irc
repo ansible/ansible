@@ -22,6 +22,7 @@
 DOCUMENTATION = '''
 ---
 module: irc
+version_added: "1.2"
 short_description: Send a message to an IRC channel
 description:
    - Send a message to an IRC channel. This is a very simplistic implementation.

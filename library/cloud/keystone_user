@@ -6,6 +6,7 @@
 DOCUMENTATION = '''
 ---
 module: keystone_user
+version_added: "1.2"
 short_description: Manage OpenStack Identity (keystone) users, tenants and roles
 description:
    - Manage users,tenants, roles from OpenStack.

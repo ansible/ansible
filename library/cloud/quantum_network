@@ -25,6 +25,7 @@ except ImportError:
 DOCUMENTATION = '''
 ---
 module: quantum_network
+version_added: "1.4"
 short_description: Creates/Removes networks from OpenStack
 description:
    - Add or Remove network from OpenStack.

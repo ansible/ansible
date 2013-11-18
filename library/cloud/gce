@@ -19,6 +19,7 @@
 DOCUMENTATION = '''
 ---
 module: gce
+version_added: "1.4"
 short_description: create or terminate GCE instances
 description:
      - Creates or terminates Google Compute Engine (GCE) instances.  See

@@ -2,6 +2,7 @@
 DOCUMENTATION = """
 ---
 module: script
+version_added: "0.9"
 short_description: Runs a local script on a remote node after transferring it
 description:
      - "The M(script) module takes the script name followed by a list of

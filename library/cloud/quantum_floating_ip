@@ -27,6 +27,7 @@ except ImportError:
 DOCUMENTATION = '''
 ---
 module: quantum_floating_ip
+version_added: "1.2"
 short_description: Add/Remove floating IP from an instance
 description:
    - Add or Remove a floating IP to an instance
