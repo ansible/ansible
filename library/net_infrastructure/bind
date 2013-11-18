@@ -1,0 +1,290 @@
+#!/usr/bin/python
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: bind
+short_description: add, delete and update bind entries and start/stop bind service.
+description:
+     - Add, delete, and update DNS A record bind entries and start/stop bind service.
+options:
+  action:
+    description:
+      - Specify which action to take, 'add', 'delete', or 'update'.
+    required: false
+    default: null
+  address:
+    description:
+      - The IP address of the host being updated or added.
+    required: false
+    default: null
+    aliases: []
+  comment:
+    description:
+      - Add a comment for the entry, this is not TXT but an inline comment
+    required: false
+    default: null
+    aliases: []
+  hostname:
+    description:
+      - The hostname to use for the DNS A record.
+    required: false
+    default: null
+    aliases: []
+  initd:
+    description:
+      - The module will attempt to determine the init.d script for bind or it can be specified here
+    required: false
+    default: null
+    aliases: []
+  reverse:
+    description:
+      - Write the reverse DNS records, this will attempt to determine the filename base on the host's IP address
+  rev_zone_file:
+    description:
+      - The file on the server to modify reverse DNS content
+    required: false
+    default: null
+    aliases: []
+  state:
+    description:
+      - Set the state of the DNS server to reload or restart.
+    required: false
+    default: null
+    aliases: []
+  zone_file:
+    description:
+       - The forward zone file to use
+    required: true
+    default: null
+    aliases: []
+author: Nicholas DeClario
+'''
+
+EXAMPLES = '''
+# Adding a host to both forward and reverse DNS
+local_action:
+    module: bind
+    action: add
+    address: xxx.xxx.xxx.xxx
+    hostname: myhost
+    zone_file: '/var/cache/bind/domain.com'
+    rev_zone_file: '/var/cache/bind/xxx.xxx.xxx.in-addr.arpa'
+    comment: 'New Web Server'
+
+# Deleting a host and reload bind
+local_action:
+    module: bind
+    action: delete
+    hostname: myhost
+    state: reload
+
+# Restarting bind
+local_action:
+    module: bind
+    state: restart
+'''
+
+import os
+import sys
+import re
+
+
+class bindHost:
+
+    def __init__(self, module):
+        self.module = module
+        self.actions = dict({'add': self.add,
+                             'delete': self.delete_update,
+                             'update': self.delete_update})
+
+        if not module.params.get('action'):
+            self.action = None
+            return
+
+        if not module.params.get('action') in self.actions:
+            print "failed=True msg='Invliad action.  Valid actions include: add, delete, and update.'"
+            sys.exit(1)
+
+        self.action = module.params.get('action')
+
+        if self.action == 'delete' and not module.params.get('hostname'):
+            print "failed=True msg='hostname is required for deleting'"
+            sys.exit(1)
+
+        if not module.params.get('hostname') and \
+           not module.params.get('address') and \
+           not module.params.get('zone_file'):
+            print "failed=True msg='hostname, address and zone_file requires'"
+            sys.exit(1)
+
+        self.hostname = module.params.get('hostname')
+        self.address = module.params.get('address')
+        self.comment = module.params.get('comment')
+        self.fwd_zone_file = module.params.get('zone_file')
+        self.fwd_zone = self.read_file(self.fwd_zone_file)
+
+        if module.params.get('rev_zone_file'):
+            self.rev_zone_file = module.params.get('rev_zone_file')
+            self.rev_zone = self.read_file(self.rev_zone_file)
+            self.rev = True
+        else:
+            self.rev_zone = None
+            self.rev = False
+
+    def start(self):
+        return self.actions[self.action]()
+
+    def read_file(self, filen):
+        content = None
+
+        try:
+            with open(filen) as f:
+                content = f.readlines()
+        except IOError:
+            print "failed=True msg='File %s not found'" % filen
+
+        return content
+
+    def write_file(self, fileo, content):
+        f = open(fileo, 'w')
+        for line in content:
+            f.write(line)
+        f.close()
+
+    def update_serial(self, content):
+
+        return content
+
+    def add(self):
+        changed = False
+
+        for line in self.fwd_zone:
+            if self.hostname in line:
+                print "Failed=true msg='Found hostname in %s'" % line
+
+        #if not self.hostname in self.fwd_zone:
+        if not any(self.hostname in fz for fz in self.fwd_zone):
+            fwd_entry = "%s\tIN\tA\t%s ; %s\n" % (self.hostname, self.address, self.comment)
+            self.fwd_zone.append(fwd_entry)
+            changed = True
+
+        if self.rev:
+            if not self.hostname in self.rev_zone:
+                addr = re.sub('.*\.', '', self.address)
+                rev_entry = "%s\tPTR\t%s." % (addr, self.hostname)
+                self.rev_zone.append(rev_entry)
+                changed = True
+
+        if changed:
+            self.fwd_zone = self.update_serial(self.fwd_zone)
+            self.write_file(self.fwd_zone_file, self.fwd_zone)
+            if self.rev:
+                self.write_file(self.rev_zone_file, self.rev_zone)
+
+        return changed
+
+    def delete_update(self):
+        changed = False
+
+        fwd_match = [fwd for fwd in self.fwd_zone if self.hostname in fwd]
+
+        if fwd_match:
+            if self.action == "delete":
+                self.fwd_zone.remove(fwd_match[0])
+            else:
+                fwd_entry = "%s\tIN\tA\t%s ; %s\n" % (self.hostname, self.address, self.comment)
+                self.fwd_zone[self.fwd_zone.index(fwd_match[0])] = fwd_entry
+            self.write_file(self.fwd_zone_file, self.fwd_zone)
+            changed = True
+
+        if self.rev:
+            rev_match = [rev for rev in self.rev_zone if self.hostname in rev]
+
+            if rev_match:
+                if self.action == "delete":
+                    self.rev_zone.remove(rev_match[0])
+                else:
+                    addr = re.sub('.*\.', '', self.address)
+                    rev_entry = "%s\tPTR\t%s." % (addr, self.hostname)
+                    self.rev_zone[self.rev_zone.index(rev_match[0])] = rev_entry
+                self.write_file(self.rev_zone_file, self.rev_zone)
+                changed = True
+
+        return changed
+
+
+def determine_bind_service():
+    match = [f for f in os.listdir("/etc/init.d/") if "bind" in f]
+
+    if not match:
+        match = [f for f in os.listdir("/etc/init.d/") if "named" in f]
+
+    if not match:
+        print "failed=True msg='Unable to determine init.d script, specify with initd='"
+        sys.exit(1)
+
+    return "/etc/init.d/%s" % match[0]
+
+
+def bind_service(state):
+    if not state == 'reload' and not state == 'restart':
+        print "failed=True msg='Invalid state specified. Valid: restart, reload'"
+        sys.exit(1)
+
+    bind = determine_bind_service()
+
+    command = "%s %s" % (bind, state)
+    result = os.system(command)
+
+    if result == 0:
+        return True
+    else:
+        print "failed=True msg='Error running bind command'"
+        sys.exit(1)
+
+    return False
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            action = dict(),
+            state = dict(),
+            hostname = dict(),
+            address = dict(),
+            comment = dict(),
+            zone_file = dict(),
+            rev_zone_file = dict(),
+            initd = dict(default=determine_bind_service())
+        )
+    )
+
+    changed = False
+
+    dns = bindHost(module)
+    if dns.action != None:
+        changed = dns.start()
+
+    if module.params.get('state'):
+        changed = bind_service(module.params.get('state'))
+
+    print "changed=%s" % changed
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+main()
