@@ -31,7 +31,7 @@ import logging
 if constants.DEFAULT_LOG_PATH != '':
     path = constants.DEFAULT_LOG_PATH
 
-    if (os.path.exists(path) and not os.access(path, os.W_OK)) or not os.access(os.path.dirname(path), os.W_OK):
+    if (os.path.exists(path) and not os.access(path, os.W_OK)) and not os.access(os.path.dirname(path), os.W_OK):
         sys.stderr.write("log file at %s is not writeable, aborting\n" % path)
         sys.exit(1)
 
