@@ -123,6 +123,8 @@ def main(args):
                       default=DEFAULT_REPO_TYPE,
                       help='Module name used to check out repository.  '
                       'Default is %s.' % DEFAULT_REPO_TYPE)
+    parser.add_option('-K', '--ask-sudo-pass', default=False, dest='ask_sudo_pass', action='store_true',
+                      help='ask for sudo password')
     options, args = parser.parse_args(args)
 
     hostname = socket.getfqdn()
@@ -171,6 +173,8 @@ def main(args):
     cmd = 'ansible-playbook %s %s' % (base_opts, playbook)
     if options.inventory:
         cmd += ' -i "%s"' % options.inventory
+    if options.ask_sudo_pass:
+        cmd += ' -K'
     os.chdir(options.dest)
     rc, out = _run(cmd)
 
