@@ -103,7 +103,7 @@ CHUNK_SIZE=10240
 DEBUG_LEVEL=0
 def log(msg, cap=0):
     global DEBUG_LEVEL
-    if cap >= DEBUG_LEVEL:
+    if DEBUG_LEVEL >= cap:
         syslog.syslog(syslog.LOG_NOTICE|syslog.LOG_DAEMON, msg)
 
 def vv(msg):
