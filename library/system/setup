@@ -398,7 +398,8 @@ class Facts(object):
                 self.facts['lsb']['major_release'] = self.facts['lsb']['release'].split('.')[0]
         elif lsb_path is None and os.path.exists('/etc/lsb-release'):
             self.facts['lsb'] = {}
-            with open('/etc/lsb-release', 'r') as f:
+            f = open('/etc/lsb-release', 'r')
+            try:
                 for line in f.readlines():
                     value = line.split('=',1)[1].strip()
                     if 'DISTRIB_ID' in line:
@@ -409,6 +410,8 @@ class Facts(object):
                         self.facts['lsb']['description'] = value
                     elif 'DISTRIB_CODENAME' in line:
                         self.facts['lsb']['codename'] = value
+            finally:
+                f.close()
         else:
             return self.facts
 
