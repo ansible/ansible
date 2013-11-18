@@ -30,6 +30,8 @@ except ImportError:
     sys.exit(1)
 import os
 
+outdir = os.path.abspath(os.path.join(os.getcwd(), "htmlout"))
+
 
 class SphinxBuilder(object):
     """
@@ -45,7 +47,6 @@ class SphinxBuilder(object):
         try:
             buildername = 'html'
 
-            outdir = os.path.abspath(os.path.join(os.getcwd(), "htmlout"))
             # Create the output directory if it doesn't exist
             if not os.access(outdir, os.F_OK):
                 os.mkdir(outdir)
@@ -88,7 +89,7 @@ if __name__ == '__main__':
         print "    Run 'make viewdocs' to build and then preview in a web browser."
         sys.exit(0)
 
-    # The 'htmldocs' make target will call this scrip twith the 'rst'
+    # The 'htmldocs' make target will call this script with the 'rst'
     # parameter' We don't need to run the 'htmlman' target then.
     if "rst" in sys.argv:
         build_rst_docs()
@@ -99,5 +100,5 @@ if __name__ == '__main__':
 
     if "view" in sys.argv:
         import webbrowser
-        if not webbrowser.open('index.html'):
+        if not webbrowser.open(outdir + '/index.html'):
             print >> sys.stderr, "Could not open on your webbrowser."
