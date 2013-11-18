@@ -25,5 +25,5 @@ Michael DeHaan -- michael.dehaan@gmail.com
 
 [install Sphinx]: http://sphinx-doc.org/install.html
 [file issues]: https://github.com/ansible/ansible/issues
-[module-docs]: http://www.ansibleworks.com/docs/moduledev.html#documenting-your-module
+[module-docs]: http://www.ansibleworks.com/docs/developing_modules.html#documenting-your-module
 
