@@ -36,14 +36,14 @@ class ActionModule(object):
 
     def setup(self, module_name, inject):
         ''' Always default to localhost as delegate if None defined '''
-        if inject['delegate_to'] is None:
+        if inject.get('delegate_to') is None:
             inject['delegate_to'] = '127.0.0.1'
             inject['ansible_connection'] = 'local'
             # If sudo is active, disable from the connection set self.sudo to True.
             if self.runner.sudo:
                 self.runner.sudo = False
 
-    def run(self, conn, tmp, module_name, module_args, 
+    def run(self, conn, tmp, module_name, module_args,
         inject, complex_args=None, **kwargs):
 
         ''' generates params and passes them on to the rsync module '''
