@@ -24,7 +24,7 @@ import re
 
 DOCUMENTATION = '''
 ---
-module: blacklist
+module: kernel_blacklist
 author: Matthias Vogelgesang
 version_added: 1.4
 short_description: Blacklist kernel modules
@@ -52,7 +52,7 @@ requirements: []
 
 EXAMPLES = '''
 # Blacklist the nouveau driver module
-- blacklist: name=nouveau state=present
+- kernel_blacklist: name=nouveau state=present
 '''
 
 
