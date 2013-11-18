@@ -34,7 +34,7 @@ class Play(object):
        'handlers', 'remote_user', 'remote_port', 'included_roles', 'accelerate',
        'accelerate_port', 'accelerate_ipv6', 'sudo', 'sudo_user', 'transport', 'playbook',
        'tags', 'gather_facts', 'serial', '_ds', '_handlers', '_tasks',
-       'basedir', 'any_errors_fatal', 'roles', 'max_fail_pct'
+       'basedir', 'any_errors_fatal', 'roles', 'max_fail_pct', 'private_key_file',
     ]
 
     # to catch typos and so forth -- these are userland names
@@ -43,7 +43,7 @@ class Play(object):
        'hosts', 'name', 'vars', 'vars_prompt', 'vars_files',
        'tasks', 'handlers', 'remote_user', 'user', 'port', 'include', 'accelerate', 'accelerate_port', 'accelerate_ipv6',
        'sudo', 'sudo_user', 'connection', 'tags', 'gather_facts', 'serial',
-       'any_errors_fatal', 'roles', 'pre_tasks', 'post_tasks', 'max_fail_percentage' 
+       'any_errors_fatal', 'roles', 'pre_tasks', 'post_tasks', 'max_fail_percentage', 'private_key_file'
     ]
 
     # *************************************************
@@ -110,6 +110,7 @@ class Play(object):
         self._tasks           = ds.get('tasks', [])
         self._handlers        = ds.get('handlers', [])
         self.remote_user      = ds.get('remote_user', ds.get('user', self.playbook.remote_user))
+        self.private_key_file = ds.get('private_key_file', self.playbook.private_key_file)
         self.remote_port      = ds.get('port', self.playbook.remote_port)
         self.sudo             = ds.get('sudo', self.playbook.sudo)
         self.sudo_user        = ds.get('sudo_user', self.playbook.sudo_user)

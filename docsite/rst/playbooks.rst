@@ -162,6 +162,16 @@ Just `Control-C` to kill it and run it again with `-K`.
 
 .. _tasks_list:
 
+
+If you want to use a private key file to connect as a user, you can user private_key_file::
+
+    ---
+    - hosts: webservers
+      remote_user: yourname
+
+You can also run `ansible-playbook` with ``--private-key`` to use a private key file for all your connections.
+
+
 Tasks list
 ++++++++++
 

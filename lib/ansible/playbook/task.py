@@ -30,7 +30,7 @@ class Task(object):
         'delegate_to', 'first_available_file', 'ignore_errors',
         'local_action', 'transport', 'sudo', 'remote_user', 'sudo_user', 'sudo_pass',
         'items_lookup_plugin', 'items_lookup_terms', 'environment', 'args',
-        'any_errors_fatal', 'changed_when', 'failed_when', 'always_run', 'delay', 'retries', 'until'
+        'any_errors_fatal', 'changed_when', 'failed_when', 'always_run', 'delay', 'retries', 'until', 'private_key_file'
     ]
 
     # to prevent typos and such
@@ -39,7 +39,7 @@ class Task(object):
          'first_available_file', 'include', 'tags', 'register', 'ignore_errors',
          'delegate_to', 'local_action', 'transport', 'remote_user', 'sudo', 'sudo_user',
          'sudo_pass', 'when', 'connection', 'environment', 'args',
-         'any_errors_fatal', 'changed_when', 'failed_when', 'always_run', 'delay', 'retries', 'until'
+         'any_errors_fatal', 'changed_when', 'failed_when', 'always_run', 'delay', 'retries', 'until', 'private_key_file'
     ]
 
     def __init__(self, play, ds, module_vars=None, default_vars=None, additional_conditions=None, role_name=None):
@@ -142,6 +142,14 @@ class Task(object):
             self.remote_user      = ds.get('remote_user', play.remote_user)
         else:
             self.remote_user      = ds.get('remote_user', play.playbook.remote_user)
+
+        # get private_key_file for task, then play, then playbook
+        if ds.get('private_key_file') is not None:
+            self.private_key_file      = ds.get('private_key_file')
+        elif ds.get('private_key_file', play.private_key_file) is not None:
+            self.private_key_file      = ds.get('private_key_file', play.private_key_file)
+        else:
+            self.private_key_file      = ds.get('private_key_file', play.playbook.private_key_file)
 
         if self.sudo:
             self.sudo_user    = ds.get('sudo_user', play.sudo_user)
