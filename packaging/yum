@@ -28,6 +28,7 @@ import yum
 DOCUMENTATION = '''
 ---
 module: yum
+version_added: historical
 short_description: Manages packages with the I(yum) package manager
 description:
      - Will install, upgrade, remove, and list packages with the I(yum) package manager.

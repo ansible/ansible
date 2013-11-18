@@ -37,6 +37,7 @@ import StringIO
 DOCUMENTATION = '''
 ---
 module: setup
+version_added: historical
 short_description: Gathers facts about remote hosts
 options:
     filter:

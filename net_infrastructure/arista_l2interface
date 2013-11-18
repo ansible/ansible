@@ -19,6 +19,7 @@
 DOCUMENTATION = '''
 ---
 module: arista_l2interface
+version_added: "1.2"
 author: Peter Sprygada
 short_description: Manage layer 2 interfaces
 requirements:

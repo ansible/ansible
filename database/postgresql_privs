@@ -19,6 +19,7 @@
 DOCUMENTATION = """
 ---
 module: postgresql_privs
+version_added: "1.2"
 short_description: Grant or revoke privileges on PostgreSQL database objects.
 description:
   - Grant or revoke privileges on PostgreSQL database objects.
