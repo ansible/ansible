@@ -339,7 +339,7 @@ def create_vpc(module, vpc_conn):
 
             # Associate with subnets
             for sn in rt['subnets']:
-                rsn = vpc_conn.get_all_subnets(filters={'cidr': sn })
+                rsn = vpc_conn.get_all_subnets(filters={'cidr': sn})
                 if len(rsn) != 1:
                     module.fail_json(
                         msg='The subnet {0} to associate with route_table {1} ' \
