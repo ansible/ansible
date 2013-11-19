@@ -151,7 +151,7 @@ def main():
         module.exit_json(changed=False, name=name, state=state)
 
     rc, out, err = run_supervisorctl('status', name)
-    running = 'RUNNING' in out
+    running = 'RUNNING' in out or '(already running)' in out
 
     if running and state == 'started':
         module.exit_json(changed=False, name=name, state=state)
