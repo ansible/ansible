@@ -11,16 +11,19 @@ class Cache(dict):
         self.caches = utils.plugins.cache_loader.all()
 
     def __getitem__(self, name):
+        value = None
         try:
-            return  dict.__getitem__(self, name)
+            value = dict.__getitem__(self, name)
         except KeyError:
             value = self.default()
             for cache in self.caches:
                 value = cache.get(name)
                 if value is not None:
                     break
-            self[name] = value
-            return value
+        if value is None:
+            value = self.default()
+        self[name] = value
+        return value
 
     def __setitem__(self, name, val):
         for cache in self.caches:
