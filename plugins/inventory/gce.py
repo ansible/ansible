@@ -114,8 +114,12 @@ class GceInventory(object):
     def get_gce_driver(self):
         '''Determine GCE authorization settings and return libcloud driver.'''
 
+        gce_ini_default_path = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), "gce.ini")
+        gce_ini_path = os.environ.get('GCE_INI_PATH', gce_ini_default_path)
+
         config = ConfigParser.SafeConfigParser()
-        config.read(os.path.dirname(os.path.realpath(__file__)) + '/gce.ini')
+        config.read(gce_ini_path)
 
         # the GCE params in 'secrets.py' will override these
         secrets_path = config.get('gce', 'libcloud_secrets')
@@ -180,8 +184,8 @@ class GceInventory(object):
             'gce_id': inst.id,
             'gce_image': inst.image,
             'gce_machine_type': inst.size,
-            'gce_private_ip': inst.private_ip[0],
-            'gce_public_ip': inst.public_ip[0],
+            'gce_private_ip': inst.private_ips[0],
+            'gce_public_ip': inst.public_ips[0],
             'gce_name': inst.name,
             'gce_description': inst.extra['description'],
             'gce_status': inst.extra['status'],
