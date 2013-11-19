@@ -6,7 +6,6 @@ class Cache(DictMixin, dict):
     def __init__(self, default=dict, *a, **kw):
         if (default is not None and not hasattr(default, '__call__')):
             raise TypeError('first argument must be callable')
-        self.data = dict(*a, **kw)
         self._default = default
         self._caches = utils.plugins.cache_loader.all()
 
@@ -34,8 +33,8 @@ class Cache(DictMixin, dict):
         if a and len(a) > 1:
             raise TypeError("update expected at most 1 arguments, got %d" % len(a))
             other = dict(*a, **kw)
-            super(Cache, self).__setitem__(name, other[key])
             for key in other:
+                super(Cache, self).__setitem__(name, other[key])
                 for cache in self._caches:
                     cache.save(key, other[key])
         for key in kw:
@@ -48,6 +47,3 @@ class Cache(DictMixin, dict):
             value = self._default()
             super(Cache, self).__setitem__(name, value)
         return value
-
-#    def clear(self):
-#        self.data.clear()
