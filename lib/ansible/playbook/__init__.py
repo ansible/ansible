@@ -22,14 +22,14 @@ from ansible.utils.template import template
 from ansible import utils
 from ansible import errors
 import ansible.callbacks
+import ansible.cache
 import os
 import shlex
-import collections
 from play import Play
 import StringIO
 import pipes
 
-SETUP_CACHE = collections.defaultdict(dict)
+SETUP_CACHE = ansible.cache.Cache(dict)
 
 class PlayBook(object):
     '''
