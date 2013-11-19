@@ -49,3 +49,7 @@ class Cache(dict):
         if key not in self:
             self[key] = value
         return self[key]
+
+    def clear(self):
+        super(Cache, self).clear()
+        self.__init__()
