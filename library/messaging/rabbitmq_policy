@@ -22,9 +22,9 @@
 DOCUMENTATION = '''
 ---
 module: rabbitmq_policy
-short_description: Manage the state of policies in RabbitMQ
+short_description: Manage the state of policies in RabbitMQ.
 description:
-  - Manage the state of a virtual host in RabbitMQ
+  - Manage the state of a virtual host in RabbitMQ.
 version_added: "1.0"
 author: John Dewey
 options:
@@ -66,7 +66,7 @@ options:
 '''
 
 EXAMPLES = '''
-# Ensure that the /vhost contains the HA policy.
+# Ensure that the / vhost contains the HA policy.
 - rabbitmq_policy: name=/ params='{"ha-mode":"all"}' policy=HA pattern='.*'
 '''
 class RabbitMqPolicy(object):
