@@ -129,8 +129,8 @@ def intersect(a, b):
 def difference(a, b):
     return set(a).difference(b)
 
-def symetric_difference(a, b):
-    return set(a).symetric_difference(b)
+def symmetric_difference(a, b):
+    return set(a).symmetric_difference(b)
 
 def union(a, b):
     return set(a).union(b)
@@ -193,7 +193,7 @@ class FilterModule(object):
             'unique' : unique,
             'intersect': intersect,
             'difference': difference,
-            'symetric_difference': symetric_difference,
+            'symmetric_difference': symmetric_difference,
             'union': union,
         }
 
