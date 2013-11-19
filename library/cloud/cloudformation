@@ -38,8 +38,8 @@ options:
   template_parameters:
     description:
       - a list of hashes of all the template variables for the stack
-    required: true
-    default: null
+    required: false
+    default: {}
     aliases: []
   region:
     description:
@@ -181,7 +181,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             stack_name=dict(required=True),
-            template_parameters=dict(required=True, type='dict'),
+            template_parameters=dict(required=False, type='dict', default={}),
             region=dict(aliases=['aws_region', 'ec2_region'], required=True, choices=AWS_REGIONS),
             state=dict(default='present', choices=['present', 'absent']),
             template=dict(default=None, required=True),
