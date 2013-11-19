@@ -55,14 +55,14 @@ class ActionModule(object):
 
         source = template.template(self.runner.basedir, source, inject)
         if '_original_file' in inject:
-              source = utils.path_dwim_relative(inject['_original_file'], 'files', source, self.runner.basedir)
+            source = utils.path_dwim_relative(inject['_original_file'], 'files', source, self.runner.basedir)
         else:
-              source = utils.path_dwim(self.runner.basedir, source)
+            source = utils.path_dwim(self.runner.basedir, source)
 
         remote_md5 = self.runner._remote_md5(conn, tmp, dest)
         if remote_md5 != '3':
-              result = dict(failed=True, msg="dest must be an existing dir")
-              return ReturnData(conn=conn, result=result)
+            result = dict(failed=True, msg="dest must be an existing dir")
+            return ReturnData(conn=conn, result=result)
 
         # transfer the file to a remote tmp location
         tmp_src = tmp + 'source'
