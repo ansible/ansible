@@ -167,6 +167,22 @@ This allows an explicit check with this feature off::
 
 The variable value will be used as is, but the template evaluation will raise an error if it is undefined.
 
+.. _set_theory_filters:
+
+Set Theory Filters
+--------------------
+These mostly deal with set (lists), no filter for union as this already works::
+
+    {{ list1 + list2 }}
+
+To get the intersection of 2 lists (unique list of all items in both)::
+
+    {{ list1 |intersect(list2)}}
+
+To get a unique set from a list::
+
+    {{ list1 |unique }}
+
 .. _other_useful_filters:
 
 Other Useful Filters
