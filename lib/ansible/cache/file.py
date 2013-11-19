@@ -21,7 +21,7 @@ class CacheModule(object):
     def get(self, name):
         ret = None
         #TODO: stat file, check mtime against expires
-        path = '/'.join([self.cache_dir, name])
+        path = '/'.join([self.cache_dir, str(name)])
         if os.path.exists(path):
             f = open(path,'r')
             ret = json.loads(f.read())
