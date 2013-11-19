@@ -38,7 +38,6 @@ New modules and plugins.
 * files: unarchive: pushes and extracts tarballs
 * files: synchronize: a useful wraper around rsyncing trees of files
 * system: firewalld -- manage the firewalld configuration
-* system: host -- manage `/etc/hosts` file entries
 * system: modprobe -- manage kernel modules on systems that support modprobe/rmmod
 * system: open_iscsi -- manage targets on an initiator using open-iscsi
 * system: blacklist: add or remove modules from the kernel blacklist
