@@ -136,6 +136,13 @@ EXAMPLES = '''
 '''
 
 import os
+import sys
+
+try:
+    import pyrax
+except ImportError:
+    print("failed=True msg='pyrax is required for this module'")
+    sys.exit(1)
 
 
 def _activate_virtualenv(path):
@@ -182,41 +189,36 @@ def _node_to_dict(node):
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
+    argument_spec = rax_argument_spec()
+    argument_spec.update(
+        dict(
             address=dict(),
-            api_key=dict(),
             condition=dict(choices=['enabled', 'disabled', 'draining']),
-            credentials=dict(),
             load_balancer_id=dict(required=True, type='int'),
             node_id=dict(type='int'),
             port=dict(type='int'),
-            region=dict(),
             state=dict(default='present', choices=['present', 'absent']),
             type=dict(choices=['primary', 'secondary']),
-            username=dict(),
             virtualenv=dict(),
             wait=dict(default=False, type='bool'),
             wait_timeout=dict(default=30, type='int'),
             weight=dict(type='int'),
-        ),
-        required_together=[
-            ['api_key', 'username']
-        ],
+        )
+    )
+
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        required_together=rax_required_together(),
     )
 
     address = module.params['address']
-    api_key = module.params['api_key']
     condition = (module.params['condition'] and
                  module.params['condition'].upper())
-    credentials = module.params['credentials']
     load_balancer_id = module.params['load_balancer_id']
     node_id = module.params['node_id']
     port = module.params['port']
-    region = module.params['region']
     state = module.params['state']
     typ = module.params['type'] and module.params['type'].upper()
-    username = module.params['username']
     virtualenv = module.params['virtualenv']
     wait = module.params['wait']
     wait_timeout = module.params['wait_timeout'] or 1
@@ -229,28 +231,7 @@ def main():
             module.fail_json(msg='Failed to activate virtualenv %s (%s)' % (
                                  virtualenv, e))
 
-    try:
-        import pyrax
-    except ImportError:
-        module.fail_json(msg='pyrax is not installed')
-
-    username = username or os.environ.get('RAX_USERNAME')
-    api_key = api_key or os.environ.get('RAX_API_KEY')
-    credentials = credentials or os.environ.get('RAX_CREDENTIALS')
-    region = region or os.environ.get('RAX_REGION')
-
-    pyrax.set_setting("identity_type", "rackspace")
-
-    try:
-        if api_key and username:
-            pyrax.set_credentials(username, api_key=api_key, region=region)
-        elif credentials:
-            credentials = os.path.expanduser(credentials)
-            pyrax.set_credential_file(credentials, region=region)
-        else:
-            module.fail_json(msg='Credentials not set')
-    except pyrax.exc.PyraxException, e:
-        module.fail_json(msg='%s' % e.message)
+    setup_rax_module(module, pyrax)
 
     if not pyrax.cloud_loadbalancers:
         module.fail_json(msg='Failed to instantiate load balancer client '
@@ -345,6 +326,10 @@ def main():
     kwargs = {'node': result} if result else {}
     module.exit_json(changed=True, state=state, **kwargs)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+# import module snippets
+from ansible.module_utils.basic import *
+from ansible.module_utils.rax import *
+
+### invoke the module
 main()

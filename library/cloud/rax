@@ -549,12 +549,11 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            api_key=dict(),
+    argument_spec = rax_argument_spec()
+    argument_spec.update(
+        dict(
             count=dict(default=1, type='int'),
             count_offset=dict(default=1, type='int'),
-            credentials=dict(aliases=['creds_file']),
             disk_config=dict(default='auto', choices=['auto', 'manual']),
             exact_count=dict(choices=BOOLEANS, default=False, type='bool'),
             files=dict(type='dict', default={}),
@@ -566,13 +565,16 @@ def main():
             meta=dict(type='dict', default={}),
             name=dict(),
             networks=dict(type='list', default=['public', 'private']),
-            region=dict(),
             service=dict(),
             state=dict(default='present', choices=['present', 'absent']),
-            username=dict(),
             wait=dict(choices=BOOLEANS, default=False, type='bool'),
             wait_timeout=dict(default=300),
-        ),
+        )
+    )
+
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        required_together=rax_required_together(),
     )
 
     service = module.params.get('service')
@@ -582,10 +584,8 @@ def main():
                              'please remove "service: cloudservers" from your '
                              'playbook pertaining to the "rax" module')
 
-    api_key = module.params.get('api_key')
     count = module.params.get('count')
     count_offset = module.params.get('count_offset')
-    credentials = module.params.get('credentials')
     disk_config = module.params.get('disk_config').upper()
     exact_count = module.params.get('exact_count', False)
     files = module.params.get('files')
@@ -597,42 +597,20 @@ def main():
     meta = module.params.get('meta')
     name = module.params.get('name')
     networks = module.params.get('networks')
-    region = module.params.get('region')
     state = module.params.get('state')
-    username = module.params.get('username')
     wait = module.params.get('wait')
     wait_timeout = int(module.params.get('wait_timeout'))
 
-    # Setup the credentials and region
-    try:
-        username = username or os.environ.get('RAX_USERNAME')
-        api_key = api_key or os.environ.get('RAX_API_KEY')
-        credentials = (credentials or os.environ.get('RAX_CREDENTIALS') or
-                       os.environ.get('RAX_CREDS_FILE'))
-        region = region or os.environ.get('RAX_REGION')
-
-    except KeyError, e:
-        module.fail_json(msg='Unable to load %s' % e.message)
-
-    # setup the auth
-    try:
-        pyrax.set_setting('identity_type', 'rackspace')
-        if api_key and username:
-            pyrax.set_credentials(username, api_key=api_key, region=region)
-        elif credentials:
-            credentials = os.path.expanduser(credentials)
-            pyrax.set_credential_file(credentials, region=region)
-        else:
-            raise Exception('No credentials supplied!')
-    except Exception, e:
-        module.fail_json(msg='%s' % e.message)
+    setup_rax_module(module, pyrax)
 
     cloudservers(module, state, name, flavor, image, meta, key_name, files,
                  wait, wait_timeout, disk_config, count, group,
                  instance_ids, exact_count, networks, count_offset)
 
 
+# import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.rax import *
 
 ### invoke the module
 main()
