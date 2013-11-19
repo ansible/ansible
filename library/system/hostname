@@ -221,6 +221,11 @@ class RedHatStrategy(GenericStrategy):
             self.module.fail_json(msg="failed to update hostname: %s" %
                 str(err))
 
+class RedHat5Hostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Redhat'
+    strategy_class = RedHatStrategy
+
 class RedHatHostname(Hostname):
     platform = 'Linux'
     distribution = 'Red hat enterprise linux server'
