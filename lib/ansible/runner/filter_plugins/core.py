@@ -126,6 +126,12 @@ def unique(a):
 def intersect(a, b):
     return set(a).intersection(b)
 
+def difference(a, b):
+    return set(a).difference(b)
+
+def symetric_difference(a, b):
+    return set(a).symetric_difference(b)
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -183,5 +189,7 @@ class FilterModule(object):
             # list
             'unique' : unique,
             'intersect': intersect,
+            'difference': difference,
+            'symetric_difference': symetric_difference,
         }
-    
+
