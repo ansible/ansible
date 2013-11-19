@@ -198,9 +198,9 @@ action_loader = PluginLoader(
 )
 
 cache_loader = PluginLoader(
-    'CacheModule', 
-    'ansible.cache', 
-    C.DEFAULT_CACHE_PLUGIN_PATH, 
+    'CacheModule',
+    'ansible.cache',
+    C.DEFAULT_CACHE_PLUGIN_PATH,
     'cache_plugins'
 )
 

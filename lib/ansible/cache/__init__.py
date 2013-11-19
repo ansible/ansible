@@ -2,10 +2,11 @@ from ansible import utils
 
 class Cache(dict):
 
-    def __init__(self, default=None, *a, **kw):
+    def __init__(self, default=dict, *a, **kw):
         if (default is not None and not hasattr(default, '__call__')):
             raise TypeError('first argument must be callable')
         dict.__init__(self, *a, **kw)
+        self.__dict__ = self
         self.default = default
         self.caches = utils.plugins.cache_loader.all()
 
@@ -15,15 +16,15 @@ class Cache(dict):
         except KeyError:
             value = self.default()
             for cache in self.caches:
-                if name in cache:
-                    value = cache[name]
+                value = cache.get(name)
+                if value is not None:
                     break
             self[name] = value
             return value
 
     def __setitem__(self, name, val):
         for cache in self.caches:
-            cache[name] = val
+            cache.save(name, val)
         super(Cache, self).__setitem__(name, val)
 
     def update(self, *a, **kw):
@@ -33,11 +34,11 @@ class Cache(dict):
             self[key] = other[key]
             for key in other:
                 for cache in self.caches:
-                    cache[key] = other[key]
+                    cache.save(key, other[key])
         for key in kw:
             self[key] = kw[key]
             for cache in self.caches:
-                cache[key] = kw[key]
+                cache.save(key, kw[key])
 
     def setdefault(self, key, value=None):
         if value is None:
