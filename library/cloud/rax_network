@@ -106,7 +106,7 @@ def cloud_network(module, state, label, cidr):
                 changed = True
             except Exception, e:
                 module.fail_json(msg='%s' % e.message)
-        except Exception:
+        except Exception, e:
             module.fail_json(msg='%s' % e.message)
 
     elif state == 'absent':
