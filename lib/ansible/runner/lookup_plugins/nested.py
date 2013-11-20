@@ -30,11 +30,18 @@ def flatten(terms):
             ret.append(term)
     return ret
 
-def combine(a,b):
+def combine(a,b, basedir, inject=None):
     results = []
     for x in a:
-        for y in b:
+        if isinstance(x, list):
+            inject['item'] = x
+        else:
+            inject['item'] = [x]
+        new_b = utils.listify_lookup_plugin_terms(b, basedir, inject)
+        for y in new_b:
             results.append(flatten([x,y]))
+    if 'item' in inject:
+        del inject['item']
     return results
 
 class LookupModule(object):
@@ -42,19 +49,11 @@ class LookupModule(object):
     def __init__(self, basedir=None, **kwargs):
         self.basedir = basedir
 
-    def __lookup_injects(self, terms, inject):
-        results = []
-        for x in terms:
-            intermediate = utils.listify_lookup_plugin_terms(x, self.basedir, inject)
-            results.append(intermediate)
-        return results
-
     def run(self, terms, inject=None, **kwargs):
 
         # this code is common with 'items.py' consider moving to utils if we need it again
 
         terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
-        terms = self.__lookup_injects(terms, inject)
 
         my_list = terms[:]
         my_list.reverse()
@@ -62,12 +61,11 @@ class LookupModule(object):
         if len(my_list) == 0:
             raise errors.AnsibleError("with_nested requires at least one element in the nested list")
         result = my_list.pop()
+        result = utils.listify_lookup_plugin_terms(result, self.basedir, inject)
         while len(my_list) > 0:
-            result2 = combine(result, my_list.pop())
+            result2 = combine(result, my_list.pop(), self.basedir, inject)
             result  = result2
         new_result = []
         for x in result:
             new_result.append(flatten(x))
         return new_result
-
-
