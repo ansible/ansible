@@ -120,6 +120,18 @@ def search(value, pattern='', ignorecase=False):
     ''' Perform a `re.search` returning a boolean '''
     return regex(value, pattern, ignorecase, 'search')
 
+def capture(value, pattern='', groupindex=1, ignorecase=False):
+    ''' Perform a `re.match.group` returning the captured group
+        Defaults to returning the string matching the first capture group,
+        which is almost always eactly what you want. 
+    '''
+    if ignorecase:
+        flags = re.I
+    else:
+        flags = 0
+    _re = re.compile(pattern, flags=flags)
+    return _re.match(value).group(groupindex);
+
 def unique(a):
     return set(a)
 
@@ -188,6 +200,7 @@ class FilterModule(object):
             'match': match,
             'search': search,
             'regex': regex,
+            'capture': capture,
 
             # list
             'unique' : unique,
