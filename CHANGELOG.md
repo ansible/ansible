@@ -50,6 +50,7 @@ New modules and plugins.
 * web_infrastructure: ejabberd_user: add and remove users to ejabberd
 * web_infrastructure: jboss: deploys or undeploys apps to jboss
 * source_control: github_hooks: manages GitHub service hooks 
+* net_infrastructure: bigip_monitor_http: manages F5 BIG-IP LTM http monitors
 * net_infrastructure: bigip_monitor_tcp: manages F5 BIG-IP LTM TCP monitors
 * net_infrastructure: bigip_pool_member: manages F5 BIG-IP LTM pool members
 * net_infrastructure: bigip_node: manages F5 BIG-IP LTM nodes
