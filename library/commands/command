@@ -24,6 +24,7 @@ import traceback
 import re
 import shlex
 import os
+import glob
 
 DOCUMENTATION = '''
 ---
@@ -53,6 +54,19 @@ options:
     version_added: "0.8"
     required: no
     default: null
+  updates:
+    description:
+      - a remote filename, when it is newer than C(src), this step will B(not) be run.
+        Requires C(src) argument to be compared. May contain shell-style wildcard.
+    required: no
+    default: null
+  src:
+    description:
+      - a remote filename, when it is older than C(updates), this step will B(not) be run.
+        Requires C(updates) argument to be compared. May contain shell-style wildcard.
+    required: no
+    default:
+      - null
   chdir:
     description:
       - cd into this directory before running the command
@@ -94,6 +108,8 @@ def main():
     args  = module.params['args']
     creates  = module.params['creates']
     removes  = module.params['removes']
+    updates  = module.params['updates']
+    src      = module.params['src']
 
     if args.strip() == '':
         module.fail_json(rc=256, msg="no command given")
@@ -125,6 +141,29 @@ def main():
             module.exit_json(
                 cmd=args,
                 stdout="skipped, since %s does not exist" % v,
+                skipped=True,
+                changed=False,
+                stderr=False,
+                rc=0
+            )
+
+    if updates or src:
+        # skip if src is older than updates
+        try:
+            mupdates = min([os.stat(v).st_mtime for v in glob.glob(os.path.expanduser(updates))])
+        except ValueError:
+            # if not exists
+            mupdates = -1
+        try:
+            msrc     = max([os.stat(v).st_mtime for v in glob.glob(os.path.expanduser(src))])
+        except ValueError:
+            module.fail_json(rc=258, msg="cannot get modified time '%s': file does not exists" % src)
+
+        if mupdates > msrc:
+            # already up-to-date
+            module.exit_json(
+                cmd=args,
+                stdout="skipped, since %s is up-to-date" % updates,
                 skipped=True,
                 changed=False,
                 stderr=False,
@@ -177,19 +216,25 @@ class CommandModule(AnsibleModule):
         params['chdir'] = None
         params['creates'] = None
         params['removes'] = None
+        params['updates'] = None
+        params['src'] = None
         params['shell'] = False
         params['executable'] = None
         if args.find("#USE_SHELL") != -1:
             args = args.replace("#USE_SHELL", "")
             params['shell'] = True
 
-        r = re.compile(r'(^|\s)(creates|removes|chdir|executable)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)')
+        r = re.compile(r'(^|\s)(creates|removes|updates|src|chdir|executable)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)')
         for m in r.finditer(args):
             v = m.group(4).replace("\\", "")
             if m.group(2) == "creates":
                 params['creates'] = v
             elif m.group(2) == "removes":
                 params['removes'] = v
+            elif m.group(2) == "updates":
+                params['updates'] = v
+            elif m.group(2) == "src":
+                params['src'] = v
             elif m.group(2) == "chdir":
                 v = os.path.expanduser(v)
                 v = os.path.abspath(v)
@@ -202,6 +247,10 @@ class CommandModule(AnsibleModule):
                 if not (os.path.exists(v)):
                     self.fail_json(rc=258, msg="cannot use executable '%s': file does not exist" % v)
                 params['executable'] = v
+
+        if bool(params["src"]) != bool(params["updates"]):
+            self.fail_json(rc=258, msg="both 'updates' and 'src' need to be compared.")
+
         args = r.sub("", args)
         params['args'] = args
         return (params, params['args'])
