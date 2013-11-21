@@ -1,6 +1,8 @@
 Ansible Changes By Release
 ==========================
 
+1.5 "Love Walks In" - Release pending!
+
 1.4 "Could This Be Magic" - November 21, 2013
 
 Highlighted new features:
