@@ -1,0 +1,371 @@
+#!/usr/bin/python
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: rax_cf_objects
+short_description: manage objects in a Rackspace Cloud Files container
+description:
+  - Manages files in a Rackspace Cloud Files container
+version_added: "1.4"
+options:
+  api_key:
+    required: false
+    description:
+      - Rackspace API key (overrides C(credentials))
+  chunk_size:
+    required: false
+    default: 4 MB
+    description:
+      - The amount of bytes to read and write at a time
+  credentials:
+    required: false
+    description:
+      - File to find the Rackspace credentials in (ignored if C(api_key) and
+        C(username) are provided)
+  dest:
+    required: true
+    description:
+      - Path to a local file or remote object (if prefixed with a container
+        name followed by a colon) that should be used as the destination.
+        Setting it to a local file indicates a download. Setting it to a remote
+        object indicates an upload or a remote copy operation, depending on the
+        value of C(src).
+  etag:
+    required: false
+    default: "yes"
+    choices: [ "yes", "no" ]
+    description:
+      - If set to C(yes) calculates an MD5 sum of the uploaded object and
+        includes it in the ETag header to ensure end-to-end data integrity
+  headers:
+    required: false
+    description:
+      - Additional HTTP headers to include when uploading an object
+  region:
+    required: false
+    description:
+     - Region to authenticate in
+  src:
+    required: false
+    description:
+      - Path to a local file or a remote object (if prefixed with a container
+        name followed by a colon) that should be used as the source. Setting
+        it to a local file indicates an upload. Setting it to a remote object
+        indicates a download or a remote copy operation, depending on the
+        value of C(dest).
+  state:
+    required: false
+    default: "present"
+    choices: [ "present", "absent" ]
+    description:
+      - If set to C(absent) deletes the remote object pointed by C(dest)
+  username:
+    required: false
+    description:
+      - Rackspace username (overrides C(credentials))
+  virtualenv:
+    required: false
+    description:
+      - Path to a virtualenv that should be activated before doing anything.
+        The virtualenv has to already exist. Useful if installing pyrax
+        globally is not an option.
+requirements: [ "pyrax" ]
+author: Lukasz Kawczynski
+notes:
+  - "The following environment variables can be used: C(RAX_USERNAME),
+    C(RAX_API_KEY), C(RAX_CREDENTIALS) and C(RAX_REGION)."
+'''
+
+EXAMPLES = '''
+# Create a new object or update an existing one
+- local_action:
+    module: rax_cf_objects
+    src: /path/to/local/file
+    dest: container:path/to/remote/object
+    credentials: /path/to/credentials
+
+# Use the source file's name as the destination path
+- local_action:
+    module: rax_cf_objects
+    src: /path/to/local/file
+    dest: container:
+    credentials: /path/to/credentials
+
+# Set an explicit Content-Type
+- local_action:
+    module: rax_cf_objects
+    src: /path/to/local/file
+    dest: container:path/to/remote/object
+    headers:
+      content-type: application/octet-stream
+    credentials: /path/to/credentials
+
+# Retrieve an object
+- local_action:
+    module: rax_cf_objects
+    src: container:path/to/remote/object
+    dest: /path/to/local/file
+    credentials: /path/to/credentials
+
+# Copy a remote object
+- local_action:
+    module: rax_cf_objects
+    src: container:path/to/remote/source/object
+    dest: container:path/to/remote/destination/object
+    credentials: /path/to/credentials
+
+# Delete an object
+- local_action:
+    module: rax_cf_objects
+    dest: container:path/to/remote/destination/object
+    state: absent
+    credentials: /path/to/credentials
+'''
+
+import hashlib
+import os
+
+
+def _activate_virtualenv(path):
+    path = os.path.expanduser(path)
+    activate_this = os.path.join(path, 'bin', 'activate_this.py')
+    execfile(activate_this, dict(__file__=activate_this))
+
+
+def _split_path(path, sep=':'):
+    """Split path and return a (container, path) tuple.
+
+    For local paths container is set to None.
+    """
+    drive, path = os.path.splitdrive(path)
+    if drive:
+        if path.startswith(os.path.sep):  # C:\Windows
+            return (None, path)
+        else:  # one-letter container name
+            return (drive, path)
+    else:
+        parts = path.split(sep, 1)
+        if len(parts) == 1:
+            return None, parts[0]
+        else:
+            return tuple(parts)
+
+
+def _store_object(pyrax, src_path, dest_container, dest_path,
+                  chunk_size=4194304, headers=None):
+    """Store contents of src_path in dest_container:dest_path"""
+    src_file = open(os.path.expanduser(src_path), 'rb')
+
+    if not dest_path:
+        dest_path = os.path.basename(src_path)
+
+    connection = pyrax.cloudfiles.connection
+    result = {}
+
+    try:
+        connection.put_object(dest_container, dest_path, src_file,
+                              chunk_size=chunk_size, headers=headers,
+                              response_dict=result)
+    except Exception, e:
+        raise pyrax.exc.PyraxException(str(e))
+    finally:
+        src_file.close()
+
+    return result
+
+
+def _retrieve_object(pyrax, src_container, src_path, dest_path,
+                     chunk_size=4194304):
+    """Retrieve contents of src_container:src_path to dest_path"""
+    dest_file = open(os.path.expanduser(dest_path), 'wb')
+
+    connection = pyrax.cloudfiles.connection
+    result = {}
+
+    try:
+        _, contents = connection.get_object(src_container, src_path,
+                                            resp_chunk_size=chunk_size,
+                                            response_dict=result)
+        for chunk in contents:
+            dest_file.write(chunk)
+    except Exception, e:
+        raise pyrax.exc.PyraxException(str(e))
+    finally:
+        dest_file.close()
+
+    return result
+
+
+def _md5sum(src_path, chunk_size=4194304):
+    """Return an MD5 sum of src_path contents"""
+    md5 = hashlib.md5()
+    src_file = open(os.path.expanduser(src_path), 'rb')
+    try:
+        while True:
+            data = src_file.read(chunk_size)
+            if not data:
+                break
+            md5.update(data)
+    finally:
+        src_file.close()
+
+    return md5.hexdigest()
+
+
+def _exit_kwargs(result):
+    """Return module exit parameters from a result dictionary"""
+    kwargs = {
+        'object': {
+            'headers': result.get('headers', {}),
+            'reason': result.get('reason', None),
+            'status': result.get('status', None),
+        }
+    }
+    return kwargs
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            api_key=dict(),
+            chunk_size=dict(default=4194304, type='int'),
+            credentials=dict(),
+            dest=dict(required=True),
+            etag=dict(default=True, choices=BOOLEANS, type='bool'),
+            headers=dict(type='dict'),
+            region=dict(),
+            src=dict(),
+            state=dict(default='present', choices=['present', 'absent']),
+            username=dict(),
+            virtualenv=dict(),
+        ),
+        required_together=[
+            ['api_key', 'username']
+        ],
+    )
+
+    api_key = module.params['api_key']
+    chunk_size = module.params['chunk_size']
+    credentials = module.params['credentials']
+    dest = module.params['dest']
+    etag = module.params['etag']
+    headers = module.params['headers']
+    region = module.params['region']
+    src = module.params['src']
+    state = module.params['state']
+    username = module.params['username']
+    virtualenv = module.params['virtualenv']
+
+    dest_container, dest_path = _split_path(dest)
+
+    if src:
+        src_container, src_path = _split_path(src)
+    else:
+        src_container = src_path = None
+
+    if virtualenv:
+        try:
+            _activate_virtualenv(virtualenv)
+        except IOError, e:
+            module.fail_json(msg='Failed to activate virtualenv %s (%s)' % (
+                                 virtualenv, e))
+
+    try:
+        import pyrax
+    except ImportError:
+        module.fail_json(msg='pyrax is not installed')
+
+    username = username or os.environ.get('RAX_USERNAME')
+    api_key = api_key or os.environ.get('RAX_API_KEY')
+    credentials = credentials or os.environ.get('RAX_CREDENTIALS')
+    region = region or os.environ.get('RAX_REGION')
+
+    pyrax.set_setting("identity_type", "rackspace")
+
+    try:
+        if api_key and username:
+            pyrax.set_credentials(username, api_key=api_key, region=region)
+        elif credentials:
+            credentials = os.path.expanduser(credentials)
+            pyrax.set_credential_file(credentials, region=region)
+        else:
+            module.fail_json(msg='Credentials not set')
+    except pyrax.exc.PyraxException, e:
+        raise ValueError(username)
+        module.fail_json(msg='%s' % e.message)
+
+
+    if not pyrax.cloudfiles:
+        module.fail_json(msg='Failed to instantiate cloud files client '
+                             '(possibly incorrect region)')
+
+    result = {}
+
+    try:
+        if state == 'absent':
+            if not dest_container:
+                module.fail_json(
+                    msg='Deletion requires remote object path in dest')
+
+            try:
+                pyrax.cloudfiles.delete_object(dest_container, dest_path,
+                                               extra_info=result)
+            except pyrax.exc.NoSuchObject:
+                module.exit_json(changed=False, state=state,
+                                 **_exit_kwargs(result))
+        else:  # present
+            try:
+                if src_container and dest_container:  # copy
+                    pyrax.cloudfiles.copy_object(src_container, src_path,
+                                                 dest_container, dest_path,
+                                                 extra_info=result)
+                elif src_container:  # download
+                    if not dest_path:
+                        module.fail_json(
+                            msg='Download requires a local file path in dest')
+
+                    result = _retrieve_object(pyrax, src_container, src_path,
+                                              dest_path, chunk_size=chunk_size)
+                elif dest_container:  # upload
+                    if not src_path:
+                        module.fail_json(
+                            msg='Upload requires a local file path in src')
+
+                    if etag:
+                        headers = headers or {}
+                        for key, value in headers.items():
+                            if key.lower() == 'etag':
+                                del headers[key]
+                        headers['ETag'] = _md5sum(src_path,
+                                                  chunk_size=chunk_size)
+
+                    result = _store_object(pyrax, src_path, dest_container,
+                                           dest_path, chunk_size=chunk_size,
+                                           headers=headers)
+                else:
+                    module.fail_json(msg='At least one of src and dest should '
+                                         'be set to a remote object path')
+            except IOError, e:
+                module.fail_json(msg='%s' % e)
+    except pyrax.exc.PyraxException, e:
+        module.fail_json(msg='%s' % e.message)
+
+    module.exit_json(changed=True, state=state, **_exit_kwargs(result))
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
