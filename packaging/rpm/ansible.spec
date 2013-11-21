@@ -26,7 +26,11 @@ Requires: python26-paramiko
 Requires: python26-jinja2
 Requires: python26-keyczar
 %else
+%if 0%{?suse_version}
+BuildRequires: python-devel
+%else
 BuildRequires: python2-devel
+%endif
 
 Requires: PyYAML
 Requires: python-paramiko
