@@ -25,7 +25,7 @@ module: rabbitmq_policy
 short_description: Manage the state of policies in RabbitMQ.
 description:
   - Manage the state of a virtual host in RabbitMQ.
-version_added: "1.0"
+version_added: "1.5"
 author: John Dewey
 options:
   name:
@@ -43,9 +43,9 @@ options:
       - A regex of queues to apply the policy to.
     required: true
     default: null
-  params:
+  tags:
     description:
-      - A json dict describing the policy.
+      - A dict or string describing the policy.
     required: true
     default: null
   priority:
@@ -66,8 +66,14 @@ options:
 '''
 
 EXAMPLES = '''
-# Ensure that the / vhost contains the HA policy.
-- rabbitmq_policy: name=/ params='{"ha-mode":"all"}' policy=HA pattern='.*'
+- name: ensure the default vhost contains the HA policy via a dict
+  rabbitmq_policy: name=HA pattern='.*'
+  args:
+    tags:
+      "ha-mode": all
+
+- name: ensure the default vhost contains the HA policy
+  rabbitmq_policy: name=HA pattern='.*' tags="ha-mode=all"
 '''
 class RabbitMqPolicy(object):
     def __init__(self, module, name):
@@ -75,7 +81,7 @@ class RabbitMqPolicy(object):
         self._name = name
         self._vhost = module.params['vhost']
         self._pattern = module.params['pattern']
-        self._params = module.params['params']
+        self._tags = module.params['tags']
         self._priority = module.params['priority']
         self._node = module.params['node']
         self._rabbitmqctl = module.get_bin_path('rabbitmqctl', True)
@@ -98,11 +104,22 @@ class RabbitMqPolicy(object):
                 return True
         return False
 
+    def _dump_json(self, d):
+        import json
+        return json.dumps(d)
+
+    def _make_params(self):
+        if type(self._tags) is dict:
+            return self._dump_json(self._tags)
+        else:
+            d = dict([x.split('=') for x in self._tags.split()])
+            return self._dump_json(d)
+
     def set(self):
         args = ['set_policy']
         args.append(self._name)
         args.append(self._pattern)
-        args.append(self._params)
+        args.append(self._make_params())
         args.append('--priority')
         args.append(self._priority)
         return self._exec(args)
@@ -116,7 +133,7 @@ def main():
         name=dict(required=True),
         vhost=dict(default='/'),
         pattern=dict(required=True),
-        params=dict(required=True),
+        tags=dict(required=True),
         priority=dict(default='0'),
         node=dict(default='rabbit'),
         state=dict(default='present', choices=['present', 'absent']),
