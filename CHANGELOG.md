@@ -1,7 +1,9 @@
 Ansible Changes By Release
 ==========================
 
-1.4 "Could This Be Magic" - Release pending!
+1.5 "Love Walks In" - Release pending!
+
+1.4 "Could This Be Magic" - November 21, 2013
 
 Highlighted new features:
 
@@ -18,18 +20,44 @@ Highlighted new features:
 * The name of each role is now shown before each task if roles are being used
 * Adds a "var=" option to the debug module for debugging variable data.  "debug: var=hostvars['hostname']" and "debug: var=foo" are all valid syntax.
 * Variables in {{ format }} can be used as references even if they are structured data
-* 
-New modules and plugins:
+* Can force binding of accelerate to ipv6 ports.
+* the apt module will auto-install python-apt if not present rather than requiring a manual installation
+* the copy module is now recursive if the local 'src' parameter is a directory.
+* syntax checks now scan included task and variable files as well as main files
 
-* cloud:ec2_eip -- manage AWS elastic IPs
-* cloud:rax_clb -- manage Rackspace cloud load balancers
-* cloud:ovirt -- VM lifecycle controls for ovirt
+New modules and plugins.
+
+* cloud: ec2_eip -- manage AWS elastic IPs
+* cloud: ec2_vpc -- manage ec2 virtual private clouds
+* cloud: elasticcache -- Manages clusters in Amazon Elasticache
+* cloud: rax_network -- sets up Rackspace networks
+* cloud: rax_facts: retrieve facts about a Rackspace Cloud Server
+* cloud: rax_clb_nodes -- manage Rackspace cloud load balanced nodes
+* cloud: rax_clb -- manages Rackspace cloud load balancers
+* cloud: docker - instantiates/removes/manages docker containers
+* cloud: ovirt -- VM lifecycle controls for ovirt
 * files: acl -- set or get acls on a file
+* files: unarchive: pushes and extracts tarballs
+* files: synchronize: a useful wraper around rsyncing trees of files
 * system: firewalld -- manage the firewalld configuration
-* system: host -- manage `/etc/hosts` file entries
 * system: modprobe -- manage kernel modules on systems that support modprobe/rmmod
 * system: open_iscsi -- manage targets on an initiator using open-iscsi
+* system: blacklist: add or remove modules from the kernel blacklist
+* system: hostname - sets the systems hostname
 * utilities: include_vars -- dynamically load variables based on conditions.
+* packaging: zypper_repository - adds or removes Zypper repositories
+* packaging: urpmi - work with urpmi packages
+* packaging: swdepot - a module for working with swdepot
+* notification: grove - notifies to Grove hosted IRC channels
+* web_infrastructure: ejabberd_user: add and remove users to ejabberd
+* web_infrastructure: jboss: deploys or undeploys apps to jboss
+* source_control: github_hooks: manages GitHub service hooks 
+* net_infrastructure: bigip_monitor_http: manages F5 BIG-IP LTM http monitors
+* net_infrastructure: bigip_monitor_tcp: manages F5 BIG-IP LTM TCP monitors
+* net_infrastructure: bigip_pool_member: manages F5 BIG-IP LTM pool members
+* net_infrastructure: bigip_node: manages F5 BIG-IP LTM nodes
+* net_infrastructure: openvswitch_port
+* net_infrastructure: openvswitch_bridge
 
 Plugins:
 
@@ -39,8 +67,11 @@ Plugins:
 * added md5 as a Jinja2 filter:  {{ path | md5 }}
 * added a fileglob filter that will return files matching a glob pattern.  with_items: "/foo/pattern/*.txt | fileglob"
 * 'changed' filter returns whether a previous step was changed easier.  when: registered_result | changed
+* DOCS NEEDED: 'unique' and 'intersect' filters are added for dealing with lists.
+* DOCS NEEDED: new lookup plugin added for etcd
+* a 'func' connection type to help people migrating from func/certmaster.
 
-Misc changes:
+Misc changes (all module additions/fixes may not listed):
 
 * (docs pending) New features for accelerate mode: configurable timeouts and a keepalives for long running tasks.
 * Added a `delimiter` field to the assemble module.
@@ -52,10 +83,10 @@ Misc changes:
 * Added parameter to allow the fetch module to skip the md5 validation step ('validate_md5=false'). This is usefull when fetching files that are actively being written to, such as live log files.
 * Inventory hosts are used in the order they appear in the inventory.
 * in hosts: foo[2-5] type syntax, the iterators now are zero indexed and the last index is non-inclusive, to match Python standards.
-* There's now a way for a callback plugin to disable itself.  See osx_say example code for an example.
+* There is now a way for a callback plugin to disable itself.  See osx_say example code for an example.
 * Many bugfixes to modules of all types.
 * Complex arguments now can be used with async tasks
-* SSH ControlPath is now configurable in ansible.cfg.  There's a limit to the lengths of these paths, see how to shorten them in ansible.cfg.
+* SSH ControlPath is now configurable in ansible.cfg.  There is a limit to the lengths of these paths, see how to shorten them in ansible.cfg.
 * md5sum support on AIX with csum.
 * Extremely large documentation refactor into subchapters
 * Added 'append_privs' option to the mysql_user module
@@ -63,6 +94,25 @@ Misc changes:
 * Fixes for IPv6 addresses in inventory text files
 * name of executable can be passed to pip/gem etc, for installing under *different* interpreters
 * copy of ./hacking/env-setup added for fish users, ./hacking/env-setup.fish
+* file module more tolerant of non-absolute paths in softlinks.
+* miscellaneous fixes/upgrades to async polling logic.
+* conditions on roles now pass to dependent roles
+* ansible_sudo_pass can be set in a host variable if desired
+* misc fixes for the pip an easy_install modules
+* support for running handlers that have parameterized names based on role parameters
+* added support for compressing MySQL dumps and extracting during import
+* Boto version compatibility fixes for the EC2 inventory script
+* in the EC2 inventory script, a group 'EC2' and 'RDS' contains EC2 and RDS hosts.
+* umask is enforced by the cron module
+* apt packages that are not-removed and not-upgraded do not count as changes
+* the assemble module can now use src files from the local server and copy them over dynamically
+* authorization code has been standardized between Amazon cloud modules
+* the wait_for module can now also wait for files to exist or a regex string to exist in a file
+* leading ranges are now allowed in ranged hostname patterns, ex: [000-250].example.com
+* pager support added to ansible-doc (so it will auto-invoke less, etc)
+* misc fixes to the cron module
+* get_url module now understands content-disposition headers for deciding filenames
+* it is possible to have subdirectories in between group_vars/ and host_vars/ and the final filename, like host_vars/rack42/asdf for the variables for host 'asdf'.  The intermediate directories are ignored, and do not put a file in there twice.
 
 1.3.4 "Top of the World" (reprise) - October 29, 2013
 

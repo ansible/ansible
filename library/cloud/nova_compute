@@ -25,6 +25,7 @@ except ImportError:
 DOCUMENTATION = '''
 ---
 module: nova_compute
+version_added: "1.2"
 short_description: Create/Delete VMs from OpenStack
 description:
    - Create or Remove virtual machines from Openstack.

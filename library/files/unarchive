@@ -22,6 +22,7 @@
 DOCUMENTATION = '''
 ---
 module: unarchive
+version_added: 1.4
 short_description: Copies archive to remote locations and unpacks them
 description:
      - The M(unarchive) module copies an archive file on the local box to remote locations and unpacks them.
@@ -95,7 +96,7 @@ class _tgzfile(object):
     def is_unarchived(self):
         dirof = os.path.dirname(self.dest)
         destbase = os.path.basename(self.dest)
-        cmd = 'tar -v -C "%s" --diff -%sf "%s"'  % (self.dest, self.zipflag,self.src )
+        cmd = 'tar -v -C "%s" --diff -%sf "%s"'  % (self.dest, self.zipflag,self.src)
         rc, out, err = self.module.run_command(cmd)
         bool = True if rc == 0 else False
         return dict( bool = bool, rc = rc , out = out, err = err, cmd = cmd)
@@ -137,7 +138,7 @@ class _tarxz(_tgzfile):
         self.zipflag = 'J'
 
 # try handlers in order and return the one that works or bail if none work
-def pick_handler (src,dest,module):
+def pick_handler(src,dest,module):
     handlers = [_tgzfile, _zipfile, _tarfile, _tarbzip, _tarxz]
     for handler in handlers:
         obj = handler(src,dest,module)

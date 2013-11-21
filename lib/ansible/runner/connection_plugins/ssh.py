@@ -116,7 +116,7 @@ class Connection(object):
             os.close(self.wfd)
 
     def not_in_host_file(self, host):
-        host_file = os.path.expanduser("~/.ssh/known_hosts")
+        host_file = os.path.expanduser(os.path.expandvars("~${USER}/.ssh/known_hosts"))
         if not os.path.exists(host_file):
             print "previous known host file not found"
             return True
@@ -216,8 +216,9 @@ class Connection(object):
         # We can't use p.communicate here because the ControlMaster may have stdout open as well
         stdout = ''
         stderr = ''
+        rpipes = [p.stdout, p.stderr]
         while True:
-            rfd, wfd, efd = select.select([p.stdout, p.stderr], [], [p.stdout, p.stderr], 1)
+            rfd, wfd, efd = select.select(rpipes, [], rpipes, 1)
 
             # fail early if the sudo password is wrong
             if self.runner.sudo and sudoable and self.runner.sudo_pass:
@@ -230,15 +231,14 @@ class Connection(object):
                 dat = os.read(p.stdout.fileno(), 9000)
                 stdout += dat
                 if dat == '':
-                    p.wait()
-                    break
-            elif p.stderr in rfd:
+                    rpipes.remove(p.stdout)
+            if p.stderr in rfd:
                 dat = os.read(p.stderr.fileno(), 9000)
                 stderr += dat
                 if dat == '':
-                    p.wait()
-                    break
-            elif p.poll() is not None:
+                    rpipes.remove(p.stderr)
+            if not rpipes or p.poll() is not None:
+                p.wait()
                 break
         stdin.close() # close stdin after we read from stdout (see also issue #848)
         

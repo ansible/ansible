@@ -40,6 +40,8 @@
 # 9) Set your PROJECT variable below
 # 10) Run and time the tests and log output, take ~30 minutes to run
 #    $ time stdbuf -oL python test/gce_tests.py 2>&1 | tee log
+#
+# Last update: gcutil-1.11.0 and v1beta16
 
 # Set this to your test Project ID
 PROJECT="google.com:erjohnso"
@@ -66,7 +68,7 @@ DNAME2="aaaaa-ansible-disk2"
 DNAME6="aaaaa-ansible-inst6"
 DNAME7="aaaaa-ansible-inst7"
 USE_PD="true"
-KERNEL="https://www.googleapis.com/compute/v1beta15/projects/google/global/kernels/gce-v20130813"
+KERNEL="https://www.googleapis.com/compute/v1beta16/projects/google/global/kernels/gce-no-conn-track-v20130813"
 
 # instances
 INAME="aaaaa-ansible-inst"
@@ -77,7 +79,7 @@ INAME5="aaaaa-ansible-inst5"
 INAME6="aaaaa-ansible-inst6"
 INAME7="aaaaa-ansible-inst7"
 TYPE="n1-standard-1"
-IMAGE="https://www.googleapis.com/compute/v1beta15/projects/debian-cloud/global/images/debian-7-wheezy-v20130816"
+IMAGE="https://www.googleapis.com/compute/v1beta16/projects/debian-cloud/global/images/debian-7-wheezy-v20131014"
 NETWORK="default"
 SCOPES="https://www.googleapis.com/auth/userinfo.email,https://www.googleapis.com/auth/compute,https://www.googleapis.com/auth/devstorage.full_control"
 
@@ -108,7 +110,7 @@ import sys
 test_cases = [
     {'id': '01', 'desc': 'Detach / Delete disk tests',
      'setup': ['gcutil addinstance "%s" --wait_until_running --zone=%s --machine_type=%s --network=%s --service_account_scopes="%s" --image="%s" --persistent_boot_disk=%s' % (INAME, ZONE, TYPE, NETWORK, SCOPES, IMAGE, USE_PD),
-               'gcutil adddisk "%s" --size_gb=2 --zone=%s' % (DNAME, ZONE)],
+               'gcutil adddisk "%s" --size_gb=2 --zone=%s --wait_until_complete' % (DNAME, ZONE)],
 
      'tests': [
        {'desc': 'DETACH_ONLY but disk not found [success]',
@@ -206,8 +208,7 @@ test_cases = [
      'setup': ['gcutil addinstance "%s" --zone=%s --machine_type=%s --network=%s --service_account_scopes="%s" --image="%s" --persistent_boot_disk=%s' % (INAME2, ZONE, TYPE, NETWORK, SCOPES, IMAGE, USE_PD),
                'gcutil addinstance "%s" --zone=%s --machine_type=%s --network=%s --service_account_scopes="%s" --image="%s" --persistent_boot_disk=%s' % (INAME, ZONE, "g1-small", NETWORK, SCOPES, IMAGE, USE_PD),
                'gcutil adddisk "%s" --size_gb=2 --zone=%s' % (DNAME, ZONE),
-               'gcutil adddisk "%s" --size_gb=2 --zone=%s' % (DNAME2, ZONE),
-               'sleep 10'],
+               'gcutil adddisk "%s" --size_gb=2 --zone=%s --wait_until_complete' % (DNAME2, ZONE),],
      'tests': [
        {'desc': 'CREATE_AND_ATTACH "string" for size_gb [FAIL]',
         'm': 'gce_pd',
@@ -264,9 +265,7 @@ test_cases = [
        },
        {'desc': 'CREATE_AND_ATTACH attach too many disks to inst [FAIL]',
         'setup': ['gcutil adddisk aa-disk-dummy --size_gb=2 --zone=%s' % (ZONE),
-                  'sleep 10',
-                  'gcutil adddisk aa-disk-dummy2 --size_gb=2 --zone=%s' % (ZONE),
-                  'sleep 10',
+                  'gcutil adddisk aa-disk-dummy2 --size_gb=2 --zone=%s --wait_until_complete' % (ZONE),
                   'gcutil attachdisk --disk=aa-disk-dummy --zone=%s %s' % (ZONE, INAME),
                   'sleep 5'],
         'peek_before': ["gcutil --format=csv listinstances --zone=%s --filter=\"name eq 'aaaa.*'\"" % (ZONE)],
@@ -337,7 +336,9 @@ test_cases = [
     },
 
     {'id': '05', 'desc': 'Create instances',
-     'setup': [],
+     'setup': ['gcutil adddisk --source_image=%s --zone=%s %s --wait_until_complete' % (IMAGE, ZONE, DNAME7),
+              'gcutil addinstance boo --wait_until_running --zone=%s --machine_type=%s --network=%s --disk=%s,mode=READ_WRITE,boot --kernel=%s' % (ZONE,TYPE,NETWORK,DNAME7,KERNEL),
+              ],
      'tests': [
        {'desc': 'CREATE_INSTANCE invalid image arg [FAIL]',
         'm': 'gce',
@@ -410,18 +411,13 @@ test_cases = [
         'r': '127.0.0.1 | success >> {"changed": true, "instance_data": [{"image": null, "machine_type": "n1-standard-1", "metadata": {}, "name": "%s", "network": "default", "private_ip": "10.240.178.140", "public_ip": "173.255.121.176", "status": "RUNNING", "tags": [], "zone": "%s"}], "name": "%s", "state": "present", "zone": "%s"}' % (INAME3, ZONE, INAME3, ZONE),
        },
        {'desc': 'CREATE_INSTANCE instance with root pd, that already exists [success]',
-        'setup': ['gcutil adddisk --source_image=%s --zone=%s %s' % (IMAGE, ZONE, DNAME6),
-                  'sleep 10'],
+        'setup': ['gcutil adddisk --source_image=%s --zone=%s %s --wait_until_complete' % (IMAGE, ZONE, DNAME6),],
         'strip_numbers': True,
         'm': 'gce',
         'a': 'name=%s zone=%s persistent_boot_disk=yes' % (INAME6, ZONE),
         'r': '127.0.0.1 | success >> {"changed": true, "instance_data": [{"image": null, "machine_type": "n1-standard-1", "metadata": {}, "name": "%s", "network": "default", "private_ip": "10.240.178.140", "public_ip": "173.255.121.176", "status": "RUNNING", "tags": [], "zone": "%s"}], "name": "%s", "state": "present", "zone": "%s"}' % (INAME6, ZONE, INAME6, ZONE),
        },
        {'desc': 'CREATE_INSTANCE instance with root pd attached to other inst [FAIL]',
-        'setup': ['gcutil adddisk --source_image=%s --zone=%s %s' % (IMAGE, ZONE, DNAME7),
-                  'sleep 10',
-                  'gcutil addinstance boo --wait_until_running --zone=%s --machine_type=%s --network=%s --disk=%s,mode=READ_WRITE,boot --kernel=%s' % (ZONE,TYPE,NETWORK,DNAME7,KERNEL),
-                  ],
         'm': 'gce',
         'a': 'name=%s zone=%s persistent_boot_disk=yes' % (INAME7, ZONE),
         'r': '127.0.0.1 | FAILED >> {"failed": true, "msg": "Unexpected error attempting to create instance %s, error: The disk resource \'projects/%s/zones/%s/disks/%s\' is already being used in read-write mode"}' % (INAME7,PROJECT,ZONE,DNAME7),

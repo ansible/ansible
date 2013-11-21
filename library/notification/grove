@@ -3,10 +3,11 @@
 
 DOCUMENTATION = '''
 ---
-module: notify_grove
+module: grove
+version_added: 1.4
 short_description: Sends a notification to a grove.io channel
 description:
-     - The M(notify_grove) modules sends a message for a service to a Grove.io
+     - The M(grove) module sends a message for a service to a Grove.io
        channel.
 options:
   channel_token:
@@ -33,12 +34,10 @@ author: Jonas Pfenniger <zimbatm@zimbatm.com>
 '''
 
 EXAMPLES = '''
-# Creates a json file for chef-solo
-- notify_grove:
-  args:
-    channel_token: 6Ph62VBBJOccmtTPZbubiPzdrhipZXtg
-    service: my-app
-    message: deployed {{ target }}
+- grove: >
+    channel_token=6Ph62VBBJOccmtTPZbubiPzdrhipZXtg
+    service=my-app
+    message=deployed {{ target }}
 '''
 
 import urllib

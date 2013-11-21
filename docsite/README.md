@@ -7,7 +7,7 @@ Contributions to the documentation are welcome.  To make changes, submit a pull 
 that changes the reStructuredText files in the "rst/" directory only, and Michael can
 do a docs build and push the static files. If you wish to verify output from the markup
 such as link references, you may [install Sphinx] and build the documentation by running
-`make viewdocs` from the `ansible/docsite/latest` directory.
+`make viewdocs` from the `ansible/docsite` directory.
 
 If you do not want to learn the reStructuredText format, you can also [file issues] about
 documentation problems on the Ansible GitHub project.
@@ -25,5 +25,5 @@ Michael DeHaan -- michael.dehaan@gmail.com
 
 [install Sphinx]: http://sphinx-doc.org/install.html
 [file issues]: https://github.com/ansible/ansible/issues
-[module-docs]: http://www.ansibleworks.com/docs/moduledev.html#documenting-your-module
+[module-docs]: http://www.ansibleworks.com/docs/developing_modules.html#documenting-your-module
 

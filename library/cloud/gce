@@ -19,6 +19,7 @@
 DOCUMENTATION = '''
 ---
 module: gce
+version_added: "1.4"
 short_description: create or terminate GCE instances
 description:
      - Creates or terminates Google Compute Engine (GCE) instances.  See
@@ -120,13 +121,13 @@ EXAMPLES = '''
     zone: us-central1-a
   tasks:
     - name: Launch instances
-      local_action: gce instance_names=${names} machine_type=${machine_type}
-                    image=${image} zone=${zone}
+      local_action: gce instance_names={{names}} machine_type={{machine_type}}
+                    image={{image}} zone={{zone}}
       register: gce
     - name: Wait for SSH to come up
-      local_action: wait_for host=${item.public_ip} port=22 delay=10
+      local_action: wait_for host={{item.public_ip}} port=22 delay=10
                     timeout=60 state=started
-      with_items: ${gce.instance_data}
+      with_items: {{gce.instance_data}}
 
 - name: Configure instance(s)
   hosts: launched
@@ -143,7 +144,7 @@ EXAMPLES = '''
       local_action:
         module: gce
         state: 'absent'
-        instance_names: ${gce.instance_names}
+        instance_names: {{gce.instance_names}}
 
 '''
 
@@ -210,8 +211,8 @@ def get_instance_info(inst):
         'metadata': metadata,
         'name': inst.name,
         'network': netname,
-        'private_ip': inst.private_ip[0],
-        'public_ip': inst.public_ip[0],
+        'private_ip': inst.private_ips[0],
+        'public_ip': inst.public_ips[0],
         'status': ('status' in inst.extra) and inst.extra['status'] or None,
         'tags': ('tags' in inst.extra) and inst.extra['tags'] or [],
         'zone': ('zone' in inst.extra) and inst.extra['zone'].name or None,
@@ -343,7 +344,7 @@ def main():
             instance_names = dict(),
             machine_type = dict(default='n1-standard-1'),
             metadata = dict(),
-            name = dict(default='gce'),
+            name = dict(),
             network = dict(default='default'),
             persistent_boot_disk = dict(type='bool', choices=BOOLEANS, default=False),
             state = dict(choices=['active', 'present', 'absent', 'deleted'],
