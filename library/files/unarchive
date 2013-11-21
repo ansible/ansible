@@ -48,9 +48,9 @@ notes:
     - uses tar's --diff arg to calculate if changed or not.  If this arg is not
       supported, it will always unpack the archive
     - does not detect if a .zip file is different from destination - always unzips
-    - existing files/directories in the destination which are not in the archvie
+    - existing files/directories in the destination which are not in the archive
       are not touched.  This is the same behavior as a normal archive extraction
-    - existing files/directories in the destination which are not in the archvie
+    - existing files/directories in the destination which are not in the archive
       are ignored for purposes of deciding if the archive should be unpacked or not
 '''
 
