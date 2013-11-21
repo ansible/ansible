@@ -104,22 +104,12 @@ class RabbitMqPolicy(object):
                 return True
         return False
 
-    def _dump_json(self, d):
-        import json
-        return json.dumps(d)
-
-    def _make_params(self):
-        if type(self._tags) is dict:
-            return self._dump_json(self._tags)
-        else:
-            d = dict([x.split('=') for x in self._tags.split()])
-            return self._dump_json(d)
-
     def set(self):
+        import json
         args = ['set_policy']
         args.append(self._name)
         args.append(self._pattern)
-        args.append(self._make_params())
+        args.append(json.dumps(self._tags))
         args.append('--priority')
         args.append(self._priority)
         return self._exec(args)
@@ -133,7 +123,7 @@ def main():
         name=dict(required=True),
         vhost=dict(default='/'),
         pattern=dict(required=True),
-        tags=dict(required=True),
+        tags=dict(type='dict', required=True),
         priority=dict(default='0'),
         node=dict(default='rabbit'),
         state=dict(default='present', choices=['present', 'absent']),
