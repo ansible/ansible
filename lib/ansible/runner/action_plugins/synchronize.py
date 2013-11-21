@@ -79,7 +79,7 @@ class ActionModule(object):
         if not dest_host is src_host:
             user = inject.get('ansible_ssh_user',
                               self.runner.remote_user)
-            private_key = inject.get('ansible_ssh_private_key_file', self.runner.private_key_file)
+            private_key = os.path.expanduser(inject.get('ansible_ssh_private_key_file', self.runner.private_key_file))
             if not private_key is None:
                 options['private_key'] = private_key
             src = self._process_origin(src_host, src, user)
