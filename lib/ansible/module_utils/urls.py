@@ -359,7 +359,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
             passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
 
             # this creates a password manager
-            passman.add_password(None, netloc, username, password)
+            passman.add_password(None, netloc, urlparse.unquote(username), urlparse.unquote(password))
 
             # because we have put None at the start it will always
             # use this username/password combination for  urls
