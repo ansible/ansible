@@ -209,7 +209,12 @@ def parsekey(raw_key):
     key_type   = None   # type of ssh key
     type_index = None   # index of keytype in key string|list
 
-    key_parts = shlex.split(raw_key)
+    # split key safely
+    lex = shlex.shlex(raw_key)
+    lex.quotes = ["'", '"']
+    lex.whitespace_split = True
+    key_parts = list(lex)
+
     for i in range(0, len(key_parts)):
         if key_parts[i] in VALID_SSH2_KEY_TYPES:
             type_index = i
