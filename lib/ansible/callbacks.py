@@ -24,6 +24,7 @@ import random
 import fnmatch
 import tempfile
 import fcntl
+from functools import partial
 import constants
 from ansible.color import stringc
 
@@ -317,35 +318,16 @@ class DefaultRunnerCallbacks(object):
     def __init__(self):
         pass
 
-    def on_failed(self, host, res, ignore_errors=False):
-        call_callback_module('runner_on_failed', host, res, ignore_errors=ignore_errors)
+    def __getattr__(self, method_name):
+        if method_name in ['on_failed', 'on_ok', 'on_error', 'on_skipped',
+                          'on_unreachable', 'on_unreachable','on_no_hosts',
+                           'on_async_poll', 'on_async_ok', 'on_async_failed',
+                           'on_file_diff']:
+            return partial(self.get_on_type, method_name)
 
-    def on_ok(self, host, res):
-        call_callback_module('runner_on_ok', host, res)
-
-    def on_error(self, host, msg):
-        call_callback_module('runner_on_error', host, msg)
-
-    def on_skipped(self, host, item=None):
-        call_callback_module('runner_on_skipped', host, item=item)
-
-    def on_unreachable(self, host, res):
-        call_callback_module('runner_on_unreachable', host, res)
-
-    def on_no_hosts(self):
-        call_callback_module('runner_on_no_hosts')
-
-    def on_async_poll(self, host, res, jid, clock):
-        call_callback_module('runner_on_async_poll', host, res, jid, clock)
-
-    def on_async_ok(self, host, res, jid):
-        call_callback_module('runner_on_async_ok', host, res, jid)
-
-    def on_async_failed(self, host, res, jid):
-        call_callback_module('runner_on_async_failed', host, res, jid)
-
-    def on_file_diff(self, host, diff):
-        call_callback_module('runner_on_file_diff', host, diff)
+    def get_on_type(method, *args, **kwargs):
+        method_name = 'runner_{0}'.format(method)
+        call_callback_module(method_name, *args, **kwargs)
 
 ########################################################################
 
@@ -680,5 +662,3 @@ class PlaybookCallbacks(object):
 
     def on_stats(self, stats):
         call_callback_module('playbook_on_stats', stats)
-
-
