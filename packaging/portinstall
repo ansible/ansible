@@ -89,7 +89,7 @@ def query_package(module, name):
             if pkgng:
                 rc, out, err = module.run_command("%s %s" % (pkg_info_path, name_without_digits))
             else:
-                rc, out, err = module.run_command("%s `%s %s`" % (pkg_info_path, pkg_glob_path, name_without_digits))
+                rc, out, err = module.run_command("%s %s" % (pkg_info_path, name_without_digits))
 
         found = rc == 0
 
