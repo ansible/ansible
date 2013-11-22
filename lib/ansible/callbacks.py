@@ -51,16 +51,13 @@ def get_cowsay_info():
     if constants.ANSIBLE_NOCOWS:
         return (None, None)
     cowsay = None
-    if os.path.exists("/usr/bin/cowsay"):
-        cowsay = "/usr/bin/cowsay"
-    elif os.path.exists("/usr/games/cowsay"):
-        cowsay = "/usr/games/cowsay"
-    elif os.path.exists("/usr/local/bin/cowsay"):
-        # BSD path for cowsay
-        cowsay = "/usr/local/bin/cowsay"
-    elif os.path.exists("/opt/local/bin/cowsay"):
-        # MacPorts path for cowsay
-        cowsay = "/opt/local/bin/cowsay"
+    for path in ["/usr/bin/cowsay",
+                 "/usr/games/cowsay",
+                 "/usr/local/bin/cowsay",
+                 "/opt/local/bin/cowsay"]:
+        if os.path.exists(path):
+            cowsay = path
+            break
 
     noncow = os.getenv("ANSIBLE_COW_SELECTION",None)
     if cowsay and noncow == 'random':
@@ -680,5 +677,3 @@ class PlaybookCallbacks(object):
 
     def on_stats(self, stats):
         call_callback_module('playbook_on_stats', stats)
-
-

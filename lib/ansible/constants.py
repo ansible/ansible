@@ -61,15 +61,11 @@ def load_config_file():
     path2 = os.path.expanduser(os.environ.get('ANSIBLE_CONFIG', "~/.ansible.cfg"))
     path3 = "/etc/ansible/ansible.cfg"
 
-    if os.path.exists(path1):
-        p.read(path1)
-    elif os.path.exists(path2):
-        p.read(path2)
-    elif os.path.exists(path3):
-        p.read(path3)
-    else:
-        return None
-    return p
+    for path in [path1, path2, path3]:
+        if os.path.exists(path):
+            p.read(path)
+            return p
+    return None
 
 def shell_expand_path(path):
     ''' shell_expand_path is needed as os.path.expanduser does not work
@@ -163,4 +159,3 @@ ANSIBLE_ETCD_URL               = get_config(p, DEFAULTS, 'etcd_url', 'ANSIBLE_ET
 DEFAULT_SUDO_PASS         = None
 DEFAULT_REMOTE_PASS       = None
 DEFAULT_SUBSET            = None
-
