@@ -98,7 +98,7 @@ class _tgzfile(object):
         destbase = os.path.basename(self.dest)
         cmd = 'tar -v -C "%s" --diff -%sf "%s"'  % (self.dest, self.zipflag,self.src)
         rc, out, err = self.module.run_command(cmd)
-        bool = True if rc == 0 else False
+        bool = (rc == 0)
         return dict( bool = bool, rc = rc , out = out, err = err, cmd = cmd)
 
     def unarchive(self):
