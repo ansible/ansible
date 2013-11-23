@@ -9,18 +9,24 @@ Using Vagrant and Ansible
 Introduction
 ````````````
 
-Vagrant is a tool to manage virtual machine environments, and allows you to configure and use reproducable work environments on top of various virtualization and cloud platforms. It also has integration with Ansible as a provisioner for these virtual machines, and the two tools work together well.
+Vagrant is a tool to manage virtual machine environments, and allows you to
+configure and use reproducable work environments on top of various
+virtualization and cloud platforms. It also has integration with Ansible as a
+provisioner for these virtual machines, and the two tools work together well.
 
 This guide will describe how to use Vagrant and Ansible together.
 
-If you're not familar with Vagrant, you should visit `the documentation <http://docs.vagrantup.com/v2/>`_.
+If you're not familar with Vagrant, you should visit `the documentation
+<http://docs.vagrantup.com/v2/>`_.
 
 .. _vagrant_setup:
 
 Vagrant Setup
 `````````````
 
-The first step once you've installed Vagrant is to create a Vagrantfile and customize it to suit your needs. This is covered in detail in the Vagrant documentation, but here is a quick example:
+The first step once you've installed Vagrant is to create a Vagrantfile and
+customize it to suit your needs. This is covered in detail in the Vagrant
+documentation, but here is a quick example:
 
 .. code-block:: bash
 
@@ -28,7 +34,9 @@ The first step once you've installed Vagrant is to create a Vagrantfile and cust
     $ cd vagrant-test
     $ vagrant init precise32 http://files.vagrantup.com/precise32.box
 
-This will create a file called Vagrantfile that you can edit to suit your needs. The default Vagrantfile has a lot of comments. Here is a simplified example that includes a section to use the Ansible provisioner:
+This will create a file called Vagrantfile that you can edit to suit your
+needs. The default Vagrantfile has a lot of comments. Here is a simplified
+example that includes a section to use the Ansible provisioner:
 
 .. code-block:: ruby
 
@@ -46,7 +54,11 @@ This will create a file called Vagrantfile that you can edit to suit your needs.
         end
     end
 
-The Vagrantfile has a lot of options, but these are the most important ones. Notice the "config.vm.provision" section that refers to an Ansible playbook called "playbook.yml" in the same directory as the Vagrantfile. Vagrant runs the provisioner once the virtual machine has booted and is ready for SSH access.
+The Vagrantfile has a lot of options, but these are the most important ones.
+Notice the "config.vm.provision" section that refers to an Ansible playbook
+called "playbook.yml" in the same directory as the Vagrantfile. Vagrant runs
+the provisioner once the virtual machine has booted and is ready for SSH
+access.
 
 .. code-block:: bash
 
@@ -54,16 +66,26 @@ The Vagrantfile has a lot of options, but these are the most important ones. Not
 
 This will start the VM and run the provisioning playbook.
 
-There are a lot of Ansible options you can configure in your Vagrantfile. Visit the `Ansible Provisioner documentation <http://docs.vagrantup.com/v2/provisioning/ansible.html>`_ for more information.
+There are a lot of Ansible options you can configure in your Vagrantfile.
+Visit the `Ansible Provisioner documentation
+<http://docs.vagrantup.com/v2/provisioning/ansible.html>`_ for more
+information.
 
 .. _running_ansible:
 
 Running Ansible Manually
 ````````````````````````
 
-You can re-run the Ansible playbook for your Vagrant machine by running "vagrant provision", but sometimes you may want to run Ansible manually against the machines. This is pretty easy to do.
+You can re-run the Ansible playbook for your Vagrant machine by running
+"vagrant provision", but sometimes you may want to run Ansible manually
+against the machines. This is pretty easy to do.
 
-Vagrant automatically creates an inventory file for each Vagrant machine in the same directory called "vagrant_ansible_inventory_machinename". It configures the inventory file according to the SSH tunnel that Vagrant automatically creates, and executes "ansible-playbook" with the correct username and SSH key options to allow access. A typical automatically-created inventory file may look something like this:
+Vagrant automatically creates an inventory file for each Vagrant machine in
+the same directory called "vagrant_ansible_inventory_machinename". It
+configures the inventory file according to the SSH tunnel that Vagrant
+automatically creates, and executes "ansible-playbook" with the correct
+username and SSH key options to allow access. A typical automatically-created
+inventory file may look something like this:
 
 .. code-block:: none
 
@@ -71,7 +93,10 @@ Vagrant automatically creates an inventory file for each Vagrant machine in the 
 
     machine ansible_ssh_host=127.0.0.1 ansible_ssh_port=2222
 
-If you want to run Ansible manually, you will want to make sure to pass "ansible" or "ansible-playbook" the correct arguments for the username (usually "vagrant") and the SSH key (usually "~/.vagrant.d/insecure_private_key"), and the autogenerated inventory file.
+If you want to run Ansible manually, you will want to make sure to pass
+"ansible" or "ansible-playbook" the correct arguments for the username
+(usually "vagrant") and the SSH key (usually
+"~/.vagrant.d/insecure_private_key"), and the autogenerated inventory file.
 
 Here is an example:
 
