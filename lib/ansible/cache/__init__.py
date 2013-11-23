@@ -4,12 +4,19 @@ from UserDict import DictMixin
 class Cache(DictMixin, dict):
 
 
-    def __init__(self, default=dict, *a, **kw):
+    def __init__(self, default=None, *a, **kw):
+
         if (default is not None and not hasattr(default, '__call__')):
             raise TypeError('first argument must be callable')
-        self._default = default
+
         #TODO: pull single/list from config, maybe ALL as special keyword
         self._caches = utils.plugins.cache_loader.all()
+        self._default = default
+
+
+    def __contains__(self, name):
+        throwaway = self.__getitem__(name) # force cache load if needed
+        return super(Cache, self).__contains__(name_)
 
 
     def __getitem__(self, name):
