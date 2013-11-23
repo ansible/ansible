@@ -29,7 +29,7 @@ from play import Play
 import StringIO
 import pipes
 
-SETUP_CACHE = ansible.cache.Cache()
+SETUP_CACHE = ansible.cache.Cache(dict)
 
 class PlayBook(object):
     '''
