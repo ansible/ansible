@@ -7,6 +7,13 @@
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 %endif
 
+%if 0%{?suse_version}
+%if 0%{?suse_version} <= 01110
+%{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
+%endif
+BuildRoot: %{_tmppath}/%{name}-%{version}-build
+%endif
+
 Name: ansible
 Release: 1%{?dist}
 Summary: SSH-based configuration management, deployment, and orchestration engine
@@ -17,7 +24,20 @@ License: GPLv3
 Source0: http://www.ansibleworks.com/releases/%{name}-%{version}.tar.gz
 Url: http://www.ansibleworks.com
 
+%if %{?suse_version: %{suse_version} > 1110} %{!?suse_version:1}
 BuildArch: noarch
+%endif
+%if 0%{?suse_version}
+BuildRequires: python-devel
+%if 0%{?suse_version} > 01020
+BuildRequires: fdupes
+%endif
+
+Requires: python-PyYAML
+Requires: python-paramiko
+Requires: python-Jinja2
+Requires: python-keyczar
+%else
 %if 0%{?rhel} && 0%{?rhel} <= 5
 BuildRequires: python26-devel
 
@@ -32,6 +52,7 @@ Requires: PyYAML
 Requires: python-paramiko
 Requires: python-jinja2
 Requires: python-keyczar
+%endif
 %endif
 Requires: sshpass
 
@@ -50,13 +71,16 @@ are transferred to managed machines automatically.
 %{__python} setup.py build
 
 %install
-%{__python} setup.py install -O1 --root=$RPM_BUILD_ROOT
+%{__python} setup.py install -O1 --prefix=%{_prefix} --root=$RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT/etc/ansible/
 cp examples/hosts $RPM_BUILD_ROOT/etc/ansible/
 cp examples/ansible.cfg $RPM_BUILD_ROOT/etc/ansible/
 mkdir -p $RPM_BUILD_ROOT/%{_mandir}/{man1,man3}/
 cp -v docs/man/man1/*.1 $RPM_BUILD_ROOT/%{_mandir}/man1/
 cp -v docs/man/man3/*.3 $RPM_BUILD_ROOT/%{_mandir}/man3/
+%if 0%{?suse_version} && 0%{?suse_version} > 01020
+%fdupes $RPM_BUILD_ROOT
+%endif
 
 %clean
 rm -rf $RPM_BUILD_ROOT
