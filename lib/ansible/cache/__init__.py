@@ -16,7 +16,7 @@ class Cache(DictMixin, dict):
 
     def __contains__(self, name):
         throwaway = self.__getitem__(name) # force cache load if needed
-        return super(Cache, self).__contains__(name_)
+        return super(Cache, self).__contains__(name)
 
 
     def __getitem__(self, name):
@@ -69,3 +69,37 @@ class Cache(DictMixin, dict):
             super(Cache, self).__setitem__(name, value)
 
         return value
+
+
+    def keys(self):
+
+        print 'doing keys'
+        ret = []
+
+        for cache in self._caches:
+            ret.update(cache.cached())
+        ret.update(super(Cache,self).keys())
+        print 'ret %s' % ret
+
+        return ret
+
+
+    def _validate_key(self, name):
+
+        if super(Cache, self)._validate_key(name):
+            return True
+
+        for cache in self._caches:
+            if cache.get(name):
+                return True
+
+        return False
+
+
+    def __getattribute__(self, name):
+        import inspect
+        returned = object.__getattribute__(self, name)
+        if inspect.isfunction(returned) or inspect.ismethod(returned):
+            print 'called Cache.', returned.__name__
+        return returned
+
