@@ -406,6 +406,8 @@ class LinuxService(Service):
                 name = "%s.service" % name
 
             rc, out, err = self.execute_command("%s list-unit-files" % (location['systemctl']))
+            if rc: # fallback for older versions of systemd
+                rc, out, err = self.execute_command("%s list-units --all --full" % (location['systemctl']))
 
             # adjust the service name to account for template service unit files
             index = name.find('@')
