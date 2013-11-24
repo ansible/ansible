@@ -57,8 +57,6 @@ cp examples/ansible.cfg $RPM_BUILD_ROOT/etc/ansible/
 mkdir -p $RPM_BUILD_ROOT/%{_mandir}/{man1,man3}/
 cp -v docs/man/man1/*.1 $RPM_BUILD_ROOT/%{_mandir}/man1/
 cp -v docs/man/man3/*.3 $RPM_BUILD_ROOT/%{_mandir}/man3/
-mkdir -p $RPM_BUILD_ROOT/%{_datadir}/ansible
-cp -rv library/* $RPM_BUILD_ROOT/%{_datadir}/ansible/
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -68,6 +66,7 @@ rm -rf $RPM_BUILD_ROOT
 %{python_sitelib}/ansible*
 %{_bindir}/ansible*
 %dir %{_datadir}/ansible
+%dir %{_datadir}/ansible/*
 %{_datadir}/ansible/*/*
 %config(noreplace) %{_sysconfdir}/ansible
 %doc README.md PKG-INFO COPYING
