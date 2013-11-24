@@ -138,8 +138,9 @@ This section is new and evolving.  The idea here is explore particular use cases
    :maxdepth: 1
 
    guide_aws
+   guide_vagrant
 
-Pending topics may include: Vagrant, Docker, Jenkins, Rackspace Cloud, Google Compute Engine, Linode/Digital Ocean, Continous Deployment, and more.
+Pending topics may include: Docker, Jenkins, Rackspace Cloud, Google Compute Engine, Linode/Digital Ocean, Continous Deployment, and more.
 
 .. _community_information:
 
