@@ -587,15 +587,11 @@ class LinuxService(Service):
                 return
 
         if self.enable_cmd.endswith("systemctl"):
-            (rc, out, err) = self.execute_command("%s show %s" % (self.enable_cmd, self.__systemd_unit))
+            (rc, out, err) = self.execute_command("%s is-enabled %s" % (self.enable_cmd, self.__systemd_unit))
 
-            d = dict(line.split('=', 1) for line in out.splitlines())
-            if "UnitFileState" in d:
-                if self.enable and d["UnitFileState"] == "enabled":
-                    return
-                elif not self.enable and d["UnitFileState"] == "disabled":
-                    return
-            elif not self.enable:
+            if self.enable and rc == 0:
+                return
+            elif not self.enable and rc != 0:
                 return
 
         if self.enable_cmd.endswith("rc-update"):
