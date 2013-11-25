@@ -1,0 +1,115 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# (c) 2013, James Martin <jmartin@basho.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+DOCUMENTATION = '''
+---
+module: ufw
+short_description: This module handles some basic ubuntu ufw operations
+description:
+     - This module handles some basic ubuntu ufw operations
+
+version_added: "1.5"
+options:
+  allow:
+    description:
+      - Set's up a firewall using iptables.  Must have a ufw application definition already defined.
+    required: false
+    default: OpenSSH
+    aliases: []
+  enable:
+    description:
+      - Enable the firewall
+    required: false
+    default: False
+    aliases: []
+'''
+
+EXAMPLES = '''
+Suppose we had a ufw application definition file with the following contents:
+
+[riak]
+title=Riak NOSQL Database
+description=Riak is a NOSQL database
+ports=4369,8099,8098,8087,6000:7999/tcp
+
+# Adds a ufw configuration to allow riak ports
+- name: configure iptables
+  copy: src=ufw-riak dest=/etc/ufw/applications.d/riak owner=root group=root mode=0644
+
+- name: update fw
+  ufw: enable=yes allow=riak
+'''
+
+
+def main():
+
+    ansible_facts = {}
+    module = AnsibleModule(argument_spec=dict(
+        allow=dict(default='OpenSSH'),
+        enable=dict(default=False, type='bool')
+    )
+    )
+    result = {}
+
+    enable = module.params.get('enable')
+    app = module.params.get('allow')
+
+    ufw_bin = module.get_bin_path('ufw')
+
+# we always need ssh for ansible
+
+    rc, out, err = module.run_command("%s allow OpenSSH" % ufw_bin)
+    if rc == 1:
+        module.fail_json(msg=out + err)
+
+    rc, out, err = module.run_command("%s allow %s" % (ufw_bin, app))
+    if rc == 1:
+        module.fail_json(msg=out + err)
+    if out.find('Skipping') != -1:
+        result['changed'] = False
+    else:
+        result['changed'] = True
+
+    result['output'] = out
+
+    rc, out, err = module.run_command(
+        "%s status|grep Status|cut -f2 -d ' '" % ufw_bin)
+    out = out.strip()
+    result['status'] = out
+
+    if rc == 1:
+        module.fail_json(msg=out + err)
+
+    if out == 'inactive' and enable == True:
+        rc, out, err = module.run_command("%s -f enable" % ufw_bin)
+        result['changed'] = True
+
+    if out == 'active' and enable == False:
+        rc, out, err = module.run_command("%s disable" % ufw_bin)
+        result['changed'] = True
+
+    result['status'] = out
+
+    module.exit_json(**result)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+main()
