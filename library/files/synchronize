@@ -183,7 +183,7 @@ def main():
     owner = module.params['owner']
     group = module.params['group']
 
-    cmd = '%s --delay-updates --compress --timeout=%s' % (rsync, rsync_timeout)
+    cmd = '%s --delay-updates -FF --compress --timeout=%s' % (rsync, rsync_timeout)
     if module.check_mode:
         cmd = cmd + ' --dry-run'
     if delete:
