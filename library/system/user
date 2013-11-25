@@ -361,7 +361,7 @@ class User(object):
                 if current_groups and not self.append:
                     groups_need_mod = True
             else:
-                groups = self.get_groups_set()
+                groups = self.get_groups_set(remove_existing=False)
                 group_diff = set(current_groups).symmetric_difference(groups)
 
                 if group_diff:
@@ -429,7 +429,7 @@ class User(object):
         else:
             return list(grp.getgrnam(group))
 
-    def get_groups_set(self):
+    def get_groups_set(self, remove_existing=True):
         if self.groups is None:
             return None
         info = self.user_info()
@@ -437,7 +437,7 @@ class User(object):
         for g in set(groups):
             if not self.group_exists(g):
                 self.module.fail_json(msg="Group %s does not exist" % (g))
-            if info and self.group_info(g)[2] == info[3]:
+            if info and remove_existing and self.group_info(g)[2] == info[3]:
                 groups.remove(g)
         return groups
 
