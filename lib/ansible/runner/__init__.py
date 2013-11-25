@@ -692,6 +692,9 @@ class Runner(object):
                 retries = self.module_vars.get('retries')
                 delay   = self.module_vars.get('delay')
                 for x in range(1, retries + 1):
+                    # template the delay, cast to float and sleep
+                    delay = template.template(self.basedir, delay, inject, expand_lists=False)
+                    delay = float(delay)
                     time.sleep(delay)
                     tmp = ''
                     if getattr(handler, 'NEEDS_TMPPATH', True):
