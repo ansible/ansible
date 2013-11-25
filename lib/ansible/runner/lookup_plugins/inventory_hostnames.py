@@ -34,7 +34,10 @@ class LookupModule(object):
 
     def __init__(self, basedir=None, **kwargs):
         self.basedir = basedir
-        self.host_list = kwargs['runner'].inventory.host_list
+        if 'runner' in kwargs:
+            self.host_list = kwargs['runner'].inventory.host_list
+        else:
+            raise errors.AnsibleError("inventory_hostnames must be used as a loop. Example: \"with_inventory_hostnames: \'all\'\"")
 
     def run(self, terms, inject=None, **kwargs):
         terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
