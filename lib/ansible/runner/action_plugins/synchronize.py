@@ -69,6 +69,8 @@ class ActionModule(object):
         # from the perspective of the rsync call the delegate is the localhost
         src_host = '127.0.0.1'
         dest_host = inject.get('ansible_ssh_host', inject['inventory_hostname'])
+        # allow ansible_ssh_host to be templated
+        dest_host = template.template(self.runner.basedir, dest_host, inject, fail_on_undefined=True)
 
         # edge case: explicit delegate and dest_host are the same
         if dest_host == inject['delegate_to']:
