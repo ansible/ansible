@@ -73,7 +73,7 @@ class _zipfile(object):
         return dict(bool = False)
 
     def unarchive(self):
-        cmd = 'unzip "%s" -d "%s" -o'  % (self.src,self.dest)
+        cmd = 'unzip -o "%s" -d "%s"'  % (self.src,self.dest)
         rc, out, err = self.module.run_command(cmd)
         return dict(cmd = cmd, rc=rc, out=out, err=err)
 
