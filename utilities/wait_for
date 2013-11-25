@@ -157,7 +157,8 @@ def main():
         while datetime.datetime.now() < end:
             if path:
                 try:
-                    with open(path) as f:
+                    f = open(path)
+                    try:
                         if search_regex:
                             if re.search(search_regex, f.read(), re.MULTILINE):
                                 break
@@ -165,6 +166,8 @@ def main():
                                 time.sleep(1)
                         else:
                             break
+                    finally:
+                        f.close()
                 except IOError:
                     time.sleep(1)
                     pass
