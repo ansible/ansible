@@ -41,7 +41,7 @@ options:
     description:
       - Rule command.
     required: false
-    choices: [ 'enable', 'disable', 'allow', 'deny', 'reject' ]
+    choices: [ 'enable', 'disable', 'reset', 'allow', 'deny', 'reject' ]
     default: 'allow'
   from_ip:
     description:
@@ -166,6 +166,9 @@ def main():
             elif rule in 'disable':
                 cmd = cmd + ' -f %s' % (rule)
                 changed_marker = 'Firewall stopped and disabled on system startup'
+            elif rule in 'reset':
+                cmd = cmd + ' -f %s' % (rule)
+                changed_marker = 'Backing up'
             elif rule in ['allow', 'deny', 'reject']:
                 changed_marker = 'Rules updated'
                 if delete:
