@@ -181,7 +181,6 @@ def parseoptions(options):
         lex.quotes = ["'", '"']
         lex.whitespace_split = True
         opt_parts = list(lex)
-        open("/tmp/awx.log", "a").write("opt_parts: %s\n" % opt_parts)
 
         #options_list = options.strip().split(",")
         options_list = opt_parts
@@ -195,7 +194,6 @@ def parseoptions(options):
                 arg = option
                 val = None
             options_dict[arg] = val.replace('"', '').replace("'", "")
-    open("/tmp/awx.log", "a").write("options_dict: %s\n" % options_dict)
     return options_dict
 
 def parsekey(raw_key):
