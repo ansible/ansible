@@ -72,6 +72,41 @@
       register: result
       failed_when: result.changed
 
+    - name: shift aliases to be now hostname
+      host: hostname=foobar state=absent keep_aliases=yes
+      register: result
+      failed_when: not result.changed
+
+    - name: test entry after shifting
+      host: hostname=foobar.com ip=192.168.123.1 aliases=foobar.net
+      register: result
+      failed_when: result.changed
+
+    - name: shift aliases to be now hostname, no aliases left
+      host: hostname=foobar.com state=absent keep_aliases=yes
+      register: result
+      failed_when: not result.changed
+
+    - name: test entry after shifting
+      host: hostname=foobar.net ip=192.168.123.1
+      register: result
+      failed_when: result.changed
+
+    - name: shift aliases ignored, no aliases available
+      host: hostname=foobar.net state=absent keep_aliases=yes
+      register: result
+      failed_when: not result.changed
+
+    - name: test entry absent after non-shifting
+      host: ip=192.168.123.1 state=absent
+      register: result
+      failed_when: result.changed
+
+    - name: test add record with alias again
+      host: hostname=foobar ip=192.168.123.1 aliases=foobar.com,foobar.net
+      register: result
+      failed_when: not result.changed
+
     - name: test add an existing record with changed alias
       host: hostname=foobar ip=192.168.123.1 aliases=foobar.net,foobar.com
       register: result
@@ -96,3 +131,19 @@
       host: hostname=barfoo ip=192.168.123.2
       register: result
       failed_when: not result.changed
+
+    - name: test change ip to loopback
+      host: hostname=barfoo ip=127.1.1.1
+      register: result
+      failed_when: not result.changed
+
+    - name: test not remove loopback if not forced
+      host: hostname=barfoo state=absent
+      register: result
+      failed_when: result.changed
+      
+    - name: test remove loopback if forced
+      host: hostname=barfoo state=absent ignore_loopback=no
+      register: result
+      failed_when: not result.changed
+
