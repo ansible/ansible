@@ -135,6 +135,9 @@ def symmetric_difference(a, b):
 def union(a, b):
     return set(a).union(b)
 
+def separate(a, b):
+    return b.join(a)
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -195,5 +198,6 @@ class FilterModule(object):
             'difference': difference,
             'symmetric_difference': symmetric_difference,
             'union': union,
+            'separate': separate,
         }
 
