@@ -218,6 +218,7 @@ def parsekey(raw_key):
     # split key safely
     lex = shlex.shlex(raw_key)
     lex.quotes = ["'", '"']
+    lex.commenters = '' #keep comment hashes
     lex.whitespace_split = True
     key_parts = list(lex)
 
