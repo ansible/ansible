@@ -64,7 +64,7 @@ class ActionModule(object):
             return self.runner._execute_module(conn, tmp, 'assemble', module_args, inject=inject, complex_args=complex_args)
 
         # Does all work assembling the file
-        path = assemble_from_fragments(src, delimiter)
+        path = _assemble_from_fragments(src, delimiter)
 
         pathmd5 = utils.md5s(path)
         remote_md5 = self.runner._remote_md5(conn, tmp, dest)
