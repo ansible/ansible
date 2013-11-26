@@ -177,7 +177,14 @@ def parseoptions(options):
     '''
     options_dict = {}
     if options:
-        options_list = options.strip().split(",")
+        lex = shlex.shlex(options)
+        lex.quotes = ["'", '"']
+        lex.whitespace_split = True
+        opt_parts = list(lex)
+        open("/tmp/awx.log", "a").write("opt_parts: %s\n" % opt_parts)
+
+        #options_list = options.strip().split(",")
+        options_list = opt_parts
         for option in options_list:
             # happen when there is comma at the end
             if option == '':
@@ -187,7 +194,8 @@ def parseoptions(options):
             else:
                 arg = option
                 val = None
-            options_dict[arg] = val
+            options_dict[arg] = val.replace('"', '').replace("'", "")
+    open("/tmp/awx.log", "a").write("options_dict: %s\n" % options_dict)
     return options_dict
 
 def parsekey(raw_key):
