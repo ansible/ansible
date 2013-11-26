@@ -226,9 +226,14 @@ class RedHat5Hostname(Hostname):
     distribution = 'Redhat'
     strategy_class = RedHatStrategy
 
-class RedHatHostname(Hostname):
+class RedHatServerHostname(Hostname):
     platform = 'Linux'
     distribution = 'Red hat enterprise linux server'
+    strategy_class = RedHatStrategy
+
+class RedHatWorkstationHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Red hat enterprise linux workstation'
     strategy_class = RedHatStrategy
 
 class CentOSHostname(Hostname):
