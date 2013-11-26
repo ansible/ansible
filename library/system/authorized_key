@@ -215,6 +215,9 @@ def parsekey(raw_key):
     key_type   = None   # type of ssh key
     type_index = None   # index of keytype in key string|list
 
+    # remove comment yaml escapes
+    raw_key = raw_key.replace('\#', '#')
+
     # split key safely
     lex = shlex.shlex(raw_key)
     lex.quotes = ["'", '"']
