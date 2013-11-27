@@ -2,7 +2,13 @@ ansible (1.5) unstable; urgency=low
 
   * 1.5 release (PENDING)
  
- -- Michael DeHaan <michael.dehaan@gmail.com>  Thu, 21 November 2013 15:00:01 -0500
+ -- Michael DeHaan <michael.dehaan@gmail.com>  Wed, 27 November 2013 15:00:02 -0500
+
+ansible (1.4.1) unstable; urgency=low
+
+  * 1.4.1 release
+
+ -- Michael DeHaan <michael.dehaan@gmail.com>  Wed, 27 November 2013 15:00:01 -0500
 
 ansible (1.4) unstable; urgency=low
 
