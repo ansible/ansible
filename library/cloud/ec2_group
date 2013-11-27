@@ -156,6 +156,8 @@ def main():
         if curGroup.name == name and curGroup.vpc_id == vpc_id:
             group = curGroup
 
+
+
     # Ensure requested group is absent
     if state == 'absent':
         if group:
@@ -204,10 +206,17 @@ def main():
             for rule in rules:
                 group_id = None
                 ip = None
+
                 if 'group_id' in rule and 'cidr_ip' in rule:
                     module.fail_json(msg="Specify group_id OR cidr_ip, not both")
                 elif 'group_id' in rule:
                     group_id = rule['group_id']
+                    if not str(group_id).startswith('sg-'):
+                        grp_stuffs = ec2.get_all_security_groups()
+                        for grp in grp_stuffs:
+                            if str(group_id) in str(grp):
+                                rule['group_id'] = grp.id
+                                group_id = rule['group_id']
                 elif 'cidr_ip' in rule:
                     ip = rule['cidr_ip']
 
