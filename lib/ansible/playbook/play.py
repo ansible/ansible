@@ -113,7 +113,7 @@ class Play(object):
             raise errors.AnsibleError('hosts declaration is required')
         elif isinstance(hosts, list):
             hosts = ';'.join(hosts)
-        self.serial           = int(ds.get('serial', 0))
+        self.serial           = str(ds.get('serial', 0))
         self.hosts            = hosts
         self.name             = ds.get('name', self.hosts)
         self._tasks           = ds.get('tasks', [])
