@@ -441,7 +441,7 @@ def main():
     timeout   = int(module.params['timeout'])
     minutes   = int(module.params['minutes'])
     debug     = int(module.params['debug'])
-    ipv6      = bool(module.params['ipv6'])
+    ipv6      = json.loads(str(module.params['ipv6']).lower())
 
     if not HAS_KEYCZAR:
         module.fail_json(msg="keyczar is not installed (on the remote side)")
