@@ -264,8 +264,8 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             ec2_url = dict(),
-            aws_secret_key = dict(aliases=['ec2_secret_key', 'secret_key'], no_log=True),
-            aws_access_key = dict(aliases=['ec2_access_key', 'access_key']),
+            ec2_secret_key = dict(aliases=['aws_secret_key', 'secret_key'], no_log=True),
+            ec2_access_key = dict(aliases=['aws_access_key', 'access_key']),
             instance_id = dict(),
             image_id = dict(),
             delete_snapshot = dict(),
