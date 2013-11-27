@@ -2,6 +2,7 @@ Ansible Releases at a Glance
 ============================
 
 1.5    "Love Walks In" -------- active development
+1.4.1  "Could This Be Magic?" - 11-27-2013
 1.4    "Could This Be Magic?" - 11-21-2013
 1.3.4  "Top of the World" ----- 10-29-2013
 1.3.3  "Top of the World" ----- 10-09-2013
