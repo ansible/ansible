@@ -427,7 +427,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             port=dict(required=False, default=5099),
-            ipv6=dict(required=False, default=False),
+            ipv6=dict(required=False, default=False, type='bool'),
             timeout=dict(required=False, default=300),
             password=dict(required=True),
             minutes=dict(required=False, default=30),
@@ -441,7 +441,7 @@ def main():
     timeout   = int(module.params['timeout'])
     minutes   = int(module.params['minutes'])
     debug     = int(module.params['debug'])
-    ipv6      = bool(module.params['ipv6'])
+    ipv6      = module.params['ipv6']
 
     if not HAS_KEYCZAR:
         module.fail_json(msg="keyczar is not installed (on the remote side)")
