@@ -257,8 +257,8 @@ def main():
                     'choices': ['present', 'absent']},
             instance_id={'required': True},
             ec2_elbs={'default': None, 'required': False, 'type':'list'},
-            aws_secret_key={'default': None, 'aliases': ['ec2_secret_key', 'secret_key'], 'no_log': True},
-            aws_access_key={'default': None, 'aliases': ['ec2_access_key', 'access_key']},
+            ec2_secret_key={'default': None, 'aliases': ['aws_secret_key', 'secret_key'], 'no_log': True},
+            ec2_access_key={'default': None, 'aliases': ['aws_access_key', 'access_key']},
             region={'default': None, 'required': False, 'aliases':['aws_region', 'ec2_region'], 'choices':AWS_REGIONS},
             enable_availability_zone={'default': True, 'required': False, 'choices': BOOLEANS, 'type': 'bool'},
             wait={'required': False, 'choices': BOOLEANS, 'default': True, 'type': 'bool'}
