@@ -762,10 +762,12 @@ class Runner(object):
             executable = C.DEFAULT_EXECUTABLE
 
         sudo_user = self.sudo_user
-        
-        if self.remote_user == sudo_user:
-            sudoable = False
-        
+
+        # compare connection user to sudo_user and disable if the same
+        if hasattr(conn, 'user'):
+            if conn.user == sudo_user:
+                sudoable = False
+
         rc, stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudo_user, sudoable=sudoable, executable=executable)
 
         if type(stdout) not in [ str, unicode ]:
