@@ -153,8 +153,8 @@ def main():
             ttl             = dict(required=False, default=3600),
             type            = dict(choices=['A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'NS'], required=True),
             value           = dict(required=False), 
-            aws_secret_key  = dict(aliases=['ec2_secret_key', 'secret_key'], no_log=True, required=False),
-            aws_access_key  = dict(aliases=['ec2_access_key', 'access_key'], required=False),
+            ec2_secret_key  = dict(aliases=['aws_secret_key', 'secret_key'], no_log=True, required=False),
+            ec2_access_key  = dict(aliases=['aws_access_key', 'access_key'], required=False),
             overwrite       = dict(required=False, type='bool')
         )
     )
