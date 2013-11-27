@@ -1,0 +1,333 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2013, John Dewey <john@dewey.ws>
+#
+# This module is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+
+import locale
+import os
+import six
+
+try:
+    from novaclient.openstack.common import uuidutils
+    from novaclient.openstack.common import strutils
+    from novaclient.v1_1 import client
+    from novaclient.v1_1 import security_groups
+    from novaclient.v1_1 import security_group_rules
+    from novaclient import exceptions
+except ImportError:
+    print("failed=True msg='novaclient is required for this module to work'")
+
+DOCUMENTATION = '''
+---
+module: security_group
+version_added: "1.5"
+short_description: Maintain nova security groups.
+description:
+  - Manage nova security groups using the python-novaclient library.
+options:
+
+  login_username:
+    description:
+        - Login username to authenticate to keystone.  If not set then the value of the OS_USERNAME environment variable is used.
+    required: false
+    default: None
+  login_password:
+    description:
+      - Password of login user.  If not set then the value of the OS_PASSWORD environment variable is used.
+    required: false
+    default: None
+  login_tenant_name:
+    description:
+      - The tenant name of the login user.  If not set then the value of the OS_TENANT_NAME environment variable is used.
+    required: false
+    default: None
+  auth_url:
+    description:
+      - The keystone url for authentication.  If not set then the value of the OS_AUTH_URL environment variable is used.
+    required: false
+    default: None
+  region_name:
+    description:
+      - Name of the region.
+    required: false
+    default: None
+  name:
+    description:
+      - Name of the security group.
+    required: true
+  description:
+    description:
+      - Description of the security group.
+    required: true
+  rules:
+    description:
+      - List of firewall rules to enforce in this group (see example).
+        Must specify either an IPv4 'cidr' address or 'group' UUID.
+    required: true
+  state:
+    description:
+      - Indicate desired state of the resource.
+    choices: ['present', 'absent']
+    required: false
+    default: 'present'
+
+requirements: ["novaclient"]
+'''
+
+EXAMPLES = '''
+- name: create example group and rules
+  local_action:
+    module: security_group
+    name: example
+    description: an example nova group
+    rules:
+      - ip_protocol: tcp
+        from_port: 80
+        to_port: 80
+        cidr: 0.0.0.0/0
+      - ip_protocol: tcp
+        from_port: 3306
+        to_port: 3306
+        group: "{{ group_uuid }}"
+      - ip_protocol: icmp
+        from_port: -1
+        to_port: -1
+        cidr: 0.0.0.0/0
+
+- name: delete rule from example group
+  local_action:
+    module: security_group
+    name: example
+    description: an example nova group
+    rules:
+      - ip_protocol: tcp
+        from_port: 80
+        to_port: 80
+        cidr: 0.0.0.0/0
+      - ip_protocol: icmp
+        from_port: -1
+        to_port: -1
+        cidr: 0.0.0.0/0
+        state: absent
+'''
+
+class NovaGroup(object):
+    def __init__(self, client):
+        self._sg = security_groups.SecurityGroupManager(client)
+
+    # Taken from novaclient/v1_1/shell.py.
+    def _get_secgroup(self, secgroup):
+        # Check secgroup is an UUID
+        if uuidutils.is_uuid_like(strutils.safe_encode(secgroup)):
+            try:
+                sg = self._sg.get(secgroup)
+                return sg
+            except exceptions.NotFound:
+                return False
+
+        # Check secgroup as a name
+        for s in self._sg.list():
+            encoding = (locale.getpreferredencoding() or
+                sys.stdin.encoding or
+                'UTF-8')
+            if not six.PY3:
+                s.name = s.name.encode(encoding)
+            if secgroup == s.name:
+                return s
+        return False
+
+
+class SecurityGroup(NovaGroup):
+    def __init__(self, client, module):
+        super(SecurityGroup, self).__init__(client)
+        self._module = module
+        self._name = module.params.get('name')
+        self._description = module.params.get('description')
+
+    def exists(self):
+        return self._get_secgroup(self._name)
+
+    def create(self):
+        self._sg.create(self._name, self._description)
+
+    def delete(self):
+        self._sg.delete(self._name)
+
+
+class SecurityGroupRule(NovaGroup):
+    def __init__(self, client, module):
+        super(SecurityGroupRule, self).__init__(client)
+        self._module = module
+        self._name = module.params.get('name')
+        self._rules = module.params.get('rules')
+        self._validate_rules()
+        self._sgr = security_group_rules.SecurityGroupRuleManager(client)
+        self._secgroup = self._get_secgroup(self._name)
+        self._current_rules = self._lookup_dict(self._secgroup.rules)
+
+    def _concat_security_group_rule(self, rule):
+        """
+        Normalize the given rule into a string in the format of:
+          protocol-from_port-to_port-group
+        The `group` needs a bit of massaging.
+          1. If an empty dict -- return None.
+          2. If a dict -- lookup group UUID (novaclient only returns the name).
+          3. Return `group` from rules dict.
+
+        :param rule: A novaclient SecurityGroupRule object.
+        """
+        group = rule.get('group')
+        # Oddly novaclient occasionaly returns None as {}.
+        if group is not None and not any(group):
+            group = None
+        elif type(group) == dict:
+            g = group.get('name')
+            group = self._get_secgroup(g)
+        r = "%s-%s-%s-%s" % (rule.get('ip_protocol'),
+                             rule.get('from_port'),
+                             rule.get('to_port'),
+                             group)
+        return r
+
+    def _lookup_dict(self, rules):
+        """
+        Populate a dict with current rules.
+
+        :param rule: A novaclient SecurityGroupRule object.
+        """
+        return {self._concat_security_group_rule(rule): rule for rule in rules}
+
+    def _get_rule(self, rule):
+        """
+        Return rule when found and False when not.
+
+        :param rule: A novaclient SecurityGroupRule object.
+        """
+        r = self._concat_security_group_rule(rule)
+        if r in self._current_rules:
+            return self._current_rules[r]
+        else:
+            return False
+
+    def _validate_rules(self):
+        for rule in self._rules:
+            if 'group' in rule and 'cidr' in rule:
+                self._module.fail_json(msg="Specify group OR cidr")
+
+    def create(self):
+        changed = False
+        filtered = [rule for rule in self._rules
+            if rule.get('state') != 'absent']
+        for rule in filtered:
+            if not self._get_rule(rule):
+                if 'cidr' in rule:
+                    self._sgr.create(self._secgroup.id,
+                                     rule.get('ip_protocol'),
+                                     rule.get('from_port'),
+                                     rule.get('to_port'),
+                                     cidr=rule.get('cidr'))
+                    changed = True
+                if 'group' in rule:
+                    self._sgr.create(self._secgroup.id,
+                                     rule.get('ip_protocol'),
+                                     rule.get('from_port'),
+                                     rule.get('to_port'),
+                                     group_id=rule.get('group'))
+                    changed = True
+        return changed
+
+    def delete(self):
+        changed = False
+        filtered = [rule for rule in self._rules
+            if rule.get('state') == 'absent']
+        for rule in filtered:
+            r = self._get_rule(rule)
+            if r:
+                self._sgr.delete(r.get('id'))
+                changed = True
+        return changed
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            name=dict(required=True),
+            description=dict(required=True),
+            rules=dict(),
+            login_username=dict(),
+            login_password=dict(no_log=True),
+            login_tenant_name=dict(),
+            auth_url= dict(),
+            region_name=dict(default=None),
+            state = dict(default='present', choices=['present', 'absent']),
+        ),
+        supports_check_mode=True,
+    )
+    login_username = module.params.get('login_username')
+    login_password = module.params.get('login_password')
+    login_tenant_name = module.params.get('login_tenant_name')
+    auth_url = module.params.get('auth_url')
+
+    # allow stackrc environment variables to be used if ansible vars aren't set
+    if not login_username and 'OS_USERNAME' in os.environ:
+        login_username = os.environ['OS_USERNAME']
+
+    if not login_password and 'OS_PASSWORD' in os.environ:
+        login_password = os.environ['OS_PASSWORD']
+
+    if not login_tenant_name and 'OS_TENANT_NAME' in os.environ:
+        login_tenant_name = os.environ['OS_TENANT_NAME']
+
+    if not auth_url and 'OS_AUTH_URL' in os.environ:
+        auth_url = os.environ['OS_AUTH_URL']
+
+    nova = client.Client(login_username,
+                         login_password,
+                         login_tenant_name,
+                         auth_url,
+                         service_type='compute')
+    try:
+        nova.authenticate()
+    except exceptions.Unauthorized as e:
+        module.fail_json(msg="Invalid OpenStack Nova credentials.: %s" % e.message)
+    except exceptions.AuthorizationFailure as e:
+        module.fail_json(msg="Unable to authorize user: %s" % e.message)
+
+    rules = module.params.get('rules')
+    state = module.params.get('state')
+    security_group = SecurityGroup(nova, module)
+    security_group_rules = SecurityGroupRule(nova, module)
+
+    changed = False
+    if security_group.exists():
+        if state == 'absent':
+            security_group.delete()
+            changed = True
+    elif state == 'present':
+        security_group.create()
+        changed = True
+
+    if rules:
+        if security_group_rules.create():
+            changed = True
+        if security_group_rules.delete():
+            changed = True
+
+    module.exit_json(changed=changed, group_id=None)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
