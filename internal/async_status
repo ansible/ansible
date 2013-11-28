@@ -25,7 +25,7 @@ module: async_status
 short_description: Obtain status of asynchronous task
 description:
      - "This module gets the status of an asynchronous task."
-version_added: "0.5"
+version_added: historical
 options:
   jid:
     description:

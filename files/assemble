@@ -36,7 +36,7 @@ description:
        local or have already been transferred to the system, and concatenate them
        together to produce a destination file. Files are assembled in string sorting order.
        Puppet calls this idea I(fragments).
-version_added: "0.5"
+version_added: historical
 options:
   src:
     description:
