@@ -66,6 +66,7 @@ class ActionModule(object):
 
         # Does all work assembling the file
         path = self._assemble_from_fragments(src, delimiter)
+        resultant = file(path).read()
 
         pathmd5 = utils.md5s(path)
         remote_md5 = self.runner._remote_md5(conn, tmp, dest)
