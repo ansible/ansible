@@ -236,6 +236,11 @@ class CentOSHostname(Hostname):
     distribution = 'Centos'
     strategy_class = RedHatStrategy
 
+class AmazonLinuxHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Amazon'
+    strategy_class = RedHatStrategy
+
 # ===========================================
 
 class FedoraStrategy(GenericStrategy):
