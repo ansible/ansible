@@ -28,7 +28,7 @@ class ActionModule(object):
     def __init__(self, runner):
         self.runner = runner
 
-    def _assemble_from_fragments(src_path, delimiter=None):
+    def _assemble_from_fragments(self, src_path, delimiter=None):
         ''' assemble a file from a directory of fragments '''
         tmpfd, temp_path = tempfile.mkstemp()
         tmp = os.fdopen(tmpfd,'w')
@@ -64,7 +64,7 @@ class ActionModule(object):
             return self.runner._execute_module(conn, tmp, 'assemble', module_args, inject=inject, complex_args=complex_args)
 
         # Does all work assembling the file
-        path = assemble_from_fragments(src, delimiter)
+        path = self._assemble_from_fragments(src, delimiter)
 
         pathmd5 = utils.md5s(path)
         remote_md5 = self.runner._remote_md5(conn, tmp, dest)

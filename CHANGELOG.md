@@ -1,7 +1,13 @@
 Ansible Changes By Release
 ==========================
 
-1.4 "Could This Be Magic" - Release pending!
+1.5 "Love Walks In" - Release pending!
+
+1.4.1 "Could This Be Magic" - November 27, 2013
+
+* Misc fixes to accelerate mode and various modules.
+
+1.4 "Could This Be Magic" - November 21, 2013
 
 Highlighted new features:
 

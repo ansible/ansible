@@ -44,7 +44,7 @@ options:
     default: null
   region:
     description:
-      - Region to create the load balancer in
+      - Region to retrieve facts for
     default: DFW
   username:
     description:

@@ -48,9 +48,9 @@ notes:
     - uses tar's --diff arg to calculate if changed or not.  If this arg is not
       supported, it will always unpack the archive
     - does not detect if a .zip file is different from destination - always unzips
-    - existing files/directories in the destination which are not in the archvie
+    - existing files/directories in the destination which are not in the archive
       are not touched.  This is the same behavior as a normal archive extraction
-    - existing files/directories in the destination which are not in the archvie
+    - existing files/directories in the destination which are not in the archive
       are ignored for purposes of deciding if the archive should be unpacked or not
 '''
 
@@ -73,7 +73,7 @@ class _zipfile(object):
         return dict(bool = False)
 
     def unarchive(self):
-        cmd = 'unzip "%s" -d "%s" -o'  % (self.src,self.dest)
+        cmd = 'unzip -o "%s" -d "%s"'  % (self.src,self.dest)
         rc, out, err = self.module.run_command(cmd)
         return dict(cmd = cmd, rc=rc, out=out, err=err)
 
@@ -98,7 +98,7 @@ class _tgzfile(object):
         destbase = os.path.basename(self.dest)
         cmd = 'tar -v -C "%s" --diff -%sf "%s"'  % (self.dest, self.zipflag,self.src)
         rc, out, err = self.module.run_command(cmd)
-        bool = True if rc == 0 else False
+        bool = (rc == 0)
         return dict( bool = bool, rc = rc , out = out, err = err, cmd = cmd)
 
     def unarchive(self):

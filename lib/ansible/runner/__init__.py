@@ -587,6 +587,9 @@ class Runner(object):
         actual_private_key_file = inject.get('ansible_ssh_private_key_file', self.private_key_file)
         self.sudo_pass = inject.get('ansible_sudo_pass', self.sudo_pass)
 
+        if actual_private_key_file is not None:
+            actual_private_key_file = os.path.expanduser(actual_private_key_file)
+
         if self.accelerate and actual_transport != 'local':
             #Fix to get the inventory name of the host to accelerate plugin
             if inject.get('ansible_ssh_host', None):
@@ -626,6 +629,10 @@ class Runner(object):
                 actual_private_key_file = delegate_info.get('ansible_ssh_private_key_file', self.private_key_file)
                 actual_transport = delegate_info.get('ansible_connection', self.transport)
                 self.sudo_pass = delegate_info.get('ansible_sudo_pass', self.sudo_pass)
+
+                if actual_private_key_file is not None:
+                    actual_private_key_file = os.path.expanduser(actual_private_key_file)
+
                 for i in delegate_info:
                     if i.startswith("ansible_") and i.endswith("_interpreter"):
                         inject[i] = delegate_info[i]
@@ -685,6 +692,9 @@ class Runner(object):
                 retries = self.module_vars.get('retries')
                 delay   = self.module_vars.get('delay')
                 for x in range(1, retries + 1):
+                    # template the delay, cast to float and sleep
+                    delay = template.template(self.basedir, delay, inject, expand_lists=False)
+                    delay = float(delay)
                     time.sleep(delay)
                     tmp = ''
                     if getattr(handler, 'NEEDS_TMPPATH', True):
@@ -752,10 +762,12 @@ class Runner(object):
             executable = C.DEFAULT_EXECUTABLE
 
         sudo_user = self.sudo_user
-        
-        if self.remote_user == sudo_user:
-            sudoable = False
-        
+
+        # compare connection user to sudo_user and disable if the same
+        if hasattr(conn, 'user'):
+            if conn.user == sudo_user:
+                sudoable = False
+
         rc, stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudo_user, sudoable=sudoable, executable=executable)
 
         if type(stdout) not in [ str, unicode ]:

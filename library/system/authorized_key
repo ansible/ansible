@@ -177,7 +177,13 @@ def parseoptions(options):
     '''
     options_dict = {}
     if options:
-        options_list = options.strip().split(",")
+        lex = shlex.shlex(options)
+        lex.quotes = ["'", '"']
+        lex.whitespace_split = True
+        opt_parts = list(lex)
+
+        #options_list = options.strip().split(",")
+        options_list = opt_parts
         for option in options_list:
             # happen when there is comma at the end
             if option == '':
@@ -187,7 +193,7 @@ def parseoptions(options):
             else:
                 arg = option
                 val = None
-            options_dict[arg] = val
+            options_dict[arg] = val.replace('"', '').replace("'", "")
     return options_dict
 
 def parsekey(raw_key):
@@ -209,7 +215,16 @@ def parsekey(raw_key):
     key_type   = None   # type of ssh key
     type_index = None   # index of keytype in key string|list
 
-    key_parts = shlex.split(raw_key)
+    # remove comment yaml escapes
+    raw_key = raw_key.replace('\#', '#')
+
+    # split key safely
+    lex = shlex.shlex(raw_key)
+    lex.quotes = ["'", '"']
+    lex.commenters = '' #keep comment hashes
+    lex.whitespace_split = True
+    key_parts = list(lex)
+
     for i in range(0, len(key_parts)):
         if key_parts[i] in VALID_SSH2_KEY_TYPES:
             type_index = i

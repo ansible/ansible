@@ -24,13 +24,13 @@ docs/man/man3/*
 *.sublime-project
 *.sublime-workspace
 # docsite stuff...
-docsite/latest/rst/modules
-docsite/latest/*.html
-docsite/latest/_static/*.gif
-docsite/latest/_static/*.png
-docsite/latest/_static/websupport.js
-docsite/latest/searchindex.js
-docsite/latest/htmlout
+docsite/rst/modules
+docsite/*.html
+docsite/_static/*.gif
+docsite/_static/*.png
+docsite/_static/websupport.js
+docsite/searchindex.js
+docsite/htmlout
 # deb building stuff...
 debian/
 # Vim swap files

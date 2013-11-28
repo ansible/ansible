@@ -34,6 +34,10 @@ import cgi
 import ansible.utils
 import ansible.utils.module_docs as module_docs
 
+# if a module is added in a version of Ansible older than this, don't print the version added information
+# in the module documentation because everyone is assumed to be running something newer than this already.
+TO_OLD_TO_BE_NOTABLE = 1.0
+
 # Get parent directory of the directory this script lives in
 MODULEDIR=os.path.abspath(os.path.join(
     os.path.dirname(os.path.realpath(__file__)), os.pardir, 'library'
@@ -366,8 +370,20 @@ def main():
                 if not 'version_added' in doc:
                     sys.stderr.write("*** ERROR: missing version_added in: %s ***\n" % module)
                     sys.exit(1)
-                    if doc['version_added'] == 'historical':
-                       del doc['version_added']
+
+                added = 0
+                if doc['version_added'] == 'historical':
+                    del doc['version_added']
+                else:
+                    added = doc['version_added']  
+
+                # don't show version added information if it's too old to be called out
+                if added:
+                    added_tokens = str(added).split(".")
+                    added = added_tokens[0] + "." + added_tokens[1]
+                    added_float = float(added)
+                    if added and added_float < TO_OLD_TO_BE_NOTABLE:
+                        del doc['version_added']
 
                 for (k,v) in doc['options'].iteritems():
                     all_keys.append(k)

@@ -382,7 +382,7 @@ def main():
     local_mods = False
     if not os.path.exists(gitconfig):
         if module.check_mode:
-            remote_head = get_remote_head(git_path, module, dest, version, repo)
+            remote_head = get_remote_head(git_path, module, dest, version, repo, bare)
             module.exit_json(changed=True, before=before, after=remote_head)
         clone(git_path, module, repo, dest, remote, depth, version, bare, reference)
     elif not update:
