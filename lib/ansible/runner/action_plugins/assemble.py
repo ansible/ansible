@@ -71,6 +71,7 @@ class ActionModule(object):
         remote_md5 = self.runner._remote_md5(conn, tmp, dest)
 
         if pathmd5 != remote_md5:
+            resultant = file(path).read()
             if self.runner.diff:
                 dest_result = self.runner._execute_module(conn, tmp, 'slurp', "path=%s" % dest, inject=inject, persist_files=True)
                 if 'content' in dest_result.result:
