@@ -25,7 +25,7 @@ module: apt
 short_description: Manages apt-packages
 description:
   - Manages I(apt) packages (such as for Debian/Ubuntu).
-version_added: historical
+version_added: "0.0.2"
 options:
   pkg:
     description:

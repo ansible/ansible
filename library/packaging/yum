@@ -74,6 +74,7 @@ options:
     description:
       - The remote yum configuration file to use for the transaction.
     required: false
+    version_added: "0.6"
     default: null
     aliases: []
 

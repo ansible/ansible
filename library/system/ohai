@@ -28,7 +28,7 @@ description:
        (U(http://wiki.opscode.com/display/chef/Ohai)) on the remote host and 
        returns JSON inventory data.
        I(Ohai) data is a bit more verbose and nested than I(facter).
-version_added: historical
+version_added: "0.6"
 options: {}
 notes: []
 requirements: [ "ohai" ]

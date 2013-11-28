@@ -27,7 +27,7 @@ module: authorized_key
 short_description: Adds or removes an SSH authorized key
 description:
      - Adds or removes an SSH authorized key for a user from a remote host.
-version_added: historical
+version_added: "0.5"
 options:
   user:
     description:

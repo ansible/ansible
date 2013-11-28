@@ -26,7 +26,7 @@ module: mount
 short_description: Control active and configured mount points
 description:
      - This module controls active and configured mount points in C(/etc/fstab).
-version_added: historical
+version_added: "0.6"
 options:
   name:
     description:
