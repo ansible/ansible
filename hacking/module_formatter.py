@@ -366,8 +366,8 @@ def main():
                 if not 'version_added' in doc:
                     sys.stderr.write("*** ERROR: missing version_added in: %s ***\n" % module)
                     sys.exit(1)
-                    if doc['version_added'] == 'historical':
-                       del doc['version_added']
+                if doc['version_added'] == 'historical':
+                    del doc['version_added']
 
                 for (k,v) in doc['options'].iteritems():
                     all_keys.append(k)
