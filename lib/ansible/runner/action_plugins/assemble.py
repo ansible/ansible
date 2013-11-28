@@ -90,10 +90,10 @@ class ActionModule(object):
             module_args = "%s src=%s dest=%s original_basename=%s" % (module_args, pipes.quote(xfered), pipes.quote(dest), pipes.quote(os.path.basename(src)))
 
             if self.runner.noop_on_check(inject):
-                return ReturnData(conn=conn, comm_ok=True, result=dict(changed=True), diff=dict(before_header=dest, after_header=src, before=dest_contents, after=resultant))
+                return ReturnData(conn=conn, comm_ok=True, result=dict(changed=True), diff=dict(before_header=dest, after_header=src, after=resultant))
             else:
-                res.diff = dict(before=dest_contents, after=resultant)
                 res = self.runner._execute_module(conn, tmp, 'copy', module_args, inject=inject)
+                res.diff = dict(after=resultant)
                 return res
         else:
             module_args = "%s src=%s dest=%s original_basename=%s" % (module_args, pipes.quote(xfered), pipes.quote(dest), pipes.quote(os.path.basename(src)))
