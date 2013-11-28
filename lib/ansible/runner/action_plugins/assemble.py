@@ -96,4 +96,5 @@ class ActionModule(object):
                 res = self.runner._execute_module(conn, tmp, 'copy', module_args, inject=inject)
                 return res
         else:
+            module_args = "%s src=%s dest=%s original_basename=%s" % (module_args, pipes.quote(xfered), pipes.quote(dest), pipes.quote(os.path.basename(src)))
             return self.runner._execute_module(conn, tmp, 'file', module_args, inject=inject)
