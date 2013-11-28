@@ -26,9 +26,18 @@ Requires: python26-paramiko
 Requires: python26-jinja2
 Requires: python26-keyczar
 %else
+%if 0%{?suse_version}
+BuildRequires: python-devel
+%if 0%{?suse_version} > 1210
+Requires: python-PyYAML
+%else
+Requires: python-yaml
+%endif
+%else
 BuildRequires: python2-devel
-
 Requires: PyYAML
+%endif
+
 Requires: python-paramiko
 Requires: python-jinja2
 Requires: python-keyczar
@@ -50,13 +59,12 @@ are transferred to managed machines automatically.
 %{__python} setup.py build
 
 %install
-%{__python} setup.py install -O1 --root=$RPM_BUILD_ROOT
+%{__python} setup.py install -O1 --root=$RPM_BUILD_ROOT --prefix=%{_prefix}
 mkdir -p $RPM_BUILD_ROOT/etc/ansible/
 cp examples/hosts $RPM_BUILD_ROOT/etc/ansible/
 cp examples/ansible.cfg $RPM_BUILD_ROOT/etc/ansible/
-mkdir -p $RPM_BUILD_ROOT/%{_mandir}/{man1,man3}/
+mkdir -p $RPM_BUILD_ROOT/%{_mandir}/man1/
 cp -v docs/man/man1/*.1 $RPM_BUILD_ROOT/%{_mandir}/man1/
-cp -v docs/man/man3/*.3 $RPM_BUILD_ROOT/%{_mandir}/man3/
 mkdir -p $RPM_BUILD_ROOT/%{_datadir}/ansible
 cp -rv library/* $RPM_BUILD_ROOT/%{_datadir}/ansible/
 
@@ -68,11 +76,11 @@ rm -rf $RPM_BUILD_ROOT
 %{python_sitelib}/ansible*
 %{_bindir}/ansible*
 %dir %{_datadir}/ansible
+%dir %{_datadir}/ansible/*
 %{_datadir}/ansible/*/*
 %config(noreplace) %{_sysconfdir}/ansible
-%doc README.md PKG-INFO COPYING
+%doc README.md COPYING
 %doc %{_mandir}/man1/ansible*
-%doc %{_mandir}/man3/ansible.*
 %doc examples/playbooks
 
 
