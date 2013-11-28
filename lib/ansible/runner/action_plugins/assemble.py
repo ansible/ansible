@@ -22,6 +22,7 @@ import pipes
 import shutil
 import tempfile
 from ansible import utils
+from ansible.runner.return_data import ReturnData
 
 class ActionModule(object):
 
