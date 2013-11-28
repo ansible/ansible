@@ -22,7 +22,7 @@ module: postgresql_db
 short_description: Add or remove PostgreSQL databases from a remote host.
 description:
    - Add or remove PostgreSQL databases from a remote host.
-version_added: historical
+version_added: "0.6"
 options:
   name:
     description:
