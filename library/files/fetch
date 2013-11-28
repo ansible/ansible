@@ -10,7 +10,7 @@ description:
        organized by hostname. Note that this module is written to transfer
        log files that might not be present, so a missing remote file won't
        be an error unless fail_on_missing is set to 'yes'.
-version_added: "0.2"
+version_added: historical
 options:
   src:
     description:

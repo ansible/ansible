@@ -38,7 +38,7 @@ description:
        (see `setting the environment
        <http://www.ansibleworks.com/docs/playbooks_environment.html#setting-the-environment-and-working-with-proxies>`_),
        or by using the use_proxy option.
-version_added: "0.6"
+version_added: historical
 options:
   url:
     description:

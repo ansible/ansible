@@ -56,7 +56,6 @@ options:
   chdir:
     description:
       - cd into this directory before running the command
-    version_added: "0.6"
     required: false
     default: null
   executable:

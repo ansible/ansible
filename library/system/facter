@@ -28,7 +28,7 @@ description:
      - Runs the I(facter) discovery program
        (U(https://github.com/puppetlabs/facter)) on the remote system, returning
        JSON data that can be useful for inventory purposes.
-version_added: "0.2"
+version_added: historical
 options: {}
 notes: []
 requirements: [ "facter", "ruby-json" ]

@@ -21,7 +21,7 @@ module: virt
 short_description: Manages virtual machines supported by libvirt
 description:
      - Manages virtual machines supported by I(libvirt).
-version_added: "0.2"
+version_added: historical
 options:
   name:
     description:

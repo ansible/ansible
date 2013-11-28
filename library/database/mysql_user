@@ -24,7 +24,7 @@ module: mysql_user
 short_description: Adds or removes a user from a MySQL database.
 description:
    - Adds or removes a user from a MySQL database.
-version_added: "0.6"
+version_added: historical
 options:
   name:
     description:

@@ -34,7 +34,7 @@ description:
      the module to try to remove the user, but if not possible keep going; the
      module will report if changes happened and separately if the user was
      removed or not.
-version_added: "0.6"
+version_added: historical
 options:
   name:
     description:
