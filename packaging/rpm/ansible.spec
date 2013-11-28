@@ -59,7 +59,7 @@ are transferred to managed machines automatically.
 %{__python} setup.py build
 
 %install
-%{__python} setup.py install -O1 --root=$RPM_BUILD_ROOT
+%{__python} setup.py install -O1 --root=$RPM_BUILD_ROOT --prefix=%{_prefix}
 mkdir -p $RPM_BUILD_ROOT/etc/ansible/
 cp examples/hosts $RPM_BUILD_ROOT/etc/ansible/
 cp examples/ansible.cfg $RPM_BUILD_ROOT/etc/ansible/
