@@ -157,7 +157,7 @@ def is_installed(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=[], dis_
             pkgs = e + m
             if not pkgs:
                 pkgs.extend(my.returnInstalledPackagesByDep(pkgspec))
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg="Failure talking to yum: %s" % e)
 
         return [ po_to_nevra(p) for p in pkgs ]
@@ -196,7 +196,7 @@ def is_available(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=[], dis_
             pkgs = e + m
             if not pkgs:
                 pkgs.extend(my.returnPackagesByDep(pkgspec))
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg="Failure talking to yum: %s" % e)
             
         return [ po_to_nevra(p) for p in pkgs ]
@@ -242,7 +242,7 @@ def is_update(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=[], dis_rep
                 e,m,u = my.pkgSack.matchPackageNames([pkgspec])
                 pkgs = e + m
             updates = my.doPackageLists(pkgnarrow='updates').updates 
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg="Failure talking to yum: %s" % e)
 
         for pkg in pkgs:
@@ -292,7 +292,7 @@ def what_provides(module, repoq, req_spec, conf_file,  qf=def_qf, en_repos=[], d
                 e,m,u = my.rpmdb.matchPackageNames([req_spec])
                 pkgs.extend(e)
                 pkgs.extend(m)
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg="Failure talking to yum: %s" % e)
 
         return set([ po_to_nevra(p) for p in pkgs ])

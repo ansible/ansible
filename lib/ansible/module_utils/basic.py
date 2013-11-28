@@ -313,7 +313,7 @@ class AnsibleModule(object):
             return context
         try:
             ret = selinux.lgetfilecon_raw(self._to_filesystem_str(path))
-        except OSError, e:
+        except OSError as e:
             if e.errno == errno.ENOENT:
                 self.fail_json(path=path, msg='path %s does not exist' % path)
             else:
@@ -419,7 +419,7 @@ class AnsibleModule(object):
             # FIXME: support English modes
             if not isinstance(mode, int):
                 mode = int(mode, 8)
-        except Exception, e:
+        except Exception as e:
             self.fail_json(path=path, msg='mode needs to be something octalish', details=str(e))
 
         st = os.lstat(path)
@@ -435,14 +435,14 @@ class AnsibleModule(object):
                     os.lchmod(path, mode)
                 else:
                     os.chmod(path, mode)
-            except OSError, e:
+            except OSError as e:
                 if os.path.islink(path) and e.errno == errno.EPERM:  # Can't set mode on symbolic links
                     pass
                 elif e.errno == errno.ENOENT: # Can't set mode on broken symbolic links
                     pass
                 else:
                     raise e
-            except Exception, e:
+            except Exception as e:
                 self.fail_json(path=path, msg='chmod failed', details=str(e))
 
             st = os.lstat(path)
@@ -647,7 +647,7 @@ class AnsibleModule(object):
                 return (result, None)
             else:
                 return result
-        except Exception, e:
+        except Exception as e:
             if include_exceptions:
                 return (str, e)
             return str
@@ -729,7 +729,7 @@ class AnsibleModule(object):
         for x in items:
             try:
                 (k, v) = x.split("=",1)
-            except Exception, e:
+            except Exception as e:
                 self.fail_json(msg="this module requires key=value arguments (%s)" % (items))
             params[k] = v
         params2 = json.loads(MODULE_COMPLEX_ARGS)
@@ -771,7 +771,7 @@ class AnsibleModule(object):
                 journal_args.append(arg.upper() + "=" + str(log_args[arg]))
             try:
                 journal.sendv(*journal_args)
-            except IOError, e:
+            except IOError as e:
                 # fall back to syslog since logging to journal failed
                 syslog.openlog(module, 0, syslog.LOG_USER)
                 syslog.syslog(syslog.LOG_NOTICE, msg)
@@ -890,7 +890,7 @@ class AnsibleModule(object):
         if os.path.exists(tmpfile):
             try:
                 os.unlink(tmpfile)
-            except OSError, e:
+            except OSError as e:
                 sys.stderr.write("could not cleanup %s: %s" % (tmpfile, e))
 
     def atomic_move(self, src, dest):
@@ -903,7 +903,7 @@ class AnsibleModule(object):
                 st = os.stat(dest)
                 os.chmod(src, st.st_mode & 07777)
                 os.chown(src, st.st_uid, st.st_gid)
-            except OSError, e:
+            except OSError as e:
                 if e.errno != errno.EPERM:
                     raise
             if self.selinux_enabled():

@@ -72,7 +72,7 @@ class ActionModule(object):
                     self.pause_type = 'seconds'
                     self.seconds = int(args['seconds'])
                     self.duration_unit = 'seconds'
-            except ValueError, e:
+            except ValueError as e:
                 raise ae("non-integer value given for prompt duration:\n%s" % str(e))
         # Is 'prompt' a key in 'args'?
         elif 'prompt' in args:

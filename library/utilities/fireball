@@ -118,7 +118,7 @@ def daemonize_self(module, password, port, minutes):
             log("exiting pid %s" % pid)
             # exit first parent
             module.exit_json(msg="daemonized fireball on port %s for %s minutes" % (port, minutes))
-    except OSError, e:
+    except OSError as e:
         log("fork #1 failed: %d (%s)" % (e.errno, e.strerror))
         sys.exit(1)
 
@@ -137,7 +137,7 @@ def daemonize_self(module, password, port, minutes):
             pid_file.close()
             log("pidfile written")
             sys.exit(0)
-    except OSError, e:
+    except OSError as e:
         log("fork #2 failed: %d (%s)" % (e.errno, e.strerror))
         sys.exit(1)
 
@@ -247,7 +247,7 @@ def daemonize(module, password, port, minutes):
 
 
         serve(module, password, port, minutes)
-    except Exception, e:
+    except Exception as e:
         tb = traceback.format_exc()
         log("exception caught, exiting fireball mode: %s\n%s" % (e, tb))
         sys.exit(0)

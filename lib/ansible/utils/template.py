@@ -457,7 +457,7 @@ def template_from_file(basedir, path, vars):
     environment.template_class = J2Template
     try:
         t = environment.from_string(data)
-    except TemplateSyntaxError, e:
+    except TemplateSyntaxError as e:
         # Throw an exception which includes a more user friendly error message
         values = {'name': realpath, 'lineno': e.lineno, 'error': str(e)}
         msg = 'file: %(name)s, line number: %(lineno)s, error: %(error)s' % \
@@ -521,7 +521,7 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
         data = data.decode('utf-8')
         try:
             t = environment.from_string(data)
-        except Exception, e:
+        except Exception as e:
             if 'recursion' in str(e):
                 raise errors.AnsibleError("recursive loop detected in template string: %s" % data)
             else:

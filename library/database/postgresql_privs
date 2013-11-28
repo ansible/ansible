@@ -590,7 +590,7 @@ def main():
             schema_qualifier=p.schema
         )
 
-    except Error, e:
+    except Error as e:
         conn.rollback()
         module.fail_json(msg=e.message)
 

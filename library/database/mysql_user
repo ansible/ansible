@@ -444,7 +444,7 @@ def main():
 
         if not cursor:
             cursor = connect(module, login_user, login_password)
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or ~/.my.cnf has the credentials")
 
     if state == "present":

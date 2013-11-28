@@ -86,7 +86,7 @@ def setvariable(cursor, mysqlvar, value):
         cursor.execute("SET GLOBAL " + mysqlvar + "=" + value)
         cursor.fetchall()
         result = True
-    except Exception, e:
+    except Exception as e:
         result = str(e)
     return result
 
@@ -193,7 +193,7 @@ def main():
         else:
             db_connection = MySQLdb.connect(host=module.params["login_host"], user=login_user, passwd=login_password, db="mysql")
         cursor = db_connection.cursor()
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or ~/.my.cnf has the credentials")
     if mysqlvar is None:
         module.fail_json(msg="Cannot run without variable to operate with")

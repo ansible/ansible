@@ -228,7 +228,7 @@ def _create_subnet(module, quantum):
         subnet.pop('dns_nameservers')
     try:
         new_subnet = quantum.create_subnet(dict(subnet=subnet))
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg = "Failure in creating subnet: %s" % e.message) 
     return new_subnet['subnet']['id']
         

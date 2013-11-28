@@ -88,7 +88,7 @@ def auth_encode(apikey):
     auth = base64.standard_b64encode(apikey)
     auth.replace("\n", "")
     return auth
-    
+
 def build_url(name, apiid, action, meter_id=None, cert_type=None):
     if action == "create":
         return 'https://%s/%s/meters' % (api_host, apiid)
@@ -102,7 +102,7 @@ def build_url(name, apiid, action, meter_id=None, cert_type=None):
         return  "https://%s/%s/meters/%s" % (api_host, apiid, meter_id)
 
 def http_request(name, apiid, apikey, action, meter_id=None, cert_type=None):
-    
+
     if meter_id is None:
         url = build_url(name, apiid, action)
     else:
@@ -113,7 +113,7 @@ def http_request(name, apiid, apikey, action, meter_id=None, cert_type=None):
 
     auth = auth_encode(apikey)
     request = urllib2.Request(url)
-    request.add_header("Authorization", "Basic %s" % (auth)) 
+    request.add_header("Authorization", "Basic %s" % (auth))
     request.add_header("Content-Type", "application/json")
     return request
 
@@ -131,7 +131,7 @@ def create_meter(module, name, apiid, apikey):
         body = '{"name":"' + name + '"}'
         request.add_data(body)
 
-        try: 
+        try:
             result = urllib2.urlopen(request)
         except urllib2.URLError, e:
             module.fail_json(msg="Failed to connect to api host to create meter")
@@ -162,7 +162,7 @@ def search_meter(module, name, apiid, apikey):
 
     request = http_request(name, apiid, apikey, action="search")
 
-    try: 
+    try:
         result = urllib2.urlopen(request)
     except urllib2.URLError, e:
         module.fail_json("Failed to connect to api host to search for meter")
@@ -192,7 +192,7 @@ def delete_meter(module, name, apiid, apikey):
         # urllib2 only does GET or POST I believe, but here we need delete
         request.get_method = lambda: 'DELETE'
 
-        try: 
+        try:
             result = urllib2.urlopen(request)
         except urllib2.URLError, e:
             module.fail_json("Failed to connect to api host to delete meter")
@@ -203,7 +203,7 @@ def delete_meter(module, name, apiid, apikey):
             try:
                 cert_file = '%s/%s.pem' % (config_directory,cert_type)
                 os.remove(cert_file)
-            except OSError, e:  
+            except OSError as e:
                 module.fail_json("Failed to remove " + cert_type + ".pem file")
 
     return 0, "Meter " + name + " deleted"
@@ -215,7 +215,7 @@ def download_request(module, name, apiid, apikey, cert_type):
     if meter_id is not None:
         action = "certificates"
         request = http_request(name, apiid, apikey, action, meter_id, cert_type)
- 
+
         try:
             result = urllib2.urlopen(request)
         except urllib2.URLError, e:
@@ -229,7 +229,7 @@ def download_request(module, name, apiid, apikey, cert_type):
                 cert_file.write(body)
                 cert_file.close
                 os.chmod(cert_file_path, 0o600)
-            except: 
+            except:
                 module.fail_json("Could not write to certificate file")
 
         return True

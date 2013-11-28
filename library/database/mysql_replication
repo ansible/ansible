@@ -294,11 +294,11 @@ def main():
             db_connection = MySQLdb.connect(host=module.params["login_host"], unix_socket=module.params["login_unix_socket"], user=login_user, passwd=login_password, db="mysql")
         else:
             db_connection = MySQLdb.connect(host=module.params["login_host"], user=login_user, passwd=login_password, db="mysql")
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or ~/.my.cnf has the credentials")
     try:
         cursor = db_connection.cursor(cursorclass=MySQLdb.cursors.DictCursor)
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg="Trouble getting DictCursor from db_connection: %s" % e)
 
     if mode in "getmaster":

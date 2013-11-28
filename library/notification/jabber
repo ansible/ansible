@@ -136,7 +136,7 @@ def main():
             conn.send(msg)
         time.sleep(1)
         conn.disconnect()
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg="unable to send msg: %s" % e)
 
     module.exit_json(changed=False, to=to, user=user, msg=msg.getBody())

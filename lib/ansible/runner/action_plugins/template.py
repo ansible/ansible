@@ -84,7 +84,7 @@ class ActionModule(object):
         # template the source data locally & get ready to transfer
         try:
             resultant = template.template_from_file(self.runner.basedir, source, inject)
-        except Exception, e:
+        except Exception as e:
             result = dict(failed=True, msg=str(e))
             return ReturnData(conn=conn, comm_ok=False, result=result)
 

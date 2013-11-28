@@ -104,9 +104,9 @@ def cloud_network(module, state, label, cidr):
             try:
                 network = pyrax.cloud_networks.create(label, cidr=cidr)
                 changed = True
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(msg='%s' % e.message)
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg='%s' % e.message)
 
     elif state == 'absent':
@@ -116,7 +116,7 @@ def cloud_network(module, state, label, cidr):
             changed = True
         except exc.NetworkNotFound:
             pass
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg='%s' % e.message)
 
     if network:
@@ -158,7 +158,7 @@ def main():
                        os.environ.get('RAX_CREDS_FILE'))
         region = region or os.environ.get('RAX_REGION')
 
-    except KeyError, e:
+    except KeyError as e:
         module.fail_json(msg='Unable to load %s' % e.message)
 
     try:
@@ -170,7 +170,7 @@ def main():
             pyrax.set_credential_file(credentials, region=region)
         else:
             raise Exception('No credentials supplied!')
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg='%s' % e.message)
 
     cloud_network(module, state, label, cidr)

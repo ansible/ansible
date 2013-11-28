@@ -117,7 +117,7 @@ def write_sysctl(module, lines, **sysctl_args):
     try:
         for l in lines:
             f.write(l)
-    except IOError, e:
+    except IOError as e:
         module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, str(e)))
     f.flush()
     f.close()
@@ -270,7 +270,7 @@ def main():
         try:
             f = open(sysctl_args['sysctl_file'],'w')
             f.close()
-        except IOError, e:
+        except IOError as e:
             module.fail_json(msg='unable to create supplied sysctl file (destination directory probably missing)')
 
     # reading the file

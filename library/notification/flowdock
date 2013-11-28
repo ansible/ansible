@@ -189,7 +189,7 @@ def main():
     # Send the data to Flowdock
     try:
         response = urllib2.urlopen(url, urllib.urlencode(params))
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg="unable to send msg: %s" % e)
 
     module.exit_json(changed=False, msg=module.params["msg"])

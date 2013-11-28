@@ -563,7 +563,7 @@ def terminate_instances(module, ec2, instance_ids):
                 filters={'instance-state-name':'terminated'})
             try:
                 num_terminated = len(response.pop().instances)
-            except Exception, e:
+            except Exception as e:
                 # got a bad response of some sort, possibly due to
                 # stale/cached data. Wait a second and then try again
                 time.sleep(1)

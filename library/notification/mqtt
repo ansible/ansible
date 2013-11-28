@@ -170,7 +170,7 @@ def main():
     try:
         publish(module, topic, payload, server, port, qos, client_id, retain,
                 username, password)
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg="unable to publish to MQTT broker %s" % (e))
 
     module.exit_json(changed=False, topic=topic)

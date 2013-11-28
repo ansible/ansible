@@ -145,7 +145,7 @@ def main():
         # cases we expect newrelic should return a 201 on success. So 
         # to handle both cases, both the except & else cases below are
         # effectively identical.
-    except Exception, e:
+    except Exception as e:
         if e.code == 201:
             module.exit_json(changed=True)
         else:

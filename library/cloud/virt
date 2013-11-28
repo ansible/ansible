@@ -468,7 +468,7 @@ def main():
     rc = VIRT_SUCCESS
     try:
         rc, result = core(module)
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg=str(e))
 
     if rc != 0: # something went wrong emit the msg

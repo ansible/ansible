@@ -152,7 +152,7 @@ class DebianStrategy(GenericStrategy):
                 return f.read().strip()
             finally:
                 f.close()
-        except Exception, err:
+        except Exception as err:
             self.module.fail_json(msg="failed to read hostname: %s" %
                 str(err))
 
@@ -163,7 +163,7 @@ class DebianStrategy(GenericStrategy):
                 f.write("%s\n" % name)
             finally:
                 f.close()
-        except Exception, err:
+        except Exception as err:
             self.module.fail_json(msg="failed to update hostname: %s" %
                 str(err))
 
@@ -196,7 +196,7 @@ class RedHatStrategy(GenericStrategy):
                         return v.strip()
             finally:
                 f.close()
-        except Exception, err:
+        except Exception as err:
             self.module.fail_json(msg="failed to read hostname: %s" %
                 str(err))
 
@@ -217,7 +217,7 @@ class RedHatStrategy(GenericStrategy):
                 f.writelines(lines)
             finally:
                 f.close()
-        except Exception, err:
+        except Exception as err:
             self.module.fail_json(msg="failed to update hostname: %s" %
                 str(err))
 

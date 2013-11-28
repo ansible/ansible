@@ -132,7 +132,7 @@ def main():
     try:
         send_msg(token, room, msg_from, msg, msg_format,
                  color, notify)
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg="unable to sent msg: %s" % e)
 
     changed = True

@@ -183,7 +183,7 @@ def setup():
     # Attempt to grab credentials from environment first
     try:
         creds_file = os.environ['RAX_CREDS_FILE']
-    except KeyError, e:
+    except KeyError as e:
         # But if that fails, use the default location of ~/.rackspace_cloud_credentials
         if os.path.isfile(default_creds_file):
             creds_file = default_creds_file
@@ -197,7 +197,7 @@ def setup():
 
     try:
         pyrax.set_credential_file(os.path.expanduser(creds_file))
-    except Exception, e:
+    except Exception as e:
         sys.stderr.write("%s: %s\n" % (e, e.message))
         sys.exit(1)
 

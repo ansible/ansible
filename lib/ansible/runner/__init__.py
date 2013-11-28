@@ -655,7 +655,7 @@ class Runner(object):
                 actual_port = [actual_port, self.accelerate_port]
             elif actual_port is not None:
                 actual_port = int(template.template(self.basedir, actual_port, inject))
-        except ValueError, e:
+        except ValueError as e:
             result = dict(failed=True, msg="FAILED: Configured port \"%s\" is not a valid port, expected integer" % actual_port)
             return ReturnData(host=host, comm_ok=False, result=result)
 
@@ -982,7 +982,7 @@ class Runner(object):
         elif self.forks > 1:
             try:
                 results = self._parallel_exec(hosts)
-            except IOError, ie:
+            except IOError as ie:
                 print ie.errno
                 if ie.errno == 32:
                     # broken pipe from Ctrl+C

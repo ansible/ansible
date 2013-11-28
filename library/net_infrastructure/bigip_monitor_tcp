@@ -460,7 +460,7 @@ def main():
             #else: monitor doesn't exist (check mode) or ipport is already ok
 
 
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg="received exception: %s" % e)
 
     module.exit_json(**result)

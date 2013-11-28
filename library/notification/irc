@@ -148,7 +148,7 @@ def main():
 
     try:
         send_msg(channel, msg, server, port, nick, color, passwd)
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg="unable to send to IRC: %s" % e)
 
     module.exit_json(changed=False, channel=channel, nick=nick,
