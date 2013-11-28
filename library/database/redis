@@ -193,7 +193,7 @@ def main():
                               password=login_password)
         try:
             r.ping()
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg="unable to connect to database: %s" % e)
 
         #Check if we are already in the mode that we want
@@ -255,7 +255,7 @@ def main():
                               db=db)
         try:
             r.ping()
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg="unable to connect to database: %s" % e)
 
         # Do the stuff

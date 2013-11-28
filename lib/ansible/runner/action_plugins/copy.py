@@ -85,7 +85,7 @@ class ActionModule(object):
             f = os.fdopen(fd, 'w')
             try:
                 f.write(content)
-            except Exception, err:
+            except Exception as err:
                 os.remove(tmp_content)
                 result = dict(failed=True, msg="could not write content temp file: %s" % err)
                 return ReturnData(conn=conn, result=result)

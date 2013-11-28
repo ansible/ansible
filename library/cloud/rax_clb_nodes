@@ -225,7 +225,7 @@ def main():
     if virtualenv:
         try:
             _activate_virtualenv(virtualenv)
-        except IOError, e:
+        except IOError as e:
             module.fail_json(msg='Failed to activate virtualenv %s (%s)' % (
                                  virtualenv, e))
 

@@ -128,7 +128,7 @@ def post_event(module):
         else:
             module.fail_json(msg=response)
 
-    except URLError, e:
+    except URLError as e:
         module.fail_json(msg="URL error: %s." % e)
     except socket.error, e:
         module.fail_json(msg="Socket error: %s to %s" % (e, uri))

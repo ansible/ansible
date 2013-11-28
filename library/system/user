@@ -504,7 +504,7 @@ class User(object):
             try:
                 os.mkdir(ssh_dir, 0700)
                 os.chown(ssh_dir, info[2], info[3])
-            except OSError, e:
+            except OSError as e:
                 return (1, '', 'Failed to create %s: %s' % (ssh_dir, str(e)))
         if os.path.exists(ssh_key_file):
             return (None, 'Key already exists', '')
@@ -570,12 +570,12 @@ class User(object):
             if os.path.exists('/etc/skel'):
                 try:
                     shutil.copytree('/etc/skel', path, symlinks=True)
-                except OSError, e:
+                except OSError as e:
                     self.module.exit_json(failed=True, msg="%s" % e)
         else:
             try:
                 os.makedirs(path)
-            except OSError, e:
+            except OSError as e:
                 self.module.exit_json(failed=True, msg="%s" % e)
 
     def chown_homedir(self, uid, gid, path):
@@ -586,7 +586,7 @@ class User(object):
                     os.chown(path, uid, gid)
                 for f in files:
                     os.chown(os.path.join(root, f), uid, gid)
-        except OSError, e:
+        except OSError as e:
             self.module.exit_json(failed=True, msg="%s" % e)
            
 
@@ -1154,7 +1154,7 @@ class SunOS(User):
                     line = ':'.join(fields)
                     lines.append('%s\n' % line)
                 open(self.SHADOWFILE, 'w+').writelines(lines)
-            except Exception, err:
+            except Exception as err:
                 self.module.fail_json(msg="failed to update users password: %s" % str(err))
 
         return (rc, out, err)
@@ -1237,7 +1237,7 @@ class SunOS(User):
                     lines.append('%s\n' % line)
                 open(self.SHADOWFILE, 'w+').writelines(lines)
                 rc = 0
-            except Exception, err:
+            except Exception as err:
                 self.module.fail_json(msg="failed to update users password: %s" % str(err))
 
         return (rc, out, err)

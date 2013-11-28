@@ -162,7 +162,7 @@ class Connection(object):
             ssh.connect(self.host, username=self.user, allow_agent=allow_agent, look_for_keys=True,
                 key_filename=key_filename, password=self.password,
                 timeout=self.runner.timeout, port=self.port)
-        except Exception, e:
+        except Exception as e:
             msg = str(e)
             if "PID check failed" in msg:
                 raise errors.AnsibleError("paramiko version issue, please upgrade paramiko on the machine running ansible")
@@ -181,7 +181,7 @@ class Connection(object):
         bufsize = 4096
         try:
             chan = self.ssh.get_transport().open_session()
-        except Exception, e:
+        except Exception as e:
             msg = "Failed to open session"
             if len(str(e)) > 0:
                 msg += ": %s" % str(e)
@@ -234,7 +234,7 @@ class Connection(object):
             raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
         try:
             self.sftp = self.ssh.open_sftp()
-        except Exception, e:
+        except Exception as e:
             raise errors.AnsibleError("failed to open a SFTP connection (%s)" % e)
         try:
             self.sftp.put(in_path, out_path)
@@ -254,7 +254,7 @@ class Connection(object):
         vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host)
         try:
             self.sftp = self._connect_sftp()
-        except Exception, e:
+        except Exception as e:
             raise errors.AnsibleError("failed to open a SFTP connection (%s)", e)
         try:
             self.sftp.get(in_path, out_path)

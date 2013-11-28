@@ -525,7 +525,7 @@ def main():
                         add_pool_member(api, pool, address, port)
                     result = {'changed': True}
 
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg="received exception: %s" % e)
 
     module.exit_json(**result)

@@ -528,7 +528,7 @@ def main():
     # ReadReplicaSourceDBInstanceIdentifier may or may not exist
     try:
         d["replication_source"] = my_inst.ReadReplicaSourceDBInstanceIdentifier
-    except Exception, e:
+    except Exception as e:
         d["replication_source"] = None
 
     module.exit_json(changed=True, instance=d)

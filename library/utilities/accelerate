@@ -144,7 +144,7 @@ def daemonize_self(module, password, port, minutes):
             vvv("exiting pid %s" % pid)
             # exit first parent
             module.exit_json(msg="daemonized accelerate on port %s for %s minutes with pid %s" % (port, minutes, str(pid)))
-    except OSError, e:
+    except OSError as e:
         log("fork #1 failed: %d (%s)" % (e.errno, e.strerror))
         sys.exit(1)
 
@@ -163,7 +163,7 @@ def daemonize_self(module, password, port, minutes):
             pid_file.close()
             vvv("pidfile written")
             sys.exit(0)
-    except OSError, e:
+    except OSError as e:
         log("fork #2 failed: %d (%s)" % (e.errno, e.strerror))
         sys.exit(1)
 
@@ -344,7 +344,7 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
                 if response.get('failed',False):
                     log("got a failed response from the master")
                     return dict(failed=True, stderr="Master reported failure, aborting transfer")
-        except Exception, e:
+        except Exception as e:
             fd.close()
             tb = traceback.format_exc()
             log("failed to fetch the file: %s" % tb)
@@ -417,7 +417,7 @@ def daemonize(module, password, port, timeout, minutes, ipv6):
         
         vv("serving!")
         server.serve_forever(poll_interval=1.0)
-    except Exception, e:
+    except Exception as e:
         tb = traceback.format_exc()
         log("exception caught, exiting accelerated mode: %s\n%s" % (e, tb))
         sys.exit(0)

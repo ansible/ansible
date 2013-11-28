@@ -367,7 +367,7 @@ def main():
                         set_ratio(api, pool, address, port, ratio)
                     result = {'changed': True}
 
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg="received exception: %s" % e)
 
     module.exit_json(**result)

@@ -97,7 +97,7 @@ class EjabberdUser(object):
         try:
             options = [self.user, self.host, self.pwd]
             (rc, out, err) = self.run_command('check_password', options)
-        except EjabberdUserException, e:
+        except EjabberdUserException as e:
             (rc, out, err) = (1, None, "required attribute(s) missing")
         return rc
 
@@ -110,7 +110,7 @@ class EjabberdUser(object):
         try:
             options = [self.user, self.host]
             (rc, out, err) = self.run_command('check_account', options)
-        except EjabberdUserException, e:
+        except EjabberdUserException as e:
             (rc, out, err) = (1, None, "required attribute(s) missing")
         return True if rc == 0 else False
 
@@ -138,7 +138,7 @@ class EjabberdUser(object):
         try:
             options = [self.user, self.host, self.pwd]
             (rc, out, err) = self.run_command('change_password', options)
-        except EjabberdUserException, e:
+        except EjabberdUserException as e:
             (rc, out, err) = (1, None, "required attribute(s) missing")
         return (rc, out, err)
 
@@ -149,7 +149,7 @@ class EjabberdUser(object):
         try:
             options = [self.user, self.host, self.pwd]
             (rc, out, err) = self.run_command('register', options)
-        except EjabberdUserException, e:
+        except EjabberdUserException as e:
             (rc, out, err) = (1, None, "required attribute(s) missing")
         return (rc, out, err)
 
@@ -159,7 +159,7 @@ class EjabberdUser(object):
         try:
             options = [self.user, self.host]
             (rc, out, err) = self.run_command('unregister', options)
-        except EjabberdUserException, e:
+        except EjabberdUserException as e:
             (rc, out, err) = (1, None, "required attribute(s) missing")
         return (rc, out, err)
 

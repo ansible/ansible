@@ -120,7 +120,7 @@ class InventoryParser(object):
                                 break
                             try:
                                 (k,v) = t.split("=")
-                            except ValueError, e:
+                            except ValueError as e:
                                 raise errors.AnsibleError("Invalid ini entry: %s - %s" % (t, str(e)))
                             try:
                                 host.set_variable(k,ast.literal_eval(v))

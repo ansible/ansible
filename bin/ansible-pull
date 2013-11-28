@@ -178,7 +178,7 @@ def main(args):
         os.chdir('/')
         try:
             shutil.rmtree(options.dest)
-        except Exception, e:
+        except Exception as e:
             print >>sys.stderr, "Failed to remove %s: %s" % (options.dest, str(e))
 
     return rc
@@ -186,6 +186,6 @@ def main(args):
 if __name__ == '__main__':
     try:
         sys.exit(main(sys.argv[1:]))
-    except KeyboardInterrupt, e:
+    except KeyboardInterrupt as e:
         print >>sys.stderr, "Exit on user request.\n"
         sys.exit(1)

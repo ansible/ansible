@@ -445,7 +445,7 @@ def main():
     try:
         db_connection = psycopg2.connect(**kw)
         cursor = db_connection.cursor()
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg="unable to connect to database: %s" % e)
 
     kw = dict(user=user)

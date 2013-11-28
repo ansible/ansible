@@ -194,7 +194,7 @@ def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
                                       algorithm=algorithm, protocol=protocol,
                                       timeout=timeout, virtual_ips=virtual_ips)
                 changed = True
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(msg='%s' % e.message)
         else:
             balancer = balancers[0]
@@ -252,7 +252,7 @@ def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
             try:
                 balancer.delete()
                 changed = True
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(msg='%s' % e.message)
 
             instance = to_dict(balancer)
@@ -308,7 +308,7 @@ def main():
         credentials = (credentials or os.environ.get('RAX_CREDENTIALS') or
                        os.environ.get('RAX_CREDS_FILE'))
         region = region or os.environ.get('RAX_REGION')
-    except KeyError, e:
+    except KeyError as e:
         module.fail_json(msg='Unable to load %s' % e.message)
 
     try:
@@ -320,7 +320,7 @@ def main():
             pyrax.set_credential_file(credentials, region=region)
         else:
             raise Exception('No credentials supplied!')
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg='%s' % e.message)
 
     cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,

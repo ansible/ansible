@@ -175,7 +175,7 @@ def main():
 
     try:
         smtp = smtplib.SMTP(host, port=int(port))
-    except Exception, e:
+    except Exception as e:
         module.fail_json(rc=1, msg='Failed to send mail to server %s on port %s: %s' % (host, port, e))
 
 
@@ -232,7 +232,7 @@ def main():
 
                 part.add_header('Content-disposition', 'attachment', filename=os.path.basename(file))
                 msg.attach(part)
-            except Exception, e:
+            except Exception as e:
                 module.fail_json(rc=1, msg="Failed to send mail: can't attach file %s: %s" % (file, e))
                 sys.exit()
 
@@ -240,7 +240,7 @@ def main():
 
     try:
         smtp.sendmail(sender_addr, set(addr_list), composed)
-    except Exception, e:
+    except Exception as e:
         module.fail_json(rc=1, msg='Failed to send mail to %s: %s' % (", ".join(addr_list), e))
 
     smtp.quit()

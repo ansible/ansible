@@ -65,7 +65,7 @@ def main():
                 present = True
                 break
         modules.close()
-    except IOError, e:
+    except IOError as e:
         module.fail_json(msg=str(e), **args)
 
     # Check only; don't modify

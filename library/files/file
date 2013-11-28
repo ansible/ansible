@@ -240,7 +240,7 @@ def main():
                 if module.check_mode:
                     module.exit_json(changed=True)
                 os.unlink(path)
-        except Exception, e:
+        except Exception as e:
             module.fail_json(path=path, msg=str(e))
         module.exit_json(path=path, changed=True)
 
@@ -314,14 +314,14 @@ def main():
             if prev_state != 'absent':
                 try:
                     os.unlink(path)
-                except OSError, e:
+                except OSError as e:
                     module.fail_json(path=path, msg='Error while removing existing target: %s' % str(e))
             try:
                 if state == 'hard':
                     os.link(src,path)
                 else:
                     os.symlink(src, path)
-            except OSError, e:
+            except OSError as e:
                 module.fail_json(path=path, msg='Error while linking: %s' % str(e))
 
         changed = module.set_file_attributes_if_different(file_args, changed)
@@ -336,12 +336,12 @@ def main():
         if prev_state != 'absent':
             try:
                 os.utime(path, None)
-            except OSError, e:
+            except OSError as e:
                 module.fail_json(path=path, msg='Error while touching existing target: %s' % str(e))
         else:
             try:
                 open(path, 'w').close()
-            except OSError, e:
+            except OSError as e:
                 module.fail_json(path=path, msg='Error, could not touch target: %s' % str(e))
         module.set_file_attributes_if_different(file_args, True)
         module.exit_json(dest=path, changed=True)

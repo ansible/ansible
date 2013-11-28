@@ -90,7 +90,7 @@ class OVSPort(object):
                 changed = True
             else:
                 changed = False
-        except Exception, e:
+        except Exception as e:
             self.module.fail_json(msg=str(e))
         self.module.exit_json(changed=changed)
 
@@ -106,7 +106,7 @@ class OVSPort(object):
                 if not self.exists():
                     self.add()
                     changed = True
-        except Exception, e:
+        except Exception as e:
             self.module.fail_json(msg=str(e))
         self.module.exit_json(changed=changed)
 

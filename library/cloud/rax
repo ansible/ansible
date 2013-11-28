@@ -200,7 +200,7 @@ def create(module, names, flavor, image, meta, key_name, files,
         try:
             fileobj = open(lpath, 'r')
             files[rpath] = fileobj
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg='Failed to load %s' % lpath)
     try:
         servers = []
@@ -210,7 +210,7 @@ def create(module, names, flavor, image, meta, key_name, files,
                                              key_name=key_name,
                                              files=files, nics=nics,
                                              disk_config=disk_config))
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg='%s' % e.message)
     else:
         changed = True
@@ -285,7 +285,7 @@ def delete(module, instance_ids, wait, wait_timeout):
     for server in servers:
         try:
             server.delete()
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg=e.message)
         else:
             changed = True
@@ -420,7 +420,7 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
 
                 try:
                     name % 0
-                except TypeError, e:
+                except TypeError as e:
                     if e.message.startswith('not all'):
                         name = '%s%%d' % name
                     else:
@@ -462,7 +462,7 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
 
                 try:
                     name % 0
-                except TypeError, e:
+                except TypeError as e:
                     if e.message.startswith('not all'):
                         name = '%s%%d' % name
                     else:
@@ -611,7 +611,7 @@ def main():
                        os.environ.get('RAX_CREDS_FILE'))
         region = region or os.environ.get('RAX_REGION')
 
-    except KeyError, e:
+    except KeyError as e:
         module.fail_json(msg='Unable to load %s' % e.message)
 
     # setup the auth
@@ -624,7 +624,7 @@ def main():
             pyrax.set_credential_file(credentials, region=region)
         else:
             raise Exception('No credentials supplied!')
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg='%s' % e.message)
 
     cloudservers(module, state, name, flavor, image, meta, key_name, files,

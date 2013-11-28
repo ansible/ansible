@@ -123,7 +123,7 @@ def main():
                                  " returned error code: '%s'" %
                                  (msg, e.code))
 
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg="unable to send msg: %s" % msg)
 
     module.exit_json(changed=True, room=room, msg=msg, notify=notify)

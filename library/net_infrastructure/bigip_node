@@ -283,7 +283,7 @@ def main():
                             set_node_description(api, address, description)
                         result = {'changed': True}
 
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg="received exception: %s" % e)
 
     module.exit_json(**result)

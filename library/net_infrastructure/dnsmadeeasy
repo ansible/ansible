@@ -112,7 +112,7 @@ try:
     from time import strftime, gmtime
     import hashlib
     import hmac
-except ImportError, e:
+except ImportError as e:
     IMPORT_ERROR = str(e)
 
 
@@ -176,13 +176,13 @@ class DME2:
         except urllib2.HTTPError, e:
             self.module.fail_json(
                 msg="%s returned %s, with body: %s" % (url, e.code, e.read()))
-        except Exception, e:
+        except Exception as e:
             self.module.fail_json(
                 msg="Failed contacting: %s : Exception %s" % (url, e.message()))
 
         try:
             return json.load(response)
-        except Exception, e:
+        except Exception as e:
             return False
 
     def getDomain(self, domain_id):

@@ -941,7 +941,7 @@ def safe_eval(str, locals=None, include_exceptions=False):
             return (result, None)
         else:
             return result
-    except Exception, e:
+    except Exception as e:
         if include_exceptions:
             return (str, e)
         return str

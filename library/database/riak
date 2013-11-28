@@ -152,7 +152,7 @@ def main():
             time.sleep(5)
         except socket.timeout:
             time.sleep(5)
-        except Exception, e:
+        except Exception as e:
             module.fail_json(msg='Could not fetch Riak stats: %s' % e)
 
 # here we attempt to load those stats,

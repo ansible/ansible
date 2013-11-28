@@ -118,7 +118,7 @@ def main():
     try:
         req = urllib2.Request("https://airbrake.io/deploys", urllib.urlencode(params))
         result=urllib2.urlopen(req)
-    except Exception, e:
+    except Exception as e:
         module.fail_json(msg="unable to update airbrake: %s" % e)
     else:
         if result.code == 200:
