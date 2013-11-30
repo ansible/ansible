@@ -536,6 +536,7 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
         jvars =_jinja2_vars(basedir, vars, t.globals, fail_on_undefined)
         new_context = t.new_context(jvars, shared=True)
         rf = t.root_render_func(new_context)
+
         try:
             res = jinja2.utils.concat(rf)
         except TypeError, te:
