@@ -46,6 +46,12 @@ options:
     choices: [ 'yes', 'no' ]
     default: 'yes'
     required: false
+  existing_only:
+    description:
+      - Skip creating new files on receiver.
+    choices: [ 'yes', 'no' ]
+    default: 'no'
+    required: false
   delete:
     description:
       - Delete files that don't exist (after transfer, not before) in the C(src) path.
@@ -154,6 +160,7 @@ def main():
             private_key = dict(default=None),
             rsync_path = dict(default=None),
             archive = dict(default='yes', type='bool'),
+            existing_only = dict(default='no', type='bool'),
             dirs  = dict(default='no', type='bool'),
             recursive = dict(type='bool'),
             links = dict(type='bool'),
@@ -174,6 +181,7 @@ def main():
     rsync = module.params.get('local_rsync_path', 'rsync')
     rsync_timeout = module.params.get('rsync_timeout', 'rsync_timeout')
     archive = module.params['archive']
+    existing_only = module.params['existing_only']
     dirs = module.params['dirs']
     # the default of these params depends on the value of archive
     recursive = module.params['recursive']
@@ -188,6 +196,8 @@ def main():
         cmd = cmd + ' --dry-run'
     if delete:
         cmd = cmd + ' --delete-after'
+    if existing_only:
+        cmd = cmd + ' --existing'
     if archive:
         cmd = cmd + ' --archive'
         if recursive is False:
