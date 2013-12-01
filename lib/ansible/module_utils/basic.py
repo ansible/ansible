@@ -62,7 +62,8 @@ import errno
 
 try:
     import json
-except ImportError:
+    json.dumps  # some json modules have no dumps so check this is okay, getting an AttributeError otherwise
+except (ImportError, AttributeError):
     try:
         import simplejson as json
     except ImportError:
