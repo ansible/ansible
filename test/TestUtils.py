@@ -196,6 +196,9 @@ class TestUtils(unittest.TestCase):
     #####################################
     ### key-value parsing
 
+    def test_check_keyvalue(self):
+        assert ansible.utils.check_keyvalue('a=simple b="with space" c="this=that"')
+
     def test_parse_kv_basic(self):
         assert (ansible.utils.parse_kv('a=simple b="with space" c="this=that"') ==
                 {'a': 'simple', 'b': 'with space', 'c': 'this=that'})

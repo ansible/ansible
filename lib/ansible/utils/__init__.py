@@ -76,6 +76,12 @@ try:
 except ImportError:
     pass
 
+# Regex to test shorthand keyvalue syntax 
+# You can see how it works here : 
+#    - https://gist.github.com/llou/7335064#file-gistfile1-py
+keyvalue_regex = re.compile(r"^\s*\w+=")
+
+
 ###############################################################
 # Abstractions around keyczar
 ###############################################################
@@ -732,6 +738,9 @@ def last_non_blank_line(buf):
     # shouldn't occur unless there's no output
     return ""
 
+def check_keyvalue(line):
+    return True if keyvalue_regex.match(line) else False
+
 def filter_leading_non_json_lines(buf):
     '''
     used to avoid random output from SSH at the top of JSON output, like messages from
@@ -744,7 +753,7 @@ def filter_leading_non_json_lines(buf):
     filtered_lines = StringIO.StringIO()
     stop_filtering = False
     for line in buf.splitlines():
-        if stop_filtering or "=" in line or line.startswith('{') or line.startswith('['):
+        if stop_filtering or check_keyvalue(line) or line.startswith('{') or line.startswith('['):
             stop_filtering = True
             filtered_lines.write(line + '\n')
     return filtered_lines.getvalue()
