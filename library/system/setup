@@ -632,7 +632,13 @@ class LinuxHardware(Hardware):
                     (rc, out, err) = module.run_command('%s -s %s' % (dmi_bin, v))
                     if rc == 0:
                         # Strip out commented lines (specific dmidecode output)
-                        self.facts[k] = ''.join([ line for line in out.split('\n') if not line.startswith('#') ])
+                        thisvalue = ''.join([ line for line in out.split('\n') if not line.startswith('#') ])
+                        try:
+                            json.dumps(thisvalue)
+                        except UnicodeDecodeError:
+                            thisvalue = "NA"
+
+                        self.facts[k] = thisvalue
                     else:
                         self.facts[k] = 'NA'
                 else:
