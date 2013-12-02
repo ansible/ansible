@@ -1,3 +1,5 @@
+[![PyPI version](https://badge.fury.io/py/ansible.png)](http://badge.fury.io/py/ansible)
+
 Ansible
 =======
 
