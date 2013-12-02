@@ -49,7 +49,7 @@ def main():
     rc, out, err = module.run_command(cmd, check_rc=True)
     module.exit_json(**json.loads(out))
 
-# this is magic, see lib/ansible/module_common.py
+# import module snippets
 from ansible.module_utils.basic import *
 
 main()

@@ -383,6 +383,6 @@ def main():
     results = enforce_state(module, module.params)
     module.exit_json(**results)
 
-# this is magic, see lib/ansible/module_common.py
+# import module snippets
 from ansible.module_utils.basic import *
 main()
