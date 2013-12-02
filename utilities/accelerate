@@ -451,5 +451,5 @@ def main():
     daemonize(module, password, port, timeout, minutes, ipv6)
 
 # this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+from ansible.module_utils.basic import *
 main()

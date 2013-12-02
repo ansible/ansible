@@ -210,6 +210,6 @@ def main():
         deactivate_packages(module, port_path, pkgs)
 
 # this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+from ansible.module_utils.basic import *
 
 main()
