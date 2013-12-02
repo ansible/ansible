@@ -1,0 +1,276 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+#
+# (c) 2013, René Moser <mail@renemoser.net>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: host
+author: René Moser
+version_added: "1.5"
+short_description: Add, update or remove entries in C(/etc/hosts).
+requirements:
+description:
+    - Manage entries in C(/etc/hosts).
+options:
+    ip:
+        required: false
+        description:
+            - IP address. Required if C(state=present).
+    hostname:
+        required: false
+        description:
+            - Name of host. Required if C(state=present).
+    aliases:
+        required: false
+        description:
+            - List of alias hostnames, comma separated.
+    keep_aliases:
+        required: false
+        choices: [ yes, no ]
+        default: "no"
+        description:
+            - If define a hostname to be C(state=absent) and aliases exists, 
+              the next aliases becomes the new hostname.
+    ignore_loopback:
+        required: false
+        choices: [ yes, no ]
+        default: "yes"
+        description:
+            - Loopback IPs (Ipv4, IPv6) will not be changed or removed as long 
+              as not set to C(no).
+    state:
+        required: false
+        default: "present"
+        choices: [ present, absent ]
+        description:
+            - Whether the entries should be present or not in C(/etc/hosts).
+'''
+
+EXAMPLES = '''
+# Example host commands from Ansible Playbooks
+
+# Ensure entry is present
+- host: ip=::1 hostname=localhost6 aliases=ip6-localhost,ip6-loopback
+- host: ip=10.10.10.10 hostname=www.example.com aliases=example.com,localhost.example.com
+
+  # Note: change loopback IP must be forced (otherwise a new entry would be created)
+- host: ip=10.10.10.10 hostname=localhost ingore_loopback=no
+
+# Ensure absent
+- host: ip=10.10.10.10 state=absent
+- host: ip=10.10.10.10 hostname=www.example.com state=absent
+
+  # If this hostname has a loopback IP, removal must be forced.
+- host: hostname=localhost state=absent ingore_loopback=no
+
+  # But if looback IP is defined, entry will be removed.
+- host: ip=127.0.0.1 state=absent
+
+  # Shift the first alias to be the new hostname if aliases available:
+- host: hostname=vagrant state=absent keep_aliases=yes
+'''
+
+import os
+import tempfile
+import fileinput
+
+class Host(object):
+
+    HOSTSFILE = '/etc/hosts'
+
+    def __init__(self, module):
+        self.module              = module
+        self.state               = module.params['state']
+        self.ip                  = module.params['ip']
+        self.hostname            = module.params['hostname']
+        self.aliases             = module.params['aliases']
+        self.keep_aliases        = module.params['keep_aliases']
+        self.ignore_loopback     = module.params['ignore_loopback']
+        self.changed             = False
+
+        self._ip_matches         = False
+        self._ip_version_matches = False
+        self._hostname_matches   = False
+        self._aliases_matches    = False
+
+    def _get_ip_version(self, ip):
+        if '.' in ip:
+            return 4
+        if ':' in ip:
+            return 6
+        return None
+        
+    def _is_loopback_ip(self, ip):
+        if self._get_ip_version(ip) == 4 and ip.startswith('127'):
+            return True
+        if self._get_ip_version(ip) == 6:
+            # TODO: improve this match
+            if ip == '::1' or ip == '0:0:0:0:0:0:0:1':
+                return True
+        return False
+
+    def validate_has_hostname_on_present(self):
+        err = ''
+        if self.state == 'present' and not (self.hostname and self.ip):
+            err = "Error: No param 'hostname' or 'ip' given in state 'present'."
+        return err
+
+    def validate_has_ip_or_hostname_on_absent(self):
+        err = ''
+        if self.state == 'absent':
+            if not (self.hostname or self.ip):
+                err = "Error: Either param 'hostname' or 'ip' must be given in state 'absent'."
+            if self.hostname and self.ip:
+                err = "Error: Either param 'hostname' or 'ip' must be given in state 'absent'."
+        return err
+
+    def proceed_hosts_entries(self):
+
+        f = open(self.HOSTSFILE,'rb')
+        self._hostsfile_lines = f.readlines()
+        f.close()
+
+        for lineno, line in enumerate(self._hostsfile_lines):
+            # skip comments and new lines
+            if line.startswith("#") or line.startswith("\n"):
+                continue
+
+            # split line into IP, hostname, aliases
+            ip       = ''.join(line.split()[0:1])
+            hostname = ''.join(line.split()[1:2])
+            aliases  = ','.join(line.split()[2:])
+
+            # IP match?
+            self._ip_matches = self.ip and (self.ip == ip)
+
+            # hostname match?
+            self._hostname_matches = self.hostname and (self.hostname == hostname)
+
+            # IP version match?
+            self._ip_version_matches = self._ip_matches or (self.ip and self._get_ip_version(self.ip) == self._get_ip_version(ip))
+
+            # aliases? only look at aliases if we found hostname or IP
+            self._aliases_matches = False
+            if self._hostname_matches or self._ip_matches:
+                if self.aliases == aliases:
+                    self._aliases_matches = True
+
+            if self.state == 'present':
+                # full entry found on state present? done!
+                if self.full_entry_exists():
+                    self.module.exit_json(changed=False)
+
+                # always update on IP match
+                elif self._ip_matches:
+                    self.add_or_update_entry(lineno)
+
+                # we only change IPs based on hostname matching, if IP has
+                # the same version (IPv4, IPv6)
+                elif self._hostname_matches and self._ip_version_matches:
+                    # skip it, if IP to change is loopback and not forced
+                    if self._is_loopback_ip(ip) and self.ignore_loopback:
+                        continue
+                    self.add_or_update_entry(lineno)
+
+            elif self.state == 'absent':
+                if self._ip_matches and self._hostname_matches:
+                    self.remove_entry(lineno)
+
+                elif self._ip_matches and not self.hostname:
+                    self.remove_entry(lineno)
+
+                elif self._hostname_matches and not self.ip:
+                    # skip it, if IP to change is loopback and not forced
+                    if self._is_loopback_ip(ip) and self.ignore_loopback:
+                        continue
+
+                    # cut hostname away if possible and forced
+                    if self.keep_aliases and aliases:
+                        self.ip = ip
+                        self.hostname = ''.join(line.split()[2:3])
+                        self.aliases = ','.join(line.split()[3:])
+                        self.add_or_update_entry(lineno)
+
+                    # remove
+                    else:
+                        self.remove_entry(lineno)
+
+        # state present but we didn't find anything about it? Add a record then
+        if self.state == 'present' and not self.changed:
+            self.add_or_update_entry()
+
+    def full_entry_exists(self):
+        return self._ip_matches and self._hostname_matches and self._aliases_matches
+
+    def remove_entry(self, index):
+        self.changed = True
+        self._hostsfile_lines.pop(index)
+
+    def add_or_update_entry(self, index = None):
+        self.changed = True
+        aliases = ''
+        if self.aliases:
+            aliases = self.aliases.replace(',',' ')
+        host_entry = self.ip + " " + self.hostname + " " + aliases + "\n"
+        if index:
+            self._hostsfile_lines[index] = host_entry
+        else:
+            self._hostsfile_lines.extend(host_entry)
+
+    def write_changes(self):
+        if self.module.check_mode:
+            return
+        tmpfd, tmpfile = tempfile.mkstemp()
+        f = os.fdopen(tmpfd,'wb')
+        f.writelines(self._hostsfile_lines)
+        f.close()
+        self.module.atomic_move(tmpfile, self.HOSTSFILE)
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            state = dict(default='present', choices=['present', 'absent'], type='str'),
+            ip = dict(default=None, type='str'),
+            hostname = dict(default=None, type='str'),
+            aliases = dict(default='', type='str'),
+            keep_aliases = dict(default='no', type='bool'),
+            ignore_loopback = dict(default='yes', type='bool'),
+        ),
+        supports_check_mode = True
+    )
+
+    result = {}
+    host = Host(module)
+    result['state'] = host.state
+    result['changed'] = False
+
+    result['msg'] = host.validate_has_hostname_on_present()
+    if result['msg']:
+        module.fail_json(**result)
+
+    host.proceed_hosts_entries()
+    result['changed'] = host.changed
+    if result['changed']:
+        host.write_changes()
+
+    module.exit_json(**result)
+
+# include magic from lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
