@@ -173,7 +173,7 @@ def main():
     # Mission complete
     module.exit_json(src=src, dest=dest, md5sum=destmd5, changed=changed, msg="OK")
 
-# this is magic, see lib/ansible/module_common.py
+# import module snippets
 from ansible.module_utils.basic import *
 
 main()

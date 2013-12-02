@@ -737,7 +737,7 @@ def main():
                      disablerepo, disable_gpg_check)
         module.fail_json(msg="we should never get here unless this all failed", **res)
 
-# this is magic, see lib/ansible/module_common.py
+# import module snippets
 from ansible.module_utils.basic import *
 main()
 
