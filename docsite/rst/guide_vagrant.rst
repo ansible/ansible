@@ -117,7 +117,7 @@ Here is an example:
 
 .. code-block:: bash
    
-    $ ansible-playbook -i insecure_private_key --private-key=~/.vagrant.d/insecure_private_key -u vagrant playbook.yml
+    $ ansible-playbook -i vagrant_ansible_inventory_machinename --private-key=~/.vagrant.d/insecure_private_key -u vagrant playbook.yml
 
 .. seealso::
 
