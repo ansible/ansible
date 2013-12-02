@@ -115,6 +115,7 @@
       - "shell_result0.rc == 0"
       - "shell_result0.stderr == ''"
       - "shell_result0.stdout == 'win'"
+      - "not shell_result0.warnings"
 
 # executable
 
@@ -143,6 +144,7 @@
       - "shell_result2.rc == 0"
       - "shell_result2.stderr == ''"
       - "shell_result2.stdout == 'win'"
+      - "not shell_result2.warnings"
 
 # creates
 
@@ -157,17 +159,23 @@
 
 # removes
 
-- name: execute the test.sh script with chdir
+- name: remove afile.txt using rm
   shell: rm {{output_dir_test | expanduser}}/afile.txt removes={{output_dir_test | expanduser}}/afile.txt
+  register: shell_result4
+
+- name: assert that using rm under shell causes a warning
+  assert:
+    that:
+      - "shell_result4.warnings"
 
 - name: verify that afile.txt is absent
   file: path={{output_dir_test}}/afile.txt state=absent
-  register: shell_result4
+  register: shell_result5
 
 - name: assert that the file was removed by the shell
   assert:
     that:
-      - "shell_result4.changed == False"
+      - "shell_result5.changed == False"
 
 - name: execute a shell command using a literal multiline block
   args:
@@ -181,13 +189,12 @@
     | tr -s ' ' \
     | cut -f1 -d ' '
     echo "this is a second line"
-  register: shell_result5
+  register: shell_result6
 
-- debug: var=shell_result5
+- debug: var=shell_result6
 
 - name: assert the multiline shell command ran as expected
   assert:
     that:
-      - "shell_result5.changed"
-      - "shell_result5.stdout == '32f3cc201b69ed8afa3902b80f554ca8\nthis is a second line'"
-
+      - "shell_result6.changed"
+      - "shell_result6.stdout == '32f3cc201b69ed8afa3902b80f554ca8\nthis is a second line'"

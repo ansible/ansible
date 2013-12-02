@@ -41,6 +41,12 @@ options:
     required: false
     default: null
     version_added: "0.9"
+  warn:
+    description:
+      - turn off warnings about running a command that is provided by an Ansible module.
+    required: false
+    default: True
+    version_added: "1.5"
 notes:
    -  If you want to execute a command securely and predictably, it may be
       better to use the M(command) module instead. Best practices when writing
