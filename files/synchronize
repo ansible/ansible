@@ -181,7 +181,7 @@ def main():
     rsync = module.params.get('local_rsync_path', 'rsync')
     rsync_timeout = module.params.get('rsync_timeout', 'rsync_timeout')
     archive = module.params['archive']
-    existing_only = module.params['existing_only'],
+    existing_only = module.params['existing_only']
     dirs = module.params['dirs']
     # the default of these params depends on the value of archive
     recursive = module.params['recursive']
