@@ -159,7 +159,7 @@ def main():
         tagdict[tag.name] = tag.value
 
     if state == 'present':
-        if set(tags).issubset(set(tagdict)):
+        if set(tags.items()).issubset(set(tagdict.items())):
             module.exit_json(msg="Tags already exists in %s." %resource, changed=False)
         else:
             for (key, value) in set(tags.items()): 
