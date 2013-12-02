@@ -129,53 +129,33 @@ def cloud_network(module, state, label, cidr):
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
+    argument_spec = rax_argument_spec()
+    argument_spec.update(
+        dict(
             state=dict(default='present',
                        choices=['present', 'absent']),
-            credentials=dict(aliases=['creds_file']),
-            api_key=dict(),
-            username=dict(),
-            region=dict(),
             label=dict(),
             cidr=dict()
         )
     )
 
-    credentials = module.params.get('credentials')
-    api_key = module.params.get('api_key')
-    username = module.params.get('username')
-    region = module.params.get('region')
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        required_together=rax_required_together(),
+    )
+
     state = module.params.get('state')
     label = module.params.get('label')
     cidr = module.params.get('cidr')
 
-    try:
-        username = username or os.environ.get('RAX_USERNAME')
-        api_key = api_key or os.environ.get('RAX_API_KEY')
-        credentials = (credentials or
-                       os.environ.get('RAX_CREDENTIALS') or
-                       os.environ.get('RAX_CREDS_FILE'))
-        region = region or os.environ.get('RAX_REGION')
-
-    except KeyError, e:
-        module.fail_json(msg='Unable to load %s' % e.message)
-
-    try:
-        pyrax.set_setting("identity_type", "rackspace")
-        if api_key and username:
-            pyrax.set_credentials(username, api_key=api_key, region=region)
-        elif credentials:
-            credentials = os.path.expanduser(credentials)
-            pyrax.set_credential_file(credentials, region=region)
-        else:
-            raise Exception('No credentials supplied!')
-    except Exception, e:
-        module.fail_json(msg='%s' % e.message)
+    setup_rax_module(module, pyrax)
 
     cloud_network(module, state, label, cidr)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
 
+# import module snippets
+from ansible.module_utils.basic import *
+from ansible.module_utils.rax import *
+
+### invoke the module
 main()
