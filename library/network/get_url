@@ -364,5 +364,5 @@ def main():
         sha256sum=sha256sum, changed=changed, msg=info.get('msg', ''))
 
 # this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+from ansible.module_utils.basic import *
 main()
