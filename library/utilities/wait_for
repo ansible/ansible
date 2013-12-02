@@ -197,5 +197,5 @@ def main():
     module.exit_json(state=state, port=port, search_regex=search_regex, path=path, elapsed=elapsed.seconds)
 
 # this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+from ansible.module_utils.basic import *
 main()

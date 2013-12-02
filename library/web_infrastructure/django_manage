@@ -274,6 +274,6 @@ def main():
                      settings=module.params['settings'], pythonpath=module.params['pythonpath'])
 
 # this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+from ansible.module_utils.basic import *
 
 main()

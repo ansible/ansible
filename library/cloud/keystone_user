@@ -386,6 +386,6 @@ def dispatch(keystone, user=None, password=None, tenant=None,
     return dict(changed=changed, id=id)
 
 # this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()

@@ -407,6 +407,6 @@ def main():
     result['changed'] = zfs.changed
     module.exit_json(**result)
 
-# include magic from lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 main()
