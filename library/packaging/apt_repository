@@ -381,7 +381,7 @@ def main():
 
     module.exit_json(changed=changed, repo=repo, state=state)
 
-# this is magic, see lib/ansible/module_common.py
+# import module snippets
 from ansible.module_utils.basic import *
 
 main()
