@@ -156,6 +156,13 @@ options:
     required: false
     default: null
     aliases: []
+  assign_public_ip:
+    version_added: "1.4"
+    description:
+      - when provisioning within vpc, assign a public IP address. Boto library must be 2.13.0+
+    required: false
+    default: null
+    aliases: []
   private_ip:
     version_added: "1.2"
     description:
@@ -238,7 +245,7 @@ local_action:
     image: ami-6e649707
     wait: yes
     vpc_subnet_id: subnet-29e63245
-
+    assign_public_ip: yes
 
 # Launch instances, runs some tasks
 # and then terminate them
@@ -336,6 +343,24 @@ def get_instance_info(inst):
 
     return instance_info
 
+def boto_supports_associate_public_ip_address(ec2):
+    """
+    Check if Boto library has associate_public_ip_address in the NetworkInterfaceSpecification
+    class. Added in Boto 2.13.0
+
+    ec2: authenticated ec2 connection object
+
+    Returns:
+        True if Boto library accepts associate_public_ip_address argument, else false
+    """
+
+    try:
+        network_interface = boto.ec2.networkinterface.NetworkInterfaceSpecification()
+        getattr(network_interface, "associate_public_ip_address")
+        return True
+    except AttributeError:
+        return False
+
 def boto_supports_profile_name_arg(ec2):
     """
     Check if Boto library has instance_profile_name argument. instance_profile_name has been added in Boto 2.5.0
@@ -378,9 +403,9 @@ def create_instances(module, ec2):
     user_data = module.params.get('user_data')
     instance_tags = module.params.get('instance_tags')
     vpc_subnet_id = module.params.get('vpc_subnet_id')
+    assign_public_ip = module.boolean(module.params.get('assign_public_ip'))
     private_ip = module.params.get('private_ip')
     instance_profile_name = module.params.get('instance_profile_name')
-
 
     # group_id and group_name are exclusive of each other
     if group_id and group_name:
@@ -440,7 +465,6 @@ def create_instances(module, ec2):
                       'instance_type': instance_type,
                       'kernel_id': kernel,
                       'ramdisk_id': ramdisk,
-                      'subnet_id': vpc_subnet_id,
                       'private_ip_address': private_ip,
                       'user_data': user_data}
 
@@ -451,10 +475,28 @@ def create_instances(module, ec2):
                     module.fail_json(
                         msg="instance_profile_name parameter requires Boto version 2.5.0 or higher")
 
-            if vpc_subnet_id:
-                params['security_group_ids'] = group_id
+            if assign_public_ip:
+                if not boto_supports_associate_public_ip_address(ec2):
+                    module.fail_json(
+                        msg="assign_public_ip parameter requires Boto version 2.13.0 or higher.")
+                elif not vpc_subnet_id:
+                    module.fail_json(
+                        msg="assign_public_ip only available with vpc_subnet_id")
+
+                else:
+                    interface = boto.ec2.networkinterface.NetworkInterfaceSpecification(
+                        subnet_id=vpc_subnet_id,
+                        groups=group_id,
+                        associate_public_ip_address=assign_public_ip)
+                    interfaces = boto.ec2.networkinterface.NetworkInterfaceCollection(interface)
+                    params['network_interfaces'] = interfaces
+
             else:
-                params['security_groups'] = group_name
+                params['subnet_id'] = vpc_subnet_id
+                if vpc_subnet_id:
+                    params['security_group_ids'] = group_id
+                else:
+                    params['security_groups'] = group_name
 
             res = ec2.run_instances(**params)
         except boto.exception.BotoServerError, e:
@@ -603,6 +645,7 @@ def main():
             user_data = dict(),
             instance_tags = dict(type='dict'),
             vpc_subnet_id = dict(),
+            assign_public_ip = dict(type='bool', default=False),
             private_ip = dict(),
             instance_profile_name = dict(),
             instance_ids = dict(type='list'),
