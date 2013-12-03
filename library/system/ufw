@@ -254,7 +254,11 @@ def main():
 
     result['cmd'] = cmd
     result['msg'] = out.rstrip()
-    result['changed'] = result['msg'] in changed_marker
+
+    if isinstance(changed_marker, basestring):
+        result['changed'] = result['msg'] in changed_marker
+    else:
+        result['changed'] = any(item in result['msg'] for item in changed_marker)
 
     return module.exit_json(**result)
 
