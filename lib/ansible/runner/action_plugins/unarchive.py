@@ -48,25 +48,28 @@ class ActionModule(object):
         options.update(utils.parse_kv(module_args))
         source  = options.get('src', None)
         dest    = options.get('dest', None)
+        copy    = options.get('copy', True)
 
         if source is None or dest is None:
             result=dict(failed=True, msg="src (or content) and dest are required")
             return ReturnData(conn=conn, result=result)
 
         source = template.template(self.runner.basedir, source, inject)
-        if '_original_file' in inject:
-            source = utils.path_dwim_relative(inject['_original_file'], 'files', source, self.runner.basedir)
-        else:
-            source = utils.path_dwim(self.runner.basedir, source)
+        if copy:
+            if '_original_file' in inject:
+                source = utils.path_dwim_relative(inject['_original_file'], 'files', source, self.runner.basedir)
+            else:
+                source = utils.path_dwim(self.runner.basedir, source)
 
         remote_md5 = self.runner._remote_md5(conn, tmp, dest)
         if remote_md5 != '3':
             result = dict(failed=True, msg="dest must be an existing dir")
             return ReturnData(conn=conn, result=result)
 
-        # transfer the file to a remote tmp location
-        tmp_src = tmp + 'source'
-        conn.put_file(source, tmp_src)
+        if copy:
+            # transfer the file to a remote tmp location
+            tmp_src = tmp + 'source'
+            conn.put_file(source, tmp_src)
 
         # handle diff mode client side
         # handle check mode client side
