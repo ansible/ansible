@@ -271,7 +271,7 @@ class CronTab(object):
 
         lines.append("%s" % (job))
 
-    def remove_job(self, name, length):
+    def remove_job(self, name, line_count):
         return self._update_job(name, "", line_count, self.do_remove_job)
 
     def do_remove_job(self, lines, comment, job, env_list):
