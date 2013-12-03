@@ -84,7 +84,7 @@ class ModuleReplacer(object):
         module_style = 'old'
         if REPLACER in module_data:
             module_style = 'new'
-        elif 'from ansible.snippets.' in module_data:
+        elif 'from ansible.module_utils.' in module_data:
             module_style = 'new'
         elif 'WANT_JSON' in module_data:
             module_style = 'non_native_want_json'
