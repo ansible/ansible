@@ -45,7 +45,7 @@ options:
         I(deny) adds deny rule. See B(EXAMPLES).
         I(reject) adds reject rule. See B(EXAMPLES).
         I(limit)  adds limit rule. Currently only IPv4 is supported. See B(EXAMPLES).
-    required: true
+    required: false
     choices: ['enable', 'disable', 'reload', 'reset', 'allow', 'deny', 'reject', 'limit']
     aliases: ['rule']
     default: 'allow'
@@ -137,6 +137,9 @@ ufw: state=deny proto=udp from_ip=1.2.3.4 to_port=514
 # Allow access to udp 1.2.3.4 port 5469 from 1.2.3.5 port 5469:
 ufw: state=allow proto=udp from_ip=1.2.3.5 from_port=5469 to_ip=1.2.3.4 to_port=5469
 
+# Deny all traffic from the IPv6 2001:db8::/32 to tcp port 25 on this host.
+# Note that IPv6 must be enabled in /etc/default/ufw for IPv6 firewalling to work.
+ufw: state=deny proto=tcp src=2001:db8::/32 port=25
 '''
 
 import platform
@@ -145,7 +148,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             default_policy = dict(default=None, choices=['allow', 'deny', 'reject'], required=False),
-            state = dict(default=None, aliases=['rule'], choices=['enable', 'disable', 'reload', 'reset', 'allow', 'deny', 'reject', 'limit'], required=True),
+            state = dict(default=None, aliases=['rule'], choices=['enable', 'disable', 'reload', 'reset', 'allow', 'deny', 'reject', 'limit'], required=False),
             name = dict(default=None, required=False),
             from_ip = dict(default='any', aliases=['src'], required=False),
             from_port = dict(default='any', required=False),
@@ -192,7 +195,7 @@ def main():
         else:
             if default_policy in ['allow', 'deny', 'reject']:
                 cmd = cmd + ' default %s' % (default_policy)
-                changed_marker = "Default incoming policy changed to '%s'" % (default_policy)
+                changed_marker = "Default incoming policy changed to '%s'\n(be sure to update your rules accordingly)" % (default_policy)
             else:
                 module.fail_json(msg="Wrong default policy %s. See 'ansible-doc ufw' for usage." % (default_policy))
 
@@ -213,7 +216,7 @@ def main():
                 cmd = cmd + ' -f %s' % (state)
                 changed_marker = 'Backing up'
             elif state in ['allow', 'deny', 'reject', 'limit']:
-                changed_marker = ['Rules updated', 'Rule added', 'Rule deleted']
+                changed_marker = ['Rules updated', 'Rules updated (v6)', 'Rule added', 'Rule added (v6)', 'Rule deleted', 'Rule deleted (v6)' ]
                 if delete:
                     cmd = cmd + ' delete'
 
