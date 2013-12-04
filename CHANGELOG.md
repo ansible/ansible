@@ -1,13 +1,13 @@
 Ansible Changes By Release
 ==========================
 
-1.5 "Love Walks In" - Release pending!
+## 1.5 "Love Walks In" - Release pending!
 
-1.4.1 "Could This Be Magic" - November 27, 2013
+## 1.4.1 "Could This Be Magic" - November 27, 2013
 
 * Misc fixes to accelerate mode and various modules.
 
-1.4 "Could This Be Magic" - November 21, 2013
+## 1.4 "Could This Be Magic" - November 21, 2013
 
 Highlighted new features:
 
@@ -118,16 +118,16 @@ Misc changes (all module additions/fixes may not listed):
 * get_url module now understands content-disposition headers for deciding filenames
 * it is possible to have subdirectories in between group_vars/ and host_vars/ and the final filename, like host_vars/rack42/asdf for the variables for host 'asdf'.  The intermediate directories are ignored, and do not put a file in there twice.
 
-1.3.4 "Top of the World" (reprise) - October 29, 2013
+## 1.3.4 "Top of the World" (reprise) - October 29, 2013
 
 * Fixed a bug in the copy module, where a filename containing the string "raw" was handled incorrectly
 * Fixed a bug in accelerate mode, where copying a zero-length file out would fail
 
-1.3.3 "Top of the World" (reprise) - October 9, 2013
+## 1.3.3 "Top of the World" (reprise) - October 9, 2013
 
 Additional fixes for accelerate mode.
 
-1.3.2 "Top of the World" (reprise) - September 19th, 2013
+## 1.3.2 "Top of the World" (reprise) - September 19th, 2013
 
 Multiple accelerate mode fixes:
 
@@ -140,11 +140,11 @@ Multiple accelerate mode fixes:
 * Fixed bug in apt_repository module where the repository cache was not being updated.
 * Fixed bug where "too many open files" errors would be encountered due to pseudo TTY's not being closed properly.
 
-1.3.1 "Top of the World" (reprise) - September 16th, 2013
+## 1.3.1 "Top of the World" (reprise) - September 16th, 2013
 
 Fixing a bug in accelerate mode whereby the gather_facts step would always be run via sudo regardless of the play settings.
 
-1.3 "Top of the World" - September 13th, 2013
+## 1.3 "Top of the World" - September 13th, 2013
 
 Highlighted new features:
 
@@ -284,12 +284,12 @@ Misc changes:
 * added new example inventory plugin for Red Hat OpenShift
 * and other misc. bugfixes
 
-1.2.3 "Hear About It Later" (reprise) -- Aug 21, 2013
+## 1.2.3 "Hear About It Later" (reprise) -- Aug 21, 2013
 
 * Local security fixes for predictable file locations for ControlPersist and retry file paths on shared machines
 on operating systems without kernel symlink/hardlink protections.
 
-1.2.2 "Hear About It Later" (reprise) -- July 4, 2013
+## 1.2.2 "Hear About It Later" (reprise) -- July 4, 2013
 
 * Added a configuration file option [paramiko_connection] record_host_keys which allows the code that paramiko uses
 to update known_hosts to be disabled.  This is done because paramiko can be very slow at doing this if you have a
@@ -297,7 +297,7 @@ large number of hosts and some folks may not want this behavior.  This can be to
 and does not affect the ssh transport plugin.  Use of the ssh transport plugin is preferred if you have ControlPersist
 capability, and Ansible by default in 1.2.1 and later will autodetect.
 
-1.2.1 "Hear About It Later" -- July 4, 2013
+## 1.2.1 "Hear About It Later" -- July 4, 2013
 
 * Connection default is now "smart", which discovers if the system openssh can support ControlPersist, and uses
   it if so, if not falls back to paramiko.
@@ -306,7 +306,7 @@ capability, and Ansible by default in 1.2.1 and later will autodetect.
 * Paramiko now records host keys it was in contact with host key checking is on.  It is somewhat sluggish when doing this,
   so switch to the 'ssh' transport if this concerns you.
 
-1.2 "Right Now" -- June 10, 2013
+## 1.2 "Right Now" -- June 10, 2013
 
 Core Features:
 
@@ -441,7 +441,7 @@ the variable is still registered for the host, with the attribute skipped: True.
 * NetBSD and OpenBSD support for the user and groups modules
 * Add encrypted password support to password lookup
 
-1.1 "Mean Street" -- 4/2/2013
+## 1.1 "Mean Street" -- 4/2/2013
 
 Core Features
 
@@ -580,7 +580,7 @@ Plugins:
 * fixed ~ expansion for fileglob
 * with_nested allows for nested loops (see examples in examples/playbooks)
 
-1.0 "Eruption" -- Feb 1 2013
+## 1.0 "Eruption" -- Feb 1 2013
 
 New modules:
 
@@ -659,7 +659,7 @@ Inventory files/scripts:
 * whitespace is now allowed around group variables in the inventory file
 * inventory scripts can now define groups of groups and group vars (need example for docs?)
 
-0.9 "Dreams" -- Nov 30 2012
+## 0.9 "Dreams" -- Nov 30 2012
 
 Highlighted core changes:
 
@@ -739,7 +739,7 @@ Plugin changes:
 * various tweaks to the EC2 inventory plugin
 * jinja2 filters are now pluggable so it's easy to write your own (to_json/etc, are now impl. as such)
 
-0.8 "Cathedral" -- Oct 19, 2012
+## 0.8 "Cathedral" -- Oct 19, 2012
 
 Highlighted Core Changes:
 
@@ -836,7 +836,7 @@ Other module Changes, Upgrades, and Fixes:
 * selinux policy is only required if setting to not disabled
 * various fixes for yum module when working with packages not in any present repo
 
-0.7 "Panama" -- Sept 6 2012
+## 0.7 "Panama" -- Sept 6 2012
 
 Module changes:
 
@@ -900,7 +900,7 @@ Playbooks:
 * adds 'serial' to playbook, allowing you to specify how many hosts can be processing a playbook at one time (default 0=all)
 * adds 'local_action: <action parameters>' as an alias to 'delegate_to: 127.0.0.1'
 
-0.6 "Cabo" -- August 6, 2012
+## 0.6 "Cabo" -- August 6, 2012
 
 playbooks:
 
@@ -960,7 +960,7 @@ internals:
 * ./hacking/test-module now supports options like ansible takes and has a debugger mode
 * sudoing to a user other than root now works more seamlessly (uses /tmp, avoids umask issues)
 
-0.5 "Amsterdam" ------- July 04, 2012
+## 0.5 "Amsterdam" ------- July 04, 2012
 
 * Service module gets more accurate service states when running with upstart
 * Jinja2 usage in playbooks (not templates), reinstated, supports %include directive
@@ -988,7 +988,7 @@ internals:
 * basic setup module support for Solaris
 * ./library relative to the playbook is always in path so modules can be included in tarballs with playbooks
 
-0.4 "Unchained" ------- May 23, 2012
+## 0.4 "Unchained" ------- May 23, 2012
 
 Internals/Core
 * internal inventory API now more object oriented, parsers decoupled
@@ -1043,7 +1043,7 @@ Misc Bugfixes
 * fix to internals of hacking/test-module development script
 
 
-0.3 "Baluchitherium" -- April 23, 2012
+## 0.3 "Baluchitherium" -- April 23, 2012
 
 * Packaging for Debian, Gentoo, and Arch
 * Improvements to the apt and yum modules
@@ -1073,7 +1073,7 @@ in kickstarts
 * fetch module for pulling in files from remote hosts
 * command task supports creates=foo for idempotent semantics, won't run if file foo already exists
 
-0.0.2 and 0.0.1
+## 0.0.2 and 0.0.1
 
 * Initial stages of project
 
