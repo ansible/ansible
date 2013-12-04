@@ -569,6 +569,11 @@ class Ec2Inventory(object):
     def write_to_cache(self, data, filename):
         ''' Writes data in JSON format to a file '''
 
+        # Create the directory if it doesn't exist
+        directory = os.path.dirname(filename)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
         json_data = self.json_format_dict(data, True)
         cache = open(filename, 'w')
         cache.write(json_data)
