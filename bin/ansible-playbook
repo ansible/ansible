@@ -83,6 +83,11 @@ def main(args):
         parser.print_help(file=sys.stderr)
         return 1
 
+    if args:
+        # reload ansible.cfg from playbook's directory
+        playpath = os.path.dirname(os.path.abspath(args[0]))
+        C.reload_config(playpath)
+
     inventory = ansible.inventory.Inventory(options.inventory)
     inventory.subset(options.subset)
     if len(inventory.list_hosts()) == 0:

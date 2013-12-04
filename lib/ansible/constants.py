@@ -55,9 +55,12 @@ def _get_config(p, section, key, env_var, default, boolean=True):
             return default
     return default
 
-def load_config_file():
+def load_config_file(path=None):
     p = ConfigParser.ConfigParser()
-    path1 = os.getcwd() + "/ansible.cfg"
+    if path==None:
+        path1 = os.getcwd() + "/ansible.cfg"
+    else:
+        path1 = path + "/ansible.cfg"
     path2 = os.path.expanduser(os.environ.get('ANSIBLE_CONFIG', "~/.ansible.cfg"))
     path3 = "/etc/ansible/ansible.cfg"
 
@@ -78,7 +81,12 @@ def shell_expand_path(path):
         path = os.path.expanduser(path)
     return path
 
-p = load_config_file()
+def reload_config(path=None):
+    global p
+    p = load_config_file(path)
+    load_constants(_PATHS)
+
+p = None
 
 active_user   = pwd.getpwuid(os.geteuid())[0]
 
@@ -114,6 +122,7 @@ def load_constants(config_str):
     finished (for example, when detecting and loading ansible.cfg
     from alternative location, such a playbook dir)
     """
+    global p
     for line in config_str.splitlines():
         if not line.strip() or line.startswith('#'):
             continue
@@ -131,7 +140,6 @@ def load_constants(config_str):
         #    constant_name = shell_expand_path(key, env_var, default)
         globals()[const[0]] = shell_expand_path(get_config(p, DEFAULTS, const[1], const[2], const[3]))
 
-load_constants(_PATHS)
 
 DEFAULT_MODULE_PATH       = get_config(p, DEFAULTS, 'library',          'ANSIBLE_LIBRARY',          DIST_MODULE_PATH)
 DEFAULT_ROLES_PATH        = get_config(p, DEFAULTS, 'roles_path',       'ANSIBLE_ROLES_PATH',       None)
@@ -194,4 +202,7 @@ ANSIBLE_ETCD_URL               = get_config(p, DEFAULTS, 'etcd_url', 'ANSIBLE_ET
 DEFAULT_SUDO_PASS         = None
 DEFAULT_REMOTE_PASS       = None
 DEFAULT_SUBSET            = None
+
+reload_config()
+
 
