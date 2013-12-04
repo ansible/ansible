@@ -205,8 +205,12 @@ action: ovirt >
 
 
 '''
-from ovirtsdk.api import API
-from ovirtsdk.xml import params
+try:
+    from ovirtsdk.api import API
+    from ovirtsdk.xml import params
+except ImportError:
+    print "failed=True msg='ovirtsdk required for this module'"
+    sys.exit(1)
 
 # ------------------------------------------------------------------- #
 # create connection with API
