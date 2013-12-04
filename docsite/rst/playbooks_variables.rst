@@ -172,6 +172,7 @@ The variable value will be used as is, but the template evaluation will raise an
 Set Theory Filters
 --------------------
 All these functions return a unique set from sets or lists.
+
 .. versionadded:: 1.4
 
 To get a unique set from a list::
