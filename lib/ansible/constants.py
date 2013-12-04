@@ -98,10 +98,41 @@ YAML_FILENAME_EXTENSIONS = [ "", ".yml", ".yaml" ]
 DEFAULTS='defaults'
 
 # configurable things
-DEFAULT_HOST_LIST         = shell_expand_path(get_config(p, DEFAULTS, 'hostfile', 'ANSIBLE_HOSTS', '/etc/ansible/hosts'))
-DEFAULT_REMOTE_TMP        = shell_expand_path(get_config(p, DEFAULTS, 'remote_tmp', 'ANSIBLE_REMOTE_TEMP', '$HOME/.ansible/tmp'))
-DEFAULT_PRIVATE_KEY_FILE  = shell_expand_path(get_config(p, DEFAULTS, 'private_key_file', 'ANSIBLE_PRIVATE_KEY_FILE', None))
-DEFAULT_LOG_PATH          = shell_expand_path(get_config(p, DEFAULTS, 'log_path',         'ANSIBLE_LOG_PATH', ''))
+_PATHS = '''
+# constant_name              key               env_var                    default         flags
+
+DEFAULT_HOST_LIST         hostfile          ANSIBLE_HOSTS             /etc/ansible/hosts
+DEFAULT_REMOTE_TMP        remote_tmp        ANSIBLE_REMOTE_TEMP       $HOME/.ansible/tmp
+DEFAULT_PRIVATE_KEY_FILE  private_key_file  ANSIBLE_PRIVATE_KEY_FILE  None                N
+DEFAULT_LOG_PATH          log_path          ANSIBLE_LOG_PATH
+'''
+
+def load_constants(config_str):
+    """
+    Set module constants by parsing definition from config_str.
+    This method can be used to relod constants after import phase
+    finished (for example, when detecting and loading ansible.cfg
+    from alternative location, such a playbook dir)
+    """
+    for line in config_str.splitlines():
+        if not line.strip() or line.startswith('#'):
+            continue
+        const = line.split()
+        # pad to length 5
+        const += ['']*(5 - len(const))
+        # normalize
+        if 'N' in const[4]:  # flags
+            if const[3] != 'None':  # defaul
+                raise('N flag means None, please correct %s line' % const[0])
+            else:
+                const[3] = None
+        # set global variable
+        # - paths:
+        #    constant_name = shell_expand_path(key, env_var, default)
+        globals()[const[0]] = shell_expand_path(get_config(p, DEFAULTS, const[1], const[2], const[3]))
+
+load_constants(_PATHS)
+
 DEFAULT_MODULE_PATH       = get_config(p, DEFAULTS, 'library',          'ANSIBLE_LIBRARY',          DIST_MODULE_PATH)
 DEFAULT_ROLES_PATH        = get_config(p, DEFAULTS, 'roles_path',       'ANSIBLE_ROLES_PATH',       None)
 DEFAULT_MODULE_NAME       = get_config(p, DEFAULTS, 'module_name',      None,                       'command')
