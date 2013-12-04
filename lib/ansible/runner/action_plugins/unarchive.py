@@ -74,7 +74,10 @@ class ActionModule(object):
         # handle diff mode client side
         # handle check mode client side
         # fix file permissions when the copy is done as a different user
-        if self.runner.sudo and self.runner.sudo_user != 'root':
-            self.runner._low_level_exec_command(conn, "chmod a+r %s" % tmp_src, tmp)
-        module_args = "%s src=%s original_basename=%s" % (module_args, pipes.quote(tmp_src), pipes.quote(os.path.basename(source)))
+        if copy:
+            if self.runner.sudo and self.runner.sudo_user != 'root':
+                self.runner._low_level_exec_command(conn, "chmod a+r %s" % tmp_src, tmp)
+            module_args = "%s src=%s original_basename=%s" % (module_args, pipes.quote(tmp_src), pipes.quote(os.path.basename(source)))
+        else:
+            module_args = "%s original_basename=%s" % (module_args, pipes.quote(os.path.basename(source)))
         return self.runner._execute_module(conn, tmp, 'unarchive', module_args, inject=inject, complex_args=complex_args)
