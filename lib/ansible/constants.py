@@ -123,22 +123,24 @@ def load_constants(config_str):
     from alternative location, such a playbook dir)
     """
     global p
+    keys = ['name', 'key', 'env', 'default', 'flags']
     for line in config_str.splitlines():
         if not line.strip() or line.startswith('#'):
             continue
         const = line.split()
         # pad to length 5
         const += ['']*(5 - len(const))
+        row = dict(zip(keys, const))
         # normalize
-        if 'N' in const[4]:  # flags
-            if const[3] != 'None':  # defaul
-                raise('N flag means None, please correct %s line' % const[0])
+        if 'N' in row['flags']:
+            if row['default'] != 'None':
+                raise('N flag means None, please correct %s line' % row['name'])
             else:
-                const[3] = None
+                row['default'] = None
         # set global variable
         # - paths:
         #    constant_name = shell_expand_path(key, env_var, default)
-        globals()[const[0]] = shell_expand_path(get_config(p, DEFAULTS, const[1], const[2], const[3]))
+        globals()[row['name']] = shell_expand_path(get_config(p, DEFAULTS, row['key'], row['env'], row['default']))
 
 
 DEFAULT_MODULE_PATH       = get_config(p, DEFAULTS, 'library',          'ANSIBLE_LIBRARY',          DIST_MODULE_PATH)
