@@ -309,7 +309,7 @@ class Runner(object):
             if 'CHECKMODE=True' in args:
                 # if module isn't using AnsibleModuleCommon infrastructure we can't be certain it knows how to
                 # do --check mode, so to be safe we will not run it.
-                return ReturnData(conn=conn, result=dict(skippped=True, msg="cannot yet run check mode against old-style modules"))
+                return ReturnData(conn=conn, result=dict(skipped=True, msg="cannot yet run check mode against old-style modules"))
 
             args = template.template(self.basedir, args, inject)
 
