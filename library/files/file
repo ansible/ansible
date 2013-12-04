@@ -234,7 +234,7 @@ def main():
                         if module.check_mode:
                             module.exit_json(changed=True)
                         shutil.rmtree(path, ignore_errors=False)
-                    except:
+                    except Exception, e:
                         module.exit_json(msg="rmtree failed")
             else:
                 if module.check_mode:
