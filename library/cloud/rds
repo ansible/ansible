@@ -211,7 +211,7 @@ options:
   new_instance_name:
     description:
       - Name to rename an instance to. Used only when command=modify.
-    required: true
+    required: false
     default: null
     aliases: []
 requirements: [ "boto" ]
@@ -248,6 +248,13 @@ EXAMPLES = '''
       command=facts
       instance_name=new_database
       register: new_database_facts
+
+# Rename an instance and wait for the change to take effect
+- rds: >
+      command=modify
+      instance_name=new_database
+      new_instance_name=renamed_database
+      wait=yes
     
 '''
 
