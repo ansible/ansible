@@ -48,7 +48,7 @@ class ActionModule(object):
         options.update(utils.parse_kv(module_args))
         source  = options.get('src', None)
         dest    = options.get('dest', None)
-        copy    = options.get('copy', True)
+        copy    = utils.boolean(options.get('copy', 'yes'))
 
         if source is None or dest is None:
             result=dict(failed=True, msg="src (or content) and dest are required")
