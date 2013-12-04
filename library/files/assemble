@@ -127,6 +127,7 @@ def main():
             dest = dict(required=True),
             backup=dict(default=False, type='bool'),
             remote_src=dict(default=False, type='bool'),
+            remote_dest=dict(default=False, type='bool'),
             regexp = dict(required=False),
         ),
         add_file_common_args=True
