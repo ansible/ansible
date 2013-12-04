@@ -1,0 +1,233 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2013, John Dewey <john@dewey.ws>
+#
+# This module is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+
+try:
+    from novaclient import utils
+    from novaclient.v1_1 import client
+    from novaclient.v1_1 import servers
+except ImportError:
+    print("failed=True msg='novaclient is required for this module to work'")
+
+DOCUMENTATION = '''
+---
+module: nova_fip
+version_added: "1.5"
+short_description: Associate an OpenStack floating IP with a server.
+description:
+  - Manage nova floating IPs using the python-novaclient library.
+options:
+
+  login_username:
+    description:
+        - Login username to authenticate to keystone.  If not set then the value of the OS_USERNAME environment variable is used.
+    required: false
+    default: None
+  login_password:
+    description:
+      - Password of login user.  If not set then the value of the OS_PASSWORD environment variable is used.
+    required: false
+    default: None
+  login_tenant_name:
+    description:
+      - The tenant name of the login user.  If not set then the value of the OS_TENANT_NAME environment variable is used.
+    required: false
+    default: None
+  auth_url:
+    description:
+      - The keystone url for authentication.  If not set then the value of the OS_AUTH_URL environment variable is used.
+    required: false
+    default: None
+  region_name:
+    description:
+      - Name of the region.
+    required: false
+    default: None
+  server:
+    description:
+      - Name or ID of server.
+    required: false
+    default: None
+  floating_ip:
+    description:
+      - The public IP address to associate with the instance.
+      - If absent, allocate a new address
+    required: false
+    default: None
+  pool:
+    description:
+      - The pool the floating_ip belongs to.
+    required: false
+    default: external
+  state:
+    description:
+      - Indicate desired state of the resource.
+    choices: ['present', 'absent']
+    required: false
+    default: 'present'
+
+requirements: ["novaclient"]
+notes:
+  - This module will return C(floating_ip) on success, which will contain the
+    public IP address associated with the instance.
+  - There may be a delay between the time the floating IP is assigned and when
+    the cloud instance is reachable via the new address. Use wait_for and pause
+    to delay further playbook execution until the instance is reachable, if
+    necessary.
+'''
+
+EXAMPLES = '''
+- name: associate a floating IP with a server
+  nova_fip: server={{ UUID or name }} ip={{ IP }}
+
+- name: disassociate a floating IP from a server
+  nova_fip: server={{ UUID or name }} ip={{ IP }} state=absent
+
+- name: allocate a new floating IP and associate it with a server
+  nova_fip: server={{ UUID or name }}
+
+- name: allocate a new floating IP without associating it to anything
+  nova_fip:
+  register: fip
+
+- name: deallocate a floating IP
+  nova_fip: ip={{ IP }} state=absent
+
+- name: output the IP
+  debug: msg="Allocated IP is {{ fip.floating_ip }}"
+'''
+
+def _floating_ip_already_associated(server, floating_ip):
+    changed = False
+    for network, ip_list in server.networks.iteritems():
+        if floating_ip in ip_list:
+            changed = True
+    return changed
+
+def _associate_floating_ip(nova, floating_ip, server):
+    s = _find_server(nova, server)
+    if not _floating_ip_already_associated(s, floating_ip):
+        s.add_floating_ip(floating_ip)
+        return True
+
+def _disassociate_floating_ip(nova, floating_ip, server):
+    s = _find_server(nova, server)
+    if _floating_ip_already_associated(s, floating_ip):
+        s.remove_floating_ip(floating_ip)
+        return True
+
+def _find_server(nova, server):
+    return utils.find_resource(nova.servers, server)
+
+def _allocate_address(nova, pool):
+    address = None
+    floating_ips = nova.floating_ips.list()
+    for fip in floating_ips:
+        # allocated but not assigned
+        if fip.pool == pool and fip.instance_id is None:
+            address = fip
+
+    # return an available floating ip
+    if address:
+        return address
+    # allocate and return a floating ip
+    else:
+        return nova.floating_ips.create(pool=pool)
+
+def _deallocate_address(nova, floating_ip):
+    changed = False
+    floating_ips = nova.floating_ips.list()
+
+    for fip in floating_ips:
+        if fip.ip == floating_ip:
+            nova.floating_ips.delete(fip.id)
+            changed = True
+    return changed
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            server=dict(required=False),
+            floating_ip=dict(required=False, aliases=['ip']),
+            pool=dict(default='external'),
+            login_username=dict(),
+            login_password=dict(no_log=True),
+            login_tenant_name=dict(),
+            auth_url= dict(),
+            region_name=dict(default=None),
+            state = dict(default='present', choices=['present', 'absent']),
+        ),
+        supports_check_mode=True,
+    )
+    login_username = module.params.get('login_username')
+    login_password = module.params.get('login_password')
+    login_tenant_name = module.params.get('login_tenant_name')
+    auth_url = module.params.get('auth_url')
+
+    # allow stackrc environment variables to be used if ansible vars aren't set
+    if not login_username and 'OS_USERNAME' in os.environ:
+        login_username = os.environ['OS_USERNAME']
+
+    if not login_password and 'OS_PASSWORD' in os.environ:
+        login_password = os.environ['OS_PASSWORD']
+
+    if not login_tenant_name and 'OS_TENANT_NAME' in os.environ:
+        login_tenant_name = os.environ['OS_TENANT_NAME']
+
+    if not auth_url and 'OS_AUTH_URL' in os.environ:
+        auth_url = os.environ['OS_AUTH_URL']
+
+    nova = client.Client(login_username,
+                         login_password,
+                         login_tenant_name,
+                         auth_url,
+                         service_type='compute')
+    try:
+        nova.authenticate()
+    except exceptions.Unauthorized as e:
+        module.fail_json(msg="Invalid OpenStack Nova credentials.: %s" % e.message)
+    except exceptions.AuthorizationFailure as e:
+        module.fail_json(msg="Unable to authorize user: %s" % e.message)
+
+    server = module.params.get('server')
+    floating_ip = module.params.get('floating_ip')
+    pool = module.params.get('pool')
+    state = module.params.get('state')
+
+    if state == 'present':
+        if floating_ip is None:
+            if server is None:
+                address = _allocate_address(nova, pool)
+                module.exit_json(changed=True, floating_ip=address.ip)
+            else:
+                address = _allocate_address(nova, pool)
+                changed = _associate_floating_ip(nova, address.ip, server)
+                module.exit_json(changed=True, floating_ip=address.ip)
+        else:
+            changed = _associate_floating_ip(nova, floating_ip, server)
+            module.exit_json(changed=changed)
+    else:
+        if server is None:
+            changed = _deallocate_address(nova, floating_ip)
+            module.exit_json(changed=changed)
+        else:
+            changed = _disassociate_floating_ip(nova, floating_ip, server)
+            module.exit_json(changed=changed)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
