@@ -7,7 +7,10 @@ Contributions to the documentation are welcome.  To make changes, submit a pull 
 that changes the reStructuredText files in the "rst/" directory only, and Michael can
 do a docs build and push the static files. If you wish to verify output from the markup
 such as link references, you may [install Sphinx] and build the documentation by running
-`make viewdocs` from the `ansible/docsite` directory.
+`make viewdocs` from the `ansible/docsite` directory.  To include module documentation
+you'll need to run `make webdocs` at the top level of the repository.  The generated
+html files are in docsite/htmlout/ and will require Wordpress to render correctly.
+
 
 If you do not want to learn the reStructuredText format, you can also [file issues] about
 documentation problems on the Ansible GitHub project.
