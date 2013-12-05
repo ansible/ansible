@@ -327,7 +327,7 @@ class Facts(object):
                         self.facts['distribution_release'] = ora_prefix + data
                     elif name == 'SuSE':
                         data = get_file_content(path).splitlines()
-                        self.facts['distribution_version'] = data.split[2].split('=')[1].strip()
+                        self.facts['distribution_version'] = data[2].split('=')[1].strip()
                     else:
                         self.facts['distribution'] = name
 
