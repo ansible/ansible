@@ -70,6 +70,12 @@ class ActionModule(object):
         src_host = '127.0.0.1'
         dest_host = inject.get('ansible_ssh_host', inject['inventory_hostname'])
 
+        dest_port = options.get('dest_port')
+        inv_port = inject.get('ansible_ssh_port', inject['inventory_hostname'])
+        if inv_port != dest_port and inv_port != inject['inventory_hostname']:
+            options['dest_port'] = inv_port
+
+
         # edge case: explicit delegate and dest_host are the same
         if dest_host == inject['delegate_to']:
             dest_host = '127.0.0.1'

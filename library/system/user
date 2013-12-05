@@ -1137,27 +1137,30 @@ class SunOS(User):
 
         cmd.append(self.name)
 
-        (rc, out, err) = self.execute_command(cmd)
-        if rc is not None and rc != 0:
-            self.module.fail_json(name=self.name, msg=err, rc=rc)
+        if self.module.check_mode:
+            return (0, '', '')
+        else:
+            (rc, out, err) = self.execute_command(cmd)
+            if rc is not None and rc != 0:
+                self.module.fail_json(name=self.name, msg=err, rc=rc)
 
-        # we have to set the password by editing the /etc/shadow file 
-        if self.password is not None:
-            try:
-                lines = []
-                for line in open(self.SHADOWFILE, 'rb').readlines():
-                    fields = line.strip().split(':')
-                    if not fields[0] == self.name:
-                        lines.append(line)
-                        continue
-                    fields[1] = self.password
-                    line = ':'.join(fields)
-                    lines.append('%s\n' % line)
-                open(self.SHADOWFILE, 'w+').writelines(lines)
-            except Exception, err:
-                self.module.fail_json(msg="failed to update users password: %s" % str(err))
+            # we have to set the password by editing the /etc/shadow file 
+            if self.password is not None:
+                try:
+                    lines = []
+                    for line in open(self.SHADOWFILE, 'rb').readlines():
+                        fields = line.strip().split(':')
+                        if not fields[0] == self.name:
+                            lines.append(line)
+                            continue
+                        fields[1] = self.password
+                        line = ':'.join(fields)
+                        lines.append('%s\n' % line)
+                    open(self.SHADOWFILE, 'w+').writelines(lines)
+                except Exception, err:
+                    self.module.fail_json(msg="failed to update users password: %s" % str(err))
 
-        return (rc, out, err)
+            return (rc, out, err)
 
     def modify_user_usermod(self):
         cmd = [self.module.get_bin_path('usermod', True)]
@@ -1214,33 +1217,36 @@ class SunOS(User):
             cmd.append('-s')
             cmd.append(self.shell)
 
-        # modify the user if cmd will do anything
-        if cmd_len != len(cmd):
-            cmd.append(self.name)
-            (rc, out, err) = self.execute_command(cmd)
-            if rc is not None and rc != 0:
-                self.module.fail_json(name=self.name, msg=err, rc=rc)
+        if self.module.check_mode:
+            return (0, '', '')
         else:
-            (rc, out, err) = (None, '', '')
+            # modify the user if cmd will do anything
+            if cmd_len != len(cmd):
+                cmd.append(self.name)
+                (rc, out, err) = self.execute_command(cmd)
+                if rc is not None and rc != 0:
+                    self.module.fail_json(name=self.name, msg=err, rc=rc)
+            else:
+                (rc, out, err) = (None, '', '')
 
-        # we have to set the password by editing the /etc/shadow file 
-        if self.update_password == 'always' and self.password is not None and info[1] != self.password:
-            try:
-                lines = []
-                for line in open(self.SHADOWFILE, 'rb').readlines():
-                    fields = line.strip().split(':')
-                    if not fields[0] == self.name:
-                        lines.append(line)
-                        continue
-                    fields[1] = self.password
-                    line = ':'.join(fields)
-                    lines.append('%s\n' % line)
-                open(self.SHADOWFILE, 'w+').writelines(lines)
-                rc = 0
-            except Exception, err:
-                self.module.fail_json(msg="failed to update users password: %s" % str(err))
+            # we have to set the password by editing the /etc/shadow file 
+            if self.update_password == 'always' and self.password is not None and info[1] != self.password:
+                try:
+                    lines = []
+                    for line in open(self.SHADOWFILE, 'rb').readlines():
+                        fields = line.strip().split(':')
+                        if not fields[0] == self.name:
+                            lines.append(line)
+                            continue
+                        fields[1] = self.password
+                        line = ':'.join(fields)
+                        lines.append('%s\n' % line)
+                    open(self.SHADOWFILE, 'w+').writelines(lines)
+                    rc = 0
+                except Exception, err:
+                    self.module.fail_json(msg="failed to update users password: %s" % str(err))
 
-        return (rc, out, err)
+            return (rc, out, err)
 
 # ===========================================
 
