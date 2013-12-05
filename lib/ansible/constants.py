@@ -117,6 +117,16 @@ DEFAULT_LOG_PATH          log_path          ANSIBLE_LOG_PATH          ''        
 DEFAULT_FORKS             forks             ANSIBLE_FORKS             5                   I
 DEFAULT_TIMEOUT           timeout           ANSIBLE_TIMEOUT           10                  I
 DEFAULT_POLL_INTERVAL     poll_interval     ANSIBLE_POLL_INTERVAL     15                  I
+
+DEFAULT_ACTION_PLUGIN_PATH      action_plugins      ANSIBLE_ACTION_PLUGINS      /usr/share/ansible_plugins/action_plugins
+DEFAULT_CALLBACK_PLUGIN_PATH    callback_plugins    ANSIBLE_CALLBACK_PLUGINS    /usr/share/ansible_plugins/callback_plugins
+DEFAULT_CONNECTION_PLUGIN_PATH  connection_plugins  ANSIBLE_CONNECTION_PLUGINS  /usr/share/ansible_plugins/connection_plugins
+DEFAULT_LOOKUP_PLUGIN_PATH      lookup_plugins      ANSIBLE_LOOKUP_PLUGINS      /usr/share/ansible_plugins/lookup_plugins
+DEFAULT_VARS_PLUGIN_PATH        vars_plugins        ANSIBLE_VARS_PLUGINS        /usr/share/ansible_plugins/vars_plugins
+DEFAULT_FILTER_PLUGIN_PATH      filter_plugins      ANSIBLE_FILTER_PLUGINS      /usr/share/ansible_plugins/filter_plugins
+
+# lookup plugin related
+ANSIBLE_ETCD_URL          etcd_url          ANSIBLE_ETCD_URL          http://127.0.0.1:4001
 '''
 
 def load_constants(config_str):
@@ -141,10 +151,12 @@ def load_constants(config_str):
         elif row['default'] == "''":
             row['default'] == ''
         # set global variable
-        if 'X' in row['flags']:   # constant_name = shell_expand_path(key, env_var, default) 
+        if   'X' in row['flags']:   # constant_name = shell_expand_path(key, env_var, default) 
             globals()[row['name']] = shell_expand_path(get_config(p, DEFAULTS, row['key'], row['env'], row['default']))
-        if 'I' in row['flags']:   # constant_name = get_config(key, env, int(default), integer=True)
+        elif 'I' in row['flags']:   # constant_name = get_config(key, env, int(default), integer=True)
             globals()[row['name']] = get_config(p, DEFAULTS, row['key'], row['env'], int(row['default']), integer=True)
+        else:
+            globals()[row['name']] = get_config(p, DEFAULTS, row['key'], row['env'], row['default'])
 
 
 
@@ -172,13 +184,6 @@ DEFAULT_LEGACY_PLAYBOOK_VARIABLES = get_config(p, DEFAULTS, 'legacy_playbook_var
 DEFAULT_JINJA2_EXTENSIONS = get_config(p, DEFAULTS, 'jinja2_extensions', 'ANSIBLE_JINJA2_EXTENSIONS', None)
 DEFAULT_EXECUTABLE        = get_config(p, DEFAULTS, 'executable', 'ANSIBLE_EXECUTABLE', '/bin/sh')
 
-DEFAULT_ACTION_PLUGIN_PATH     = get_config(p, DEFAULTS, 'action_plugins',     'ANSIBLE_ACTION_PLUGINS', '/usr/share/ansible_plugins/action_plugins')
-DEFAULT_CALLBACK_PLUGIN_PATH   = get_config(p, DEFAULTS, 'callback_plugins',   'ANSIBLE_CALLBACK_PLUGINS', '/usr/share/ansible_plugins/callback_plugins')
-DEFAULT_CONNECTION_PLUGIN_PATH = get_config(p, DEFAULTS, 'connection_plugins', 'ANSIBLE_CONNECTION_PLUGINS', '/usr/share/ansible_plugins/connection_plugins')
-DEFAULT_LOOKUP_PLUGIN_PATH     = get_config(p, DEFAULTS, 'lookup_plugins',     'ANSIBLE_LOOKUP_PLUGINS', '/usr/share/ansible_plugins/lookup_plugins')
-DEFAULT_VARS_PLUGIN_PATH       = get_config(p, DEFAULTS, 'vars_plugins',       'ANSIBLE_VARS_PLUGINS', '/usr/share/ansible_plugins/vars_plugins')
-DEFAULT_FILTER_PLUGIN_PATH     = get_config(p, DEFAULTS, 'filter_plugins',     'ANSIBLE_FILTER_PLUGINS', '/usr/share/ansible_plugins/filter_plugins')
-
 ANSIBLE_NOCOLOR                = get_config(p, DEFAULTS, 'nocolor', 'ANSIBLE_NOCOLOR', None, boolean=True)
 ANSIBLE_NOCOWS                 = get_config(p, DEFAULTS, 'nocows', 'ANSIBLE_NOCOWS', None, boolean=True)
 DISPLAY_SKIPPED_HOSTS          = get_config(p, DEFAULTS, 'display_skipped_hosts', 'DISPLAY_SKIPPED_HOSTS', True, boolean=True)
@@ -198,9 +203,6 @@ PARAMIKO_PTY                   = get_config(p, 'paramiko_connection', 'pty', 'AN
 
 # characters included in auto-generated passwords
 DEFAULT_PASSWORD_CHARS = ascii_letters + digits + ".,:-_"
-
-# LOOKUP PLUGIN RELATED
-ANSIBLE_ETCD_URL               = get_config(p, DEFAULTS, 'etcd_url', 'ANSIBLE_ETCD_URL', 'http://127.0.0.1:4001')
 
 # non-configurable things
 DEFAULT_SUDO_PASS         = None
