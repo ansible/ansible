@@ -114,6 +114,10 @@ DEFAULT_LOG_PATH          log_path          ANSIBLE_LOG_PATH          ''        
 
 # path to standard system location for shared files
 DEFAULT_MODULE_PATH       library           ANSIBLE_LIBRARY           DIST_MODULE_PATH    G
+DEFAULT_ROLES_PATH        roles_path        ANSIBLE_ROLES_PATH        None
+
+# default hosts pattern
+DEFAULT_PATTERN           pattern           None                      *
 
 DEFAULT_MODULE_NAME       module_name       None                      command
 DEFAULT_MODULE_ARGS       module_args       ANSIBLE_MODULE_ARGS
@@ -122,6 +126,13 @@ DEFAULT_MODULE_LANG       module_lang       ANSIBLE_MODULE_LANG       C
 DEFAULT_FORKS             forks             ANSIBLE_FORKS             5                   I
 DEFAULT_TIMEOUT           timeout           ANSIBLE_TIMEOUT           10                  I
 DEFAULT_POLL_INTERVAL     poll_interval     ANSIBLE_POLL_INTERVAL     15                  I
+
+# connection related
+DEFAULT_REMOTE_USER       remote_user       ANSIBLE_REMOTE_USER       active_user         G
+DEFAULT_SUDO_USER         sudo_user         ANSIBLE_SUDO_USER         root
+DEFAULT_ASK_PASS          ask_pass          ANSIBLE_ASK_PASS          False               B
+DEFAULT_ASK_SUDO_PASS     ask_sudo_pass     ANSIBLE_ASK_SUDO_PASS     False               B
+
 
 DEFAULT_ACTION_PLUGIN_PATH      action_plugins      ANSIBLE_ACTION_PLUGINS      /usr/share/ansible_plugins/action_plugins
 DEFAULT_CALLBACK_PLUGIN_PATH    callback_plugins    ANSIBLE_CALLBACK_PLUGINS    /usr/share/ansible_plugins/callback_plugins
@@ -164,15 +175,17 @@ def load_constants(config_str):
             globals()[row['name']] = shell_expand_path(get_config(p, DEFAULTS, row['key'], row['env'], row['default']))
         elif 'I' in row['flags']:   # constant_name = get_config(key, env, int(default), integer=True)
             globals()[row['name']] = get_config(p, DEFAULTS, row['key'], row['env'], int(row['default']), integer=True)
+        elif 'B' in row['flags']:
+            if row['default'] not in ['True', 'False']:
+                raise
+            value = True
+            if row['default'] == 'False':
+                value = False
+            globals()[row['name']] = get_config(p, DEFAULTS, row['key'], row['env'], value, boolean=True)
         else:
             globals()[row['name']] = get_config(p, DEFAULTS, row['key'], row['env'], row['default'])
 
-DEFAULT_ROLES_PATH        = get_config(p, DEFAULTS, 'roles_path',       'ANSIBLE_ROLES_PATH',       None)
-DEFAULT_PATTERN           = get_config(p, DEFAULTS, 'pattern',          None,                       '*')
-DEFAULT_REMOTE_USER       = get_config(p, DEFAULTS, 'remote_user',      'ANSIBLE_REMOTE_USER',      active_user)
-DEFAULT_ASK_PASS          = get_config(p, DEFAULTS, 'ask_pass',  'ANSIBLE_ASK_PASS',    False, boolean=True)
-DEFAULT_SUDO_USER         = get_config(p, DEFAULTS, 'sudo_user',        'ANSIBLE_SUDO_USER',        'root')
-DEFAULT_ASK_SUDO_PASS     = get_config(p, DEFAULTS, 'ask_sudo_pass',    'ANSIBLE_ASK_SUDO_PASS',    False, boolean=True)
+
 DEFAULT_REMOTE_PORT       = get_config(p, DEFAULTS, 'remote_port',      'ANSIBLE_REMOTE_PORT',      22, integer=True)
 DEFAULT_TRANSPORT         = get_config(p, DEFAULTS, 'transport',        'ANSIBLE_TRANSPORT',        'smart')
 DEFAULT_SCP_IF_SSH        = get_config(p, 'ssh_connection', 'scp_if_ssh',       'ANSIBLE_SCP_IF_SSH',       False, boolean=True)
