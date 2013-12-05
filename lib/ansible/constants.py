@@ -100,9 +100,6 @@ else:
 # group variables
 YAML_FILENAME_EXTENSIONS = [ "", ".yml", ".yaml" ]
 
-# sections in config file
-DEFAULTS='defaults'
-
 # configurable things
 _TABLE = '''
 # constant_name              key               env_var                    default         flags
@@ -139,6 +136,10 @@ DEFAULT_EXECUTABLE        executable        ANSIBLE_EXECUTABLE        /bin/sh
 
 DEFAULT_TRANSPORT         transport         ANSIBLE_TRANSPORT         smart
 DEFAULT_REMOTE_PORT       remote_port       ANSIBLE_REMOTE_PORT       22                  I
+
+DEFAULT_SCP_IF_SSH        ssh_connection:scp_if_ssh    ANSIBLE_SCP_IF_SSH        False    B
+ANSIBLE_SSH_ARGS          ssh_connection:ssh_args      ANSIBLE_SSH_ARGS          None
+ANSIBLE_SSH_CONTROL_PATH  ssh_connection:control_path  ANSIBLE_SSH_CONTROL_PATH  '%(directory)s/ansible-ssh-%%h-%%p-%%r'
 
 # misc
 DEFAULT_SYSLOG_FACILITY    syslog_facility    ANSIBLE_SYSLOG_FACILITY    LOG_USER
@@ -182,6 +183,7 @@ def load_constants(config_str):
     for line in config_str.splitlines():
         if not line.strip() or line.startswith('#'):
             continue
+        # preprocess line
         const = line.split()
         if len(const) > 5:  # long string value
             const[3:] = ''.join(const[3:])
@@ -190,8 +192,9 @@ def load_constants(config_str):
             const[3] = const[3][1:-1]  # strip quotes
         # pad to length 5
         const += ['']*(5 - len(const))
+        # convert to dictionary
         row = dict(zip(keys, const))
-        # normalize
+        # normalize values
         if row['env'] == 'None':
             row['env'] = None
         if row['default'] == 'None':
@@ -200,27 +203,28 @@ def load_constants(config_str):
             row['default'] = ''
         elif 'G' in row['flags']:   # value is the name of global variable
             row['default'] = globals()[row['default']]
+        # detect config section
+        section = 'defaults'
+        if ':' in row['key']:
+            section, row['key'] = row['key'].split(':') 
         # set global variable
         if   'X' in row['flags']:   # constant_name = shell_expand_path(key, env_var, default) 
-            globals()[row['name']] = shell_expand_path(get_config(p, DEFAULTS, row['key'], row['env'], row['default']))
+            globals()[row['name']] = shell_expand_path(get_config(p, section, row['key'], row['env'], row['default']))
         elif 'I' in row['flags']:   # constant_name = get_config(key, env, int(default), integer=True)
-            globals()[row['name']] = get_config(p, DEFAULTS, row['key'], row['env'], int(row['default']), integer=True)
+            globals()[row['name']] = get_config(p, section, row['key'], row['env'], int(row['default']), integer=True)
         elif 'B' in row['flags']:
             if row['default'] not in ['True', 'False']:
                 raise
             value = True
             if row['default'] == 'False':
                 value = False
-            globals()[row['name']] = get_config(p, DEFAULTS, row['key'], row['env'], value, boolean=True)
+            globals()[row['name']] = get_config(p, section, row['key'], row['env'], value, boolean=True)
         else:
-            globals()[row['name']] = get_config(p, DEFAULTS, row['key'], row['env'], row['default'])
+            globals()[row['name']] = get_config(p, section, row['key'], row['env'], row['default'])
 
 
-DEFAULT_SCP_IF_SSH        = get_config(p, 'ssh_connection', 'scp_if_ssh',       'ANSIBLE_SCP_IF_SSH',       False, boolean=True)
 
 # CONNECTION RELATED
-ANSIBLE_SSH_ARGS               = get_config(p, 'ssh_connection', 'ssh_args', 'ANSIBLE_SSH_ARGS', None)
-ANSIBLE_SSH_CONTROL_PATH       = get_config(p, 'ssh_connection', 'control_path', 'ANSIBLE_SSH_CONTROL_PATH', "%(directory)s/ansible-ssh-%%h-%%p-%%r")
 PARAMIKO_RECORD_HOST_KEYS      = get_config(p, 'paramiko_connection', 'record_host_keys', 'ANSIBLE_PARAMIKO_RECORD_HOST_KEYS', True, boolean=True)
 ZEROMQ_PORT                    = get_config(p, 'fireball_connection', 'zeromq_port', 'ANSIBLE_ZEROMQ_PORT', 5099, integer=True)
 ACCELERATE_PORT                = get_config(p, 'accelerate', 'accelerate_port', 'ACCELERATE_PORT', 5099, integer=True)

@@ -89,11 +89,17 @@ class TestConstants(unittest.TestCase):
         import ansible.constants as C
         assert C.DEFAULT_MANAGED_STR == 'Ansible managed: {file} modified on %Y-%m-%d %H:%M:%S by {uid} on {host}'
 
+    def test_configfile_load_section(self):
+        import ansible.constants as C
+        C.reload_config(os.path.dirname(__file__))
+        assert C.ANSIBLE_SSH_ARGS == ''
+
     #####################################
     ### reload_config unit tests
 
     def test_configfile_reload(self):
         import ansible.constants as C 
+        C.reload_config(None)
         assert C.DEFAULT_HOST_LIST == '/etc/ansible/hosts'
         C.reload_config(os.path.dirname(__file__))
         assert C.DEFAULT_HOST_LIST == './ansible_hosts'
