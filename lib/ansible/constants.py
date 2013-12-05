@@ -140,6 +140,10 @@ DEFAULT_EXECUTABLE        executable        ANSIBLE_EXECUTABLE        /bin/sh
 DEFAULT_TRANSPORT         transport         ANSIBLE_TRANSPORT         smart
 DEFAULT_REMOTE_PORT       remote_port       ANSIBLE_REMOTE_PORT       22                  I
 
+# misc
+DEFAULT_SYSLOG_FACILITY    syslog_facility    ANSIBLE_SYSLOG_FACILITY    LOG_USER
+DEFAULT_KEEP_REMOTE_FILES  keep_remote_files  ANSIBLE_KEEP_REMOTE_FILES  False     B
+
 
 DEFAULT_ACTION_PLUGIN_PATH      action_plugins      ANSIBLE_ACTION_PLUGINS      /usr/share/ansible_plugins/action_plugins
 DEFAULT_CALLBACK_PLUGIN_PATH    callback_plugins    ANSIBLE_CALLBACK_PLUGINS    /usr/share/ansible_plugins/callback_plugins
@@ -152,14 +156,17 @@ DEFAULT_FILTER_PLUGIN_PATH      filter_plugins      ANSIBLE_FILTER_PLUGINS      
 ANSIBLE_ETCD_URL          etcd_url          ANSIBLE_ETCD_URL          http://127.0.0.1:4001
 
 # software tuning
-DEFAULT_JINJA2_EXTENSIONS  jinja2_extensions  ANSIBLE_JINJA2_EXTENSIONS  None
 ANSIBLE_NOCOLOR            nocolor            ANSIBLE_NOCOLOR            False  B
 ANSIBLE_NOCOWS             nocows             ANSIBLE_NOCOWS             False  B
+DEFAULT_JINJA2_EXTENSIONS  jinja2_extensions  ANSIBLE_JINJA2_EXTENSIONS  None
+DISPLAY_SKIPPED_HOSTS      display_skipped_hosts  DISPLAY_SKIPPED_HOSTS  True   B
 
 # not recommended / deprecated
 DEFAULT_HASH_BEHAVIOUR             hash_behaviour             ANSIBLE_HASH_BEHAVIOUR             replace
+DEFAULT_UNDEFINED_VAR_BEHAVIOR     error_on_undefined_vars    ANSIBLE_ERROR_ON_UNDEFINED_VARS    True      B
 DEFAULT_LEGACY_PLAYBOOK_VARIABLES  legacy_playbook_variables  ANSIBLE_LEGACY_PLAYBOOK_VARIABLES  True      B
 DEPRECATION_WARNINGS               deprecation_warnings       ANSIBLE_DEPRECATION_WARNINGS       True      B
+HOST_KEY_CHECKING                  host_key_checking          ANSIBLE_HOST_KEY_CHECKING          True      B
 '''
 
 def load_constants(config_str):
@@ -205,12 +212,6 @@ def load_constants(config_str):
 
 DEFAULT_SCP_IF_SSH        = get_config(p, 'ssh_connection', 'scp_if_ssh',       'ANSIBLE_SCP_IF_SSH',       False, boolean=True)
 DEFAULT_MANAGED_STR       = get_config(p, DEFAULTS, 'ansible_managed',  None,           'Ansible managed: {file} modified on %Y-%m-%d %H:%M:%S by {uid} on {host}')
-DEFAULT_SYSLOG_FACILITY   = get_config(p, DEFAULTS, 'syslog_facility',  'ANSIBLE_SYSLOG_FACILITY', 'LOG_USER')
-DEFAULT_KEEP_REMOTE_FILES = get_config(p, DEFAULTS, 'keep_remote_files', 'ANSIBLE_KEEP_REMOTE_FILES', False, boolean=True)
-
-DISPLAY_SKIPPED_HOSTS          = get_config(p, DEFAULTS, 'display_skipped_hosts', 'DISPLAY_SKIPPED_HOSTS', True, boolean=True)
-DEFAULT_UNDEFINED_VAR_BEHAVIOR = get_config(p, DEFAULTS, 'error_on_undefined_vars', 'ANSIBLE_ERROR_ON_UNDEFINED_VARS', True, boolean=True)
-HOST_KEY_CHECKING              = get_config(p, DEFAULTS, 'host_key_checking',  'ANSIBLE_HOST_KEY_CHECKING',    True, boolean=True)
 
 # CONNECTION RELATED
 ANSIBLE_SSH_ARGS               = get_config(p, 'ssh_connection', 'ssh_args', 'ANSIBLE_SSH_ARGS', None)
