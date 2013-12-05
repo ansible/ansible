@@ -132,6 +132,12 @@ DEFAULT_REMOTE_USER       remote_user       ANSIBLE_REMOTE_USER       active_use
 DEFAULT_SUDO_USER         sudo_user         ANSIBLE_SUDO_USER         root
 DEFAULT_ASK_PASS          ask_pass          ANSIBLE_ASK_PASS          False               B
 DEFAULT_ASK_SUDO_PASS     ask_sudo_pass     ANSIBLE_ASK_SUDO_PASS     False               B
+DEFAULT_SUDO              sudo              ANSIBLE_SUDO              False               B
+DEFAULT_SUDO_EXE          sudo_exe          ANSIBLE_SUDO_EXE          sudo
+DEFAULT_SUDO_FLAGS        sudo_flags        ANSIBLE_SUDO_FLAGS        -H
+
+DEFAULT_TRANSPORT         transport         ANSIBLE_TRANSPORT         smart
+DEFAULT_REMOTE_PORT       remote_port       ANSIBLE_REMOTE_PORT       22                  I
 
 
 DEFAULT_ACTION_PLUGIN_PATH      action_plugins      ANSIBLE_ACTION_PLUGINS      /usr/share/ansible_plugins/action_plugins
@@ -186,15 +192,10 @@ def load_constants(config_str):
             globals()[row['name']] = get_config(p, DEFAULTS, row['key'], row['env'], row['default'])
 
 
-DEFAULT_REMOTE_PORT       = get_config(p, DEFAULTS, 'remote_port',      'ANSIBLE_REMOTE_PORT',      22, integer=True)
-DEFAULT_TRANSPORT         = get_config(p, DEFAULTS, 'transport',        'ANSIBLE_TRANSPORT',        'smart')
 DEFAULT_SCP_IF_SSH        = get_config(p, 'ssh_connection', 'scp_if_ssh',       'ANSIBLE_SCP_IF_SSH',       False, boolean=True)
 DEFAULT_MANAGED_STR       = get_config(p, DEFAULTS, 'ansible_managed',  None,           'Ansible managed: {file} modified on %Y-%m-%d %H:%M:%S by {uid} on {host}')
 DEFAULT_SYSLOG_FACILITY   = get_config(p, DEFAULTS, 'syslog_facility',  'ANSIBLE_SYSLOG_FACILITY', 'LOG_USER')
 DEFAULT_KEEP_REMOTE_FILES = get_config(p, DEFAULTS, 'keep_remote_files', 'ANSIBLE_KEEP_REMOTE_FILES', False, boolean=True)
-DEFAULT_SUDO              = get_config(p, DEFAULTS, 'sudo', 'ANSIBLE_SUDO', False, boolean=True)
-DEFAULT_SUDO_EXE          = get_config(p, DEFAULTS, 'sudo_exe', 'ANSIBLE_SUDO_EXE', 'sudo')
-DEFAULT_SUDO_FLAGS        = get_config(p, DEFAULTS, 'sudo_flags', 'ANSIBLE_SUDO_FLAGS', '-H')
 DEFAULT_HASH_BEHAVIOUR    = get_config(p, DEFAULTS, 'hash_behaviour', 'ANSIBLE_HASH_BEHAVIOUR', 'replace')
 DEFAULT_LEGACY_PLAYBOOK_VARIABLES = get_config(p, DEFAULTS, 'legacy_playbook_variables', 'ANSIBLE_LEGACY_PLAYBOOK_VARIABLES', True, boolean=True)
 DEFAULT_JINJA2_EXTENSIONS = get_config(p, DEFAULTS, 'jinja2_extensions', 'ANSIBLE_JINJA2_EXTENSIONS', None)
