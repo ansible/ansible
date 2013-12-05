@@ -259,7 +259,7 @@ class User(object):
         cmd = [self.module.get_bin_path('userdel', True)]
         if self.force:
             cmd.append('-f')
-        elif self.remove:
+        if self.remove:
             cmd.append('-r')
         cmd.append(self.name)
 
