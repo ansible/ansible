@@ -160,6 +160,7 @@ ANSIBLE_NOCOLOR            nocolor            ANSIBLE_NOCOLOR            False  
 ANSIBLE_NOCOWS             nocows             ANSIBLE_NOCOWS             False  B
 DEFAULT_JINJA2_EXTENSIONS  jinja2_extensions  ANSIBLE_JINJA2_EXTENSIONS  None
 DISPLAY_SKIPPED_HOSTS      display_skipped_hosts  DISPLAY_SKIPPED_HOSTS  True   B
+DEFAULT_MANAGED_STR        ansible_managed    None                       'Ansible managed: {file} modified on %Y-%m-%d %H:%M:%S by {uid} on {host}'
 
 # not recommended / deprecated
 DEFAULT_HASH_BEHAVIOUR             hash_behaviour             ANSIBLE_HASH_BEHAVIOUR             replace
@@ -182,6 +183,11 @@ def load_constants(config_str):
         if not line.strip() or line.startswith('#'):
             continue
         const = line.split()
+        if len(const) > 5:  # long string value
+            const[3:] = ''.join(const[3:])
+            if not const[3].startswith("'") and not const[3].endswith("'"):
+                raise
+            const[3] = const[3][1:-1]  # strip quotes
         # pad to length 5
         const += ['']*(5 - len(const))
         row = dict(zip(keys, const))
@@ -211,7 +217,6 @@ def load_constants(config_str):
 
 
 DEFAULT_SCP_IF_SSH        = get_config(p, 'ssh_connection', 'scp_if_ssh',       'ANSIBLE_SCP_IF_SSH',       False, boolean=True)
-DEFAULT_MANAGED_STR       = get_config(p, DEFAULTS, 'ansible_managed',  None,           'Ansible managed: {file} modified on %Y-%m-%d %H:%M:%S by {uid} on {host}')
 
 # CONNECTION RELATED
 ANSIBLE_SSH_ARGS               = get_config(p, 'ssh_connection', 'ssh_args', 'ANSIBLE_SSH_ARGS', None)

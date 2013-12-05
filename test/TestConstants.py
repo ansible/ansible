@@ -85,6 +85,10 @@ class TestConstants(unittest.TestCase):
         C.load_constants(table)
         assert C.__dict__[r] == v
 
+    def test_configfile_load_longstring(self):
+        import ansible.constants as C
+        assert C.DEFAULT_MANAGED_STR == 'Ansible managed: {file} modified on %Y-%m-%d %H:%M:%S by {uid} on {host}'
+
     #####################################
     ### reload_config unit tests
 
