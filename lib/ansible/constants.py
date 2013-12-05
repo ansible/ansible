@@ -109,10 +109,10 @@ DEFAULTS='defaults'
 _PATHS = '''
 # constant_name              key               env_var                    default         flags
 
-DEFAULT_HOST_LIST         hostfile          ANSIBLE_HOSTS             /etc/ansible/hosts
-DEFAULT_REMOTE_TMP        remote_tmp        ANSIBLE_REMOTE_TEMP       $HOME/.ansible/tmp
-DEFAULT_PRIVATE_KEY_FILE  private_key_file  ANSIBLE_PRIVATE_KEY_FILE  None                N
-DEFAULT_LOG_PATH          log_path          ANSIBLE_LOG_PATH
+DEFAULT_HOST_LIST         hostfile          ANSIBLE_HOSTS             /etc/ansible/hosts  X
+DEFAULT_REMOTE_TMP        remote_tmp        ANSIBLE_REMOTE_TEMP       $HOME/.ansible/tmp  X
+DEFAULT_PRIVATE_KEY_FILE  private_key_file  ANSIBLE_PRIVATE_KEY_FILE  None                X
+DEFAULT_LOG_PATH          log_path          ANSIBLE_LOG_PATH          ''                  X
 '''
 
 def load_constants(config_str):
@@ -132,15 +132,13 @@ def load_constants(config_str):
         const += ['']*(5 - len(const))
         row = dict(zip(keys, const))
         # normalize
-        if 'N' in row['flags']:
-            if row['default'] != 'None':
-                raise('N flag means None, please correct %s line' % row['name'])
-            else:
-                row['default'] = None
+        if row['default'] == 'None':
+            row['default'] = None
+        elif row['default'] == "''":
+            row['default'] == ''
         # set global variable
-        # - paths:
-        #    constant_name = shell_expand_path(key, env_var, default)
-        globals()[row['name']] = shell_expand_path(get_config(p, DEFAULTS, row['key'], row['env'], row['default']))
+        if 'X' in row['flags']:   # constant_name = shell_expand_path(key, env_var, default) 
+            globals()[row['name']] = shell_expand_path(get_config(p, DEFAULTS, row['key'], row['env'], row['default']))
 
 
 DEFAULT_MODULE_PATH       = get_config(p, DEFAULTS, 'library',          'ANSIBLE_LIBRARY',          DIST_MODULE_PATH)
