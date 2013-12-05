@@ -286,7 +286,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_together=rax_required_together,
+        required_together=rax_required_together(),
     )
 
     algorithm = module.params.get('algorithm')
