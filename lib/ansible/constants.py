@@ -102,7 +102,7 @@ YAML_FILENAME_EXTENSIONS = [ "", ".yml", ".yaml" ]
 
 # configurable things
 _TABLE = '''
-# constant_name              key               env_var                    default         flags
+# constant_name            section:key          env_var                    default        flags
 
 DEFAULT_HOST_LIST         hostfile          ANSIBLE_HOSTS             /etc/ansible/hosts  X
 DEFAULT_REMOTE_TMP        remote_tmp        ANSIBLE_REMOTE_TEMP       $HOME/.ansible/tmp  X
@@ -140,6 +140,14 @@ DEFAULT_REMOTE_PORT       remote_port       ANSIBLE_REMOTE_PORT       22        
 DEFAULT_SCP_IF_SSH        ssh_connection:scp_if_ssh    ANSIBLE_SCP_IF_SSH        False    B
 ANSIBLE_SSH_ARGS          ssh_connection:ssh_args      ANSIBLE_SSH_ARGS          None
 ANSIBLE_SSH_CONTROL_PATH  ssh_connection:control_path  ANSIBLE_SSH_CONTROL_PATH  '%(directory)s/ansible-ssh-%%h-%%p-%%r'
+
+PARAMIKO_RECORD_HOST_KEYS   paramiko_connection:record_host_keys   ANSIBLE_PARAMIKO_RECORD_HOST_KEYS  True  B
+PARAMIKO_PTY                paramiko_connection:pty                ANSIBLE_PARAMIKO_PTY               True  B
+ZEROMQ_PORT                 fireball_connection:zeromq_port        ANSIBLE_ZEROMQ_PORT                5099  I
+ACCELERATE_PORT             accelerate:accelerate_port             ACCELERATE_PORT                    5099  I
+ACCELERATE_TIMEOUT          accelerate:accelerate_timeout          ACCELERATE_TIMEOUT                   30  I
+ACCELERATE_CONNECT_TIMEOUT  accelerate:accelerate_connect_timeout  ACCELERATE_CONNECT_TIMEOUT          1.0  F
+
 
 # misc
 DEFAULT_SYSLOG_FACILITY    syslog_facility    ANSIBLE_SYSLOG_FACILITY    LOG_USER
@@ -212,6 +220,8 @@ def load_constants(config_str):
             globals()[row['name']] = shell_expand_path(get_config(p, section, row['key'], row['env'], row['default']))
         elif 'I' in row['flags']:   # constant_name = get_config(key, env, int(default), integer=True)
             globals()[row['name']] = get_config(p, section, row['key'], row['env'], int(row['default']), integer=True)
+        elif 'F' in row['flags']:   # constant_name = get_config(key, env, float(default), integer=True)
+            globals()[row['name']] = get_config(p, section, row['key'], row['env'], float(row['default']), floating=True)
         elif 'B' in row['flags']:
             if row['default'] not in ['True', 'False']:
                 raise
@@ -222,15 +232,6 @@ def load_constants(config_str):
         else:
             globals()[row['name']] = get_config(p, section, row['key'], row['env'], row['default'])
 
-
-
-# CONNECTION RELATED
-PARAMIKO_RECORD_HOST_KEYS      = get_config(p, 'paramiko_connection', 'record_host_keys', 'ANSIBLE_PARAMIKO_RECORD_HOST_KEYS', True, boolean=True)
-ZEROMQ_PORT                    = get_config(p, 'fireball_connection', 'zeromq_port', 'ANSIBLE_ZEROMQ_PORT', 5099, integer=True)
-ACCELERATE_PORT                = get_config(p, 'accelerate', 'accelerate_port', 'ACCELERATE_PORT', 5099, integer=True)
-ACCELERATE_TIMEOUT             = get_config(p, 'accelerate', 'accelerate_timeout', 'ACCELERATE_TIMEOUT', 30, integer=True)
-ACCELERATE_CONNECT_TIMEOUT     = get_config(p, 'accelerate', 'accelerate_connect_timeout', 'ACCELERATE_CONNECT_TIMEOUT', 1.0, floating=True)
-PARAMIKO_PTY                   = get_config(p, 'paramiko_connection', 'pty', 'ANSIBLE_PARAMIKO_PTY', True, boolean=True)
 
 # characters included in auto-generated passwords
 DEFAULT_PASSWORD_CHARS = ascii_letters + digits + ".,:-_"
