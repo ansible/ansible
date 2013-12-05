@@ -55,21 +55,22 @@ def _get_config(p, section, key, env_var, default, boolean=True):
             return default
     return default
 
-def load_config_file():
+def load_config_file(path=None):
     p = ConfigParser.ConfigParser()
-    path1 = os.getcwd() + "/ansible.cfg"
-    path2 = os.path.expanduser(os.environ.get('ANSIBLE_CONFIG', "~/.ansible.cfg"))
-    path3 = "/etc/ansible/ansible.cfg"
+    paths = []
+    if path == None:
+        paths.append(os.getcwd() + "/ansible.cfg")
+    else:
+        paths.append(path + "/ansible.cfg")
+    paths.append(os.path.expanduser(os.environ.get('ANSIBLE_CONFIG', "~/.ansible.cfg")))
+    paths.append("/etc/ansible/ansible.cfg")
 
-    if os.path.exists(path1):
-        p.read(path1)
-    elif os.path.exists(path2):
-        p.read(path2)
-    elif os.path.exists(path3):
-        p.read(path3)
+    for entry in paths:
+        if os.path.exists(entry):
+            p.read(entry)
+            return p
     else:
         return None
-    return p
 
 def shell_expand_path(path):
     ''' shell_expand_path is needed as os.path.expanduser does not work
@@ -78,7 +79,12 @@ def shell_expand_path(path):
         path = os.path.expanduser(path)
     return path
 
-p = load_config_file()
+def reload_config(path=None):
+    global p
+    p = load_config_file(path)
+    load_constants(_TABLE)
+
+p = None
 
 active_user   = pwd.getpwuid(os.geteuid())[0]
 
@@ -94,73 +100,147 @@ else:
 # group variables
 YAML_FILENAME_EXTENSIONS = [ "", ".yml", ".yaml" ]
 
-# sections in config file
-DEFAULTS='defaults'
-
 # configurable things
-DEFAULT_HOST_LIST         = shell_expand_path(get_config(p, DEFAULTS, 'hostfile', 'ANSIBLE_HOSTS', '/etc/ansible/hosts'))
-DEFAULT_MODULE_PATH       = get_config(p, DEFAULTS, 'library',          'ANSIBLE_LIBRARY',          DIST_MODULE_PATH)
-DEFAULT_ROLES_PATH        = get_config(p, DEFAULTS, 'roles_path',       'ANSIBLE_ROLES_PATH',       None)
-DEFAULT_REMOTE_TMP        = shell_expand_path(get_config(p, DEFAULTS, 'remote_tmp',       'ANSIBLE_REMOTE_TEMP',      '$HOME/.ansible/tmp'))
-DEFAULT_MODULE_NAME       = get_config(p, DEFAULTS, 'module_name',      None,                       'command')
-DEFAULT_PATTERN           = get_config(p, DEFAULTS, 'pattern',          None,                       '*')
-DEFAULT_FORKS             = get_config(p, DEFAULTS, 'forks',            'ANSIBLE_FORKS',            5, integer=True)
-DEFAULT_MODULE_ARGS       = get_config(p, DEFAULTS, 'module_args',      'ANSIBLE_MODULE_ARGS',      '')
-DEFAULT_MODULE_LANG       = get_config(p, DEFAULTS, 'module_lang',      'ANSIBLE_MODULE_LANG',      'C')
-DEFAULT_TIMEOUT           = get_config(p, DEFAULTS, 'timeout',          'ANSIBLE_TIMEOUT',          10, integer=True)
-DEFAULT_POLL_INTERVAL     = get_config(p, DEFAULTS, 'poll_interval',    'ANSIBLE_POLL_INTERVAL',    15, integer=True)
-DEFAULT_REMOTE_USER       = get_config(p, DEFAULTS, 'remote_user',      'ANSIBLE_REMOTE_USER',      active_user)
-DEFAULT_ASK_PASS          = get_config(p, DEFAULTS, 'ask_pass',  'ANSIBLE_ASK_PASS',    False, boolean=True)
-DEFAULT_PRIVATE_KEY_FILE  = shell_expand_path(get_config(p, DEFAULTS, 'private_key_file', 'ANSIBLE_PRIVATE_KEY_FILE', None))
-DEFAULT_SUDO_USER         = get_config(p, DEFAULTS, 'sudo_user',        'ANSIBLE_SUDO_USER',        'root')
-DEFAULT_ASK_SUDO_PASS     = get_config(p, DEFAULTS, 'ask_sudo_pass',    'ANSIBLE_ASK_SUDO_PASS',    False, boolean=True)
-DEFAULT_REMOTE_PORT       = get_config(p, DEFAULTS, 'remote_port',      'ANSIBLE_REMOTE_PORT',      22, integer=True)
-DEFAULT_TRANSPORT         = get_config(p, DEFAULTS, 'transport',        'ANSIBLE_TRANSPORT',        'smart')
-DEFAULT_SCP_IF_SSH        = get_config(p, 'ssh_connection', 'scp_if_ssh',       'ANSIBLE_SCP_IF_SSH',       False, boolean=True)
-DEFAULT_MANAGED_STR       = get_config(p, DEFAULTS, 'ansible_managed',  None,           'Ansible managed: {file} modified on %Y-%m-%d %H:%M:%S by {uid} on {host}')
-DEFAULT_SYSLOG_FACILITY   = get_config(p, DEFAULTS, 'syslog_facility',  'ANSIBLE_SYSLOG_FACILITY', 'LOG_USER')
-DEFAULT_KEEP_REMOTE_FILES = get_config(p, DEFAULTS, 'keep_remote_files', 'ANSIBLE_KEEP_REMOTE_FILES', False, boolean=True)
-DEFAULT_SUDO              = get_config(p, DEFAULTS, 'sudo', 'ANSIBLE_SUDO', False, boolean=True)
-DEFAULT_SUDO_EXE          = get_config(p, DEFAULTS, 'sudo_exe', 'ANSIBLE_SUDO_EXE', 'sudo')
-DEFAULT_SUDO_FLAGS        = get_config(p, DEFAULTS, 'sudo_flags', 'ANSIBLE_SUDO_FLAGS', '-H')
-DEFAULT_HASH_BEHAVIOUR    = get_config(p, DEFAULTS, 'hash_behaviour', 'ANSIBLE_HASH_BEHAVIOUR', 'replace')
-DEFAULT_LEGACY_PLAYBOOK_VARIABLES = get_config(p, DEFAULTS, 'legacy_playbook_variables', 'ANSIBLE_LEGACY_PLAYBOOK_VARIABLES', True, boolean=True)
-DEFAULT_JINJA2_EXTENSIONS = get_config(p, DEFAULTS, 'jinja2_extensions', 'ANSIBLE_JINJA2_EXTENSIONS', None)
-DEFAULT_EXECUTABLE        = get_config(p, DEFAULTS, 'executable', 'ANSIBLE_EXECUTABLE', '/bin/sh')
+_TABLE = '''
+# constant_name            section:key          env_var                    default        flags
 
-DEFAULT_ACTION_PLUGIN_PATH     = get_config(p, DEFAULTS, 'action_plugins',     'ANSIBLE_ACTION_PLUGINS', '/usr/share/ansible_plugins/action_plugins')
-DEFAULT_CALLBACK_PLUGIN_PATH   = get_config(p, DEFAULTS, 'callback_plugins',   'ANSIBLE_CALLBACK_PLUGINS', '/usr/share/ansible_plugins/callback_plugins')
-DEFAULT_CONNECTION_PLUGIN_PATH = get_config(p, DEFAULTS, 'connection_plugins', 'ANSIBLE_CONNECTION_PLUGINS', '/usr/share/ansible_plugins/connection_plugins')
-DEFAULT_LOOKUP_PLUGIN_PATH     = get_config(p, DEFAULTS, 'lookup_plugins',     'ANSIBLE_LOOKUP_PLUGINS', '/usr/share/ansible_plugins/lookup_plugins')
-DEFAULT_VARS_PLUGIN_PATH       = get_config(p, DEFAULTS, 'vars_plugins',       'ANSIBLE_VARS_PLUGINS', '/usr/share/ansible_plugins/vars_plugins')
-DEFAULT_FILTER_PLUGIN_PATH     = get_config(p, DEFAULTS, 'filter_plugins',     'ANSIBLE_FILTER_PLUGINS', '/usr/share/ansible_plugins/filter_plugins')
-DEFAULT_LOG_PATH               = shell_expand_path(get_config(p, DEFAULTS, 'log_path',           'ANSIBLE_LOG_PATH', ''))
+DEFAULT_HOST_LIST         hostfile          ANSIBLE_HOSTS             /etc/ansible/hosts  X
+DEFAULT_REMOTE_TMP        remote_tmp        ANSIBLE_REMOTE_TEMP       $HOME/.ansible/tmp  X
+DEFAULT_PRIVATE_KEY_FILE  private_key_file  ANSIBLE_PRIVATE_KEY_FILE  None                X
+DEFAULT_LOG_PATH          log_path          ANSIBLE_LOG_PATH          ''                  X
 
-ANSIBLE_NOCOLOR                = get_config(p, DEFAULTS, 'nocolor', 'ANSIBLE_NOCOLOR', None, boolean=True)
-ANSIBLE_NOCOWS                 = get_config(p, DEFAULTS, 'nocows', 'ANSIBLE_NOCOWS', None, boolean=True)
-DISPLAY_SKIPPED_HOSTS          = get_config(p, DEFAULTS, 'display_skipped_hosts', 'DISPLAY_SKIPPED_HOSTS', True, boolean=True)
-DEFAULT_UNDEFINED_VAR_BEHAVIOR = get_config(p, DEFAULTS, 'error_on_undefined_vars', 'ANSIBLE_ERROR_ON_UNDEFINED_VARS', True, boolean=True)
-HOST_KEY_CHECKING              = get_config(p, DEFAULTS, 'host_key_checking',  'ANSIBLE_HOST_KEY_CHECKING',    True, boolean=True)
-DEPRECATION_WARNINGS           = get_config(p, DEFAULTS, 'deprecation_warnings', 'ANSIBLE_DEPRECATION_WARNINGS', True, boolean=True)
+# path to standard system location for shared files
+DEFAULT_MODULE_PATH       library           ANSIBLE_LIBRARY           DIST_MODULE_PATH    G
+DEFAULT_ROLES_PATH        roles_path        ANSIBLE_ROLES_PATH        None
 
-# CONNECTION RELATED
-ANSIBLE_SSH_ARGS               = get_config(p, 'ssh_connection', 'ssh_args', 'ANSIBLE_SSH_ARGS', None)
-ANSIBLE_SSH_CONTROL_PATH       = get_config(p, 'ssh_connection', 'control_path', 'ANSIBLE_SSH_CONTROL_PATH', "%(directory)s/ansible-ssh-%%h-%%p-%%r")
-PARAMIKO_RECORD_HOST_KEYS      = get_config(p, 'paramiko_connection', 'record_host_keys', 'ANSIBLE_PARAMIKO_RECORD_HOST_KEYS', True, boolean=True)
-ZEROMQ_PORT                    = get_config(p, 'fireball_connection', 'zeromq_port', 'ANSIBLE_ZEROMQ_PORT', 5099, integer=True)
-ACCELERATE_PORT                = get_config(p, 'accelerate', 'accelerate_port', 'ACCELERATE_PORT', 5099, integer=True)
-ACCELERATE_TIMEOUT             = get_config(p, 'accelerate', 'accelerate_timeout', 'ACCELERATE_TIMEOUT', 30, integer=True)
-ACCELERATE_CONNECT_TIMEOUT     = get_config(p, 'accelerate', 'accelerate_connect_timeout', 'ACCELERATE_CONNECT_TIMEOUT', 1.0, floating=True)
-PARAMIKO_PTY                   = get_config(p, 'paramiko_connection', 'pty', 'ANSIBLE_PARAMIKO_PTY', True, boolean=True)
+# default hosts pattern
+DEFAULT_PATTERN           pattern           None                      *
+
+DEFAULT_MODULE_NAME       module_name       None                      command
+DEFAULT_MODULE_ARGS       module_args       ANSIBLE_MODULE_ARGS
+DEFAULT_MODULE_LANG       module_lang       ANSIBLE_MODULE_LANG       C
+
+DEFAULT_FORKS             forks             ANSIBLE_FORKS             5                   I
+DEFAULT_TIMEOUT           timeout           ANSIBLE_TIMEOUT           10                  I
+DEFAULT_POLL_INTERVAL     poll_interval     ANSIBLE_POLL_INTERVAL     15                  I
+
+# connection related
+DEFAULT_REMOTE_USER       remote_user       ANSIBLE_REMOTE_USER       active_user         G
+DEFAULT_SUDO_USER         sudo_user         ANSIBLE_SUDO_USER         root
+DEFAULT_ASK_PASS          ask_pass          ANSIBLE_ASK_PASS          False               B
+DEFAULT_ASK_SUDO_PASS     ask_sudo_pass     ANSIBLE_ASK_SUDO_PASS     False               B
+DEFAULT_SUDO              sudo              ANSIBLE_SUDO              False               B
+DEFAULT_SUDO_EXE          sudo_exe          ANSIBLE_SUDO_EXE          sudo
+DEFAULT_SUDO_FLAGS        sudo_flags        ANSIBLE_SUDO_FLAGS        -H
+DEFAULT_EXECUTABLE        executable        ANSIBLE_EXECUTABLE        /bin/sh
+
+DEFAULT_TRANSPORT         transport         ANSIBLE_TRANSPORT         smart
+DEFAULT_REMOTE_PORT       remote_port       ANSIBLE_REMOTE_PORT       22                  I
+
+DEFAULT_SCP_IF_SSH        ssh_connection:scp_if_ssh    ANSIBLE_SCP_IF_SSH        False    B
+ANSIBLE_SSH_ARGS          ssh_connection:ssh_args      ANSIBLE_SSH_ARGS          None
+ANSIBLE_SSH_CONTROL_PATH  ssh_connection:control_path  ANSIBLE_SSH_CONTROL_PATH  '%(directory)s/ansible-ssh-%%h-%%p-%%r'
+
+PARAMIKO_RECORD_HOST_KEYS   paramiko_connection:record_host_keys   ANSIBLE_PARAMIKO_RECORD_HOST_KEYS  True  B
+PARAMIKO_PTY                paramiko_connection:pty                ANSIBLE_PARAMIKO_PTY               True  B
+ZEROMQ_PORT                 fireball_connection:zeromq_port        ANSIBLE_ZEROMQ_PORT                5099  I
+ACCELERATE_PORT             accelerate:accelerate_port             ACCELERATE_PORT                    5099  I
+ACCELERATE_TIMEOUT          accelerate:accelerate_timeout          ACCELERATE_TIMEOUT                   30  I
+ACCELERATE_CONNECT_TIMEOUT  accelerate:accelerate_connect_timeout  ACCELERATE_CONNECT_TIMEOUT          1.0  F
+
+
+# misc
+DEFAULT_SYSLOG_FACILITY    syslog_facility    ANSIBLE_SYSLOG_FACILITY    LOG_USER
+DEFAULT_KEEP_REMOTE_FILES  keep_remote_files  ANSIBLE_KEEP_REMOTE_FILES  False     B
+
+
+DEFAULT_ACTION_PLUGIN_PATH      action_plugins      ANSIBLE_ACTION_PLUGINS      /usr/share/ansible_plugins/action_plugins
+DEFAULT_CALLBACK_PLUGIN_PATH    callback_plugins    ANSIBLE_CALLBACK_PLUGINS    /usr/share/ansible_plugins/callback_plugins
+DEFAULT_CONNECTION_PLUGIN_PATH  connection_plugins  ANSIBLE_CONNECTION_PLUGINS  /usr/share/ansible_plugins/connection_plugins
+DEFAULT_LOOKUP_PLUGIN_PATH      lookup_plugins      ANSIBLE_LOOKUP_PLUGINS      /usr/share/ansible_plugins/lookup_plugins
+DEFAULT_VARS_PLUGIN_PATH        vars_plugins        ANSIBLE_VARS_PLUGINS        /usr/share/ansible_plugins/vars_plugins
+DEFAULT_FILTER_PLUGIN_PATH      filter_plugins      ANSIBLE_FILTER_PLUGINS      /usr/share/ansible_plugins/filter_plugins
+
+# lookup plugin related
+ANSIBLE_ETCD_URL          etcd_url          ANSIBLE_ETCD_URL          http://127.0.0.1:4001
+
+# software tuning
+ANSIBLE_NOCOLOR            nocolor            ANSIBLE_NOCOLOR            False  B
+ANSIBLE_NOCOWS             nocows             ANSIBLE_NOCOWS             False  B
+DEFAULT_JINJA2_EXTENSIONS  jinja2_extensions  ANSIBLE_JINJA2_EXTENSIONS  None
+DISPLAY_SKIPPED_HOSTS      display_skipped_hosts  DISPLAY_SKIPPED_HOSTS  True   B
+DEFAULT_MANAGED_STR        ansible_managed    None                       'Ansible managed: {file} modified on %Y-%m-%d %H:%M:%S by {uid} on {host}'
+
+# not recommended / deprecated
+DEFAULT_HASH_BEHAVIOUR             hash_behaviour             ANSIBLE_HASH_BEHAVIOUR             replace
+DEFAULT_UNDEFINED_VAR_BEHAVIOR     error_on_undefined_vars    ANSIBLE_ERROR_ON_UNDEFINED_VARS    True      B
+DEFAULT_LEGACY_PLAYBOOK_VARIABLES  legacy_playbook_variables  ANSIBLE_LEGACY_PLAYBOOK_VARIABLES  True      B
+DEPRECATION_WARNINGS               deprecation_warnings       ANSIBLE_DEPRECATION_WARNINGS       True      B
+HOST_KEY_CHECKING                  host_key_checking          ANSIBLE_HOST_KEY_CHECKING          True      B
+'''
+
+def load_constants(config_str):
+    """
+    Set module constants by parsing definition from config_str.
+    This method can be used to relod constants after import phase
+    finished (for example, when detecting and loading ansible.cfg
+    from alternative location, such a playbook dir)
+    """
+    global p
+    keys = ['name', 'key', 'env', 'default', 'flags']
+    for line in config_str.splitlines():
+        if not line.strip() or line.startswith('#'):
+            continue
+        # preprocess line
+        const = line.split()
+        if len(const) > 5:  # long string value
+            const[3:] = ''.join(const[3:])
+            if not const[3].startswith("'") and not const[3].endswith("'"):
+                raise
+            const[3] = const[3][1:-1]  # strip quotes
+        # pad to length 5
+        const += ['']*(5 - len(const))
+        # convert to dictionary
+        row = dict(zip(keys, const))
+        # normalize values
+        if row['env'] == 'None':
+            row['env'] = None
+        if row['default'] == 'None':
+            row['default'] = None
+        elif row['default'] == "''":
+            row['default'] = ''
+        elif 'G' in row['flags']:   # value is the name of global variable
+            row['default'] = globals()[row['default']]
+        # detect config section
+        section = 'defaults'
+        if ':' in row['key']:
+            section, row['key'] = row['key'].split(':') 
+        # set global variable
+        if   'X' in row['flags']:   # constant_name = shell_expand_path(key, env_var, default) 
+            globals()[row['name']] = shell_expand_path(get_config(p, section, row['key'], row['env'], row['default']))
+        elif 'I' in row['flags']:   # constant_name = get_config(key, env, int(default), integer=True)
+            globals()[row['name']] = get_config(p, section, row['key'], row['env'], int(row['default']), integer=True)
+        elif 'F' in row['flags']:   # constant_name = get_config(key, env, float(default), integer=True)
+            globals()[row['name']] = get_config(p, section, row['key'], row['env'], float(row['default']), floating=True)
+        elif 'B' in row['flags']:
+            if row['default'] not in ['True', 'False']:
+                raise
+            value = True
+            if row['default'] == 'False':
+                value = False
+            globals()[row['name']] = get_config(p, section, row['key'], row['env'], value, boolean=True)
+        else:
+            globals()[row['name']] = get_config(p, section, row['key'], row['env'], row['default'])
+
 
 # characters included in auto-generated passwords
 DEFAULT_PASSWORD_CHARS = ascii_letters + digits + ".,:-_"
-
-# LOOKUP PLUGIN RELATED
-ANSIBLE_ETCD_URL               = get_config(p, DEFAULTS, 'etcd_url', 'ANSIBLE_ETCD_URL', 'http://127.0.0.1:4001')
 
 # non-configurable things
 DEFAULT_SUDO_PASS         = None
 DEFAULT_REMOTE_PASS       = None
 DEFAULT_SUBSET            = None
+
+reload_config()
+
 

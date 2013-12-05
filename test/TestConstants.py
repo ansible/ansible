@@ -62,3 +62,45 @@ class TestConstants(unittest.TestCase):
         res = get_config(p, 'defaults', 'doesnt_exist', env_var, 'default')
 
         assert res == 'default'
+
+
+    #####################################
+    ### load_constants unit tests
+
+    def test_configfile_load_expansion(self):
+        import ansible.constants as C
+        r = 'TEST_C' + random_string(6)
+        v = '~/path'
+        table = "%s   test  TEST  %s  X" % (r ,v)
+        C.load_constants(table)
+        assert C.__dict__[r] != v
+        assert C.__dict__[r].endswith('/path')
+
+    def test_configfile_load_envflag(self):
+        import ansible.constants as C
+        r = 'TEST_C' + random_string(6)
+        v = 'newstuff'
+        C.__dict__['ANSIBLE_'+r] = v
+        table = "%s   test  TEST  %s  G" % (r ,'ANSIBLE_'+r)
+        C.load_constants(table)
+        assert C.__dict__[r] == v
+
+    def test_configfile_load_longstring(self):
+        import ansible.constants as C
+        assert C.DEFAULT_MANAGED_STR == 'Ansible managed: {file} modified on %Y-%m-%d %H:%M:%S by {uid} on {host}'
+
+    def test_configfile_load_section(self):
+        import ansible.constants as C
+        C.reload_config(os.path.dirname(__file__))
+        assert C.ANSIBLE_SSH_ARGS == ''
+
+    #####################################
+    ### reload_config unit tests
+
+    def test_configfile_reload(self):
+        import ansible.constants as C 
+        C.reload_config(None)
+        assert C.DEFAULT_HOST_LIST == '/etc/ansible/hosts'
+        C.reload_config(os.path.dirname(__file__))
+        assert C.DEFAULT_HOST_LIST == './ansible_hosts'
+
