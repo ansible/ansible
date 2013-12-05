@@ -112,7 +112,12 @@ DEFAULT_REMOTE_TMP        remote_tmp        ANSIBLE_REMOTE_TEMP       $HOME/.ans
 DEFAULT_PRIVATE_KEY_FILE  private_key_file  ANSIBLE_PRIVATE_KEY_FILE  None                X
 DEFAULT_LOG_PATH          log_path          ANSIBLE_LOG_PATH          ''                  X
 
+# path to standard system location for shared files
 DEFAULT_MODULE_PATH       library           ANSIBLE_LIBRARY           DIST_MODULE_PATH    G
+
+DEFAULT_MODULE_NAME       module_name       None                      command
+DEFAULT_MODULE_ARGS       module_args       ANSIBLE_MODULE_ARGS
+DEFAULT_MODULE_LANG       module_lang       ANSIBLE_MODULE_LANG       C
 
 DEFAULT_FORKS             forks             ANSIBLE_FORKS             5                   I
 DEFAULT_TIMEOUT           timeout           ANSIBLE_TIMEOUT           10                  I
@@ -148,6 +153,8 @@ def load_constants(config_str):
         # normalize
         if row['default'] == 'None':
             row['default'] = None
+        if row['env'] == 'None':
+            row['env'] = None
         elif row['default'] == "''":
             row['default'] = ''
         elif 'G' in row['flags']:   # value is the name of global variable
@@ -161,10 +168,7 @@ def load_constants(config_str):
             globals()[row['name']] = get_config(p, DEFAULTS, row['key'], row['env'], row['default'])
 
 DEFAULT_ROLES_PATH        = get_config(p, DEFAULTS, 'roles_path',       'ANSIBLE_ROLES_PATH',       None)
-DEFAULT_MODULE_NAME       = get_config(p, DEFAULTS, 'module_name',      None,                       'command')
 DEFAULT_PATTERN           = get_config(p, DEFAULTS, 'pattern',          None,                       '*')
-DEFAULT_MODULE_ARGS       = get_config(p, DEFAULTS, 'module_args',      'ANSIBLE_MODULE_ARGS',      '')
-DEFAULT_MODULE_LANG       = get_config(p, DEFAULTS, 'module_lang',      'ANSIBLE_MODULE_LANG',      'C')
 DEFAULT_REMOTE_USER       = get_config(p, DEFAULTS, 'remote_user',      'ANSIBLE_REMOTE_USER',      active_user)
 DEFAULT_ASK_PASS          = get_config(p, DEFAULTS, 'ask_pass',  'ANSIBLE_ASK_PASS',    False, boolean=True)
 DEFAULT_SUDO_USER         = get_config(p, DEFAULTS, 'sudo_user',        'ANSIBLE_SUDO_USER',        'root')
