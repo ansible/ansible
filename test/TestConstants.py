@@ -62,3 +62,14 @@ class TestConstants(unittest.TestCase):
         res = get_config(p, 'defaults', 'doesnt_exist', env_var, 'default')
 
         assert res == 'default'
+
+
+    #####################################
+    ### reload_config unit tests
+
+    def test_configfile_reload(self):
+        import ansible.constants as C 
+        assert C.DEFAULT_HOST_LIST == '/etc/ansible/hosts'
+        C.reload_config(os.path.dirname(__file__))
+        assert C.DEFAULT_HOST_LIST == './ansible_hosts'
+
