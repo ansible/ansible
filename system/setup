@@ -1787,7 +1787,7 @@ class FreeBSDNetwork(GenericBsdIfconfigNetwork, Network):
 
 class AIXNetwork(GenericBsdIfconfigNetwork, Network):
     """
-    This is the FreeBSD Network Class.
+    This is the AIX Network Class.
     It uses the GenericBsdIfconfigNetwork unchanged.
     """
     platform = 'AIX'
