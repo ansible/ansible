@@ -1463,7 +1463,7 @@ class HPUX(User):
 
     def remove_user_userdel(self):
         rc, stdout, stderr = self.module.run_command("uname -r")
-        release = stdout
+        release = stdout.strip()
         cmd = [self.module.get_bin_path('userdel', True)]
         if self.force and release == "B.11.31":
             cmd.append('-F')
@@ -1518,7 +1518,7 @@ class HPUX(User):
 
     def modify_user_usermod(self):
         rc, stdout, stderr = self.module.run_command("uname -r")
-        release = stdout
+        release = stdout.strip()
         if release != "B.11.31":
             cmd = ["/usr/sam/lbin/usermod.sam"]
         else:
