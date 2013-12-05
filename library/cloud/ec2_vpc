@@ -233,8 +233,12 @@ def create_vpc(module, vpc_conn):
             wait_timeout = time.time() + wait_timeout
             while wait and wait_timeout > time.time() and pending:
                 pvpc = vpc_conn.get_all_vpcs(vpc.id)
-                if pvpc.state == "available":
-                    pending = False
+                if hasattr(pvpc, 'state'):
+                    if pvpc.state == "available":
+                        pending = False
+                elif hasattr(pvpc[0], 'state'):
+                    if pvpc[0].state == "available":
+                        pending = False
                 time.sleep(5)
             if wait and wait_timeout <= time.time():
                 # waiting took too long
