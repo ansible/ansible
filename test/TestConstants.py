@@ -73,8 +73,17 @@ class TestConstants(unittest.TestCase):
         v = '~/path'
         table = "%s   test  TEST  %s  X" % (r ,v)
         C.load_constants(table)
-        assert C.__dict__[r] == v
+        assert C.__dict__[r] != v
+        assert C.__dict__[r].endswith('/path')
 
+    def test_configfile_load_envflag(self):
+        import ansible.constants as C
+        r = 'TEST_C' + random_string(6)
+        v = 'newstuff'
+        C.__dict__['ANSIBLE_'+r] = v
+        table = "%s   test  TEST  %s  G" % (r ,'ANSIBLE_'+r)
+        C.load_constants(table)
+        assert C.__dict__[r] == v
 
     #####################################
     ### reload_config unit tests

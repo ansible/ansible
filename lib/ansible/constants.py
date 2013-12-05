@@ -112,6 +112,8 @@ DEFAULT_REMOTE_TMP        remote_tmp        ANSIBLE_REMOTE_TEMP       $HOME/.ans
 DEFAULT_PRIVATE_KEY_FILE  private_key_file  ANSIBLE_PRIVATE_KEY_FILE  None                X
 DEFAULT_LOG_PATH          log_path          ANSIBLE_LOG_PATH          ''                  X
 
+DEFAULT_MODULE_PATH       library           ANSIBLE_LIBRARY           DIST_MODULE_PATH    G
+
 DEFAULT_FORKS             forks             ANSIBLE_FORKS             5                   I
 DEFAULT_TIMEOUT           timeout           ANSIBLE_TIMEOUT           10                  I
 DEFAULT_POLL_INTERVAL     poll_interval     ANSIBLE_POLL_INTERVAL     15                  I
@@ -147,7 +149,9 @@ def load_constants(config_str):
         if row['default'] == 'None':
             row['default'] = None
         elif row['default'] == "''":
-            row['default'] == ''
+            row['default'] = ''
+        elif 'G' in row['flags']:   # value is the name of global variable
+            row['default'] = globals()[row['default']]
         # set global variable
         if   'X' in row['flags']:   # constant_name = shell_expand_path(key, env_var, default) 
             globals()[row['name']] = shell_expand_path(get_config(p, DEFAULTS, row['key'], row['env'], row['default']))
@@ -156,9 +160,6 @@ def load_constants(config_str):
         else:
             globals()[row['name']] = get_config(p, DEFAULTS, row['key'], row['env'], row['default'])
 
-
-
-DEFAULT_MODULE_PATH       = get_config(p, DEFAULTS, 'library',          'ANSIBLE_LIBRARY',          DIST_MODULE_PATH)
 DEFAULT_ROLES_PATH        = get_config(p, DEFAULTS, 'roles_path',       'ANSIBLE_ROLES_PATH',       None)
 DEFAULT_MODULE_NAME       = get_config(p, DEFAULTS, 'module_name',      None,                       'command')
 DEFAULT_PATTERN           = get_config(p, DEFAULTS, 'pattern',          None,                       '*')
