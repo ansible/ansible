@@ -117,7 +117,8 @@ class Facts(object):
                     '/etc/system-release': 'OtherLinux',
                     '/etc/alpine-release': 'Alpine',
                     '/etc/release': 'Solaris',
-                    '/etc/arch-release': 'Archlinux' }
+                    '/etc/arch-release': 'Archlinux',
+                    '/etc/SuSE-release': 'SuSE' }
     SELINUX_MODE_DICT = { 1: 'enforcing', 0: 'permissive', -1: 'disabled' }
 
     # A list of dicts.  If there is a platform with more than one
@@ -324,6 +325,9 @@ class Facts(object):
                         self.facts['distribution'] = data.split()[0]
                         self.facts['distribution_version'] = data.split()[1]
                         self.facts['distribution_release'] = ora_prefix + data
+                    elif name == 'SuSE':
+                        data = get_file_content(path).splitlines()
+                        self.facts['distribution_release'] = data[2].split('=')[1].strip()
                     else:
                         self.facts['distribution'] = name
 
