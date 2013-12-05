@@ -82,7 +82,7 @@ def shell_expand_path(path):
 def reload_config(path=None):
     global p
     p = load_config_file(path)
-    load_constants(_PATHS)
+    load_constants(_TABLE)
 
 p = None
 
@@ -104,7 +104,7 @@ YAML_FILENAME_EXTENSIONS = [ "", ".yml", ".yaml" ]
 DEFAULTS='defaults'
 
 # configurable things
-_PATHS = '''
+_TABLE = '''
 # constant_name              key               env_var                    default         flags
 
 DEFAULT_HOST_LIST         hostfile          ANSIBLE_HOSTS             /etc/ansible/hosts  X

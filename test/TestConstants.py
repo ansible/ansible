@@ -65,6 +65,18 @@ class TestConstants(unittest.TestCase):
 
 
     #####################################
+    ### load_constants unit tests
+
+    def test_configfile_load_expansion(self):
+        import ansible.constants as C
+        r = 'TEST_C' + random_string(6)
+        v = '~/path'
+        table = "%s   test  TEST  %s  X" % (r ,v)
+        C.load_constants(table)
+        assert C.__dict__[r] == v
+
+
+    #####################################
     ### reload_config unit tests
 
     def test_configfile_reload(self):
