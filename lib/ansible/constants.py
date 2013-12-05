@@ -151,10 +151,10 @@ def load_constants(config_str):
         const += ['']*(5 - len(const))
         row = dict(zip(keys, const))
         # normalize
-        if row['default'] == 'None':
-            row['default'] = None
         if row['env'] == 'None':
             row['env'] = None
+        if row['default'] == 'None':
+            row['default'] = None
         elif row['default'] == "''":
             row['default'] = ''
         elif 'G' in row['flags']:   # value is the name of global variable
