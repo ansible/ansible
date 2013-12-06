@@ -152,7 +152,6 @@ def rax_dns(module, comment, email, name, state, ttl):
                 domain.delete()
                 changed = True
             except Exception, e:
-                raise
                 module.fail_json(msg='%s' % e.message)
 
     module.exit_json(changed=changed, domain=to_dict(domain))
