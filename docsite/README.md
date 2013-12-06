@@ -19,13 +19,6 @@ Note that module documentation can actually be [generated from a DOCUMENTATION d
 in the modules directory, so corrections to modules written as such need to be made
 in the module source, rather than in docsite source.
 
-Author
-======
-
-Michael DeHaan -- michael.dehaan@gmail.com
-
-[http://michaeldehaan.net](http://michaeldehaan.net/)
-
 [install Sphinx]: http://sphinx-doc.org/install.html
 [file issues]: https://github.com/ansible/ansible/issues
 [module-docs]: http://www.ansibleworks.com/docs/developing_modules.html#documenting-your-module
