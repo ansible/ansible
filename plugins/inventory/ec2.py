@@ -131,12 +131,15 @@ except ImportError:
 
 
 class Ec2Inventory(object):
+    def _empty_inventory(self):
+        return {"_meta" : {"hostvars" : {}}}
+
     def __init__(self):
         ''' Main execution path '''
 
         # Inventory grouped by instance IDs, tags, security groups, regions,
         # and availability zones
-        self.inventory = {"_meta" : {"hostvars" : {}}}
+        self.inventory = self._empty_inventory()
 
         # Index of hostname (address) to instance ID
         self.index = {}
@@ -157,7 +160,7 @@ class Ec2Inventory(object):
 
         elif self.args.list:
             # Display list of instances for inventory
-            if len(self.inventory) == 0:
+            if self.inventory == self._empty_inventory():
                 data_to_print = self.get_inventory_from_cache()
             else:
                 data_to_print = self.json_format_dict(self.inventory, True)
