@@ -1540,9 +1540,10 @@ class LinuxNetwork(Network):
 
         # replace : by _ in interface name since they are hard to use in template 
         new_interfaces = {}
+        to_replace = '[:\.]'
         for i in interfaces:
-            if ':' in i:
-                new_interfaces[i.replace(':','_')] = interfaces[i]
+            if re.search(to_replace, i):
+                new_interfaces[re.sub(to_replace, '_', i)] = interfaces[i]
             else:
                 new_interfaces[i] = interfaces[i]
         return new_interfaces, ips
