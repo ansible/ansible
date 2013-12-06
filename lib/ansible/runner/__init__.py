@@ -140,6 +140,9 @@ class Runner(object):
         accelerate=False,                   # use accelerated connection
         accelerate_ipv6=False,              # accelerated connection w/ IPv6
         accelerate_port=None,               # port to use with accelerated connection
+        su=False,                           # Are we running our command via su?
+        su_user=None,                       # User to su to when running command, ex: 'root'
+        su_pass=C.DEFAULT_SU_PASS
         ):
 
         # used to lock multiprocess inputs and outputs at various levels
@@ -187,6 +190,9 @@ class Runner(object):
         self.accelerate_ipv6  = accelerate_ipv6
         self.callbacks.runner = self
         self.original_transport = self.transport
+        self.su               = su
+        self.su_user          = su_user
+        self.su_pass          = su_pass
 
         if self.transport == 'smart':
             # if the transport is 'smart' see if SSH can support ControlPersist if not use paramiko
@@ -299,7 +305,7 @@ class Runner(object):
         environment_string = self._compute_environment_string(inject)
 
         cmd_mod = ""
-        if self.sudo and self.sudo_user != 'root':
+        if (self.sudo or self.su) and (self.sudo_user != 'root' or self.su_user != 'root'):
             # deal with possible umask issues once sudo'ed to other user
             cmd_chmod = "chmod a+r %s" % remote_module_path
             self._low_level_exec_command(conn, cmd_chmod, tmp, sudoable=False)
@@ -357,7 +363,10 @@ class Runner(object):
             # specified in the play, not the sudo_user
             sudoable = False
 
-        res = self._low_level_exec_command(conn, cmd, tmp, sudoable=sudoable)
+        if self.su:
+            res = self._low_level_exec_command(conn, cmd, tmp, su=sudoable)
+        else:
+            res = self._low_level_exec_command(conn, cmd, tmp, sudoable=sudoable)
 
         if self.sudo and self.sudo_user != 'root':
             # not sudoing to root, so maybe can't delete files as that other user
@@ -436,6 +445,8 @@ class Runner(object):
         inject['defaults']    = self.default_vars
         inject['environment'] = self.environment
         inject['playbook_dir'] = self.basedir
+
+        #raise errors.AnsibleError(repr(inject))
 
         if self.inventory.basedir() is not None:
             inject['inventory_dir'] = self.inventory.basedir()
@@ -755,20 +766,26 @@ class Runner(object):
 
     # *****************************************************
 
-    def _low_level_exec_command(self, conn, cmd, tmp, sudoable=False, executable=None):
+    def _low_level_exec_command(self, conn, cmd, tmp, sudoable=False, executable=None, su=False):
         ''' execute a command string over SSH, return the output '''
 
         if executable is None:
             executable = C.DEFAULT_EXECUTABLE
 
         sudo_user = self.sudo_user
+        su_user = self.su_user
 
         # compare connection user to sudo_user and disable if the same
         if hasattr(conn, 'user'):
             if conn.user == sudo_user:
                 sudoable = False
 
-        rc, stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudo_user, sudoable=sudoable, executable=executable)
+        if su:
+            rc, stdin, stdout, stderr = conn.exec_command(
+                cmd, tmp, su_user=su_user, su=su, executable=executable)
+        else:
+            rc, stdin, stdout, stderr = conn.exec_command(
+                cmd, tmp, sudo_user, sudoable=sudoable, executable=executable)
 
         if type(stdout) not in [ str, unicode ]:
             out = ''.join(stdout.readlines())
@@ -826,11 +843,11 @@ class Runner(object):
 
         basefile = 'ansible-%s-%s' % (time.time(), random.randint(0, 2**48))
         basetmp = os.path.join(C.DEFAULT_REMOTE_TMP, basefile)
-        if self.sudo and self.sudo_user != 'root' and basetmp.startswith('$HOME'):
+        if (self.sudo or self.su) and (self.sudo_user != 'root' or self.su != 'root') and basetmp.startswith('$HOME'):
             basetmp = os.path.join('/tmp', basefile)
 
         cmd = 'mkdir -p %s' % basetmp
-        if self.remote_user != 'root' or (self.sudo and self.sudo_user != 'root'):
+        if self.remote_user != 'root' or ((self.sudo or self.su) and (self.sudo_user != 'root' or self.su != 'root')):
             cmd += ' && chmod a+rx %s' % basetmp
         cmd += ' && echo %s' % basetmp
 
