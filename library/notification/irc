@@ -125,8 +125,7 @@ def send_msg(channel, msg, server='localhost', port='6667',
         if re.search('^:\S+ 00[1-4] %s :' % nick, motd, flags=re.M):
             break
         elif time.time() - start > timeout:
-            module.fail_json(msg='Timeout waiting for IRC server welcome '
-                                 'response')
+            raise Exception('Timeout waiting for IRC server welcome response')
         time.sleep(0.5)
 
     irc.send('JOIN %s\r\n' % channel)
@@ -137,7 +136,7 @@ def send_msg(channel, msg, server='localhost', port='6667',
         if re.search('^:\S+ 366 %s %s :' % (nick, channel), join, flags=re.M):
             break
         elif time.time() - start > timeout:
-            module.fail_json(msg='Timeout waiting for IRC JOIN response')
+            raise Exception('Timeout waiting for IRC JOIN response')
         time.sleep(0.5)
 
     irc.send('PRIVMSG %s :%s\r\n' % (channel, message))
