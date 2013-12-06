@@ -122,11 +122,12 @@ class Npm(object):
         else:
             self.name_version = self.name
 
-    def _exec(self, args, run_in_check_mode=False, check_rc=True):
+    def _exec(self, args, run_in_check_mode=False, check_rc=True,
+            skip_global=False):
         if not self.module.check_mode or (self.module.check_mode and run_in_check_mode):
             cmd = [self.executable] + args
 
-            if self.glbl:
+            if self.glbl and not skip_global:
                 cmd.append('--global')
             if self.production:
                 cmd.append('--production')
@@ -162,6 +163,18 @@ class Npm(object):
         #Named dependency not installed
         else:
             missing.append(self.name)
+
+        # If we are installing a package from the local system globally, the
+        # check above will not work since it checks what is missing globally.
+        # In order to see whether our local package is installed or missing,
+        # npm list without the --global flag to get the local package name,
+        # then add it to the list of (global) missing packages.
+        if self.path and self.glbl and not self.name:
+            cmd = ['list', '--json']
+            data = json.loads(self._exec(cmd, True, False, skip_global=True))
+            package_name = data.get('name')
+            if package_name and package_name not in installed:
+                missing.append(package_name)
 
         return installed, missing
 
