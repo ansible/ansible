@@ -157,14 +157,14 @@ class SecurityGroup(NovaGroup):
         self._name = module.params.get('name')
         self._description = module.params.get('description')
 
-    def exists(self):
+    def get(self):
         return self._get_secgroup(self._name)
 
     def create(self):
-        self._sg.create(self._name, self._description)
+        return self._sg.create(self._name, self._description)
 
     def delete(self):
-        self._sg.delete(self._name)
+        return self._sg.delete(self._name)
 
 
 class SecurityGroupRule(NovaGroup):
@@ -219,8 +219,6 @@ class SecurityGroupRule(NovaGroup):
         r = self._concat_security_group_rule(rule)
         if r in self._current_rules:
             return self._current_rules[r]
-        else:
-            return False
 
     def _validate_rules(self):
         for rule in self._rules:
@@ -260,6 +258,14 @@ class SecurityGroupRule(NovaGroup):
                 changed = True
         return changed
 
+    def update(self):
+        changed = False
+        if self.create():
+            changed = True
+        if self.delete():
+            changed = True
+        return changed
+
 
 def main():
     module = AnsibleModule(
@@ -274,7 +280,7 @@ def main():
             region_name=dict(default=None),
             state = dict(default='present', choices=['present', 'absent']),
         ),
-        supports_check_mode=True,
+        supports_check_mode=False,
     )
     login_username = module.params.get('login_username')
     login_password = module.params.get('login_password')
@@ -309,24 +315,26 @@ def main():
     rules = module.params.get('rules')
     state = module.params.get('state')
     security_group = SecurityGroup(nova, module)
-    security_group_rules = SecurityGroupRule(nova, module)
 
     changed = False
-    if security_group.exists():
+    group_id = None
+    group = security_group.get()
+    if group:
+        group_id = group.id
         if state == 'absent':
             security_group.delete()
             changed = True
     elif state == 'present':
-        security_group.create()
+        group = security_group.create()
         changed = True
+        group_id = group.id
 
-    if rules:
-        if security_group_rules.create():
-            changed = True
-        if security_group_rules.delete():
+    if rules is not None:
+        security_group_rules = SecurityGroupRule(nova, module)
+        if security_group_rules.update():
             changed = True
 
-    module.exit_json(changed=changed, group_id=None)
+    module.exit_json(changed=changed, group_id=group_id)
 
 # this is magic, see lib/ansible/module_common.py
 #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
