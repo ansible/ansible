@@ -416,17 +416,23 @@ class AnsibleModule(object):
 
     def set_mode_if_different(self, path, mode, changed):
         path = os.path.expanduser(path)
+        path_stat = os.lstat(path)
+
         if mode is None:
             return changed
-        try:
-            # FIXME: support English modes
-            if not isinstance(mode, int):
-                mode = int(mode, 8)
-        except Exception, e:
-            self.fail_json(path=path, msg='mode needs to be something octalish', details=str(e))
 
-        st = os.lstat(path)
-        prev_mode = stat.S_IMODE(st[stat.ST_MODE])
+        if not isinstance(mode, int):
+            try:
+                mode = int(mode, 8)
+            except Exception:
+                try:
+                    mode = self._symbolic_mode_to_octal(path_stat, mode)
+                except Exception, e:
+                    self.fail_json(path=path,
+                                   msg="mode must be in octal or symbolic form",
+                                   details=str(e))
+
+        prev_mode = stat.S_IMODE(path_stat.st_mode)
 
         if prev_mode != mode:
             if self.check_mode:
@@ -448,12 +454,92 @@ class AnsibleModule(object):
             except Exception, e:
                 self.fail_json(path=path, msg='chmod failed', details=str(e))
 
-            st = os.lstat(path)
-            new_mode = stat.S_IMODE(st[stat.ST_MODE])
+            path_stat = os.lstat(path)
+            new_mode = stat.S_IMODE(path_stat.st_mode)
 
             if new_mode != prev_mode:
                 changed = True
         return changed
+
+    def _symbolic_mode_to_octal(self, path_stat, symbolic_mode):
+        new_mode = stat.S_IMODE(path_stat.st_mode)
+
+        mode_re = re.compile(r'^(?P<users>[ugoa]+)(?P<operator>[-+=])(?P<perms>[rwxXst]*|[ugo])$')
+        for mode in symbolic_mode.split(','):
+            match = mode_re.match(mode)
+            if match:
+                users = match.group('users')
+                operator = match.group('operator')
+                perms = match.group('perms')
+
+                if users == 'a': users = 'ugo'
+
+                for user in users:
+                    mode_to_apply = self._get_octal_mode_from_symbolic_perms(path_stat, user, perms)
+                    new_mode = self._apply_operation_to_mode(user, operator, mode_to_apply, new_mode)
+            else:
+                raise ValueError("bad symbolic permission for mode: %s" % mode)
+        return new_mode
+    
+    def _apply_operation_to_mode(self, user, operator, mode_to_apply, current_mode):
+        if operator  ==  '=':
+            if user == 'u': mask = stat.S_IRWXU | stat.S_ISUID
+            elif user == 'g': mask = stat.S_IRWXG | stat.S_ISGID
+            elif user == 'o': mask = stat.S_IRWXO | stat.S_ISVTX
+            
+            # mask out u, g, or o permissions from current_mode and apply new permissions   
+            inverse_mask = mask ^ 07777
+            new_mode = (current_mode & inverse_mask) | mode_to_apply
+        elif operator == '+':
+            new_mode = current_mode | mode_to_apply
+        elif operator == '-':
+            new_mode = current_mode - (current_mode & mode_to_apply)
+        return new_mode
+        
+    def _get_octal_mode_from_symbolic_perms(self, path_stat, user, perms):
+        prev_mode = stat.S_IMODE(path_stat.st_mode)
+        
+        is_directory = stat.S_ISDIR(path_stat.st_mode)
+        has_x_permissions = (prev_mode & 00111) > 0
+        apply_X_permission = is_directory or has_x_permissions
+
+        # Permission bits constants documented at:
+        # http://docs.python.org/2/library/stat.html#stat.S_ISUID
+        user_perms_to_modes = {
+            'u': {
+                'r': stat.S_IRUSR,
+                'w': stat.S_IWUSR,
+                'x': stat.S_IXUSR,
+                'X': stat.S_IXUSR if apply_X_permission else 0,
+                's': stat.S_ISUID,
+                't': 0,
+                'u': prev_mode & stat.S_IRWXU,
+                'g': (prev_mode & stat.S_IRWXG) << 3,
+                'o': (prev_mode & stat.S_IRWXO) << 6 },
+            'g': {
+                'r': stat.S_IRGRP,
+                'w': stat.S_IWGRP,
+                'x': stat.S_IXGRP,
+                'X': stat.S_IXGRP if apply_X_permission else 0,
+                's': stat.S_ISGID,
+                't': 0,
+                'u': (prev_mode & stat.S_IRWXU) >> 3,
+                'g': prev_mode & stat.S_IRWXG,
+                'o': (prev_mode & stat.S_IRWXO) << 3 },
+            'o': {
+                'r': stat.S_IROTH,
+                'w': stat.S_IWOTH,
+                'x': stat.S_IXOTH,
+                'X': stat.S_IXOTH if apply_X_permission else 0,
+                's': 0,
+                't': stat.S_ISVTX,
+                'u': (prev_mode & stat.S_IRWXU) >> 6,
+                'g': (prev_mode & stat.S_IRWXG) >> 3,
+                'o': prev_mode & stat.S_IRWXO }
+        }
+
+        or_reduce = lambda mode, perm: mode | user_perms_to_modes[user][perm]
+        return reduce(or_reduce, perms, 0)
 
     def set_file_attributes_if_different(self, file_args, changed):
         # set modes owners and context as needed

@@ -10,6 +10,7 @@ import os
 import shutil
 import time
 import tempfile
+import stat
 
 from nose.plugins.skip import SkipTest
 
@@ -221,9 +222,47 @@ class TestRunner(unittest.TestCase):
         assert self._run('file', ['dest=' + filedemo, 'src=/dev/null', 'state=link'])['failed']
         assert os.path.isfile(filedemo)
 
-        res = self._run('file', ['dest=' + filedemo, 'mode=604', 'state=file'])
-        assert res['changed']
-        assert os.path.isfile(filedemo) and os.stat(filedemo).st_mode == 0100604
+        os.chmod(filedemo, 0)
+        assert self._run('file', ['dest=' + filedemo, 'mode=604', 'state=file'])['changed']
+        assert os.path.isfile(filedemo) and stat.S_IMODE(os.stat(filedemo).st_mode) == 00604
+
+        os.chmod(filedemo, 0)
+        assert self._run('file', ['dest=' + filedemo, 'mode="u=rwsx,g=rwxs,o=rwxt"', 'state=file'])['changed']
+        assert os.path.isfile(filedemo) and stat.S_IMODE(os.stat(filedemo).st_mode) == 07777 
+
+        os.chmod(filedemo, 0)
+        assert self._run('file', ['dest=' + filedemo, 'mode="u=rwx,g=rwx,o=rwx"', 'state=file'])['changed']
+        assert os.path.isfile(filedemo) and stat.S_IMODE(os.stat(filedemo).st_mode) == 00777 
+
+        os.chmod(filedemo, 0)
+        assert self._run('file', ['dest=' + filedemo, 'mode="u=rwx,g=,o=rwx"', 'state=file'])['changed']
+        assert os.path.isfile(filedemo) and stat.S_IMODE(os.stat(filedemo).st_mode) == 00707 
+
+        os.chmod(filedemo, 07777)
+        assert self._run('file', ['dest=' + filedemo, 'mode="u=,g=,o="', 'state=file'])['changed']
+        assert os.path.isfile(filedemo) and stat.S_IMODE(os.stat(filedemo).st_mode) == 0 
+
+        os.chmod(filedemo, 00777)
+        assert self._run('file', ['dest=' + filedemo, 'mode="u-X"', 'state=file'])['changed']
+        assert os.path.isfile(filedemo) and stat.S_IMODE(os.stat(filedemo).st_mode) == 00677
+
+        os.chmod(filedemo, 00777)
+        assert self._run('file', ['dest=' + filedemo, 'mode="u-x"', 'state=file'])['changed']
+        assert os.path.isfile(filedemo) and stat.S_IMODE(os.stat(filedemo).st_mode) == 00677
+
+        os.chmod(filedemo, 00411)
+        assert self._run('file', ['dest=' + filedemo, 'mode="u+X"', 'state=file'])['changed']
+        assert os.path.isfile(filedemo) and stat.S_IMODE(os.stat(filedemo).st_mode) == 00511
+
+        os.chmod(filedemo, 00444)
+        assert not self._run('file', ['dest=' + filedemo, 'mode="g+X"', 'state=file'])['changed']
+        assert os.path.isfile(filedemo) and stat.S_IMODE(os.stat(filedemo).st_mode) == 00444
+
+        os.chmod(filedemo, 00444)
+        assert not self._run('file', ['dest=' + filedemo, 'mode="u=u,g=g,o=o"', 'state=file'])['changed']
+        assert os.path.isfile(filedemo) and stat.S_IMODE(os.stat(filedemo).st_mode) == 00444
+
+        assert self._run('file', ['dest=' + filedemo, 'mode=u=gx', 'state=file'])['failed']
 
         assert self._run('file', ['dest=' + filedemo, 'state=absent'])['changed']
         assert not os.path.exists(filedemo)
@@ -239,8 +278,13 @@ class TestRunner(unittest.TestCase):
         #assert result['failed']
         #assert os.path.isdir(filedemo)
 
+        os.chmod(filedemo, 0)
         assert self._run('file', ['dest=' + filedemo, 'mode=701', 'state=directory'])['changed']
-        assert os.path.isdir(filedemo) and os.stat(filedemo).st_mode == 040701
+        assert os.path.isdir(filedemo) and stat.S_IMODE(os.stat(filedemo).st_mode) == 00701
+
+        os.chmod(filedemo, 00444)
+        assert self._run('file', ['dest=' + filedemo, 'mode=ugo+X', 'state=directory'])['changed']
+        assert os.path.isdir(filedemo) and stat.S_IMODE(os.stat(filedemo).st_mode) == 00555
 
         assert self._run('file', ['dest=' + filedemo, 'state=absent'])['changed']
         assert not os.path.exists(filedemo)
