@@ -139,6 +139,7 @@ This section is new and evolving.  The idea here is explore particular use cases
 
    guide_aws
    guide_vagrant
+   guide_rolling_upgrade
 
 Pending topics may include: Docker, Jenkins, Rackspace Cloud, Google Compute Engine, Linode/Digital Ocean, Continous Deployment, and more.
 
