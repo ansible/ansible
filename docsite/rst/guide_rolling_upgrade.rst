@@ -1,5 +1,5 @@
-Tutorial: A Rolling Upgrade
-===========================
+Tutorial: Rolling Upgrades for Continuous Deployment
+====================================================
 
 .. contents::
    :depth: 2
@@ -9,8 +9,9 @@ Tutorial: A Rolling Upgrade
 Introduction
 ````````````
 
-This document describes in detail one of Ansible's most complete example
-playbooks: lamp_haproxy. This example uses a lot of Ansible features: roles, templates, and group variables, and it also comes with an orchestration playbook that can do zero-downtime rolling upgrades of the web application stack.
+Continuous deployment is the concept of frequently delivering updates to your software application. Some Ansible users are deploying updates to their customers on an hourly or even more frequent basis. To achieve this, you need tools to be able to quickly apply those updates in a zero-downtime way.
+
+This document describes in detail how to achieve this goal, using one of Ansible's most complete example playbooks as a template: lamp_haproxy. This example uses a lot of Ansible features: roles, templates, and group variables, and it also comes with an orchestration playbook that can do zero-downtime rolling upgrades of the web application stack.
 
 .. note::
 
@@ -76,8 +77,8 @@ The next four plays run against specific host groups and apply specific roles to
 
 .. _lamp_roles:
 
-Roles
-`````
+Reusable Content: Roles
+```````````````````````
 
 By now you should have a bit of understanding about roles and how they work in Ansible. Roles are a way to organize content: tasks, handlers, templates, and files, into reusable components.
 
@@ -87,8 +88,8 @@ Roles can have variables and dependencies, and you can pass in parameters to rol
 
 .. _lamp_group_variables:
 
-Group Variables
-```````````````
+Configuration: Group Variables
+``````````````````````````````
 
 Group variables are variables that are applied to groups of servers. They can be used in templates and in playbooks to customize behavior and to provide easily-changed settings and parameters. They are stored in a directory called ``group_vars`` in the same location as your inventory. Here is lamp_haproxy's ``group_vars/all`` file. As you might expect, these variables are applied to all of the machines in your inventory::
 
@@ -210,10 +211,23 @@ Finally, in the ``post_tasks`` section, we reverse the changes to the Nagios con
 
 .. _lamp_end_notes:
 
-End Notes
-`````````
+Managing Load Balancers
+```````````````````````
 
-That's it! This is a good example of how to structure a multi-tier application with Ansible, and orchestrate operations upon that app. You could extend the idea of the rolling upgrade to lots of different parts of the app; maybe add front-end web servers along with application servers, for instance, or replace the SQL database with something like MongoDB or Riak. Ansible gives you the capability to easily manage complicated environments and automate common operations.
+In this example, we use the simple HAProxy load balancer to front-end the web servers. It's easy to configure and easy to manage. Ansible has built-in support for a variety of other load balancers like Citrix NetScaler, F5 BigIP, Amazon Elastic Load Balancers, and more. See the module documentation for more information.
+
+For other load balancers, you may need to send shell commands to them (like we do for HAProxy above), or call an API, if your load balancer exposes one. For the load balancers for which Ansible has modules, you may want to run them as a ``local_action`` if they contact an API. You can read more about local actions in the :doc:`playbooks_delegation` section.
+
+.. _lamp_end_to_end:
+
+Continuous Delivery End-To-End
+``````````````````````````````
+
+Now that you have an automated way to deploy updates to your application, how do you tie it all together? A lot of organizations use a continuous integration tool like `Jenkins <jenkins url>`_ or `Atlassian Bamboo <bamboo url>`_ to tie the development, test, release, and deploy steps together. You may also want to use a tool like `Gerrit <gerrit>`_ to add a code review step to commits to either the application code itself, or to your Ansible playbooks, or both.
+
+You can easily trigger playbook runs using the ``ansible-playbook`` command line tool, or, if you're using AnsibleWorks AWX, the ``awx-cli`` or the built-in REST API.
+
+That's it! This should give you a good idea of how to structure a multi-tier application with Ansible, and orchestrate operations upon that app, with the eventual goal of continuous deployment to your customers. You could extend the idea of the rolling upgrade to lots of different parts of the app; maybe add front-end web servers along with application servers, for instance, or replace the SQL database with something like MongoDB or Riak. Ansible gives you the capability to easily manage complicated environments and automate common operations.
 
 If you need help or if you have questions, stop by the mailing list or the IRC channel, or email us at info@ansibleworks.com.
 
