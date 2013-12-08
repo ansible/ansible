@@ -1020,28 +1020,26 @@ class FreeBSDHardware(Hardware):
 
         # Fall back to using dmidecode, if available
         dmi_bin = module.get_bin_path('dmidecode')
-        DMI_DICT = {
-                'bios_date': 'bios-release-date',
-                'bios_version': 'bios-version',
-                'form_factor': 'chassis-type',
-                'product_name': 'system-product-name',
-                'product_serial': 'system-serial-number',
-                'product_uuid': 'system-uuid',
-                'product_version': 'system-version',
-                'system_vendor': 'system-manufacturer'
-                }
+        DMI_DICT = dict(
+            bios_date='bios-release-date',
+            bios_version='bios-version',
+            form_factor='chassis-type',
+            product_name='system-product-name',
+            product_serial='system-serial-number',
+            product_uuid='system-uuid',
+            product_version='system-version',
+            system_vendor='system-manufacturer'
+        )
         for (k, v) in DMI_DICT.items():
             if dmi_bin is not None:
                 (rc, out, err) = module.run_command('%s -s %s' % (dmi_bin, v))
                 if rc == 0:
                     # Strip out commented lines (specific dmidecode output)
-                    thisvalue = ''.join([ line for line in out.split('\n') if not line.startswith('#') ])
+                    self.facts[k] = ''.join([ line for line in out.split('\n') if not line.startswith('#') ])
                     try:
-                        json.dumps(thisvalue)
+                        json.dumps(self.facts[k])
                     except UnicodeDecodeError:
-                        thisvalue = "NA"
-
-                    self.facts[k] = thisvalue
+                        self.facts[k] = 'NA'
                 else:
                     self.facts[k] = 'NA'
             else:
