@@ -1,5 +1,5 @@
-Tutorial: Rolling Upgrades for Continuous Deployment
-====================================================
+Tutorial: Rolling Upgrades for Continuous Delivery
+==================================================
 
 .. contents::
    :depth: 2
@@ -9,7 +9,7 @@ Tutorial: Rolling Upgrades for Continuous Deployment
 Introduction
 ````````````
 
-Continuous deployment is the concept of frequently delivering updates to your software application. Some Ansible users are deploying updates to their customers on an hourly or even more frequent basis. To achieve this, you need tools to be able to quickly apply those updates in a zero-downtime way.
+Continuous Delivery is the concept of frequently delivering updates to your software application. Some Ansible users are deploying updates to their customers on an hourly or even more frequent basis. To achieve this, you need tools to be able to quickly apply those updates in a zero-downtime way.
 
 This document describes in detail how to achieve this goal, using one of Ansible's most complete example playbooks as a template: lamp_haproxy. This example uses a lot of Ansible features: roles, templates, and group variables, and it also comes with an orchestration playbook that can do zero-downtime rolling upgrades of the web application stack.
 
@@ -69,7 +69,7 @@ Let's start with ``site.yml``. This is our site-wide deployment playbook. It can
 
 .. note:
 
-   If you're not familiar with terms like playbooks and plays, you should review the `basic playbook documentation <http://www.ansibleworks.com/docs/playbooks.html>`_.
+   If you're not familiar with terms like playbooks and plays, you should review :doc:`playbooks`.
 
 In this playbook we have 5 plays. The first one targets ``all`` hosts and applies the ``common`` role to all of the hosts. This is for site-wide things like Yum repository configuration, firewall configuration, and anything else that needs to apply to all of the servers.
 
@@ -214,7 +214,7 @@ Finally, in the ``post_tasks`` section, we reverse the changes to the Nagios con
 Managing Load Balancers
 ```````````````````````
 
-In this example, we use the simple HAProxy load balancer to front-end the web servers. It's easy to configure and easy to manage. Ansible has built-in support for a variety of other load balancers like Citrix NetScaler, F5 BigIP, Amazon Elastic Load Balancers, and more. See the module documentation for more information.
+In this example, we use the simple HAProxy load balancer to front-end the web servers. It's easy to configure and easy to manage. Ansible has built-in support for a variety of other load balancers like Citrix NetScaler, F5 BigIP, Amazon Elastic Load Balancers, and more. See the :doc:`modules` documentation for more information.
 
 For other load balancers, you may need to send shell commands to them (like we do for HAProxy above), or call an API, if your load balancer exposes one. For the load balancers for which Ansible has modules, you may want to run them as a ``local_action`` if they contact an API. You can read more about local actions in the :doc:`playbooks_delegation` section.
 
@@ -223,11 +223,11 @@ For other load balancers, you may need to send shell commands to them (like we d
 Continuous Delivery End-To-End
 ``````````````````````````````
 
-Now that you have an automated way to deploy updates to your application, how do you tie it all together? A lot of organizations use a continuous integration tool like `Jenkins <jenkins url>`_ or `Atlassian Bamboo <bamboo url>`_ to tie the development, test, release, and deploy steps together. You may also want to use a tool like `Gerrit <gerrit>`_ to add a code review step to commits to either the application code itself, or to your Ansible playbooks, or both.
+Now that you have an automated way to deploy updates to your application, how do you tie it all together? A lot of organizations use a continuous integration tool like `Jenkins <http://jenkins-ci.org/>`_ or `Atlassian Bamboo <https://www.atlassian.com/software/bamboo>`_ to tie the development, test, release, and deploy steps together. You may also want to use a tool like `Gerrit <https://code.google.com/p/gerrit/>`_ to add a code review step to commits to either the application code itself, or to your Ansible playbooks, or both.
 
 You can easily trigger playbook runs using the ``ansible-playbook`` command line tool, or, if you're using AnsibleWorks AWX, the ``awx-cli`` or the built-in REST API.
 
-That's it! This should give you a good idea of how to structure a multi-tier application with Ansible, and orchestrate operations upon that app, with the eventual goal of continuous deployment to your customers. You could extend the idea of the rolling upgrade to lots of different parts of the app; maybe add front-end web servers along with application servers, for instance, or replace the SQL database with something like MongoDB or Riak. Ansible gives you the capability to easily manage complicated environments and automate common operations.
+That's it! This should give you a good idea of how to structure a multi-tier application with Ansible, and orchestrate operations upon that app, with the eventual goal of continuous delivery to your customers. You could extend the idea of the rolling upgrade to lots of different parts of the app; maybe add front-end web servers along with application servers, for instance, or replace the SQL database with something like MongoDB or Riak. Ansible gives you the capability to easily manage complicated environments and automate common operations.
 
 If you need help or if you have questions, stop by the mailing list or the IRC channel, or email us at info@ansibleworks.com.
 
@@ -241,4 +241,5 @@ If you need help or if you have questions, stop by the mailing list or the IRC c
        An introduction to playbook roles
    :doc:`playbooks_variables`
        An introduction to Ansible variables
-
+   `AnsibleWorks: Continuous Delivery <http://www.ansibleworks.com/continuous-delivery/>`_
+       An introduction to Continuous Delivery
