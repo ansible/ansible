@@ -35,6 +35,8 @@ import pipes
 
 class ActionModule(object):
 
+    TRANSFERS_FILES = True
+
     def __init__(self, runner):
         self.runner = runner
 
