@@ -34,14 +34,18 @@ class Connection(object):
         self.host = host
         # port is unused, since this is local
         self.port = port 
+        self.has_pipelining = False
 
     def connect(self, port=None):
         ''' connect to the local host; nothing to do here '''
 
         return self
 
-    def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False, executable='/bin/sh'):
+    def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False, executable='/bin/sh', in_data=None):
         ''' run a command on the local host '''
+
+        if in_data:
+            raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
 
         if not self.runner.sudo or not sudoable:
             if executable:

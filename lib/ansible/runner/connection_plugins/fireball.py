@@ -37,6 +37,7 @@ class Connection(object):
     def __init__(self, runner, host, port, *args, **kwargs):
 
         self.runner = runner
+        self.has_pipelining = False
 
         # attempt to work around shared-memory funness
         if getattr(self.runner, 'aes_keys', None):
@@ -67,8 +68,11 @@ class Connection(object):
 
         return self
 
-    def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False, executable='/bin/sh'):
+    def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False, executable='/bin/sh', in_data=None):
         ''' run a command on the remote host '''
+
+        if in_data:
+            raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
 
         vvv("EXEC COMMAND %s" % cmd)
 
