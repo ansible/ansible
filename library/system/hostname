@@ -203,15 +203,19 @@ class RedHatStrategy(GenericStrategy):
     def set_permanent_hostname(self, name):
         try:
             lines = []
+            found = False
             f = open(self.NETWORK_FILE, 'rb')
             try:
                 for line in f.readlines():
                     if line.startswith('HOSTNAME'):
                         lines.append("HOSTNAME=%s\n" % name)
+                        found = True
                     else:
                         lines.append(line)
             finally:
                 f.close()
+            if not found:
+                lines.append("HOSTNAME=%s\n" % name)
             f = open(self.NETWORK_FILE, 'w+')
             try:
                 f.writelines(lines)
