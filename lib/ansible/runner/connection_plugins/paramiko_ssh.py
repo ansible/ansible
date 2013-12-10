@@ -121,6 +121,7 @@ class Connection(object):
         self.user = user
         self.password = password
         self.private_key_file = private_key_file
+        self.has_pipelining = False
 
     def _cache_key(self):
         return "%s__%s__" % (self.host, self.user)
@@ -175,8 +176,11 @@ class Connection(object):
 
         return ssh
 
-    def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False, executable='/bin/sh'):
+    def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False, executable='/bin/sh', in_data=None):
         ''' run a command on the remote host '''
+
+        if in_data:
+            raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
 
         bufsize = 4096
         try:
