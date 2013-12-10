@@ -70,6 +70,7 @@ class TestRunner(unittest.TestCase):
         args = ' '.join(module_args)
         self.runner.module_args = args
         self.runner.background = background
+        self.runner.async = background > 0
         self.runner.check = check_mode
         results = self.runner.run()
         # when using nosetests this will only show up on failure
