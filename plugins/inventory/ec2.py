@@ -295,9 +295,10 @@ class Ec2Inventory(object):
                 for instance in instances:
                     self.add_rds_instance(instance, region)
         except boto.exception.BotoServerError as e:
-            print "Looks like AWS RDS is down: "
-            print e
-            sys.exit(1)
+            if not e.reason == "Forbidden":
+                print "Looks like AWS RDS is down: "
+                print e
+                sys.exit(1)
 
     def get_instance(self, region, instance_id):
         ''' Gets details about a specific instance '''
