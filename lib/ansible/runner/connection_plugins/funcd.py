@@ -42,6 +42,7 @@ class Connection(object):
     def __init__(self, runner, host, port, *args, **kwargs):
         self.runner = runner
         self.host = host
+        self.has_pipelining = False
         # port is unused, this go on func
         self.port = port
 
@@ -53,8 +54,11 @@ class Connection(object):
         return self
 
     def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False,
-                     executable='/bin/sh'):
+                     executable='/bin/sh', in_data=None):
         ''' run a command on the remote minion '''
+
+        if in_data:
+            raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
 
         vvv("EXEC %s" % (cmd), host=self.host)
         p = self.client.command.run(cmd)[self.host]
