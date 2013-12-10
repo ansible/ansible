@@ -765,7 +765,7 @@ Other Core Changes:
 * ability to access inventory variables via 'hostvars' for hosts not yet included in any play, using on demand lookups
 * merged ansible-plugins, ansible-resources, and ansible-docs into the main project
 * you can set ANSIBLE_NOCOWS=1 if you want to disable cowsay if it is installed.  Though no one should ever want to do this!  Cows are great!
-* you can set ANSIBLE_FORCECOLOR=1 to force color mode even when running without a TTY
+* you can set ANSIBLE_FORCE_COLOR=1 to force color mode even when running without a TTY
 * fatal errors are now properly colored red.
 * skipped messages are now cyan, to differentiate them from unchanged messages.
 * extensive documentation upgrades
