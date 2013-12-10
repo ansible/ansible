@@ -446,8 +446,6 @@ class Runner(object):
         inject['environment'] = self.environment
         inject['playbook_dir'] = self.basedir
 
-        #raise errors.AnsibleError(repr(inject))
-
         if self.inventory.basedir() is not None:
             inject['inventory_dir'] = self.inventory.basedir()
 
