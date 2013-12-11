@@ -28,7 +28,7 @@ class ActionModule(object):
 
     ### We need to be able to modify the inventory
     BYPASS_HOST_LOOP = True
-    TRANSFERS_FILES = False
+    NEEDS_TMPPATH = False
 
     def __init__(self, runner):
         self.runner = runner
