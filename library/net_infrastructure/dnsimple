@@ -24,7 +24,7 @@ description:
 options:
   account_email:
     description:
-      - "Account email. If ommitted, a C(.dnsimple) file will be looked for, see: U(https://github.com/mikemaccana/dnsimple-python#getting-started)"
+      - "Account email. If ommitted, the env variables DNSIMPLE_EMAIL and DNSIMPLE_API_TOKEN will be looked for. If those aren't found, a C(.dnsimple) file will be looked for, see: U(https://github.com/mikemaccana/dnsimple-python#getting-started)"
     required: false
     default: null
 
@@ -129,6 +129,7 @@ EXAMPLES = '''
 
 '''
 
+import os
 try:
     from dnsimple import DNSimple
     from dnsimple.dnsimple import DNSimpleException
@@ -171,6 +172,8 @@ def main():
 
     if account_email and account_api_token:
         client = DNSimple(email=account_email, api_token=account_api_token)
+    elif os.environ.get('DNSIMPLE_EMAIL') and os.environ.get('DNSIMPLE_API_TOKEN'):
+        client = DNSimple(email=os.environ.get('DNSIMPLE_EMAIL'), api_token=os.environ.get('DNSIMPLE_API_TOKEN'))
     else:
         client = DNSimple()
 
