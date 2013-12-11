@@ -49,7 +49,6 @@ class Connection(object):
         self.port = port[0]
         self.accport = port[1]
         self.is_connected = False
-        self.has_pipelining = False
 
         if not self.port:
             self.port = constants.DEFAULT_REMOTE_PORT
@@ -159,11 +158,8 @@ class Connection(object):
         except socket.timeout:
             raise errors.AnsibleError("timed out while waiting to receive data")
 
-    def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False, executable='/bin/sh', in_data=None):
+    def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False, executable='/bin/sh'):
         ''' run a command on the remote host '''
-
-        if in_data:
-            raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
 
         if executable == "":
             executable = constants.DEFAULT_EXECUTABLE
