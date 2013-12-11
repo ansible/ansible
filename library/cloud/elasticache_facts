@@ -1,0 +1,134 @@
+#!/usr/bin/python
+
+DOCUMENTATION = '''
+---
+module: elasticache_facts
+version_added: "1.5"
+short_description: get facts about Elasticache Instances
+description:
+     -  This module has a dependency on python-boto >= 2.5.
+options:
+  instance_name:
+    description:
+      - Elasticache instance identifier.
+    required: true
+    default: null
+    aliases: []
+  region:
+    description:
+      - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
+    required: true
+    default: null
+    aliases: [ 'aws_region', 'ec2_region' ]
+requirements: [ "boto" ]
+author: Baptiste Lafontaine
+'''
+
+EXAMPLES = '''
+# Get facts about an instance
+
+- name: get ElastiCache memcached facts
+  local_action: elasticache_facts instance_name=my-cluster-cache region=eu-west-1 
+  register: apps_cache
+    
+'''
+
+import sys
+import time
+
+AWS_REGIONS = ['ap-northeast-1',
+               'ap-southeast-1',
+               'ap-southeast-2',
+               'eu-west-1',
+               'sa-east-1',
+               'us-east-1',
+               'us-west-1',
+               'us-west-2']
+
+try:
+    import boto.elasticache
+except ImportError:
+    print "failed=True msg='boto required for this module'"
+    sys.exit(1)
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            instance_name = dict(required=True),
+            aws_secret_key = dict(aliases=['ec2_secret_key', 'secret_key'], no_log=True, required=False),
+            aws_access_key = dict(aliases=['ec2_access_key', 'access_key'], required=False),
+            region = dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS, required=False),
+        )
+    )
+
+    instance_name = module.params.get('instance_name')
+    aws_secret_key = module.params.get('aws_secret_key')
+    aws_access_key = module.params.get('aws_access_key')
+    region = module.params.get('region')
+
+    # allow environment variables to be used if ansible vars aren't set
+    if not region:
+        if 'AWS_REGION' in os.environ:
+            region = os.environ['AWS_REGION']
+        elif 'EC2_REGION' in os.environ:
+            region = os.environ['EC2_REGION']
+
+    if not aws_secret_key:
+        if 'AWS_SECRET_KEY' in os.environ:
+            aws_secret_key = os.environ['AWS_SECRET_KEY']
+        elif 'EC2_SECRET_KEY' in os.environ:
+            aws_secret_key = os.environ['EC2_SECRET_KEY']
+
+    if not aws_access_key:
+        if 'AWS_ACCESS_KEY' in os.environ:
+            aws_access_key = os.environ['AWS_ACCESS_KEY']
+        elif 'EC2_ACCESS_KEY' in os.environ:
+            aws_access_key = os.environ['EC2_ACCESS_KEY']
+
+    if not region:
+        module.fail_json(msg = str("region not specified and unable to determine region from EC2_REGION."))
+
+    try:
+        conn = boto.elasticache.connect_to_region(region, aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key)
+    except boto.exception.BotoServerError, e:
+        module.fail_json(msg = e.error_message)
+
+    try:
+        my_inst = conn.describe_cache_clusters(instance_name, 20, None, True)
+        data = my_inst['DescribeCacheClustersResponse']['DescribeCacheClustersResult']['CacheClusters'][0]
+    except boto.exception.BotoServerError, e:
+        module.fail_json(msg = e.error_message)
+
+
+    # If we got here then pack up all the instance details to send
+    # back to ansible
+    d = {
+      'id': data['CacheClusterId'],
+      'status': data['CacheClusterStatus'],
+      'instance_type': data['CacheNodeType'],
+      'engine': data['Engine'],
+      'node_endpoints': []
+    }
+
+    if d['status'] == 'available':
+      d['configuration_endpoint'] = {
+          'address': data['ConfigurationEndpoint']['Address'],
+          'port': data['ConfigurationEndpoint']['Port']
+        }
+
+    for node in data['CacheNodes']:
+      nodeData = {
+        'id': node['CacheNodeId'],
+        'status': node['CacheNodeStatus']
+      }
+      if nodeData['status'] == 'available':
+        nodeData['address'] = node['Endpoint']['Address']
+        nodeData['port'] = node['Endpoint']['Port']
+      d['node_endpoints'].append(nodeData)
+
+    module.exit_json(changed=True, instance=d)
+
+# import module snippets
+from ansible.module_utils.basic import *
+
+main()
