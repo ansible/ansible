@@ -23,7 +23,7 @@ from ansible.runner.return_data import ReturnData
 class ActionModule(object):
     ''' Fail with custom message '''
 
-    TRANSFERS_FILES = False
+    NEEDS_TMPPATH = False
 
     def __init__(self, runner):
         self.runner = runner

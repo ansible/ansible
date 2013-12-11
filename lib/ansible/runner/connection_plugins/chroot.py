@@ -30,7 +30,6 @@ class Connection(object):
 
     def __init__(self, runner, host, port, *args, **kwargs):
         self.chroot = host
-        self.has_pipelining = False
 
         if os.geteuid() != 0:
             raise errors.AnsibleError("chroot connection requires running as root")
@@ -60,11 +59,8 @@ class Connection(object):
 
         return self
 
-    def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False, executable='/bin/sh', in_data=None):
+    def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False, executable='/bin/sh'):
         ''' run a command on the chroot '''
-
-        if in_data:
-            raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
 
         # We enter chroot as root so sudo stuff can be ignored
 
