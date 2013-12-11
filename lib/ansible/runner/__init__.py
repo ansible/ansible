@@ -286,7 +286,7 @@ class Runner(object):
     def _execute_module(self, conn, tmp, module_name, args,
         async_jid=None, async_module=None, async_limit=None, inject=None, persist_files=False, complex_args=None):
 
-        ''' runs a module that has already been transferred '''
+        ''' transfer and run a module along with its arguments on the remote side'''
 
         # hack to support fireball mode
         if module_name == 'fireball':
@@ -294,17 +294,32 @@ class Runner(object):
             if 'port' not in args:
                 args += " port=%s" % C.ZEROMQ_PORT
 
-        (remote_module_path, module_style, shebang) = self._copy_module(conn, tmp, module_name, args, inject, complex_args)
+        (
+        module_style,
+        shebang,
+        module_data
+        ) = self._configure_module(conn, module_name, args, inject, complex_args)
+
+        # a remote tmp path may be necessary and not already created
+        if self._late_needs_tmp_path(conn, tmp, module_style):
+            tmp = self._make_tmp_path(conn)
+
+        remote_module_path = os.path.join(tmp, module_name)
+
+        if (module_style != 'new'
+           or async_jid is not None
+           or not conn.has_pipelining):
+            self._transfer_str(conn, tmp, module_name, module_data)
 
         environment_string = self._compute_environment_string(inject)
 
-        cmd_mod = ""
-        if self.sudo and self.sudo_user != 'root':
+        if tmp.find("tmp") != -1 and self.sudo and self.sudo_user != 'root':
             # deal with possible umask issues once sudo'ed to other user
             cmd_chmod = "chmod a+r %s" % remote_module_path
             self._low_level_exec_command(conn, cmd_chmod, tmp, sudoable=False)
 
         cmd = ""
+        in_data = None
         if module_style != 'new':
             if 'CHECKMODE=True' in args:
                 # if module isn't using AnsibleModuleCommon infrastructure we can't be certain it knows how to
@@ -336,12 +351,16 @@ class Runner(object):
                 cmd = " ".join([str(x) for x in [remote_module_path, async_jid, async_limit, async_module, argsfile]])
         else:
             if async_jid is None:
-                cmd = "%s" % (remote_module_path)
+                if conn.has_pipelining:
+                    in_data = module_data
+                else:
+                    cmd = "%s" % (remote_module_path)
             else:
                 cmd = " ".join([str(x) for x in [remote_module_path, async_jid, async_limit, async_module]])
 
         if not shebang:
             raise errors.AnsibleError("module is missing interpreter line")
+
 
         cmd = " ".join([environment_string.strip(), shebang.replace("#!","").strip(), cmd])
         cmd = cmd.strip()
@@ -357,12 +376,12 @@ class Runner(object):
             # specified in the play, not the sudo_user
             sudoable = False
 
-        res = self._low_level_exec_command(conn, cmd, tmp, sudoable=sudoable)
+        res = self._low_level_exec_command(conn, cmd, tmp, sudoable=sudoable, in_data=in_data)
 
-        if self.sudo and self.sudo_user != 'root':
+        if tmp.find("tmp") != -1 and not C.DEFAULT_KEEP_REMOTE_FILES and not persist_files:
+            if self.sudo and self.sudo_user != 'root':
             # not sudoing to root, so maybe can't delete files as that other user
             # have to clean up temp files as original user in a second step
-            if tmp.find("tmp") != -1 and not C.DEFAULT_KEEP_REMOTE_FILES and not persist_files:
                 cmd2 = "rm -rf %s >/dev/null 2>&1" % tmp
                 self._low_level_exec_command(conn, cmd2, tmp, sudoable=False)
 
@@ -415,7 +434,7 @@ class Runner(object):
 
         host_variables = self.inventory.get_variables(host)
         host_connection = host_variables.get('ansible_connection', self.transport)
-        if host_connection in [ 'paramiko', 'ssh', 'accelerate' ]:
+        if host_connection in [ 'paramiko', 'ssh', 'ssh_alt', 'accelerate' ]:
             port = host_variables.get('ansible_ssh_port', self.remote_port)
             if port is None:
                 port = C.DEFAULT_REMOTE_PORT
@@ -602,7 +621,7 @@ class Runner(object):
             if not self.accelerate_port:
                 self.accelerate_port = C.ACCELERATE_PORT
 
-        if actual_transport in [ 'paramiko', 'ssh', 'accelerate' ]:
+        if actual_transport in [ 'paramiko', 'ssh', 'ssh_alt', 'accelerate' ]:
             actual_port = inject.get('ansible_ssh_port', port)
 
         # the delegated host may have different SSH port configured, etc
@@ -670,8 +689,8 @@ class Runner(object):
             return ReturnData(host=host, comm_ok=False, result=result)
 
         tmp = ''
-        # all modules get a tempdir, action plugins get one unless they have NEEDS_TMPPATH set to False
-        if getattr(handler, 'NEEDS_TMPPATH', True):
+        # action plugins may DECLARE via TRANSFERS_FILES = True that they need a remote tmp path working dir
+        if self._early_needs_tmp_path(module_name, handler):
             tmp = self._make_tmp_path(conn)
 
         # render module_args and complex_args templates
@@ -697,7 +716,7 @@ class Runner(object):
                     delay = float(delay)
                     time.sleep(delay)
                     tmp = ''
-                    if getattr(handler, 'NEEDS_TMPPATH', True):
+                    if self._early_needs_tmp_path(module_name, handler):
                         tmp = self._make_tmp_path(conn)
                     result = handler.run(conn, tmp, module_name, module_args, inject, complex_args)
                     result.result['attempts'] = x
@@ -753,9 +772,29 @@ class Runner(object):
                 self.callbacks.on_ok(host, data)
         return result
 
+    def _early_needs_tmp_path(self, module_name, handler):
+        ''' detect if a tmp path should be created before the handler is called '''
+        if module_name in utils.plugins.action_loader:
+          return getattr(handler, 'TRANSFERS_FILES', False)
+        # other modules never need tmp path at early stage
+        return False
+
+    def _late_needs_tmp_path(self, conn, tmp, module_style):
+        if tmp.find("tmp") != -1:
+            # tmp has already been created
+            return False
+        if not conn.has_pipelining:
+            # tmp is necessary to store the module source code
+            return True
+        if module_style != "new":
+            # even when conn has pipelining, old style modules need tmp to store arguments
+            return True
+        return False
+    
+
     # *****************************************************
 
-    def _low_level_exec_command(self, conn, cmd, tmp, sudoable=False, executable=None):
+    def _low_level_exec_command(self, conn, cmd, tmp, sudoable=False, executable=None, in_data=None):
         ''' execute a command string over SSH, return the output '''
 
         if executable is None:
@@ -768,7 +807,7 @@ class Runner(object):
             if conn.user == sudo_user:
                 sudoable = False
 
-        rc, stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudo_user, sudoable=sudoable, executable=executable)
+        rc, stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudo_user, sudoable=sudoable, executable=executable, in_data=in_data)
 
         if type(stdout) not in [ str, unicode ]:
             out = ''.join(stdout.readlines())
@@ -840,7 +879,7 @@ class Runner(object):
         if result['rc'] != 0:
             if result['rc'] == 5:
                 output = 'Authentication failure.'
-            elif result['rc'] == 255 and self.transport == 'ssh':
+            elif result['rc'] == 255 and self.transport in ['ssh', 'ssh_alt']:
                 if utils.VERBOSITY > 3:
                     output = 'SSH encountered an unknown error. The output was:\n%s' % (result['stdout']+result['stderr'])
                 else:
@@ -858,27 +897,39 @@ class Runner(object):
             raise errors.AnsibleError('failed to resolve remote temporary directory from %s: `%s` returned empty string' % (basetmp, cmd))
         return rc
 
-
     # *****************************************************
 
     def _copy_module(self, conn, tmp, module_name, module_args, inject, complex_args=None):
         ''' transfer a module over SFTP, does not run it '''
+        (
+        module_style,
+        module_shebang,
+        module_data
+        ) = self._configure_module(conn, module_name, module_args, inject, complex_args)
+        module_remote_path = os.path.join(tmp, module_name)
+        
+        self._transfer_str(conn, tmp, module_name, module_data)
+         
+        return (module_remote_path, module_style, module_shebang)
+
+    # *****************************************************
+
+    def _configure_module(self, conn, module_name, module_args, inject, complex_args=None):
+        ''' find module and configure it '''
 
         # Search module path(s) for named module.
-        in_path = utils.plugins.module_finder.find_plugin(module_name)
-        if in_path is None:
+        module_path = utils.plugins.module_finder.find_plugin(module_name)
+        if module_path is None:
             raise errors.AnsibleFileNotFound("module %s not found in %s" % (module_name, utils.plugins.module_finder.print_paths()))
 
-        out_path = os.path.join(tmp, module_name)
 
         # insert shared code and arguments into the module
-        (module_data, module_style, shebang) = module_replacer.modify_module(
-            in_path, complex_args, module_args, inject
+        (module_data, module_style, module_shebang) = module_replacer.modify_module(
+            module_path, complex_args, module_args, inject
         )
 
-        self._transfer_str(conn, tmp, module_name, module_data)
+        return (module_style, module_shebang, module_data)
 
-        return (out_path, module_style, shebang)
 
     # *****************************************************
 

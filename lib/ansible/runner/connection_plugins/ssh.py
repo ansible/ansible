@@ -45,6 +45,7 @@ class Connection(object):
         self.password = password
         self.private_key_file = private_key_file
         self.HASHED_KEY_MAGIC = "|1|"
+        self.has_pipelining = False
 
         fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_EX)
         self.cp_dir = utils.prepare_writeable_dir('$HOME/.ansible/cp',mode=0700)
@@ -144,8 +145,11 @@ class Connection(object):
                     return False
         return True
 
-    def exec_command(self, cmd, tmp_path, sudo_user,sudoable=False, executable='/bin/sh'):
+    def exec_command(self, cmd, tmp_path, sudo_user,sudoable=False, executable='/bin/sh', in_data=None):
         ''' run a command on the remote host '''
+
+        if in_data:
+            raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
 
         ssh_cmd = self._password_cmd()
         ssh_cmd += ["ssh", "-tt"]
