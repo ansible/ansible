@@ -237,9 +237,13 @@ class Connection(object):
                 stderr += dat
                 if dat == '':
                     rpipes.remove(p.stderr)
-            if not rpipes or p.poll() is not None:
-                p.wait()
+            # only break out if we've emptied the pipes, or there is nothing to
+            # read from and the process has finished.
+            if (not rpipes or not rfd) and p.poll() is not None:
                 break
+            # Calling wait while there are still pipes to read can cause a lock
+            elif not rpipes and p.poll() == None:
+                p.wait()
         stdin.close() # close stdin after we read from stdout (see also issue #848)
         
         if C.HOST_KEY_CHECKING and not_in_host_file:
