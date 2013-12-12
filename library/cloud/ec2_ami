@@ -273,7 +273,7 @@ def main():
             wait = dict(type="bool", default=False),
             wait_timeout = dict(default=900),
             description = dict(default=""),
-            no_reboot = dict(default=True, type="bool"),
+            no_reboot = dict(default=False, type="bool"),
             state = dict(default='present'),
             region = dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS)
         )
