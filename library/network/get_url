@@ -24,6 +24,7 @@ import shutil
 import datetime
 import re
 import tempfile
+import email.utils
 
 DOCUMENTATION = '''
 ---
@@ -83,6 +84,13 @@ options:
     required: false
     default: 'yes'
     choices: ['yes', 'no']
+  use_timestamp:
+    description:
+      - if C(yes), it will only be downloaded if the timestamp has changed
+        this will also work for a directory
+    required: false
+    default: 'yes'
+    choices: ['yes', 'no']
   others:
     description:
       - all arguments accepted by the M(file) module also work here
@@ -130,7 +138,7 @@ def url_filename(url):
         return 'index.html'
     return fn
 
-def url_do_get(module, url, dest, use_proxy, last_mod_time):
+def url_do_get(module, url, dest, use_proxy, last_mod_time, method=None):
     """
     Get url and return request and info
     Credits: http://stackoverflow.com/questions/7006574/how-to-download-file-from-ftp
@@ -174,6 +182,8 @@ def url_do_get(module, url, dest, use_proxy, last_mod_time):
     opener = urllib2.build_opener(*handlers)
     urllib2.install_opener(opener)
     request = urllib2.Request(url)
+    if method is not None:
+        request.get_method = lambda : 'HEAD'
     request.add_header('User-agent', USERAGENT)
 
     if last_mod_time:
@@ -222,6 +232,29 @@ def url_get(module, url, dest, use_proxy, last_mod_time):
     req.close()
     return tempname, info
 
+def url_head(module, url, dest, use_proxy):
+    """
+    Only get header information, and return it, to allow check if download is needed
+    
+    Return (filename from Content-Disposition, size from Content-Length, timestamp from Last-Modified, md5 sum from Content-MD5)
+    """
+    r, headers = url_do_get(module, url, dest, use_proxy, last_mod_time=None, method='GET')
+    r.close()
+    filename = extract_filename_from_headers(headers)
+    if not filename:
+        # Fall back to extracting the filename from the URL.
+        # Pluck the URL from the info, since a redirect could have changed
+        # it.
+        filename = url_filename(headers['url'])
+    size = int(headers.get('content-length', -1))
+    timestamp = headers.get('last-modified', None)
+    if timestamp is not None:
+        # convert to correct timestamp
+        t_w_tz = email.utils.parsedate_tz(timestamp)
+        timestamp = datetime.datetime.fromtimestamp(time.mktime(t_w_tz[:9])) + datetime.timedelta(minutes=t_w_tz[9])
+    md5sum = headers.get('content-md5', None)
+    return filename, size, timestamp, md5sum
+
 def extract_filename_from_headers(headers):
     """
     Extracts a filename from the given dict of HTTP headers.
@@ -259,7 +292,8 @@ def main():
             dest = dict(required=True),
             force = dict(default='no', aliases=['thirsty'], type='bool'),
             sha256sum = dict(default=''),
-            use_proxy = dict(default='yes', type='bool')
+            use_proxy = dict(default='yes', type='bool'),
+            use_timestamp = dict(default='no', type='bool')
         ),
         add_file_common_args=True
     )
@@ -269,18 +303,32 @@ def main():
     force = module.params['force']
     sha256sum = module.params['sha256sum']
     use_proxy = module.params['use_proxy']
+    use_timestamp = module.params['use_timestamp']
 
+    if use_timestamp and not force:
+        filename, size, timestamp, md5sum_ori = url_head(module, url, dest, use_proxy)
+    else:
+        filename = None
+        size = -1
+        timestamp = None
+        md5sum_ori = None
+    # TODO: implement validation based on size or md5sum
+        
     dest_is_dir = os.path.isdir(dest)
     last_mod_time = None
 
     if not dest_is_dir and os.path.exists(dest):
-        if not force:
+        if not force and not use_timestamp:
             module.exit_json(msg="file already exists", dest=dest, url=url, changed=False)
 
         # If the file already exists, prepare the last modified time for the
         # request.
         mtime = os.path.getmtime(dest)
         last_mod_time = datetime.datetime.utcfromtimestamp(mtime)
+    elif dest_is_dir and filename is not None and os.path.exists(os.path.join(dest, filename)):
+        if use_timestamp:
+            mtime = os.path.getmtime(os.path.join(dest, filename))
+            last_mod_time = datetime.datetime.utcfromtimestamp(mtime)
 
     # download to tmpsrc
     tmpsrc, info = url_get(module, url, dest, use_proxy, last_mod_time)
