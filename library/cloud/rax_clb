@@ -78,6 +78,7 @@ options:
     description:
       - Virtual IP ID to use when creating the load balancer for purposes of
         sharing an IP with another load balancer of another protocol
+    version_added: 1.5
   wait:
     description:
       - wait for the balancer to be in state 'running' before returning
