@@ -42,7 +42,7 @@ def get_config(p, section, key, env_var, default, boolean=False, integer=False, 
         return float(value)
     return value
 
-def _get_config(p, section, key, env_var, default, boolean=True):
+def _get_config(p, section, key, env_var, default):
     ''' helper function for get_config '''
     if env_var is not None:
         value = os.environ.get(env_var, None)
