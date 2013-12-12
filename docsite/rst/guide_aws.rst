@@ -40,7 +40,7 @@ And in your playbook steps we'll typically be using the following pattern for pr
 Provisioning
 ````````````
 
-The ec2 module provides the ability to provision instances within EC2.  Typically the provisioning task will be performed against your Ansible master server as a local_action statement.  
+The ec2 module provides the ability to provision instances within EC2.  Typically the provisioning task will be performed against your Ansible master server in a play that operates on localhost using the ``local`` connection type. If you are doing an EC2 operation mid-stream inside a regular play operating on remote hosts, you may want to use the ``local_action`` keyword for that particular task. Read :doc:`playbooks_delegation` for more about local actions. 
 
 .. note::
 
@@ -65,7 +65,7 @@ In a play, this might look like (assuming the parameters are held as vars)::
 
     tasks:
     - name: Provision a set of instances
-      local_action: ec2 
+      ec2: > 
           keypair={{mykeypair}} 
           group={{security_group}} 
           instance_type={{instance_type}} 
@@ -78,7 +78,7 @@ In a play, this might look like (assuming the parameters are held as vars)::
 By registering the return its then possible to dynamically create a host group consisting of these new instances.  This facilitates performing configuration actions on the hosts immediately in a subsequent task::
 
     - name: Add all instance public IPs to host group
-      local_action: add_host hostname={{ item.public_ip }} groupname=ec2hosts
+      add_host: hostname={{ item.public_ip }} groupname=ec2hosts
       with_items: ec2.instances
 
 With the host group now created, a second play in your provision playbook might now have some configuration steps::
@@ -90,7 +90,7 @@ With the host group now created, a second play in your provision playbook might 
 
       tasks:
       - name: Check NTP service
-        action: service name=ntpd state=started
+        service: name=ntpd state=started
 
 Rather than include configuration inline, you may also choose to just do it as a task include or a role.
 
