@@ -188,6 +188,8 @@ class Play(object):
             if os.path.isfile(vars):
                 vars_data = utils.parse_yaml_from_file(vars)
                 if vars_data:
+                    if not isinstance(vars_data, dict):
+                        raise errors.AnsibleError("vars from '%s' are not a dict" % vars)
                     role_vars = utils.combine_vars(vars_data, role_vars)
             defaults = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(role_path, 'defaults')))
             defaults_data = {}
