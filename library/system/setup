@@ -943,6 +943,7 @@ class FreeBSDHardware(Hardware):
     def populate(self):
         self.get_cpu_facts()
         self.get_memory_facts()
+        self.get_dmi_facts()
         self.get_device_facts()
         self.get_mount_facts()
         return self.facts
@@ -1011,6 +1012,39 @@ class FreeBSDHardware(Hardware):
                 s = slices.match(device)
                 if s:
                     self.facts['devices'][d.group(1)].append(s.group(1))
+
+    def get_dmi_facts(self):
+        ''' learn dmi facts from system
+
+        Use dmidecode executable if available'''
+
+        # Fall back to using dmidecode, if available
+        dmi_bin = module.get_bin_path('dmidecode')
+        DMI_DICT = dict(
+            bios_date='bios-release-date',
+            bios_version='bios-version',
+            form_factor='chassis-type',
+            product_name='system-product-name',
+            product_serial='system-serial-number',
+            product_uuid='system-uuid',
+            product_version='system-version',
+            system_vendor='system-manufacturer'
+        )
+        for (k, v) in DMI_DICT.items():
+            if dmi_bin is not None:
+                (rc, out, err) = module.run_command('%s -s %s' % (dmi_bin, v))
+                if rc == 0:
+                    # Strip out commented lines (specific dmidecode output)
+                    self.facts[k] = ''.join([ line for line in out.split('\n') if not line.startswith('#') ])
+                    try:
+                        json.dumps(self.facts[k])
+                    except UnicodeDecodeError:
+                        self.facts[k] = 'NA'
+                else:
+                    self.facts[k] = 'NA'
+            else:
+                self.facts[k] = 'NA'
+
 
 class NetBSDHardware(Hardware):
     """
