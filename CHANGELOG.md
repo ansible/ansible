@@ -3,6 +3,8 @@ Ansible Changes By Release
 
 ## 1.5 "Love Walks In" - Release pending!
 
+* no_reboot is now defaulted to "no" in the ec2_ami module to ensure filesystem consistency in the resulting AMI.
+
 ## 1.4.1 "Could This Be Magic" - November 27, 2013
 
 * Misc fixes to accelerate mode and various modules.

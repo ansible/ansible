@@ -84,9 +84,9 @@ options:
     aliases: []
   no_reboot:
     description:
-      - An optional flag indicating that the bundling process should not attempt to shutdown the instance before bundling. If this flag is True, the responsibility of maintaining file system integrity is left to the owner of the instance.
+      - An optional flag indicating that the bundling process should not attempt to shutdown the instance before bundling. If this flag is True, the responsibility of maintaining file system integrity is left to the owner of the instance. The default choice is "no".
     required: false
-    default: yes
+    default: no
     choices: [ "yes", "no" ]
     aliases: []
   image_id:
