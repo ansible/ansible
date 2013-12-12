@@ -1,18 +1,4 @@
 #!/usr/bin/python
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
 DOCUMENTATION = '''
 ---
@@ -49,6 +35,7 @@ EXAMPLES = '''
 
 import sys
 import time
+from ansible.module_utils.ec2 import *
 
 AWS_REGIONS = ['ap-northeast-1',
                'ap-southeast-1',
@@ -76,31 +63,8 @@ def main():
     )
 
     instance_name = module.params.get('instance_name')
-    aws_secret_key = module.params.get('aws_secret_key')
-    aws_access_key = module.params.get('aws_access_key')
-    region = module.params.get('region')
-
-    # allow environment variables to be used if ansible vars aren't set
-    if not region:
-        if 'AWS_REGION' in os.environ:
-            region = os.environ['AWS_REGION']
-        elif 'EC2_REGION' in os.environ:
-            region = os.environ['EC2_REGION']
-
-    if not aws_secret_key:
-        if 'AWS_SECRET_KEY' in os.environ:
-            aws_secret_key = os.environ['AWS_SECRET_KEY']
-        elif 'EC2_SECRET_KEY' in os.environ:
-            aws_secret_key = os.environ['EC2_SECRET_KEY']
-
-    if not aws_access_key:
-        if 'AWS_ACCESS_KEY' in os.environ:
-            aws_access_key = os.environ['AWS_ACCESS_KEY']
-        elif 'EC2_ACCESS_KEY' in os.environ:
-            aws_access_key = os.environ['EC2_ACCESS_KEY']
-
-    if not region:
-        module.fail_json(msg = str("region not specified and unable to determine region from EC2_REGION."))
+    
+    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
 
     try:
         conn = boto.elasticache.connect_to_region(region, aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key)
@@ -116,29 +80,29 @@ def main():
 
     # If we got here then pack up all the instance details to send
     # back to ansible
-    d = {
-      'id': data['CacheClusterId'],
-      'status': data['CacheClusterStatus'],
-      'instance_type': data['CacheNodeType'],
-      'engine': data['Engine'],
-      'node_endpoints': []
-    }
+    d = dict(
+        id = data['CacheClusterId'],
+        status = data['CacheClusterStatus'],
+        instance_type = data['CacheNodeType'],
+        engine = data['Engine'],
+        node_endpoints = []
+    )
 
     if d['status'] == 'available':
-      d['configuration_endpoint'] = {
-          'address': data['ConfigurationEndpoint']['Address'],
-          'port': data['ConfigurationEndpoint']['Port']
-        }
+        d['configuration_endpoint'] = dict(
+            address = data['ConfigurationEndpoint']['Address'],
+            port = data['ConfigurationEndpoint']['Port']
+        )
 
     for node in data['CacheNodes']:
-      nodeData = {
-        'id': node['CacheNodeId'],
-        'status': node['CacheNodeStatus']
-      }
-      if nodeData['status'] == 'available':
-        nodeData['address'] = node['Endpoint']['Address']
-        nodeData['port'] = node['Endpoint']['Port']
-      d['node_endpoints'].append(nodeData)
+        nodeData = dict(
+            id = node['CacheNodeId'],
+            status = node['CacheNodeStatus']
+        )
+        if nodeData['status'] == 'available':
+            nodeData['address'] = node['Endpoint']['Address']
+            nodeData['port'] = node['Endpoint']['Port']
+        d['node_endpoints'].append(nodeData)
 
     module.exit_json(changed=True, instance=d)
 
