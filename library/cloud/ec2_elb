@@ -138,8 +138,7 @@ class ElbManager:
         to report it out-of-service"""
 
         for lb in self.lbs:
-            if wait:
-                initial_state = self._get_instance_health(lb)
+            initial_state = self._get_instance_health(lb) if wait else None
 
             if initial_state and initial_state.state == 'InService':
                 lb.deregister_instances([self.instance_id])
