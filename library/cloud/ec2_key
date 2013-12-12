@@ -106,9 +106,6 @@ except ImportError:
     print "failed=True msg='boto required for this module'"
     sys.exit(1)
 
-# Required if importing key
-import base64
-
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -159,14 +156,14 @@ def main():
             try:
                 key.delete()
             except Exception, e:
-                module.fail_json(msg="Unable to key pair '%s' - %s" % (key, e))
+                module.fail_json(msg="Unable to delete key pair '%s' - %s" % (key, e))
             else:
                 key = None
                 changed = True
         else:
             '''no match found, no changes required'''
 
-    # Ensure requested group is present
+    # Ensure requested key is present
     elif state == 'present':
         if key:
             '''existing key found'''
@@ -175,7 +172,7 @@ def main():
             # the key has been created of imported.
             pass
 
-        # if the group doesn't exist, create it now
+        # if the key doesn't exist, create it now
         else:
             '''no match found, create it'''
             if not module.check_mode:
