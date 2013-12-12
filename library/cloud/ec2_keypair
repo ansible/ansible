@@ -52,15 +52,21 @@ options:
     required: true
     default: null
     aliases: []
+  src:
+    description:
+      - path to the public key to upload for keypair imports
+    required: false
+    default: null
+    aliases: []
   dest:
     description:
-      - directory in which to store the keypair
-    required: true
+      - directory in which to store the keypair when generating a new keypair
+    required: false
     default: null
     aliases: []
   state: 
     description:
-      - whether to ensure the keypair is present or absent
+      - whether to ensure the keypair is present or absent. Absent also deletes the associated keypair in dest
     default: present
     required: false
     choices: [ 'present', 'absent' ]
@@ -80,7 +86,12 @@ EXAMPLES = '''
     module: ec2_keypair 
     name: ec2_key
     dest: ~/.ansible
+# Upload a new keypair from ~/.ssh/id_rsa.pub
 
+- local_action: 
+    module: ec2_keypair 
+    name: ec2_key
+    src: ~/.ssh/id_rsa.pub
 '''    
 
 import sys
@@ -106,6 +117,7 @@ def main():
         argument_spec = dict(
             name = dict(),
             dest = dict(),
+            src = dict(),
             force = dict(type='bool', default=False),
             state = dict(default='present', choices=['present', 'absent']),
             region = dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS),
@@ -120,9 +132,20 @@ def main():
     ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
 
     name = module.params.get('name')
-    dest = os.path.expanduser(module.params.get('dest'))
+    dest = module.params.get('dest')
+    if dest:
+        dest = os.path.expanduser(dest)
+    src = module.params.get('src')
+    if src:
+        src = os.path.expanduser(src)
     force = module.params.get('force')
     state = module.params.get('state')
+
+    if src and dest:
+        module.fail_json(msg='At most one of src and dest should be set')
+
+    if src and force:
+        module.fail_json(msg="Force should not be used when importing a keypair")
 
     # If we have a region specified, connect to its endpoint.
     if region: 
@@ -139,7 +162,6 @@ def main():
     else:
         module.fail_json(msg="Either region or ec2_url must be specified")
 
-    fullpath = os.path.join(dest, '%s.pem' % name)
     try: 
         keypairs = [ keypair.name for keypair in ec2.get_all_key_pairs() ]
     except boto.exception.BotoServerError, e:
@@ -154,11 +176,14 @@ def main():
             except boto.exception.BotoServerError, e:
                 module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
         
-        if os.path.exists(fullpath):
-            os.remove(fullpath)
-            changed = True
-        module.exit_json(changed=changed, name=name, state=state, keyfile=fullpath)
+        if dest:
+            fullpath = os.path.join(dest, '%s.pem' % name)
+            if os.path.exists(fullpath):
+                os.remove(fullpath)
+                changed = True
+        module.exit_json(changed=changed, name=name, state=state)
     else:
+        fullpath = src or os.path.join(dest, '%s.pem' % name)
         if name in keypairs:
             if os.path.exists(fullpath):
                 module.exit_json(changed=False, name=name, state=state, keyfile=fullpath)
@@ -171,20 +196,34 @@ def main():
                 else:
                     module.fail_json(msg="Key %s exists in EC2 but does not exist at %s. Use force to override" % (name, fullpath))
         else:
-            if os.path.exists(fullpath):
+            if dest and os.path.exists(fullpath):
                 if force:
                     os.remove(fullpath)
                 else:
                     module.fail_json(msg="Key %s exists at %s but does not exist in EC2. Use force to override" % (name, fullpath))
           
-        try: 
-            key = ec2.create_key_pair(name)
-            key.save(dest)
+        if dest: 
+            try: 
+                key = ec2.create_key_pair(name)
+                key.save(dest)
+                module.exit_json(changed=True, name=name, state=state, keyfile=dest)
+            except boto.exception.BotoServerError, e:
+                module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+        if src:
+            try: 
+                fd = open(src)
+                key = fd.read()
+            except OSError, e:
+                module.fail_json(msg="Could not read public key file %s: %s" % (src, e.message))
+            finally:
+                fd.close()
+            try:
+                ec2.import_key_pair(name, key)
+                module.exit_json(changed=True, name=name, state=state, keyfile=src)
+            except boto.exception.BotoServerError, e:
+                module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
 
-        except boto.exception.BotoServerError, e:
-            module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
-
-    module.exit_json(changed=True, name=name, state=state, keyfile=fullpath)
+        module.fail_json(msg="Should not have got here!")
 
 # import module snippets
 from ansible.module_utils.basic import *
