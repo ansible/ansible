@@ -10,10 +10,10 @@ The mechanism for doing this is the "ansible.cfg" file, which is looked for in t
 
     * /etc/ansible/ansible.cfg
     * ~/.ansible.cfg
-    * ansible.cfg (in the playbook directory)
+    * ansible.cfg (in the current directory)
 
 If multiple file locations matching the above exist, the last location on the above list is used.  Settings in files
-are not merged together.  
+are not merged together.
 
 .. contents::
    :depth: 2
@@ -208,7 +208,7 @@ hash_behaviour
 ==============
 
 Ansible by default will override variables in specific precedence orders, as described in :doc:`playbooks_variables`.  When a variable
-of higher precedence wins, it will replace the other value.  
+of higher precedence wins, it will replace the other value.
 
 Some users prefer that variables that are hashes (aka 'dictionaries' in Python terms) are merged together.  This setting is called 'merge'. This is not the default behavior and it does not affect variables whose values are scalars (integers, strings) or
 arrays.  We generally recommend not using this setting unless you think you have an absolute need for it, and playbooks in the
@@ -319,7 +319,7 @@ nocolor
 =======
 
 By default ansible will try to colorize output to give a better indication of failure and status information.
-If you dislike this behavior you can turn it off by setting 'nocolor' to 0::
+If you dislike this behavior you can turn it off by setting 'nocolor' to 1::
 
    nocolor=0
 
@@ -385,7 +385,7 @@ remote_tmp
 Ansible works by transferring modules to your remote machines, running them, and then cleaning up after itself.  In some
 cases, you may not wish to use the default location and would like to change the path.  You can do so by altering this
 setting::
-   
+
     remote_tmp = $HOME/.ansible/tmp
 
 The default is to use a subdirectory of the user's home directory.  Ansible will then choose a random directory name
@@ -517,8 +517,8 @@ If set, this will pass a specific set of options to Ansible rather than Ansible'
 
     ssh_args = -o ControlMaster=auto -o ControlPersist=60s
 
-In particular, users may wish to raise the ControlPersist time to encourage performance.  A value of 30 minutes may 
-be appropriate.  
+In particular, users may wish to raise the ControlPersist time to encourage performance.  A value of 30 minutes may
+be appropriate.
 
 .. _control_path:
 
@@ -529,9 +529,9 @@ This is the location to save ControlPath sockets. This defaults to::
 
    control_path=%(directory)s/ansible-ssh-%%h-%%p-%%r
 
-On some systems with very long hostnames or very long path names (caused by long user names or 
+On some systems with very long hostnames or very long path names (caused by long user names or
 deeply nested home directories) this can exceed the character limit on
-file socket names (108 characters for most platforms). In that case, you 
+file socket names (108 characters for most platforms). In that case, you
 may wish to shorten the string to something like the below::
 
    control_path = %(directory)s/%%h-%%r
@@ -568,7 +568,7 @@ accelerate_port
 .. versionadded:: 1.3
 
 This is the port to use for accelerate mode::
-  
+
    accelerate_port = 5099
 
 .. _accelerate_timeout:
