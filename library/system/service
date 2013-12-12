@@ -384,7 +384,7 @@ class LinuxService(Service):
     def get_service_tools(self):
 
         paths = [ '/sbin', '/usr/sbin', '/bin', '/usr/bin' ]
-        binaries = [ 'service', 'chkconfig', 'update-rc.d', 'rc-service', 'rc-update', 'initctl', 'systemctl', 'start', 'stop', 'restart' ]
+        binaries = [ 'service', 'chkconfig', 'update-rc.d', 'rc-service', 'rc-update', 'initctl', 'systemctl', 'start', 'stop', 'restart', 'insserv' ]
         initpaths = [ '/etc/init.d' ]
         location = dict()
 
@@ -429,6 +429,8 @@ class LinuxService(Service):
             else:
                 # we are using a standard SysV service
                 self.enable_cmd = location['chkconfig']
+        elif location.get('insserv', None):
+            self.enable_cmd = location['insserv']
         elif location.get('update-rc.d', None):
             if check_systemd(self.name):
                 # service is managed by systemd
@@ -561,7 +563,6 @@ class LinuxService(Service):
 
 
     def service_enable(self):
-
         if self.enable_cmd is None:
             self.module.fail_json(msg='cannot detect command to enable service %s, typo or init system potentially unknown' % self.name)
 
@@ -642,6 +643,38 @@ class LinuxService(Service):
                 # service already disabled altogether
                 if not self.enable:
                     return
+
+        if self.enable_cmd.endswith("insserv"):
+            if self.enable:
+                (rc, out, err) = self.execute_command("%s -n %s" % (self.enable_cmd, self.name))
+            else:
+                (rc, out, err) = self.execute_command("%s -nr %s" % (self.enable_cmd, self.name))
+
+            self.changed = False
+            for line in err.splitlines():
+                if self.enable and line.find('enable service') != -1:
+                    self.changed = True
+                    break
+                if not self.enable and line.find('remove service') != -1:
+                    self.changed = True
+                    break
+
+            if self.module.check_mode:
+                self.module.exit_json(changed=self.changed)
+
+            if not self.changed:
+                return
+
+            if self.enable:
+                (rc, out, err) = self.execute_command("%s %s" % (self.enable_cmd, self.name))
+                if (rc != 0) or (err != ''):
+                    self.module.fail_json(msg=("Failed to install service. rc: %s, out: %s, err: %s" % (rc, out, err)))
+                return (rc, out, err)
+            else:
+                (rc, out, err) = self.execute_command("%s -r %s" % (self.enable_cmd, self.name))
+                if (rc != 0) or (err != ''):
+                    self.module.fail_json(msg=("Failed to remove service. rc: %s, out: %s, err: %s" % (rc, out, err)))
+                return (rc, out, err)
 
         if self.enable_cmd.endswith("update-rc.d"):
             if self.enable:
