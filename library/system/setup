@@ -1572,11 +1572,11 @@ class LinuxNetwork(Network):
             parse_ip_output(primary_data)
             parse_ip_output(secondary_data, secondary=True)
 
-        # replace : by _ in interface name since they are hard to use in template 
+        # replace : and . by _ in interface name since they are hard to use in template
         new_interfaces = {}
         for i in interfaces:
-            if ':' in i:
-                new_interfaces[i.replace(':','_')] = interfaces[i]
+            if re.search('[:\.]', i):
+                new_interfaces[re.sub('[:\.]', '_', i)] = interfaces[i]
             else:
                 new_interfaces[i] = interfaces[i]
         return new_interfaces, ips
@@ -1845,7 +1845,7 @@ class AIXNetwork(GenericBsdIfconfigNetwork, Network):
             if line:
                 words = line.split()
 
-		# only this condition differs from GenericBsdIfconfigNetwork
+                # only this condition differs from GenericBsdIfconfigNetwork
                 if re.match('^\w*\d*:', line):
                     current_if = self.parse_interface_line(words)
                     interfaces[ current_if['device'] ] = current_if
