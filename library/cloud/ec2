@@ -68,6 +68,7 @@ options:
     default: null
     aliases: []
   spot_price:
+    version_added: "1.5"
     description:
       - Maximum spot price to bid, If not set a regular on-demand instance is requested. A spot request is made with this maximum bid. When it is filled, the instance is started.
     required: false
@@ -104,6 +105,7 @@ options:
     default: 300
     aliases: []
   spot_wait_timeout:
+    version_added: "1.5"
     description:
       - how long to wait for the spot instance request to be fulfilled
     default: 600
