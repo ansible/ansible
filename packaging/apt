@@ -181,20 +181,29 @@ def package_status(m, pkgname, version, cache, state):
     except AttributeError:
         has_files = False  # older python-apt cannot be used to determine non-purged
 
+    try:
+        package_is_installed = ll_pkg.current_state == apt_pkg.CURSTATE_INSTALLED 
+    except AttributeError: # python-apt 0.7.X has very weak low-level object
+        try:
+            # might not be necessary as python-apt post-0.7.X should have current_state property
+            package_is_installed = pkg.is_installed
+        except AttributeError:
+            # assume older version of python-apt is installed
+            package_is_installed = pkg.isInstalled
+
     if version:
-        try :
-            return ll_pkg.current_state == apt_pkg.CURSTATE_INSTALLED and \
-                   fnmatch.fnmatch(pkg.installed.version, version), False, has_files
+        try:
+            installed_version = pkg.installed.version
         except AttributeError:
-            #assume older version of python-apt is installed
-            return ll_pkg.current_state == apt_pkg.CURSTATE_INSTALLED and \
-                   fnmatch.fnmatch(pkg.installedVersion, version), False, has_files
+            installed_version = pkg.installedVersion
+        return package_is_installed and fnmatch.fnmatch(installed_version, version), False, has_files
     else:
-        try :
-            return ll_pkg.current_state == apt_pkg.CURSTATE_INSTALLED, pkg.is_upgradable, has_files
+        try:
+            package_is_upgradable = pkg.is_upgradable
         except AttributeError:
-            #assume older version of python-apt is installed
-            return ll_pkg.current_state == apt_pkg.CURSTATE_INSTALLED, pkg.isUpgradable, has_files
+            # assume older version of python-apt is installed
+            package_is_upgradable = pkg.isUpgradable
+        return package_is_installed, package_is_upgradable, has_files
 
 def expand_dpkg_options(dpkg_options_compressed):
     options_list = dpkg_options_compressed.split(',')
