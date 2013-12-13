@@ -32,24 +32,24 @@ description:
 options:
    login_username:
      description:
-        - login username to authenticate to keystone
-     required: true
-     default: admin
+        - Login username to authenticate to keystone.  If not set then the value of the OS_USERNAME environment variable is used.
+     required: false
+     default: None
    login_password:
      description:
-        - Password of login user
-     required: true
-     default: 'yes'
+        - Password of login user.  If not set then the value of the OS_PASSWORD environment variable is used.
+     required: false
+     default: None
    login_tenant_name:
      description:
-        - The tenant name of the login user
-     required: true
-     default: 'yes'
+        - The tenant name of the login user.  If not set then the value of the OS_TENANT_NAME environment variable is used.
+     required: false
+     default: None
    auth_url:
      description:
-        - The keystone url for authentication
+        - The keystone url for authentication.  If not set then the value of the OS_AUTH_URL environment variable is used.
      required: false
-     default: 'http://127.0.0.1:35357/v2.0/'
+     default: None
    region_name:
      description:
         - Name of the region
@@ -87,20 +87,41 @@ EXAMPLES = '''
 def main():
     module = AnsibleModule(
         argument_spec                   = dict(
-        login_username                  = dict(default='admin'),
-        login_password                  = dict(required=True),
-        login_tenant_name               = dict(required='True'),
-        auth_url                        = dict(default='http://127.0.0.1:35357/v2.0/'),
+        login_username                  = dict(),
+        login_password                  = dict(no_log=True),
+        login_tenant_name               = dict(),
+        auth_url                        = dict(),
         region_name                     = dict(default=None),
         name                            = dict(required=True),
         public_key                      = dict(default=None),
         state                           = dict(default='present', choices=['absent', 'present'])
         ),
     )
-        
+
+    login_username = module.params.get('login_username')
+    login_password = module.params.get('login_password')
+    login_tenant_name = module.params.get('login_tenant_name')
+    auth_url = module.params.get('auth_url')
+
+    # allow stackrc environment variables to be used if ansible vars aren't set
+    if not login_username and 'OS_USERNAME' in os.environ:
+        login_username = os.environ['OS_USERNAME']
+
+    if not login_password and 'OS_PASSWORD' in os.environ:
+        login_password = os.environ['OS_PASSWORD']
+
+    if not login_tenant_name and 'OS_TENANT_NAME' in os.environ:
+        login_tenant_name = os.environ['OS_TENANT_NAME']
+
+    if not auth_url and 'OS_AUTH_URL' in os.environ:
+        auth_url = os.environ['OS_AUTH_URL']
+
     try:
-        nova = client.Client(module.params['login_username'], module.params['login_password'], 
-                                     module.params['login_tenant_name'], module.params['auth_url'], service_type='compute')
+        nova = client.Client(login_username,
+                             login_password,
+                             login_tenant_name,
+                             auth_url,
+                             service_type='compute')
     except Exception as e:
         module.fail_json( msg = " Error in authenticating to nova: %s" % e.message)
     if module.params['state'] == 'present':
