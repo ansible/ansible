@@ -2,6 +2,7 @@
 #coding: utf-8 -*-
 
 # (c) 2013, Benno Joy <benno@ansibleworks.com>
+# (c) 2013, John Dewey <john@dewey.ws>
 #
 # This module is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,6 +19,7 @@
 
 try:
     from novaclient.v1_1 import client
+    from novaclient import exceptions
     import time
 except ImportError:
     print("failed=True msg='novaclient is required for this module to work'")
@@ -97,12 +99,19 @@ def main():
         state                           = dict(default='present', choices=['absent', 'present'])
         ),
     )
-        
+
+    nova = nova_client.Client(module.params['login_username'],
+                              module.params['login_password'],
+                              module.params['login_tenant_name'],
+                              module.params['auth_url'],
+                              service_type='compute')
     try:
-        nova = client.Client(module.params['login_username'], module.params['login_password'], 
-                                     module.params['login_tenant_name'], module.params['auth_url'], service_type='compute')
-    except Exception as e:
-        module.fail_json( msg = " Error in authenticating to nova: %s" % e.message)
+        nova.authenticate()
+    except exc.Unauthorized as e:
+        module.fail_json(msg = "Invalid OpenStack Nova credentials.: %s" % e.message)
+    except exc.AuthorizationFailure as e:
+        module.fail_json(msg = "Unable to authorize user: %s" % e.message)
+
     if module.params['state'] == 'present':
         for key in nova.keypairs.list():
             if key.name == module.params['name']:
