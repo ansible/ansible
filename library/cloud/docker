@@ -134,7 +134,7 @@ options:
     aliases: []
   name:
     description:
-      - Set the name of the container
+      - Set the name of the container (cannot use with count)
     required: false
     default: null
     aliases: []
@@ -189,6 +189,38 @@ Stop, remove all of the running tomcat containers and list the exit code from th
   - name: Display return codes from stopped containers
     debug: msg="Returned {{inventory_hostname}}:{{item}}"
     with_items: docker_containers
+
+Create a named container:
+
+- hosts: web
+  sudo: yes
+  tasks:
+  - name: run tomcat server
+    docker: image=centos name=tomcat command="service tomcat6 start" ports=:8080
+
+Create multiple named containers:
+
+- hosts: web
+  sudo: yes
+  tasks:
+  - name: run tomcat servers
+    docker: image=centos name={{item}} command="service tomcat6 start" ports=:8080
+    with_items:
+      - crookshank
+      - snowbell
+      - heathcliff
+      - felix
+      - sylvester
+
+Create containers named in a sequence:
+
+- hosts: web
+  sudo: yes
+  tasks:
+  - name: run tomcat servers
+    docker: image=centos name={{item}} command="service tomcat6 start" ports=:8080
+    with_sequence: start=1 end=5 format=tomcat_%d.example.com
+
 '''
 
 try:
