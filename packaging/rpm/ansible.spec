@@ -47,11 +47,10 @@ Requires: python-keyczar
 # SuSE/openSuSE
 %if 0%{?suse_version} 
 BuildRequires: python-devel
-BuildRequires: python-setuptools
 Requires: python-paramiko
-Requires: python-jinja2
+Requires: python-Jinja2
 Requires: python-keyczar
-Requires: python-yaml
+Requires: python-PyYAML
 %endif
 
 Requires: sshpass
