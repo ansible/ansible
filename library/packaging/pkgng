@@ -116,6 +116,7 @@ def install_packages(module, pkgin_path, packages, cached, pkgsite):
         if rc != 0:
             module.fail_json(msg="Could not update catalogue")
 
+    module.run_command("set BATCH=yes")
     for package in packages:
         if query_package(module, pkgin_path, package):
             continue
