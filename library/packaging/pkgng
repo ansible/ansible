@@ -116,13 +116,12 @@ def install_packages(module, pkgin_path, packages, cached, pkgsite):
         if rc != 0:
             module.fail_json(msg="Could not update catalogue")
 
-    module.run_command("set BATCH=yes")
     for package in packages:
         if query_package(module, pkgin_path, package):
             continue
 
         if not module.check_mode:
-            rc, out, err = module.run_command("%s %s install -g -U -y %s" % (pkgsite, pkgin_path, package))
+            rc, out, err = module.run_command("BATCH=yes %s %s install -g -U -y %s" % (pkgsite, pkgin_path, package))
 
         if not module.check_mode and not query_package(module, pkgin_path, package):
             module.fail_json(msg="failed to install %s: %s" % (package, out), stderr=err)
