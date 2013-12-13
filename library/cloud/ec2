@@ -184,6 +184,12 @@ options:
     required: false
     default: null
     aliases: []
+  source_dest_check:
+    version_added: "1.5"
+    description:
+      - Enable or Disable the Source/Destination checks (for NAT instances and Virtual Routers)
+    required: false
+    default: true
   state:
     version_added: "1.3"
     description:
@@ -406,6 +412,7 @@ def create_instances(module, ec2):
     assign_public_ip = module.boolean(module.params.get('assign_public_ip'))
     private_ip = module.params.get('private_ip')
     instance_profile_name = module.params.get('instance_profile_name')
+    source_dest_check = module.boolean(module.params.get('source_dest_check'))
 
     # group_id and group_name are exclusive of each other
     if group_id and group_name:
@@ -546,6 +553,11 @@ def create_instances(module, ec2):
         for inst in this_res.instances:
             running_instances.append(inst)
 
+        # Enabled by default by Amazon
+        if not source_dest_check:
+            for inst in res.instances:
+                inst.modify_attribute('sourceDestCheck', False)
+
     instance_dict_array = []
     created_instance_ids = []
     for inst in running_instances:
@@ -649,6 +661,7 @@ def main():
             private_ip = dict(),
             instance_profile_name = dict(),
             instance_ids = dict(type='list'),
+            source_dest_check = dict(type='bool', default=True),
             state = dict(default='present'),
         )
     )
