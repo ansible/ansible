@@ -477,7 +477,8 @@ def main():
         # start/stop containers
         if state == "present":
 
-            if name:
+            # make sure a container with `name` is running
+            if name and name not in map(lambda x: x['name'], running_containers):
                 containers = manager.create_containers(1)
                 manager.start_containers(containers)
 
