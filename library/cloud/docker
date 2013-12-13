@@ -431,6 +431,8 @@ def main():
 
         if count < 1:
             module.fail_json(msg="Count must be positive number")
+        if count > 1 and name:
+            module.fail_json(msg="Count and name must not be used together")
 
         running_containers = manager.get_running_containers()
         running_count = len(running_containers)
@@ -443,8 +445,12 @@ def main():
         # start/stop containers
         if state == "present":
 
+            if name:
+                containers = manager.create_containers(1)
+                manager.start_containers(containers)
+
             # start more containers if we don't have enough
-            if delta > 0:
+            elif delta > 0:
                 containers = manager.create_containers(delta)
                 manager.start_containers(containers)
 
