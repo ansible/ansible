@@ -162,6 +162,8 @@ except ImportError:
     print("failed=True msg='pyrax is required for this module'")
     sys.exit(1)
 
+import novaclient.exceptions
+
 ACTIVE_STATUSES = ('ACTIVE', 'BUILD', 'HARD_REBOOT', 'MIGRATING', 'PASSWORD',
                    'REBOOT', 'REBUILD', 'RESCUE', 'RESIZE', 'REVERT_RESIZE')
 FINAL_STATUSES = ('ACTIVE', 'ERROR')
@@ -366,11 +368,13 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
         except ValueError:
             try:
                 image = cs.images.find(human_id=image)
-            except (pyrax.exceptions.NotFound,
+            except (novaclient.exceptions.NotFound,
+                    pyrax.exceptions.NotFound,
                     pyrax.exceptions.NoUniqueMatch):
                 try:
                     image = cs.images.find(name=image)
-                except (pyrax.exceptions.NotFound,
+                except (novaclient.exceptions.NotFound,
+                        pyrax.exceptions.NotFound,
                         pyrax.exceptions.NoUniqueMatch):
                     module.fail_json(msg='No matching image found (%s)' %
                                          image)
