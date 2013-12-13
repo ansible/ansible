@@ -776,10 +776,10 @@ class AnsibleModule(object):
                 journal.sendv(*journal_args)
             except IOError, e:
                 # fall back to syslog since logging to journal failed
-                syslog.openlog(module, 0, syslog.LOG_USER)
+                syslog.openlog(str(module), 0, syslog.LOG_USER)
                 syslog.syslog(syslog.LOG_NOTICE, msg)
         else:
-            syslog.openlog(module, 0, syslog.LOG_USER)
+            syslog.openlog(str(module), 0, syslog.LOG_USER)
             syslog.syslog(syslog.LOG_NOTICE, msg)
 
     def get_bin_path(self, arg, required=False, opt_dirs=[]):
