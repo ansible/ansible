@@ -214,6 +214,7 @@ options:
     required: false
     default: null
     aliases: []
+    version_added: 1.5
 requirements: [ "boto" ]
 author: Bruce Pennypacker
 '''
