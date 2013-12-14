@@ -98,8 +98,6 @@ except ImportError:
     print("failed=True msg='pyrax required for this module'")
     sys.exit(1)
 
-from novaclient.exceptions import NotFound
-
 NON_CALLABLES = (basestring, bool, dict, int, list, NoneType)
 
 
@@ -121,7 +119,7 @@ def rax_keypair(module, name, public_key, state):
     if state == 'present':
         try:
             keypair = cs.keypairs.find(name=name)
-        except NotFound:
+        except cs.exceptions.NotFound:
             try:
                 keypair = cs.keypairs.create(name, public_key)
                 changed = True
