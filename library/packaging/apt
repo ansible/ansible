@@ -82,6 +82,12 @@ options:
     required: false
     default: "yes"
     choices: [ "yes", "safe", "full", "dist"]
+  build_dep:
+    description:
+      - Instead, install the build dependancies for the named pkg (equivalent to 'apt-get build-dep foo')
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
   dpkg_options:
     description:
       - Add dpkg options to apt command. Defaults to '-o "Dpkg::Options::=--force-confdef" -o "Dpkg::Options::=--force-confold"'
@@ -125,6 +131,9 @@ EXAMPLES = '''
 
 # Pass options to dpkg on run
 - apt: upgrade=dist update_cache=yes dpkg_options='force-confold,force-confdef'
+
+# Install the build deps for package "foo"
+- apt: pkg=foo build_dep=yes
 '''
 
 
@@ -338,6 +347,36 @@ def upgrade(m, mode="yes", force=False,
         m.exit_json(changed=False, msg=out, stdout=out, stderr=err)
     m.exit_json(changed=True, msg=out, stdout=out, stderr=err)
 
+def build_dep(m, pkgspec, cache, force=False,
+        dpkg_options=expand_dpkg_options(DPKG_OPTIONS)):
+    if m.check_mode:
+        check_arg = '--simulate'
+    else:
+        check_arg = ''
+    
+    if force:
+        force_yes = '--force-yes'
+    else:
+        force_yes = ''
+    
+    packages = ""
+    pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache)
+    for package in pkgspec:
+        name, version = package_split(package)
+        packages += "'%s' " % package
+    
+    if len(packages) == 0:
+        m.exit_json(changed=False)
+    else:
+        apt_cmd_path = m.get_bin_path(APT_GET_CMD, required=True)
+        cmd = '%s %s -y %s %s %s build-dep %s' % (APT_ENVVARS, apt_cmd_path, dpkg_options, force_yes, check_arg, packages)
+        rc, out, err = m.run_command(cmd)
+        if rc:
+            m.fail_json(msg="'%s' failed: %s" % (cmd, err), stdout=out)
+        if APT_GET_ZERO in out:
+            m.exit_json(changed=False, msg=out, stdout=out, stderr=err)
+        m.exit_json(changed=True, msg=out, stdout=out, stderr=err)
+
 def main():
     module = AnsibleModule(
         argument_spec = dict(
@@ -350,10 +389,11 @@ def main():
             install_recommends = dict(default='yes', aliases=['install-recommends'], type='bool'),
             force = dict(default='no', type='bool'),
             upgrade = dict(choices=['yes', 'safe', 'full', 'dist']),
+            build_dep = dict(default='no', type='bool'),
             dpkg_options = dict(default=DPKG_OPTIONS)
         ),
         mutually_exclusive = [['package', 'upgrade']],
-        required_one_of = [['package', 'upgrade', 'update_cache']],
+        required_one_of = [['package', 'upgrade', 'update_cache', 'build_dep']],
         supports_check_mode = True
     )
 
@@ -430,6 +470,9 @@ def main():
                 module.fail_json(msg="invalid package spec: %s" % package)
             if latest and '=' in package:
                 module.fail_json(msg='version number inconsistent with state=latest: %s' % package)
+
+        if p['build_dep']:
+            build_dep(module, packages, cache, force=force_yes, dpkg_options=dpkg_options)
 
         if p['state'] == 'latest':
             install(module, packages, cache, upgrade=True,
