@@ -480,7 +480,8 @@ def main():
         if state == "present":
 
             # make sure a container with `name` is running
-            if name and name not in map(lambda x: x.get('name'), running_containers):
+            print running_containers
+            if name and "/" + name not in map(lambda x: x.get('Name'), running_containers):
                 containers = manager.create_containers(1)
                 manager.start_containers(containers)
 
