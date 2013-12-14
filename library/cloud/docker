@@ -382,6 +382,7 @@ class DockerManager:
                   'hostname':     self.module.params.get('hostname'),
                   'detach':       self.module.params.get('detach'),
                   'privileged':   self.module.params.get('privileged'),
+                  'name':         self.module.params.get('name'),
                   }
 
         def do_create(count, params):
