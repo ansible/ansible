@@ -83,6 +83,8 @@ The data to be added to the top level JSON dictionary looks like this::
 
     }
 
+.. seealso::
+
    :doc:`developing_api`
        Python API to Playbooks and Ad Hoc Task Execution
    :doc:`developing_modules`
@@ -95,5 +97,3 @@ The data to be added to the top level JSON dictionary looks like this::
        Mailing list for development topics
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
-
