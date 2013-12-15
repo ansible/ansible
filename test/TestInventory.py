@@ -163,6 +163,21 @@ class TestInventory(unittest.TestCase):
         var = inventory.get_variables('FE80:EF45::12:1')
         self.assertEqual(var['ansible_ssh_port'], 2222)
 
+    def test_simple_string_fqdn(self):
+        inventory = Inventory('foo.example.com,bar.example.com')
+        hosts = inventory.list_hosts()
+        self.assertEqual(sorted(hosts), sorted(['foo.example.com','bar.example.com']))
+
+    def test_simple_string_fqdn_port(self):
+        inventory = Inventory('foo.example.com:2222,bar.example.com')
+        hosts = inventory.list_hosts()
+        self.assertEqual(sorted(hosts), sorted(['foo.example.com','bar.example.com']))
+
+    def test_simple_string_fqdn_vars(self):
+        inventory = Inventory('foo.example.com:2222,bar.example.com')
+        var = inventory.get_variables('foo.example.com')
+        self.assertEqual(var['ansible_ssh_port'], 2222)
+
     def test_simple_vars(self):
         inventory = self.simple_inventory()
         vars = inventory.get_variables('thor')
@@ -254,6 +269,7 @@ class TestInventory(unittest.TestCase):
         expected2 = ['rtp_a', 'rtp_b']
         expected3 = ['rtp_a', 'rtp_b', 'rtp_c', 'tri_a', 'tri_b', 'tri_c']
         expected4 = ['rtp_b', 'orlando' ]
+        expected5 = ['blade-a-1']
 
         inventory = self.complex_inventory()
         hosts = inventory.list_hosts("nc[1]")
@@ -264,6 +280,16 @@ class TestInventory(unittest.TestCase):
         self.compare(hosts, expected3, sort=False)
         hosts = inventory.list_hosts("nc[1-2]:florida[0-1]")
         self.compare(hosts, expected4, sort=False)
+        hosts = inventory.list_hosts("blade-a-1")
+        self.compare(hosts, expected5, sort=False)
+        vars = inventory.get_variables('host-e-11.example.net')
+
+        expected = { 'ansible_ssh_port': 1234,
+                     'group_names': ['role4'],
+                     'inventory_hostname': 'host-e-11.example.net',
+                     'inventory_hostname_short': 'host-e-11' }
+        assert vars == expected
+
 
     def test_complex_intersect(self):
         inventory = self.complex_inventory()
