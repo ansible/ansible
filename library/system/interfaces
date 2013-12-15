@@ -103,8 +103,8 @@ $IFACE up','down ip link set $IFACE down'
 interfaces: name=eth0 state=absent
 '''
 
-import os
 import json
+import tempfile
 
 
 def update(module, state, name, auto, hotplug, iface_type, addr_family,
@@ -180,11 +180,12 @@ def update(module, state, name, auto, hotplug, iface_type, addr_family,
             elif not line.strip().startswith('#'):
                 ignored.append(line.strip())
 
-        # Close file so we copy over it
+        # Close file so we can replace it
         fd.close()
 
-        # Truncate
-        fd = open('/etc/network/interfaces.tmp', 'w')
+        # Open a temp file to write to
+        tmpfile = tempfile.mkstemp()
+        fd = open(tmpfile, 'w')
         fd.write('# This file is controlled by ansible\n')
 
         # Build basic structure
@@ -266,9 +267,9 @@ def update(module, state, name, auto, hotplug, iface_type, addr_family,
                 elif directive not in ['iface_type']:
                     ignored.append('Key error: %s' % directive)
 
-        # Close file so we can move it
+        # Close temp file and move it
         fd.close()
-        os.rename('/etc/network/interfaces.tmp', '/etc/network/interfaces')
+        module.atomic_move(tmpfile, '/etc/network/interfaces')
 
         module.exit_json(
             changed=changed,
