@@ -27,7 +27,9 @@ Design Principles
 Get Involved
 ============
 
-   * Read [Contributing.md](https://github.com/ansible/ansible/blob/devel/CONTRIBUTING.md) for all kinds of ways to contribute to and interact with the project, including mailing list information and how to submit bug reports and code to Ansible.
+   * Read [Contributing.md](https://github.com/ansible/ansible/blob/devel/CONTRIBUTING.md) for all kinds of ways to contribute to and interact with the project, including mailing list information and how to submit bug reports and code to Ansible.  
+   * When submitting a bug report, include 1) the output of 'ansible --version', 2) what you expected to happen, 3) what actually happened, and 4) any relevant commands and output.
+   * All code submissions are done through pull requests.  Take care to make sure no merge commits are in the submission, and use "git rebase" vs "git merge" for this reason.  If submitting a large code change (other than modules), it's probably a good idea to join ansible-devel and talk about what you would like to do or add first and to avoid duplicate efforts.  This not only helps everyone know what's going on, it also helps save time and effort if we decide some changes are needed.
    * irc.freenode.net: #ansible
 
 Branch Info
