@@ -83,17 +83,17 @@ The data to be added to the top level JSON dictionary looks like this::
 
     }
 
+.. seealso::
+
    :doc:`developing_api`
        Python API to Playbooks and Ad Hoc Task Execution
    :doc:`developing_modules`
        How to develop modules
    :doc:`developing_plugins`
        How to develop plugins
-   `AnsibleWorks AWX <http://ansibleworks.com/ansibleworks-awx`_
+   `AnsibleWorks AWX <http://ansibleworks.com/ansibleworks-awx>`_
        REST API endpoint and GUI for Ansible, syncs with dynamic inventory
    `Development Mailing List <http://groups.google.com/group/ansible-devel>`_
        Mailing list for development topics
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
-
