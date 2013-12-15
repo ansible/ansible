@@ -33,7 +33,12 @@ import os
 import subprocess
 import traceback
 import optparse
-import ansible.utils as utils
+try:
+    import ansible.utils as utils
+except ImportError, e:
+    print "Can not find 'ansible.utils', as per CONTRIBUTING.md, you may need to do:"
+    print "    source ./hacking/env-setup"
+    exit (1)
 import ansible.module_common as module_common
 import ansible.constants as C
 

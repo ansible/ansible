@@ -31,7 +31,12 @@ import time
 import datetime
 import subprocess
 import cgi
-import ansible.utils
+try:
+    import ansible.util
+except ImportError, e:
+    print "Can not find 'ansible.utils', as per CONTRIBUTING.md, you may need to do:"
+    print "    source ./hacking/env-setup"
+    exit (1)
 import ansible.utils.module_docs as module_docs
 
 # Get parent directory of the directory this script lives in
