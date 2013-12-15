@@ -27,6 +27,7 @@ except ImportError:
 DOCUMENTATION = '''
 ---
 module: quantum_floating_ip_associate
+version_added: "1.2"
 short_description: Associate or disassociate a particular floating IP with an instance
 description:
    - Associates or disassociates a specific floating IP with a particular instance
@@ -212,6 +213,6 @@ def main():
         module.exit_json(changed = True, result = "detached")
 
 # this is magic, see lib/ansible/module.params['common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+from ansible.module_utils.basic import *
 main()
 

@@ -191,7 +191,7 @@ def main():
     msg="%s. %d entries changed" % (msg,changes)
     module.exit_json(changed=changed, msg=msg, acl=currentacl)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 
 main()

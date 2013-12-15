@@ -1,3 +1,5 @@
+[![PyPI version](https://badge.fury.io/py/ansible.png)](http://badge.fury.io/py/ansible)
+
 Ansible
 =======
 
@@ -42,3 +44,4 @@ Author
 Michael DeHaan -- michael@ansibleworks.com
 
 [AnsibleWorks](http://ansibleworks.com)
+

@@ -34,6 +34,11 @@ options:
     description:
       - Path on the destination machine that will be synchronized from the source; The path can be absolute or relative.
     required: true
+  dest_port:
+    description:
+      - Port number for ssh on the destination host. The ansible_ssh_port inventory var takes precedence over this value.
+    default: 22
+    version_added: "1.5"
   mode:
     description:
       - Specify the direction of the synchroniztion. In push mode the localhost or delgate is the  source; In pull mode the remote host in context is the source.
@@ -150,6 +155,7 @@ def main():
         argument_spec = dict(
             src = dict(required=True),
             dest = dict(required=True),
+            dest_port = dict(default=22),
             delete = dict(default='no', type='bool'),
             private_key = dict(default=None),
             rsync_path = dict(default=None),
@@ -168,6 +174,7 @@ def main():
 
     source = module.params['src']
     dest = module.params['dest']
+    dest_port = module.params['dest_port']
     delete = module.params['delete']
     private_key = module.params['private_key']
     rsync_path = module.params['rsync_path']
@@ -221,8 +228,14 @@ def main():
         private_key = ''
     else:
         private_key = '-i '+ private_key 
-    cmd = cmd + " --rsh '%s %s -o %s'" % ('ssh', private_key,
+
+    if dest_port != 22:
+        cmd += " --rsh '%s %s -o %s -o Port=%s'" % ('ssh', private_key,
+                'StrictHostKeyChecking=no', dest_port)
+    else:
+        cmd += " --rsh '%s %s -o %s'" % ('ssh', private_key,
                 'StrictHostKeyChecking=no')  # need ssh param
+
     if rsync_path:
         cmd = cmd + " --rsync-path '%s'" %(rsync_path)
     changed_marker = '<<CHANGED>>'
@@ -237,8 +250,8 @@ def main():
         return module.exit_json(changed=changed, msg=out.replace(changed_marker,''),
                                 rc=rc, cmd=cmdstr)
 
-# include magic from lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 
 main()
 

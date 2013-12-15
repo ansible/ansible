@@ -122,8 +122,11 @@ def get_distribution():
     if platform.system() == 'Linux':
         try:
             distribution = platform.linux_distribution()[0].capitalize()
-            if distribution == 'NA':
-                if os.path.is_file('/etc/system-release'):
+            if not distribution and os.path.isfile('/etc/system-release'):
+                distribution = platform.linux_distribution(supported_dists=['system'])[0].capitalize()
+                if 'Amazon' in distribution:
+                    distribution = 'Amazon'
+                else:
                     distribution = 'OtherLinux'
         except:
             # FIXME: MethodMissing, I assume?
@@ -773,10 +776,10 @@ class AnsibleModule(object):
                 journal.sendv(*journal_args)
             except IOError, e:
                 # fall back to syslog since logging to journal failed
-                syslog.openlog(module, 0, syslog.LOG_USER)
+                syslog.openlog(str(module), 0, syslog.LOG_USER)
                 syslog.syslog(syslog.LOG_NOTICE, msg)
         else:
-            syslog.openlog(module, 0, syslog.LOG_USER)
+            syslog.openlog(str(module), 0, syslog.LOG_USER)
             syslog.syslog(syslog.LOG_NOTICE, msg)
 
     def get_bin_path(self, arg, required=False, opt_dirs=[]):

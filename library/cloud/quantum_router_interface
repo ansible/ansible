@@ -24,6 +24,7 @@ except ImportError:
 DOCUMENTATION = '''
 ---
 module: quantum_router_interface
+version_added: "1.2"
 short_description: Attach/Dettach a subnet's interface to a router
 description:
    - Attach/Dettach a subnet interface to a router, to provide a gateway for the subnet.
@@ -244,6 +245,6 @@ def main():
         module.exit_json(changed=True, result="Deleted")
                         
 # this is magic, see lib/ansible/module.params['common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+from ansible.module_utils.basic import *
 main()
 

@@ -461,6 +461,6 @@ def main():
             changed = False
     module.exit_json(changed=changed, user=user)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 main()

@@ -167,6 +167,34 @@ This allows an explicit check with this feature off::
 
 The variable value will be used as is, but the template evaluation will raise an error if it is undefined.
 
+.. _set_theory_filters:
+
+Set Theory Filters
+--------------------
+All these functions return a unique set from sets or lists.
+
+.. versionadded:: 1.4
+
+To get a unique set from a list::
+
+    {{ list1 |unique }}
+
+To get a union of two lists::
+
+    {{ list1 | union(list2) }}
+
+To get the intersection of 2 lists (unique list of all items in both)::
+
+    {{ list1 |intersect(list2)}}
+
+To get the difference of 2 lists (items in 1 that don't exist in 2)::
+
+    {{ list1 |difference(list2)}}
+
+To get the symetric difference of 2 lists (items exclusive to each list)::
+
+    {{ list1 |symetric_difference(list2)}}
+
 .. _other_useful_filters:
 
 Other Useful Filters

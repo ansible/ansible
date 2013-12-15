@@ -116,13 +116,13 @@ def install_packages(module, brew_path, packages, options):
         if module.check_mode:
             module.exit_json(changed=True)
 
+        cmd = [brew_path, 'install', package]
         if options:
-            rc, out, err = module.run_command([brew_path, 'install', package, options])
-        else:
-            rc, out, err = module.run_command([brew_path, 'install', package])
+            cmd.extend(options)
+        rc, out, err = module.run_command(cmd)
 
         if not query_package(module, brew_path, package):
-            module.fail_json(msg="failed to install %s: %s" % (package, out.strip()))
+            module.fail_json(msg="failed to install %s: '%s' %s" % (package, cmd, out.strip()))
 
         installed_count += 1
 
@@ -133,14 +133,14 @@ def install_packages(module, brew_path, packages, options):
 
 def generate_options_string(install_options):
     if install_options is None:
-        return ''
+        return None
 
-    options_str = ''
+    options = []
 
     for option in install_options:
-        options_str += ' --%s' % option
+        options.append('--%s' % option)
 
-    return options_str.strip()
+    return options
 
 
 def main():
@@ -170,7 +170,7 @@ def main():
     elif p["state"] in ["absent", "removed"]:
         remove_packages(module, brew_path, pkgs)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 
 main()

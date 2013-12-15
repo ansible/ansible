@@ -62,7 +62,8 @@ class LookupModule(object):
                         paramvals[name] = int(value)
                     elif name == 'chars':
                         use_chars=[]
-                        if ",," in value: use_chars.append(',')
+                        if ",," in value: 
+                            use_chars.append(',')
                         use_chars.extend(value.replace(',,',',').split(','))
                         paramvals['chars'] = use_chars
                     else:

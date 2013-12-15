@@ -259,7 +259,7 @@ class User(object):
         cmd = [self.module.get_bin_path('userdel', True)]
         if self.force:
             cmd.append('-f')
-        elif self.remove:
+        if self.remove:
             cmd.append('-r')
         cmd.append(self.name)
 
@@ -361,7 +361,7 @@ class User(object):
                 if current_groups and not self.append:
                     groups_need_mod = True
             else:
-                groups = self.get_groups_set()
+                groups = self.get_groups_set(remove_existing=False)
                 group_diff = set(current_groups).symmetric_difference(groups)
 
                 if group_diff:
@@ -429,7 +429,7 @@ class User(object):
         else:
             return list(grp.getgrnam(group))
 
-    def get_groups_set(self):
+    def get_groups_set(self, remove_existing=True):
         if self.groups is None:
             return None
         info = self.user_info()
@@ -437,7 +437,7 @@ class User(object):
         for g in set(groups):
             if not self.group_exists(g):
                 self.module.fail_json(msg="Group %s does not exist" % (g))
-            if info and self.group_info(g)[2] == info[3]:
+            if info and remove_existing and self.group_info(g)[2] == info[3]:
                 groups.remove(g)
         return groups
 
@@ -1137,27 +1137,30 @@ class SunOS(User):
 
         cmd.append(self.name)
 
-        (rc, out, err) = self.execute_command(cmd)
-        if rc is not None and rc != 0:
-            self.module.fail_json(name=self.name, msg=err, rc=rc)
+        if self.module.check_mode:
+            return (0, '', '')
+        else:
+            (rc, out, err) = self.execute_command(cmd)
+            if rc is not None and rc != 0:
+                self.module.fail_json(name=self.name, msg=err, rc=rc)
 
-        # we have to set the password by editing the /etc/shadow file 
-        if self.password is not None:
-            try:
-                lines = []
-                for line in open(self.SHADOWFILE, 'rb').readlines():
-                    fields = line.strip().split(':')
-                    if not fields[0] == self.name:
-                        lines.append(line)
-                        continue
-                    fields[1] = self.password
-                    line = ':'.join(fields)
-                    lines.append('%s\n' % line)
-                open(self.SHADOWFILE, 'w+').writelines(lines)
-            except Exception, err:
-                self.module.fail_json(msg="failed to update users password: %s" % str(err))
+            # we have to set the password by editing the /etc/shadow file 
+            if self.password is not None:
+                try:
+                    lines = []
+                    for line in open(self.SHADOWFILE, 'rb').readlines():
+                        fields = line.strip().split(':')
+                        if not fields[0] == self.name:
+                            lines.append(line)
+                            continue
+                        fields[1] = self.password
+                        line = ':'.join(fields)
+                        lines.append('%s\n' % line)
+                    open(self.SHADOWFILE, 'w+').writelines(lines)
+                except Exception, err:
+                    self.module.fail_json(msg="failed to update users password: %s" % str(err))
 
-        return (rc, out, err)
+            return (rc, out, err)
 
     def modify_user_usermod(self):
         cmd = [self.module.get_bin_path('usermod', True)]
@@ -1214,33 +1217,36 @@ class SunOS(User):
             cmd.append('-s')
             cmd.append(self.shell)
 
-        # modify the user if cmd will do anything
-        if cmd_len != len(cmd):
-            cmd.append(self.name)
-            (rc, out, err) = self.execute_command(cmd)
-            if rc is not None and rc != 0:
-                self.module.fail_json(name=self.name, msg=err, rc=rc)
+        if self.module.check_mode:
+            return (0, '', '')
         else:
-            (rc, out, err) = (None, '', '')
+            # modify the user if cmd will do anything
+            if cmd_len != len(cmd):
+                cmd.append(self.name)
+                (rc, out, err) = self.execute_command(cmd)
+                if rc is not None and rc != 0:
+                    self.module.fail_json(name=self.name, msg=err, rc=rc)
+            else:
+                (rc, out, err) = (None, '', '')
 
-        # we have to set the password by editing the /etc/shadow file 
-        if self.update_password == 'always' and self.password is not None and info[1] != self.password:
-            try:
-                lines = []
-                for line in open(self.SHADOWFILE, 'rb').readlines():
-                    fields = line.strip().split(':')
-                    if not fields[0] == self.name:
-                        lines.append(line)
-                        continue
-                    fields[1] = self.password
-                    line = ':'.join(fields)
-                    lines.append('%s\n' % line)
-                open(self.SHADOWFILE, 'w+').writelines(lines)
-                rc = 0
-            except Exception, err:
-                self.module.fail_json(msg="failed to update users password: %s" % str(err))
+            # we have to set the password by editing the /etc/shadow file 
+            if self.update_password == 'always' and self.password is not None and info[1] != self.password:
+                try:
+                    lines = []
+                    for line in open(self.SHADOWFILE, 'rb').readlines():
+                        fields = line.strip().split(':')
+                        if not fields[0] == self.name:
+                            lines.append(line)
+                            continue
+                        fields[1] = self.password
+                        line = ':'.join(fields)
+                        lines.append('%s\n' % line)
+                    open(self.SHADOWFILE, 'w+').writelines(lines)
+                    rc = 0
+                except Exception, err:
+                    self.module.fail_json(msg="failed to update users password: %s" % str(err))
 
-        return (rc, out, err)
+            return (rc, out, err)
 
 # ===========================================
 
@@ -1524,6 +1530,6 @@ def main():
 
     module.exit_json(**result)
 
-# include magic from lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 main()

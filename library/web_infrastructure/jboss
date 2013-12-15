@@ -20,10 +20,10 @@
 
 DOCUMENTATION = """
 module: jboss
+version_added: "1.4"
 short_description: deploy applications to JBoss
 description:
   - Deploy applications to JBoss standalone using the filesystem
-version_added: "1.4"
 options:
   deployment:
     required: true
@@ -135,6 +135,6 @@ def main():
 
     module.exit_json(changed=changed)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 main()

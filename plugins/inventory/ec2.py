@@ -131,12 +131,15 @@ except ImportError:
 
 
 class Ec2Inventory(object):
+    def _empty_inventory(self):
+        return {"_meta" : {"hostvars" : {}}}
+
     def __init__(self):
         ''' Main execution path '''
 
         # Inventory grouped by instance IDs, tags, security groups, regions,
         # and availability zones
-        self.inventory = {}
+        self.inventory = self._empty_inventory()
 
         # Index of hostname (address) to instance ID
         self.index = {}
@@ -157,7 +160,7 @@ class Ec2Inventory(object):
 
         elif self.args.list:
             # Display list of instances for inventory
-            if len(self.inventory) == 0:
+            if self.inventory == self._empty_inventory():
                 data_to_print = self.get_inventory_from_cache()
             else:
                 data_to_print = self.json_format_dict(self.inventory, True)
@@ -376,6 +379,8 @@ class Ec2Inventory(object):
         # Global Tag: tag all EC2 instances
         self.push(self.inventory, 'ec2', dest)
 
+        self.inventory["_meta"]["hostvars"][dest] = self.get_host_info_dict_from_instance(instance)
+
 
     def add_rds_instance(self, instance, region):
         ''' Adds an RDS instance to the inventory and index, as long as it is
@@ -479,30 +484,21 @@ class Ec2Inventory(object):
         return list(name_list)
 
 
-    def get_host_info(self):
-        ''' Get variables about a specific host '''
-
-        if len(self.index) == 0:
-            # Need to load index from cache
-            self.load_index_from_cache()
-
-        if not self.args.host in self.index:
-            # try updating the cache
-            self.do_api_calls_update_cache()
-            if not self.args.host in self.index:
-                # host migh not exist anymore
-                return self.json_format_dict({}, True)
-
-        (region, instance_id) = self.index[self.args.host]
-
-        instance = self.get_instance(region, instance_id)
+    def get_host_info_dict_from_instance(self, instance):
         instance_vars = {}
         for key in vars(instance):
             value = getattr(instance, key)
             key = self.to_safe('ec2_' + key)
 
             # Handle complex types
-            if type(value) in [int, bool]:
+            # state/previous_state changed to properties in boto in https://github.com/boto/boto/commit/a23c379837f698212252720d2af8dec0325c9518
+            if key == 'ec2__state':
+                instance_vars['ec2_state'] = instance.state or ''
+                instance_vars['ec2_state_code'] = instance.state_code
+            elif key == 'ec2__previous_state':
+                instance_vars['ec2_previous_state'] = instance.previous_state or ''
+                instance_vars['ec2_previous_state_code'] = instance.previous_state_code
+            elif type(value) in [int, bool]:
                 instance_vars[key] = value
             elif type(value) in [str, unicode]:
                 instance_vars[key] = value.strip()
@@ -529,8 +525,26 @@ class Ec2Inventory(object):
                 #print type(value)
                 #print value
 
-        return self.json_format_dict(instance_vars, True)
+        return instance_vars
 
+    def get_host_info(self):
+        ''' Get variables about a specific host '''
+
+        if len(self.index) == 0:
+            # Need to load index from cache
+            self.load_index_from_cache()
+
+        if not self.args.host in self.index:
+            # try updating the cache
+            self.do_api_calls_update_cache()
+            if not self.args.host in self.index:
+                # host migh not exist anymore
+                return self.json_format_dict({}, True)
+
+        (region, instance_id) = self.index[self.args.host]
+
+        instance = self.get_instance(region, instance_id)
+        return self.json_format_dict(self.get_host_info_dict_from_instance(instance), True)
 
     def push(self, my_dict, key, element):
         ''' Pushed an element onto an array that may not have been defined in

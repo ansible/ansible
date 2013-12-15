@@ -146,26 +146,26 @@ class TestRunner(unittest.TestCase):
 
         result = self._run('command', ["/usr/bin/this_does_not_exist", "splat"])
         assert 'msg' in result
-        assert 'failed' in result
+        assert result.get('failed')
 
         result = self._run('shell', ["/bin/echo", "$HOME"])
         assert 'failed' not in result
         assert result['rc'] == 0
 
         result = self._run('command', ["creates='/tmp/ansible command test'", "chdir=/tmp", "touch", "'ansible command test'"])
-        assert 'changed' in result
+        assert result.get('changed')
         assert result['rc'] == 0
 
         result = self._run('command', ["creates='/tmp/ansible command test'", "false"])
-        assert 'skipped' in result
+        assert result.get('skipped')
 
         result = self._run('shell', ["removes=/tmp/ansible\\ command\\ test", "chdir=/tmp", "rm -f 'ansible command test'; echo $?"])
-        assert 'changed' in result
+        assert result.get('changed')
         assert result['rc'] == 0
         assert result['stdout'] == '0'
 
         result = self._run('shell', ["removes=/tmp/ansible\\ command\\ test", "false"])
-        assert 'skipped' in result
+        assert result.get('skipped')
 
     def test_git(self):
         self._run('file', ['path=/tmp/gitdemo', 'state=absent'])

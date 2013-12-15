@@ -158,7 +158,14 @@ def install_packages(module, pkgspec, force=True, no_suggests=True):
         cmd = ("%s --auto %s --quiet %s %s > /dev/null" % (URPMI_PATH, force_yes, no_suggests_yes, packages))
 
         rc, out, err = module.run_command(cmd)
-        if rc:
+
+        installed = True
+        for packages in pkgspec:
+            if not query_package_provides(module, package):
+                installed = False
+
+        # urpmi always have 0 for exit code if --force is used
+        if rc or not installed:
             module.fail_json(msg="'urpmi %s' failed: %s" % (packages, err))
         else:
             module.exit_json(changed=True, msg="%s present(s)" % packages)
@@ -195,7 +202,7 @@ def main():
     elif p['state'] in [ 'removed', 'absent' ]:
         remove_packages(module, packages)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
     
 main()        

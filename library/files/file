@@ -31,6 +31,7 @@ except ImportError:
 DOCUMENTATION = '''
 ---
 module: file
+version_added: "historical"
 short_description: Sets attributes of files
 description: 
      - Sets attributes of files, symlinks, and directories, or removes
@@ -348,7 +349,7 @@ def main():
     else:
         module.fail_json(path=path, msg='unexpected position reached')
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 main()
 

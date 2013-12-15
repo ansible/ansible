@@ -36,14 +36,14 @@ class ActionModule(object):
 
     def setup(self, module_name, inject):
         ''' Always default to localhost as delegate if None defined '''
-        if inject['delegate_to'] is None:
+        if inject.get('delegate_to') is None:
             inject['delegate_to'] = '127.0.0.1'
             inject['ansible_connection'] = 'local'
             # If sudo is active, disable from the connection set self.sudo to True.
             if self.runner.sudo:
                 self.runner.sudo = False
 
-    def run(self, conn, tmp, module_name, module_args, 
+    def run(self, conn, tmp, module_name, module_args,
         inject, complex_args=None, **kwargs):
 
         ''' generates params and passes them on to the rsync module '''
@@ -70,6 +70,12 @@ class ActionModule(object):
         src_host = '127.0.0.1'
         dest_host = inject.get('ansible_ssh_host', inject['inventory_hostname'])
 
+        dest_port = options.get('dest_port')
+        inv_port = inject.get('ansible_ssh_port', inject['inventory_hostname'])
+        if inv_port != dest_port and inv_port != inject['inventory_hostname']:
+            options['dest_port'] = inv_port
+
+
         # edge case: explicit delegate and dest_host are the same
         if dest_host == inject['delegate_to']:
             dest_host = '127.0.0.1'
@@ -81,7 +87,9 @@ class ActionModule(object):
                               self.runner.remote_user)
             private_key = inject.get('ansible_ssh_private_key_file', self.runner.private_key_file)
             if not private_key is None:
+                private_key = os.path.expanduser(private_key)
                 options['private_key'] = private_key
+                
             src = self._process_origin(src_host, src, user)
             dest = self._process_origin(dest_host, dest, user)
 

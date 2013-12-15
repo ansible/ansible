@@ -16,7 +16,7 @@
 
 DOCUMENTATION = '''
 ---
-module: vpc 
+module: ec2_vpc 
 short_description: configure AWS virtual private clouds
 description:
     - Create or terminates AWS virtual private clouds.  This module has a dependency on python-boto.
@@ -109,14 +109,14 @@ EXAMPLES = '''
 
 # Basic creation example:
       local_action:
-        module: vpc
+        module: ec2_vpc
         state: present
         cidr_block: 172.23.0.0/16
         region: us-west-2
 # Full creation example with subnets and optional availability zones.
 # The absence or presense of subnets deletes or creates them respectively.
       local_action:
-        module: vpc
+        module: ec2_vpc
         state: present
         cidr_block: 172.22.0.0/16
         subnets: 
@@ -144,7 +144,7 @@ EXAMPLES = '''
 
 # Removal of a VPC by id
       local_action:
-        module: vpc
+        module: ec2_vpc
         state: absent
         vpc_id: vpc-aaaaaaa 
         region: us-west-2  
@@ -233,8 +233,12 @@ def create_vpc(module, vpc_conn):
             wait_timeout = time.time() + wait_timeout
             while wait and wait_timeout > time.time() and pending:
                 pvpc = vpc_conn.get_all_vpcs(vpc.id)
-                if pvpc.state == "available":
-                    pending = False
+                if hasattr(pvpc, 'state'):
+                    if pvpc.state == "available":
+                        pending = False
+                elif hasattr(pvpc[0], 'state'):
+                    if pvpc[0].state == "available":
+                        pending = False
                 time.sleep(5)
             if wait and wait_timeout <= time.time():
                 # waiting took too long
@@ -339,7 +343,7 @@ def create_vpc(module, vpc_conn):
 
             # Associate with subnets
             for sn in rt['subnets']:
-                rsn = vpc_conn.get_all_subnets(filters={'cidr': sn })
+                rsn = vpc_conn.get_all_subnets(filters={'cidr': sn})
                 if len(rsn) != 1:
                     module.fail_json(
                         msg='The subnet {0} to associate with route_table {1} ' \
@@ -489,8 +493,8 @@ def main():
             route_tables = dict(type='list'),
             region = dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS),
             state = dict(choices=['present', 'absent'], default='present'),
-            aws_secret_key = dict(aliases=['ec2_secret_key', 'secret_key'], no_log=True),
-            aws_access_key = dict(aliases=['ec2_access_key', 'access_key']),
+            ec2_secret_key = dict(aliases=['aws_secret_key', 'secret_key'], no_log=True),
+            ec2_access_key = dict(aliases=['aws_access_key', 'access_key']),
         )
     )
 

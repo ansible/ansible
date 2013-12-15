@@ -205,8 +205,12 @@ action: ovirt >
 
 
 '''
-from ovirtsdk.api import API
-from ovirtsdk.xml import params
+try:
+    from ovirtsdk.api import API
+    from ovirtsdk.xml import params
+except ImportError:
+    print "failed=True msg='ovirtsdk required for this module'"
+    sys.exit(1)
 
 # ------------------------------------------------------------------- #
 # create connection with API
@@ -416,6 +420,6 @@ def main():
 
 
 
-# include magic from lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 main()

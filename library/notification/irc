@@ -22,6 +22,7 @@
 DOCUMENTATION = '''
 ---
 module: irc
+version_added: "1.2"
 short_description: Send a message to an IRC channel
 description:
    - Send a message to an IRC channel. This is a very simplistic implementation.
@@ -153,6 +154,6 @@ def main():
     module.exit_json(changed=False, channel=channel, nick=nick,
                      msg=msg)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 main()

@@ -17,6 +17,7 @@
 DOCUMENTATION = '''
 ---
 module: ec2_ami
+version_added: "1.3"
 short_description: create or destroy an image in ec2, return imageid
 description:
      - Creates or deletes ec2 images. This module has a dependency on python-boto >= 2.5
@@ -83,9 +84,9 @@ options:
     aliases: []
   no_reboot:
     description:
-      - An optional flag indicating that the bundling process should not attempt to shutdown the instance before bundling. If this flag is True, the responsibility of maintaining file system integrity is left to the owner of the instance.
+      - An optional flag indicating that the bundling process should not attempt to shutdown the instance before bundling. If this flag is True, the responsibility of maintaining file system integrity is left to the owner of the instance. The default choice is "no".
     required: false
-    default: null
+    default: no
     choices: [ "yes", "no" ]
     aliases: []
   image_id:
@@ -263,8 +264,8 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             ec2_url = dict(),
-            aws_secret_key = dict(aliases=['ec2_secret_key', 'secret_key'], no_log=True),
-            aws_access_key = dict(aliases=['ec2_access_key', 'access_key']),
+            ec2_secret_key = dict(aliases=['aws_secret_key', 'secret_key'], no_log=True),
+            ec2_access_key = dict(aliases=['aws_access_key', 'access_key']),
             instance_id = dict(),
             image_id = dict(),
             delete_snapshot = dict(),
@@ -272,7 +273,7 @@ def main():
             wait = dict(type="bool", default=False),
             wait_timeout = dict(default=900),
             description = dict(default=""),
-            no_reboot = dict(default=True, type="bool"),
+            no_reboot = dict(default=False, type="bool"),
             state = dict(default='present'),
             region = dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS)
         )

@@ -336,6 +336,6 @@ def main():
         module.fail_json(
             msg="'%s' is an unknown value for the state argument" % state)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 main()

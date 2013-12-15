@@ -18,9 +18,9 @@ DOCUMENTATION = '''
 ---
 module: rds
 version_added: "1.3"
-short_description: create or delete an Amazon rds instance
+short_description: create, delete, or modify an Amazon rds instance
 description:
-     - Creates or deletes rds instances.  When creating an instance it can be either a new instance or a read-only replica of an existing instance. This module has a dependency on python-boto >= 2.5.
+     - Creates, deletes, or modifies rds instances.  When creating an instance it can be either a new instance or a read-only replica of an existing instance. This module has a dependency on python-boto >= 2.5. The 'promote' command requires boto >= 2.18.0.
 options:
   command:
     description:
@@ -28,7 +28,7 @@ options:
     required: true
     default: null
     aliases: []
-    choices: [ 'create', 'replicate', 'delete', 'facts', 'modify' ]
+    choices: [ 'create', 'replicate', 'delete', 'facts', 'modify' , 'promote' ]
   instance_name:
     description:
       - Database instance identifier.
@@ -208,6 +208,13 @@ options:
     default: no
     choices: [ "yes", "no" ]
     aliases: []
+  new_instance_name:
+    description:
+      - Name to rename an instance to. Used only when command=modify.
+    required: false
+    default: null
+    aliases: []
+    version_added: 1.5
 requirements: [ "boto" ]
 author: Bruce Pennypacker
 '''
@@ -242,6 +249,13 @@ EXAMPLES = '''
       command=facts
       instance_name=new_database
       register: new_database_facts
+
+# Rename an instance and wait for the change to take effect
+- rds: >
+      command=modify
+      instance_name=new_database
+      new_instance_name=renamed_database
+      wait=yes
     
 '''
 
@@ -266,7 +280,7 @@ except ImportError:
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            command           = dict(choices=['create', 'replicate', 'delete', 'facts', 'modify'], required=True),
+            command           = dict(choices=['create', 'replicate', 'delete', 'facts', 'modify', 'promote'], required=True),
             instance_name     = dict(required=True),
             source_instance   = dict(required=False),
             db_engine         = dict(choices=['MySQL', 'oracle-se1', 'oracle-se', 'oracle-ee', 'sqlserver-ee', 'sqlserver-se', 'sqlserver-ex', 'sqlserver-web'], required=False),
@@ -296,6 +310,7 @@ def main():
             wait_timeout      = dict(default=300),
             snapshot          = dict(required=False),
             apply_immediately = dict(type='bool', default=False),
+            new_instance_name = dict(required=False),
         )
     )
 
@@ -329,6 +344,7 @@ def main():
     wait_timeout       = int(module.params.get('wait_timeout'))
     snapshot           = module.params.get('snapshot')
     apply_immediately  = module.params.get('apply_immediately')
+    new_instance_name  = module.params.get('new_instance_name')
 
     # allow environment variables to be used if ansible vars aren't set
     if not region:
@@ -361,25 +377,29 @@ def main():
     # Validate parameters for each command
     if command == 'create':
         required_vars = [ 'instance_name', 'db_engine', 'size', 'instance_type', 'username', 'password' ]
-        invalid_vars  = [ 'source_instance', 'snapshot', 'apply_immediately' ]
+        invalid_vars  = [ 'source_instance', 'snapshot', 'apply_immediately', 'new_instance_name' ]
 
     elif command == 'replicate':
         required_vars = [ 'instance_name', 'source_instance' ]
-        invalid_vars  = [ 'db_engine', 'size', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'security_groups', 'option_group', 'maint_window', 'backup_window', 'backup_retention', 'subnet', 'snapshot', 'apply_immediately' ]
+        invalid_vars  = [ 'db_engine', 'size', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'security_groups', 'option_group', 'maint_window', 'backup_window', 'backup_retention', 'subnet', 'snapshot', 'apply_immediately', 'new_instance_name' ]
 
     elif command == 'delete':
         required_vars = [ 'instance_name' ]
-        invalid_vars  = [ 'db_engine', 'size', 'instance_type', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'security_groups', 'option_group', 'maint_window', 'backup_window', 'backup_retention', 'port', 'upgrade', 'subnet', 'zone' , 'source_instance', 'apply_immediately' ]
+        invalid_vars  = [ 'db_engine', 'size', 'instance_type', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'security_groups', 'option_group', 'maint_window', 'backup_window', 'backup_retention', 'port', 'upgrade', 'subnet', 'zone' , 'source_instance', 'apply_immediately', 'new_instance_name' ]
 
     elif command == 'facts':
         required_vars = [ 'instance_name' ]
-        invalid_vars  = [ 'db_engine', 'size', 'instance_type', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'security_groups', 'option_group', 'maint_window', 'backup_window', 'backup_retention', 'port', 'upgrade', 'subnet', 'zone', 'wait', 'source_instance' 'apply_immediately' ]
+        invalid_vars  = [ 'db_engine', 'size', 'instance_type', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'security_groups', 'option_group', 'maint_window', 'backup_window', 'backup_retention', 'port', 'upgrade', 'subnet', 'zone', 'wait', 'source_instance' 'apply_immediately', 'new_instance_name' ]
 
     elif command == 'modify':
         required_vars = [ 'instance_name' ]
         if password:
             params["master_password"] = password
         invalid_vars = [ 'db_engine', 'username', 'db_name', 'engine_version',  'license_model', 'option_group', 'port', 'upgrade', 'subnet', 'zone', 'source_instance' ]
+
+    elif command == 'promote':
+        required_vars = [ 'instance_name' ]
+        invalid_vars = [ 'db_engine', 'size', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'security_groups', 'option_group', 'maint_window', 'subnet', 'source_instance', 'snapshot', 'apply_immediately', 'new_instance_name' ]
  
     for v in required_vars:
         if not module.params.get(v):
@@ -443,6 +463,9 @@ def main():
         else:
             params["security_groups"] = security_groups.split(',')
 
+    if new_instance_name:
+        params["new_instance_id"] = new_instance_name
+
     try: 
         if command == 'create':
             db = conn.create_dbinstance(instance_name, size, instance_type, username, password, **params)
@@ -461,6 +484,25 @@ def main():
         elif command == 'modify':
             params["apply_immediately"] = apply_immediately
             db = conn.modify_dbinstance(instance_name, **params)
+            if apply_immediately:
+                if new_instance_name:
+                    # Wait until the new instance name is valid
+                    found = 0
+                    while found == 0:
+                        instances = conn.get_all_dbinstances()
+                        for i in instances:
+                            if i.id == new_instance_name:
+                                instance_name = new_instance_name
+                                found = 1
+                        if found == 0:
+                            time.sleep(5)
+                else:
+                    # Wait for a few seconds since it takes a while for AWS
+                    # to change the instance from 'available' to 'modifying'
+                    time.sleep(5)
+
+        elif command == 'promote':
+            db = conn.promote_read_replica(instance_name, **params)
 
     # Don't do anything for the 'facts' command since we'll just drop down
     # to get_all_dbinstances below to collect the facts
@@ -533,7 +575,7 @@ def main():
 
     module.exit_json(changed=True, instance=d)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 
 main()

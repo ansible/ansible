@@ -482,7 +482,7 @@ def main():
     linodeServers(module, api, state, name, plan, distribution, datacenter, linode_id, 
                  payment_term, password, ssh_pub_key, swap, wait, wait_timeout)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 
 main()

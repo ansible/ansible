@@ -28,6 +28,7 @@ import os
 DOCUMENTATION = '''
 ---
 module: command
+version_added: historical
 short_description: Executes a command on a remote node
 description:
      - The M(command) module takes the command name followed by a list of space-delimited arguments.
@@ -155,8 +156,8 @@ def main():
         changed = True
     )
 
-# include magic from lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 
 # only the command module should ever need to do this
 # everything else should be simple key=value

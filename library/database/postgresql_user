@@ -44,6 +44,7 @@ options:
   password:
     description:
       - set the user's password, before 1.4 this was required.
+      - "When passing an encrypted password it must be generated with the format C('str[\\"md5\\"] + md5[ password + username ]'), resulting in a total of 35 characters.  An easy way to do this is: C(echo \\"md5`echo -n \\"verysecretpasswordJOE\\" | md5`\\")."
     required: false
     default: null
   db:
@@ -481,6 +482,6 @@ def main():
     kw['changed'] = changed
     module.exit_json(**kw)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 main()

@@ -24,6 +24,7 @@ import time
 DOCUMENTATION = '''
 ---
 module: copy
+version_added: "historical"
 short_description: Copies files to remote locations.
 description:
      - The M(copy) module copies a file on the local box to remote locations.
@@ -183,6 +184,6 @@ def main():
 
     module.exit_json(**res_args)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 main()

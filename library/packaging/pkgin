@@ -64,7 +64,7 @@ def query_package(module, pkgin_path, name, state="present"):
 
     if state == "present":
 
-        rc, out, err = module.run_command("%s list | grep ^%s" % (pkgin_path, name))
+        rc, out, err = module.run_command("%s -y list | grep ^%s" % (pkgin_path, name))
 
         if rc == 0:
             # At least one package with a package name that starts with ``name``
@@ -162,7 +162,7 @@ def main():
     elif p["state"] == "absent":
         remove_packages(module, pkgin_path, pkgs)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 
 main()

@@ -25,6 +25,7 @@ except ImportError:
 DOCUMENTATION = '''
 ---
 module: quantum_router
+version_added: "1.2"
 short_description: Create or Remove router from openstack
 description:
    - Create or Delete routers from OpenStack
@@ -205,6 +206,6 @@ def main():
             module.exit_json(changed=True, result="deleted")
                 
 # this is magic, see lib/ansible/module.params['common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+from ansible.module_utils.basic import *
 main()
 

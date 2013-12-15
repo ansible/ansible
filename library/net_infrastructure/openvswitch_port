@@ -17,6 +17,7 @@
 DOCUMENTATION = '''
 ---
 module: openvswitch_port
+version_added: 1.4
 short_description: Manage Open vSwitch ports
 requirements: [ ovs-vsctl ]
 description:
@@ -128,6 +129,6 @@ def main():
         port.run()
 
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 main()

@@ -102,7 +102,7 @@ def _legacy_varFindLimitSpace(basedir, vars, space, part, lookup_fatal, depth, e
     if space is None:
         return space
     # A part with escaped .s in it is compounded by { and }, remove them
-    if part[0] == '{' and part[-1] == '}':
+    if len(part) > 0 and part[0] == '{' and part[-1] == '}':
         part = part[1:-1]
     # Template part to resolve variables within (${var$var2})
     part = legacy_varReplace(basedir, part, vars, lookup_fatal=lookup_fatal, depth=depth + 1, expand_lists=expand_lists)
@@ -298,9 +298,10 @@ def legacy_varReplace(basedir, raw, vars, lookup_fatal=True, depth=0, expand_lis
 
     result = ''.join(done)
 
-    if result != orig:
+    if (not '\$' in orig) and (result != orig):
         from ansible import utils
-        utils.deprecated("Legacy variable subsitution, such as using ${foo} or $foo instead of {{ foo }} is currently valid but will be phased out and has been out of favor since version 1.2. This is the last of legacy features on our deprecation list. You may continue to use this if you have specific needs for now","1.6")
+        # above check against \$ as templating will remove the backslash
+        utils.deprecated("Legacy variable substitution, such as using ${foo} or $foo instead of {{ foo }} is currently valid but will be phased out and has been out of favor since version 1.2. This is the last of legacy features on our deprecation list. You may continue to use this if you have specific needs for now","1.6")
     return result
 
 def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=True, convert_bare=False, fail_on_undefined=False, filter_fatal=True):
@@ -531,13 +532,14 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
             return lookup(*args, basedir=basedir, **kwargs)
 
         t.globals['lookup'] = my_lookup
-
-        
-
         jvars =_jinja2_vars(basedir, vars, t.globals, fail_on_undefined)
         new_context = t.new_context(jvars, shared=True)
         rf = t.root_render_func(new_context)
-        res = jinja2.utils.concat(rf)
+        try:
+            res = jinja2.utils.concat(rf)
+        except TypeError, te:
+            if 'StrictUndefined' in str(te):
+                raise errors.AnsibleUndefinedVariable("unable to look up a name or access an attribute in template string")
         return res
     except (jinja2.exceptions.UndefinedError, errors.AnsibleUndefinedVariable):
         if fail_on_undefined:

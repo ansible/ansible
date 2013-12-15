@@ -268,64 +268,47 @@ def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
+    argument_spec = rax_argument_spec()
+    argument_spec.update(
+        dict(
             algorithm=dict(choices=ALGORITHMS, default='LEAST_CONNECTIONS'),
-            api_key=dict(),
-            credentials=dict(aliases=['creds_file']),
             meta=dict(type='dict', default={}),
             name=dict(),
             port=dict(type='int', default=80),
             protocol=dict(choices=PROTOCOLS, default='HTTP'),
-            region=dict(),
             state=dict(default='present', choices=['present', 'absent']),
             timeout=dict(type='int', default=30),
             type=dict(choices=['PUBLIC', 'SERVICENET'], default='PUBLIC'),
-            username=dict(),
             wait=dict(type='bool'),
             wait_timeout=dict(default=300),
-        ),
+        )
+    )
+
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        required_together=rax_required_together(),
     )
 
     algorithm = module.params.get('algorithm')
-    api_key = module.params.get('api_key')
-    credentials = module.params.get('credentials')
     meta = module.params.get('meta')
     name = module.params.get('name')
     port = module.params.get('port')
     protocol = module.params.get('protocol')
-    region = module.params.get('region')
     state = module.params.get('state')
     timeout = int(module.params.get('timeout'))
-    username = module.params.get('username')
     vip_type = module.params.get('type')
     wait = module.params.get('wait')
     wait_timeout = int(module.params.get('wait_timeout'))
 
-    try:
-        username = username or os.environ.get('RAX_USERNAME')
-        api_key = api_key or os.environ.get('RAX_API_KEY')
-        credentials = (credentials or os.environ.get('RAX_CREDENTIALS') or
-                       os.environ.get('RAX_CREDS_FILE'))
-        region = region or os.environ.get('RAX_REGION')
-    except KeyError, e:
-        module.fail_json(msg='Unable to load %s' % e.message)
-
-    try:
-        pyrax.set_setting('identity_type', 'rackspace')
-        if api_key and username:
-            pyrax.set_credentials(username, api_key=api_key, region=region)
-        elif credentials:
-            credentials = os.path.expanduser(credentials)
-            pyrax.set_credential_file(credentials, region=region)
-        else:
-            raise Exception('No credentials supplied!')
-    except Exception, e:
-        module.fail_json(msg='%s' % e.message)
+    setup_rax_module(module, pyrax)
 
     cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
                         vip_type, timeout, wait, wait_timeout)
 
-from ansible.module_utils.basic import *
 
+# import module snippets
+from ansible.module_utils.basic import *
+from ansible.module_utils.rax import *
+
+### invoke the module
 main()

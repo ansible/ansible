@@ -22,6 +22,7 @@
 DOCUMENTATION = '''
 ---
 module: unarchive
+version_added: 1.4
 short_description: Copies archive to remote locations and unpacks them
 description:
      - The M(unarchive) module copies an archive file on the local box to remote locations and unpacks them.
@@ -47,9 +48,9 @@ notes:
     - uses tar's --diff arg to calculate if changed or not.  If this arg is not
       supported, it will always unpack the archive
     - does not detect if a .zip file is different from destination - always unzips
-    - existing files/directories in the destination which are not in the archvie
+    - existing files/directories in the destination which are not in the archive
       are not touched.  This is the same behavior as a normal archive extraction
-    - existing files/directories in the destination which are not in the archvie
+    - existing files/directories in the destination which are not in the archive
       are ignored for purposes of deciding if the archive should be unpacked or not
 '''
 
@@ -72,7 +73,7 @@ class _zipfile(object):
         return dict(bool = False)
 
     def unarchive(self):
-        cmd = 'unzip "%s" -d "%s" -o'  % (self.src,self.dest)
+        cmd = 'unzip -o "%s" -d "%s"'  % (self.src,self.dest)
         rc, out, err = self.module.run_command(cmd)
         return dict(cmd = cmd, rc=rc, out=out, err=err)
 
@@ -95,9 +96,9 @@ class _tgzfile(object):
     def is_unarchived(self):
         dirof = os.path.dirname(self.dest)
         destbase = os.path.basename(self.dest)
-        cmd = 'tar -v -C "%s" --diff -%sf "%s"'  % (self.dest, self.zipflag,self.src )
+        cmd = 'tar -v -C "%s" --diff -%sf "%s"'  % (self.dest, self.zipflag,self.src)
         rc, out, err = self.module.run_command(cmd)
-        bool = True if rc == 0 else False
+        bool = (rc == 0)
         return dict( bool = bool, rc = rc , out = out, err = err, cmd = cmd)
 
     def unarchive(self):
@@ -137,7 +138,7 @@ class _tarxz(_tgzfile):
         self.zipflag = 'J'
 
 # try handlers in order and return the one that works or bail if none work
-def pick_handler (src,dest,module):
+def pick_handler(src,dest,module):
     handlers = [_tgzfile, _zipfile, _tarfile, _tarbzip, _tarxz]
     for handler in handlers:
         obj = handler(src,dest,module)
@@ -193,6 +194,6 @@ def main():
 
     module.exit_json(**res_args)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 main()

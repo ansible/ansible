@@ -138,8 +138,13 @@ class ElbManager:
         to report it out-of-service"""
 
         for lb in self.lbs:
-            initial_state = lb.get_instance_health([self.instance_id])[0]
-            lb.deregister_instances([self.instance_id])
+            initial_state = self._get_instance_health(lb) if wait else None
+
+            if initial_state and initial_state.state == 'InService':
+                lb.deregister_instances([self.instance_id])
+            else:
+                return
+
             if wait:
                 self._await_elb_instance_state(lb, 'OutOfService', initial_state)
             else:
@@ -151,10 +156,14 @@ class ElbManager:
         """Register the instance for all ELBs and wait for the ELB
         to report the instance in-service"""
         for lb in self.lbs:
-            initial_state = lb.get_instance_health([self.instance_id])[0]
+            if wait:
+                initial_state = self._get_instance_health(lb)
+
             if enable_availability_zone:
                 self._enable_availailability_zone(lb)
+
             lb.register_instances([self.instance_id])
+
             if wait:
                 self._await_elb_instance_state(lb, 'InService', initial_state)
             else:
@@ -164,7 +173,7 @@ class ElbManager:
 
     def exists(self, lbtest):
         """ Verify that the named ELB actually exists """
-        
+
         found = False
         for lb in self.lbs:
             if lb.name == lbtest:
@@ -191,13 +200,22 @@ class ElbManager:
         lb: load balancer
         awaited_state : state to poll for (string)"""
         while True:
-            instance_state = lb.get_instance_health([self.instance_id])[0]
+            instance_state = self._get_instance_health(lb)
+
+            if not instance_state:
+                msg = ("The instance %s could not be put in service on %s."
+                       " Reason: Invalid Instance")
+                self.module.fail_json(msg=msg % (self.instance_id, lb))
+
             if instance_state.state == awaited_state:
                 # Check the current state agains the initial state, and only set
                 # changed if they are different.
                 if instance_state.state != initial_state.state:
                     self.changed = True
                 break
+            elif self._is_instance_state_pending(instance_state):
+                # If it's pending, we'll skip further checks andd continue waiting
+                pass
             elif (awaited_state == 'InService'
                   and instance_state.reason_code == "Instance"):
                 # If the reason_code for the instance being out of service is
@@ -210,8 +228,32 @@ class ElbManager:
                 self.module.fail_json(msg=msg % (self.instance_id,
                                                  lb,
                                                  instance_state.description))
+            time.sleep(1)
+
+    def _is_instance_state_pending(self, instance_state):
+        """
+        Determines whether the instance_state is "pending", meaning there is
+        an operation under way to bring it in service.
+        """
+        # This is messy, because AWS provides no way to distinguish between
+        # an instance that is is OutOfService because it's pending vs. OutOfService
+        # because it's failing health checks. So we're forced to analyze the
+        # description, which is likely to be brittle.
+        return (instance_state and 'pending' in instance_state.description)
+
+    def _get_instance_health(self, lb):
+        """
+        Check instance health, should return status object or None under
+        certain error conditions.
+        """
+        try:
+            status = lb.get_instance_health([self.instance_id])[0]
+        except boto.exception.BotoServerError, e:
+            if e.error_code == 'InvalidInstance':
+                return None
             else:
-                time.sleep(1)
+                raise
+        return status
 
     def _get_instance_lbs(self, ec2_elbs=None):
         """Returns a list of ELBs attached to self.instance_id
@@ -257,8 +299,8 @@ def main():
                     'choices': ['present', 'absent']},
             instance_id={'required': True},
             ec2_elbs={'default': None, 'required': False, 'type':'list'},
-            aws_secret_key={'default': None, 'aliases': ['ec2_secret_key', 'secret_key'], 'no_log': True},
-            aws_access_key={'default': None, 'aliases': ['ec2_access_key', 'access_key']},
+            ec2_secret_key={'default': None, 'aliases': ['aws_secret_key', 'secret_key'], 'no_log': True},
+            ec2_access_key={'default': None, 'aliases': ['aws_access_key', 'access_key']},
             region={'default': None, 'required': False, 'aliases':['aws_region', 'ec2_region'], 'choices':AWS_REGIONS},
             enable_availability_zone={'default': True, 'required': False, 'choices': BOOLEANS, 'type': 'bool'},
             wait={'required': False, 'choices': BOOLEANS, 'default': True, 'type': 'bool'}

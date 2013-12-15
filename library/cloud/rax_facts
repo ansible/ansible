@@ -44,7 +44,7 @@ options:
     default: null
   region:
     description:
-      - Region to create the load balancer in
+      - Region to retrieve facts for
     default: DFW
   username:
     description:
@@ -144,51 +144,34 @@ def rax_facts(module, address, name, server_id):
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
+    argument_spec = rax_argument_spec()
+    argument_spec.update(
+        dict(
             address=dict(),
-            api_key=dict(),
-            credentials=dict(aliases=['creds_file']),
             id=dict(),
             name=dict(),
-            region=dict(),
-            username=dict(),
-        ),
+        )
+    )
+
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        required_together=rax_required_together(),
         mutually_exclusive=[['address', 'id', 'name']],
         required_one_of=[['address', 'id', 'name']],
     )
 
     address = module.params.get('address')
-    api_key = module.params.get('api_key')
-    credentials = module.params.get('credentials')
     server_id = module.params.get('id')
     name = module.params.get('name')
-    region = module.params.get('region')
-    username = module.params.get('username')
 
-    try:
-        username = username or os.environ.get('RAX_USERNAME')
-        api_key = api_key or os.environ.get('RAX_API_KEY')
-        credentials = (credentials or os.environ.get('RAX_CREDENTIALS') or
-                       os.environ.get('RAX_CREDS_FILE'))
-        region = region or os.environ.get('RAX_REGION')
-    except KeyError, e:
-        module.fail_json(msg='Unable to load %s' % e.message)
-
-    try:
-        pyrax.set_setting('identity_type', 'rackspace')
-        if api_key and username:
-            pyrax.set_credentials(username, api_key=api_key, region=region)
-        elif credentials:
-            credentials = os.path.expanduser(credentials)
-            pyrax.set_credential_file(credentials, region=region)
-        else:
-            raise Exception('No credentials supplied!')
-    except Exception, e:
-        module.fail_json(msg='%s' % e.message)
+    setup_rax_module(module, pyrax)
 
     rax_facts(module, address, name, server_id)
 
-from ansible.module_utils.basic import *
 
+# import module snippets
+from ansible.module_utils.basic import *
+from ansible.module_utils.rax import *
+
+### invoke the module
 main()

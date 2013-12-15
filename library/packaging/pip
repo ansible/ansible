@@ -346,7 +346,7 @@ def main():
     module.exit_json(changed=changed, cmd=cmd, name=name, version=version,
                      state=state, requirements=requirements, virtualenv=env, stdout=out, stderr=err)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 
 main()

@@ -72,9 +72,9 @@ EXAMPLES = '''
 
 import base64
 import getpass
+import json
 import os
 import os.path
-import shutil
 import signal
 import socket
 import struct
@@ -250,7 +250,7 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
                     vv("bad decrypt, skipping...")
                     data2 = json.dumps(dict(rc=1))
                     data2 = self.server.key.Encrypt(data2)
-                    send_data(client, data2)
+                    self.send_data(data2)
                     return
 
                 vvvv("loading json from the data")
@@ -360,13 +360,11 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
             return dict(failed=True, msg='internal error: out_path is required')
 
         final_path = None
-        final_user = None
         if 'user' in data and data.get('user') != getpass.getuser():
             vv("the target user doesn't match this user, we'll move the file into place via sudo")
             (fd,out_path) = tempfile.mkstemp(prefix='ansible.', dir=os.path.expanduser('~/.ansible/tmp/'))
             out_fd = os.fdopen(fd, 'w', 0)
             final_path = data['out_path']
-            final_user = data['user']
         else:
             out_path = data['out_path']
             out_fd = open(out_path, 'w')
@@ -429,7 +427,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             port=dict(required=False, default=5099),
-            ipv6=dict(required=False, default=False),
+            ipv6=dict(required=False, default=False, type='bool'),
             timeout=dict(required=False, default=300),
             password=dict(required=True),
             minutes=dict(required=False, default=30),
@@ -443,7 +441,7 @@ def main():
     timeout   = int(module.params['timeout'])
     minutes   = int(module.params['minutes'])
     debug     = int(module.params['debug'])
-    ipv6      = bool(module.params['ipv6'])
+    ipv6      = module.params['ipv6']
 
     if not HAS_KEYCZAR:
         module.fail_json(msg="keyczar is not installed (on the remote side)")
@@ -452,6 +450,6 @@ def main():
 
     daemonize(module, password, port, timeout, minutes, ipv6)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 main()

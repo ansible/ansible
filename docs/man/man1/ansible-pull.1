@@ -1,22 +1,13 @@
 '\" t
 .\"     Title: ansible
 .\"    Author: [see the "AUTHOR" section]
-.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 09/13/2013
+.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
+.\"      Date: 11/27/2013
 .\"    Manual: System administration commands
-.\"    Source: Ansible 1.4
+.\"    Source: Ansible 1.4.1
 .\"  Language: English
 .\"
-.TH "ANSIBLE" "1" "09/13/2013" "Ansible 1\&.4" "System administration commands"
-.\" -----------------------------------------------------------------
-.\" * Define some portability stuff
-.\" -----------------------------------------------------------------
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.\" http://bugs.debian.org/507673
-.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.ie \n(.g .ds Aq \(aq
-.el       .ds Aq '
+.TH "ANSIBLE" "1" "11/27/2013" "Ansible 1\&.4\&.1" "System administration commands"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -34,7 +25,7 @@ ansible-pull \- set up a remote copy of ansible on each managed node
 ansible \-d DEST \-U URL [options] [ <filename\&.yml> ]
 .SH "DESCRIPTION"
 .sp
-\fBAnsible\fR is an extra\-simple tool/framework/API for doing \*(Aqremote things\*(Aq over SSH\&.
+\fBAnsible\fR is an extra\-simple tool/framework/API for doing \'remote things\' over SSH\&.
 .sp
 Use ansible\-pull to set up a remote copy of ansible on each managed node, each set to run via cron and update playbook source via a source repository\&. This inverts the default \fBpush\fR architecture of ansible into a \fBpull\fR architecture, which has near\-limitless scaling potential\&.
 .sp
@@ -45,14 +36,14 @@ This is useful both for extreme scale\-out as well as periodic remediation\&. Us
 .PP
 \fBfilename\&.yml\fR
 .RS 4
-The name of one the YAML format files to run as an ansible playbook\&. This can be a relative path within the checkout\&. If not provided, ansible\-pull will look for a playbook based on the host\(cqs fully\-qualified domain name and finally a playbook named
+The name of one the YAML format files to run as an ansible playbook\&. This can be a relative path within the checkout\&. If not provided, ansible\-pull will look for a playbook based on the host\(cqs fully\-qualified domain name, on the host hostname and finally a playbook named
 \fBlocal\&.yml\fR\&.
 .RE
 .SH "OPTIONS"
 .PP
 \fB\-d\fR \fIDEST\fR, \fB\-\-directory=\fR\fIDEST\fR
 .RS 4
-Directory to checkout repository into\&.
+Directory to checkout repository into\&. If not provided, a subdirectory of ~/\&.ansible/pull/ will be used\&.
 .RE
 .PP
 \fB\-U\fR \fIURL\fR, \fB\-\-url=\fR\fIURL\fR
@@ -63,6 +54,11 @@ URL of the playbook repository to checkout\&.
 \fB\-C\fR \fICHECKOUT\fR, \fB\-\-checkout=\fR\fICHECKOUT\fR
 .RS 4
 Branch/Tag/Commit to checkout\&. If not provided, uses default behavior of module used to check out playbook repository\&.
+.RE
+.PP
+\fB\-f\fR, \fB\-\-force\fR
+.RS 4
+Force running of playbook even if unable to update playbook repository\&. This can be useful, for example, to enforce run\-time state when a network connection may not always be up or possible\&.
 .RE
 .PP
 \fB\-i\fR \fIPATH\fR, \fB\-\-inventory=\fR\fIPATH\fR

@@ -118,8 +118,8 @@ def main():
             region = dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS),
             state = dict(choices=['present', 'absent']),
             ec2_url = dict(aliases=['EC2_URL']),
-            aws_secret_key = dict(aliases=['ec2_secret_key', 'secret_key'], no_log=True),
-            aws_access_key = dict(aliases=['ec2_access_key', 'access_key']),
+            ec2_secret_key = dict(aliases=['aws_secret_key', 'secret_key'], no_log=True),
+            ec2_access_key = dict(aliases=['aws_access_key', 'access_key']),
         )
     )
 
@@ -159,7 +159,7 @@ def main():
         tagdict[tag.name] = tag.value
 
     if state == 'present':
-        if set(tags).issubset(set(tagdict)):
+        if set(tags.items()).issubset(set(tagdict.items())):
             module.exit_json(msg="Tags already exists in %s." %resource, changed=False)
         else:
             for (key, value) in set(tags.items()): 

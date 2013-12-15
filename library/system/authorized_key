@@ -111,6 +111,7 @@ import os
 import pwd
 import os.path
 import tempfile
+import re
 import shlex
 
 def keyfile(module, user, write=False, path=None, manage_dir=True):
@@ -170,27 +171,44 @@ def keyfile(module, user, write=False, path=None, manage_dir=True):
 
     return keysfile
 
-def parseoptions(options):
+def parseoptions(module, options):
     ''' 
     reads a string containing ssh-key options 
     and returns a dictionary of those options
     '''
     options_dict = {}
     if options:
-        options_list = options.strip().split(",")
-        for option in options_list:
-            # happen when there is comma at the end
-            if option == '':
-                continue
-            if option.find("=") != -1:
-                (arg,val) = option.split("=", 1)
+        token_exp = [
+            # matches separator
+            (r',+', False),
+            # matches option with value, e.g. from="x,y"
+            (r'([a-z0-9-]+)="((?:[^"\\]|\\.)*)"', True),
+            # matches single option, e.g. no-agent-forwarding 
+            (r'[a-z0-9-]+', True)
+        ]
+
+        pos = 0
+        while pos < len(options):
+            match = None
+            for pattern, is_valid_option in token_exp:
+                regex = re.compile(pattern, re.IGNORECASE)
+                match = regex.match(options, pos)
+                if match:
+                    text = match.group(0)
+                    if is_valid_option:
+                        if len(match.groups()) == 2:
+                            options_dict[match.group(1)] = match.group(2)
+                        else:
+                            options_dict[text] = None
+                    break
+            if not match:
+                module.fail_json(msg="invalid option string: %s" % options)
             else:
-                arg = option
-                val = None
-            options_dict[arg] = val
+                pos = match.end(0)
+
     return options_dict
 
-def parsekey(raw_key):
+def parsekey(module, raw_key):
     '''
     parses a key, which may or may not contain a list
     of ssh-key options at the beginning
@@ -209,7 +227,16 @@ def parsekey(raw_key):
     key_type   = None   # type of ssh key
     type_index = None   # index of keytype in key string|list
 
-    key_parts = shlex.split(raw_key)
+    # remove comment yaml escapes
+    raw_key = raw_key.replace('\#', '#')
+
+    # split key safely
+    lex = shlex.shlex(raw_key)
+    lex.quotes = ["'", '"']
+    lex.commenters = '' #keep comment hashes
+    lex.whitespace_split = True
+    key_parts = list(lex)
+
     for i in range(0, len(key_parts)):
         if key_parts[i] in VALID_SSH2_KEY_TYPES:
             type_index = i
@@ -224,7 +251,7 @@ def parsekey(raw_key):
         options = key_parts[0]
 
     # parse the options (if any)
-    options = parseoptions(options)
+    options = parseoptions(module, options)
 
     # get key after the type index
     key = key_parts[(type_index + 1)]
@@ -235,7 +262,7 @@ def parsekey(raw_key):
 
     return (key, key_type, options, comment)
 
-def readkeys(filename):
+def readkeys(module, filename):
 
     if not os.path.isfile(filename):
         return {}
@@ -243,7 +270,7 @@ def readkeys(filename):
     keys = {}
     f = open(filename)
     for line in f.readlines():
-        key_data = parsekey(line)
+        key_data = parsekey(module, line)
         if key_data:
             # use key as identifier
             keys[key_data[0]] = key_data
@@ -299,14 +326,14 @@ def enforce_state(module, params):
     # check current state -- just get the filename, don't create file
     do_write = False
     params["keyfile"] = keyfile(module, user, do_write, path, manage_dir)
-    existing_keys = readkeys(params["keyfile"])
+    existing_keys = readkeys(module, params["keyfile"])
 
     # Check our new keys, if any of them exist we'll continue.
     for new_key in key:
         if key_options is not None:
             new_key = "%s %s" % (key_options, new_key)
 
-        parsed_new_key = parsekey(new_key)
+        parsed_new_key = parsekey(module, new_key)
         if not parsed_new_key:
             module.fail_json(msg="invalid key specified: %s" % new_key)
 
@@ -368,6 +395,6 @@ def main():
     results = enforce_state(module, module.params)
     module.exit_json(**results)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 main()

@@ -133,6 +133,6 @@ def post_event(module):
     except socket.error, e:
         module.fail_json(msg="Socket error: %s to %s" % (e, uri))
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 main()

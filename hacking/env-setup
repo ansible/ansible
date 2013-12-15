@@ -5,6 +5,8 @@
 # When run using source as directed, $0 gets set to bash, so we must use $BASH_SOURCE
 if [ -n "$BASH_SOURCE" ] ; then
     HACKING_DIR=`dirname $BASH_SOURCE`
+elif [ ${0:(-9)} = "env-setup" ]; then
+    HACKING_DIR=`dirname $0`
 else
     HACKING_DIR="$PWD/hacking"
 fi

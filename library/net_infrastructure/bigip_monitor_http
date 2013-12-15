@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2013, serge van Ginderachter <serge@vanginderachter.be>
+# based on Matt Hite's bigip_pool module
+# (c) 2013, Matt Hite <mhite@hotmail.com>
 #
 # This file is part of Ansible
 #
@@ -20,10 +22,10 @@
 
 DOCUMENTATION = '''
 ---
-module: bigip_monitor_tcp
-short_description: "Manages F5 BIG-IP LTM tcp monitors"
+module: bigip_monitor_http
+short_description: "Manages F5 BIG-IP LTM http monitors"
 description:
-    - "Manages F5 BIG-IP LTM tcp monitors via iControl SOAP API"
+    - "Manages F5 BIG-IP LTM monitors via iControl SOAP API"
 version_added: "1.4"
 author: Serge van Ginderachter
 notes:
@@ -66,18 +68,11 @@ options:
             - Partition for the monitor
         required: false
         default: 'Common'
-    type:
-        description:
-            - The template type of this monitor template
-        required: false
-        default: 'tcp'
-        choices: [ 'TTYPE_TCP', 'TTYPE_TCP_ECHO', 'TTYPE_TCP_HALF_OPEN']
     parent:
         description:
             - The parent template of this monitor template
         required: false
-        default: 'tcp'
-        choices: [ 'tcp', 'tcp_echo', 'tcp_half_open']
+        default: 'http'
     parent_partition:
         description:
             - Partition for the parent monitor
@@ -91,6 +86,11 @@ options:
     receive:
         description:
             - The receive string for the monitor call
+        required: true
+        default: none
+    receive_disable:
+        description:
+            - The receive disable string for the monitor call
         required: true
         default: none
     ip:
@@ -134,43 +134,25 @@ options:
 '''
 
 EXAMPLES = '''
-
-- name: BIGIP F5 | Create TCP Monitor
+- name: BIGIP F5 | Create HTTP Monitor
   local_action:
-    module:             bigip_monitor_tcp
+    module:             bigip_monitor_http
     state:              present
     server:             "{{ f5server }}"
     user:               "{{ f5user }}"
     password:           "{{ f5password }}"
     name:               "{{ item.monitorname }}"
-    type:               tcp
     send:               "{{ item.send }}"
     receive:            "{{ item.receive }}"
-  with_items: f5monitors-tcp
-- name: BIGIP F5 | Create TCP half open Monitor
+  with_items: f5monitors
+- name: BIGIP F5 | Remove HTTP Monitor
   local_action:
-    module:             bigip_monitor_tcp
-    state:              present
-    server:             "{{ f5server }}"
-    user:               "{{ f5user }}"
-    password:           "{{ f5password }}"
-    name:               "{{ item.monitorname }}"
-    type:               tcp
-    send:               "{{ item.send }}"
-    receive:            "{{ item.receive }}"
-  with_items: f5monitors-halftcp
-- name: BIGIP F5 | Remove TCP Monitor
-  local_action:
-    module:             bigip_monitor_tcp
+    module:             bigip_monitor_http
     state:              absent
     server:             "{{ f5server }}"
     user:               "{{ f5user }}"
     password:           "{{ f5password }}"
     name:               "{{ monitorname }}"
-  with_flattened:
-  - f5monitors-tcp
-  - f5monitors-halftcp
-
 '''
 
 try:
@@ -180,9 +162,8 @@ except ImportError:
 else:
     bigsuds_found = True
 
-TEMPLATE_TYPE = DEFAULT_TEMPLATE_TYPE = 'TTYPE_TCP'
-TEMPLATE_TYPE_CHOICES = ['tcp', 'tcp_echo', 'tcp_half_open']
-DEFAULT_PARENT = DEFAULT_TEMPLATE_TYPE_CHOICE = DEFAULT_TEMPLATE_TYPE.replace('TTYPE_', '').lower()
+TEMPLATE_TYPE = 'TTYPE_HTTP'
+DEFAULT_PARENT_TYPE = 'http'
 
 
 # ===========================================
@@ -316,11 +297,11 @@ def main():
             partition = dict(default='Common'),
             state     = dict(default='present', choices=['present', 'absent']),
             name      = dict(required=True),
-            type      = dict(default=DEFAULT_TEMPLATE_TYPE_CHOICE, choices=TEMPLATE_TYPE_CHOICES),
-            parent    = dict(default=DEFAULT_PARENT),
+            parent    = dict(default=DEFAULT_PARENT_TYPE),
             parent_partition = dict(default='Common'),
             send      = dict(required=False),
             receive   = dict(required=False),
+            receive_disable   = dict(required=False),
             ip        = dict(required=False),
             port      = dict(required=False, type='int'),
             interval  = dict(required=False, type='int'),
@@ -337,20 +318,16 @@ def main():
     parent_partition = module.params['parent_partition']
     state = module.params['state']
     name = module.params['name']
-    type = 'TTYPE_' + module.params['type'].upper()
     parent = "/%s/%s" % (parent_partition, module.params['parent'])
     monitor = "/%s/%s" % (partition, name)
     send = module.params['send']
     receive = module.params['receive']
+    receive_disable = module.params['receive_disable']
     ip = module.params['ip']
     port = module.params['port']
     interval = module.params['interval']
     timeout = module.params['timeout']
     time_until_up = module.params['time_until_up']
-
-    # tcp monitor has multiple types, so overrule
-    global TEMPLATE_TYPE
-    TEMPLATE_TYPE = type
 
     # end monitor specific stuff
 
@@ -380,6 +357,8 @@ def main():
             send = ''
         if receive is None:         
             receive = ''
+        if receive_disable is None: 
+            receive_disable = ''
 
     # define and set address type
     if ip == '0.0.0.0' and port == 0:
@@ -403,13 +382,12 @@ def main():
                            'is_directly_usable': True}
 
     # monitor specific stuff
-    if type == 'TTYPE_TCP':
-        template_string_properties = [{'type': 'STYPE_SEND',
-                                       'value': send},
-                                      {'type': 'STYPE_RECEIVE',
-                                       'value': receive}]
-    else:
-        template_string_properties = []
+    template_string_properties = [{'type': 'STYPE_SEND',
+                                   'value': send},
+                                  {'type': 'STYPE_RECEIVE',
+                                   'value': receive},
+                                  {'type': 'STYPE_RECEIVE_DRAIN',
+                                   'value': receive_disable}]
 
     template_integer_properties = [{'type': 'ITYPE_INTERVAL',
                                      'value': interval},
