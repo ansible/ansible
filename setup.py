@@ -4,27 +4,15 @@ import os
 import sys
 from glob import glob
 
-def rel(f):
-    return os.path.join(os.path.dirname(__file__), f)
-
-sys.path.insert(0, rel('lib'))
+sys.path.insert(0, os.path.abspath('lib'))
 from ansible import __version__, __author__
 from distutils.core import setup
 
-# Needed so the RPM can call setup.py and have modules land in the
-# correct location. See #1277 for discussion
-if getattr(sys, "real_prefix", None):
-    # in a virtualenv
-    DEFAULT_MODULE_PATH = os.path.join(sys.prefix, 'share/ansible/library')
-else:
-    DEFAULT_MODULE_PATH = '/usr/share/ansible/library'
-
-module_path = DEFAULT_MODULE_PATH
-if not os.path.exists(DEFAULT_MODULE_PATH):
-    module_path = rel('library')
-
+# find library modules
+from ansible.constants import DEFAULT_MODULE_PATH
+dirs=os.listdir("./library/")
 data_files = []
-for i in os.listdir(module_path):
+for i in dirs:
     data_files.append((os.path.join(DEFAULT_MODULE_PATH, i), glob('./library/' + i + '/*')))
 
 setup(name='ansible',
@@ -35,7 +23,7 @@ setup(name='ansible',
       url='http://ansibleworks.com/',
       license='GPLv3',
       install_requires=['paramiko', 'jinja2', "PyYAML"],
-      package_dir={ '': 'lib' },
+      package_dir={ 'ansible': 'lib/ansible' },
       packages=[
          'ansible',
          'ansible.utils',
