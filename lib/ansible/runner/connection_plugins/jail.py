@@ -60,6 +60,7 @@ class Connection(object):
         self.jail = host
         self.runner = runner
         self.host = host
+        self.has_pipelining = False
 
         if os.geteuid() != 0:
             raise errors.AnsibleError("jail connection requires running as root")
@@ -90,8 +91,11 @@ class Connection(object):
             local_cmd = '%s "%s" %s' % (self.jexec_cmd, self.jail, cmd)
         return local_cmd
 
-    def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False, executable='/bin/sh'):
+    def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False, executable='/bin/sh', in_data=None):
         ''' run a command on the chroot '''
+
+        if in_data:
+            raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
 
         # We enter chroot as root so sudo stuff can be ignored
         local_cmd = self._generate_cmd(executable, cmd)
