@@ -351,7 +351,7 @@ class Inventory(object):
 
         vars.update(host.get_variables())
         if self.parser is not None:
-            vars.update(self.parser.get_host_variables(host))
+            vars = utils.combine_vars(vars, self.parser.get_host_variables(host))
         return vars
 
     def add_group(self, group):
