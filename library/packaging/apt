@@ -138,7 +138,7 @@ import datetime
 import fnmatch
 
 # APT related constants
-APT_ENVVARS = "DEBIAN_FRONTEND=noninteractive DEBIAN_PRIORITY=critical"
+APT_ENVVARS = "APT_LISTCHANGES_FRONTEND=none APT_LISTBUGS_FRONTEND=none DEBIAN_FRONTEND=noninteractive DEBIAN_PRIORITY=critical"
 DPKG_OPTIONS = 'force-confdef,force-confold'
 APT_GET_ZERO = "0 upgraded, 0 newly installed"
 APTITUDE_ZERO = "0 packages upgraded, 0 newly installed"
