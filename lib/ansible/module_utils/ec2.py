@@ -1,3 +1,13 @@
+AWS_REGIONS = ['ap-northeast-1',
+               'ap-southeast-1',
+               'ap-southeast-2',
+               'eu-west-1',
+               'sa-east-1',
+               'us-east-1',
+               'us-west-1',
+               'us-west-2']
+
+
 def get_ec2_creds(module):
 
     # Check module args for credentials, then check environment vars
@@ -36,3 +46,27 @@ def get_ec2_creds(module):
             region = os.environ['AWS_REGION']
 
     return ec2_url, ec2_access_key, ec2_secret_key, region
+
+
+def ec2_connect(module):
+
+    """ Return an ec2 connection"""
+
+    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
+
+    # If we have a region specified, connect to its endpoint.
+    if region:
+        try:
+            ec2 = boto.ec2.connect_to_region(region, aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key)
+        except boto.exception.NoAuthHandlerFound, e:
+            module.fail_json(msg = str(e))
+    # Otherwise, no region so we fallback to the old connection method
+    elif ec2_url:
+        try:
+            ec2 = boto.connect_ec2_endpoint(ec2_url, aws_access_key, aws_secret_key)
+        except boto.exception.NoAuthHandlerFound, e:
+            module.fail_json(msg = str(e))
+    else:
+        module.fail_json(msg="Either region or ec2_url must be specified")
+    return ec2
+
