@@ -129,12 +129,11 @@ def _ensure_virtualenv(module):
     if venv_param is None:
         return
 
-    virtualenv = module.get_bin_path('virtualenv', True)
-
     vbin = os.path.join(os.path.expanduser(venv_param), 'bin')
     activate = os.path.join(vbin, 'activate')
 
     if not os.path.exists(activate):
+        virtualenv = module.get_bin_path('virtualenv', True)
         vcmd = '%s %s' % (virtualenv, venv_param)
         vcmd = [virtualenv, venv_param]
         rc, out_venv, err_venv = module.run_command(vcmd)
