@@ -10,6 +10,10 @@ from nose.plugins.skip import SkipTest
 import ansible.utils
 import ansible.utils.template as template2
 
+import sys
+reload(sys)
+sys.setdefaultencoding("utf8") 
+
 class TestUtils(unittest.TestCase):
 
     #####################################
