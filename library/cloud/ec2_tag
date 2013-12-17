@@ -31,8 +31,9 @@ options:
   state:
     description:
       - Whether the tags should be present or absent on the resource.
-    required: true
-    default: null
+    required: false
+    default: present
+    choices: ['present', 'absent']
     aliases: []
   region:
     description:
@@ -116,7 +117,7 @@ def main():
             resource = dict(required=True),
             tags = dict(required=True),
             region = dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS),
-            state = dict(choices=['present', 'absent']),
+            state = dict(default='present', choices=['present', 'absent']),
             ec2_url = dict(aliases=['EC2_URL']),
             ec2_secret_key = dict(aliases=['aws_secret_key', 'secret_key'], no_log=True),
             ec2_access_key = dict(aliases=['aws_access_key', 'access_key']),
