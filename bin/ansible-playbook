@@ -90,14 +90,18 @@ def main(args):
 
     sshpass = None
     sudopass = None
+    su_pass = None
     if not options.listhosts and not options.syntax and not options.listtasks:
         options.ask_pass = options.ask_pass or C.DEFAULT_ASK_PASS
         # Never ask for an SSH password when we run with local connection
         if options.connection == "local":
             options.ask_pass = False
         options.ask_sudo_pass = options.ask_sudo_pass or C.DEFAULT_ASK_SUDO_PASS
-        (sshpass, sudopass) = utils.ask_passwords(ask_pass=options.ask_pass, ask_sudo_pass=options.ask_sudo_pass)
+        options.ask_su_pass = options.ask_su_pass or C.DEFAULT_ASK_SU_PASS
+        (sshpass, sudopass, su_pass) = utils.ask_passwords(ask_pass=options.ask_pass, ask_sudo_pass=options.ask_sudo_pass, ask_su_pass=options.ask_su_pass)
         options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
+        options.su_user = options.su_user or C.DEFAULT_SU_USER
+
 
     extra_vars = {}
     for extra_vars_opt in options.extra_vars:
@@ -156,7 +160,10 @@ def main(args):
             only_tags=only_tags,
             skip_tags=skip_tags,
             check=options.check,
-            diff=options.diff
+            diff=options.diff,
+            su=options.su,
+            su_pass=su_pass,
+            su_user=options.su_user
         )
 
         if options.listhosts or options.listtasks or options.syntax:
