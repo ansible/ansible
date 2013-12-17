@@ -67,13 +67,18 @@ options:
      default: present
    network_name:
      description:
-        - Name of the network from which IP has to be assigned to VM. Please make sure the network is an external network 
+        - Name of the network from which IP has to be assigned to VM. Please make sure the network is an external network
      required: true
      default: None
    instance_name:
      description:
         - The name of the instance to which the IP address should be assigned
      required: true
+     default: None
+   internal_network_name:
+     description:
+        - The name of the network of the port to associate with the floating ip. Necessary when VM multiple networks.
+     required: false
      default: None
 requirements: ["novaclient", "quantumclient", "neutronclient", "keystoneclient"]
 '''
@@ -82,7 +87,7 @@ EXAMPLES = '''
 # Assign a floating ip to the instance from an external network
 - quantum_floating_ip: state=present login_username=admin login_password=admin
                        login_tenant_name=admin network_name=external_network
-                       instance_name=vm1
+                       instance_name=vm1 internal_network_name=internal_network
 '''
 
 def _get_ksclient(module, kwargs):
@@ -135,7 +140,13 @@ def _get_server_state(module, nova):
         module.fail_json(msg = "Error in getting the server list: %s" % e.message)
     return server_info, server
 
-def _get_port_info(neutron, module, instance_id):
+def _get_port_info(neutron, module, instance_id, internal_network_name=None):
+    if internal_network_name:
+        kwargs = {
+            'name': internal_network_name,
+        }
+        networks = neutron.list_networks(**kwargs)
+        subnet_id = networks['networks'][0]['subnets'][0]
     kwargs = {
             'device_id': instance_id,
     }
@@ -143,9 +154,16 @@ def _get_port_info(neutron, module, instance_id):
         ports = neutron.list_ports(**kwargs)
     except Exception as e:
         module.fail_json( msg = "Error in listing ports: %s" % e.message)
+    if subnet_id:
+        port = next(port for port in ports['ports'] if port['fixed_ips'][0]['subnet_id'] == subnet_id)
+        port_id = port['id']
+        fixed_ip_address = port['fixed_ips'][0]['ip_address']
+    else:
+        port_id = ports['ports'][0]['id']
+        fixed_ip_address = ports['ports'][0]['fixed_ips'][0]['ip_address']
     if not ports['ports']:
         return None, None
-    return ports['ports'][0]['fixed_ips'][0]['ip_address'], ports['ports'][0]['id']
+    return fixed_ip_address, port_id
 
 def _get_floating_ip(module, neutron, fixed_ip_address):
     kwargs = {
@@ -204,7 +222,8 @@ def main():
             region_name                     = dict(default=None),
             network_name                    = dict(required=True),
             instance_name                   = dict(required=True),
-            state                           = dict(default='present', choices=['absent', 'present'])
+            state                           = dict(default='present', choices=['absent', 'present']),
+            internal_network_name           = dict(default=None),
         ),
     )
 
@@ -219,7 +238,7 @@ def main():
     if not server_info:
         module.fail_json(msg="The instance name provided cannot be found")
 
-    fixed_ip, port_id = _get_port_info(neutron, module, server_info['id'])
+    fixed_ip, port_id = _get_port_info(neutron, module, server_info['id'], module.params['internal_network_name'])
     if not port_id:
         module.fail_json(msg="Cannot find a port for this instance, maybe fixed ip is not assigned")
 
