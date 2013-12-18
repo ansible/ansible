@@ -89,10 +89,10 @@ class InventoryParser(object):
                 # 0. A hostname that contains a range pesudo-code and a port
                 # 1. A hostname that contains just a port
                 if hostname.count(":") > 1:
-                    # probably an IPv6 addresss, so check for the format
-                    # XXX:XXX::XXX.port, otherwise we'll just assume no
-                    # port is set 
-                    if hostname.find(".") != -1:
+                    # Possible an IPv6 address, or maybe a host line with multiple ranges
+                    # IPv6 with Port  XXX:XXX::XXX.port
+                    # FQDN            foo.example.com
+                    if hostname.count(".") == 1:
                         (hostname, port) = hostname.rsplit(".", 1)
                 elif (hostname.find("[") != -1 and
                     hostname.find("]") != -1 and
