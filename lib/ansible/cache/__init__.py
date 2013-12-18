@@ -1,7 +1,6 @@
 from ansible import utils
-from UserDict import DictMixin
 
-class Cache(DictMixin, dict):
+class Cache(dict):
 
 
     def __init__(self, default=None, *a, **kw):
@@ -13,20 +12,23 @@ class Cache(DictMixin, dict):
         self._caches = utils.plugins.cache_loader.all()
         self._default = default
 
+        # initialize dict
+        self.update(*a, **kw)
+
 
     def __contains__(self, name):
-        throwaway = self.__getitem__(name) # force cache load if needed
-        return super(Cache, self).__contains__(name)
-
+        res = self.__getitem__(name) # force cache load if needed
+        if res is None or res == {}:
+            res = dict.__contains__(self, name)
+        return res
 
     def __getitem__(self, name):
         value = None
+        had = False
         try:
-            value = super(Cache, self).__getitem__(name)
+            value = dict.__getitem__(self, name)
+            had = True
         except KeyError:
-            pass
-
-        if value is None or not value:
             for cache in self._caches:
                 value = cache.get(name)
                 if value is not None:
@@ -35,7 +37,9 @@ class Cache(DictMixin, dict):
         if value is None:
             value = self._default()
 
-        super(Cache, self).__setitem__(name, value)
+        if not had:
+            dict.__setitem__(self, name, value)
+
         return value
 
 
@@ -43,7 +47,7 @@ class Cache(DictMixin, dict):
 
         for cache in self._caches:
             cache.save(name, value)
-        super(Cache, self).__setitem__(name, value)
+        dict.__setitem__(self, name, value)
 
 
     def update(self, *a, **kw):
@@ -52,21 +56,17 @@ class Cache(DictMixin, dict):
             raise TypeError("update expected at most 1 arguments, got %d" % len(a))
             other = dict(*a, **kw)
             for key in other:
-                super(Cache, self).__setitem__(name, other[key])
-                for cache in self._caches:
-                    cache.save(key, other[key])
+                self.__setitem__(name, other[key])
 
         for key in kw:
-            super(Cache, self).__setitem__(name, kw[key])
-            for cache in self._caches:
-                cache.save(key, kw[key])
+            self.__setitem__(name, kw[key])
 
 
     def setdefault(self, name, value=None):
 
         if value is None:
             value = self._default()
-            super(Cache, self).__setitem__(name, value)
+            self.__setitem__(name, value)
 
         return value
 
@@ -78,7 +78,7 @@ class Cache(DictMixin, dict):
 
         for cache in self._caches:
             ret.update(cache.cached())
-        ret.update(super(Cache,self).keys())
+        ret.update(dict.keys(self))
         print 'ret %s' % ret
 
         return ret
@@ -86,7 +86,7 @@ class Cache(DictMixin, dict):
 
     def _validate_key(self, name):
 
-        if super(Cache, self)._validate_key(name):
+        if dict._validate_key(self, name):
             return True
 
         for cache in self._caches:
@@ -95,11 +95,11 @@ class Cache(DictMixin, dict):
 
         return False
 
-
-    def __getattribute__(self, name):
-        import inspect
-        returned = object.__getattribute__(self, name)
-        if inspect.isfunction(returned) or inspect.ismethod(returned):
-            print 'called Cache.', returned.__name__
-        return returned
-
+# for debug
+#    def __getattribute__(self, name):
+#        import inspect
+#        returned = object.__getattribute__(self, name)
+#        if inspect.isfunction(returned) or inspect.ismethod(returned):
+#            print 'called Cache.', returned.__name__
+#        return returned
+#
