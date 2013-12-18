@@ -217,6 +217,30 @@ Packaging Ansible or wanting to build a local package yourself, but don't want t
 
 These releases are also tagged in the git repository with the release version.
 
+.. _virtualenv:
+
+Using a virtual environment
++++++++++++++++++++++++++++
+
+Many users who wish to utilize a python virtual environment, will also utilize the previously mentioned instructions for running from source.  However, there is no reason you have to run from source in a virtual environment.i  Installing the latest release via pip as previously described will work just as well.
+
+Running ansible from within a python virtual environment requires several considerations.
+
+Many modules require additional python dependencies to be installed to operate. If the module dependencies are not installed globally, many modules will fail to operate as expected when executed with local_action or when specified to only run on localhost by another specification.  This is achievable utilizing the ``ansible_python_interpreter`` host variable. The localhost specification in your inventory will need to look similar to the following:
+
+.. code-block:: ini
+
+    [localhost]
+    localhost ansible_connection=local ansible_python_interpreter=/path/to/ansiblevenv/bin/python
+
+If you are also utilizing `virtualenvwrapper <http://virtualenvwrapper.readthedocs.org/>`_ you can take advantage of the ``bin/postactivate`` script to automatically source the env-setup script.  To utilize this functionality, manipulate the ``bin/postactivate`` script within your virtual environment to look like:
+
+.. code-block:: bash
+
+    #!/bin/bash
+    # This hook is run after this virtualenv is activated.
+    source ${VIRTUAL_ENV}/ansible/hacking/env-setup -q
+
 .. seealso::
 
    :doc:`intro_adhoc`
