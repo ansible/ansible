@@ -482,13 +482,17 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
             out = '%s: Nothing to do' % spec
             changed = False
 
-        res['rc'] += rc
-        res['results'].append(out)
-        res['msg'] += err
-
         # FIXME - if we did an install - go and check the rpmdb to see if it actually installed
         # look for the pkg in rpmdb
         # look for the pkg via obsoletes
+        if not is_installed(module, repoq, pkg, conf_file, en_repos=en_repos, dis_repos=dis_repos, is_pkg=True):
+             rc = 1
+             err = 'Package %s was not installed, is it a valid yum path?' % pkg
+             changed = False
+
+        res['rc'] += rc
+        res['results'].append(out)
+        res['msg'] += err
 
         # accumulate any changes
         res['changed'] |= changed
