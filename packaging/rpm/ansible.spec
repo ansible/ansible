@@ -17,6 +17,12 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 
 BuildArch: noarch
 
+# make rpm
+BuildRequires: asciidoc
+BuildRequires: rpm-build
+# make tests
+BuildRequires: python-nose
+
 # RHEL <=5
 %if 0%{?rhel} && 0%{?rhel} <= 5
 BuildRequires: python26-devel
@@ -28,7 +34,7 @@ Requires: python26-keyczar
 
 # RHEL > 5
 %if 0%{?rhel} && 0%{?rhel} > 5
-BuildRequires: python2-devel
+BuildRequires: python-devel
 Requires: PyYAML
 Requires: python-paramiko
 Requires: python-jinja2
