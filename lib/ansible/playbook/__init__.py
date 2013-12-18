@@ -528,6 +528,7 @@ class PlayBook(object):
                         play_hosts.append(all_hosts.pop())
                 serialized_batch.append(play_hosts)
 
+        completed_count = 0
         for on_hosts in serialized_batch:
 
             self.inventory.also_restrict_to(on_hosts)
@@ -611,6 +612,9 @@ class PlayBook(object):
                     return False
 
             self.inventory.lift_also_restriction()
+            
+            completed_count += len(on_hosts)
+            self.callbacks.on_batch_completed(completed_count, len(self._list_available_hosts(play.hosts)))
 
         return True
 
