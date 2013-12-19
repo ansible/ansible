@@ -509,7 +509,7 @@ def execute_init(args, options):
                 author = 'your name',
                 company = 'your company (optional)',
                 license = 'license (GPLv2, CC-BY, etc)',
-                min_ansible_version = '1.2 (or higher)',
+                min_ansible_version = '1.2',
                 platforms = platform_groups,
                 categories = categories,
             )
