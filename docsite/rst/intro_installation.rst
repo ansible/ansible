@@ -118,7 +118,7 @@ If you don't have pip installed in your version of Python, install pip::
 
 Ansible also uses the the following Python modules that need to be installed::
 
-    $ sudo pip install paramiko PyYAML jinja2
+    $ sudo pip install paramiko PyYAML jinja2 httplib2
 
 Once running the env-setup script you'll be running from checkout and the default inventory file
 will be /etc/ansible/hosts.  You can optionally specify an inventory file (see :doc:`intro_inventory`) 
