@@ -1,0 +1,160 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+"""
+Ansible module to configure debian packages.
+(c) 2014, Brian Coca <briancoca+ansible@gmail.com>
+
+This file is part of Ansible
+
+Ansible is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Ansible is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+DOCUMENTATION = '''
+---
+module: debconf
+short_description: Configure a debian package
+description:
+     - Configure a Debian package using debconf-set-selections
+version_added: "1.5"
+notes:
+    - A number of questions have to be answered (depending on the package).
+      Use 'debconf-show <package>' on any debian/derivative with the package
+      installed to see questions/settings available.
+options:
+  name:
+    description:
+      - Name of package to configure.
+    required: true
+    default: null
+    aliases: ['pkg']
+  setting:
+    description:
+      - A debconf configuration setting
+    required: false
+    default: null
+    aliases: ['question', 'selection']
+  type:
+    description:
+      - The type of value supplied
+    required: false
+    default: null
+    choices: [string, boolean, select, multiselect, note, text, password, title]
+    aliases: []
+  value:
+    description:
+      -  Value to set the configuration to
+    required: false
+    default: null
+    aliases: ['awnser']
+  unseen:
+    description:
+      - Do not set 'seen' flag when preseeding
+    required: false
+    default: False
+    aliases: []
+author: Brian Coca
+
+'''
+
+EXAMPLES = '''
+# Set default locale to fr_FR.UTF-8
+debconf: name=locales setting='locales/default_environment_locale' value=fr_FR.UTF-8
+
+# set to generate locales:
+debconf: name=locales setting='locales/locales_to_be_generated  value='en_US.UTF-8 UTF-8, fr_FR.UTF-8 UTF-8'
+
+# Accept oracle license
+debconf: names='oracle-java7-installer' question='shared/accepted-oracle-license-v1-1' value='true' type='select'
+'''
+
+def get_selections(module, pkg):
+    cmd = [module.get_bin_path('debconf-show', True), pkg]
+    rc, out, err = module.run_command(' '.join(cmd))
+
+    if rc == 0:
+        selections = {}
+	for line in out.splitlines():
+            #if not line.startswith('*'): # only awnsered
+            #    continue
+            (key, value) = line.split(':')
+            selections[ key.strip('*').strip() ] = value.strip()
+        return selections
+    else:
+        module.fail_json(msg=err)
+
+
+def set_selection(module, pkg, question, type, value, unseen):
+
+    awnser = [ question ]
+    if 'type':
+        awnser.append(type)
+    awnser.append(value)
+
+    data = ' '.join(awnser)
+
+    setsel = module.get_bin_path('debconf-set-selections', True)
+    cmd = ["echo '%s %s' |" % (pkg, data), setsel]
+    if unseen:
+        cmd.append('-u')
+
+    return module.run_command(' '.join(cmd))
+
+def main():
+
+    module = AnsibleModule(
+        argument_spec = dict(
+           name = dict(required=True, aliases=['pkg'], type='str'),
+           setting = dict(required=False, aliases=['question', 'selection'], type='str'),
+           type = dict(required=False, type='str', choices=['string', 'boolean', 'select',  'multiselect', 'note', 'text', 'password', 'title']),
+           value= dict(required=False, type='str'),
+           unseen = dict(required=False, type='bool'),
+        ),
+        supports_check_mode=True,
+    )
+
+    #TODO: enable passing array of optionas and/or debconf file from get-selections dump
+    pkg      = module.params["name"]
+    question = module.params["setting"]
+    type     = module.params["type"]
+    value    = module.params["value"]
+    unseen   = module.params["unseen"]
+
+    prev = get_selections(module, pkg)
+    diff = ''
+
+    changed = False
+    msg = ""
+
+    if question is not None:
+        if not question in prev or prev[question] != value:
+            changed = True
+
+    if changed:
+        if not module.check_mode:
+            rc, msg, e = set_selection(module, pkg, question, type, value, unseen)
+            if rc:
+                module.fail_json(msg=e)
+	curr = { question: value }
+	prev = (question, prev[question])
+
+        module.exit_json(changed=changed, msg=msg, current=curr, previous=prev)
+
+    module.exit_json(changed=changed, msg=msg, current=prev)
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
+
+
