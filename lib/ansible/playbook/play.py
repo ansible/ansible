@@ -164,6 +164,7 @@ class Play(object):
         if C.DEFAULT_ROLES_PATH:
             search_locations = C.DEFAULT_ROLES_PATH.split(os.pathsep)
             for loc in search_locations:
+                loc = os.path.expanduser(loc)
                 possible_paths.append(utils.path_dwim(loc, orig_path))
 
         for path_option in possible_paths:
