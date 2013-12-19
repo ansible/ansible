@@ -37,6 +37,8 @@ from distutils.version import LooseVersion
 from jinja2 import Environment
 from optparse import OptionParser
 
+import ansible.constants as C
+
 default_meta_template = """---
 galaxy_info:
   author: {{ author }}
@@ -137,7 +139,7 @@ def build_option_parser(action):
     # options that apply to more than one action
     if action != "init":
         parser.add_option(
-            '-p', '--roles-path', dest='roles_path', default="/etc/ansible/roles",
+            '-p', '--roles-path', dest='roles_path', default=C.DEFAULT_ROLES_PATH,
             help='The path to the directory containing your roles.'
                  'The default is the roles_path configured in your '
                  'ansible.cfg file (/etc/ansible/roles if not configured)')
@@ -272,7 +274,7 @@ def get_role_path(role_name, options):
     Returns the role path based on the roles_path option
     and the role name.
     """
-    roles_path = get_opt(options,'roles_path','/etc/ansible/roles')
+    roles_path = get_opt(options,'roles_path')
     return os.path.join(roles_path, role_name)
 
 def get_role_metadata(role_name, options):
@@ -280,8 +282,8 @@ def get_role_metadata(role_name, options):
     Returns the metadata as YAML, if the file 'meta/main.yml'
     exists in the specified role_path
     """
+    role_path = os.path.join(get_role_path(role_name, options), 'meta/main.yml')
     try:
-        role_path = os.path.join(get_role_path(role_name, options), 'meta/main.yml')
         if os.path.isfile(role_path):
             f = open(role_path, 'r')
             meta_data = yaml.safe_load(f)
@@ -689,7 +691,7 @@ def execute_list(args, options):
             print "The role %s was not found" % role_name
     else:
         # show all valid roles in the roles_path directory
-        roles_path = get_opt(options, 'roles_path', '/etc/ansible/roles')
+        roles_path = get_opt(options, 'roles_path')
         if not os.path.exists(roles_path):
             print "The path %s does not exist. Please specify a valid path with --roles-path" % roles_path
             sys.exit(1)
