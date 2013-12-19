@@ -24,6 +24,7 @@ Requires: python26-PyYAML
 Requires: python26-paramiko
 Requires: python26-jinja2
 Requires: python26-keyczar
+Requires: python26-httplib2
 %endif
 
 # RHEL > 5
@@ -33,6 +34,7 @@ Requires: PyYAML
 Requires: python-paramiko
 Requires: python-jinja2
 Requires: python-keyczar
+Requires: python-httplib2
 %endif
 
 # FEDORA > 17
@@ -42,6 +44,7 @@ Requires: PyYAML
 Requires: python-paramiko
 Requires: python-jinja2
 Requires: python-keyczar
+Requires: python-httplib2
 %endif
 
 # SuSE/openSuSE
@@ -52,6 +55,7 @@ Requires: python-paramiko
 Requires: python-jinja2
 Requires: python-keyczar
 Requires: python-yaml
+Requires: python-httplib2
 %endif
 
 Requires: sshpass
