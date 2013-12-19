@@ -45,12 +45,50 @@ import sys
 import datetime
 import socket
 from ansible import utils
+import shlex
+import select
 
 DEFAULT_REPO_TYPE = 'git'
 DEFAULT_PLAYBOOK = 'local.yml'
 PLAYBOOK_ERRORS = {1: 'File does not exist',
                     2: 'File is not readable'}
+VERBOSITY=0
 
+def increment_debug(option, opt, value, parser):
+    global VERBOSITY
+    VERBOSITY += 1
+
+def _run_live(cmd):
+    cmdargs = shlex.split(cmd)
+    p = subprocess.Popen(cmdargs, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    
+    stdout = ''
+    stderr = ''
+    rpipes = [p.stdout, p.stderr]
+    while True:
+        rfd, wfd, efd = select.select(rpipes, [], rpipes, 1)
+
+        if p.stdout in rfd:
+            dat = os.read(p.stdout.fileno(), 100)
+            sys.stdout.write(dat)
+            stdout += dat
+            if dat == '':
+                rpipes.remove(p.stdout)
+        if p.stderr in rfd:
+            dat = os.read(p.stderr.fileno(), 100)
+            stderr += dat
+            sys.stdout.write(dat)
+            if dat == '':
+                rpipes.remove(p.stderr)
+        # only break out if we've emptied the pipes, or there is nothing to
+        # read from and the process has finished.
+        if (not rpipes or not rfd) and p.poll() is not None:
+            break
+        # Calling wait while there are still pipes to read can cause a lock
+        elif not rpipes and p.poll() == None:
+            p.wait()
+
+    return p.returncode, stdout
 
 def _run(cmd):
     print >>sys.stderr, "Running: '%s'" % cmd
@@ -102,6 +140,11 @@ def main(args):
     """ Set up and run a local playbook """
     usage = "%prog [options] [playbook.yml]"
     parser = utils.SortedOptParser(usage=usage)
+    parser.add_option('-v', '--verbose', default=False, action="callback",
+                      callback=increment_debug,
+                      help='Pass -vvvv to ansible-playbook')
+    parser.add_option('-l', '--live', default=False, action='store_true',
+                      help='Print the ansible-playbook output while running')
     parser.add_option('--purge', default=False, action='store_true',
                       help='purge checkout after playbook run')
     parser.add_option('-o', '--only-if-changed', dest='ifchanged', default=False, action='store_true',
@@ -141,7 +184,11 @@ def main(args):
 
     inv_opts = 'localhost,'
     limit_opts = 'localhost:%s:127.0.0.1' % hostname
-    base_opts = '-c local --limit "%s"' % limit_opts
+    if VERBOSITY == 0:
+        base_opts = '-c local --limit "%s"' % limit_opts
+    elif VERBOSITY > 0:
+        debug_level = ''.join([ "v" for x in range(0, VERBOSITY) ])
+        base_opts = '-%s -c local --limit "%s"' % (debug_level, limit_opts)
     repo_opts = "name=%s dest=%s" % (options.url, options.dest)
     if options.checkout:
         repo_opts += ' version=%s' % options.checkout
@@ -172,7 +219,10 @@ def main(args):
     if options.inventory:
         cmd += ' -i "%s"' % options.inventory
     os.chdir(options.dest)
-    rc, out = _run(cmd)
+    if not options.live:
+        rc, out = _run(cmd)
+    else:
+        rc, out = _run_live(cmd)
 
     if options.purge:
         os.chdir('/')
