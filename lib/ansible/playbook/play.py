@@ -203,6 +203,8 @@ class Play(object):
                 data = utils.parse_yaml_from_file(meta)
                 if data:
                     dependencies = data.get('dependencies',[])
+                    if dependencies is None:
+                        dependencies = []
                     for dep in dependencies:
                         allow_dupes = False
                         (dep_path,dep_vars) = self._get_role_path(dep)
