@@ -147,7 +147,7 @@ def main():
             if rc:
                 module.fail_json(msg=e)
 	curr = { question: value }
-	prev = (question: prev[question])
+	prev = {question: prev[question]}
 
         module.exit_json(changed=changed, msg=msg, current=curr, previous=prev)
 
