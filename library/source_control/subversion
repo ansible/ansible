@@ -63,6 +63,12 @@ options:
       - --password parameter passed to svn.
     required: false
     default: null
+  recursive:
+    description:
+      - --non-recursive parameter passed to svn if false.
+    required: false
+    default: "yes"
+    choices: [ "yes", "no" ]
   executable:
     required: false
     default: null
@@ -83,13 +89,14 @@ import tempfile
 
 class Subversion(object):
     def __init__(
-            self, module, dest, repo, revision, username, password, svn_path):
+            self, module, dest, repo, revision, username, password, recursive, svn_path):
         self.module = module
         self.dest = dest
         self.repo = repo
         self.revision = revision
         self.username = username
         self.password = password
+        self.recursive = recursive
         self.svn_path = svn_path
 
     def _exec(self, args):
@@ -109,16 +116,16 @@ class Subversion(object):
 
     def checkout(self):
         '''Creates new svn working directory if it does not already exist.'''
-        self._exec("checkout -r %s '%s' '%s'" % (self.revision, self.repo, self.dest))
+        self._exec("checkout -r %s '%s' '%s' %s" % (self.revision, self.repo, self.dest, "--non-recursive" if not self.recursive else ""))
 
     def switch(self):
         '''Change working directory's repo.'''
         # switch to ensure we are pointing at correct repo.
-        self._exec("switch '%s' '%s'" % (self.repo, self.dest))
+        self._exec("switch '%s' '%s' %s" % (self.repo, self.dest, "--non-recursive" if not self.recursive else ""))
 
     def update(self):
         '''Update existing svn working directory.'''
-        self._exec("update -r %s '%s'" % (self.revision, self.dest))
+        self._exec("update -r %s '%s' %s" % (self.revision, self.dest, "--non-recursive" if not self.recursive else ""))
 
     def revert(self):
         '''Revert svn working directory.'''
@@ -133,7 +140,7 @@ class Subversion(object):
 
     def has_local_mods(self):
         '''True if revisioned files have been added or modified. Unrevisioned files are ignored.'''
-        lines = self._exec("status '%s'" % self.dest)
+        lines = self._exec("status '%s' %s" % (self.dest, "--non-recursive" if not self.recursive else ""))
         # Match only revisioned files, i.e. ignore status '?'.
         regex = re.compile(r'^[^?]')
         # Has local mods if more than 0 modifed revisioned files.
@@ -162,6 +169,7 @@ def main():
             force=dict(default='yes', type='bool'),
             username=dict(required=False),
             password=dict(required=False),
+            recursive=dict(default='yes', type='bool'),
             executable=dict(default=None),
         ),
         supports_check_mode=True
@@ -173,9 +181,10 @@ def main():
     force = module.params['force']
     username = module.params['username']
     password = module.params['password']
+    recursive = module.params['recursive']
     svn_path = module.params['executable'] or module.get_bin_path('svn', True)
 
-    svn = Subversion(module, dest, repo, revision, username, password, svn_path)
+    svn = Subversion(module, dest, repo, revision, username, password, recursive, svn_path)
 
     if not os.path.exists(dest):
         before = None
@@ -206,6 +215,6 @@ def main():
     changed = before != after or local_mods
     module.exit_json(changed=changed, before=before, after=after)
 
-# import module snippets
-from ansible.module_utils.basic import *
+# include magic from lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
 main()
