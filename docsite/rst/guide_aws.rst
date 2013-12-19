@@ -183,6 +183,101 @@ And in your playbook::
 
     hosts: /chroot/path
 
+Example 4
++++++++++
+
+    How would I create a new ec2 instance, provision it and then destroy it all in the same play?
+
+.. code-block:: yaml
+    
+    # Use the ec2 module to create a new host and then add
+    # it to a special "ec2hosts" group.
+
+    - hosts: localhost
+      connection: local
+      gather_facts: False
+      vars:
+        ec2_access_key: "--REMOVED--"
+        ec2_secret_key: "--REMOVED--"
+        keypair: "mykeyname"
+        instance_type: "t1.micro"
+        image: "ami-d03ea1e0"
+        group: "mysecuritygroup"
+        region: "us-west-2"
+        zone: "us-west-2c"
+      tasks:
+        - name: make one instance
+          ec2: image={{ image }}
+               instance_type={{ instance_type }} 
+               aws_access_key={{ ec2_access_key }}
+               aws_secret_key={{ ec2_secret_key }}
+               keypair={{ keypair }}
+               instance_tags='{"foo":"bar"}'
+               region={{ region }}
+               group={{ group }}
+               wait=true
+          register: ec2_info
+
+        - debug: var=ec2_info
+        - debug: var=item
+          with_items: ec2_info.instance_ids
+
+        - add_host: hostname={{ item.public_ip }} groupname=ec2hosts
+          with_items: ec2_info.instances
+
+        - name: wait for instances to listen on port:22
+          wait_for:
+            state=started
+            host={{ item.public_dns_name }}
+            port=22
+          with_items: ec2_info.instances
+
+
+    # Connect to the node and gather facts,
+    # including the instance-id. These facts
+    # are added to inventory hostvars for the
+    # duration of the playbook's execution
+    # Typical "provisioning" tasks would go in 
+    # this playbook.
+
+    - hosts: ec2hosts
+      gather_facts: True    
+      user: ec2-user
+      sudo: True
+      tasks:
+
+        # fetch instance data from the metadata servers in ec2
+        - ec2_facts: 
+
+        # show all known facts for this host
+        - debug: var=hostvars[inventory_hostname]
+
+        # just show the instance-id
+        - debug: msg="{{ hostvars[inventory_hostname]['ansible_ec2_instance-id'] }}"
+
+
+    # Using the instanceid, call the ec2 module
+    # locally to remove the instance by declaring
+    # it's state is "absent"
+
+    - hosts: ec2hosts
+      gather_facts: True    
+      connection: local
+      vars:
+        ec2_access_key: "--REMOVED--"
+        ec2_secret_key: "--REMOVED--"
+        region: "us-west-2"
+      tasks:
+        - name: destroy all instances
+          ec2: state='absent'
+               aws_access_key={{ ec2_access_key }}
+               aws_secret_key={{ ec2_secret_key }}
+               region={{ region }}
+               instance_ids={{ item }}
+               wait=true
+          with_items: hostvars[inventory_hostname]['ansible_ec2_instance-id']
+
+
 .. note:: more examples of this are pending.   You may also be interested in the ec2_ami module for taking AMIs of running instances.
 
 .. _aws_pending:
