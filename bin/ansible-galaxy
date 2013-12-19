@@ -467,7 +467,7 @@ def execute_init(args, options):
                 print "The path %s already exists, but is a file - aborting" % role_path
                 sys.exit(1)
             elif not force:
-                print "The directory %s already exists."
+                print "The directory %s already exists." % role_path
                 print ""
                 print "You can use --force to re-initialize this directory,\n" + \
                       "however it will reset any main.yml files that may have\n" + \
