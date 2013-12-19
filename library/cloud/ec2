@@ -399,6 +399,17 @@ def boto_supports_profile_name_arg(ec2):
     run_instances_method = getattr(ec2, 'run_instances')
     return 'instance_profile_name' in run_instances_method.func_code.co_varnames
 
+def boto_supports_param_in_spot_request(ec2, param):
+    """
+    Check if Boto library has a <param> in its request_spot_instances() method. For example, the placement_group parameter wasn't added until 2.3.0.
+
+    ec2: authenticated ec2 connection object
+
+    Returns:
+        True if boto library has the named param as an argument on the request_spot_instances method, else False
+    """
+    method = getattr(ec2, 'request_spot_instances')
+    return param in method.func_code.co_varnames
 
 def create_instances(module, ec2):
     """
@@ -486,7 +497,6 @@ def create_instances(module, ec2):
                       'key_name': key_name,
                       'monitoring_enabled': monitoring,
                       'placement': zone,
-                      'placement_group': placement_group,
                       'instance_type': instance_type,
                       'kernel_id': kernel,
                       'ramdisk_id': ramdisk,
@@ -527,6 +537,7 @@ def create_instances(module, ec2):
                     'min_count': count_remaining,
                     'max_count': count_remaining,
                     'client_token': id,
+                    'placement_group': placement_group,
                     'private_ip_address': private_ip,
                 })
                 res = ec2.run_instances(**params)
@@ -545,6 +556,12 @@ def create_instances(module, ec2):
                 if private_ip:
                     module.fail_json(
                         msg='private_ip only available with on-demand (non-spot) instances')
+                if boto_supports_param_in_spot_request(ec2, placement_group):
+                    params['placement_group'] = placement_group
+                elif placement_group :
+                        module.fail_json(
+                            msg="placement_group parameter requires Boto version 2.3.0 or higher.")
+
                 params.update({
                     'count': count_remaining,
                 })
