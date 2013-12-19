@@ -22,7 +22,7 @@ setup(name='ansible',
       author_email='michael@ansibleworks.com',
       url='http://ansibleworks.com/',
       license='GPLv3',
-      install_requires=['paramiko', 'jinja2', "PyYAML"],
+      install_requires=['paramiko', 'jinja2', "PyYAML", "httplib2"],
       package_dir={ 'ansible': 'lib/ansible' },
       packages=[
          'ansible',
@@ -42,6 +42,7 @@ setup(name='ansible',
          'bin/ansible',
          'bin/ansible-playbook',
          'bin/ansible-pull',
+         'bin/ansible-galaxy',
          'bin/ansible-doc'
       ],
       data_files=data_files

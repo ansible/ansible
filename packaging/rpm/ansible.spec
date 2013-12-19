@@ -25,6 +25,7 @@ Requires: python26-PyYAML
 Requires: python26-paramiko
 Requires: python26-jinja2
 Requires: python26-keyczar
+Requires: python26-httplib2
 %else
 BuildRequires: python2-devel
 
@@ -32,6 +33,7 @@ Requires: PyYAML
 Requires: python-paramiko
 Requires: python-jinja2
 Requires: python-keyczar
+Requires: python-httplib2
 %endif
 Requires: sshpass
 
