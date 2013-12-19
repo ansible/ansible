@@ -67,6 +67,14 @@ class Cli(object):
         if len(args) == 0 or len(args) > 1:
             parser.print_help()
             sys.exit(1)
+
+        # su and sudo command line arguments need to be mutually exclusive
+        if (options.su or options.su_user or options.ask_su_pass) and \
+                (options.sudo or options.sudo_user or options.ask_sudo_pass):
+            parser.error("Sudo arguments ('--sudo', '--sudo-user', and '--ask-sudo-pass') "
+                         "and su arguments ('-su', '--su-user', and '--ask-su-pass') are "
+                         "mutually exclusive")
+
         return (options, args)
 
     # ----------------------------------------------
