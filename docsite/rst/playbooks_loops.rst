@@ -318,6 +318,66 @@ That's how!
 
 .. _writing_your_own_iterators:
 
+Using register with a loop
+``````````````````````````
+
+When using ``register`` with a loop the data strucutre placed in the variable during a loop, will contain a ``results`` attribute, that is a list of all responses from the module.
+
+Here is an example of using ``register`` with ``with_items``
+
+    - shell: echo "{{ item }}"
+      with_items:
+        - one
+        - two
+      register: echo
+
+This differs from the data strucutre returned when using ``register`` without a loop::
+
+    {
+        "changed": true,
+        "msg": "All items completed",
+        "results": [
+            {
+                "changed": true,
+                "cmd": "echo \"one\" ",
+                "delta": "0:00:00.003110",
+                "end": "2013-12-19 12:00:05.187153",
+                "invocation": {
+                    "module_args": "echo \"one\"",
+                    "module_name": "shell"
+                },
+                "item": "one",
+                "rc": 0,
+                "start": "2013-12-19 12:00:05.184043",
+                "stderr": "",
+                "stdout": "one"
+            },
+            {
+                "changed": true,
+                "cmd": "echo \"two\" ",
+                "delta": "0:00:00.002920",
+                "end": "2013-12-19 12:00:05.245502",
+                "invocation": {
+                    "module_args": "echo \"two\"",
+                    "module_name": "shell"
+                },
+                "item": "two",
+                "rc": 0,
+                "start": "2013-12-19 12:00:05.242582",
+                "stderr": "",
+                "stdout": "two"
+            }
+        ]
+    }
+
+Subsequent loops over the registered variable to inspect the results may look like::
+
+    - name: Fail if return code is not 0
+      fail:
+        msg: "The command ({{ item.cmd }}) did not have a 0 return code"
+      when: item.rc != 0
+      with_items: echo.results
+
 Writing Your Own Iterators
 ``````````````````````````
 
