@@ -4,7 +4,13 @@ Ansible Changes By Release
 ## 1.5 "Love Walks In" - Release pending!
 
 * no_reboot is now defaulted to "no" in the ec2_ami module to ensure filesystem consistency in the resulting AMI.
-* ansible-galaxy command added
+
+1.4.2 "Could This Be Magic" - December 18, 2013
+
+- Fixed a few bugs related to unicode
+- Fixed errors in the ssh connection method with large data returns
+- Miscellaneous fixes for a few modules
+- Add the ansible-galaxy command
 
 ## 1.4.1 "Could This Be Magic" - November 27, 2013
 
