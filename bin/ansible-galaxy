@@ -275,7 +275,9 @@ def get_role_path(role_name, options):
     and the role name.
     """
     roles_path = get_opt(options,'roles_path')
-    return os.path.join(roles_path, role_name)
+    roles_path = os.path.join(roles_path, role_name)
+    roles_path = os.path.expanduser(roles_path)
+    return roles_path
 
 def get_role_metadata(role_name, options):
     """
@@ -340,7 +342,8 @@ def remove_role(role_name, options):
     path so the user doesn't blow away random directories 
     """
     if get_role_metadata(role_name, options):
-        shutil.rmtree(get_role_path(role_name, options))
+        role_path = get_role_path(role_name, options)
+        shutil.rmtree(role_path)
         return True
     else:
         return False
@@ -399,6 +402,7 @@ def install_role(role_name, role_version, role_filename, options):
         # the tar file here, since the default is 'github_repo-target', and change it 
         # to the specified role's name
         role_path = os.path.join(get_opt(options, 'roles_path', '/etc/ansible/roles'), role_name)
+        role_path = os.path.expanduser(role_path)
         print " - extracting %s to %s" % (role_name, role_path)
         try:
             if os.path.exists(role_path):
@@ -692,6 +696,7 @@ def execute_list(args, options):
     else:
         # show all valid roles in the roles_path directory
         roles_path = get_opt(options, 'roles_path')
+        roles_path = os.path.expanduser(roles_path)
         if not os.path.exists(roles_path):
             print "The path %s does not exist. Please specify a valid path with --roles-path" % roles_path
             sys.exit(1)
