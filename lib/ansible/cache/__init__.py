@@ -95,6 +95,14 @@ class Cache(dict):
 
         return False
 
+    def close(self):
+      for name in self.keys():
+        for cache in self._caches:
+            cache.save(name, self[name])
+    
+    def __del__(self):
+      self.close()
+
 # for debug
 #    def __getattribute__(self, name):
 #        import inspect
