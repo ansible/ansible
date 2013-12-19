@@ -456,6 +456,7 @@ def execute_init(args, options):
     init_path  = get_opt(options, 'init_path', './')
     api_server = get_opt(options, "api_server", "galaxy.ansibleworks.com")
     force      = get_opt(options, 'force', False)
+    ROLE_DIRS = ('defaults','files','handlers','meta','tasks','templates','vars')
 
     api_config = api_get_config(api_server)
     if not api_config:
@@ -469,20 +470,20 @@ def execute_init(args, options):
         role_path = os.path.join(init_path, role_name)
         if os.path.exists(role_path):
             if os.path.isfile(role_path):
-                print "The path %s already exists, but is a file - aborting" % role_path
+                print "The path '%s' already exists, but is a file - aborting" % role_path
                 sys.exit(1)
-            elif not force:
-                print "The directory %s already exists." % role_path
-                print ""
-                print "You can use --force to re-initialize this directory,\n" + \
-                      "however it will reset any main.yml files that may have\n" + \
-                      "been modified there already."
-                sys.exit(1)
+            elif os.path.isdir(role_path) and not force:
+                # Fail if the directory already contains any ROLE_DIRS
+                if any([True for f in os.listdir(role_path) if f in ROLE_DIRS]):
+                    print "The path '%s' already exists and contains role files." % role_path
+                    print ""
+                    print "You can use --force to re-initialize this directory,\n" + \
+                          "however it will reset any existing role files."
+                    sys.exit(1)
     except Exception, e:
         print "No role name specified for init"
         sys.exit(1)
 
-    ROLE_DIRS = ('defaults','files','handlers','meta','tasks','templates','vars')
     for dir in ROLE_DIRS:
         dir_path = os.path.join(init_path, role_name, dir)
         main_yml_path = os.path.join(dir_path, 'main.yml')
