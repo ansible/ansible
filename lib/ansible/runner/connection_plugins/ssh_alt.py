@@ -272,7 +272,7 @@ class Connection(object):
         controlpersisterror = stderr.find('Bad configuration option: ControlPersist') != -1 or stderr.find('unknown configuration option: ControlPersist') != -1
         if p.returncode != 0 and controlpersisterror:
             raise errors.AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" (or ansible_ssh_args in the config file) before running again')
-        if p.returncode != 0 and in_data:
+        if p.returncode == 255 and in_data:
             raise errors.AnsibleError('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
 
         return (p.returncode, '', stdout, stderr)

@@ -164,6 +164,7 @@ class Play(object):
         if C.DEFAULT_ROLES_PATH:
             search_locations = C.DEFAULT_ROLES_PATH.split(os.pathsep)
             for loc in search_locations:
+                loc = os.path.expanduser(loc)
                 possible_paths.append(utils.path_dwim(loc, orig_path))
 
         for path_option in possible_paths:
@@ -188,6 +189,8 @@ class Play(object):
             if os.path.isfile(vars):
                 vars_data = utils.parse_yaml_from_file(vars)
                 if vars_data:
+                    if not isinstance(vars_data, dict):
+                        raise errors.AnsibleError("vars from '%s' are not a dict" % vars)
                     role_vars = utils.combine_vars(vars_data, role_vars)
             defaults = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(role_path, 'defaults')))
             defaults_data = {}
@@ -200,6 +203,8 @@ class Play(object):
                 data = utils.parse_yaml_from_file(meta)
                 if data:
                     dependencies = data.get('dependencies',[])
+                    if dependencies is None:
+                        dependencies = []
                     for dep in dependencies:
                         allow_dupes = False
                         (dep_path,dep_vars) = self._get_role_path(dep)

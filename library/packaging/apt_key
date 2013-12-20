@@ -138,7 +138,7 @@ def download_key(module, url):
             module.fail_json("error connecting to download key from url")
         data = connection.read()
         return data
-    except:
+    except Exception:
         module.fail_json(msg="error getting key id from url", traceback=format_exc())
 
 
