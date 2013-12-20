@@ -1,7 +1,10 @@
 Ansible Changes By Release
 ==========================
 
-1.5 "Love Walks In" - Release pending!
+1.4.3 "Could This Be Magic?" - December 20, 2013
+
+- Fixed role_path parsing from ansible.cfg
+- Fixed default role templates
 
 1.4.2 "Could This Be Magic" - December 18, 2013
 

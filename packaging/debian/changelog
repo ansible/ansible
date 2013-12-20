@@ -1,3 +1,9 @@
+ansible (1.4.3) unstable; urgency=low
+
+  * 1.4.3 release
+
+ -- Michael DeHaan <michael.dehaan@gmail.com>  Fri, 20 December 2013 13:19:01 -0500
+
 ansible (1.4.2) unstable; urgency=low
 
   * 1.4.2 release
