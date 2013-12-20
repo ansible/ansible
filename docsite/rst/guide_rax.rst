@@ -9,9 +9,7 @@ Rackspace Cloud Guide
 Introduction
 ````````````
 
-.. note:: This section of the documentation is under construction. We are in the process of adding more examples about the Rackspace modules 
-and how they work together.  Once complete, there will also be examples for 
-Rackspace Cloud in `ansible-examples <http://github.com/ansible/ansible-examples/>`_.
+.. note:: This section of the documentation is under construction. We are in the process of adding more examples about the Rackspace modules and how they work together.  Once complete, there will also be examples for Rackspace Cloud in `ansible-examples <http://github.com/ansible/ansible-examples/>`_.
 
 Ansible contains a number of core modules for interacting with Rackspace Cloud.  
 
@@ -127,8 +125,6 @@ Here's what it would look like in a playbook, assuming the parameters were defin
 By registering the return value of the step, it is then possible to dynamically add the resulting hosts to inventory (temporarily, in memory).
 This facilitates performing configuration actions on the hosts immediately in a subsequent task::
 
-.. code-block:: yaml
-
     - name: Add the instances we created (by public IP) to the group 'raxhosts'
       local_action:
           module: add_host 
@@ -139,9 +135,7 @@ This facilitates performing configuration actions on the hosts immediately in a 
       with_items: rax.success
       when: rax.action == 'create'
 
-With the host group now created, a second play in your provision playbook could now configure them, for example:
-
-.. code-block:: yaml    
+With the host group now created, a second play in your provision playbook could now configure them, for example::
 
     - name: Configuration play
       hosts: raxhosts
@@ -183,10 +177,7 @@ rax.py
 To use the rackspace dynamic inventory script, copy ``rax.py`` from ``plugins/inventory`` into your inventory directory.  You can specify credentials 
 for ``rax.py`` utilizing the ``RAX_CREDS_FILE`` environment variable.
 
-.. note:: Users of AnsibleWorks AWX will note that dynamic inventory is natively supported by AWX, and all you have to do is associate
-a group with your Rackspace Cloud credentials, and it will easily synchronize without going through these steps.
-
-.. code-block:: bash
+.. note:: Users of AnsibleWorks AWX will note that dynamic inventory is natively supported by AWX, and all you have to do is associate a group with your Rackspace Cloud credentials, and it will easily synchronize without going through these steps::
 
     $ RAX_CREDS_FILE=~/.raxpub ansible all -i rax.py -m setup
 
