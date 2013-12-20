@@ -1,5 +1,5 @@
-Tutorial: Rolling Upgrades for Continuous Delivery
-==================================================
+Continuous Delivery and Rolling Upgrades
+========================================
 
 .. contents::
    :depth: 2
@@ -14,8 +14,8 @@ Continuous Delivery is the concept of frequently delivering updates to your soft
 The idea is that my updating more often, you not only have to wait for specific timed period, but your organization
 gets better at the process of responding to change.
 
-Some Ansible users are deploying updates to their end users on an hourly or even more frequent basis. 
-To achieve this, you need tools to be able to quickly apply those updates in a zero-downtime way.
+Some Ansible users are deploying updates to their end users on an hourly or even more frequent basis -- sometimes every time
+there is an approved code change.  To achieve this, you need tools to be able to quickly apply those updates in a zero-downtime way.
 
 This document describes in detail how to achieve this goal, using one of Ansible's most complete example 
 playbooks as a template: lamp_haproxy. This example uses a lot of Ansible features: roles, templates, 
@@ -24,7 +24,7 @@ rolling upgrades of the web application stack.
 
 .. note::
 
-   You can always find the latest playbooks for this example `here
+   `Click here for the latest playbooks for this example`
    <https://github.com/ansible/ansible-examples/tree/master/lamp_haproxy>`_.
 
 The playbooks deploy Apache, PHP, MySQL, Nagios, and HAProxy to a CentOS-based set of servers.
