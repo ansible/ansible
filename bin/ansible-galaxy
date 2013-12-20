@@ -29,6 +29,7 @@ import shutil
 import sys
 import tarfile
 import tempfile
+import urllib
 import urllib2
 import yaml
 
@@ -202,6 +203,8 @@ def api_lookup_role_by_name(api_server, role_name):
     """
     Uses the Galaxy API to do a lookup on the role owner/name.
     """
+
+    role_name = urllib.quote(role_name)
 
     try:
         user_name,role_name = role_name.split(".", 1)
