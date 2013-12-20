@@ -103,8 +103,10 @@ def build_option_parser(action):
     the user wants to execute.
     """
 
-    parser = OptionParser(epilog = "See '%s --help <command>' for more information on a specific command." % os.path.basename(sys.argv[0]))
-    parser.set_usage("usage: %%prog [--help] [%s] [options] ..." % "|".join(VALID_ACTIONS))
+    usage = "usage: %%prog [%s] [--help] [options] ..." % "|".join(VALID_ACTIONS)
+    epilog = "\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
+    OptionParser.format_epilog = lambda self, formatter: self.epilog
+    parser = OptionParser(usage=usage, epilog=epilog)
 
     if not action:
         parser.print_help()
