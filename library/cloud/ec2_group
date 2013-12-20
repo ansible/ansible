@@ -87,7 +87,10 @@ EXAMPLES = '''
       - proto: udp
         from_port: 10051
         to_port: 10051
-        group_id: abcdef
+        group_id: sg-12345678
+      - proto: all
+        # the containing group name may be specified here
+        group_name: example
 '''
 
 try:
@@ -203,11 +206,19 @@ def main():
         if rules:
             for rule in rules:
                 group_id = None
+                group_name = None
                 ip = None
                 if 'group_id' in rule and 'cidr_ip' in rule:
                     module.fail_json(msg="Specify group_id OR cidr_ip, not both")
+                elif 'group_id' in rule and 'group_name' in rule:
+                    module.fail_json(msg="Specify group_id OR group_name, not both")
                 elif 'group_id' in rule:
                     group_id = rule['group_id']
+                elif 'group_name' in rule:
+                    group_name = rule['group_name']
+                    if group_name == name:
+                        group_id = group.id
+                        groups[group_id] = group
                 elif 'cidr_ip' in rule:
                     ip = rule['cidr_ip']
 
