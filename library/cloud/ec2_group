@@ -87,7 +87,9 @@ EXAMPLES = '''
       - proto: udp
         from_port: 10051
         to_port: 10051
-        group_id: abcdef
+        # the special keyword 'this' may be specified here to indicate
+        # that the rule should reference the group that contains it
+        group_id: sg-xxxxxxxx
 '''
 
 try:
@@ -208,6 +210,9 @@ def main():
                     module.fail_json(msg="Specify group_id OR cidr_ip, not both")
                 elif 'group_id' in rule:
                     group_id = rule['group_id']
+                    if group_id == 'this':
+                        group_id = group.id
+                        groups[group_id] = group
                 elif 'cidr_ip' in rule:
                     ip = rule['cidr_ip']
 
