@@ -103,8 +103,8 @@ def build_option_parser(action):
     the user wants to execute.
     """
 
-    parser = OptionParser()
-    parser.set_usage("usage: %%prog [%s] [options] ..." % "|".join(VALID_ACTIONS))
+    parser = OptionParser(epilog = "See '%s --help <command>' for more information on a specific command." % os.path.basename(sys.argv[0]))
+    parser.set_usage("usage: %%prog [--help] [%s] [options] ..." % "|".join(VALID_ACTIONS))
 
     if not action:
         parser.print_help()
@@ -206,6 +206,7 @@ def api_lookup_role_by_name(api_server, role_name):
     try:
         user_name,role_name = role_name.split(".", 1)
     except:
+        parser.print_help()
         print "Invalid role name (%s). You must specify username.rolename" % role_name
         sys.exit(1)
 
@@ -444,7 +445,7 @@ def install_role(role_name, role_version, role_filename, options):
 # Action functions
 #-------------------------------------------------------------------------------------
 
-def execute_init(args, options):
+def execute_init(args, options, parser):
     """
     Executes the init action, which creates the skeleton framework
     of a role that complies with the galaxy metadata format.
@@ -476,6 +477,7 @@ def execute_init(args, options):
                       "been modified there already."
                 sys.exit(1)
     except Exception, e:
+        parser.print_help()
         print "No role name specified for init"
         sys.exit(1)
 
@@ -527,7 +529,7 @@ def execute_init(args, options):
             f.close()
     print "%s was created successfully" % role_name
 
-def execute_info(args, options):
+def execute_info(args, options, parser):
     """
     Executes the info action. This action prints out detailed
     information about an installed role as well as info available
@@ -536,7 +538,7 @@ def execute_info(args, options):
 
     pass
 
-def execute_install(args, options):
+def execute_install(args, options, parser):
     """
     Executes the installation action. The args list contains the 
     roles to be installed, unless -f was specified. The list of roles
@@ -551,11 +553,13 @@ def execute_install(args, options):
     if len(args) == 0 and not role_file:
         # the user needs to specify one of either --role-file
         # or specify a single user/role name
+        parser.print_help()
         print "You must specify a user/role name or a roles file"
         sys.exit()
     elif len(args) == 1 and role_file:
         # using a role file is mutually exclusive of specifying
         # the role name on the command line
+        parser.print_help()
         print "Please specify a user/role name, or a roles file, but not both"
         sys.exit(1)
 
@@ -648,13 +652,14 @@ def execute_install(args, options):
                 exit_without_ignore(options)
     sys.exit(0)
 
-def execute_remove(args, options):
+def execute_remove(args, options, parser):
     """
     Executes the remove action. The args list contains the list
     of roles to be removed. This list can contain more than one role.
     """
 
     if len(args) == 0:
+        parser.print_help()
         print 'You must specify at least one role to remove.'
         sys.exit()
 
@@ -668,7 +673,7 @@ def execute_remove(args, options):
             print '%s is not installed, skipping.' % role
     sys.exit(0)
 
-def execute_list(args, options):
+def execute_list(args, options, parser):
     """
     Executes the list action. The args list can contain zero 
     or one role. If one is specified, only that role will be 
@@ -700,10 +705,12 @@ def execute_list(args, options):
         roles_path = get_opt(options, 'roles_path')
         roles_path = os.path.expanduser(roles_path)
         if not os.path.exists(roles_path):
+            parser.print_help()
             print "The path %s does not exist. Please specify a valid path with --roles-path" % roles_path
             sys.exit(1)
         elif not os.path.isdir(roles_path):
             print "%s exists, but it is not a directory. Please specify a valid path with --roles-path" % roles_path
+            parser.print_help()
             sys.exit(1)
         path_files = os.listdir(roles_path)
         for path_file in path_files:
@@ -730,7 +737,7 @@ def main():
     # execute the desired action
     if 1: #try:
         fn = globals()["execute_%s" % action]
-        fn(args, options)
+        fn(args, options, parser)
     #except KeyError, e:
     #    print "Error: %s is not a valid action. Valid actions are: %s" % (action, ", ".join(VALID_ACTIONS))
     #    sys.exit(1)
