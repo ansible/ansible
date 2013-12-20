@@ -146,8 +146,12 @@ def main():
             rc, msg, e = set_selection(module, pkg, question, type, value, unseen)
             if rc:
                 module.fail_json(msg=e)
-	curr = { question: value }
-	prev = {question: prev[question]}
+
+        curr = { question: value }
+        if question in prev:
+            prev = {question: prev[question]}
+        else:
+            prev[question] = ''
 
         module.exit_json(changed=changed, msg=msg, current=curr, previous=prev)
 
