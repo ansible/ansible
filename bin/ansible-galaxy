@@ -523,7 +523,7 @@ def execute_init(args, options):
             f.write(rendered_meta)
             f.close()
             pass
-        else:
+        elif dir not in ('files','templates'):
             # just write a (mostly) empty YAML file for main.yml
             f = open(main_yml_path, 'w')
             f.write('---\n# %s file for %s\n' % (dir,role_name))
