@@ -80,6 +80,37 @@ dependencies: []
 
 """
 
+default_readme_template = """Role Name
+========
+
+A brief description of the role goes here.
+
+Requirements
+------------
+
+Any pre-requisites that may not be covered by the ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+
+Role Variables
+--------------
+
+A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+
+Dependencies
+------------
+
+A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+
+License
+-------
+
+The license for the role should be specified here. If any other rights are given (for instance, with CC licenses) they should be mentioned here as well.
+
+Author Information
+------------------
+
+An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+"""
+
 #-------------------------------------------------------------------------------------
 # Utility functions for parsing actions/options
 #-------------------------------------------------------------------------------------
@@ -483,12 +514,22 @@ def execute_init(args, options):
         sys.exit(1)
 
     ROLE_DIRS = ('defaults','files','handlers','meta','tasks','templates','vars')
+
+    # create the default README.md
+    if not os.path.exists(role_path):
+        os.makedirs(role_path)
+    readme_path = os.path.join(role_path, "README.md")
+    f = open(readme_path, "wb")
+    f.write(default_readme_template)
+    f.close
+
     for dir in ROLE_DIRS:
         dir_path = os.path.join(init_path, role_name, dir)
         main_yml_path = os.path.join(dir_path, 'main.yml')
         # create the directory if it doesn't exist already
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
+
         # now create the main.yml file for that directory
         if dir == "meta":
             # create a skeleton meta/main.yml with a valid galaxy_info 
