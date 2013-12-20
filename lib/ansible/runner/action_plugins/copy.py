@@ -125,6 +125,9 @@ class ActionModule(object):
         changed = False
         diffs = []
         module_result = {"changed": False}
+        # Remove tmp path since a new one is created below.  Should be empty.
+        if tmp.find("tmp") != -1:
+            self.runner._low_level_exec_command(conn, "rm -rf %s > /dev/null 2>&1" % tmp, tmp)
         for source_full, source_rel in source_files:
             # We need to get a new tmp path for each file, otherwise the copy module deletes the folder.
             tmp = self.runner._make_tmp_path(conn)
