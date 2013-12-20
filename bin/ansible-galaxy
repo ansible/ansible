@@ -199,8 +199,8 @@ def get_opt(options, k, defval=""):
     except:
         return defval
     if k == "roles_path":
-        if ":" in data:
-            data = data.split(':')[0]
+        if os.pathsep in data:
+            data = data.split(os.pathsep)[0]
     return data
 
 def exit_without_ignore(options, rc=1):
