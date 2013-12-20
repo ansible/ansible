@@ -9,54 +9,77 @@ Rackspace Cloud Guide
 Introduction
 ````````````
 
-.. note:: This section of the documentation is under construction.
-   We are in the process of adding more examples about all of the rax modules 
+.. note:: This section of the documentation is under construction. We are in the process of adding more examples about the Rackspace modules 
 and how they work together.  Once complete, there will also be examples for 
 Rackspace Cloud in `ansible-examples <http://github.com/ansible/ansible-examples/>`_.
 
 Ansible contains a number of core modules for interacting with Rackspace Cloud.  
+
 The purpose of this section is to explain how to put Ansible modules together 
 (and use inventory scripts) to use Ansible in Rackspace Cloud context.
 
-Requirements for the rax modules are minimal.  All of the modules require and 
-are tested against pyrax 1.5 or higher. You'll need this Python module installed 
-on the execution host.  pyrax is not currently available in many operating system 
+Prerequisites for using the rax modules are minimal.  In addition to ansible itself, 
+all of the modules require and are tested against pyrax 1.5 or higher. 
+You'll need this Python module installed on the execution host.  
+
+pyrax is not currently available in many operating system 
 package repositories, so you will likely need to install it via pip:
 
 .. code-block:: bash
 
     $ pip install pyrax
 
-The following steps will often execute outside the host loop, so it makes sense 
-to add localhost to inventory.  Ansible may not require this step in the future:
+The following steps will often execute from the control machine against the Rackspace Cloud API, so it makes sense 
+to add localhost to the inventory file.  (Ansible may not require this manual step in the future):
 
 .. code-block:: ini
 
     [localhost]
     localhost ansible_connection=local
 
-And in your playbook steps we'll typically be using the following pattern for provisioning steps:
+In playbook steps we'll typically be using the following pattern:
 
 .. code-block:: yaml
 
     - hosts: localhost
       connection: local
       gather_facts: False
+      tasks:
+
+.. _credentials_file:
+
+Credentials File
+````````````````
+
+The `rax.py` inventory script and all `rax` modules support a standard `pyrax` credentials file that looks like:
+
+.. code-block:: ini
+
+    [rackspace_cloud]
+    username = myraxusername
+    api_key = d41d8cd98f00b204e9800998ecf8427e
+
+Setting the environment parameter RAX_CREDS_FILE to the path of this file will help Ansible find how to load
+this information.
+
+More information about this credentials file can be found at 
+https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating
+
 
 .. _virtual_environment:
 
-Virtual Environment (Optional)
-++++++++++++++++++++++++++++++
+Running from a Python Virtual Environment (Optional)
+++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Special considerations for running ansible within a python virtual environment need to 
-be taken if pyrax is not installed globally (it's fine if you install it globally).  
+Special considerations need to 
+be taken if pyrax is not installed globally but instead using a python virtualenv (it's fine if you install it globally).  
+
 Ansible assumes, unless otherwise instructed, that the python binary will live at 
 /usr/bin/python.  This is done so via the interpret line in the modules, however 
-when instructed using ansible_python_interpreter, ansible will use this specified path to the python binary.
+when instructed using ansible_python_interpreter, ansible will use this specified path instead for finding 
+python.
 
-This is required when pyrax is only installed within the virtual environment, due to the global 
-python not having access to the virtual environments site-packages directory.  The previously 
-mentioned inventory configuration for localhost would then look similar to:
+If using virtualenv, you may wish to modify your localhost inventory definition to find this location as follows:
 
 .. code-block:: ini
 
@@ -68,8 +91,10 @@ mentioned inventory configuration for localhost would then look similar to:
 Provisioning
 ````````````
 
-The rax module provides the ability to provision instances within Rackspace Cloud.  Typically the 
-provisioning task will be performed against your Ansible master server as a local_action statement.  
+Now for the fun parts.
+
+The 'rax' module provides the ability to provision instances within Rackspace Cloud.  Typically the 
+provisioning task will be performed from your Ansible control server against the Rackspace cloud API.
 
 .. note::
 
@@ -77,13 +102,13 @@ provisioning task will be performed against your Ansible master server as a loca
    specifying your username and API key as environment variables or passing
    them as module arguments.
 
-Here is an example of provisioning a instance in ad-hoc mode mode:
+Here is a basic example of provisioning a instance in ad-hoc mode mode:
 
 .. code-block:: bash
 
     $ ansible localhost -m rax -a "name=awx flavor=4 image=ubuntu-1204-lts-precise-pangolin wait=yes" -c local
 
-In a play, this might look like (assuming the parameters are held as vars):
+Here's what it would look like in a playbook, assuming the parameters were defined in variables:
 
 .. code-block:: yaml
 
@@ -99,12 +124,12 @@ In a play, this might look like (assuming the parameters are held as vars):
             wait: yes
         register: rax
 
-By registering the return its then possible to dynamically create a host group consisting of these new instances.  
-This facilitates performing configuration actions on the hosts immediately in a subsequent task:
+By registering the return value of the step, it is then possible to dynamically add the resulting hosts to inventory (temporarily, in memory).
+This facilitates performing configuration actions on the hosts immediately in a subsequent task::
 
 .. code-block:: yaml
 
-    - name: Add all instance public IPs to host group
+    - name: Add the instances we created (by public IP) to the group 'raxhosts'
       local_action:
           module: add_host 
           hostname: "{{ item.name }}"
@@ -114,25 +139,20 @@ This facilitates performing configuration actions on the hosts immediately in a 
       with_items: rax.success
       when: rax.action == 'create'
 
-With the host group now created, a second play in your provision playbook might now have some configuration steps:
+With the host group now created, a second play in your provision playbook could now configure them, for example:
 
 .. code-block:: yaml    
 
     - name: Configuration play
       hosts: raxhosts
       user: root
-      gather_facts: true
-      tasks:
-        - name: Install NTP service
-          apt: pkg=ntp cache_valid_time=86400 update_cache=yes
-          
-        - name: Check NTP service
-          service: name=ntpd state=started
+      roles:
+        - ntp
+        - webserver
 
-Rather than include configuration inline, you may also choose to just do it as a task include or a role.
 
-The method above ties the configuration of a host with the provisioning step.  This isn't always ideal and leads us 
-onto the next section.
+The method above ties the configuration of a host with the provisioning step.  This isn't always what you want, and leads us 
+to the next section.
 
 .. _host_inventory:
 
@@ -140,23 +160,31 @@ Host Inventory
 ``````````````
 
 Once your nodes are spun up, you'll probably want to talk to them again.  
-The best way to handle his is to use the rax inventory plugin.
 
-Even for larger environments, you might have nodes spun up from other tools.  You don't have to use Ansible to spin up guests.  
-Once these are created and you wish to configure them, the Rackspace Cloud API can be used to return system grouping with the 
-help of the rax inventory script. This script can be used to group resources by their meta data.  Utilizing meta data is highly 
+The best way to handle his is to use the rax inventory plugin, which dynamically queries Rackspace Cloud and tells Ansible what
+nodes you have to manage.
+
+You might want to use this even if you are spinning up Ansible via other tools, including the Rackspace Cloud user interface.
+
+The inventory plugin can be used to group resources by their meta data.  Utilizing meta data is highly 
 recommended in rax and can provide an easy way to sort between host groups and roles.
 
-There are several recommended ways to manage inventory for Rackspace.  The first is utilizing the ``rax.py`` inventory script 
-and the second is utilizing a standard Ansible INI-formatted inventory file.
+If you don't want to use the ``rax.py`` dynamic inventory script, you could also still choose to manually manage your INI inventroy file,
+though this is less recommended.   
+
+In Ansible it is quite possible to use multiple dynamic inventory plugins along with INI file data.  Just put them in a common
+directory and be sure the scripts are chmod +x, and the INI-based ones are not.
 
 .. _raxpy:
 
 rax.py
 ++++++
 
-Copy ``rax.py`` from ``plugins/inventory`` into your inventory directory.  You can specify credentials 
-for ``rax.py`` utilizing the ``RAX_CREDS_FILE`` environment variable 
+To use the rackspace dynamic inventory script, copy ``rax.py`` from ``plugins/inventory`` into your inventory directory.  You can specify credentials 
+for ``rax.py`` utilizing the ``RAX_CREDS_FILE`` environment variable.
+
+.. note:: Users of AnsibleWorks AWX will note that dynamic inventory is natively supported by AWX, and all you have to do is associate
+a group with your Rackspace Cloud credentials, and it will easily synchronize without going through these steps.
 
 .. code-block:: bash
 
@@ -165,20 +193,23 @@ for ``rax.py`` utilizing the ``RAX_CREDS_FILE`` environment variable
 ``rax.py`` also accepts a ``RAX_REGION`` environment variable, which can contain an individual region, or a 
 comma separated list of regions.
 
-For more information about the credentials file, see _`Credentials File`.
+When using ``rax.py``, you will not have a 'localhost' defined in the inventory.  
 
-When using ``rax.py``, you will not have a 'localhost' defined in the inventory.  As mentioned previously, you will 
-often be running most of these modules outside of the host loop, and will need 'localhost' defined.  The recommended 
-way to do this, would be to create an ``inventory`` directory, and place both the ``rax.py`` script and a file containing 
-``localhost`` in it.  Executing ``ansible`` or ``ansible-playbook`` and specifying the ``inventory`` directory instead 
+As mentioned previously, you will often be running most of these modules outside of the host loop, 
+and will need 'localhost' defined.  The recommended way to do this, would be to create an ``inventory`` directory, 
+and place both the ``rax.py`` script and a file containing ``localhost`` in it.  
+
+Executing ``ansible`` or ``ansible-playbook`` and specifying the ``inventory`` directory instead 
 of an individual file, will cause ansible to evaluate each file in that directory for inventory.
+
+Let's test our inventory script to see if it can talk to Rackspace Cloud.
 
 .. code-block:: bash
 
     $ RAX_CREDS_FILE=~/.raxpub ansible all -i inventory/ -m setup
 
-The ``rax.py`` inventory script will output information similar to the following information, which will be utilized for 
-inventory and discoverable hostvars:
+Assuming things are properly configured, the ``rax.py`` inventory script will output information similar to the 
+following information, which will be utilized for inventory and variables. 
 
 .. code-block:: json
 
@@ -277,18 +308,21 @@ inventory and discoverable hostvars:
 Standard Inventory
 ++++++++++++++++++
 
-When utilizing a standard ini formatted inventory file, it may still be adventageous to retrieve discoverable hostvar information 
-from the Rackspace API.  That can be achieved with the ``rax_facts`` module and an inventory file similar to the following:
+When utilizing a standard ini formatted inventory file (as opposed to the inventory plugin), 
+it may still be adventageous to retrieve discoverable hostvar information  from the Rackspace API.  
+
+This can be achieved with the ``rax_facts`` module and an inventory file similar to the following:
 
 .. code-block:: ini
 
-    [test-servers]
-    test rax_region=ORD
+    [test_servers]
+    hostname1 rax_region=ORD
+    hostname2 rax_region=ORD
 
 .. code-block:: yaml
 
     - name: Gather info about servers
-      hosts: all
+      hosts: test_servers
       gather_facts: False
       tasks:
         - name: Get facts about servers
@@ -301,8 +335,9 @@ from the Rackspace API.  That can be achieved with the ``rax_facts`` module and 
           set_fact:
             ansible_ssh_host: "{{ rax_accessipv4 }}"
 
-The ``rax_facts`` module will return the following JSON structure, providing hostvars/facts about the servers that matches 
-the ``rax.py`` inventory script:
+While you don't need to know how it works, it may be interesting to know what kind of variables are returned.
+
+The ``rax_facts`` module provides facts as followings, which match the ``rax.py`` inventory script:
 
 .. code-block:: json
 
@@ -389,28 +424,11 @@ the ``rax.py`` inventory script:
         "changed": false
     }
 
-.. _credentials_file:
-
-Credentials File
-````````````````
-
-The `rax.py` inventory script and all `rax` modules support a standard `pyrax` credentials file that looks like:
-
-.. code-block:: ini
-
-    [rackspace_cloud]
-    username = myraxusername
-    api_key = d41d8cd98f00b204e9800998ecf8427e
-
-More information about this credentials file can be found at 
-https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating
-
-.. _use_cases:
 
 Use Cases
 `````````
 
-This section covers some usage examples built around a specific use case.
+This section covers some additional usage examples built around a specific use case.
 
 .. _example_1:
 
@@ -572,7 +590,7 @@ Advanced Usage
 AWX Autoscaling
 +++++++++++++++
 
-AnsibleWorks's "AWX" product also contains a very nice feature for auto-scaling use cases.  
+AnsibleWorks's "AWX" solution also contains a very nice feature for auto-scaling use cases.  
 In this mode, a simple curl script can call a defined URL and the server will "dial out" to the requester 
 and configure an instance that is spinning up.  This can be a great way to reconfigure ephmeral nodes.  
 See the AWX documentation for more details.  Click on the AWX link in the sidebar for details.
@@ -586,3 +604,5 @@ Pending Information
 ```````````````````
 
 More to come!
+
+
