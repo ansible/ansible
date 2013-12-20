@@ -42,7 +42,8 @@ setup(name='ansible',
          'bin/ansible',
          'bin/ansible-playbook',
          'bin/ansible-pull',
-         'bin/ansible-doc'
+         'bin/ansible-doc',
+         'bin/ansible-galaxy'
       ],
       data_files=data_files
 )
