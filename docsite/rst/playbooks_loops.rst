@@ -316,14 +316,14 @@ As you can see the formatting of packages in these lists is all over the place. 
 
 That's how!
 
-.. _writing_your_own_iterators:
+.. _using_register_with_a_loop:
 
 Using register with a loop
 ``````````````````````````
 
 When using ``register`` with a loop the data strucutre placed in the variable during a loop, will contain a ``results`` attribute, that is a list of all responses from the module.
 
-Here is an example of using ``register`` with ``with_items``
+Here is an example of using ``register`` with ``with_items``::
 
     - shell: echo "{{ item }}"
       with_items:
@@ -377,6 +377,8 @@ Subsequent loops over the registered variable to inspect the results may look li
         msg: "The command ({{ item.cmd }}) did not have a 0 return code"
       when: item.rc != 0
       with_items: echo.results
+
+.. _writing_your_own_iterators:
 
 Writing Your Own Iterators
 ``````````````````````````
