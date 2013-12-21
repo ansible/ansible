@@ -17,7 +17,7 @@ based on those variables.
 
 Variables in Ansible are how we deal with differences between systems.  
 
-Once understanding variables you'll also want to dig into `playbooks_conditionals` and `playbooks_loops`.  
+Once understanding variables you'll also want to dig into :doc:`playbooks_conditionals` and :doc:`playbooks_loops`.
 Useful things like the "group_by" module
 and the "when" conditional can also be used with variables, and to help manage differences between systems.
 
@@ -49,7 +49,7 @@ a bit of a refresher.
 Often you'll want to set variables based on what groups a machine is in.  For instance, maybe machines in Boston
 want to use 'boston.ntp.example.com' as an NTP server.
 
-See the `intro_inventory` document for multiple ways on how to define variables in inventory.  
+See the :doc:`intro_inventory` document for multiple ways on how to define variables in inventory.
 
 .. _playbook_variables:
 
@@ -232,7 +232,7 @@ Hey Wait, A YAML Gotcha
 ```````````````````````
 
 YAML syntax requires that if you start a value with {{ foo }} you quote the whole line, since it wants to be
-sure you aren't trying to start a YAML dictionary.  This is covered on the `YAMLSyntax` page.
+sure you aren't trying to start a YAML dictionary.  This is covered on the :doc:`YAMLSyntax` page.
 
 This won't work::
 
@@ -572,7 +572,7 @@ Registered Variables
 Another major use of variables is running a command and using the result of that command to save the result into a variable.
 
 The value of a task being executed in ansible can be saved in a variable and used later.  See some examples of this in the
-`playbooks_conditionals` chapter.
+:doc:`playbooks_conditionals` chapter.
 
 While it's mentioned elsewhere in that document too, here's a quick syntax example::
 
@@ -819,7 +819,7 @@ control you might want over values.
 First off, group variables are super powerful.
 
 Site wide defaults should be defined as a 'group_vars/all' setting.  Group variables are generally placed alongside
-your inventory file.  They can also be returned by a dynamic inventory script (see `intro_dynamic_inventory`) or defined
+your inventory file.  They can also be returned by a dynamic inventory script (see :doc:`intro_dynamic_inventory`) or defined
 in things like AnsibleWorks AWX from the UI or API::
 
     ---

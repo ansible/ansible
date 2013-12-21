@@ -91,7 +91,7 @@ Where does the configuration file live and what can I configure in it?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
-See `intro_configuration`.
+See :doc:`intro_configuration`.
 
 .. _who_would_ever_want_to_disable_cowsay_but_ok_here_is_how:
 

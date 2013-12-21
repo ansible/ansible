@@ -382,7 +382,7 @@ Subsequent loops over the registered variable to inspect the results may look li
 Writing Your Own Iterators
 ``````````````````````````
 
-While you ordinarily shouldn't have to, should you wish to write your own ways to loop over arbitrary datastructures, you can read `developing_plugins` for some starter
+While you ordinarily shouldn't have to, should you wish to write your own ways to loop over arbitrary datastructures, you can read :doc:`developing_plugins` for some starter
 information.  Each of the above features are implemented as plugins in ansible, so there are many implementations to reference.
 
 .. seealso::
