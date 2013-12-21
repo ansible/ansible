@@ -23,8 +23,11 @@ try:
 except ImportError:
     import simplejson as json
 
+# this can be made configurable, not should not use ansible.cfg
+ANSIBLE_ETCD_URL = 'http://127.0.0.1:4001'
+
 class etcd():
-    def __init__(self, url='http://127.0.0.1:4001'):
+    def __init__(self, url=ANSIBLE_ETCD_URL)
         self.url = url
         self.baseurl = '%s/v1/keys' % (self.url)
 
@@ -56,7 +59,7 @@ class LookupModule(object):
 
     def __init__(self, basedir=None, **kwargs):
         self.basedir = basedir
-        self.etcd = etcd(constants.ANSIBLE_ETCD_URL)
+        self.etcd = etcd()
 
     def run(self, terms, inject=None, **kwargs):
 
