@@ -11,7 +11,7 @@ Introduction
 
 Continuous Delivery is the concept of frequently delivering updates to your software application. 
 
-The idea is that my updating more often, you not only have to wait for specific timed period, but your organization
+The idea is that by updating more often, you do not have to wait for a specific timed period, and your organization
 gets better at the process of responding to change.
 
 Some Ansible users are deploying updates to their end users on an hourly or even more frequent basis -- sometimes every time
@@ -24,7 +24,7 @@ rolling upgrades of the web application stack.
 
 .. note::
 
-   `Click here for the latest playbooks for this example`
+   `Click here for the latest playbooks for this example 
    <https://github.com/ansible/ansible-examples/tree/master/lamp_haproxy>`_.
 
 The playbooks deploy Apache, PHP, MySQL, Nagios, and HAProxy to a CentOS-based set of servers.
