@@ -28,12 +28,12 @@ version_added: "1.4"
 options:
     name:
         description:
-            - name of package to install/remove
+            - name of package to install/remove/upgrade
         required: true
     state:
         description:
             - state of the package
-        choices: [ 'present', 'absent' ]
+        choices: [ 'present', 'absent', 'latest' ]
         required: false
         default: present
     update_homebrew:
@@ -51,6 +51,7 @@ notes:  []
 '''
 EXAMPLES = '''
 - homebrew: name=foo state=present
+- homebrew: name=foo state=latest
 - homebrew: name=foo state=present update_homebrew=yes
 - homebrew: name=foo state=absent
 - homebrew: name=foo,bar state=absent
@@ -77,6 +78,14 @@ def query_package(module, brew_path, name, state="present"):
 
         return False
 
+def find_outdated(module, brew_path, name):
+    """ Returns whether a package is outdated or not. """
+
+    rc, out, err = module.run_command("%s outdated -m1 | grep -q '^%s$'" % (brew_path, name))
+    if rc == 0:
+        return True
+
+    return False
 
 def remove_packages(module, brew_path, packages):
     """ Uninstalls one or more packages if installed. """
@@ -131,6 +140,43 @@ def install_packages(module, brew_path, packages, options):
 
     module.exit_json(changed=False, msg="package(s) already present")
 
+def upgrade_packages(module, brew_path, packages, options):
+    """ Upgrades or installs one or more packages. """
+
+    installed_count = 0
+
+    for package in packages:
+        is_installed = query_package(module, brew_path, package)
+        if is_installed and not find_outdated(module, brew_path, package):
+            continue
+
+        if module.check_mode:
+            module.exit_json(changed=True)
+
+        if not is_installed:
+            cmd = [brew_path, 'install', package]
+            if options:
+                cmd.extend(options)
+            rc, out, err = module.run_command(cmd)
+
+            if not query_package(module, brew_path, package):
+                module.fail_json(msg="failed to install %s: '%s' %s" % (package, cmd, out.strip()))
+        else:
+            cmd = [brew_path, 'upgrade', package]
+            if options:
+                cmd.extend(options)
+            rc, out, err = module.run_command(cmd)
+
+            if find_outdated(module, brew_path, package):
+                module.fail_json(msg="failed to upgrade %s: '%s' %s" % (package, cmd, out.strip()))
+
+        installed_count += 1
+
+    if installed_count > 0:
+        module.exit_json(changed=True, msg="upgraded or installed %d package(s)" % (installed_count,))
+
+    module.exit_json(changed=False, msg="package(s) already present")
+
 def generate_options_string(install_options):
     if install_options is None:
         return None
@@ -147,7 +193,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             name = dict(aliases=["pkg"], required=True),
-            state = dict(default="present", choices=["present", "installed", "absent", "removed"]),
+            state = dict(default="present", choices=["present", "installed", "absent", "removed", "latest"]),
             update_homebrew = dict(default="no", aliases=["update-brew"], type='bool'),
             install_options = dict(default=None, aliases=["options"], type='list')
         ),
@@ -169,6 +215,10 @@ def main():
 
     elif p["state"] in ["absent", "removed"]:
         remove_packages(module, brew_path, pkgs)
+
+    elif p["state"] in ["latest"]:
+        opt = generate_options_string(p["install_options"])
+        upgrade_packages(module, brew_path, pkgs, opt)
 
 # import module snippets
 from ansible.module_utils.basic import *
