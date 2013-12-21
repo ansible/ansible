@@ -335,8 +335,7 @@ Let's run a playbook using a parallelism level of 10::
 
     ansible-playbook playbook.yml -f 10
 
-.. _tips_and_tricks:
-
+.. _ansible-pull:
 
 Ansible-Pull
 ````````````
@@ -352,6 +351,8 @@ Assuming you load balance your checkout location, ansible-pull scales essentiall
 Run 'ansible-pull --help' for details.
 
 There's also a `clever playbook <https://github.com/ansible/ansible-examples/blob/master/language_features/ansible_pull.yml>`_ available to using ansible in push mode to configure ansible-pull via a crontab!
+
+.. _tips_and_tricks:
 
 Tips and Tricks
 ```````````````

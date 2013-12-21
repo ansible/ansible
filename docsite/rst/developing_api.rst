@@ -37,7 +37,7 @@ It's pretty simple::
 
 The run method returns results per host, grouped by whether they
 could be contacted or not.  Return types are module specific, as
-expressed in the 'ansible-modules' documentation.::
+expressed in the :doc:`modules` documentation.::
 
     {
         "dark" : {
