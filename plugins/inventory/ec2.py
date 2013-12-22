@@ -136,7 +136,7 @@ class Ec2Inventory(object):
 
     def __init__(self):
         ''' Main execution path '''
-
+        self.myid = boto.utils.get_instance_metadata()['instance-id']
         # Inventory grouped by instance IDs, tags, security groups, regions,
         # and availability zones
         self.inventory = self._empty_inventory()
@@ -347,6 +347,10 @@ class Ec2Inventory(object):
 
         # Inventory: Group by availability zone
         self.push(self.inventory, instance.placement, dest)
+
+        # localhost
+        if self.myid == instance.id:
+            self.push(self.inventory, "localhost", dest)
 
         # Inventory: Group by instance type
         self.push(self.inventory, self.to_safe('type_' + instance.instance_type), dest)
