@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Ansible module to configure debian packages.
+Ansible module to configure .deb packages.
 (c) 2014, Brian Coca <briancoca+ansible@gmail.com>
 
 This file is part of Ansible
@@ -24,13 +24,13 @@ along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 DOCUMENTATION = '''
 ---
 module: debconf
-short_description: Configure a debian package
+short_description: Configure a .deb package
 description:
-     - Configure a Debian package using debconf-set-selections
+     - Configure a .deb package using debconf-set-selections
 version_added: "1.5"
 notes:
     - A number of questions have to be answered (depending on the package).
-      Use 'debconf-show <package>' on any debian/derivative with the package
+      Use 'debconf-show <package>' on any Debian or derivative with the package
       installed to see questions/settings available.
 options:
   name:
@@ -60,7 +60,7 @@ options:
     aliases: ['awnser']
   unseen:
     description:
-      - Do not set 'seen' flag when preseeding
+      - Do not set 'seen' flag when pre-seeding
     required: false
     default: False
     aliases: []
