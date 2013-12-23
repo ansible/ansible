@@ -211,6 +211,8 @@ def main():
                 ip = None
                 if 'group_id' in rule and 'cidr_ip' in rule:
                     module.fail_json(msg="Specify group_id OR cidr_ip, not both")
+                elif 'group_name' in rule and 'cidr_ip' in rule:
+                    module.fail_json(msg="Specify group_name OR cidr_ip, not both")
                 elif 'group_id' in rule and 'group_name' in rule:
                     module.fail_json(msg="Specify group_id OR group_name, not both")
                 elif 'group_id' in rule:
