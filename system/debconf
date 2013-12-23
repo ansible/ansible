@@ -47,7 +47,7 @@ options:
     aliases: ['question', 'selection']
   type:
     description:
-      - The type of value supplied
+      - The type of the value supplied
     required: false
     default: null
     choices: [string, boolean, select, multiselect, note, text, password, title]
