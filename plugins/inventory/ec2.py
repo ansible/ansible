@@ -139,9 +139,9 @@ class Ec2Inventory(object):
 
         # finds the instanceid of the instance it is running on
         try:
-            self.myid = boto.utils.get_instance_metadata()['instance-id']
+            self.myinstanceid = boto.utils.get_instance_metadata()['instance-id']
         except:
-            self.myid = None
+            self.myinstanceid = None
         # Inventory grouped by instance IDs, tags, security groups, regions,
         # and availability zones
         self.inventory = self._empty_inventory()
@@ -354,7 +354,7 @@ class Ec2Inventory(object):
         self.push(self.inventory, instance.placement, dest)
 
         # add localhost if this is the instance it is running on
-        if self.myid and self.myid == instance.id:
+        if self.myinstanceid and self.myinstanceid == instance.id:
             self.push(self.inventory, "localhost", dest)
 
         # Inventory: Group by instance type
