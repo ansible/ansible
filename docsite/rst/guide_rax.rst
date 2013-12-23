@@ -542,7 +542,7 @@ Build a complete webserver environment with servers, custom networks and load ba
             module: rax_clb_nodes
             credentials: ~/.raxpub
             load_balancer_id: "{{ clb.balancer.id }}"
-            address: "{{ item.networks.private|first }}"
+            address: "{{ item.rax_networks.private|first }}"
             port: 80
             condition: enabled
             type: primary
