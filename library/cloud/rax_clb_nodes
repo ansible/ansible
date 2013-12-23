@@ -135,11 +135,21 @@ def _activate_virtualenv(path):
     execfile(activate_this, dict(__file__=activate_this))
 
 
-def _get_node(lb, node_id):
-    """Return a node with the given `node_id`"""
-    for node in lb.nodes:
-        if node.id == node_id:
-            return node
+def _get_node(lb, node_id=None, address=None, port=None):
+    """Return a matching node"""
+    searches = {
+        'id': node_id,
+        'address': address,
+        'port': port
+    }
+
+    for node in getattr(lb, 'nodes', []):
+        try:
+            if all(getattr(node, attr) == value
+                   for (attr, value) in searches.items() if value is not None):
+                return node
+        except AttributeError:
+            continue
     return None
 
 
@@ -230,10 +240,7 @@ def main():
     except pyrax.exc.PyraxException, e:
         module.fail_json(msg='%s' % e.message)
 
-    if node_id:
-        node = _get_node(lb, node_id)
-    else:
-        node = None
+    node = _get_node(lb, node_id, address, port)
 
     result = _node_to_dict(node)
 
@@ -272,21 +279,11 @@ def main():
                 except pyrax.exc.PyraxException, e:
                     module.fail_json(msg='%s' % e.message)
         else:  # Updating an existing node
-            immutable = {
-                'address': address,
-                'port': port,
-            }
-
             mutable = {
                 'condition': condition,
                 'type': typ,
                 'weight': weight,
             }
-
-            for name, value in immutable.items():
-                if value:
-                    module.fail_json(
-                        msg='Attribute %s cannot be modified' % name)
 
             for name, value in mutable.items():
                 if value is None or value == getattr(node, name):
