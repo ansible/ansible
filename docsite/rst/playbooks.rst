@@ -18,6 +18,7 @@ It is recommended to look at `Example Playbooks <https://github.com/ansible/ansi
 .. toctree::
    :maxdepth: 1
 
+   playbooks_intro
    playbooks_roles
    playbooks_variables
    playbooks_conditionals
