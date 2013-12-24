@@ -1,9 +1,6 @@
 Loops
 =====
 
-.. contents::
-   :depth: 2
-
 Often you'll want to do many things in one task, such as create a lot of users, install a lot of packages, or
 repeat a polling step until a certain result is reached.
 

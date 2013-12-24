@@ -1,9 +1,6 @@
 Rackspace Cloud Guide
 =====================
 
-.. contents::
-   :depth: 3
-
 .. _introduction:
 
 Introduction

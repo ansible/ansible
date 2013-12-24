@@ -1,9 +1,6 @@
 Amazon Web Services Guide
 =========================
 
-.. contents::
-   :depth: 2
-
 .. _aws_intro:
 
 Introduction

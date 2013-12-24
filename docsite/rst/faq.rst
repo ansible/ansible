@@ -3,9 +3,6 @@ Frequently Asked Questions
 
 Here are some commonly-asked questions and their answers.
 
-.. contents::
-   :depth: 2
-
 .. _users_and_ports:
 
 How do I handle different machines needing different user accounts or ports to log in with?

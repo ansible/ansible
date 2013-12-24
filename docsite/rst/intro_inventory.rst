@@ -12,9 +12,6 @@ Not only is this inventory configurable, but you can also use
 multiple inventory files at the same time (explained below) and also
 pull inventory from dynamic or cloud sources, as described in :doc:`intro_dynamic_inventory`.
 
-.. contents::
-   :depth: 2
-
 .. _inventoryformat:
 
 Hosts and Groups

@@ -1,9 +1,6 @@
 Continuous Delivery and Rolling Upgrades
 ========================================
 
-.. contents::
-   :depth: 2
-
 .. _lamp_introduction:
 
 Introduction

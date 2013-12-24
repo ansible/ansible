@@ -13,9 +13,6 @@ Should you develop an interesting Ansible module, consider sending a pull reques
 `github project <http://github.com/ansible/ansible>`_ to see about getting your module
 included in the core project.
 
-.. contents::
-   :depth: 2
-
 .. _module_dev_tutorial:
 
 Tutorial

@@ -16,9 +16,6 @@ Ansible easily supports all of these options via an external inventory system.  
 
 For information about writing your own dynamic inventory source, see :doc:`developing_inventory`.
 
-.. contents::
-   :depth: 2
-
 
 .. _cobbler_example:
 
