@@ -196,7 +196,7 @@ Is there a web interface / REST API / etc?
 ++++++++++++++++++++++++++++++++++++++++++
 
 Yes!  AnsibleWorks makes a great product that makes Ansible even more powerful
-and easy to use: `AnsibleWorks AWX <http://ansibleworks.com/ansible-awx/>`
+and easy to use: `AnsibleWorks AWX <http://ansibleworks.com/ansible-awx/>`_.
 
 .. _docs_contributions:
 
@@ -212,7 +212,7 @@ I don't see my question here
 
 We're happy to help.
 
-See the "Resources" section of the documentation home page for a link to the IRC and Google Group.
+See the `Resources <http://www.ansibleworks.com/community/>`_ section of the documentation home page for a link to the IRC and Google Group.
 
 .. seealso::
 
