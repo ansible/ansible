@@ -1,9 +1,6 @@
 YAML Syntax
 ===========
 
-.. contents::
-   :depth: 2
-
 This page provides a basic overview of correct YAML syntax, which is how Ansible
 playbooks (our configuration management language) are expressed.  
 

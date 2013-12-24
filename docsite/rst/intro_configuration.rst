@@ -15,9 +15,6 @@ The mechanism for doing this is the "ansible.cfg" file, which is looked for in t
 If multiple file locations matching the above exist, the last location on the above list is used.  Settings in files
 are not merged together.
 
-.. contents::
-   :depth: 2
-
 .. _getting_the_latest_configuration:
 
 Getting the latest configuration

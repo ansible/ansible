@@ -21,9 +21,6 @@ and the "when" conditional can also be used with variables, and to help manage d
 
 It's highly recommended that you consult the ansible-examples github repository to see a lot of examples of variables put to use.
 
-.. contents::
-   :depth: 2
-
 .. _valid_variable_names:
 
 What Makes A Valid Variable Name

@@ -1,9 +1,6 @@
 Setting the Environment (and Working With Proxies)
 ==================================================
 
-.. contents::
-   :depth: 2
-
 .. versionadded:: 1.1
 
 It is quite possible that you may need to get package updates through a proxy, or even get some package

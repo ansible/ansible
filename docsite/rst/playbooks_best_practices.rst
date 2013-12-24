@@ -5,9 +5,6 @@ Here are some tips for making the most of Ansible playbooks.
 
 You can find some example playbooks illustrating these best practices in our `ansible-examples repository <https://github.com/ansible/ansible-examples>`_.  (NOTE: These may not use all of the features in the latest release, but are still an excellent reference!).
 
-.. contents::
-   :depth: 2
-
 .. _content_organization:
 
 Content Organization

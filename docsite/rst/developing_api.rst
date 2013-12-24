@@ -13,9 +13,6 @@ as it has a very nice REST API that provides all of these things at a higher lev
 Ansible is written in its own API so you have a considerable amount of power across the board.  
 This chapter discusses the Python API.
 
-.. contents:: `Table of contents`
-   :depth: 2
-
 .. _python_api:
 
 Python API

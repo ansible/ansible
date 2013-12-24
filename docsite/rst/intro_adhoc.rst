@@ -31,9 +31,6 @@ port over directly to the playbook language.
 If you haven't read :doc:`intro_inventory` already, please look that over a bit first
 and then we'll get going.
 
-.. contents::
-   :depth: 2
-
 .. _parallelism_and_shell_commands:
 
 Parallelism and Shell Commands

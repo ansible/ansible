@@ -1,9 +1,6 @@
 Intro to Playbooks
 ==================
 
-.. contents::
-   :depth: 2
-
 .. _about_playbooks:
 
 About Playbooks

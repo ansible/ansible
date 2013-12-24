@@ -1,9 +1,6 @@
 Using Vagrant and Ansible
 =========================
 
-.. contents::
-   :depth: 2
-
 .. _vagrant_intro:
 
 Introduction

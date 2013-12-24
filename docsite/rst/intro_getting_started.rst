@@ -1,9 +1,6 @@
 Getting Started
 ===============
 
-.. contents::
-   :depth: 2
-
 .. _gs_about:
 
 About
