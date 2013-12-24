@@ -1,6 +1,9 @@
 Ansible Modules
 ===============
 
+.. toctree::
+   :maxdepth: 2
+
 .. _modules_intro:
 
 Introduction
