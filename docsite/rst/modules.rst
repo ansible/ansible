@@ -1,9 +1,6 @@
 Ansible Modules
 ===============
 
-.. contents::
-   :depth: 3
-
 .. _modules_intro:
 
 Introduction
