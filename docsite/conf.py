@@ -16,13 +16,17 @@
 import sys
 import os
 
+# pip install sphinx_rtd_theme
+import sphinx_rtd_theme
+html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+
 # If your extensions are in another directory, add it here. If the directory
 # is relative to the documentation root, use os.path.abspath to make it
 # absolute, like shown here.
 #sys.path.append(os.path.abspath('some/directory'))
-
-sys.path.insert(0, os.path.join('ansible', 'lib'))
-sys.path.append(os.path.abspath('_themes'))
+#
+#sys.path.insert(0, os.path.join('ansible', 'lib'))
+#sys.path.append(os.path.abspath('_themes'))
 
 VERSION='0.01'
 AUTHOR='AnsibleWorks'
@@ -100,14 +104,14 @@ pygments_style = 'sphinx'
 # Options for HTML output
 # -----------------------
 
-html_theme_path = ['_themes']
-html_theme = 'solar'
+#html_theme_path = ['_themes']
+html_theme = 'sphinx_rtd_theme'
 html_short_title = 'Ansible Documentation'
 
 # The style sheet to use for HTML and HTML Help pages. A file of that name
 # must exist either in Sphinx' static/ path, or in one of the custom paths
 # given in html_static_path.
-html_style = 'solar.css'
+#html_style = 'solar.css'
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".

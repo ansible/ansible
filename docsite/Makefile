@@ -6,8 +6,6 @@ all: clean docs
 
 docs: clean modules
 	./build-site.py
-	cp _static/* htmlout/_static/
-	cp _themes/solar/static/* htmlout/_static/
 
 viewdocs: clean
 	./build-site.py view
