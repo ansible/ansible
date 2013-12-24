@@ -52,7 +52,7 @@ The ec2 module provides the ability to provision instances within EC2.  Typicall
    exporting the variable as EC2_URL=https://myhost:8773/services/Eucalyptus.
    This can be set using the 'environment' keyword in Ansible if you like.
 
-Here is an example of provisioning a number of instances in ad-hoc mode mode:
+Here is an example of provisioning a number of instances in ad-hoc mode:
 
 .. code-block:: bash
 
