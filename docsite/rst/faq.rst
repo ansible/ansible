@@ -212,7 +212,7 @@ I don't see my question here
 
 We're happy to help.
 
-See the "Resources" section of the documentation home page for a link to the IRC and Google Group.
+See the `Resources <http://www.ansibleworks.com/community/>`_ section of the documentation home page for a link to the IRC and Google Group.
 
 .. seealso::
 
