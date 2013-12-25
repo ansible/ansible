@@ -8,7 +8,7 @@
 %: -- module header
 \mods{@{module}@}{@{docuri}@}{
 		{% for desc in description -%}
-		@{ desc | jpfunc }@
+		@{ desc | convert_symbols_to_format }@
 		{% endfor -%}
 		{% if version_added is defined -%}
 		(\I{* new in version @{ version_added }@})
@@ -30,7 +30,7 @@
 
 		{# -------- option description ----------#}
 		{% for desc in v.description %}
-		@{ desc | jpfunc }@
+		@{ desc | convert_symbols_to_format }@
 		{% endfor %}
 		{% if v['choices'] %}
 		    \B{Choices}:\,
@@ -51,7 +51,7 @@
 {% if notes %}
 
 		{% for note in notes %}
-		\I{@{ note | jpfunc }@}
+		\I{@{ note | convert_symbols_to_format }@}
 		{% endfor %}
 {% endif %}
  ----------------------------- #}
