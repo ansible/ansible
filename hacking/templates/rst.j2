@@ -1,7 +1,15 @@
 .. _@{ module }@:
 
-@{ module }@
-++++++++++++++++++++++++++++++++++++++
+{% if short_description %}
+{% set title = module + ' - ' + short_description|convert_symbols_to_format %}
+{% else %}
+{% set title = module %}
+{% endif %}
+{% set title_len = title|length %}
+
+@{ title }@
+@{ '+' * title_len }@
+
 {% if author %}
 :Author: @{ author }@
 {% endif %}
