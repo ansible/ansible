@@ -21,7 +21,7 @@
 {% if options -%}
 .. raw:: html
 
-    <table>
+    <table border=1 cellpadding=4>
     <tr>
     <th class="head">parameter</th>
     <th class="head">required</th>
@@ -58,6 +58,7 @@
 
 {% endif %}
 
+{% if not plainexamples %}
 .. raw:: html
 
 {% for example in examples %}
@@ -69,22 +70,19 @@
     </p>
 {% endfor %}
     <br/>
+{% endif %}
 
 {% if plainexamples %}
-.. raw:: html
 
-    <pre>
+Examples::
+
 @{ plainexamples | escape | indent(4, True) }@
-    </pre>
 {% endif %}
 
 
 {% if notes %}
-.. raw:: html
-
-    <h4>Notes</h4>
-    {% for note in notes %}
-    <p>@{ note | html_ify }@</p>
-    {% endfor %}
+{% for note in notes %}
+.. note:: @{ note | html_ify }@</p>
+{% endfor %}
 {% endif %}
 
