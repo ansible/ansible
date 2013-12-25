@@ -2,6 +2,13 @@
 
 @{ module }@
 ++++++++++++++++++++++++++++++++++++++
+{% if author %}
+:Author: @{ author }@
+{% endif %}
+
+.. contents::
+   :local:
+   :depth: 1
 
 {# ------------------------------------------
  #
@@ -10,15 +17,21 @@
  #
  --------------------------------------------#}
 
+Synopsis
+--------
+
 {% if version_added is defined -%}
 .. versionadded:: @{ version_added }@
 {% endif %}
 
 {% for desc in description -%}
-@{ desc | convert_symbols_to_format }@ 
+@{ desc | convert_symbols_to_format }@
 {% endfor %}
 
 {% if options -%}
+Options
+-------
+
 .. raw:: html
 
     <table border=1 cellpadding=4>
@@ -49,12 +62,15 @@
 {% if requirements %}
 {% for req in requirements %}
 
-.. note:: Requires @{ req | html_ify }@
+.. note:: Requires @{ req | convert_symbols_to_format }@
 
 {% endfor %}
 {% endif %}
 
-{% if not plainexamples %}
+{% if examples or plainexamples %}
+Examples
+--------
+
 .. raw:: html
 
 {% for example in examples %}
@@ -66,19 +82,18 @@
     </p>
 {% endfor %}
     <br/>
-{% endif %}
 
 {% if plainexamples %}
 
-Examples::
+::
 
 @{ plainexamples | escape | indent(4, True) }@
 {% endif %}
-
+{% endif %}
 
 {% if notes %}
 {% for note in notes %}
-.. note:: @{ note | html_ify }@</p>
+.. note:: @{ note | convert_symbols_to_format }@
 {% endfor %}
 {% endif %}
 

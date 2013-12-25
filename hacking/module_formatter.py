@@ -146,7 +146,7 @@ def generate_parser():
     p.add_option("-M", "--module-dir", action="store", dest="module_dir", default=MODULEDIR, help="Ansible library path")
     p.add_option("-T", "--template-dir", action="store", dest="template_dir", default="hacking/templates", help="directory containing Jinja2 templates")
     p.add_option("-t", "--type", action='store', dest='type', choices=['html', 'latex', 'man', 'rst', 'json', 'markdown', 'js'], default='latex', help="Document type")
-    p.add_option("-v", "--verbose", action='store_true', default=False, help="Verbose") 
+    p.add_option("-v", "--verbose", action='store_true', default=False, help="Verbose")
     p.add_option("-o", "--output-dir", action="store", dest="output_dir", default=None, help="Output directory for module files")
     p.add_option("-I", "--includes-file", action="store", dest="includes_file", default=None, help="Create a file containing list of processed modules")
     p.add_option('-V', action='version', help='Show version number and exit')
@@ -241,7 +241,7 @@ def process_category(category, categories, options, env, template, outputname):
 
     category_file_path = os.path.join(options.output_dir, "list_of_%s_modules.rst" % category)
     category_file = open(category_file_path, "w")
-    print "*** recording category %s in %s ***" % (category, category_file_path) 
+    print "*** recording category %s in %s ***" % (category, category_file_path)
 
     # TODO: start a new category file
 
@@ -254,16 +254,19 @@ def process_category(category, categories, options, env, template, outputname):
     category_header = "%s Modules" % (category.title())
     underscores = "`" * len(category_header)
 
-    category_file.write(category_header)
-    category_file.write("\n")
-    category_file.write(underscores)
-    category_file.write("\n")
-    category_file.write(".. toctree::\n")
+    category_file.write("""\
+%s
+%s
+
+.. toctree::
+   :maxdepth: 1
+
+""" % (category_header, underscores))
 
     for module in modules:
         result = process_module(module, options, env, template, outputname, module_map)
         if result != "SKIPPED":
-            category_file.write("    %s_module\n" % module)
+            category_file.write("   %s_module\n" % module)
 
 
     category_file.close()
@@ -300,14 +303,14 @@ def main():
     last_category = None
     category_names = categories.keys()
     category_names.sort()
-    
+
     category_list_path = os.path.join(options.output_dir, "modules_by_category.rst")
     category_list_file = open(category_list_path, "w")
     category_list_file.write("Module Index\n")
     category_list_file.write("============\n")
     category_list_file.write("\n\n")
     category_list_file.write(".. toctree::\n")
- 
+
     for category in category_names:
         category_list_file.write("    list_of_%s_modules\n" % category)
         process_category(category, categories, options, env, template, outputname)

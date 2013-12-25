@@ -30,7 +30,7 @@ From playbooks, Ansible modules are executed in a very similar way::
     - name: reboot the servers
       action: command /sbin/reboot -t now
 
-Which can be abbreviated to:
+Which can be abbreviated to::
 
     - name: reboot the servers
       command: /sbin/reboot -t now
