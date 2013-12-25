@@ -47,15 +47,11 @@
 {% endif %}
 
 {% if requirements %}
-.. raw:: html
+{% for req in requirements %}
 
-    <p>
-    <b>Requirements:</b> 
-    {% for req in requirements %}
-    @{ req | html_ify }@
-    {% endfor %}
-    </p>
+.. note:: Requires @{ req | html_ify }@
 
+{% endfor %}
 {% endif %}
 
 {% if not plainexamples %}
