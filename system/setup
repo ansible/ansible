@@ -83,7 +83,7 @@ ansible all -m setup -a 'filter=ansible_*_mb'
 # Display only facts returned by facter.
 ansible all -m setup -a 'filter=facter_*'
 
-# Display only facts returned by facter.
+# Display only facts about certain interfaces.
 ansible all -m setup -a 'filter=ansible_eth[0-2]'
 """
 
