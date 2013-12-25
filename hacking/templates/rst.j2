@@ -15,7 +15,7 @@
 {% endif %}
 
 {% for desc in description -%}
-@{ desc | jpfunc }@ 
+@{ desc | convert_symbols_to_format }@ 
 {% endfor %}
 
 {% if options -%}

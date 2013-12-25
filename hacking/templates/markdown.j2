@@ -1,4 +1,4 @@
-## @{ module | jpfunc }@
+## @{ module | convert_symbols_to_format }@
 
 {# ------------------------------------------
  #
@@ -11,7 +11,7 @@ New in version @{ version_added }@.
 {% endif %}
 
 {% for desc in description -%}
-@{ desc | jpfunc }@
+@{ desc | convert_symbols_to_format }@
 
 {% endfor %}
 
@@ -42,7 +42,7 @@ New in version @{ version_added }@.
 
 {% for example in examples %}
 {% if example['description'] %}
-* @{ example['description'] | jpfunc }@
+* @{ example['description'] | convert_symbols_to_format }@
 {% endif %}
 
 ```
@@ -58,7 +58,7 @@ New in version @{ version_added }@.
 {% if notes %}
 #### Notes
 {% for note in notes %}
-@{ note | jpfunc }@
+@{ note | convert_symbols_to_format }@
 {% endfor %}
 {% endif %}
 

@@ -6,7 +6,7 @@
 .SH DESCRIPTION
 {% for desc in description %}
 .PP
-@{ desc | jpfunc }@ 
+@{ desc | convert_symbols_to_format }@ 
 {% endfor %}
 .\" ------ OPTIONS
 .\"
@@ -17,7 +17,7 @@
    {% set v = options[k] %}
 
 .IP @{ k }@
-{% for desc in v.description %}@{ desc | jpfunc }@{% endfor %}
+{% for desc in v.description %}@{ desc | convert_symbols_to_format }@{% endfor %}
 {% if v.get('choices') %}
 
 .IR Choices :
@@ -37,7 +37,7 @@
 .SH NOTES
 {% for note in notes %}
 .PP
-@{ note | jpfunc }@ 
+@{ note | convert_symbols_to_format }@ 
 {% endfor %}
 {% endif %}
 .\"
@@ -48,7 +48,7 @@
 {% for e in examples %}
 .PP
 {% if e['description'] %}
-@{ e['description'] | jpfunc }@
+@{ e['description'] | convert_symbols_to_format }@
 {% endif %}
 
 .nf

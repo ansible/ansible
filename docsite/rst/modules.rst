@@ -54,8 +54,7 @@ ansible-doc as well as the man command::
 
 Let's see what's available in the Ansible module library, out of the box:
 
-
-.. include:: modules/_list.rst
+.. include:: modules/_categories.rst
 
 .. _ansible_doc:
 
