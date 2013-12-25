@@ -114,24 +114,6 @@ def write_data(text, options, outputname, module):
 
 #####################################################################################
 
-def boilerplate():
-    ''' prints the boilerplate for module docs '''
-
-    if not os.path.exists(EXAMPLE_YAML):
-        print >>sys.stderr, "Missing example boiler plate: %s" % EXAMPLE_YAML
-    print "DOCUMENTATION = '''"
-    print file(EXAMPLE_YAML).read()
-    print "'''"
-    print ""
-    print ""
-    print "EXAMPLES = '''"
-    print "# example of doing ___ from a playbook"
-    print "your_module: some_arg=1 other_arg=2"
-    print "'''"
-    print ""
-
-#####################################################################################
-
 def list_modules(module_dir):
     ''' returns a hash of categories, each category being a hash of module names to file paths '''
 
@@ -167,7 +149,6 @@ def generate_parser():
     p.add_option("-v", "--verbose", action='store_true', default=False, help="Verbose") 
     p.add_option("-o", "--output-dir", action="store", dest="output_dir", default=None, help="Output directory for module files")
     p.add_option("-I", "--includes-file", action="store", dest="includes_file", default=None, help="Create a file containing list of processed modules")
-    p.add_option("-G", "--generate", action="store_true", dest="do_boilerplate", default=False, help="generate boilerplate docs to stdout")
     p.add_option('-V', action='version', help='Show version number and exit')
     return p
 
@@ -293,10 +274,6 @@ def process_category(category, categories, options, env, template, outputname):
 
 def validate_options(options):
     ''' validate option parser options '''
-
-    if options.do_boilerplate:
-        boilerplate()
-        sys.exit(0)
 
     if not options.module_dir:
         print >>sys.stderr, "--module-dir is required"
