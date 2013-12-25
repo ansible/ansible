@@ -62,7 +62,7 @@ Options
 {% if requirements %}
 {% for req in requirements %}
 
-.. note:: Requires @{ req | html_ify }@
+.. note:: Requires @{ req | convert_symbols_to_format }@
 
 {% endfor %}
 {% endif %}
