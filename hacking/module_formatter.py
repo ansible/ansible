@@ -41,10 +41,12 @@ TO_OLD_TO_BE_NOTABLE = 1.0
 # Get parent directory of the directory this script lives in
 MODULEDIR=os.path.abspath(os.path.join(
     os.path.dirname(os.path.realpath(__file__)), os.pardir, 'library'
-    ))
+))
+
+# The name of the DOCUMENTATION template
 EXAMPLE_YAML=os.path.abspath(os.path.join(
-    os.path.dirname(os.path.realpath(__file__)), os.pardir, 'examples', 'DOCUMENTATION.yaml'
-    ))
+    os.path.dirname(os.path.realpath(__file__)), os.pardir, 'examples', 'DOCUMENTATION.yml'
+))
 
 # There is a better way of doing this!
 # TODO: somebody add U(text, http://foo.bar/) as described by Tim in #991
