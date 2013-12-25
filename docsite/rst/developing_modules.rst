@@ -371,7 +371,7 @@ syntax highlighting before you include it in your Python file.
 Example
 +++++++
 
-See an example documentation string in the checkout under examples/DOCUMENTATION.yml
+See an example documentation string in the checkout under `examples/DOCUMENTATION.yml <https://github.com/ansible/ansible/blob/devel/examples/DOCUMENTATION.yml>`_.
 
 Include it in your module file like this::
 
