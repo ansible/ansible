@@ -254,16 +254,19 @@ def process_category(category, categories, options, env, template, outputname):
     category_header = "%s Modules" % (category.title())
     underscores = "`" * len(category_header)
 
-    category_file.write(category_header)
-    category_file.write("\n")
-    category_file.write(underscores)
-    category_file.write("\n")
-    category_file.write(".. toctree::\n")
+    category_file.write("""\
+%s
+%s
+
+.. toctree::
+   :maxdepth: 1
+
+""" % (category_header, underscores))
 
     for module in modules:
         result = process_module(module, options, env, template, outputname, module_map)
         if result != "SKIPPED":
-            category_file.write("    %s_module\n" % module)
+            category_file.write("   %s_module\n" % module)
 
 
     category_file.close()
