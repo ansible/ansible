@@ -226,8 +226,7 @@ The 'group' and 'user' modules are reasonably non-trivial and showcase what this
 
 Key parts include always ending the module file with::
 
-    # include magic from lib/ansible/module_common.py
-    #<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+    from ansible.module_utils.basic import *
     main()
 
 And instantiating the module class like::
@@ -372,10 +371,7 @@ syntax highlighting before you include it in your Python file.
 Example
 +++++++
 
-To print a basic documentation string, run ``./hacking/module_formatter.py -G``. 
-
-You can copy it into your module and use it as a starting point 
-when writing your own docs.
+See an example documentation string in the checkout under examples/DOCUMENTATION.yml
 
 Include it in your module file like this::
 
@@ -389,8 +385,9 @@ Include it in your module file like this::
     # ... snip ...
     '''
 
-The ``description``, and ``notes`` 
-support formatting in some of the output formats (e.g. ``rst``, ``man``).
+The ``description``, and ``notes`` fields 
+support formatting with some special macros.  
+
 These formatting functions are ``U()``, ``M()``, ``I()``, and ``C()``
 for URL, module, italic, and constant-width respectively. It is suggested
 to use ``C()`` for file and option names, and ``I()`` when referencing
@@ -405,9 +402,8 @@ like this::
     - action: modulename opt1=arg1 opt2=arg2
     '''
 
-The ``module_formatter.py`` script and ``ansible-doc(1)`` append the
-``EXAMPLES`` blob after any existing (deprecated) ``examples`` you may have in the
-YAML ``DOCUMENTATION`` string.
+The EXAMPLES section, just like the documentation section, is required in
+all module pull requests for new modules.
 
 .. _module_dev_testing:
 

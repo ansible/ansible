@@ -102,7 +102,7 @@ def rst_xline(width, char="="):
 
 #####################################################################################
 
-def return_data(text, options, outputname, module):
+def write_data(text, options, outputname, module):
     ''' dumps module output to a file or the screen, as requested '''
 
     if options.output_dir is not None:
@@ -188,7 +188,7 @@ def jinja2_environment(template_dir, typ):
         env.filters['fmt'] = rst_fmt
         env.filters['xline'] = rst_xline
         template = env.get_template('rst.j2')
-        outputname = "%s.rst"
+        outputname = "%s_module.rst"
     else:
         raise Exception("unknown module format type: %s" % typ)
 
@@ -214,7 +214,7 @@ def process_module(module, options, env, template, outputname, module_map):
         sys.stderr.write("*** ERROR: CORE MODULE MISSING DOCUMENTATION: %s, %s ***\n" % (fname, module))
         sys.exit(1)
     if doc is None:
-        return
+        return "SKIPPED"
 
     all_keys = []
 
@@ -250,13 +250,17 @@ def process_module(module, options, env, template, outputname, module_map):
     # here is where we build the table of contents...
 
     text = template.render(doc)
-    return_data(text, options, outputname, module)
+    write_data(text, options, outputname, module)
 
 #####################################################################################
 
 def process_category(category, categories, options, env, template, outputname):
 
     module_map = categories[category]
+
+    category_file_path = os.path.join(options.output_dir, "list_of_%s_modules.rst" % category)
+    category_file = open(category_file_path, "w")
+    print "*** recording category %s in %s ***" % (category, category_file_path) 
 
     # TODO: start a new category file
 
@@ -266,8 +270,22 @@ def process_category(category, categories, options, env, template, outputname):
     modules = module_map.keys()
     modules.sort()
 
+    category_header = "%s Modules" % (category.title())
+    underscores = "`" * len(category_header)
+
+    category_file.write(category_header)
+    category_file.write("\n")
+    category_file.write(underscores)
+    category_file.write("\n")
+    category_file.write(".. toctree::\n")
+
     for module in modules:
-        process_module(module, options, env, template, outputname, module_map)
+        result = process_module(module, options, env, template, outputname, module_map)
+        if result != "SKIPPED":
+            category_file.write("    %s_module\n" % module)
+
+
+    category_file.close()
 
     # TODO: end a new category file
 
@@ -305,9 +323,19 @@ def main():
     last_category = None
     category_names = categories.keys()
     category_names.sort()
+    
+    category_list_path = os.path.join(options.output_dir, "modules_by_category.rst")
+    category_list_file = open(category_list_path, "w")
+    category_list_file.write("Module Index\n")
+    category_list_file.write("============\n")
+    category_list_file.write("\n\n")
+    category_list_file.write(".. toctree::\n")
  
     for category in category_names:
+        category_list_file.write("    list_of_%s_modules\n" % category)
         process_category(category, categories, options, env, template, outputname)
+
+    category_list_file.close()
 
 if __name__ == '__main__':
     main()
