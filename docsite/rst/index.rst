@@ -23,12 +23,13 @@ This documentation covers the current released version of Ansible (1.4.3) and al
 .. _an_introduction:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    intro
    playbooks
    playbooks_special_topics
    modules
+   modules_by_category
    guides
    developing
    awx
