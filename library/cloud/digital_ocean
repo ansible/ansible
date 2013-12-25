@@ -112,7 +112,7 @@ EXAMPLES = '''
 - digital_ocean: >
       state=present
       command=droplet
-      name=my_new_droplet
+      name=mydroplet
       client_id=XXX
       api_key=XXX
       size_id=1
@@ -131,7 +131,7 @@ EXAMPLES = '''
       state=present
       command=droplet
       id=123
-      name=my_new_droplet
+      name=mydroplet
       client_id=XXX
       api_key=XXX
       size_id=1
@@ -147,7 +147,7 @@ EXAMPLES = '''
 - digital_ocean: >
       state=present
       ssh_key_ids=id1,id2
-      name=my_new_droplet
+      name=mydroplet
       client_id=XXX
       api_key=XXX
       size_id=1
