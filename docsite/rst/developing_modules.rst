@@ -1,6 +1,8 @@
 Developing Modules
 ==================
 
+.. contents:: Topics
+
 Ansible modules are reusable units of magic that can be used by the Ansible API,
 or by the `ansible` or `ansible-playbook` programs.
 

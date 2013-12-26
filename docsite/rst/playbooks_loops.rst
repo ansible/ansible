@@ -6,6 +6,8 @@ repeat a polling step until a certain result is reached.
 
 This chapter is all about how to use loops in playbooks.
 
+.. contents:: Topics
+
 .. _standard_loops:
 
 Standard Loops

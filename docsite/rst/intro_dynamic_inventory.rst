@@ -3,6 +3,8 @@
 Dynamic Inventory
 =================
 
+.. contents:: Topics
+
 Often a user of a configuration management system will want to keep inventory
 in a different software system.  Ansible provides a basic text-based system as described in
 :doc:`intro_inventory` but what if you want to use something else?
