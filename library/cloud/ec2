@@ -306,6 +306,8 @@ AWS_REGIONS = ['ap-northeast-1',
 try:
     import boto.ec2
     from boto.exception import EC2ResponseError
+    from boto.ec2.blockdevicemapping import BlockDeviceType
+    from boto.ec2.blockdevicemapping import BlockDeviceMapping
 except ImportError:
     print "failed=True msg='boto required for this module'"
     sys.exit(1)
@@ -406,6 +408,7 @@ def create_instances(module, ec2):
     assign_public_ip = module.boolean(module.params.get('assign_public_ip'))
     private_ip = module.params.get('private_ip')
     instance_profile_name = module.params.get('instance_profile_name')
+    ephemeral = int(module.params.get('ephemeral'))
 
     # group_id and group_name are exclusive of each other
     if group_id and group_name:
@@ -497,6 +500,15 @@ def create_instances(module, ec2):
                     params['security_group_ids'] = group_id
                 else:
                     params['security_groups'] = group_name
+
+            if ephemeral > 0:
+                mapping = BlockDeviceMapping()
+                for cnt in range(ephemeral):
+                    eph = BlockDeviceType()
+                    eph.ephemeral_name = 'ephemeral%s' % cnt
+                    device_name = '/dev/xvd%s' % chr(ord('b') + cnt)
+                    mapping[device_name] = eph
+                params['block_device_map'] = mapping
 
             res = ec2.run_instances(**params)
         except boto.exception.BotoServerError, e:
@@ -650,6 +662,7 @@ def main():
             instance_profile_name = dict(),
             instance_ids = dict(type='list'),
             state = dict(default='present'),
+            ephemeral = dict(default=0),
         )
     )
 
