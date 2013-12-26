@@ -228,6 +228,14 @@ class Ec2Inventory(object):
         self.cache_path_index = cache_path + "/ansible-ec2.index"
         self.cache_max_age = config.getint('ec2', 'cache_max_age')
         
+        # Tag/Value Group Name format
+        use_bare_tag_value_groups = config.getboolean('ec2', 
+            'bare_tag_value_groups')
+
+        if use_bare_tag_value_groups:
+            self.group_from_tag_value = self.bare_group_name_from_tag_value
+        else:
+            self.group_from_tag_value = self.legacy_group_name_from_tag_value
 
 
     def parse_cli_args(self):
@@ -367,7 +375,7 @@ class Ec2Inventory(object):
 
         # Inventory: Group by tag keys
         for k, v in instance.tags.iteritems():
-            key = self.to_safe("tag_" + k + "=" + v)
+            key = self.group_from_tag_value(k, v)
             self.push(self.inventory, key, dest)
 
         # Inventory: Group by Route53 domain names if enabled
@@ -564,6 +572,18 @@ class Ec2Inventory(object):
         json_inventory = cache.read()
         return json_inventory
 
+    def legacy_group_name_from_tag_value(self, tag, value):
+        ''' Returns a host group in the legacy format from a tag/value pair. 
+        '''
+        return self.to_safe("tag_" + tag + "=" + value)
+
+    def bare_group_name_from_tag_value(self, tag, value):
+        ''' Returns a host group named in raw tag=value format from a specified
+        tag/value pair. '''
+        if not value:
+            return self.to_safe(tag)
+        else:
+            return self.to_safe(tag) + '=' + self.to_safe(value)
 
     def load_index_from_cache(self):
         ''' Reads the index from the cache file sets self.index '''
