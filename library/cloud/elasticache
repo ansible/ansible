@@ -17,9 +17,9 @@
 DOCUMENTATION = """
 ---
 module: elasticache
+short_description: Manage cache clusters in Amazon Elasticache.
 description:
   - Manage cache clusters in Amazon Elasticache.
-short_description: Manage cache clusters in Amazon Elasticache.
   - Returns information about the specified cache cluster.
 version_added: "1.4"
 requirements: [ "boto" ]
