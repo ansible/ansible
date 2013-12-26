@@ -48,8 +48,11 @@ options:
     required: false
 notes:
   - Since Ansible version 0.9, templates are loaded with C(trim_blocks=True).
-  - 'You can override jinja2 settings by adding a special header to template file. 
-    i.e. C(#jinja2: trim_blocks: False)'
+
+  - "Also, you can override jinja2 settings by adding a special header to template file.
+  i.e. C(#jinja2:variable_start_string:'[%' , variable_end_string:'%]')
+  which changes the variable interpolation markers to  [% var %] instead of  {{ var }}."
+
 requirements: []
 author: Michael DeHaan
 '''
