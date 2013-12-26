@@ -71,7 +71,7 @@ Variables defined from included files and roles
 
 It turns out we've already talked about variables in another place too.
 
-As described in `intro_roles`, variables can also be included in the playbook via include files, which may or may
+As described in :doc:`intro_roles`, variables can also be included in the playbook via include files, which may or may
 not be part of an "Ansible Role".  Usage of roles is preferred as it provides a nice organizational system.
 
 .. _about_jinja2:
