@@ -31,7 +31,7 @@ module: yum
 version_added: historical
 short_description: Manages packages with the I(yum) package manager
 description:
-     - Will install, upgrade, remove, and list packages or package groups with the I(yum) package manager.
+     - Installs, upgrade, removes, and lists packages and groups with the I(yum) package manager.
 options:
   name:
     description:
@@ -41,7 +41,7 @@ options:
     aliases: []
   list:
     description:
-      - Various non-idempotent commands for usage with C(/usr/bin/ansible) and I(not) playbooks. See examples.
+      - Various (non-idempotent) commands for usage with C(/usr/bin/ansible) and I(not) playbooks. See examples.
     required: false
     default: null
   state:
@@ -94,20 +94,26 @@ author: Seth Vidal
 '''
 
 EXAMPLES = '''
-# description: installs the latest version of httpd
-- yum: name=httpd state=latest
-# description: removes the httpd package
-- yum: name=httpd state=removed
-# description: installs the latest version of httpd from the testing repo
-- yum: name=httpd enablerepo=testing state=installed
-# description: upgrades all packages
-- yum: name=* state=latest
-# description: installs the nginx rpm from a remote repo
-- yum: name=http://nginx.org/packages/centos/6/noarch/RPMS/nginx-release-centos-6-0.el6.ngx.noarch.rpm state=present
-# description: installs nginx rpm from a local file
-- yum: name=/usr/local/src/nginx-release-centos-6-0.el6.ngx.noarch.rpm state=present
-# description: installs the package group 'Development tool'
-- yum: name="@Development tools" state=present
+- name: install the latest version of Apache
+  yum: name=httpd state=latest
+
+- name: remove the Apache package
+  yum: name=httpd state=removed
+
+- name: install the latest version of Apche from the testing repo
+  yum: name=httpd enablerepo=testing state=installed
+
+- name: upgrade all packages
+  yum: name=* state=latest
+
+- name: install the nginx rpm from a remote repo
+  yum: name=http://nginx.org/packages/centos/6/noarch/RPMS/nginx-release-centos-6-0.el6.ngx.noarch.rpm state=present
+
+- name: install nginx rpm from a local file
+  yum: name=/usr/local/src/nginx-release-centos-6-0.el6.ngx.noarch.rpm state=present
+
+- name: install the 'Development tools' package group
+  yum: name="@Development tools" state=present
 '''
 
 def_qf = "%{name}-%{version}-%{release}.%{arch}"
