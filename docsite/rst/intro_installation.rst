@@ -1,6 +1,8 @@
 Installation
 ============
 
+.. contents:: Topics
+
 .. _getting_ansible:
 
 Getting Ansible
