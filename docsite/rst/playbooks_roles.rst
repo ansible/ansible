@@ -1,6 +1,8 @@
 Playbook Roles and Include Statements
 =====================================
 
+.. contents:: Topics
+
 Introduction
 ````````````
 

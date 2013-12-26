@@ -1,6 +1,8 @@
 The Ansible Configuration File
 ++++++++++++++++++++++++++++++
 
+.. contents:: Topics
+
 .. highlight:: bash
 
 Certain things in Ansible are adjustable in a configuration file.  In general, the stock configuration is probably

@@ -7,6 +7,8 @@ in Ansible, and are typically used to load variables or templates with informati
 
 .. note:: This is considered an advanced feature, and many users will probably not rely on these features.  
 
+.. contents:: Topics
+
 .. _getting_file_contents:
 
 Intro to Lookups: Getting File Contents

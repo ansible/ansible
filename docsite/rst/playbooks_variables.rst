@@ -1,6 +1,8 @@
 Variables
 =========
 
+.. contents:: Topics
+
 While automation exists to make it easier to make things repeatable, all of your systems are likely not exactly alike.
 
 All of your systems are likely not the same.  On some systems you may want to set some behavior
