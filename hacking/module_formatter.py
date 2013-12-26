@@ -310,9 +310,10 @@ def main():
     category_list_file.write("============\n")
     category_list_file.write("\n\n")
     category_list_file.write(".. toctree::\n")
+    category_list_file.write("   :maxdepth: 1\n\n")
 
     for category in category_names:
-        category_list_file.write("    list_of_%s_modules\n" % category)
+        category_list_file.write("   list_of_%s_modules\n" % category)
         process_category(category, categories, options, env, template, outputname)
 
     category_list_file.close()
