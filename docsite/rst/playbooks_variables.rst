@@ -67,7 +67,7 @@ This can be nice as it's right there when you are reading the playbook.
 .. _included_variables:
 
 Variables defined from included files and roles
------------------------------------------------
+```````````````````````````````````````````````
 
 It turns out we've already talked about variables in another place too.
 
@@ -85,13 +85,13 @@ Ansible allows you to
 reference variables in your playbooks using the Jinja2 templating system.  While you can do a lot of complex
 things in Jinja, only the basics are things you really need to learn at first.
 
-For instance, in a simple template, you can do something like
+For instance, in a simple template, you can do something like::
 
     My amp goes to {{ max_amp_value }}
 
 And that will provide the most basic form of variable substitution.
 
-This is also valid directly in playbooks, and you'll occasionally want to do things like:
+This is also valid directly in playbooks, and you'll occasionally want to do things like::
 
     template: src=foo.cfg.j2 dest={{ remote_install_path}}/foo.cfg
 
