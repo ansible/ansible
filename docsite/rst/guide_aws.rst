@@ -115,6 +115,22 @@ You may wish to schedule a regular refresh of the inventory cache to accommodate
 
 Put this into a crontab as appropriate to make calls from your Ansible master server to the EC2 API endpoints and gather host information.  The aim is to keep the view of hosts as up-to-date as possible, so schedule accordingly. Playbook calls could then also be scheduled to act on the refreshed hosts inventory after each refresh.  This approach means that machine images can remain "raw", containing no payload and OS-only.  Configuration of the workload is handled entirely by Ansible.  
 
+Tags
+++++
+
+There's a feature in the ec2 inventory script where hosts tagged with
+certain keys and values automatically appear in certain groups.
+
+For instance, if a host is given the "class" tag with the value of "webserver",
+it will be automatically discoverable via a dynamic group like so::
+
+   - hosts: tag_class_webserver
+     tasks:
+       - ping
+
+Using this philosophy can be a great way to manage groups dynamically, without
+having to maintain seperate inventory.  
+
 .. _aws_pull:
 
 Pull Configuration
