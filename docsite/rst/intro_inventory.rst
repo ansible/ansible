@@ -35,6 +35,9 @@ The format for /etc/ansible/hosts is an INI format and looks like this::
 The things in brackets are group names, which are used in classifying systems
 and deciding what systems you are controlling at what times and for what purpose.
 
+It is ok to put systems in more than one group, for instance a server could be both a webserver and a dbserver.  
+If you do, note that variables will come from all of the groups they are a member of, and variable precedence is detailed in a later chapter.
+
 If you have hosts that run on non-standard SSH ports you can put the port number
 after the hostname with a colon.  Ports listed in your SSH config file won't be used,
 so it is important that you set them if things are not running on the default port::
