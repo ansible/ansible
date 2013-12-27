@@ -649,8 +649,6 @@ A frequently used idiom is walking a group to find all IP addresses in that grou
 
 An example of this could include pointing a frontend proxy server to all of the app servers, setting up the correct firewall rules between servers, etc.
 
-Just a few other 'magic' variables are available...  There aren't many.
-
 Additionally, *inventory_hostname* is the name of the hostname as configured in Ansible's inventory host file.  This can
 be useful for when you don't want to rely on the discovered hostname `ansible_hostname` or for other mysterious
 reasons.  If you have a long FQDN, *inventory_hostname_short* also contains the part up to the first
