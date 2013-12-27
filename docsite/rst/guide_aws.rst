@@ -122,7 +122,7 @@ Pull Configuration
 
 For some the delay between refreshing host information and acting on that host information (i.e. running Ansible tasks against the hosts) may be too long. This may be the case in such scenarios where EC2 AutoScaling is being used to scale the number of instances as a result of a particular event. Such an event may require that hosts come online and are configured as soon as possible (even a 1 minute delay may be undesirable).  Its possible to pre-bake machine images which contain the necessary ansible-pull script and components to pull and run a playbook via git. The machine images could be configured to run ansible-pull upon boot as part of the bootstrapping procedure. 
 
-More information on pull-mode playbooks can be found `here <http://www.ansibleworks.com/docs/playbooks2.html#pull-mode-playbooks>`_.
+Read :ref:`ansible-pull` for more information on pull-mode playbooks.
 
 (Various developments around Ansible are also going to make this easier in the near future.  Stay tuned!)
 

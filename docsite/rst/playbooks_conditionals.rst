@@ -21,7 +21,7 @@ Sometimes you will want to skip a particular step on a particular host.  This co
 as simple as not installing a certain package if the operating system is a particular version,
 or it could be something like performing some cleanup steps if a filesystem is getting full.
 
-This is easy to do in Ansible, with the `when` clause, which contains a Jinja2 expression (see `playbooks_variables`).
+This is easy to do in Ansible, with the `when` clause, which contains a Jinja2 expression (see :doc:`playbooks_variables`).
 It's actually pretty simple::
 
     tasks:
@@ -125,7 +125,7 @@ Or with a role::
          - { role: debian_stock_config, when: ansible_os_family == 'Debian' }
 
 You will note a lot of 'skipped' output by default in Ansible when using this approach on systems that don't match the criteria.
-Read up on the 'group_by' module in the `modules` docs for a more streamlined way to accomplish the same thing.
+Read up on the 'group_by' module in the :doc:`modules` docs for a more streamlined way to accomplish the same thing.
 
 Conditional Imports
 ```````````````````
