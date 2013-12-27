@@ -138,6 +138,42 @@ Then you can use the facts inside your template, like this::
        {{ hostvars[host]['ansible_eth0']['ipv4']['address'] }}
     {% endfor %}
 
+.. _programatic_access_to_a_variable::
+
+How do I access a variable name programatically?
+++++++++++++++++++++++++++++++++++++++++++++++++
+
+An example may come up where we need to get the ipv4 address of an arbitrary interface, where the interface to be used may be supplied
+via a role parameter or other input.  Variable names can be built by adding strings together, like so::
+
+    {{ hostvars[inventory_hostname]['ansible_' + which_interface]['ipv4']['address'] }}
+
+The trick about going through hostvars is neccessary because it's a dictionary of the entire namespace of variables.  'inventory_hostname'
+is a magic variable that indiciates the current host you are looping over in the host loop.
+
+.. _first_host_in_a_group::
+
+How do I access a variable of the first host in a group?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+What happens if we want the ip address of the first webserver in the webservers group?  Well, we can do that too.  Note that if we
+are using dynamic inventory, which host is the 'first' may not be consistent, so you wouldn't want to do this unless your inventory
+was static and predictable.  (If you are using AWX, it will use database order, so this isn't a problem even if you are using cloud
+based inventory scripts).
+
+Anyway, here's the trick::
+
+    {{ hostvars[groups['webservers'][0]]['ansible_eth0']['ipv4']['address'] }}
+
+Notice how we're pulling out the hostname of the first machine of the webservers group.  If you are doing this in a template, you
+could use the Jinja2 '#set' directive to simplify this, or in a playbook, you could also use set_fact:
+
+    - set_fact: headnode={{ groups[['webservers'][0]] }}
+ 
+    - debug: msg={{ hostvars[headnode].ansible_eth0.ipv4.address }}
+
+Notice how we interchanged the bracket syntax for dots -- that can be done anywhere.
+
 .. _file_recursion:
 
 How do I copy files recursively onto a target host?
