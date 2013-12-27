@@ -34,7 +34,7 @@ options:
         default: "present"
         description:
             - The required state of the package.
-author: Mark mcConachie
+author: Mark McConachie
 '''
 
 EXAMPLES = '''
