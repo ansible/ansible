@@ -75,7 +75,7 @@ def main():
     key = module.params['key']
     value = module.params['value']
 
-    cmd = 'gsettings get %r %r' % (schema, key)
+    cmd = 'gsettings get %s %s' % (schema, key)
     rc, out, err = module.run_command(cmd)
     if rc != 0:
         _fail(module, cmd, out, err)
@@ -83,9 +83,10 @@ def main():
     if module.check_mode:
         module.exit_json(changed=changed)
     if changed:
-        cmd = 'gsettings set %r %r %r' % (schema, key, value)
+        cmd = 'gsettings set %s %s %s' % (schema, key, value)
         rc, out, err = module.run_command(cmd)
-        assert rc == 0
+        if rc != 0:
+            _fail(module, cmd, out, err)
     module.exit_json(
         changed=changed, cmd=cmd, schema=schema, key=key, value=value,
         stdout=out, stderr=err)
