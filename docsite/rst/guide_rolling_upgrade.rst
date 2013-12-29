@@ -118,7 +118,7 @@ Here is lamp_haproxy's ``group_vars/all`` file. As you might expect, these varia
 
 This is a YAML file, and you can create lists and dictionaries for more complex variable structures. 
 In this case, we are just setting two variables, one for the port for the web server, and one for the 
-NTP server that our machiens should use for time synchronization.
+NTP server that our machines should use for time synchronization.
 
 Here's another group variables file. This is ``group_vars/dbservers`` which applies to the hosts in the ``dbservers`` group::
 
