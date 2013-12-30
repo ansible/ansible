@@ -119,7 +119,7 @@ class InventoryParser(object):
                             if t.startswith('#'):
                                 break
                             try:
-                                (k,v) = t.split("=")
+                                (k,v) = t.split("=", 1)
                             except ValueError, e:
                                 raise errors.AnsibleError("Invalid ini entry: %s - %s" % (t, str(e)))
                             try:
