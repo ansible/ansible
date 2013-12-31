@@ -49,17 +49,17 @@ from ansible import utils
 DEFAULT_REPO_TYPE = 'git'
 DEFAULT_PLAYBOOK = 'local.yml'
 PLAYBOOK_ERRORS = {1: 'File does not exist',
-                    2: 'File is not readable'}
+                   2: 'File is not readable'}
 
 
 def _run(cmd):
-    print >>sys.stderr, "Running: '%s'" % cmd
+    print >> sys.stderr, "Running: '%s'" % cmd
     cmd = subprocess.Popen(cmd, shell=True,
                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (out, err) = cmd.communicate()
     print out
     if cmd.returncode != 0:
-        print >>sys.stderr, err
+        print >> sys.stderr, err
     return cmd.returncode, out
 
 
@@ -77,7 +77,7 @@ def select_playbook(path, args):
         playbook = "%s/%s" % (path, args[0])
         rc = try_playbook(playbook)
         if rc != 0:
-            print >>sys.stderr, "%s: %s" % (playbook, PLAYBOOK_ERRORS[rc])
+            print >> sys.stderr, "%s: %s" % (playbook, PLAYBOOK_ERRORS[rc])
             return None
         return playbook
     else:
@@ -94,7 +94,7 @@ def select_playbook(path, args):
             else:
                 errors.append("%s: %s" % (pb, PLAYBOOK_ERRORS[rc]))
         if playbook is None:
-            print >>sys.stderr, "\n".join(errors)
+            print >> sys.stderr, "\n".join(errors)
         return playbook
 
 
@@ -116,13 +116,13 @@ def main(args):
                       help='URL of the playbook repository')
     parser.add_option('-C', '--checkout', dest='checkout',
                       help='branch/tag/commit to checkout.  '
-                      'Defaults to behavior of repository module.')
+                           'Defaults to behavior of repository module.')
     parser.add_option('-i', '--inventory-file', dest='inventory',
                       help="location of the inventory host file")
     parser.add_option('-m', '--module-name', dest='module_name',
                       default=DEFAULT_REPO_TYPE,
                       help='Module name used to check out repository.  '
-                      'Default is %s.' % DEFAULT_REPO_TYPE)
+                           'Default is %s.' % DEFAULT_REPO_TYPE)
     options, args = parser.parse_args(args)
 
     hostname = socket.getfqdn()
@@ -137,7 +137,7 @@ def main(args):
         return 1
 
     now = datetime.datetime.now()
-    print >>sys.stderr, now.strftime("Starting ansible-pull at %F %T")
+    print >> sys.stderr, now.strftime("Starting ansible-pull at %F %T")
 
     inv_opts = 'localhost,'
     limit_opts = 'localhost:%s:127.0.0.1' % hostname
@@ -150,8 +150,8 @@ def main(args):
         sys.stderr.write("module '%s' not found.\n" % options.module_name)
         return 1
     cmd = 'ansible all -i "%s" %s -m %s -a "%s"' % (
-            inv_opts, base_opts, options.module_name, repo_opts
-            )
+        inv_opts, base_opts, options.module_name, repo_opts
+    )
     rc, out = _run(cmd)
     if rc != 0:
         if options.force:
@@ -165,7 +165,7 @@ def main(args):
     playbook = select_playbook(options.dest, args)
 
     if playbook is None:
-        print >>sys.stderr, "Could not find a playbook to run."
+        print >> sys.stderr, "Could not find a playbook to run."
         return 1
 
     cmd = 'ansible-playbook %s %s' % (base_opts, playbook)
@@ -179,13 +179,14 @@ def main(args):
         try:
             shutil.rmtree(options.dest)
         except Exception, e:
-            print >>sys.stderr, "Failed to remove %s: %s" % (options.dest, str(e))
+            print >> sys.stderr, "Failed to remove %s: %s" % (options.dest, str(e))
 
     return rc
+
 
 if __name__ == '__main__':
     try:
         sys.exit(main(sys.argv[1:]))
     except KeyboardInterrupt, e:
-        print >>sys.stderr, "Exit on user request.\n"
+        print >> sys.stderr, "Exit on user request.\n"
         sys.exit(1)

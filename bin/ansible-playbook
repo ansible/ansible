@@ -31,12 +31,14 @@ from ansible import utils
 from ansible.color import ANSIBLE_COLOR, stringc
 from ansible.callbacks import display
 
+
 def colorize(lead, num, color):
     """ Print 'lead' = 'num' in 'color' """
     if num != 0 and ANSIBLE_COLOR and color is not None:
         return "%s%s%-15s" % (stringc(lead, color), stringc("=", color), stringc(str(num), color))
     else:
         return "%s=%-4s" % (lead, str(num))
+
 
 def hostcolor(host, stats, color=True):
     if ANSIBLE_COLOR and color:
@@ -55,7 +57,7 @@ def main(args):
     # create parser for CLI options
     parser = utils.base_parser(
         constants=C,
-        usage = "%prog playbook.yml",
+        usage="%prog playbook.yml",
         connect_opts=True,
         runas_opts=True,
         subset_opts=True,
@@ -63,19 +65,19 @@ def main(args):
         diff_opts=True
     )
     parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
-        help="set additional variables as key=value or YAML/JSON", default=[])
+                      help="set additional variables as key=value or YAML/JSON", default=[])
     parser.add_option('-t', '--tags', dest='tags', default='all',
-        help="only run plays and tasks tagged with these values")
+                      help="only run plays and tasks tagged with these values")
     parser.add_option('--skip-tags', dest='skip_tags',
-        help="only run plays and tasks whose tags do not match these values")
+                      help="only run plays and tasks whose tags do not match these values")
     parser.add_option('--syntax-check', dest='syntax', action='store_true',
-        help="perform a syntax check on the playbook, but do not execute it")
+                      help="perform a syntax check on the playbook, but do not execute it")
     parser.add_option('--list-tasks', dest='listtasks', action='store_true',
-        help="list all tasks that would be executed")
+                      help="list all tasks that would be executed")
     parser.add_option('--step', dest='step', action='store_true',
-        help="one-step-at-a-time: confirm each task before running")
+                      help="one-step-at-a-time: confirm each task before running")
     parser.add_option('--start-at-task', dest='start_at',
-        help="start the playbook at the task matching this name")
+                      help="start the playbook at the task matching this name")
 
     options, args = parser.parse_args(args)
 
@@ -189,7 +191,7 @@ def main(args):
 
                     for task in play.tasks():
                         if (set(task.tags).intersection(pb.only_tags) and not
-                            set(task.tags).intersection(pb.skip_tags)):
+                                set(task.tags).intersection(pb.skip_tags)):
                             if getattr(task, 'name', None) is not None:
                                 # meta tasks have no names
                                 print '    %s' % task.name
@@ -247,7 +249,6 @@ def main(args):
                     log_only=True
                 )
 
-
             print ""
             if len(failed_hosts) > 0:
                 return 2
@@ -273,4 +274,3 @@ if __name__ == "__main__":
     except KeyboardInterrupt, ke:
         display("ERROR: interrupted", color='red', stderr=True)
         sys.exit(1)
-
