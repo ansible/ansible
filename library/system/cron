@@ -73,6 +73,11 @@ options:
         The location of the backup is returned in the C(backup) variable by this module.
     required: false
     default: false
+  mailto:
+    description:
+      - The address the output of the job should be mailed to.
+    required: false
+    default: null
   minute:
     description:
       - Minute when the job should run ( 0-59, *, */2, etc )
@@ -117,7 +122,7 @@ options:
 requirements:
   - cron
 author: Dane Summers
-updates: [ 'Mike Grozak', 'Patrick Callahan' ]
+updates: [ 'Mike Grozak', 'Patrick Callahan', 'Rutger Spiertz' ]
 """
 
 EXAMPLES = '''
@@ -247,7 +252,7 @@ class CronTab(object):
         self.lines.append("%s%s" % (self.ansible, name))
 
         # Add the job
-        self.lines.append("%s" % (job))
+        self.lines.extend(job)
 
     def update_job(self, name, job):
         return self._update_job(name, job, self.do_add_job)
@@ -255,7 +260,7 @@ class CronTab(object):
     def do_add_job(self, lines, comment, job):
         lines.append(comment)
 
-        lines.append("%s" % (job))
+        lines.extend(job)
 
     def remove_job(self, name):
         return self._update_job(name, "", self.do_remove_job)
@@ -275,30 +280,35 @@ class CronTab(object):
 
     def find_job(self, name):
         comment = None
+        job = []
         for l in self.lines:
-            if comment is not None:
+            if re.match( r'%s' % self.ansible, l):
+                if comment is None:
+                    comment = re.sub( r'%s' % self.ansible, '', l)
+                else:
+                    return [comment, job]
+            elif comment is not None:
                 if comment == name:
-                    return [comment, l]
+                    job.append(l)
                 else:
                     comment = None
-            elif re.match( r'%s' % self.ansible, l):
-                comment = re.sub( r'%s' % self.ansible, '', l)
-
+        if comment is not None:
+            return [comment, job]
         return []
 
-    def get_cron_job(self,minute,hour,day,month,weekday,job,special):
+    def get_cron_job(self, mailto, minute, hour, day, month, weekday, job, special):
+        cron_job = ["MAILTO=%s" % mailto] if mailto else []
         if special:
             if self.cron_file:
-                return "@%s %s %s" % (special, self.user, job)
+                cron_job.append("@%s %s %s" % (special, self.user, job))
             else:
-                return "@%s %s" % (special, job)
+                cron_job.append("@%s %s" % (special, job))
         else:
             if self.cron_file:
-                return "%s %s %s %s %s %s %s" % (minute,hour,day,month,weekday,self.user,job)
+                cron_job.append("%s %s %s %s %s %s %s" % (minute, hour, day, month, weekday, self.user,job))
             else:
-                return "%s %s %s %s %s %s" % (minute,hour,day,month,weekday,job)
-
-        return None
+                cron_job.append("%s %s %s %s %s %s" % (minute, hour, day, month, weekday, job))
+        return cron_job
 
     def get_jobnames(self):
         jobnames = []
@@ -313,11 +323,19 @@ class CronTab(object):
         ansiblename = "%s%s" % (self.ansible, name)
         newlines = []
         comment = None
+        job_added = False
 
         for l in self.lines:
             if comment is not None:
-                addlinesfunction(newlines, comment, job)
-                comment = None
+                if job_added:
+                    if re.match(r'%s' % self.ansible, l):
+                        newlines.append(l)
+                        comment = None
+                    else:
+                        continue
+                else:
+                    addlinesfunction(newlines, comment, job)
+                    job_added = True
             elif l == ansiblename:
                 comment = l
             else:
@@ -396,6 +414,7 @@ def main():
             cron_file=dict(required=False),
             state=dict(default='present', choices=['present', 'absent']),
             backup=dict(default=False, type='bool'),
+            mailto=dict(default=False),
             minute=dict(default='*'),
             hour=dict(default='*'),
             day=dict(aliases=['dom'], default='*'),
@@ -416,6 +435,7 @@ def main():
     cron_file    = module.params['cron_file']
     state        = module.params['state']
     backup       = module.params['backup']
+    mailto       = module.params['mailto']
     minute       = module.params['minute']
     hour         = module.params['hour']
     day          = module.params['day']
@@ -473,7 +493,7 @@ def main():
         changed = crontab.remove_job_file()
         module.exit_json(changed=changed,cron_file=cron_file,state=state)
 
-    job = crontab.get_cron_job(minute, hour, day, month, weekday, job, special_time)
+    job = crontab.get_cron_job(mailto, minute, hour, day, month, weekday, job, special_time)
     old_job = crontab.find_job(name)
 
     if do_install:
