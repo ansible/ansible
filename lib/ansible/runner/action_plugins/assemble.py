@@ -15,17 +15,17 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-
+import base64
 import os
 import os.path
 import pipes
-import shutil
 import tempfile
+
 from ansible import utils
 from ansible.runner.return_data import ReturnData
 
-class ActionModule(object):
 
+class ActionModule(object):
     TRANSFERS_FILES = True
 
     def __init__(self, runner):
@@ -34,7 +34,7 @@ class ActionModule(object):
     def _assemble_from_fragments(self, src_path, delimiter=None):
         ''' assemble a file from a directory of fragments '''
         tmpfd, temp_path = tempfile.mkstemp()
-        tmp = os.fdopen(tmpfd,'w')
+        tmp = os.fdopen(tmpfd, 'w')
         delimit_me = False
         for f in sorted(os.listdir(src_path)):
             fragment = "%s/%s" % (src_path, f)
@@ -49,7 +49,7 @@ class ActionModule(object):
     def run(self, conn, tmp, module_name, module_args, inject, complex_args=None, **kwargs):
 
         # load up options
-        options  = {}
+        options = {}
         if complex_args:
             options.update(complex_args)
         options.update(utils.parse_kv(module_args))
@@ -64,7 +64,8 @@ class ActionModule(object):
             return ReturnData(conn=conn, comm_ok=False, result=result)
 
         if remote_src:
-            return self.runner._execute_module(conn, tmp, 'assemble', module_args, inject=inject, complex_args=complex_args)
+            return self.runner._execute_module(conn, tmp, 'assemble', module_args, inject=inject,
+                                               complex_args=complex_args)
 
         # Does all work assembling the file
         path = self._assemble_from_fragments(src, delimiter)
@@ -75,7 +76,8 @@ class ActionModule(object):
         if pathmd5 != remote_md5:
             resultant = file(path).read()
             if self.runner.diff:
-                dest_result = self.runner._execute_module(conn, tmp, 'slurp', "path=%s" % dest, inject=inject, persist_files=True)
+                dest_result = self.runner._execute_module(conn, tmp, 'slurp', "path=%s" % dest, inject=inject,
+                                                          persist_files=True)
                 if 'content' in dest_result.result:
                     dest_contents = dest_result.result['content']
                     if dest_result.result['encoding'] == 'base64':
@@ -89,14 +91,17 @@ class ActionModule(object):
                 self.runner._low_level_exec_command(conn, "chmod a+r %s" % xfered, tmp)
 
             # run the copy module
-            module_args = "%s src=%s dest=%s original_basename=%s" % (module_args, pipes.quote(xfered), pipes.quote(dest), pipes.quote(os.path.basename(src)))
+            module_args = "%s src=%s dest=%s original_basename=%s" % (
+                module_args, pipes.quote(xfered), pipes.quote(dest), pipes.quote(os.path.basename(src)))
 
             if self.runner.noop_on_check(inject):
-                return ReturnData(conn=conn, comm_ok=True, result=dict(changed=True), diff=dict(before_header=dest, after_header=src, after=resultant))
+                return ReturnData(conn=conn, comm_ok=True, result=dict(changed=True),
+                                  diff=dict(before_header=dest, after_header=src, after=resultant))
             else:
                 res = self.runner._execute_module(conn, tmp, 'copy', module_args, inject=inject)
                 res.diff = dict(after=resultant)
                 return res
         else:
-            module_args = "%s src=%s dest=%s original_basename=%s" % (module_args, pipes.quote(xfered), pipes.quote(dest), pipes.quote(os.path.basename(src)))
+            module_args = "%s src=%s dest=%s original_basename=%s" % (
+                module_args, pipes.quote(xfered), pipes.quote(dest), pipes.quote(os.path.basename(src)))
             return self.runner._execute_module(conn, tmp, 'file', module_args, inject=inject)

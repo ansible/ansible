@@ -15,21 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import pwd
-import random
-import traceback
-import tempfile
-
-import ansible.constants as C
-from ansible import utils
-from ansible import errors
-from ansible import module_common
 from ansible.runner.return_data import ReturnData
-from ansible.callbacks import vv, vvv
+from ansible.callbacks import vv
+
 
 class ActionModule(object):
-
     def __init__(self, runner):
         self.runner = runner
 
@@ -39,9 +29,10 @@ class ActionModule(object):
         module_args = self.runner._complex_args_hack(complex_args, module_args)
 
         if self.runner.noop_on_check(inject):
-            if module_name in [ 'shell', 'command' ]:
-                return ReturnData(conn=conn, comm_ok=True, result=dict(skipped=True, msg='check mode not supported for %s' % module_name))
-            # else let the module parsing code decide, though this will only be allowed for AnsibleModuleCommon using
+            if module_name in ['shell', 'command']:
+                return ReturnData(conn=conn, comm_ok=True,
+                                  result=dict(skipped=True, msg='check mode not supported for %s' % module_name))
+                # else let the module parsing code decide, though this will only be allowed for AnsibleModuleCommon using
             # python modules for now
             module_args += " CHECKMODE=True"
 
@@ -51,6 +42,5 @@ class ActionModule(object):
             module_args += " #USE_SHELL"
 
         vv("REMOTE_MODULE %s %s" % (module_name, module_args), host=conn.host)
-        return self.runner._execute_module(conn, tmp, module_name, module_args, inject=inject, complex_args=complex_args)
-
-
+        return self.runner._execute_module(conn, tmp, module_name, module_args, inject=inject,
+                                           complex_args=complex_args)

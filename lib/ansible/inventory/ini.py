@@ -17,15 +17,17 @@
 
 #############################################
 
+import shlex
+import re
+import ast
+
 import ansible.constants as C
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 from ansible.inventory.expand_hosts import detect_range
 from ansible.inventory.expand_hosts import expand_hostname_range
 from ansible import errors
-import shlex
-import re
-import ast
+
 
 class InventoryParser(object):
     """
@@ -47,7 +49,6 @@ class InventoryParser(object):
         self._parse_group_variables()
         return self.groups
 
-
     # [webservers]
     # alpha
     # beta:2345
@@ -67,7 +68,7 @@ class InventoryParser(object):
         for line in self.lines:
             line = line.split("#")[0].strip()
             if line.startswith("[") and line.endswith("]"):
-                active_group_name = line.replace("[","").replace("]","")
+                active_group_name = line.replace("[", "").replace("]", "")
                 if line.find(":vars") != -1 or line.find(":children") != -1:
                     active_group_name = active_group_name.rsplit(":", 1)[0]
                     if active_group_name not in self.groups:
@@ -91,15 +92,15 @@ class InventoryParser(object):
                 if hostname.count(":") > 1:
                     # probably an IPv6 addresss, so check for the format
                     # XXX:XXX::XXX.port, otherwise we'll just assume no
-                    # port is set 
+                    # port is set
                     if hostname.find(".") != -1:
                         (hostname, port) = hostname.rsplit(".", 1)
                 elif (hostname.find("[") != -1 and
-                    hostname.find("]") != -1 and
-                    hostname.find(":") != -1 and
-                    (hostname.rindex("]") < hostname.rindex(":")) or
-                    (hostname.find("]") == -1 and hostname.find(":") != -1)):
-                        (hostname, port) = hostname.rsplit(":", 1)
+                        hostname.find("]") != -1 and
+                        hostname.find(":") != -1 and
+                        (hostname.rindex("]") < hostname.rindex(":")) or
+                        (hostname.find("]") == -1 and hostname.find(":") != -1)):
+                    (hostname, port) = hostname.rsplit(":", 1)
 
                 hostnames = []
                 if detect_range(hostname):
@@ -119,15 +120,15 @@ class InventoryParser(object):
                             if t.startswith('#'):
                                 break
                             try:
-                                (k,v) = t.split("=")
+                                (k, v) = t.split("=")
                             except ValueError, e:
                                 raise errors.AnsibleError("Invalid ini entry: %s - %s" % (t, str(e)))
                             try:
-                                host.set_variable(k,ast.literal_eval(v))
+                                host.set_variable(k, ast.literal_eval(v))
                             except:
                                 # most likely a string that literal_eval
                                 # doesn't like, so just set it
-                                host.set_variable(k,v)
+                                host.set_variable(k, v)
                     self.groups[active_group_name].add_host(host)
 
     # [southeast:children]
@@ -142,7 +143,7 @@ class InventoryParser(object):
             if line is None or line == '':
                 continue
             if line.startswith("[") and line.find(":children]") != -1:
-                line = line.replace("[","").replace(":children]","")
+                line = line.replace("[", "").replace(":children]", "")
                 group = self.groups.get(line, None)
                 if group is None:
                     group = self.groups[line] = Group(name=line)
@@ -157,7 +158,6 @@ class InventoryParser(object):
                 else:
                     group.add_child_group(kid_group)
 
-
     # [webservers:vars]
     # http_port=1234
     # maxRequestsPerChild=200
@@ -167,7 +167,7 @@ class InventoryParser(object):
         for line in self.lines:
             line = line.strip()
             if line.startswith("[") and line.find(":vars]") != -1:
-                line = line.replace("[","").replace(":vars]","")
+                line = line.replace("[", "").replace(":vars]", "")
                 group = self.groups.get(line, None)
                 if group is None:
                     raise errors.AnsibleError("can't add vars to undefined group: %s" % line)

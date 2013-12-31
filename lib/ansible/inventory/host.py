@@ -17,10 +17,11 @@
 
 import ansible.constants as C
 
+
 class Host(object):
     ''' a single ansible host '''
 
-    __slots__ = [ 'name', 'vars', 'groups' ]
+    __slots__ = ['name', 'vars', 'groups']
 
     def __init__(self, name=None, port=None):
 
@@ -39,7 +40,7 @@ class Host(object):
 
     def set_variable(self, key, value):
 
-        self.vars[key]=value
+        self.vars[key] = value
 
     def get_groups(self):
 
@@ -60,7 +61,5 @@ class Host(object):
         results.update(self.vars)
         results['inventory_hostname'] = self.name
         results['inventory_hostname_short'] = self.name.split('.')[0]
-        results['group_names'] = sorted([ g.name for g in groups if g.name != 'all'])
+        results['group_names'] = sorted([g.name for g in groups if g.name != 'all'])
         return results
-
-

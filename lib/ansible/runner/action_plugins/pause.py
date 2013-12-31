@@ -15,15 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from termios import tcflush, TCIFLUSH
+import datetime
+import sys
+import time
+
 from ansible.callbacks import vv
 from ansible.errors import AnsibleError as ae
 from ansible.runner.return_data import ReturnData
 from ansible.utils import getch, parse_kv
 import ansible.utils.template as template
-from termios import tcflush, TCIFLUSH
-import datetime
-import sys
-import time
 
 
 class ActionModule(object):
@@ -38,14 +39,15 @@ class ActionModule(object):
         self.duration_unit = 'minutes'
         self.prompt = None
         self.seconds = None
-        self.result = {'changed': False,
-                       'rc': 0,
-                       'stderr': '',
-                       'stdout': '',
-                       'start': None,
-                       'stop': None,
-                       'delta': None,
-                       }
+        self.result = {
+            'changed': False,
+            'rc': 0,
+            'stderr': '',
+            'stdout': '',
+            'start': None,
+            'stop': None,
+            'delta': None,
+        }
 
     def run(self, conn, tmp, module_name, module_args, inject, complex_args=None, **kwargs):
         ''' run the pause action module '''
@@ -57,7 +59,7 @@ class ActionModule(object):
         args = {}
         if complex_args:
             args.update(complex_args)
-        # extra template call unneeded?
+            # extra template call unneeded?
         args.update(parse_kv(template.template(self.runner.basedir, module_args, inject)))
 
         # Are 'minutes' or 'seconds' keys that exist in 'args'?
@@ -84,11 +86,11 @@ class ActionModule(object):
             self.prompt = "[%s]\nPress enter to continue: " % hosts
         # I have no idea what you're trying to do. But it's so wrong.
         else:
-            raise ae("invalid pause type given. must be one of: %s" % \
-                         ", ".join(self.PAUSE_TYPES))
+            raise ae("invalid pause type given. must be one of: %s" %
+                     ", ".join(self.PAUSE_TYPES))
 
-        vv("created 'pause' ActionModule: pause_type=%s, duration_unit=%s, calculated_seconds=%s, prompt=%s" % \
-                (self.pause_type, self.duration_unit, self.seconds, self.prompt))
+        vv("created 'pause' ActionModule: pause_type=%s, duration_unit=%s, calculated_seconds=%s, prompt=%s" %
+           (self.pause_type, self.duration_unit, self.seconds, self.prompt))
 
         ########################################################################
         # Begin the hard work!

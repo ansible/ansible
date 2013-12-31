@@ -17,8 +17,8 @@
 
 from ansible.runner.return_data import ReturnData
 
-class ActionModule(object):
 
+class ActionModule(object):
     def __init__(self, runner):
         self.runner = runner
 
@@ -26,7 +26,8 @@ class ActionModule(object):
         ''' transfer the given module name, plus the async module, then run it '''
 
         if self.runner.noop_on_check(inject):
-            return ReturnData(conn=conn, comm_ok=True, result=dict(skipped=True, msg='check mode not supported for this module'))
+            return ReturnData(conn=conn, comm_ok=True,
+                              result=dict(skipped=True, msg='check mode not supported for this module'))
 
         # shell and command module are the same
         if module_name == 'shell':
@@ -36,13 +37,12 @@ class ActionModule(object):
         if tmp.find("tmp") == -1:
             tmp = self.runner._make_tmp_path(conn)
 
-        (module_path, is_new_style, shebang) = self.runner._copy_module(conn, tmp, module_name, module_args, inject, complex_args=complex_args)
+        (module_path, is_new_style, shebang) = self.runner._copy_module(conn, tmp, module_name, module_args, inject,
+                                                                        complex_args=complex_args)
         self.runner._low_level_exec_command(conn, "chmod a+rx %s" % module_path, tmp)
 
         return self.runner._execute_module(conn, tmp, 'async_wrapper', module_args,
-           async_module=module_path,
-           async_jid=self.runner.generated_jid,
-           async_limit=self.runner.background,
-           inject=inject
-        )
-
+                                           async_module=module_path,
+                                           async_jid=self.runner.generated_jid,
+                                           async_limit=self.runner.background,
+                                           inject=inject)

@@ -31,25 +31,25 @@ REPLACER_ARGS = "\"<<INCLUDE_ANSIBLE_MODULE_ARGS>>\""
 REPLACER_LANG = "\"<<INCLUDE_ANSIBLE_MODULE_LANG>>\""
 REPLACER_COMPLEX = "\"<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>\""
 
-class ModuleReplacer(object):
 
+class ModuleReplacer(object):
     """
     The Replacer is used to insert chunks of code into modules before
     transfer.  Rather than doing classical python imports, this allows for more
     efficient transfer in a no-bootstrapping scenario by not moving extra files
     over the wire, and also takes care of embedding arguments in the transferred
-    modules.  
+    modules.
 
     This version is done in such a way that local imports can still be
     used in the module code, so IDEs don't have to be aware of what is going on.
 
     Example:
 
-    from ansible.module_utils.basic import * 
+    from ansible.module_utils.basic import *
 
     will result in a template evaluation of
 
-    {{ include 'basic.py' }} 
+    {{ include 'basic.py' }}
 
     from the module_utils/ directory in the source tree.
 
@@ -62,10 +62,9 @@ class ModuleReplacer(object):
     def __init__(self, strip_comments=False):
         this_file = inspect.getfile(inspect.currentframe())
         self.snippet_path = os.path.join(os.path.dirname(this_file), 'module_utils')
-        self.strip_comments = strip_comments # TODO: implement
+        self.strip_comments = strip_comments  # TODO: implement
 
     # ******************************************************************************
-
 
     def slurp(self, path):
         if not os.path.exists(path):
@@ -88,7 +87,7 @@ class ModuleReplacer(object):
             module_style = 'new'
         elif 'WANT_JSON' in module_data:
             module_style = 'non_native_want_json'
-      
+
         output = StringIO()
         lines = module_data.split('\n')
         snippet_names = []
@@ -99,7 +98,7 @@ class ModuleReplacer(object):
                 output.write(self.slurp(os.path.join(self.snippet_path, "basic.py")))
                 snippet_names.append('basic')
             elif line.startswith('from ansible.module_utils.'):
-                tokens=line.split(".")
+                tokens = line.split(".")
                 import_error = False
                 if len(tokens) != 3:
                     import_error = True
@@ -118,7 +117,7 @@ class ModuleReplacer(object):
                 output.write("\n")
 
         if len(snippet_names) > 0 and not 'basic' in snippet_names:
-            raise errors.AnsibleError("missing required import in %s: from ansible.module_utils.basic import *" % module_path) 
+            raise errors.AnsibleError("missing required import in %s: from ansible.module_utils.basic import *" % module_path)
 
         return (output.getvalue(), module_style)
 
@@ -154,7 +153,6 @@ class ModuleReplacer(object):
                     facility = inject['ansible_syslog_facility']
                 module_data = module_data.replace('syslog.LOG_USER', "syslog.%s" % facility)
 
-
             lines = module_data.split("\n")
             shebang = None
             if lines[0].startswith("#!"):
@@ -168,4 +166,3 @@ class ModuleReplacer(object):
                     module_data = "\n".join(lines)
 
             return (module_data, module_style, shebang)
-

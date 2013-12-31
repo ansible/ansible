@@ -21,8 +21,8 @@ from ansible import utils
 from ansible import errors
 from ansible.runner.return_data import ReturnData
 
-class ActionModule(object):
 
+class ActionModule(object):
     TRANSFERS_FILES = False
 
     def __init__(self, runner):
@@ -51,4 +51,3 @@ class ActionModule(object):
         else:
             result = dict(failed=True, msg="Source file not found.", file=source)
             return ReturnData(conn=conn, comm_ok=True, result=result)
-

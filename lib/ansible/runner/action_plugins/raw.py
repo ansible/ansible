@@ -17,10 +17,8 @@
 
 import re
 
-import ansible.constants as C
-from ansible import utils
-from ansible import errors
 from ansible.runner.return_data import ReturnData
+
 
 class ActionModule(object):
     TRANSFERS_FILES = False
@@ -43,6 +41,8 @@ class ActionModule(object):
                 executable = v
         module_args = r.sub("", module_args)
 
-        return ReturnData(conn=conn,
-            result=self.runner._low_level_exec_command(conn, module_args, tmp, sudoable=True, executable=executable)
+        return ReturnData(
+            conn=conn,
+            result=self.runner._low_level_exec_command(conn, module_args, tmp, sudoable=True,
+                                                       executable=executable)
         )

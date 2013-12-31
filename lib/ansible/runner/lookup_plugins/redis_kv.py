@@ -16,11 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 from ansible import utils, errors
-import os
-HAVE_REDIS=False
+HAVE_REDIS = False
 try:
     import redis        # https://github.com/andymccurdy/redis-py/
-    HAVE_REDIS=True
+    HAVE_REDIS = True
 except ImportError:
     pass
 import re
@@ -31,21 +30,21 @@ import re
 # URL may be empty, in which case redis://localhost:6379 assumed
 # --------------------------------------------------------------
 
-class LookupModule(object):
 
+class LookupModule(object):
     def __init__(self, basedir=None, **kwargs):
         self.basedir = basedir
 
-        if HAVE_REDIS == False:
+        if HAVE_REDIS is False:
             raise errors.AnsibleError("Can't LOOKUP(redis_kv): module redis is not installed")
 
     def run(self, terms, inject=None, **kwargs):
 
-        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
+        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
 
         ret = []
         for term in terms:
-            (url,key) = term.split(',')
+            (url, key) = term.split(',')
             if url == "":
                 url = 'redis://localhost:6379'
 

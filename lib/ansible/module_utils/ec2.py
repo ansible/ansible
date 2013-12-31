@@ -1,3 +1,6 @@
+import os
+
+
 def get_ec2_creds(module):
 
     # Check module args for credentials, then check environment vars

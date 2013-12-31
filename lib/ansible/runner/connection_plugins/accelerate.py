@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import json
 import os
 import base64
 import socket
@@ -31,9 +30,10 @@ from ansible import constants
 # the chunk size to read and send, assuming mtu 1500 and
 # leaving room for base64 (+33%) encoding and header (8 bytes)
 # ((1400-8)/4)*3) = 1044
-# which leaves room for the TCP/IP header. We set this to a 
+# which leaves room for the TCP/IP header. We set this to a
 # multiple of the value to speed up file reads.
-CHUNK_SIZE=1044*20
+CHUNK_SIZE = 1044 * 20
+
 
 class Connection(object):
     ''' raw socket accelerated connection '''
@@ -85,10 +85,12 @@ class Connection(object):
             utils.AES_KEYS = self.runner.aes_keys
 
     def _execute_accelerate_module(self):
-        args = "password=%s port=%s debug=%d ipv6=%s" % (base64.b64encode(self.key.__str__()), str(self.accport), int(utils.VERBOSITY), self.runner.accelerate_ipv6)
+        args = "password=%s port=%s debug=%d ipv6=%s" % (
+            base64.b64encode(self.key.__str__()), str(self.accport), int(utils.VERBOSITY), self.runner.accelerate_ipv6)
         inject = dict(password=self.key)
         if getattr(self.runner, 'accelerate_inventory_host', False):
-            inject = utils.combine_vars(inject, self.runner.inventory.get_variables(self.runner.accelerate_inventory_host))
+            inject = utils.combine_vars(inject,
+                                        self.runner.inventory.get_variables(self.runner.accelerate_inventory_host))
         else:
             inject = utils.combine_vars(inject, self.runner.inventory.get_variables(self.host))
         vvvv("attempting to start up the accelerate daemon...")
@@ -104,10 +106,10 @@ class Connection(object):
                 tries = 3
                 self.conn = socket.socket()
                 self.conn.settimeout(constants.ACCELERATE_CONNECT_TIMEOUT)
-                vvvv("attempting connection to %s via the accelerated port %d" % (self.host,self.accport))
+                vvvv("attempting connection to %s via the accelerated port %d" % (self.host, self.accport))
                 while tries > 0:
                     try:
-                        self.conn.connect((self.host,self.accport))
+                        self.conn.connect((self.host, self.accport))
                         break
                     except:
                         vvvv("failed, retrying...")
@@ -122,19 +124,20 @@ class Connection(object):
                 vvv("Falling back to ssh to startup accelerated mode")
                 res = self._execute_accelerate_module()
                 if not res.is_successful():
-                    raise errors.AnsibleError("Failed to launch the accelerated daemon on %s (reason: %s)" % (self.host,res.result.get('msg')))
+                    raise errors.AnsibleError("Failed to launch the accelerated daemon on %s (reason: %s)" % (
+                        self.host, res.result.get('msg')))
                 return self.connect(allow_ssh=False)
             else:
-                raise errors.AnsibleError("Failed to connect to %s:%s" % (self.host,self.accport))
+                raise errors.AnsibleError("Failed to connect to %s:%s" % (self.host, self.accport))
         self.is_connected = True
         return self
 
     def send_data(self, data):
-        packed_len = struct.pack('!Q',len(data))
+        packed_len = struct.pack('!Q', len(data))
         return self.conn.sendall(packed_len + data)
 
     def recv_data(self):
-        header_len = 8 # size of a packed unsigned long long
+        header_len = 8  # size of a packed unsigned long long
         data = b""
         try:
             vvvv("%s: in recv_data(), waiting for the header" % self.host)
@@ -145,9 +148,9 @@ class Connection(object):
                     return None
                 data += d
             vvvv("%s: got the header, unpacking" % self.host)
-            data_len = struct.unpack('!Q',data[:header_len])[0]
+            data_len = struct.unpack('!Q', data[:header_len])[0]
             data = data[header_len:]
-            vvvv("%s: data received so far (expecting %d): %d" % (self.host,data_len,len(data)))
+            vvvv("%s: data received so far (expecting %d): %d" % (self.host, data_len, len(data)))
             while len(data) < data_len:
                 d = self.conn.recv(data_len - len(data))
                 if not d:
@@ -183,11 +186,11 @@ class Connection(object):
         data = utils.encrypt(self.key, data)
         if self.send_data(data):
             raise errors.AnsibleError("Failed to send command to %s" % self.host)
-        
+
         while True:
-            # we loop here while waiting for the response, because a 
+            # we loop here while waiting for the response, because a
             # long running command may cause us to receive keepalive packets
-            # ({"pong":"true"}) rather than the response we want. 
+            # ({"pong":"true"}) rather than the response we want.
             response = self.recv_data()
             if not response:
                 raise errors.AnsibleError("Failed to get a response from %s" % self.host)
@@ -201,7 +204,7 @@ class Connection(object):
                 vvvv("%s: received the response" % self.host)
                 break
 
-        return (response.get('rc',None), '', response.get('stdout',''), response.get('stderr',''))
+        return (response.get('rc', None), '', response.get('stdout', ''), response.get('stderr', ''))
 
     def put_file(self, in_path, out_path):
 
@@ -236,7 +239,7 @@ class Connection(object):
                 response = utils.decrypt(self.key, response)
                 response = utils.parse_json(response)
 
-                if response.get('failed',False):
+                if response.get('failed', False):
                     raise errors.AnsibleError("failed to put the file in the requested location")
         finally:
             fd.close()
@@ -247,7 +250,7 @@ class Connection(object):
             response = utils.decrypt(self.key, response)
             response = utils.parse_json(response)
 
-            if response.get('failed',False):
+            if response.get('failed', False):
                 raise errors.AnsibleError("failed to put the file in the requested location")
 
     def fetch_file(self, in_path, out_path):
@@ -274,7 +277,7 @@ class Connection(object):
                 out = base64.b64decode(response['data'])
                 fh.write(out)
                 bytes += len(out)
-                # send an empty response back to signify we 
+                # send an empty response back to signify we
                 # received the last chunk without errors
                 data = utils.jsonify(dict())
                 data = utils.encrypt(self.key, data)
@@ -298,4 +301,3 @@ class Connection(object):
             self.conn.close()
         except:
             pass
-

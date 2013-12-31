@@ -121,7 +121,7 @@ class AristaVlan(object):
     def run_command(self, cmd):
         """ Calls the Ansible module run_command method.  This method will
             also send a message to syslog with the command name
-        """        
+        """
         self.log("Command: %s" % cmd)
         return self.module.run_command(cmd.split())
         

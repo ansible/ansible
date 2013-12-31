@@ -17,7 +17,6 @@
 
 import traceback
 import os
-import pipes
 import shutil
 import subprocess
 import select
@@ -26,6 +25,7 @@ from ansible import errors
 from ansible import utils
 from ansible.callbacks import vvv
 
+
 class Connection(object):
     ''' Local based connections '''
 
@@ -33,7 +33,7 @@ class Connection(object):
         self.runner = runner
         self.host = host
         # port is unused, since this is local
-        self.port = port 
+        self.port = port
         self.has_pipelining = False
 
     def connect(self, port=None):

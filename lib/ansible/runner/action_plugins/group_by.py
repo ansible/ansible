@@ -23,6 +23,7 @@ from ansible.runner.return_data import ReturnData
 from ansible.utils import parse_kv, check_conditional
 import ansible.utils.template as template
 
+
 class ActionModule(object):
     ''' Create inventory groups based on variables '''
 
@@ -45,7 +46,7 @@ class ActionModule(object):
         if not 'key' in args:
             raise ae("'key' is a required argument.")
 
-        vv("created 'group_by' ActionModule: key=%s"%(args['key']))
+        vv("created 'group_by' ActionModule: key=%s" % (args['key']))
 
         inventory = self.runner.inventory
 
@@ -60,16 +61,17 @@ class ActionModule(object):
             data.update(inject['hostvars'][host])
             conds = self.runner.conditional
             if type(conds) != list:
-                conds = [ conds ]
+                conds = [conds]
             next_host = False
             for cond in conds:
-                if not check_conditional(cond, self.runner.basedir, data, fail_on_undefined=self.runner.error_on_undefined_vars):
+                if not check_conditional(cond, self.runner.basedir, data,
+                                         fail_on_undefined=self.runner.error_on_undefined_vars):
                     next_host = True
                     break
             if next_host:
                 continue
             group_name = template.template(self.runner.basedir, args['key'], data)
-            group_name = group_name.replace(' ','-')
+            group_name = group_name.replace(' ', '-')
             if group_name not in groups:
                 groups[group_name] = []
             groups[group_name].append(host)

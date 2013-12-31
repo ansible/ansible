@@ -16,8 +16,8 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import ansible.utils as utils
-from ansible.utils import safe_eval
 import ansible.errors as errors
+
 
 def flatten(terms):
     ret = []
@@ -30,15 +30,16 @@ def flatten(terms):
             ret.append(term)
     return ret
 
-def combine(a,b):
+
+def combine(a, b):
     results = []
     for x in a:
         for y in b:
-            results.append(flatten([x,y]))
+            results.append(flatten([x, y]))
     return results
 
-class LookupModule(object):
 
+class LookupModule(object):
     def __init__(self, basedir=None, **kwargs):
         self.basedir = basedir
 
@@ -64,10 +65,8 @@ class LookupModule(object):
         result = my_list.pop()
         while len(my_list) > 0:
             result2 = combine(result, my_list.pop())
-            result  = result2
+            result = result2
         new_result = []
         for x in result:
             new_result.append(flatten(x))
         return new_result
-
-

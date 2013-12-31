@@ -18,8 +18,8 @@
 from ansible import utils
 from ansible.runner.return_data import ReturnData
 
-class ActionModule(object):
 
+class ActionModule(object):
     TRANSFERS_FILES = False
 
     def __init__(self, runner):
@@ -29,7 +29,7 @@ class ActionModule(object):
         ''' handler for running operations on master '''
 
         # load up options
-        options  = {}
+        options = {}
         if complex_args:
             options.update(complex_args)
         options.update(utils.parse_kv(module_args))

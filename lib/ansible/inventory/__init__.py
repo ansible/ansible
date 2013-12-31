@@ -20,7 +20,6 @@
 import fnmatch
 import os
 import re
-import subprocess
 
 import ansible.constants as C
 from ansible.inventory.ini import InventoryParser
@@ -31,14 +30,15 @@ from ansible.inventory.host import Host
 from ansible import errors
 from ansible import utils
 
+
 class Inventory(object):
     """
     Host inventory for ansible.
     """
 
-    __slots__ = [ 'host_list', 'groups', '_restriction', '_also_restriction', '_subset', 
-                  'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache', '_groups_list',
-                  '_pattern_cache', '_vars_plugins', '_playbook_basedir']
+    __slots__ = ['host_list', 'groups', '_restriction', '_also_restriction', '_subset',
+                 'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache', '_groups_list',
+                 '_pattern_cache', '_vars_plugins', '_playbook_basedir']
 
     def __init__(self, host_list=C.DEFAULT_HOST_LIST):
 
@@ -49,11 +49,11 @@ class Inventory(object):
         # caching to avoid repeated calculations, particularly with
         # external inventory scripts.
 
-        self._vars_per_host  = {}
+        self._vars_per_host = {}
         self._vars_per_group = {}
-        self._hosts_cache    = {}
-        self._groups_list    = {} 
-        self._pattern_cache  = {}
+        self._hosts_cache = {}
+        self._groups_list = {}
+        self._pattern_cache = {}
 
         # to be set by calling set_playbook_basedir by ansible-playbook
         self._playbook_basedir = None
@@ -69,14 +69,14 @@ class Inventory(object):
         if isinstance(host_list, basestring):
             if "," in host_list:
                 host_list = host_list.split(",")
-                host_list = [ h for h in host_list if h and h.strip() ]
+                host_list = [h for h in host_list if h and h.strip()]
 
         if host_list is None:
             self.parser = None
         elif isinstance(host_list, list):
             self.parser = None
             all = Group('all')
-            self.groups = [ all ]
+            self.groups = [all]
             ipv6_re = re.compile('\[([a-f:A-F0-9]*[%[0-z]+]?)\](?::(\d+))?')
             for x in host_list:
                 m = ipv6_re.match(x)
@@ -105,12 +105,13 @@ class Inventory(object):
                 self.parser = InventoryParser(filename=host_list)
                 self.groups = self.parser.groups.values()
 
-            utils.plugins.vars_loader.add_directory(self.basedir(), with_subdir=True)
+            utils.plugins.vars_loader.add_directory(self.basedir(),
+                                                    with_subdir=True)
         else:
-            raise errors.AnsibleError("Unable to find an inventory file, specify one with -i ?")
+            raise errors.AnsibleError(
+                "Unable to find an inventory file, specify one with -i ?")
 
-        self._vars_plugins = [ x for x in utils.plugins.vars_loader.all(self) ]
-
+        self._vars_plugins = [x for x in utils.plugins.vars_loader.all(self)]
 
     def _match(self, str, pattern_str):
         if pattern_str.startswith('~'):
@@ -119,7 +120,7 @@ class Inventory(object):
             return fnmatch.fnmatch(str, pattern_str)
 
     def get_hosts(self, pattern="all"):
-        """ 
+        """
         find all host names matching a pattern string, taking into account any inventory restrictions or
         applied subsets.
         """
@@ -127,7 +128,7 @@ class Inventory(object):
         # process patterns
         if isinstance(pattern, list):
             pattern = ';'.join(pattern)
-        patterns = pattern.replace(";",":").split(":")
+        patterns = pattern.replace(";", ":").split(":")
         hosts = self._get_hosts(patterns)
 
         # exclude hosts not in a subset, if defined
@@ -141,9 +142,9 @@ class Inventory(object):
 
         # exclude hosts mentioned in any restriction (ex: failed hosts)
         if self._restriction is not None:
-            hosts = [ h for h in hosts if h.name in self._restriction ]
+            hosts = [h for h in hosts if h.name in self._restriction]
         if self._also_restriction is not None:
-            hosts = [ h for h in hosts if h.name in self._also_restriction ]
+            hosts = [h for h in hosts if h.name in self._also_restriction]
 
         return hosts
 
@@ -179,9 +180,9 @@ class Inventory(object):
         for p in patterns:
             that = self.__get_hosts(p)
             if p.startswith("!"):
-                hosts = [ h for h in hosts if h not in that ]
+                hosts = [h for h in hosts if h not in that]
             elif p.startswith("&"):
-                hosts = [ h for h in hosts if h in that ]
+                hosts = [h for h in hosts if h in that]
             else:
                 for h in that:
                     if h not in hosts:
@@ -190,7 +191,7 @@ class Inventory(object):
         return hosts
 
     def __get_hosts(self, pattern):
-        """ 
+        """
         finds hosts that postively match a particular pattern.  Does not
         take into account negative matches.
         """
@@ -214,18 +215,18 @@ class Inventory(object):
         if not "[" in pattern or pattern.startswith('~'):
             return (pattern, None)
         (first, rest) = pattern.split("[")
-        rest = rest.replace("]","")
+        rest = rest.replace("]", "")
         try:
             # support selectors like webservers[0]
             x = int(rest)
-            return (first, (x,x)) 
+            return (first, (x, x))
         except:
             pass
         if "-" in rest:
-            (left, right) = rest.split("-",1)
+            (left, right) = rest.split("-", 1)
             return (first, (left, right))
         elif ":" in rest:
-            (left, right) = rest.split(":",1)
+            (left, right) = rest.split(":", 1)
             return (first, (left, right))
         else:
             return (first, (rest, rest))
@@ -234,7 +235,7 @@ class Inventory(object):
         """
         given a pattern like foo, that matches hosts, return all of hosts
         given a pattern like foo[0:5], where foo matches hosts, return the first 6 hosts
-        """ 
+        """
 
         (loose_pattern, limits) = self._enumeration_info(pat)
         if not limits:
@@ -246,25 +247,25 @@ class Inventory(object):
             left = 0
         if right == '':
             right = 0
-        left=int(left)
-        right=int(right)
+        left = int(left)
+        right = int(right)
         if left != right:
             return hosts[left:right]
         else:
-            return [ hosts[left] ]
+            return [hosts[left]]
 
     def _hosts_in_unenumerated_pattern(self, pattern):
         """ Get all host names matching the pattern """
-
-        hosts = []
         # ignore any negative checks here, this is handled elsewhere
-        pattern = pattern.replace("!","").replace("&", "")
+        pattern = pattern.replace("!", "").replace("&", "")
 
         results = []
         groups = self.get_groups()
         for group in groups:
             for host in group.get_hosts():
-                if pattern == 'all' or self._match(group.name, pattern) or self._match(host.name, pattern):
+                if pattern == 'all' or self._match(group.name,
+                                                   pattern) or self._match(
+                        host.name, pattern):
                     if host not in results:
                         results.append(host)
         return results
@@ -304,7 +305,7 @@ class Inventory(object):
         return self._hosts_cache[hostname]
 
     def _get_host(self, hostname):
-        if hostname in ['localhost','127.0.0.1']:
+        if hostname in ['localhost', '127.0.0.1']:
             for host in self.get_group('all').get_hosts():
                 if host.name in ['localhost', '127.0.0.1']:
                     return host
@@ -323,7 +324,8 @@ class Inventory(object):
 
     def get_group_variables(self, groupname):
         if groupname not in self._vars_per_group:
-            self._vars_per_group[groupname] = self._get_group_variables(groupname)
+            self._vars_per_group[groupname] = self._get_group_variables(
+                groupname)
         return self._vars_per_group[groupname]
 
     def _get_group_variables(self, groupname):
@@ -344,7 +346,7 @@ class Inventory(object):
             raise errors.AnsibleError("host not found: %s" % hostname)
 
         vars = {}
-        vars_results = [ plugin.run(host) for plugin in self._vars_plugins ] 
+        vars_results = [plugin.run(host) for plugin in self._vars_plugins]
         for updated in vars_results:
             if updated is not None:
                 vars.update(updated)
@@ -356,26 +358,26 @@ class Inventory(object):
 
     def add_group(self, group):
         self.groups.append(group)
-        self._groups_list = None  # invalidate internal cache 
+        self._groups_list = None  # invalidate internal cache
 
     def list_hosts(self, pattern="all"):
-        return [ h.name for h in self.get_hosts(pattern) ]
+        return [h.name for h in self.get_hosts(pattern)]
 
     def list_groups(self):
-        return sorted([ g.name for g in self.groups ], key=lambda x: x)
+        return sorted([g.name for g in self.groups], key=lambda x: x)
 
     # TODO: remove this function
     def get_restriction(self):
         return self._restriction
 
     def restrict_to(self, restriction):
-        """ 
+        """
         Restrict list operations to the hosts given in restriction.  This is used
         to exclude failed hosts in main playbook code, don't use this for other
         reasons.
         """
         if not isinstance(restriction, list):
-            restriction = [ restriction ]
+            restriction = [restriction]
         self._restriction = restriction
 
     def also_restrict_to(self, restriction):
@@ -384,21 +386,21 @@ class Inventory(object):
         to implement serial behavior.
         """
         if not isinstance(restriction, list):
-            restriction = [ restriction ]
+            restriction = [restriction]
         self._also_restriction = restriction
-    
+
     def subset(self, subset_pattern):
-        """ 
+        """
         Limits inventory results to a subset of inventory that matches a given
         pattern, such as to select a given geographic of numeric slice amongst
-        a previous 'hosts' selection that only select roles, or vice versa.  
+        a previous 'hosts' selection that only select roles, or vice versa.
         Corresponds to --limit parameter to ansible-playbook
-        """        
+        """
         if subset_pattern is None:
             self._subset = None
         else:
-            subset_pattern = subset_pattern.replace(',',':')
-            subset_pattern = subset_pattern.replace(";",":").split(":")
+            subset_pattern = subset_pattern.replace(',', ':')
+            subset_pattern = subset_pattern.replace(";", ":").split(":")
             results = []
             # allow Unix style @filename data
             for x in subset_pattern:
@@ -413,7 +415,7 @@ class Inventory(object):
     def lift_restriction(self):
         """ Do not restrict list operations """
         self._restriction = None
-    
+
     def lift_also_restriction(self):
         """ Clears the also restriction """
         self._also_restriction = None
@@ -431,7 +433,7 @@ class Inventory(object):
         dname = os.path.dirname(self.host_list)
         if dname is None or dname == '' or dname == '.':
             cwd = os.getcwd()
-            return os.path.abspath(cwd) 
+            return os.path.abspath(cwd)
         return os.path.abspath(dname)
 
     def src(self):
@@ -445,10 +447,8 @@ class Inventory(object):
         return self._playbook_basedir
 
     def set_playbook_basedir(self, dir):
-        """ 
+        """
         sets the base directory of the playbook so inventory plugins can use it to find
-        variable files and other things. 
+        variable files and other things.
         """
         self._playbook_basedir = dir
-
-

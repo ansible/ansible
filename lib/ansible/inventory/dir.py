@@ -19,12 +19,10 @@
 
 import os
 import ansible.constants as C
-from ansible.inventory.host import Host
-from ansible.inventory.group import Group
 from ansible.inventory.ini import InventoryParser
 from ansible.inventory.script import InventoryScript
 from ansible import utils
-from ansible import errors
+
 
 class InventoryDirectory(object):
     ''' Host inventory parser for ansible using a directory of inventories. '''
@@ -36,9 +34,9 @@ class InventoryDirectory(object):
         self.parsers = []
         self.hosts = {}
         self.groups = {}
- 
+
         for i in self.names:
-            
+
             if i.endswith("~") or i.endswith(".orig") or i.endswith(".bak"):
                 continue
             if i.endswith(".ini"):
@@ -92,4 +90,3 @@ class InventoryDirectory(object):
         for i in self.parsers:
             vars.update(i.get_host_variables(host))
         return vars
-

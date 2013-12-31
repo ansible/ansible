@@ -18,37 +18,44 @@
 import base64
 import json
 import os.path
-import yaml
 import types
 import pipes
 import glob
 import re
+
+import yaml
+
 from ansible import errors
 from ansible.utils import md5s
+
 
 def to_nice_yaml(*a, **kw):
     '''Make verbose, human readable yaml'''
     return yaml.safe_dump(*a, indent=4, allow_unicode=True, default_flow_style=False, **kw)
 
+
 def to_nice_json(*a, **kw):
     '''Make verbose, human readable JSON'''
     return json.dumps(*a, indent=4, sort_keys=True, **kw)
+
 
 def failed(*a, **kw):
     ''' Test if task result yields failed '''
     item = a[0]
     if type(item) != dict:
         raise errors.AnsibleFilterError("|failed expects a dictionary")
-    rc = item.get('rc',0)
-    failed = item.get('failed',False)
+    rc = item.get('rc', 0)
+    failed = item.get('failed', False)
     if rc != 0 or failed:
         return True
     else:
         return False
 
+
 def success(*a, **kw):
     ''' Test if task result yields success '''
     return not failed(*a, **kw)
+
 
 def changed(*a, **kw):
     ''' Test if task result yields changed '''
@@ -58,13 +65,14 @@ def changed(*a, **kw):
     if not 'changed' in item:
         changed = False
         if ('results' in item    # some modules return a 'results' key
-                and type(item['results']) == list 
+                and type(item['results']) == list
                 and type(item['results'][0]) == dict):
             for result in item['results']:
                 changed = changed or result.get('changed', False)
     else:
         changed = item.get('changed', False)
     return changed
+
 
 def skipped(*a, **kw):
     ''' Test if task result yields skipped '''
@@ -74,11 +82,13 @@ def skipped(*a, **kw):
     skipped = item.get('skipped', False)
     return skipped
 
+
 def mandatory(a):
     ''' Make a variable mandatory '''
     if not a:
         raise errors.AnsibleFilterError('Mandatory variable not defined.')
     return a
+
 
 def bool(a):
     ''' return a bool for the arg '''
@@ -91,13 +101,16 @@ def bool(a):
     else:
         return False
 
+
 def quote(a):
     ''' return its argument quoted for shell usage '''
     return pipes.quote(a)
 
+
 def fileglob(pathname):
     ''' return list of matched files for glob '''
     return glob.glob(pathname)
+
 
 def regex(value='', pattern='', ignorecase=False, match_type='search'):
     ''' Expose `re` as a boolean filter using the `search` method by default.
@@ -112,28 +125,36 @@ def regex(value='', pattern='', ignorecase=False, match_type='search'):
     _bool = __builtins__.get('bool')
     return _bool(getattr(_re, match_type, 'search')(value))
 
+
 def match(value, pattern='', ignorecase=False):
     ''' Perform a `re.match` returning a boolean '''
     return regex(value, pattern, ignorecase, 'match')
+
 
 def search(value, pattern='', ignorecase=False):
     ''' Perform a `re.search` returning a boolean '''
     return regex(value, pattern, ignorecase, 'search')
 
+
 def unique(a):
     return set(a)
+
 
 def intersect(a, b):
     return set(a).intersection(b)
 
+
 def difference(a, b):
     return set(a).difference(b)
+
 
 def symmetric_difference(a, b):
     return set(a).symmetric_difference(b)
 
+
 def union(a, b):
     return set(a).union(b)
+
 
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
@@ -160,14 +181,14 @@ class FilterModule(object):
             'realpath': os.path.realpath,
 
             # failure testing
-            'failed'  : failed,
-            'success' : success,
+            'failed': failed,
+            'success': success,
 
             # changed testing
-            'changed' : changed,
+            'changed': changed,
 
             # skip testing
-            'skipped' : skipped,
+            'skipped': skipped,
 
             # variable existence
             'mandatory': mandatory,
@@ -190,10 +211,9 @@ class FilterModule(object):
             'regex': regex,
 
             # list
-            'unique' : unique,
+            'unique': unique,
             'intersect': intersect,
             'difference': difference,
             'symmetric_difference': symmetric_difference,
             'union': union,
         }
-

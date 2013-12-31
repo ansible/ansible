@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import json
 import os
 import base64
 from ansible.callbacks import vvv
@@ -23,13 +22,14 @@ from ansible import utils
 from ansible import errors
 from ansible import constants
 
-HAVE_ZMQ=False
+HAVE_ZMQ = False
 
 try:
     import zmq
-    HAVE_ZMQ=True
+    HAVE_ZMQ = True
 except ImportError:
     pass
+
 
 class Connection(object):
     ''' ZeroMQ accelerated connection '''
@@ -48,7 +48,7 @@ class Connection(object):
         self.context = None
         self.socket = None
 
-        if  port is None:
+        if port is None:
             self.port = constants.ZEROMQ_PORT
         else:
             self.port = port
@@ -58,13 +58,13 @@ class Connection(object):
 
         if not HAVE_ZMQ:
             raise errors.AnsibleError("zmq is not installed")
-        
+
         # this is rough/temporary and will likely be optimized later ...
         self.context = zmq.Context()
         socket = self.context.socket(zmq.REQ)
         addr = "tcp://%s:%s" % (self.host, self.port)
         socket.connect(addr)
-        self.socket = socket    
+        self.socket = socket
 
         return self
 
@@ -92,12 +92,12 @@ class Connection(object):
         data = utils.jsonify(data)
         data = utils.encrypt(self.key, data)
         self.socket.send(data)
-        
+
         response = self.socket.recv()
         response = utils.decrypt(self.key, response)
         response = utils.parse_json(response)
 
-        return (response.get('rc',None), '', response.get('stdout',''), response.get('stderr',''))
+        return (response.get('rc', None), '', response.get('stdout', ''), response.get('stderr', ''))
 
     def put_file(self, in_path, out_path):
 
@@ -134,7 +134,7 @@ class Connection(object):
         response = utils.decrypt(self.key, response)
         response = utils.parse_json(response)
         response = response['data']
-        response = base64.b64decode(response)        
+        response = base64.b64decode(response)
 
         fh = open(out_path, "w")
         fh.write(response)
@@ -148,4 +148,3 @@ class Connection(object):
             self.context.term()
         except:
             pass
-
