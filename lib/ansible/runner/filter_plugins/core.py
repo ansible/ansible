@@ -76,9 +76,12 @@ def skipped(*a, **kw):
 
 def mandatory(a):
     ''' Make a variable mandatory '''
-    if not a:
+    try:
+        a
+    except NameError:
         raise errors.AnsibleFilterError('Mandatory variable not defined.')
-    return a
+    else:
+        return a
 
 def bool(a):
     ''' return a bool for the arg '''
