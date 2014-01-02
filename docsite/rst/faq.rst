@@ -138,7 +138,7 @@ Then you can use the facts inside your template, like this::
        {{ hostvars[host]['ansible_eth0']['ipv4']['address'] }}
     {% endfor %}
 
-.. _programatic_access_to_a_variable::
+.. _programatic_access_to_a_variable:
 
 How do I access a variable name programatically?
 ++++++++++++++++++++++++++++++++++++++++++++++++
@@ -151,7 +151,7 @@ via a role parameter or other input.  Variable names can be built by adding stri
 The trick about going through hostvars is neccessary because it's a dictionary of the entire namespace of variables.  'inventory_hostname'
 is a magic variable that indiciates the current host you are looping over in the host loop.
 
-.. _first_host_in_a_group::
+.. _first_host_in_a_group:
 
 How do I access a variable of the first host in a group?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
