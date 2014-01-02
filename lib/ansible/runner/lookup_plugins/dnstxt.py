@@ -16,12 +16,12 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 from ansible import utils, errors
-import os
-HAVE_DNS=False
+
+HAVE_DNS = False
 try:
     import dns.resolver
     from dns.exception import DNSException
-    HAVE_DNS=True
+    HAVE_DNS = True
 except ImportError:
     pass
 
@@ -32,20 +32,20 @@ except ImportError:
 # TODO: configurable resolver IPs
 # --------------------------------------------------------------
 
-class LookupModule(object):
 
+class LookupModule(object):
     def __init__(self, basedir=None, **kwargs):
         self.basedir = basedir
 
-        if HAVE_DNS == False:
+        if HAVE_DNS is False:
             raise errors.AnsibleError("Can't LOOKUP(dnstxt): module dns.resolver is not installed")
 
     def run(self, terms, inject=None, **kwargs):
 
-        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
+        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
 
         if isinstance(terms, basestring):
-            terms = [ terms ]
+            terms = [terms]
 
         ret = []
         for term in terms:
@@ -61,7 +61,7 @@ class LookupModule(object):
                 string = 'NXDOMAIN'
             except dns.resolver.Timeout:
                 string = ''
-            except dns.exception.DNSException as e:
+            except DNSException as e:
                 raise errors.AnsibleError("dns.resolver unhandled exception", e)
 
             ret.append(''.join(string))

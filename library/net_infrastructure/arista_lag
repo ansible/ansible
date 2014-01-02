@@ -135,7 +135,7 @@ class AristaLag(object):
     def run_command(self, cmd):
         """ Calls the Ansible module run_command method. This method will 
             directly return the results of the run_command method
-        """      
+        """
         self.log("Command: %s" % cmd)
         return self.module.run_command(cmd.split())
 

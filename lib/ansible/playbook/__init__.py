@@ -15,6 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+import shlex
+import collections
+import StringIO
+
 import ansible.inventory
 import ansible.constants as C
 import ansible.runner
@@ -22,14 +27,11 @@ from ansible.utils.template import template
 from ansible import utils
 from ansible import errors
 import ansible.callbacks
-import os
-import shlex
-import collections
 from play import Play
-import StringIO
-import pipes
+
 
 SETUP_CACHE = collections.defaultdict(dict)
+
 
 class PlayBook(object):
     '''
@@ -45,31 +47,30 @@ class PlayBook(object):
     # *****************************************************
 
     def __init__(self,
-        playbook         = None,
-        host_list        = C.DEFAULT_HOST_LIST,
-        module_path      = None,
-        forks            = C.DEFAULT_FORKS,
-        timeout          = C.DEFAULT_TIMEOUT,
-        remote_user      = C.DEFAULT_REMOTE_USER,
-        remote_pass      = C.DEFAULT_REMOTE_PASS,
-        sudo_pass        = C.DEFAULT_SUDO_PASS,
-        remote_port      = None,
-        transport        = C.DEFAULT_TRANSPORT,
-        private_key_file = C.DEFAULT_PRIVATE_KEY_FILE,
-        callbacks        = None,
-        runner_callbacks = None,
-        stats            = None,
-        sudo             = False,
-        sudo_user        = C.DEFAULT_SUDO_USER,
-        extra_vars       = None,
-        only_tags        = None,
-        skip_tags        = None,
-        subset           = C.DEFAULT_SUBSET,
-        inventory        = None,
-        check            = False,
-        diff             = False,
-        any_errors_fatal = False):
-
+                 playbook=None,
+                 host_list=C.DEFAULT_HOST_LIST,
+                 module_path=None,
+                 forks=C.DEFAULT_FORKS,
+                 timeout=C.DEFAULT_TIMEOUT,
+                 remote_user=C.DEFAULT_REMOTE_USER,
+                 remote_pass=C.DEFAULT_REMOTE_PASS,
+                 sudo_pass=C.DEFAULT_SUDO_PASS,
+                 remote_port=None,
+                 transport=C.DEFAULT_TRANSPORT,
+                 private_key_file=C.DEFAULT_PRIVATE_KEY_FILE,
+                 callbacks=None,
+                 runner_callbacks=None,
+                 stats=None,
+                 sudo=False,
+                 sudo_user=C.DEFAULT_SUDO_USER,
+                 extra_vars=None,
+                 only_tags=None,
+                 skip_tags=None,
+                 subset=C.DEFAULT_SUBSET,
+                 inventory=None,
+                 check=False,
+                 diff=False,
+                 any_errors_fatal=False):
         """
         playbook:         path to a playbook file
         host_list:        path to a file like /etc/ansible/hosts
@@ -97,45 +98,45 @@ class PlayBook(object):
         if extra_vars is None:
             extra_vars = {}
         if only_tags is None:
-            only_tags = [ 'all' ]
+            only_tags = ['all']
         if skip_tags is None:
             skip_tags = []
 
-        self.check            = check
-        self.diff             = diff
-        self.module_path      = module_path
-        self.forks            = forks
-        self.timeout          = timeout
-        self.remote_user      = remote_user
-        self.remote_pass      = remote_pass
-        self.remote_port      = remote_port
-        self.transport        = transport
-        self.callbacks        = callbacks
+        self.check = check
+        self.diff = diff
+        self.module_path = module_path
+        self.forks = forks
+        self.timeout = timeout
+        self.remote_user = remote_user
+        self.remote_pass = remote_pass
+        self.remote_port = remote_port
+        self.transport = transport
+        self.callbacks = callbacks
         self.runner_callbacks = runner_callbacks
-        self.stats            = stats
-        self.sudo             = sudo
-        self.sudo_pass        = sudo_pass
-        self.sudo_user        = sudo_user
-        self.extra_vars       = extra_vars
-        self.global_vars      = {}
+        self.stats = stats
+        self.sudo = sudo
+        self.sudo_pass = sudo_pass
+        self.sudo_user = sudo_user
+        self.extra_vars = extra_vars
+        self.global_vars = {}
         self.private_key_file = private_key_file
-        self.only_tags        = only_tags
-        self.skip_tags        = skip_tags
+        self.only_tags = only_tags
+        self.skip_tags = skip_tags
         self.any_errors_fatal = any_errors_fatal
 
         self.callbacks.playbook = self
         self.runner_callbacks.playbook = self
 
         if inventory is None:
-            self.inventory    = ansible.inventory.Inventory(host_list)
+            self.inventory = ansible.inventory.Inventory(host_list)
             self.inventory.subset(subset)
         else:
-            self.inventory    = inventory
+            self.inventory = inventory
 
         if self.module_path is not None:
             utils.plugins.module_finder.add_directory(self.module_path)
 
-        self.basedir     = os.path.dirname(playbook) or '.'
+        self.basedir = os.path.dirname(playbook) or '.'
         utils.plugins.push_basedir(self.basedir)
         vars = extra_vars.copy()
         vars['playbook_dir'] = self.basedir
@@ -156,7 +157,7 @@ class PlayBook(object):
         run top level error checking on playbooks and allow them to include other playbooks.
         '''
 
-        playbook_data  = utils.parse_yaml_from_file(path)
+        playbook_data = utils.parse_yaml_from_file(path)
         accumulated_plays = []
         play_basedirs = []
 
@@ -167,7 +168,8 @@ class PlayBook(object):
         utils.plugins.push_basedir(basedir)
         for play in playbook_data:
             if type(play) != dict:
-                raise errors.AnsibleError("parse error: each play in a playbook must be a YAML dictionary (hash), recieved: %s" % play)
+                raise errors.AnsibleError(
+                    "parse error: each play in a playbook must be a YAML dictionary (hash), recieved: %s" % play)
 
             if 'include' in play:
                 # a playbook (list of plays) decided to include some other list of plays
@@ -187,8 +189,7 @@ class PlayBook(object):
                 # to set variables
 
                 for t in tokens[1:]:
-
-                    (k,v) = t.split("=", 1)
+                    (k, v) = t.split("=", 1)
                     incvars[k] = template(basedir, v, incvars)
 
                 included_path = utils.path_dwim(basedir, template(basedir, tokens[0], incvars))
@@ -202,7 +203,7 @@ class PlayBook(object):
                         p['vars'].update(incvars)
                     elif isinstance(p['vars'], list):
                         # nobody should really do this, but handle vars: a=1 b=2
-                        p['vars'].extend([dict(k=v) for k,v in incvars.iteritems()])
+                        p['vars'].extend([dict(k=v) for k, v in incvars.iteritems()])
 
                 accumulated_plays.extend(plays)
                 play_basedirs.extend(basedirs)
@@ -281,7 +282,7 @@ class PlayBook(object):
         # mark any hosts that are still listed as started as failed
         # since these likely got killed by async_wrapper
         for host in poller.hosts_to_poll:
-            reason = { 'failed' : 1, 'rc' : None, 'msg' : 'timed out' }
+            reason = {'failed': 1, 'rc': None, 'msg': 'timed out'}
             self.runner_callbacks.on_async_failed(host, reason, poller.jid)
             results['contacted'][host] = reason
 
@@ -292,7 +293,8 @@ class PlayBook(object):
     def _list_available_hosts(self, *args):
         ''' returns a list of hosts that haven't failed and aren't dark '''
 
-        return [ h for h in self.inventory.list_hosts(*args) if (h not in self.stats.failures) and (h not in self.stats.dark)]
+        return [h for h in self.inventory.list_hosts(*args) if
+                (h not in self.stats.failures) and (h not in self.stats.dark)]
 
     # *****************************************************
 
@@ -331,8 +333,8 @@ class PlayBook(object):
                 for (host, res) in results.get('contacted', {}).iteritems():
                     self.runner_callbacks.on_async_ok(host, res, poller.jid)
 
-        contacted = results.get('contacted',{})
-        dark      = results.get('dark', {})
+        contacted = results.get('contacted', {})
+        dark = results.get('dark', {})
 
         self.inventory.lift_restriction()
 
@@ -354,7 +356,8 @@ class PlayBook(object):
         else:
             name = task.name
 
-        self.callbacks.on_task_start(template(play.basedir, name, task.module_vars, lookup_fatal=False, filter_fatal=False), is_handler)
+        self.callbacks.on_task_start(template(play.basedir, name, task.module_vars,
+                                              lookup_fatal=False, filter_fatal=False), is_handler)
         if hasattr(self.callbacks, 'skip_task') and self.callbacks.skip_task:
             ansible.callbacks.set_task(self.callbacks, None)
             ansible.callbacks.set_task(self.runner_callbacks, None)
@@ -384,6 +387,7 @@ class PlayBook(object):
             else:
                 facts = result.get('ansible_facts', {})
                 self.SETUP_CACHE[host].update(facts)
+
             # extra vars need to always trump - so update  again following the facts
             self.SETUP_CACHE[host].update(self.extra_vars)
             if task.register:
@@ -401,7 +405,7 @@ class PlayBook(object):
 
         # flag which notify handlers need to be run
         if len(task.notify) > 0:
-            for host, results in results.get('contacted',{}).iteritems():
+            for host, results in results.get('contacted', {}).iteritems():
                 if results.get('changed', False):
                     for handler_name in task.notify:
                         self._flag_handler(play, template(play.basedir, handler_name, task.module_vars), host)
@@ -472,7 +476,6 @@ class PlayBook(object):
 
     # *****************************************************
 
-
     def generate_retry_inventory(self, replay_hosts):
         '''
         called by /usr/bin/ansible when a playbook run fails. It generates a inventory
@@ -483,9 +486,8 @@ class PlayBook(object):
         buf = StringIO.StringIO()
         for x in replay_hosts:
             buf.write("%s\n" % x)
-        basedir = self.inventory.basedir()
         filename = "%s.retry" % os.path.basename(self.filename)
-        filename = filename.replace(".yml","")
+        filename = filename.replace(".yml", "")
         filename = os.path.join(os.path.expandvars('$HOME/'), filename)
 
         try:
@@ -555,7 +557,7 @@ class PlayBook(object):
                                 host_list = self._list_available_hosts(play.hosts)
                                 if handler.any_errors_fatal and len(host_list) < hosts_count:
                                     play.max_fail_pct = 0
-                                if (hosts_count - len(host_list)) > int((play.max_fail_pct)/100.0 * hosts_count):
+                                if (hosts_count - len(host_list)) > int((play.max_fail_pct) / 100.0 * hosts_count):
                                     host_list = None
                                 if not host_list:
                                     self.callbacks.on_no_hosts_remaining()
@@ -602,7 +604,7 @@ class PlayBook(object):
                     play.max_fail_pct = 0
 
                 # If threshold for max nodes failed is exceeded , bail out.
-                if (hosts_count - len(host_list)) > int((play.max_fail_pct)/100.0 * hosts_count):
+                if (hosts_count - len(host_list)) > int((play.max_fail_pct) / 100.0 * hosts_count):
                     host_list = None
 
                 # if no hosts remain, drop out
@@ -613,4 +615,3 @@ class PlayBook(object):
             self.inventory.lift_also_restriction()
 
         return True
-

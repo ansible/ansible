@@ -19,16 +19,9 @@ import sys
 import re
 import os
 import shlex
-import yaml
 import copy
 import optparse
 import operator
-from ansible import errors
-from ansible import __version__
-from ansible.utils.plugins import *
-from ansible.utils import template
-from ansible.callbacks import display
-import ansible.constants as C
 import time
 import StringIO
 import stat
@@ -38,18 +31,26 @@ import pipes
 import random
 import difflib
 import warnings
-import traceback
 import getpass
-import sys
 import textwrap
 
-VERBOSITY=0
+import yaml
+
+from ansible import errors
+from ansible import __version__
+from ansible.utils.plugins import *
+from ansible.utils import template
+from ansible.callbacks import display
+import ansible.constants as C
+
+
+VERBOSITY = 0
 
 # list of all deprecation messages to prevent duplicate display
 deprecations = {}
 warns = {}
 
-MAX_FILE_SIZE_FOR_DIFF=1*1024*1024
+MAX_FILE_SIZE_FOR_DIFF = 1 * 1024 * 1024
 
 try:
     import json
@@ -68,13 +69,14 @@ try:
 except:
     pass
 
-KEYCZAR_AVAILABLE=False
+KEYCZAR_AVAILABLE = False
 try:
     import keyczar.errors as key_errors
     from keyczar.keys import AesKey
-    KEYCZAR_AVAILABLE=True
+    KEYCZAR_AVAILABLE = True
 except ImportError:
     pass
+
 
 ###############################################################
 # Abstractions around keyczar
@@ -93,7 +95,7 @@ def key_for_hostname(hostname):
     key_path = os.path.expanduser("~/.fireball.keys/%s" % hostname)
 
     # use new AES keys every 2 hours, which means fireball must not allow running for longer either
-    if not os.path.exists(key_path) or (time.time() - os.path.getmtime(key_path) > 60*60*2):
+    if not os.path.exists(key_path) or (time.time() - os.path.getmtime(key_path) > 60 * 60 * 2):
         key = AesKey.Generate()
         fh = open(key_path, "w")
         fh.write(str(key))
@@ -105,14 +107,17 @@ def key_for_hostname(hostname):
         fh.close()
         return key
 
+
 def encrypt(key, msg):
     return key.Encrypt(msg)
+
 
 def decrypt(key, msg):
     try:
         return key.Decrypt(msg)
     except key_errors.InvalidSignatureError:
         raise errors.AnsibleError("decryption failed")
+
 
 ###############################################################
 # UTILITY FUNCTIONS FOR COMMAND LINE TOOLS
@@ -123,11 +128,13 @@ def err(msg):
 
     print >> sys.stderr, msg
 
+
 def exit(msg, rc=1):
     ''' quit with an error to stdout and a failure code '''
 
     err(msg)
     sys.exit(rc)
+
 
 def jsonify(result, format=False):
     ''' format JSON output (uncompressed or uncompressed) '''
@@ -143,6 +150,7 @@ def jsonify(result, format=False):
     else:
         return json.dumps(result2, sort_keys=True)
 
+
 def write_tree_file(tree, hostname, buf):
     ''' write something into treedir/hostname '''
 
@@ -153,18 +161,20 @@ def write_tree_file(tree, hostname, buf):
     fd.write(buf)
     fd.close()
 
+
 def is_failed(result):
     ''' is a given JSON result a failed result? '''
 
-    return ((result.get('rc', 0) != 0) or (result.get('failed', False) in [ True, 'True', 'true']))
+    return ((result.get('rc', 0) != 0) or (result.get('failed', False) in [True, 'True', 'true']))
+
 
 def is_changed(result):
     ''' is a given JSON result a changed result? '''
 
-    return (result.get('changed', False) in [ True, 'True', 'true'])
+    return (result.get('changed', False) in [True, 'True', 'true'])
+
 
 def check_conditional(conditional, basedir, inject, fail_on_undefined=False, jinja2=False):
-
     if isinstance(conditional, list):
         for x in conditional:
             if not check_conditional(x, basedir, inject, fail_on_undefined=fail_on_undefined, jinja2=jinja2):
@@ -175,19 +185,19 @@ def check_conditional(conditional, basedir, inject, fail_on_undefined=False, jin
         conditional = "jinja2_compare %s" % conditional
 
     if conditional.startswith("jinja2_compare"):
-        conditional = conditional.replace("jinja2_compare ","")
+        conditional = conditional.replace("jinja2_compare ", "")
         # allow variable names
         if conditional in inject and str(inject[conditional]).find('-') == -1:
             conditional = inject[conditional]
         conditional = template.template(basedir, conditional, inject, fail_on_undefined=fail_on_undefined)
-        original = str(conditional).replace("jinja2_compare ","")
+        original = str(conditional).replace("jinja2_compare ", "")
         # a Jinja2 evaluation that results in something Python can eval!
         presented = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional
         conditional = template.template(basedir, presented, inject)
         val = conditional.strip()
         if val == presented:
-            # the templating failed, meaning most likely a 
-            # variable was undefined. If we happened to be 
+            # the templating failed, meaning most likely a
+            # variable was undefined. If we happened to be
             # looking for an undefined variable, return True,
             # otherwise fail
             if conditional.find("is undefined") != -1:
@@ -209,12 +219,13 @@ def check_conditional(conditional, basedir, inject, fail_on_undefined=False, jin
     try:
         conditional = conditional.replace("\n", "\\n")
         result = safe_eval(conditional)
-        if result not in [ True, False ]:
+        if result not in [True, False]:
             raise errors.AnsibleError("Conditional expression must evaluate to True or False: %s" % conditional)
         return result
 
     except (NameError, SyntaxError):
         raise errors.AnsibleError("Could not evaluate the expression: (%s)" % conditional)
+
 
 def is_executable(path):
     '''is the given path executable?'''
@@ -222,8 +233,9 @@ def is_executable(path):
             or stat.S_IXGRP & os.stat(path)[stat.ST_MODE]
             or stat.S_IXOTH & os.stat(path)[stat.ST_MODE])
 
+
 def unfrackpath(path):
-    ''' 
+    '''
     returns a path that is free of symlinks, environment
     variables, relative path traversals and symbols (~)
     example:
@@ -231,7 +243,8 @@ def unfrackpath(path):
     '''
     return os.path.normpath(os.path.realpath(os.path.expandvars(os.path.expanduser(path))))
 
-def prepare_writeable_dir(tree,mode=0777):
+
+def prepare_writeable_dir(tree, mode=0777):
     ''' make sure a directory exists and is writeable '''
 
     # modify the mode to ensure the owner at least
@@ -251,6 +264,7 @@ def prepare_writeable_dir(tree,mode=0777):
         raise errors.AnsibleError("Cannot write to path %s" % tree)
     return tree
 
+
 def path_dwim(basedir, given):
     '''
     make relative paths work like folks expect.
@@ -262,6 +276,7 @@ def path_dwim(basedir, given):
         return os.path.abspath(os.path.expanduser(given))
     else:
         return os.path.abspath(os.path.join(basedir, given))
+
 
 def path_dwim_relative(original, dirname, source, playbook_base, check=True):
     ''' find one file in a directory one level up in a dir named dirname relative to current '''
@@ -281,12 +296,14 @@ def path_dwim_relative(original, dirname, source, playbook_base, check=True):
         return obvious_local_path
     if check:
         raise errors.AnsibleError("input file not found at %s or %s" % (source2, obvious_local_path))
-    return source2 # which does not exist
+    return source2  # which does not exist
+
 
 def json_loads(data):
     ''' parse a JSON string and return a data structure '''
 
     return json.loads(data)
+
 
 def parse_json(raw_data):
     ''' this version for module return data only '''
@@ -305,24 +322,25 @@ def parse_json(raw_data):
         try:
             tokens = shlex.split(data)
         except:
-            print "failed to parse json: "+ data
+            print "failed to parse json: " + data
             raise
 
         for t in tokens:
             if t.find("=") == -1:
                 raise errors.AnsibleError("failed to parse: %s" % orig_data)
-            (key,value) = t.split("=", 1)
+            (key, value) = t.split("=", 1)
             if key == 'changed' or 'failed':
-                if value.lower() in [ 'true', '1' ]:
+                if value.lower() in ['true', '1']:
                     value = True
-                elif value.lower() in [ 'false', '0' ]:
+                elif value.lower() in ['false', '0']:
                     value = False
             if key == 'rc':
                 value = int(value)
             results[key] = value
         if len(results.keys()) == 0:
-            return { "failed" : True, "parsed" : False, "msg" : orig_data }
+            return {"failed": True, "parsed": False, "msg": orig_data}
         return results
+
 
 def smush_braces(data):
     ''' smush Jinaj2 braces so unresolved templates like {{ foo }} don't get parsed weird by key=value code '''
@@ -332,13 +350,14 @@ def smush_braces(data):
         data = data.replace(' }}', '}}')
     return data
 
+
 def smush_ds(data):
     # things like key={{ foo }} are not handled by shlex.split well, so preprocess any YAML we load
     # so we do not have to call smush elsewhere
     if type(data) == list:
-        return [ smush_ds(x) for x in data ]
+        return [smush_ds(x) for x in data]
     elif type(data) == dict:
-        for (k,v) in data.items():
+        for (k, v) in data.items():
             data[k] = smush_ds(v)
         return data
     elif isinstance(data, basestring):
@@ -346,19 +365,21 @@ def smush_ds(data):
     else:
         return data
 
+
 def parse_yaml(data):
     ''' convert a yaml string to a data structure '''
     return smush_ds(yaml.safe_load(data))
 
+
 def process_common_errors(msg, probline, column):
-    replaced = probline.replace(" ","")
+    replaced = probline.replace(" ", "")
 
     if replaced.find(":{{") != -1 and replaced.find("}}") != -1:
         msg = msg + """
-This one looks easy to fix.  YAML thought it was looking for the start of a 
+This one looks easy to fix.  YAML thought it was looking for the start of a
 hash/dictionary and was confused to see a second "{".  Most likely this was
-meant to be an ansible template evaluation instead, so we have to give the 
-parser a small hint that we wanted a string instead. The solution here is to 
+meant to be an ansible template evaluation instead, so we have to give the
+parser a small hint that we wanted a string instead. The solution here is to
 just quote the entire value.
 
 For instance, if the original line was:
@@ -373,9 +394,9 @@ It should be written as:
 
     elif len(probline) and len(probline) >= column and probline[column] == ":" and probline.count(':') > 1:
         msg = msg + """
-This one looks easy to fix.  There seems to be an extra unquoted colon in the line 
-and this is confusing the parser. It was only expecting to find one free 
-colon. The solution is just add some quotes around the colon, or quote the 
+This one looks easy to fix.  There seems to be an extra unquoted colon in the line
+and this is confusing the parser. It was only expecting to find one free
+colon. The solution is just add some quotes around the colon, or quote the
 entire line after the first colon.
 
 For instance, if the original line was:
@@ -387,7 +408,7 @@ It can be written as:
     copy: src=file.txt dest='/path/filename:with_colon.txt'
 
 Or:
-    
+
     copy: 'src=file.txt dest=/path/filename:with_colon.txt'
 
 
@@ -403,12 +424,13 @@ Or:
                 match = True
             elif middle.startswith('"') and not middle.endswith('"'):
                 match = True
-            if len(middle) > 0 and middle[0] in [ '"', "'" ] and middle[-1] in [ '"', "'" ] and probline.count("'") > 2 or probline.count("'") > 2:
+            if len(middle) > 0 and middle[0] in ['"', "'"] and middle[-1] in ['"', "'"] and probline.count(
+                    "'") > 2 or probline.count("'") > 2:
                 unbalanced = True
             if match:
                 msg = msg + """
-This one looks easy to fix.  It seems that there is a value started 
-with a quote, and the YAML parser is expecting to see the line ended 
+This one looks easy to fix.  It seems that there is a value started
+with a quote, and the YAML parser is expecting to see the line ended
 with the same kind of quote.  For instance:
 
     when: "ok" in result.stdout
@@ -426,9 +448,9 @@ or equivalently:
 
             if unbalanced:
                 msg = msg + """
-We could be wrong, but this one looks like it might be an issue with 
-unbalanced quotes.  If starting a value with a quote, make sure the 
-line ends with the same set of quotes.  For instance this arbitrary 
+We could be wrong, but this one looks like it might be an issue with
+unbalanced quotes.  If starting a value with a quote, make sure the
+line ends with the same set of quotes.  For instance this arbitrary
 example:
 
     foo: "bad" "wolf"
@@ -442,11 +464,12 @@ Could be written as:
 
     return msg
 
+
 def process_yaml_error(exc, data, path=None):
     if hasattr(exc, 'problem_mark'):
         mark = exc.problem_mark
-        if mark.line -1 >= 0:
-            before_probline = data.split("\n")[mark.line-1]
+        if mark.line - 1 >= 0:
+            before_probline = data.split("\n")[mark.line - 1]
         else:
             before_probline = ''
         probline = data.split("\n")[mark.line]
@@ -459,7 +482,6 @@ Note: The error may actually appear before this position: line %s, column %s
 %s""" % (path, mark.line + 1, mark.column + 1, before_probline, probline, arrow)
 
         msg = process_common_errors(msg, probline, mark.column)
-
 
     else:
         # No problem markers means we have to throw a generic
@@ -482,6 +504,7 @@ def parse_yaml_from_file(path):
     except yaml.YAMLError, exc:
         process_yaml_error(exc, data, path)
 
+
 def parse_kv(args):
     ''' convert a string of key/value items to a dict '''
     options = {}
@@ -492,9 +515,10 @@ def parse_kv(args):
         #vargs = shlex.split(str(args), posix=True)
         for x in vargs:
             if x.find("=") != -1:
-                k, v = x.split("=",1)
-                options[k]=v
+                k, v = x.split("=", 1)
+                options[k] = v
     return options
+
 
 def merge_hash(a, b):
     ''' recursively merges hash b into a
@@ -515,6 +539,7 @@ def merge_hash(a, b):
 
     return result
 
+
 def md5s(data):
     ''' Return MD5 hex digest of data. '''
 
@@ -524,6 +549,7 @@ def md5s(data):
     except UnicodeEncodeError:
         digest.update(data.encode('utf-8'))
     return digest.hexdigest()
+
 
 def md5(filename):
     ''' Return MD5 hex digest of local file, or None if file is not present. '''
@@ -540,11 +566,13 @@ def md5(filename):
     infile.close()
     return digest.hexdigest()
 
+
 def default(value, function):
     ''' syntactic sugar around lazy evaluation of defaults '''
     if value is None:
         return function()
     return value
+
 
 def _gitinfo():
     ''' returns a string containing git branch, commit id and commit date '''
@@ -577,10 +605,12 @@ def _gitinfo():
             else:
                 offset = time.altzone
             result = "({0} {1}) last updated {2} (GMT {3:+04d})".format(branch, commit,
-                time.strftime("%Y/%m/%d %H:%M:%S", date), offset / -36)
+                                                                        time.strftime("%Y/%m/%d %H:%M:%S", date),
+                                                                        offset / -36)
     else:
         result = ''
     return result
+
 
 def version(prog):
     result = "{0} {1}".format(prog, __version__)
@@ -588,6 +618,7 @@ def version(prog):
     if gitinfo:
         result = result + " {0}".format(gitinfo)
     return result
+
 
 def getch():
     ''' read in a single character '''
@@ -600,6 +631,7 @@ def getch():
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
     return ch
 
+
 ####################################################################
 # option handling code for /usr/bin/ansible and ansible-playbook
 # below this line
@@ -611,57 +643,60 @@ class SortedOptParser(optparse.OptionParser):
         self.option_list.sort(key=operator.methodcaller('get_opt_string'))
         return optparse.OptionParser.format_help(self, formatter=None)
 
+
 def increment_debug(option, opt, value, parser):
     global VERBOSITY
     VERBOSITY += 1
 
+
 def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
-    async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, diff_opts=False):
+                async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, diff_opts=False):
     ''' create an options parser for any ansible script '''
 
     parser = SortedOptParser(usage, version=version("%prog"))
-    parser.add_option('-v','--verbose', default=False, action="callback",
-        callback=increment_debug, help="verbose mode (-vvv for more, -vvvv to enable connection debugging)")
+    parser.add_option('-v', '--verbose', default=False, action="callback",
+                      callback=increment_debug,
+                      help="verbose mode (-vvv for more, -vvvv to enable connection debugging)")
 
-    parser.add_option('-f','--forks', dest='forks', default=constants.DEFAULT_FORKS, type='int',
-        help="specify number of parallel processes to use (default=%s)" % constants.DEFAULT_FORKS)
+    parser.add_option('-f', '--forks', dest='forks', default=constants.DEFAULT_FORKS, type='int',
+                      help="specify number of parallel processes to use (default=%s)" % constants.DEFAULT_FORKS)
     parser.add_option('-i', '--inventory-file', dest='inventory',
-        help="specify inventory host file (default=%s)" % constants.DEFAULT_HOST_LIST,
-        default=constants.DEFAULT_HOST_LIST)
+                      help="specify inventory host file (default=%s)" % constants.DEFAULT_HOST_LIST,
+                      default=constants.DEFAULT_HOST_LIST)
     parser.add_option('-k', '--ask-pass', default=False, dest='ask_pass', action='store_true',
-        help='ask for SSH password')
+                      help='ask for SSH password')
     parser.add_option('--private-key', default=C.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
-        help='use this file to authenticate the connection')
+                      help='use this file to authenticate the connection')
     parser.add_option('-K', '--ask-sudo-pass', default=False, dest='ask_sudo_pass', action='store_true',
-        help='ask for sudo password')
+                      help='ask for sudo password')
     parser.add_option('--list-hosts', dest='listhosts', action='store_true',
-        help='outputs a list of matching hosts; does not execute anything else')
+                      help='outputs a list of matching hosts; does not execute anything else')
     parser.add_option('-M', '--module-path', dest='module_path',
-        help="specify path(s) to module library (default=%s)" % constants.DEFAULT_MODULE_PATH,
-        default=None)
+                      help="specify path(s) to module library (default=%s)" % constants.DEFAULT_MODULE_PATH,
+                      default=None)
 
     if subset_opts:
         parser.add_option('-l', '--limit', default=constants.DEFAULT_SUBSET, dest='subset',
-            help='further limit selected hosts to an additional pattern')
+                          help='further limit selected hosts to an additional pattern')
 
     parser.add_option('-T', '--timeout', default=constants.DEFAULT_TIMEOUT, type='int',
-        dest='timeout',
-        help="override the SSH timeout in seconds (default=%s)" % constants.DEFAULT_TIMEOUT)
+                      dest='timeout',
+                      help="override the SSH timeout in seconds (default=%s)" % constants.DEFAULT_TIMEOUT)
 
     if output_opts:
         parser.add_option('-o', '--one-line', dest='one_line', action='store_true',
-            help='condense output')
+                          help='condense output')
         parser.add_option('-t', '--tree', dest='tree', default=None,
-            help='log output to this directory')
+                          help='log output to this directory')
 
     if runas_opts:
         parser.add_option("-s", "--sudo", default=constants.DEFAULT_SUDO, action="store_true",
-            dest='sudo', help="run operations with sudo (nopasswd)")
+                          dest='sudo', help="run operations with sudo (nopasswd)")
         parser.add_option('-U', '--sudo-user', dest='sudo_user', help='desired sudo user (default=root)',
-            default=None)   # Can't default to root because we need to detect when this option was given
+                          default=None)   # Can't default to root because we need to detect when this option was given
         parser.add_option('-u', '--user', default=constants.DEFAULT_REMOTE_USER,
-            dest='remote_user',
-            help='connect as this user (default=%s)' % constants.DEFAULT_REMOTE_USER)
+                          dest='remote_user',
+                          help='connect as this user (default=%s)' % constants.DEFAULT_REMOTE_USER)
 
     if connect_opts:
         parser.add_option('-c', '--connection', dest='connection',
@@ -670,23 +705,23 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
 
     if async_opts:
         parser.add_option('-P', '--poll', default=constants.DEFAULT_POLL_INTERVAL, type='int',
-            dest='poll_interval',
-            help="set the poll interval if using -B (default=%s)" % constants.DEFAULT_POLL_INTERVAL)
+                          dest='poll_interval',
+                          help="set the poll interval if using -B (default=%s)" % constants.DEFAULT_POLL_INTERVAL)
         parser.add_option('-B', '--background', dest='seconds', type='int', default=0,
-            help='run asynchronously, failing after X seconds (default=N/A)')
+                          help='run asynchronously, failing after X seconds (default=N/A)')
 
     if check_opts:
         parser.add_option("-C", "--check", default=False, dest='check', action='store_true',
-            help="don't make any changes; instead, try to predict some of the changes that may occur"
-        )
+                          help="don't make any changes; instead, try to predict some of the changes that may occur"
+                          )
 
     if diff_opts:
         parser.add_option("-D", "--diff", default=False, dest='diff', action='store_true',
-            help="when changing (small) files and templates, show the differences in those files; works great with --check"
-        )
-
+                          help="when changing (small) files and templates, show the differences in those files; works great with --check"
+                          )
 
     return parser
+
 
 def ask_passwords(ask_pass=False, ask_sudo_pass=False):
     sshpass = None
@@ -703,6 +738,7 @@ def ask_passwords(ask_pass=False, ask_sudo_pass=False):
             sudopass = sshpass
 
     return (sshpass, sudopass)
+
 
 def do_encrypt(result, encrypt, salt_size=None, salt=None):
     if PASSLIB_AVAILABLE:
@@ -722,8 +758,8 @@ def do_encrypt(result, encrypt, salt_size=None, salt=None):
 
     return result
 
-def last_non_blank_line(buf):
 
+def last_non_blank_line(buf):
     all_lines = buf.splitlines()
     all_lines.reverse()
     for line in all_lines:
@@ -731,6 +767,7 @@ def last_non_blank_line(buf):
             return line
     # shouldn't occur unless there's no output
     return ""
+
 
 def filter_leading_non_json_lines(buf):
     '''
@@ -749,12 +786,14 @@ def filter_leading_non_json_lines(buf):
             filtered_lines.write(line + '\n')
     return filtered_lines.getvalue()
 
+
 def boolean(value):
     val = str(value)
-    if val.lower() in [ "true", "t", "y", "1", "yes" ]:
+    if val.lower() in ["true", "t", "y", "1", "yes"]:
         return True
     else:
         return False
+
 
 def compile_when_to_only_if(expression):
     '''
@@ -772,16 +811,16 @@ def compile_when_to_only_if(expression):
     # when: str $x != $y
     # when: jinja2_compare asdf  # implies {{ asdf }}
 
-    if type(expression) not in [ str, unicode ]:
+    if type(expression) not in [str, unicode]:
         raise errors.AnsibleError("invalid usage of when_ operator: %s" % expression)
     tokens = expression.split()
     if len(tokens) < 2:
         raise errors.AnsibleError("invalid usage of when_ operator: %s" % expression)
 
     # when_set / when_unset
-    if tokens[0] in [ 'set', 'unset' ]:
+    if tokens[0] in ['set', 'unset']:
         tcopy = tokens[1:]
-        for (i,t) in enumerate(tokens[1:]):
+        for (i, t) in enumerate(tokens[1:]):
             if t.find("$") != -1:
                 tcopy[i] = "is_%s('''%s''')" % (tokens[0], t)
             else:
@@ -789,9 +828,9 @@ def compile_when_to_only_if(expression):
         return " ".join(tcopy)
 
     # when_failed / when_changed
-    elif tokens[0] in [ 'failed', 'changed' ]:
+    elif tokens[0] in ['failed', 'changed']:
         tcopy = tokens[1:]
-        for (i,t) in enumerate(tokens[1:]):
+        for (i, t) in enumerate(tokens[1:]):
             if t.find("$") != -1:
                 tcopy[i] = "is_%s(%s)" % (tokens[0], t)
             else:
@@ -799,7 +838,7 @@ def compile_when_to_only_if(expression):
         return " ".join(tcopy)
 
     # when_integer / when_float / when_string
-    elif tokens[0] in [ 'integer', 'float', 'string' ]:
+    elif tokens[0] in ['integer', 'float', 'string']:
         cast = None
         if tokens[0] == 'integer':
             cast = 'int'
@@ -808,7 +847,8 @@ def compile_when_to_only_if(expression):
         elif tokens[0] == 'float':
             cast = 'float'
         tcopy = tokens[1:]
-        for (i,t) in enumerate(tokens[1:]):
+
+        for (i, t) in enumerate(tokens[1:]):
             #if re.search(t, r"^\w"):
                 # bare word will turn into Jinja2 so all the above
                 # casting is really not needed
@@ -821,9 +861,8 @@ def compile_when_to_only_if(expression):
         result = " ".join(tcopy)
         return result
 
-
     # when_boolean
-    elif tokens[0] in [ 'bool', 'boolean' ]:
+    elif tokens[0] in ['bool', 'boolean']:
         tcopy = tokens[1:]
         for (i, t) in enumerate(tcopy):
             if t.find("$") != -1:
@@ -835,6 +874,7 @@ def compile_when_to_only_if(expression):
         return " ".join(tokens)
     else:
         raise errors.AnsibleError("invalid usage of when_ operator: %s" % expression)
+
 
 def make_sudo_cmd(sudo_user, executable, cmd):
     """
@@ -855,12 +895,15 @@ def make_sudo_cmd(sudo_user, executable, cmd):
         prompt, sudo_user, executable or '$SHELL', pipes.quote('echo %s; %s' % (success_key, cmd)))
     return ('/bin/sh -c ' + pipes.quote(sudocmd), prompt, success_key)
 
+
 _TO_UNICODE_TYPES = (unicode, type(None))
+
 
 def to_unicode(value):
     if isinstance(value, _TO_UNICODE_TYPES):
         return value
     return value.decode("utf-8")
+
 
 def get_diff(diff):
     # called by --diff usage in playbook and runner via callbacks
@@ -887,18 +930,22 @@ def get_diff(diff):
                     after_header = "after: %s" % diff['after_header']
                 else:
                     after_header = 'after'
-                differ = difflib.unified_diff(to_unicode(diff['before']).splitlines(True), to_unicode(diff['after']).splitlines(True), before_header, after_header, '', '', 10)
+                differ = difflib.unified_diff(to_unicode(diff['before']).splitlines(True),
+                                              to_unicode(diff['after']).splitlines(True), before_header, after_header,
+                                              '', '', 10)
                 for line in list(differ):
                     ret.append(line)
             return u"".join(ret)
     except UnicodeDecodeError:
         return ">> the files are different, but the diff library cannot compare unicode strings"
 
+
 def is_list_of_strings(items):
     for x in items:
         if not isinstance(x, basestring):
             return False
     return True
+
 
 def safe_eval(str, locals=None, include_exceptions=False):
     '''
@@ -948,7 +995,6 @@ def safe_eval(str, locals=None, include_exceptions=False):
 
 
 def listify_lookup_plugin_terms(terms, basedir, inject):
-
     if isinstance(terms, basestring):
         # someone did:
         #    with_items: alist
@@ -975,9 +1021,10 @@ def listify_lookup_plugin_terms(terms, basedir, inject):
             return safe_eval(terms)
 
         if isinstance(terms, basestring):
-            terms = [ terms ]
+            terms = [terms]
 
     return terms
+
 
 def deprecated(msg, version):
     ''' used to print out a deprecation message.'''
@@ -992,6 +1039,7 @@ def deprecated(msg, version):
         display(new_msg, color='purple', stderr=True)
         deprecations[new_msg] = 1
 
+
 def warning(msg):
     new_msg = "\n[WARNING]: %s" % msg
     wrapped = textwrap.wrap(new_msg, 79)
@@ -1000,12 +1048,13 @@ def warning(msg):
         display(new_msg, color='bright purple', stderr=True)
         warns[new_msg] = 1
 
-def combine_vars(a, b):
 
+def combine_vars(a, b):
     if C.DEFAULT_HASH_BEHAVIOUR == "merge":
         return merge_hash(a, b)
     else:
         return dict(a.items() + b.items())
+
 
 def random_password(length=20, chars=C.DEFAULT_PASSWORD_CHARS):
     '''Return a random password string of length containing only chars.'''

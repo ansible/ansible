@@ -15,9 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible.utils import safe_eval
 import ansible.utils as utils
 import ansible.errors as errors
+
 
 def flatten(terms):
     ret = []
@@ -28,17 +28,15 @@ def flatten(terms):
             ret.append(term)
     return ret
 
-class LookupModule(object):
 
+class LookupModule(object):
     def __init__(self, basedir=None, **kwargs):
         self.basedir = basedir
 
     def run(self, terms, inject=None, **kwargs):
-        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
+        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
 
         if not isinstance(terms, list):
             raise errors.AnsibleError("with_items expects a list")
 
         return flatten(terms)
-
-

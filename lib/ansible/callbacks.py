@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import utils
 import sys
 import getpass
 import os
@@ -24,17 +23,19 @@ import random
 import fnmatch
 import tempfile
 import fcntl
+import logging
+
+import utils
 import constants
 from ansible.color import stringc
 
-import logging
+
 if constants.DEFAULT_LOG_PATH != '':
     path = constants.DEFAULT_LOG_PATH
 
     if (os.path.exists(path) and not os.access(path, os.W_OK)) and not os.access(os.path.dirname(path), os.W_OK):
         sys.stderr.write("log file at %s is not writeable, aborting\n" % path)
         sys.exit(1)
-
 
     logging.basicConfig(filename=path, level=logging.DEBUG, format='%(asctime)s %(name)s %(message)s')
     mypid = str(os.getpid())
@@ -43,9 +44,11 @@ if constants.DEFAULT_LOG_PATH != '':
 
 callback_plugins = []
 
+
 def load_callback_plugins():
     global callback_plugins
     callback_plugins = [x for x in utils.plugins.callback_loader.all()]
+
 
 def get_cowsay_info():
     if constants.ANSIBLE_NOCOWS:
@@ -62,7 +65,7 @@ def get_cowsay_info():
         # MacPorts path for cowsay
         cowsay = "/opt/local/bin/cowsay"
 
-    noncow = os.getenv("ANSIBLE_COW_SELECTION",None)
+    noncow = os.getenv("ANSIBLE_COW_SELECTION", None)
     if cowsay and noncow == 'random':
         cmd = subprocess.Popen([cowsay, "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (out, err) = cmd.communicate()
@@ -71,7 +74,9 @@ def get_cowsay_info():
         noncow = random.choice(cows)
     return (cowsay, noncow)
 
+
 cowsay, noncow = get_cowsay_info()
+
 
 def log_lockfile():
     tempdir = tempfile.gettempdir()
@@ -79,7 +84,9 @@ def log_lockfile():
     path = os.path.join(tempdir, ".ansible-lock.%s" % uid)
     return path
 
+
 LOG_LOCK = open(log_lockfile(), 'w')
+
 
 def log_flock(runner):
     if runner is not None:
@@ -108,17 +115,20 @@ def log_unflock(runner):
         except OSError:
             pass
 
+
 def set_play(callback, play):
     ''' used to notify callback plugins of context '''
     callback.play = play
     for callback_plugin in callback_plugins:
         callback_plugin.play = play
 
+
 def set_task(callback, task):
     ''' used to notify callback plugins of context '''
     callback.task = task
     for callback_plugin in callback_plugins:
         callback_plugin.task = task
+
 
 def display(msg, color=None, stderr=False, screen_only=False, log_only=False, runner=None):
     # prevent a very rare case of interlaced multiprocess I/O
@@ -134,12 +144,12 @@ def display(msg, color=None, stderr=False, screen_only=False, log_only=False, ru
                 print msg2.encode('utf-8')
         else:
             try:
-                print >>sys.stderr, msg2
+                print >> sys.stderr, msg2
             except UnicodeEncodeError:
-                print >>sys.stderr, msg2.encode('utf-8')
+                print >> sys.stderr, msg2.encode('utf-8')
     if constants.DEFAULT_LOG_PATH != '':
         while msg.startswith("\n"):
-            msg = msg.replace("\n","")
+            msg = msg.replace("\n", "")
         if not screen_only:
             if color == 'red':
                 logger.error(msg)
@@ -147,8 +157,8 @@ def display(msg, color=None, stderr=False, screen_only=False, log_only=False, ru
                 logger.info(msg)
     log_unflock(runner)
 
-def call_callback_module(method_name, *args, **kwargs):
 
+def call_callback_module(method_name, *args, **kwargs):
     for callback_plugin in callback_plugins:
         # a plugin that set self.disabled to True will not be called
         # see osx_say.py example for such a plugin
@@ -162,14 +172,18 @@ def call_callback_module(method_name, *args, **kwargs):
             if method is not None:
                 method(*args, **kwargs)
 
+
 def vv(msg, host=None):
     return verbose(msg, host=host, caplevel=1)
+
 
 def vvv(msg, host=None):
     return verbose(msg, host=host, caplevel=2)
 
+
 def vvvv(msg, host=None):
     return verbose(msg, host=host, caplevel=3)
+
 
 def verbose(msg, host=None, caplevel=2):
     if utils.VERBOSITY > caplevel:
@@ -178,31 +192,32 @@ def verbose(msg, host=None, caplevel=2):
         else:
             display("<%s> %s" % (host, msg), color='blue')
 
+
 class AggregateStats(object):
     ''' holds stats about per-host activity during playbook runs '''
 
     def __init__(self):
 
-        self.processed   = {}
-        self.failures    = {}
-        self.ok          = {}
-        self.dark        = {}
-        self.changed     = {}
-        self.skipped     = {}
+        self.processed = {}
+        self.failures = {}
+        self.ok = {}
+        self.dark = {}
+        self.changed = {}
+        self.skipped = {}
 
     def _increment(self, what, host):
         ''' helper function to bump a statistic '''
 
         self.processed[host] = 1
         prev = (getattr(self, what)).get(host, 0)
-        getattr(self, what)[host] = prev+1
+        getattr(self, what)[host] = prev + 1
 
     def compute(self, runner_results, setup=False, poll=False, ignore_errors=False):
         ''' walk through all results and increment stats '''
 
         for (host, value) in runner_results.get('contacted', {}).iteritems():
-            if not ignore_errors and (('failed' in value and bool(value['failed'])) or
-                ('failed_when_result' in value and [value['failed_when_result']] or ['rc' in value and value['rc'] != 0])[0]):
+            if not ignore_errors and (('failed' in value and bool(value['failed']))
+                                      or ('failed_when_result' in value and [value['failed_when_result']] or ['rc' in value and value['rc'] != 0])[0]):
                 self._increment('failures', host)
             elif 'skipped' in value and bool(value['skipped']):
                 self._increment('skipped', host)
@@ -217,36 +232,35 @@ class AggregateStats(object):
         for (host, value) in runner_results.get('dark', {}).iteritems():
             self._increment('dark', host)
 
-
     def summarize(self, host):
         ''' return information about a particular host '''
 
         return dict(
-            ok          = self.ok.get(host, 0),
-            failures    = self.failures.get(host, 0),
-            unreachable = self.dark.get(host,0),
-            changed     = self.changed.get(host, 0),
-            skipped     = self.skipped.get(host, 0)
+            ok=self.ok.get(host, 0),
+            failures=self.failures.get(host, 0),
+            unreachable=self.dark.get(host, 0),
+            changed=self.changed.get(host, 0),
+            skipped=self.skipped.get(host, 0)
         )
 
 ########################################################################
+
 
 def regular_generic_msg(hostname, result, oneline, caption):
     ''' output on the result of a module run that is not command '''
 
     if not oneline:
-        return "%s | %s >> %s\n" % (hostname, caption, utils.jsonify(result,format=True))
+        return "%s | %s >> %s\n" % (hostname, caption, utils.jsonify(result, format=True))
     else:
         return "%s | %s >> %s\n" % (hostname, caption, utils.jsonify(result))
 
 
 def banner_cowsay(msg):
-
     if msg.find(": [") != -1:
-        msg = msg.replace("[","")
+        msg = msg.replace("[", "")
         if msg.endswith("]"):
             msg = msg[:-1]
-    runcmd = [cowsay,"-W", "60"]
+    runcmd = [cowsay, "-W", "60"]
     if noncow:
         runcmd.append('-f')
         runcmd.append(noncow)
@@ -255,13 +269,14 @@ def banner_cowsay(msg):
     (out, err) = cmd.communicate()
     return "%s\n" % out
 
-def banner_normal(msg):
 
+def banner_normal(msg):
     width = 78 - len(msg)
     if width < 3:
         width = 3
     filler = "*" * width
     return "\n%s %s " % (msg, filler)
+
 
 def banner(msg):
     if cowsay:
@@ -272,19 +287,20 @@ def banner(msg):
             return banner_normal(msg)
     return banner_normal(msg)
 
+
 def command_generic_msg(hostname, result, oneline, caption):
     ''' output the result of a command run '''
 
-    rc     = result.get('rc', '0')
-    stdout = result.get('stdout','')
+    rc = result.get('rc', '0')
+    stdout = result.get('stdout', '')
     stderr = result.get('stderr', '')
-    msg    = result.get('msg', '')
+    msg = result.get('msg', '')
 
     hostname = hostname.encode('utf-8')
-    caption  = caption.encode('utf-8')
+    caption = caption.encode('utf-8')
 
     if not oneline:
-        buf = "%s | %s | rc=%s >>\n" % (hostname, caption, result.get('rc',0))
+        buf = "%s | %s | rc=%s >>\n" % (hostname, caption, result.get('rc', 0))
         if stdout:
             buf += stdout
         if stderr:
@@ -298,12 +314,13 @@ def command_generic_msg(hostname, result, oneline, caption):
         else:
             return "%s | %s | rc=%s | (stdout) %s" % (hostname, caption, rc, stdout)
 
+
 def host_report_msg(hostname, module_name, result, oneline):
     ''' summarize the JSON results for a particular host '''
 
     failed = utils.is_failed(result)
     msg = ('', None)
-    if module_name in [ 'command', 'shell', 'raw' ] and 'ansible_job_id' not in result and result.get('parsed',True) != False:
+    if module_name in ['command', 'shell', 'raw'] and 'ansible_job_id' not in result and result.get('parsed', True) is not False:
         if not failed:
             msg = (command_generic_msg(hostname, result, oneline, 'success'), 'green')
         else:
@@ -316,6 +333,7 @@ def host_report_msg(hostname, module_name, result, oneline):
     return msg
 
 ###############################################
+
 
 class DefaultRunnerCallbacks(object):
     ''' no-op callbacks for API usage of Runner() if no callbacks are specified '''
@@ -355,6 +373,7 @@ class DefaultRunnerCallbacks(object):
 
 ########################################################################
 
+
 class CliRunnerCallbacks(DefaultRunnerCallbacks):
     ''' callbacks for use by /usr/bin/ansible '''
 
@@ -364,7 +383,7 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
         self._async_notified = {}
 
     def on_failed(self, host, res, ignore_errors=False):
-        self._on_any(host,res)
+        self._on_any(host, res)
         super(CliRunnerCallbacks, self).on_failed(host, res, ignore_errors=ignore_errors)
 
     def on_ok(self, host, res):
@@ -372,17 +391,17 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
         res.pop('verbose_override', None)
         res.pop('verbose_always', None)
 
-        self._on_any(host,res)
+        self._on_any(host, res)
         super(CliRunnerCallbacks, self).on_ok(host, res)
 
     def on_unreachable(self, host, res):
         if type(res) == dict:
-            res = res.get('msg','')
+            res = res.get('msg', '')
         display("%s | FAILED => %s" % (host, res), stderr=True, color='red', runner=self.runner)
         if self.options.tree:
             utils.write_tree_file(
                 self.options.tree, host,
-                utils.jsonify(dict(failed=True, msg=res),format=True)
+                utils.jsonify(dict(failed=True, msg=res), format=True)
             )
         super(CliRunnerCallbacks, self).on_unreachable(host, res)
 
@@ -407,12 +426,12 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
         super(CliRunnerCallbacks, self).on_async_poll(host, res, jid, clock)
 
     def on_async_ok(self, host, res, jid):
-        display("<job %s> finished on %s => %s"%(jid, host, utils.jsonify(res,format=True)), runner=self.runner)
+        display("<job %s> finished on %s => %s" % (jid, host, utils.jsonify(res, format=True)), runner=self.runner)
         super(CliRunnerCallbacks, self).on_async_ok(host, res, jid)
 
     def on_async_failed(self, host, res, jid):
-        display("<job %s> FAILED on %s => %s"%(jid, host, utils.jsonify(res,format=True)), color='red', stderr=True, runner=self.runner)
-        super(CliRunnerCallbacks, self).on_async_failed(host,res,jid)
+        display("<job %s> FAILED on %s => %s" % (jid, host, utils.jsonify(res, format=True)), color='red', stderr=True, runner=self.runner)
+        super(CliRunnerCallbacks, self).on_async_failed(host, res, jid)
 
     def _on_any(self, host, result):
         result2 = result.copy()
@@ -420,13 +439,14 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
         (msg, color) = host_report_msg(host, self.options.module_name, result2, self.options.one_line)
         display(msg, color=color, runner=self.runner)
         if self.options.tree:
-            utils.write_tree_file(self.options.tree, host, utils.jsonify(result2,format=True))
+            utils.write_tree_file(self.options.tree, host, utils.jsonify(result2, format=True))
 
     def on_file_diff(self, host, diff):
         display(utils.get_diff(diff), runner=self.runner)
         super(CliRunnerCallbacks, self).on_file_diff(host, diff)
 
 ########################################################################
+
 
 class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
     ''' callbacks used for Runner() from /usr/bin/ansible-playbook '''
@@ -453,7 +473,6 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
 
     def on_failed(self, host, results, ignore_errors=False):
 
-
         results2 = results.copy()
         results2.pop('invocation', None)
 
@@ -461,7 +480,7 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         parsed = results2.get('parsed', True)
         module_msg = ''
         if not parsed:
-            module_msg  = results2.pop('msg', None)
+            module_msg = results2.pop('msg', None)
         stderr = results2.pop('stderr', None)
         stdout = results2.pop('stdout', None)
         returned_msg = results2.pop('msg', None)
@@ -498,8 +517,7 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
 
         # show verbose output for non-setup module results if --verbose is used
         msg = ''
-        if (not self.verbose or host_result2.get("verbose_override",None) is not
-                None) and not verbose_always:
+        if (not self.verbose or host_result2.get("verbose_override", None) is not None) and not verbose_always:
             if item:
                 msg = "%s: [%s] => (item=%s)" % (ok_or_changed, host, item)
             else:
@@ -551,25 +569,26 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
             self._async_notified[jid] = clock + 1
         if self._async_notified[jid] > clock:
             self._async_notified[jid] = clock
-            msg = "<job %s> polling, %ss remaining"%(jid, clock)
+            msg = "<job %s> polling, %ss remaining" % (jid, clock)
             display(msg, color='cyan', runner=self.runner)
-        super(PlaybookRunnerCallbacks, self).on_async_poll(host,res,jid,clock)
+        super(PlaybookRunnerCallbacks, self).on_async_poll(host, res, jid, clock)
 
     def on_async_ok(self, host, res, jid):
-        msg = "<job %s> finished on %s"%(jid, host)
+        msg = "<job %s> finished on %s" % (jid, host)
         display(msg, color='cyan', runner=self.runner)
         super(PlaybookRunnerCallbacks, self).on_async_ok(host, res, jid)
 
     def on_async_failed(self, host, res, jid):
         msg = "<job %s> FAILED on %s" % (jid, host)
         display(msg, color='red', stderr=True, runner=self.runner)
-        super(PlaybookRunnerCallbacks, self).on_async_failed(host,res,jid)
+        super(PlaybookRunnerCallbacks, self).on_async_failed(host, res, jid)
 
     def on_file_diff(self, host, diff):
         display(utils.get_diff(diff), runner=self.runner)
         super(PlaybookRunnerCallbacks, self).on_file_diff(host, diff)
 
 ########################################################################
+
 
 class PlaybookCallbacks(object):
     ''' playbook.py callbacks used by /usr/bin/ansible-playbook '''
@@ -607,12 +626,12 @@ class PlaybookCallbacks(object):
                 if actual_name == self.start_at or fnmatch.fnmatch(actual_name, self.start_at):
                     del self.start_at
 
-        if hasattr(self, 'start_at'): # we still have start_at so skip the task
+        if hasattr(self, 'start_at'):  # we still have start_at so skip the task
             self.skip_task = True
         elif hasattr(self, 'step') and self.step:
             msg = ('Perform task: %s (y/n/c): ' % name).encode(sys.stdout.encoding)
             resp = raw_input(msg)
-            if resp.lower() in ['y','yes']:
+            if resp.lower() in ['y', 'yes']:
                 self.skip_task = False
                 display(banner(msg))
             elif resp.lower() in ['c', 'continue']:
@@ -641,7 +660,6 @@ class PlaybookCallbacks(object):
                 return getpass.getpass(prompt)
             return raw_input(prompt)
 
-
         if confirm:
             while True:
                 result = prompt(msg, private)
@@ -656,13 +674,11 @@ class PlaybookCallbacks(object):
         if not result and default:
             result = default
 
-
         if encrypt:
-            result = utils.do_encrypt(result,encrypt,salt_size,salt)
+            result = utils.do_encrypt(result, encrypt, salt_size, salt)
 
-        call_callback_module( 'playbook_on_vars_prompt', varname, private=private, prompt=prompt,
-                               encrypt=encrypt, confirm=confirm, salt_size=salt_size, salt=None, default=default
-                            )
+        call_callback_module('playbook_on_vars_prompt', varname, private=private, prompt=prompt,
+                             encrypt=encrypt, confirm=confirm, salt_size=salt_size, salt=None, default=default)
 
         return result
 
@@ -686,5 +702,3 @@ class PlaybookCallbacks(object):
 
     def on_stats(self, stats):
         call_callback_module('playbook_on_stats', stats)
-
-

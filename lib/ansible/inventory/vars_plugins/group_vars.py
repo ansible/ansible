@@ -23,14 +23,15 @@ from ansible import errors
 from ansible import utils
 import ansible.constants as C
 
+
 def _load_vars(basepath, results):
     """
     Load variables from any potential yaml filename combinations of basepath,
     returning result.
     """
 
-    paths_to_check = [ "".join([basepath, ext]) 
-                       for ext in C.YAML_FILENAME_EXTENSIONS ]
+    paths_to_check = ["".join([basepath, ext])
+                      for ext in C.YAML_FILENAME_EXTENSIONS]
 
     found_paths = []
 
@@ -39,15 +40,16 @@ def _load_vars(basepath, results):
         if found:
             found_paths.append(path)
 
-
     # disallow the potentially confusing situation that there are multiple
     # variable files for the same name. For example if both group_vars/all.yml
     # and group_vars/all.yaml
     if len(found_paths) > 1:
         raise errors.AnsibleError("Multiple variable files found. "
-            "There should only be one. %s" % ( found_paths, ))
+                                  "There should only be one. %s" % (
+                                      found_paths, ))
 
     return results
+
 
 def _load_vars_from_path(path, results):
     """
@@ -65,17 +67,18 @@ def _load_vars_from_path(path, results):
         # most common case is that nothing exists at that path.
         if err.errno == errno.ENOENT:
             return False, results
-        # otherwise this is a condition we should report to the user
+            # otherwise this is a condition we should report to the user
         raise errors.AnsibleError(
-            "%s is not accessible: %s." 
-            " Please check its permissions." % ( path, err.strerror))
+            "%s is not accessible: %s."
+            " Please check its permissions." % (path, err.strerror))
 
     # symbolic link
     if stat.S_ISLNK(pathstat.st_mode):
         try:
             target = os.readlink(path)
         except os.error, err2:
-            raise errors.AnsibleError("The symbolic link at %s "
+            raise errors.AnsibleError(
+                "The symbolic link at %s "
                 "is not readable: %s.  Please check its permissions."
                 % (path, err2.strerror, ))
         # follow symbolic link chains by recursing, so we repeat the same
@@ -103,7 +106,9 @@ def _load_vars_from_path(path, results):
     # something else? could be a fifo, socket, device, etc.
     else:
         raise errors.AnsibleError("Expected a variable file or directory "
-            "but found a non-file object at path %s" % (path, ))
+                                  "but found a non-file object at path %s" % (
+                                      path, ))
+
 
 def _load_vars_from_folder(folder_path, results):
     """
@@ -116,21 +121,20 @@ def _load_vars_from_folder(folder_path, results):
         names = os.listdir(folder_path)
     except os.error, err:
         raise errors.AnsibleError(
-            "This folder cannot be listed: %s: %s." 
-             % ( folder_path, err.strerror))
-        
+            "This folder cannot be listed: %s: %s."
+            % (folder_path, err.strerror))
+
     # evaluate files in a stable order rather than whatever order the
     # filesystem lists them.
-    names.sort() 
+    names.sort()
 
     paths = [os.path.join(folder_path, name) for name in names]
     for path in paths:
         _found, results = _load_vars_from_path(path, results)
     return results
 
-            
-class VarsModule(object):
 
+class VarsModule(object):
     """
     Loads variables from group_vars/<groupname> and host_vars/<hostname> in directories parallel
     to the inventory base directory or in the same directory as the playbook.  Variables in the playbook
@@ -149,21 +153,21 @@ class VarsModule(object):
 
         inventory = self.inventory
         basedir = inventory.playbook_basedir()
-        if basedir is not None: 
+        if basedir is not None:
             basedir = os.path.abspath(basedir)
         self.pb_basedir = basedir
 
         # sort groups by depth so deepest groups can override the less deep ones
-        groupz = sorted(inventory.groups_for_host(host.name), key=lambda g: g.depth)
-        groups = [ g.name for g in groupz ]
+        groupz = sorted(inventory.groups_for_host(host.name),
+                        key=lambda g: g.depth)
+        groups = [g.name for g in groupz]
         inventory_basedir = inventory.basedir()
 
         results = {}
         scan_pass = 0
 
         # look in both the inventory base directory and the playbook base directory
-        for basedir in [ inventory_basedir, self.pb_basedir ]:
-
+        for basedir in [inventory_basedir, self.pb_basedir]:
 
             # this can happen from particular API usages, particularly if not run
             # from /usr/bin/ansible-playbook
@@ -191,4 +195,3 @@ class VarsModule(object):
 
         # all done, results is a dictionary of variables for this particular host.
         return results
-

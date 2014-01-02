@@ -17,13 +17,14 @@
 
 from ansible import utils
 
+
 class ReturnData(object):
     ''' internal return class for runner execute methods, not part of public API signature '''
 
-    __slots__ = [ 'result', 'comm_ok', 'host', 'diff', 'flags' ]
+    __slots__ = ['result', 'comm_ok', 'host', 'diff', 'flags']
 
-    def __init__(self, conn=None, host=None, result=None, 
-        comm_ok=True, diff=dict(), flags=None):
+    def __init__(self, conn=None, host=None, result=None,
+                 comm_ok=True, diff=dict(), flags=None):
 
         # which host is this ReturnData about?
         if conn is not None:
@@ -42,9 +43,8 @@ class ReturnData(object):
         # changes made to particular files
         self.diff = diff
 
-        if type(self.result) in [ str, unicode ]:
+        if type(self.result) in [str, unicode]:
             self.result = utils.parse_json(self.result)
-
 
         if self.host is None:
             raise Exception("host not set")
@@ -59,5 +59,8 @@ class ReturnData(object):
         return self.comm_ok
 
     def is_successful(self):
-        return self.comm_ok and (self.result.get('failed', False) == False) and ('failed_when_result' in self.result and [not self.result['failed_when_result']] or [self.result.get('rc',0) == 0])[0]
-
+        return self.comm_ok \
+            and (self.result.get('failed', False) is False) \
+            and ('failed_when_result' in self.result
+                 and [not self.result['failed_when_result']]
+                 or [self.result.get('rc', 0) == 0])[0]

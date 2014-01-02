@@ -16,25 +16,24 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-
-from ansible import utils
-import ansible.utils.template as template
-from ansible import errors
-from ansible.runner.return_data import ReturnData
 import base64
 import stat
 import tempfile
 import pipes
 
+from ansible import utils
+import ansible.utils.template as template
+from ansible.runner.return_data import ReturnData
+
 ## fixes https://github.com/ansible/ansible/issues/3518
 # http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
 import sys
+
 reload(sys)
 sys.setdefaultencoding("utf8")
 
 
 class ActionModule(object):
-
     TRANSFERS_FILES = True
 
     def __init__(self, runner):
@@ -48,17 +47,17 @@ class ActionModule(object):
         if complex_args:
             options.update(complex_args)
         options.update(utils.parse_kv(module_args))
-        source  = options.get('src', None)
+        source = options.get('src', None)
         content = options.get('content', None)
-        dest    = options.get('dest', None)
-        raw     = utils.boolean(options.get('raw', 'no'))
-        force   = utils.boolean(options.get('force', 'yes'))
+        dest = options.get('dest', None)
+        raw = utils.boolean(options.get('raw', 'no'))
+        force = utils.boolean(options.get('force', 'yes'))
 
         if (source is None and content is None and not 'first_available_file' in inject) or dest is None:
-            result=dict(failed=True, msg="src (or content) and dest are required")
+            result = dict(failed=True, msg="src (or content) and dest are required")
             return ReturnData(conn=conn, result=result)
         elif (source is not None or 'first_available_file' in inject) and content is not None:
-            result=dict(failed=True, msg="src and content are mutually exclusive")
+            result = dict(failed=True, msg="src and content are mutually exclusive")
             return ReturnData(conn=conn, result=result)
 
         source_trailing_slash = False
@@ -70,17 +69,17 @@ class ActionModule(object):
         if 'first_available_file' in inject:
             found = False
             for fn in inject.get('first_available_file'):
-                fn_orig = fn
                 fnt = template.template(self.runner.basedir, fn, inject)
                 fnd = utils.path_dwim(self.runner.basedir, fnt)
                 if not os.path.exists(fnd) and '_original_file' in inject:
-                    fnd = utils.path_dwim_relative(inject['_original_file'], 'files', fnt, self.runner.basedir, check=False)
+                    fnd = utils.path_dwim_relative(inject['_original_file'], 'files', fnt, self.runner.basedir,
+                                                   check=False)
                 if os.path.exists(fnd):
                     source = fnd
                     found = True
                     break
             if not found:
-                results=dict(failed=True, msg="could not find src in first_available_file list")
+                results = dict(failed=True, msg="could not find src in first_available_file list")
                 return ReturnData(conn=conn, result=results)
         elif content is not None:
             fd, tmp_content = tempfile.mkstemp()
@@ -99,7 +98,6 @@ class ActionModule(object):
                 source = utils.path_dwim_relative(inject['_original_file'], 'files', source, self.runner.basedir)
             else:
                 source = utils.path_dwim(self.runner.basedir, source)
-
 
         source_files = []
         if os.path.isdir(source):
@@ -134,7 +132,7 @@ class ActionModule(object):
             local_md5 = utils.md5(source_full)
 
             if local_md5 is None:
-                result=dict(failed=True, msg="could not find src=%s" % source_full)
+                result = dict(failed=True, msg="could not find src=%s" % source_full)
                 return ReturnData(conn=conn, result=result)
 
             # This is kind of optimization - if user told us destination is
@@ -159,7 +157,6 @@ class ActionModule(object):
             if remote_md5 != '1' and not force:
                 continue
 
-            exec_rc = None
             if local_md5 != remote_md5:
                 # Assume we either really change file or error out
                 changed = True
@@ -176,7 +173,6 @@ class ActionModule(object):
                     changed = True
                     module_result = dict(changed=True)
                     continue
-
 
                 # transfer the file to a remote tmp location
                 tmp_src = tmp + 'source'
@@ -205,8 +201,10 @@ class ActionModule(object):
                 # we pass dest only to make sure it includes trailing slash
                 # in case of recursive copy
                 module_args_tmp = "%s src=%s dest=%s original_basename=%s" % (module_args,
-                                  pipes.quote(tmp_src), pipes.quote(dest), pipes.quote(source_rel))
-                module_return = self.runner._execute_module(conn, tmp, 'copy', module_args_tmp, inject=inject, complex_args=complex_args)
+                                                                              pipes.quote(tmp_src), pipes.quote(dest),
+                                                                              pipes.quote(source_rel))
+                module_return = self.runner._execute_module(conn, tmp, 'copy', module_args_tmp, inject=inject,
+                                                            complex_args=complex_args)
 
             else:
                 # no need to transfer the file, already correct md5, but still need to call
@@ -222,15 +220,16 @@ class ActionModule(object):
                     # don't send down raw=no
                     module_args.pop('raw')
                 module_args_tmp = "%s src=%s original_basename=%s" % (module_args,
-                                  pipes.quote(tmp_src), pipes.quote(source_rel))
+                                                                      pipes.quote(tmp_src), pipes.quote(source_rel))
                 if self.runner.noop_on_check(inject):
                     module_args_tmp = "%s CHECKMODE=True" % module_args_tmp
-                module_return = self.runner._execute_module(conn, tmp, 'file', module_args_tmp, inject=inject, complex_args=complex_args)
+                module_return = self.runner._execute_module(conn, tmp, 'file', module_args_tmp, inject=inject,
+                                                            complex_args=complex_args)
 
             module_result = module_return.result
-            if module_result.get('failed') == True:
+            if module_result.get('failed'):
                 return module_return
-            if module_result.get('changed') == True:
+            if module_result.get('changed'):
                 changed = True
 
         # TODO: Support detailed status/diff for multiple files
@@ -244,7 +243,8 @@ class ActionModule(object):
             return ReturnData(conn=conn, result=result)
 
     def _get_diff_data(self, conn, tmp, inject, destination, source):
-        peek_result = self.runner._execute_module(conn, tmp, 'file', "path=%s diff_peek=1" % destination, inject=inject, persist_files=True)
+        peek_result = self.runner._execute_module(conn, tmp, 'file', "path=%s diff_peek=1" % destination, inject=inject,
+                                                  persist_files=True)
 
         if not peek_result.is_successful():
             return {}
@@ -257,7 +257,8 @@ class ActionModule(object):
         elif peek_result.result['size'] > utils.MAX_FILE_SIZE_FOR_DIFF:
             diff['dst_larger'] = utils.MAX_FILE_SIZE_FOR_DIFF
         else:
-            dest_result = self.runner._execute_module(conn, tmp, 'slurp', "path=%s" % destination, inject=inject, persist_files=True)
+            dest_result = self.runner._execute_module(conn, tmp, 'slurp', "path=%s" % destination, inject=inject,
+                                                      persist_files=True)
             if 'content' in dest_result.result:
                 dest_contents = dest_result.result['content']
                 if dest_result.result['encoding'] == 'base64':
@@ -280,7 +281,7 @@ class ActionModule(object):
             diff['after'] = src.read()
 
         return diff
-    
+
     def _result_key_merge(self, options, results):
         # add keys to file module results to mimic copy
         if 'path' in results.result and 'dest' not in results.result:

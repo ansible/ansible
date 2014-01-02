@@ -17,16 +17,15 @@
 
 import os
 import os.path
-import sys
 import glob
 import imp
 from ansible import constants as C
-from ansible import errors
 
 MODULE_CACHE = {}
 PATH_CACHE = {}
 PLUGIN_PATH_CACHE = {}
 _basedirs = []
+
 
 def push_basedir(basedir):
     # avoid pushing the same absolute dir more than once
@@ -34,8 +33,8 @@ def push_basedir(basedir):
     if basedir not in _basedirs:
         _basedirs.insert(0, basedir)
 
-class PluginLoader(object):
 
+class PluginLoader(object):
     '''
     PluginLoader loads plugins from the configured plugin directories.
 
@@ -46,11 +45,11 @@ class PluginLoader(object):
 
     def __init__(self, class_name, package, config, subdir, aliases={}):
 
-        self.class_name         = class_name
-        self.package            = package
-        self.config             = config
-        self.subdir             = subdir
-        self.aliases            = aliases
+        self.class_name = class_name
+        self.package = package
+        self.config = config
+        self.subdir = subdir
+        self.aliases = aliases
 
         if not class_name in MODULE_CACHE:
             MODULE_CACHE[class_name] = {}
@@ -59,8 +58,8 @@ class PluginLoader(object):
         if not class_name in PLUGIN_PATH_CACHE:
             PLUGIN_PATH_CACHE[class_name] = {}
 
-        self._module_cache      = MODULE_CACHE[class_name]
-        self._paths             = PATH_CACHE[class_name]
+        self._module_cache = MODULE_CACHE[class_name]
+        self._paths = PATH_CACHE[class_name]
         self._plugin_path_cache = PLUGIN_PATH_CACHE[class_name]
 
         self._extra_dirs = []
@@ -88,7 +87,7 @@ class PluginLoader(object):
             paths.append(self.package_path)
             return paths
         else:
-            return [ self.package_path ]
+            return [self.package_path]
 
     def _get_paths(self):
         ''' Return a list of paths to search for plugins in '''
@@ -108,14 +107,14 @@ class PluginLoader(object):
                 if fullpath not in ret:
                     ret.append(fullpath)
 
-        # look in any configured plugin paths, allow one level deep for subcategories 
+        # look in any configured plugin paths, allow one level deep for subcategories
         configured_paths = self.config.split(os.pathsep)
         for path in configured_paths:
             path = os.path.abspath(os.path.expanduser(path))
             contents = glob.glob("%s/*" % path)
             for c in contents:
                 if os.path.isdir(c) and c not in ret:
-                    ret.append(c)       
+                    ret.append(c)
             if path not in ret:
                 ret.append(path)
 
@@ -125,7 +124,6 @@ class PluginLoader(object):
         self._paths = ret
 
         return ret
-
 
     def add_directory(self, directory, with_subdir=False):
         ''' Adds an additional directory to the search path '''
@@ -177,7 +175,7 @@ class PluginLoader(object):
         return getattr(self._module_cache[path], self.class_name)(*args, **kwargs)
 
     def all(self, *args, **kwargs):
-        ''' instantiates all plugins with the same arguments '''       
+        ''' instantiates all plugins with the same arguments '''
 
         for i in self._get_paths():
             matches = glob.glob(os.path.join(i, "*.py"))
@@ -190,54 +188,53 @@ class PluginLoader(object):
                     self._module_cache[path] = imp.load_source('.'.join([self.package, name]), path)
                 yield getattr(self._module_cache[path], self.class_name)(*args, **kwargs)
 
+
 action_loader = PluginLoader(
-    'ActionModule',   
+    'ActionModule',
     'ansible.runner.action_plugins',
     C.DEFAULT_ACTION_PLUGIN_PATH,
     'action_plugins'
 )
 
 callback_loader = PluginLoader(
-    'CallbackModule', 
-    'ansible.callback_plugins', 
-    C.DEFAULT_CALLBACK_PLUGIN_PATH, 
+    'CallbackModule',
+    'ansible.callback_plugins',
+    C.DEFAULT_CALLBACK_PLUGIN_PATH,
     'callback_plugins'
 )
 
 connection_loader = PluginLoader(
-    'Connection', 
-    'ansible.runner.connection_plugins', 
-    C.DEFAULT_CONNECTION_PLUGIN_PATH, 
-    'connection_plugins', 
+    'Connection',
+    'ansible.runner.connection_plugins',
+    C.DEFAULT_CONNECTION_PLUGIN_PATH,
+    'connection_plugins',
     aliases={'paramiko': 'paramiko_ssh'}
 )
 
 module_finder = PluginLoader(
-    '', 
-    '', 
-    C.DEFAULT_MODULE_PATH, 
+    '',
+    '',
+    C.DEFAULT_MODULE_PATH,
     'library'
 )
 
 lookup_loader = PluginLoader(
-    'LookupModule',   
-    'ansible.runner.lookup_plugins', 
-    C.DEFAULT_LOOKUP_PLUGIN_PATH, 
+    'LookupModule',
+    'ansible.runner.lookup_plugins',
+    C.DEFAULT_LOOKUP_PLUGIN_PATH,
     'lookup_plugins'
 )
 
 vars_loader = PluginLoader(
-    'VarsModule', 
-    'ansible.inventory.vars_plugins', 
-    C.DEFAULT_VARS_PLUGIN_PATH, 
+    'VarsModule',
+    'ansible.inventory.vars_plugins',
+    C.DEFAULT_VARS_PLUGIN_PATH,
     'vars_plugins'
 )
 
 filter_loader = PluginLoader(
-    'FilterModule', 
-    'ansible.runner.filter_plugins', 
-    C.DEFAULT_FILTER_PLUGIN_PATH, 
+    'FilterModule',
+    'ansible.runner.filter_plugins',
+    C.DEFAULT_FILTER_PLUGIN_PATH,
     'filter_plugins'
 )
-
-

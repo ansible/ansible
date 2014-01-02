@@ -20,7 +20,6 @@ import os
 
 from ansible import utils
 import ansible.utils.template as template
-from ansible import errors
 from ansible.runner.return_data import ReturnData
 
 ## fixes https://github.com/ansible/ansible/issues/3518
@@ -33,8 +32,8 @@ sys.setdefaultencoding("utf8")
 #import tempfile
 import pipes
 
-class ActionModule(object):
 
+class ActionModule(object):
     TRANSFERS_FILES = True
 
     def __init__(self, runner):
@@ -48,11 +47,11 @@ class ActionModule(object):
         if complex_args:
             options.update(complex_args)
         options.update(utils.parse_kv(module_args))
-        source  = options.get('src', None)
-        dest    = options.get('dest', None)
+        source = options.get('src', None)
+        dest = options.get('dest', None)
 
         if source is None or dest is None:
-            result=dict(failed=True, msg="src (or content) and dest are required")
+            result = dict(failed=True, msg="src (or content) and dest are required")
             return ReturnData(conn=conn, result=result)
 
         source = template.template(self.runner.basedir, source, inject)
@@ -75,5 +74,7 @@ class ActionModule(object):
         # fix file permissions when the copy is done as a different user
         if self.runner.sudo and self.runner.sudo_user != 'root':
             self.runner._low_level_exec_command(conn, "chmod a+r %s" % tmp_src, tmp)
-        module_args = "%s src=%s original_basename=%s" % (module_args, pipes.quote(tmp_src), pipes.quote(os.path.basename(source)))
-        return self.runner._execute_module(conn, tmp, 'unarchive', module_args, inject=inject, complex_args=complex_args)
+        module_args = "%s src=%s original_basename=%s" % (
+            module_args, pipes.quote(tmp_src), pipes.quote(os.path.basename(source)))
+        return self.runner._execute_module(conn, tmp, 'unarchive', module_args, inject=inject,
+                                           complex_args=complex_args)

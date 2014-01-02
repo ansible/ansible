@@ -15,9 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible.utils import safe_eval
 import ansible.utils as utils
 import ansible.errors as errors
+
 
 def flatten(terms):
     ret = []
@@ -28,8 +28,8 @@ def flatten(terms):
             ret.append(term)
     return ret
 
-class LookupModule(object):
 
+class LookupModule(object):
     def __init__(self, basedir=None, **kwargs):
         self.basedir = basedir
 
@@ -41,4 +41,3 @@ class LookupModule(object):
 
         items = flatten(terms)
         return zip(range(len(items)), items)
-

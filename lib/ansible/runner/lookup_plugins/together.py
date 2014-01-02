@@ -15,10 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import ansible.utils as utils
-from ansible.utils import safe_eval
-import ansible.errors as errors
 from itertools import izip_longest
+
+import ansible.utils as utils
+import ansible.errors as errors
+
 
 def flatten(terms):
     ret = []
@@ -30,6 +31,7 @@ def flatten(terms):
         else:
             ret.append(term)
     return ret
+
 
 class LookupModule(object):
     """
@@ -60,5 +62,3 @@ class LookupModule(object):
         if len(my_list) == 0:
             raise errors.AnsibleError("with_together requires at least one element in each list")
         return [flatten(x) for x in izip_longest(*my_list, fillvalue=None)]
-
-

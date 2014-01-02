@@ -21,11 +21,10 @@ import shlex
 import ansible.constants as C
 from ansible.utils import template
 from ansible import utils
-from ansible import errors
 from ansible.runner.return_data import ReturnData
 
-class ActionModule(object):
 
+class ActionModule(object):
     TRANSFERS_FILES = True
 
     def __init__(self, runner):
@@ -36,35 +35,36 @@ class ActionModule(object):
 
         if self.runner.noop_on_check(inject):
             # in check mode, always skip this module
-            return ReturnData(conn=conn, comm_ok=True, result=dict(skipped=True, msg='check mode not supported for this module'))
+            return ReturnData(conn=conn, comm_ok=True,
+                              result=dict(skipped=True, msg='check mode not supported for this module'))
 
         # Decode the result of shlex.split() to UTF8 to get around a bug in that's been fixed in Python 2.7 but not Python 2.6.
         # See: http://bugs.python.org/issue6988
-        tokens  = shlex.split(module_args.encode('utf8'))
+        tokens = shlex.split(module_args.encode('utf8'))
         tokens = [s.decode('utf8') for s in tokens]
 
-        source  = tokens[0]
+        source = tokens[0]
         # FIXME: error handling
-        args    = " ".join(tokens[1:])
-        source  = template.template(self.runner.basedir, source, inject)
+        args = " ".join(tokens[1:])
+        source = template.template(self.runner.basedir, source, inject)
         if '_original_file' in inject:
             source = utils.path_dwim_relative(inject['_original_file'], 'files', source, self.runner.basedir)
         else:
             source = utils.path_dwim(self.runner.basedir, source)
 
         # transfer the file to a remote tmp location
-        source  = source.replace('\x00','') # why does this happen here?
-        args    = args.replace('\x00','') # why does this happen here?
+        source = source.replace('\x00', '')  # why does this happen here?
+        args = args.replace('\x00', '')  # why does this happen here?
         tmp_src = os.path.join(tmp, os.path.basename(source))
-        tmp_src = tmp_src.replace('\x00', '') 
+        tmp_src = tmp_src.replace('\x00', '')
 
         conn.put_file(source, tmp_src)
 
-        sudoable=True
+        sudoable = True
         # set file permissions, more permisive when the copy is done as a different user
         if self.runner.sudo and self.runner.sudo_user != 'root':
             cmd_args_chmod = "chmod a+rx %s" % tmp_src
-            sudoable=False
+            sudoable = False
         else:
             cmd_args_chmod = "chmod +rx %s" % tmp_src
         self.runner._low_level_exec_command(conn, cmd_args_chmod, tmp, sudoable=sudoable)

@@ -19,11 +19,10 @@
 import os.path
 
 from ansible import utils
-from ansible.runner.return_data import ReturnData
 import ansible.utils.template as template
 
-class ActionModule(object):
 
+class ActionModule(object):
     def __init__(self, runner):
         self.runner = runner
 
@@ -44,7 +43,7 @@ class ActionModule(object):
                 self.runner.sudo = False
 
     def run(self, conn, tmp, module_name, module_args,
-        inject, complex_args=None, **kwargs):
+            inject, complex_args=None, **kwargs):
 
         ''' generates params and passes them on to the rsync module '''
 
@@ -77,7 +76,6 @@ class ActionModule(object):
         if inv_port != dest_port and inv_port != inject['inventory_hostname']:
             options['dest_port'] = inv_port
 
-
         # edge case: explicit delegate and dest_host are the same
         if dest_host == inject['delegate_to']:
             dest_host = '127.0.0.1'
@@ -91,7 +89,7 @@ class ActionModule(object):
             if not private_key is None:
                 private_key = os.path.expanduser(private_key)
                 options['private_key'] = private_key
-                
+
             src = self._process_origin(src_host, src, user)
             dest = self._process_origin(dest_host, dest, user)
 
@@ -108,8 +106,6 @@ class ActionModule(object):
         if rsync_path:
             options['rsync_path'] = '"' + rsync_path + '"'
 
-        module_items = ' '.join(['%s=%s' % (k, v) for (k,
-                v) in options.items()])
+        module_items = ' '.join(['%s=%s' % (k, v) for (k, v) in options.items()])
         return self.runner._execute_module(conn, tmp, 'synchronize',
-                module_items, inject=inject)
-
+                                           module_items, inject=inject)

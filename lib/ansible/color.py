@@ -19,26 +19,26 @@ import os
 import sys
 import constants
 
-ANSIBLE_COLOR=True
+ANSIBLE_COLOR = True
 if constants.ANSIBLE_NOCOLOR:
-    ANSIBLE_COLOR=False
+    ANSIBLE_COLOR = False
 elif not hasattr(sys.stdout, 'isatty') or not sys.stdout.isatty():
-    ANSIBLE_COLOR=False
+    ANSIBLE_COLOR = False
 else:
     try:
         import curses
         curses.setupterm()
         if curses.tigetnum('colors') < 0:
-            ANSIBLE_COLOR=False
+            ANSIBLE_COLOR = False
     except ImportError:
         # curses library was not found
         pass
     except curses.error:
         # curses returns an error (e.g. could not find terminal)
-        ANSIBLE_COLOR=False
+        ANSIBLE_COLOR = False
 
 if os.getenv("ANSIBLE_FORCE_COLOR") is not None:
-        ANSIBLE_COLOR=True
+    ANSIBLE_COLOR = True
 
 # --- begin "pretty"
 #
@@ -52,24 +52,24 @@ if os.getenv("ANSIBLE_FORCE_COLOR") is not None:
 # http://nezzen.net/2008/06/23/colored-text-in-python-using-ansi-escape-sequences/
 
 codeCodes = {
-    'black':     '0;30', 'bright gray':    '0;37',
-    'blue':      '0;34', 'white':          '1;37',
-    'green':     '0;32', 'bright blue':    '1;34',
-    'cyan':      '0;36', 'bright green':   '1;32',
-    'red':       '0;31', 'bright cyan':    '1;36',
-    'purple':    '0;35', 'bright red':     '1;31',
-    'yellow':    '0;33', 'bright purple':  '1;35',
-    'dark gray': '1;30', 'bright yellow':  '1;33',
-    'normal':    '0'
+    'black': '0;30', 'bright gray': '0;37',
+    'blue': '0;34', 'white': '1;37',
+    'green': '0;32', 'bright blue': '1;34',
+    'cyan': '0;36', 'bright green': '1;32',
+    'red': '0;31', 'bright cyan': '1;36',
+    'purple': '0;35', 'bright red': '1;31',
+    'yellow': '0;33', 'bright purple': '1;35',
+    'dark gray': '1;30', 'bright yellow': '1;33',
+    'normal': '0'
 }
+
 
 def stringc(text, color):
     """String in color."""
 
     if ANSIBLE_COLOR:
-        return "\033["+codeCodes[color]+"m"+text+"\033[0m"
+        return "\033[" + codeCodes[color] + "m" + text + "\033[0m"
     else:
         return text
 
 # --- end "pretty"
-

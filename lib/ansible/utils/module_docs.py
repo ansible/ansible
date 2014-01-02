@@ -17,16 +17,17 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import os
-import sys
 import ast
-import yaml
 import traceback
+
+import yaml
+
 
 # modules that are ok that they do not have documentation strings
 BLACKLIST_MODULES = [
-   'async_wrapper',
+    'async_wrapper',
 ]
+
 
 def get_docstring(filename, verbose=False):
     """
@@ -49,9 +50,8 @@ def get_docstring(filename, verbose=False):
                 if 'EXAMPLES' in (t.id for t in child.targets):
                     plainexamples = child.value.s[1:]  # Skip first empty line
     except:
-        traceback.print_exc() # temp
-        if verbose == True:
+        traceback.print_exc()  # temp
+        if verbose is True:
             traceback.print_exc()
             print "unable to parse %s" % filename
     return doc, plainexamples
-

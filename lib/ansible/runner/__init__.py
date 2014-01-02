@@ -28,10 +28,10 @@ import collections
 import socket
 import base64
 import sys
-import shlex
 import pipes
-import jinja2
 import subprocess
+
+import jinja2
 
 import ansible.constants as C
 import ansible.inventory
@@ -39,30 +39,30 @@ from ansible import utils
 from ansible.utils import template
 from ansible.utils import check_conditional
 from ansible import errors
-from ansible import module_common
 import poller
 import connection
 from return_data import ReturnData
 from ansible.callbacks import DefaultRunnerCallbacks, vv
 from ansible.module_common import ModuleReplacer
 
+
 module_replacer = ModuleReplacer(strip_comments=False)
 
-HAS_ATFORK=True
+HAS_ATFORK = True
 try:
     from Crypto.Random import atfork
 except ImportError:
-    HAS_ATFORK=False
+    HAS_ATFORK = False
 
 multiprocessing_runner = None
-        
-OUTPUT_LOCKFILE  = tempfile.TemporaryFile()
+
+OUTPUT_LOCKFILE = tempfile.TemporaryFile()
 PROCESS_LOCKFILE = tempfile.TemporaryFile()
 
 ################################################
 
-def _executor_hook(job_queue, result_queue, new_stdin):
 
+def _executor_hook(job_queue, result_queue, new_stdin):
     # attempt workaround of https://github.com/newsapps/beeswithmachineguns/issues/17
     # this function also not present in CentOS 6
     if HAS_ATFORK:
@@ -83,6 +83,7 @@ def _executor_hook(job_queue, result_queue, new_stdin):
             pass
         except:
             traceback.print_exc()
+
 
 class HostVars(dict):
     ''' A special view of setup_cache that adds values from the inventory when needed. '''
@@ -107,97 +108,96 @@ class Runner(object):
     # see bin/ansible for how this is used...
 
     def __init__(self,
-        host_list=C.DEFAULT_HOST_LIST,      # ex: /etc/ansible/hosts, legacy usage
-        module_path=None,                   # ex: /usr/share/ansible
-        module_name=C.DEFAULT_MODULE_NAME,  # ex: copy
-        module_args=C.DEFAULT_MODULE_ARGS,  # ex: "src=/tmp/a dest=/tmp/b"
-        forks=C.DEFAULT_FORKS,              # parallelism level
-        timeout=C.DEFAULT_TIMEOUT,          # SSH timeout
-        pattern=C.DEFAULT_PATTERN,          # which hosts?  ex: 'all', 'acme.example.org'
-        remote_user=C.DEFAULT_REMOTE_USER,  # ex: 'username'
-        remote_pass=C.DEFAULT_REMOTE_PASS,  # ex: 'password123' or None if using key
-        remote_port=None,                   # if SSH on different ports
-        private_key_file=C.DEFAULT_PRIVATE_KEY_FILE, # if not using keys/passwords
-        sudo_pass=C.DEFAULT_SUDO_PASS,      # ex: 'password123' or None
-        background=0,                       # async poll every X seconds, else 0 for non-async
-        basedir=None,                       # directory of playbook, if applicable
-        setup_cache=None,                   # used to share fact data w/ other tasks
-        transport=C.DEFAULT_TRANSPORT,      # 'ssh', 'paramiko', 'local'
-        conditional='True',                 # run only if this fact expression evals to true
-        callbacks=None,                     # used for output
-        sudo=False,                         # whether to run sudo or not
-        sudo_user=C.DEFAULT_SUDO_USER,      # ex: 'root'
-        module_vars=None,                   # a playbooks internals thing
-        default_vars=None,                  # ditto
-        is_playbook=False,                  # running from playbook or not?
-        inventory=None,                     # reference to Inventory object
-        subset=None,                        # subset pattern
-        check=False,                        # don't make any changes, just try to probe for potential changes
-        diff=False,                         # whether to show diffs for template files that change
-        environment=None,                   # environment variables (as dict) to use inside the command
-        complex_args=None,                  # structured data in addition to module_args, must be a dict
-        error_on_undefined_vars=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR, # ex. False
-        accelerate=False,                   # use accelerated connection
-        accelerate_ipv6=False,              # accelerated connection w/ IPv6
-        accelerate_port=None,               # port to use with accelerated connection
-        ):
+                 host_list=C.DEFAULT_HOST_LIST,  # ex: /etc/ansible/hosts, legacy usage
+                 module_path=None,  # ex: /usr/share/ansible
+                 module_name=C.DEFAULT_MODULE_NAME,  # ex: copy
+                 module_args=C.DEFAULT_MODULE_ARGS,  # ex: "src=/tmp/a dest=/tmp/b"
+                 forks=C.DEFAULT_FORKS,  # parallelism level
+                 timeout=C.DEFAULT_TIMEOUT,  # SSH timeout
+                 pattern=C.DEFAULT_PATTERN,  # which hosts?  ex: 'all', 'acme.example.org'
+                 remote_user=C.DEFAULT_REMOTE_USER,  # ex: 'username'
+                 remote_pass=C.DEFAULT_REMOTE_PASS,  # ex: 'password123' or None if using key
+                 remote_port=None,  # if SSH on different ports
+                 private_key_file=C.DEFAULT_PRIVATE_KEY_FILE,  # if not using keys/passwords
+                 sudo_pass=C.DEFAULT_SUDO_PASS,  # ex: 'password123' or None
+                 background=0,  # async poll every X seconds, else 0 for non-async
+                 basedir=None,  # directory of playbook, if applicable
+                 setup_cache=None,  # used to share fact data w/ other tasks
+                 transport=C.DEFAULT_TRANSPORT,  # 'ssh', 'paramiko', 'local'
+                 conditional='True',  # run only if this fact expression evals to true
+                 callbacks=None,  # used for output
+                 sudo=False,  # whether to run sudo or not
+                 sudo_user=C.DEFAULT_SUDO_USER,  # ex: 'root'
+                 module_vars=None,  # a playbooks internals thing
+                 default_vars=None,  # ditto
+                 is_playbook=False,  # running from playbook or not?
+                 inventory=None,  # reference to Inventory object
+                 subset=None,  # subset pattern
+                 check=False,  # don't make any changes, just try to probe for potential changes
+                 diff=False,  # whether to show diffs for template files that change
+                 environment=None,  # environment variables (as dict) to use inside the command
+                 complex_args=None,  # structured data in addition to module_args, must be a dict
+                 error_on_undefined_vars=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR,  # ex. False
+                 accelerate=False,  # use accelerated connection
+                 accelerate_ipv6=False,  # accelerated connection w/ IPv6
+                 accelerate_port=None,  # port to use with accelerated connection
+                 ):
 
         # used to lock multiprocess inputs and outputs at various levels
-        self.output_lockfile  = OUTPUT_LOCKFILE
+        self.output_lockfile = OUTPUT_LOCKFILE
         self.process_lockfile = PROCESS_LOCKFILE
 
         if not complex_args:
             complex_args = {}
 
         # storage & defaults
-        self.check            = check
-        self.diff             = diff
-        self.setup_cache      = utils.default(setup_cache, lambda: collections.defaultdict(dict))
-        self.basedir          = utils.default(basedir, lambda: os.getcwd())
-        self.callbacks        = utils.default(callbacks, lambda: DefaultRunnerCallbacks())
-        self.generated_jid    = str(random.randint(0, 999999999999))
-        self.transport        = transport
-        self.inventory        = utils.default(inventory, lambda: ansible.inventory.Inventory(host_list))
+        self.check = check
+        self.diff = diff
+        self.setup_cache = utils.default(setup_cache, lambda: collections.defaultdict(dict))
+        self.basedir = utils.default(basedir, lambda: os.getcwd())
+        self.callbacks = utils.default(callbacks, lambda: DefaultRunnerCallbacks())
+        self.generated_jid = str(random.randint(0, 999999999999))
+        self.transport = transport
+        self.inventory = utils.default(inventory, lambda: ansible.inventory.Inventory(host_list))
 
-        self.module_vars      = utils.default(module_vars, lambda: {})
-        self.default_vars     = utils.default(default_vars, lambda: {})
-        self.always_run       = None
-        self.connector        = connection.Connection(self)
-        self.conditional      = conditional
-        self.module_name      = module_name
-        self.forks            = int(forks)
-        self.pattern          = pattern
-        self.module_args      = module_args
-        self.timeout          = timeout
-        self.remote_user      = remote_user
-        self.remote_pass      = remote_pass
-        self.remote_port      = remote_port
+        self.module_vars = utils.default(module_vars, lambda: {})
+        self.default_vars = utils.default(default_vars, lambda: {})
+        self.always_run = None
+        self.connector = connection.Connection(self)
+        self.conditional = conditional
+        self.module_name = module_name
+        self.forks = int(forks)
+        self.pattern = pattern
+        self.module_args = module_args
+        self.timeout = timeout
+        self.remote_user = remote_user
+        self.remote_pass = remote_pass
+        self.remote_port = remote_port
         self.private_key_file = private_key_file
-        self.background       = background
-        self.sudo             = sudo
-        self.sudo_user_var    = sudo_user
-        self.sudo_user        = None
-        self.sudo_pass        = sudo_pass
-        self.is_playbook      = is_playbook
-        self.environment      = environment
-        self.complex_args     = complex_args
+        self.background = background
+        self.sudo = sudo
+        self.sudo_user_var = sudo_user
+        self.sudo_user = None
+        self.sudo_pass = sudo_pass
+        self.is_playbook = is_playbook
+        self.environment = environment
+        self.complex_args = complex_args
         self.error_on_undefined_vars = error_on_undefined_vars
-        self.accelerate       = accelerate
-        self.accelerate_port  = accelerate_port
-        self.accelerate_ipv6  = accelerate_ipv6
+        self.accelerate = accelerate
+        self.accelerate_port = accelerate_port
+        self.accelerate_ipv6 = accelerate_ipv6
         self.callbacks.runner = self
         self.original_transport = self.transport
 
         if self.transport == 'smart':
             # if the transport is 'smart' see if SSH can support ControlPersist if not use paramiko
             # 'smart' is the default since 1.2.1/1.3
-            cmd = subprocess.Popen(['ssh','-o','ControlPersist'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            (out, err) = cmd.communicate() 
+            cmd = subprocess.Popen(['ssh', '-o', 'ControlPersist'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            (out, err) = cmd.communicate()
             if "Bad configuration option" in err:
                 self.transport = "paramiko"
             else:
-                self.transport = "ssh" 
-
+                self.transport = "ssh"
 
         # misc housekeeping
         if subset and self.inventory._subset is None:
@@ -215,6 +215,7 @@ class Runner(object):
 
         # ensure we are using unique tmp paths
         random.seed()
+
     # *****************************************************
 
     def _complex_args_hack(self, complex_args, module_args):
@@ -231,7 +232,7 @@ class Runner(object):
             return module_args
         if type(complex_args) != dict:
             raise errors.AnsibleError("complex arguments are not a dictionary: %s" % complex_args)
-        for (k,v) in complex_args.iteritems():
+        for (k, v) in complex_args.iteritems():
             if isinstance(v, basestring):
                 module_args = "%s=%s %s" % (k, pipes.quote(v), module_args)
         return module_args
@@ -277,14 +278,15 @@ class Runner(object):
         if type(enviro) != dict:
             raise errors.AnsibleError("environment must be a dictionary, received %s" % enviro)
         result = ""
-        for (k,v) in enviro.iteritems():
+        for (k, v) in enviro.iteritems():
             result = "%s=%s %s" % (k, pipes.quote(str(v)), result)
         return result
 
     # *****************************************************
 
     def _execute_module(self, conn, tmp, module_name, args,
-        async_jid=None, async_module=None, async_limit=None, inject=None, persist_files=False, complex_args=None):
+                        async_jid=None, async_module=None, async_limit=None, inject=None, persist_files=False,
+                        complex_args=None):
 
         ''' transfer and run a module along with its arguments on the remote side'''
 
@@ -295,9 +297,9 @@ class Runner(object):
                 args += " port=%s" % C.ZEROMQ_PORT
 
         (
-        module_style,
-        shebang,
-        module_data
+            module_style,
+            shebang,
+            module_data
         ) = self._configure_module(conn, module_name, args, inject, complex_args)
 
         # a remote tmp path may be necessary and not already created
@@ -307,8 +309,8 @@ class Runner(object):
         remote_module_path = os.path.join(tmp, module_name)
 
         if (module_style != 'new'
-           or async_jid is not None
-           or not conn.has_pipelining):
+            or async_jid is not None
+                or not conn.has_pipelining):
             self._transfer_str(conn, tmp, module_name, module_data)
 
         environment_string = self._compute_environment_string(inject)
@@ -324,7 +326,8 @@ class Runner(object):
             if 'CHECKMODE=True' in args:
                 # if module isn't using AnsibleModuleCommon infrastructure we can't be certain it knows how to
                 # do --check mode, so to be safe we will not run it.
-                return ReturnData(conn=conn, result=dict(skipped=True, msg="cannot yet run check mode against old-style modules"))
+                return ReturnData(conn=conn,
+                                  result=dict(skipped=True, msg="cannot yet run check mode against old-style modules"))
 
             args = template.template(self.basedir, args, inject)
 
@@ -361,8 +364,7 @@ class Runner(object):
         if not shebang:
             raise errors.AnsibleError("module is missing interpreter line")
 
-
-        cmd = " ".join([environment_string.strip(), shebang.replace("#!","").strip(), cmd])
+        cmd = " ".join([environment_string.strip(), shebang.replace("#!", "").strip(), cmd])
         cmd = cmd.strip()
 
         if tmp.find("tmp") != -1 and not C.DEFAULT_KEEP_REMOTE_FILES and not persist_files:
@@ -386,7 +388,7 @@ class Runner(object):
                 self._low_level_exec_command(conn, cmd2, tmp, sudoable=False)
 
         data = utils.parse_json(res['stdout'])
-        if 'parsed' in data and data['parsed'] == False:
+        if 'parsed' in data and data['parsed'] is False:
             data['msg'] += res['stderr']
         return ReturnData(conn=conn, result=data)
 
@@ -434,7 +436,7 @@ class Runner(object):
 
         host_variables = self.inventory.get_variables(host)
         host_connection = host_variables.get('ansible_connection', self.transport)
-        if host_connection in [ 'paramiko', 'ssh', 'ssh_alt', 'accelerate' ]:
+        if host_connection in ['paramiko', 'ssh', 'ssh_alt', 'accelerate']:
             port = host_variables.get('ansible_ssh_port', self.remote_port)
             if port is None:
                 port = C.DEFAULT_REMOTE_PORT
@@ -450,9 +452,9 @@ class Runner(object):
         inject.setdefault('ansible_ssh_user', self.remote_user)
         inject['hostvars'] = HostVars(self.setup_cache, self.inventory)
         inject['group_names'] = host_variables.get('group_names', [])
-        inject['groups']      = self.inventory.groups_list()
-        inject['vars']        = self.module_vars
-        inject['defaults']    = self.default_vars
+        inject['groups'] = self.inventory.groups_list()
+        inject['vars'] = self.module_vars
+        inject['defaults'] = self.default_vars
         inject['environment'] = self.environment
         inject['playbook_dir'] = self.basedir
 
@@ -477,16 +479,18 @@ class Runner(object):
 
             items_terms = self.module_vars.get('items_lookup_terms', '')
             items_terms = template.template(basedir, items_terms, inject)
-            items = utils.plugins.lookup_loader.get(items_plugin, runner=self, basedir=basedir).run(items_terms, inject=inject)
+            items = utils.plugins.lookup_loader.get(items_plugin, runner=self, basedir=basedir).run(items_terms,
+                                                                                                    inject=inject)
             if type(items) != list:
                 raise errors.AnsibleError("lookup plugins have to return a list: %r" % items)
 
-            if len(items) and utils.is_list_of_strings(items) and self.module_name in [ 'apt', 'yum', 'pkgng' ]:
+            if len(items) and utils.is_list_of_strings(items) and self.module_name in ['apt', 'yum', 'pkgng']:
                 # hack for apt, yum, and pkgng so that with_items maps back into a single module call
                 use_these_items = []
                 for x in items:
                     inject['item'] = x
-                    if not self.conditional or utils.check_conditional(self.conditional, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
+                    if not self.conditional or utils.check_conditional(self.conditional, self.basedir, inject,
+                                                                       fail_on_undefined=self.error_on_undefined_vars):
                         use_these_items.append(x)
                 inject['item'] = ",".join(use_these_items)
                 items = None
@@ -501,7 +505,8 @@ class Runner(object):
                 complex_args = utils.safe_eval(complex_args)
                 if type(complex_args) != dict:
                     raise errors.AnsibleError("args must be a dictionary, received %s" % complex_args)
-            return self._executor_internal_inner(host, self.module_name, self.module_args, inject, port, complex_args=complex_args)
+            return self._executor_internal_inner(host, self.module_name, self.module_args, inject, port,
+                                                 complex_args=complex_args)
         elif len(items) > 0:
 
             # executing using with_items, so make multiple calls
@@ -510,7 +515,6 @@ class Runner(object):
             if self.background > 0:
                 raise errors.AnsibleError("lookup plugins (with_*) cannot be used with async tasks")
 
-            aggregrate = {}
             all_comm_ok = True
             all_changed = False
             all_failed = False
@@ -525,22 +529,23 @@ class Runner(object):
                     if type(complex_args) != dict:
                         raise errors.AnsibleError("args must be a dictionary, received %s" % complex_args)
                 result = self._executor_internal_inner(
-                     host,
-                     self.module_name,
-                     self.module_args,
-                     inject,
-                     port,
-                     complex_args=complex_args
+                    host,
+                    self.module_name,
+                    self.module_args,
+                    inject,
+                    port,
+                    complex_args=complex_args
                 )
                 results.append(result.result)
-                if result.comm_ok == False:
+                if result.comm_ok is False:
                     all_comm_ok = False
                     all_failed = True
                     break
                 for x in results:
-                    if x.get('changed') == True:
+                    if x.get('changed') is True:
                         all_changed = True
-                    if (x.get('failed') == True) or ('failed_when_result' in x and [x['failed_when_result']] or [('rc' in x) and (x['rc'] != 0)])[0]:
+                    if (x.get('failed') is True) or ('failed_when_result' in x and [x['failed_when_result']] or [
+                            ('rc' in x) and (x['rc'] != 0)])[0]:
                         all_failed = True
                         break
             msg = 'All items completed'
@@ -556,7 +561,8 @@ class Runner(object):
 
     # *****************************************************
 
-    def _executor_internal_inner(self, host, module_name, module_args, inject, port, is_chained=False, complex_args=None):
+    def _executor_internal_inner(self, host, module_name, module_args, inject, port, is_chained=False,
+                                 complex_args=None):
         ''' decides how to invoke a module '''
 
         # late processing of parameterized sudo_user (with_items,..)
@@ -567,12 +573,12 @@ class Runner(object):
         # though it is usually a string
         new_args = ""
         if type(module_args) == dict:
-            for (k,v) in module_args.iteritems():
-                new_args = new_args + "%s='%s' " % (k,v)
+            for (k, v) in module_args.iteritems():
+                new_args = new_args + "%s='%s' " % (k, v)
             module_args = new_args
 
         # module_name may be dynamic (but cannot contain {{ ansible_ssh_user }})
-        module_name  = template.template(self.basedir, module_name, inject)
+        module_name = template.template(self.basedir, module_name, inject)
 
         if module_name in utils.plugins.action_loader:
             if self.background != 0:
@@ -584,13 +590,13 @@ class Runner(object):
             handler = utils.plugins.action_loader.get('async', self)
 
         if type(self.conditional) != list:
-            self.conditional = [ self.conditional ]
+            self.conditional = [self.conditional]
 
         for cond in self.conditional:
 
             if not utils.check_conditional(cond, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
                 result = utils.jsonify(dict(changed=False, skipped=True))
-                self.callbacks.on_skipped(host, inject.get('item',None))
+                self.callbacks.on_skipped(host, inject.get('item', None))
                 return ReturnData(host=host, result=result)
 
         if getattr(handler, 'setup', None) is not None:
@@ -615,13 +621,13 @@ class Runner(object):
                 self.accelerate_inventory_host = host
             else:
                 self.accelerate_inventory_host = None
-            # if we're using accelerated mode, force the
+                # if we're using accelerated mode, force the
             # transport to accelerate
             actual_transport = "accelerate"
             if not self.accelerate_port:
                 self.accelerate_port = C.ACCELERATE_PORT
 
-        if actual_transport in [ 'paramiko', 'ssh', 'ssh_alt', 'accelerate' ]:
+        if actual_transport in ['paramiko', 'ssh', 'ssh_alt', 'accelerate']:
             actual_port = inject.get('ansible_ssh_port', port)
 
         # the delegated host may have different SSH port configured, etc
@@ -675,14 +681,15 @@ class Runner(object):
             elif actual_port is not None:
                 actual_port = int(template.template(self.basedir, actual_port, inject))
         except ValueError, e:
-            result = dict(failed=True, msg="FAILED: Configured port \"%s\" is not a valid port, expected integer" % actual_port)
+            result = dict(failed=True,
+                          msg="FAILED: Configured port \"%s\" is not a valid port, expected integer" % actual_port)
             return ReturnData(host=host, comm_ok=False, result=result)
 
         try:
-            conn = self.connector.connect(actual_host, actual_port, actual_user, actual_pass, actual_transport, actual_private_key_file)
+            conn = self.connector.connect(actual_host, actual_port, actual_user, actual_pass, actual_transport,
+                                          actual_private_key_file)
             if delegate_to or host != actual_host:
                 conn.delegate = host
-
 
         except errors.AnsibleConnectionFailed, e:
             result = dict(failed=True, msg="FAILED: %s" % str(e))
@@ -695,11 +702,12 @@ class Runner(object):
 
         # render module_args and complex_args templates
         try:
-            module_args = template.template(self.basedir, module_args, inject, fail_on_undefined=self.error_on_undefined_vars)
-            complex_args = template.template(self.basedir, complex_args, inject, fail_on_undefined=self.error_on_undefined_vars)
+            module_args = template.template(self.basedir, module_args, inject,
+                                            fail_on_undefined=self.error_on_undefined_vars)
+            complex_args = template.template(self.basedir, complex_args, inject,
+                                             fail_on_undefined=self.error_on_undefined_vars)
         except jinja2.exceptions.UndefinedError, e:
             raise errors.AnsibleUndefinedVariable("One or more undefined variables: %s" % str(e))
-
 
         result = handler.run(conn, tmp, module_name, module_args, inject, complex_args)
         # Code for do until feature
@@ -707,9 +715,9 @@ class Runner(object):
         if until is not None and result.comm_ok:
             inject[self.module_vars.get('register')] = result.result
             cond = template.template(self.basedir, until, inject, expand_lists=False)
-            if not utils.check_conditional(cond,  self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
+            if not utils.check_conditional(cond, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
                 retries = self.module_vars.get('retries')
-                delay   = self.module_vars.get('delay')
+                delay = self.module_vars.get('delay')
                 for x in range(1, int(retries) + 1):
                     # template the delay, cast to float and sleep
                     delay = template.template(self.basedir, delay, inject, expand_lists=False)
@@ -723,10 +731,12 @@ class Runner(object):
                     vv("Result from run %i is: %s" % (x, result.result))
                     inject[self.module_vars.get('register')] = result.result
                     cond = template.template(self.basedir, until, inject, expand_lists=False)
-                    if utils.check_conditional(cond, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
+                    if utils.check_conditional(cond, self.basedir, inject,
+                                               fail_on_undefined=self.error_on_undefined_vars):
                         break
-                if result.result['attempts'] == retries and not utils.check_conditional(cond, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
-                    result.result['failed'] = True 
+                if result.result['attempts'] == retries and not utils.check_conditional(cond, self.basedir, inject,
+                                                                                        fail_on_undefined=self.error_on_undefined_vars):
+                    result.result['failed'] = True
                     result.result['msg'] = "Task failed as maximum retries was encountered"
             else:
                 result.result['attempts'] = 0
@@ -749,14 +759,17 @@ class Runner(object):
             failed_when = self.module_vars.get('failed_when')
             if changed_when is not None or failed_when is not None:
                 register = self.module_vars.get('register')
-                if  register is not None:
+                if register is not None:
                     if 'stdout' in data:
                         data['stdout_lines'] = data['stdout'].splitlines()
                     inject[register] = data
                 if changed_when is not None:
-                    data['changed'] = utils.check_conditional(changed_when, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars)
+                    data['changed'] = utils.check_conditional(changed_when, self.basedir, inject,
+                                                              fail_on_undefined=self.error_on_undefined_vars)
                 if failed_when is not None:
-                    data['failed_when_result'] = data['failed'] = utils.check_conditional(failed_when, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars)
+                    data['failed_when_result'] = data['failed'] = utils.check_conditional(failed_when, self.basedir,
+                                                                                          inject,
+                                                                                          fail_on_undefined=self.error_on_undefined_vars)
 
             if is_chained:
                 # no callbacks
@@ -775,8 +788,8 @@ class Runner(object):
     def _early_needs_tmp_path(self, module_name, handler):
         ''' detect if a tmp path should be created before the handler is called '''
         if module_name in utils.plugins.action_loader:
-          return getattr(handler, 'TRANSFERS_FILES', False)
-        # other modules never need tmp path at early stage
+            return getattr(handler, 'TRANSFERS_FILES', False)
+            # other modules never need tmp path at early stage
         return False
 
     def _late_needs_tmp_path(self, conn, tmp, module_style):
@@ -790,7 +803,6 @@ class Runner(object):
             # even when conn has pipelining, old style modules need tmp to store arguments
             return True
         return False
-    
 
     # *****************************************************
 
@@ -807,14 +819,15 @@ class Runner(object):
             if conn.user == sudo_user:
                 sudoable = False
 
-        rc, stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudo_user, sudoable=sudoable, executable=executable, in_data=in_data)
+        rc, stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudo_user, sudoable=sudoable, executable=executable,
+                                                      in_data=in_data)
 
-        if type(stdout) not in [ str, unicode ]:
+        if type(stdout) not in [str, unicode]:
             out = ''.join(stdout.readlines())
         else:
             out = stdout
 
-        if type(stderr) not in [ str, unicode ]:
+        if type(stderr) not in [str, unicode]:
             err = ''.join(stderr.readlines())
         else:
             err = stderr
@@ -836,11 +849,11 @@ class Runner(object):
         md5s = [
             "(/usr/bin/md5sum %s 2>/dev/null)" % path,  # Linux
             "(/sbin/md5sum -q %s 2>/dev/null)" % path,  # ?
-            "(/usr/bin/digest -a md5 %s 2>/dev/null)" % path,   # Solaris 10+
-            "(/sbin/md5 -q %s 2>/dev/null)" % path,     # Freebsd
+            "(/usr/bin/digest -a md5 %s 2>/dev/null)" % path,  # Solaris 10+
+            "(/sbin/md5 -q %s 2>/dev/null)" % path,  # Freebsd
             "(/usr/bin/md5 -n %s 2>/dev/null)" % path,  # Netbsd
-            "(/bin/md5 -q %s 2>/dev/null)" % path,      # Openbsd
-            "(/usr/bin/csum -h MD5 %s 2>/dev/null)" % path # AIX
+            "(/bin/md5 -q %s 2>/dev/null)" % path,  # Openbsd
+            "(/usr/bin/csum -h MD5 %s 2>/dev/null)" % path  # AIX
         ]
 
         cmd = " || ".join(md5s)
@@ -850,7 +863,8 @@ class Runner(object):
         try:
             return data2.split()[0]
         except IndexError:
-            sys.stderr.write("warning: md5sum command failed unusually, please report this to the list so it can be fixed\n")
+            sys.stderr.write(
+                "warning: md5sum command failed unusually, please report this to the list so it can be fixed\n")
             sys.stderr.write("command: %s\n" % md5s)
             sys.stderr.write("----\n")
             sys.stderr.write("output: %s\n" % data)
@@ -863,7 +877,7 @@ class Runner(object):
     def _make_tmp_path(self, conn):
         ''' make and return a temporary path on a remote box '''
 
-        basefile = 'ansible-%s-%s' % (time.time(), random.randint(0, 2**48))
+        basefile = 'ansible-%s-%s' % (time.time(), random.randint(0, 2 ** 48))
         basetmp = os.path.join(C.DEFAULT_REMOTE_TMP, basefile)
         if self.sudo and self.sudo_user != 'root' and basetmp.startswith('$HOME'):
             basetmp = os.path.join('/tmp', basefile)
@@ -881,11 +895,13 @@ class Runner(object):
                 output = 'Authentication failure.'
             elif result['rc'] == 255 and self.transport in ['ssh', 'ssh_alt']:
                 if utils.VERBOSITY > 3:
-                    output = 'SSH encountered an unknown error. The output was:\n%s' % (result['stdout']+result['stderr'])
+                    output = 'SSH encountered an unknown error. The output was:\n%s' % (
+                        result['stdout'] + result['stderr'])
                 else:
                     output = 'SSH encountered an unknown error during the connection. We recommend you re-run the command using -vvvv, which will enable SSH debugging output to help diagnose the issue'
             else:
-                output = 'Authentication or permission failure.  In some cases, you may have been able to authenticate and did not have permissions on the remote directory. Consider changing the remote temp path in ansible.cfg to a path rooted in "/tmp". Failed command was: %s, exited with result %d' % (cmd, result['rc'])
+                output = 'Authentication or permission failure.  In some cases, you may have been able to authenticate and did not have permissions on the remote directory. Consider changing the remote temp path in ansible.cfg to a path rooted in "/tmp". Failed command was: %s, exited with result %d' % (
+                    cmd, result['rc'])
             if 'stdout' in result and result['stdout'] != '':
                 output = output + ": %s" % result['stdout']
             raise errors.AnsibleError(output)
@@ -893,8 +909,9 @@ class Runner(object):
         rc = utils.last_non_blank_line(result['stdout']).strip() + '/'
         # Catch failure conditions, files should never be
         # written to locations in /.
-        if rc == '/': 
-            raise errors.AnsibleError('failed to resolve remote temporary directory from %s: `%s` returned empty string' % (basetmp, cmd))
+        if rc == '/':
+            raise errors.AnsibleError(
+                'failed to resolve remote temporary directory from %s: `%s` returned empty string' % (basetmp, cmd))
         return rc
 
     # *****************************************************
@@ -902,14 +919,14 @@ class Runner(object):
     def _copy_module(self, conn, tmp, module_name, module_args, inject, complex_args=None):
         ''' transfer a module over SFTP, does not run it '''
         (
-        module_style,
-        module_shebang,
-        module_data
+            module_style,
+            module_shebang,
+            module_data
         ) = self._configure_module(conn, module_name, module_args, inject, complex_args)
         module_remote_path = os.path.join(tmp, module_name)
-        
+
         self._transfer_str(conn, tmp, module_name, module_data)
-         
+
         return (module_remote_path, module_style, module_shebang)
 
     # *****************************************************
@@ -920,8 +937,8 @@ class Runner(object):
         # Search module path(s) for named module.
         module_path = utils.plugins.module_finder.find_plugin(module_name)
         if module_path is None:
-            raise errors.AnsibleFileNotFound("module %s not found in %s" % (module_name, utils.plugins.module_finder.print_paths()))
-
+            raise errors.AnsibleFileNotFound(
+                "module %s not found in %s" % (module_name, utils.plugins.module_finder.print_paths()))
 
         # insert shared code and arguments into the module
         (module_data, module_style, module_shebang) = module_replacer.modify_module(
@@ -930,9 +947,7 @@ class Runner(object):
 
         return (module_style, module_shebang, module_data)
 
-
     # *****************************************************
-
 
     def _parallel_exec(self, hosts):
         ''' handles mulitprocessing when more than 1 fork is required '''
@@ -947,7 +962,7 @@ class Runner(object):
         for i in range(self.forks):
             new_stdin = os.fdopen(os.dup(sys.stdin.fileno()))
             prc = multiprocessing.Process(target=_executor_hook,
-                args=(job_queue, result_queue, new_stdin))
+                                          args=(job_queue, result_queue, new_stdin))
             prc.start()
             workers.append(prc)
 
@@ -958,7 +973,7 @@ class Runner(object):
             for worker in workers:
                 worker.terminate()
                 worker.join()
-        
+
         results = []
         try:
             while not result_queue.empty():
@@ -1026,8 +1041,8 @@ class Runner(object):
             # Create a ResultData item for each host in this group
             # using the returned result. If we didn't do this we would
             # get false reports of dark hosts.
-            results = [ ReturnData(host=h, result=result_data, comm_ok=True) \
-                           for h in hosts ]
+            results = [ReturnData(host=h, result=result_data, comm_ok=True)
+                       for h in hosts]
             del self.host_set
 
         elif self.forks > 1:
@@ -1040,7 +1055,7 @@ class Runner(object):
                     raise errors.AnsibleError("interrupted")
                 raise
         else:
-            results = [ self._executor(h, None) for h in hosts ]
+            results = [self._executor(h, None) for h in hosts]
 
         return self._partition_results(results)
 

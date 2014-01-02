@@ -15,19 +15,21 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from re import compile as re_compile, IGNORECASE
+
 from ansible.errors import AnsibleError
 import ansible.utils as utils
-from re import compile as re_compile, IGNORECASE
+
 
 # shortcut format
 NUM = "(0?x?[0-9a-f]+)"
 SHORTCUT = re_compile(
-    "^(" +        # Group 0
-    NUM +         # Group 1: Start
+    "^(" +  # Group 0
+    NUM +  # Group 1: Start
     "-)?" +
-    NUM +         # Group 2: End
-    "(/" +        # Group 3
-    NUM +         # Group 4: Stride
+    NUM +  # Group 2: End
+    "(/" +  # Group 3
+    NUM +  # Group 4: Stride
     ")?" +
     "(:(.+))?$",  # Group 5, Group 6: Format String
     IGNORECASE
@@ -97,7 +99,7 @@ class LookupModule(object):
             except ValueError:
                 raise AnsibleError(
                     "can't parse arg %s=%r as integer"
-                        % (arg, arg_raw)
+                    % (arg, arg_raw)
                 )
             if 'format' in args:
                 self.format = args.pop("format")
@@ -176,7 +178,7 @@ class LookupModule(object):
         terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
 
         if isinstance(terms, basestring):
-            terms = [ terms ]
+            terms = [terms]
 
         for term in terms:
             try:

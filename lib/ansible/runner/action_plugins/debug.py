@@ -15,11 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import ansible
-
 from ansible import utils
 from ansible.utils import template
 from ansible.runner.return_data import ReturnData
+
 
 class ActionModule(object):
     ''' Print statements during execution '''
@@ -35,7 +34,7 @@ class ActionModule(object):
             args.update(complex_args)
 
         # attempt to prevent confusing messages when the variable didn't interpolate
-        module_args = module_args.replace("{{ ","{{").replace(" }}","}}")
+        module_args = module_args.replace("{{ ", "{{").replace(" }}", "}}")
 
         kv = utils.parse_kv(module_args)
         args.update(kv)

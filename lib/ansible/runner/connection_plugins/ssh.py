@@ -20,7 +20,6 @@ import os
 import subprocess
 import shlex
 import pipes
-import random
 import select
 import fcntl
 import hmac
@@ -32,6 +31,7 @@ import ansible.constants as C
 from ansible.callbacks import vvv
 from ansible import errors
 from ansible import utils
+
 
 class Connection(object):
     ''' ssh based connections '''
@@ -48,7 +48,7 @@ class Connection(object):
         self.has_pipelining = False
 
         fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_EX)
-        self.cp_dir = utils.prepare_writeable_dir('$HOME/.ansible/cp',mode=0700)
+        self.cp_dir = utils.prepare_writeable_dir('$HOME/.ansible/cp', mode=0700)
         fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_UN)
 
     def connect(self):
@@ -82,9 +82,9 @@ class Connection(object):
         if self.port is not None:
             self.common_args += ["-o", "Port=%d" % (self.port)]
         if self.private_key_file is not None:
-            self.common_args += ["-o", "IdentityFile="+os.path.expanduser(self.private_key_file)]
+            self.common_args += ["-o", "IdentityFile=" + os.path.expanduser(self.private_key_file)]
         elif self.runner.private_key_file is not None:
-            self.common_args += ["-o", "IdentityFile="+os.path.expanduser(self.runner.private_key_file)]
+            self.common_args += ["-o", "IdentityFile=" + os.path.expanduser(self.runner.private_key_file)]
         if self.password:
             self.common_args += ["-o", "GSSAPIAuthentication=no",
                                  "-o", "PubkeyAuthentication=no"]
@@ -93,7 +93,7 @@ class Connection(object):
                                  "-o", "PreferredAuthentications=gssapi-with-mic,gssapi-keyex,hostbased,publickey",
                                  "-o", "PasswordAuthentication=no"]
         if self.user != pwd.getpwuid(os.geteuid())[0]:
-            self.common_args += ["-o", "User="+self.user]
+            self.common_args += ["-o", "User=" + self.user]
         self.common_args += ["-o", "ConnectTimeout=%d" % self.runner.timeout]
 
         return self
@@ -102,10 +102,11 @@ class Connection(object):
         if self.password:
             try:
                 p = subprocess.Popen(["sshpass"], stdin=subprocess.PIPE,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 p.communicate()
             except OSError:
-                raise errors.AnsibleError("to use the 'ssh' connection type with passwords, you must install the sshpass program")
+                raise errors.AnsibleError(
+                    "to use the 'ssh' connection type with passwords, you must install the sshpass program")
             (self.rfd, self.wfd) = os.pipe()
             return ["sshpass", "-d%d" % self.rfd]
         return []
@@ -131,7 +132,7 @@ class Connection(object):
             if tokens[0].find(self.HASHED_KEY_MAGIC) == 0:
                 # this is a hashed known host entry
                 try:
-                    (kn_salt,kn_host) = tokens[0][len(self.HASHED_KEY_MAGIC):].split("|",2)
+                    (kn_salt, kn_host) = tokens[0][len(self.HASHED_KEY_MAGIC):].split("|", 2)
                     hash = hmac.new(kn_salt.decode('base64'), digestmod=sha1)
                     hash.update(host)
                     if hash.digest() == kn_host.decode('base64'):
@@ -145,7 +146,7 @@ class Connection(object):
                     return False
         return True
 
-    def exec_command(self, cmd, tmp_path, sudo_user,sudoable=False, executable='/bin/sh', in_data=None):
+    def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False, executable='/bin/sh', in_data=None):
         ''' run a command on the remote host '''
 
         if in_data:
@@ -177,12 +178,10 @@ class Connection(object):
         not_in_host_file = self.not_in_host_file(self.host)
 
         if C.HOST_KEY_CHECKING and not_in_host_file:
-            # lock around the initial SSH connectivity so the user prompt about whether to add 
+            # lock around the initial SSH connectivity so the user prompt about whether to add
             # the host to known hosts is not intermingled with multiprocess output.
             fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_EX)
             fcntl.lockf(self.runner.output_lockfile, fcntl.LOCK_EX)
-        
-
 
         try:
             # Make sure stdin is a proper (pseudo) pty to avoid: tcgetattr errors
@@ -229,7 +228,7 @@ class Connection(object):
                 incorrect_password = gettext.dgettext(
                     "sudo", "Sorry, try again.")
                 if stdout.endswith("%s\r\n%s" % (incorrect_password, prompt)):
-                    raise errors.AnsibleError('Incorrect sudo password') 
+                    raise errors.AnsibleError('Incorrect sudo password')
 
             if p.stdout in rfd:
                 dat = os.read(p.stdout.fileno(), 9000)
@@ -241,23 +240,25 @@ class Connection(object):
                 stderr += dat
                 if dat == '':
                     rpipes.remove(p.stderr)
-            # only break out if we've emptied the pipes, or there is nothing to
+                # only break out if we've emptied the pipes, or there is nothing to
             # read from and the process has finished.
             if (not rpipes or not rfd) and p.poll() is not None:
                 break
             # Calling wait while there are still pipes to read can cause a lock
-            elif not rpipes and p.poll() == None:
+            elif not rpipes and p.poll() is None:
                 p.wait()
-        stdin.close() # close stdin after we read from stdout (see also issue #848)
-        
+        stdin.close()  # close stdin after we read from stdout (see also issue #848)
+
         if C.HOST_KEY_CHECKING and not_in_host_file:
-            # lock around the initial SSH connectivity so the user prompt about whether to add 
+            # lock around the initial SSH connectivity so the user prompt about whether to add
             # the host to known hosts is not intermingled with multiprocess output.
             fcntl.lockf(self.runner.output_lockfile, fcntl.LOCK_UN)
             fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_UN)
-        controlpersisterror = stderr.find('Bad configuration option: ControlPersist') != -1 or stderr.find('unknown configuration option: ControlPersist') != -1
+        controlpersisterror = stderr.find('Bad configuration option: ControlPersist') != -1 or stderr.find(
+            'unknown configuration option: ControlPersist') != -1
         if p.returncode != 0 and controlpersisterror:
-            raise errors.AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" (or ansible_ssh_args in the config file) before running again')
+            raise errors.AnsibleError(
+                'using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" (or ansible_ssh_args in the config file) before running again')
 
         return (p.returncode, '', stdout, stderr)
 
@@ -274,7 +275,7 @@ class Connection(object):
 
         if C.DEFAULT_SCP_IF_SSH:
             cmd += ["scp"] + self.common_args
-            cmd += [in_path,host + ":" + pipes.quote(out_path)]
+            cmd += [in_path, host + ":" + pipes.quote(out_path)]
             indata = None
         else:
             cmd += ["sftp"] + self.common_args + [host]
@@ -316,4 +317,3 @@ class Connection(object):
     def close(self):
         ''' not applicable since we're executing openssh binaries '''
         pass
-

@@ -15,12 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible import utils, errors
 import os
 import codecs
 
-class LookupModule(object):
+from ansible import utils, errors
 
+
+class LookupModule(object):
     def __init__(self, basedir=None, **kwargs):
         self.basedir = basedir
 
@@ -32,7 +33,7 @@ class LookupModule(object):
         # this can happen if the variable contains a string, strictly not desired for lookup
         # plugins, but users may try it, so make it work.
         if not isinstance(terms, list):
-            terms = [ terms ]
+            terms = [terms]
 
         for term in terms:
             path = utils.path_dwim(self.basedir, term)
@@ -40,6 +41,5 @@ class LookupModule(object):
                 raise errors.AnsibleError("%s does not exist" % path)
 
             ret.append(codecs.open(path, encoding="utf8").read().rstrip())
-
 
         return ret

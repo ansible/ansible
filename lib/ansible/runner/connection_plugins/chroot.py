@@ -25,6 +25,7 @@ from ansible import errors
 from ansible import utils
 from ansible.callbacks import vvv
 
+
 class Connection(object):
     ''' Local chroot based connections '''
 

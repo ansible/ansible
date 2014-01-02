@@ -16,20 +16,13 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import pwd
-import random
-import traceback
-import tempfile
 import base64
 
-import ansible.constants as C
 from ansible import utils
-from ansible import errors
-from ansible import module_common
 from ansible.runner.return_data import ReturnData
 
-class ActionModule(object):
 
+class ActionModule(object):
     def __init__(self, runner):
         self.runner = runner
 
@@ -37,7 +30,8 @@ class ActionModule(object):
         ''' handler for fetch operations '''
 
         if self.runner.noop_on_check(inject):
-            return ReturnData(conn=conn, comm_ok=True, result=dict(skipped=True, msg='check mode not (yet) supported for this module'))
+            return ReturnData(conn=conn, comm_ok=True,
+                              result=dict(skipped=True, msg='check mode not (yet) supported for this module'))
 
         # load up options
         options = {}
@@ -71,7 +65,7 @@ class ActionModule(object):
             # files are saved in dest dir, with a subdir for each host, then the filename
             dest = "%s/%s/%s" % (utils.path_dwim(self.runner.basedir, dest), conn.host, source)
 
-        dest = os.path.expanduser(dest.replace("//","/"))
+        dest = os.path.expanduser(dest.replace("//", "/"))
 
         # calculate md5 sum for the remote file
         remote_md5 = self.runner._remote_md5(conn, tmp, source)
@@ -95,10 +89,12 @@ class ActionModule(object):
             if fail_on_missing:
                 result = dict(failed=True, msg="the remote file does not exist", file=source)
             else:
-                result = dict(msg="the remote file does not exist, not transferring, ignored", file=source, changed=False)
+                result = dict(msg="the remote file does not exist, not transferring, ignored", file=source,
+                              changed=False)
             return ReturnData(conn=conn, result=result)
         if remote_md5 == '2':
-            result = dict(msg="no read permission on remote file, not transferring, ignored", file=source, changed=False)
+            result = dict(msg="no read permission on remote file, not transferring, ignored", file=source,
+                          changed=False)
             return ReturnData(conn=conn, result=result)
 
         # calculate md5 sum for the local file
@@ -118,11 +114,11 @@ class ActionModule(object):
                 f.close()
             new_md5 = utils.md5(dest)
             if validate_md5 and new_md5 != remote_md5:
-                result = dict(failed=True, md5sum=new_md5, msg="md5 mismatch", file=source, dest=dest, remote_md5sum=remote_md5)
+                result = dict(failed=True, md5sum=new_md5, msg="md5 mismatch", file=source, dest=dest,
+                              remote_md5sum=remote_md5)
                 return ReturnData(conn=conn, result=result)
             result = dict(changed=True, md5sum=new_md5, dest=dest, remote_md5sum=remote_md5)
             return ReturnData(conn=conn, result=result)
         else:
             result = dict(changed=False, md5sum=local_md5, file=source, dest=dest)
             return ReturnData(conn=conn, result=result)
-

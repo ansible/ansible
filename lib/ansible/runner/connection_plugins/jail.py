@@ -25,6 +25,7 @@ import subprocess
 from ansible import errors
 from ansible.callbacks import vvv
 
+
 class Connection(object):
     ''' Local chroot based connections '''
 
@@ -54,8 +55,6 @@ class Connection(object):
         # remove \n
         return stdout[:-1]
 
- 
-        
     def __init__(self, runner, host, port, *args, **kwargs):
         self.jail = host
         self.runner = runner
@@ -67,10 +66,9 @@ class Connection(object):
 
         self.jls_cmd = self._search_executable('jls')
         self.jexec_cmd = self._search_executable('jexec')
-        
+
         if not self.jail in self.list_jails():
             raise errors.AnsibleError("incorrect jail name %s" % self.jail)
-
 
         self.host = host
         # port is unused, since this is local
