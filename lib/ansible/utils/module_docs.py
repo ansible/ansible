@@ -25,7 +25,7 @@ import traceback
 
 # modules that are ok that they do not have documentation strings
 BLACKLIST_MODULES = [
-   'async_wrapper',
+   'async_wrapper', 'accelerate', 'async_status'
 ]
 
 def get_docstring(filename, verbose=False):
