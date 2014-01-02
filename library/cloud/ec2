@@ -293,6 +293,7 @@ local_action:
 
 import sys
 import time
+import signal
 
 AWS_REGIONS = ['ap-northeast-1',
                'ap-southeast-1',
@@ -373,6 +374,9 @@ def boto_supports_profile_name_arg(ec2):
     run_instances_method = getattr(ec2, 'run_instances')
     return 'instance_profile_name' in run_instances_method.func_code.co_varnames
 
+def timeout_handler(sig, frame):
+    module.fail_json(msg = "timeout on %s" % time.asctime())
+  
 
 def create_instances(module, ec2):
     """
@@ -498,6 +502,11 @@ def create_instances(module, ec2):
                 else:
                     params['security_groups'] = group_name
 
+            # Set timer for entire instance startup process
+            if wait:
+                signal.signal(signal.SIGALRM, timeout_handler)
+                signal.alarm(wait_timeout)
+              
             res = ec2.run_instances(**params)
         except boto.exception.BotoServerError, e:
             module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
@@ -523,8 +532,7 @@ def create_instances(module, ec2):
         # wait here until the instances are up
         this_res = []
         num_running = 0
-        wait_timeout = time.time() + wait_timeout
-        while wait_timeout > time.time() and num_running < len(instids):
+        while num_running < len(instids):
             res_list = res.connection.get_all_instances(instids)
             if len(res_list) > 0:
                 this_res = res_list[0]
@@ -539,13 +547,13 @@ def create_instances(module, ec2):
             else:
                 break
 
-        if wait and wait_timeout <= time.time():
-            # waiting took too long
-            module.fail_json(msg = "wait for instances running timeout on %s" % time.asctime())
-
         for inst in this_res.instances:
             running_instances.append(inst)
-
+            
+    # instances created within our time limit
+    if wait:
+        signal.alarm(0)
+    
     instance_dict_array = []
     created_instance_ids = []
     for inst in running_instances:
