@@ -34,6 +34,13 @@ class ActionModule(object):
         else:
             return path
 
+    def _process_remote(self, host, path, user):
+        transport = self.runner.transport
+        if not host in ['127.0.0.1', 'localhost'] or transport != "local":
+            return '%s@%s:%s' % (user, host, path)
+        else:
+            return path
+
     def setup(self, module_name, inject):
         ''' Always default to localhost as delegate if None defined '''
         if inject.get('delegate_to') is None:
@@ -76,7 +83,7 @@ class ActionModule(object):
         inv_port = inject.get('ansible_ssh_port', inject['inventory_hostname'])
         if inv_port != dest_port and inv_port != inject['inventory_hostname']:
             options['dest_port'] = inv_port
-
+        
 
         # edge case: explicit delegate and dest_host are the same
         if dest_host == inject['delegate_to']:
@@ -92,8 +99,15 @@ class ActionModule(object):
                 private_key = os.path.expanduser(private_key)
                 options['private_key'] = private_key
                 
-            src = self._process_origin(src_host, src, user)
-            dest = self._process_origin(dest_host, dest, user)
+            # use the mode to define src and dest's url
+            if options.get('mode', 'push') == 'pull':
+                # src is a remote path: <user>@<host>, dest is a local path
+                src = self._process_remote(src_host, src, user)
+                dest = self._process_origin(dest_host, dest, user)
+            else:
+                # src is a local path, dest is a remote path: <user>@<host>
+                src = self._process_origin(src_host, src, user)
+                dest = self._process_remote(dest_host, dest, user)
 
         options['src'] = src
         options['dest'] = dest
