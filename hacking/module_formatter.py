@@ -117,7 +117,7 @@ def write_data(text, options, outputname, module):
 def list_modules(module_dir):
     ''' returns a hash of categories, each category being a hash of module names to file paths '''
 
-    categories = {}
+    categories = dict(all=dict())
     files = glob.glob("%s/*" % module_dir)
     for d in files:
         if os.path.isdir(d):
@@ -129,6 +129,7 @@ def list_modules(module_dir):
                 if not category in categories:
                     categories[category] = {}
                 categories[category][module] = f
+                categories['all'][module] = f
     return categories
 
 #####################################################################################
