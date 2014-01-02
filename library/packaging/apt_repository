@@ -3,6 +3,7 @@
 
 # (c) 2012, Matt Wright <matt@nobien.net>
 # (c) 2013, Alexander Saltanov <asd@mokote.com>
+# (c) 2014, Rutger Spiertz <rutger@kumina.nl>
 #
 # This file is part of Ansible
 #
@@ -111,8 +112,9 @@ class SourcesList(object):
         self.files = {}  # group sources by file
         self.default_file = apt_pkg.config.find_file('Dir::Etc::sourcelist')
 
-        # read sources.list
-        self.load(self.default_file)
+        # read sources.list if it exists
+        if os.path.isfile(self.default_file):
+            self.load(self.default_file)
 
         # read sources.list.d
         for file in glob.iglob('%s/*.list' % apt_pkg.config.find_dir('Dir::Etc::sourceparts')):
