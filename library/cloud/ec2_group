@@ -195,8 +195,8 @@ def configure_rules(module, ec2, groups, group):
 
             if 'type' in rule:
                 ruleType = rule['type']
-                if ruleType != 'egress':
-                    ruleType = 'ingress'
+                if ruleType not in ['ingress', 'egress']:
+                    module.fail_json(msg="Type must be either ingress or egress. Type defaults to ingress if not specified.")
             else:
                 ruleType = 'ingress'
 
