@@ -4,7 +4,7 @@
 
 DOCUMENTATION = '''
 ---
-module: my_ec2_group
+module: ec2_group
 version_added: "1.3"
 short_description: maintain an ec2 VPC security group.
 description:
