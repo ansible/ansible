@@ -835,7 +835,7 @@ If for some crazy reason we wanted to tell just a specific host to use a specifi
 
     ---
     # file: /etc/ansible/host_vars/xyz.boston.example.com
-    ntp-server: override.example.com
+    ntp_server: override.example.com
 
 So that covers inventory and what you would normally set there.  It's a great place for things that deal with geography or behavior.  Since groups are frequently the entity that maps roles onto hosts, it is sometimes a shortcut to set variables on the group instead of defining them on a role.  You could go either way.
 
