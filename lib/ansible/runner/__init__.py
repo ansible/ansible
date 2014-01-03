@@ -405,8 +405,13 @@ class Runner(object):
             return flags
 
         try:
-            if not new_stdin:
-                self._new_stdin = os.fdopen(os.dup(sys.stdin.fileno()))
+            fileno = sys.stdin.fileno()
+        except ValueError:
+            fileno = None
+
+        try:
+            if not new_stdin and fileno is not None:
+                self._new_stdin = os.fdopen(os.dup(fileno))
             else:
                 self._new_stdin = new_stdin
 
