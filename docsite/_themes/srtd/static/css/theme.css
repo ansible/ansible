@@ -290,54 +290,54 @@ big, small {
 
 @media print {
     html, body, section {
-    background: none !important;
+        background: none !important;
+    }
+
+    * {
+        box-shadow: none !important;
+        text-shadow: none !important;
+        filter: none !important;
+        -ms-filter: none !important;
+    }
+
+    a, a:visited {
+        text-decoration: underline;
+    }
+
+    .ir a:after, a[href^="javascript:"]:after, a[href^="#"]:after {
+        content: "";
+    }
+
+    pre, blockquote {
+        page-break-inside: avoid;
+    }
+
+    thead {
+        display: table-header-group;
+    }
+
+    tr, img {
+        page-break-inside: avoid;
+    }
+
+    img {
+        max-width: 100% !important;
+    }
+
+    @page {
+        margin: 0.5cm;
+    }
+
+    p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+    }
+
+    h2, h3 {
+        page-break-after: avoid;
+    }
 }
 
-* {
-    box-shadow: none !important;
-    text-shadow: none !important;
-    filter: none !important;
-    -ms-filter: none !important;
-}
-
-a, a:visited {
-    text-decoration: underline;
-}
-
-.ir a:after, a[href^="javascript:"]:after, a[href^="#"]:after {
-    content: "";
-}
-
-pre, blockquote {
-    page-break-inside: avoid;
-}
-
-thead {
-    display: table-header-group;
-}
-
-tr, img {
-    page-break-inside: avoid;
-}
-
-img {
-    max-width: 100% !important;
-}
-
-@page {
-    margin: 0.5cm;
-}
-
-p, h2, h3 {
-    orphans: 3;
-    widows: 3;
-}
-
-h2, h3 {
-    page-break-after: avoid;
-}
-
-}
 .font-smooth, .icon:before, .wy-inline-validate.wy-inline-validate-success .wy-input-context:before, .wy-inline-validate.wy-inline-validate-danger .wy-input-context:before, .wy-inline-validate.wy-inline-validate-warning .wy-input-context:before, .wy-inline-validate.wy-inline-validate-info .wy-input-context:before, .wy-tag-input-group .wy-tag .wy-tag-remove:before, .rst-content .admonition-title:before, .rst-content h1 .headerlink:before, .rst-content h2 .headerlink:before, .rst-content h3 .headerlink:before, .rst-content h4 .headerlink:before, .rst-content h5 .headerlink:before, .rst-content h6 .headerlink:before, .rst-content dl dt .headerlink:before, .wy-alert, .rst-content .note, .rst-content .attention, .rst-content .caution, .rst-content .danger, .rst-content .error, .rst-content .hint, .rst-content .important, .rst-content .tip, .rst-content .warning, .btn, input[type="text"], input[type="password"], input[type="email"], input[type="url"], input[type="date"], input[type="month"], input[type="time"], input[type="datetime"], input[type="datetime-local"], input[type="week"], input[type="number"], input[type="search"], input[type="tel"], input[type="color"], select, textarea, .wy-tag-input-group, .wy-menu-vertical li.on a, .wy-menu-vertical li.current>a, .wy-side-nav-search>a, .wy-side-nav-search .wy-dropdown>a, .wy-nav-top a {
     -webkit-font-smoothing: antialiased;
 }
@@ -2617,10 +2617,10 @@ select[disabled], textarea[disabled], input[readonly], select[readonly], textare
 
 @media screen and (max-width: 480px) {
     .wy-form-upload {
-    width: 100%;
+        width: 100%;
+    }
 }
 
-}
 .wy-form-upload .image-drop {
     display: none;
 }
@@ -2654,11 +2654,11 @@ select[disabled], textarea[disabled], input[readonly], select[readonly], textare
 
 @media screen and (max-width: 480px) {
     .wy-form-upload .wy-form-upload-image {
-    width: 100%;
-    margin-bottom: 24px;
+        width: 100%;
+        margin-bottom: 24px;
+    }
 }
 
-}
 .wy-form-upload img {
     max-width: 125px;
     max-height: 125px;
@@ -2674,10 +2674,10 @@ select[disabled], textarea[disabled], input[readonly], select[readonly], textare
 
 @media screen and (max-width: 480px) {
     .wy-form-upload .wy-form-upload-content {
-    width: 100%;
+        width: 100%;
+    }
 }
 
-}
 .wy-form-upload:hover {
     border-color: #b3b3b3;
     color: #404040;
@@ -2825,16 +2825,16 @@ select[disabled], textarea[disabled], input[readonly], select[readonly], textare
 
 @media screen and (max-width: 768px) {
     .wy-form-gallery-manage li {
-    width: 25%;
+        width: 25%;
+    }
 }
 
-}
 @media screen and (max-width: 480px) {
     .wy-form-gallery-manage li {
-    width: 50%;
+        width: 50%;
+    }
 }
 
-}
 .wy-form-gallery-manage li:active {
     cursor: move;
 }
@@ -2889,53 +2889,53 @@ li.wy-form-gallery-edit .arrow {
 
 @media only screen and (max-width: 480px) {
     .wy-form button[type="submit"] {
-    margin: 0.7em 0 0;
+        margin: 0.7em 0 0;
+    }
+
+    .wy-form input[type="text"], .wy-form input[type="password"], .wy-form input[type="email"], .wy-form input[type="url"], .wy-form input[type="date"], .wy-form input[type="month"], .wy-form input[type="time"], .wy-form input[type="datetime"], .wy-form input[type="datetime-local"], .wy-form input[type="week"], .wy-form input[type="number"], .wy-form input[type="search"], .wy-form input[type="tel"], .wy-form input[type="color"] {
+        margin-bottom: 0.3em;
+        display: block;
+    }
+
+    .wy-form label {
+        margin-bottom: 0.3em;
+        display: block;
+    }
+
+    .wy-form input[type="password"], .wy-form input[type="email"], .wy-form input[type="url"], .wy-form input[type="date"], .wy-form input[type="month"], .wy-form input[type="time"], .wy-form input[type="datetime"], .wy-form input[type="datetime-local"], .wy-form input[type="week"], .wy-form input[type="number"], .wy-form input[type="search"], .wy-form input[type="tel"], .wy-form input[type="color"] {
+        margin-bottom: 0;
+    }
+
+    .wy-form-aligned .wy-control-group label {
+        margin-bottom: 0.3em;
+        text-align: left;
+        display: block;
+        width: 100%;
+    }
+
+    .wy-form-aligned .wy-controls {
+        margin: 1.5em 0 0 0;
+    }
+
+    .wy-form .wy-help-inline, .wy-form-message-inline, .wy-form-message {
+        display: block;
+        font-size: 80%;
+        padding: 0.2em 0 0.8em;
+    }
 }
 
-.wy-form input[type="text"], .wy-form input[type="password"], .wy-form input[type="email"], .wy-form input[type="url"], .wy-form input[type="date"], .wy-form input[type="month"], .wy-form input[type="time"], .wy-form input[type="datetime"], .wy-form input[type="datetime-local"], .wy-form input[type="week"], .wy-form input[type="number"], .wy-form input[type="search"], .wy-form input[type="tel"], .wy-form input[type="color"] {
-    margin-bottom: 0.3em;
-    display: block;
-}
-
-.wy-form label {
-    margin-bottom: 0.3em;
-    display: block;
-}
-
-.wy-form input[type="password"], .wy-form input[type="email"], .wy-form input[type="url"], .wy-form input[type="date"], .wy-form input[type="month"], .wy-form input[type="time"], .wy-form input[type="datetime"], .wy-form input[type="datetime-local"], .wy-form input[type="week"], .wy-form input[type="number"], .wy-form input[type="search"], .wy-form input[type="tel"], .wy-form input[type="color"] {
-    margin-bottom: 0;
-}
-
-.wy-form-aligned .wy-control-group label {
-    margin-bottom: 0.3em;
-    text-align: left;
-    display: block;
-    width: 100%;
-}
-
-.wy-form-aligned .wy-controls {
-    margin: 1.5em 0 0 0;
-}
-
-.wy-form .wy-help-inline, .wy-form-message-inline, .wy-form-message {
-    display: block;
-    font-size: 80%;
-    padding: 0.2em 0 0.8em;
-}
-
-}
 @media screen and (max-width: 768px) {
     .tablet-hide {
-    display: none;
+        display: none;
+    }
 }
 
-}
 @media screen and (max-width: 480px) {
     .mobile-hide {
-    display: none;
+        display: none;
+    }
 }
 
-}
 .float-left {
     float: left;
 }
@@ -3463,10 +3463,10 @@ pre.literal-block {
 
 @media print {
     .codeblock, div[class^='highlight'], div[class^='highlight'] pre {
-    white-space: pre-wrap;
+        white-space: pre-wrap;
+    }
 }
 
-}
 .hll {
     background-color: #f8f8f8;
     border: 1px solid #ccc;
@@ -3764,20 +3764,20 @@ pre.literal-block {
 
 @media screen and (max-width: 480px) {
     .wy-breadcrumbs-extra {
-    display: none;
+        display: none;
+    }
+
+    .wy-breadcrumbs li.wy-breadcrumbs-aside {
+        display: none;
+    }
 }
 
-.wy-breadcrumbs li.wy-breadcrumbs-aside {
-    display: none;
-}
-
-}
 @media print {
     .wy-breadcrumbs li.wy-breadcrumbs-aside {
-    display: none;
+        display: none;
+    }
 }
 
-}
 .wy-affix {
     position: fixed;
     top: 1.618em;
@@ -4135,61 +4135,61 @@ footer p {
 
 @media screen and (max-width: 768px) {
     .wy-body-for-nav {
-    background: #fcfcfc;
+        background: #fcfcfc;
+    }
+
+    .wy-nav-top {
+        display: block;
+    }
+
+    .wy-nav-side {
+        left: -300px;
+    }
+
+    .wy-nav-side.shift {
+        width: 85%;
+        left: 0;
+    }
+
+    .wy-nav-content-wrap {
+        margin-left: 0;
+    }
+
+    .wy-nav-content-wrap .wy-nav-content {
+        padding: 1.618em;
+    }
+
+    .wy-nav-content-wrap.shift {
+        position: fixed;
+        min-width: 100%;
+        left: 85%;
+        top: 0;
+        height: 100%;
+        overflow: hidden;
+    }
 }
 
-.wy-nav-top {
-    display: block;
-}
-
-.wy-nav-side {
-    left: -300px;
-}
-
-.wy-nav-side.shift {
-    width: 85%;
-    left: 0;
-}
-
-.wy-nav-content-wrap {
-    margin-left: 0;
-}
-
-.wy-nav-content-wrap .wy-nav-content {
-    padding: 1.618em;
-}
-
-.wy-nav-content-wrap.shift {
-    position: fixed;
-    min-width: 100%;
-    left: 85%;
-    top: 0;
-    height: 100%;
-    overflow: hidden;
-}
-
-}
 @media screen and (min-width: 1400px) {
     .wy-nav-content-wrap {
-    background: rgba(0, 0, 0, 0.05);
+        background: rgba(0, 0, 0, 0.05);
+    }
+
+    .wy-nav-content {
+        margin: 0;
+        background: #fcfcfc;
+    }
 }
 
-.wy-nav-content {
-    margin: 0;
-    background: #fcfcfc;
-}
-
-}
 @media print {
     .wy-nav-side {
-    display: none;
+        display: none;
+    }
+
+    .wy-nav-content-wrap {
+        margin-left: 0;
+    }
 }
 
-.wy-nav-content-wrap {
-    margin-left: 0;
-}
-
-}
 .rst-versions {
     position: fixed;
     bottom: 0;
@@ -4307,20 +4307,20 @@ footer p {
 
 @media screen and (max-width: 768px) {
     .rst-versions {
-    width: 85%;
-    display: none;
+        width: 85%;
+        display: none;
+    }
+
+    .rst-versions.shift {
+        display: block;
+    }
+
+    img {
+        width: 100%;
+        height: auto;
+    }
 }
 
-.rst-versions.shift {
-    display: block;
-}
-
-img {
-    width: 100%;
-    height: auto;
-}
-
-}
 .rst-content img {
     max-width: 100%;
     height: auto !important;
