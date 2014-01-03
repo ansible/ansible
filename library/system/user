@@ -901,8 +901,21 @@ class OpenBSDUser(User):
             cmd.append(self.shell)
 
         if self.login_class is not None:
-            cmd.append('-L')
-            cmd.append(self.login_class)
+            # find current login class
+            user_login_class = None
+            userinfo_cmd = [self.module.get_bin_path('userinfo', True), self.name]
+            (rc, out, err) = self.execute_command(userinfo_cmd)
+
+            for line in out.splitlines():
+                tokens = line.split()
+
+                if tokens[0] == 'class' and len(tokens) == 2:
+                    user_login_class = tokens[1]
+
+            # act only if login_class change
+            if self.login_class != user_login_class:
+                cmd.append('-L')
+                cmd.append(self.login_class)
 
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
             cmd.append('-p')
