@@ -73,10 +73,10 @@ options:
   use_mirrors:
     description:
       - Whether to use mirrors when installing python libraries.  If using
-        an older version of pip (< 1.0), you should set this to no because
-        older versions of pip do not support I(--use-mirrors).
+        a version of pip between 1.0 and 1.4 inclusive, you should set this to 'yes' because
+        older and newer versions of pip do not support I(--use-mirrors).
     required: false
-    default: "yes"
+    default: "no"
     choices: [ "yes", "no" ]
     version_added: "1.0"
   state:
@@ -220,7 +220,7 @@ def main():
             virtualenv=dict(default=None, required=False),
             virtualenv_site_packages=dict(default='no', type='bool'),
             virtualenv_command=dict(default='virtualenv', required=False),
-            use_mirrors=dict(default='yes', type='bool'),
+            use_mirrors=dict(default='no', type='bool'),
             extra_args=dict(default=None, required=False),
             chdir=dict(default=None, required=False),
             executable=dict(default=None, required=False),
