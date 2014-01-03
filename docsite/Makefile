@@ -4,13 +4,13 @@ FORMATTER=../hacking/module_formatter.py
 
 all: clean docs
 
-docs: clean modules
+docs: clean modules staticmin
 	./build-site.py
 
-viewdocs: clean
+viewdocs: clean staticmin
 	./build-site.py view
 
-htmldocs:
+htmldocs: staticmin
 	./build-site.py rst
 
 clean:
@@ -18,6 +18,8 @@ clean:
 	-rm -f .buildinfo
 	-rm -f *.inv
 	-rm -rf *.doctrees
+	@echo "Cleaning up minified css files"
+	find . -type f -name "*.min.css" -delete
 	@echo "Cleaning up byte compiled python stuff"
 	find . -regex ".*\.py[co]$$" -delete
 	@echo "Cleaning up editor backup files"
@@ -29,4 +31,6 @@ clean:
 modules: $(FORMATTER) ../hacking/templates/rst.j2
 	PYTHONPATH=../lib $(FORMATTER) -t rst --template-dir=../hacking/templates --module-dir=../library -o rst/
 
+staticmin:
+	yuicompressor --type css -o _themes/srtd/static/css/theme.min.css _themes/srtd/static/css/theme.css
 
