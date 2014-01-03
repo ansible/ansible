@@ -32,5 +32,4 @@ modules: $(FORMATTER) ../hacking/templates/rst.j2
 	PYTHONPATH=../lib $(FORMATTER) -t rst --template-dir=../hacking/templates --module-dir=../library -o rst/
 
 staticmin:
-	yuicompressor --type css -o _themes/srtd/static/css/theme.min.css _themes/srtd/static/css/theme.css
-
+	cat _themes/srtd/static/css/theme.css | sed -e 's/^[ \t]*//g; s/[ \t]*$$//g; s/\([:{;,]\) /\1/g; s/ {/{/g; s/\/\*.*\*\///g; /^$$/d' | sed -e :a -e '$$!N; s/\n\(.\)/\1/; ta' > _themes/srtd/static/css/theme.min.css
