@@ -275,6 +275,7 @@ def main():
     pip = _get_pip(module, env, module.params['executable'])
 
     cmd = '%s %s' % (pip, state_map[state])
+    cmd_opts = None
     
     # If there's a virtualenv we want things we install to be able to use other
     # installations that exist as binaries within this virtualenv. Example: we 
@@ -319,7 +320,11 @@ def main():
             is_local_path = True
         # for tarball or vcs source, applying --use-mirrors doesn't really make sense
         is_package = is_vcs or is_tar or is_local_path       # just a shortcut for bool
-        if not is_package and state != 'absent' and use_mirrors:
+
+        if cmd_opts is None:
+            cmd_opts = _get_cmd_options(module, cmd)
+
+        if not is_package and state != 'absent' and use_mirrors and '--use-mirrors' in cmd_opts:
             cmd += ' --use-mirrors'
         cmd += ' %s' % _get_full_name(name, version)
     elif requirements:
