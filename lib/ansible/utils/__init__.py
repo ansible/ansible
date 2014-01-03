@@ -979,12 +979,21 @@ def listify_lookup_plugin_terms(terms, basedir, inject):
 
     return terms
 
-def deprecated(msg, version):
+def deprecated(msg, version, removed=False):
     ''' used to print out a deprecation message.'''
-    if not C.DEPRECATION_WARNINGS:
+
+    if not removed and not C.DEPRECATION_WARNINGS:
         return
-    new_msg = "\n[DEPRECATION WARNING]: %s. This feature will be removed in version %s." % (msg, version)
-    new_msg = new_msg + " Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.\n\n"
+
+    if not removed:
+        if version:
+            new_msg = "\n[DEPRECATION WARNING]: %s. This feature will be removed in version %s." % (msg, version)
+        else:
+            new_msg = "\n[DEPRECATION WARNING]: %s. This feature will be removed in a future release." % (msg)
+        new_msg = new_msg + " Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.\n\n"
+    else:
+        raise errors.AnsibleError("[DEPRECATED]: %s.  Please update your playbooks." % msg)
+
     wrapped = textwrap.wrap(new_msg, 79)
     new_msg = "\n".join(wrapped) + "\n"
 

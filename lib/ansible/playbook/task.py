@@ -98,7 +98,7 @@ class Task(object):
                     utils.warning("It is unneccessary to use '{{' in conditionals, leave variables in loop expressions bare.")
                 ds[x] = "jinja2_compare %s" % (ds[x])
             elif x.startswith("when_"):
-                utils.deprecated("The 'when_' conditional is a deprecated syntax as of 1.2. Switch to using the regular unified 'when' statements as described in ansibleworks.com/docs/.","1.5")
+                utils.deprecated("The 'when_' conditional has been removed. Switch to using the regular unified 'when' statements as described in ansibleworks.com/docs/.","1.5", removed=True)
 
                 if 'when' in ds:
                     raise errors.AnsibleError("multiple when_* statements specified in task %s" % (ds.get('name', ds['action'])))
@@ -191,7 +191,7 @@ class Task(object):
         self.only_if = ds.get('only_if', 'True')
 
         if self.only_if != 'True':
-            utils.deprecated("only_if is a very old feature and has been obsolete since 0.9, please switch to the 'when' conditional as described at http://ansibleworks.com/docs","1.5")
+            utils.deprecated("only_if is a very old feature and has been obsolete since 0.9, please switch to the 'when' conditional as described at http://ansibleworks.com/docs","1.5",removed=True)
 
         self.when    = ds.get('when', None)
         self.changed_when = ds.get('changed_when', None)

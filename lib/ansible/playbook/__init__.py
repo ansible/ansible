@@ -161,7 +161,7 @@ class PlayBook(object):
         play_basedirs = []
 
         if type(playbook_data) != list:
-            raise errors.AnsibleError("parse error: playbooks must be formatted as a YAML list")
+            raise errors.AnsibleError("parse error: playbooks must be formatted as a YAML list, got %s" % type(playbook_data))
 
         basedir = os.path.dirname(path) or '.'
         utils.plugins.push_basedir(basedir)
