@@ -43,11 +43,18 @@ class ActionModule(object):
 
     def setup(self, module_name, inject):
         ''' Always default to localhost as delegate if None defined '''
+
+        # Store original transport and sudo values.
+        self.original_transport = inject.get('ansible_connection', self.runner.transport)
+        self.original_sudo = self.runner.sudo
+        self.transport_overridden = False
+
         if inject.get('delegate_to') is None:
             inject['delegate_to'] = '127.0.0.1'
-            inject['ansible_connection'] = 'local'
-            # If sudo is active, disable from the connection set self.sudo to True.
-            if self.runner.sudo:
+            # IF original transport is not local, override transport and disable sudo.
+            if self.original_transport != 'local':
+                inject['ansible_connection'] = 'local'
+                self.transport_overridden = True
                 self.runner.sudo = False
 
     def run(self, conn, tmp, module_name, module_args,
@@ -78,6 +85,7 @@ class ActionModule(object):
         dest_host = inject.get('ansible_ssh_host', inject['inventory_hostname'])
         # allow ansible_ssh_host to be templated
         dest_host = template.template(self.runner.basedir, dest_host, inject, fail_on_undefined=True)
+        dest_is_local = dest_host in ['127.0.0.1', 'localhost']
 
         dest_port = options.get('dest_port')
         inv_port = inject.get('ansible_ssh_port', inject['inventory_hostname'])
@@ -114,8 +122,11 @@ class ActionModule(object):
         if 'mode' in options:
             del options['mode']
 
+        # Allow custom rsync path argument.
         rsync_path = options.get('rsync_path', None)
-        if not rsync_path and self.runner.sudo:
+
+        # If no rsync_path is set, sudo was originally set, and dest is remote then add 'sudo rsync' argument.
+        if not rsync_path and self.transport_overridden and self.original_sudo and not dest_is_local:
             rsync_path = 'sudo rsync'
 
         # make sure rsync path is quoted.
