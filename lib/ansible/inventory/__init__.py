@@ -133,11 +133,7 @@ class Inventory(object):
         # exclude hosts not in a subset, if defined
         if self._subset:
             subset = self._get_hosts(self._subset)
-            new_hosts = []
-            for h in hosts:
-                if h in subset and h not in new_hosts:
-                    new_hosts.append(h)
-            hosts = new_hosts
+            hosts = [ h for h in hosts if h in subset ]
 
         # exclude hosts mentioned in any restriction (ex: failed hosts)
         if self._restriction is not None:
@@ -183,9 +179,7 @@ class Inventory(object):
             elif p.startswith("&"):
                 hosts = [ h for h in hosts if h in that ]
             else:
-                for h in that:
-                    if h not in hosts:
-                        hosts.append(h)
+                hosts.extend([ h for h in that if h not in hosts ])
 
         return hosts
 
