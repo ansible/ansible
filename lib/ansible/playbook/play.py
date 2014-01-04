@@ -489,11 +489,11 @@ class Play(object):
                         utils.deprecated("\"when_<criteria>:\" is a removed deprecated feature, use the simplified 'when:' conditional directly", None, removed=True)
                     elif k == 'when':
                         if type(x[k]) is str:
-                            included_additional_conditions.insert(0, utils.compile_when_to_only_if("jinja2_compare %s" % x[k]))
+                            included_additional_conditions.insert(0, x[k])
                         elif type(x[k]) is list:
                             for i in x[k]:
-                                included_additional_conditions.insert(0, utils.compile_when_to_only_if("jinja2_compare %s" % i))
-                    elif k in ("include", "vars", "default_vars", "only_if", "sudo", "sudo_user", "role_name"):
+                                included_additional_conditions.insert(0, i)
+                    elif k in ("include", "vars", "default_vars", "sudo", "sudo_user", "role_name"):
                         continue
                     else:
                         include_vars[k] = x[k]
@@ -511,8 +511,8 @@ class Play(object):
                 if 'vars' in x:
                     task_vars = utils.combine_vars(task_vars, x['vars'])
 
-                if 'only_if' in x:
-                    included_additional_conditions.append(x['only_if'])
+                if 'when' in x:
+                    included_additional_conditions.append(x['when'])
 
                 new_role = None
                 if 'role_name' in x:

@@ -1067,6 +1067,6 @@ class Runner(object):
         if self.always_run is None:
             self.always_run = self.module_vars.get('always_run', False)
             self.always_run = check_conditional(
-                self.always_run, self.basedir, inject, fail_on_undefined=True, jinja2=True)
+                self.always_run, self.basedir, inject, fail_on_undefined=True)
 
         return (self.check and not self.always_run)
