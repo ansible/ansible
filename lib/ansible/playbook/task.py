@@ -24,7 +24,7 @@ import sys
 class Task(object):
 
     __slots__ = [
-        'name', 'meta', 'action', 'only_if', 'when', 'async_seconds', 'async_poll_interval',
+        'name', 'meta', 'action', 'when', 'async_seconds', 'async_poll_interval',
         'notify', 'module_name', 'module_args', 'module_vars', 'default_vars',
         'play', 'notified_by', 'tags', 'register', 'role_name',
         'delegate_to', 'first_available_file', 'ignore_errors',
@@ -35,7 +35,7 @@ class Task(object):
 
     # to prevent typos and such
     VALID_KEYS = [
-         'name', 'meta', 'action', 'only_if', 'async', 'poll', 'notify',
+         'name', 'meta', 'action', 'when', 'async', 'poll', 'notify',
          'first_available_file', 'include', 'tags', 'register', 'ignore_errors',
          'delegate_to', 'local_action', 'transport', 'remote_user', 'sudo', 'sudo_user',
          'sudo_pass', 'when', 'connection', 'environment', 'args',
@@ -96,7 +96,6 @@ class Task(object):
             elif x in [ 'changed_when', 'failed_when', 'when']:
                 if isinstance(ds[x], basestring) and ds[x].lstrip().startswith("{{"):
                     utils.warning("It is unneccessary to use '{{' in conditionals, leave variables in loop expressions bare.")
-                ds[x] = "jinja2_compare %s" % (ds[x])
             elif x.startswith("when_"):
                 utils.deprecated("The 'when_' conditional has been removed. Switch to using the regular unified 'when' statements as described in ansibleworks.com/docs/.","1.5", removed=True)
 
@@ -128,8 +127,8 @@ class Task(object):
             self.module_vars['delay']     = ds.get('delay', 5)
             self.module_vars['retries']   = ds.get('retries', 3)
             self.module_vars['register']  = ds.get('register', None)
-            self.until                    = "jinja2_compare %s" % (ds.get('until'))
-            self.module_vars['until']     = utils.compile_when_to_only_if(self.until)
+            self.until                    = ds.get('until')
+            self.module_vars['until']     = self.until
 
         # rather than simple key=value args on the options line, these represent structured data and the values
         # can be hashes and lists, not just scalars
@@ -188,21 +187,9 @@ class Task(object):
             self.name = self.action
 
         # load various attributes
-        self.only_if = ds.get('only_if', 'True')
-
-        if self.only_if != 'True':
-            utils.deprecated("only_if is a very old feature and has been obsolete since 0.9, please switch to the 'when' conditional as described at http://ansibleworks.com/docs","1.5",removed=True)
-
         self.when    = ds.get('when', None)
         self.changed_when = ds.get('changed_when', None)
-
-        if self.changed_when is not None:
-            self.changed_when = utils.compile_when_to_only_if(self.changed_when)
-
         self.failed_when = ds.get('failed_when', None)
-
-        if self.failed_when is not None:
-            self.failed_when = utils.compile_when_to_only_if(self.failed_when)
 
         self.async_seconds = int(ds.get('async', 0))  # not async by default
         self.async_poll_interval = int(ds.get('poll', 10))  # default poll = 10 seconds
@@ -276,12 +263,7 @@ class Task(object):
                 self.tags.extend(apply_tags)
         self.tags.extend(import_tags)
 
-        if self.when is not None:
-            if self.only_if != 'True':
-                raise errors.AnsibleError('when obsoletes only_if, only use one or the other')
-            self.only_if = utils.compile_when_to_only_if(self.when)
-
         if additional_conditions:
             new_conditions = additional_conditions
-            new_conditions.append(self.only_if)
-            self.only_if = new_conditions
+            new_conditions.append(self.when)
+            self.when = new_conditions

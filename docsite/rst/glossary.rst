@@ -56,8 +56,8 @@ Conditionals
 ++++++++++++
 
 A conditional is an expression that evaluates to true or false that decides whether a given task will be executed on a given
-machine or not.   Ansible's conditionals include 'when_boolean',
-'when_string', and 'when_integer'.  These are discussed in the playbook documentation.
+machine or not.   Ansible's conditionals are powered by the 'when' statement, and are 
+discussed in the playbook documentation.
 
 Diff Mode
 +++++++++
@@ -219,11 +219,6 @@ JSON
 ++++
 
 Ansible uses JSON for return data from remote modules.  This allows modules to be written in any language, not just Python.
-
-only_if
-+++++++
-
-A deprecated form of the "when:" statement. It should no longer be used.
 
 Library
 +++++++

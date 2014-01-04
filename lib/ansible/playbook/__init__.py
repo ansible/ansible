@@ -310,7 +310,7 @@ class PlayBook(object):
             remote_port=task.play.remote_port, module_vars=task.module_vars,
             default_vars=task.default_vars, private_key_file=self.private_key_file,
             setup_cache=self.SETUP_CACHE, basedir=task.play.basedir,
-            conditional=task.only_if, callbacks=self.runner_callbacks,
+            conditional=task.when, callbacks=self.runner_callbacks,
             sudo=task.sudo, sudo_user=task.sudo_user,
             transport=task.transport, sudo_pass=task.sudo_pass, is_playbook=True,
             check=self.check, diff=self.diff, environment=task.environment, complex_args=task.args,

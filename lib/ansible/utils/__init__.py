@@ -163,58 +163,44 @@ def is_changed(result):
 
     return (result.get('changed', False) in [ True, 'True', 'true'])
 
-def check_conditional(conditional, basedir, inject, fail_on_undefined=False, jinja2=False):
+def check_conditional(conditional, basedir, inject, fail_on_undefined=False):
 
     if isinstance(conditional, list):
         for x in conditional:
-            if not check_conditional(x, basedir, inject, fail_on_undefined=fail_on_undefined, jinja2=jinja2):
+            if not check_conditional(x, basedir, inject, fail_on_undefined=fail_on_undefined):
                 return False
         return True
-
-    if jinja2:
-        conditional = "jinja2_compare %s" % conditional
-
-    if conditional.startswith("jinja2_compare"):
-        conditional = conditional.replace("jinja2_compare ","")
-        # allow variable names
-        if conditional in inject and str(inject[conditional]).find('-') == -1:
-            conditional = inject[conditional]
-        conditional = template.template(basedir, conditional, inject, fail_on_undefined=fail_on_undefined)
-        original = str(conditional).replace("jinja2_compare ","")
-        # a Jinja2 evaluation that results in something Python can eval!
-        presented = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional
-        conditional = template.template(basedir, presented, inject)
-        val = conditional.strip()
-        if val == presented:
-            # the templating failed, meaning most likely a 
-            # variable was undefined. If we happened to be 
-            # looking for an undefined variable, return True,
-            # otherwise fail
-            if conditional.find("is undefined") != -1:
-                return True
-            elif conditional.find("is defined") != -1:
-                return False
-            else:
-                raise errors.AnsibleError("error while evaluating conditional: %s" % original)
-        elif val == "True":
-            return True
-        elif val == "False":
-            return False
-        else:
-            raise errors.AnsibleError("unable to evaluate conditional: %s" % original)
 
     if not isinstance(conditional, basestring):
         return conditional
 
-    try:
-        conditional = conditional.replace("\n", "\\n")
-        result = safe_eval(conditional)
-        if result not in [ True, False ]:
-            raise errors.AnsibleError("Conditional expression must evaluate to True or False: %s" % conditional)
-        return result
-
-    except (NameError, SyntaxError):
-        raise errors.AnsibleError("Could not evaluate the expression: (%s)" % conditional)
+    conditional = conditional.replace("jinja2_compare ","")
+    # allow variable names
+    if conditional in inject and str(inject[conditional]).find('-') == -1:
+        conditional = inject[conditional]
+    conditional = template.template(basedir, conditional, inject, fail_on_undefined=fail_on_undefined)
+    original = str(conditional).replace("jinja2_compare ","")
+    # a Jinja2 evaluation that results in something Python can eval!
+    presented = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional
+    conditional = template.template(basedir, presented, inject)
+    val = conditional.strip()
+    if val == presented:
+        # the templating failed, meaning most likely a 
+        # variable was undefined. If we happened to be 
+        # looking for an undefined variable, return True,
+        # otherwise fail
+        if conditional.find("is undefined") != -1:
+            return True
+        elif conditional.find("is defined") != -1:
+            return False
+        else:
+            raise errors.AnsibleError("error while evaluating conditional: %s" % original)
+    elif val == "True":
+        return True
+    elif val == "False":
+        return False
+    else:
+        raise errors.AnsibleError("unable to evaluate conditional: %s" % original)
 
 def is_executable(path):
     '''is the given path executable?'''
@@ -755,86 +741,6 @@ def boolean(value):
         return True
     else:
         return False
-
-def compile_when_to_only_if(expression):
-    '''
-    when is a shorthand for writing only_if conditionals.  It requires less quoting
-    magic.  only_if is retained for backwards compatibility.
-    '''
-
-    # when: set $variable
-    # when: unset $variable
-    # when: failed $json_result
-    # when: changed $json_result
-    # when: int $x >= $z and $y < 3
-    # when: int $x in $alist
-    # when: float $x > 2 and $y <= $z
-    # when: str $x != $y
-    # when: jinja2_compare asdf  # implies {{ asdf }}
-
-    if type(expression) not in [ str, unicode ]:
-        raise errors.AnsibleError("invalid usage of when_ operator: %s" % expression)
-    tokens = expression.split()
-    if len(tokens) < 2:
-        raise errors.AnsibleError("invalid usage of when_ operator: %s" % expression)
-
-    # when_set / when_unset
-    if tokens[0] in [ 'set', 'unset' ]:
-        tcopy = tokens[1:]
-        for (i,t) in enumerate(tokens[1:]):
-            if t.find("$") != -1:
-                tcopy[i] = "is_%s('''%s''')" % (tokens[0], t)
-            else:
-                tcopy[i] = t
-        return " ".join(tcopy)
-
-    # when_failed / when_changed
-    elif tokens[0] in [ 'failed', 'changed' ]:
-        tcopy = tokens[1:]
-        for (i,t) in enumerate(tokens[1:]):
-            if t.find("$") != -1:
-                tcopy[i] = "is_%s(%s)" % (tokens[0], t)
-            else:
-                tcopy[i] = t
-        return " ".join(tcopy)
-
-    # when_integer / when_float / when_string
-    elif tokens[0] in [ 'integer', 'float', 'string' ]:
-        cast = None
-        if tokens[0] == 'integer':
-            cast = 'int'
-        elif tokens[0] == 'string':
-            cast = 'str'
-        elif tokens[0] == 'float':
-            cast = 'float'
-        tcopy = tokens[1:]
-        for (i,t) in enumerate(tokens[1:]):
-            #if re.search(t, r"^\w"):
-                # bare word will turn into Jinja2 so all the above
-                # casting is really not needed
-                #tcopy[i] = "%s('''%s''')" % (cast, t)
-            t2 = t.strip()
-            if (t2[0].isalpha() or t2[0] == '$') and cast == 'str' and t2 != 'in':
-                tcopy[i] = "'%s'" % (t)
-            else:
-                tcopy[i] = t
-        result = " ".join(tcopy)
-        return result
-
-
-    # when_boolean
-    elif tokens[0] in [ 'bool', 'boolean' ]:
-        tcopy = tokens[1:]
-        for (i, t) in enumerate(tcopy):
-            if t.find("$") != -1:
-                tcopy[i] = "(is_set('''%s''') and '''%s'''.lower() not in ('false', 'no', 'n', 'none', '0', ''))" % (t, t)
-        return " ".join(tcopy)
-
-    # the stock 'when' without qualification (new in 1.2), assumes Jinja2 terms
-    elif tokens[0] == 'jinja2_compare':
-        return " ".join(tokens)
-    else:
-        raise errors.AnsibleError("invalid usage of when_ operator: %s" % expression)
 
 def make_sudo_cmd(sudo_user, executable, cmd):
     """
