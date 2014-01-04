@@ -165,6 +165,9 @@ def is_changed(result):
 
 def check_conditional(conditional, basedir, inject, fail_on_undefined=False):
 
+    if conditional is None or conditional == '':
+        return True
+
     if isinstance(conditional, list):
         for x in conditional:
             if not check_conditional(x, basedir, inject, fail_on_undefined=fail_on_undefined):
