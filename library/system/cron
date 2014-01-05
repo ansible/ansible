@@ -351,6 +351,8 @@ class CronTab(object):
         if self.user:
             if platform.system() == 'SunOS':
                 return "su '%s' -c '%s -l'" % (self.user, CRONCMD)
+            elif platform.system() == 'AIX':
+		return "%s -l %s" % (CRONCMD, self.user)
             else:
                 user = '-u %s' % self.user
         return "%s %s %s" % (CRONCMD , user, '-l')
@@ -361,7 +363,7 @@ class CronTab(object):
         """
         user = ''
         if self.user:
-            if platform.system() == 'SunOS':
+            if platform.system() == 'SunOS' od paltform.system() == 'AIX':
                 return "chown %s %s ; su '%s' -c '%s %s'" % (self.user, path, self.user, CRONCMD, path)
             else:
                 user = '-u %s' % self.user
