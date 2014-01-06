@@ -28,8 +28,15 @@ import shlex
 from play import Play
 import StringIO
 import pipes
+import collections
 
-SETUP_CACHE = ansible.cache.Cache(dict)
+SETUP_CACHE = None
+cache_plugin = utils.plugins.cache_loader.get(C.CACHE_PLUGIN)
+
+if cache_plugin:
+   SETUP_CACHE = ansible.cache.FactCache()
+else:
+   SETUP_CACHE = collections.defaultdict(dict)
 
 class PlayBook(object):
     '''
