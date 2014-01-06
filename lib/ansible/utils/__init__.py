@@ -447,8 +447,30 @@ Note: The error may actually appear before this position: line %s, column %s
 %s
 %s""" % (path, mark.line + 1, mark.column + 1, before_probline, probline, arrow)
 
-        msg = process_common_errors(msg, probline, mark.column)
+        unquoted_var = None
+        if '{{' in probline and '}}' in probline:
+            if '"{{' not in probline or "'{{" not in probline:
+                unquoted_var = True
 
+        msg = process_common_errors(msg, probline, mark.column)
+        if not unquoted_var:
+            msg = process_common_errors(msg, probline, mark.column)
+        else:
+            msg = msg + """
+We could be wrong, but this one looks like it might be an issue with
+missing quotes.  Always quote template expression brackets when they 
+start a value. For instance:            
+
+    with_items:
+      - {{ foo }}
+
+Should be written as:
+
+    with_items:
+      - "{{ foo }}"      
+
+"""
+            msg = process_common_errors(msg, probline, mark.column)
 
     else:
         # No problem markers means we have to throw a generic
