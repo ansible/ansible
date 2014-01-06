@@ -1,6 +1,10 @@
 Ansible Changes By Release
 ==========================
 
+1.4.4 "Could This Be Magic" - January 06, 2014
+
+- Fixed issue with newer versions of pip not having --use-mirrors
+
 1.4.3 "Could This Be Magic?" - December 20, 2013
 
 - Fixed role_path parsing from ansible.cfg

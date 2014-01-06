@@ -2,6 +2,7 @@ Ansible Releases at a Glance
 ============================
 
 
+1.4.4  "Could This Be Magic?" - 01-06-2014
 1.4.3  "Could This Be Magic?" - 12-20-2013
 1.4.2  "Could This Be Magic?" - 12-18-2013
 1.4.1  "Could This Be Magic?" - 11-27-2013
