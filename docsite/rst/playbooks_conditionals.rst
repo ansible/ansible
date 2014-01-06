@@ -193,10 +193,10 @@ The following example shows how to template out a configuration file that was ve
     - name: template a file
       template: src={{ item }} dest=/etc/myapp/foo.conf
       with_first_found:
-        files: 
+        - files: 
            - {{ ansible_distribution }}.conf
            - default.conf
-        paths:
+          paths:
            - search_location_one/somedir/
            - /opt/other_location/somedir/
 
