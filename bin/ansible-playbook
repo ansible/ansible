@@ -221,7 +221,7 @@ def main(args):
 
             retries = failed_hosts + unreachable_hosts
 
-            if len(retries) > 0:
+            if C.RETRY_FILES_ENABLED and len(retries) > 0:
                 filename = pb.generate_retry_inventory(retries)
                 if filename:
                     display("           to retry, use: --limit @%s\n" % filename)

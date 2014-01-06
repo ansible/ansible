@@ -392,6 +392,33 @@ class TestPlaybook(unittest.TestCase):
 
       assert utils.jsonify(expected, format=True) == utils.jsonify(actual,format=True)
 
+   def test_playbook_retry_files(self):
+       '''
+       This test is not particularly deep. It simply asserts some behaviour
+       following a regression and some discussion on the mailing list.
+       '''
+
+       test_callbacks = TestCallbacks()
+       playbook = ansible.playbook.PlayBook(
+           playbook=os.path.join(self.test_dir, 'playbook-always-fail.yml'),
+           host_list='test/ansible_hosts',
+           stats=ans_callbacks.AggregateStats(),
+           callbacks=test_callbacks,
+           runner_callbacks=test_callbacks
+       )
+
+       filename = playbook.generate_retry_inventory('localhost')
+       expected = os.path.join(
+             os.path.expandvars(C.RETRY_FILES_SAVE_PATH), 'playbook-always-fail.retry'
+       )
+
+       print "**ACTUAL**"
+       print filename
+       print "**EXPECTED**"
+       print expected
+
+       assert filename == expected
+
 
    def test_recursive_copy(self):
        pb = 'test/playbook-recursive-copy.yml'
