@@ -18,7 +18,7 @@ upgrade remote daemons or the problem of not being able to manage systems becaus
 
 You may be interested in reading about `some notable Ansible users <http://www.ansibleworks.com/users/>`_.
 
-This documentation covers the current released version of Ansible (1.4.3) and also some development version features (1.5).  For recent features, in each section, the version of Ansible where the feature is added is indicated.  AnsibleWorks releases a new major release of Ansible approximately every 2 months.  The core application evolves somewhat conservatively, valuing simplicity in language design and setup, while the community around new modules and plugins being developed and contributed moves very very quickly, typically adding 20 or so new modules in each release.
+This documentation covers the current released version of Ansible (1.4.4) and also some development version features (1.5).  For recent features, in each section, the version of Ansible where the feature is added is indicated.  AnsibleWorks releases a new major release of Ansible approximately every 2 months.  The core application evolves somewhat conservatively, valuing simplicity in language design and setup, while the community around new modules and plugins being developed and contributed moves very very quickly, typically adding 20 or so new modules in each release.
 
 .. _an_introduction:
 
