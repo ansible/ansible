@@ -241,7 +241,10 @@ def api_lookup_role_by_name(api_server, role_name):
     role_name = urllib.quote(role_name)
 
     try:
-        user_name,role_name = role_name.split(".", 1)
+        parts = role_name.split(".")
+        user_name = ".".join(parts[0:-1])
+        role_name = parts[-1]
+        print " downloading role '%s', owned by %s" % (role_name, user_name)
     except:
         print "Invalid role name (%s). You must specify username.rolename" % role_name
         sys.exit(1)
