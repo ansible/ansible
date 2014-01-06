@@ -17,7 +17,7 @@
 DOCUMENTATION = '''
 ---
 module: ec2
-short_description: create or terminate an instance in ec2, return instanceid
+short_description: create, terminate, start, or stop an instance in ec2, return instanceid
 description:
      - Creates or terminates ec2 instances. When created optionally waits for it to be 'running'. This module has a dependency on python-boto >= 2.5
 version_added: "0.9"
@@ -180,7 +180,7 @@ options:
   instance_ids:
     version_added: "1.3"
     description:
-      - list of instance ids, currently only used when state='absent'
+      - list of instance ids, currently only used when state is absent, stoped, or started
     required: false
     default: null
     aliases: []
@@ -309,39 +309,6 @@ try:
 except ImportError:
     print "failed=True msg='boto required for this module'"
     sys.exit(1)
-
-
-def get_instance_info(inst):
-    """
-    Retrieves instance information from an instance
-    ID and returns it as a dictionary
-    """
-    instance_info = {'id': inst.id,
-                     'ami_launch_index': inst.ami_launch_index,
-                     'private_ip': inst.private_ip_address,
-                     'private_dns_name': inst.private_dns_name,
-                     'public_ip': inst.ip_address,
-                     'dns_name': inst.dns_name,
-                     'public_dns_name': inst.public_dns_name,
-                     'state_code': inst.state_code,
-                     'architecture': inst.architecture,
-                     'image_id': inst.image_id,
-                     'key_name': inst.key_name,
-                     'placement': inst.placement,
-                     'kernel': inst.kernel,
-                     'ramdisk': inst.ramdisk,
-                     'launch_time': inst.launch_time,
-                     'instance_type': inst.instance_type,
-                     'root_device_type': inst.root_device_type,
-                     'root_device_name': inst.root_device_name,
-                     'state': inst.state,
-                     'hypervisor': inst.hypervisor}
-    try:
-        instance_info['virtualization_type'] = getattr(inst,'virtualization_type')
-    except AttributeError:
-        instance_info['virtualization_type'] = None
-
-    return instance_info
 
 def boto_supports_associate_public_ip_address(ec2):
     """
@@ -573,9 +540,81 @@ def terminate_instances(module, ec2, instance_ids):
 
     """
 
-    # Whether to wait for termination to complete before returning
+    changed = False
+
+    if not isinstance(instance_ids, list) or len(instance_ids) < 1:
+        module.fail_json(msg='instance_ids should be a list of instances, aborting')
+
+    relevant_instances = get_state_instances(ec2, instance_ids, 'running')
+    relevant_instance_ids = [inst['id'] for inst in relevant_instances]
+
+    for id in relevant_instance_ids:
+        try:
+            ec2.terminate_instances(id)
+        except EC2ResponseError as e:
+            module.fail_json(msg='Unable to terminate instance {0}, error: {1}'.format(id, e))
+        changed = True
+
+    wait_for_instances(ec2, relevant_instance_ids, 'terminated', module)
+
+    return (changed, relevant_instances, relevant_instance_ids)
+
+def start_instances(module, ec2, instance_ids):
+    """
+    Starts a list of instances
+
+    module: Ansible module object
+    ec2: authenticated ec2 connection object
+    start_list: a list of instances to start in the form of
+      [ {id: <inst-id>}, ..]
+
+    Returns a dictionary of instance information
+    about the instances started.
+
+    If the instances to be started are already running
+    "changed" will be set to False.
+
+    """
+
+    # Whether to wait for starting to complete before returning
     wait = module.params.get('wait')
     wait_timeout = int(module.params.get('wait_timeout'))
+
+    changed = False
+
+    if not isinstance(instance_ids, list) or len(instance_ids) < 1:
+        module.fail_json(msg='instance_ids should be a list of instances, aborting')
+
+    relevant_instances = get_state_instances(ec2, instance_ids, 'stopped')
+    relevant_instance_ids = [inst['id'] for inst in relevant_instances]
+
+    for id in relevant_instance_ids:
+        try:
+            ec2.start_instances(id)
+        except EC2ResponseError as e:
+            module.fail_json(msg='Unable to start instance {0}, error: {1}'.format(id, e))
+        changed = True
+
+    started_instances = wait_for_instances(ec2, relevant_instance_ids, 'running', module, True)
+            
+    return (changed, started_instances, relevant_instance_ids)
+
+def stop_instances(module, ec2, instance_ids):
+    """
+    Stops a list of instances
+
+    module: Ansible module object
+    ec2: authenticated ec2 connection object
+    stop_list: a list of instances to terminate in the form of
+      [ {id: <inst-id>}, ..]
+
+    Returns a dictionary of instance information
+    about the instances stopped.
+
+    If the instances to be stopped are already stopped
+    "changed" will be set to False.
+
+    """
 
     changed = False
     instance_dict_array = []
@@ -583,43 +622,20 @@ def terminate_instances(module, ec2, instance_ids):
     if not isinstance(instance_ids, list) or len(instance_ids) < 1:
         module.fail_json(msg='instance_ids should be a list of instances, aborting')
 
-    terminated_instance_ids = []
-    for res in ec2.get_all_instances(instance_ids):
-        for inst in res.instances:
-            if inst.state == 'running':
-                terminated_instance_ids.append(inst.id)
-                instance_dict_array.append(get_instance_info(inst))
-                try:
-                    ec2.terminate_instances([inst.id])
-                except EC2ResponseError as e:
-                    module.fail_json(msg='Unable to terminate instance {0}, error: {1}'.format(inst.id, e))
-                changed = True
+    relevant_instances = get_state_instances(ec2, instance_ids, 'running')
+    relevant_instance_ids = [inst['id'] for inst in relevant_instances]
+    for id in relevant_instance_ids:
+        try:
+            ec2.stop_instances(id)
+        except EC2ResponseError as e:
+            module.fail_json(msg='Unable to stop instance {0}, error: {1}'.format(id, e))
+        
+        changed = True
 
-    # wait here until the instances are 'terminated'
-    if wait:
-        num_terminated = 0
-        wait_timeout = time.time() + wait_timeout
-        while wait_timeout > time.time() and num_terminated < len(terminated_instance_ids):
-            response = ec2.get_all_instances( \
-                instance_ids=terminated_instance_ids, \
-                filters={'instance-state-name':'terminated'})
-            try:
-                num_terminated = len(response.pop().instances)
-            except Exception, e:
-                # got a bad response of some sort, possibly due to
-                # stale/cached data. Wait a second and then try again
-                time.sleep(1)
-                continue
+    # wait here until the instances are 'stopped'
+    wait_for_instances(ec2, instance_ids, 'stopped', module)
 
-            if num_terminated < len(terminated_instance_ids):
-                time.sleep(5)
-
-        # waiting took too long
-        if wait_timeout < time.time() and num_terminated < len(terminated_instance_ids):
-            module.fail_json(msg = "wait for instance termination timeout on %s" % time.asctime())
-
-    return (changed, instance_dict_array, terminated_instance_ids)
-
+    return (changed, relevant_instances, relevant_instance_ids)
 
 def main():
     module = AnsibleModule(
@@ -686,6 +702,22 @@ def main():
         if not module.params.get('image'):
             module.fail_json(msg='image parameter is required for new instance')
         (instance_dict_array, new_instance_ids, changed) = create_instances(module, ec2)
+
+    elif module.params.get('state') == 'started':
+        instance_ids = module.params.get('instance_ids')
+        if not isinstance(instance_ids, list):
+            module.fail_json(msg='start_list needs to be a list of instances to start')
+
+        (changed, instance_dict_array, new_instance_ids) = start_instances(module, ec2, instance_ids)
+
+    elif module.params.get('state') == 'stopped':
+        instance_ids = module.params.get('instance_ids')
+        if not isinstance(instance_ids, list):
+            module.fail_json(msg='stop_list needs to be a list of instances to stop')
+
+        (changed, instance_dict_array, new_instance_ids) = stop_instances(module, ec2, instance_ids)
+    else:
+        module.fail_json(msg='state must be one of present, started, stopped, or absent')
 
     module.exit_json(changed=changed, instance_ids=new_instance_ids, instances=instance_dict_array)
 
