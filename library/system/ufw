@@ -224,7 +224,7 @@ def main():
                 if log:
                     cmd = cmd + ' log'
                 if name:
-                    cmd = cmd + ' %s' % (name)
+                    cmd = cmd + ' "%s"' % (name)
                 else:
                     if proto and proto not in 'any':
                         cmd = cmd + ' proto %s' % (proto)
