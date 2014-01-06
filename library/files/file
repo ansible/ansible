@@ -307,6 +307,10 @@ def main():
             if not force:
                 module.fail_json(dest=path, src=src, msg='Cannot link, file exists at destination')
             changed = True
+        elif prev_state == 'directory':
+            if not force:
+                module.fail_json(dest=path, src=src, msg='Cannot link, directory exists at destination')
+            changed = True
         else:
             module.fail_json(dest=path, src=src, msg='unexpected position reached')
 
