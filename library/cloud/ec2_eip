@@ -102,38 +102,6 @@ else:
     boto_found = True
 
 
-def connect(ec2_url, ec2_access_key, ec2_secret_key, region, module):
-
-    """ Return an ec2 connection"""
-    # allow environment variables to be used if ansible vars aren't set
-    if not ec2_url and 'EC2_URL' in os.environ:
-        ec2_url = os.environ['EC2_URL']
-    if not ec2_secret_key and 'EC2_SECRET_KEY' in os.environ:
-        ec2_secret_key = os.environ['EC2_SECRET_KEY']
-    if not ec2_access_key and 'EC2_ACCESS_KEY' in os.environ:
-        ec2_access_key = os.environ['EC2_ACCESS_KEY']
-
-    # If we have a region specified, connect to its endpoint.
-    if region:
-        try:
-            ec2 = boto.ec2.connect_to_region(region,
-                                        aws_access_key_id=ec2_access_key,
-                                        aws_secret_access_key=ec2_secret_key)
-        except boto.exception.NoAuthHandlerFound, e:
-            module.fail_json(msg = str(" %s %s %s " % (region, ec2_access_key,
-                                                       ec2_secret_key)))
-    # Otherwise, no region so we fallback to the old connection method
-    else:
-        try:
-            if ec2_url: # if we have an URL set, connect to the specified endpoint
-                ec2 = boto.connect_ec2_endpoint(ec2_url, ec2_access_key, ec2_secret_key)
-            else: # otherwise it's Amazon.
-                ec2 = boto.connect_ec2(ec2_access_key, ec2_secret_key)
-        except boto.exception.NoAuthHandlerFound, e:
-            module.fail_json(msg = str(e))
-    return ec2
-
-
 def associate_ip_and_instance(ec2, address, instance_id, module):
     if ip_is_associated_with_instance(ec2, address.public_ip, instance_id, module):
         module.exit_json(changed=False, public_ip=address.public_ip)
@@ -248,8 +216,8 @@ def main():
             state = dict(required=False, default='present',
                          choices=['present', 'absent']),
             ec2_url = dict(required=False, aliases=['EC2_URL']),
-            ec2_secret_key = dict(required=False, aliases=['EC2_SECRET_KEY'], no_log=True),
-            ec2_access_key = dict(required=False, aliases=['EC2_ACCESS_KEY']),
+            ec2_secret_key = dict(aliases=['aws_secret_key', 'secret_key'], no_log=True),
+            ec2_access_key = dict(aliases=['aws_access_key', 'access_key']),
             region = dict(required=False, aliases=['ec2_region']),
             in_vpc = dict(required=False, choices=BOOLEANS, default=False),
         ),
@@ -259,13 +227,7 @@ def main():
     if not boto_found:
         module.fail_json(msg="boto is required")
 
-    ec2_url, ec2_access_key, ec2_secret_key, region = get_ec2_creds(module)
-
-    ec2 = connect(ec2_url,
-                  ec2_access_key,
-                  ec2_secret_key,
-                  region,
-                  module)
+    ec2 = ec2_connect(module)
 
     instance_id = module.params.get('instance_id')
     public_ip = module.params.get('public_ip')
