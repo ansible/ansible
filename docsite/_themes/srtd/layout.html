@@ -38,6 +38,7 @@ var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga
 
   {# CSS #}
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+  <link href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.0.3/css/font-awesome.min.css' rel='stylesheet' type='text/css'>
 
   {# JS #}
   {% if not embedded %}
@@ -101,6 +102,27 @@ var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga
 
   <script src="//cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
 
+  <style>
+    .search-reset-start {
+        color: #463E3F;
+        float: right;
+        position: relative;
+        top: -25px;
+        left: -10px;
+        z-index: 10;
+     }
+     .search-reset-start:hover {
+        cursor: pointer;
+        color: #2980B9;
+     }
+     #search-box-id {
+        padding-right: 25px;
+     }
+     .wy-nav-content {
+        max-width: 1024px;
+     }
+  </style>
+
 </head>
 
 <body class="wy-body-for-nav">
@@ -114,7 +136,7 @@ var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga
         {% include "searchbox.html" %}
       </div>
 
-      <div class="wy-menu wy-menu-vertical" data-spy="affix">
+      <div id="menu-id" class="wy-menu wy-menu-vertical" data-spy="affix">
         {% set toctree = toctree(maxdepth=2, collapse=False) %}
         {% if toctree %}
             {{ toctree }}
@@ -138,7 +160,10 @@ var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga
       <div class="wy-nav-content">
         <div class="rst-content">
           {% include "breadcrumbs.html" %}
+          <div id="page-content">
           {% block body %}{% endblock %}
+          </div>
+          <div id="search-results"><gcse:searchresults-only></div>
           {% include "footer.html" %}
         </div>
       </div>
