@@ -21,6 +21,7 @@ import fnmatch
 import os
 import re
 import subprocess
+from sets import Set
 
 import ansible.constants as C
 from ansible.inventory.ini import InventoryParser
@@ -251,6 +252,8 @@ class Inventory(object):
         """ Get all host names matching the pattern """
 
         hosts = []
+        hostnames = Set()
+
         # ignore any negative checks here, this is handled elsewhere
         pattern = pattern.replace("!","").replace("&", "")
 
@@ -259,8 +262,9 @@ class Inventory(object):
         for group in groups:
             for host in group.get_hosts():
                 if pattern == 'all' or self._match(group.name, pattern) or self._match(host.name, pattern):
-                    if host not in results:
+                    if host not in results and host.name not in hostnames:
                         results.append(host)
+                        hostnames.add(host.name)
         return results
 
     def clear_pattern_cache(self):
