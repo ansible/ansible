@@ -4617,3 +4617,20 @@ span[id*='MathJax-Span'] {
     color: #fff;
 }
 
+.search-reset-start {
+    color: #463E3F;
+    float: right;
+    position: relative;
+    top: -25px;
+    left: -10px;
+    z-index: 10;
+}
+
+.search-reset-start:hover {
+    cursor: pointer;
+    color: #2980B9;
+}
+
+#search-box-id {
+    padding-right: 25px;
+}
