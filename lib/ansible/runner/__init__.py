@@ -46,6 +46,7 @@ import connection
 from return_data import ReturnData
 from ansible.callbacks import DefaultRunnerCallbacks, vv
 from ansible.module_common import ModuleReplacer
+from ansible.cache import FactCache
 
 module_replacer = ModuleReplacer(strip_comments=False)
 
@@ -153,7 +154,14 @@ class Runner(object):
         # storage & defaults
         self.check            = check
         self.diff             = diff
-        self.setup_cache      = utils.default(setup_cache, lambda: collections.defaultdict(dict))
+
+        cache_plugin = utils.plugins.cache_loader.get(C.CACHE_PLUGIN)
+
+        if cache_plugin is not None:
+            self.setup_cache = ansible.cache.FactCache()
+        else:
+            self.setup_cache = collections.defaultdict(dict)
+
         self.basedir          = utils.default(basedir, lambda: os.getcwd())
         self.callbacks        = utils.default(callbacks, lambda: DefaultRunnerCallbacks())
         self.generated_jid    = str(random.randint(0, 999999999999))
