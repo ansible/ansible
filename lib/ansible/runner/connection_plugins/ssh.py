@@ -229,7 +229,7 @@ class Connection(object):
                 if p.stderr in rfd:
                     chunk = p.stderr.read()
                     if not chunk:
-                        raise errors.AnsibleError('ssh connection closed waiting for sudo password prompt')
+                        raise errors.AnsibleError('ssh connection closed waiting for sudo or su password prompt')
                     sudo_errput += chunk
                     incorrect_password = gettext.dgettext(
                         "sudo", "Sorry, try again.")
