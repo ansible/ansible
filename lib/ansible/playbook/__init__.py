@@ -325,7 +325,7 @@ class PlayBook(object):
             private_key_file=self.private_key_file,
             setup_cache=self.SETUP_CACHE,
             basedir=task.play.basedir,
-            conditional=task.only_if,
+            conditional=task.when,
             callbacks=self.runner_callbacks,
             sudo=task.sudo,
             sudo_user=task.sudo_user,
