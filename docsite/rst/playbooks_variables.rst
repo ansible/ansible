@@ -190,9 +190,9 @@ To get the difference of 2 lists (items in 1 that don't exist in 2)::
 
     {{ list1 |difference(list2)}}
 
-To get the symetric difference of 2 lists (items exclusive to each list)::
+To get the symmetric difference of 2 lists (items exclusive to each list)::
 
-    {{ list1 |symetric_difference(list2)}}
+    {{ list1 |symmetric_difference(list2)}}
 
 .. _other_useful_filters:
 
