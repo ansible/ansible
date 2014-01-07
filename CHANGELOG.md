@@ -18,6 +18,10 @@ Misc:
 
 * no_reboot is now defaulted to "no" in the ec2_ami module to ensure filesystem consistency in the resulting AMI.
 
+## 1.4.4 "Could This Be Magic" - January 6, 2014
+
+- fixed a minor issue with newer versions of pip dropping the "use-mirrors" parameter.
+
 ## 1.4.3 "Could This Be Magic" - December 20, 2013
 
 - Fixed role_path parsing from ansible.cfg
