@@ -34,7 +34,7 @@ class Play(object):
        'handlers', 'remote_user', 'remote_port', 'included_roles', 'accelerate',
        'accelerate_port', 'accelerate_ipv6', 'sudo', 'sudo_user', 'transport', 'playbook',
        'tags', 'gather_facts', 'serial', '_ds', '_handlers', '_tasks',
-       'basedir', 'any_errors_fatal', 'roles', 'max_fail_pct'
+       'basedir', 'any_errors_fatal', 'roles', 'max_fail_pct', '_play_hosts'
     ]
 
     # to catch typos and so forth -- these are userland names
@@ -134,6 +134,8 @@ class Play(object):
         if self.sudo_user != 'root':
             self.sudo = True
 
+        # place holder for the discovered hosts to be used in this play
+        self._play_hosts = None
 
     # *************************************************
 
