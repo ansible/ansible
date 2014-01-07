@@ -222,6 +222,45 @@ doesn't know it is a boolean value::
    - debug: msg=test
      when: some_string_value | bool
 
+Cron management
+```````````````
+
+Generate random whole number(s) based on a seed for repeatable randomness. Each
+host will generate a different random number, but a specific host's result will
+not change between runs. This prevents thundering herd issues with resource
+intensive cron tasks. Seed is typically inventory_hostname or inventory_hostname
+combined with a string to prevent multiple cronjobs on a server from sharing the
+same offset.
+
+Note: Due to how playbooks are parsed, you shouldn't allow spaces in the filter
+command.
+
+To generate a random minute::
+
+    {{inventory_hostname|cron_rand}}
+
+To generate a random time per task::
+
+    - cron:
+        name=task_name_here
+        minute={{[inventory_hostname,'task_name_here']|join('+')|cron_rand}}
+        job="blah"
+
+to generate 4 random runs per hour::
+
+    - cron:
+        name=task_name_here
+        minute={{[inventory_hostname,'task_name_here']|join('+')|cron_rand(60,4)}}
+        job="blah"
+
+to run randomly once a day::
+
+    - cron:
+        name=task_name_here
+        hour={{[inventory_hostname,'task_name_here']|join('+')|cron_rand(24)}}
+        minute={{[inventory_hostname,'task_name_here']|join('+')|cron_rand}}
+        job="blah"
+
 A few useful filters are typically added with each new Ansible release.  The development documentation shows
 how to extend Ansible filters by writing your own as plugins, though in general, we encourage new ones
 to be added to core so everyone can make use of them.
