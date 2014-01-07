@@ -29,7 +29,7 @@
   function executeQuery() {
       var input = document.getElementById('search-box-id');
       var element = google.search.cse.element.getElement('searchresults-only0');
-      element.resultsUrl = '/htmlout/search.html'
+      element.resultsUrl = '/search.html'
       if (input.value == '') {
           element.clearAllResults();
           $('#page-content, .rst-footer-buttons, #search-start').show();
