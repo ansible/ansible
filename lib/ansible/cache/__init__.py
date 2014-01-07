@@ -30,6 +30,9 @@ class FactCache(dict):
     def __getitem__(self, key, default={}):
         return self._plugin.get(key, default)
 
+    def get(self, key, default=None):
+        return self.__getitem__(key, default)
+
     def __setitem__(self, key, value):
         self._plugin.set(key, value)
 

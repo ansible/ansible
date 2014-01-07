@@ -392,7 +392,7 @@ class PlayBook(object):
             if task.register:
                 if 'stdout' in result and 'stdout_lines' not in result:
                     result['stdout_lines'] = result['stdout'].splitlines()
-                self.SETUP_CACHE[host][task.register] = result
+                utils.update_hash(self.SETUP_CACHE, host, {task.register: result})
 
         # also have to register some failed, but ignored, tasks
         if task.ignore_errors and task.register:
@@ -400,7 +400,7 @@ class PlayBook(object):
             for host, result in failed.iteritems():
                 if 'stdout' in result and 'stdout_lines' not in result:
                     result['stdout_lines'] = result['stdout'].splitlines()
-                self.SETUP_CACHE[host][task.register] = result
+                utils.update_hash(self.SETUP_CACHE, host, {task.register: result})
 
         # flag which notify handlers need to be run
         if len(task.notify) > 0:
