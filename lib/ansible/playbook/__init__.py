@@ -316,7 +316,8 @@ class PlayBook(object):
             check=self.check, diff=self.diff, environment=task.environment, complex_args=task.args,
             accelerate=task.play.accelerate, accelerate_port=task.play.accelerate_port,
             accelerate_ipv6=task.play.accelerate_ipv6,
-            error_on_undefined_vars=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR
+            error_on_undefined_vars=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR,
+            run_hosts=hosts
         )
 
         if task.async_seconds == 0:
