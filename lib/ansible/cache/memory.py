@@ -26,3 +26,7 @@ class CacheModule(object):
     def set(self, key, value):
         self._cache[key] = value
 
+    def keys(self):
+        self._cache.keys()
+
+
