@@ -1958,6 +1958,11 @@ class LinuxVirtual(Virtual):
             self.facts['virtualization_role'] = 'guest'
             return
 
+        if product_name == 'RHEV Hypervisor':
+            self.facts['virtualization_type'] = 'RHEV'
+            self.facts['virtualization_role'] = 'guest'
+            return
+
         if product_name == 'VMware Virtual Platform':
             self.facts['virtualization_type'] = 'VMware'
             self.facts['virtualization_role'] = 'guest'
