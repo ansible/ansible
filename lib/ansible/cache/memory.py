@@ -27,6 +27,12 @@ class CacheModule(object):
         self._cache[key] = value
 
     def keys(self):
-        self._cache.keys()
+        return self._cache.keys()
+
+    def contains(self, key):
+        return 'key' in self._cache
+
+    def delete(self, key):
+        del self._cache[key]
 
 
