@@ -26,6 +26,13 @@ options:
   api_key:
     description:
       - Rackspace API key (overrides I(credentials))
+  auto_increment:
+    description:
+      - Whether or not to increment a single number with the name of the
+        created servers. Only applicable when used with the I(group) attribute
+        or meta key.
+    default: yes
+    version_added: 1.5
   count:
     description:
       - number of instances to launch
@@ -147,6 +154,26 @@ EXAMPLES = '''
         networks:
           - private
           - public
+      register: rax
+
+- name: Build an exact count of cloud servers with incremented names
+  hosts: local
+  gather_facts: False
+  tasks:
+    - name: Server build requests
+      local_action:
+        module: rax
+        credentials: ~/.raxpub
+        name: test%03d.example.org
+        flavor: performance1-1
+        image: ubuntu-1204-lts-precise-pangolin
+        state: present
+        count: 10
+        count_offset: 10
+        exact_count: yes
+        group: test
+        wait: yes
+      register: rax
 '''
 
 import sys
@@ -199,7 +226,7 @@ def create(module, names, flavor, image, meta, key_name, files,
         lpath = os.path.expanduser(files[rpath])
         try:
             fileobj = open(lpath, 'r')
-            files[rpath] = fileobj
+            files[rpath] = fileobj.read()
         except Exception, e:
             module.fail_json(msg='Failed to load %s' % lpath)
     try:
@@ -347,7 +374,8 @@ def delete(module, instance_ids, wait, wait_timeout):
 
 def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                  wait, wait_timeout, disk_config, count, group,
-                 instance_ids, exact_count, networks, count_offset):
+                 instance_ids, exact_count, networks, count_offset,
+                 auto_increment):
     cs = pyrax.cloudservers
     cnw = pyrax.cloud_networks
     servers = []
@@ -357,6 +385,15 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
         meta['group'] = group
     elif 'group' in meta and group is None:
         group = meta['group']
+
+    # When using state=absent with group, the absent block won't match the
+    # names properly. Use the exact_count functionality to decrease the count
+    # to the desired level
+    was_absent = False
+    if group is not None and state == 'absent':
+        exact_count = True
+        state = 'present'
+        was_absent = True
 
     # Check if the provided image is a UUID and if not, search for an
     # appropriate image using human_id and name
@@ -416,27 +453,43 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                 module.fail_json(msg='"group" must be provided when using '
                                      '"exact_count"')
             else:
-                numbers = set()
+                if auto_increment:
+                    numbers = set()
 
-                try:
-                    name % 0
-                except TypeError, e:
-                    if e.message.startswith('not all'):
-                        name = '%s%%d' % name
+                    try:
+                        name % 0
+                    except TypeError, e:
+                        if e.message.startswith('not all'):
+                            name = '%s%%d' % name
+                        else:
+                            module.fail_json(msg=e.message)
+
+                    pattern = re.sub(r'%\d+[sd]', r'(\d+)', name)
+                    for server in cs.servers.list():
+                        if server.metadata.get('group') == group:
+                            servers.append(server)
+                        match = re.search(pattern, server.name)
+                        if match:
+                            number = int(match.group(1))
+                            numbers.add(number)
+
+                    number_range = xrange(count_offset, count_offset + count)
+                    available_numbers = list(set(number_range)
+                                             .difference(numbers))
+                else:
+                    for server in cs.servers.list():
+                        if server.metadata.get('group') == group:
+                            servers.append(server)
+
+                # If state was absent but the count was changed,
+                # assume we only wanted to remove that number of instances
+                if was_absent:
+                    diff = len(servers) - count
+                    if diff < 0:
+                        count = 0
                     else:
-                        module.fail_json(msg=e.message)
+                        count = diff
 
-                pattern = re.sub(r'%\d+[sd]', r'(\d+)', name)
-                for server in cs.servers.list():
-                    if server.metadata.get('group') == group:
-                        servers.append(server)
-                    match = re.search(pattern, server.name)
-                    if match:
-                        number = int(match.group(1))
-                        numbers.add(number)
-
-                number_range = xrange(count_offset, count_offset + count)
-                available_numbers = list(set(number_range).difference(numbers))
                 if len(servers) > count:
                     state = 'absent'
                     del servers[:count]
@@ -445,45 +498,52 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                         instance_ids.append(server.id)
                     delete(module, instance_ids, wait, wait_timeout)
                 elif len(servers) < count:
-                    names = []
-                    numbers_to_use = available_numbers[:count - len(servers)]
-                    for number in numbers_to_use:
-                        names.append(name % number)
+                    if auto_increment:
+                        names = []
+                        name_slice = count - len(servers)
+                        numbers_to_use = available_numbers[:name_slice]
+                        for number in numbers_to_use:
+                            names.append(name % number)
+                    else:
+                        names = [name] * (count - len(servers))
                 else:
                     module.exit_json(changed=False, action=None, instances=[],
                                      success=[], error=[], timeout=[],
                                      instance_ids={'instances': [],
                                                    'success': [], 'error': [],
                                                    'timeout': []})
-
         else:
             if group is not None:
-                numbers = set()
+                if auto_increment:
+                    numbers = set()
 
-                try:
-                    name % 0
-                except TypeError, e:
-                    if e.message.startswith('not all'):
-                        name = '%s%%d' % name
-                    else:
-                        module.fail_json(msg=e.message)
+                    try:
+                        name % 0
+                    except TypeError, e:
+                        if e.message.startswith('not all'):
+                            name = '%s%%d' % name
+                        else:
+                            module.fail_json(msg=e.message)
 
-                pattern = re.sub(r'%\d+[sd]', r'(\d+)', name)
-                for server in cs.servers.list():
-                    if server.metadata.get('group') == group:
-                        servers.append(server)
-                    match = re.search(pattern, server.name)
-                    if match:
-                        number = int(match.group(1))
-                        numbers.add(number)
+                    pattern = re.sub(r'%\d+[sd]', r'(\d+)', name)
+                    for server in cs.servers.list():
+                        if server.metadata.get('group') == group:
+                            servers.append(server)
+                        match = re.search(pattern, server.name)
+                        if match:
+                            number = int(match.group(1))
+                            numbers.add(number)
 
-                number_range = xrange(count_offset,
-                                      count_offset + count + len(numbers))
-                available_numbers = list(set(number_range).difference(numbers))
-                names = []
-                numbers_to_use = available_numbers[:count]
-                for number in numbers_to_use:
-                    names.append(name % number)
+                    number_range = xrange(count_offset,
+                                          count_offset + count + len(numbers))
+                    available_numbers = list(set(number_range)
+                                             .difference(numbers))
+                    names = []
+                    numbers_to_use = available_numbers[:count]
+                    for number in numbers_to_use:
+                        names.append(name % number)
+                else:
+                    names = [name] * count
             else:
                 search_opts = {
                     'name': name,
@@ -552,6 +612,7 @@ def main():
     argument_spec = rax_argument_spec()
     argument_spec.update(
         dict(
+            auto_increment=dict(choices=BOOLEANS, default=True, type='bool'),
             count=dict(default=1, type='int'),
             count_offset=dict(default=1, type='int'),
             disk_config=dict(default='auto', choices=['auto', 'manual']),
@@ -584,6 +645,7 @@ def main():
                              'please remove "service: cloudservers" from your '
                              'playbook pertaining to the "rax" module')
 
+    auto_increment = module.params.get('auto_increment')
     count = module.params.get('count')
     count_offset = module.params.get('count_offset')
     disk_config = module.params.get('disk_config').upper()
@@ -605,7 +667,8 @@ def main():
 
     cloudservers(module, state, name, flavor, image, meta, key_name, files,
                  wait, wait_timeout, disk_config, count, group,
-                 instance_ids, exact_count, networks, count_offset)
+                 instance_ids, exact_count, networks, count_offset,
+                 auto_increment)
 
 
 # import module snippets
