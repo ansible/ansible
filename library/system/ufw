@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# (c) 2014, Jarno Keskikangas <jarno.keskikangas@gmail.com>
 # (c) 2013, Aleksey Ovcharenko <aleksey.ovcharenko@gmail.com>
 # (c) 2013, James Martin <jmartin@basho.com>
 #
@@ -23,11 +24,33 @@ short_description: This module handles Ubuntu UFW operations
 description:
      - This module handles Ubuntu UFW operations
 options:
-  default_policy:
-    description:
-      - Change the default policy for incoming traffic.
+  state:
+    description: |
+        I(enable) reloads firewall and enables firewall on boot.
+        I(disable) unloads firewall and disables firewall on boot.
+        I(reload) reloads firewall.
+        I(reset) disables and resets firewall to installation defaults.
     required: false
+    choices: ['enable', 'disable', 'reload', 'reset']
+    default: None
+  policy:
+    description:
+      - Change the default policy for incoming or outgoing traffic.
+    required: false
+    alias: default
     choices: ['allow', 'deny', 'reject']
+    default: None
+  direction:
+    description:
+      - Select direction for default policy command.
+    required: false
+    default: incoming
+    choises: ['incoming', 'outgoing']
+  rule:
+    description:
+      - Add firewall rule
+    required: false
+    choises: ['allow', 'deny', 'reject', 'limit']
     default: None
   delete:
     description:
@@ -35,111 +58,96 @@ options:
     required: false
     choices: ['yes', 'no']
     default: 'no'
-  state:
-    description: |
-        I(enable) reloads firewall and enables firewall on boot.
-        I(disable) unloads firewall and disables firewall on boot.
-        I(reload) reloads firewall.
-        I(reset) disables and resets firewall to installation defaults.
-        I(allow) adds allow rule. See B(EXAMPLES).
-        I(deny) adds deny rule. See B(EXAMPLES).
-        I(reject) adds reject rule. See B(EXAMPLES).
-        I(limit)  adds limit rule. Currently only IPv4 is supported. See B(EXAMPLES).
-    required: false
-    choices: ['enable', 'disable', 'reload', 'reset', 'allow', 'deny', 'reject', 'limit']
-    aliases: ['rule']
-    default: 'allow'
   name:
     description:
       - Use profile located in /etc/ufw/applications.d
     required: false
     default: None
+    aliases: ['app']
     version_added: "2.1"
   from_ip:
     description:
       - Source IP address.
     required: false
-    aliases: ['src']
+    aliases: ['from', 'src']
     default: 'any'
   from_port:
     description:
       - Source port.
     required: false
-    default: 'any'
+    default: None
   to_ip:
     description:
       - Destination IP address.
     required: false
-    aliases: ['dest']
+    aliases: ['to', 'dest']
     default: 'any'
   to_port:
     description:
       - Destination port.
     required: false
-    default: 'any'
+    default: None
     aliases: ['port']
   proto:
     description:
       - TCP/IP protocol.
     choices: ['any', 'tcp', 'udp', 'ipv6']
+    default: 'any'
     required: false
-  log:
+  logging:
     description:
       - Toggles logging. Logged packets use the LOG_KERN syslog facility.
-    choices: ['yes', 'no']
+    choices: ['on', 'off', 'low', 'medium', 'high', 'full']
     required: false
-    default: 'no'
+    default: 'on'
 version_added: 2.0
 notes:
    -  See C(man 8 ufw) for more example.
 requirements: [ ]
-author: Aleksey Ovcharenko
+authors: Aleksey Ovcharenko, Jarno Keskikangas
 '''
 
 EXAMPLES = '''
 # Allow everything and enable UFW
-ufw: state={{ item }}
-with_items:
-- allow
-- enable
+ufw: state=enable policy=allow
 
 # Sometimes it is desirable to let the sender know when traffic is
 # being denied, rather than simply ignoring it. In these cases, use
 # reject instead of deny.  For example:
-ufw: state=reject port=auth
+ufw: rule=reject port=auth
 
 # ufw supports connection rate limiting, which is useful for protecting
 # against brute-force login attacks. ufw will deny connections if an IP
 # address has attempted to initiate 6 or more connections in the last
 # 30 seconds. See  http://www.debian-administration.org/articles/187
 # for details. Typical usage is:
-ufw: state=limit port=ssh proto=tcp
+ufw: rule=limit port=ssh proto=tcp
 
 # Allow OpenSSH
-ufw: state=allow name=OpenSSH
+ufw: rule=allow name=OpenSSH
 
 # Deny all access to port 53:
-ufw: state=deny port=53
+ufw: rule=deny port=53
 
 # Allow all access to tcp port 80:
-ufw: state=allow to_port=80 proto=tcp
+ufw: rule=allow port=80 proto=tcp
 
 # Allow all access from RFC1918 networks to this host:
-ufw: state=allow from_ip={{ item }}
+ufw: rule=allow src={{ item }}
 with_items:
 - 10.0.0.0/8
 - 172.16.0.0/12
 - 192.168.0.0/16
 
 # Deny access to udp port 514 from host 1.2.3.4:
-ufw: state=deny proto=udp from_ip=1.2.3.4 to_port=514
+ufw: rule=deny proto=udp src=1.2.3.4 port=514
 
 # Allow access to udp 1.2.3.4 port 5469 from 1.2.3.5 port 5469:
-ufw: state=allow proto=udp from_ip=1.2.3.5 from_port=5469 to_ip=1.2.3.4 to_port=5469
+ufw: rule=allow proto=udp src=1.2.3.5 from_port=5469 dest=1.2.3.4 to_port=5469
 
 # Deny all traffic from the IPv6 2001:db8::/32 to tcp port 25 on this host.
 # Note that IPv6 must be enabled in /etc/default/ufw for IPv6 firewalling to work.
-ufw: state=deny proto=tcp src=2001:db8::/32 port=25
+ufw: rule=deny proto=tcp src=2001:db8::/32 port=25
 '''
 
 import platform
@@ -147,118 +155,93 @@ import platform
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            default_policy = dict(default=None, choices=['allow', 'deny', 'reject'], required=False),
-            state = dict(default=None, aliases=['rule'], choices=['enable', 'disable', 'reload', 'reset', 'allow', 'deny', 'reject', 'limit'], required=False),
-            name = dict(default=None, required=False),
-            from_ip = dict(default='any', aliases=['src'], required=False),
-            from_port = dict(default='any', required=False),
-            to_ip = dict(default='any', aliases=['dest'], required=False),
-            to_port = dict(default='any', aliases=['port'], required=False),
-            proto = dict(default='any', choices=['any', 'tcp', 'udp', 'ipv6'], required=False),
-            delete = dict(default=False, choices=BOOLEANS, required=False),
-            log = dict(default=False, choices=BOOLEANS, required=False)
+            state     = dict(default=None,  choices=['enable', 'disable', 'reload', 'reset']),
+            default   = dict(default=None,  aliases=['policy'], choices=['allow', 'deny', 'reject']),
+            logging   = dict(default=None,  choises=['on', 'off', 'low', 'medium', 'high', 'full']),
+            direction = dict(default=None,    choises=['in', 'incoming', 'out', 'outgoing']),
+            delete    = dict(default=False,    choices=BOOLEANS),
+            rule      = dict(default=None,  choices=['allow', 'deny', 'reject', 'limit']),
+            interface = dict(default=None,    aliases=['if']),
+            log       = dict(default=False,    choices=BOOLEANS),
+            from_ip   = dict(default='any', aliases=['src', 'from']),
+            from_port = dict(default=None),
+            to_ip     = dict(default='any', aliases=['dest', 'to']),
+            to_port   = dict(default=None,    aliases=['port']),
+            proto     = dict(default=None,    aliases=['protocol'], choices=['any', 'tcp', 'udp', 'ipv6']),
+            app       = dict(default=None,    aliases=['name'])
         ),
-        supports_check_mode = True
+        supports_check_mode = True,
+        mutually_exclusive = [['app', 'proto']]
     )
 
-    default_policy =  module.params.get('default_policy')
-    state =  module.params.get('state')
-    name = module.params.get('name')
-    from_ip =  module.params.get('from_ip')
-    from_port =  module.params.get('from_port')
-    to_ip =  module.params.get('to_ip')
-    to_port =  module.params.get('to_port')
-    proto =  module.params.get('proto')
-    delete = module.params['delete']
-    log = module.params['log']
+    cmds = []
+    def execute(cmd):
+        cmds.append(cmd)
+        (rc, out, err) = module.run_command(cmd)
+        if rc != 0: module.fail_json(msg=cmd or err or out)
 
-    system = platform.system()
+    p = module.params
 
-    if "Linux" not in system:
-        module.exit_json(msg="Not implemented for system %s. Only Linux (Ubuntu) is supported" % (system), changed=False)
-    else:
-        dist = platform.dist()
-        if dist and 'Ubuntu' not in dist[0]:
-            module.exit_json(msg="Not implemented for distrubution %s. Only Ubuntu is supported" % (dist[0]), changed=False)
+    # Ensure at least one of the command arguments are given
+    commands = ['state', 'default', 'rule', 'logging']
+    command_args = [(k, p[k]) for k in commands if p[k]]
 
-	result = {}
-    result['state'] = state
+    if len(command_args) < 1:
+        module.fail_json(msg="Not any of the command arguments %s given" % commands)
 
-    cmd = module.get_bin_path('ufw')
+    # Ensure ufw is available
+    ufw_bin = module.get_bin_path('ufw', True)
 
-    if module.check_mode:
-        cmd = cmd + ' --dry-run'
+    # Save the pre state in order to recognize changes reliably
+    (_, pre_state, _) = module.run_command(ufw_bin + ' status verbose')
 
-    if default_policy:
-        if state:
-            module.fail_json(msg="'default_policy' and 'state' are mutually exclusive options.")
-        else:
-            if default_policy in ['allow', 'deny', 'reject']:
-                cmd = cmd + ' default %s' % (default_policy)
-                changed_marker = "Default incoming policy changed to '%s'\n(be sure to update your rules accordingly)" % (default_policy)
-            else:
-                module.fail_json(msg="Wrong default policy %s. See 'ansible-doc ufw' for usage." % (default_policy))
+    # Execute commands
+    for command_arg in command_args:
+        command = command_arg[0]
+        arg = command_arg[1]
 
-    if not default_policy:
-        if not state:
-            module.fail_json(msg="You must specify either 'default_policy' or 'state' option.")
-        else:
-            if state in 'enable':
-                cmd = cmd + ' -f %s' % (state)
-                changed_marker = 'Firewall is active and enabled on system startup'
-            elif state in 'disable':
-                cmd = cmd + ' -f %s' % (state)
-                changed_marker = 'Firewall stopped and disabled on system startup'
-            elif state in 'reload':
-                cmd = cmd + ' -f %s' % (state)
-                changed_marker = 'Firewall reloaded'
-            elif state in 'reset':
-                cmd = cmd + ' -f %s' % (state)
-                changed_marker = 'Backing up'
-            elif state in ['allow', 'deny', 'reject', 'limit']:
-                changed_marker = ['Rules updated', 'Rules updated (v6)', 'Rule added', 'Rule added (v6)', 'Rule deleted', 'Rule deleted (v6)' ]
-                if delete:
-                    cmd = cmd + ' delete'
+        # Check for dry run
+        dry_run = {True: '--dry-run', False: ''}[module.check_mode]
 
-                cmd = cmd + ' %s' % (state)
-                if log:
-                    cmd = cmd + ' log'
-                if name:
-                    cmd = cmd + ' "%s"' % (name)
-                else:
-                    if proto and proto not in 'any':
-                        cmd = cmd + ' proto %s' % (proto)
-                    if from_ip and from_ip not in 'any':
-                        cmd = cmd + ' from %s' % (from_ip)
-                        if from_port and from_port not in 'any':
-                             cmd = cmd + ' port %s' % (from_port)
-                    elif from_port and from_port not in 'any':
-                        cmd = cmd + ' from port %s' % (from_port)
+        cmd = "%s %s " % (ufw_bin, dry_run)
 
-                    if to_ip:
-                        cmd = cmd + ' to %s' % (to_ip)
-                        if to_port and to_port not in 'any':
-                             cmd = cmd + ' port %s' % (to_port)
-                    elif to_port and to_port not in 'any':
-                        cmd = cmd + ' to port %s' % (to_port)
-            else:
-                module.fail_json(msg="Wrong rule %s. See 'ansible-doc ufw' for usage." % (state))
+        if command == 'state':
+            execute(cmd + "-f %s" % (arg))
 
-    (rc, out, err) = module.run_command(cmd)
+        elif command == 'logging':
+            execute(cmd + "%s %s" % (command, arg))
 
-    if rc != 0:
-        if err:
-            module.fail_json(msg=err)
-        else:
-            module.fail_json(msg=out)
+        elif command == 'default':
+            execute(cmd + "%s %s %s" % (command, arg, p['direction']))
 
-    result['cmd'] = cmd
-    result['msg'] = out.rstrip()
+        elif command == 'rule':
+            opts = dict(zip(p.keys(), ['']*len(p.keys())))
 
-    if isinstance(changed_marker, basestring):
-        result['changed'] = result['msg'] in changed_marker
-    else:
-        result['changed'] = any(item in result['msg'] for item in changed_marker)
+            if module.boolean(p['delete']): opts['delete'] = " delete "
+            if module.boolean(p['log']):    opts['log']    = " log "
+
+            if p['direction']: opts['direction'] = " %s "      % (p['direction'])
+            if p['interface']: opts['interface'] = " on %s "   % (p['interface'])
+            if p['from_ip']:   opts['from_ip']   = " from %s " % (p['from_ip'])
+            if p['from_port']: opts['from_port'] = " port %s " % (p['from_port'])
+            if p['to_ip']:     opts['to_ip']     = " to %s "   % (p['to_ip'])
+            if p['to_port']:   opts['to_port']   = " port %s " % (p['to_port'])
+            if p['proto']:     opts['proto']     = " proto %s" % (p['proto'])
+            if p['app']:       opts['app']       = " app '%s'" % (p['app'])
+
+            execute(cmd + opts['delete'] + arg + opts['direction'] + opts['interface'] + opts['log'] +
+                opts['from_ip'] + opts['from_port'] +
+                opts['to_ip']   + opts['to_port'] +
+                opts['proto']   + opts['app'])
+
+    # Get the new state
+    (_, post_state, _) = module.run_command(ufw_bin + ' status verbose')
+
+    result             = {}
+    result['state']    = post_state
+    result['commands'] = cmds
+    result['msg']      = post_state.rstrip()
+    result['changed']  = pre_state != post_state
 
     return module.exit_json(**result)
 
