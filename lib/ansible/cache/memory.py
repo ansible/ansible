@@ -19,7 +19,11 @@ class CacheModule(object):
         return _cache.get(key, default)
 
     def set(self, key, value):
-        global cache
+        global _cache
         _cache[key] = value
+
+    #def update(self, *args, **kwargs):
+    #   global _cache
+    #   _cache.update(args, kwargs)
 
 

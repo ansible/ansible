@@ -4,6 +4,7 @@ from ansible import errors
 
 GET = None
 SET = None
+#UPDATE = None
 
 class FactCache(dict):
 
@@ -11,14 +12,16 @@ class FactCache(dict):
 
         global GET
         global SET
+        #global UPDATE
 
         self._plugin = utils.plugins.cache_loader.get(C.CACHE_PLUGIN)
         if self._plugin is None:
             return
 
-        self.update(*args, **kwargs)
         GET = self._plugin.get
         SET = self._plugin.set
+        #UPDATE = self._plugin.update
+        #self.update(*args, **kwargs)
 
     def __getitem__(self, key, default={}):
         return GET(key, default)
@@ -28,9 +31,4 @@ class FactCache(dict):
 
     def __repr__(self):
         return '%s' % (type(self))
-
-    def update(self, *args, **kwargs):
-        for k, v in dict(*args, **kwargs).iteritems():
-            SET(k,v)
-
 
