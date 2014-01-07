@@ -961,10 +961,13 @@ def random_password(length=20, chars=C.DEFAULT_PASSWORD_CHARS):
 def update_hash(hash, key, new_value):
     ''' used to avoid nested .update calls on the parent '''
 
-    value = hash.get(key, {})
+    value = None
+    try:
+        value = hash[key]
+    except KeyError:
+        value = {}
     value.update(new_value)
     hash[key] = value
-
 
 
 
