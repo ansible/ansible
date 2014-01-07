@@ -44,6 +44,12 @@
 
   $('#search-reset').hide();
 
+  $('#search-box-id').css('background-position', '1em center');
+
+  $('#search-box-id').on('blur', function() {
+    $('#search-box-id').css('background-position', '1em center');
+  });
+
   $('#search-start').click(function(e) { executeQuery(); });
   $('#search-reset').click(function(e) { $('#search-box-id').val(''); executeQuery(); });
 
