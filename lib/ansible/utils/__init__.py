@@ -957,3 +957,14 @@ def random_password(length=20, chars=C.DEFAULT_PASSWORD_CHARS):
             password.append(new_char)
 
     return ''.join(password)
+
+def update_hash(hash, key, new_value):
+    ''' used to avoid nested .update calls on the parent '''
+
+    value = hash.get(key, {})
+    value.update(new_value)
+    hash[key] = value
+
+
+
+
