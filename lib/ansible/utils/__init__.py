@@ -250,6 +250,8 @@ def path_dwim(basedir, given):
     elif given.startswith("~"):
         return os.path.abspath(os.path.expanduser(given))
     else:
+        if basedir is None:
+            basedir = "."
         return os.path.abspath(os.path.join(basedir, given))
 
 def path_dwim_relative(original, dirname, source, playbook_base, check=True):
