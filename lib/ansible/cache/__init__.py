@@ -33,6 +33,10 @@ class FactCache(dict):
     def __setitem__(self, key, val):
         self._plugin.set(key, value)
 
+    def keys(self):
+        return self._plugin.keys()
+
     def __repr__(self):
         return '%s' % (type(self))
+
 
