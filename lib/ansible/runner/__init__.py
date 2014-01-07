@@ -155,11 +155,7 @@ class Runner(object):
         self.diff             = diff
 
         cache_plugin = utils.plugins.cache_loader.get(C.CACHE_PLUGIN)
-
-        if cache_plugin is not None:
-            self.setup_cache = ansible.cache.FactCache()
-        else:
-            self.setup_cache = collections.defaultdict(dict)
+        self.setup_cache = ansible.cache.FactCache()
 
         self.basedir          = utils.default(basedir, lambda: os.getcwd())
         self.callbacks        = utils.default(callbacks, lambda: DefaultRunnerCallbacks())
