@@ -32,11 +32,7 @@ import collections
 
 SETUP_CACHE = None
 cache_plugin = utils.plugins.cache_loader.get(C.CACHE_PLUGIN)
-
-if cache_plugin:
-   SETUP_CACHE = ansible.cache.FactCache()
-else:
-   SETUP_CACHE = collections.defaultdict(dict)
+SETUP_CACHE = ansible.cache.FactCache()
 
 class PlayBook(object):
     '''
