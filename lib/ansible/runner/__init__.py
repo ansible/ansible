@@ -868,7 +868,7 @@ class Runner(object):
     def _make_tmp_path(self, conn):
         ''' make and return a temporary path on a remote box '''
 
-        basefile = 'ansible-%s-%s' % (time.time(), random.randint(0, 2**48))
+        basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
         basetmp = os.path.join(C.DEFAULT_REMOTE_TMP, basefile)
         if self.sudo and self.sudo_user != 'root' and basetmp.startswith('$HOME'):
             basetmp = os.path.join('/tmp', basefile)
