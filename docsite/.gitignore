@@ -12,3 +12,4 @@ ansible*.xml
 objects.inv
 .doctrees
 rst/modules/*.rst
+*.min.css
