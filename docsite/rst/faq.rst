@@ -215,9 +215,19 @@ Ansible 1.4 will also make remote environment variables available via facts in t
 How do I generate crypted passwords for the user module?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Crypted password values can be generated as follows::
+The mkpasswd utility that is available on most Linux systems is a great option::
 
-    openssl passwd -salt <salt> -1 <plaintext>
+    mkpasswd --method=SHA-512
+
+If this utility is not installed on your system (e.g. you are using OS X) then you can still easily
+generate these passwords using Python. First, ensure that the `Passlib <https://code.google.com/p/passlib/>`_
+password hashing library is installed.
+
+    pip install passlib
+
+Once the library is ready, SHA512 password values can then be generated as follows::
+
+    python -c "from passlib.hash import sha512_crypt; print sha512_crypt.encrypt('<password>')"
 
 .. _commercial_support:
 
