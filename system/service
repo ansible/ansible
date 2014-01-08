@@ -784,7 +784,7 @@ class FreeBsdService(Service):
         else:
             self.rcconf_value = "NO"
 
-        rcfiles = [ '/etc/rc.conf','/usr/local/etc/rc.conf' ]
+        rcfiles = [ '/etc/rc.conf','/etc/rc.conf.local' ] # prefer /etc/rc.conf.local if it exists
         for rcfile in rcfiles:
             if os.path.isfile(rcfile):
                 self.rcconf_file = rcfile
