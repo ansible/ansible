@@ -1,0 +1,155 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2012, Matt Wright <matt@nobien.net>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: nvm
+short_description: Manage node.js versions with nvm
+description:
+  - Manage node.js versions with Node Version Manager (nvm), U(https://github.com/creationix/nvm).
+version_added: 1.5
+options:
+  version:
+    description:
+      - The version of node.js to manage.
+    required: true
+  state:
+    description:
+      - The desired state of the version.
+      - When C(state) is I(present), the return result will contain installed C(node_path) and C(npm_path).
+      - When C(state) is I(absent), all related alias will also be removed.
+    required: true
+    choices: ["present", "absent"]
+  alias:
+    description:
+      - The alias to set on the version, can apply mutiple ones through a string delimited by comma.
+      - Missing ones will be added, redundant ones will be removed.
+      - To cleare all alias on the version, set this to empty string.
+requirements:
+  - curl
+  - git
+  - c++ compiler, for OSX, XCode will work, for Ubuntu, the build-essential and libssl-dev packages work.
+author: Aaron Wang <inetfuture@gmail.com>
+'''
+
+EXAMPLES = '''
+description: Install version 0.8.24 and set it as default, then use installed node binary.
+- nvm: version=0.8.24 state=present alias=default
+  register: nvm_result
+- shell: '{{ nvm_result.node_path }} -v'
+  register: node_result
+- debug: var=node_result.stdout
+
+description: Uninstall version 0.8.24.
+- nvm: version=0.8.24 state=absent
+'''
+
+
+def main():
+    arg_spec = dict(
+        version=dict(required=True, aliases=['name']),
+        state=dict(required=True, choices=['present', 'absent']),
+        alias=dict(default=None)
+    )
+    module = AnsibleModule(argument_spec=arg_spec, supports_check_mode=True)
+
+    version = module.params['version']
+    state = module.params['state']
+    alias = module.params['alias']
+
+    if alias is not None and state != 'present':
+        module.fail_json(msg='alias= is required with state=present')
+
+    module.get_bin_path('curl', required=True)
+    module.get_bin_path('git', required=True)
+
+    def run_within_nvm_env(args, version=None):
+        nvm_use_command = ''
+        if version is not None:
+            nvm_use_command = 'nvm use %s > /dev/null &&' % version
+        rc, out, err = module.run_command('. ~/.nvm/nvm.sh && %s %s' % (nvm_use_command, args),
+                                          check_rc=True, executable='/bin/bash')
+        return out
+
+    def run_nvm(args):
+        return run_within_nvm_env('nvm %s' % args)
+
+    def get_existent_aliases(version):
+        existent_aliases = []
+        out = run_nvm('alias')
+        for existent_alias_line in out.splitlines():
+            # One line would like this:
+            #   default -> 0.8.24 (-> v0.8.24)
+            #   [alias_name] -> [version] (-> installation)
+            existent_alias_fields = [field for field in existent_alias_line.split(' ') if field != '']
+            existent_alias_name = existent_alias_fields[0]
+            existent_alias_version = existent_alias_fields[2]
+            if existent_alias_version == version:
+                existent_aliases.append(existent_alias_name)
+        return existent_aliases
+
+    changed = False
+    node_path = None
+    npm_path = None
+
+    # Install nvm.
+    module.run_command('curl https://raw.github.com/creationix/nvm/master/install.sh | sh', check_rc=True)
+
+    out = run_nvm('ls')
+    is_installed = True if 'v%s' % version in out else False
+
+    if state == 'absent':
+        if is_installed:
+            if not module.check_mode:
+                run_nvm('uninstall %s' % version)
+                for alias in get_existent_aliases(version):
+                    run_nvm('unalias %s' % alias)
+            changed = True
+    else:   # present
+        if not is_installed:
+            if not module.check_mode:
+                run_nvm('install %s' % version)
+                is_installed = True
+            changed = True
+
+        if alias is not None:
+            aliases = [a for a in alias.split(',') if a != '']
+            existent_aliases = get_existent_aliases(version)
+            if sorted(existent_aliases) != sorted(aliases):
+                if not module.check_mode:
+                    for alias in aliases:
+                        if alias not in existent_aliases:
+                            run_nvm('alias %s %s' % (alias, version))
+                    for existent_alias in existent_aliases:
+                        if existent_alias not in aliases:
+                            run_nvm('unalias %s' % existent_alias)
+                changed = True
+
+        if is_installed:
+            out = run_within_nvm_env('which node', version)
+            node_path = out.strip('\n')
+            out = run_within_nvm_env('which npm', version)
+            npm_path = out.strip('\n')
+
+    module.exit_json(changed=changed, version=version, state=state, node_path=node_path, npm_path=npm_path)
+
+# import module snippets
+from ansible.module_utils.basic import *
+main()
