@@ -62,7 +62,7 @@ class CallbackModule(object):
     def runner_on_async_failed(self, host, res, jid):
         pass
 
-    def playbook_on_start(self):
+    def playbook_on_start(self, name):
         pass
 
     def playbook_on_notify(self, host, handler):
