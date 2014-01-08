@@ -186,7 +186,9 @@ class AnsibleModule(object):
         os.environ['LANG'] = MODULE_LANG
         (self.params, self.args) = self._load_params()
 
-        self._legal_inputs = [ 'CHECKMODE' ]
+        disable_logging = self.boolean(self.params.pop('DISABLE_LOG_INVOCATION', False))
+
+        self._legal_inputs = [ 'CHECKMODE', ]
         
         self.aliases = self._handle_aliases()
 
@@ -205,7 +207,8 @@ class AnsibleModule(object):
             self._check_required_one_of(required_one_of)
 
         self._set_defaults(pre=False)
-        if not no_log:
+
+        if not no_log and not disable_logging:
             self._log_invocation()
 
     def load_file_common_arguments(self, params):

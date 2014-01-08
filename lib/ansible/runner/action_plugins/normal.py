@@ -50,6 +50,10 @@ class ActionModule(object):
             module_name = 'command'
             module_args += " #USE_SHELL"
 
+        # support log_invocation
+        if C.DEFAULT_DISABLE_INVOCATION_LOGGING:
+            module_args += " DISABLE_LOG_INVOCATION=%s" % C.DEFAULT_DISABLE_INVOCATION_LOGGING
+
         vv("REMOTE_MODULE %s %s" % (module_name, module_args), host=conn.host)
         return self.runner._execute_module(conn, tmp, module_name, module_args, inject=inject, complex_args=complex_args)
 
