@@ -258,7 +258,7 @@ class Connection(object):
 
         if C.HOST_KEY_CHECKING:
             if ssh_cmd[0] == "sshpass" and p.returncode == 6:
-                raise errors.AnsibleError('sshpass has exited with error 6. This is typically caused by combining host_key_checking=True and --ask-pass without first adding the hostkey to known_hosts.')
+                raise errors.AnsibleError('Using a SSH password instead of a key is not possible because Host Key checking is enabled and sshpass does not support this.  Please add this host\'s fingerprint to your known_hosts file to manage this host.')
 
         controlpersisterror = stderr.find('Bad configuration option: ControlPersist') != -1 or stderr.find('unknown configuration option: ControlPersist') != -1
         if p.returncode != 0 and controlpersisterror:

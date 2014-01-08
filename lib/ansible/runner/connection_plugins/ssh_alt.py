@@ -297,7 +297,7 @@ class Connection(object):
 
         if C.HOST_KEY_CHECKING:
             if ssh_cmd[0] == "sshpass" and p.returncode == 6:
-                raise errors.AnsibleError('sshpass has exited with error 6. This is typically caused by combining host_key_checking=True and --ask-pass without first adding the hostkey to known_hosts.')
+                raise errors.AnsibleError('Using a SSH password instead of a key is not possible because Host Key checking is enabled and sshpass does not support this.  Please add this host\'s fingerprint to your known_hosts file to manage this host.')
 
         if p.returncode != 0 and controlpersisterror:
             raise errors.AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" (or ansible_ssh_args in the config file) before running again')
