@@ -334,7 +334,6 @@ def upgrade(m, mode="yes", force=False,
     apt_cmd_path = m.get_bin_path(apt_cmd, required=True)
     cmd = '%s %s -y %s %s %s %s' % (APT_ENVVARS, apt_cmd_path, dpkg_options,
                                     force_yes, check_arg, upgrade_command)
-    open("/tmp/awx.log", "a").write("cmd: %s\n" % cmd)
     rc, out, err = m.run_command(cmd)
     if rc:
         m.fail_json(msg="'%s %s' failed: %s" % (apt_cmd, upgrade_command, err), stdout=out)
