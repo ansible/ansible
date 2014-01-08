@@ -22,14 +22,17 @@ from ansible.utils.template import template
 from ansible import utils
 from ansible import errors
 import ansible.callbacks
+import ansible.cache
 import os
 import shlex
-import collections
 from play import Play
 import StringIO
 import pipes
+import collections
 
-SETUP_CACHE = collections.defaultdict(dict)
+SETUP_CACHE = None
+cache_plugin = utils.plugins.cache_loader.get(C.CACHE_PLUGIN)
+SETUP_CACHE = ansible.cache.FactCache()
 
 class PlayBook(object):
     '''
@@ -380,12 +383,12 @@ class PlayBook(object):
                 for res in result['results']:
                     if type(res) == dict:
                         facts = res.get('ansible_facts', {})
-                        self.SETUP_CACHE[host].update(facts)
+                        utils.update_hash(self.SETUP_CACHE, host, facts)
             else:
                 facts = result.get('ansible_facts', {})
-                self.SETUP_CACHE[host].update(facts)
+                utils.update_hash(self.SETUP_CACHE, host, facts)
             # extra vars need to always trump - so update  again following the facts
-            self.SETUP_CACHE[host].update(self.extra_vars)
+            utils.update_hash(self.SETUP_CACHE, host, self.extra_vars)
             if task.register:
                 if 'stdout' in result and 'stdout_lines' not in result:
                     result['stdout_lines'] = result['stdout'].splitlines()
@@ -462,8 +465,8 @@ class PlayBook(object):
         # let runner template out future commands
         setup_ok = setup_results.get('contacted', {})
         for (host, result) in setup_ok.iteritems():
-            self.SETUP_CACHE[host].update({'module_setup': True})
-            self.SETUP_CACHE[host].update(result.get('ansible_facts', {}))
+            utils.update_hash(self.SETUP_CACHE, host, {'module_setup': True})
+            utils.update_hash(self.SETUP_CACHE, host, result.get('ansible_facts', {}))
         return setup_results
 
     # *****************************************************

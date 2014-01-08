@@ -135,6 +135,15 @@ def symmetric_difference(a, b):
 def union(a, b):
     return set(a).union(b)
 
+def cron_rand(seed, range_max=60, count=1):
+    period = range_max / count
+    offset = int(md5s(seed), 16) % period
+    times = []
+    for _ in xrange(count):
+        times.append(str((((period * _) + offset) % range_max)))
+    times.sort(key=int)
+    return ','.join(times)
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -195,5 +204,8 @@ class FilterModule(object):
             'difference': difference,
             'symmetric_difference': symmetric_difference,
             'union': union,
+
+            # cron_rand
+            'cron_rand': cron_rand,
         }
 
