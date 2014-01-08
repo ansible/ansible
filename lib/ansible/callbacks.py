@@ -578,8 +578,8 @@ class PlaybookCallbacks(object):
 
         self.verbose = verbose
 
-    def on_start(self):
-        call_callback_module('playbook_on_start')
+    def on_start(self, name):
+        call_callback_module('playbook_on_start', name)
 
     def on_notify(self, host, handler):
         call_callback_module('playbook_on_notify', host, handler)

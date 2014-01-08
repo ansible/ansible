@@ -70,8 +70,8 @@ class CallbackModule(object):
     def runner_on_async_failed(self, host, res, jid):
         say("Failure on host %s" % host, FAILED_VOICE)
 
-    def playbook_on_start(self):
-        say("Running Playbook", REGULAR_VOICE)
+    def playbook_on_start(self, name):
+        say("Running Playbook: %s" % name, REGULAR_VOICE)
 
     def playbook_on_notify(self, host, handler):
         say("pew", LASER_VOICE)

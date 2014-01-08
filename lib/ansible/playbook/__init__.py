@@ -224,7 +224,7 @@ class PlayBook(object):
         unmatched_tags_all = set()
 
         # loop through all patterns and run them
-        self.callbacks.on_start()
+        self.callbacks.on_start(self.filename)
         for (play_ds, play_basedir) in zip(self.playbook, self.play_basedirs):
             play = Play(self, play_ds, play_basedir)
             assert play is not None
