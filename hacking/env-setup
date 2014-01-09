@@ -38,5 +38,8 @@ if [ $# -eq 0 -o "$1" != "-q" ] ; then
     echo ""
     echo "Done!"
     echo ""
+
+    PS1="[ansible] $PS1"
+    export PS1
 fi
 
