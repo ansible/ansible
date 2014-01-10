@@ -745,9 +745,10 @@ class Runner(object):
             data = result.result
 
             # https://github.com/ansible/ansible/issues/4958
-            if "stdout" in data and sys.stdout.isatty():
-                if not string_functions.isprintable(data['stdout']):
-                    data['stdout'] = ''
+            if hasattr(sys.stdout, "isatty"):
+                if "stdout" in data and sys.stdout.isatty():
+                    if not string_functions.isprintable(data['stdout']):
+                        data['stdout'] = ''
 
             if 'item' in inject:
                 result.result['item'] = inject['item']
