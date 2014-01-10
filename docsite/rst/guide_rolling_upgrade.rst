@@ -75,7 +75,7 @@ as push updates to all of the servers::
       - base-apache
       - nagios
 
-.. note:
+.. note::
 
    If you're not familiar with terms like playbooks and plays, you should review :doc:`playbooks`.
 

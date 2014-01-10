@@ -96,7 +96,7 @@ documentation.  The `remote_user` is just the name of the user account::
     - hosts: webservers
       remote_user: root
 
-.. Note::
+.. note::
 
     The `remote_user` parameter was formerly called just `user`. It was renamed in Ansible 1.4 to make it more distinguishable from the `user` module (used to create users on remote systems).
 
@@ -110,7 +110,7 @@ Remote users can also be defined per task::
           ping:
           remote_user: yourname
 
-.. Note::
+.. note::
 
     The `remote_user` parameter for tasks was added in 1.4.
 
@@ -203,9 +203,9 @@ the service module takes key=value arguments::
      - name: make sure apache is running
        service: name=httpd state=running
 
-The `command` and `shell` modules are the one modules that just takes a list
-of arguments, and don't use the key=value form.  This makes
-them work just like you would expect. Simple::
+The `command` and `shell` modules are the only modules that just take a list
+of arguments and don't use the key=value form.  This makes
+them work as simply as you would expect::
 
    tasks:
      - name: disable selinux
