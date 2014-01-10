@@ -38,6 +38,7 @@ import ansible.inventory
 from ansible import utils
 from ansible.utils import template
 from ansible.utils import check_conditional
+from ansible.utils import string_functions
 from ansible import errors
 from ansible import module_common
 import poller
@@ -742,6 +743,12 @@ class Runner(object):
             self.callbacks.on_unreachable(host, result.result)
         else:
             data = result.result
+
+            # https://github.com/ansible/ansible/issues/4958
+            if "stdout" in data and sys.stdout.isatty():
+                if not string_functions.isprintable(data['stdout']):
+                    data['stdout'] = ''
+
             if 'item' in inject:
                 result.result['item'] = inject['item']
 
