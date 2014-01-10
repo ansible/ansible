@@ -111,7 +111,7 @@ class Connection(object):
             if not self.is_connected:
                 wrong_user = False
                 tries = 3
-                self.conn = socket.socket()
+                self.conn = socket.socket(self.runner.accelerate_ipv6 and socket.AF_INET6 or socket.AF_INET)
                 self.conn.settimeout(constants.ACCELERATE_CONNECT_TIMEOUT)
                 vvvv("attempting connection to %s via the accelerated port %d" % (self.host,self.accport))
                 while tries > 0:
