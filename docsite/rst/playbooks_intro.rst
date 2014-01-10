@@ -203,9 +203,9 @@ the service module takes key=value arguments::
      - name: make sure apache is running
        service: name=httpd state=running
 
-The `command` and `shell` modules are the one modules that just takes a list
-of arguments, and don't use the key=value form.  This makes
-them work just like you would expect. Simple::
+The `command` and `shell` modules are the only modules that just take a list
+of arguments and don't use the key=value form.  This makes
+them work as simply as you would expect::
 
    tasks:
      - name: disable selinux
