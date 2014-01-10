@@ -1,4 +1,4 @@
-# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2012-2013, Michael DeHaan <michael.dehaan@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -74,6 +74,8 @@ def _load_vars_from_path(path, results):
     if stat.S_ISLNK(pathstat.st_mode):
         try:
             target = os.readlink(path)
+            if target.startswith('..'):
+                target = os.path.join(os.path.dirname(path),target)
         except os.error, err2:
             raise errors.AnsibleError("The symbolic link at %s "
                 "is not readable: %s.  Please check its permissions."
