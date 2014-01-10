@@ -110,7 +110,7 @@ it's more than that -- you can also read variables about other hosts.  We'll sho
 Jinja2 Filters
 ``````````````
 
-.. note: These are infrequently utilized features.  Use them if they fit a use case you have, but this is optional knowledge.
+.. note:: These are infrequently utilized features.  Use them if they fit a use case you have, but this is optional knowledge.
 
 Filters in Jinja2 are a way of transforming template expressions from one kind of data into another.  Jinja2
 ships with many of these as documented on the official Jinja2 template documentation.
@@ -737,7 +737,7 @@ or in a file as above.
 Conditional Imports
 ```````````````````
 
-.. note: this behavior is infrequently used in Ansible.  You may wish to skip this section.  The 'group_by' module as described in the module documentation is a better way to achieve this behavior in most cases.
+.. note:: This behavior is infrequently used in Ansible.  You may wish to skip this section.  The 'group_by' module as described in the module documentation is a better way to achieve this behavior in most cases.
 
 Sometimes you will want to do certain things differently in a playbook based on certain criteria.
 Having one playbook that works on multiple platforms and OS versions is a good example.
