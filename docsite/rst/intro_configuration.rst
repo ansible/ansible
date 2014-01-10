@@ -682,3 +682,15 @@ If enabled, this setting allows multiple private keys to be uploaded to the daem
 
 New clients first connect to the target node over SSH to upload the key, which is done via a local socket file, so they must have the same access as the user that launched the daemon originally.
 
+.. _accelerate_ipv6:
+
+accelerate_ipv6
+==================
+
+.. versionadded:: 1.4
+
+If set the accelerate mode use ipv6
+
+    accelerate_ipv6 = False
+
+

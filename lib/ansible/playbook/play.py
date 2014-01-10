@@ -126,7 +126,7 @@ class Play(object):
         self.any_errors_fatal = utils.boolean(ds.get('any_errors_fatal', 'false'))
         self.accelerate       = utils.boolean(ds.get('accelerate', 'false'))
         self.accelerate_port  = ds.get('accelerate_port', None)
-        self.accelerate_ipv6  = ds.get('accelerate_ipv6', False)
+        self.accelerate_ipv6  = ds.get('accelerate_ipv6', None)
         self.max_fail_pct     = int(ds.get('max_fail_percentage', 100))
         self.su               = ds.get('su', self.playbook.su)
         self.su_user          = ds.get('su_user', self.playbook.su_user)

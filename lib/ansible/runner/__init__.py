@@ -136,7 +136,7 @@ class Runner(object):
         complex_args=None,                  # structured data in addition to module_args, must be a dict
         error_on_undefined_vars=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR, # ex. False
         accelerate=False,                   # use accelerated connection
-        accelerate_ipv6=False,              # accelerated connection w/ IPv6
+        accelerate_ipv6=None,               # accelerated connection w/ IPv6
         accelerate_port=None,               # port to use with accelerated connection
         su=False,                           # Are we running our command via su?
         su_user=None,                       # User to su to when running command, ex: 'root'
@@ -758,6 +758,9 @@ class Runner(object):
             actual_transport = "accelerate"
             if not self.accelerate_port:
                 self.accelerate_port = C.ACCELERATE_PORT
+
+        if actual_transport == "accelerate" and  self.accelerate_ipv6 is None:
+            self.accelerate_ipv6 = C.ACCELERATE_IPV6
 
         actual_port = inject.get('ansible_ssh_port', port)
 
