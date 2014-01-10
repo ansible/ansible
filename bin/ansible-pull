@@ -45,23 +45,18 @@ import sys
 import datetime
 import socket
 from ansible import utils
+from ansible.utils import cmd_functions
 
 DEFAULT_REPO_TYPE = 'git'
 DEFAULT_PLAYBOOK = 'local.yml'
 PLAYBOOK_ERRORS = {1: 'File does not exist',
                     2: 'File is not readable'}
 
+VERBOSITY=0
 
-def _run(cmd):
-    print >>sys.stderr, "Running: '%s'" % cmd
-    cmd = subprocess.Popen(cmd, shell=True,
-                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    (out, err) = cmd.communicate()
-    print out
-    if cmd.returncode != 0:
-        print >>sys.stderr, err
-    return cmd.returncode, out
-
+def increment_debug(option, opt, value, parser):
+    global VERBOSITY
+    VERBOSITY += 1
 
 def try_playbook(path):
     if not os.path.exists(path):
@@ -112,6 +107,8 @@ def main(args):
                            'not be updated')
     parser.add_option('-d', '--directory', dest='dest', default=None,
                       help='directory to checkout repository to')
+    #parser.add_option('-l', '--live', default=True, action='store_live',
+    #                  help='Print the ansible-playbook output while running')
     parser.add_option('-U', '--url', dest='url', default=None,
                       help='URL of the playbook repository')
     parser.add_option('-C', '--checkout', dest='checkout',
@@ -119,6 +116,9 @@ def main(args):
                       'Defaults to behavior of repository module.')
     parser.add_option('-i', '--inventory-file', dest='inventory',
                       help="location of the inventory host file")
+    parser.add_option('-v', '--verbose', default=False, action="callback",
+                      callback=increment_debug,
+                      help='Pass -vvvv to ansible-playbook')
     parser.add_option('-m', '--module-name', dest='module_name',
                       default=DEFAULT_REPO_TYPE,
                       help='Module name used to check out repository.  '
@@ -141,8 +141,14 @@ def main(args):
 
     inv_opts = 'localhost,'
     limit_opts = 'localhost:%s:127.0.0.1' % hostname
-    base_opts = '-c local --limit "%s"' % limit_opts
     repo_opts = "name=%s dest=%s" % (options.url, options.dest)
+
+    if VERBOSITY == 0:
+        base_opts = '-c local --limit "%s"' % limit_opts
+    elif VERBOSITY > 0:
+        debug_level = ''.join([ "v" for x in range(0, VERBOSITY) ])
+        base_opts = '-%s -c local --limit "%s"' % (debug_level, limit_opts)
+
     if options.checkout:
         repo_opts += ' version=%s' % options.checkout
     path = utils.plugins.module_finder.find_plugin(options.module_name)
@@ -152,7 +158,10 @@ def main(args):
     cmd = 'ansible all -i "%s" %s -m %s -a "%s"' % (
             inv_opts, base_opts, options.module_name, repo_opts
             )
-    rc, out = _run(cmd)
+
+    # RUN THE CHECKOUT COMMAND
+    rc, out, err = cmd_functions.run_cmd(cmd, live=True)
+
     if rc != 0:
         if options.force:
             print "Unable to update repository. Continuing with (forced) run of playbook."
@@ -172,7 +181,9 @@ def main(args):
     if options.inventory:
         cmd += ' -i "%s"' % options.inventory
     os.chdir(options.dest)
-    rc, out = _run(cmd)
+
+    # RUN THE PLAYBOOK COMMAND
+    rc, out, err = cmd_functions.run_cmd(cmd, live=True)
 
     if options.purge:
         os.chdir('/')
