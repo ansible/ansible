@@ -91,7 +91,7 @@ The example usage we are trying to achieve to set the time is::
 
 If no time parameter is set, we'll just leave the time as is and return the current time.
 
-.. note:
+.. note::
    This is obviously an unrealistic idea for a module.  You'd most likely just
    use the shell module.  However, it probably makes a decent tutorial.
 
