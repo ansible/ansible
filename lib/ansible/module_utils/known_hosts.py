@@ -18,7 +18,7 @@ def get_fqdn(repo_url):
     """ chop the hostname out of a giturl """
 
     result = None
-    if "@" in repo_url:
+    if "@" in repo_url and not repo_url.startswith("http"):
         repo_url = repo_url.split("@", 1)[1]
         if ":" in repo_url:
             repo_url = repo_url.split(":")[0]
