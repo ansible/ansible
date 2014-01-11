@@ -2,16 +2,16 @@ def add_git_host_key(module, url, accept_hostkey=True):
 
     """ idempotently add a git url hostkey """
 
-    if accept_hostkey:
+    fqdn = get_fqdn(module.params['repo'])
 
-        fqdn = get_fqdn(module.params['repo'])
-
-        if fqdn:
-            known_host = check_hostkey(module, fqdn)
-            if not known_host:
-                rc, out, err = add_host_key(module, fqdn)
-                if rc != 0:
-                    module.fail_json(msg="failed to add %s hostkey: %s" % (fqdn, out + err))
+    if fqdn:
+        known_host = check_hostkey(module, fqdn)
+        if not known_host and accept_hostkey:
+            rc, out, err = add_host_key(module, fqdn)
+            if rc != 0:
+                module.fail_json(msg="failed to add %s hostkey: %s" % (fqdn, out + err))
+        else:
+            module.fail_json(msg="%s has an unknown hostkey. Set accept_hostkey to True or manually add the hostkey prior to running the git module" % fqdn)                    
 
 def get_fqdn(repo_url):
 
