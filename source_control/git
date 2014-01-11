@@ -43,6 +43,12 @@ options:
             - What version of the repository to check out.  This can be the
               full 40-character I(SHA-1) hash, the literal string C(HEAD), a
               branch name, or a tag name.
+    accept_hostkey:
+        required: false
+        default: true
+        version_added: "1.5"
+        description:
+            - Add the hostkey for the repo url if not already added.
     reference:
         required: false
         default: null
@@ -117,6 +123,7 @@ EXAMPLES = '''
 
 import re
 import tempfile
+
 
 def get_version(git_path, dest, ref="HEAD"):
     ''' samples the version of the git repo '''
@@ -352,6 +359,7 @@ def main():
             force=dict(default='yes', type='bool'),
             depth=dict(default=None, type='int'),
             update=dict(default='yes', type='bool'),
+            accept_hostkey=dict(default='yes', type='bool'),
             executable=dict(default=None),
             bare=dict(default='no', type='bool'),
         ),
@@ -368,6 +376,10 @@ def main():
     bare      = module.params['bare']
     reference = module.params['reference']
     git_path  = module.params['executable'] or module.get_bin_path('git', True)
+
+    # add the git repo's hostkey 
+    if module.params['accept_hostkey']:
+        add_git_host_key(module, repo, accept_hostkey=True)
 
     if bare:
         gitconfig = os.path.join(dest, 'config')
@@ -430,4 +442,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.known_hosts import *
+
 main()
