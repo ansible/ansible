@@ -20,7 +20,7 @@ module: rds
 version_added: "1.3"
 short_description: create, delete, or modify an Amazon rds instance
 description:
-     - Creates, deletes, or modifies rds instances.  When creating an instance it can be either a new instance or a read-only replica of an existing instance. This module has a dependency on python-boto >= 2.5. The 'promote' command requires boto >= 2.18.0.
+     - Creates, deletes, or modifies rds instances.  When creating an instance it can be either a new instance a read-only replica of an existing instance or a restore from a snapshot. This module has a dependency on python-boto >= 2.5. The 'promote' command requires boto >= 2.18.0.
 options:
   command:
     description:
@@ -28,7 +28,7 @@ options:
     required: true
     default: null
     aliases: []
-    choices: [ 'create', 'replicate', 'delete', 'facts', 'modify' , 'promote' ]
+    choices: [ 'create', 'replicate', 'delete', 'facts', 'modify' , 'promote' , 'restore' ]
   instance_name:
     description:
       - Database instance identifier.
@@ -174,7 +174,7 @@ options:
     aliases: []
   snapshot:
     description:
-      - Name of final snapshot to take when deleting an instance.  If no snapshot name is provided then no snapshot is taken. Used only when command=delete.
+      - When used with command=delete it is the name of final snapshot to take when deleting an instance.  If no snapshot name is provided then no snapshot is taken. When used with command=restore it is the name of the snapshot to create a db instance from.
     required: false
     default: null
     aliases: []
@@ -256,7 +256,13 @@ EXAMPLES = '''
       instance_name=new_database
       new_instance_name=renamed_database
       wait=yes
-    
+
+# Restore a db snaphot to a new instance
+- rds: >
+    command=restore
+    snapshot=snapshot_to_restore
+    instance_name=new_database
+_   
 '''
 
 import sys
@@ -271,7 +277,7 @@ except ImportError:
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            command           = dict(choices=['create', 'replicate', 'delete', 'facts', 'modify', 'promote'], required=True),
+            command           = dict(choices=['create', 'replicate', 'delete', 'facts', 'modify', 'promote', 'restore'], required=True),
             instance_name     = dict(required=True),
             source_instance   = dict(required=False),
             db_engine         = dict(choices=['MySQL', 'oracle-se1', 'oracle-se', 'oracle-ee', 'sqlserver-ee', 'sqlserver-se', 'sqlserver-ex', 'sqlserver-web', 'postgres'], required=False),
@@ -374,6 +380,11 @@ def main():
         required_vars = [ 'instance_name' ]
         invalid_vars = [ 'db_engine', 'size', 'username', 'password', 'db_name', 'engine_version', 'parameter_group', 'license_model', 'multi_zone', 'iops', 'security_groups', 'option_group', 'maint_window', 'subnet', 'source_instance', 'snapshot', 'apply_immediately', 'new_instance_name' ]
  
+    elif command == 'restore':
+        required_vars = ['command', 'snapshot', 'instance_name', 'instance_type']
+        optional_vars = ['port', 'availability_zone', 'multi_az', 'auto_minor_version_upgrade', 'subnet', 'wait', 'wait_timeout']
+        invalid_vars  = list(set(module.params.keys()) - set(optional_vars) - set(required_vars))
+
     for v in required_vars:
         if not module.params.get(v):
             module.fail_json(msg = str("Parameter %s required for %s command" % (v, command)))
@@ -476,6 +487,8 @@ def main():
 
         elif command == 'promote':
             db = conn.promote_read_replica(instance_name, **params)
+        elif command == 'restore':
+            db = conn.restore_dbinstance_from_dbsnapshot(snapshot, instance_name, instance_type, **params)
 
     # Don't do anything for the 'facts' command since we'll just drop down
     # to get_all_dbinstances below to collect the facts
