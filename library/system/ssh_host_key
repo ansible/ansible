@@ -1,0 +1,258 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+"""
+Ansible module to add host keys for ssh
+(c) 2014, Rob Smith <kormoc@gmail.com>
+
+This file is part of Ansible
+
+Ansible is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Ansible is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+DOCUMENTATION = '''
+---
+module: ssh_host_key
+short_description: Adds or removes an SSH host key
+description:
+     - Adds or removes an SSH host key
+version_added: "1.4.5"
+options:
+  state:
+    description:
+      - Whether the given host key (with the given key_type) should or should not be in the file
+    required: false
+    choices: [ "present", "absent" ]
+    default: "present"
+  known_hosts_file:
+    description:
+      - Path to the known hosts file
+    required: false
+    default: "/etc/ssh/ssh_known_hosts"
+  host:
+    description:
+      - What host to manage the hostkey for
+    required: true
+  key_type:
+    description:
+      - What key type to manage
+    required: false
+    choices: [ "rsa", "dsa" ]
+    default: "rsa"
+  key:
+    description:
+      - Specify a host key
+    required: false
+  manage_ip:
+    description:
+      - Manage ip address along side the hostname in known_hosts file
+    required: false
+    default: false
+  ip:
+    description:
+      - Specify a ip address if manage_ip is true
+    required: false
+
+description:
+    - "Adds or removes SSH host keys"
+author: Rob Smith
+'''
+
+EXAMPLES = '''
+# Ensure bitbucket keys are accepted and valid
+- ssh_host_key:
+    state=present
+    host=bitbucket.org
+    manage_ip=True
+'''
+
+import os
+import os.path
+import tempfile
+import socket
+
+def read_keys(module, filename):
+    host_keys = []
+
+    if not os.path.isfile(filename):
+        return host_keys
+    
+    try:
+        with open(filename, 'r') as fp:
+            for line in fp.readlines():
+                line = line.strip()
+                if line[0] == '#':
+                    host_keys.append({'comment': line})
+                    continue
+                
+                # If there are any comments post key, keep them
+                line = line.split(' ', 3)
+                if len(line) == 3:
+                    line.append('')
+    
+                host_keys.append({
+                    'host': line[0],
+                    'type': line[1],
+                    'key': line[2],
+                    'comment': line[3],
+                    })
+    except IOError, e:
+        module.fail_json(msg="Failed to read file %s: %s" % (filename, str(e)))
+
+    return host_keys
+
+def write_keys(module, filename, host_keys):
+    try:
+        fd, tmp_path = tempfile.mkstemp('', 'tmp', os.path.dirname(filename))
+        with open(tmp_path, 'w') as fp:
+            for host_key in host_keys:
+                line = ''
+                if 'key' in host_key:
+                    line = '%s %s %s' % (
+                        host_key['host'],
+                        host_key['type'],
+                        host_key['key'],
+                    )
+                line = ('%s %s' % (line, host_key['comment'])).strip() + '\n'                
+                fp.write(line)
+
+        module.atomic_move(tmp_path, filename)
+    except IOError, e:
+        module.fail_json(
+            msg="Failed to write to file %s: %s" % (tmp_path, str(e)))
+
+def enforce_state(module, params):
+    state               = params.get('state',
+                                     'present')
+    known_hosts_file    = params.get('known_hosts_file',
+                                     '/etc/ssh/ssh_known_hosts')
+    host                = params.get('host',
+                                     None)
+    key_type            = params.get('key_type',
+                                     'rsa')
+    key                 = params.get('key',
+                                     None)
+    manage_ip           = params.get('manage_ip',
+                                     False)
+    ip                  = params.get('ip',
+                                     None)
+    
+    params['changed'] = False
+    ssh_type = 'ssh-%s' % key_type
+    new_keys = []
+    
+    # Look up the ip address if needed
+    if manage_ip and ip is None:
+        try:
+            ip = socket.gethostbyname(host)
+        except socket.gaierror, e:
+            module.fail_json(msg="Failed to look up ip for %s: %s" % (ip, str(e)))
+        
+    # Look up the ssh key if not given
+    if key is None and state == 'present':
+        keyscan_cmd = module.get_bin_path('ssh-keyscan', True)
+        this_cmd = keyscan_cmd + ' -t ' + key_type + ' ' + host
+        rc, out, err = module.run_command(this_cmd)
+        if rc != 0:
+            module.fail_json(msg="ssh-keyscan failed with return code %s" % str(rc))
+        key = out.strip()
+        if len(key) == 0:
+            module.fail_json(msg="ssh-keyscan failed")
+        key = key.split(' ')[2].strip()
+    
+    # Load the current keys
+    host_keys = read_keys(module, known_hosts_file)
+    
+    if state == 'absent':
+        for host_key in host_keys:
+            if 'key' in host_key:
+                if host_key['type'] == ssh_type:
+                    if host_key['host'] == host or (host_key['host'] == ip and manage_ip):
+                        params['changed'] = True
+                        continue
+            new_keys.append(host_key)
+    elif state == 'present':
+        found = False
+        for host_key in host_keys:
+            if 'key' in host_key:
+                if ((host_key['host'] == host or host_key['host'] == ip)
+                        and host_key['type'] == ssh_type):
+                    found = True
+                    if host_key['key'] != key:
+                        host_key['key'] = key
+                        params['changed'] = True
+                    pass
+            new_keys.append(host_keys)
+        if not found:
+            new_keys.append({
+                'host': host,
+                'type': ssh_type,
+                'key': key,
+                'comment': '',
+            })
+            params['changed'] = True
+            if manage_ip:
+                new_keys.append({
+                    'host': ip,
+                    'type': ssh_type,
+                    'key': key,
+                    'comment': '',
+                })
+                params['changed'] = True
+    
+    if params['changed'] is True:
+        write_keys(module, known_hosts_file, new_keys)
+    
+    return params
+    
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            state = dict(
+                required=False,
+                type='str',
+                default='present',
+                choices=['absent','present']),
+            known_hosts_file = dict(
+                required=False,
+                type='str',
+                default='/etc/ssh/ssh_known_hosts'),
+            host = dict(
+                required=True,
+                type='str'),
+            key_type = dict(
+                required=False,
+                type='str',
+                default='rsa',
+                choices=['rsa','dsa']),
+            key = dict(
+                required=False,
+                type='str'),
+            manage_ip = dict(
+                required=False,
+                type='bool',
+                default=False),
+            ip = dict(
+                required=False,
+                type='str'),
+        )
+    )
+
+    results = enforce_state(module, module.params)
+    module.exit_json(**results)
+
+# import module snippets
+from ansible.module_utils.basic import *
+main()
