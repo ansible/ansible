@@ -22,6 +22,7 @@ import yaml
 import types
 import pipes
 import glob
+import random
 import re
 from ansible import errors
 from ansible.utils import md5s
@@ -135,6 +136,36 @@ def symmetric_difference(a, b):
 def union(a, b):
     return set(a).union(b)
 
+def generate_random_numbers(range_max=1, offset=None, count=1, seed=None,
+                            seed2=None, precision=0, use_period=True):
+    # Setup the seed. This should allow fixed values if a seed is passed in
+    # based on a hostname or similar
+    if seed is not None and seed2 is not None:
+        seed += seed2
+    random.seed(seed)
+
+    # Figure out the period. This is specifically targetted towards cron
+    if use_period:
+        period = range_max / count
+        if offset is None:
+            offset = random.uniform(0, period)
+    else:
+        period = range_max
+        if offset is None:
+            offset = 0
+
+    values = []
+    for i in xrange(count):
+        rnd = period * i
+        rnd += random.uniform(0, period)
+        rnd %= range_max
+        rnd = round(rnd, precision)
+        if precision == 0:
+            rnd = int(rnd)
+        values.append(str(rnd))
+    values.sort(key=float)
+    return ','.join(values)
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -195,5 +226,7 @@ class FilterModule(object):
             'difference': difference,
             'symmetric_difference': symmetric_difference,
             'union': union,
+
+            'random': generate_random_numbers,
         }
 

@@ -222,6 +222,10 @@ doesn't know it is a boolean value::
    - debug: msg=test
      when: some_string_value | bool
 
+To generage a random number between 0 and 60::
+
+    {{60 | random}}
+
 A few useful filters are typically added with each new Ansible release.  The development documentation shows
 how to extend Ansible filters by writing your own as plugins, though in general, we encourage new ones
 to be added to core so everyone can make use of them.
