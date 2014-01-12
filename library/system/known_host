@@ -1,32 +1,30 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-"""
-Ansible module to known_hosts for ssh connections.
-(c) 2014, Ray Myers <ray.myers@gmail.com>
-
-This file is part of Ansible
-
-Ansible is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Ansible is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-"""
+# (c) 2014, Ray Myers <ray.myers@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 DOCUMENTATION = '''
 ---
 module: known_host
 short_description: Adds or removes an SSH known host
 description:
-     - Adds or removes a host from an SSH known_hosts file
+     - Adds or removes a host from an SSH known_hosts file. 
+       Uses commands I(ssh-keyscan) and I(ssh-keygen).
 version_added: ""
 options:
   user:
@@ -59,7 +57,9 @@ options:
     default: "0600"
   manage_dir:
     description:
-      - Whether this module should manage the directory of the known_hosts file
+      - Whether this module should manage the directory of the known_hosts file. 
+        If managed, the directory will be created when missing, have mode 0700, 
+        and be owned by I(user).
     required: false
     choices: [ "yes", "no" ]
     default: "yes"
