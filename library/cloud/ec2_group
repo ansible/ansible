@@ -159,6 +159,7 @@ def add_rules_to_lookup(rules, prefix, dict):
 
 def configure_rules(module, ec2, groups, group):
     changed = False
+    changes = { 'created': [], 'added' : [], 'removed' : [] }
 
     groupRules = {}
     add_rules_to_lookup(group.rules, 'ingress', groupRules)
@@ -183,6 +184,7 @@ def configure_rules(module, ec2, groups, group):
                     if not module.check_mode:
                         g = ec2.create_security_group(group_name, None, vpc_id=vpc_id)
                         groups[g.id] = g
+                    changes['created'].append(group_name)
 
                 group_id = g.id
             elif 'cidr_ip' in rule:
@@ -209,26 +211,31 @@ def configure_rules(module, ec2, groups, group):
                 grantGroup = None
                 if group_id:
                     grantGroup = groups[group_id]
-
+                    
                 if not module.check_mode:
                     if ruleType == 'egress':
                         ec2.authorize_security_group_egress(group.id, rule['proto'], rule['from_port'], rule['to_port'], group_id, ip, False)
                     else:
                         group.authorize(rule['proto'], rule['from_port'], rule['to_port'], ip, grantGroup)
+                changes['added'].append(rule)
                 changed = True
 
     # Remove anything left in the groupRules -- these will be defunct rules
     for rule in groupRules.itervalues():
         for grant in rule.grants:
             grantGroup = None
+            grantGroupName = None
             if grant.group_id:
                 grantGroup = groups[grant.group_id]
+                grantGroupName = grantGroup.name
             if not module.check_mode:
                 if rule.ip_protocol in ['tcp', 'udp', 'icmp']:
                     group.revoke(rule.ip_protocol, rule.from_port, rule.to_port, grant.cidr_ip, grantGroup)
+            
+            changes['removed'].append([rule.ip_protocol, rule.from_port, rule.to_port, grant.cidr_ip, grantGroupName])
             changed = True
 
-    return changed
+    return changed, changes
 
 def main():
     module = AnsibleModule(
@@ -271,9 +278,12 @@ def main():
                 group = ec2.create_security_group(module.params['name'], module.params['description'], vpc_id=module.params['vpc_id'])
                 changed = True
 
-        changed |= configure_rules(module, ec2, groups, group)
+        rules_changed, changes = configure_rules(module, ec2, groups, group)
+        if changed:
+            changes['created'].append(module.params['name'])
+        changed |= rules_changed
 
-        module.exit_json(changed=changed, group_id=group.id)
+        module.exit_json(changed=changed, changes=changes, group_id=group.id)
     else:
         module.fail_json(msg="Unsupported state requested: %s" % state)
 
