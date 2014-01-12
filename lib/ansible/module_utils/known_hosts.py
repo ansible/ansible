@@ -6,12 +6,13 @@ def add_git_host_key(module, url, accept_hostkey=True):
 
     if fqdn:
         known_host = check_hostkey(module, fqdn)
-        if not known_host and accept_hostkey:
-            rc, out, err = add_host_key(module, fqdn)
-            if rc != 0:
-                module.fail_json(msg="failed to add %s hostkey: %s" % (fqdn, out + err))
-        else:
-            module.fail_json(msg="%s has an unknown hostkey. Set accept_hostkey to True or manually add the hostkey prior to running the git module" % fqdn)                    
+        if not known_host:
+            if accept_hostkey:
+                rc, out, err = add_host_key(module, fqdn)
+                if rc != 0:
+                    module.fail_json(msg="failed to add %s hostkey: %s" % (fqdn, out + err))
+            else:
+                module.fail_json(msg="%s has an unknown hostkey. Set accept_hostkey to True or manually add the hostkey prior to running the git module" % fqdn)                    
 
 def get_fqdn(repo_url):
 
@@ -42,6 +43,14 @@ def check_hostkey(module, fqdn):
     if rc == 0:
         if out != "":
             result = True
+    else:
+        # Check the main system location
+        this_cmd = keygen_cmd + " -H -f /etc/ssh/ssh_known_hosts -F " + fqdn
+        rc, out, err = module.run_command(this_cmd)
+
+        if rc == 0:
+            if out != "":
+                result = True
 
     return result
 
