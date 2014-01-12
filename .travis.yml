@@ -1,0 +1,19 @@
+---
+language: python
+
+python:
+  - "2.6"
+  - "2.7"
+
+before_install:
+ - sudo apt-get update -qq
+ - sudo apt-get install -qq ruby-json facter
+ - git config --global user.name "Travis CI"
+ - git config --global user.email "travis@example.com"
+
+install:
+  - "pip install PyYAML --use-mirrors"
+  - "pip install jinja2 --use-mirrors"
+  - "pip install paramiko --use-mirrors"
+
+script: make tests
