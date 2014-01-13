@@ -206,6 +206,7 @@ class Connection(object):
 
         self._send_password()
 
+        sudo_stdout_extra = ''
         if self.runner.sudo and sudoable and self.runner.sudo_pass:
             # several cases are handled for sudo privileges with password
             # * NOPASSWD (tty & no-tty): detect success_key on stdout
@@ -219,7 +220,7 @@ class Connection(object):
             sudo_output = ''
             sudo_errput = ''
 
-            while not sudo_output.endswith(prompt) and success_key not in sudo_output:
+            while success_key not in sudo_output:
                 rfd, wfd, efd = select.select([p.stdout, p.stderr], [],
                                               [p.stdout], self.runner.timeout)
                 if p.stderr in rfd:
@@ -239,18 +240,23 @@ class Connection(object):
                     if not chunk:
                         raise errors.AnsibleError('ssh connection closed waiting for sudo password prompt')
                     sudo_output += chunk
+                    if sudo_output.endswith(prompt):
+                        stdin.write(self.runner.sudo_pass + '\n')
 
                 if not rfd:
                     # timeout. wrap up process communication
                     stdout = p.communicate()
                     raise errors.AnsibleError('ssh connection error waiting for sudo password prompt')
-
-            if success_key not in sudo_output:
-                stdin.write(self.runner.sudo_pass + '\n')
+            # preserve any extra data after the success_key in stdout since it
+            # belongs to the real command output
+            end_of_sudo_output = sudo_output.find('\n', sudo_output.find(success_key)+len(success_key))
+            sudo_stdout_extra = sudo_output[end_of_sudo_output+1:]
+                            
             fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
             fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) & ~os.O_NONBLOCK)
+            
         # We can't use p.communicate here because the ControlMaster may have stdout open as well
-        stdout = ''
+        stdout = sudo_stdout_extra
         stderr = ''
         rpipes = [p.stdout, p.stderr]
         if in_data:
