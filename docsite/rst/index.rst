@@ -26,6 +26,7 @@ This documentation covers the current released version of Ansible (1.4.4) and al
    :maxdepth: 1
 
    intro
+   quickstart
    playbooks
    playbooks_special_topics
    modules
