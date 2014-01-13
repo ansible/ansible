@@ -17,6 +17,7 @@ New modules:
 Misc:
 
 * no_reboot is now defaulted to "no" in the ec2_ami module to ensure filesystem consistency in the resulting AMI.
+* various bug fixes
 
 ## 1.4.4 "Could This Be Magic" - January 6, 2014
 
