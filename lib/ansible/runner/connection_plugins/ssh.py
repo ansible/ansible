@@ -255,6 +255,11 @@ class Connection(object):
             # the host to known hosts is not intermingled with multiprocess output.
             fcntl.lockf(self.runner.output_lockfile, fcntl.LOCK_UN)
             fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_UN)
+
+        if C.HOST_KEY_CHECKING:
+            if ssh_cmd[0] == "sshpass" and p.returncode == 6:
+                raise errors.AnsibleError('Using a SSH password instead of a key is not possible because Host Key checking is enabled and sshpass does not support this.  Please add this host\'s fingerprint to your known_hosts file to manage this host.')
+
         controlpersisterror = stderr.find('Bad configuration option: ControlPersist') != -1 or stderr.find('unknown configuration option: ControlPersist') != -1
         if p.returncode != 0 and controlpersisterror:
             raise errors.AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" (or ansible_ssh_args in the config file) before running again')

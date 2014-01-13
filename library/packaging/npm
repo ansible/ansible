@@ -30,7 +30,7 @@ options:
   name:
     description:
       - The name of a node.js library to install
-    requires: false
+    required: false
   path:
     description:
       - The base path where to install the node.js libraries
@@ -101,7 +101,7 @@ class Npm(object):
         self.version = kwargs['version']
         self.path = kwargs['path']
         self.production = kwargs['production']
-        
+
         if kwargs['executable']:
             self.executable = kwargs['executable']
         else:
@@ -119,7 +119,7 @@ class Npm(object):
             if self.glbl:
                 cmd.append('--global')
             if self.production:
-                cmd.append('--production')                
+                cmd.append('--production')
             if self.name:
                 cmd.append(self.name_version)
 
@@ -180,7 +180,7 @@ def main():
         executable=dict(default=None),
         state=dict(default='present', choices=['present', 'absent', 'latest'])
     )
-    arg_spec['global']=dict(default='no', type='bool')
+    arg_spec['global'] = dict(default='no', type='bool')
     module = AnsibleModule(
         argument_spec=arg_spec,
         supports_check_mode=True
