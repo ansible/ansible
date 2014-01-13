@@ -705,7 +705,7 @@ class Play(object):
                             if self._has_vars_in(filename2) and not self._has_vars_in(filename3):
                                 # this filename has variables in it that were fact specific
                                 # so it needs to be loaded into the per host SETUP_CACHE
-                                self.playbook.SETUP_CACHE[host].update(data)
+                                utils.update_hash(self.playbook.SETUP_CACHE, host, data)
                                 self.playbook.callbacks.on_import_for_host(host, filename4)
                         elif not self._has_vars_in(filename4):
                             # found a non-host specific variable, load into vars and NOT

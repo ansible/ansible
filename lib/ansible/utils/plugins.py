@@ -197,6 +197,13 @@ action_loader = PluginLoader(
     'action_plugins'
 )
 
+cache_loader = PluginLoader(
+    'CacheModule',
+    'ansible.cache',
+    C.DEFAULT_CACHE_PLUGIN_PATH,
+    'cache_plugins'
+)
+
 callback_loader = PluginLoader(
     'CallbackModule', 
     'ansible.callback_plugins', 
