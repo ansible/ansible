@@ -193,7 +193,7 @@ mentioned::
     ansible_ssh_pass
       The ssh password to use (this is insecure, we strongly recommend using --ask-pass or SSH keys)
     ansible_sudo_pass
-      The sudo password to use (this is insecure, we strongly recommend using --ask-pass or SSH keys)
+      The sudo password to use (this is insecure, we strongly recommend using --ask-sudo-pass)
     ansible_connection
       Connection type of the host. Candidates are local, ssh or paramiko.  The default is paramiko before Ansible 1.2, and 'smart' afterwards which detects whether usage of 'ssh' would be feasible based on whether ControlPersist is supported.
     ansible_ssh_private_key_file
