@@ -706,6 +706,12 @@ class AnsibleModule(object):
                         self.params[k] = int(value)
                     else:
                         is_invalid = True
+            elif wanted == 'float':
+                if not isinstance(value, float):
+                    if isinstance(value, basestring):
+                        self.params[k] = float(value)
+                    else:
+                        is_invalid = True
             else:
                 self.fail_json(msg="implementation error: unknown type %s requested for %s" % (wanted, k))
 
