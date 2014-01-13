@@ -137,27 +137,20 @@ def union(a, b):
     return set(a).union(b)
 
 def generate_random_numbers(range_max=1, offset=None, count=1, seed=None,
-                            seed2=None, precision=0, use_period=True):
+                            precision=0):
     # Setup the seed. This should allow fixed values if a seed is passed in
     # based on a hostname or similar
-    if seed is not None and seed2 is not None:
-        seed += seed2
     random.seed(seed)
 
     # Figure out the period. This is specifically targetted towards cron
-    if use_period:
-        period = range_max / count
-        if offset is None:
-            offset = random.uniform(0, period)
-    else:
-        period = range_max
-        if offset is None:
-            offset = 0
+    period = range_max / count
+    if offset is None:
+        offset = random.uniform(0, period)
 
     values = []
     for i in xrange(count):
         rnd = period * i
-        rnd += random.uniform(0, period)
+        rnd += offset
         rnd %= range_max
         rnd = round(rnd, precision)
         if precision == 0:

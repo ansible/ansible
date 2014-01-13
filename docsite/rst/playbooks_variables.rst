@@ -222,9 +222,17 @@ doesn't know it is a boolean value::
    - debug: msg=test
      when: some_string_value | bool
 
-To generage a random number between 0 and 60::
+To generate random numbers::
 
-    {{60 | random}}
+    {{max_number | random}}
+
+To use a seed::
+
+    {{60 | random(seed=inventory_hostname)}}
+
+To return a set of numbers, useful for cron::
+
+    {{60 | random(count=4)}}
 
 A few useful filters are typically added with each new Ansible release.  The development documentation shows
 how to extend Ansible filters by writing your own as plugins, though in general, we encourage new ones
