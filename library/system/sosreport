@@ -1,0 +1,152 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+#
+# (c) 2014, Richard Isaacson <richard.c.isaacson@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: sosreport
+short_description: Execute sosreport and make the archive available.
+description:
+ - sosreport is a tool for collecting current system state information into an archive.
+ - The sosreport module will always be executed in batch mode.
+ - The sosreport module is restricted to RHEL based distributions for availability reasons.
+version_added: "0.0"
+options:
+    archive_name:
+        description:
+             - Specify the archive name that will be created.
+        required: false
+        default: null
+    ticket_number:
+        description:
+             - Put in a ticket number.
+        required: false
+        default: null
+    skip_plugins:
+        description:
+             - Disable the specified plugin(s). Multiple plug-ins may be specified as a comma-separated list.
+        required: false
+        default: null
+    enable_plugins:
+        description:
+             - Enable the specified plugin(s). Multiple plug-ins may be specified as a comma-separated list.
+        required: false
+        default: null
+    only_plugins:
+        description:
+             - Only enable the specified plugin(s). Multiple plug-ins may be specified as a comma-separated list.
+        required: false
+        default: null
+    config_file:
+        description:
+             - Specify an alternate configuration file.
+        required: false
+        default: null
+    temp_dir
+        description:
+             - Specify an alternate temporary directory.
+        required: false
+        default: null
+requirements:
+ - sosreport
+author: Richard Isaacson
+'''
+
+EXAMPLES = '''
+# Execute sosreport creating an archive with a provided name.
+- sosreport: archive_name="server"
+'''
+
+import os
+import tempfile
+
+SOSCMD = "/usr/bin/sosreport"
+
+#================================================
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            archive_name=dict(required=False),
+            ticket_number=dict(required=False),
+            skip_plugins=dict(required=False),
+            enable_plugins=dict(required=True)
+            only_plugins=dict(required=True)
+            config_file=dict(required=True)
+            tmp_dir=dict(required=True)
+        ),
+        supports_check_mode = False,
+    )
+
+    archive_name   = module.params['archive_name']
+    ticket_number  = module.params['ticket_nuber']
+    skip_plugins   = module.params['skip_plugins']
+    enable_plugins = module.params['enable_plugins']
+    only_plugins   = module.params['only_plugins']
+    config_file    = module.params['config_file']
+    tmp_dir        = module.params['tmp_dir']
+
+#TODO: if this is not a RHEL based distro fail.
+
+    if (skip plugins or enable_plugins) and only_plugins:
+        module.fail_json(msg="skip_plugins or enable_plugins and only_plugins are mutually exclusive")
+
+    result = {}
+
+    sosreport_command = "%s --batch" % (SOSCMD)
+    rc, out, err = module.run_command(sosreport_command)
+    if rc != 0:
+        module.fail_json(msg=err)
+
+
+    # result['unit_count'] = unit_count
+    # result['unit_type'] = unit_type
+
+    # if command:
+    #     filed, path = tempfile.mkstemp(prefix='at')
+    #     result['script_file'] = path
+    #     fileh = os.fdopen(filed, 'w')
+    #     fileh.write(command)
+    #     fileh.close()
+    #     at_command = "%s now + %s %s -f %s" % (ATCMD, unit_count, unit_type, path)
+    #     if user:
+    #         at_command = "chown %s %s; su '%s' -c '%s'" % (user, path, user, at_command)
+    #     rc, out, err = module.run_command(at_command)
+    #     if rc != 0:
+    #         module.fail_json(msg=err)
+    #     os.unlink(path)
+    #     result['changed'] = 'true'
+    # elif script_file:
+    #     result['script_file'] = script_file
+    #     at_command = "%s now + %s %s -f %s" % (ATCMD, unit_count, unit_type, script_file)
+    #     if user:
+    #     	# We expect that if this is an installed the permissions are already correct for the user to execute it.
+    #         at_command = "su '%s' -c '%s'" % (user, at_command)
+    #     rc, out, err = module.run_command(at_command)
+    #     if rc != 0:
+    #         module.fail_json(msg=err)
+    #     result['changed'] = 'true'
+    # else:
+    #     module.fail_json(msg="command or script_file not specified")
+
+    module.exit_json(**result)
+
+# import module snippets
+from ansible.module_utils.basic import *
+main()
