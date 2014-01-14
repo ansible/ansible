@@ -1,4 +1,5 @@
 [![PyPI version](https://badge.fury.io/py/ansible.png)](http://badge.fury.io/py/ansible)
+[![Build Status](https://travis-ci.org/ansible/ansible.png?branch=devel)](https://travis-ci.org/ansible/ansible)
 
 Ansible
 =======
