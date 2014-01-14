@@ -10,10 +10,11 @@ from distutils.core import setup
 
 # find library modules
 from ansible.constants import DEFAULT_MODULE_PATH
+install_path = DEFAULT_MODULE_PATH.split(os.pathsep)[0]
 dirs=os.listdir("./library/")
 data_files = []
 for i in dirs:
-    data_files.append((os.path.join(DEFAULT_MODULE_PATH, i), glob('./library/' + i + '/*')))
+    data_files.append((os.path.join(install_path, i), glob('./library/' + i + '/*')))
 
 setup(name='ansible',
       version=__version__,
