@@ -120,7 +120,7 @@ def main():
             description=dict(required=False),
             disable_gpg_check = dict(required=False, default='no', type='bool'),
         ),
-        supports_check_mode=True,
+        supports_check_mode=False,
     )
 
     repo = module.params['repo']
