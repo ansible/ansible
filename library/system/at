@@ -78,9 +78,9 @@ def main():
             script_file=dict(required=False),
             unit_count=dict(required=True),
             unit_type=dict(required=True,
-            	           default=None,
-            	           choices=["minutes", "hours", "days", "weeks"],
-            	           type="str")
+                           default=None,
+                           choices=["minutes", "hours", "days", "weeks"],
+                           type="str")
         ),
         supports_check_mode = False,
     )
@@ -112,7 +112,7 @@ def main():
         if rc != 0:
             module.fail_json(msg=err)
         os.unlink(path)
-        result['changed'] = 'true'
+        result['changed'] = True
     elif script_file:
         result['script_file'] = script_file
         at_command = "%s now + %s %s -f %s" % (ATCMD, unit_count, unit_type, script_file)
@@ -122,7 +122,7 @@ def main():
         rc, out, err = module.run_command(at_command)
         if rc != 0:
             module.fail_json(msg=err)
-        result['changed'] = 'true'
+        result['changed'] = True
     else:
         module.fail_json(msg="command or script_file not specified")
 
