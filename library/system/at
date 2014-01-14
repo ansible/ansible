@@ -18,45 +18,50 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-DOCUMENTATION = """
+DOCUMENTATION = '''
 ---
 module: at
 short_description: Schedule the execution of a command or scripts via the at command.
 description:
  - Use this module to schedule a command or script to run once in the future.
-  version_added: "0.0"
-  options:
-    command:
-      description:
-       - A command to be executed in the future.
-      required: false
-      default: null
-    script_file:
-      description:
-       - An existing script to be executed in the future.
-      required: false
-      default: null
-    unit_count:
-      description:
-       - The count of units in the future to execute the command or script.
-      required: true
-    unit_type:
-      description:
-       - The type of units in the future to execute the command or script.
-      required: true
-      choices: ["minutes", "hours", "days", "weeks"]
+version_added: "0.0"
+options:
+  user:
+    description:
+     - The user to execute the at command as.
+    required: false
+    default: null
+  command:
+    description:
+     - A command to be executed in the future.
+    required: false
+    default: null
+  script_file:
+    description:
+     - An existing script to be executed in the future.
+    required: false
+    default: null
+  unit_count:
+    description:
+     - The count of units in the future to execute the command or script.
+    required: true
+  unit_type:
+    description:
+     - The type of units in the future to execute the command or script.
+    required: true
+    choices: ["minutes", "hours", "days", "weeks"]
 requirements:
  - at
 author: Richard Isaacson
-"""
+'''
 
-EXAMPLES = """
+EXAMPLES = '''
 # Schedule a command to execute in 20 minutes as root.
 - at: command="ls -d > /dev/null" unit_count=1 unit_type="minutes"
 
 # Schedule a script to execute in 1 hour as the neo user.
 - at: script_file="/some/script.sh" user="neo" unit_count=1 unit_type="hours"
-"""
+'''
 
 import os
 import tempfile
@@ -68,6 +73,7 @@ ATCMD = "/usr/bin/at"
 def main():
     module = AnsibleModule(
         argument_spec = dict(
+            user=dict(required=False),
             command=dict(required=False),
             script_file=dict(required=False),
             unit_count=dict(required=True),
@@ -79,6 +85,7 @@ def main():
         supports_check_mode = False,
     )
 
+    user        = module.params['user']
     command        = module.params['command']
     script_file    = module.params['script_file']
     unit_count     = module.params['unit_count']
@@ -98,15 +105,24 @@ def main():
         fileh = os.fdopen(filed, 'w')
         fileh.write(command)
         fileh.close()
-        rc, out, err = module.run_command("%s now + %s %s -f %s" % (ATCMD, unit_count, unit_type, path))
+        at_command = "%s now + %s %s -f %s" % (ATCMD, unit_count, unit_type, path)
+        if user:
+            at_command = "chown %s %s; su '%s' -c '%s'" % (user, path, user, at_command)
+        rc, out, err = module.run_command(at_command)
         if rc != 0:
             module.fail_json(msg=err)
         os.unlink(path)
+        result['changed'] = 'true'
     elif script_file:
         result['script_file'] = script_file
-        rc, out, err = module.run_command("%s now + %s %s -f %s" % (ATCMD, unit_count, unit_type, script_file))
+        at_command = "%s now + %s %s -f %s" % (ATCMD, unit_count, unit_type, script_file)
+        if user:
+        	# We expect that if this is an installed the permissions are already correct for the user to execute it.
+            at_command = "su '%s' -c '%s'" % (user, at_command)
+        rc, out, err = module.run_command(at_command)
         if rc != 0:
             module.fail_json(msg=err)
+        result['changed'] = 'true'
     else:
         module.fail_json(msg="command or script_file not specified")
 
