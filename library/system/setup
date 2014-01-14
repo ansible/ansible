@@ -118,7 +118,8 @@ class Facts(object):
                     '/etc/alpine-release': 'Alpine',
                     '/etc/release': 'Solaris',
                     '/etc/arch-release': 'Archlinux',
-                    '/etc/SuSE-release': 'SuSE' }
+                    '/etc/SuSE-release': 'SuSE',
+                    '/etc/os-release': 'Debian' }
     SELINUX_MODE_DICT = { 1: 'enforcing', 0: 'permissive', -1: 'disabled' }
 
     # A list of dicts.  If there is a platform with more than one
@@ -328,6 +329,11 @@ class Facts(object):
                     elif name == 'SuSE':
                         data = get_file_content(path).splitlines()
                         self.facts['distribution_release'] = data[2].split('=')[1].strip()
+                    elif name == 'Debian':
+                        data = get_file_content(path).split('\n')[0]
+                        release = re.search("PRETTY_NAME.+ \(?([^ ]+?)\)?\"", data)
+                        if release:
+                            self.facts['distribution_release'] = release.groups()[0]
                     else:
                         self.facts['distribution'] = name
 
