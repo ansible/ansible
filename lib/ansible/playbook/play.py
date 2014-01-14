@@ -1,4 +1,4 @@
-# (c) 2012-2013, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -114,7 +114,7 @@ class Play(object):
         self.sudo             = ds.get('sudo', self.playbook.sudo)
         self.sudo_user        = ds.get('sudo_user', self.playbook.sudo_user)
         self.transport        = ds.get('connection', self.playbook.transport)
-        self.gather_facts     = ds.get('gather_facts', None)
+        self.gather_facts     = ds.get('gather_facts', True)
         self.remote_port      = self.remote_port
         self.any_errors_fatal = utils.boolean(ds.get('any_errors_fatal', 'false'))
         self.accelerate       = utils.boolean(ds.get('accelerate', 'false'))
@@ -484,21 +484,16 @@ class Play(object):
                 include_vars = {}
                 for k in x:
                     if k.startswith("with_"):
-                        utils.deprecated("include + with_items is an unsupported feature and has been undocumented for many releases because of this", "1.5")
-                        plugin_name = k[5:]
-                        if plugin_name not in utils.plugins.lookup_loader:
-                            raise errors.AnsibleError("cannot find lookup plugin named %s for usage in with_%s" % (plugin_name, plugin_name))
-                        terms = template(self.basedir, x[k], task_vars)
-                        items = utils.plugins.lookup_loader.get(plugin_name, basedir=self.basedir, runner=None).run(terms, inject=task_vars)
+                        utils.deprecated("include + with_items is a removed deprecated feature", "1.5", removed=True)
                     elif k.startswith("when_"):
-                        included_additional_conditions.insert(0, utils.compile_when_to_only_if("%s %s" % (k[5:], x[k])))
+                        utils.deprecated("\"when_<criteria>:\" is a removed deprecated feature, use the simplified 'when:' conditional directly", None, removed=True)
                     elif k == 'when':
                         if type(x[k]) is str:
-                            included_additional_conditions.insert(0, utils.compile_when_to_only_if("jinja2_compare %s" % x[k]))
+                            included_additional_conditions.insert(0, x[k])
                         elif type(x[k]) is list:
                             for i in x[k]:
-                                included_additional_conditions.insert(0, utils.compile_when_to_only_if("jinja2_compare %s" % i))
-                    elif k in ("include", "vars", "default_vars", "only_if", "sudo", "sudo_user", "role_name"):
+                                included_additional_conditions.insert(0, i)
+                    elif k in ("include", "vars", "default_vars", "sudo", "sudo_user", "role_name"):
                         continue
                     else:
                         include_vars[k] = x[k]
@@ -516,8 +511,8 @@ class Play(object):
                 if 'vars' in x:
                     task_vars = utils.combine_vars(task_vars, x['vars'])
 
-                if 'only_if' in x:
-                    included_additional_conditions.append(x['only_if'])
+                if 'when' in x:
+                    included_additional_conditions.append(x['when'])
 
                 new_role = None
                 if 'role_name' in x:

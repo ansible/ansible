@@ -1,8 +1,7 @@
 Installation
 ============
 
-.. contents::
-   :depth: 2
+.. contents:: Topics
 
 .. _getting_ansible:
 

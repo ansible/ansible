@@ -83,7 +83,7 @@ ansible all -m setup -a 'filter=ansible_*_mb'
 # Display only facts returned by facter.
 ansible all -m setup -a 'filter=facter_*'
 
-# Display only facts returned by facter.
+# Display only facts about certain interfaces.
 ansible all -m setup -a 'filter=ansible_eth[0-2]'
 """
 
@@ -1540,8 +1540,7 @@ class LinuxNetwork(Network):
                         iface = words[-1]
                         if iface != device:
                             interfaces[iface] = {}
-                            interfaces[iface].update(interfaces[device])
-                        if "ipv4_secondaries" not in interfaces[iface]:
+                        if not secondary and "ipv4_secondaries" not in interfaces[iface]:
                             interfaces[iface]["ipv4_secondaries"] = []
                         if not secondary or "ipv4" not in interfaces[iface]:
                             interfaces[iface]['ipv4'] = {'address': address,
@@ -1553,6 +1552,15 @@ class LinuxNetwork(Network):
                                 'netmask': netmask,
                                 'network': network,
                             })
+
+                        # add this secondary IP to the main device
+                        if secondary:
+                            interfaces[device]["ipv4_secondaries"].append({
+                                'address': address,
+                                'netmask': netmask,
+                                'network': network,
+                            })
+
                         # If this is the default address, update default_ipv4
                         if 'address' in default_ipv4 and default_ipv4['address'] == address:
                             default_ipv4['netmask'] = netmask
@@ -2069,6 +2077,11 @@ class LinuxVirtual(Virtual):
 
         if product_name in ['KVM', 'Bochs']:
             self.facts['virtualization_type'] = 'kvm'
+            self.facts['virtualization_role'] = 'guest'
+            return
+
+        if product_name == 'RHEV Hypervisor':
+            self.facts['virtualization_type'] = 'RHEV'
             self.facts['virtualization_role'] = 'guest'
             return
 

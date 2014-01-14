@@ -3,7 +3,25 @@ Ansible Changes By Release
 
 ## 1.5 "Love Walks In" - Release pending!
 
+Major features/changes:
+
+* when_foo which was previously deprecated is now removed, use "when:" instead.  Code generates appropriate error suggestion.
+* include + with_items which was previously deprecated is now removed, ditto.  Use with_nested / with_together, etc.
+* only_if, which is much older than when_foo and was deprecated, is similarly removed.
+* ssh_alt connection plugin, much more performant than standard -c ssh, in tree, soon to replace ssh.py (in this release)
+
+New modules:
+
+* Details pending
+
+Misc:
+
 * no_reboot is now defaulted to "no" in the ec2_ami module to ensure filesystem consistency in the resulting AMI.
+* various bug fixes
+
+## 1.4.4 "Could This Be Magic" - January 6, 2014
+
+- fixed a minor issue with newer versions of pip dropping the "use-mirrors" parameter.
 
 ## 1.4.3 "Could This Be Magic" - December 20, 2013
 

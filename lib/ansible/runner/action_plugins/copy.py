@@ -1,4 +1,4 @@
-# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -34,8 +34,6 @@ sys.setdefaultencoding("utf8")
 
 
 class ActionModule(object):
-
-    TRANSFERS_FILES = True
 
     def __init__(self, runner):
         self.runner = runner

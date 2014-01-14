@@ -124,7 +124,7 @@ options:
     choices: [ "yes", "no" ]
     description:
       - 'force the creation of the symlinks in two cases: the source file does 
-        not exist (but will appear later); the destination exists and a file (so, we need to unlink the
+        not exist (but will appear later); the destination exists and is a file (so, we need to unlink the
         "path" file and create symlink to the "src" file in place of it).'
 notes:
     - See also M(copy), M(template), M(assemble)
@@ -306,6 +306,10 @@ def main():
         elif prev_state == 'file':
             if not force:
                 module.fail_json(dest=path, src=src, msg='Cannot link, file exists at destination')
+            changed = True
+        elif prev_state == 'directory':
+            if not force:
+                module.fail_json(dest=path, src=src, msg='Cannot link, directory exists at destination')
             changed = True
         else:
             module.fail_json(dest=path, src=src, msg='unexpected position reached')

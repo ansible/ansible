@@ -1,4 +1,4 @@
-# (c) 2012-2013, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -38,6 +38,7 @@ import ansible.inventory
 from ansible import utils
 from ansible.utils import template
 from ansible.utils import check_conditional
+from ansible.utils import string_functions
 from ansible import errors
 from ansible import module_common
 import poller
@@ -405,8 +406,13 @@ class Runner(object):
             return flags
 
         try:
-            if not new_stdin:
-                self._new_stdin = os.fdopen(os.dup(sys.stdin.fileno()))
+            fileno = sys.stdin.fileno()
+        except ValueError:
+            fileno = None
+
+        try:
+            if not new_stdin and fileno is not None:
+                self._new_stdin = os.fdopen(os.dup(fileno))
             else:
                 self._new_stdin = new_stdin
 
@@ -737,6 +743,13 @@ class Runner(object):
             self.callbacks.on_unreachable(host, result.result)
         else:
             data = result.result
+
+            # https://github.com/ansible/ansible/issues/4958
+            if hasattr(sys.stdout, "isatty"):
+                if "stdout" in data and sys.stdout.isatty():
+                    if not string_functions.isprintable(data['stdout']):
+                        data['stdout'] = ''
+
             if 'item' in inject:
                 result.result['item'] = inject['item']
 
@@ -863,7 +876,7 @@ class Runner(object):
     def _make_tmp_path(self, conn):
         ''' make and return a temporary path on a remote box '''
 
-        basefile = 'ansible-%s-%s' % (time.time(), random.randint(0, 2**48))
+        basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
         basetmp = os.path.join(C.DEFAULT_REMOTE_TMP, basefile)
         if self.sudo and self.sudo_user != 'root' and basetmp.startswith('$HOME'):
             basetmp = os.path.join('/tmp', basefile)
@@ -1062,6 +1075,6 @@ class Runner(object):
         if self.always_run is None:
             self.always_run = self.module_vars.get('always_run', False)
             self.always_run = check_conditional(
-                self.always_run, self.basedir, inject, fail_on_undefined=True, jinja2=True)
+                self.always_run, self.basedir, inject, fail_on_undefined=True)
 
         return (self.check and not self.always_run)

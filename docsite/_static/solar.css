@@ -1,0 +1,344 @@
+/* solar.css
+ * Modified from sphinxdoc.css of the sphinxdoc theme.
+*/
+
+@import url("basic.css");
+
+/* -- page layout ----------------------------------------------------------- */
+
+body {
+    font-family: 'Open Sans', sans-serif;
+    font-size: 14px;
+    line-height: 150%;
+    text-align: center;
+    color: #002b36;
+    padding: 0;
+    margin: 0px 80px 0px 80px;
+    min-width: 740px;	
+    -moz-box-shadow: 0px 0px 10px #93a1a1;
+    -webkit-box-shadow: 0px 0px 10px #93a1a1;
+    box-shadow: 0px 0px 10px #93a1a1;
+    background: url("subtle_dots.png") repeat;
+
+}
+
+div.document {
+    background-color: #fcfcfc;
+    text-align: left;
+    background-repeat: repeat-x;
+}
+
+div.bodywrapper {
+    margin: 0 240px 0 0;
+    border-right: 1px dotted #eee8d5;
+}
+
+div.body {
+    background-color: white;
+    margin: 0;
+    padding: 0.5em 20px 20px 20px;
+}
+
+div.related {
+    font-size: 1em;
+    background: #002b36;
+    color: #839496;
+    padding: 5px 0px;
+}
+
+div.related ul {
+    height: 2em;
+    margin: 2px;
+}
+
+div.related ul li {
+    margin: 0;
+    padding: 0;
+    height: 2em;
+    float: left;
+}
+
+div.related ul li.right {
+    float: right;
+    margin-right: 5px;
+}
+
+div.related ul li a {
+    margin: 0;
+    padding: 2px 5px;
+    line-height: 2em;
+    text-decoration: none;
+    color: #839496;
+}
+
+div.related ul li a:hover {
+    background-color: #073642;
+    -webkit-border-radius: 2px;
+    -moz-border-radius: 2px;
+    border-radius: 2px;
+}
+
+div.sphinxsidebarwrapper {
+    padding: 0;
+}
+
+div.sphinxsidebar {
+    margin: 0;
+    padding: 0.5em 15px 15px 0;
+    width: 210px;
+    float: right;
+    font-size: 0.9em;
+    text-align: left;
+}
+
+div.sphinxsidebar h3, div.sphinxsidebar h4 {
+    margin: 1em 0 0.5em 0;
+    font-size: 1em;
+    padding: 0.7em;
+    background-color: #eeeff1;
+}
+
+div.sphinxsidebar h3 a {
+    color: #2E3436;
+}
+
+div.sphinxsidebar ul {
+    padding-left: 1.5em;
+    margin-top: 7px;
+    padding: 0;
+    line-height: 150%;
+    color: #586e75;
+}
+
+div.sphinxsidebar ul ul {
+    margin-left: 20px;
+}
+
+div.sphinxsidebar input {
+    border: 1px solid #eee8d5;
+}
+
+div.footer {
+    background-color: #93a1a1;
+    color: #eee;
+    padding: 3px 8px 3px 0;
+    clear: both;
+    font-size: 0.8em;
+    text-align: right;
+}
+
+div.footer a {
+    color: #eee;
+    text-decoration: none;
+}
+
+/* -- body styles ----------------------------------------------------------- */
+
+p {    
+    margin: 0.8em 0 0.5em 0;
+}
+
+div.body a, div.sphinxsidebarwrapper a {
+    color: #268bd2;
+    text-decoration: none;
+}
+
+div.body a:hover, div.sphinxsidebarwrapper a:hover {
+    border-bottom: 1px solid #268bd2;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: "Open Sans", sans-serif;
+    font-weight: 300;
+}
+
+h1 {
+    margin: 0;
+    padding: 0.7em 0 0.3em 0;
+    line-height: 1.2em;
+    color: #002b36;
+    text-shadow: #eee 0.1em 0.1em 0.1em;
+}
+
+h2 {
+    margin: 1.3em 0 0.2em 0;
+    padding: 0 0 10px 0;
+    color: #073642;
+    border-bottom: 1px solid #eee;
+}
+
+h3 {
+    margin: 1em 0 -0.3em 0;
+    padding-bottom: 5px;
+}
+
+h3, h4, h5, h6 {
+    color: #073642;
+	border-bottom: 1px dotted #eee;
+}
+
+div.body h1 a, div.body h2 a, div.body h3 a, div.body h4 a, div.body h5 a, div.body h6 a {
+    color: #657B83!important;
+}
+
+h1 a.anchor, h2 a.anchor, h3 a.anchor, h4 a.anchor, h5 a.anchor, h6 a.anchor {
+    display: none;
+    margin: 0 0 0 0.3em;
+    padding: 0 0.2em 0 0.2em;
+    color: #aaa!important;
+}
+
+h1:hover a.anchor, h2:hover a.anchor, h3:hover a.anchor, h4:hover a.anchor,
+h5:hover a.anchor, h6:hover a.anchor {
+    display: inline;
+}
+
+h1 a.anchor:hover, h2 a.anchor:hover, h3 a.anchor:hover, h4 a.anchor:hover,
+h5 a.anchor:hover, h6 a.anchor:hover {
+    color: #777;
+    background-color: #eee;
+}
+
+a.headerlink {
+    color: #c60f0f!important;
+    font-size: 1em;
+    margin-left: 6px;
+    padding: 0 4px 0 4px;
+    text-decoration: none!important;
+}
+
+a.headerlink:hover {
+    background-color: #ccc;
+    color: white!important;
+}
+
+
+cite, code, tt {
+    font-family: 'Source Code Pro', monospace;
+	font-size: 0.9em;
+    letter-spacing: 0.01em;
+    background-color: #eeeff2;
+    font-style: normal;
+}
+
+hr {
+    border: 1px solid #eee;
+    margin: 2em;
+}
+
+.highlight {
+    -webkit-border-radius: 2px;
+    -moz-border-radius: 2px;
+    border-radius: 2px;
+}
+
+pre {
+    font-family: 'Source Code Pro', monospace;
+    font-style: normal;
+	font-size: 0.9em;
+    letter-spacing: 0.015em;
+    line-height: 120%;
+    padding: 0.7em;
+	white-space: pre-wrap;       /* css-3 */
+	white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+	white-space: -pre-wrap;      /* Opera 4-6 */
+	white-space: -o-pre-wrap;    /* Opera 7 */
+	word-wrap: break-word;       /* Internet Explorer 5.5+ */
+}
+
+pre a {
+    color: inherit;
+    text-decoration: underline;
+}
+
+td.linenos pre {
+    padding: 0.5em 0;
+}
+
+div.quotebar {
+    background-color: #f8f8f8;
+    max-width: 250px;
+    float: right;
+    padding: 2px 7px;
+    border: 1px solid #ccc;
+}
+
+div.topic {
+    background-color: #f8f8f8;
+}
+
+table {
+    border-collapse: collapse;
+    margin: 0 -0.5em 0 -0.5em;
+}
+
+table td, table th {
+    padding: 0.2em 0.5em 0.2em 0.5em;
+}
+
+div.admonition {
+    font-size: 0.9em;
+    margin: 1em 0 1em 0;
+    border: 1px solid #eee;
+    background-color: #f7f7f7;
+    padding: 0;
+    -moz-box-shadow: 0px 8px 6px -8px #93a1a1;
+    -webkit-box-shadow: 0px 8px 6px -8px #93a1a1;
+    box-shadow: 0px 8px 6px -8px #93a1a1;
+}
+
+div.admonition p {
+    margin: 0.5em 1em 0.5em 1em;
+    padding: 0.2em;
+}
+
+div.admonition pre {
+    margin: 0.4em 1em 0.4em 1em;
+}
+
+div.admonition p.admonition-title
+{
+    margin: 0;
+    padding: 0.2em 0 0.2em 0.6em;
+    color: white;
+    border-bottom: 1px solid #eee8d5;
+    font-weight: bold;
+    background-color: #268bd2;
+}
+
+div.warning p.admonition-title,
+div.important p.admonition-title {
+    background-color: #cb4b16;
+}
+
+div.hint p.admonition-title,
+div.tip p.admonition-title {
+    background-color: #859900;
+}
+
+div.caution p.admonition-title,
+div.attention p.admonition-title,
+div.danger p.admonition-title,
+div.error p.admonition-title {
+    background-color: #dc322f;
+}
+
+div.admonition ul, div.admonition ol {
+    margin: 0.1em 0.5em 0.5em 3em;
+    padding: 0;
+}
+
+div.versioninfo {
+    margin: 1em 0 0 0;
+    border: 1px solid #eee;
+    background-color: #DDEAF0;
+    padding: 8px;
+    line-height: 1.3em;
+    font-size: 0.9em;
+}
+
+div.viewcode-block:target {
+    background-color: #f4debf;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+}
