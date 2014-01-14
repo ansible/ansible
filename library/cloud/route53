@@ -217,7 +217,7 @@ def main():
             record['ttl'] = rset.ttl
             record['value'] = ','.join(sorted(rset.resource_records))
             record['values'] = sorted(rset.resource_records)
-            if value_list == sorted(rset.resource_records) and command_in == 'create':
+            if value_list == sorted(rset.resource_records) and record['ttl'] == ttl_in and command_in == 'create':
                 module.exit_json(changed=False)
 
     if command_in == 'get':
@@ -232,7 +232,7 @@ def main():
         if not module.params['overwrite']:
             module.fail_json(msg = "Record already exists with different value. Set 'overwrite' to replace it")
         else:
-            change = changes.add_change("DELETE", record_in, type_in, ttl_in)
+            change = changes.add_change("DELETE", record_in, type_in, record['ttl'])
         for v in record['values']:
             change.add_value(v)
 
