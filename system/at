@@ -1,0 +1,117 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+#
+# (c) 2014, Richard Isaacson <richard.c.isaacson@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = """
+---
+module: at
+short_description: Schedule the execution of a command or scripts via the at command.
+description:
+ - Use this module to schedule a command or script to run once in the future.
+  version_added: "0.0"
+  options:
+    command:
+      description:
+       - A command to be executed in the future.
+      required: false
+      default: null
+    script_file:
+      description:
+       - An existing script to be executed in the future.
+      required: false
+      default: null
+    unit_count:
+      description:
+       - The count of units in the future to execute the command or script.
+      required: true
+    unit_type:
+      description:
+       - The type of units in the future to execute the command or script.
+      required: true
+      choices: ["minutes", "hours", "days", "weeks"]
+requirements:
+ - at
+author: Richard Isaacson
+"""
+
+EXAMPLES = """
+# Schedule a command to execute in 20 minutes as root.
+- at: command="ls -d > /dev/null" unit_count=1 unit_type="minutes"
+
+# Schedule a script to execute in 1 hour as the neo user.
+- at: script_file="/some/script.sh" user="neo" unit_count=1 unit_type="hours"
+"""
+
+import os
+import tempfile
+
+ATCMD = "/usr/bin/at"
+
+#================================================
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            command=dict(required=False),
+            script_file=dict(required=False),
+            unit_count=dict(required=True),
+            unit_type=dict(required=True,
+            	           default=None,
+            	           choices=["minutes", "hours", "days", "weeks"],
+            	           type="str")
+        ),
+        supports_check_mode = False,
+    )
+
+    command        = module.params['command']
+    script_file    = module.params['script_file']
+    unit_count     = module.params['unit_count']
+    unit_type      = module.params['unit_type']
+
+    if command and script_file:
+        module.fail_json(msg="command and script_file are mutually exclusive")
+
+    result = {}
+
+    result['unit_count'] = unit_count
+    result['unit_type'] = unit_type
+
+    if command:
+        filed, path = tempfile.mkstemp(prefix='at')
+        result['script_file'] = path
+        fileh = os.fdopen(filed, 'w')
+        fileh.write(command)
+        fileh.close()
+        rc, out, err = module.run_command("%s now + %s %s -f %s" % (ATCMD, unit_count, unit_type, path))
+        if rc != 0:
+            module.fail_json(msg=err)
+        os.unlink(path)
+    elif script_file:
+        result['script_file'] = script_file
+        rc, out, err = module.run_command("%s now + %s %s -f %s" % (ATCMD, unit_count, unit_type, script_file))
+        if rc != 0:
+            module.fail_json(msg=err)
+    else:
+        module.fail_json(msg="command or script_file not specified")
+
+    module.exit_json(**result)
+
+# import module snippets
+from ansible.module_utils.basic import *
+main()
