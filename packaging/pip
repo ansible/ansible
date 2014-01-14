@@ -147,9 +147,8 @@ EXAMPLES = '''
 def _get_cmd_options(module, cmd):
     thiscmd = cmd + " --help"
     rc, stdout, stderr = module.run_command(thiscmd)
-    #import epdb; epdb.serve()
     if rc != 0:
-        module.fail_json(msg="Could not get --help output from %s" % virtualenv)
+        module.fail_json(msg="Could not get output from %s: %s" % (thiscmd, stdout + stderr))
 
     words = stdout.strip().split()
     cmd_options = [ x for x in words if x.startswith('--') ]
@@ -322,7 +321,7 @@ def main():
         is_package = is_vcs or is_tar or is_local_path       # just a shortcut for bool
 
         if cmd_opts is None:
-            cmd_opts = _get_cmd_options(module, cmd)
+            cmd_opts = _get_cmd_options(module, '%s %s' % (pip, state_map[state]))
 
         if not is_package and state != 'absent' and use_mirrors and '--use-mirrors' in cmd_opts:
             cmd += ' --use-mirrors'
