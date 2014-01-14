@@ -79,7 +79,7 @@ def main():
     rc, out, err = module.run_command(cmd)
     if rc != 0:
         _fail(module, cmd, out, err)
-    changed = (value != out.strip())
+    changed = (value.strip('"\'') != out.strip('"\'\n'))
     if module.check_mode:
         module.exit_json(changed=changed)
     if changed:
