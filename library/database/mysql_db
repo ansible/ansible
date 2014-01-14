@@ -116,13 +116,13 @@ def db_delete(cursor, db):
     cursor.execute(query)
     return True
 
-def db_dump(module, host, user, password, db_name, target, socket=None):
+def db_dump(module, host, user, password, db_name, target, port, socket=None):
     cmd = module.get_bin_path('mysqldump', True)
-    cmd += " --quick --user=%s --password=%s" %(user, password)
+    cmd += " --quick --user=%s --password='%s'" %(user, password)
     if socket is not None:
         cmd += " --socket=%s" % socket
     else:
-        cmd += " --host=%s" % host
+        cmd += " --host=%s --port=%s" % (host, port)
     cmd += " %s" % db_name
     if os.path.splitext(target)[-1] == '.gz':
         cmd = cmd + ' | gzip > ' + target
@@ -133,13 +133,13 @@ def db_dump(module, host, user, password, db_name, target, socket=None):
     rc, stdout, stderr = module.run_command(cmd)
     return rc, stdout, stderr
 
-def db_import(module, host, user, password, db_name, target, socket=None):
+def db_import(module, host, user, password, db_name, target, port, socket=None):
     cmd = module.get_bin_path('mysql', True)
-    cmd += " --user=%s --password=%s" %(user, password)
+    cmd += " --user=%s --password='%s'" %(user, password)
     if socket is not None:
         cmd += " --socket=%s" % socket
     else:
-        cmd += " --host=%s" % host
+        cmd += " --host=%s --port=%s" % (host, port)
     cmd += " -D %s" % db_name
     if os.path.splitext(target)[-1] == '.gz':
         cmd = 'gunzip < ' + target + ' | ' + cmd
@@ -282,6 +282,7 @@ def main():
         elif state == "dump":
             rc, stdout, stderr = db_dump(module, login_host, login_user, 
                                         login_password, db, target, 
+                                        port=module.params['login_port'],
                                         socket=module.params['login_unix_socket'])
             if rc != 0:
                 module.fail_json(msg="%s" % stderr)
@@ -290,6 +291,7 @@ def main():
         elif state == "import":
             rc, stdout, stderr = db_import(module, login_host, login_user, 
                                         login_password, db, target, 
+                                        port=module.params['login_port'],
                                         socket=module.params['login_unix_socket'])
             if rc != 0:
                 module.fail_json(msg="%s" % stderr)
