@@ -309,7 +309,8 @@ class Runner(object):
 
         if (module_style != 'new'
            or async_jid is not None
-           or not conn.has_pipelining):
+           or not conn.has_pipelining
+           or C.DEFAULT_KEEP_REMOTE_FILES):
             self._transfer_str(conn, tmp, module_name, module_data)
 
         environment_string = self._compute_environment_string(inject)
@@ -352,7 +353,7 @@ class Runner(object):
                 cmd = " ".join([str(x) for x in [remote_module_path, async_jid, async_limit, async_module, argsfile]])
         else:
             if async_jid is None:
-                if conn.has_pipelining:
+                if conn.has_pipelining and not C.DEFAULT_KEEP_REMOTE_FILES:
                     in_data = module_data
                 else:
                     cmd = "%s" % (remote_module_path)
@@ -796,8 +797,9 @@ class Runner(object):
         if tmp.find("tmp") != -1:
             # tmp has already been created
             return False
-        if not conn.has_pipelining:
+        if not conn.has_pipelining or C.DEFAULT_KEEP_REMOTE_FILES:
             # tmp is necessary to store the module source code
+            # or we want to keep the files on the target system
             return True
         if module_style != "new":
             # even when conn has pipelining, old style modules need tmp to store arguments
