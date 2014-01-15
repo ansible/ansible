@@ -32,8 +32,9 @@ Sharing A Feature Idea
 If you have an idea for a new feature, you can open a new ticket at 
 [github.com/ansible/ansible](https://github.com/ansible/ansible), though in general we like to 
 talk about feature ideas first and bring in lots of people into the discussion. Consider stopping 
-by the [Ansible project mailing list](https://groups.google.com/forum/#!forum/ansible-project) or #ansible
-on irc.freenode.net.  
+by the
+[Ansible project mailing list](https://groups.google.com/forum/#!forum/ansible-project)([Subscribe](https://groups.google.com/forum/#!forum/ansible-project/join))
+or #ansible on irc.freenode.net.
 
 Helping with Documentation
 --------------------------
