@@ -94,6 +94,7 @@ class Subversion(object):
 
     def _exec(self, args):
         bits = [
+            'LANG=C',
             self.svn_path,
             '--non-interactive',
             '--trust-server-cert',
