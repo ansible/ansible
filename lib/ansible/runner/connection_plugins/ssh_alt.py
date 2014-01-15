@@ -261,6 +261,7 @@ class Connection(object):
                 raise errors.AnsibleError('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
         while True:
             rfd, wfd, efd = select.select(rpipes, [], rpipes, 1)
+            process_over = p.poll() is not None
 
             # fail early if the sudo password is wrong
             if self.runner.sudo and sudoable and self.runner.sudo_pass:
@@ -270,22 +271,11 @@ class Connection(object):
                     raise errors.AnsibleError('Incorrect sudo password') 
 
             if p.stdout in rfd:
-                dat = os.read(p.stdout.fileno(), 9000)
-                stdout += dat
-                if dat == '':
-                    rpipes.remove(p.stdout)
+                stdout += os.read(p.stdout.fileno(), 9000)
             if p.stderr in rfd:
-                dat = os.read(p.stderr.fileno(), 9000)
-                stderr += dat
-                if dat == '':
-                    rpipes.remove(p.stderr)
-            # only break out if we've emptied the pipes, or there is nothing to
-            # read from and the process has finished.
-            if (not rpipes or not rfd) and p.poll() is not None:
+                stderr += os.read(p.stderr.fileno(), 9000)
+            if process_over:
                 break
-            # Calling wait while there are still pipes to read can cause a lock
-            elif not rpipes and p.poll() == None:
-                p.wait()
         stdin.close() # close stdin after we read from stdout (see also issue #848)
         
         if C.HOST_KEY_CHECKING and not_in_host_file:
