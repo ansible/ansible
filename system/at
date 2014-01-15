@@ -173,6 +173,7 @@ def main():
             if rc != 0:
                 module.fail_json(msg=err)
             result['changed'] = True
+        module.exit_json(**result)
 
     # if unique if existing return unchanged
     if action == 'unique':
