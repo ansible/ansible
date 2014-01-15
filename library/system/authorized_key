@@ -114,6 +114,27 @@ import tempfile
 import re
 import shlex
 
+class keydict(dict):
+
+    """ a dictionary that maintains the order of keys as they are added """
+    
+    # http://stackoverflow.com/questions/2328235/pythonextend-the-dict-class
+
+    def __init__(self, *args, **kw):
+        super(keydict,self).__init__(*args, **kw)
+        self.itemlist = super(keydict,self).keys()
+    def __setitem__(self, key, value):
+        self.itemlist.append(key)
+        super(keydict,self).__setitem__(key, value)        
+    def __iter__(self):
+        return iter(self.itemlist)
+    def keys(self):
+        return self.itemlist
+    def values(self):
+        return [self[key] for key in self]
+    def itervalues(self):
+        return (self[key] for key in self)    
+
 def keyfile(module, user, write=False, path=None, manage_dir=True):
     """
     Calculate name of authorized keys file, optionally creating the
@@ -176,7 +197,8 @@ def parseoptions(module, options):
     reads a string containing ssh-key options 
     and returns a dictionary of those options
     '''
-    options_dict = {}
+    options_dict = keydict() #ordered dict
+    key_order = []
     if options:
         token_exp = [
             # matches separator
@@ -198,8 +220,10 @@ def parseoptions(module, options):
                     if is_valid_option:
                         if len(match.groups()) == 2:
                             options_dict[match.group(1)] = match.group(2)
+                            key_order.append(match.group(1))
                         else:
                             options_dict[text] = None
+                            key_order.append(text)
                     break
             if not match:
                 module.fail_json(msg="invalid option string: %s" % options)
@@ -246,9 +270,8 @@ def parsekey(module, raw_key):
     # check for options
     if type_index is None:
         return None
-    elif type_index == 1:
-        # parse the options and store them
-        options = key_parts[0]
+    elif type_index > 0:
+        options = " ".join(key_parts[:type_index])
 
     # parse the options (if any)
     options = parseoptions(module, options)
@@ -292,7 +315,7 @@ def writekeys(module, filename, keys):
                 option_str = ""
                 if options:
                     option_strings = []
-                    for option_key in sorted(options.keys()):
+                    for option_key in options.keys():
                         if options[option_key]:
                             option_strings.append("%s=\"%s\"" % (option_key, options[option_key]))
                         else:
@@ -330,10 +353,11 @@ def enforce_state(module, params):
 
     # Check our new keys, if any of them exist we'll continue.
     for new_key in key:
-        if key_options is not None:
-            new_key = "%s %s" % (key_options, new_key)
-
         parsed_new_key = parsekey(module, new_key)
+        if key_options is not None:
+            parsed_options = parseoptions(module, key_options)
+            parsed_new_key = (parsed_new_key[0], parsed_new_key[1], parsed_options, parsed_new_key[3])
+
         if not parsed_new_key:
             module.fail_json(msg="invalid key specified: %s" % new_key)
 
