@@ -246,7 +246,7 @@ class SysctlModule(object):
         f = open(tmp_path,"w")
         try:
             for l in self.fixed_lines:
-                f.write(l)
+                f.write(l.strip() + "\n")
         except IOError, e:
             self.module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, str(e)))
         f.flush()
