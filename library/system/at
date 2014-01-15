@@ -24,6 +24,7 @@ module: at
 short_description: Schedule the execution of a command or scripts via the at command.
 description:
  - Use this module to schedule a command or script to run once in the future.
+ - All jobs are executed in the a queue.
 version_added: "0.0"
 options:
   user:
@@ -50,6 +51,13 @@ options:
      - The type of units in the future to execute the command or script.
     required: true
     choices: ["minutes", "hours", "days", "weeks"]
+  action:
+    description:
+     - The action to take for the job defaulting to add. Unique will verify that there is only one entry in the queue.
+     - Delete will remove all existing queued jobs.
+    required: true
+    choices: ["add", "delete", "unique"]
+    default: add
 requirements:
  - at
 author: Richard Isaacson
@@ -57,14 +65,55 @@ author: Richard Isaacson
 
 EXAMPLES = '''
 # Schedule a command to execute in 20 minutes as root.
-- at: command="ls -d > /dev/null" unit_count=1 unit_type="minutes"
+- at: command="ls -d / > /dev/null" unit_count=20 unit_type="minutes"
 
 # Schedule a script to execute in 1 hour as the neo user.
 - at: script_file="/some/script.sh" user="neo" unit_count=1 unit_type="hours"
+
+# Match a command to an existing job and delete the job.
+- at: command="ls -d / > /dev/null" action="delete"
+
+# Schedule a command to execute in 20 minutes making sure it is unique in the queue.
+- at: command="ls -d / > /dev/null" action="unique" unit_count=20 unit_type="minutes"
 '''
 
 import os
 import tempfile
+
+def matching_jobs(module, at_cmd, script_file, user=None):
+    matching_jobs = []
+
+    atq_cmd = module.get_bin_path('atq', True)
+
+    # Get list of job numbers for the user.
+    atq_command = "%s" % (atq_cmd)
+    if user:
+        atq_command = "su '%s' -c '%s'" % (user, atq_command)
+    rc, out, err = module.run_command(atq_command)
+    if rc != 0:
+        module.fail_json(msg=err)
+    current_jobs = out.splitlines()
+    if len(current_jobs) == 0:
+        return matching_jobs
+
+    # Read script_file into a string.
+    script_file_string = open(string_file).read()
+
+    # Loop through the jobs.
+    #   If the script text is contained in a job add job number to list.
+    for current_job in current_jobs:
+        split_current_job = current_job.split()
+        at_command = "%s -c %s" % (at_cmd, split_current_job[0])
+        if user:
+            at_command = "su '%s' -c '%s'" % (user, at_command)
+        rc, out, err = module.run_command(at_command)
+        if rc != 0:
+            module.fail_json(msg=err)
+        if script_file_string in out:
+            matching_jobs.append(split_current_job[0])
+
+    # Return the list.
+    return matching_jobs
 
 #================================================
 
@@ -75,57 +124,75 @@ def main():
             user=dict(required=False),
             command=dict(required=False),
             script_file=dict(required=False),
-            unit_count=dict(required=True),
+            unit_count=dict(required=True,
+                            type='int'),
             unit_type=dict(required=True,
                            default=None,
                            choices=["minutes", "hours", "days", "weeks"],
-                           type="str")
+                           type="str"),
+            action=dict(required=False,
+                        default="add",
+                        choices=["add", "delete", "unique"],
+                        type="str")
         ),
         supports_check_mode = False,
     )
 
-    atcmd = module.get_bin_path('at', True)
+    at_cmd = module.get_bin_path('at', True)
 
-    user        = module.params['user']
+    user           = module.params['user']
     command        = module.params['command']
     script_file    = module.params['script_file']
     unit_count     = module.params['unit_count']
     unit_type      = module.params['unit_type']
+    action         = module.params['action']
+
+    if (not command) and (not script_file):
+        module.fail_json(msg="command or script_file not specified")
 
     if command and script_file:
         module.fail_json(msg="command and script_file are mutually exclusive")
 
     result = {}
+    result['changed'] = False
 
-    result['unit_count'] = unit_count
-    result['unit_type'] = unit_type
-
+    # If command transform it into a script_file
     if command:
-        filed, path = tempfile.mkstemp(prefix='at')
-        result['script_file'] = path
+        filed, script_file = tempfile.mkstemp(prefix='at')
         fileh = os.fdopen(filed, 'w')
         fileh.write(command)
         fileh.close()
-        at_command = "%s now + %s %s -f %s" % (atcmd, unit_count, unit_type, path)
-        if user:
-            at_command = "chown %s %s; su '%s' -c '%s'" % (user, path, user, at_command)
-        rc, out, err = module.run_command(at_command)
-        if rc != 0:
-            module.fail_json(msg=err)
-        os.unlink(path)
-        result['changed'] = True
-    elif script_file:
-        result['script_file'] = script_file
-        at_command = "%s now + %s %s -f %s" % (atcmd, unit_count, unit_type, script_file)
-        if user:
-            # We expect that if this is an installed the permissions are already correct for the user to execute it.
-            at_command = "su '%s' -c '%s'" % (user, at_command)
-        rc, out, err = module.run_command(at_command)
-        if rc != 0:
-            module.fail_json(msg=err)
-        result['changed'] = True
-    else:
-        module.fail_json(msg="command or script_file not specified")
+
+    # if delete then return
+    if action == 'delete':
+        for matching_job in matching_jobs(module, at_cmd, script_file, user):
+            at_command = "%s -d %s" % (at_cmd, matching_job)
+            if user:
+                at_command = "su '%s' -c '%s'" % (user, at_ccommand)
+            rc, out, err = module.run_command(at_command)
+            if rc != 0:
+                module.fail_json(msg=err)
+            result['changed'] = True
+
+    # if unique if existing return unchanged
+    if action == 'unique':
+        if not matching_jobs(module, at_cmd, script_file, user):
+            module.exit_json(**result)
+
+    result['script_file'] = script_file
+    result['unit_count'] = unit_count
+    result['unit_type'] = unit_type
+
+    at_command = "%s now + %s %s -f %s" % (at_cmd, unit_count, unit_type, script_file)
+    if user:
+        # We expect that if this is an installed the permissions are already correct for the user to execute it.
+        at_command = "su '%s' -c '%s'" % (user, at_command)
+    rc, out, err = module.run_command(at_command)
+    if rc != 0:
+        module.fail_json(msg=err)
+    if command:
+        os.unlink(script_file)
+    result['changed'] = True
 
     module.exit_json(**result)
 
