@@ -77,8 +77,8 @@ class LookupModule(object):
         results = {}
         for term in terms:
             # We silently ignore any items specified that are not dict().
-            # This is necessary to handle merger when deeper vars are defined
-            # in the tasks but not always defined in the vars.  The downside
+            # This is necessary to handle merger when deeper vars are defined
+            # in the tasks but not always defined in the vars.  The downside
             # is that if users don't define the YAML correctly this will
             # silently fail.  Ideally we'd be able to output some info when
             # running with at least one -v, but can't see how to implement that
