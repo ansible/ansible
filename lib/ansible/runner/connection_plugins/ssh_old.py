@@ -45,7 +45,7 @@ class Connection(object):
         self.password = password
         self.private_key_file = private_key_file
         self.HASHED_KEY_MAGIC = "|1|"
-        self.has_pipelining = True
+        self.has_pipelining = False
 
         fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_EX)
         self.cp_dir = utils.prepare_writeable_dir('$HOME/.ansible/cp',mode=0700)
@@ -148,13 +148,11 @@ class Connection(object):
     def exec_command(self, cmd, tmp_path, sudo_user,sudoable=False, executable='/bin/sh', in_data=None):
         ''' run a command on the remote host '''
 
+        if in_data:
+            raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
+
         ssh_cmd = self._password_cmd()
-        ssh_cmd += ["ssh", "-C"]
-        if not in_data:
-            # we can only use tty when we are not pipelining the modules. piping data into /usr/bin/python
-            # inside a tty automatically invokes the python interactive-mode but the modules are not
-            # compatible with the interactive-mode ("unexpected indent" mainly because of empty lines)
-            ssh_cmd += ["-tt"]
+        ssh_cmd += ["ssh", "-tt"]
         if utils.VERBOSITY > 3:
             ssh_cmd += ["-vvv"]
         else:
@@ -184,81 +182,45 @@ class Connection(object):
             fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_EX)
             fcntl.lockf(self.runner.output_lockfile, fcntl.LOCK_EX)
         
-        # create process
-        if in_data:
-            # do not use pseudo-pty
+
+
+        try:
+            # Make sure stdin is a proper (pseudo) pty to avoid: tcgetattr errors
+            master, slave = pty.openpty()
+            p = subprocess.Popen(ssh_cmd, stdin=slave,
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdin = os.fdopen(master, 'w', 0)
+            os.close(slave)
+        except:
             p = subprocess.Popen(ssh_cmd, stdin=subprocess.PIPE,
-                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdin = p.stdin
-        else:
-            # try to use upseudo-pty
-            try:
-                # Make sure stdin is a proper (pseudo) pty to avoid: tcgetattr errors
-                master, slave = pty.openpty()
-                p = subprocess.Popen(ssh_cmd, stdin=slave,
-                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                stdin = os.fdopen(master, 'w', 0)
-                os.close(slave)
-            except:
-                p = subprocess.Popen(ssh_cmd, stdin=subprocess.PIPE,
-                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                stdin = p.stdin
 
         self._send_password()
 
         if self.runner.sudo and sudoable and self.runner.sudo_pass:
-            # several cases are handled for sudo privileges with password
-            # * NOPASSWD (tty & no-tty): detect success_key on stdout
-            # * without NOPASSWD:
-            #   * detect prompt on stdout (tty)
-            #   * detect prompt on stderr (no-tty)
             fcntl.fcntl(p.stdout, fcntl.F_SETFL,
                         fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
-            fcntl.fcntl(p.stderr, fcntl.F_SETFL,
-                        fcntl.fcntl(p.stderr, fcntl.F_GETFL) | os.O_NONBLOCK)
             sudo_output = ''
-            sudo_errput = ''
-
             while not sudo_output.endswith(prompt) and success_key not in sudo_output:
-                rfd, wfd, efd = select.select([p.stdout, p.stderr], [],
+                rfd, wfd, efd = select.select([p.stdout], [],
                                               [p.stdout], self.runner.timeout)
-                if p.stderr in rfd:
-                    chunk = p.stderr.read()
-                    if not chunk:
-                        raise errors.AnsibleError('ssh connection closed waiting for sudo password prompt')
-                    sudo_errput += chunk
-                    incorrect_password = gettext.dgettext(
-                        "sudo", "Sorry, try again.")
-                    if sudo_errput.strip().endswith("%s%s" % (prompt, incorrect_password)):
-                        raise errors.AnsibleError('Incorrect sudo password')
-                    elif sudo_errput.endswith(prompt):
-                        stdin.write(self.runner.sudo_pass + '\n')
-
                 if p.stdout in rfd:
                     chunk = p.stdout.read()
                     if not chunk:
                         raise errors.AnsibleError('ssh connection closed waiting for sudo password prompt')
                     sudo_output += chunk
-
-                if not rfd:
-                    # timeout. wrap up process communication
+                else:
                     stdout = p.communicate()
                     raise errors.AnsibleError('ssh connection error waiting for sudo password prompt')
-
             if success_key not in sudo_output:
                 stdin.write(self.runner.sudo_pass + '\n')
             fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
-            fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) & ~os.O_NONBLOCK)
+
         # We can't use p.communicate here because the ControlMaster may have stdout open as well
         stdout = ''
         stderr = ''
         rpipes = [p.stdout, p.stderr]
-        if in_data:
-            try:
-                stdin.write(in_data)
-                stdin.close()
-            except:
-                raise errors.AnsibleError('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
         while True:
             rfd, wfd, efd = select.select(rpipes, [], rpipes, 1)
 
@@ -293,16 +255,14 @@ class Connection(object):
             # the host to known hosts is not intermingled with multiprocess output.
             fcntl.lockf(self.runner.output_lockfile, fcntl.LOCK_UN)
             fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_UN)
-        controlpersisterror = stderr.find('Bad configuration option: ControlPersist') != -1 or stderr.find('unknown configuration option: ControlPersist') != -1
 
         if C.HOST_KEY_CHECKING:
             if ssh_cmd[0] == "sshpass" and p.returncode == 6:
                 raise errors.AnsibleError('Using a SSH password instead of a key is not possible because Host Key checking is enabled and sshpass does not support this.  Please add this host\'s fingerprint to your known_hosts file to manage this host.')
 
+        controlpersisterror = stderr.find('Bad configuration option: ControlPersist') != -1 or stderr.find('unknown configuration option: ControlPersist') != -1
         if p.returncode != 0 and controlpersisterror:
             raise errors.AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" (or ansible_ssh_args in the config file) before running again')
-        if p.returncode == 255 and in_data:
-            raise errors.AnsibleError('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
 
         return (p.returncode, '', stdout, stderr)
 
