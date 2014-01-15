@@ -97,7 +97,7 @@ def matching_jobs(module, at_cmd, script_file, user=None):
         return matching_jobs
 
     # Read script_file into a string.
-    script_file_string = open(string_file).read()
+    script_file_string = open(script_file).read().strip()
 
     # Loop through the jobs.
     #   If the script text is contained in a job add job number to list.
@@ -124,9 +124,9 @@ def main():
             user=dict(required=False),
             command=dict(required=False),
             script_file=dict(required=False),
-            unit_count=dict(required=True,
+            unit_count=dict(required=False,
                             type='int'),
-            unit_type=dict(required=True,
+            unit_type=dict(required=False,
                            default=None,
                            choices=["minutes", "hours", "days", "weeks"],
                            type="str"),
@@ -147,6 +147,9 @@ def main():
     unit_type      = module.params['unit_type']
     action         = module.params['action']
 
+    if ((action == 'add') and (not unit_count or not unit_type)):
+        module.fail_json(msg="add action requires unit_count and unit_type")
+
     if (not command) and (not script_file):
         module.fail_json(msg="command or script_file not specified")
 
@@ -154,6 +157,7 @@ def main():
         module.fail_json(msg="command and script_file are mutually exclusive")
 
     result = {}
+    result['action'] = action
     result['changed'] = False
 
     # If command transform it into a script_file
@@ -177,7 +181,7 @@ def main():
 
     # if unique if existing return unchanged
     if action == 'unique':
-        if not matching_jobs(module, at_cmd, script_file, user):
+        if len(matching_jobs(module, at_cmd, script_file, user)) != 0:
             module.exit_json(**result)
 
     result['script_file'] = script_file
