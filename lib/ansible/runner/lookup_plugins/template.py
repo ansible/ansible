@@ -27,7 +27,4 @@ class LookupModule(object):
 
         terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
 
-        ret = []
-        for term in terms:
-            ret.append(template.template_from_file(self.basedir, term, inject))
-        return ret
+        return [template.template_from_file(self.basedir, term, inject) for term in terms]
