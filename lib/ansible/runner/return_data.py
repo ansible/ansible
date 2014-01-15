@@ -17,6 +17,7 @@
 
 from ansible import utils
 
+
 class ReturnData(object):
     ''' internal return class for runner execute methods, not part of public API signature '''
 
@@ -42,22 +43,20 @@ class ReturnData(object):
         # changes made to particular files
         self.diff = diff
 
-        if type(self.result) in [ str, unicode ]:
+        if isinstance(self.result, basestring):
             self.result = utils.parse_json(self.result)
 
-
         if self.host is None:
-            raise Exception("host not set")
-        if type(self.result) != dict:
-            raise Exception("dictionary result expected")
+            raise ValueError("host not set")
 
-        if flags is None:
-            flags = []
-        self.flags = []
+        if not isinstance(self.result, dict):
+            raise TypeError("dictionary result expected")
+
+        self.flags = flags or []
 
     def communicated_ok(self):
         return self.comm_ok
 
     def is_successful(self):
-        return self.comm_ok and (self.result.get('failed', False) == False) and ('failed_when_result' in self.result and [not self.result['failed_when_result']] or [self.result.get('rc',0) == 0])[0]
+        return self.comm_ok and (self.result.get('failed', False) is False) and ('failed_when_result' in self.result and [not self.result['failed_when_result']] or [self.result.get('rc',0) == 0])[0]
 

@@ -168,7 +168,7 @@ def user_add(cursor, user, password, role_attr_flags,  encrypted, expires):
     if password is not None:
         query = query + " WITH %(crypt)s PASSWORD '%(password)s'" % { "crypt": encrypted, "password": password }
     if expires is not None:
-        query = query + " VALID UNTIL '%(expires)s'" % { "exipres": expires }
+        query = query + " VALID UNTIL '%(expires)s'" % { "expires": expires }
     query = query + " " + role_attr_flags
     cursor.execute(query)
     return True
@@ -201,7 +201,7 @@ def user_alter(cursor, user, password, role_attr_flags, encrypted, expires):
         elif role_attr_flags:
             alter = alter + ' WITH ' + role_attr_flags
         if expires is not None:
-            alter = alter + " VALID UNTIL '%(expires)s'" % { "exipres": expires }
+            alter = alter + " VALID UNTIL '%(expires)s'" % { "expires": expires }
 
         cursor.execute(alter)
 
