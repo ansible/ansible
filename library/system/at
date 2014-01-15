@@ -66,11 +66,10 @@ EXAMPLES = '''
 import os
 import tempfile
 
-ATCMD = "/usr/bin/at"
-
 #================================================
 
 def main():
+
     module = AnsibleModule(
         argument_spec = dict(
             user=dict(required=False),
@@ -84,6 +83,8 @@ def main():
         ),
         supports_check_mode = False,
     )
+
+    atcmd = module.get_bin_path('at', True)
 
     user        = module.params['user']
     command        = module.params['command']
@@ -105,7 +106,7 @@ def main():
         fileh = os.fdopen(filed, 'w')
         fileh.write(command)
         fileh.close()
-        at_command = "%s now + %s %s -f %s" % (ATCMD, unit_count, unit_type, path)
+        at_command = "%s now + %s %s -f %s" % (atcmd, unit_count, unit_type, path)
         if user:
             at_command = "chown %s %s; su '%s' -c '%s'" % (user, path, user, at_command)
         rc, out, err = module.run_command(at_command)
@@ -115,9 +116,9 @@ def main():
         result['changed'] = True
     elif script_file:
         result['script_file'] = script_file
-        at_command = "%s now + %s %s -f %s" % (ATCMD, unit_count, unit_type, script_file)
+        at_command = "%s now + %s %s -f %s" % (atcmd, unit_count, unit_type, script_file)
         if user:
-        	# We expect that if this is an installed the permissions are already correct for the user to execute it.
+            # We expect that if this is an installed the permissions are already correct for the user to execute it.
             at_command = "su '%s' -c '%s'" % (user, at_command)
         rc, out, err = module.run_command(at_command)
         if rc != 0:
