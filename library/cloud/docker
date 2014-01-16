@@ -48,7 +48,13 @@ options:
     aliases: []
   ports:
     description:
-      - Set private to public port mapping specification (e.g. ports=22,80 or ports=:8080 maps 8080 directly to host)
+      - Set private to public port mapping specification using docker CLI-style syntax [([<host_interface>:[host_port]])|(<host_port>):]<container_port>[/udp]
+    required: false
+    default: null
+    aliases: []
+  expose:
+    description:
+      - Set container ports to expose for port mappings or links. (If the port is already exposed using EXPOSE in a Dockerfile, you don't need to expose it again.)
     required: false
     default: null
     aliases: []
@@ -152,7 +158,7 @@ on the host:
   sudo: yes
   tasks:
   - name: run tomcat servers
-    docker: image=centos command="service tomcat6 start" ports=:8080
+    docker: image=centos command="service tomcat6 start" ports=8080
 
 The tomcat server's port is NAT'ed to a dynamic port on the host, but you can determine which port the server was
 mapped to using docker_containers:
@@ -290,9 +296,13 @@ class DockerManager:
                 parts = option.split(':')
                 self.lxc_conf.append({"Key": parts[0], "Value": parts[1]})
 
-        self.ports = None
+        self.exposed_ports = None
+        if self.module.params.get('expose'):
+            self.exposed_ports = self.get_exposed_ports(self.module.params.get('expose'))
+
+        self.port_bindings = None
         if self.module.params.get('ports'):
-            self.ports = self.module.params.get('ports').split(",")
+            self.port_bindings = self.get_port_bindings(self.module.params.get('ports'))
 
         self.env = None
         if self.module.params.get('env'):
@@ -301,6 +311,66 @@ class DockerManager:
         # connect to docker server
         docker_url = urlparse(module.params.get('docker_url'))
         self.client = docker.Client(base_url=docker_url.geturl())
+
+
+    def get_exposed_ports(self, expose):
+        """
+        Parse the ports and protocols (TCP/UDP) to expose in the docker-py `create_container` call from the docker CLI-style syntax.
+        """
+        if expose :
+            exposed = []
+            for port in expose.split(','):
+                if port.endswith('/tcp') or port.endswith('/udp'):
+                    port_with_proto = tuple(port.split('/'))
+                else:
+                    # assume tcp protocol if not specified
+                    port_with_proto = (port, 'tcp')
+                exposed.append(port_with_proto)
+            return exposed
+        else:
+            return None
+
+
+    def get_port_bindings(self, ports):
+        """
+        Parse the `ports` string into a port bindings dict for the `start_container` call.
+        """
+        binds = {}
+        for port in ports.split(','):
+            parts = port.split(':')
+            container_port = parts[-1]
+            if '/' not in container_port:
+                container_port = int(parts[-1])
+
+            p_len = len(parts)
+            if p_len == 1:
+                # Bind `container_port` of the container to a dynamically
+                # allocated TCP port on all available interfaces of the host
+                # machine.
+                bind = ('0.0.0.0',)
+            elif p_len == 2:
+                # Bind `container_port` of the container to port `parts[0]` on
+                # all available interfaces of the host machine.
+                bind = int(parts[0])
+            elif p_len == 3:
+                # Bind `container_port` of the container to port `parts[1]` on
+                # IP `parts[0]` of the host machine. If `parts[1]` empty bind
+                # to a dynamically allocacted port of IP `parts[0]`.
+                bind = (parts[0], int(parts[1])) if parts[1] else (parts[0],)
+
+            if container_port in binds:
+                old_bind = binds[container_port]
+                if isinstance(old_bind, list):
+                    # append to list if it already exists
+                    old_bind.append(bind)
+                else:
+                    # otherwise create list that contains the old and new binds
+                    binds[container_port] = [binds[container_port], bind]
+            else:
+                binds[container_port] = bind
+
+        return binds
+
 
 
     def get_split_image_tag(self, image):
@@ -373,7 +443,7 @@ class DockerManager:
     def create_containers(self, count=1):
         params = {'image':        self.module.params.get('image'),
                   'command':      self.module.params.get('command'),
-                  'ports':        self.ports,
+                  'ports':        self.exposed_ports,
                   'volumes':      self.volumes,
                   'volumes_from': self.module.params.get('volumes_from'),
                   'mem_limit':    _human_to_bytes(self.module.params.get('memory_limit')),
@@ -404,9 +474,14 @@ class DockerManager:
         return containers
 
     def start_containers(self, containers):
+        params = {
+            'lxc_conf': self.lxc_conf,
+            'binds': self.binds,
+            'port_bindings': self.port_bindings
+        }
         for i in containers:
-                self.client.start(i['Id'], lxc_conf=self.lxc_conf, binds=self.binds)
-                self.increment_counter('started')
+            self.client.start(i['Id'], **params)
+            self.increment_counter('started')
 
     def stop_containers(self, containers):
         for i in containers:
@@ -436,6 +511,7 @@ def main():
             count           = dict(default=1),
             image           = dict(required=True),
             command         = dict(required=False, default=None),
+            expose          = dict(required=False, default=None),
             ports           = dict(required=False, default=None),
             volumes         = dict(default=None),
             volumes_from    = dict(default=None),
