@@ -351,7 +351,7 @@ class DockerManager:
             elif p_len == 2:
                 # Bind `container_port` of the container to port `parts[0]` on
                 # all available interfaces of the host machine.
-                bind = int(parts[0])
+                bind = ('0.0.0.0', int(parts[0]))
             elif p_len == 3:
                 # Bind `container_port` of the container to port `parts[1]` on
                 # IP `parts[0]` of the host machine. If `parts[1]` empty bind
