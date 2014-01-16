@@ -173,6 +173,8 @@ class SysctlModule(object):
 
     # Use the sysctl command to set the current value
     def set_token_value(self, token, value):
+        if len(value.split()) > 0:
+            value = '"' + value + '"'
         thiscmd = "%s -w %s=%s" % (self.sysctl_cmd, token, value)
         rc,out,err = self.module.run_command(thiscmd)
         if rc != 0:
@@ -268,7 +270,7 @@ def main():
             value = dict(aliases=['val'], required=False),
             state = dict(default='present', choices=['present', 'absent']),
             reload = dict(default=True, type='bool'),
-            sysctl_set = dict(default=True, type='bool'),
+            sysctl_set = dict(default=False, type='bool'),
             sysctl_file = dict(default='/etc/sysctl.conf')
         ),
         supports_check_mode=True
