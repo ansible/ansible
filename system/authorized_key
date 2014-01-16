@@ -198,7 +198,6 @@ def parseoptions(module, options):
     and returns a dictionary of those options
     '''
     options_dict = keydict() #ordered dict
-    key_order = []
     if options:
         token_exp = [
             # matches separator
@@ -220,10 +219,8 @@ def parseoptions(module, options):
                     if is_valid_option:
                         if len(match.groups()) == 2:
                             options_dict[match.group(1)] = match.group(2)
-                            key_order.append(match.group(1))
                         else:
                             options_dict[text] = None
-                            key_order.append(text)
                     break
             if not match:
                 module.fail_json(msg="invalid option string: %s" % options)
