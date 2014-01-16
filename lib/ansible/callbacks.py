@@ -466,23 +466,25 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         stdout = results2.pop('stdout', None)
         returned_msg = results2.pop('msg', None)
 
+        msg = "failed: [%s]" % (host)
         if item:
-            msg = "failed: [%s] => (item=%s) => %s" % (host, item, utils.jsonify(results2))
+            msg += " => (item=%s) => %s" % (host, item, utils.jsonify(results2))
+        if ignore_errors == "silently":
+            display(msg + " ...ignoring", color='cyan', runner=self.runner)
         else:
-            msg = "failed: [%s] => %s" % (host, utils.jsonify(results2))
-        display(msg, color='red', runner=self.runner)
-
-        if stderr:
-            display("stderr: %s" % stderr, color='red', runner=self.runner)
-        if stdout:
-            display("stdout: %s" % stdout, color='red', runner=self.runner)
-        if returned_msg:
-            display("msg: %s" % returned_msg, color='red', runner=self.runner)
-        if not parsed and module_msg:
-            display("invalid output was: %s" % module_msg, color='red', runner=self.runner)
-        if ignore_errors:
-            display("...ignoring", color='cyan', runner=self.runner)
-        super(PlaybookRunnerCallbacks, self).on_failed(host, results, ignore_errors=ignore_errors)
+            msg += " => %s" % (utils.jsonify(results2))
+            display(msg, color='red', runner=self.runner)
+            if stderr:
+                display("stderr: %s" % stderr, color='red', runner=self.runner)
+            if stdout:
+                display("stdout: %s" % stdout, color='red', runner=self.runner)
+            if returned_msg:
+                display("msg: %s" % returned_msg, color='red', runner=self.runner)
+            if not parsed and module_msg:
+                display("invalid output was: %s" % module_msg, color='red', runner=self.runner)
+            if ignore_errors:
+                display("...ignoring", color='cyan', runner=self.runner)
+            super(PlaybookRunnerCallbacks, self).on_failed(host, results, ignore_errors=ignore_errors)
 
     def on_ok(self, host, host_result):
 
