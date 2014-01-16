@@ -121,7 +121,7 @@ class Connection(object):
         self.user = user
         self.password = password
         self.private_key_file = private_key_file
-        self.has_pipelining = False
+        self.has_pipelining = True
 
     def _cache_key(self):
         return "%s__%s__" % (self.host, self.user)
@@ -179,9 +179,6 @@ class Connection(object):
     def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False, executable='/bin/sh', in_data=None):
         ''' run a command on the remote host '''
 
-        if in_data:
-            raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
-
         bufsize = 4096
         try:
             chan = self.ssh.get_transport().open_session()
@@ -191,12 +188,12 @@ class Connection(object):
                 msg += ": %s" % str(e)
             raise errors.AnsibleConnectionFailed(msg)
 
-        if not self.runner.sudo or not sudoable:
+        if not self.runner.sudo or not sudoable or in_data:
             if executable:
                 quoted_command = executable + ' -c ' + pipes.quote(cmd)
             else:
                 quoted_command = cmd
-            vvv("EXEC %s" % quoted_command, host=self.host)
+            vvv("EXEC ALT no-tty %s" % quoted_command, host=self.host)
             chan.exec_command(quoted_command)
         else:
             # sudo usually requires a PTY (cf. requiretty option), therefore
@@ -227,8 +224,17 @@ class Connection(object):
             except socket.timeout:
                 raise errors.AnsibleError('ssh timed out waiting for sudo.\n' + sudo_output)
 
+        if in_data:
+            try:
+                stdin = chan.makefile('wb')
+                stdin.write(in_data)
+                chan.shutdown_write()
+            except Exception, e:
+                raise errors.AnsibleError('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh.')
+
         stdout = ''.join(chan.makefile('rb', bufsize))
         stderr = ''.join(chan.makefile_stderr('rb', bufsize))
+
         return (chan.recv_exit_status(), '', stdout, stderr)
 
     def put_file(self, in_path, out_path):
