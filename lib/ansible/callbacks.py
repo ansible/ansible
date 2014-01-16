@@ -468,7 +468,7 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
 
         msg = "failed: [%s]" % (host)
         if item:
-            msg += " => (item=%s) => %s" % (host, item, utils.jsonify(results2))
+            msg += " => (item=%s) => %s" % (host, item)
         if ignore_errors == "silently":
             display(msg + " ...ignoring", color='cyan', runner=self.runner)
         else:
