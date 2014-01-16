@@ -158,8 +158,6 @@ options:
     aliases: []
 author: Cove Schneider
 requirements: [ "docker-py" ]
-notes:
-    - Currently supports Docker version <= 0.7.1 only.
 '''
 
 EXAMPLES = '''
