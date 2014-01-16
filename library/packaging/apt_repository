@@ -378,8 +378,8 @@ def main():
             if update_cache:
                 cache = apt.Cache()
                 cache.update()
-        except OSError as err:
-            module.fail_json(msg=unicode(err))
+        except OSError, e:
+            module.fail_json(msg=unicode(e))
 
     module.exit_json(changed=changed, repo=repo, state=state)
 
