@@ -179,7 +179,7 @@ class Inventory(object):
             elif p.startswith("&"):
                 hosts = [ h for h in hosts if h in that ]
             else:
-                hosts.extend([ h for h in that if h not in hosts ])
+                hosts.extend([ h for h in that if h.name not in [ y.name for y in hosts ] ])
 
         return hosts
 
