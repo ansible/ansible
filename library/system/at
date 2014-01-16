@@ -21,10 +21,10 @@
 DOCUMENTATION = '''
 ---
 module: at
-short_description: Schedule the execution of a command or scripts via the at command.
+short_description: Schedule the execution of a command or script file via the at command.
 description:
- - Use this module to schedule a command or script to run once in the future.
- - All jobs are executed in the a queue.
+ - Use this module to schedule a command or script file to run once in the future.
+ - All jobs are executed in the 'a' queue.
 version_added: "1.5"
 options:
   command:
@@ -34,21 +34,21 @@ options:
     default: null
   script_file:
     description:
-     - An existing script to be executed in the future.
+     - An existing script file to be executed in the future.
     required: false
     default: null
   count:
     description:
-     - The count of units in the future to execute the command or script.
+     - The count of units in the future to execute the command or script file.
     required: true
   units:
     description:
-     - The type of units in the future to execute the command or script.
+     - The type of units in the future to execute the command or script file.
     required: true
     choices: ["minutes", "hours", "days", "weeks"]
   state:
     description:
-     - The state dictates if the command or script_file should be evaluated as present(added) or absent(deleted).
+     - The state dictates if the command or script file should be evaluated as present(added) or absent(deleted).
     required: false
     choices: ["present", "absent"]
     default: "present"
