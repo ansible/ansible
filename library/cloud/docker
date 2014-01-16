@@ -70,6 +70,12 @@ options:
     required: false
     default: null
     aliases: []
+  links:
+    description:
+      - Link container(s) to other container(s)
+    required: false
+    default: null
+    aliases: []
   memory_limit:
     description:
       - Set RAM allocated to container
@@ -227,6 +233,17 @@ Create containers named in a sequence:
     docker: image=centos name={{item}} command="service tomcat6 start" ports=:8080
     with_sequence: start=1 end=5 format=tomcat_%d.example.com
 
+Create two linked containers
+
+- hosts: web
+  sudo: yes
+  tasks:
+  - name: ensure redis container is running
+    docker_test: image=crosbymichael/redis name=redis
+
+  - name: ensure redis_ambassador container is running
+    docker: image=svendowideit/ambassador ports=6379:6379 links=redis:redis name=redis_ambassador_ansible
+
 '''
 
 try:
@@ -303,6 +320,14 @@ class DockerManager:
         self.port_bindings = None
         if self.module.params.get('ports'):
             self.port_bindings = self.get_port_bindings(self.module.params.get('ports'))
+
+        self.links = None
+        if self.module.params.get('links'):
+            links = {}
+            for link in self.module.params.get('links').split(','):
+                (source, dest) = link.split(':')
+                links[source] = dest
+            self.links = links
 
         self.env = None
         if self.module.params.get('env'):
@@ -477,7 +502,8 @@ class DockerManager:
         params = {
             'lxc_conf': self.lxc_conf,
             'binds': self.binds,
-            'port_bindings': self.port_bindings
+            'port_bindings': self.port_bindings,
+            'links': self.links
         }
         for i in containers:
             self.client.start(i['Id'], **params)
@@ -515,6 +541,7 @@ def main():
             ports           = dict(required=False, default=None),
             volumes         = dict(default=None),
             volumes_from    = dict(default=None),
+            links           = dict(default=None),
             memory_limit    = dict(default=0),
             memory_swap     = dict(default=0),
             docker_url      = dict(default='unix://var/run/docker.sock'),
