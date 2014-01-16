@@ -3,7 +3,7 @@ import os
 
 def rax_argument_spec():
     return dict(
-        api_key=dict(type='str'),
+        api_key=dict(type='str', no_log=True),
         credentials=dict(type='str', aliases=['creds_file']),
         region=dict(type='str'),
         username=dict(type='str'),
