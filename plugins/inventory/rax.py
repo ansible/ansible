@@ -140,12 +140,13 @@ def _list(regions):
 
             # Check if group metadata key in servers' metadata
             try:
-                group = server.metadata['group']
+                grouplist = server.metadata['group'].split(',')
             except KeyError:
                 pass
             else:
                 # Create group if not exist and add the server
-                groups[group].append(server.name)
+                for g in grouplist:
+                    groups[g].append(server.name)
 
             # Add host metadata
             keys = [key for key in vars(server) if key not in ('manager', '_info')]
