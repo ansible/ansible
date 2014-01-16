@@ -70,7 +70,7 @@ def has_boolean_value(module, name):
     try:
         rc, bools = selinux.security_get_boolean_names()
     except OSError, e:
-        module.fail_json(msg="Failed to get list of boolean names: %d (%s)" % (e.errno, e.strerror))
+        module.fail_json(msg="Error (%d): Failed to get list of boolean names. %s" % (e.strerror, e.errno))
     if name in bools:
         return True
     else:
@@ -81,7 +81,7 @@ def get_boolean_value(module, name):
     try:
         state = selinux.security_get_boolean_active(name)
     except OSError, e:
-        module.fail_json(msg="Failed to determine current state for boolean %s: %d (%s)" % (name, e.errno, e.strerror))
+        module.fail_json(msg="Error (%d): Failed to determine current state for boolean %s. %s " % (e.errno, name, e.strerror))
     if state == 1:
         return True
     else:
@@ -150,7 +150,7 @@ def set_boolean_value(module, name, state):
     try:
         rc = selinux.security_set_boolean(name, value)
     except OSError, e:
-        module.fail_json(msg="Failed to set boolean %s to %s: %d (%s)" % (name, value, e.errno, e.strerror))
+        module.fail_json(msg="Error (%d): Failed to set boolean %s to %s. %s " % ( e.errno, name, value, e.strerror))
     if rc == 0:
         return True
     else:

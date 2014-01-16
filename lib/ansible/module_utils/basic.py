@@ -364,7 +364,7 @@ class AnsibleModule(object):
                 rc = selinux.lsetfilecon(self._to_filesystem_str(path),
                                          str(':'.join(new_context)))
             except OSError, e:
-                self.fail_json(path=path, msg='invalid selinux context: '+str(':'.join(new_context))+', Errno '+str(e.errno)+'('+os.strerror(e.errno)+')', new_context=new_context, cur_context=cur_context, input_was=context)
+                self.fail_json(path=path, msg="Error ("+str(e.errno)+"): invalid selinux context:"+str(':'.join(new_context))+". "+os.strerror(e.errno), new_context=new_context, cur_context=cur_context, input_was=context)
             if rc != 0:
                 self.fail_json(path=path, msg='set selinux context failed')
             changed = True
