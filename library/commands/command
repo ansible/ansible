@@ -94,6 +94,7 @@ def main():
     args  = module.params['args']
     creates  = module.params['creates']
     removes  = module.params['removes']
+    load_json = module.params['json']
 
     if args.strip() == '':
         module.fail_json(rc=256, msg="no command given")
@@ -145,6 +146,10 @@ def main():
     if err is None:
         err = ''
 
+    json_arg = {}
+    if out and load_json:
+        json_arg['json'] = module.from_json(out)
+
     module.exit_json(
         cmd     = args,
         stdout  = out.rstrip("\r\n"),
@@ -153,7 +158,8 @@ def main():
         start   = str(startd),
         end     = str(endd),
         delta   = str(delta),
-        changed = True
+        changed = True,
+        **json_arg
     )
 
 # import module snippets
@@ -179,11 +185,12 @@ class CommandModule(AnsibleModule):
         params['removes'] = None
         params['shell'] = False
         params['executable'] = None
+        params['json'] = False
         if args.find("#USE_SHELL") != -1:
             args = args.replace("#USE_SHELL", "")
             params['shell'] = True
 
-        r = re.compile(r'(^|\s)(creates|removes|chdir|executable)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)')
+        r = re.compile(r'(^|\s)(creates|removes|chdir|executable|json)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)')
         for m in r.finditer(args):
             v = m.group(4).replace("\\", "")
             if m.group(2) == "creates":
@@ -202,6 +209,8 @@ class CommandModule(AnsibleModule):
                 if not (os.path.exists(v)):
                     self.fail_json(rc=258, msg="cannot use executable '%s': file does not exist" % v)
                 params['executable'] = v
+            elif m.group(2) == "json":
+                params['json'] = self.boolean(v)
         args = r.sub("", args)
         params['args'] = args
         return (params, params['args'])
