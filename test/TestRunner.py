@@ -159,6 +159,9 @@ class TestRunner(unittest.TestCase):
         result = self._run('command', ["creates='/tmp/ansible command test'", "false"])
         assert result.get('skipped')
 
+        result = self._run('command', ["json=yes", "echo '{\"foo\":true}'"])
+        assert result.get('json') == {'foo': True}
+
         result = self._run('shell', ["removes=/tmp/ansible\\ command\\ test", "chdir=/tmp", "rm -f 'ansible command test'; echo $?"])
         assert result.get('changed')
         assert result['rc'] == 0
@@ -166,6 +169,10 @@ class TestRunner(unittest.TestCase):
 
         result = self._run('shell', ["removes=/tmp/ansible\\ command\\ test", "false"])
         assert result.get('skipped')
+
+        result = self._run('command', ["json=yes", "echo '{\"bar\":false}'"])
+        assert result.get('json') == {'bar': False}
+
 
     def test_git(self):
         self._run('file', ['path=/tmp/gitdemo', 'state=absent'])
