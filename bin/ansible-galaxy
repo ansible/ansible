@@ -476,7 +476,7 @@ def install_role(role_name, role_version, role_filename, options):
             # write out the install info file for later use
             write_galaxy_install_info(role_name, role_version, options)
         except OSError, e:
-            print "Error: you do not have permission to modify files in %s" % role_path
+            print "Error: you do not have permission to modify files in %s: %d (%s) " % (role_path, e.errno, e.strerror)
             return False
 
         # return the parsed yaml metadata
