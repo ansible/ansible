@@ -58,6 +58,12 @@ options:
     required: false
     default: null
     aliases: []
+  publish_all_ports:
+    description:
+      - Publish all exposed ports to the host interfaces
+      required: false
+      default: false
+      aliases: []
   volumes:
     description:
       - Set volume(s) to mount on the container
@@ -503,6 +509,7 @@ class DockerManager:
             'lxc_conf': self.lxc_conf,
             'binds': self.binds,
             'port_bindings': self.port_bindings,
+            'publish_all_ports': self.module.params.get('publish_all_ports'),
             'links': self.links
         }
         for i in containers:
@@ -539,6 +546,7 @@ def main():
             command         = dict(required=False, default=None),
             expose          = dict(required=False, default=None),
             ports           = dict(required=False, default=None),
+            publish_all_ports = dict(default=False, type='bool'),
             volumes         = dict(default=None),
             volumes_from    = dict(default=None),
             links           = dict(default=None),
