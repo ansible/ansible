@@ -23,9 +23,9 @@ DOCUMENTATION = '''
 ---
 module: unarchive
 version_added: 1.4
-short_description: Copies archive to remote locations and unpacks them
+short_description: Copies an archive to a remote location and unpack it
 description:
-     - The M(unarchive) module copies an archive file on the local box to remote locations and unpacks them.
+     - The M(unarchive) module copies an archive file from the local machine to a remote and unpacks it.
 options:
   src:
     description:
@@ -42,10 +42,10 @@ todo:
     - detect changed/unchanged for .zip files
     - handle common unarchive args, like preserve owner/timestamp etc...
 notes:
-    - requires tar/unzip command on host
-    - can handle gzip, bzip2 and xz compressed as well as uncompressed tar files
+    - requires C(tar)/C(unzip) command on target host
+    - can handle I(gzip), I(bzip2) and I(xz) compressed as well as uncompressed tar files
     - detects type of archive automatically
-    - uses tar's --diff arg to calculate if changed or not.  If this arg is not
+    - uses tar's C(--diff arg) to calculate if changed or not. If this C(arg) is not
       supported, it will always unpack the archive
     - does not detect if a .zip file is different from destination - always unzips
     - existing files/directories in the destination which are not in the archive
