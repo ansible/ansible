@@ -46,6 +46,7 @@ class PlayBook(object):
 
     def __init__(self,
         playbook         = None,
+        playbook_yaml    = None,
         host_list        = C.DEFAULT_HOST_LIST,
         module_path      = None,
         forks            = C.DEFAULT_FORKS,
@@ -91,7 +92,7 @@ class PlayBook(object):
 
         self.SETUP_CACHE = SETUP_CACHE
 
-        if playbook is None or callbacks is None or runner_callbacks is None or stats is None:
+        if (playbook is None and playbook_yaml is None) or callbacks is None or runner_callbacks is None or stats is None:
             raise Exception('missing required arguments')
 
         if extra_vars is None:
@@ -135,7 +136,14 @@ class PlayBook(object):
         if self.module_path is not None:
             utils.plugins.module_finder.add_directory(self.module_path)
 
-        self.basedir     = os.path.dirname(playbook) or '.'
+        if playbook is not None:
+            playbook_data = utils.parse_yaml_from_file(utils.parse_yaml(playbook))
+            self.basedir = os.path.dirname(playbook) or '.'
+            self.filename = playbook
+        else:
+            playbook_data = utils.parse_yaml(playbook_yaml)
+            self.basedir = '.'
+            self.filename = ''
         utils.plugins.push_basedir(self.basedir)
         vars = extra_vars.copy()
         vars['playbook_dir'] = self.basedir
@@ -145,18 +153,20 @@ class PlayBook(object):
         if self.inventory.src() is not None:
             vars['inventory_file'] = self.inventory.src()
 
-        self.filename = playbook
-        (self.playbook, self.play_basedirs) = self._load_playbook_from_file(playbook, vars)
+        (self.playbook, self.play_basedirs) = self._load_playbook(playbook_data, vars, self.basedir)
         ansible.callbacks.load_callback_plugins()
 
     # *****************************************************
 
     def _load_playbook_from_file(self, path, vars={}):
+        basedir = os.path.dirname(path) or '.'
+        return self._load_playbook(utils.parse_yaml_from_file(playbook), vars, basedir)
+
+    def _load_playbook(self, playbook_data, vars={}, basedir=None):
         '''
         run top level error checking on playbooks and allow them to include other playbooks.
         '''
 
-        playbook_data  = utils.parse_yaml_from_file(path)
         accumulated_plays = []
         play_basedirs = []
 
