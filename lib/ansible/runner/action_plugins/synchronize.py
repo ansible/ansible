@@ -99,7 +99,7 @@ class ActionModule(object):
 
         if options.get('mode', 'push') == 'pull':
             (dest_host, src_host) = (src_host, dest_host)
-        if not dest_host is src_host:
+        if not dest_host is src_host and self.original_transport != 'local':
             user = inject.get('ansible_ssh_user',
                               self.runner.remote_user)
             private_key = inject.get('ansible_ssh_private_key_file', self.runner.private_key_file)
