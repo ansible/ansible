@@ -120,7 +120,8 @@ class SysctlModule(object):
 
         # Whitespace is bad
         self.args['name'] = self.args['name'].strip()
-        self.args['value'] = self.args['value'].strip()
+        if self.args['value']:
+            self.args['value'] = self.args['value'].strip()
 
         thisname = self.args['name']
 
