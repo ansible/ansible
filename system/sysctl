@@ -120,7 +120,10 @@ class SysctlModule(object):
 
         # Whitespace is bad
         self.args['name'] = self.args['name'].strip()
-        self.args['value'] = self.args['value'].strip()
+        if self.args['value'] is not None:
+            self.args['value'] = self.args['value'].strip()
+        else:
+            self.args['value'] = ""
 
         thisname = self.args['name']
 
@@ -169,7 +172,7 @@ class SysctlModule(object):
         if rc != 0:
             return None
         else:
-            return shlex.split(out)[-1]
+            return out
 
     # Use the sysctl command to set the current value
     def set_token_value(self, token, value):
