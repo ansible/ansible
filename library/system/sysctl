@@ -148,7 +148,7 @@ class SysctlModule(object):
         if self.args['sysctl_set']:            
             if self.proc_value is None:
                 self.changed = True
-            elif self._compare_values(self.proc_value, self.args['value']):
+            elif not self._values_is_equal(self.proc_value, self.args['value']):
                 self.changed = True 
                 self.set_proc = True
 
@@ -161,7 +161,7 @@ class SysctlModule(object):
             if self.set_proc:
                 self.set_token_value(self.args['name'], self.args['value'])
 
-    def _compare_values(self, a, b):
+    def _values_is_equal(self, a, b):
         """Expects two string values. It will split the string by whitespace
         and compare each value. It will return True if both lists are the same,
         contain the same elements and the same order."""
@@ -174,7 +174,7 @@ class SysctlModule(object):
         if len(a) != len(b):
             return False
 
-        return len([i for i, j in zip(a, b) if i == j]) != len(a)
+        return len([i for i, j in zip(a, b) if i == j]) == len(a)
 
     # ==============================================================
     #   SYSCTL COMMAND MANAGEMENT
