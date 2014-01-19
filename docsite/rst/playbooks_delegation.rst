@@ -1,8 +1,7 @@
 Delegation, Rolling Updates, and Local Actions
 ==============================================
 
-.. contents::
-   :depth: 2
+.. contents:: Topics
 
 Being designed for multi-tier deployments since the beginning, Ansible is great at doing things on one host on behalf of another, or doing local steps with reference to some remote hosts.
 

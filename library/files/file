@@ -124,7 +124,7 @@ options:
     choices: [ "yes", "no" ]
     description:
       - 'force the creation of the symlinks in two cases: the source file does 
-        not exist (but will appear later); the destination exists and a file (so, we need to unlink the
+        not exist (but will appear later); the destination exists and is a file (so, we need to unlink the
         "path" file and create symlink to the "src" file in place of it).'
 notes:
     - See also M(copy), M(template), M(assemble)
@@ -245,7 +245,7 @@ def main():
         module.exit_json(path=path, changed=True)
 
     if prev_state != 'absent' and prev_state != state:
-        if not (force and (prev_state == 'file' or prev_state == 'directory') and state == 'link') and state != 'touch':
+        if not (force and (prev_state == 'file' or prev_state == 'hard' or prev_state == 'directory') and state == 'link') and state != 'touch':
             module.fail_json(path=path, msg='refusing to convert between %s and %s for %s' % (prev_state, state, src))
 
     if prev_state == 'absent' and state == 'absent':
@@ -306,6 +306,10 @@ def main():
         elif prev_state == 'file':
             if not force:
                 module.fail_json(dest=path, src=src, msg='Cannot link, file exists at destination')
+            changed = True
+        elif prev_state == 'directory':
+            if not force:
+                module.fail_json(dest=path, src=src, msg='Cannot link, directory exists at destination')
             changed = True
         else:
             module.fail_json(dest=path, src=src, msg='unexpected position reached')

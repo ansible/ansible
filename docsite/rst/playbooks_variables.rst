@@ -1,6 +1,8 @@
 Variables
 =========
 
+.. contents:: Topics
+
 While automation exists to make it easier to make things repeatable, all of your systems are likely not exactly alike.
 
 All of your systems are likely not the same.  On some systems you may want to set some behavior
@@ -15,14 +17,11 @@ based on those variables.
 
 Variables in Ansible are how we deal with differences between systems.  
 
-Once understanding variables you'll also want to dig into `playbooks_conditionals` and `playbooks_loops`.  
+Once understanding variables you'll also want to dig into :doc:`playbooks_conditionals` and :doc:`playbooks_loops`.
 Useful things like the "group_by" module
 and the "when" conditional can also be used with variables, and to help manage differences between systems.
 
 It's highly recommended that you consult the ansible-examples github repository to see a lot of examples of variables put to use.
-
-.. contents::
-   :depth: 2
 
 .. _valid_variable_names:
 
@@ -50,7 +49,7 @@ a bit of a refresher.
 Often you'll want to set variables based on what groups a machine is in.  For instance, maybe machines in Boston
 want to use 'boston.ntp.example.com' as an NTP server.
 
-See the `intro_inventory` document for multiple ways on how to define variables in inventory.  
+See the :doc:`intro_inventory` document for multiple ways on how to define variables in inventory.
 
 .. _playbook_variables:
 
@@ -68,11 +67,11 @@ This can be nice as it's right there when you are reading the playbook.
 .. _included_variables:
 
 Variables defined from included files and roles
------------------------------------------------
+```````````````````````````````````````````````
 
 It turns out we've already talked about variables in another place too.
 
-As described in `intro_roles`, variables can also be included in the playbook via include files, which may or may
+As described in :doc:`playbooks_roles`, variables can also be included in the playbook via include files, which may or may
 not be part of an "Ansible Role".  Usage of roles is preferred as it provides a nice organizational system.
 
 .. _about_jinja2:
@@ -86,13 +85,13 @@ Ansible allows you to
 reference variables in your playbooks using the Jinja2 templating system.  While you can do a lot of complex
 things in Jinja, only the basics are things you really need to learn at first.
 
-For instance, in a simple template, you can do something like
+For instance, in a simple template, you can do something like::
 
     My amp goes to {{ max_amp_value }}
 
 And that will provide the most basic form of variable substitution.
 
-This is also valid directly in playbooks, and you'll occasionally want to do things like:
+This is also valid directly in playbooks, and you'll occasionally want to do things like::
 
     template: src=foo.cfg.j2 dest={{ remote_install_path}}/foo.cfg
 
@@ -111,7 +110,7 @@ it's more than that -- you can also read variables about other hosts.  We'll sho
 Jinja2 Filters
 ``````````````
 
-.. note: These are infrequently utilized features.  Use them if they fit a use case you have, but this is optional knowledge.
+.. note:: These are infrequently utilized features.  Use them if they fit a use case you have, but this is optional knowledge.
 
 Filters in Jinja2 are a way of transforming template expressions from one kind of data into another.  Jinja2
 ships with many of these as documented on the official Jinja2 template documentation.
@@ -191,9 +190,9 @@ To get the difference of 2 lists (items in 1 that don't exist in 2)::
 
     {{ list1 |difference(list2)}}
 
-To get the symetric difference of 2 lists (items exclusive to each list)::
+To get the symmetric difference of 2 lists (items exclusive to each list)::
 
-    {{ list1 |symetric_difference(list2)}}
+    {{ list1 |symmetric_difference(list2)}}
 
 .. _other_useful_filters:
 
@@ -233,7 +232,7 @@ Hey Wait, A YAML Gotcha
 ```````````````````````
 
 YAML syntax requires that if you start a value with {{ foo }} you quote the whole line, since it wants to be
-sure you aren't trying to start a YAML dictionary.  This is covered on the `YAMLSyntax` page.
+sure you aren't trying to start a YAML dictionary.  This is covered on the :doc:`YAMLSyntax` page.
 
 This won't work::
 
@@ -573,7 +572,7 @@ Registered Variables
 Another major use of variables is running a command and using the result of that command to save the result into a variable.
 
 The value of a task being executed in ansible can be saved in a variable and used later.  See some examples of this in the
-`playbooks_conditionals` chapter.
+:doc:`playbooks_conditionals` chapter.
 
 While it's mentioned elsewhere in that document too, here's a quick syntax example::
 
@@ -649,8 +648,6 @@ A frequently used idiom is walking a group to find all IP addresses in that grou
    {% endfor %}
 
 An example of this could include pointing a frontend proxy server to all of the app servers, setting up the correct firewall rules between servers, etc.
-
-Just a few other 'magic' variables are available...  There aren't many.
 
 Additionally, *inventory_hostname* is the name of the hostname as configured in Ansible's inventory host file.  This can
 be useful for when you don't want to rely on the discovered hostname `ansible_hostname` or for other mysterious
@@ -740,7 +737,7 @@ or in a file as above.
 Conditional Imports
 ```````````````````
 
-.. note: this behavior is infrequently used in Ansible.  You may wish to skip this section.  The 'group_by' module as described in the module documentation is a better way to achieve this behavior in most cases.
+.. note:: This behavior is infrequently used in Ansible.  You may wish to skip this section.  The 'group_by' module as described in the module documentation is a better way to achieve this behavior in most cases.
 
 Sometimes you will want to do certain things differently in a playbook based on certain criteria.
 Having one playbook that works on multiple platforms and OS versions is a good example.
@@ -820,7 +817,7 @@ control you might want over values.
 First off, group variables are super powerful.
 
 Site wide defaults should be defined as a 'group_vars/all' setting.  Group variables are generally placed alongside
-your inventory file.  They can also be returned by a dynamic inventory script (see `intro_dynamic_inventory`) or defined
+your inventory file.  They can also be returned by a dynamic inventory script (see :doc:`intro_dynamic_inventory`) or defined
 in things like AnsibleWorks AWX from the UI or API::
 
     ---
@@ -838,7 +835,7 @@ If for some crazy reason we wanted to tell just a specific host to use a specifi
 
     ---
     # file: /etc/ansible/host_vars/xyz.boston.example.com
-    ntp-server: override.example.com
+    ntp_server: override.example.com
 
 So that covers inventory and what you would normally set there.  It's a great place for things that deal with geography or behavior.  Since groups are frequently the entity that maps roles onto hosts, it is sometimes a shortcut to set variables on the group instead of defining them on a role.  You could go either way.
 

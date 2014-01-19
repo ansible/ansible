@@ -1,4 +1,4 @@
-# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -34,8 +34,6 @@ sys.setdefaultencoding("utf8")
 
 
 class ActionModule(object):
-
-    TRANSFERS_FILES = True
 
     def __init__(self, runner):
         self.runner = runner
@@ -125,9 +123,6 @@ class ActionModule(object):
         changed = False
         diffs = []
         module_result = {"changed": False}
-        # Remove tmp path since a new one is created below.  Should be empty.
-        if tmp.find("tmp") != -1:
-            self.runner._low_level_exec_command(conn, "rm -rf %s > /dev/null 2>&1" % tmp, tmp)
         for source_full, source_rel in source_files:
             # We need to get a new tmp path for each file, otherwise the copy module deletes the folder.
             tmp = self.runner._make_tmp_path(conn)

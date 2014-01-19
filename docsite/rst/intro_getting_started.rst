@@ -1,13 +1,12 @@
 Getting Started
 ===============
 
-.. contents::
-   :depth: 2
+.. contents:: Topics
 
 .. _gs_about:
 
-About
-`````
+Foreword
+````````
 
 Now that you've read :doc:`intro_installation` and installed Ansible, it's time to dig in and get
 started with some commands.  

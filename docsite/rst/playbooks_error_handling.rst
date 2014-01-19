@@ -1,8 +1,7 @@
 Error Handling In Playbooks
 ===========================
 
-.. contents::
-   :depth: 2
+.. contents:: Topics
 
 Ansible normally has defaults that make sure to check the return codes of commands and modules and
 it fails fast -- forcing an error to be dealt with unless you decide otherwise.

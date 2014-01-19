@@ -1,9 +1,6 @@
 Accelerated Mode
 ================
 
-.. contents::
-   :depth: 2
-
 .. versionadded:: 1.3
 
 While OpenSSH using the ControlPersist feature is quite fast and scalable, there is a certain small amount of overhead involved in

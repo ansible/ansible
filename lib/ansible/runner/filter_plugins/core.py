@@ -58,7 +58,7 @@ def changed(*a, **kw):
     if not 'changed' in item:
         changed = False
         if ('results' in item    # some modules return a 'results' key
-                and type(item['results']) == list 
+                and type(item['results']) == list
                 and type(item['results'][0]) == dict):
             for result in item['results']:
                 changed = changed or result.get('changed', False)
@@ -76,9 +76,12 @@ def skipped(*a, **kw):
 
 def mandatory(a):
     ''' Make a variable mandatory '''
-    if not a:
+    try:
+        a
+    except NameError:
         raise errors.AnsibleFilterError('Mandatory variable not defined.')
-    return a
+    else:
+        return a
 
 def bool(a):
     ''' return a bool for the arg '''

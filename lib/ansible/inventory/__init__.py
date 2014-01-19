@@ -1,4 +1,4 @@
-# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -133,11 +133,7 @@ class Inventory(object):
         # exclude hosts not in a subset, if defined
         if self._subset:
             subset = self._get_hosts(self._subset)
-            new_hosts = []
-            for h in hosts:
-                if h in subset and h not in new_hosts:
-                    new_hosts.append(h)
-            hosts = new_hosts
+            hosts = [ h for h in hosts if h in subset ]
 
         # exclude hosts mentioned in any restriction (ex: failed hosts)
         if self._restriction is not None:
@@ -183,9 +179,7 @@ class Inventory(object):
             elif p.startswith("&"):
                 hosts = [ h for h in hosts if h in that ]
             else:
-                for h in that:
-                    if h not in hosts:
-                        hosts.append(h)
+                hosts.extend([ h for h in that if h.name not in [ y.name for y in hosts ] ])
 
         return hosts
 
@@ -257,6 +251,8 @@ class Inventory(object):
         """ Get all host names matching the pattern """
 
         hosts = []
+        hostnames = set()
+
         # ignore any negative checks here, this is handled elsewhere
         pattern = pattern.replace("!","").replace("&", "")
 
@@ -265,8 +261,9 @@ class Inventory(object):
         for group in groups:
             for host in group.get_hosts():
                 if pattern == 'all' or self._match(group.name, pattern) or self._match(host.name, pattern):
-                    if host not in results:
+                    if host not in results and host.name not in hostnames:
                         results.append(host)
+                        hostnames.add(host.name)
         return results
 
     def clear_pattern_cache(self):
@@ -351,7 +348,7 @@ class Inventory(object):
 
         vars.update(host.get_variables())
         if self.parser is not None:
-            vars.update(self.parser.get_host_variables(host))
+            vars = utils.combine_vars(vars, self.parser.get_host_variables(host))
         return vars
 
     def add_group(self, group):
