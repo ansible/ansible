@@ -53,6 +53,52 @@ def replace_line(existing_line, new_line):
     with open("/etc/locale.gen", "w") as f:
         f.write("".join(lines))
 
+def apply_change(targetState, name, encoding):
+    """Create or remove locale.
+    
+    Keyword arguments:
+    targetState -- Desired state, eiter present or absent.
+    name -- Name including encoding such as de_CH.UTF-8.
+    encoding -- Encoding such as UTF-8.
+    """
+    if targetState=="present":
+        # Create locale.
+        replace_line("# "+name+" "+encoding, name+" "+encoding)
+    else:
+        # Delete locale.
+        replace_line(name+" "+encoding, "# "+name+" "+encoding)
+    
+    localeGenExitValue = call("locale-gen")
+    if localeGenExitValue!=0:
+        module.fail_json(msg="locale.gen failed to execute, it returned "+str(localeGenExitValue))
+
+def apply_change_ubuntu(targetState, name, encoding):
+    """Create or remove locale.
+    
+    Keyword arguments:
+    targetState -- Desired state, eiter present or absent.
+    name -- Name including encoding such as de_CH.UTF-8.
+    encoding -- Encoding such as UTF-8.
+    """
+    if targetState=="present":
+        # Create locale.
+        # Ubuntu's patched locale-gen automatically adds the new locale to /var/lib/locales/supported.d/local
+        localeGenExitValue = call(["locale-gen", name])
+    else:
+        # Delete locale involves discarding the locale from /var/lib/locales/supported.d/local and regenerating all locales.
+        with open("/var/lib/locales/supported.d/local", "r") as f:
+            content = f.readlines()
+        with open("/var/lib/locales/supported.d/local", "w") as f:
+            for line in content:
+                if line!=(name+" "+encoding+"\n"):
+                    f.write(line)
+        # Purge locales and regenerate.
+        # Please provide a patch if you know how to avoid regenerating the locales to keep!
+        localeGenExitValue = call(["locale-gen", "--purge"])
+    
+    if localeGenExitValue!=0:
+        raise EnvironmentError(localeGenExitValue, "locale.gen failed to execute, it returned "+str(localeGenExitValue))
+
 # ==============================================================
 # main
 
@@ -72,7 +118,14 @@ def main():
     state = module.params['state']
 
     if not os.path.exists("/etc/locale.gen"):
-        module.fail_json(msg="/etc/locale.gen missing. Is the package “locales” installed?")
+        if os.path.exists("/var/lib/locales/supported.d/local"):
+            # Ubuntu created its own system to manage locales.
+            ubuntuMode = True
+        else:
+            module.fail_json(msg="/etc/locale.gen and /var/lib/locales/supported.d/local are missing. Is the package “locales” installed?")
+    else:
+        # We found the common way to manage locales.
+        ubuntuMode = False
     
     prev_state = "present" if is_present(name) else "absent"
     changed = (prev_state!=state)
@@ -82,16 +135,13 @@ def main():
     else:
         encoding = name.split(".")[1]
         if changed:
-            if state=="present":
-                # Create locale.
-                replace_line("# "+name+" "+encoding, name+" "+encoding)
-            else:
-                # Delete locale.
-                replace_line(name+" "+encoding, "# "+name+" "+encoding)
-            
-            localeGenExitValue = call("locale-gen")
-            if localeGenExitValue!=0:
-                module.fail_json(msg="locale.gen failed to execute, it returned "+localeGenExitValue)
+            try:
+                if ubuntuMode==False:
+                    apply_change(state, name, encoding)
+                else:
+                    apply_change_ubuntu(state, name, encoding)
+            except EnvironmentError as e:
+                module.fail_json(msg=e.strerror, exitValue=e.errno)
       
         module.exit_json(name=name, changed=changed, msg="OK")
 
