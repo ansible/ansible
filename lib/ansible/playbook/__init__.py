@@ -1,4 +1,4 @@
-# (c) 2012-2013, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -161,7 +161,7 @@ class PlayBook(object):
         play_basedirs = []
 
         if type(playbook_data) != list:
-            raise errors.AnsibleError("parse error: playbooks must be formatted as a YAML list")
+            raise errors.AnsibleError("parse error: playbooks must be formatted as a YAML list, got %s" % type(playbook_data))
 
         basedir = os.path.dirname(path) or '.'
         utils.plugins.push_basedir(basedir)
@@ -310,7 +310,7 @@ class PlayBook(object):
             remote_port=task.play.remote_port, module_vars=task.module_vars,
             default_vars=task.default_vars, private_key_file=self.private_key_file,
             setup_cache=self.SETUP_CACHE, basedir=task.play.basedir,
-            conditional=task.only_if, callbacks=self.runner_callbacks,
+            conditional=task.when, callbacks=self.runner_callbacks,
             sudo=task.sudo, sudo_user=task.sudo_user,
             transport=task.transport, sudo_pass=task.sudo_pass, is_playbook=True,
             check=self.check, diff=self.diff, environment=task.environment, complex_args=task.args,
@@ -433,14 +433,10 @@ class PlayBook(object):
     def _do_setup_step(self, play):
         ''' get facts from the remote system '''
 
-        host_list = self._list_available_hosts(play.hosts)
-
         if play.gather_facts is False:
             return {}
-        elif play.gather_facts is None:
-            host_list = [h for h in host_list if h not in self.SETUP_CACHE or 'module_setup' not in self.SETUP_CACHE[h]]
-            if len(host_list) == 0:
-                return {}
+
+        host_list = self._list_available_hosts(play.hosts)
 
         self.callbacks.on_setup()
         self.inventory.restrict_to(host_list)

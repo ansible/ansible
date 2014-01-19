@@ -1,6 +1,8 @@
 Introduction To Ad-Hoc Commands
 ===============================
 
+.. contents:: Topics
+
 .. highlight:: bash
 
 The following examples show how to use `/usr/bin/ansible` for running
@@ -30,9 +32,6 @@ port over directly to the playbook language.
 
 If you haven't read :doc:`intro_inventory` already, please look that over a bit first
 and then we'll get going.
-
-.. contents::
-   :depth: 2
 
 .. _parallelism_and_shell_commands:
 

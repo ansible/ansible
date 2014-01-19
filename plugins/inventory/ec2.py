@@ -223,9 +223,12 @@ class Ec2Inventory(object):
                 config.get('ec2', 'route53_excluded_zones', '').split(','))
 
         # Cache related
-        cache_path = config.get('ec2', 'cache_path')
-        self.cache_path_cache = cache_path + "/ansible-ec2.cache"
-        self.cache_path_index = cache_path + "/ansible-ec2.index"
+        cache_dir = os.path.expanduser(config.get('ec2', 'cache_path'))
+        if not os.path.exists(cache_dir):
+            os.makedirs(cache_dir)
+
+        self.cache_path_cache = cache_dir + "/ansible-ec2.cache"
+        self.cache_path_index = cache_dir + "/ansible-ec2.index"
         self.cache_max_age = config.getint('ec2', 'cache_max_age')
         
 
@@ -295,9 +298,10 @@ class Ec2Inventory(object):
                 for instance in instances:
                     self.add_rds_instance(instance, region)
         except boto.exception.BotoServerError as e:
-            print "Looks like AWS RDS is down: "
-            print e
-            sys.exit(1)
+            if not e.reason == "Forbidden":
+                print "Looks like AWS RDS is down: "
+                print e
+                sys.exit(1)
 
     def get_instance(self, region, instance_id):
         ''' Gets details about a specific instance '''

@@ -3,6 +3,8 @@
 Dynamic Inventory
 =================
 
+.. contents:: Topics
+
 Often a user of a configuration management system will want to keep inventory
 in a different software system.  Ansible provides a basic text-based system as described in
 :doc:`intro_inventory` but what if you want to use something else?
@@ -15,9 +17,6 @@ Ansible easily supports all of these options via an external inventory system.  
 `AnsibleWorks AWX <http://ansibleworks.com/ansibleworks-awx/>`_ also provides a database to store inventory results that is both web and REST Accessible.  AWX syncs with all Ansible dynamic inventory sources. By having a database record of all of your hosts, it's easy to correlate past event history and see which ones have had failures on their last playbook runs.
 
 For information about writing your own dynamic inventory source, see :doc:`developing_inventory`.
-
-.. contents::
-   :depth: 2
 
 
 .. _cobbler_example:

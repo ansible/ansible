@@ -7,20 +7,26 @@ DOCUMENTATION = '''
 module: shell
 short_description: Execute commands in nodes.
 description:
-     - The shell module takes the command name followed by a list of arguments,
-       space delimited. It is almost exactly like the M(command) module but runs
+     - The M(shell) module takes the command name followed by a list of space-delimited arguments.
+       It is almost exactly like the M(command) module but runs
        the command through a shell (C(/bin/sh)) on the remote node.
 version_added: "0.2"
 options:
-  (free form):
+  free_form:
     description:
-      - The command module takes a free form command to run
-    required: null
+      - The shell module takes a free form command to run
+    required: true
     default: null
   creates:
     description:
-      - a filename, when it already exists, this step will NOT be run
-    required: false
+      - a filename, when it already exists, this step will B(not) be run.
+    required: no
+    default: null
+  removes:
+    description:
+      - a filename, when it does not exist, this step will B(not) be run.
+    version_added: "0.8"
+    required: no
     default: null
   chdir:
     description:

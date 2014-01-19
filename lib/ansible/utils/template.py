@@ -497,7 +497,14 @@ def template_from_file(basedir, path, vars):
 
     if data.endswith('\n') and not res.endswith('\n'):
         res = res + '\n'
-    return template(basedir, res, vars)
+
+    if isinstance(res, unicode):
+        # do not try to re-template a unicode string
+        result = res
+    else:
+        result = template(basedir, res, vars)
+
+    return result
 
 def template_from_string(basedir, data, vars, fail_on_undefined=False):
     ''' run a string through the (Jinja2) templating engine '''

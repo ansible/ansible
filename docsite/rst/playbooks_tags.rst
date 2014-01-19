@@ -1,9 +1,6 @@
 Tags
 ====
 
-.. contents::
-   :depth: 2
-
 If you have a large playbook it may become useful to be able to run a 
 specific part of the configuration without running the whole playbook.  
 

@@ -64,9 +64,6 @@ all: clean python
 tests:
 	PYTHONPATH=./lib ANSIBLE_LIBRARY=./library  $(NOSETESTS) -d -v
 
-# To force a rebuild of the docs run 'touch VERSION && make docs'
-docs: $(MANPAGES) modulepages
-
 authors:
 	sh hacking/authors.sh
 
@@ -127,7 +124,7 @@ install:
 sdist: clean docs
 	$(PYTHON) setup.py sdist -t MANIFEST.in
 
-rpmcommon: sdist
+rpmcommon: $(MANPAGES) sdist
 	@mkdir -p rpm-build
 	@cp dist/*.gz rpm-build/
 	@sed -e 's#^Version:.*#Version: $(VERSION)#' -e 's#^Release:.*#Release: $(RPMRELEASE)%{?dist}#' $(RPMSPEC) >rpm-build/$(NAME).spec
@@ -172,11 +169,6 @@ deb: debian
 
 # for arch or gentoo, read instructions in the appropriate 'packaging' subdirectory directory
 
-modulepages:
-	PYTHONPATH=./lib $(PYTHON) hacking/module_formatter.py -A $(VERSION) -t man -o docs/man/man3/ --module-dir=library --template-dir=hacking/templates # --verbose
-
-# because this requires Sphinx it is not run as part of every build, those building the RPM and so on can ignore this
-
-webdocs:
+webdocs: $(MANPAGES)
 	(cd docsite/; make docs)
 

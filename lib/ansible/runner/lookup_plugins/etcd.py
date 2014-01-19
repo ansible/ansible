@@ -15,8 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible import utils, errors, constants
-import os
+from ansible import utils
 import urllib2
 try:
     import json
@@ -27,7 +26,7 @@ except ImportError:
 ANSIBLE_ETCD_URL = 'http://127.0.0.1:4001'
 
 class etcd():
-    def __init__(self, url=ANSIBLE_ETCD_URL)
+    def __init__(self, url=ANSIBLE_ETCD_URL):
         self.url = url
         self.baseurl = '%s/v1/keys' % (self.url)
 

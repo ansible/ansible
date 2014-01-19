@@ -1,13 +1,12 @@
 Loops
 =====
 
-.. contents::
-   :depth: 2
-
 Often you'll want to do many things in one task, such as create a lot of users, install a lot of packages, or
 repeat a polling step until a certain result is reached.
 
 This chapter is all about how to use loops in playbooks.
+
+.. contents:: Topics
 
 .. _standard_loops:
 
@@ -321,7 +320,7 @@ That's how!
 Using register with a loop
 ``````````````````````````
 
-When using ``register`` with a loop the data strucutre placed in the variable during a loop, will contain a ``results`` attribute, that is a list of all responses from the module.
+When using ``register`` with a loop the data structure placed in the variable during a loop, will contain a ``results`` attribute, that is a list of all responses from the module.
 
 Here is an example of using ``register`` with ``with_items``::
 
@@ -331,7 +330,7 @@ Here is an example of using ``register`` with ``with_items``::
         - two
       register: echo
 
-This differs from the data strucutre returned when using ``register`` without a loop::
+This differs from the data structure returned when using ``register`` without a loop::
 
     {
         "changed": true,
@@ -383,7 +382,7 @@ Subsequent loops over the registered variable to inspect the results may look li
 Writing Your Own Iterators
 ``````````````````````````
 
-While you ordinarily shouldn't have to, should you wish to write your own ways to loop over arbitrary datastructures, you can read `developing_plugins` for some starter
+While you ordinarily shouldn't have to, should you wish to write your own ways to loop over arbitrary datastructures, you can read :doc:`developing_plugins` for some starter
 information.  Each of the above features are implemented as plugins in ansible, so there are many implementations to reference.
 
 .. seealso::

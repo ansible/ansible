@@ -1,9 +1,6 @@
 Rackspace Cloud Guide
 =====================
 
-.. contents::
-   :depth: 3
-
 .. _introduction:
 
 Introduction
@@ -100,7 +97,7 @@ provisioning task will be performed from your Ansible control server against the
    specifying your username and API key as environment variables or passing
    them as module arguments.
 
-Here is a basic example of provisioning a instance in ad-hoc mode mode:
+Here is a basic example of provisioning a instance in ad-hoc mode:
 
 .. code-block:: bash
 
@@ -542,7 +539,7 @@ Build a complete webserver environment with servers, custom networks and load ba
             module: rax_clb_nodes
             credentials: ~/.raxpub
             load_balancer_id: "{{ clb.balancer.id }}"
-            address: "{{ item.networks.private|first }}"
+            address: "{{ item.rax_networks.private|first }}"
             port: 80
             condition: enabled
             type: primary

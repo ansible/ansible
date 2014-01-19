@@ -83,6 +83,9 @@ Purge the checkout after the playbook is run.
 
 Module used to checkout playbook repository.  Defaults to git.
 
+*-o*, *--only-if-changed*::
+
+Run the playbook only if the repository has changed
 
 AUTHOR
 ------

@@ -270,4 +270,7 @@ if __name__ == "__main__":
     except errors.AnsibleError, e:
         display("ERROR: %s" % e, color='red', stderr=True)
         sys.exit(1)
+    except KeyboardInterrupt, ke:
+        display("ERROR: interrupted", color='red', stderr=True)
+        sys.exit(1)
 

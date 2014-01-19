@@ -1,7 +1,22 @@
 .. _@{ module }@:
 
-@{ module }@
-++++++++++++++++++++++++++++++++++++++
+{% if short_description %}
+{% set title = module + ' - ' + short_description|convert_symbols_to_format %}
+{% else %}
+{% set title = module %}
+{% endif %}
+{% set title_len = title|length %}
+
+@{ title }@
+@{ '+' * title_len }@
+
+{% if author %}
+:Author: @{ author }@
+{% endif %}
+
+.. contents::
+   :local:
+   :depth: 1
 
 {# ------------------------------------------
  #
@@ -10,18 +25,24 @@
  #
  --------------------------------------------#}
 
+Synopsis
+--------
+
 {% if version_added is defined -%}
 .. versionadded:: @{ version_added }@
 {% endif %}
 
 {% for desc in description -%}
-@{ desc | jpfunc }@ 
+@{ desc | convert_symbols_to_format }@
 {% endfor %}
 
 {% if options -%}
+Options
+-------
+
 .. raw:: html
 
-    <table>
+    <table border=1 cellpadding=4>
     <tr>
     <th class="head">parameter</th>
     <th class="head">required</th>
@@ -47,16 +68,16 @@
 {% endif %}
 
 {% if requirements %}
-.. raw:: html
+{% for req in requirements %}
 
-    <p>
-    <b>Requirements:</b> 
-    {% for req in requirements %}
-    @{ req | html_ify }@
-    {% endfor %}
-    </p>
+.. note:: Requires @{ req | convert_symbols_to_format }@
 
+{% endfor %}
 {% endif %}
+
+{% if examples or plainexamples %}
+Examples
+--------
 
 .. raw:: html
 
@@ -71,20 +92,16 @@
     <br/>
 
 {% if plainexamples %}
-.. raw:: html
 
-    <pre>
-@{ plainexamples | escape | indent(4, True) }@
-    </pre>
+::
+
+@{ plainexamples | indent(4, True) }@
+{% endif %}
 {% endif %}
 
-
 {% if notes %}
-.. raw:: html
-
-    <h4>Notes</h4>
-    {% for note in notes %}
-    <p>@{ note | html_ify }@</p>
-    {% endfor %}
+{% for note in notes %}
+.. note:: @{ note | convert_symbols_to_format }@
+{% endfor %}
 {% endif %}
 
