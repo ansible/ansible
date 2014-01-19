@@ -70,7 +70,7 @@ def apply_change(targetState, name, encoding):
     
     localeGenExitValue = call("locale-gen")
     if localeGenExitValue!=0:
-        module.fail_json(msg="locale.gen failed to execute, it returned "+str(localeGenExitValue))
+        raise EnvironmentError(localeGenExitValue, "locale.gen failed to execute, it returned "+str(localeGenExitValue))
 
 def apply_change_ubuntu(targetState, name, encoding):
     """Create or remove locale.
