@@ -431,10 +431,10 @@ class LinuxService(Service):
             if check_systemd(self.name):
                 # service is managed by systemd
                 self.enable_cmd = location['systemctl']
-            elif os.path.exists("/etc/init/%s.conf" % self.name):
+            elif location['initctl'] and os.path.exists("/etc/init/%s.conf" % self.name):
                 # service is managed by upstart
                 self.enable_cmd = location['initctl']
-            elif os.path.exists("/etc/init.d/%s" % self.name):
+            elif location['update-rc.d'] and os.path.exists("/etc/init.d/%s" % self.name):
                 # service is managed by with SysV init scripts, but with update-rc.d
                 self.enable_cmd = location['update-rc.d']
             else:
@@ -649,7 +649,7 @@ class LinuxService(Service):
                 return
 
             if self.enable:
-                # make sure the init.d symlinks are created 
+                # make sure the init.d symlinks are created
                 # otherwise enable might not work
                 (rc, out, err) = self.execute_command("%s %s defaults" \
                                                       % (self.enable_cmd, self.name))
