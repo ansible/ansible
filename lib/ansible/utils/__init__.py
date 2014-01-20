@@ -645,6 +645,8 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
         help='use this file to authenticate the connection')
     parser.add_option('-K', '--ask-sudo-pass', default=False, dest='ask_sudo_pass', action='store_true',
         help='ask for sudo password')
+    parser.add_option('--ask-su-pass', default=False, dest='ask_su_pass',
+                      action='store_true', help='ask for su password')
     parser.add_option('--list-hosts', dest='listhosts', action='store_true',
         help='outputs a list of matching hosts; does not execute anything else')
     parser.add_option('-M', '--module-path', dest='module_path',
@@ -668,11 +670,15 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
     if runas_opts:
         parser.add_option("-s", "--sudo", default=constants.DEFAULT_SUDO, action="store_true",
             dest='sudo', help="run operations with sudo (nopasswd)")
-        parser.add_option('-U', '--sudo-user', dest='sudo_user', help='desired sudo user (default=root)',
-            default=None)   # Can't default to root because we need to detect when this option was given
+        parser.add_option('-U', '--sudo-user', dest='sudo_user', default=None,
+                          help='desired sudo user (default=root)')  # Can't default to root because we need to detect when this option was given
         parser.add_option('-u', '--user', default=constants.DEFAULT_REMOTE_USER,
-            dest='remote_user',
-            help='connect as this user (default=%s)' % constants.DEFAULT_REMOTE_USER)
+            dest='remote_user', help='connect as this user (default=%s)' % constants.DEFAULT_REMOTE_USER)
+
+        parser.add_option('-S', '--su', default=constants.DEFAULT_SU,
+                          action='store_true', help='run operations with su')
+        parser.add_option('-R', '--su-user', help='run operations with su as this '
+                                                  'user (default=%s)' % constants.DEFAULT_SU_USER)
 
     if connect_opts:
         parser.add_option('-c', '--connection', dest='connection',
@@ -699,10 +705,12 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
 
     return parser
 
-def ask_passwords(ask_pass=False, ask_sudo_pass=False):
+def ask_passwords(ask_pass=False, ask_sudo_pass=False, ask_su_pass=False):
     sshpass = None
     sudopass = None
+    su_pass = None
     sudo_prompt = "sudo password: "
+    su_prompt = "su password: "
 
     if ask_pass:
         sshpass = getpass.getpass(prompt="SSH password: ")
@@ -713,7 +721,10 @@ def ask_passwords(ask_pass=False, ask_sudo_pass=False):
         if ask_pass and sudopass == '':
             sudopass = sshpass
 
-    return (sshpass, sudopass)
+    if ask_su_pass:
+        su_pass = getpass.getpass(prompt=su_prompt)
+
+    return (sshpass, sudopass, su_pass)
 
 def do_encrypt(result, encrypt, salt_size=None, salt=None):
     if PASSLIB_AVAILABLE:
@@ -784,6 +795,21 @@ def make_sudo_cmd(sudo_user, executable, cmd):
     sudocmd = '%s -k && %s %s -S -p "%s" -u %s %s -c %s' % (
         C.DEFAULT_SUDO_EXE, C.DEFAULT_SUDO_EXE, C.DEFAULT_SUDO_FLAGS,
         prompt, sudo_user, executable or '$SHELL', pipes.quote('echo %s; %s' % (success_key, cmd)))
+    return ('/bin/sh -c ' + pipes.quote(sudocmd), prompt, success_key)
+
+
+def make_su_cmd(su_user, executable, cmd):
+    """
+    Helper function for connection plugins to create direct su commands
+    """
+    # TODO: work on this function
+    randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
+    prompt = 'assword: '
+    success_key = 'SUDO-SUCCESS-%s' % randbits
+    sudocmd = '%s %s %s %s -c %s' % (
+        C.DEFAULT_SU_EXE, C.DEFAULT_SU_FLAGS, su_user, executable or '$SHELL',
+        pipes.quote('echo %s; %s' % (success_key, cmd))
+    )
     return ('/bin/sh -c ' + pipes.quote(sudocmd), prompt, success_key)
 
 _TO_UNICODE_TYPES = (unicode, type(None))

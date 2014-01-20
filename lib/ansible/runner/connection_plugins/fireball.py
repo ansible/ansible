@@ -68,7 +68,7 @@ class Connection(object):
 
         return self
 
-    def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False, executable='/bin/sh', in_data=None):
+    def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False, executable='/bin/sh', in_data=None, su_user=None, su=None):
         ''' run a command on the remote host '''
 
         if in_data:
@@ -76,9 +76,9 @@ class Connection(object):
 
         vvv("EXEC COMMAND %s" % cmd)
 
-        if self.runner.sudo and sudoable:
+        if (self.runner.sudo and sudoable) or (self.runner.su and su):
             raise errors.AnsibleError(
-                "When using fireball, do not specify sudo to run your tasks. " +
+                "When using fireball, do not specify sudo or su to run your tasks. " +
                 "Instead sudo the fireball action with sudo. " +
                 "Task will communicate with the fireball already running in sudo mode."
             )
