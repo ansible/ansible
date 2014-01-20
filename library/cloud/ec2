@@ -549,6 +549,7 @@ def get_instance_info(inst):
                      'image_id': inst.image_id,
                      'key_name': inst.key_name,
                      'placement': inst.placement,
+                     'region': inst.placement[:-1],
                      'kernel': inst.kernel,
                      'ramdisk': inst.ramdisk,
                      'launch_time': inst.launch_time,
