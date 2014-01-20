@@ -34,7 +34,7 @@ class Play(object):
        'handlers', 'remote_user', 'remote_port', 'included_roles', 'accelerate',
        'accelerate_port', 'accelerate_ipv6', 'sudo', 'sudo_user', 'transport', 'playbook',
        'tags', 'gather_facts', 'serial', '_ds', '_handlers', '_tasks',
-       'basedir', 'any_errors_fatal', 'roles', 'max_fail_pct', 'su', 'su_user'
+       'basedir', 'any_errors_fatal', 'roles', 'max_fail_pct'
     ]
 
     # to catch typos and so forth -- these are userland names
@@ -43,8 +43,7 @@ class Play(object):
        'hosts', 'name', 'vars', 'vars_prompt', 'vars_files',
        'tasks', 'handlers', 'remote_user', 'user', 'port', 'include', 'accelerate', 'accelerate_port', 'accelerate_ipv6',
        'sudo', 'sudo_user', 'connection', 'tags', 'gather_facts', 'serial',
-       'any_errors_fatal', 'roles', 'pre_tasks', 'post_tasks', 'max_fail_percentage',
-       'su', 'su_user'
+       'any_errors_fatal', 'roles', 'pre_tasks', 'post_tasks', 'max_fail_percentage' 
     ]
 
     # *************************************************
@@ -122,8 +121,6 @@ class Play(object):
         self.accelerate_port  = ds.get('accelerate_port', None)
         self.accelerate_ipv6  = ds.get('accelerate_ipv6', False)
         self.max_fail_pct     = int(ds.get('max_fail_percentage', 100))
-        self.su               = ds.get('su', self.playbook.su)
-        self.su_user          = ds.get('su_user', self.playbook.su_user)
 
         load_vars = {}
         load_vars['playbook_dir'] = self.basedir
@@ -435,8 +432,7 @@ class Play(object):
 
     # *************************************************
 
-    def _load_tasks(self, tasks, vars=None, default_vars=None, sudo_vars=None,
-                    additional_conditions=None, original_file=None, role_name=None):
+    def _load_tasks(self, tasks, vars=None, default_vars=None, sudo_vars=None, additional_conditions=None, original_file=None, role_name=None):
         ''' handle task and handler include statements '''
 
         results = []
@@ -473,7 +469,7 @@ class Play(object):
 
             if 'meta' in x:
                 if x['meta'] == 'flush_handlers':
-                    results.append(Task(self, x))
+                    results.append(Task(self,x))
                     continue
 
             task_vars = self.vars.copy()
@@ -541,13 +537,7 @@ class Play(object):
                     loaded = self._load_tasks(data, mv, default_vars, included_sudo_vars, list(included_additional_conditions), original_file=include_filename, role_name=new_role)
                     results += loaded
             elif type(x) == dict:
-                task = Task(
-                    self, x,
-                    module_vars=task_vars,
-                    default_vars=default_vars,
-                    additional_conditions=list(additional_conditions),
-                    role_name=role_name
-                )
+                task = Task(self,x,module_vars=task_vars,default_vars=default_vars,additional_conditions=list(additional_conditions),role_name=role_name)
                 results.append(task)
             else:
                 raise Exception("unexpected task type")

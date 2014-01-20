@@ -67,14 +67,6 @@ class Cli(object):
         if len(args) == 0 or len(args) > 1:
             parser.print_help()
             sys.exit(1)
-
-        # su and sudo command line arguments need to be mutually exclusive
-        if (options.su or options.su_user or options.ask_su_pass) and \
-                (options.sudo or options.sudo_user or options.ask_sudo_pass):
-            parser.error("Sudo arguments ('--sudo', '--sudo-user', and '--ask-sudo-pass') "
-                         "and su arguments ('-su', '--su-user', and '--ask-su-pass') are "
-                         "mutually exclusive")
-
         return (options, args)
 
     # ----------------------------------------------
@@ -104,46 +96,31 @@ class Cli(object):
 
         sshpass = None
         sudopass = None
-        su_pass = None
         options.ask_pass = options.ask_pass or C.DEFAULT_ASK_PASS
         # Never ask for an SSH password when we run with local connection
         if options.connection == "local":
             options.ask_pass = False
         options.ask_sudo_pass = options.ask_sudo_pass or C.DEFAULT_ASK_SUDO_PASS
-        options.ask_su_pass = options.ask_su_pass or C.DEFAULT_ASK_SU_PASS
-        (sshpass, sudopass, su_pass) = utils.ask_passwords(ask_pass=options.ask_pass, ask_sudo_pass=options.ask_sudo_pass, ask_su_pass=options.ask_su_pass)
-        if options.su_user or options.ask_su_pass:
-            options.su = True
-        elif options.sudo_user or options.ask_sudo_pass:
+        (sshpass, sudopass) = utils.ask_passwords(ask_pass=options.ask_pass, ask_sudo_pass=options.ask_sudo_pass)
+        if options.sudo_user or options.ask_sudo_pass:
             options.sudo = True
         options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
-        options.su_user = options.su_user or C.DEFAULT_SU_USER
         if options.tree:
             utils.prepare_writeable_dir(options.tree)
 
-
         runner = Runner(
-            module_name=options.module_name,
-            module_path=options.module_path,
+            module_name=options.module_name, module_path=options.module_path,
             module_args=options.module_args,
-            remote_user=options.remote_user,
-            remote_pass=sshpass,
-            inventory=inventory_manager,
-            timeout=options.timeout,
+            remote_user=options.remote_user, remote_pass=sshpass,
+            inventory=inventory_manager, timeout=options.timeout,
             private_key_file=options.private_key_file,
             forks=options.forks,
             pattern=pattern,
-            callbacks=self.callbacks,
-            sudo=options.sudo,
-            sudo_pass=sudopass,
-            sudo_user=options.sudo_user,
-            transport=options.connection,
-            subset=options.subset,
+            callbacks=self.callbacks, sudo=options.sudo,
+            sudo_pass=sudopass,sudo_user=options.sudo_user,
+            transport=options.connection, subset=options.subset,
             check=options.check,
-            diff=options.check,
-            su=options.su,
-            su_pass=su_pass,
-            su_user=options.su_user
+            diff=options.check
         )
 
         if options.seconds:

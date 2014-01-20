@@ -176,7 +176,7 @@ class Connection(object):
 
         return ssh
 
-    def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable='/bin/sh', in_data=None, su=None, su_user=None):
+    def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False, executable='/bin/sh', in_data=None):
         ''' run a command on the remote host '''
 
         if in_data:
@@ -191,7 +191,7 @@ class Connection(object):
                 msg += ": %s" % str(e)
             raise errors.AnsibleConnectionFailed(msg)
 
-        if not (self.runner.sudo and sudo) and not (self.runner.su and su):
+        if not self.runner.sudo or not sudoable:
             if executable:
                 quoted_command = executable + ' -c ' + pipes.quote(cmd)
             else:
@@ -206,15 +206,12 @@ class Connection(object):
                 chan.get_pty(term=os.getenv('TERM', 'vt100'),
                              width=int(os.getenv('COLUMNS', 0)),
                              height=int(os.getenv('LINES', 0)))
-            if self.runner.sudo or sudoable:
-                shcmd, prompt, success_key = utils.make_sudo_cmd(sudo_user, executable, cmd)
-            elif self.runner.su or su:
-                shcmd, prompt, success_key = utils.make_su_cmd(su_user, executable, cmd)
+            shcmd, prompt, success_key = utils.make_sudo_cmd(sudo_user, executable, cmd)
             vvv("EXEC %s" % shcmd, host=self.host)
             sudo_output = ''
             try:
                 chan.exec_command(shcmd)
-                if self.runner.sudo_pass or self.runner.su_pass:
+                if self.runner.sudo_pass:
                     while not sudo_output.endswith(prompt) and success_key not in sudo_output:
                         chunk = chan.recv(bufsize)
                         if not chunk:
@@ -226,10 +223,7 @@ class Connection(object):
                                     'closed waiting for password prompt')
                         sudo_output += chunk
                     if success_key not in sudo_output:
-                        if sudoable:
-                            chan.sendall(self.runner.sudo_pass + '\n')
-                        elif su:
-                            chan.sendall(self.runner.su_pass + '\n')
+                        chan.sendall(self.runner.sudo_pass + '\n')
             except socket.timeout:
                 raise errors.AnsibleError('ssh timed out waiting for sudo.\n' + sudo_output)
 
