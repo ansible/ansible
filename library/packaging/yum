@@ -485,7 +485,11 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
 
         rc, out, err = module.run_command(cmd)
 
-        if (rc != 0 and 'Nothing to do' in err) or 'Nothing to do' in out:
+        # Fail on invalid urls:
+        if (rc == 1 and '://' in spec and ('No package %s available.' % spec in out or 'Cannot open: %s. Skipping.' % spec in err)):
+            err = 'Package at %s could not be installed' % spec
+            module.fail_json(changed=False,msg=err,rc=1)
+        elif (rc != 0 and 'Nothing to do' in err) or 'Nothing to do' in out:
             # avoid failing in the 'Nothing To Do' case
             # this may happen with an URL spec.
             # for an already installed group,
