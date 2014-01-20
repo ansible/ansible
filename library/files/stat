@@ -63,7 +63,8 @@ def main():
         argument_spec = dict(
             path = dict(required=True),
             follow = dict(default='no', type='bool')
-        )
+        ),
+        supports_check_mode = True
     )
 
     path = module.params.get('path')
