@@ -19,6 +19,7 @@
 
 import fnmatch
 import os
+import sys
 import re
 import subprocess
 
@@ -179,8 +180,9 @@ class Inventory(object):
             elif p.startswith("&"):
                 hosts = [ h for h in hosts if h in that ]
             else:
-                hosts.extend([ h for h in that if h.name not in [ y.name for y in hosts ] ])
-
+                to_append = [ h for h in that if h.name not in [ y.name for y in hosts ] ]
+                hosts.extend(to_append)
+        
         return hosts
 
     def __get_hosts(self, pattern):
@@ -264,6 +266,14 @@ class Inventory(object):
                     if host not in results and host.name not in hostnames:
                         results.append(host)
                         hostnames.add(host.name)
+
+        if pattern in ["localhost", "127.0.0.1"] and len(results) == 0:
+            new_host = Host(pattern)
+            new_host.set_variable("ansible_python_interpreter", sys.executable)
+            new_host.set_variable("ansible_connection", "local")
+            ungrouped = self.get_group("ungrouped")
+            ungrouped.add_host(new_host)
+            results.append(new_host)
         return results
 
     def clear_pattern_cache(self):
@@ -356,7 +366,13 @@ class Inventory(object):
         self._groups_list = None  # invalidate internal cache 
 
     def list_hosts(self, pattern="all"):
-        return [ h.name for h in self.get_hosts(pattern) ]
+
+        """ return a list of hostnames for a pattern """
+
+        result = [ h.name for h in self.get_hosts(pattern) ]
+        if len(result) == 0 and pattern in ["localhost", "127.0.0.1"]:
+            result = [pattern]
+        return result
 
     def list_groups(self):
         return sorted([ g.name for g in self.groups ], key=lambda x: x)
