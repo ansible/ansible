@@ -623,6 +623,9 @@ class Runner(object):
         actual_transport = inject.get('ansible_connection', self.transport)
         actual_private_key_file = inject.get('ansible_ssh_private_key_file', self.private_key_file)
         self.sudo_pass = inject.get('ansible_sudo_pass', self.sudo_pass)
+        self.su = inject.get('ansible_su', self.su_pass)
+        self.su_user = inject.get('ansible_su_user', self.su_user)
+        self.su_pass = inject.get('ansible_su_pass', self.su_pass)
 
         if actual_private_key_file is not None:
             actual_private_key_file = os.path.expanduser(actual_private_key_file)
