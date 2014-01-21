@@ -141,6 +141,9 @@ class Runner(object):
         accelerate=False,                   # use accelerated connection
         accelerate_ipv6=False,              # accelerated connection w/ IPv6
         accelerate_port=None,               # port to use with accelerated connection
+        su=False,                           # Are we running our command via su?
+        su_user=None,                       # User to su to when running command, ex: 'root'
+        su_pass=C.DEFAULT_SU_PASS
         ):
 
         # used to lock multiprocess inputs and outputs at various levels
@@ -188,6 +191,9 @@ class Runner(object):
         self.accelerate_ipv6  = accelerate_ipv6
         self.callbacks.runner = self
         self.original_transport = self.transport
+        self.su               = su
+        self.su_user          = su_user
+        self.su_pass          = su_pass
 
         if self.transport == 'smart':
             # if the transport is 'smart' see if SSH can support ControlPersist if not use paramiko
@@ -311,12 +317,13 @@ class Runner(object):
            or async_jid is not None
            or not conn.has_pipelining
            or not C.ANSIBLE_SSH_PIPELINING
-           or C.DEFAULT_KEEP_REMOTE_FILES):
+           or C.DEFAULT_KEEP_REMOTE_FILES
+           or self.su):
             self._transfer_str(conn, tmp, module_name, module_data)
 
         environment_string = self._compute_environment_string(inject)
 
-        if tmp.find("tmp") != -1 and self.sudo and self.sudo_user != 'root':
+        if (self.sudo or self.su) and (self.sudo_user != 'root' or self.su_user != 'root'):
             # deal with possible umask issues once sudo'ed to other user
             cmd_chmod = "chmod a+r %s" % remote_module_path
             self._low_level_exec_command(conn, cmd_chmod, tmp, sudoable=False)
@@ -343,7 +350,7 @@ class Runner(object):
             else:
                 argsfile = self._transfer_str(conn, tmp, 'arguments', args)
 
-            if self.sudo and self.sudo_user != 'root':
+            if (self.sudo or self.su) and (self.sudo_user != 'root' or self.su_user != 'root'):
                 # deal with possible umask issues once sudo'ed to other user
                 cmd_args_chmod = "chmod a+r %s" % argsfile
                 self._low_level_exec_command(conn, cmd_args_chmod, tmp, sudoable=False)
@@ -354,7 +361,7 @@ class Runner(object):
                 cmd = " ".join([str(x) for x in [remote_module_path, async_jid, async_limit, async_module, argsfile]])
         else:
             if async_jid is None:
-                if conn.has_pipelining and C.ANSIBLE_SSH_PIPELINING and not C.DEFAULT_KEEP_REMOTE_FILES:
+                if conn.has_pipelining and C.ANSIBLE_SSH_PIPELINING and not C.DEFAULT_KEEP_REMOTE_FILES and not self.su:
                     in_data = module_data
                 else:
                     cmd = "%s" % (remote_module_path)
@@ -369,7 +376,7 @@ class Runner(object):
         cmd = cmd.strip()
 
         if tmp.find("tmp") != -1 and not C.DEFAULT_KEEP_REMOTE_FILES and not persist_files:
-            if not self.sudo or self.sudo_user == 'root':
+            if not self.sudo or self.su or self.sudo_user == 'root' or self.su_user == 'root':
                 # not sudoing or sudoing to root, so can cleanup files in the same step
                 cmd = cmd + "; rm -rf %s >/dev/null 2>&1" % tmp
 
@@ -379,10 +386,13 @@ class Runner(object):
             # specified in the play, not the sudo_user
             sudoable = False
 
-        res = self._low_level_exec_command(conn, cmd, tmp, sudoable=sudoable, in_data=in_data)
+        if self.su:
+            res = self._low_level_exec_command(conn, cmd, tmp, su=sudoable, in_data=in_data)
+        else:
+            res = self._low_level_exec_command(conn, cmd, tmp, sudoable=sudoable, in_data=in_data)
 
         if tmp.find("tmp") != -1 and not C.DEFAULT_KEEP_REMOTE_FILES and not persist_files:
-            if self.sudo and self.sudo_user != 'root':
+            if (self.sudo or self.su) and (self.sudo_user != 'root' or self.su_user != 'root'):
             # not sudoing to root, so maybe can't delete files as that other user
             # have to clean up temp files as original user in a second step
                 cmd2 = "rm -rf %s >/dev/null 2>&1" % tmp
@@ -613,6 +623,9 @@ class Runner(object):
         actual_transport = inject.get('ansible_connection', self.transport)
         actual_private_key_file = inject.get('ansible_ssh_private_key_file', self.private_key_file)
         self.sudo_pass = inject.get('ansible_sudo_pass', self.sudo_pass)
+        self.su = inject.get('ansible_su', self.su_pass)
+        self.su_user = inject.get('ansible_su_user', self.su_user)
+        self.su_pass = inject.get('ansible_su_pass', self.su_pass)
 
         if actual_private_key_file is not None:
             actual_private_key_file = os.path.expanduser(actual_private_key_file)
@@ -798,7 +811,10 @@ class Runner(object):
         if tmp.find("tmp") != -1:
             # tmp has already been created
             return False
-        if not conn.has_pipelining or not C.ANSIBLE_SSH_PIPELINING or C.DEFAULT_KEEP_REMOTE_FILES:
+        if not conn.has_pipelining or not C.ANSIBLE_SSH_PIPELINING or C.DEFAULT_KEEP_REMOTE_FILES or self.su:
+            # tmp is necessary to store module source code
+            return True
+        if not conn.has_pipelining:
             # tmp is necessary to store the module source code
             # or we want to keep the files on the target system
             return True
@@ -810,20 +826,36 @@ class Runner(object):
 
     # *****************************************************
 
-    def _low_level_exec_command(self, conn, cmd, tmp, sudoable=False, executable=None, in_data=None):
+    def _low_level_exec_command(self, conn, cmd, tmp, sudoable=False,
+                                executable=None, su=False, in_data=None):
         ''' execute a command string over SSH, return the output '''
 
         if executable is None:
             executable = C.DEFAULT_EXECUTABLE
 
         sudo_user = self.sudo_user
+        su_user = self.su_user
 
         # compare connection user to sudo_user and disable if the same
         if hasattr(conn, 'user'):
-            if conn.user == sudo_user:
+            if conn.user == sudo_user or conn.user == su_user:
                 sudoable = False
+                su = False
 
-        rc, stdin, stdout, stderr = conn.exec_command(cmd, tmp, sudo_user, sudoable=sudoable, executable=executable, in_data=in_data)
+        if su:
+            rc, stdin, stdout, stderr = conn.exec_command(cmd,
+                                                          tmp,
+                                                          su_user=su_user,
+                                                          su=su,
+                                                          executable=executable,
+                                                          in_data=in_data)
+        else:
+            rc, stdin, stdout, stderr = conn.exec_command(cmd,
+                                                          tmp,
+                                                          sudo_user,
+                                                          sudoable=sudoable,
+                                                          executable=executable,
+                                                          in_data=in_data)
 
         if type(stdout) not in [ str, unicode ]:
             out = ''.join(stdout.readlines())
@@ -881,11 +913,11 @@ class Runner(object):
 
         basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
         basetmp = os.path.join(C.DEFAULT_REMOTE_TMP, basefile)
-        if self.sudo and self.sudo_user != 'root' and basetmp.startswith('$HOME'):
+        if (self.sudo or self.su) and (self.sudo_user != 'root' or self.su != 'root') and basetmp.startswith('$HOME'):
             basetmp = os.path.join('/tmp', basefile)
 
         cmd = 'mkdir -p %s' % basetmp
-        if self.remote_user != 'root' or (self.sudo and self.sudo_user != 'root'):
+        if self.remote_user != 'root' or ((self.sudo or self.su) and (self.sudo_user != 'root' or self.su != 'root')):
             cmd += ' && chmod a+rx %s' % basetmp
         cmd += ' && echo %s' % basetmp
 
