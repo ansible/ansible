@@ -40,8 +40,7 @@ def check_hostkey(module, fqdn):
     this_cmd = keygen_cmd + " -H -F " + fqdn
     rc, out, err = module.run_command(this_cmd)
 
-    if rc == 0:
-        if out != "":
+    if rc == 0 and out != "":
             result = True
     else:
         # Check the main system location
