@@ -689,7 +689,6 @@ class Runner(object):
         actual_user = template.template(self.basedir, actual_user, inject)
         actual_pass = template.template(self.basedir, actual_pass, inject)
         self.sudo_pass = template.template(self.basedir, self.sudo_pass, inject)
-        
 
         # make actual_user available as __magic__ ansible_ssh_user variable
         inject['ansible_ssh_user'] = actual_user
