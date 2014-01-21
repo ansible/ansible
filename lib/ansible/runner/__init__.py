@@ -143,7 +143,8 @@ class Runner(object):
         accelerate_port=None,               # port to use with accelerated connection
         su=False,                           # Are we running our command via su?
         su_user=None,                       # User to su to when running command, ex: 'root'
-        su_pass=C.DEFAULT_SU_PASS
+        su_pass=C.DEFAULT_SU_PASS,
+        run_hosts=None,                     # an optional list of pre-calculated hosts to run on
         ):
 
         # used to lock multiprocess inputs and outputs at various levels
@@ -210,6 +211,10 @@ class Runner(object):
         if subset and self.inventory._subset is None:
             # don't override subset when passed from playbook
             self.inventory.subset(subset)
+
+        # If we get a pre-built list of hosts to run on, from say a playbook, use them.
+        # Also where we will store the hosts to run on once discovered
+        self.run_hosts = run_hosts
 
         if self.transport == 'local':
             self.remote_user = pwd.getpwuid(os.geteuid())[0]
@@ -1034,7 +1039,7 @@ class Runner(object):
                 results2["dark"][host] = result.result
 
         # hosts which were contacted but never got a chance to return
-        for host in self.inventory.list_hosts(self.pattern):
+        for host in self.run_hosts:
             if not (host in results2['dark'] or host in results2['contacted']):
                 results2["dark"][host] = {}
         return results2
@@ -1045,7 +1050,9 @@ class Runner(object):
         ''' xfer & run module on all matched hosts '''
 
         # find hosts that match the pattern
-        hosts = self.inventory.list_hosts(self.pattern)
+        if not self.run_hosts:
+            self.run_hosts = self.inventory.list_hosts(self.pattern)
+        hosts = self.run_hosts
         if len(hosts) == 0:
             self.callbacks.on_no_hosts()
             return dict(contacted={}, dark={})
