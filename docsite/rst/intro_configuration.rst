@@ -22,7 +22,7 @@ are not merged together.
 Getting the latest configuration
 ````````````````````````````````
 
-If installing ansible from a package manager, the latest ansible.cfg should be present in /etc/ansible, possibly
+If installing Ansible from a package manager, the latest ansible.cfg should be present in /etc/ansible, possibly
 as a ".rpmnew" file (or other) as appropriate in the case of updates.
 
 If you have installed from pip or from source, however, you may want to create this file in order to override
@@ -58,7 +58,7 @@ In the [defaults] section of ansible.cfg, the following settings are tunable:
 action_plugins
 ==============
 
-Actions are pieces of code in ansible that enable things like module execution, templating, and so forth.
+Actions are pieces of code in Ansible that enable things like module execution, templating, and so forth.
 
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
@@ -148,7 +148,7 @@ Deprecation warnings indicate usage of legacy features that are slated for remov
 display_skipped_hosts
 =====================
 
-If set to `False`, ansible will not display any status for a task that is skipped. The default behavior is to display skipped tasks::
+If set to `False`, Ansible will not display any status for a task that is skipped. The default behavior is to display skipped tasks::
 
     #display_skipped_hosts=True
 
@@ -159,13 +159,13 @@ Note that Ansible will always show the task header for any task, regardless of w
 error_on_undefined_vars
 =======================
 
-On by default since Ansible 1.3, this causes ansible to fail steps that reference variable names that are likely
+On by default since Ansible 1.3, this causes Ansible to fail steps that reference variable names that are likely
 typoed::
 
    #error_on_undefined_vars=True
 
 If set to False, any '{{ template_expression }}' that contains undefined variables will be rendered in a template
-or ansible action line exactly as written.
+or Ansible action line exactly as written.
 
 .. _executable:
 
@@ -284,7 +284,7 @@ the user running Ansible has permissions on the logfile::
 
     log_path=/var/log/ansible.log
 
-This behavior is not on by default.  Note that ansible will, without this setting, record module arguments called to the
+This behavior is not on by default.  Note that Ansible will, without this setting, record module arguments called to the
 syslog of managed machines.  Password arguments are excluded.
 
 For Enterprise users seeking more detailed logging history, you may be interested in `AnsibleWorks AWX <http://ansibleworks.com/ansibleworks-awx>`_.
@@ -317,7 +317,7 @@ it to 'shell'::
 nocolor
 =======
 
-By default ansible will try to colorize output to give a better indication of failure and status information.
+By default Ansible will try to colorize output to give a better indication of failure and status information.
 If you dislike this behavior you can turn it off by setting 'nocolor' to 1::
 
    nocolor=0
@@ -327,7 +327,7 @@ If you dislike this behavior you can turn it off by setting 'nocolor' to 1::
 nocows
 ======
 
-By default ansible will take advantage of cowsay if installed to make /usr/bin/ansible-playbook runs more exciting.
+By default Ansible will take advantage of cowsay if installed to make /usr/bin/ansible-playbook runs more exciting.
 Why?  We believe systems management should be a happy experience.  If you do not like the cows, you can disable them
 by setting 'nocows' to 1::
 
@@ -395,7 +395,7 @@ inside this location.
 remote_user
 ===========
 
-This is the default username ansible will connect as for /usr/bin/ansible-playbook.  Note that /usr/bin/ansible will
+This is the default username Ansible will connect as for /usr/bin/ansible-playbook.  Note that /usr/bin/ansible will
 always default to the current user::
 
     remote_user = root

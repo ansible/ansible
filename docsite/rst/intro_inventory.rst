@@ -48,7 +48,7 @@ Suppose you have just static IPs and want to set up some aliases that don't live
 
     jumper ansible_ssh_port=5555 ansible_ssh_host=192.168.1.50
 
-In the above example, trying to ansible against the host alias "jumper" (which may not even be a real hostname) will contact 192.168.1.50 on port 5555.  Note that this is using a feature of the inventory file to define some special variables.  Generally speaking this is not the best
+In the above example, trying to Ansible against the host alias "jumper" (which may not even be a real hostname) will contact 192.168.1.50 on port 5555.  Note that this is using a feature of the inventory file to define some special variables.  Generally speaking this is not the best
 way to define variables that describe your system policy, but we'll share suggestions on doing this later.  We're just getting started.
 
 Adding a lot of hosts?  If you have a lot of hosts following similar patterns you can do this rather than listing each hostname::
@@ -181,7 +181,7 @@ is an excellent way to track changes to your inventory and host variables.
 List of Behavioral Inventory Parameters
 +++++++++++++++++++++++++++++++++++++++
 
-As alluded to above, setting the following variables controls how ansible interacts with remote hosts. Some we have already
+As alluded to above, setting the following variables controls how Ansible interacts with remote hosts. Some we have already
 mentioned::
 
     ansible_ssh_host
