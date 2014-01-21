@@ -272,6 +272,10 @@ class Inventory(object):
             new_host.set_variable("ansible_python_interpreter", sys.executable)
             new_host.set_variable("ansible_connection", "local")
             ungrouped = self.get_group("ungrouped")
+            if ungrouped is None:
+                self.add_group(Group('ungrouped'))
+                ungrouped = self.get_group('ungrouped')
+
             ungrouped.add_host(new_host)
             results.append(new_host)
         return results
