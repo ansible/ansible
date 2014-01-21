@@ -191,6 +191,7 @@ class Connection(object):
                 msg += ": %s" % str(e)
             raise errors.AnsibleConnectionFailed(msg)
 
+        sudo_stdout_extra = ''
         if not self.runner.sudo or not sudoable:
             if executable:
                 quoted_command = executable + ' -c ' + pipes.quote(cmd)
@@ -212,7 +213,7 @@ class Connection(object):
             try:
                 chan.exec_command(shcmd)
                 if self.runner.sudo_pass:
-                    while not sudo_output.endswith(prompt) and success_key not in sudo_output:
+                    while success_key not in sudo_output:
                         chunk = chan.recv(bufsize)
                         if not chunk:
                             if 'unknown user' in sudo_output:
@@ -222,12 +223,17 @@ class Connection(object):
                                 raise errors.AnsibleError('ssh connection ' +
                                     'closed waiting for password prompt')
                         sudo_output += chunk
-                    if success_key not in sudo_output:
-                        chan.sendall(self.runner.sudo_pass + '\n')
+                        if sudo_output.endswith(prompt):
+                            chan.sendall(self.runner.sudo_pass + '\n')
+                    # preserve any extra data after the success_key in stdout since it
+                    # belongs to the real command output
+                    end_of_sudo_output = sudo_output.find('\n', sudo_output.find(success_key)+len(success_key))
+                    sudo_stdout_extra = sudo_output[end_of_sudo_output+1:]
+
             except socket.timeout:
                 raise errors.AnsibleError('ssh timed out waiting for sudo.\n' + sudo_output)
 
-        stdout = ''.join(chan.makefile('rb', bufsize))
+        stdout = sudo_stdout_extra + ''.join(chan.makefile('rb', bufsize))
         stderr = ''.join(chan.makefile_stderr('rb', bufsize))
         return (chan.recv_exit_status(), '', stdout, stderr)
 
