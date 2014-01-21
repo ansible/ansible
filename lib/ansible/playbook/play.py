@@ -26,6 +26,7 @@ import pipes
 import shlex
 import os
 import sys
+import glob
 
 class Play(object):
 
@@ -375,6 +376,10 @@ class Play(object):
                 new_handlers.append(nt)
             if os.path.isfile(vars_file):
                 new_vars_files.append(vars_file)
+            # add the extra vars, see RFC-2958
+            new_vars_files.extend(sorted(
+                [f for f in glob.glob(vars_basepath+"/*.yml")
+                 if os.path.isfile(f) and not os.path.basename(f) == "main.yml"]))
             if os.path.isfile(defaults_file):
                 defaults_files.append(defaults_file)
             if os.path.isdir(library):
