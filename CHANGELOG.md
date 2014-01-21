@@ -32,7 +32,6 @@ Misc:
 * backwards/forwards compatibility for OpenStack modules, 'quantum' modules grok neutron renaming
 * hosts properly uniqueified if appearing in redundant groups
 * hostname module support added for ScientificLinux
-
 * various other bug fixes
 
 ## 1.4.4 "Could This Be Magic" - January 6, 2014
