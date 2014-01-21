@@ -14,7 +14,7 @@ Such as::
 
     ansible webservers -m service -a "name=httpd state=restarted"
 
-Certain patterns include characters that are significant to the shell you're using. In bash, and other shells, the exclamation mark and ampersand characters must be escaped, for example::
+Certain patterns include characters that are significant to the shell you're using. In bash, and other shells, some characters, most commonly the exclamation mark and ampersand characters must be escaped, for example::
 
     ansible webservers:\&staging -m ping
     ansible webservers:\!staging -m ping
