@@ -68,7 +68,7 @@ options:
     aliases: []
   s3_url:
     description:
-        - S3 URL endpoint. If not specified then the S3_URL environment variable is used, if that variable is defined.
+        - S3 URL endpoint. If not specified then the S3_URL environment variable is used, if that variable is defined. Ansible tries to guess if fakes3 (https://github.com/jubos/fake-s3) or Eucalyptus Walrus (https://github.com/eucalyptus/eucalyptus/wiki/Walrus) is used and configure connection accordingly. Current heuristic is: everything with scheme fakes3:// is fakes3, everything else not ending with amazonaws.com is Walrus.
     default: null
     aliases: [ S3_URL ]
   aws_secret_key:
@@ -238,6 +238,13 @@ def get_download_url(module, s3, bucket, obj, expiry, changed=True):
     except s3.provider.storage_response_error, e:
         module.fail_json(msg= str(e))
 
+def is_fakes3(s3_url):
+    """ Return True if s3_url has scheme fakes3:// """
+    if s3_url is not None:
+        return urlparse.urlparse(s3_url).scheme == 'fakes3'
+    else:
+        return False
+
 def is_walrus(s3_url):
     """ Return True if it's Walrus endpoint, not S3
 
@@ -283,8 +290,22 @@ def main():
     if not s3_url and 'S3_URL' in os.environ:
         s3_url = os.environ['S3_URL']
 
-    # If we have an S3_URL env var set, this is likely to be Walrus, so change connection method
-    if is_walrus(s3_url):
+    # Look at s3_url and tweak connection settings
+    # if connecting to Walrus or fakes3
+    if is_fakes3(s3_url):
+        try:
+            fakes3 = urlparse.urlparse(s3_url)
+            from boto.s3.connection import OrdinaryCallingFormat
+            s3 = boto.connect_s3(
+                aws_access_key,
+                aws_secret_key,
+                is_secure=False,
+                host=fakes3.hostname,
+                port=fakes3.port,
+                calling_format=OrdinaryCallingFormat())
+        except boto.exception.NoAuthHandlerFound, e:
+            module.fail_json(msg = str(e))
+    elif is_walrus(s3_url):
         try:
             walrus = urlparse.urlparse(s3_url).hostname
             s3 = boto.connect_walrus(walrus, aws_access_key, aws_secret_key)
