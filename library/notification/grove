@@ -16,8 +16,9 @@ options:
     required: true
   service:
     description:
-      - Name of the service (displayed in the message)
-    required: true
+      - Name of the service (displayed as the "user" in the message)
+    required: false
+    default: ansible
   message:
     description:
       - Message content
@@ -66,7 +67,7 @@ def main():
         argument_spec = dict(
             channel_token = dict(type='str', required=True),
             message = dict(type='str', required=True),
-            service = dict(type='str', required=True),
+            service = dict(type='str', default='ansible'),
             url = dict(type='str', default=None),
             icon_url = dict(type='str', default=None),
         )
