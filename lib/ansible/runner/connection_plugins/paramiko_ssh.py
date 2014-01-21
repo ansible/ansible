@@ -191,7 +191,7 @@ class Connection(object):
                 msg += ": %s" % str(e)
             raise errors.AnsibleConnectionFailed(msg)
 
-        if not self.runner.sudo or not sudoable:
+        if not (self.runner.sudo and sudoable) and not (self.runner.su and su):
             if executable:
                 quoted_command = executable + ' -c ' + pipes.quote(cmd)
             else:
