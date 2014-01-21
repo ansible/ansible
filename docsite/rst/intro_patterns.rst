@@ -14,6 +14,11 @@ Such as::
 
     ansible webservers -m service -a "name=httpd state=restarted"
 
+Certain patterns include characters that are significant to the shell you're using. In bash, and other shells, some characters, most commonly the exclamation mark and ampersand characters must be escaped, for example::
+
+    ansible webservers:\&staging -m ping
+    ansible webservers:\!staging -m ping
+
 A pattern usually refers to a set of groups (which are sets of hosts) -- in the above case, machines in the "webservers" group.
 
 Anyway, to use Ansible, you'll first need to know how to tell Ansible which hosts in your inventory to talk to.
@@ -32,7 +37,7 @@ It is also possible to address a specific host or set of hosts by name::
     192.168.1.*
 
 The following patterns address one or more groups.  Groups separated by a colon indicate an "OR" configuration.
-This means the host may be in either one group or the other::
+This means the host may be in one or both groups:: 
 
     webservers
     webservers:dbservers
