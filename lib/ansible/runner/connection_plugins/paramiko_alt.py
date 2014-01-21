@@ -176,7 +176,7 @@ class Connection(object):
 
         return ssh
 
-    def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False, executable='/bin/sh', in_data=None):
+    def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable='/bin/sh', in_data=None, su=None, su_user=None):
         ''' run a command on the remote host '''
 
         bufsize = 4096
@@ -188,7 +188,7 @@ class Connection(object):
                 msg += ": %s" % str(e)
             raise errors.AnsibleConnectionFailed(msg)
 
-        if not self.runner.sudo or not sudoable or in_data:
+        if not (self.runner.sudo and sudoable) and not (self.runner.su and su) or in_data:
             if executable:
                 quoted_command = executable + ' -c ' + pipes.quote(cmd)
             else:
@@ -208,7 +208,7 @@ class Connection(object):
             sudo_output = ''
             try:
                 chan.exec_command(shcmd)
-                if self.runner.sudo_pass:
+                if self.runner.sudo_pass or self.runner.su_pass:
                     while not sudo_output.endswith(prompt) and success_key not in sudo_output:
                         chunk = chan.recv(bufsize)
                         if not chunk:
@@ -220,7 +220,10 @@ class Connection(object):
                                     'closed waiting for password prompt')
                         sudo_output += chunk
                     if success_key not in sudo_output:
-                        chan.sendall(self.runner.sudo_pass + '\n')
+                        if sudoable:
+                            chan.sendall(self.runner.sudo_pass + '\n')
+                        elif su:
+                            chan.sendall(self.runner.su_pass + '\n')
             except socket.timeout:
                 raise errors.AnsibleError('ssh timed out waiting for sudo.\n' + sudo_output)
 
