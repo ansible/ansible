@@ -1,0 +1,133 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# (c) 2014, Chris Petersen <geek@ex-nerd.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+
+DOCUMENTATION = '''
+---
+module: timezone
+short_description: Configure the system timezone.
+description:
+  - Configures the system timezone.
+version_added: "1.4.x"
+options:
+  zonefile:
+    description:
+      - "name of the zonefile to use (example: C(America/Los_Angeles))"
+    required: true
+  zoneinfo_path:
+    description:
+      - "Path to the directory containing the system's zone files"
+    required: false
+    default: /usr/share/zoneinfo
+  target:
+    description:
+      - "Zone file symlink target (must be a link or regular file)"
+    required: false
+    default: /etc/localtime
+  mode:
+    description:
+      - "Method to update file.  Auto will attempt to auto-detect based on an existing target."
+    required: false
+    default: auto
+    choices: [auto, symlink, copy]
+author: Chris Petersen <geek@ex-nerd.com>
+'''
+
+EXAMPLES = '''
+- timezone: zonefile=UTC
+- timezone: zonefile=US/Pacific
+- timezone: zonefile=America/Los_Angeles
+'''
+
+import os
+import filecmp
+
+# Some helpful constants to avoid typos
+MODE_AUTO = "auto"
+MODE_COPY = "copy"
+MODE_LINK = "symlink"
+
+def main():
+    # Setup
+    module = AnsibleModule(
+        argument_spec = dict(
+            zonefile = dict(required=True),
+            zoneinfo_path = dict(default="/usr/share/zoneinfo"),
+            target = dict(default="/etc/localtime"),
+            mode = dict(default=MODE_AUTO, choices=[MODE_AUTO, MODE_LINK, MODE_COPY]),
+        ),
+        supports_check_mode = True
+    )
+    zonefile = module.params["zonefile"]
+    zoneinfo_path = module.params["zoneinfo_path"]
+    target = module.params["target"]
+    mode = module.params["mode"]
+
+    # Make sure the zoneinfo_path exists
+    if not os.path.isdir(zoneinfo_path):
+        module.fail_json(msg="zoneinfo_path is not a directory")
+
+    # Make sure the source exists
+    source_path = os.path.realpath(os.path.join(zoneinfo_path, zonefile))
+    if not os.path.isfile(source_path):
+        module.fail_json(msg="zonefile does not exist in zoneinfo_path")
+
+    # Some checks based on the existing target file type
+    if os.path.islink(target):
+        # Auto-detect existing link
+        if mode == MODE_AUTO:
+            mode = MODE_LINK
+        # No change if the existing link already matches
+        if mode == MODE_LINK and source_path == os.path.realpath(os.readlink(target)):
+            module.exit_json(changed=False)
+    elif os.path.isfile(target):
+        # Auto-detect existing file
+        if mode == MODE_AUTO:
+            mode = MODE_COPY
+        # No change if the existing file is identical
+        if mode == MODE_COPY and filecmp.cmp(source_path, target, False):
+            module.exit_json(changed=False)
+    elif os.path.exists(target):
+        module.fail_json(msg="target exists but is not a link or regular file")
+
+    # Still need to auto-detect mode?  Throw an error until we can figure out distro detection/preferences (and how
+    # the heck we got here without an existing file).
+    if mode == MODE_AUTO:
+        module.fail_json(msg="'auto' mode requires an existing target file")
+
+    # Exit early for check-mode before making changes?
+    if module.check_mode:
+        module.exit_json(changed=True)
+
+    # Remove the existing file and copy/link the new one into place
+    if os.path.exists(target):
+        os.remove(target)
+    if mode == MODE_LINK:
+        os.symlink(source_path,target)
+    elif mode == MODE_COPY:
+        shutil.copyfile(source_path,target)
+    else:
+        module.exit_json(msg='Unknown mode.  Module developer made a mistake.  Please submit a bug report.')
+
+    module.exit_json(changed=True, mode=mode)
+
+# import module snippets
+from ansible.module_utils.basic import *
+main()
