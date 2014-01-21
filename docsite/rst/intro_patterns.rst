@@ -32,7 +32,7 @@ It is also possible to address a specific host or set of hosts by name::
     192.168.1.*
 
 The following patterns address one or more groups.  Groups separated by a colon indicate an "OR" configuration.
-This means the host may be in either one group or the other::
+This means the host may be in one or both groups:: 
 
     webservers
     webservers:dbservers
