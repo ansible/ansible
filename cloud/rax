@@ -464,7 +464,7 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                         else:
                             module.fail_json(msg=e.message)
 
-                    pattern = re.sub(r'%\d+[sd]', r'(\d+)', name)
+                    pattern = re.sub(r'%\d*[sd]', r'(\d+)', name)
                     for server in cs.servers.list():
                         if server.metadata.get('group') == group:
                             servers.append(server)
@@ -525,7 +525,7 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                         else:
                             module.fail_json(msg=e.message)
 
-                    pattern = re.sub(r'%\d+[sd]', r'(\d+)', name)
+                    pattern = re.sub(r'%\d*[sd]', r'(\d+)', name)
                     for server in cs.servers.list():
                         if server.metadata.get('group') == group:
                             servers.append(server)
