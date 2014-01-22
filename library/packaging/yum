@@ -25,6 +25,13 @@ import traceback
 import os
 import yum
 
+try:
+    from yum.misc import find_unfinished_transactions, find_ts_remaining
+    from rpmUtils.miscutils import splitFilename
+    transaction_helpers = True
+except:
+    transaction_helpers = False
+
 DOCUMENTATION = '''
 ---
 module: yum
@@ -335,6 +342,45 @@ def what_provides(module, repoq, req_spec, conf_file,  qf=def_qf, en_repos=[], d
 
     return []
 
+def transaction_exists(pkglist):
+    """ 
+    checks the package list to see if any packages are 
+    involved in an incomplete transaction 
+    """
+
+    conflicts = []
+    if not transaction_helpers:
+        return conflicts
+
+    # first, we create a list of the package 'nvreas'
+    # so we can compare the pieces later more easily
+    pkglist_nvreas = []
+    for pkg in pkglist:
+        pkglist_nvreas.append(splitFilename(pkg))
+
+    # next, we build the list of packages that are
+    # contained within an unfinished transaction
+    unfinished_transactions = find_unfinished_transactions()
+    for trans in unfinished_transactions:
+        steps = find_ts_remaining(trans)
+        for step in steps:
+            # the action is install/erase/etc., but we only
+            # care about the package spec contained in the step
+            (action, step_spec) = step
+            (n,v,r,e,a) = splitFilename(step_spec)
+            # and see if that spec is in the list of packages
+            # requested for installation/updating
+            for pkg in pkglist_nvreas:
+                # if the name and arch match, we're going to assume
+                # this package is part of a pending transaction
+                # the label is just for display purposes
+                label = "%s-%s" % (n,a)
+                if n == pkg[0] and a == pkg[4]:
+                    if label not in conflicts:
+                        conflicts.append("%s-%s" % (n,a))
+                    break
+    return conflicts
+
 def local_nvra(module, path):
     """return nvra of a local rpm passed in"""
     
@@ -447,6 +493,13 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
             pkglist = what_provides(module, repoq, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos)
             if not pkglist:
                 res['msg'] += "No Package matching '%s' found available, installed or updated" % spec
+                module.fail_json(**res)
+
+            # if any of the packages are involved in a transaction, fail now
+            # so that we don't hang on the yum operation later
+            conflicts = transaction_exists(pkglist)
+            if len(conflicts) > 0:
+                res['msg'] += "The following packages have pending transactions: %s" % ", ".join(conflicts)
                 module.fail_json(**res)
 
             # if any of them are installed
@@ -613,6 +666,13 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
             if nothing_to_do:
                 res['results'].append("All packages providing %s are up to date" % spec)
                 continue
+
+            # if any of the packages are involved in a transaction, fail now
+            # so that we don't hang on the yum operation later
+            conflicts = transaction_exists(pkglist)
+            if len(conflicts) > 0:
+                res['msg'] += "The following packages have pending transactions: %s" % ", ".join(conflicts)
+                module.fail_json(**res)
 
             pkg = spec
         if not cmd:
