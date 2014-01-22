@@ -1,0 +1,315 @@
+#!/usr/bin/env python
+#
+
+# (c) 2014, Pavel Antonov <antonov@adwz.ru>
+#
+# This module is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+
+######################################################################
+
+DOCUMENTATION = '''
+---
+module: docker
+version_added: "1.4"
+short_description: manage docker containers
+description:
+     - Manage the life cycle of docker containers.
+options:
+  count:
+    description:
+      - Set number of containers to run
+    required: False
+    default: 1
+    aliases: []
+  image:
+    description:
+       - Set container image to use
+    required: true
+    default: null
+    aliases: []
+  command:
+    description:
+       - Set command to run in a container on startup
+    required: false
+    default: null
+    aliases: []
+  ports:
+    description:
+      - Set private to public port mapping specification (e.g. ports=22,80 or ports=:8080 maps 8080 directly to host)
+    required: false
+    default: null
+    aliases: []
+  volumes:
+    description:
+      - Set volume(s) to mount on the container
+    required: false
+    default: null
+    aliases: []
+  volumes_from:
+    description:
+      - Set shared volume(s) from another container
+    required: false
+    default: null
+    aliases: []
+  memory_limit:
+    description:
+      - Set RAM allocated to container
+    required: false
+    default: null
+    aliases: []
+    default: 256MB
+  docker_url:
+    description:
+      - URL of docker host to issue commands to
+    required: false
+    default: unix://var/run/docker.sock
+    aliases: []
+  username:
+    description:
+      - Set remote API username
+    required: false
+    default: null
+    aliases: []
+  password:
+    description:
+      - Set remote API password
+    required: false
+    default: null
+    aliases: []
+  hostname:
+    description:
+      - Set container hostname
+    required: false
+    default: null
+    aliases: []
+  env:
+    description:
+      - Set environment variables (e.g. env="PASSWORD=sEcRe7,WORKERS=4")
+    required: false
+    default: null
+    aliases: []
+  dns:
+    description:
+      - Set custom DNS servers for the container
+    required: false
+    default: null
+    aliases: []
+  detach:
+    description:
+      - Enable detached mode on start up, leaves container running in background
+    required: false
+    default: true
+    aliases: []
+  state:
+    description:
+      - Set the state of the container
+    required: false
+    default: present
+    choices: [ "present", "stopped", "absent", "killed", "restarted" ]
+    aliases: []
+  privileged:
+    description:
+      - Set whether the container should run in privileged mode
+    required: false
+    default: false
+    aliases: []
+  lxc_conf:
+    description:
+      - LXC config parameters,  e.g. lxc.aa_profile:unconfined
+    required: false
+    default:
+    aliases: []
+author: Cove Schneider
+requirements: [ "docker-py" ]
+notes:
+    - Currently supports Docker version <= 0.6.4 only.
+'''
+
+EXAMPLES = '''
+Start one docker container running tomcat in each host of the web group and bind tomcat's listening port to 8080
+on the host:
+
+- hosts: web
+  sudo: yes
+  tasks:
+  - name: run tomcat servers
+    docker: image=centos command="service tomcat6 start" ports=:8080
+
+The tomcat server's port is NAT'ed to a dynamic port on the host, but you can determine which port the server was
+mapped to using docker_containers:
+
+- hosts: web
+  sudo: yes
+  tasks:
+  - name: run tomcat servers
+    docker: image=centos command="service tomcat6 start" ports=8080 count=5
+  - name: Display IP address and port mappings for containers
+    debug: msg={{inventory_hostname}}:{{item.NetworkSettings.Ports['8080/tcp'][0].HostPort}}
+    with_items: docker_containers
+
+Just as in the previous example, but iterates over the list of docker containers with a sequence:
+
+- hosts: web
+  sudo: yes
+  vars:
+    start_containers_count: 5
+  tasks:
+  - name: run tomcat servers
+    docker: image=centos command="service tomcat6 start" ports=8080 count={{start_containers_count}}
+  - name: Display IP address and port mappings for containers
+    debug: msg={{inventory_hostname}}:{{docker_containers[{{item}}].NetworkSettings.Ports['8080/tcp'][0].HostPort}}"
+    with_sequence: start=0 end={{start_containers_count - 1}}
+
+Stop, remove all of the running tomcat containers and list the exit code from the stopped containers:
+
+- hosts: web
+  sudo: yes
+  tasks:
+  - name: stop tomcat servers
+    docker: image=centos command="service tomcat6 start" state=absent
+  - name: Display return codes from stopped containers
+    debug: msg="Returned {{inventory_hostname}}:{{item}}"
+    with_items: docker_containers
+'''
+
+try:
+    import sys
+    import docker.client
+    from requests.exceptions import *
+    from urlparse import urlparse
+except ImportError, e:
+    print "failed=True msg='failed to import python module: %s'" % e
+    sys.exit(1)
+
+def _human_to_bytes(number):
+    suffixes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
+
+    if isinstance(number, int):
+        return number
+    if number[-1] == suffixes[0] and number[-2].isdigit():
+        return number[:-1]
+
+    i = 1
+    for each in suffixes[1:]:
+        if number[-len(each):] == suffixes[i]:
+            return int(number[:-len(each)]) * (1024 ** i)
+        i = i + 1
+
+    print "failed=True msg='Could not convert %s to integer'" % (number)
+    sys.exit(1)
+
+def _ansible_facts(container_list):
+    return {"docker_containers": container_list}
+
+def _docker_id_quirk(inspect):
+    # XXX: some quirk in docker
+    if 'ID' in inspect:
+        inspect['Id'] = inspect['ID']
+        del inspect['ID']
+    return inspect
+
+class DockerImageManager:
+
+    counters = {'created':0, 'started':0, 'stopped':0, 'killed':0, 'removed':0, 'restarted':0, 'pull':0}
+
+    def __init__(self, module):
+        self.module = module
+        self.path = self.module.params.get('path')
+        self.name = self.module.params.get('name')
+        self.tag = self.module.params.get('tag')
+        self.nocache = self.module.params.get('nocache')
+        docker_url = urlparse(module.params.get('docker_url'))
+        self.client = docker.Client(base_url=docker_url.geturl(), timeout=module.params.get('timeout'))
+        self.changed = False
+
+    def build(self):
+        res = self.client.build(self.path, tag=":".join([self.name, self.tag]), nocache=self.nocache, rm=True)
+        self.changed = True
+        return res
+
+
+    def has_changed(self):
+        return self.changed
+
+    def get_images(self):
+        filtered_images = []
+        images = self.client.images()
+        for i in images:
+            if (not self.name or self.name == i['Repository']) and (not self.tag or self.tag == i['Tag']):
+                filtered_images.append(i)
+        return filtered_images
+
+    def remove_images(self):
+        images = self.get_images()
+        for i in images:
+            try:
+                self.client.remove_image(i['Id'])
+                self.changed = True
+            except docker.APIError as e:
+                # image can be removed by docker if not used
+                pass
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            path            = dict(required=False, default=None),
+            name            = dict(required=True),
+            #id              = dict(required=False, default=None),
+            tag             = dict(required=False, default=""),
+            nocache         = dict(default=False, type='bool'),
+            state           = dict(default='present', choices=['absent', 'present', 'build']),
+            docker_url      = dict(default='unix://var/run/docker.sock'),
+            timeout         = dict(default=600, type='int'),
+        )
+    )
+
+    try:
+        manager = DockerImageManager(module)
+        state = module.params.get('state')
+        failed = False
+        image_id = None
+        msg = ''
+
+        # build image if not exists
+        if state == "present":
+            images = manager.get_images()
+            if len(images) == 0:
+                image_id, msg = manager.build()
+                if image_id is None:
+                    failed = True
+
+
+        # remove image or images
+        elif state == "absent":
+            manager.remove_images()
+
+        # build image
+        elif state == "build":
+            image_id, msg = manager.build()
+            if image_id is None:
+                failed = True
+
+        module.exit_json(failed=failed, changed=manager.has_changed(), msg=msg, image_id=image_id)
+
+    except docker.client.APIError as e:
+        module.exit_json(failed=True, changed=manager.has_changed(), msg="Docker API error: " + e.explanation)
+
+    except RequestException as e:
+        module.exit_json(failed=True, changed=manager.has_changed(), msg=repr(e))
+        
+# import module snippets
+from ansible.module_utils.basic import *
+
+main()
