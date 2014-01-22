@@ -191,6 +191,13 @@ options:
     required: false
     default: 'present'
     aliases: []
+  role_tag:
+    version_added: "1.4"
+    description:
+      - use the role tag to check whether instances already exist, making the command idempotent.
+    required: false
+    default: null
+    aliases: []
 
 requirements: [ "boto" ]
 author: Seth Vidal, Tim Gerla, Lester Wade
@@ -221,6 +228,20 @@ EXAMPLES = '''
     wait_timeout: 500
     count: 5
     instance_tags: '{"db":"postgres"}'
+    monitoring=yes
+
+# Using a role to define a group of instances to start if not already running
+- local_action:
+    module: ec2
+    keypair: mykey
+    group: databases
+    instance_type: m1.large
+    image: ami-6e649707
+    wait: yes
+    wait_timeout: 500
+    count: 5
+    instance_tags: '{"db":"postgres"}'
+    role_tag: postgres
     monitoring=yes
 
 # Multiple groups example
@@ -379,6 +400,7 @@ def create_instances(module, ec2):
 
     key_name = module.params.get('key_name')
     id = module.params.get('id')
+    role_tag = module.params.get('role_tag')
     group_name = module.params.get('group')
     group_id = module.params.get('group_id')
     zone = module.params.get('zone')
@@ -397,6 +419,10 @@ def create_instances(module, ec2):
     assign_public_ip = module.boolean(module.params.get('assign_public_ip'))
     private_ip = module.params.get('private_ip')
     instance_profile_name = module.params.get('instance_profile_name')
+
+    def bail(msg):
+        module.fail_json(msg = str(msg))
+        sys.exit(1)
 
     # group_id and group_name are exclusive of each other
     if group_id and group_name:
@@ -429,6 +455,22 @@ def create_instances(module, ec2):
 
     running_instances = []
     count_remaining = int(count)
+
+    if id and role_tag:
+      bail("Use only one type of parameter to decide whether to launch images - id or role_tag")
+
+    if role_tag != None:
+        if 'role' in instance_tags:
+          bail("Don't specify role tag in instance_tags - will be taken from role_tag")
+          
+        instance_tags['role'] = role_tag
+
+        filter_dict = {'tag:role': role_tag, 'instance-state-name' : 'running'}
+        previous_reservations = ec2.get_all_instances(None, filter_dict)
+        for res in previous_reservations:
+            for prev_instance in res.instances:
+                running_instances.append(prev_instance)
+        count_remaining = count_remaining - len(running_instances)
 
     if id != None:
         filter_dict = {'client-token':id, 'instance-state-name' : 'running'}
@@ -617,6 +659,7 @@ def main():
         argument_spec = dict(
             key_name = dict(aliases = ['keypair']),
             id = dict(),
+            role_tag = dict(),
             group = dict(type='list'),
             group_id = dict(type='list'),
             region = dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS),
