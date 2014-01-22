@@ -37,7 +37,7 @@ in the GitHub project perform custom logging, send email, or even play sound eff
 Check Mode
 ++++++++++
 
-Refers to running Ansible with the --check option, which does not make any changes on the remote systems, but only outputs the changes that
+Refers to running Ansible with the ``--check`` option, which does not make any changes on the remote systems, but only outputs the changes that
 might occur if the command ran without this flag.  This is analogous to so-called "dry run" modes in other systems, though the user should
 be warned that this does not take into account unexpected command failures or cascade effects (which is true of similar modes in other
 systems).  Use this to get an idea of what might happen, but it is not a substitute for a good staging environment.
@@ -62,8 +62,8 @@ discussed in the playbook documentation.
 Diff Mode
 +++++++++
 
-A --diff flag can be passed to Ansible to show how template files change when they are overwritten, or how they might change when used
-with --check mode.   These diffs come out in unified diff format.
+A ``--diff`` flag can be passed to Ansible to show how template files change when they are overwritten, or how they might change when used
+with ``--check`` mode.   These diffs come out in unified diff format.
 
 Facts
 +++++
@@ -93,7 +93,7 @@ self destruct after a set period of time.  This means the bus does not allow man
 Forks
 +++++
 
-Ansible talks to remote nodes in parallel and the level of parallelism can be set either by passing --forks, or editing the default in a configuration
+Ansible talks to remote nodes in parallel and the level of parallelism can be set either by passing ``--forks``, or editing the default in a configuration
 file.  The default is a very conservative 5 forks, though if you have a lot of RAM, you can easily set this to a value like 50 for increased
 parallelism.  
 
@@ -228,7 +228,7 @@ A collection of modules made available to /usr/bin/ansible or an Ansible playboo
 Limit Groups
 ++++++++++++
 
-By passing "--limit somegroup" to ansible or ansible-playbook, the commands can be limited to a subset of hosts.  For instance, 
+By passing ``--limit somegroup`` to ansible or ansible-playbook, the commands can be limited to a subset of hosts.  For instance, 
 this can be used to run a playbook that normally targets an entire set of servers to one particular server.
 
 Local Connection
