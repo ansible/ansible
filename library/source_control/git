@@ -101,6 +101,19 @@ options:
         description:
             - if C(yes), repository will be created as a bare repo, otherwise
               it will be a standard repo with a workspace.
+    template_path:
+        required: false
+        default: null
+        version_added: ""
+        description:
+            - Path to template directory to use when building $GIT_DIR in clone. 
+              Must exist on controlled machine. See git-init --template.
+    config:
+        required: false
+        default: null
+        version_added: ""
+        description:
+            - Set git configuration variables during repo clone. See git-config.              
 notes:
     - "If the task seems to be hanging, first verify remote host is in C(known_hosts).
       SSH will prompt user to authorize the first contact with a remote host.  To avoid this prompt, 
@@ -119,6 +132,9 @@ EXAMPLES = '''
 
 # Example just ensuring the repo checkout exists
 - git: repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout update=no
+
+# Example clone remote repo with sparse checkout based on /srv/git-template/info/sparse-checkout
+- git: repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout template=/srv/git-template config=core.sparsecheckout=true
 '''
 
 import re
@@ -132,7 +148,7 @@ def get_version(git_path, dest, ref="HEAD"):
     sha = os.popen(cmd).read().rstrip("\n")
     return sha
 
-def clone(git_path, module, repo, dest, remote, depth, version, bare, reference):
+def clone(git_path, module, repo, dest, remote, depth, version, bare, reference, template_path, config):
     ''' makes a new git repo if it does not already exist '''
     dest_dirname = os.path.dirname(dest)
     try:
@@ -152,6 +168,10 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare, reference)
         cmd.extend([ '--depth', str(depth) ])
     if reference:
         cmd.extend([ '--reference', str(reference) ])
+    if template_path:
+        cmd.extend([ '--template', template_path ])
+    if config:
+        cmd.extend([ '--config', config ])
     cmd.extend([ repo, dest ])
     module.run_command(cmd, check_rc=True)
     if bare:
@@ -362,20 +382,24 @@ def main():
             accept_hostkey=dict(default='no', type='bool'),
             executable=dict(default=None),
             bare=dict(default='no', type='bool'),
+            template_path=dict(default=None),
+            config=dict(default=None),
         ),
         supports_check_mode=True
     )
 
-    dest      = os.path.abspath(os.path.expanduser(module.params['dest']))
-    repo      = module.params['repo']
-    version   = module.params['version']
-    remote    = module.params['remote']
-    force     = module.params['force']
-    depth     = module.params['depth']
-    update    = module.params['update']
-    bare      = module.params['bare']
-    reference = module.params['reference']
-    git_path  = module.params['executable'] or module.get_bin_path('git', True)
+    dest          = os.path.abspath(os.path.expanduser(module.params['dest']))
+    repo          = module.params['repo']
+    version       = module.params['version']
+    remote        = module.params['remote']
+    force         = module.params['force']
+    depth         = module.params['depth']
+    update        = module.params['update']
+    bare          = module.params['bare']
+    reference     = module.params['reference']
+    template_path = module.params['template_path']
+    config        = module.params['config']
+    git_path      = module.params['executable'] or module.get_bin_path('git', True)
 
     # add the git repo's hostkey 
     #if module.params['accept_hostkey']:
@@ -396,7 +420,7 @@ def main():
         if module.check_mode:
             remote_head = get_remote_head(git_path, module, dest, version, repo, bare)
             module.exit_json(changed=True, before=before, after=remote_head)
-        clone(git_path, module, repo, dest, remote, depth, version, bare, reference)
+        clone(git_path, module, repo, dest, remote, depth, version, bare, reference, template_path, config)
     elif not update:
         # Just return having found a repo already in the dest path
         # this does no checking that the repo is the actual repo
