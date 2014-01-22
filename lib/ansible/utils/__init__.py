@@ -34,6 +34,7 @@ import StringIO
 import stat
 import termios
 import tty
+import tokenize
 import pipes
 import random
 import difflib
@@ -811,6 +812,60 @@ def make_su_cmd(su_user, executable, cmd):
         pipes.quote('echo %s; %s' % (success_key, cmd))
     )
     return ('/bin/sh -c ' + pipes.quote(sudocmd), prompt, success_key)
+
+def sanitize_module(code):
+    """
+    Helper function to modify on-the-fly the code of the module that
+    is sent to the remote
+    """
+    f = StringIO.StringIO(code)
+    processed_tokens = []
+    last_token = None
+    in_comment = False
+    # go thru all the tokens and try to skip comments and docstrings
+    for tok in tokenize.generate_tokens(f.readline):
+        t_type, t_string, t_srow_scol, t_erow_ecol, t_line = tok
+        done = False
+        skip = False
+        new_tok = tok[:2]
+
+        if t_type == tokenize.COMMENT:
+            in_comment = True
+        elif t_type != tokenize.NL:
+            in_comment = False
+        
+        if not done and t_type == tokenize.COMMENT:
+            new_tok = None
+            done = True
+        if not done and in_comment and t_type == tokenize.NL:
+            new_tok = None
+            done = True
+        if not done and t_type == tokenize.STRING:
+            if not done and last_token is None or last_token[0] == tokenize.INDENT:
+                new_tok = None
+                done = True
+            if not done and t_line.startswith('DOCUMENTATION'):
+                new_tok = [tokenize.STRING, '""""""']
+                done = True
+            if not done and t_line.startswith('EXAMPLES'):
+                new_tok = [tokenize.STRING, '""""""']
+                done = True
+            if not done and t_string.startswith("'''") and t_string.endswith("'''"):
+                new_tok = [tokenize.STRING, '"""' + t_string[3:-3] + '"""']
+                done = True
+            elif not done and t_string.startswith("'") and t_string.endswith("'"):
+                s = t_string[1:-1]
+                if '"' not in s:
+                    new_tok = [tokenize.STRING, '"' + s + '"']
+                done = True
+        
+        if new_tok:
+            processed_tokens.append(new_tok)
+
+        last_token = tok[:2]
+
+    return tokenize.untokenize(processed_tokens)
+
 
 _TO_UNICODE_TYPES = (unicode, type(None))
 
