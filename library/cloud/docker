@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 # (c) 2013, Cove Schneider
+# (c) 2014, Pavel Antonov <antonov@adwz.ru>
 #
 # This file is part of Ansible,
 #
@@ -45,9 +46,21 @@ options:
     required: false
     default: null
     aliases: []
+  name:
+    description:
+       - Set name for container (used to find single container or to provide links)
+    required: false
+    default: null
+    aliases: []
   ports:
     description:
       - Set private to public port mapping specification (e.g. ports=22,80 or ports=:8080 maps 8080 directly to host)
+    required: false
+    default: null
+    aliases: []
+  links:
+    description:
+      - Add links to another container (e.g. links=redis,postgresql:db)
     required: false
     default: null
     aliases: []
@@ -232,7 +245,9 @@ class DockerManager:
         if self.module.params.get('volumes'):
             self.binds = {}
             self.volumes = {}
-            vols = self.module.params.get('volumes').split(" ")
+            vols = self.module.params.get('volumes')
+            if not isinstance(vols, list):
+                vols = vols.split(" ")
             for vol in vols:
                 parts = vol.split(":")
                 # host mount (e.g. /mnt:/tmp, bind mounts host's /tmp to /mnt in the container)
@@ -253,11 +268,37 @@ class DockerManager:
 
         self.ports = None
         if self.module.params.get('ports'):
-            self.ports = self.module.params.get('ports').split(",")
+            ports = self.module.params.get('ports')
+            self.ports = ports if isinstance(ports, list) else ports.split(",")
+
+        self.port_bindings = None
+        if self.module.params.get('port_bindings'):
+            self.port_bindings = {}
+            bindings = self.module.params.get('port_bindings')
+            bindings = bindings if isinstance(bindings, list) else bindings.split(",")
+            for binding in bindings:
+                parts = binding.split(":")
+                if len(parts) == 3:
+                    self.port_bindings[parts[0]] = (parts[1], parts[2])
+                elif len(parts) == 2:
+                    self.port_bindings[parts[0]] = parts[1]
+                else:
+                    self.port_bindings[parts[0]] = None
+
+        self.links = None
+        if self.module.params.get('links'):
+            self.links = {}
+            links = self.module.params.get('links')
+            if not isinstance(links, list):
+                links = links.split(",")
+            for link in links:
+                parts = link.split(":")
+                self.links[parts[0]] = parts[1] if len(parts) == 2 else parts[0]
 
         self.env = None
         if self.module.params.get('env'):
-            self.env = dict(map(lambda x: x.split("="), self.module.params.get('env').split(",")))
+            env = self.module.params.get('env')
+            self.env = dict(map(lambda x: x.split("="), env if isinstance(env, list) else env.split(",")))
 
         # connect to docker server
         docker_url = urlparse(module.params.get('docker_url'))
@@ -301,22 +342,27 @@ class DockerManager:
 
     def get_deployed_containers(self):
         # determine which images/commands are running already
-        containers = self.client.containers()
-        image      = self.module.params.get('image')
-        command    = self.module.params.get('command')
+        containers = self.client.containers(all=True)
+        image = self.module.params.get('image')
+        command = self.module.params.get('command')
         if command:
             command = command.strip()
-        deployed   = []
+        name = self.module.params.get('name')
+        if name and not name.startswith('/'):
+            name = '/' + name
+        deployed = []
 
         # if we weren't given a tag with the image, we need to only compare on the image name, as that
         # docker will give us back the full image name including a tag in the container list if one exists.
         image, tag = self.get_split_image_tag(image)
-        
+
         for i in containers:
             running_image, running_tag = self.get_split_image_tag(i['Image'])
             running_command = i['Command'].strip()
 
-            if running_image == image and (not tag or tag == running_tag) and (not command or running_command == command):
+            if (name and name in i['Names']) or \
+                    (not name and running_image == image and (not tag or tag == running_tag) and
+                    (not command or running_command == command)):
                 details = self.client.inspect_container(i['Id'])
                 details = _docker_id_quirk(details)
                 deployed.append(details)
@@ -334,6 +380,7 @@ class DockerManager:
     def create_containers(self, count=1):
         params = {'image':        self.module.params.get('image'),
                   'command':      self.module.params.get('command'),
+                  'name':         self.module.params.get('name'),
                   'ports':        self.ports,
                   'volumes':      self.volumes,
                   'volumes_from': self.module.params.get('volumes_from'),
@@ -365,7 +412,8 @@ class DockerManager:
 
     def start_containers(self, containers):
         for i in containers:
-                self.client.start(i['Id'], lxc_conf=self.lxc_conf, binds=self.binds)
+                self.client.start(i['Id'], lxc_conf=self.lxc_conf, binds=self.binds,
+                                  port_bindings = self.port_bindings, links=self.links)
                 self.increment_counter('started')
 
     def stop_containers(self, containers):
@@ -396,7 +444,10 @@ def main():
             count           = dict(default=1),
             image           = dict(required=True),
             command         = dict(required=False, default=None),
+            name            = dict(required=False, default=None),
             ports           = dict(required=False, default=None),
+            port_bindings   = dict(required=False, default=None),
+            links           = dict(required=False, default=None),
             volumes         = dict(default=None),
             volumes_from    = dict(default=None),
             memory_limit    = dict(default=0),
@@ -434,7 +485,6 @@ def main():
 
         # start/stop containers
         if state == "present":
-
             # start more containers if we don't have enough
             if delta > 0:
                 containers = manager.create_containers(delta)
