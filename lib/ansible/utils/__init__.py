@@ -193,7 +193,7 @@ def check_conditional(conditional, basedir, inject, fail_on_undefined=False):
 
     conditional = conditional.replace("jinja2_compare ","")
     # allow variable names
-    if conditional in inject and str(inject[conditional]).find('-') == -1:
+    if conditional in inject and '-' not in str(inject[conditional]):
         conditional = inject[conditional]
     conditional = template.template(basedir, conditional, inject, fail_on_undefined=fail_on_undefined)
     original = str(conditional).replace("jinja2_compare ","")
@@ -206,9 +206,9 @@ def check_conditional(conditional, basedir, inject, fail_on_undefined=False):
         # variable was undefined. If we happened to be 
         # looking for an undefined variable, return True,
         # otherwise fail
-        if conditional.find("is undefined") != -1:
+        if "is undefined" in conditional:
             return True
-        elif conditional.find("is defined") != -1:
+        elif "is defined" in conditional:
             return False
         else:
             raise errors.AnsibleError("error while evaluating conditional: %s" % original)
@@ -331,9 +331,9 @@ def parse_json(raw_data):
 
 def smush_braces(data):
     ''' smush Jinaj2 braces so unresolved templates like {{ foo }} don't get parsed weird by key=value code '''
-    while data.find('{{ ') != -1:
+    while '{{ ' in data:
         data = data.replace('{{ ', '{{')
-    while data.find(' }}') != -1:
+    while ' }}' in data:
         data = data.replace(' }}', '}}')
     return data
 
@@ -374,7 +374,7 @@ def parse_yaml(data, path_hint=None):
 def process_common_errors(msg, probline, column):
     replaced = probline.replace(" ","")
 
-    if replaced.find(":{{") != -1 and replaced.find("}}") != -1:
+    if ":{{" in replaced and "}}" in replaced:
         msg = msg + """
 This one looks easy to fix.  YAML thought it was looking for the start of a 
 hash/dictionary and was confused to see a second "{".  Most likely this was
@@ -542,7 +542,7 @@ def parse_kv(args):
         vargs = [x.decode('utf-8') for x in shlex.split(args, posix=True)]
         #vargs = shlex.split(str(args), posix=True)
         for x in vargs:
-            if x.find("=") != -1:
+            if "=" in x:
                 k, v = x.split("=",1)
                 options[k]=v
     return options
@@ -1023,7 +1023,7 @@ def listify_lookup_plugin_terms(terms, basedir, inject):
             # not sure why the "/" is in above code :)
             try:
                 new_terms = template.template(basedir, "{{ %s }}" % terms, inject)
-                if isinstance(new_terms, basestring) and new_terms.find("{{") != -1:
+                if isinstance(new_terms, basestring) and "{{" in new_terms.find:
                     pass
                 else:
                     terms = new_terms
@@ -1095,5 +1095,6 @@ def before_comment(msg):
     msg = msg.split("#")[0]
     msg = msg.replace("**NOT_A_COMMENT**","#")
     return msg
+
 
 
