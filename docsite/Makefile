@@ -6,6 +6,9 @@ all: clean docs
 
 docs: clean modules staticmin
 	./build-site.py
+	cp *.ico htmlout/
+	cp *.jpg htmlout/
+	cp *.png htmlout/
 
 viewdocs: clean staticmin
 	./build-site.py view
