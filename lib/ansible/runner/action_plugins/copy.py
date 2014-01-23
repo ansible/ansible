@@ -331,7 +331,7 @@ class ActionModule(object):
         src = open(source)
         src_contents = src.read(8192)
         st = os.stat(source)
-        if src_contents.find("\x00") != -1:
+        if "\x00" in src_contents:
             diff['src_binary'] = 1
         elif st[stat.ST_SIZE] > utils.MAX_FILE_SIZE_FOR_DIFF:
             diff['src_larger'] = utils.MAX_FILE_SIZE_FOR_DIFF
