@@ -607,16 +607,17 @@ def terminate_instances(module, ec2):
         except socket.gaierror:
             module.fail_json(msg='error while resolving domains from dns_name, aborting')
 
-    for res in ec2.get_all_instances(instance_ids):
-        for inst in res.instances:
-            if inst.state == 'running':
-                terminated_instance_ids.append(inst.id)
-                instance_dict_array.append(get_instance_info(inst))
-                try:
-                    ec2.terminate_instances([inst.id])
-                except EC2ResponseError as e:
-                    module.fail_json(msg='Unable to terminate instance {0}, error: {1}'.format(inst.id, e))
-                changed = True
+    if instance_ids:
+        for res in ec2.get_all_instances(instance_ids):
+            for inst in res.instances:
+                if inst.state == 'running':
+                    terminated_instance_ids.append(inst.id)
+                    instance_dict_array.append(get_instance_info(inst))
+                    try:
+                        ec2.terminate_instances([inst.id])
+                    except EC2ResponseError as e:
+                        module.fail_json(msg='Unable to terminate instance {0}, error: {1}'.format(inst.id, e))
+                    changed = True
 
     # wait here until the instances are 'terminated'
     if wait:
