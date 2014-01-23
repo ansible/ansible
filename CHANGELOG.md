@@ -10,7 +10,7 @@ Major features/changes:
 * only_if, which is much older than when_foo and was deprecated, is similarly removed.
 * ssh connection plugin is now more efficient if you add 'pipelining=True' in ansible.cfg under [ssh_connection], see example.cfg
 * localhost/127.0.0.1 is not required to be in inventory if referenced, if not in inventory, it does not implicitly appear in the 'all' group.
-* git module now takes sshopts and keyfile parameters to override how git calls ssh
+* git module now takes ssh_opts and key_file parameters to override how git calls ssh
 
 New modules:
 

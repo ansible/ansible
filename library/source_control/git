@@ -49,7 +49,7 @@ options:
         version_added: "1.5"
         description:
             - Add the hostkey for the repo url if not already added.
-    sshopts:
+    ssh_opts:
         required: false
         default: None
         version_added: "1.5"
@@ -57,13 +57,13 @@ options:
             - Creates a wrapper script and exports the path as GIT_SSH
               which git then automatically uses to override ssh arguments.
               An example value could be "-o StrictHostKeyChecking=no"
-    keyfile:
+    key_file:
         requird: false
         default: None
         version_added: "1.5"
         description:
-            - Uses the same wrapper method as sshopts to pass 
-              "-i <keyfile>" to the ssh arguments used by git
+            - Uses the same wrapper method as ssh_opts to pass 
+              "-i <key_file>" to the ssh arguments used by git
     reference:
         required: false
         default: null
@@ -414,8 +414,8 @@ def main():
             depth=dict(default=None, type='int'),
             update=dict(default='yes', type='bool'),
             accept_hostkey=dict(default='no', type='bool'),
-            keyfile=dict(default=None, required=False),
-            sshopts=dict(default=None, required=False),
+            key_file=dict(default=None, required=False),
+            ssh_opts=dict(default=None, required=False),
             executable=dict(default=None),
             bare=dict(default='no', type='bool'),
         ),
@@ -433,8 +433,8 @@ def main():
     reference = module.params['reference']
     git_path  = module.params['executable'] or module.get_bin_path('git', True)
     
-    key_file   = module.params['keyfile']
-    ssh_opts   = module.params['sshopts']
+    key_file   = module.params['key_file']
+    ssh_opts   = module.params['ssh_opts']
 
     # create a wrapper script and export
     # GIT_SSH=<path> as an environment variable
