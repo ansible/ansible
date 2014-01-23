@@ -69,7 +69,7 @@ class InventoryParser(object):
             line = utils.before_comment(line).strip()
             if line.startswith("[") and line.endswith("]"):
                 active_group_name = line.replace("[","").replace("]","")
-                if line.find(":vars") != -1 or line.find(":children") != -1:
+                if ":vars" in line or ":children" in line:
                     active_group_name = active_group_name.rsplit(":", 1)[0]
                     if active_group_name not in self.groups:
                         new_group = self.groups[active_group_name] = Group(name=active_group_name)
@@ -95,11 +95,11 @@ class InventoryParser(object):
                     # FQDN            foo.example.com
                     if hostname.count(".") == 1:
                         (hostname, port) = hostname.rsplit(".", 1)
-                elif (hostname.find("[") != -1 and
-                    hostname.find("]") != -1 and
-                    hostname.find(":") != -1 and
+                elif ("[" in hostname and
+                    "]" in hostname and
+                    ":" in hostname and
                     (hostname.rindex("]") < hostname.rindex(":")) or
-                    (hostname.find("]") == -1 and hostname.find(":") != -1)):
+                    ("]" not in hostname and ":" in hostname)):
                         (hostname, port) = hostname.rsplit(":", 1)
 
                 hostnames = []
@@ -152,7 +152,7 @@ class InventoryParser(object):
             line = line.strip()
             if line is None or line == '':
                 continue
-            if line.startswith("[") and line.find(":children]") != -1:
+            if line.startswith("[") and ":children]" in line:
                 line = line.replace("[","").replace(":children]","")
                 group = self.groups.get(line, None)
                 if group is None:
@@ -177,7 +177,7 @@ class InventoryParser(object):
         group = None
         for line in self.lines:
             line = line.strip()
-            if line.startswith("[") and line.find(":vars]") != -1:
+            if line.startswith("[") and ":vars]" in line:
                 line = line.replace("[","").replace(":vars]","")
                 group = self.groups.get(line, None)
                 if group is None:
@@ -189,7 +189,7 @@ class InventoryParser(object):
             elif line == '':
                 pass
             elif group:
-                if line.find("=") == -1:
+                if "=" not in line:
                     raise errors.AnsibleError("variables assigned to group must be in key=value form")
                 else:
                     (k, v) = [e.strip() for e in line.split("=", 1)]

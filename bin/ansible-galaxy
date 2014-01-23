@@ -655,7 +655,7 @@ def execute_install(args, options, parser):
 
         if role_name == "" or role_name.startswith("#"):
             continue
-        elif role_name.find(',') != -1:
+        elif ',' in role_name:
             role_name,role_version = role_name.split(',',1)
             role_name = role_name.strip()
             role_version = role_version.strip()

@@ -483,9 +483,9 @@ class LinuxService(Service):
         if self.svc_initctl and self.running is None:
             # check the job status by upstart response
             initctl_rc, initctl_status_stdout, initctl_status_stderr = self.execute_command("%s status %s" % (self.svc_initctl, self.name))
-            if initctl_status_stdout.find("stop/waiting") != -1:
+            if "stop/waiting" in initctl_status_stdout:
                 self.running = False
-            elif initctl_status_stdout.find("start/running") != -1:
+            elif "start/running" in initctl_status_stdout:
                 self.running = True
 
         if self.svc_cmd and self.svc_cmd.endswith("rc-service") and self.running is None:
@@ -525,7 +525,7 @@ class LinuxService(Service):
 
         # if the job status is still not known check it by special conditions
         if self.running is None:
-            if self.name == 'iptables' and status_stdout.find("ACCEPT") != -1:
+            if self.name == 'iptables' and "ACCEPT" in status_stdout:
                 # iptables status command output is lame
                 # TODO: lookup if we can use a return code for this instead?
                 self.running = True
@@ -631,16 +631,16 @@ class LinuxService(Service):
                 if line.startswith('rename'):
                     self.changed = True
                     break
-                elif self.enable and line.find('do not exist') != -1:
+                elif self.enable and 'do not exist' in line:
                     self.changed = True
                     break
-                elif not self.enable and line.find('already exist') != -1:
+                elif not self.enable and 'already exist' in line:
                     self.changed = True
                     break
 
             # Debian compatibility
             for line in err.splitlines():
-                if self.enable and line.find('no runlevel symlinks to modify') != -1:
+                if self.enable and 'no runlevel symlinks to modify' in line:
                     self.changed = True
                     break
 
@@ -982,9 +982,9 @@ class SunOSService(Service):
         #    enabled   false
         for line in stdout.split("\n"):
             if line.find("enabled") == 0:
-                if line.find("true") != -1:
+                if "true" in line:
                     enabled = True
-                if line.find("temporary") != -1:
+                if "temporary" in line:
                     temporary = True
 
         startup_enabled = (enabled and not temporary) or (not enabled and temporary)
@@ -1176,7 +1176,7 @@ def main():
     (rc, out, err) = service.modify_service_state()
 
     if rc != 0:
-        if err and err.find("is already") != -1:
+        if err and "is already" in err:
             # upstart got confused, one such possibility is MySQL on Ubuntu 12.04
             # where status may report it has no start/stop links and we could
             # not get accurate status

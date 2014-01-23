@@ -95,7 +95,7 @@ class ModuleReplacer(object):
 
         for line in lines:
 
-            if line.find(REPLACER) != -1:
+            if REPLACER in line:
                 output.write(self.slurp(os.path.join(self.snippet_path, "basic.py")))
                 snippet_names.append('basic')
             elif line.startswith('from ansible.module_utils.'):
@@ -103,7 +103,7 @@ class ModuleReplacer(object):
                 import_error = False
                 if len(tokens) != 3:
                     import_error = True
-                if line.find(" import *") == -1:
+                if " import *" not in line:
                     import_error = True
                 if import_error:
                     raise errors.AnsibleError("error importing module in %s, expecting format like 'from ansible.module_utils.basic import *'" % module_path)

@@ -707,7 +707,7 @@ class Play(object):
     # *************************************************
 
     def _has_vars_in(self, msg):
-        return ((msg.find("$") != -1) or (msg.find("{{") != -1))
+        return "$" in msg or "{{" in msg
 
     # *************************************************
 

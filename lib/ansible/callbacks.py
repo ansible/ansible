@@ -250,7 +250,7 @@ def regular_generic_msg(hostname, result, oneline, caption):
 
 def banner_cowsay(msg):
 
-    if msg.find(": [") != -1:
+    if ": [" in msg:
         msg = msg.replace("[","")
         if msg.endswith("]"):
             msg = msg[:-1]

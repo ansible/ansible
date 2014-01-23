@@ -120,7 +120,7 @@ class LibvirtConnection(object):
         cmd = "uname -r"
         rc, stdout, stderr = self.module.run_command(cmd)
 
-        if stdout.find("xen") != -1:
+        if "xen" in stdout:
             conn = libvirt.open(None)
         else:
             conn = libvirt.open(uri)

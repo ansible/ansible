@@ -168,7 +168,7 @@ def main():
             f = open(path)
             b = f.read(8192)
             f.close()
-            if b.find("\x00") != -1:
+            if "\x00" in b:
                 appears_binary = True
         except:
             pass
