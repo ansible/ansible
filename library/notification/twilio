@@ -20,22 +20,16 @@
 
 DOCUMENTATION = '''
 ---
-version_added: "1.2"
+version_added: "1.5"
 module: text
-short_description: Sends a text message to a mobile phone.
+short_description: Sends a text message to a mobile phone through Twilio.
 description:
-   - Sends a text message to a phone number through an SMS service. Currently
-     only Twilio is supported.
+   - Sends a text message to a phone number through an the Twilio SMS service. 
 notes:
    - Like the other notification modules, this one requires an external 
      dependency to work. In this case, you'll need a Twilio account with
-     a purchased phone number to send the text message.
+     a purchased or verified phone number to send the text message.
 options:
-  sms_service:
-    description:
-      the SMS service to use; currently only Twilio is supported
-    required: false 
-    default: twilio
   account_sid:
     description:
       user's account id for Twilio found on the account page
@@ -88,25 +82,21 @@ except ImportError:
 import base64
 
 
-def post_text(module, sms_service, account_sid, auth_token, msg, 
-    from_number, to_number):
-    if sms_service == 'twilio':
-        URI = "https://api.twilio.com/2010-04-01/Accounts/%s/Messages.json" \
-            % (account_sid,)
-        AGENT = "Ansible/1.6"
+def post_text(module, account_sid, auth_token, msg, from_number, to_number):
+    URI = "https://api.twilio.com/2010-04-01/Accounts/%s/Messages.json" \
+        % (account_sid,)
+    AGENT = "Ansible/1.5"
 
-        data = {'From':from_number, 'To':to_number, 'Body':msg}
-        encoded_data = urllib.urlencode(data)
-        request = urllib2.Request(URI)
-        base64string = base64.encodestring('%s:%s' % \
-            (account_sid, auth_token)).replace('\n', '')
-        request.add_header('User-Agent', AGENT)
-        request.add_header('Content-type', 'application/x-www-form-urlencoded')
-        request.add_header('Accept', 'application/ansible')
-        request.add_header('Authorization', 'Basic %s' % base64string)
-        return urllib2.urlopen(request, encoded_data)
-    else:
-        raise Exception('unknown messaging service')
+    data = {'From':from_number, 'To':to_number, 'Body':msg}
+    encoded_data = urllib.urlencode(data)
+    request = urllib2.Request(URI)
+    base64string = base64.encodestring('%s:%s' % \
+        (account_sid, auth_token)).replace('\n', '')
+    request.add_header('User-Agent', AGENT)
+    request.add_header('Content-type', 'application/x-www-form-urlencoded')
+    request.add_header('Accept', 'application/ansible')
+    request.add_header('Authorization', 'Basic %s' % base64string)
+    return urllib2.urlopen(request, encoded_data)
 
 
 # =======================================
@@ -117,7 +107,6 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            sms_service=dict(default='twilio', choices=['twilio', ]),
             account_sid=dict(required=True),
             auth_token=dict(required=True),
             msg=dict(required=True),
@@ -127,7 +116,6 @@ def main():
         supports_check_mode=True
     )
   
-    sms_service = module.params['sms_service']
     account_sid = module.params['account_sid']
     auth_token = module.params['auth_token']
     msg = module.params['msg']
@@ -135,8 +123,8 @@ def main():
     to_number = module.params['to_number']
 
     try:
-        response = post_text(module, sms_service, account_sid, auth_token, 
-            msg, from_number, to_number)
+        response = post_text(module, account_sid, auth_token, msg, 
+            from_number, to_number)
     except Exception, e:
         module.fail_json(msg="unable to send text message to %s" % to_number)
 
