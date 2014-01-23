@@ -19,19 +19,18 @@
 
 DOCUMENTATION = '''
 ---
-module:
+module: rax_files_objects
 short_description: create, fetch, and delete objects in Rackspace Cloud Files
-description:
-  - Upload, download, and delete objects in Rackspace Cloud Files
+description: Upload, download, and delete objects in Rackspace Cloud Files
 version_added: "1.5"
 options:
   api_key:
     description:
-      - Rackspace API key (overrides I(credentials))requirements: [ "pyrax" ]
+      - 'Rackspace API key (overrides I(credentials))requirements: [ "pyrax" ]'
   clear_meta:
     description:
       - Optionally clear existing metadata when applying metadata to existing objects.
-      - Selecting this option is only appropriate when setting typ=meta
+        Selecting this option is only appropriate when setting typ=meta
     choices: ["yes", "no"]
     default: "no"
   container:
@@ -47,21 +46,21 @@ options:
   dest:
     description:
       - The destination of a "get" operation; i.e. a local directory, "/home/user/myfolder"
-      - Used to specify the destination of an operation on a remote object; i.e. a file name,
-      "file1", or a comma-separated list of remote objects, "file1,file2,file17"
+        Used to specify the destination of an operation on a remote object; i.e. a file name,
+        'file1', or a comma-separated list of remote objects, "file1,file2,file17"
   expires:
     description:
       - Used to set an expiration on a file or folder uploaded to Cloud Files
-      - Requires an integer, specifying expiration in seconds
+        Requires an integer, specifying expiration in seconds
   meta:
     description:
       - A hash of items to set as metadata values on an uploaded file or folder
   method:
     description:
-      - The method of operation to be performed: put, get, delete
-      - Put to upload files to Cloud Files
-      - Get to download files from Cloud Files
-      - Delete to delete remote objects in Cloud Files
+      - The method of operation to be performed put, get, delete
+        Put to upload files to Cloud Files
+        Get to download files from Cloud Files
+        Delete to delete remote objects in Cloud Files
     choices: ["get", "put", "delete"]
     default: "get"
   region:
@@ -71,23 +70,23 @@ options:
   src:
     description:
       - Source from which to upload files
-      - Used to specify a remote object as a source for an operation, i.e. a file name,
-      "file1", or a comma-separated list of remote objects, "file1,file2,file17"
-      - src and dest are mutually exclusive on remote-only object operations
+        Used to specify a remote object as a source for an operation, i.e. a file name,
+        'file1', or a comma-separated list of remote objects, "file1,file2,file17"
+        src and dest are mutually exclusive on remote-only object operations
   structure:
     description:
       - Used to specify whether to maintain nested directory structure when downloading objects from Cloud Files
-      - Setting to false downloads the contents of a container to a single, flat directory
+        Setting to false downloads the contents of a container to a single, flat directory
     choices: ["yes", "no"]
     default: "yes"
   typ:
     description:
-      - Type of object to do work on: metadata object or a file object
+      - Type of object to do work on, metadata object or a file object
     choices: ["file", "meta"]
     default: "file"
   username:
     description:
-      - Rackspace username (overrides I(credentials))
+      - Rackspace username
 requirements: [ "pyrax" ]
 author: Paul Durivage
 notes:
@@ -564,7 +563,7 @@ def main():
             src=dict(),
             dest=dict(),
             method=dict(default='get', choices=['put', 'get', 'delete']),
-            type=dict(default='file', choices=['file', 'meta']),
+            typ=dict(default='file', choices=['file', 'meta']),
             meta=dict(type='dict', default={}),
             clear_meta=dict(choices=BOOLEANS, default=False, type='bool'),
             structure=dict(choices=BOOLEANS, default=True, type='bool'),
@@ -581,7 +580,7 @@ def main():
     src = module.params.get('src')
     dest = module.params.get('dest')
     method = module.params.get('method')
-    typ = module.params.get('type')
+    typ = module.params.get('typ')
     meta = module.params.get('meta')
     clear_meta = module.params.get('clear_meta')
     structure = module.params.get('structure')
