@@ -125,6 +125,11 @@ class Play(object):
         self.su               = ds.get('su', self.playbook.su)
         self.su_user          = ds.get('su_user', self.playbook.su_user)
 
+        # Fail out if user specifies a sudo param with a su param in a given play
+        if (ds.get('sudo') or ds.get('sudo_user')) and (ds.get('su') or ds.get('su_user')):
+            raise errors.AnsibleError('sudo params ("sudo", "sudo_user") and su params '
+                                      '("su", "su_user") cannot be used together')
+
         load_vars = {}
         load_vars['playbook_dir'] = self.basedir
         if self.playbook.inventory.basedir() is not None:
