@@ -33,8 +33,11 @@ def setup_rax_module(module, rax_module):
         rax_module.set_setting('identity_type', 'rackspace')
 
         if api_key and username:
-            rax_module.set_credentials(username, api_key=api_key,
-                                       region=region)
+            if api_key == 'USE_KEYRING':
+                rax_module.keyring_auth(username)
+            else:
+                rax_module.set_credentials(username, api_key=api_key,
+                                           region=region)
         elif credentials:
             credentials = os.path.expanduser(credentials)
             rax_module.set_credential_file(credentials, region=region)
