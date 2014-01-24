@@ -26,11 +26,11 @@ description:
  - sosreport is a tool for collecting current system state information into an archive.
  - The sosreport module will always be executed in batch mode.
  - The sosreport module is restricted to RHEL based distributions for availability reasons.
-version_added: "0.0"
+version_added: "1.5"
 options:
-    archive_name:
+    name:
         description:
-             - Specify the archive name that will be created.
+             - Specify a name to be included in the archive name.
         required: false
         default: null
     ticket_number:
@@ -70,80 +70,73 @@ author: Richard Isaacson
 
 EXAMPLES = '''
 # Execute sosreport creating an archive with a provided name.
-- sosreport: archive_name="server"
+- sosreport: name="server"
 '''
 
+from cStringIO import StringIO
 import os
 import tempfile
 
-SOSCMD = "/usr/bin/sosreport"
-
 #================================================
+
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            archive_name=dict(required=False),
-            ticket_number=dict(required=False),
-            skip_plugins=dict(required=False),
-            enable_plugins=dict(required=True)
-            only_plugins=dict(required=True)
-            config_file=dict(required=True)
-            tmp_dir=dict(required=True)
+        argument_spec=dict(
+            name=dict(required=False, type='str'),
+            ticket_number=dict(required=False, type='int'),
+            skip_plugins=dict(required=False, type='str'),
+            enable_plugins=dict(required=False, type='str'),
+            only_plugins=dict(required=False, type='str'),
+            config_file=dict(required=False, type='str'),
+            tmp_dir=dict(required=False, type='str')
         ),
-        supports_check_mode = False,
+        supports_check_mode=False
     )
 
-    archive_name   = module.params['archive_name']
-    ticket_number  = module.params['ticket_nuber']
+    sosreport_path = module.get_bin_path('sosreport', True)
+
+    name           = module.params['name']
+    ticket_number  = module.params['ticket_number']
     skip_plugins   = module.params['skip_plugins']
     enable_plugins = module.params['enable_plugins']
     only_plugins   = module.params['only_plugins']
     config_file    = module.params['config_file']
     tmp_dir        = module.params['tmp_dir']
 
-#TODO: if this is not a RHEL based distro fail.
+# TODO: if this is not a RHEL based distro fail.
 
-    if (skip plugins or enable_plugins) and only_plugins:
+    if (skip_plugins or enable_plugins) and only_plugins:
         module.fail_json(msg="skip_plugins or enable_plugins and only_plugins are mutually exclusive")
 
-    result = {}
+    result = {'changed': False}
 
-    sosreport_command = "%s --batch" % (SOSCMD)
-    rc, out, err = module.run_command(sosreport_command)
-    if rc != 0:
-        module.fail_json(msg=err)
+    sosreport_command = "%s --batch" % sosreport_path
+    if skip_plugins:
+        sosreport_command = "%s --skip-plugins %s" % (sosreport_command, skip_plugins)
+    if enable_plugins:
+        sosreport_command = "%s --enable-plugins %s" % (sosreport_command, enable_plugins)
+    if only_plugins:
+        sosreport_command = "%s --only-plugins %s" % (sosreport_command, only_plugins)
+    if config_file:
+        sosreport_command = "%s --config-file %s" % (sosreport_command, config_file)
+    if name:
+        sosreport_command = "%s --name %s" % (sosreport_command, name)
+    if ticket_number:
+        sosreport_command = "%s --ticket-number %s" % (sosreport_command, ticket_number)
+    if tmp_dir:
+        sosreport_command = "%s --tmp-dir %s" % (sosreport_command, tmp_dir)
 
+    result['command'] = sosreport_command
 
-    # result['unit_count'] = unit_count
-    # result['unit_type'] = unit_type
-
-    # if command:
-    #     filed, path = tempfile.mkstemp(prefix='at')
-    #     result['script_file'] = path
-    #     fileh = os.fdopen(filed, 'w')
-    #     fileh.write(command)
-    #     fileh.close()
-    #     at_command = "%s now + %s %s -f %s" % (ATCMD, unit_count, unit_type, path)
-    #     if user:
-    #         at_command = "chown %s %s; su '%s' -c '%s'" % (user, path, user, at_command)
-    #     rc, out, err = module.run_command(at_command)
-    #     if rc != 0:
-    #         module.fail_json(msg=err)
-    #     os.unlink(path)
-    #     result['changed'] = 'true'
-    # elif script_file:
-    #     result['script_file'] = script_file
-    #     at_command = "%s now + %s %s -f %s" % (ATCMD, unit_count, unit_type, script_file)
-    #     if user:
-    #     	# We expect that if this is an installed the permissions are already correct for the user to execute it.
-    #         at_command = "su '%s' -c '%s'" % (user, at_command)
-    #     rc, out, err = module.run_command(at_command)
-    #     if rc != 0:
-    #         module.fail_json(msg=err)
-    #     result['changed'] = 'true'
-    # else:
-    #     module.fail_json(msg="command or script_file not specified")
+    rc, out, err = module.run_command(sosreport_command, check_rc=True)
+    result['changed'] = True
+    in_string = StringIO(out)
+    while True:
+        in_line = in_string.readline()
+        if in_line == '': break
+        if 'Your sosreport has been generated and saved in:' in in_line:
+            result['file'] = in_string.readline().strip()
 
     module.exit_json(**result)
 
