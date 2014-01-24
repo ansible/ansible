@@ -150,10 +150,8 @@ class Connection(object):
 
         ssh_cmd = self._password_cmd()
         ssh_cmd += ["ssh", "-C"]
-        if not in_data:
-            # we can only use tty when we are not pipelining the modules. piping data into /usr/bin/python
-            # inside a tty automatically invokes the python interactive-mode but the modules are not
-            # compatible with the interactive-mode ("unexpected indent" mainly because of empty lines)
+        requireTTY = True
+        if requireTTY:
             ssh_cmd += ["-tt"]
         if utils.VERBOSITY > 3:
             ssh_cmd += ["-vvv"]
@@ -164,6 +162,24 @@ class Connection(object):
         if self.ipv6:
             ssh_cmd += ['-6']
         ssh_cmd += [self.host]
+
+        python_shebang = "/usr/bin/python"
+        if requireTTY and in_data and python_shebang in cmd:
+            # pipelining data to the python interpreter is very slow when run inside a TTY
+            # because it automatically enters the python interactive shell and code
+            # has to be sent line by line. Use the /usr/bin/python -c flag instead
+
+            in_data = utils.sanitize_module(in_data) 
+
+            # __file__ is not defined in this case
+            in_data = '__file__ = "interactive"\n' + in_data
+
+            # new python command
+            cmd_py = python_shebang + ' -c ' + pipes.quote(in_data)
+
+            # new command. replace and not concat because in some cases we have /usr/bin/python; rm tmp-path
+            cmd = cmd.replace( python_shebang, cmd_py, 1)
+            in_data = None
 
         if su and su_user:
             sudocmd, prompt, success_key = utils.make_su_cmd(su_user, executable, cmd)
@@ -177,7 +193,9 @@ class Connection(object):
             sudocmd, prompt, success_key = utils.make_sudo_cmd(sudo_user, executable, cmd)
             ssh_cmd.append(sudocmd)
 
-        vvv("EXEC %s" % ssh_cmd, host=self.host)
+        vvv_marker = "python"
+        vvv("EXEC %s" % (' '.join(ssh_cmd).split(vvv_marker,1)[0]), host=self.host)
+        #vvv("EXEC %s" % (ssh_cmd), host=self.host)
 
         not_in_host_file = self.not_in_host_file(self.host)
 
@@ -188,7 +206,7 @@ class Connection(object):
             fcntl.lockf(self.runner.output_lockfile, fcntl.LOCK_EX)
 
         # create process
-        if in_data:
+        if not requireTTY:
             # do not use pseudo-pty
             p = subprocess.Popen(ssh_cmd, stdin=subprocess.PIPE,
                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
