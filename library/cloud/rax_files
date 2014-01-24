@@ -19,19 +19,34 @@
 
 DOCUMENTATION = '''
 ---
+<<<<<<< HEAD
 module: rax_files
 short_description: Manipulate Rackspace Cloud Files Containers
 description:
   - Manipulate Rackspace Cloud Files Containers
+=======
+module:
+short_description: create, fetch, and delete objects in Rackspace Cloud Files
+description:
+  - Upload, download, and delete objects in Rackspace Cloud Files
+>>>>>>> parent of c3408f2... Revert "Merge pull request #5540 from angstwad/cf-container-module"
 version_added: "1.5"
 options:
   api_key:
     description:
+<<<<<<< HEAD
       - Rackspace API key (overrides I(credentials))
   clear_meta:
     description:
       - Optionally clear existing metadata when applying metadata to existing containers.
         Selecting this option is only appropriate when setting type=meta
+=======
+      - Rackspace API key (overrides I(credentials))requirements: [ "pyrax" ]
+  clear_meta:
+    description:
+      - Optionally clear existing metadata when applying metadata to existing containers.
+      - Selecting this option is only appropriate when setting type=meta
+>>>>>>> parent of c3408f2... Revert "Merge pull request #5540 from angstwad/cf-container-module"
     choices: ["yes", "no"]
     default: "no"
   container:
@@ -49,9 +64,14 @@ options:
       - A hash of items to set as metadata values on a container
   private:
     description:
+<<<<<<< HEAD
       - Used to set a container as private, removing it from the CDN.  B(Warning!)
         Private containers, if previously made public, can have live objects
         available until the TTL on cached objects expires
+=======
+      - Used to set a container as private, removing it from the CDN.
+      - Warning: Private containers, if previously made public, can have live objects available until the TTL on cached objects expires
+>>>>>>> parent of c3408f2... Revert "Merge pull request #5540 from angstwad/cf-container-module"
   public:
     description:
       - Used to set a container as public, available via the Cloud Files CDN
@@ -61,11 +81,19 @@ options:
     default: DFW
   ttl:
     description:
+<<<<<<< HEAD
       - In seconds, set a container-wide TTL for all objects cached on CDN edge nodes.
         Setting a TTL is only appropriate for containers that are public
   type:
     description:
       - Type of object to do work on, i.e. metadata object or a container object
+=======
+      - In seconds, set a container-wide TTL for all objects cached on CDN edge nodes
+      - Setting a TTL is only appropriate for containers that are public
+  type:
+    description:
+      - Type of object to do work on: metadata object or a container object
+>>>>>>> parent of c3408f2... Revert "Merge pull request #5540 from angstwad/cf-container-module"
     choices: ["file", "meta"]
     default: "file"
   username:
@@ -89,6 +117,10 @@ notes:
 '''
 
 EXAMPLES = '''
+<<<<<<< HEAD
+=======
+---
+>>>>>>> parent of c3408f2... Revert "Merge pull request #5540 from angstwad/cf-container-module"
 - name: "Test Cloud Files Containers"
   hosts: local
   gather_facts: no
