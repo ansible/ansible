@@ -413,3 +413,11 @@ class TestInventory(unittest.TestCase):
     #                    'inventory_hostname_short': 'zeus',
     #                    'group_names': ['greek', 'major-god', 'ungrouped'],
     #                    'var_a': '1#2'}
+
+    def test_dir_inventory_multiple_groups(self):
+         inventory = self.dir_inventory()
+         group_greek = inventory.get_group('greek')
+         group_major_god = inventory.get_group('major-god')
+         actual_host_names = [host.name for host in group_greek.get_hosts()];
+         print "%s : %s " % (group_greek.name, actual_host_names)
+         assert actual_host_names == ['zeus','morpheus'] 
