@@ -25,7 +25,7 @@ options:
   key_name:
     description:
       - key pair to use on the instance
-    required: true
+    required: false
     default: null
     aliases: ['keypair']
   id:
@@ -655,8 +655,6 @@ def main():
 
     elif module.params.get('state') == 'present':
         # Changed is always set to true when provisioning new instances
-        if not module.params.get('key_name'):
-            module.fail_json(msg='key_name parameter is required for new instance')
         if not module.params.get('image'):
             module.fail_json(msg='image parameter is required for new instance')
         (instance_dict_array, new_instance_ids, changed) = create_instances(module, ec2)
