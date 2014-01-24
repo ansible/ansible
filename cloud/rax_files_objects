@@ -199,7 +199,7 @@ except ImportError, e:
     print("failed=True msg='pyrax is required for this module'")
     sys.exit(1)
 
-EXIT_DICT = {'success': False}
+EXIT_DICT = dict(success=False)
 META_PREFIX = 'x-object-meta-'
 
 
@@ -257,9 +257,9 @@ def upload(module, cf, container, src, dest, meta, expires):
     num_objs_after = len(c.get_object_names())
 
     if not meta:
-        meta = {}
+        meta = dict()
 
-    meta_result = {}
+    meta_result = dict()
     if meta:
         if cont_obj:
             meta_result = cont_obj.set_metadata(meta)
@@ -294,9 +294,7 @@ def upload(module, cf, container, src, dest, meta, expires):
     if cont_obj or locals().get('bytes'):
         EXIT_DICT['changed'] = True
     if meta_result:
-        EXIT_DICT['meta'] = {
-            'updated': True
-        }
+        EXIT_DICT['meta'] = dict(updated=True)
 
     if cont_obj:
         EXIT_DICT['bytes'] = cont_obj.total_bytes
@@ -431,14 +429,18 @@ def get_meta(module, cf, container, src, dest):
     else:
         objs = c.get_object_names()
 
-    results = {}
+    results = dict()
     for obj in objs:
         try:
             meta = c.get_object(obj).get_metadata()
         except Exception, e:
             module.fail_json(msg=e.message)
         else:
-            results[obj] = {k.split(META_PREFIX)[-1]: v for k, v in meta.iteritems()}
+            results[obj] = dict()
+            for k, v in meta.items():
+                meta_key = k.split(META_PREFIX)[-1]
+                results[obj][meta_key] = v
+
 
     EXIT_DICT['container'] = c.name
     if results:
@@ -452,7 +454,6 @@ def put_meta(module, cf, container, src, dest, meta, clear_meta):
     Passing a true value to clear_meta clears the metadata stored in Cloud
     Files before setting the new metadata to the value of "meta".
     """
-
     objs = None
     if src and dest:
         module.fail_json(msg="Error: ambiguous instructions; files to set meta"
@@ -570,7 +571,7 @@ def main():
             dest=dict(),
             method=dict(default='get', choices=['put', 'get', 'delete']),
             type=dict(default='file', choices=['file', 'meta']),
-            meta=dict(type='dict', default={}),
+            meta=dict(type='dict', default=dict()),
             clear_meta=dict(choices=BOOLEANS, default=False, type='bool'),
             structure=dict(choices=BOOLEANS, default=True, type='bool'),
             expires=dict(type='int'),
