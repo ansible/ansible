@@ -155,7 +155,7 @@ except ImportError, e:
     print("failed=True msg='pyrax is required for this module'")
     sys.exit(1)
 
-EXIT_DICT = {'success': True}
+EXIT_DICT = dict(success=True)
 META_PREFIX = 'x-container-meta-'
 USER_AGENT = "Ansible/%s via pyrax" % __version__
 
@@ -168,10 +168,11 @@ def _get_container(module, cf, container):
 
 
 def _fetch_meta(module, container):
+    EXIT_DICT['meta'] = dict()
     try:
-        EXIT_DICT['meta'] = {
-            k.split(META_PREFIX)[-1]: v for k, v in container.get_metadata().items()
-        }
+        for k, v in container.get_metadata().items():
+            split_key = k.split(META_PREFIX)[-1]
+            EXIT_DICT['meta'][split_key] = v
     except Exception, e:
         module.fail_json(msg=e.message)
 
@@ -267,12 +268,10 @@ def container(cf, module, container_, state, meta_, clear_meta, ttl, public, pri
         except Exception, e:
             module.fail_json(msg=e.message)
         else:
-            EXIT_DICT['container_urls'] = {
-                'url': c.cdn_uri,
-                'ssl_url': c.cdn_ssl_uri,
-                'streaming_url': c.cdn_streaming_uri,
-                'ios_uri': c.cdn_ios_uri
-            }
+            EXIT_DICT['container_urls'] = dict(url=c.cdn_uri,
+                                               ssl_url=c.cdn_ssl_uri,
+                                               streaming_url=c.cdn_streaming_uri,
+                                               ios_uri=c.cdn_ios_uri)
 
     if private:
         try:
@@ -337,7 +336,7 @@ def main():
         dict(
             container=dict(),
             state=dict(choices=['present', 'absent', 'list'], default='present'),
-            meta=dict(type='dict', default={}),
+            meta=dict(type='dict', default=dict()),
             clear_meta=dict(choices=BOOLEANS, default=False, type='bool'),
             type=dict(choices=['container', 'meta'], default='container'),
             ttl=dict(type='int'),
