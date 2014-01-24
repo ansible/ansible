@@ -59,7 +59,7 @@ def setup_rax_module(module, rax_module):
     try:
         if api_key and username:
             if api_key == 'USE_KEYRING':
-                rax_module.keyring_auth(username)
+                rax_module.keyring_auth(username, region=region)
             else:
                 rax_module.set_credentials(username, api_key=api_key,
                                            region=region)
