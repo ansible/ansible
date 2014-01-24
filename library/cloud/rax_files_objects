@@ -19,34 +19,55 @@
 
 DOCUMENTATION = '''
 ---
+<<<<<<< HEAD
 module: rax_files_objects
 short_description: Upload, download, and delete objects in Rackspace Cloud Files
+=======
+module:
+short_description: create, fetch, and delete objects in Rackspace Cloud Files
+>>>>>>> parent of b11d622... Revert "Merge pull request #5496 from angstwad/cf-module"
 description:
   - Upload, download, and delete objects in Rackspace Cloud Files
 version_added: "1.5"
 options:
   api_key:
     description:
+<<<<<<< HEAD
       - Rackspace API key (overrides I(credentials))
     default: null
   clear_meta:
     description:
       - Optionally clear existing metadata when applying metadata to existing objects.
         Selecting this option is only appropriate when setting type=meta
+=======
+      - Rackspace API key (overrides I(credentials))requirements: [ "pyrax" ]
+  clear_meta:
+    description:
+      - Optionally clear existing metadata when applying metadata to existing objects.
+      - Selecting this option is only appropriate when setting typ=meta
+>>>>>>> parent of b11d622... Revert "Merge pull request #5496 from angstwad/cf-module"
     choices: ["yes", "no"]
     default: "no"
   container:
     description:
       - The container to use for file object operations.
     required: true
+<<<<<<< HEAD
     default: null
   credentials:
     description:
       - File to find the Rackspace credentials in (ignored if I(api_key) and I(username) are provided)
+=======
+  credentials:
+    description:
+      - File to find the Rackspace credentials in (ignored if I(api_key) and
+        I(username) are provided)
+>>>>>>> parent of b11d622... Revert "Merge pull request #5496 from angstwad/cf-module"
     default: null
     aliases: ['creds_file']
   dest:
     description:
+<<<<<<< HEAD
       - The destination of a "get" operation; i.e. a local directory, "/home/user/myfolder".
         Used to specify the destination of an operation on a remote object; i.e. a file name,
         "file1", or a comma-separated list of remote objects, "file1,file2,file17"
@@ -64,10 +85,29 @@ options:
       - The method of operation to be performed.  For example, put to upload files
         to Cloud Files, get to download files from Cloud Files or delete to delete
         remote objects in Cloud Files
+=======
+      - The destination of a "get" operation; i.e. a local directory, "/home/user/myfolder"
+      - Used to specify the destination of an operation on a remote object; i.e. a file name,
+      "file1", or a comma-separated list of remote objects, "file1,file2,file17"
+  expires:
+    description:
+      - Used to set an expiration on a file or folder uploaded to Cloud Files
+      - Requires an integer, specifying expiration in seconds
+  meta:
+    description:
+      - A hash of items to set as metadata values on an uploaded file or folder
+  method:
+    description:
+      - The method of operation to be performed: put, get, delete
+      - Put to upload files to Cloud Files
+      - Get to download files from Cloud Files
+      - Delete to delete remote objects in Cloud Files
+>>>>>>> parent of b11d622... Revert "Merge pull request #5496 from angstwad/cf-module"
     choices: ["get", "put", "delete"]
     default: "get"
   region:
     description:
+<<<<<<< HEAD
       - Region in which to work.  Maps to a Rackspace Cloud region, i.e. DFW, ORD, IAD, SYD, LON
     default: DFW
   src:
@@ -87,11 +127,31 @@ options:
     description:
       - Type of object to do work on
       - Metadata object or a file object
+=======
+      - Region to create an instance in
+    default: DFW
+  src:
+    description:
+      - Source from which to upload files
+      - Used to specify a remote object as a source for an operation, i.e. a file name,
+      "file1", or a comma-separated list of remote objects, "file1,file2,file17"
+      - src and dest are mutually exclusive on remote-only object operations
+  structure:
+    description:
+      - Used to specify whether to maintain nested directory structure when downloading objects from Cloud Files
+      - Setting to false downloads the contents of a container to a single, flat directory
+    choices: ["yes", "no"]
+    default: "yes"
+  typ:
+    description:
+      - Type of object to do work on: metadata object or a file object
+>>>>>>> parent of b11d622... Revert "Merge pull request #5496 from angstwad/cf-module"
     choices: ["file", "meta"]
     default: "file"
   username:
     description:
       - Rackspace username (overrides I(credentials))
+<<<<<<< HEAD
     default: null
 requirements: [ "pyrax" ]
 author: Paul Durivage
@@ -100,6 +160,15 @@ notes:
     C(RAX_CREDS_FILE), C(RAX_CREDENTIALS), C(RAX_REGION).
   - C(RAX_CREDENTIALS) and C(RAX_CREDS_FILE) points to a credentials file appropriate
     for pyrax. See U(https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating)
+=======
+requirements: [ "pyrax" ]
+author: Paul Durivage
+notes:
+  - The following environment variables can be used, C(RAX_USERNAME),
+    C(RAX_API_KEY), C(RAX_CREDS_FILE), C(RAX_CREDENTIALS), C(RAX_REGION).
+  - C(RAX_CREDENTIALS) and C(RAX_CREDS_FILE) points to a credentials file
+    appropriate for pyrax. See U(https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating)
+>>>>>>> parent of b11d622... Revert "Merge pull request #5496 from angstwad/cf-module"
   - C(RAX_USERNAME) and C(RAX_API_KEY) obviate the use of a credentials file
   - C(RAX_REGION) defines a Rackspace Public Cloud region (DFW, ORD, LON, ...)
 '''
