@@ -45,6 +45,13 @@ galaxy_info:
   author: {{ author }}
   description: {{description}}
   company: {{ company }}
+  # Some suggested licenses:
+  # - BSD (default)
+  # - MIT
+  # - GPLv2
+  # - GPLv3
+  # - Apache
+  # - CC-BY
   license: {{ license }}
   min_ansible_version: {{ min_ansible_version }}
   #
