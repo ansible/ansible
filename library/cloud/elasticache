@@ -68,7 +68,11 @@ options:
     description:
       - A list of cache security group names to associate with this cache cluster
     required: false
-    default: ['default']
+  cache_subnet_group_name:
+    description:
+      - The name of the cache subnet group to be used for the cache cluster.
+    required: false
+    version_added: "1.5"
   zone:
     description:
       - The EC2 Availability Zone in which the cache cluster will be created
@@ -88,7 +92,7 @@ options:
     choices: [ "yes", "no" ]
   aws_secret_key:
     description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
+      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used.
     required: false
     default: None
     aliases: ['ec2_secret_key', 'secret_key']
@@ -124,7 +128,6 @@ EXAMPLES = """
       - default
     zone: us-east-1d
 
-
 # Ensure cache cluster is gone
 - local_action:
     module: elasticache
@@ -137,6 +140,12 @@ EXAMPLES = """
     name: "test-please-delete"
     state: rebooted
 
+# Non default vpc
+- local_action:
+    module: elasticache
+    name: non-default-vpc-cache
+    cache_subnet_group_name: non-default-vpc-subnet-group-name
+    state: present
 """
 
 import sys
@@ -158,7 +167,8 @@ class ElastiCacheManager(object):
     EXIST_STATUSES = ['available', 'creating', 'rebooting', 'modifying']
 
     def __init__(self, module, name, engine, cache_engine_version, node_type,
-                 num_nodes, cache_port, cache_security_groups, security_group_ids, zone, wait,
+                 num_nodes, cache_port, cache_security_groups,
+                 cache_subnet_group_name, security_group_ids, zone, wait,
                  hard_modify, aws_access_key, aws_secret_key, region):
         self.module = module
         self.name = name
@@ -167,6 +177,7 @@ class ElastiCacheManager(object):
         self.node_type = node_type
         self.num_nodes = num_nodes
         self.cache_port = cache_port
+        self.cache_subnet_group_name = cache_subnet_group_name
         self.cache_security_groups = cache_security_groups
         self.security_group_ids = security_group_ids
         self.zone = zone
@@ -224,6 +235,7 @@ class ElastiCacheManager(object):
                                                       engine=self.engine,
                                                       engine_version=self.cache_engine_version,
                                                       cache_security_group_names=self.cache_security_groups,
+                                                      cache_subnet_group_name=self.cache_subnet_group_name,
                                                       security_group_ids=self.security_group_ids,
                                                       preferred_availability_zone=self.zone,
                                                       port=self.cache_port)
@@ -484,8 +496,9 @@ def main():
             node_type={'required': False, 'default': 'cache.m1.small'},
             num_nodes={'required': False, 'default': None, 'type': 'int'},
             cache_port={'required': False, 'default': 11211, 'type': 'int'},
-            cache_security_groups={'required': False, 'default': ['default'],
+            cache_security_groups={'required': False, 'default': None,
                                    'type': 'list'},
+            cache_subnet_group_name={'required': False, 'default': None},
             security_group_ids={'required': False, 'default': [],
                                    'type': 'list'},
             zone={'required': False, 'default': None},
@@ -508,6 +521,7 @@ def main():
     num_nodes = module.params['num_nodes']
     cache_port = module.params['cache_port']
     cache_security_groups = module.params['cache_security_groups']
+    cache_subnet_group_name = module.params['cache_subnet_group_name']
     security_group_ids = module.params['security_group_ids']
     zone = module.params['zone']
     wait = module.params['wait']
@@ -522,6 +536,7 @@ def main():
     elasticache_manager = ElastiCacheManager(module, name, engine,
                                              cache_engine_version, node_type,
                                              num_nodes, cache_port,
+                                             cache_subnet_group_name,
                                              cache_security_groups,
                                              security_group_ids, zone, wait,
                                              hard_modify, aws_access_key,
