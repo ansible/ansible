@@ -45,7 +45,8 @@ def setup_rax_module(module, rax_module):
         username = username or os.environ.get('RAX_USERNAME')
         if not username:
             username = rax_module.get_setting('keyring_username')
-            api_key = 'USE_KEYRING'
+            if username:
+                api_key = 'USE_KEYRING'
         if not api_key:
             api_key = os.environ.get('RAX_API_KEY')
         credentials = (credentials or os.environ.get('RAX_CREDENTIALS') or
