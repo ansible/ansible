@@ -45,8 +45,6 @@ def setup_rax_module(module, rax_module):
         module.fail_json(msg='Unable to load %s' % e.message)
 
     try:
-        rax_module.set_setting('identity_type', 'rackspace')
-
         if api_key and username:
             if api_key == 'USE_KEYRING':
                 rax_module.keyring_auth(username)
