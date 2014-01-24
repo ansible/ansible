@@ -628,7 +628,7 @@ class Runner(object):
         actual_transport = inject.get('ansible_connection', self.transport)
         actual_private_key_file = inject.get('ansible_ssh_private_key_file', self.private_key_file)
         self.sudo_pass = inject.get('ansible_sudo_pass', self.sudo_pass)
-        self.su = inject.get('ansible_su', self.su_pass)
+        self.su = inject.get('ansible_su', self.su)
         self.su_user = inject.get('ansible_su_user', self.su_user)
         self.su_pass = inject.get('ansible_su_pass', self.su_pass)
 
@@ -843,7 +843,7 @@ class Runner(object):
 
         # compare connection user to sudo_user and disable if the same
         if hasattr(conn, 'user'):
-            if conn.user == sudo_user or conn.user == su_user:
+            if (conn.user == sudo_user and not su) or (conn.user == su_user and su):
                 sudoable = False
                 su = False
 
