@@ -193,7 +193,8 @@ class Runner(object):
         self.callbacks.runner = self
         self.original_transport = self.transport
         self.su               = su
-        self.su_user          = su_user
+        self.su_user_var      = su_user
+        self.su_user          = None
         self.su_pass          = su_pass
 
         if self.transport == 'smart':
@@ -585,6 +586,8 @@ class Runner(object):
         # late processing of parameterized sudo_user (with_items,..)
         if self.sudo_user_var is not None:
             self.sudo_user = template.template(self.basedir, self.sudo_user_var, inject)
+        if self.su_user_var is not None:
+            self.su_user = template.template(self.basedir, self.su_user_var, inject)
 
         # allow module args to work as a dictionary
         # though it is usually a string
@@ -629,7 +632,6 @@ class Runner(object):
         actual_private_key_file = inject.get('ansible_ssh_private_key_file', self.private_key_file)
         self.sudo_pass = inject.get('ansible_sudo_pass', self.sudo_pass)
         self.su = inject.get('ansible_su', self.su_pass)
-        self.su_user = inject.get('ansible_su_user', self.su_user)
         self.su_pass = inject.get('ansible_su_pass', self.su_pass)
 
         if actual_private_key_file is not None:
