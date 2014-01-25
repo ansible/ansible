@@ -460,10 +460,13 @@ class PlayBook(object):
     def _do_setup_step(self, play):
         ''' get facts from the remote system '''
 
+        host_list = self._trim_unavailable_hosts(play._play_hosts)
+
+        for host in host_list:
+            self.SETUP_CACHE[host].update({ 'play_hosts': host_list })
+
         if play.gather_facts is False:
             return {}
-
-        host_list = self._trim_unavailable_hosts(play._play_hosts)
 
         self.callbacks.on_setup()
         self.inventory.restrict_to(host_list)
