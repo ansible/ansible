@@ -348,7 +348,7 @@ run ansible-playbook against that content.
 
 Assuming you load balance your checkout location, ansible-pull scales essentially infinitely.
 
-Run 'ansible-pull --help' for details.
+Run ``ansible-pull --help`` for details.
 
 There's also a `clever playbook <https://github.com/ansible/ansible-examples/blob/master/language_features/ansible_pull.yml>`_ available to using ansible in push mode to configure ansible-pull via a crontab!
 
@@ -362,7 +362,7 @@ and how they performed.   General failures and fatal "unreachable" communication
 kept separate in the counts.
 
 If you ever want to see detailed output from successful modules as well as unsuccessful ones,
-use the '--verbose' flag.  This is available in Ansible 0.5 and later.
+use the ``--verbose`` flag.  This is available in Ansible 0.5 and later.
 
 Ansible playbook output is vastly upgraded if the cowsay
 package is installed.  Try it!

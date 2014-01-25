@@ -359,8 +359,8 @@ Keep It Simple
 
 When you can do something simply, do something simply.  Do not reach
 to use every feature of Ansible together, all at once.  Use what works
-for you.  For example, you will probably not need 'vars',
-'vars_files', 'vars_prompt' and '--extra-vars' all at once,
+for you.  For example, you will probably not need ``vars``,
+``vars_files``, ``vars_prompt`` and ``--extra-vars`` all at once,
 while also using an external inventory file.
 
 .. _version_control:

@@ -72,7 +72,7 @@ Most people don't specify patterns as regular expressions, but you can.  Just st
 
     ~(web|db).*\.example\.com
 
-While we're jumping a bit ahead, additionally, you can add an exclusion criteria just by supplying the "--limit" flag to /usr/bin/ansible or /usr/bin/ansible-playbook::
+While we're jumping a bit ahead, additionally, you can add an exclusion criteria just by supplying the ``--limit`` flag to /usr/bin/ansible or /usr/bin/ansible-playbook::
 
     ansible-playbook site.yml --limit datacenter2
 

@@ -500,9 +500,9 @@ Similarly, the hostname as the system reports it is::
     {{ ansible_hostname }}
 
 
-Facts are frequently used in conditionals (see `playbook_conditionals`) and also in templates.
+Facts are frequently used in conditionals (see :doc:`playbook_conditionals`) and also in templates.
 
-Facts can be also used to create dynamic groups of hosts that match particular criteria, see the :doc:`modules` documentation on 'group_by' for details, as well as in generalized conditional statements as discussed in the `playbook_conditionals` chapter.
+Facts can be also used to create dynamic groups of hosts that match particular criteria, see the :doc:`modules` documentation on 'group_by' for details, as well as in generalized conditional statements as discussed in the :doc:`playbook_conditionals` chapter.
 
 .. _disabling_facts:
 
@@ -848,7 +848,7 @@ roles aren't you?  Hint hint.
 
 Ok, so if you are writing a redistributable role with reasonable defaults, put those in the 'roles/x/defaults/main.yml' file.  This means
 the role will bring along a default value but ANYTHING in Ansible will override it.  It's just a default.  That's why it says "defaults" :)
-See `intro_roles` for more info about this::
+See :doc:`playbooks_roles` for more info about this::
 
     ---
     # file: roles/x/defaults/main.yml
