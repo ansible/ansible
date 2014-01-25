@@ -267,7 +267,7 @@ class Inventory(object):
                         results.append(host)
                         hostnames.add(host.name)
 
-        if pattern in ["localhost", "127.0.0.1"] and len(results) == 0:
+        if pattern in ["localhost", "127.0.0.1", "::1"] and len(results) == 0:
             new_host = Host(pattern)
             new_host.set_variable("ansible_python_interpreter", sys.executable)
             new_host.set_variable("ansible_connection", "local")
@@ -315,9 +315,9 @@ class Inventory(object):
         return self._hosts_cache[hostname]
 
     def _get_host(self, hostname):
-        if hostname in ['localhost','127.0.0.1']:
+        if hostname in ['localhost','127.0.0.1','::1']:
             for host in self.get_group('all').get_hosts():
-                if host.name in ['localhost', '127.0.0.1']:
+                if host.name in ['localhost', '127.0.0.1', '::1']:
                     return host
         else:
             for group in self.groups:
@@ -374,7 +374,7 @@ class Inventory(object):
         """ return a list of hostnames for a pattern """
 
         result = [ h.name for h in self.get_hosts(pattern) ]
-        if len(result) == 0 and pattern in ["localhost", "127.0.0.1"]:
+        if len(result) == 0 and pattern in ["localhost", "127.0.0.1", "::1"]:
             result = [pattern]
         return result
 
