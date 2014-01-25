@@ -114,7 +114,7 @@ callback_plugins
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-   action_plugins = /usr/share/ansible_plugins/action_plugins
+   callback_plugins = /usr/share/ansible_plugins/callback_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
@@ -126,7 +126,7 @@ connection_plugins
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-   action_plugins = /usr/share/ansible_plugins/action_plugins
+   connection_plugins = /usr/share/ansible_plugins/connection_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
@@ -185,7 +185,7 @@ filter_plugins
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-   action_plugins = /usr/share/ansible_plugins/action_plugins
+   filter_plugins = /usr/share/ansible_plugins/filter_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
@@ -297,7 +297,7 @@ lookup_plugins
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-   action_plugins = /usr/share/ansible_plugins/action_plugins
+   lookup_plugins = /usr/share/ansible_plugins/lookup_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
@@ -476,7 +476,7 @@ vars_plugins
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-   action_plugins = /usr/share/ansible_plugins/action_plugins
+   vars_plugins = /usr/share/ansible_plugins/vars_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
