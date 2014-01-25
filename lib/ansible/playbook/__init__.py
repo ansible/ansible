@@ -346,6 +346,8 @@ class PlayBook(object):
             run_hosts=hosts
         )
 
+        runner.module_vars.update({'play_hosts': hosts})
+
         if task.async_seconds == 0:
             results = runner.run()
         else:
