@@ -47,6 +47,14 @@ options:
     description:
     - Control if the logical volume exists.
     required: false
+  force:
+    version_added: "1.5"
+    choices: [ "yes", "no" ]
+    default: "no"
+    description:
+    - Shrink or remove operations of volumes requires this switch. Ensures that
+      that filesystems get never corrupted/destroyed by mistake.
+    required: false
 notes:
   - Filesystems on top of the volume are not resized.
 '''
@@ -65,10 +73,10 @@ EXAMPLES = '''
 - lvol: vg=firefly lv=test size=1024
 
 # Reduce the logical volume to 512m
-- lvol: vg=firefly lv=test size=512
+- lvol: vg=firefly lv=test size=512 force=yes
 
 # Remove the logical volume.
-- lvol: vg=firefly lv=test state=absent
+- lvol: vg=firefly lv=test state=absent force=yes
 '''
 
 import re
@@ -94,6 +102,7 @@ def main():
             lv=dict(required=True),
             size=dict(),
             state=dict(choices=["absent", "present"], default='present'),
+            force=dict(type='bool', default='no'),
         ),
         supports_check_mode=True,
     )
@@ -102,6 +111,7 @@ def main():
     lv = module.params['lv']
     size = module.params['size']
     state = module.params['state']
+    force = module.boolean(module.params['force'])
     size_opt = 'L'
     size_unit = 'm'
 
@@ -179,12 +189,14 @@ def main():
                 if rc == 0:
                     changed = True
                 else:
-                    module.fail_json(msg="Creating logical volume '%s' failed" % (lv), rc=rc, err=err)
+                    module.fail_json(msg="Creating logical volume '%s' failed" % lv, rc=rc, err=err)
     else:
         if state == 'absent':
             ### remove LV
             if module.check_mode:
                 module.exit_json(changed=True)
+            if not force:
+                module.fail_json(msg="Sorry, no removal of logical volume %s without force=yes." % (this_lv['name']))
             rc, _, err = module.run_command("lvremove --force %s/%s" % (vg, this_lv['name']))
             if rc == 0:
                 module.exit_json(changed=True)
@@ -199,6 +211,8 @@ def main():
             if size > this_lv['size']:
                 tool = 'lvextend'
             elif size < this_lv['size']:
+                if not force:
+                    module.fail_json(msg="Sorry, no shrinking of %s without force=yes." % (this_lv['name']))
                 tool = 'lvreduce --force'
 
             if tool:
