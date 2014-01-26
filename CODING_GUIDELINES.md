@@ -160,17 +160,17 @@ Python Imports should happen at the top of the file, exempting code from module_
 
 When a conditional runtime import is required, do so something like this instead:
 
-   HAS_FOO = False
-   try:
-      import foo
-      HAS_FOO = True
-   except ImportError:
-      pass
+    HAS_FOO = False
+    try:
+       import foo
+       HAS_FOO = True
+    except ImportError:
+       pass
 
-   ...
+    ...
 
-   if not HAS_FOO:
-      raise Exception("the foo library is required")
+    if not HAS_FOO:
+       raise Exception("the foo library is required")
 
 This makes it clear what optional dependencies are but allows this to be deferred until runtime.   In the case of module code, the raising of the Exception will be replaced
 with a "module.exit_json" call.
@@ -180,32 +180,69 @@ Exceptions
 
 In the main body of the code, use typed exceptions where possible:
 
-   raise errors.AnsibleError("panic!")
+
+    raise errors.AnsibleError("panic!")
+
 
 versus:
 
-   raise Exception("panic!")
+
+    raise Exception("panic!")
 
 Similarly, exception checking should be fine grained:
 
-   # not this
-   try:
-      foo()
-   except:
-      bar()
+    # not this
+    try:
+       foo()
+    except:
+       bar()
 
-   # but this
-   try:
-      foo()
-   except SomeTypedException
-      bar()
+    # but this
+    try:
+       foo()
+    except SomeTypedException
+       bar()
 
 List Comprehensions
 ===================
 
 In general list comprehensions are always preferred to map() and filter() calls.
 
-However, they can be abused.  Optimize for readability, and avoid nesting them
+However, they can be abused.  Optimize for readability, and avoid nesting them too deeply.
+
+Regexes
+=======
+
+There is a time and place for them, but here's an illustrative joke.
+
+"A developer had a problem, and used a regular expression to solve it.  Now the developer had two problems".
+
+Often regexes are difficult to maintain, and a trusty call to "find" can be a great solution!
+
+
+Find
+====
+
+This expression:
+
+   if x.find('foo') != -1:
+      # blarg
+
+Should be written:
+ 
+   if 'foo' in x:
+      # blarg
+
+String checks
+=============
+
+To test if something is a string, consider that it may be unicode.
+
+    # no
+    if type(x) == str:
+
+    # yes
+    if isintance(x, basestr):
 
 Cleverness
 ==========
