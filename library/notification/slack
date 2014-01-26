@@ -43,14 +43,34 @@ options:
       - Gives the user an icon represented by the content of the URL. The URL
         should point to an image. Ex: "https://slack.com/img/icons/app-57.png"
     required: false
+  attachments:
+    description:
+      - Allows to build more richly-formatted messages.
+    required: false
 author: Jonas Pfenniger <zimbatm@zimbatm.com>
 '''
 
 EXAMPLES = '''
+# Simple example
 - slack: >
     domain=example.slack.com
     token=xsKhh7TZyXSWX9VHBvCWZDZg
     text=deploying my-app
+
+# Example with attachments
+- slack: domain=example.slack.com token=xsKhh7TZyXSWX9VHBvCWZDZg
+  args:
+    text: deploying
+    attachments:
+    - fallback: my-app on {{ ansible_hostname }}
+      color: good
+      fields:
+      - title: app
+        value: my-app
+        short: true
+      - title: host
+        value: "{{ ansible_hostname }}"
+        short: true
 '''
 
 import json
@@ -92,6 +112,7 @@ def main():
             username = dict(type='str', required=False),
             icon_url = dict(type='str', required=False),
             icon_emoji = dict(type='str', required=False),
+            attachments = dict(type='list', required=False),
         )
     )
 
@@ -100,7 +121,7 @@ def main():
     text = module.params['text']
 
     extra = slice_dict(module.params, 'channel', 'username', 'icon_emoji',
-            'icon_url')
+            'icon_url', 'attachments')
 
     ret = do_notify_slack(module, domain, token, text, extra)
 
