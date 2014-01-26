@@ -208,7 +208,7 @@ Similarly, exception checking should be fine grained:
     # but this
     try:
        foo()
-    except SomeTypedException
+    except SomeTypedException:
        bar()
 
 List Comprehensions
