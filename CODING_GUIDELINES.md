@@ -25,6 +25,15 @@ PEP8 and basic style checks
   * There is no need to submit code changes for pep8 and pyflake fixes, as these break attribution history.  Project leadership will make these periodically.
   * Do not submit pull requests that simply adjust whitespace in the code
 
+Testing
+=======
+
+  * Much of ansible's testing needs are in integration, not unit tests.  We're working on releasing wide array of integration tests that use modules in a live environment.
+  * That being said, there are unit tests
+  * Code written must absolutely pass unit tests (i.e. "make tests")
+  * You should anticipate any error paths in your code and test down those error paths.
+  * Additions to unit tests for core code is welcome, but modules tend to be more integration-testey, so it's not always possible to add them (examples: ec2, etc).
+
 Whitespace
 ==========
 
@@ -179,15 +188,14 @@ Exceptions
 ==========
 
 In the main body of the code, use typed exceptions where possible:
-
-
-    raise errors.AnsibleError("panic!")
-
-
-versus:
-
-
+    
+    # not this
     raise Exception("panic!")
+
+    # this
+    from ansible import errors
+    ...
+    raise errors.AnsibleError("panic!")
 
 Similarly, exception checking should be fine grained:
 
@@ -217,21 +225,33 @@ There is a time and place for them, but here's an illustrative joke.
 
 "A developer had a problem, and used a regular expression to solve it.  Now the developer had two problems".
 
-Often regexes are difficult to maintain, and a trusty call to "find" can be a great solution!
+Often regexes are difficult to maintain, and a trusty call to other string operations can be a great solution, faster,
+and more readable.
 
+File Conventions
+================
 
-Find
-====
+If a piece of code looks for a named YAML file in a directory, it should assume it can take no extension, or an extension of '.yml' or '.yaml'.
+This should be true against all code that loads files.
 
-This expression:
+Any code that uses directories should consider the possibility that the directory may be symlink.
 
-   if x.find('foo') != -1:
-      # blarg
+New Ansible language parameters
+===============================
 
-Should be written:
- 
-   if 'foo' in x:
-      # blarg
+If adding a new parameter, like 'can_fizzbuzz: True/False' be sure the value of the parameter is templated somewhere in the Runner code, as if anything can be parameterized in Ansible,
+there is a user that will try to parameterize it.
+
+String Find
+===========
+
+Use 'in':
+
+    # not this:
+    if x.find('foo') != -1:
+
+    # this: 
+    if 'foo' in x:
 
 String checks
 =============
