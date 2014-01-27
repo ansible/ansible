@@ -143,7 +143,7 @@ def url_do_get(module, url, dest, use_proxy, last_mod_time):
 
     parsed = urlparse.urlparse(url)
 
-    if '@' in parsed[1]:
+    if '@' in parsed[1] and parsed.scheme in ['http','https']:
         credentials, netloc = parsed[1].split('@', 1)
         if ':' in credentials:
             username, password = credentials.split(':', 1)
