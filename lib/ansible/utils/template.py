@@ -547,6 +547,8 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
         except TypeError, te:
             if 'StrictUndefined' in str(te):
                 raise errors.AnsibleUndefinedVariable("unable to look up a name or access an attribute in template string")
+            else:
+                raise errors.AnsibleError("an unexpected type error occured. Error was %s" % te)
         return res
     except (jinja2.exceptions.UndefinedError, errors.AnsibleUndefinedVariable):
         if fail_on_undefined:
