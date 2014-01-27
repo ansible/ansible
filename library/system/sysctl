@@ -120,10 +120,7 @@ class SysctlModule(object):
 
         # Whitespace is bad
         self.args['name'] = self.args['name'].strip()
-        if self.args['value'] is not None:
-            self.args['value'] = self.args['value'].strip()
-        else:
-            self.args['value'] = ""
+        self.args['value'] = self._parse_value(self.args['value'])
 
         thisname = self.args['name']
 
@@ -175,6 +172,16 @@ class SysctlModule(object):
             return False
 
         return len([i for i, j in zip(a, b) if i == j]) == len(a)
+
+    def _parse_value(self, value):
+        if value is None:
+            return ''
+        elif value.lower() in BOOLEANS_TRUE:
+            return '1'
+        elif value.lower() in BOOLEANS_FALSE:
+            return '0'
+        else:
+            return value.strip()
 
     # ==============================================================
     #   SYSCTL COMMAND MANAGEMENT
