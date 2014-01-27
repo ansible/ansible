@@ -76,9 +76,13 @@ access, if any.
 
 Desired sudo user (default=root).
 
-*--tags*::
+*-t*, 'TAGS', *'--tags=*'TAGS'::
 
-Run only these tags from the playbook
+Only run plays and tasks tagged with these values.
+
+*'--skip-tags=*'SKIP_TAGS'::
+
+Only run plays and tasks whose tags do not match these values.
 
 *--syntax-check*::
 
