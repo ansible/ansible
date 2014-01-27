@@ -10,6 +10,7 @@ def rax_argument_spec():
         identity_type=dict(type='str', default='rackspace'),
         region=dict(type='str'),
         tenant_id=dict(type='str'),
+        tenant_name=dict(type='str'),
         username=dict(type='str'),
         verify_ssl=dict(choices=BOOLEANS, type='bool'),
     )
@@ -27,6 +28,7 @@ def setup_rax_module(module, rax_module):
     identity_type = module.params.get('identity_type')
     region = module.params.get('region')
     tenant_id = module.params.get('tenant_id')
+    tenant_name = module.params.get('tenant_name')
     username = module.params.get('username')
     verify_ssl = module.params.get('verify_ssl')
 
@@ -40,6 +42,8 @@ def setup_rax_module(module, rax_module):
         rax_module.set_setting('auth_endpoint', auth_endpoint)
     if tenant_id is not None:
         rax_module.set_setting('tenant_id', tenant_id)
+    if tenant_name is not None:
+        rax_module.set_setting('tenant_name', tenant_name)
 
     try:
         username = username or os.environ.get('RAX_USERNAME')
