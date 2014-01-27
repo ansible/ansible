@@ -367,11 +367,11 @@ local_action:
   tasks:
     - name: Stop the sanbox instances
       local_action:
-      module: e2
+      module: ec2
       instance_ids: '{{ instance_ids }}'
-      region: {'{ region }}'
+      region: '{{ region }}'
       state: stopped
-       wait: True
+      wait: True
 '''
 
 import sys
