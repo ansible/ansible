@@ -202,7 +202,7 @@ class ElbManager:
             if instance_state.state == awaited_state:
                 # Check the current state agains the initial state, and only set
                 # changed if they are different.
-                if instance_state.state != initial_state.state:
+                if (initial_state is None) or (instance_state.state != initial_state.state):
                     self.changed = True
                 break
             elif self._is_instance_state_pending(instance_state):
