@@ -500,9 +500,9 @@ Similarly, the hostname as the system reports it is::
     {{ ansible_hostname }}
 
 
-Facts are frequently used in conditionals (see :doc:`playbook_conditionals`) and also in templates.
+Facts are frequently used in conditionals (see :doc:`playbooks_conditionals`) and also in templates.
 
-Facts can be also used to create dynamic groups of hosts that match particular criteria, see the :doc:`modules` documentation on 'group_by' for details, as well as in generalized conditional statements as discussed in the :doc:`playbook_conditionals` chapter.
+Facts can be also used to create dynamic groups of hosts that match particular criteria, see the :doc:`modules` documentation on 'group_by' for details, as well as in generalized conditional statements as discussed in the :doc:`playbooks_conditionals` chapter.
 
 .. _disabling_facts:
 
