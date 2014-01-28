@@ -846,7 +846,7 @@ class Runner(object):
 
         # compare connection user to (su|sudo)_user and disable if the same
         if hasattr(conn, 'user'):
-            if conn.user == sudo_user or conn.user == su_user:
+            if (conn.user == sudo_user and not su) or (conn.user == su_user and su):
                 sudoable = False
                 su = False
 
