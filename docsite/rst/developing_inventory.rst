@@ -91,7 +91,7 @@ The data to be added to the top level JSON dictionary looks like this::
        How to develop modules
    :doc:`developing_plugins`
        How to develop plugins
-   `AnsibleWorks AWX <http://ansibleworks.com/ansibleworks-awx>`_
+   `Ansible Tower <http://ansible.com/ansible-tower>`_
        REST API endpoint and GUI for Ansible, syncs with dynamic inventory
    `Development Mailing List <http://groups.google.com/group/ansible-devel>`_
        Mailing list for development topics

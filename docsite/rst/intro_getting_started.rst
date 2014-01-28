@@ -127,7 +127,7 @@ Also note that host key checking in paramiko mode is reasonably slow, therefore 
 .. _a_note_about_logging:
 
 Ansible will log some information about module arguments on the remote system in the remote syslog.  To enable basic
-logging on the control machine see :doc:`intro_configuration` document and set the 'log_path' configuration file setting.  Enterprise users may also be interested in `AnsibleWorks AWX <http://ansibleworks.com/ansibleworks-awx>`_.  AWX provides a very robust database logging feature where it is possible to drill down and see history based on hosts, projects, and particular inventories over time -- explorable both graphically and through a REST API.
+logging on the control machine see :doc:`intro_configuration` document and set the 'log_path' configuration file setting.  Enterprise users may also be interested in :doc:`tower`.  Tower provides a very robust database logging feature where it is possible to drill down and see history based on hosts, projects, and particular inventories over time -- explorable both graphically and through a REST API.
 
 .. seealso::
 

@@ -28,6 +28,10 @@ clean:
 	@echo "Cleaning up editor backup files"
 	find . -type f \( -name "*~" -or -name "#*" \) -delete
 	find . -type f \( -name "*.swp" \) -delete
+	@echo "Cleaning up generated rst"
+	-rm rst/list_of_*.rst
+	-rm rst/*_by_category.rst
+	-rm rst/*_module.rst
 
 .PHONEY: docs clean
 

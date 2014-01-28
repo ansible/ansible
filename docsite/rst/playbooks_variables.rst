@@ -818,7 +818,7 @@ First off, group variables are super powerful.
 
 Site wide defaults should be defined as a 'group_vars/all' setting.  Group variables are generally placed alongside
 your inventory file.  They can also be returned by a dynamic inventory script (see :doc:`intro_dynamic_inventory`) or defined
-in things like AnsibleWorks AWX from the UI or API::
+in things like :doc:`tower` from the UI or API::
 
     ---
     # file: /etc/ansible/group_vars/all
