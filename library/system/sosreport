@@ -109,19 +109,19 @@ def main():
     result = dict(changed=False)
 
     if skip_plugins:
-        sos_cmd.append("--skip-plugins %s" % skip_plugins)
+        sos_cmd.append("--skip-plugins=%s" % skip_plugins)
     if enable_plugins:
-        sos_cmd.append("--enable-plugins %s" % enable_plugins)
+        sos_cmd.append("--enable-plugins=%s" % enable_plugins)
     if only_plugins:
-        sos_cmd.append("--only-plugins %s" % only_plugins)
+        sos_cmd.append("--only-plugins=%s" % only_plugins)
     if config_file:
-        sos_cmd.append("--config-file %s" % config_file)
+        sos_cmd.append("--config-file=%s" % config_file)
     if name:
-        sos_cmd.append("--name %s" % name)
+        sos_cmd.append("--name=%s" % name)
     if ticket_number:
-        sos_cmd.append("--ticket-number %s" % ticket_number)
+        sos_cmd.append("--ticket-number=%s" % ticket_number)
     if tmp_dir:
-        sos_cmd.append("--tmp-dir %s" % tmp_dir)
+        sos_cmd.append("--tmp-dir=%s" % tmp_dir)
 
     rc, out, err = module.run_command(sos_cmd, check_rc=True)
     result['changed'] = True
