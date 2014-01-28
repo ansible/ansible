@@ -21,11 +21,9 @@
 DOCUMENTATION = '''
 ---
 module: sosreport
-short_description: Execute sosreport and make the archive available.
+short_description: Gather system state data into an archive.
 description:
- - sosreport is a tool for collecting current system state information into an archive.
- - The sosreport module will always be executed in batch mode.
- - The sosreport module is restricted to RHEL based distributions for availability reasons.
+ - Allows you to gather the current system state information into an archive returning the path to the archive and MD5 file.
 version_added: "1.5"
 options:
     name:
@@ -64,18 +62,19 @@ options:
         required: false
         default: null
 requirements:
- - sosreport
+ - sos
 author: Richard Isaacson
 '''
 
 EXAMPLES = '''
-# Execute sosreport creating an archive with a provided name.
-- sosreport: name="server"
+# Basic execution creating an archive.
+- sosreport:
+
+# Execution skippint the system plugin.
+- sosreport: skip_plugins:system
 '''
 
 from cStringIO import StringIO
-import os
-import tempfile
 
 #================================================
 
@@ -104,8 +103,6 @@ def main():
     config_file    = module.params['config_file']
     tmp_dir        = module.params['tmp_dir']
 
-# TODO: if this is not a RHEL based distro fail.
-
     if (skip_plugins or enable_plugins) and only_plugins:
         module.fail_json(msg="skip_plugins or enable_plugins and only_plugins are mutually exclusive")
 
@@ -127,7 +124,7 @@ def main():
     if tmp_dir:
         sosreport_command = "%s --tmp-dir %s" % (sosreport_command, tmp_dir)
 
-    result['command'] = sosreport_command
+    # result['command'] = sosreport_command
 
     rc, out, err = module.run_command(sosreport_command, check_rc=True)
     result['changed'] = True
@@ -136,7 +133,8 @@ def main():
         in_line = in_string.readline()
         if in_line == '': break
         if 'Your sosreport has been generated and saved in:' in in_line:
-            result['file'] = in_string.readline().strip()
+            result['sosreport_archive'] = in_string.readline().strip()
+            result['sosreport_md5'] = "%s.md5" % result['sosreport_archive']
 
     module.exit_json(**result)
 
