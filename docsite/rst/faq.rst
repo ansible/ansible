@@ -158,7 +158,7 @@ How do I access a variable of the first host in a group?
 
 What happens if we want the ip address of the first webserver in the webservers group?  Well, we can do that too.  Note that if we
 are using dynamic inventory, which host is the 'first' may not be consistent, so you wouldn't want to do this unless your inventory
-was static and predictable.  (If you are using AWX, it will use database order, so this isn't a problem even if you are using cloud
+was static and predictable.  (If you are using doc:`tower`, it will use database order, so this isn't a problem even if you are using cloud
 based inventory scripts).
 
 Anyway, here's the trick::
@@ -234,15 +234,15 @@ Once the library is ready, SHA512 password values can then be generated as follo
 Can I get training on Ansible or find commercial support?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Yes!  See `AnsibleWorks.com <http://ansibleworks.com>`_ or email `info@ansibleworks.com <mailto:info@ansibleworks.com>`_.
+Yes!  See `our Guru offering <http://www.ansible.com/ansible-guru>_` for online support, and support is also included with :doc:`tower`. You can also read our `service page <http://www.ansible.com/ansible-services>`_ and email `info@ansible.com <mailto:info@ansible.com>`_ for further details.
 
 .. _web_interface:
 
 Is there a web interface / REST API / etc?
 ++++++++++++++++++++++++++++++++++++++++++
 
-Yes!  AnsibleWorks makes a great product that makes Ansible even more powerful
-and easy to use: `AnsibleWorks AWX <http://ansibleworks.com/ansible-awx/>`_.
+Yes!  Ansible, Inc makes a great product that makes Ansible even more powerful
+and easy to use. See :doc:`tower`.
 
 .. _docs_contributions:
 
@@ -256,9 +256,7 @@ Great question!  Documentation for Ansible is kept in the main project git repos
 I don't see my question here
 ++++++++++++++++++++++++++++
 
-We're happy to help.
-
-See the `Resources <http://www.ansibleworks.com/community/>`_ section of the documentation home page for a link to the IRC and Google Group.
+Please see the section below for a link to IRC and the Google Group, where you can ask your question there.
 
 .. seealso::
 
