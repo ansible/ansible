@@ -6,9 +6,9 @@ pkgver(){
 	git describe --tags --long | sed 's/^v//;s/-/./g'
 }
 pkgrel=1
-pkgdesc="A radically simple deployment, model-driven configuration management, and command execution framework"
+pkgdesc="A radically simple IT automation"
 arch=('any')
-url="http://www.ansibleworks.com"
+url="http://www.ansible.com"
 license=('GPL3')
 depends=('python2' 'python2-paramiko' 'python2-jinja' 'python2-yaml')
 makedepends=('git' 'asciidoc' 'fakeroot')

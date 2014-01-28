@@ -17,7 +17,7 @@ You can help share Ansible with others by telling friends and colleagues, writin
 or presenting at user groups (like DevOps groups or the local LUG or BUG).  You are also 
 welcome to share slides on speakerdeck, sign up for a free account and tag it “Ansible”. On Twitter, 
 you can also share things with #ansible and may wish 
-to follow [@AnsibleWorks](https://twitter.com/ansibleworks).
+to follow [@Ansible](https://twitter.com/ansible).
 
 Sharing Content and Tips
 ------------------------
@@ -73,7 +73,7 @@ in!  Patches should be made against the 'devel' branch.
 
 Contributions can be for new features like modules, or to fix bugs you or others have found. If you 
 are interested in writing new modules to be included in the core Ansible distribution, please refer 
-to the [Module Developers documentation on our website](http://www.ansibleworks.com/docs/developing_modules.html).
+to the [Module Developers documentation on our website](http://docs.ansible.com/developing_modules.html).
 
 Ansible's aesthetic encourages simple, readable code and consistent, conservatively extending, 
 backwards-compatible improvements.  Code developed for Ansible needs to support Python 2.6+, 
@@ -121,7 +121,7 @@ Online Resources
 Documentation
 -------------
 
-The main ansible documentation can be found at [ansibleworks.com/docs](http://ansibleworks.com/docs). 
+The main ansible documentation can be found at [docs.ansible.com](http://docs.ansible.com). 
 As mentioned above this is an open source project, so we accept contributions to the documentation. 
 You can also find some best practices examples that we recommend reading at 
 [ansible-examples](http://github.com/ansible/ansible-examples).
@@ -157,17 +157,17 @@ development work, or getting help from other users.
 Miscellaneous Information
 =========================
 
-AnsibleWorks Staff
-------------------
+Staff
+-----
 
-AnsibleWorks is a company supporting Ansible and building additional solutions based on 
+Ansible, Inc is a company supporting Ansible and building additional solutions based on 
 Ansible.  We also do services and support for those that are interested.   Our most 
 important task however is enabling all the great things that happen in the Ansible 
 community, including organizing software releases of Ansible.  For more information about
-any of these things, contact info@ansibleworks.com
+any of these things, contact info@ansible.com
 
 On IRC, you can find us as mdehaan, jimi_c, Tybstar, and others.   On the mailing list, 
-we post with an @ansibleworks.com address.
+we post with an @ansible.com address.
 
 Community Code of Conduct
 -------------------------

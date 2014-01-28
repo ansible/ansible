@@ -99,7 +99,7 @@ class Task(object):
                 if isinstance(ds[x], basestring) and ds[x].lstrip().startswith("{{"):
                     utils.warning("It is unneccessary to use '{{' in conditionals, leave variables in loop expressions bare.")
             elif x.startswith("when_"):
-                utils.deprecated("The 'when_' conditional has been removed. Switch to using the regular unified 'when' statements as described in ansibleworks.com/docs/.","1.5", removed=True)
+                utils.deprecated("The 'when_' conditional has been removed. Switch to using the regular unified 'when' statements as described on docs.ansible.com.","1.5", removed=True)
 
                 if 'when' in ds:
                     raise errors.AnsibleError("multiple when_* statements specified in task %s" % (ds.get('name', ds['action'])))
