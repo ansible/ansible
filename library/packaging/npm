@@ -56,6 +56,10 @@ options:
     required: false
     choices: [ "yes", "no" ]
     default: no
+  registry:
+    description:
+      - The registry to install modules from.
+    required: false
   state:
     description:
       - The state of the node.js library
@@ -76,6 +80,9 @@ description: Install "coffee-script" node.js package globally.
 
 description: Remove the globally package "coffee-script".
 - npm: name=coffee-script global=yes state=absent
+
+description: Install "coffee-script" node.js package from custom registry.
+- npm: name=coffee-script registry=http://registry.mysite.com
 
 description: Install packages based on package.json.
 - npm: path=/app/location
@@ -101,6 +108,7 @@ class Npm(object):
         self.name = kwargs['name']
         self.version = kwargs['version']
         self.path = kwargs['path']
+        self.registry = kwargs['registry']
         self.production = kwargs['production']
 
         if kwargs['executable']:
@@ -123,6 +131,9 @@ class Npm(object):
                 cmd.append('--production')
             if self.name:
                 cmd.append(self.name_version)
+            if self.registry:
+                cmd.append('--registry')
+                cmd.append(self.registry)
 
             #If path is specified, cd into that path and run the command.
             cwd = None
@@ -182,6 +193,7 @@ def main():
         version=dict(default=None),
         production=dict(default='no', type='bool'),
         executable=dict(default=None),
+        registry=dict(default=None),
         state=dict(default='present', choices=['present', 'absent', 'latest'])
     )
     arg_spec['global'] = dict(default='no', type='bool')
@@ -196,6 +208,7 @@ def main():
     glbl = module.params['global']
     production = module.params['production']
     executable = module.params['executable']
+    registry = module.params['registry']
     state = module.params['state']
 
     if not path and not glbl:
@@ -204,7 +217,7 @@ def main():
         module.fail_json(msg='uninstalling a package is only available for named packages')
 
     npm = Npm(module, name=name, path=path, version=version, glbl=glbl, production=production, \
-              executable=executable)
+              executable=executable, registry=registry)
 
     changed = False
     if state == 'present':
