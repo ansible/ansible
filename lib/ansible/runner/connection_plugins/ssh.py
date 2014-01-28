@@ -117,7 +117,11 @@ class Connection(object):
             os.close(self.wfd)
 
     def not_in_host_file(self, host):
-        host_file = os.path.expanduser(os.path.expandvars("~${USER}/.ssh/known_hosts"))
+        if 'USER' in os.environ:
+            host_file = os.path.expandvars("~${USER}/.ssh/known_hosts")
+        else:
+            host_file = "~/.ssh/known_hosts"
+        host_file = os.path.expanduser(host_file)
         if not os.path.exists(host_file):
             print "previous known host file not found"
             return True
