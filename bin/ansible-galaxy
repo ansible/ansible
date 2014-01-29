@@ -198,7 +198,7 @@ def build_option_parser(action):
 
     if action in ("info","init","install"):
         parser.add_option(
-            '-s', '--server', dest='api_server', default="galaxy.ansibleworks.com",
+            '-s', '--server', dest='api_server', default="galaxy.ansible.com",
             help='The API server destination')
 
     if action in ("init","install"):
@@ -510,7 +510,7 @@ def execute_init(args, options, parser):
     """
 
     init_path  = get_opt(options, 'init_path', './')
-    api_server = get_opt(options, "api_server", "galaxy.ansibleworks.com")
+    api_server = get_opt(options, "api_server", "galaxy.ansible.com")
     force      = get_opt(options, 'force', False)
 
     api_config = api_get_config(api_server)
@@ -615,7 +615,7 @@ def execute_install(args, options, parser):
     """
 
     role_file  = get_opt(options, "role_file", None)
-    api_server = get_opt(options, "api_server", "galaxy.ansibleworks.com")
+    api_server = get_opt(options, "api_server", "galaxy.ansible.com")
     no_deps    = get_opt(options, "no_deps", False)
 
     if len(args) == 0 and not role_file:
