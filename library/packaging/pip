@@ -175,7 +175,8 @@ def _get_pip(module, env=None, executable=None):
         if os.path.isabs(executable):
             pip = executable
         else:
-            candidate_pip_basenames.insert(0, executable)
+            # If you define your own executable that executable should be the only candidate.
+            candidate_pip_basenames = [executable]
     if pip is None:
         if env is None:
             opt_dirs = []
