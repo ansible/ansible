@@ -26,6 +26,13 @@
 #    test-module -m ../library/command -a "/bin/sleep 3"
 #    test-module -m ../library/service -a "name=httpd ensure=restarted"
 #    test-module -m ../library/service -a "name=httpd ensure=restarted" --debugger /usr/bin/pdb
+#
+# save the generated module file to a path:
+#    test-module -m ../libary/command -o module-file
+#
+# specify complex args for a module as json:
+#    test-module -m module-foo -j '{"foo": {"bar": 10}}'
+#
 
 import sys
 import base64
@@ -56,6 +63,12 @@ def parse():
         help="module argument string")
     parser.add_option('-D', '--debugger', dest='debugger', 
         help="path to python debugger (e.g. /usr/bin/pdb)")
+    parser.add_option("-o","--output",dest="output_path",
+        help="path to save the generated module, but do not execute it"
+        )
+    parser.add_option("-j","--json-data",dest="complex_args",
+        help="pass json_data string as complex args to the module"
+        )
     options, args = parser.parse_args()
     if not options.module_path:
         parser.print_help()
@@ -74,7 +87,7 @@ def write_argsfile(argstring, json=False):
     argsfile.close()
     return argspath
 
-def boilerplate_module(modfile, args):
+def boilerplate_module(modfile, args, complex_args, output_path=None):
     """ simulate what ansible does with new style modules """
 
     #module_fh = open(modfile)
@@ -85,7 +98,6 @@ def boilerplate_module(modfile, args):
 
     #included_boilerplate = module_data.find(module_common.REPLACER) != -1 or module_data.find("import ansible.module_utils") != -1
 
-    complex_args = {}
     inject = {}
     (module_data, module_style, shebang) = replacer.modify_module(
         modfile, 
@@ -94,7 +106,7 @@ def boilerplate_module(modfile, args):
         inject 
     )
 
-    modfile2_path = os.path.expanduser("~/.ansible_module_generated")
+    modfile2_path = os.path.expanduser(output_path or "~/.ansible_module_generated")
     print "* including generated source, if any, saving to: %s" % modfile2_path
     print "* this may offset any line numbers in tracebacks/debuggers!"
     modfile2 = open(modfile2_path, 'w')
@@ -144,7 +156,18 @@ def rundebug(debugger, modfile, argspath):
 def main(): 
 
     options, args = parse()
-    (modfile, module_style) = boilerplate_module(options.module_path, options.module_args)
+    if options.complex_args:
+        complex_args = utils.json_loads(options.complex_args)
+    else:
+        complex_args = {}
+
+    (modfile, module_style) = boilerplate_module(
+        options.module_path, options.module_args, complex_args,
+        output_path=options.output_path
+        )
+
+    if options.output_path:
+        return
 
     argspath=None
     if module_style != 'new':
