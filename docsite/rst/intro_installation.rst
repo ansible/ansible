@@ -115,7 +115,7 @@ If you don't have pip installed in your version of Python, install pip::
 
     $ sudo easy_install pip
 
-Ansible also uses the the following Python modules that need to be installed::
+Ansible also uses the following Python modules that need to be installed::
 
     $ sudo pip install paramiko PyYAML jinja2 httplib2
 
