@@ -174,7 +174,7 @@ rax.py
 To use the rackspace dynamic inventory script, copy ``rax.py`` from ``plugins/inventory`` into your inventory directory.  You can specify credentials 
 for ``rax.py`` utilizing the ``RAX_CREDS_FILE`` environment variable.
 
-.. note:: Users of doc:`tower` will note that dynamic inventory is natively supported by Tower, and all you have to do is associate a group with your Rackspace Cloud credentials, and it will easily synchronize without going through these steps::
+.. note:: Users of :doc:`tower` will note that dynamic inventory is natively supported by Tower, and all you have to do is associate a group with your Rackspace Cloud credentials, and it will easily synchronize without going through these steps::
 
     $ RAX_CREDS_FILE=~/.raxpub ansible all -i rax.py -m setup
 
