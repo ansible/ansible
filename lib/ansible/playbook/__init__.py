@@ -209,7 +209,7 @@ class PlayBook(object):
                         p['vars'].update(incvars)
                     elif isinstance(p['vars'], list):
                         # nobody should really do this, but handle vars: a=1 b=2
-                        p['vars'].extend([dict(k=v) for k,v in incvars.iteritems()])
+                        p['vars'].extend([{k:v} for k,v in incvars.iteritems()])
 
                 accumulated_plays.extend(plays)
                 play_basedirs.extend(basedirs)
