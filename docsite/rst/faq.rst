@@ -158,7 +158,7 @@ How do I access a variable of the first host in a group?
 
 What happens if we want the ip address of the first webserver in the webservers group?  Well, we can do that too.  Note that if we
 are using dynamic inventory, which host is the 'first' may not be consistent, so you wouldn't want to do this unless your inventory
-was static and predictable.  (If you are using doc:`tower`, it will use database order, so this isn't a problem even if you are using cloud
+was static and predictable.  (If you are using :doc:`tower`, it will use database order, so this isn't a problem even if you are using cloud
 based inventory scripts).
 
 Anyway, here's the trick::
