@@ -569,7 +569,7 @@ or variables defined elsewhere in the playbook.
 Registered Variables
 ````````````````````
 
-Another major use of variables is running a command and using the result of that command to save the result into a variable.
+Another major use of variables is running a command and using the result of that command to save the result into a variable. Results will vary from module to module. Use of -v when executing playbooks will show possible values for the results.
 
 The value of a task being executed in ansible can be saved in a variable and used later.  See some examples of this in the
 :doc:`playbooks_conditionals` chapter.
