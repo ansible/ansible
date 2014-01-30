@@ -83,6 +83,11 @@ options:
     description:
       - path of the file to link to (applies only to C(state=link)). Will accept absolute,
         relative and nonexisting paths. Relative paths are not expanded.
+  content:
+    required: false
+    default: null
+    description:
+      - content that the file should have. Ignored unless the state is a file.
   seuser:
     required: false
     default: null
@@ -149,6 +154,7 @@ def main():
             original_basename = dict(required=False), # Internal use only, for recursive ops
             recurse  = dict(default='no', type='bool'),
             force = dict(required=False,default=False,type='bool'),
+            content = dict(default=None),
             diff_peek = dict(default=None),
             validate = dict(required=False, default=None),
         ),
@@ -252,8 +258,10 @@ def main():
         module.exit_json(path=path, changed=False)
 
     if state == 'file':
-
-        if prev_state != 'file':
+        if content is not None:
+            with open(path, 'wb') as file:
+                file.write(content)
+        elif prev_state != 'file':
             module.fail_json(path=path, msg='file (%s) does not exist, use copy or template module to create' % path)
 
         changed = module.set_file_attributes_if_different(file_args, changed)
