@@ -37,4 +37,5 @@ This documentation covers the current released version of Ansible (1.4.4) and al
    faq
    glossary
    YAMLSyntax
+   guru
 
