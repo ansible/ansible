@@ -10,7 +10,8 @@ Major features/changes:
 * only_if, which is much older than when_foo and was deprecated, is similarly removed.
 * ssh connection plugin is now more efficient if you add 'pipelining=True' in ansible.cfg under [ssh_connection], see example.cfg
 * localhost/127.0.0.1 is not required to be in inventory if referenced, if not in inventory, it does not implicitly appear in the 'all' group.
-* git module now takes ssh_opts and key_file parameters to override how git calls ssh
+* git module has new parameters (accept_hostkey, key_file, ssh_opts) to ease the usage of git and ssh protocols. 
+
 
 New modules:
 
@@ -42,6 +43,11 @@ Misc:
 * backwards/forwards compatibility for OpenStack modules, 'quantum' modules grok neutron renaming
 * hosts properly uniqueified if appearing in redundant groups
 * hostname module support added for ScientificLinux
+* ansible-pull can now show live stdout and pass verbosity levels to ansible-playbook
+* ec2 instances can now be stopped or started
+* additional volumes can be created when creating new ec2 instances
+* user module can move a home directory
+* significant enhancement and cleanup of rackspace modules
 * various other bug fixes
 
 ## 1.4.4 "Could This Be Magic" - January 6, 2014
