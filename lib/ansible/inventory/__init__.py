@@ -249,6 +249,17 @@ class Inventory(object):
         else:
             return [ hosts[left] ]
 
+    def _create_implicit_localhost(self, pattern):
+        new_host = Host(pattern)
+        new_host.set_variable("ansible_python_interpreter", sys.executable)
+        new_host.set_variable("ansible_connection", "local")
+        ungrouped = self.get_group("ungrouped")
+        if ungrouped is None:
+            self.add_group(Group('ungrouped'))
+            ungrouped = self.get_group('ungrouped')
+        ungrouped.add_host(new_host)
+        return new_host
+
     def _hosts_in_unenumerated_pattern(self, pattern):
         """ Get all host names matching the pattern """
 
@@ -268,15 +279,7 @@ class Inventory(object):
                         hostnames.add(host.name)
 
         if pattern in ["localhost", "127.0.0.1"] and len(results) == 0:
-            new_host = Host(pattern)
-            new_host.set_variable("ansible_python_interpreter", sys.executable)
-            new_host.set_variable("ansible_connection", "local")
-            ungrouped = self.get_group("ungrouped")
-            if ungrouped is None:
-                self.add_group(Group('ungrouped'))
-                ungrouped = self.get_group('ungrouped')
-
-            ungrouped.add_host(new_host)
+            new_host = self._create_implicit_localhost(pattern)
             results.append(new_host)
         return results
 
@@ -319,6 +322,7 @@ class Inventory(object):
             for host in self.get_group('all').get_hosts():
                 if host.name in ['localhost', '127.0.0.1']:
                     return host
+            return self._create_implicit_localhost(hostname)
         else:
             for group in self.groups:
                 for host in group.get_hosts():
