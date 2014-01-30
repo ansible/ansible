@@ -14,7 +14,16 @@ Major features/changes:
 
 New modules:
 
-* Details pending
+* cloud: ec2_elb_lb
+* cloud: ec2_key
+* cloud: rax_dns
+* cloud: rax_dns_record
+* cloud: rax_files
+* cloud: rax_files_objects
+* cloud: rax_keypair
+* cloud: rax_queue
+* system: at
+
 
 Misc:
 
