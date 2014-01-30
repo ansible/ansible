@@ -84,6 +84,10 @@ author: Michael DeHaan
 notes:
    - The "copy" module recursively copy facility does not scale to lots (>hundreds) of files.
      For alternative, see "Delegation" section of the Advanced Playbooks documentation.
+     
+   - The "copy" module will compute an md5 hash of both "src" and "dest" files before uploading
+     the file to the remote host, and avoid the upload when the hashes are equal.
+   
 '''
 
 EXAMPLES = '''
