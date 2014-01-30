@@ -75,6 +75,7 @@ import getpass
 import json
 import os
 import os.path
+import pwd
 import signal
 import socket
 import struct
@@ -280,6 +281,9 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
                 elif mode == 'fetch':
                     vvvv("received a fetch request, getting it")
                     response = self.fetch(data)
+                elif mode == 'validate_user':
+                    vvvv("received a request to validate the user id")
+                    response = self.validate_user(data)
 
                 vvvv("response result is %s" % str(response))
                 data2 = json.dumps(response)
@@ -287,6 +291,10 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
                 vvvv("sending the response back to the controller")
                 self.send_data(data2)
                 vvvv("done sending the response")
+
+                if mode == 'validate_user' and response.get('rc') == 1:
+                    vvvv("detected a uid mismatch, shutting down")
+                    self.server.shutdown()
         except:
             tb = traceback.format_exc()
             log("encountered an unhandled exception in the handle() function")
@@ -294,6 +302,27 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
             data2 = json.dumps(dict(rc=1, failed=True, msg="unhandled error in the handle() function"))
             data2 = self.server.key.Encrypt(data2)
             self.send_data(data2)
+
+    def validate_user(self, data):
+        if 'username' not in data:
+            return dict(failed=True, msg='No username specified')
+
+        vvvv("validating we're running as %s" % data['username'])
+
+        # get the current uid
+        c_uid = os.getuid()
+        try:
+            # the target uid
+            t_uid = pwd.getpwnam(data['username']).pw_uid
+        except:
+            vvvv("could not find user %s" % data['username'])
+            return dict(failed=True, msg='could not find user %s' % data['username'])
+
+        # and return rc=0 for success, rc=1 for failure
+        if c_uid == t_uid:
+            return dict(rc=0)
+        else:
+            return dict(rc=1)
 
     def command(self, data):
         if 'cmd' not in data:
@@ -409,14 +438,26 @@ def daemonize(module, password, port, timeout, minutes, ipv6):
         signal.signal(signal.SIGALRM, catcher)
         signal.setitimer(signal.ITIMER_REAL, 60 * minutes)
 
-        if ipv6:
-            server = ThreadedTCPV6Server(("::", port), ThreadedTCPRequestHandler, module, password, timeout)
-        else:
-            server = ThreadedTCPServer(("0.0.0.0", port), ThreadedTCPRequestHandler, module, password, timeout)
-        server.allow_reuse_address = True
+        tries = 5
+        while tries > 0:
+            try:
+                if ipv6:
+                    server = ThreadedTCPV6Server(("::", port), ThreadedTCPRequestHandler, module, password, timeout)
+                else:
+                    server = ThreadedTCPServer(("0.0.0.0", port), ThreadedTCPRequestHandler, module, password, timeout)
+                server.allow_reuse_address = True
+                break
+            except:
+                vv("Failed to create the TCP server (tries left = %d)" % tries)
+            tries -= 1
+            time.sleep(0.2)
         
+        if tries == 0:
+            vv("Maximum number of attempts to create the TCP server reached, bailing out")
+            raise Exception("max # of attempts to serve reached")
+
         vv("serving!")
-        server.serve_forever(poll_interval=1.0)
+        server.serve_forever(poll_interval=0.1)
     except Exception, e:
         tb = traceback.format_exc()
         log("exception caught, exiting accelerated mode: %s\n%s" % (e, tb))
