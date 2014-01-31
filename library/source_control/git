@@ -142,8 +142,8 @@ import re
 import tempfile
 
 def write_ssh_wrapper():
-    fh = tempfile.NamedTemporaryFile(delete=False)
-    wrapper_path = fh.name
+    fd, wrapper_path = tempfile.mkstemp()
+    fh = os.fdopen(fd, 'w+b')
     template = """#!/bin/sh
 if [ -z "$GIT_SSH_OPTS" ]; then
     BASEOPTS=""
