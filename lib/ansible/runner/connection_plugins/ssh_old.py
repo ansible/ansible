@@ -246,9 +246,9 @@ class Connection(object):
                     raise errors.AnsibleError('Incorrect su password')
 
             if p.stdout in rfd:
-                stdout += os.read(p.stdout.fileno(), 9000)
+                stdout += p.stdout.read() if process_over else os.read(p.stdout.fileno(), 9000)
             if p.stderr in rfd:
-                stderr += os.read(p.stderr.fileno(), 9000)
+                stderr += p.stderr.read() if process_over else os.read(p.stderr.fileno(), 9000)
             if process_over:
                 break
         stdin.close() # close stdin after we read from stdout (see also issue #848)
