@@ -130,7 +130,7 @@ Read up on the 'group_by' module in the :doc:`modules` docs for a more streamlin
 Conditional Imports
 ```````````````````
 
-.. note:: This is an advanced topic that is infrequently used.  You can probably skip this section.
+.. note:: This is an advanced topic.
 
 Sometimes you will want to do certain things differently in a playbook based on certain criteria.
 Having one playbook that works on multiple platforms and OS versions is a good example.
@@ -183,12 +183,11 @@ minimum of decision points to track.
 Selecting Files And Templates Based On Variables
 ````````````````````````````````````````````````
 
-.. note:: This is an advanced topic that is infrequently used.  You can probably skip this section.
+.. note:: This is an advanced topic.
 
-Sometimes a configuration file you want to copy, or a template you will use may depend on a variable.
-The following construct selects the first available file appropriate for the variables of a given host, which is often much cleaner than putting a lot of if conditionals in a template.
+Sometimes a configuration file you want to copy, or a template you will use may depend on a variable. The following construct selects the first available file appropriate for the variables of a given host, which is often much cleaner than putting a lot of if conditionals in a template.
 
-The following example shows how to template out a configuration file that was very different between, say, CentOS and Debian::
+When you have a configuration file that is very different between, say, CentOS and Debian, you could use:
 
     - name: template a file
       template: src={{ item }} dest=/etc/myapp/foo.conf
@@ -199,6 +198,8 @@ The following example shows how to template out a configuration file that was ve
           paths:
            - search_location_one/somedir/
            - /opt/other_location/somedir/
+
+The list of paths is optional. When provided, Ansible will search the first path using all the given files, and then move on to the next path.
 
 Register Variables
 ``````````````````
