@@ -182,7 +182,7 @@ minimum of decision points to track.
 
 Selecting Files And Templates Based On Variables
 ````````````````````````````````````````````````
-
+wi
 .. note:: This is an advanced topic.
 
 Sometimes a configuration file you want to copy, or a template you will use may depend on a variable. The following construct selects the first available file appropriate for the variables of a given host, which is often much cleaner than putting a lot of if conditionals in a template.
@@ -196,10 +196,11 @@ When you have a configuration file that is very different between, say, CentOS a
            - {{ ansible_distribution }}.conf
            - default.conf
           paths:
+           - ../templates
            - search_location_one/somedir/
            - /opt/other_location/somedir/
 
-The list of paths is optional. When provided, Ansible will search the first path using all the given files, and then move on to the next path.
+Ansible will search the first path in the list, trying all the given files, and then move on to the next path (if any).
 
 Register Variables
 ``````````````````
