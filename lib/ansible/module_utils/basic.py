@@ -175,6 +175,7 @@ class AnsibleModule(object):
         self.argument_spec = argument_spec
         self.supports_check_mode = supports_check_mode
         self.check_mode = False
+        self.no_log = no_log
         
         self.aliases = {}
         
@@ -186,13 +187,14 @@ class AnsibleModule(object):
         os.environ['LANG'] = MODULE_LANG
         (self.params, self.args) = self._load_params()
 
-        self._legal_inputs = [ 'CHECKMODE' ]
+        self._legal_inputs = [ 'CHECKMODE', 'NO_LOG' ]
         
         self.aliases = self._handle_aliases()
 
         if check_invalid_arguments:
             self._check_invalid_arguments()
         self._check_for_check_mode()
+        self._check_for_no_log()
 
         self._set_defaults(pre=True)
 
@@ -205,7 +207,7 @@ class AnsibleModule(object):
             self._check_required_one_of(required_one_of)
 
         self._set_defaults(pre=False)
-        if not no_log:
+        if not self.no_log:
             self._log_invocation()
 
     def load_file_common_arguments(self, params):
@@ -558,9 +560,14 @@ class AnsibleModule(object):
                 if self.supports_check_mode:
                     self.check_mode = True
 
+    def _check_for_no_log(self):
+        for (k,v) in self.params.iteritems():
+            if k == 'NO_LOG':
+                self.no_log = self.boolean(v)
+
     def _check_invalid_arguments(self):
         for (k,v) in self.params.iteritems():
-            if k == 'CHECKMODE':
+            if k in ('CHECKMODE', 'NO_LOG'):
                 continue
             if k not in self._legal_inputs:
                 self.fail_json(msg="unsupported parameter for module: %s" % k)

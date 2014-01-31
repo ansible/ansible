@@ -343,7 +343,8 @@ class PlayBook(object):
             su=task.su,
             su_user=task.su_user,
             su_pass=task.su_pass,
-            run_hosts=hosts
+            run_hosts=hosts,
+            no_log=task.no_log,
         )
 
         if task.async_seconds == 0:

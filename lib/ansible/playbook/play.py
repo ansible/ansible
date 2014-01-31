@@ -504,7 +504,7 @@ class Play(object):
                         elif type(x[k]) is list:
                             for i in x[k]:
                                 included_additional_conditions.insert(0, i)
-                    elif k in ("include", "vars", "default_vars", "sudo", "sudo_user", "role_name"):
+                    elif k in ("include", "vars", "default_vars", "sudo", "sudo_user", "role_name", "no_log"):
                         continue
                     else:
                         include_vars[k] = x[k]
