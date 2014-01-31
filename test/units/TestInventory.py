@@ -431,3 +431,11 @@ class TestInventory(unittest.TestCase):
         print "EXPECTED VARS=%s" % expected_vars
 
         assert host_vars == expected_vars
+
+    def test_dir_inventory_multiple_groups(self):
+         inventory = self.dir_inventory()
+         group_greek = inventory.get_group('greek')
+         group_major_god = inventory.get_group('major-god')
+         actual_host_names = [host.name for host in group_greek.get_hosts()];
+         print "%s : %s " % (group_greek.name, actual_host_names)
+         assert actual_host_names == ['zeus','morpheus']
