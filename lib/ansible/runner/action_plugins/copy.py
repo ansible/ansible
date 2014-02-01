@@ -220,6 +220,8 @@ class ActionModule(object):
                                   pipes.quote(tmp_src), pipes.quote(source_rel))
                 if self.runner.noop_on_check(inject):
                     module_args_tmp = "%s CHECKMODE=True" % module_args_tmp
+                if self.runner.no_log:
+                    module_args_tmp = "%s NO_LOG=True" % module_args_tmp
                 module_return = self.runner._execute_module(conn, tmp, 'file', module_args_tmp, inject=inject, complex_args=complex_args)
 
             module_result = module_return.result

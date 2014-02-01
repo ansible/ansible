@@ -145,6 +145,7 @@ class Runner(object):
         su_user=None,                       # User to su to when running command, ex: 'root'
         su_pass=C.DEFAULT_SU_PASS,
         run_hosts=None,                     # an optional list of pre-calculated hosts to run on
+        no_log=False,                       # option to enable/disable logging for a given task
         ):
 
         # used to lock multiprocess inputs and outputs at various levels
@@ -196,6 +197,7 @@ class Runner(object):
         self.su_user_var      = su_user
         self.su_user          = None
         self.su_pass          = su_pass
+        self.no_log           = no_log
 
         if self.transport == 'smart':
             # if the transport is 'smart' see if SSH can support ControlPersist if not use paramiko
@@ -341,6 +343,8 @@ class Runner(object):
                 # if module isn't using AnsibleModuleCommon infrastructure we can't be certain it knows how to
                 # do --check mode, so to be safe we will not run it.
                 return ReturnData(conn=conn, result=dict(skipped=True, msg="cannot yet run check mode against old-style modules"))
+            elif 'NO_LOG' in args:
+                return ReturnData(conn=conn, result=dict(skipped=True, msg="cannot use no_log: with old-style modules"))
 
             args = template.template(self.basedir, args, inject)
 

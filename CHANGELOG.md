@@ -12,6 +12,7 @@ Major features/changes:
 * localhost/127.0.0.1 is not required to be in inventory if referenced, if not in inventory, it does not implicitly appear in the 'all' group.
 * git module has new parameters (accept_hostkey, key_file, ssh_opts) to ease the usage of git and ssh protocols. 
 * when using accelerate mode, the daemon will now be restarted when specifying a different remote_user between plays.
+* added no_log: option for tasks. When used, no logging information will be sent to syslog during the module execution.
 
 
 New modules:
