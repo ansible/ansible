@@ -4,7 +4,7 @@ PORTNAME=       ansible
 PORTVERSION=    1.0
 PORTREVISION=   1
 CATEGORIES=     python net-mgmt
-MASTER_SITES=   http://ansibleworks.com/releases/
+MASTER_SITES=   http://releases.ansible.com/ansible/
 DISTNAME=		${PORTNAME}-${PORTVERSION}
 
 MAINTAINER=		briancoca+ansible@gmail.com

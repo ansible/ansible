@@ -17,15 +17,15 @@
 DOCUMENTATION = '''
 ---
 module: ec2
-short_description: create or terminate an instance in ec2, return instanceid
+short_description: create, terminate, start or stop an instance in ec2, return instanceid
 description:
-     - Creates or terminates ec2 instances. When created optionally waits for it to be 'running'. This module has a dependency on python-boto >= 2.5
+    - Creates or terminates ec2 instances. When created optionally waits for it to be 'running'. This module has a dependency on python-boto >= 2.5
 version_added: "0.9"
 options:
   key_name:
     description:
       - key pair to use on the instance
-    required: true
+    required: false
     default: null
     aliases: ['keypair']
   id:
@@ -191,6 +191,13 @@ options:
     required: false
     default: 'present'
     aliases: []
+  volumes:
+    version_added: "1.5"
+    description:
+      - a list of volume dicts, each containing device name and optionally ephemeral id or snapshot id. Size and type (and number of iops for io device type) must be specified for a new volume or a root volume, and may be passed for a snapshot volume. For any volume, a volume size less than 1 will be interpreted as a request not to create the volume.
+    required: false
+    default: null
+    aliases: []
 
 requirements: [ "boto" ]
 author: Seth Vidal, Tim Gerla, Lester Wade
@@ -223,6 +230,23 @@ EXAMPLES = '''
     instance_tags: '{"db":"postgres"}'
     monitoring=yes
 
+# Single instance with additional IOPS volume from snapshot
+local_action:
+    module: ec2
+    keypair: mykey
+    group: webserver
+    instance_type: m1.large
+    image: ami-6e649707
+    wait: yes
+    wait_timeout: 500
+    volumes:
+    - device_name: /dev/sdb
+      snapshot: snap-abcdef12
+      device_type: io1
+      iops: 1000
+      volume_size: 100
+    monitoring=yes
+
 # Multiple groups example
 local_action:
     module: ec2
@@ -234,6 +258,22 @@ local_action:
     wait_timeout: 500
     count: 5
     instance_tags: '{"db":"postgres"}'
+    monitoring=yes
+
+# Multiple instances with additional volume from snapshot
+local_action:
+    module: ec2
+    keypair: mykey
+    group: webserver
+    instance_type: m1.large
+    image: ami-6e649707
+    wait: yes
+    wait_timeout: 500
+    count: 5
+    volumes:
+    - device_name: /dev/sdb
+      snapshot: snap-abcdef12
+      volume_size: 10
     monitoring=yes
 
 # VPC example
@@ -289,22 +329,57 @@ local_action:
         state: 'absent'
         instance_ids: {{ec2.instance_ids}}
 
+# Start a few existing instances, run some tasks
+# and stop the instances
+
+- name: Start sandbox instances
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  vars:
+    instance_ids:
+    - 'i-xxxxxx'
+    - 'i-xxxxxx'
+    - 'i-xxxxxx'
+    region: us-east-1
+  tasks:
+    - name: Start the sandbox instances
+      local_action:
+       module: ec2
+       instance_ids: '{{ instance_ids }}'
+       region: '{{ region }}'
+       state: running
+       wait: True
+  role:
+    - do_neat_stuff
+    - do_more_neat_stuff
+
+- name: Stop sandbox instances
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  vars:
+    instance_ids:
+    - 'i-xxxxxx'
+    - 'i-xxxxxx'
+    - 'i-xxxxxx'
+    region: us-east-1
+  tasks:
+    - name: Stop the sanbox instances
+      local_action:
+      module: ec2
+      instance_ids: '{{ instance_ids }}'
+      region: '{{ region }}'
+      state: stopped
+      wait: True
 '''
 
 import sys
 import time
 
-AWS_REGIONS = ['ap-northeast-1',
-               'ap-southeast-1',
-               'ap-southeast-2',
-               'eu-west-1',
-               'sa-east-1',
-               'us-east-1',
-               'us-west-1',
-               'us-west-2']
-
 try:
     import boto.ec2
+    from boto.ec2.blockdevicemapping import BlockDeviceType, BlockDeviceMapping
     from boto.exception import EC2ResponseError
 except ImportError:
     print "failed=True msg='boto required for this module'"
@@ -373,6 +448,30 @@ def boto_supports_profile_name_arg(ec2):
     run_instances_method = getattr(ec2, 'run_instances')
     return 'instance_profile_name' in run_instances_method.func_code.co_varnames
 
+def create_block_device(module, ec2, volume):
+    # Not aware of a way to determine this programatically
+    # http://aws.amazon.com/about-aws/whats-new/2013/10/09/ebs-provisioned-iops-maximum-iops-gb-ratio-increased-to-30-1/
+    MAX_IOPS_TO_SIZE_RATIO = 30
+    if 'snapshot' not in volume and 'ephemeral' not in volume:
+        if 'volume_size' not in volume: 
+            module.fail_json(msg = 'Size must be specified when creating a new volume or modifying the root volume')
+    if 'snapshot' in volume:
+        if 'device_type' in volume and volume.get('device_type') == 'io1' and 'iops' not in volume:
+            module.fail_json(msg = 'io1 volumes must have an iops value set')
+        if 'iops' in volume:
+            snapshot = ec2.get_all_snapshots(snapshot_ids=[volume['snapshot']])[0]
+            size = volume.get('volume_size', snapshot.volume_size)
+            if int(volume['iops']) > MAX_IOPS_TO_SIZE_RATIO * size:
+                module.fail_json(msg = 'IOPS must be at most %d times greater than size' % MAX_IOPS_TO_SIZE_RATIO)
+    if 'ephemeral' in volume:
+        if 'snapshot' in volume: 
+            module.fail_json(msg = 'Cannot set both ephemeral and snapshot')
+    return BlockDeviceType(snapshot_id=volume.get('snapshot'),
+                           ephemeral_name=volume.get('ephemeral'),
+                           size=volume.get('volume_size'),
+                           volume_type=volume.get('device_type'),
+                           delete_on_termination=volume.get('delete_on_termination', False),
+                           iops=volume.get('iops'))
 
 def create_instances(module, ec2):
     """
@@ -406,6 +505,7 @@ def create_instances(module, ec2):
     assign_public_ip = module.boolean(module.params.get('assign_public_ip'))
     private_ip = module.params.get('private_ip')
     instance_profile_name = module.params.get('instance_profile_name')
+    volumes = module.params.get('volumes')
 
     # group_id and group_name are exclusive of each other
     if group_id and group_name:
@@ -497,6 +597,18 @@ def create_instances(module, ec2):
                     params['security_group_ids'] = group_id
                 else:
                     params['security_groups'] = group_name
+
+            if volumes:
+                bdm = BlockDeviceMapping()
+                for volume in volumes: 
+                    if 'device_name' not in volume:
+                        module.fail_json(msg = 'Device name must be set for volume')
+                    # Minimum volume size is 1GB. We'll use volume size explicitly set to 0
+                    # to be a signal not to create this volume 
+                    if 'volume_size' not in volume or int(volume['volume_size']) > 0:
+                        bdm[volume['device_name']] = create_block_device(module, ec2, volume)
+
+                params['block_device_map'] = bdm
 
             res = ec2.run_instances(**params)
         except boto.exception.BotoServerError, e:
@@ -621,6 +733,80 @@ def terminate_instances(module, ec2, instance_ids):
     return (changed, instance_dict_array, terminated_instance_ids)
 
 
+def startstop_instances(module, ec2, instance_ids):
+    """
+    Starts or stops a list of existing instances
+
+    module: Ansible module object
+    ec2: authenticated ec2 connection object
+    instance_ids: The list of instances to start in the form of
+      [ {id: <inst-id>}, ..]
+
+    Returns a dictionary of instance information
+    about the instances started.
+
+    If the instance was not able to change state,
+    "changed" will be set to False.
+
+    """
+    
+    wait = module.params.get('wait')
+    wait_timeout = int(module.params.get('wait_timeout'))
+    changed = False
+    instance_dict_array = []
+    
+    if not isinstance(instance_ids, list) or len(instance_ids) < 1:
+        module.fail_json(msg='instance_ids should be a list of instances, aborting')
+
+    dest_state = module.params.get('state')
+    dest_state_ec2 = 'stopped' if dest_state == 'stopped' else 'running'
+
+    # Check that our instances are not in the state we want to take them to
+    # and change them to our desired state
+    running_instances_array = []
+    for res in ec2.get_all_instances(instance_ids):
+        for inst in res.instances:
+           if not inst.state == dest_state_ec2:
+               instance_dict_array.append(get_instance_info(inst))
+               try:
+                   if dest_state == 'running':
+                       inst.start()
+                   else:
+                       inst.stop()
+               except EC2ResponseError as e:
+                   module.fail_json(msg='Unable to change state for instance {0}, error: {1}'.format(inst.id, e))
+               changed = True
+
+    ## Wait for all the instances to finish starting or stopping
+    instids = [ i.id for i in res.instances ]
+    this_res = []
+    num_running = 0
+    wait_timeout = time.time() + wait_timeout
+    while wait_timeout > time.time() and num_running < len(instids):
+        res_list = res.connection.get_all_instances(instids)
+        if len(res_list) > 0:
+            this_res = res_list[0]
+            num_running = len([ i for i in this_res.instances if i.state == dest_state_ec2 ])
+        else:
+            # got a bad response of some sort, possibly due to 
+            # stale/cached data. Wait a second and then try again
+            time.sleep(1)
+            continue
+        if wait and num_running < len(instids):
+            time.sleep(5)
+        else:
+            break
+
+    if wait and wait_timeout <= time.time():
+        # waiting took too long
+        module.fail_json(msg = "wait for instances running timeout on %s" % time.asctime())
+
+    for inst in this_res.instances:
+        running_instances_array.append(inst.id)
+
+    return (changed, instance_dict_array, running_instances_array)
+
+
 def main():
     module = AnsibleModule(
         argument_spec = dict(
@@ -650,27 +836,11 @@ def main():
             instance_profile_name = dict(),
             instance_ids = dict(type='list'),
             state = dict(default='present'),
+            volumes = dict(type='list'),
         )
     )
 
-    # def get_ec2_creds(module):
-    #   return ec2_url, ec2_access_key, ec2_secret_key, region
-    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
-
-    # If we have a region specified, connect to its endpoint.
-    if region:
-        try:
-            ec2 = boto.ec2.connect_to_region(region, aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key)
-        except boto.exception.NoAuthHandlerFound, e:
-            module.fail_json(msg = str(e))
-    # If we specified an ec2_url then try connecting to it
-    elif ec2_url:
-        try:
-            ec2 = boto.connect_ec2_endpoint(ec2_url, aws_access_key, aws_secret_key)
-        except boto.exception.NoAuthHandlerFound, e:
-            module.fail_json(msg = str(e))
-    else:
-        module.fail_json(msg="Either region or ec2_url must be specified")
+    ec2 = ec2_connect(module)
 
     if module.params.get('state') == 'absent':
         instance_ids = module.params.get('instance_ids')
@@ -679,10 +849,15 @@ def main():
 
         (changed, instance_dict_array, new_instance_ids) = terminate_instances(module, ec2, instance_ids)
 
+    elif module.params.get('state') == 'running' or module.params.get('state') == 'stopped':
+        instance_ids = module.params.get('instance_ids')
+        if not isinstance(instance_ids, list):
+            module.fail_json(msg='running list needs to be a list of instances to run: %s' % instance_ids)
+
+        (changed, instance_dict_array, new_instance_ids) = startstop_instances(module, ec2, instance_ids)
+
     elif module.params.get('state') == 'present':
         # Changed is always set to true when provisioning new instances
-        if not module.params.get('key_name'):
-            module.fail_json(msg='key_name parameter is required for new instance')
         if not module.params.get('image'):
             module.fail_json(msg='image parameter is required for new instance')
         (instance_dict_array, new_instance_ids, changed) = create_instances(module, ec2)

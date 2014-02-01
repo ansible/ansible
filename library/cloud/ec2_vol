@@ -77,6 +77,11 @@ options:
     required: false
     default: null
     aliases: ['aws_zone', 'ec2_zone']
+  snapshot:
+    description:
+      - snapshot ID on which to base the volume
+    required: false
+    default: null
 requirements: [ "boto" ]
 author: Lester Wade
 '''
@@ -96,6 +101,12 @@ EXAMPLES = '''
     volume_size: 5 
     iops: 200
     device_name: sdd
+
+# Example using snapshot id
+- local_action:
+    module: ec2_vol
+    instance: XXXXXX
+    snapshot: "{{ snapshot }}"
 
 # Playbook example combined with instance launch 
 - local_action: 
@@ -127,15 +138,6 @@ except ImportError:
     print "failed=True msg='boto required for this module'"
     sys.exit(1)
 
-AWS_REGIONS = ['ap-northeast-1',
-               'ap-southeast-1',
-               'ap-southeast-2',
-               'eu-west-1',
-               'sa-east-1',
-               'us-east-1',
-               'us-west-1',
-               'us-west-2']
-
 def main():
     module = AnsibleModule(
         argument_spec = dict(
@@ -148,33 +150,18 @@ def main():
             ec2_url = dict(),
             ec2_secret_key = dict(aliases=['aws_secret_key', 'secret_key'], no_log=True),
             ec2_access_key = dict(aliases=['aws_access_key', 'access_key']),
+            snapshot = dict(),
         )
     )
-
-    # def get_ec2_creds(module):
-    #   return ec2_url, ec2_access_key, ec2_secret_key, region
-    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
 
     instance = module.params.get('instance')
     volume_size = module.params.get('volume_size')
     iops = module.params.get('iops')
     device_name = module.params.get('device_name')
     zone = module.params.get('zone')
+    snapshot = module.params.get('snapshot')
    
-    # If we have a region specified, connect to its endpoint.
-    if region: 
-        try:
-            ec2 = boto.ec2.connect_to_region(region, aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key)
-        except boto.exception.NoAuthHandlerFound, e:
-            module.fail_json(msg = str(e))
-    # Otherwise, no region so we fallback to the old connection method
-    elif ec2_url:
-        try:
-            ec2 = boto.connect_ec2_endpoint(ec2_url, aws_access_key, aws_secret_key)
-        except boto.exception.NoAuthHandlerFound, e:
-            module.fail_json(msg = str(e))
-    else:
-        module.fail_json(msg="Either region or ec2_url must be specified")
+    ec2 = ec2_connect(module)
 
     # Here we need to get the zone info for the instance. This covers situation where 
     # instance is specified but zone isn't.
@@ -204,7 +191,7 @@ def main():
     # If no instance supplied, try volume creation based on module parameters.
 
     try:
-        volume = ec2.create_volume(volume_size, zone, None, volume_type, iops)
+        volume = ec2.create_volume(volume_size, zone, snapshot, volume_type, iops)
         while volume.status != 'available':
             time.sleep(3)
             volume.update()

@@ -7,11 +7,11 @@
 Name:      %{name}
 Version:   1.5
 Release:   1%{?dist}
-Url:       http://www.ansibleworks.com
-Summary:   SSH-based configuration management, deployment, and orchestration engine
+Url:       http://www.ansible.com
+Summary:   SSH-based application deployment, configuration management, and IT orchestration platform
 License:   GPLv3
 Group:     Development/Libraries
-Source:    http://www.ansibleworks.com/releases/%{name}-%{version}.tar.gz
+Source:    http://releases.ansible.com/ansible/%{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
 
@@ -79,9 +79,8 @@ are transferred to managed machines automatically.
 mkdir -p %{buildroot}/etc/ansible/
 cp examples/hosts %{buildroot}/etc/ansible/
 cp examples/ansible.cfg %{buildroot}/etc/ansible/
-mkdir -p %{buildroot}/%{_mandir}/{man1,man3}/
+mkdir -p %{buildroot}/%{_mandir}/man1/
 cp -v docs/man/man1/*.1 %{buildroot}/%{_mandir}/man1/
-cp -v docs/man/man3/*.3 %{buildroot}/%{_mandir}/man3/
 mkdir -p %{buildroot}/%{_datadir}/ansible
 cp -rv library/* %{buildroot}/%{_datadir}/ansible/
 
@@ -98,7 +97,6 @@ rm -rf %{buildroot}
 %config(noreplace) %{_sysconfdir}/ansible
 %doc README.md PKG-INFO COPYING
 %doc %{_mandir}/man1/ansible*
-%doc %{_mandir}/man3/ansible.*
 %doc examples/playbooks
 
 

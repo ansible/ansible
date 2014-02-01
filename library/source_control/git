@@ -43,6 +43,29 @@ options:
             - What version of the repository to check out.  This can be the
               full 40-character I(SHA-1) hash, the literal string C(HEAD), a
               branch name, or a tag name.
+    accept_hostkey:
+        required: false
+        default: false
+        version_added: "1.5"
+        description:
+            - Add the hostkey for the repo url if not already added.
+              If ssh_args contains "-o StrictHostKeyChecking=no", this
+              parameter is ignored.
+    ssh_opts:
+        required: false
+        default: None
+        version_added: "1.5"
+        description:
+            - Creates a wrapper script and exports the path as GIT_SSH
+              which git then automatically uses to override ssh arguments.
+              An example value could be "-o StrictHostKeyChecking=no"
+    key_file:
+        requird: false
+        default: None
+        version_added: "1.5"
+        description:
+            - Uses the same wrapper method as ssh_opts to pass 
+              "-i <key_file>" to the ssh arguments used by git
     reference:
         required: false
         default: null
@@ -118,6 +141,46 @@ EXAMPLES = '''
 import re
 import tempfile
 
+def write_ssh_wrapper():
+    fd, wrapper_path = tempfile.mkstemp()
+    fh = os.fdopen(fd, 'w+b')
+    template = """#!/bin/sh
+if [ -z "$GIT_SSH_OPTS" ]; then
+    BASEOPTS=""
+else
+    BASEOPTS=$GIT_SSH_OPTS
+fi
+
+if [ -z "$GIT_KEY" ]; then
+    ssh $BASEOPTS "$@"
+else
+    ssh -i "$GIT_KEY" $BASEOPTS "$@"
+fi
+"""
+    fh.write(template)
+    fh.close()
+    st = os.stat(wrapper_path)
+    os.chmod(wrapper_path, st.st_mode | stat.S_IEXEC)
+    return wrapper_path
+
+def set_git_ssh(ssh_wrapper, key_file, ssh_opts):
+
+    if os.environ.get("GIT_SSH"):
+        del os.environ["GIT_SSH"]
+    os.environ["GIT_SSH"] = ssh_wrapper
+
+    if os.environ.get("GIT_KEY"):
+        del os.environ["GIT_KEY"]
+
+    if key_file:
+        os.environ["GIT_KEY"] = key_file    
+
+    if os.environ.get("GIT_SSH_OPTS"):
+        del os.environ["GIT_SSH_OPTS"]
+
+    if ssh_opts:
+        os.environ["GIT_SSH_OPTS"] = ssh_opts
+
 def get_version(git_path, dest, ref="HEAD"):
     ''' samples the version of the git repo '''
     os.chdir(dest)
@@ -192,7 +255,7 @@ def get_remote_head(git_path, module, dest, version, remote, bare):
         # appears to be a sha1.  return as-is since it appears
         # cannot check for a specific sha1 on remote
         return version
-    (rc, out, err) = module.run_command(cmd, check_rc=True)
+    (rc, out, err) = module.run_command(cmd, check_rc=True )
     if len(out) < 1:
         module.fail_json(msg="Could not determine remote revision for %s" % version)
     rev = out.split()[0]
@@ -352,6 +415,9 @@ def main():
             force=dict(default='yes', type='bool'),
             depth=dict(default=None, type='int'),
             update=dict(default='yes', type='bool'),
+            accept_hostkey=dict(default='no', type='bool'),
+            key_file=dict(default=None, required=False),
+            ssh_opts=dict(default=None, required=False),
             executable=dict(default=None),
             bare=dict(default='no', type='bool'),
         ),
@@ -368,6 +434,24 @@ def main():
     bare      = module.params['bare']
     reference = module.params['reference']
     git_path  = module.params['executable'] or module.get_bin_path('git', True)
+    
+    key_file   = module.params['key_file']
+    ssh_opts   = module.params['ssh_opts']
+
+    # create a wrapper script and export
+    # GIT_SSH=<path> as an environment variable
+    # for git to use the wrapper script
+    ssh_wrapper = None
+    if key_file or ssh_opts:
+        ssh_wrapper = write_ssh_wrapper()
+        set_git_ssh(ssh_wrapper, key_file, ssh_opts)
+
+    # add the git repo's hostkey 
+    if module.params['ssh_opts'] is not None:
+        if not "-o StrictHostKeyChecking=no" in module.params['ssh_opts']:
+            add_git_host_key(module, repo, accept_hostkey=module.params['accept_hostkey'])
+    else:            
+        add_git_host_key(module, repo, accept_hostkey=module.params['accept_hostkey'])
 
     if bare:
         gitconfig = os.path.join(dest, 'config')
@@ -426,8 +510,14 @@ def main():
     if before != after or local_mods:
         changed = True
 
+    # cleanup the wrapper script
+    if ssh_wrapper:
+        os.remove(ssh_wrapper) 
+
     module.exit_json(changed=changed, before=before, after=after)
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.known_hosts import *
+
 main()

@@ -163,58 +163,47 @@ def is_changed(result):
 
     return (result.get('changed', False) in [ True, 'True', 'true'])
 
-def check_conditional(conditional, basedir, inject, fail_on_undefined=False, jinja2=False):
+def check_conditional(conditional, basedir, inject, fail_on_undefined=False):
+
+    if conditional is None or conditional == '':
+        return True
 
     if isinstance(conditional, list):
         for x in conditional:
-            if not check_conditional(x, basedir, inject, fail_on_undefined=fail_on_undefined, jinja2=jinja2):
+            if not check_conditional(x, basedir, inject, fail_on_undefined=fail_on_undefined):
                 return False
         return True
-
-    if jinja2:
-        conditional = "jinja2_compare %s" % conditional
-
-    if conditional.startswith("jinja2_compare"):
-        conditional = conditional.replace("jinja2_compare ","")
-        # allow variable names
-        if conditional in inject and str(inject[conditional]).find('-') == -1:
-            conditional = inject[conditional]
-        conditional = template.template(basedir, conditional, inject, fail_on_undefined=fail_on_undefined)
-        original = str(conditional).replace("jinja2_compare ","")
-        # a Jinja2 evaluation that results in something Python can eval!
-        presented = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional
-        conditional = template.template(basedir, presented, inject)
-        val = conditional.strip()
-        if val == presented:
-            # the templating failed, meaning most likely a 
-            # variable was undefined. If we happened to be 
-            # looking for an undefined variable, return True,
-            # otherwise fail
-            if conditional.find("is undefined") != -1:
-                return True
-            elif conditional.find("is defined") != -1:
-                return False
-            else:
-                raise errors.AnsibleError("error while evaluating conditional: %s" % original)
-        elif val == "True":
-            return True
-        elif val == "False":
-            return False
-        else:
-            raise errors.AnsibleError("unable to evaluate conditional: %s" % original)
 
     if not isinstance(conditional, basestring):
         return conditional
 
-    try:
-        conditional = conditional.replace("\n", "\\n")
-        result = safe_eval(conditional)
-        if result not in [ True, False ]:
-            raise errors.AnsibleError("Conditional expression must evaluate to True or False: %s" % conditional)
-        return result
-
-    except (NameError, SyntaxError):
-        raise errors.AnsibleError("Could not evaluate the expression: (%s)" % conditional)
+    conditional = conditional.replace("jinja2_compare ","")
+    # allow variable names
+    if conditional in inject and str(inject[conditional]).find('-') == -1:
+        conditional = inject[conditional]
+    conditional = template.template(basedir, conditional, inject, fail_on_undefined=fail_on_undefined)
+    original = str(conditional).replace("jinja2_compare ","")
+    # a Jinja2 evaluation that results in something Python can eval!
+    presented = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional
+    conditional = template.template(basedir, presented, inject)
+    val = conditional.strip()
+    if val == presented:
+        # the templating failed, meaning most likely a 
+        # variable was undefined. If we happened to be 
+        # looking for an undefined variable, return True,
+        # otherwise fail
+        if conditional.find("is undefined") != -1:
+            return True
+        elif conditional.find("is defined") != -1:
+            return False
+        else:
+            raise errors.AnsibleError("error while evaluating conditional: %s" % original)
+    elif val == "True":
+        return True
+    elif val == "False":
+        return False
+    else:
+        raise errors.AnsibleError("unable to evaluate conditional: %s" % original)
 
 def is_executable(path):
     '''is the given path executable?'''
@@ -261,6 +250,8 @@ def path_dwim(basedir, given):
     elif given.startswith("~"):
         return os.path.abspath(os.path.expanduser(given))
     else:
+        if basedir is None:
+            basedir = "."
         return os.path.abspath(os.path.join(basedir, given))
 
 def path_dwim_relative(original, dirname, source, playbook_base, check=True):
@@ -458,8 +449,30 @@ Note: The error may actually appear before this position: line %s, column %s
 %s
 %s""" % (path, mark.line + 1, mark.column + 1, before_probline, probline, arrow)
 
-        msg = process_common_errors(msg, probline, mark.column)
+        unquoted_var = None
+        if '{{' in probline and '}}' in probline:
+            if '"{{' not in probline or "'{{" not in probline:
+                unquoted_var = True
 
+        msg = process_common_errors(msg, probline, mark.column)
+        if not unquoted_var:
+            msg = process_common_errors(msg, probline, mark.column)
+        else:
+            msg = msg + """
+We could be wrong, but this one looks like it might be an issue with
+missing quotes.  Always quote template expression brackets when they 
+start a value. For instance:            
+
+    with_items:
+      - {{ foo }}
+
+Should be written as:
+
+    with_items:
+      - "{{ foo }}"      
+
+"""
+            msg = process_common_errors(msg, probline, mark.column)
 
     else:
         # No problem markers means we have to throw a generic
@@ -634,6 +647,8 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
         help='use this file to authenticate the connection')
     parser.add_option('-K', '--ask-sudo-pass', default=False, dest='ask_sudo_pass', action='store_true',
         help='ask for sudo password')
+    parser.add_option('--ask-su-pass', default=False, dest='ask_su_pass',
+                      action='store_true', help='ask for su password')
     parser.add_option('--list-hosts', dest='listhosts', action='store_true',
         help='outputs a list of matching hosts; does not execute anything else')
     parser.add_option('-M', '--module-path', dest='module_path',
@@ -657,11 +672,15 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
     if runas_opts:
         parser.add_option("-s", "--sudo", default=constants.DEFAULT_SUDO, action="store_true",
             dest='sudo', help="run operations with sudo (nopasswd)")
-        parser.add_option('-U', '--sudo-user', dest='sudo_user', help='desired sudo user (default=root)',
-            default=None)   # Can't default to root because we need to detect when this option was given
+        parser.add_option('-U', '--sudo-user', dest='sudo_user', default=None,
+                          help='desired sudo user (default=root)')  # Can't default to root because we need to detect when this option was given
         parser.add_option('-u', '--user', default=constants.DEFAULT_REMOTE_USER,
-            dest='remote_user',
-            help='connect as this user (default=%s)' % constants.DEFAULT_REMOTE_USER)
+            dest='remote_user', help='connect as this user (default=%s)' % constants.DEFAULT_REMOTE_USER)
+
+        parser.add_option('-S', '--su', default=constants.DEFAULT_SU,
+                          action='store_true', help='run operations with su')
+        parser.add_option('-R', '--su-user', help='run operations with su as this '
+                                                  'user (default=%s)' % constants.DEFAULT_SU_USER)
 
     if connect_opts:
         parser.add_option('-c', '--connection', dest='connection',
@@ -688,10 +707,12 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
 
     return parser
 
-def ask_passwords(ask_pass=False, ask_sudo_pass=False):
+def ask_passwords(ask_pass=False, ask_sudo_pass=False, ask_su_pass=False):
     sshpass = None
     sudopass = None
+    su_pass = None
     sudo_prompt = "sudo password: "
+    su_prompt = "su password: "
 
     if ask_pass:
         sshpass = getpass.getpass(prompt="SSH password: ")
@@ -702,7 +723,10 @@ def ask_passwords(ask_pass=False, ask_sudo_pass=False):
         if ask_pass and sudopass == '':
             sudopass = sshpass
 
-    return (sshpass, sudopass)
+    if ask_su_pass:
+        su_pass = getpass.getpass(prompt=su_prompt)
+
+    return (sshpass, sudopass, su_pass)
 
 def do_encrypt(result, encrypt, salt_size=None, salt=None):
     if PASSLIB_AVAILABLE:
@@ -756,86 +780,6 @@ def boolean(value):
     else:
         return False
 
-def compile_when_to_only_if(expression):
-    '''
-    when is a shorthand for writing only_if conditionals.  It requires less quoting
-    magic.  only_if is retained for backwards compatibility.
-    '''
-
-    # when: set $variable
-    # when: unset $variable
-    # when: failed $json_result
-    # when: changed $json_result
-    # when: int $x >= $z and $y < 3
-    # when: int $x in $alist
-    # when: float $x > 2 and $y <= $z
-    # when: str $x != $y
-    # when: jinja2_compare asdf  # implies {{ asdf }}
-
-    if type(expression) not in [ str, unicode ]:
-        raise errors.AnsibleError("invalid usage of when_ operator: %s" % expression)
-    tokens = expression.split()
-    if len(tokens) < 2:
-        raise errors.AnsibleError("invalid usage of when_ operator: %s" % expression)
-
-    # when_set / when_unset
-    if tokens[0] in [ 'set', 'unset' ]:
-        tcopy = tokens[1:]
-        for (i,t) in enumerate(tokens[1:]):
-            if t.find("$") != -1:
-                tcopy[i] = "is_%s('''%s''')" % (tokens[0], t)
-            else:
-                tcopy[i] = t
-        return " ".join(tcopy)
-
-    # when_failed / when_changed
-    elif tokens[0] in [ 'failed', 'changed' ]:
-        tcopy = tokens[1:]
-        for (i,t) in enumerate(tokens[1:]):
-            if t.find("$") != -1:
-                tcopy[i] = "is_%s(%s)" % (tokens[0], t)
-            else:
-                tcopy[i] = t
-        return " ".join(tcopy)
-
-    # when_integer / when_float / when_string
-    elif tokens[0] in [ 'integer', 'float', 'string' ]:
-        cast = None
-        if tokens[0] == 'integer':
-            cast = 'int'
-        elif tokens[0] == 'string':
-            cast = 'str'
-        elif tokens[0] == 'float':
-            cast = 'float'
-        tcopy = tokens[1:]
-        for (i,t) in enumerate(tokens[1:]):
-            #if re.search(t, r"^\w"):
-                # bare word will turn into Jinja2 so all the above
-                # casting is really not needed
-                #tcopy[i] = "%s('''%s''')" % (cast, t)
-            t2 = t.strip()
-            if (t2[0].isalpha() or t2[0] == '$') and cast == 'str' and t2 != 'in':
-                tcopy[i] = "'%s'" % (t)
-            else:
-                tcopy[i] = t
-        result = " ".join(tcopy)
-        return result
-
-
-    # when_boolean
-    elif tokens[0] in [ 'bool', 'boolean' ]:
-        tcopy = tokens[1:]
-        for (i, t) in enumerate(tcopy):
-            if t.find("$") != -1:
-                tcopy[i] = "(is_set('''%s''') and '''%s'''.lower() not in ('false', 'no', 'n', 'none', '0', ''))" % (t, t)
-        return " ".join(tcopy)
-
-    # the stock 'when' without qualification (new in 1.2), assumes Jinja2 terms
-    elif tokens[0] == 'jinja2_compare':
-        return " ".join(tokens)
-    else:
-        raise errors.AnsibleError("invalid usage of when_ operator: %s" % expression)
-
 def make_sudo_cmd(sudo_user, executable, cmd):
     """
     helper function for connection plugins to create sudo commands
@@ -853,6 +797,21 @@ def make_sudo_cmd(sudo_user, executable, cmd):
     sudocmd = '%s -k && %s %s -S -p "%s" -u %s %s -c %s' % (
         C.DEFAULT_SUDO_EXE, C.DEFAULT_SUDO_EXE, C.DEFAULT_SUDO_FLAGS,
         prompt, sudo_user, executable or '$SHELL', pipes.quote('echo %s; %s' % (success_key, cmd)))
+    return ('/bin/sh -c ' + pipes.quote(sudocmd), prompt, success_key)
+
+
+def make_su_cmd(su_user, executable, cmd):
+    """
+    Helper function for connection plugins to create direct su commands
+    """
+    # TODO: work on this function
+    randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
+    prompt = 'assword: '
+    success_key = 'SUDO-SUCCESS-%s' % randbits
+    sudocmd = '%s %s %s %s -c %s' % (
+        C.DEFAULT_SU_EXE, C.DEFAULT_SU_FLAGS, su_user, executable or '$SHELL',
+        pipes.quote('echo %s; %s' % (success_key, cmd))
+    )
     return ('/bin/sh -c ' + pipes.quote(sudocmd), prompt, success_key)
 
 _TO_UNICODE_TYPES = (unicode, type(None))
@@ -979,12 +938,21 @@ def listify_lookup_plugin_terms(terms, basedir, inject):
 
     return terms
 
-def deprecated(msg, version):
+def deprecated(msg, version, removed=False):
     ''' used to print out a deprecation message.'''
-    if not C.DEPRECATION_WARNINGS:
+
+    if not removed and not C.DEPRECATION_WARNINGS:
         return
-    new_msg = "\n[DEPRECATION WARNING]: %s. This feature will be removed in version %s." % (msg, version)
-    new_msg = new_msg + " Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.\n\n"
+
+    if not removed:
+        if version:
+            new_msg = "\n[DEPRECATION WARNING]: %s. This feature will be removed in version %s." % (msg, version)
+        else:
+            new_msg = "\n[DEPRECATION WARNING]: %s. This feature will be removed in a future release." % (msg)
+        new_msg = new_msg + " Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.\n\n"
+    else:
+        raise errors.AnsibleError("[DEPRECATED]: %s.  Please update your playbooks." % msg)
+
     wrapped = textwrap.wrap(new_msg, 79)
     new_msg = "\n".join(wrapped) + "\n"
 

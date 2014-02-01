@@ -15,15 +15,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <!-- begin analytics -->
-<script type="text/javascript">
-var _gaq = _gaq || [];
-_gaq.push(['_setAccount', 'UA-29861888-2']);
-_gaq.push(['_trackPageview']);
-(function() {
-var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-})();
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-29861888-3', 'ansible.com');
+  ga('send', 'pageview');
+
 </script>
 <!-- end analytics -->
 
@@ -38,6 +38,7 @@ var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga
 
   {# CSS #}
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+  <link href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.0.3/css/font-awesome.min.css' rel='stylesheet' type='text/css'>
 
   {# JS #}
   {% if not embedded %}
@@ -101,6 +102,24 @@ var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga
 
   <script src="//cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
 
+  <style>
+    .search-reset-start {
+        color: #463E3F;
+        float: right;
+        position: relative;
+        top: -25px;
+        left: -10px;
+        z-index: 10;
+     }
+     .search-reset-start:hover {
+        cursor: pointer;
+        color: #2980B9;
+     }
+     #search-box-id {
+        padding-right: 25px;
+     }
+  </style>
+
 </head>
 
 <body class="wy-body-for-nav">
@@ -109,18 +128,40 @@ var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga
 
     {# SIDE NAV, TOGGLES ON MOBILE #}
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-nav-search">
-        <a href="{{ pathto(master_doc) }}" class="icon icon-home"> {{ project }}</a>
+      <div style='background-color:#64C5C7'>
+        <br/>
+        <center><a href="{{ pathto(master_doc) }}"><img src="http://cdn2.hubspot.net/hub/330046/file-445792629-png/ANSI_logotype_web_white.png" style="border-radius:0;background-color:#64C5C7;width:214px;height:26px;margin:'auto auto auto auto'"></a></center>
+        <br/>      
+      </div>
+      <div class="wy-side-nav-search" style="background-color:#64C5C7;height=80px;margin:'auto auto auto auto'">
+        <!-- <a href="{{ pathto(master_doc) }}" class="icon icon-home"> {{ project }}</a> -->
         {% include "searchbox.html" %}
       </div>
 
-      <div class="wy-menu wy-menu-vertical" data-spy="affix">
+      <div id="menu-id" class="wy-menu wy-menu-vertical" data-spy="affix">
         {% set toctree = toctree(maxdepth=2, collapse=False) %}
         {% if toctree %}
             {{ toctree }}
         {% else %}
             {{ toc }}
         {% endif %}
+
+<!-- changeable widget -->
+<center>
+<br/>
+<span class="hs-cta-wrapper" id="hs-cta-wrapper-71d47584-8ef5-4b06-87ae-8d25bc2a837e">
+    <span class="hs-cta-node hs-cta-71d47584-8ef5-4b06-87ae-8d25bc2a837e" id="hs-cta-71d47584-8ef5-4b06-87ae-8d25bc2a837e">
+        <!--[if lte IE 8]><div id="hs-cta-ie-element"></div><![endif]-->
+        <a href="http://cta-redirect.hubspot.com/cta/redirect/330046/71d47584-8ef5-4b06-87ae-8d25bc2a837e"><img class="hs-cta-img" id="hs-cta-img-71d47584-8ef5-4b06-87ae-8d25bc2a837e" style="border-width:0px;" src="https://no-cache.hubspot.com/cta/default/330046/71d47584-8ef5-4b06-87ae-8d25bc2a837e.png" /></a>
+    </span>
+    <script charset="utf-8" src="https://js.hscta.net/cta/current.js"></script>
+        <script type="text/javascript">
+            hbspt.cta.load(330046, '71d47584-8ef5-4b06-87ae-8d25bc2a837e');
+        </script>
+</span>
+</center>
+
+
       </div>
       &nbsp;
     </nav>
@@ -138,7 +179,10 @@ var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga
       <div class="wy-nav-content">
         <div class="rst-content">
           {% include "breadcrumbs.html" %}
+          <div id="page-content">
           {% block body %}{% endblock %}
+          </div>
+          <div id="search-results"><gcse:searchresults-only></div>
           {% include "footer.html" %}
         </div>
       </div>

@@ -6,11 +6,10 @@ Ansible
 Ansible is a radically simple configuration-management, deployment, task-execution, and
 multinode orchestration framework.
 
-Read the documentation and more at http://ansibleworks.com/
+Read the documentation and more at http://ansible.com/
 
 Many users run straight from the development branch (it's generally fine to do so), but you might also wish to consume a release.  You can find 
-instructions [here](http://ansibleworks.com/docs/intro_getting_started.html) for a variety of platforms.  If you want a tarball of the last release, go to 
-http://ansibleworks.com/releases/ and you can also install with pip.
+instructions [here](http://docs.ansible.com/intro_getting_started.html) for a variety of platforms.  If you want a tarball of the last release, go to [releases.ansible.com](http://releases.ansible.com/ansible) and you can also install with pip.
 
 Design Principles
 =================
@@ -43,7 +42,7 @@ Branch Info
 Author
 ======
 
-Michael DeHaan -- michael@ansibleworks.com
+Michael DeHaan -- michael@ansible.com
 
-[AnsibleWorks](http://ansibleworks.com)
+[Ansible, Inc](http://ansible.com)
 

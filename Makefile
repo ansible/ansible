@@ -124,7 +124,7 @@ install:
 sdist: clean docs
 	$(PYTHON) setup.py sdist -t MANIFEST.in
 
-rpmcommon: sdist
+rpmcommon: $(MANPAGES) sdist
 	@mkdir -p rpm-build
 	@cp dist/*.gz rpm-build/
 	@sed -e 's#^Version:.*#Version: $(VERSION)#' -e 's#^Release:.*#Release: $(RPMRELEASE)%{?dist}#' $(RPMSPEC) >rpm-build/$(NAME).spec

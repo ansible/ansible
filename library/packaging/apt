@@ -324,7 +324,10 @@ def upgrade(m, mode="yes", force=False,
         upgrade_command = "safe-upgrade"
 
     if force:
-        force_yes = '--force-yes'
+        if apt_cmd == APT_GET_CMD:
+            force_yes = '--force-yes'
+        else:
+            force_yes = ''
     else:
         force_yes = ''
 

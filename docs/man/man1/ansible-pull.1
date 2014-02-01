@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: ansible
-.\"    Author: [see the "AUTHOR" section]
-.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 11/27/2013
+.\"    Author: :doctype:manpage
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 01/02/2014
 .\"    Manual: System administration commands
-.\"    Source: Ansible 1.4.1
+.\"    Source: Ansible 1.5
 .\"  Language: English
 .\"
-.TH "ANSIBLE" "1" "11/27/2013" "Ansible 1\&.4\&.1" "System administration commands"
+.TH "ANSIBLE" "1" "01/03/2014" "Ansible 1\&.5" "System administration commands"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -25,7 +25,7 @@ ansible-pull \- set up a remote copy of ansible on each managed node
 ansible \-d DEST \-U URL [options] [ <filename\&.yml> ]
 .SH "DESCRIPTION"
 .sp
-\fBAnsible\fR is an extra\-simple tool/framework/API for doing \'remote things\' over SSH\&.
+\fBAnsible\fR is an extra\-simple tool/framework/API for doing \*(Aqremote things\*(Aq over SSH\&.
 .sp
 Use ansible\-pull to set up a remote copy of ansible on each managed node, each set to run via cron and update playbook source via a source repository\&. This inverts the default \fBpush\fR architecture of ansible into a \fBpull\fR architecture, which has near\-limitless scaling potential\&.
 .sp
@@ -77,6 +77,11 @@ Purge the checkout after the playbook is run\&.
 .RS 4
 Module used to checkout playbook repository\&. Defaults to git\&.
 .RE
+.PP
+\fB\-o\fR, \fB\-\-only\-if\-changed\fR
+.RS 4
+Run the playbook only if the repository has changed
+.RE
 .SH "AUTHOR"
 .sp
 Ansible was originally written by Michael DeHaan\&. See the AUTHORS file for a complete list of contributors\&.
@@ -90,3 +95,9 @@ Ansible is released under the terms of the GPLv3 License\&.
 \fBansible\fR(1), \fBansible\-playbook\fR(1), \fBansible\-doc\fR(1)
 .sp
 Extensive documentation as well as IRC and mailing list info is available on the ansible home page: https://ansible\&.github\&.com/
+.SH "AUTHOR"
+.PP
+\fB:doctype:manpage\fR
+.RS 4
+Author.
+.RE

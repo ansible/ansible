@@ -1,4 +1,4 @@
-# (c) 2012-2013, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -24,22 +24,24 @@ import sys
 class Task(object):
 
     __slots__ = [
-        'name', 'meta', 'action', 'only_if', 'when', 'async_seconds', 'async_poll_interval',
+        'name', 'meta', 'action', 'when', 'async_seconds', 'async_poll_interval',
         'notify', 'module_name', 'module_args', 'module_vars', 'default_vars',
         'play', 'notified_by', 'tags', 'register', 'role_name',
         'delegate_to', 'first_available_file', 'ignore_errors',
         'local_action', 'transport', 'sudo', 'remote_user', 'sudo_user', 'sudo_pass',
         'items_lookup_plugin', 'items_lookup_terms', 'environment', 'args',
-        'any_errors_fatal', 'changed_when', 'failed_when', 'always_run', 'delay', 'retries', 'until'
+        'any_errors_fatal', 'changed_when', 'failed_when', 'always_run', 'delay', 'retries', 'until',
+        'su', 'su_user', 'su_pass', 'no_log',
     ]
 
     # to prevent typos and such
     VALID_KEYS = [
-         'name', 'meta', 'action', 'only_if', 'async', 'poll', 'notify',
+         'name', 'meta', 'action', 'when', 'async', 'poll', 'notify',
          'first_available_file', 'include', 'tags', 'register', 'ignore_errors',
          'delegate_to', 'local_action', 'transport', 'remote_user', 'sudo', 'sudo_user',
          'sudo_pass', 'when', 'connection', 'environment', 'args',
-         'any_errors_fatal', 'changed_when', 'failed_when', 'always_run', 'delay', 'retries', 'until'
+         'any_errors_fatal', 'changed_when', 'failed_when', 'always_run', 'delay', 'retries', 'until',
+         'su', 'su_user', 'su_pass', 'no_log',
     ]
 
     def __init__(self, play, ds, module_vars=None, default_vars=None, additional_conditions=None, role_name=None):
@@ -96,16 +98,14 @@ class Task(object):
             elif x in [ 'changed_when', 'failed_when', 'when']:
                 if isinstance(ds[x], basestring) and ds[x].lstrip().startswith("{{"):
                     utils.warning("It is unneccessary to use '{{' in conditionals, leave variables in loop expressions bare.")
-                ds[x] = "jinja2_compare %s" % (ds[x])
             elif x.startswith("when_"):
-                utils.deprecated("The 'when_' conditional is a deprecated syntax as of 1.2. Switch to using the regular unified 'when' statements as described in ansibleworks.com/docs/.","1.5")
+                utils.deprecated("The 'when_' conditional has been removed. Switch to using the regular unified 'when' statements as described on docs.ansible.com.","1.5", removed=True)
 
                 if 'when' in ds:
                     raise errors.AnsibleError("multiple when_* statements specified in task %s" % (ds.get('name', ds['action'])))
                 when_name = x.replace("when_","")
                 ds['when'] = "%s %s" % (when_name, ds[x])
                 ds.pop(x)
-
             elif not x in Task.VALID_KEYS:
                 raise errors.AnsibleError("%s is not a legal parameter in an Ansible task or handler" % x)
 
@@ -118,9 +118,11 @@ class Task(object):
         self.tags         = [ 'all' ]
         self.register     = ds.get('register', None)
         self.sudo         = utils.boolean(ds.get('sudo', play.sudo))
+        self.su           = utils.boolean(ds.get('su', play.su))
         self.environment  = ds.get('environment', {})
         self.role_name    = role_name
-        
+        self.no_log       = utils.boolean(ds.get('no_log', "false"))
+
         #Code to allow do until feature in a Task 
         if 'until' in ds:
             if not ds.get('register'):
@@ -128,8 +130,8 @@ class Task(object):
             self.module_vars['delay']     = ds.get('delay', 5)
             self.module_vars['retries']   = ds.get('retries', 3)
             self.module_vars['register']  = ds.get('register', None)
-            self.until                    = "jinja2_compare %s" % (ds.get('until'))
-            self.module_vars['until']     = utils.compile_when_to_only_if(self.until)
+            self.until                    = ds.get('until')
+            self.module_vars['until']     = self.until
 
         # rather than simple key=value args on the options line, these represent structured data and the values
         # can be hashes and lists, not just scalars
@@ -143,13 +145,25 @@ class Task(object):
         else:
             self.remote_user      = ds.get('remote_user', play.playbook.remote_user)
 
+        self.sudo_user    = None
+        self.sudo_pass    = None
+        self.su_user      = None
+        self.su_pass      = None
+
         if self.sudo:
             self.sudo_user    = ds.get('sudo_user', play.sudo_user)
             self.sudo_pass    = ds.get('sudo_pass', play.playbook.sudo_pass)
-        else:
-            self.sudo_user    = None
-            self.sudo_pass    = None
-        
+        elif self.su:
+            self.su_user      = ds.get('su_user', play.su_user)
+            self.su_pass      = ds.get('su_pass', play.playbook.su_pass)
+
+        # Fail out if user specifies a sudo param with a su param in a given play
+        if (ds.get('sudo') or ds.get('sudo_user') or ds.get('sudo_pass')) and \
+                (ds.get('su') or ds.get('su_user') or ds.get('su_pass')):
+            raise errors.AnsibleError('sudo params ("sudo", "sudo_user", "sudo_pass") '
+                                      'and su params "su", "su_user", "su_pass") '
+                                      'cannot be used together')
+
         # Both are defined
         if ('action' in ds) and ('local_action' in ds):
             raise errors.AnsibleError("the 'action' and 'local_action' attributes can not be used together")
@@ -188,21 +202,9 @@ class Task(object):
             self.name = self.action
 
         # load various attributes
-        self.only_if = ds.get('only_if', 'True')
-
-        if self.only_if != 'True':
-            utils.deprecated("only_if is a very old feature and has been obsolete since 0.9, please switch to the 'when' conditional as described at http://ansibleworks.com/docs","1.5")
-
         self.when    = ds.get('when', None)
         self.changed_when = ds.get('changed_when', None)
-
-        if self.changed_when is not None:
-            self.changed_when = utils.compile_when_to_only_if(self.changed_when)
-
         self.failed_when = ds.get('failed_when', None)
-
-        if self.failed_when is not None:
-            self.failed_when = utils.compile_when_to_only_if(self.failed_when)
 
         self.async_seconds = int(ds.get('async', 0))  # not async by default
         self.async_poll_interval = int(ds.get('poll', 10))  # default poll = 10 seconds
@@ -276,12 +278,7 @@ class Task(object):
                 self.tags.extend(apply_tags)
         self.tags.extend(import_tags)
 
-        if self.when is not None:
-            if self.only_if != 'True':
-                raise errors.AnsibleError('when obsoletes only_if, only use one or the other')
-            self.only_if = utils.compile_when_to_only_if(self.when)
-
         if additional_conditions:
             new_conditions = additional_conditions
-            new_conditions.append(self.only_if)
-            self.only_if = new_conditions
+            new_conditions.append(self.when)
+            self.when = new_conditions

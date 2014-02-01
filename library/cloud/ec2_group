@@ -87,7 +87,7 @@ EXAMPLES = '''
       - proto: udp
         from_port: 10051
         to_port: 10051
-        group_id: abcdef
+        group_id: sg-12345678
       - proto: tcp
         from_port: 123
         to_port: 123

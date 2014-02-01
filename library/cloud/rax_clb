@@ -74,6 +74,11 @@ options:
   username:
     description:
       - Rackspace username (overrides C(credentials))
+  vip_id:
+    description:
+      - Virtual IP ID to use when creating the load balancer for purposes of
+        sharing an IP with another load balancer of another protocol
+    version_added: 1.5
   wait:
     description:
       - wait for the balancer to be in state 'running' before returning
@@ -118,7 +123,6 @@ EXAMPLES = '''
 '''
 
 import sys
-import os
 
 from types import NoneType
 
@@ -136,6 +140,12 @@ PROTOCOLS = ['DNS_TCP', 'DNS_UDP', 'FTP', 'HTTP', 'HTTPS', 'IMAPS', 'IMAPv4',
              'TCP_CLIENT_FIRST', 'UDP', 'UDP_STREAM', 'SFTP']
 
 
+def node_to_dict(obj):
+    node = obj.to_dict()
+    node['id'] = obj.id
+    return node
+
+
 def to_dict(obj):
     instance = {}
     for key in dir(obj):
@@ -151,7 +161,7 @@ def to_dict(obj):
         elif key == 'nodes':
             instance[key] = []
             for node in value:
-                instance[key].append(node.to_dict())
+                instance[key].append(node_to_dict(node))
         elif (isinstance(value, NON_CALLABLES) and
                 not key.startswith('_')):
             instance[key] = value
@@ -160,7 +170,7 @@ def to_dict(obj):
 
 
 def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
-                        vip_type, timeout, wait, wait_timeout):
+                        vip_type, timeout, wait, wait_timeout, vip_id):
     for arg in (state, name, port, protocol, vip_type):
         if not arg:
             module.fail_json(msg='%s is required for rax_clb' % arg)
@@ -189,7 +199,7 @@ def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
 
         if not balancers:
             try:
-                virtual_ips = [clb.VirtualIP(type=vip_type)]
+                virtual_ips = [clb.VirtualIP(type=vip_type, id=vip_id)]
                 balancer = clb.create(name, metadata=metadata, port=port,
                                       algorithm=algorithm, protocol=protocol,
                                       timeout=timeout, virtual_ips=virtual_ips)
@@ -279,6 +289,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent']),
             timeout=dict(type='int', default=30),
             type=dict(choices=['PUBLIC', 'SERVICENET'], default='PUBLIC'),
+            vip_id=dict(),
             wait=dict(type='bool'),
             wait_timeout=dict(default=300),
         )
@@ -296,6 +307,7 @@ def main():
     protocol = module.params.get('protocol')
     state = module.params.get('state')
     timeout = int(module.params.get('timeout'))
+    vip_id = module.params.get('vip_id')
     vip_type = module.params.get('type')
     wait = module.params.get('wait')
     wait_timeout = int(module.params.get('wait_timeout'))
@@ -303,7 +315,7 @@ def main():
     setup_rax_module(module, pyrax)
 
     cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
-                        vip_type, timeout, wait, wait_timeout)
+                        vip_type, timeout, wait, wait_timeout, vip_id)
 
 
 # import module snippets

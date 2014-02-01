@@ -82,7 +82,7 @@ If a required variable has not been set, you can skip or fail using Jinja2's
         - shell: echo "I've got '{{ foo }}' and am not afraid to use it!"
           when: foo is defined
 
-        - fail: msg="Bailing out: this play requires 'bar'"
+        - fail: msg="Bailing out. this play requires 'bar'"
           when: bar is not defined
 
 This is especially useful in combination with the conditional import of vars
@@ -193,10 +193,10 @@ The following example shows how to template out a configuration file that was ve
     - name: template a file
       template: src={{ item }} dest=/etc/myapp/foo.conf
       with_first_found:
-        files: 
+        - files: 
            - {{ ansible_distribution }}.conf
            - default.conf
-        paths:
+          paths:
            - search_location_one/somedir/
            - /opt/other_location/somedir/
 

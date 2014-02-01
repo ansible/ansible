@@ -1,4 +1,4 @@
-# (c) 2013, Benno Joy <benno@ansibleworks.com>
+# (c) 2013-2014, Benno Joy <benno@ansible.com>
 #
 # This file is part of Ansible
 #

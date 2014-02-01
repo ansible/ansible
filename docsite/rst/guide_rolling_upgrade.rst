@@ -75,7 +75,7 @@ as push updates to all of the servers::
       - base-apache
       - nagios
 
-.. note:
+.. note::
 
    If you're not familiar with terms like playbooks and plays, you should review :doc:`playbooks`.
 
@@ -118,7 +118,7 @@ Here is lamp_haproxy's ``group_vars/all`` file. As you might expect, these varia
 
 This is a YAML file, and you can create lists and dictionaries for more complex variable structures. 
 In this case, we are just setting two variables, one for the port for the web server, and one for the 
-NTP server that our machiens should use for time synchronization.
+NTP server that our machines should use for time synchronization.
 
 Here's another group variables file. This is ``group_vars/dbservers`` which applies to the hosts in the ``dbservers`` group::
 
@@ -262,11 +262,9 @@ Now that you have an automated way to deploy updates to your application, how do
 
 Depending on your environment, you might be deploying continuously to a test environment, running an integration test battery against that environment, and then deploying automatically into production.  Or you could keep it simple and just use the rolling-update for on-demand deployment into test or production specifically.  This is all up to you.
 
-For integration with Continuous Integration systems, you can easily trigger playbook runs using the ``ansible-playbook`` command line tool, or, if you're using AnsibleWorks AWX, the ``awx-cli`` or the built-in REST API.  (The AWX-cli command 'joblaunch' will spawn a remote job over the REST API and is pretty slick).
+For integration with Continuous Integration systems, you can easily trigger playbook runs using the ``ansible-playbook`` command line tool, or, if you're using :doc:`tower`, the ``tower-cli`` or the built-in REST API.  (The tower-cli command 'joblaunch' will spawn a remote job over the REST API and is pretty slick).
 
 This should give you a good idea of how to structure a multi-tier application with Ansible, and orchestrate operations upon that app, with the eventual goal of continuous delivery to your customers. You could extend the idea of the rolling upgrade to lots of different parts of the app; maybe add front-end web servers along with application servers, for instance, or replace the SQL database with something like MongoDB or Riak. Ansible gives you the capability to easily manage complicated environments and automate common operations.
-
-If you need help or if you have questions, stop by the mailing list or the IRC channel, or email us at info@ansibleworks.com.
 
 .. seealso::
 
@@ -278,7 +276,7 @@ If you need help or if you have questions, stop by the mailing list or the IRC c
        An introduction to playbook roles
    :doc:`playbooks_variables`
        An introduction to Ansible variables
-   `AnsibleWorks: Continuous Delivery <http://www.ansibleworks.com/continuous-delivery/>`_
+   `Ansible.com: Continuous Delivery <http://www.ansible.com/ansible-continuous-delivery>`_
        An introduction to Continuous Delivery with Ansible
 
 

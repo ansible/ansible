@@ -1,4 +1,4 @@
-# (c) 2012-2013, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -34,7 +34,7 @@ class Play(object):
        'handlers', 'remote_user', 'remote_port', 'included_roles', 'accelerate',
        'accelerate_port', 'accelerate_ipv6', 'sudo', 'sudo_user', 'transport', 'playbook',
        'tags', 'gather_facts', 'serial', '_ds', '_handlers', '_tasks',
-       'basedir', 'any_errors_fatal', 'roles', 'max_fail_pct'
+       'basedir', 'any_errors_fatal', 'roles', 'max_fail_pct', '_play_hosts', 'su', 'su_user'
     ]
 
     # to catch typos and so forth -- these are userland names
@@ -43,7 +43,8 @@ class Play(object):
        'hosts', 'name', 'vars', 'vars_prompt', 'vars_files',
        'tasks', 'handlers', 'remote_user', 'user', 'port', 'include', 'accelerate', 'accelerate_port', 'accelerate_ipv6',
        'sudo', 'sudo_user', 'connection', 'tags', 'gather_facts', 'serial',
-       'any_errors_fatal', 'roles', 'pre_tasks', 'post_tasks', 'max_fail_percentage' 
+       'any_errors_fatal', 'roles', 'pre_tasks', 'post_tasks', 'max_fail_percentage',
+       'su', 'su_user'
     ]
 
     # *************************************************
@@ -114,13 +115,20 @@ class Play(object):
         self.sudo             = ds.get('sudo', self.playbook.sudo)
         self.sudo_user        = ds.get('sudo_user', self.playbook.sudo_user)
         self.transport        = ds.get('connection', self.playbook.transport)
-        self.gather_facts     = ds.get('gather_facts', None)
+        self.gather_facts     = ds.get('gather_facts', True)
         self.remote_port      = self.remote_port
         self.any_errors_fatal = utils.boolean(ds.get('any_errors_fatal', 'false'))
         self.accelerate       = utils.boolean(ds.get('accelerate', 'false'))
         self.accelerate_port  = ds.get('accelerate_port', None)
         self.accelerate_ipv6  = ds.get('accelerate_ipv6', False)
         self.max_fail_pct     = int(ds.get('max_fail_percentage', 100))
+        self.su               = ds.get('su', self.playbook.su)
+        self.su_user          = ds.get('su_user', self.playbook.su_user)
+
+        # Fail out if user specifies a sudo param with a su param in a given play
+        if (ds.get('sudo') or ds.get('sudo_user')) and (ds.get('su') or ds.get('su_user')):
+            raise errors.AnsibleError('sudo params ("sudo", "sudo_user") and su params '
+                                      '("su", "su_user") cannot be used together')
 
         load_vars = {}
         load_vars['playbook_dir'] = self.basedir
@@ -134,6 +142,8 @@ class Play(object):
         if self.sudo_user != 'root':
             self.sudo = True
 
+        # place holder for the discovered hosts to be used in this play
+        self._play_hosts = None
 
     # *************************************************
 
@@ -432,7 +442,8 @@ class Play(object):
 
     # *************************************************
 
-    def _load_tasks(self, tasks, vars=None, default_vars=None, sudo_vars=None, additional_conditions=None, original_file=None, role_name=None):
+    def _load_tasks(self, tasks, vars=None, default_vars=None, sudo_vars=None,
+                    additional_conditions=None, original_file=None, role_name=None):
         ''' handle task and handler include statements '''
 
         results = []
@@ -469,7 +480,7 @@ class Play(object):
 
             if 'meta' in x:
                 if x['meta'] == 'flush_handlers':
-                    results.append(Task(self,x))
+                    results.append(Task(self, x))
                     continue
 
             task_vars = self.vars.copy()
@@ -484,21 +495,16 @@ class Play(object):
                 include_vars = {}
                 for k in x:
                     if k.startswith("with_"):
-                        utils.deprecated("include + with_items is an unsupported feature and has been undocumented for many releases because of this", "1.5")
-                        plugin_name = k[5:]
-                        if plugin_name not in utils.plugins.lookup_loader:
-                            raise errors.AnsibleError("cannot find lookup plugin named %s for usage in with_%s" % (plugin_name, plugin_name))
-                        terms = template(self.basedir, x[k], task_vars)
-                        items = utils.plugins.lookup_loader.get(plugin_name, basedir=self.basedir, runner=None).run(terms, inject=task_vars)
+                        utils.deprecated("include + with_items is a removed deprecated feature", "1.5", removed=True)
                     elif k.startswith("when_"):
-                        included_additional_conditions.insert(0, utils.compile_when_to_only_if("%s %s" % (k[5:], x[k])))
+                        utils.deprecated("\"when_<criteria>:\" is a removed deprecated feature, use the simplified 'when:' conditional directly", None, removed=True)
                     elif k == 'when':
                         if type(x[k]) is str:
-                            included_additional_conditions.insert(0, utils.compile_when_to_only_if("jinja2_compare %s" % x[k]))
+                            included_additional_conditions.insert(0, x[k])
                         elif type(x[k]) is list:
                             for i in x[k]:
-                                included_additional_conditions.insert(0, utils.compile_when_to_only_if("jinja2_compare %s" % i))
-                    elif k in ("include", "vars", "default_vars", "only_if", "sudo", "sudo_user", "role_name"):
+                                included_additional_conditions.insert(0, i)
+                    elif k in ("include", "vars", "default_vars", "sudo", "sudo_user", "role_name", "no_log"):
                         continue
                     else:
                         include_vars[k] = x[k]
@@ -516,8 +522,8 @@ class Play(object):
                 if 'vars' in x:
                     task_vars = utils.combine_vars(task_vars, x['vars'])
 
-                if 'only_if' in x:
-                    included_additional_conditions.append(x['only_if'])
+                if 'when' in x:
+                    included_additional_conditions.append(x['when'])
 
                 new_role = None
                 if 'role_name' in x:
@@ -542,7 +548,13 @@ class Play(object):
                     loaded = self._load_tasks(data, mv, default_vars, included_sudo_vars, list(included_additional_conditions), original_file=include_filename, role_name=new_role)
                     results += loaded
             elif type(x) == dict:
-                task = Task(self,x,module_vars=task_vars,default_vars=default_vars,additional_conditions=list(additional_conditions),role_name=role_name)
+                task = Task(
+                    self, x,
+                    module_vars=task_vars,
+                    default_vars=default_vars,
+                    additional_conditions=list(additional_conditions),
+                    role_name=role_name
+                )
                 results.append(task)
             else:
                 raise Exception("unexpected task type")

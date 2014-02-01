@@ -3,7 +3,58 @@ Ansible Changes By Release
 
 ## 1.5 "Love Walks In" - Release pending!
 
+Major features/changes:
+
+* when_foo which was previously deprecated is now removed, use "when:" instead.  Code generates appropriate error suggestion.
+* include + with_items which was previously deprecated is now removed, ditto.  Use with_nested / with_together, etc.
+* only_if, which is much older than when_foo and was deprecated, is similarly removed.
+* ssh connection plugin is now more efficient if you add 'pipelining=True' in ansible.cfg under [ssh_connection], see example.cfg
+* localhost/127.0.0.1 is not required to be in inventory if referenced, if not in inventory, it does not implicitly appear in the 'all' group.
+* git module has new parameters (accept_hostkey, key_file, ssh_opts) to ease the usage of git and ssh protocols. 
+* when using accelerate mode, the daemon will now be restarted when specifying a different remote_user between plays.
+* added no_log: option for tasks. When used, no logging information will be sent to syslog during the module execution.
+
+
+New modules:
+
+* cloud: ec2_elb_lb
+* cloud: ec2_key
+* cloud: rax_dns
+* cloud: rax_dns_record
+* cloud: rax_files
+* cloud: rax_files_objects
+* cloud: rax_keypair
+* cloud: rax_queue
+* system: at
+
+
+Misc:
+
 * no_reboot is now defaulted to "no" in the ec2_ami module to ensure filesystem consistency in the resulting AMI.
+* sysctl module overhauled
+* authorized_key module overhauled
+* synchronized module now handles local transport better
+* apt_key module now ignores case on keys
+* zypper_repository now skips on check mode
+* file module now responds to force behavior when dealing with hardlinks
+* new lookup plugin 'csvfile'
+* fixes to allow hash_merge behavior to work with dynamic inventory
+* mysql module will use port argument on dump/import
+* subversion module now ignores locale to better intercept status messages
+* rax api_key argument is no longer logged
+* backwards/forwards compatibility for OpenStack modules, 'quantum' modules grok neutron renaming
+* hosts properly uniqueified if appearing in redundant groups
+* hostname module support added for ScientificLinux
+* ansible-pull can now show live stdout and pass verbosity levels to ansible-playbook
+* ec2 instances can now be stopped or started
+* additional volumes can be created when creating new ec2 instances
+* user module can move a home directory
+* significant enhancement and cleanup of rackspace modules
+* various other bug fixes
+
+## 1.4.4 "Could This Be Magic" - January 6, 2014
+
+- fixed a minor issue with newer versions of pip dropping the "use-mirrors" parameter.
 
 ## 1.4.3 "Could This Be Magic" - December 20, 2013
 

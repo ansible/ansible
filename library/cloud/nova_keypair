@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #coding: utf-8 -*-
 
-# (c) 2013, Benno Joy <benno@ansibleworks.com>
+# (c) 2013, Benno Joy <benno@ansible.com>
 # (c) 2013, John Dewey <john@dewey.ws>
 #
 # This module is free software: you can redistribute it and/or modify

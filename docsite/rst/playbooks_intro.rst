@@ -96,7 +96,7 @@ documentation.  The `remote_user` is just the name of the user account::
     - hosts: webservers
       remote_user: root
 
-.. Note::
+.. note::
 
     The `remote_user` parameter was formerly called just `user`. It was renamed in Ansible 1.4 to make it more distinguishable from the `user` module (used to create users on remote systems).
 
@@ -110,7 +110,7 @@ Remote users can also be defined per task::
           ping:
           remote_user: yourname
 
-.. Note::
+.. note::
 
     The `remote_user` parameter for tasks was added in 1.4.
 
@@ -203,9 +203,9 @@ the service module takes key=value arguments::
      - name: make sure apache is running
        service: name=httpd state=running
 
-The `command` and `shell` modules are the one modules that just takes a list
-of arguments, and don't use the key=value form.  This makes
-them work just like you would expect. Simple::
+The `command` and `shell` modules are the only modules that just take a list
+of arguments and don't use the key=value form.  This makes
+them work as simply as you would expect::
 
    tasks:
      - name: disable selinux
@@ -348,7 +348,7 @@ run ansible-playbook against that content.
 
 Assuming you load balance your checkout location, ansible-pull scales essentially infinitely.
 
-Run 'ansible-pull --help' for details.
+Run ``ansible-pull --help`` for details.
 
 There's also a `clever playbook <https://github.com/ansible/ansible-examples/blob/master/language_features/ansible_pull.yml>`_ available to using ansible in push mode to configure ansible-pull via a crontab!
 
@@ -362,7 +362,7 @@ and how they performed.   General failures and fatal "unreachable" communication
 kept separate in the counts.
 
 If you ever want to see detailed output from successful modules as well as unsuccessful ones,
-use the '--verbose' flag.  This is available in Ansible 0.5 and later.
+use the ``--verbose`` flag.  This is available in Ansible 0.5 and later.
 
 Ansible playbook output is vastly upgraded if the cowsay
 package is installed.  Try it!

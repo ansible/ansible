@@ -90,6 +90,7 @@ options:
 
 notes:
   - Two environment variables can be used, DO_CLIENT_ID and DO_API_KEY.
+requirements: [ dopy ]
 '''
 
 
@@ -221,7 +222,7 @@ class Droplet(JsonfyMixIn):
             raise TimeoutError('Wait for droplet running timeout', self.id)
 
     def destroy(self):
-        return self.manager.destroy_droplet(self.id)
+        return self.manager.destroy_droplet(self.id, scrub_data=True)
 
     @classmethod
     def setup(cls, client_id, api_key):
