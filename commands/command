@@ -184,7 +184,7 @@ class CommandModule(AnsibleModule):
             args = args.replace("#USE_SHELL", "")
             params['shell'] = True
 
-        r = re.compile(r'(^|\s)(creates|removes|chdir|executable)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)')
+        r = re.compile(r'(^|\s)(creates|removes|chdir|executable|NO_LOG)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)')
         for m in r.finditer(args):
             v = m.group(4).replace("\\", "")
             if m.group(2) == "creates":
@@ -203,6 +203,8 @@ class CommandModule(AnsibleModule):
                 if not (os.path.exists(v)):
                     self.fail_json(rc=258, msg="cannot use executable '%s': file does not exist" % v)
                 params['executable'] = v
+            elif m.group(2) == "NO_LOG":
+                params['NO_LOG'] = self.boolean(v)
         args = r.sub("", args)
         params['args'] = args
         return (params, params['args'])
