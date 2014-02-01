@@ -101,28 +101,6 @@ except ImportError:
     print "failed=True msg='boto required for this module'"
     sys.exit(1)
 
-def ec2_connect(module):
-    # def get_ec2_creds(module):
-    #   return ec2_url, ec2_access_key, ec2_secret_key, region
-    ec2_url, ec2_access_key, ec2_secret_key, region = get_ec2_creds(module)
-
-    # If we have a region specified, connect to its endpoint.
-    if region:
-        try:
-            ec2 = boto.ec2.connect_to_region(region, aws_access_key_id=ec2_access_key, aws_secret_access_key=ec2_secret_key)
-        except boto.exception.NoAuthHandlerFound, e:
-            module.fail_json(msg=str(e))
-    # Otherwise, no region so we fallback to the old connection method
-    else:
-        try:
-            if ec2_url:  # if we have an URL set, connect to the specified endpoint
-                ec2 = boto.connect_ec2_endpoint(ec2_url, ec2_access_key, ec2_secret_key)
-            else:  # otherwise it's Amazon.
-                ec2 = boto.connect_ec2(ec2_access_key, ec2_secret_key)
-        except boto.exception.NoAuthHandlerFound, e:
-            module.fail_json(msg=str(e))
-    return ec2
-
 def lookup_security_group(groups, name, vpc_id):
     # find the group if present
     group = None
@@ -247,8 +225,8 @@ def main():
             ec2_url=dict(aliases=['EC2_URL']),
             ec2_secret_key=dict(aliases=['EC2_SECRET_KEY', 'aws_secret_key'], no_log=True),
             ec2_access_key=dict(aliases=['EC2_ACCESS_KEY', 'aws_access_key']),
-            region=dict(choices=['eu-west-1', 'sa-east-1', 'us-east-1', 'ap-northeast-1', 'us-west-2', 'us-west-1', 'ap-southeast-1', 'ap-southeast-2']),
-            state = dict(default='present', choices=['present', 'absent']),
+            region=dict(choices=AWS_REGIONS),
+            state=dict(default='present', choices=['present', 'absent']),
         ),
         supports_check_mode=True,
     )
