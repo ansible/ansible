@@ -619,7 +619,7 @@ def create_instances(module, ec2):
             try:
                 res.connection.get_all_instances(instids)
                 break
-            except boto.exception.EC2ResponseError as e:
+            except boto.exception.EC2ResponseError, e:
                 if "<Code>InvalidInstanceID.NotFound</Code>" in str(e):
                     # there's a race between start and get an instance
                     continue
@@ -629,7 +629,7 @@ def create_instances(module, ec2):
         if instance_tags:
             try:
                 ec2.create_tags(instids, instance_tags)
-            except boto.exception.EC2ResponseError as e:
+            except boto.exception.EC2ResponseError, e:
                 module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
 
         # wait here until the instances are up
@@ -703,7 +703,7 @@ def terminate_instances(module, ec2, instance_ids):
                 instance_dict_array.append(get_instance_info(inst))
                 try:
                     ec2.terminate_instances([inst.id])
-                except EC2ResponseError as e:
+                except EC2ResponseError, e:
                     module.fail_json(msg='Unable to terminate instance {0}, error: {1}'.format(inst.id, e))
                 changed = True
 
@@ -773,7 +773,7 @@ def startstop_instances(module, ec2, instance_ids):
                        inst.start()
                    else:
                        inst.stop()
-               except EC2ResponseError as e:
+               except EC2ResponseError, e:
                    module.fail_json(msg='Unable to change state for instance {0}, error: {1}'.format(inst.id, e))
                changed = True
 

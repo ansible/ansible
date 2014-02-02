@@ -263,7 +263,7 @@ def create_vpc(module, vpc_conn):
             try:
                 vpc_conn.create_subnet(vpc.id, subnet['cidr'], subnet.get('az', None))
                 changed = True
-            except EC2ResponseError as e:
+            except EC2ResponseError, e:
                 module.fail_json(msg='Unable to create subnet {0}, error: {1}'.format(subnet['cidr'], e))
     # Now delete all absent subnets
     for csubnet in current_subnets:
@@ -275,7 +275,7 @@ def create_vpc(module, vpc_conn):
             try:
                 vpc_conn.delete_subnet(csubnet.id)
                 changed = True
-            except EC2ResponseError as e:
+            except EC2ResponseError, e:
                 module.fail_json(msg='Unable to delete subnet {0}, error: {1}'.format(csubnet.cidr_block, e))
 
     # Handle Internet gateway (create/delete igw)
@@ -289,7 +289,7 @@ def create_vpc(module, vpc_conn):
                 igw = vpc_conn.create_internet_gateway()
                 vpc_conn.attach_internet_gateway(igw.id, vpc.id)
                 changed = True
-            except EC2ResponseError as e:
+            except EC2ResponseError, e:
                 module.fail_json(msg='Unable to create Internet Gateway, error: {0}'.format(e))
         else:
             # Set igw variable to the current igw instance for use in route tables.
@@ -300,7 +300,7 @@ def create_vpc(module, vpc_conn):
                 vpc_conn.detach_internet_gateway(igws[0].id, vpc.id)
                 vpc_conn.delete_internet_gateway(igws[0].id)
                 changed = True
-            except EC2ResponseError as e:
+            except EC2ResponseError, e:
                 module.fail_json(msg='Unable to delete Internet Gateway, error: {0}'.format(e))
 
     # Handle route tables - this may be worth splitting into a
@@ -357,7 +357,7 @@ def create_vpc(module, vpc_conn):
                 vpc_conn.associate_route_table(new_rt.id, rsn.id)
 
             all_route_tables.append(new_rt)
-        except EC2ResponseError as e:
+        except EC2ResponseError, e:
             module.fail_json(
                 msg='Unable to create and associate route table {0}, error: ' \
                 '{1}'.format(rt, e)
@@ -382,7 +382,7 @@ def create_vpc(module, vpc_conn):
             try:
                 if not is_main:
                     vpc_conn.delete_route_table(rt.id)
-            except EC2ResponseError as e:
+            except EC2ResponseError, e:
                 module.fail_json(msg='Unable to delete old route table {0}, error: {1}'.format(rt.id, e))
 
     vpc_dict = get_vpc_info(vpc)
@@ -461,7 +461,7 @@ def terminate_vpc(module, vpc_conn, vpc_id=None, cidr=None):
                         vpc_conn.delete_route_table(rt.id)
 
                 vpc_conn.delete_vpc(vpc.id)
-            except EC2ResponseError as e:
+            except EC2ResponseError, e:
                 module.fail_json(
                     msg='Unable to delete VPC {0}, error: {1}'.format(vpc.id, e)
                 )
