@@ -17,6 +17,7 @@
 
 #############################################
 
+from __future__ import with_statement # required for 'with open(f): ...'
 import ansible.constants as C
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
