@@ -23,6 +23,7 @@
 # for most users on these platforms.  Users with ControlPersist capability can consider
 # using -c ssh or configuring the transport in ansible.cfg.
 
+from __future__ import with_statement # required for 'with open(f): ...'
 import warnings
 import os
 import pipes

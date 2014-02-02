@@ -16,6 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 # from python and deps
+from __future__ import with_statement # required for 'with open(f): ...'
 from cStringIO import StringIO
 import inspect
 import os
