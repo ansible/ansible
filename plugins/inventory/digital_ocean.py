@@ -139,7 +139,7 @@ except ImportError:
 
 try:
     from dopy.manager import DoError, DoManager
-except ImportError as e:
+except ImportError, e:
     print "failed=True msg='`dopy` library required for this script'"
     sys.exit(1)
 

@@ -155,7 +155,7 @@ def main():
         gce = get_driver(Provider.GCE)(*ARGS, datacenter=zone, **KWARGS)
         gce.connection.user_agent_append("%s/%s" % (
                 USER_AGENT_PRODUCT, USER_AGENT_VERSION))
-    except Exception as e:
+    except Exception, e:
         module.fail_json(msg=unexpected_error_msg(e), changed=False)
 
     disk = inst = None
@@ -185,7 +185,7 @@ def main():
         json_output['size_gb'] = int(disk.size)
     except ResourceNotFoundError:
         pass
-    except Exception as e:
+    except Exception, e:
         module.fail_json(msg=unexpected_error_msg(e), changed=False)
 
     # user wants a disk to exist.  If "instance_name" is supplied the user
@@ -214,14 +214,14 @@ def main():
             except QuotaExceededError:
                 module.fail_json(msg='Requested disk size exceeds quota',
                         changed=False)
-            except Exception as e:
+            except Exception, e:
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
             json_output['size_gb'] = size_gb
             changed = True
         if inst and not is_attached:
             try:
                 gce.attach_volume(inst, disk, device=name, ex_mode=mode)
-            except Exception as e:
+            except Exception, e:
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
             json_output['attached_to_instance'] = inst.name
             json_output['attached_mode'] = mode
@@ -233,15 +233,15 @@ def main():
         if inst and is_attached:
             try:
                 gce.detach_volume(disk, ex_node=inst)
-            except Exception as e:
+            except Exception, e:
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
             changed = True
         if not detach_only:
             try:
                 gce.destroy_volume(disk)
-            except ResourceInUseError as e:
+            except ResourceInUseError, e:
                 module.fail_json(msg=str(e.value), changed=False)
-            except Exception as e:
+            except Exception, e:
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
             changed = True
 

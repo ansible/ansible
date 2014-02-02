@@ -472,11 +472,11 @@ def main():
     
         module.exit_json(failed=failed, changed=changed, msg=msg, ansible_facts=_ansible_facts(facts))
 
-    except docker.client.APIError as e:
+    except docker.client.APIError, e:
         changed = manager.has_changed()
         module.exit_json(failed=True, changed=changed, msg="Docker API error: " + e.explanation)
 
-    except RequestException as e:
+    except RequestException, e:
         changed = manager.has_changed()
         module.exit_json(failed=True, changed=changed, msg=repr(e))
         

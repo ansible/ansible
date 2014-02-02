@@ -199,7 +199,7 @@ def main():
         if login_user is not None and login_password is not None:
             client.admin.authenticate(login_user, login_password)
 
-    except ConnectionFailure as e:
+    except ConnectionFailure, e:
         module.fail_json(msg='unable to connect to database, check login_user and login_password are correct')
 
     if state == 'present':

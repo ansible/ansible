@@ -64,7 +64,7 @@ class LookupModule(object):
                     name, value = param.split('=')
                     assert(name in paramvals)
                     paramvals[name] = value
-            except (ValueError, AssertionError) as e:
+            except (ValueError, AssertionError), e:
                 raise errors.AnsibleError(e)
 
             if paramvals['delimiter'] == 'TAB':
