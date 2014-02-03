@@ -298,6 +298,81 @@ class Runner(object):
 
     # *****************************************************
 
+    def _compute_delegate(self, host, password, remote_inject):
+
+        """ Build a dictionary of all attributes for the delegate host """
+       
+        delegate = {}
+
+        delegate['host'] = host
+        delegate['inject'] = remote_inject.copy()
+
+        # set any interpreters
+        interpreters = []
+        for i in delegate['inject']:
+            if i.startswith("ansible_") and i.endswith("_interpreter"):
+                interpreters.append(i)
+        for i in interpreters:
+            del delegate['inject'][i]
+        port = C.DEFAULT_REMOTE_PORT
+
+        this_host = delegate['host']
+
+        # get the vars for the delegate by it's name        
+        this_info = delegate['inject']['hostvars'][this_host]
+
+        # get the real ssh_address for the delegate        
+        delegate['ssh_host'] = this_info.get('ansible_ssh_host', delegate['host'])
+
+        # allow ansible_ssh_host to be templated
+        delegate['host'] = template.template(self.basedir, this_host, 
+                                delegate['inject'], fail_on_undefined=True)
+
+        delegate['port'] = this_info.get('ansible_ssh_port', port)
+        delegate['user'] = self._compute_delegate_user(this_host, delegate['inject'])
+        delegate['pass'] = this_info.get('ansible_ssh_pass', password)
+        delegate['private_key_file'] = this_info.get('ansible_ssh_private_key_file', 
+                                        self.private_key_file)
+        delegate['transport'] = this_info.get('ansible_connection', self.transport)
+        delegate['sudo_pass'] = this_info.get('ansible_sudo_pass', self.sudo_pass)
+
+        if delegate['private_key_file'] is not None:
+            delegate['private_key_file'] = os.path.expanduser(delegate['private_key_file'])
+
+        for i in this_info:
+            if i.startswith("ansible_") and i.endswith("_interpreter"):
+                delegate['inject'][i] = this_info[i]
+
+        return delegate
+
+    def _compute_delegate_user(self, host, inject):
+
+        """ Caculate the remote user based on an order of preference """
+
+        # inventory > playbook > original_host
+
+        actual_user = inject.get('ansible_ssh_user', self.remote_user)
+        thisuser = None
+
+        if inject['hostvars'][host].get('ansible_ssh_user'):
+            # user for delegate host in inventory
+            thisuser = inject['hostvars'][host].get('ansible_ssh_user')
+        if thisuser is None and self.remote_user:
+            # user defined by play/runner
+            thisuser = self.remote_user
+
+        if thisuser is not None:
+            actual_user = thisuser
+        else:
+            # fallback to the inventory user of the play host
+            #actual_user = inject.get('ansible_ssh_user', actual_user)
+            actual_user = inject.get('ansible_ssh_user', self.remote_user)
+
+        return actual_user
+
+
+    # *****************************************************
+
     def _execute_module(self, conn, tmp, module_name, args,
         async_jid=None, async_module=None, async_limit=None, inject=None, persist_files=False, complex_args=None):
 
@@ -660,36 +735,15 @@ class Runner(object):
         # and we need to transfer those, and only those, variables
         delegate_to = inject.get('delegate_to', None)
         if delegate_to is not None:
-            delegate_to = template.template(self.basedir, delegate_to, inject)
-            inject = inject.copy()
-            interpreters = []
-            for i in inject:
-                if i.startswith("ansible_") and i.endswith("_interpreter"):
-                    interpreters.append(i)
-            for i in interpreters:
-                del inject[i]
-            port = C.DEFAULT_REMOTE_PORT
-            try:
-                delegate_info = inject['hostvars'][delegate_to]
-                actual_host = delegate_info.get('ansible_ssh_host', delegate_to)
-                # allow ansible_ssh_host to be templated
-                actual_host = template.template(self.basedir, actual_host, inject, fail_on_undefined=True)
-                actual_port = delegate_info.get('ansible_ssh_port', port)
-                actual_user = delegate_info.get('ansible_ssh_user', actual_user)
-                actual_pass = delegate_info.get('ansible_ssh_pass', actual_pass)
-                actual_private_key_file = delegate_info.get('ansible_ssh_private_key_file', self.private_key_file)
-                actual_transport = delegate_info.get('ansible_connection', self.transport)
-                self.sudo_pass = delegate_info.get('ansible_sudo_pass', self.sudo_pass)
-
-                if actual_private_key_file is not None:
-                    actual_private_key_file = os.path.expanduser(actual_private_key_file)
-
-                for i in delegate_info:
-                    if i.startswith("ansible_") and i.endswith("_interpreter"):
-                        inject[i] = delegate_info[i]
-            except errors.AnsibleError:
-                actual_host = delegate_to
-                actual_port = port
+            delegate = self._compute_delegate(delegate_to, actual_pass, inject)
+            actual_transport = delegate['transport']
+            actual_host = delegate['ssh_host']
+            actual_port = delegate['port']
+            actual_user = delegate['user']
+            actual_pass = delegate['pass']
+            actual_private_key_file = delegate['private_key_file']
+            self.sudo_pass = delegate['sudo_pass']
+            inject = delegate['inject']
 
         # user/pass may still contain variables at this stage
         actual_user = template.template(self.basedir, actual_user, inject)
