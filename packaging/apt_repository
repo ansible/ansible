@@ -178,10 +178,10 @@ class SourcesList(object):
 
     def load(self, file):
         group = []
-        with open(file, 'r') as f:
-            for n, line in enumerate(f):
-                valid, enabled, source, comment = self._parse(line)
-                group.append((n, valid, enabled, source, comment))
+        f = open(file, 'r')
+        for n, line in enumerate(f):
+            valid, enabled, source, comment = self._parse(line)
+            group.append((n, valid, enabled, source, comment))
         self.files[file] = group
 
     def save(self, module):
@@ -191,22 +191,22 @@ class SourcesList(object):
                 fd, tmp_path = tempfile.mkstemp(prefix=".%s-" % fn, dir=d)
                 os.chmod(os.path.join(fd, tmp_path), 0644)
 
-                with os.fdopen(fd, 'w') as f:
-                    for n, valid, enabled, source, comment in sources:
-                        chunks = []
-                        if not enabled:
-                            chunks.append('# ')
-                        chunks.append(source)
-                        if comment:
-                            chunks.append(' # ')
-                            chunks.append(comment)
-                        chunks.append('\n')
-                        line = ''.join(chunks)
+                f = os.fdopen(fd, 'w')
+                for n, valid, enabled, source, comment in sources:
+                    chunks = []
+                    if not enabled:
+                        chunks.append('# ')
+                    chunks.append(source)
+                    if comment:
+                        chunks.append(' # ')
+                        chunks.append(comment)
+                    chunks.append('\n')
+                    line = ''.join(chunks)
 
-                        try:
-                            f.write(line)
-                        except IOError, err:
-                            module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, unicode(err)))
+                    try:
+                        f.write(line)
+                    except IOError, err:
+                        module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, unicode(err)))
                 module.atomic_move(tmp_path, filename)
             else:
                 del self.files[filename]
