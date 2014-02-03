@@ -254,11 +254,12 @@ class Facts(object):
         )
 
         if self.facts['system'] == 'Windows':
-            self.facts['distribution'] = 'Cygwin'
-            rc, out, err = module.run_command("/bin/uname -v")
-            self.facts['distribution_version'] = out
-            rc, out, err = module.run_command("/bin/uname -r")
-            self.facts['distribution_release'] = out
+            if os.path.exists('/bin/cygwin1.dll'):
+                self.facts['distribution'] = 'Cygwin'
+                rc, out, err = module.run_command("/bin/uname -v")
+                self.facts['distribution_version'] = out
+                rc, out, err = module.run_command("/bin/uname -r")
+                self.facts['distribution_release'] = out
         elif self.facts['system'] == 'AIX':
             self.facts['distribution'] = 'AIX'
             rc, out, err = module.run_command("/usr/bin/oslevel")
