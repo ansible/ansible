@@ -17,8 +17,8 @@ See :doc:`playbooks` if you need a review of these concepts.
 Playbooks can also include plays from other playbook files.  When that is done, the plays will be inserted into the playbook to form
 a longer list of plays.
 
-When you start to think about it -- tasks, handlers, variables, and so -- begin to form larger concepts.  You start to think about modeling
-what something is, rather than how to make something look like something.  It's no longer "apply this handful of THINGS" to these hosts, you say "these hosts are a dbservers" or "these hosts are webservers".  In programming, we might call that 'encapsulating' how things work.  For instance,
+When you start to think about it -- tasks, handlers, variables, and so on -- begin to form larger concepts.  You start to think about modeling
+what something is, rather than how to make something look like something.  It's no longer "apply this handful of THINGS to these hosts", you say "these hosts are dbservers" or "these hosts are webservers".  In programming, we might call that "encapsulating" how things work.  For instance,
 you can drive a car without knowing how the engine works.
 
 Roles in Ansible build on the idea of include files and combine them to form clean, reusable abstractions -- they allow you to focus
