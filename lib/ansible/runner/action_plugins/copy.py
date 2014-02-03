@@ -124,8 +124,6 @@ class ActionModule(object):
         diffs = []
         module_result = {"changed": False}
         for source_full, source_rel in source_files:
-            # We need to get a new tmp path for each file, otherwise the copy module deletes the folder.
-            tmp = self.runner._make_tmp_path(conn)
             local_md5 = utils.md5(source_full)
 
             if local_md5 is None:
