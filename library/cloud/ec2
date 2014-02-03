@@ -376,6 +376,7 @@ local_action:
 
 import sys
 import time
+import socket
 
 try:
     import boto.ec2
@@ -487,6 +488,7 @@ def create_instances(module, ec2):
 
     key_name = module.params.get('key_name')
     id = module.params.get('id')
+    dns_name = module.params.get('dns_name')
     group_name = module.params.get('group')
     group_id = module.params.get('group_id')
     zone = module.params.get('zone')
@@ -539,13 +541,25 @@ def create_instances(module, ec2):
     running_instances = []
     count_remaining = int(count)
 
-    if id != None:
+    if id:
         filter_dict = {'client-token':id, 'instance-state-name' : 'running'}
         previous_reservations = ec2.get_all_instances(None, filter_dict)
         for res in previous_reservations:
             for prev_instance in res.instances:
                 running_instances.append(prev_instance)
         count_remaining = count_remaining - len(running_instances)
+
+    if dns_name:
+        try:
+            (hostname, aliases, ips) = socket.gethostbyname_ex(dns_name)
+            filter_dict = {'dns-name':hostname, 'instance-state-name' : 'running'}
+            previous_reservations = ec2.get_all_instances(None, filter_dict)
+            for res in previous_reservations:
+                for prev_instance in res.instances:
+                    running_instances.append(prev_instance)
+            count_remaining = count_remaining - len(running_instances)
+        except socket.gaierror:
+            pass
 
     # Both min_count and max_count equal count parameter. This means the launch request is explicit (we want count, or fail) in how many instances we want.
 
@@ -642,7 +656,7 @@ def create_instances(module, ec2):
                 this_res = res_list[0]
                 num_running = len([ i for i in this_res.instances if i.state=='running' ])
             else:
-                # got a bad response of some sort, possibly due to 
+                # got a bad response of some sort, possibly due to
                 # stale/cached data. Wait a second and then try again
                 time.sleep(1)
                 continue
@@ -668,7 +682,7 @@ def create_instances(module, ec2):
     return (instance_dict_array, created_instance_ids, changed)
 
 
-def terminate_instances(module, ec2, instance_ids):
+def terminate_instances(module, ec2):
     """
     Terminates a list of instances
 
@@ -692,20 +706,39 @@ def terminate_instances(module, ec2, instance_ids):
     changed = False
     instance_dict_array = []
 
-    if not isinstance(instance_ids, list) or len(instance_ids) < 1:
-        module.fail_json(msg='instance_ids should be a list of instances, aborting')
+    dns_name = module.params.get('dns_name')
+    instance_ids = module.params.get('instance_ids')
+
+    if not dns_name and not isinstance(instance_ids, list):
+        module.fail_json(msg='instance_ids should be a list of instances or dns_name should be a list of domains, aborting')
 
     terminated_instance_ids = []
-    for res in ec2.get_all_instances(instance_ids):
-        for inst in res.instances:
-            if inst.state == 'running':
-                terminated_instance_ids.append(inst.id)
-                instance_dict_array.append(get_instance_info(inst))
-                try:
-                    ec2.terminate_instances([inst.id])
-                except EC2ResponseError as e:
-                    module.fail_json(msg='Unable to terminate instance {0}, error: {1}'.format(inst.id, e))
-                changed = True
+
+    if dns_name:
+        try:
+            (hostname, aliases, ips) = socket.gethostbyname_ex(dns_name)
+            filter_dict = {'dns-name':hostname, 'instance-state-name' : 'running'}
+            domain_instance_ids = []
+            for inst in ec2.get_only_instances(None, filter_dict):
+                domain_instance_ids.append(inst.id)
+            if not isinstance(instance_ids, list):
+                instance_ids = domain_instance_ids
+            elif isinstance(instance_ids, list) and set(instance_ids) <> set(domain_instance_ids):
+                module.fail_json(msg='instance_ids and instance ids extracted from dns_name should be equal, aborting')
+        except socket.gaierror:
+            module.fail_json(msg='error while resolving domains from dns_name, aborting')
+
+    if instance_ids:
+        for res in ec2.get_all_instances(instance_ids):
+            for inst in res.instances:
+                if inst.state == 'running':
+                    terminated_instance_ids.append(inst.id)
+                    instance_dict_array.append(get_instance_info(inst))
+                    try:
+                        ec2.terminate_instances([inst.id])
+                    except EC2ResponseError as e:
+                        module.fail_json(msg='Unable to terminate instance {0}, error: {1}'.format(inst.id, e))
+                    changed = True
 
     # wait here until the instances are 'terminated'
     if wait:
@@ -730,7 +763,7 @@ def terminate_instances(module, ec2, instance_ids):
         if wait_timeout < time.time() and num_terminated < len(terminated_instance_ids):
             module.fail_json(msg = "wait for instance termination timeout on %s" % time.asctime())
 
-    return (changed, instance_dict_array, terminated_instance_ids)
+    return (instance_dict_array, terminated_instance_ids, changed)
 
 
 def startstop_instances(module, ec2, instance_ids):
@@ -812,6 +845,7 @@ def main():
         argument_spec = dict(
             key_name = dict(aliases = ['keypair']),
             id = dict(),
+            dns_name = dict(),
             group = dict(type='list'),
             group_id = dict(type='list'),
             region = dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS),
@@ -844,10 +878,9 @@ def main():
 
     if module.params.get('state') == 'absent':
         instance_ids = module.params.get('instance_ids')
-        if not isinstance(instance_ids, list):
-            module.fail_json(msg='termination_list needs to be a list of instances to terminate')
-
-        (changed, instance_dict_array, new_instance_ids) = terminate_instances(module, ec2, instance_ids)
+        if not module.params.get('dns_name') and not isinstance(instance_ids, list):
+            module.fail_json(msg='termination_list needs to be a list of instances or domain names to terminate')
+        (instance_dict_array, new_instance_ids, changed) = terminate_instances(module, ec2)
 
     elif module.params.get('state') == 'running' or module.params.get('state') == 'stopped':
         instance_ids = module.params.get('instance_ids')
