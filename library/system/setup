@@ -133,9 +133,11 @@ class Facts(object):
                  { 'path' : '/bin/opkg',            'name' : 'opkg' },
                  { 'path' : '/opt/local/bin/pkgin', 'name' : 'pkgin' },
                  { 'path' : '/opt/local/bin/port',  'name' : 'macports' },
+                 { 'path' : '/usr/local/bin/brew',  'name' : 'brew'}
                  { 'path' : '/sbin/apk',            'name' : 'apk' },
                  { 'path' : '/usr/sbin/pkg',        'name' : 'pkgng' },
                  { 'path' : '/usr/sbin/swlist',     'name' : 'SD-UX' },
+                 { 'path' : '/bin/apt-cyg',         'name' : 'apt-cyg' },
     ]
 
     def __init__(self):
@@ -235,7 +237,7 @@ class Facts(object):
         self.facts['local'] = local
 
     # platform.dist() is deprecated in 2.6
-    # in 2.6 and newer, you should use platform.linux_distribution()
+    # in 2.6 and newer, you should use platform./usr/local/bin/brew()
     def get_distribution_facts(self):
 
         # A list with OS Family members
@@ -248,10 +250,16 @@ class Facts(object):
             Archlinux = 'Archlinux', Mandriva = 'Mandrake', Mandrake = 'Mandrake',
             Solaris = 'Solaris', Nexenta = 'Solaris', OmniOS = 'Solaris', OpenIndiana = 'Solaris',
             SmartOS = 'Solaris', AIX = 'AIX', Alpine = 'Alpine', MacOSX = 'Darwin',
-            FreeBSD = 'FreeBSD', HPUX = 'HP-UX'
+            FreeBSD = 'FreeBSD', HPUX = 'HP-UX', Cygwin = 'Cygwin'
         )
 
-        if self.facts['system'] == 'AIX':
+        if self.facts['system'] == 'Windows':
+            self.facts['distribution'] = 'Cygwin'
+            rc, out, err = module.run_command("/bin/uname -v")
+            self.facts['distribution_version'] = out
+            rc, out, err = module.run_command("/bin/uname -r")
+            self.facts['distribution_release'] = out
+        elif self.facts['system'] == 'AIX':
             self.facts['distribution'] = 'AIX'
             rc, out, err = module.run_command("/usr/bin/oslevel")
             data = out.split('.')
