@@ -593,6 +593,7 @@ class PlayBook(object):
                         fired_names = {}
                         for handler in play.handlers():
                             if len(handler.notified_by) > 0:
+                                play._play_hosts = handler.notified_by
                                 self.inventory.restrict_to(handler.notified_by)
 
                                 # Resolve the variables first
