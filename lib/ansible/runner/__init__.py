@@ -304,7 +304,10 @@ class Runner(object):
        
         delegate = {}
 
-        delegate['host'] = host
+        # allow ansible_ssh_host to be templated
+        delegate['host'] = template.template(self.basedir, host, 
+                                remote_inject, fail_on_undefined=True)
+
         delegate['inject'] = remote_inject.copy()
 
         # set any interpreters
@@ -323,10 +326,6 @@ class Runner(object):
 
         # get the real ssh_address for the delegate        
         delegate['ssh_host'] = this_info.get('ansible_ssh_host', delegate['host'])
-
-        # allow ansible_ssh_host to be templated
-        delegate['host'] = template.template(self.basedir, this_host, 
-                                delegate['inject'], fail_on_undefined=True)
 
         delegate['port'] = this_info.get('ansible_ssh_port', port)
         delegate['user'] = self._compute_delegate_user(this_host, delegate['inject'])
