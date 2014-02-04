@@ -164,13 +164,16 @@ def user_exists(cursor, user):
 
 def user_add(cursor, user, password, role_attr_flags,  encrypted, expires):
     """Create a new database user (role)."""
+    query_password_data = dict()
     query = 'CREATE USER "%(user)s"' % { "user": user}
     if password is not None:
-        query = query + " WITH %(crypt)s PASSWORD '%(password)s'" % { "crypt": encrypted, "password": password }
+        query = query + " WITH %(crypt)s" % { "crypt": encrypted }
+        query = query + " PASSWORD %(password)s"
+        query_password_data.update(password=password)
     if expires is not None:
         query = query + " VALID UNTIL '%(expires)s'" % { "exipres": expires }
     query = query + " " + role_attr_flags
-    cursor.execute(query)
+    cursor.execute(query, query_password_data)
     return True
 
 def user_alter(cursor, user, password, role_attr_flags, encrypted, expires):
@@ -188,6 +191,7 @@ def user_alter(cursor, user, password, role_attr_flags, encrypted, expires):
     # Handle passwords.
     if password is not None or role_attr_flags is not None:
         # Select password and all flag-like columns in order to verify changes.
+        query_password_data = dict()
         select = "SELECT * FROM pg_authid where rolname=%(user)s"
         cursor.execute(select, {"user": user})
         # Grab current role attributes.
@@ -195,15 +199,16 @@ def user_alter(cursor, user, password, role_attr_flags, encrypted, expires):
 
         alter = 'ALTER USER "%(user)s"' % {"user": user}
         if password is not None:
-            alter = alter + " WITH %(crypt)s PASSWORD '%(password)s' %(flags)s" % {
-                "crypt": encrypted, "password": password, "flags": role_attr_flags
-            }
+            query_password_data.update(password=password)
+            alter = alter + " WITH %(crypt)s" % {"crypt": encrypted}
+            alter = alter + " PASSWORD %(password)s"
+            alter = alter + "  %(flags)s" % {'flags': role_attr_flags}
         elif role_attr_flags:
             alter = alter + ' WITH ' + role_attr_flags
         if expires is not None:
             alter = alter + " VALID UNTIL '%(expires)s'" % { "exipres": expires }
 
-        cursor.execute(alter)
+        cursor.execute(alter, query_password_data)
 
         # Grab new role attributes.
         cursor.execute(select, {"user": user})
