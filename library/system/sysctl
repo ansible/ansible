@@ -45,6 +45,11 @@ options:
             - Whether the entry should be present or absent in the sysctl file.
         choices: [ "present", "absent" ]
         default: present
+    ignoreerrors:
+        description:
+            - Use this option to ignore errors about unknown keys.
+        choices: [ "yes", "no" ]
+        default: no
     reload:
         description:
             - If C(yes), performs a I(/sbin/sysctl -p) if the C(sysctl_file) is
@@ -214,8 +219,11 @@ class SysctlModule(object):
             # freebsd doesn't support -p, so reload the sysctl service
             rc,out,err = self.module.run_command('/etc/rc.d/sysctl reload')
         else:
-            # system supports reloading via the -p flag to sysctl, so we'll use that 
-            rc,out,err = self.module.run_command([self.sysctl_cmd, '-p', self.sysctl_file])
+            # system supports reloading via the -p flag to sysctl, so we'll use that
+            if self.args['ignoreerrors']:
+                rc,out,err = self.module.run_command([self.sysctl_cmd, '-e', '-p', self.sysctl_file])
+            else:
+                rc,out,err = self.module.run_command([self.sysctl_cmd, '-p', self.sysctl_file])
 
         if rc != 0:            
             self.module.fail_json(msg="Failed to reload sysctl: %s" % str(out) + str(err))
@@ -296,6 +304,7 @@ def main():
             state = dict(default='present', choices=['present', 'absent']),
             reload = dict(default=True, type='bool'),
             sysctl_set = dict(default=False, type='bool'),
+            ignoreerrors = dict(default=False, type='bool'),
             sysctl_file = dict(default='/etc/sysctl.conf')
         ),
         supports_check_mode=True
