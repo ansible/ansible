@@ -133,7 +133,7 @@ class Facts(object):
                  { 'path' : '/bin/opkg',            'name' : 'opkg' },
                  { 'path' : '/opt/local/bin/pkgin', 'name' : 'pkgin' },
                  { 'path' : '/opt/local/bin/port',  'name' : 'macports' },
-                 { 'path' : '/usr/local/bin/brew',  'name' : 'brew'}
+                 { 'path' : '/usr/local/bin/brew',  'name' : 'brew'} ,
                  { 'path' : '/sbin/apk',            'name' : 'apk' },
                  { 'path' : '/usr/sbin/pkg',        'name' : 'pkgng' },
                  { 'path' : '/usr/sbin/swlist',     'name' : 'SD-UX' },
@@ -253,13 +253,13 @@ class Facts(object):
             FreeBSD = 'FreeBSD', HPUX = 'HP-UX', Cygwin = 'Cygwin'
         )
 
-        if self.facts['system'] == 'Windows':
+        if self.facts['system'].startswith('CYGWIN'):
             if os.path.exists('/bin/cygwin1.dll'):
                 self.facts['distribution'] = 'Cygwin'
                 rc, out, err = module.run_command("/bin/uname -v")
-                self.facts['distribution_version'] = out
+                self.facts['distribution_version'] = out.split('\n')[0]
                 rc, out, err = module.run_command("/bin/uname -r")
-                self.facts['distribution_release'] = out
+                self.facts['distribution_release'] = out.split('\n')[0]
         elif self.facts['system'] == 'AIX':
             self.facts['distribution'] = 'AIX'
             rc, out, err = module.run_command("/usr/bin/oslevel")
