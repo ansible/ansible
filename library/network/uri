@@ -280,7 +280,7 @@ def uri(module, url, dest, user, password, body, method, headers, redirects, soc
         r['redirected'] = redirected
         r.update(resp_redir)
         r.update(resp)
-        return r, content, dest
+        return r, content.decode('utf-8', 'ignore'), dest
     except httplib2.RedirectMissingLocation:
         module.fail_json(msg="A 3xx redirect response code was provided but no Location: header was provided to point to the new location.")
     except httplib2.RedirectLimit:
