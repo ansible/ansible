@@ -35,17 +35,16 @@ options:
       - EC2 secret key
     required: false
     default: null
-    aliases: ['aws_secret_key']
+    aliases: ['aws_secret_key', 'secret_key']
   ec2_access_key:
     description:
       - EC2 access key
     required: false
     default: null
-    aliases: ['aws_access_key']
+    aliases: ['aws_access_key', 'access_key']
   state:
-    version_added: "1.5"
     description:
-      - create or delete security group
+      - create or delete keypair
     required: false
     default: 'present'
     aliases: []
@@ -55,15 +54,15 @@ author: Vincent Viallet
 '''
 
 EXAMPLES = '''
+# Note: None of these examples set aws_access_key, aws_secret_key, or region.
+# It is assumed that their matching environment variables are set.
+
 # Creates a new ec2 key pair named `example` if not present, returns generated
 # private key
 - name: example ec2 key
   local_action:
     module: ec2_key
     name: example
-    region: eu-west-1a
-    ec2_secret_key: SECRET
-    ec2_access_key: ACCESS
 
 # Creates a new ec2 key pair named `example` if not present using provided key
 # material
@@ -71,9 +70,6 @@ EXAMPLES = '''
   local_action:
     module: ec2_key
     name: example2
-    region: eu-west-1a
-    ec2_secret_key: SECRET
-    ec2_access_key: ACCESS
     key_material: 'ssh-rsa AAAAxyz...== me@example.com'
     state: present
 
@@ -83,9 +79,6 @@ EXAMPLES = '''
   local_action:
     module: ec2_key
     name: example3
-    region: eu-west-1a
-    ec2_secret_key: SECRET
-    ec2_access_key: ACCESS
     key_material: "{{ item }}"
   with_file: /path/to/public_key.id_rsa.pub
 
@@ -95,9 +88,6 @@ EXAMPLES = '''
     module: ec2_key
     name: example
     state: absent
-    region: eu-west-1a
-    ec2_secret_key: SECRET
-    ec2_access_key: ACCESS
 '''
 
 try:
@@ -120,31 +110,13 @@ def main():
         supports_check_mode=True,
     )
 
-    # def get_ec2_creds(module):
-    #   return ec2_url, ec2_access_key, ec2_secret_key, region
-    ec2_url, ec2_access_key, ec2_secret_key, region = get_ec2_creds(module)
-
     name = module.params['name']
     state = module.params.get('state')
     key_material = module.params.get('key_material')
 
     changed = False
 
-    # If we have a region specified, connect to its endpoint.
-    if region:
-        try:
-            ec2 = boto.ec2.connect_to_region(region, aws_access_key_id=ec2_access_key, aws_secret_access_key=ec2_secret_key)
-        except boto.exception.NoAuthHandlerFound, e:
-            module.fail_json(msg=str(e))
-    # Otherwise, no region so we fallback to the old connection method
-    else:
-        try:
-            if ec2_url:  # if we have an URL set, connect to the specified endpoint
-                ec2 = boto.connect_ec2_endpoint(ec2_url, ec2_access_key, ec2_secret_key)
-            else:  # otherwise it's Amazon.
-                ec2 = boto.connect_ec2(ec2_access_key, ec2_secret_key)
-        except boto.exception.NoAuthHandlerFound, e:
-            module.fail_json(msg=str(e))
+    ec2 = ec2_connect(module)
 
     # find the key if present
     key = ec2.get_key_pair(name)
@@ -186,8 +158,6 @@ def main():
                     '''
                     key = ec2.create_key_pair(name)
             changed = True
-    else:
-        module.fail_json(msg="Unsupported state requested: %s" % state)
 
     if key:
         data = {
