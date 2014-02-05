@@ -52,6 +52,8 @@ options:
       - If C(dest) is a directory, either the server provided filename or, if
         none provided, the base name of the URL on the remote server will be
         used. If a directory, C(force) has no effect.
+        If C(dest) is a directory, the file will always be
+        downloaded (regardless of the force option), but replaced only if the contents changed.
     required: true
     default: null
   force:
@@ -61,8 +63,6 @@ options:
         will only be downloaded if the destination does not exist. Generally
         should be C(yes) only for small local files. Prior to 0.6, this module
         behaved as if C(yes) was the default.
-        Has no effect if C(dest) is a directory - the file will always be
-        downloaded, but replaced only if the contents changed.
     version_added: "0.7"
     required: false
     choices: [ "yes", "no" ]
@@ -335,7 +335,7 @@ def main():
     else:
         changed = False
 
-    # Check the digest of the destination file and ensure that it matches the 
+    # Check the digest of the destination file and ensure that it matches the
     # sha256sum parameter if it is present
     if sha256sum != '':
         # Remove any non-alphanumeric characters, including the infamous
