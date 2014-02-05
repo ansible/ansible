@@ -116,7 +116,7 @@ EXAMPLES = '''
       record=localhost.foo.com
       type=AAAA
       ttl=7200
-      value=::1"
+      value="::1"
 '''
 
 import sys
