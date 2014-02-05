@@ -500,9 +500,9 @@ Similarly, the hostname as the system reports it is::
     {{ ansible_hostname }}
 
 
-Facts are frequently used in conditionals (see `playbook_conditionals`) and also in templates.
+Facts are frequently used in conditionals (see :doc:`playbooks_conditionals`) and also in templates.
 
-Facts can be also used to create dynamic groups of hosts that match particular criteria, see the :doc:`modules` documentation on 'group_by' for details, as well as in generalized conditional statements as discussed in the `playbook_conditionals` chapter.
+Facts can be also used to create dynamic groups of hosts that match particular criteria, see the :doc:`modules` documentation on 'group_by' for details, as well as in generalized conditional statements as discussed in the :doc:`playbooks_conditionals` chapter.
 
 .. _disabling_facts:
 
@@ -569,7 +569,7 @@ or variables defined elsewhere in the playbook.
 Registered Variables
 ````````````````````
 
-Another major use of variables is running a command and using the result of that command to save the result into a variable.
+Another major use of variables is running a command and using the result of that command to save the result into a variable. Results will vary from module to module. Use of -v when executing playbooks will show possible values for the results.
 
 The value of a task being executed in ansible can be saved in a variable and used later.  See some examples of this in the
 :doc:`playbooks_conditionals` chapter.
@@ -818,7 +818,7 @@ First off, group variables are super powerful.
 
 Site wide defaults should be defined as a 'group_vars/all' setting.  Group variables are generally placed alongside
 your inventory file.  They can also be returned by a dynamic inventory script (see :doc:`intro_dynamic_inventory`) or defined
-in things like AnsibleWorks AWX from the UI or API::
+in things like :doc:`tower` from the UI or API::
 
     ---
     # file: /etc/ansible/group_vars/all
@@ -848,7 +848,7 @@ roles aren't you?  Hint hint.
 
 Ok, so if you are writing a redistributable role with reasonable defaults, put those in the 'roles/x/defaults/main.yml' file.  This means
 the role will bring along a default value but ANYTHING in Ansible will override it.  It's just a default.  That's why it says "defaults" :)
-See `intro_roles` for more info about this::
+See :doc:`playbooks_roles` for more info about this::
 
     ---
     # file: roles/x/defaults/main.yml

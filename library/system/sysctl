@@ -120,7 +120,7 @@ class SysctlModule(object):
 
         # Whitespace is bad
         self.args['name'] = self.args['name'].strip()
-        self.args['value'] = self.args['value'].strip()
+        self.args['value'] = self._parse_value(self.args['value'])
 
         thisname = self.args['name']
 
@@ -145,7 +145,7 @@ class SysctlModule(object):
         if self.args['sysctl_set']:            
             if self.proc_value is None:
                 self.changed = True
-            elif self.proc_value != self.args['value']:
+            elif not self._values_is_equal(self.proc_value, self.args['value']):
                 self.changed = True 
                 self.set_proc = True
 
@@ -158,6 +158,31 @@ class SysctlModule(object):
             if self.set_proc:
                 self.set_token_value(self.args['name'], self.args['value'])
 
+    def _values_is_equal(self, a, b):
+        """Expects two string values. It will split the string by whitespace
+        and compare each value. It will return True if both lists are the same,
+        contain the same elements and the same order."""
+        if a is None or b is None:
+            return False
+
+        a = a.split()
+        b = b.split()
+
+        if len(a) != len(b):
+            return False
+
+        return len([i for i, j in zip(a, b) if i == j]) == len(a)
+
+    def _parse_value(self, value):
+        if value is None:
+            return ''
+        elif value.lower() in BOOLEANS_TRUE:
+            return '1'
+        elif value.lower() in BOOLEANS_FALSE:
+            return '0'
+        else:
+            return value.strip()
+
     # ==============================================================
     #   SYSCTL COMMAND MANAGEMENT
     # ==============================================================
@@ -169,14 +194,16 @@ class SysctlModule(object):
         if rc != 0:
             return None
         else:
-            return shlex.split(out)[-1]
+            return out
 
     # Use the sysctl command to set the current value
     def set_token_value(self, token, value):
+        if len(value.split()) > 0:
+            value = '"' + value + '"'
         thiscmd = "%s -w %s=%s" % (self.sysctl_cmd, token, value)
         rc,out,err = self.module.run_command(thiscmd)
         if rc != 0:
-            self.module.fail_json(msg='setting %s failed: %s' (token, out + err))
+            self.module.fail_json(msg='setting %s failed: %s' % (token, out + err))
         else:
             return rc
 
@@ -189,8 +216,9 @@ class SysctlModule(object):
         else:
             # system supports reloading via the -p flag to sysctl, so we'll use that 
             rc,out,err = self.module.run_command([self.sysctl_cmd, '-p', self.sysctl_file])
-            
-        return rc,out+err
+
+        if rc != 0:            
+            self.module.fail_json(msg="Failed to reload sysctl: %s" % str(out) + str(err))
 
     # ==============================================================
     #   SYSCTL FILE MANAGEMENT
@@ -245,7 +273,7 @@ class SysctlModule(object):
         f = open(tmp_path,"w")
         try:
             for l in self.fixed_lines:
-                f.write(l)
+                f.write(l.strip() + "\n")
         except IOError, e:
             self.module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, str(e)))
         f.flush()
@@ -267,7 +295,7 @@ def main():
             value = dict(aliases=['val'], required=False),
             state = dict(default='present', choices=['present', 'absent']),
             reload = dict(default=True, type='bool'),
-            sysctl_set = dict(default=True, type='bool'),
+            sysctl_set = dict(default=False, type='bool'),
             sysctl_file = dict(default='/etc/sysctl.conf')
         ),
         supports_check_mode=True

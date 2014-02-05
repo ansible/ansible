@@ -19,7 +19,7 @@ Basics / What Will Be Installed
 
 Ansible by default manages machines over the SSH protocol.
 
-Once ansible is installed, it will not add a database, and there will be no daemons to start or keep running.  You only need to install it on one machine (which could easily be a laptop) and it can manage an entire fleet of remote machines from that central point.  When Ansible manages remote machines, it does not leave software installed or running on them, so there's no real question about how to upgrade Ansible when moving to a new version.
+Once Ansible is installed, it will not add a database, and there will be no daemons to start or keep running.  You only need to install it on one machine (which could easily be a laptop) and it can manage an entire fleet of remote machines from that central point.  When Ansible manages remote machines, it does not leave software installed or running on them, so there's no real question about how to upgrade Ansible when moving to a new version.
 
 .. _what_version:
 
@@ -46,7 +46,7 @@ information about running from source.  It's not necessary to install the progra
 Control Machine Requirements
 ````````````````````````````
 
-Currently Ansible can be from any machine with Python 2.6 installed (Windows isn't supported for the control machine).
+Currently Ansible can be run from any machine with Python 2.6 installed (Windows isn't supported for the control machine).
 
 This includes Red Hat, Debian, CentOS, OS X, any of the BSDs, and so on.
   
@@ -76,10 +76,10 @@ On the managed nodes, you only need Python 2.4 or later, but if you are are runn
 
 .. note::
 
-   Python 3 is a slightly different language than Python 2 and most python programs (including
+   Python 3 is a slightly different language than Python 2 and most Python programs (including
    Ansible) are not switching over yet.  However, some Linux distributions (Gentoo, Arch) may not have a 
    Python 2.X interpreter installed by default.  On those systems, you should install one, and set
-   the 'ansible_python_interpreter' variable in inventory (see :doc:`intro_inventory`) to point at your 2.X python.  Distributions
+   the 'ansible_python_interpreter' variable in inventory (see :doc:`intro_inventory`) to point at your 2.X Python.  Distributions
    like Red Hat Enterprise Linux, CentOS, Fedora, and Ubuntu all have a 2.X interpreter installed
    by default and this does not apply to those distributions.  This is also true of nearly all
    Unix systems.  If you need to bootstrap these remote systems by installing Python 2.X, 
@@ -115,7 +115,7 @@ If you don't have pip installed in your version of Python, install pip::
 
     $ sudo easy_install pip
 
-Ansible also uses the the following Python modules that need to be installed::
+Ansible also uses the following Python modules that need to be installed::
 
     $ sudo pip install paramiko PyYAML jinja2 httplib2
 
@@ -148,7 +148,7 @@ RPMs are available from yum for `EPEL
 Fedora distributions. 
 
 Ansible itself can manage earlier operating
-systems that contain python 2.4 or higher (so also EL5).
+systems that contain Python 2.4 or higher (so also EL5).
 
 Fedora users can install Ansible directly, though if you are using RHEL or CentOS and have not already done so, `configure EPEL <http://fedoraproject.org/wiki/EPEL>`_
    
@@ -210,11 +210,9 @@ Readers that use virtualenv can also install Ansible under virtualenv, though we
 Tarballs of Tagged Releases
 +++++++++++++++++++++++++++
 
-Packaging Ansible or wanting to build a local package yourself, but don't want to do a git checkout?  Tarballs of releases are available on the ansibleworks.com page.
+Packaging Ansible or wanting to build a local package yourself, but don't want to do a git checkout?  Tarballs of releases are available on the `Ansible downloads <http://releases.ansible.com/ansible>`_ page.
 
-* `Ansible/downloads <http://ansibleworks.com/releases>`_
-
-These releases are also tagged in the git repository with the release version.
+These releases are also tagged in the `git repository <https://github.com/ansible/ansible/releases>`_ with the release version.
 
 .. seealso::
 

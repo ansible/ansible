@@ -114,7 +114,7 @@ callback_plugins
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-   action_plugins = /usr/share/ansible_plugins/action_plugins
+   callback_plugins = /usr/share/ansible_plugins/callback_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
@@ -126,7 +126,7 @@ connection_plugins
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-   action_plugins = /usr/share/ansible_plugins/action_plugins
+   connection_plugins = /usr/share/ansible_plugins/connection_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
@@ -185,7 +185,7 @@ filter_plugins
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-   action_plugins = /usr/share/ansible_plugins/action_plugins
+   filter_plugins = /usr/share/ansible_plugins/filter_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
@@ -287,7 +287,7 @@ the user running Ansible has permissions on the logfile::
 This behavior is not on by default.  Note that ansible will, without this setting, record module arguments called to the
 syslog of managed machines.  Password arguments are excluded.
 
-For Enterprise users seeking more detailed logging history, you may be interested in `AnsibleWorks AWX <http://ansibleworks.com/ansibleworks-awx>`_.
+For Enterprise users seeking more detailed logging history, you may be interested in :doc:`tower`.
 
 .. _lookup_plugins:
 
@@ -297,7 +297,7 @@ lookup_plugins
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-   action_plugins = /usr/share/ansible_plugins/action_plugins
+   lookup_plugins = /usr/share/ansible_plugins/lookup_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
@@ -476,7 +476,7 @@ vars_plugins
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-   action_plugins = /usr/share/ansible_plugins/action_plugins
+   vars_plugins = /usr/share/ansible_plugins/vars_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 

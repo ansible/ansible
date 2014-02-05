@@ -1,0 +1,208 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+
+DOCUMENTATION = '''
+---
+module: ec2_key
+version_added: "1.5"
+short_description: maintain an ec2 key pair.
+description:
+    - maintains ec2 key pairs. This module has a dependency on python-boto >= 2.5
+options:
+  name:
+    description:
+      - Name of the key pair.
+    required: true
+  key_material:
+    description:
+      - Public key material.
+    required: false
+  region:
+    description:
+      - the EC2 region to use
+    required: false
+    default: null
+    aliases: []
+  ec2_url:
+    description:
+      - Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints)
+    required: false
+    default: null
+    aliases: []
+  ec2_secret_key:
+    description:
+      - EC2 secret key
+    required: false
+    default: null
+    aliases: ['aws_secret_key']
+  ec2_access_key:
+    description:
+      - EC2 access key
+    required: false
+    default: null
+    aliases: ['aws_access_key']
+  state:
+    version_added: "1.5"
+    description:
+      - create or delete security group
+    required: false
+    default: 'present'
+    aliases: []
+
+requirements: [ "boto" ]
+author: Vincent Viallet
+'''
+
+EXAMPLES = '''
+# Creates a new ec2 key pair named `example` if not present, returns generated
+# private key
+- name: example ec2 key
+  local_action:
+    module: ec2_key
+    name: example
+    region: eu-west-1a
+    ec2_secret_key: SECRET
+    ec2_access_key: ACCESS
+
+# Creates a new ec2 key pair named `example` if not present using provided key
+# material
+- name: example2 ec2 key
+  local_action:
+    module: ec2_key
+    name: example2
+    region: eu-west-1a
+    ec2_secret_key: SECRET
+    ec2_access_key: ACCESS
+    key_material: 'ssh-rsa AAAAxyz...== me@example.com'
+    state: present
+
+# Creates a new ec2 key pair named `example` if not present using provided key
+# material
+- name: example3 ec2 key
+  local_action:
+    module: ec2_key
+    name: example3
+    region: eu-west-1a
+    ec2_secret_key: SECRET
+    ec2_access_key: ACCESS
+    key_material: "{{ item }}"
+  with_file: /path/to/public_key.id_rsa.pub
+
+# Removes ec2 key pair by name
+- name: remove example key
+  local_action:
+    module: ec2_key
+    name: example
+    state: absent
+    region: eu-west-1a
+    ec2_secret_key: SECRET
+    ec2_access_key: ACCESS
+'''
+
+try:
+    import boto.ec2
+except ImportError:
+    print "failed=True msg='boto required for this module'"
+    sys.exit(1)
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            name=dict(required=True),
+            key_material=dict(required=False),
+            ec2_url=dict(aliases=['EC2_URL']),
+            ec2_secret_key=dict(aliases=['aws_secret_key', 'secret_key'], no_log=True),
+            ec2_access_key=dict(aliases=['aws_access_key', 'access_key']),
+            region=dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS),
+            state = dict(default='present', choices=['present', 'absent']),
+        ),
+        supports_check_mode=True,
+    )
+
+    # def get_ec2_creds(module):
+    #   return ec2_url, ec2_access_key, ec2_secret_key, region
+    ec2_url, ec2_access_key, ec2_secret_key, region = get_ec2_creds(module)
+
+    name = module.params['name']
+    state = module.params.get('state')
+    key_material = module.params.get('key_material')
+
+    changed = False
+
+    # If we have a region specified, connect to its endpoint.
+    if region:
+        try:
+            ec2 = boto.ec2.connect_to_region(region, aws_access_key_id=ec2_access_key, aws_secret_access_key=ec2_secret_key)
+        except boto.exception.NoAuthHandlerFound, e:
+            module.fail_json(msg=str(e))
+    # Otherwise, no region so we fallback to the old connection method
+    else:
+        try:
+            if ec2_url:  # if we have an URL set, connect to the specified endpoint
+                ec2 = boto.connect_ec2_endpoint(ec2_url, ec2_access_key, ec2_secret_key)
+            else:  # otherwise it's Amazon.
+                ec2 = boto.connect_ec2(ec2_access_key, ec2_secret_key)
+        except boto.exception.NoAuthHandlerFound, e:
+            module.fail_json(msg=str(e))
+
+    # find the key if present
+    key = ec2.get_key_pair(name)
+
+    # Ensure requested key is absent
+    if state == 'absent':
+        if key:
+            '''found a match, delete it'''
+            try:
+                key.delete()
+            except Exception, e:
+                module.fail_json(msg="Unable to delete key pair '%s' - %s" % (key, e))
+            else:
+                key = None
+                changed = True
+        else:
+            '''no match found, no changes required'''
+
+    # Ensure requested key is present
+    elif state == 'present':
+        if key:
+            '''existing key found'''
+            # Should check if the fingerprint is the same - but lack of info
+            # and different fingerprint provided (pub or private) depending if
+            # the key has been created of imported.
+            pass
+
+        # if the key doesn't exist, create it now
+        else:
+            '''no match found, create it'''
+            if not module.check_mode:
+                if key_material:
+                    '''We are providing the key, need to import'''
+                    key = ec2.import_key_pair(name, key_material)
+                else:
+                    '''
+                    No material provided, let AWS handle the key creation and 
+                    retrieve the private key
+                    '''
+                    key = ec2.create_key_pair(name)
+            changed = True
+    else:
+        module.fail_json(msg="Unsupported state requested: %s" % state)
+
+    if key:
+        data = {
+            'name': key.name,
+            'fingerprint': key.fingerprint
+        }
+        if key.material:
+            data.update({'private_key': key.material})
+
+        module.exit_json(changed=changed, key=data)
+    else:
+        module.exit_json(changed=changed, key=None)
+
+# import module snippets
+from ansible.module_utils.basic import *
+from ansible.module_utils.ec2 import *
+
+main()

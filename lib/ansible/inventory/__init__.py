@@ -19,6 +19,7 @@
 
 import fnmatch
 import os
+import sys
 import re
 import subprocess
 
@@ -179,8 +180,9 @@ class Inventory(object):
             elif p.startswith("&"):
                 hosts = [ h for h in hosts if h in that ]
             else:
-                hosts.extend([ h for h in that if h not in hosts ])
-
+                to_append = [ h for h in that if h.name not in [ y.name for y in hosts ] ]
+                hosts.extend(to_append)
+        
         return hosts
 
     def __get_hosts(self, pattern):
@@ -247,6 +249,17 @@ class Inventory(object):
         else:
             return [ hosts[left] ]
 
+    def _create_implicit_localhost(self, pattern):
+        new_host = Host(pattern)
+        new_host.set_variable("ansible_python_interpreter", sys.executable)
+        new_host.set_variable("ansible_connection", "local")
+        ungrouped = self.get_group("ungrouped")
+        if ungrouped is None:
+            self.add_group(Group('ungrouped'))
+            ungrouped = self.get_group('ungrouped')
+        ungrouped.add_host(new_host)
+        return new_host
+
     def _hosts_in_unenumerated_pattern(self, pattern):
         """ Get all host names matching the pattern """
 
@@ -264,6 +277,10 @@ class Inventory(object):
                     if host not in results and host.name not in hostnames:
                         results.append(host)
                         hostnames.add(host.name)
+
+        if pattern in ["localhost", "127.0.0.1"] and len(results) == 0:
+            new_host = self._create_implicit_localhost(pattern)
+            results.append(new_host)
         return results
 
     def clear_pattern_cache(self):
@@ -305,6 +322,7 @@ class Inventory(object):
             for host in self.get_group('all').get_hosts():
                 if host.name in ['localhost', '127.0.0.1']:
                     return host
+            return self._create_implicit_localhost(hostname)
         else:
             for group in self.groups:
                 for host in group.get_hosts():
@@ -348,7 +366,7 @@ class Inventory(object):
 
         vars.update(host.get_variables())
         if self.parser is not None:
-            vars.update(self.parser.get_host_variables(host))
+            vars = utils.combine_vars(vars, self.parser.get_host_variables(host))
         return vars
 
     def add_group(self, group):
@@ -356,7 +374,13 @@ class Inventory(object):
         self._groups_list = None  # invalidate internal cache 
 
     def list_hosts(self, pattern="all"):
-        return [ h.name for h in self.get_hosts(pattern) ]
+
+        """ return a list of hostnames for a pattern """
+
+        result = [ h.name for h in self.get_hosts(pattern) ]
+        if len(result) == 0 and pattern in ["localhost", "127.0.0.1"]:
+            result = [pattern]
+        return result
 
     def list_groups(self):
         return sorted([ g.name for g in self.groups ], key=lambda x: x)

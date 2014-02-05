@@ -68,7 +68,11 @@ class PlayBook(object):
         inventory        = None,
         check            = False,
         diff             = False,
-        any_errors_fatal = False):
+        any_errors_fatal = False,
+        su               = False,
+        su_user          = False,
+        su_pass          = False,
+    ):
 
         """
         playbook:         path to a playbook file
@@ -91,8 +95,17 @@ class PlayBook(object):
 
         self.SETUP_CACHE = SETUP_CACHE
 
-        if playbook is None or callbacks is None or runner_callbacks is None or stats is None:
-            raise Exception('missing required arguments')
+        arguments = []
+        if playbook is None:
+            arguments.append('playbook')
+        if callbacks is None:
+            arguments.append('callbacks')
+        if runner_callbacks is None:
+            arguments.append('runner_callbacks')
+        if stats is None:
+            arguments.append('stats')
+        if arguments:
+            raise Exception('PlayBook missing required arguments: %s' % ', '.join(arguments))
 
         if extra_vars is None:
             extra_vars = {}
@@ -122,6 +135,9 @@ class PlayBook(object):
         self.only_tags        = only_tags
         self.skip_tags        = skip_tags
         self.any_errors_fatal = any_errors_fatal
+        self.su               = su
+        self.su_user          = su_user
+        self.su_pass          = su_pass
 
         self.callbacks.playbook = self
         self.runner_callbacks.playbook = self
@@ -202,7 +218,7 @@ class PlayBook(object):
                         p['vars'].update(incvars)
                     elif isinstance(p['vars'], list):
                         # nobody should really do this, but handle vars: a=1 b=2
-                        p['vars'].extend([dict(k=v) for k,v in incvars.iteritems()])
+                        p['vars'].extend([{k:v} for k,v in incvars.iteritems()])
 
                 accumulated_plays.extend(plays)
                 play_basedirs.extend(basedirs)
@@ -289,34 +305,55 @@ class PlayBook(object):
 
     # *****************************************************
 
-    def _list_available_hosts(self, *args):
+    def _trim_unavailable_hosts(self, hostlist=[]):
         ''' returns a list of hosts that haven't failed and aren't dark '''
 
-        return [ h for h in self.inventory.list_hosts(*args) if (h not in self.stats.failures) and (h not in self.stats.dark)]
+        return [ h for h in self.inventory.list_hosts(hostlist) if (h not in self.stats.failures) and (h not in self.stats.dark)]
 
     # *****************************************************
 
     def _run_task_internal(self, task):
         ''' run a particular module step in a playbook '''
 
-        hosts = self._list_available_hosts()
+        hosts = self._trim_unavailable_hosts(task.play._play_hosts)
         self.inventory.restrict_to(hosts)
 
         runner = ansible.runner.Runner(
-            pattern=task.play.hosts, inventory=self.inventory, module_name=task.module_name,
-            module_args=task.module_args, forks=self.forks,
-            remote_pass=self.remote_pass, module_path=self.module_path,
-            timeout=self.timeout, remote_user=task.remote_user,
-            remote_port=task.play.remote_port, module_vars=task.module_vars,
-            default_vars=task.default_vars, private_key_file=self.private_key_file,
-            setup_cache=self.SETUP_CACHE, basedir=task.play.basedir,
-            conditional=task.when, callbacks=self.runner_callbacks,
-            sudo=task.sudo, sudo_user=task.sudo_user,
-            transport=task.transport, sudo_pass=task.sudo_pass, is_playbook=True,
-            check=self.check, diff=self.diff, environment=task.environment, complex_args=task.args,
-            accelerate=task.play.accelerate, accelerate_port=task.play.accelerate_port,
+            pattern=task.play.hosts,
+            inventory=self.inventory,
+            module_name=task.module_name,
+            module_args=task.module_args,
+            forks=self.forks,
+            remote_pass=self.remote_pass,
+            module_path=self.module_path,
+            timeout=self.timeout,
+            remote_user=task.remote_user,
+            remote_port=task.play.remote_port,
+            module_vars=task.module_vars,
+            default_vars=task.default_vars,
+            private_key_file=self.private_key_file,
+            setup_cache=self.SETUP_CACHE,
+            basedir=task.play.basedir,
+            conditional=task.when,
+            callbacks=self.runner_callbacks,
+            sudo=task.sudo,
+            sudo_user=task.sudo_user,
+            transport=task.transport,
+            sudo_pass=task.sudo_pass,
+            is_playbook=True,
+            check=self.check,
+            diff=self.diff,
+            environment=task.environment,
+            complex_args=task.args,
+            accelerate=task.play.accelerate,
+            accelerate_port=task.play.accelerate_port,
             accelerate_ipv6=task.play.accelerate_ipv6,
-            error_on_undefined_vars=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR
+            error_on_undefined_vars=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR,
+            su=task.su,
+            su_user=task.su_user,
+            su_pass=task.su_pass,
+            run_hosts=hosts,
+            no_log=task.no_log,
         )
 
         if task.async_seconds == 0:
@@ -436,7 +473,7 @@ class PlayBook(object):
         if play.gather_facts is False:
             return {}
 
-        host_list = self._list_available_hosts(play.hosts)
+        host_list = self._trim_unavailable_hosts(play._play_hosts)
 
         self.callbacks.on_setup()
         self.inventory.restrict_to(host_list)
@@ -446,13 +483,33 @@ class PlayBook(object):
 
         # push any variables down to the system
         setup_results = ansible.runner.Runner(
-            pattern=play.hosts, module_name='setup', module_args={}, inventory=self.inventory,
-            forks=self.forks, module_path=self.module_path, timeout=self.timeout, remote_user=play.remote_user,
-            remote_pass=self.remote_pass, remote_port=play.remote_port, private_key_file=self.private_key_file,
-            setup_cache=self.SETUP_CACHE, callbacks=self.runner_callbacks, sudo=play.sudo, sudo_user=play.sudo_user,
-            transport=play.transport, sudo_pass=self.sudo_pass, is_playbook=True, module_vars=play.vars,
-            default_vars=play.default_vars, check=self.check, diff=self.diff,
-            accelerate=play.accelerate, accelerate_port=play.accelerate_port,
+            pattern=play.hosts,
+            module_name='setup',
+            module_args={},
+            inventory=self.inventory,
+            forks=self.forks,
+            module_path=self.module_path,
+            timeout=self.timeout,
+            remote_user=play.remote_user,
+            remote_pass=self.remote_pass,
+            remote_port=play.remote_port,
+            private_key_file=self.private_key_file,
+            setup_cache=self.SETUP_CACHE,
+            callbacks=self.runner_callbacks,
+            sudo=play.sudo,
+            sudo_user=play.sudo_user,
+            sudo_pass=self.sudo_pass,
+            su=play.su,
+            su_user=play.su_user,
+            su_pass=self.su_pass,
+            transport=play.transport,
+            is_playbook=True,
+            module_vars=play.vars,
+            default_vars=play.default_vars,
+            check=self.check,
+            diff=self.diff,
+            accelerate=play.accelerate,
+            accelerate_port=play.accelerate_port,
         ).run()
         self.stats.compute(setup_results, setup=True)
 
@@ -499,8 +556,10 @@ class PlayBook(object):
         ''' run a list of tasks for a given pattern, in order '''
 
         self.callbacks.on_play_start(play.name)
+        # Get the hosts for this play
+        play._play_hosts = self.inventory.list_hosts(play.hosts)
         # if no hosts matches this play, drop out
-        if not self.inventory.list_hosts(play.hosts):
+        if not play._play_hosts:
             self.callbacks.on_no_hosts_matched()
             return True
 
@@ -509,8 +568,9 @@ class PlayBook(object):
 
         # now with that data, handle contentional variable file imports!
 
-        all_hosts = self._list_available_hosts(play.hosts)
+        all_hosts = self._trim_unavailable_hosts(play._play_hosts)
         play.update_vars_files(all_hosts)
+        hosts_count = len(all_hosts)
 
         serialized_batch = []
         if play.serial <= 0:
@@ -526,6 +586,9 @@ class PlayBook(object):
 
         for on_hosts in serialized_batch:
 
+            # restrict the play to just the hosts we have in our on_hosts block that are
+            # available.
+            play._play_hosts = self._trim_unavailable_hosts(on_hosts)
             self.inventory.also_restrict_to(on_hosts)
 
             for task in play.tasks():
@@ -548,7 +611,7 @@ class PlayBook(object):
                                 # prevent duplicate handler includes from running more than once
                                 fired_names[handler_name] = 1
 
-                                host_list = self._list_available_hosts(play.hosts)
+                                host_list = self._trim_unavailable_hosts(play._play_hosts)
                                 if handler.any_errors_fatal and len(host_list) < hosts_count:
                                     play.max_fail_pct = 0
                                 if (hosts_count - len(host_list)) > int((play.max_fail_pct)/100.0 * hosts_count):
@@ -566,8 +629,6 @@ class PlayBook(object):
                                 handler.notified_by = new_list
 
                         continue
-
-                hosts_count = len(self._list_available_hosts(play.hosts))
 
                 # only run the task if the requested tags match
                 should_run = False
@@ -591,7 +652,9 @@ class PlayBook(object):
                         # just didn't match anything and that's ok
                         return False
 
-                host_list = self._list_available_hosts(play.hosts)
+                # Get a new list of what hosts are left as available, the ones that
+                # did not go fail/dark during the task
+                host_list = self._trim_unavailable_hosts(play._play_hosts)
 
                 # Set max_fail_pct to 0, So if any hosts fails, bail out
                 if task.any_errors_fatal and len(host_list) < hosts_count:

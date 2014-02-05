@@ -3938,11 +3938,11 @@ pre.literal-block {
 .wy-side-nav-search img {
     display: block;
     margin: auto auto 0.809em auto;
-    height: 45px;
-    width: 45px;
+    height: 214px;
+    width: 26px;
     background-color: #2980b9;
     padding: 5px;
-    border-radius: 100%;
+/*  border-radius: 100%; */
 }
 
 .wy-side-nav-search>a, .wy-side-nav-search .wy-dropdown>a {

@@ -5,7 +5,7 @@ Check Mode ("Dry Run")
 
 .. contents:: Topics
 
-When ansible-playbook is executed with --check it will not make any changes on remote systems.  Instead, any module
+When ansible-playbook is executed with ``--check`` it will not make any changes on remote systems.  Instead, any module
 instrumented to support 'check mode' (which contains most of the primary core modules, but it is not required that all modules do
 this) will report what changes they would have made rather than making them.  Other modules that do not support check mode will also take no action, but just will not report what changes they might have made.
 
@@ -42,13 +42,13 @@ true.
 
 .. _diff_mode:
 
-Showing Differences with --diff
-```````````````````````````````
+Showing Differences with ``--diff``
+```````````````````````````````````
 
 .. versionadded:: 1.1
 
-The --diff option to ansible-playbook works great with --check (detailed above) but can also be used by itself.  When this flag is supplied, if any templated files on the remote system are changed, and the ansible-playbook CLI will report back
-the textual changes made to the file (or, if used with --check, the changes that would have been made).  Since the diff
+The ``--diff`` option to ansible-playbook works great with ``--check`` (detailed above) but can also be used by itself.  When this flag is supplied, if any templated files on the remote system are changed, and the ansible-playbook CLI will report back
+the textual changes made to the file (or, if used with ``--check``, the changes that would have been made).  Since the diff
 feature produces a large amount of output, it is best used when checking a single host at a time, like so::
 
     ansible-playbook foo.yml --check --diff --limit foo.example.com

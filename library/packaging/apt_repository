@@ -3,6 +3,7 @@
 
 # (c) 2012, Matt Wright <matt@nobien.net>
 # (c) 2013, Alexander Saltanov <asd@mokote.com>
+# (c) 2014, Rutger Spiertz <rutger@kumina.nl>
 #
 # This file is part of Ansible
 #
@@ -111,8 +112,9 @@ class SourcesList(object):
         self.files = {}  # group sources by file
         self.default_file = apt_pkg.config.find_file('Dir::Etc::sourcelist')
 
-        # read sources.list
-        self.load(self.default_file)
+        # read sources.list if it exists
+        if os.path.isfile(self.default_file):
+            self.load(self.default_file)
 
         # read sources.list.d
         for file in glob.iglob('%s/*.list' % apt_pkg.config.find_dir('Dir::Etc::sourceparts')):
@@ -203,7 +205,7 @@ class SourcesList(object):
 
                         try:
                             f.write(line)
-                        except IOError as err:
+                        except IOError, err:
                             module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, unicode(err)))
                 module.atomic_move(tmp_path, filename)
             else:
@@ -364,7 +366,7 @@ def main():
             sourceslist.add_source(repo)
         elif state == 'absent':
             sourceslist.remove_source(repo)
-    except InvalidSource as err:
+    except InvalidSource, err:
         module.fail_json(msg='Invalid repository string: %s' % unicode(err))
 
     sources_after = sourceslist.dump()
@@ -376,7 +378,7 @@ def main():
             if update_cache:
                 cache = apt.Cache()
                 cache.update()
-        except OSError as err:
+        except OSError, err:
             module.fail_json(msg=unicode(err))
 
     module.exit_json(changed=changed, repo=repo, state=state)

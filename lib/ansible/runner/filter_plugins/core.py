@@ -30,9 +30,13 @@ def to_nice_yaml(*a, **kw):
     '''Make verbose, human readable yaml'''
     return yaml.safe_dump(*a, indent=4, allow_unicode=True, default_flow_style=False, **kw)
 
-def to_nice_json(*a, **kw):
+def to_json(a, *args, **kw):
+    ''' Convert the value to JSON '''
+    return json.dumps(a, *args, **kw)
+
+def to_nice_json(a, *args, **kw):
     '''Make verbose, human readable JSON'''
-    return json.dumps(*a, indent=4, sort_keys=True, **kw)
+    return json.dumps(a, indent=4, sort_keys=True, *args, **kw)
 
 def failed(*a, **kw):
     ''' Test if task result yields failed '''
@@ -58,7 +62,7 @@ def changed(*a, **kw):
     if not 'changed' in item:
         changed = False
         if ('results' in item    # some modules return a 'results' key
-                and type(item['results']) == list 
+                and type(item['results']) == list
                 and type(item['results'][0]) == dict):
             for result in item['results']:
                 changed = changed or result.get('changed', False)
@@ -76,9 +80,12 @@ def skipped(*a, **kw):
 
 def mandatory(a):
     ''' Make a variable mandatory '''
-    if not a:
+    try:
+        a
+    except NameError:
         raise errors.AnsibleFilterError('Mandatory variable not defined.')
-    return a
+    else:
+        return a
 
 def bool(a):
     ''' return a bool for the arg '''
@@ -145,7 +152,7 @@ class FilterModule(object):
             'b64encode': base64.b64encode,
 
             # json
-            'to_json': json.dumps,
+            'to_json': to_json,
             'to_nice_json': to_nice_json,
             'from_json': json.loads,
 

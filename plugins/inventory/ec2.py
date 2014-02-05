@@ -283,7 +283,7 @@ class Ec2Inventory(object):
                 for instance in reservation.instances:
                     self.add_instance(instance, region)
         
-        except boto.exception.BotoServerError as e:
+        except boto.exception.BotoServerError, e:
             if  not self.eucalyptus:
                 print "Looks like AWS is down again:"
             print e
@@ -299,7 +299,7 @@ class Ec2Inventory(object):
                 instances = conn.get_all_dbinstances()
                 for instance in instances:
                     self.add_rds_instance(instance, region)
-        except boto.exception.BotoServerError as e:
+        except boto.exception.BotoServerError, e:
             if not e.reason == "Forbidden":
                 print "Looks like AWS RDS is down: "
                 print e

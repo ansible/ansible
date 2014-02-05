@@ -17,9 +17,9 @@
 DOCUMENTATION = """
 ---
 module: ec2_elb
-short_description: De-registers or registers instances from EC2 ELB(s)
+short_description: De-registers or registers instances from EC2 ELBs
 description:
-  - This module de-registers or registers an AWS EC2 instance from the ELB(s)
+  - This module de-registers or registers an AWS EC2 instance from the ELBs
     that it belongs to.
   - Returns fact "ec2_elbs" which is a list of elbs attached to the instance
     if state=absent is passed as an argument.
@@ -32,6 +32,7 @@ options:
     description:
       - register or deregister the instance
     required: true
+    choices: ['present', 'absent']
 
   instance_id:
     description:
@@ -201,7 +202,7 @@ class ElbManager:
             if instance_state.state == awaited_state:
                 # Check the current state agains the initial state, and only set
                 # changed if they are different.
-                if instance_state.state != initial_state.state:
+                if (initial_state is None) or (instance_state.state != initial_state.state):
                     self.changed = True
                 break
             elif self._is_instance_state_pending(instance_state):

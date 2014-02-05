@@ -195,7 +195,7 @@ def create_image(module, ec2):
         try:
             img = ec2.get_image(image_id)
             break
-        except boto.exception.EC2ResponseError as e:
+        except boto.exception.EC2ResponseError, e:
             if e.error_code == 'InvalidAMIID.NotFound':
                 time.sleep(1)
             else:

@@ -73,7 +73,7 @@ def _load_vars_from_path(path, results):
     # symbolic link
     if stat.S_ISLNK(pathstat.st_mode):
         try:
-            target = os.readlink(path)
+            target = os.path.realpath(path)
         except os.error, err2:
             raise errors.AnsibleError("The symbolic link at %s "
                 "is not readable: %s.  Please check its permissions."

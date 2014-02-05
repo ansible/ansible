@@ -90,6 +90,7 @@ options:
 
 notes:
   - Two environment variables can be used, DO_CLIENT_ID and DO_API_KEY.
+requirements: [ dopy ]
 '''
 
 
@@ -162,7 +163,7 @@ import time
 try:
     import dopy
     from dopy.manager import DoError, DoManager
-except ImportError as e:
+except ImportError, e:
     print "failed=True msg='dopy >= 0.2.2 required for this module'"
     sys.exit(1)
 
@@ -414,9 +415,9 @@ def main():
 
     try:
         core(module)
-    except TimeoutError as e:
+    except TimeoutError, e:
         module.fail_json(msg=str(e), id=e.id)
-    except (DoError, Exception) as e:
+    except (DoError, Exception), e:
         module.fail_json(msg=str(e))
 
 # import module snippets
