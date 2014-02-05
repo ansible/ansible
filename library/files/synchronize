@@ -75,6 +75,12 @@ options:
     choices: [ 'yes', 'no' ]
     default: the value of the archive option
     required: false
+  copy_links:
+    description:
+      - Copy symlinks as the item that they point to (the referent) is copied, rather than the symlink.
+    choices: [ 'yes', 'no' ]
+    default: 'no'
+    required: false
   perms:
     description:
       - Preserve permissions.
@@ -163,6 +169,7 @@ def main():
             dirs  = dict(default='no', type='bool'),
             recursive = dict(type='bool'),
             links = dict(type='bool'),
+            copy_links = dict(type='bool'),
             perms = dict(type='bool'),
             times = dict(type='bool'),
             owner = dict(type='bool'),
@@ -185,6 +192,7 @@ def main():
     # the default of these params depends on the value of archive
     recursive = module.params['recursive']
     links = module.params['links']
+    copy_links = module.params['copy_links']
     perms = module.params['perms']
     times = module.params['times']
     owner = module.params['owner']
@@ -201,6 +209,8 @@ def main():
             cmd = cmd + ' --no-recursive'
         if links is False:
             cmd = cmd + ' --no-links'
+        if copy_links is True:
+            cmd = cmd + ' --copy-links'
         if perms is False:
             cmd = cmd + ' --no-perms'
         if times is False:
@@ -214,6 +224,8 @@ def main():
             cmd = cmd + ' --recursive'
         if links is True:
             cmd = cmd + ' --links'
+        if copy_links is True:
+            cmd = cmd + ' --copy-links'
         if perms is True:
             cmd = cmd + ' --perms'
         if times is True:
