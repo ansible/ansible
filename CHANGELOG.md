@@ -25,6 +25,7 @@ New modules:
 * cloud: rax_files_objects
 * cloud: rax_keypair
 * cloud: rax_queue
+* messaging: rabbitmq_policy
 * system: at
 
 
