@@ -13,6 +13,7 @@ Major features/changes:
 * git module has new parameters (accept_hostkey, key_file, ssh_opts) to ease the usage of git and ssh protocols. 
 * when using accelerate mode, the daemon will now be restarted when specifying a different remote_user between plays.
 * added no_log: option for tasks. When used, no logging information will be sent to syslog during the module execution.
+* acl module now handles 'default' and allows for either shorthand entry or specific fields per entry section
 
 
 New modules:
