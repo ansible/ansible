@@ -8,6 +8,15 @@ AWS_REGIONS = ['ap-northeast-1',
                'us-west-2']
 
 
+def ec2_argument_spec():
+    return dict(
+        region=dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS),
+        ec2_url=dict(),
+        ec2_secret_key=dict(aliases=['aws_secret_key', 'secret_key'], no_log=True),
+        ec2_access_key=dict(aliases=['aws_access_key', 'access_key']),
+    )
+
+
 def get_ec2_creds(module):
 
     # Check module args for credentials, then check environment vars
