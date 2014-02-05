@@ -220,10 +220,11 @@ class SysctlModule(object):
             rc,out,err = self.module.run_command('/etc/rc.d/sysctl reload')
         else:
             # system supports reloading via the -p flag to sysctl, so we'll use that
+            sysctl_args = [self.sysctl_cmd, '-p', self.sysctl_file]
             if self.args['ignoreerrors']:
-                rc,out,err = self.module.run_command([self.sysctl_cmd, '-e', '-p', self.sysctl_file])
-            else:
-                rc,out,err = self.module.run_command([self.sysctl_cmd, '-p', self.sysctl_file])
+                sysctl_args.insert(1, '-e')
+            
+            rc,out,err = self.module.run_command(sysctl_args)
 
         if rc != 0:            
             self.module.fail_json(msg="Failed to reload sysctl: %s" % str(out) + str(err))
