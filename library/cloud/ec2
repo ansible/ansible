@@ -338,18 +338,18 @@ local_action:
   connection: local
   vars:
     instance_ids:
-    - 'i-xxxxxx'
-    - 'i-xxxxxx'
-    - 'i-xxxxxx'
+      - 'i-xxxxxx'
+      - 'i-xxxxxx'
+      - 'i-xxxxxx'
     region: us-east-1
   tasks:
     - name: Start the sandbox instances
       local_action:
-       module: ec2
-       instance_ids: '{{ instance_ids }}'
-       region: '{{ region }}'
-       state: running
-       wait: True
+        module: ec2
+        instance_ids: '{{ instance_ids }}'
+        region: '{{ region }}'
+        state: running
+        wait: True
   role:
     - do_neat_stuff
     - do_more_neat_stuff
@@ -360,9 +360,9 @@ local_action:
   connection: local
   vars:
     instance_ids:
-    - 'i-xxxxxx'
-    - 'i-xxxxxx'
-    - 'i-xxxxxx'
+      - 'i-xxxxxx'
+      - 'i-xxxxxx'
+      - 'i-xxxxxx'
     region: us-east-1
   tasks:
     - name: Stop the sanbox instances
