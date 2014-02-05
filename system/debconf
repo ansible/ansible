@@ -45,7 +45,7 @@ options:
     required: false
     default: null
     aliases: ['question', 'selection']
-  type:
+  vtype:
     description:
       - The type of the value supplied
     required: false
@@ -57,7 +57,7 @@ options:
       -  Value to set the configuration to
     required: false
     default: null
-    aliases: ['awnser']
+    aliases: ['answer']
   unseen:
     description:
       - Do not set 'seen' flag when pre-seeding
@@ -76,33 +76,33 @@ debconf: name=locales setting='locales/default_environment_locale' value=fr_FR.U
 debconf: name=locales setting='locales/locales_to_be_generated  value='en_US.UTF-8 UTF-8, fr_FR.UTF-8 UTF-8'
 
 # Accept oracle license
-debconf: names='oracle-java7-installer' question='shared/accepted-oracle-license-v1-1' value='true' type='select'
+debconf: names='oracle-java7-installer' question='shared/accepted-oracle-license-v1-1' value='true' vtype='select'
 '''
 
 def get_selections(module, pkg):
     cmd = [module.get_bin_path('debconf-show', True), pkg]
     rc, out, err = module.run_command(' '.join(cmd))
 
-    if rc == 0:
-        selections = {}
-    for line in out.splitlines():
-            #if not line.startswith('*'): # only awnsered
-            #    continue
-            (key, value) = line.split(':')
-            selections[ key.strip('*').strip() ] = value.strip()
-        return selections
-    else:
+    if rc != 0:
         module.fail_json(msg=err)
 
+    selections = {}
 
-def set_selection(module, pkg, question, type, value, unseen):
+    for line in out.splitlines():
+        (key, value) = line.split(':')
+        selections[ key.strip('*').strip() ] = value.strip()
 
-    awnser = [ question ]
-    if 'type':
-        awnser.append(type)
-    awnser.append(value)
+    return selections
 
-    data = ' '.join(awnser)
+
+def set_selection(module, pkg, question, vtype, value, unseen):
+
+    answer = [ question ]
+    if 'vtype':
+        answer.append(vtype)
+    answer.append(value)
+
+    data = ' '.join(answer)
 
     setsel = module.get_bin_path('debconf-set-selections', True)
     cmd = ["echo '%s %s' |" % (pkg, data), setsel]
@@ -117,7 +117,7 @@ def main():
         argument_spec = dict(
            name = dict(required=True, aliases=['pkg'], type='str'),
            setting = dict(required=False, aliases=['question', 'selection'], type='str'),
-           type = dict(required=False, type='str', choices=['string', 'boolean', 'select',  'multiselect', 'note', 'text', 'password', 'title']),
+           vtype = dict(required=False, type='str', choices=['string', 'boolean', 'select',  'multiselect', 'note', 'text', 'password', 'title']),
            value= dict(required=False, type='str'),
            unseen = dict(required=False, type='bool'),
         ),
@@ -127,7 +127,7 @@ def main():
     #TODO: enable passing array of optionas and/or debconf file from get-selections dump
     pkg      = module.params["name"]
     question = module.params["setting"]
-    type     = module.params["type"]
+    vtype     = module.params["vtype"]
     value    = module.params["value"]
     unseen   = module.params["unseen"]
 
@@ -143,7 +143,7 @@ def main():
 
     if changed:
         if not module.check_mode:
-            rc, msg, e = set_selection(module, pkg, question, type, value, unseen)
+            rc, msg, e = set_selection(module, pkg, question, vtype, value, unseen)
             if rc:
                 module.fail_json(msg=e)
 
@@ -157,6 +157,5 @@ def main():
 
     module.exit_json(changed=changed, msg=msg, current=prev)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
-main()
+# import module snippets
+from ansible.module_utils.basic import *
