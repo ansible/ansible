@@ -59,17 +59,32 @@ options:
     default: null
     aliases: []
   instance_id:
-    description: 
+    description:
     - instance that has a the required volume to snapshot mounted
     required: false
     default: null
     aliases: []
   device_name:
-    description: 
+    description:
     - device name of a mounted volume to be snapshotted
     required: false
     default: null
     aliases: []
+  profile:
+    description:
+      - uses a boto profile. Only works with boto >= 2.24.0
+    required: false
+    default: null
+    aliases: []
+    version_added: "1.5"
+  security_token:
+    description:
+      - security token to authenticate against AWS
+    required: false
+    default: null
+    aliases: []
+    version_added: "1.5"
+
 requirements: [ "boto" ]
 author: Will Thames
 '''
