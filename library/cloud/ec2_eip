@@ -61,6 +61,20 @@ options:
     choices: ["yes", "no"]
     aliases: []
     version_added: "1.5"
+  profile:
+    description:
+      - uses a boto profile. Only works with boto >= 2.24.0
+    required: false
+    default: null
+    aliases: []
+    version_added: "1.5"
+  security_token:
+    description:
+      - security token to authenticate against AWS
+    required: false
+    default: null
+    aliases: []
+    version_added: "1.5"
 
 requirements: [ "boto" ]
 author: Lorin Hochstein <lorin@nimbisservices.com>
