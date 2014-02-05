@@ -127,6 +127,10 @@ notes:
    - The remote user for the dest path will always be the remote_user, not
      the sudo_user. 
    - Expect that dest=~/x will be ~<remote_user>/x even if using sudo.
+   - To exclude files and directories from being synchronized, you may add 
+     C(.rsync-filter) files to the source directory.
+     
+     
 author: Timothy Appnel
 '''
 
@@ -160,6 +164,11 @@ synchronize: src=some/relative/path dest=/some/absolute/path delete=yes
 
 # Synchronize using an alternate rsync command
 synchronize: src=some/relative/path dest=/some/absolute/path rsync_path="sudo rsync"
+
+# Example .rsync-filter file in the source directory
+- var       # exclude any path whose last part is 'var'
+- /var      # exclude any path starting with 'var' starting at the source directory
++ /var/conf # include /var/conf even though it was previously excluded
 '''
 
 
@@ -207,7 +216,7 @@ def main():
     owner = module.params['owner']
     group = module.params['group']
 
-    cmd = '%s --delay-updates --compress --timeout=%s' % (rsync, rsync_timeout)
+    cmd = '%s --delay-updates -FF --compress --timeout=%s' % (rsync, rsync_timeout)
     if module.check_mode:
         cmd = cmd + ' --dry-run'
     if delete:
