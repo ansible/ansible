@@ -963,8 +963,9 @@ class Runner(object):
 
         if "-tmp-" in tmp_path:
             cmd = "rm -rf %s >/dev/null 2>&1" % tmp_path
-            result = self._low_level_exec_command(conn, cmd, None, sudoable=False)
-            # FIXME Do something with the result?
+            self._low_level_exec_command(conn, cmd, None, sudoable=False)
+            # If we have gotten here we have a working ssh configuration.
+            # If ssh breaks we could leave tmp directories out on the remote system.
 
     # *****************************************************
 
