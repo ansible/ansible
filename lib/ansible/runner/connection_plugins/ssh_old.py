@@ -261,6 +261,9 @@ class Connection(object):
             # Calling wait while there are still pipes to read can cause a lock
             elif not rpipes and p.poll() == None:
                 p.wait()
+                # the process has finished and the pipes are empty,
+                # if we loop and do the select it waits all the timeout
+                break
         stdin.close() # close stdin after we read from stdout (see also issue #848)
         
         if C.HOST_KEY_CHECKING and not_in_host_file:
