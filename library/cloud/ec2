@@ -327,7 +327,7 @@ local_action:
       local_action:
         module: ec2
         state: 'absent'
-        instance_ids: {{ec2.instance_ids}}
+        instance_ids: '{{ ec2.instance_ids }}'
 
 # Start a few existing instances, run some tasks
 # and stop the instances
