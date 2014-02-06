@@ -94,7 +94,7 @@ def key_for_hostname(hostname):
     elif not os.path.isdir(key_path):
         raise errors.AnsibleError('ACCELERATE_KEYS_DIR is not a directory.')
 
-    if stat.S_IMODE(os.stat(key_path).st_mode) != C.ACCELERATE_KEYS_DIR_PERMS:
+    if stat.S_IMODE(os.stat(key_path).st_mode) != int(C.ACCELERATE_KEYS_DIR_PERMS, 8):
         raise errors.AnsibleError('Incorrect permissions on ACCELERATE_KEYS_DIR (%s)' % (C.ACCELERATE_KEYS_DIR,))
 
     key_path = os.path.join(key_path, hostname)
@@ -108,7 +108,7 @@ def key_for_hostname(hostname):
         fh.close()
         return key
     else:
-        if stat.S_IMODE(os.stat(key_path).st_mode) != C.ACCELERATE_KEYS_FILE_PERMS:
+        if stat.S_IMODE(os.stat(key_path).st_mode) != int(C.ACCELERATE_KEYS_FILE_PERMS, 8):
             raise errors.AnsibleError('Incorrect permissions on ACCELERATE_KEYS_FILE (%s)' % (key_path,))
         fh = open(key_path)
         key = AesKey.Read(fh.read())
