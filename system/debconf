@@ -100,8 +100,10 @@ def set_selection(module, pkg, question, vtype, value, unseen):
     answer = [ question ]
     if 'vtype':
         answer.append(vtype)
-    answer.append(value)
 
+    if value is None:
+        value = ''
+    answer.append(value)
     data = ' '.join(answer)
 
     setsel = module.get_bin_path('debconf-set-selections', True)
@@ -159,3 +161,5 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+
+main()
