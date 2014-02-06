@@ -1,32 +1,64 @@
-%if 0%{?rhel} && 0%{?rhel} <= 5
-%{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
+%define name ansible
+
+%if 0%{?rhel} == 5
+%define __python /usr/bin/python26
 %endif
 
-Name: ansible
-Release: 1%{?dist}
-Summary: SSH-based configuration management, deployment, and orchestration engine
-Version: 1.3
-
-Group: Development/Libraries
-License: GPLv3
-Source0: http://www.ansibleworks.com/releases/%{name}-%{version}.tar.gz
-Url: http://www.ansibleworks.com
+Name:      %{name}
+Version:   1.5
+Release:   1%{?dist}
+Url:       http://www.ansible.com
+Summary:   SSH-based application deployment, configuration management, and IT orchestration platform
+License:   GPLv3
+Group:     Development/Libraries
+Source:    http://releases.ansible.com/ansible/%{name}-%{version}.tar.gz
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
+%{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
 
 BuildArch: noarch
+
+# RHEL <=5
 %if 0%{?rhel} && 0%{?rhel} <= 5
 BuildRequires: python26-devel
-
 Requires: python26-PyYAML
 Requires: python26-paramiko
 Requires: python26-jinja2
-%else
-BuildRequires: python2-devel
+Requires: python26-keyczar
+Requires: python26-httplib2
+%endif
 
+# RHEL > 5
+%if 0%{?rhel} && 0%{?rhel} > 5
+BuildRequires: python2-devel
 Requires: PyYAML
 Requires: python-paramiko
 Requires: python-jinja2
+Requires: python-keyczar
+Requires: python-httplib2
 %endif
+
+# FEDORA > 17
+%if 0%{?fedora} >= 18
+BuildRequires: python-devel
+Requires: PyYAML
+Requires: python-paramiko
+Requires: python-jinja2
+Requires: python-keyczar
+Requires: python-httplib2
+%endif
+
+# SuSE/openSuSE
+%if 0%{?suse_version} 
+BuildRequires: python-devel
+BuildRequires: python-setuptools
+Requires: python-paramiko
+Requires: python-jinja2
+Requires: python-keyczar
+Requires: python-yaml
+Requires: python-httplib2
+%endif
+
+Requires: sshpass
 
 %description
 
@@ -36,41 +68,6 @@ over SSH and does not require any software or daemons to be installed
 on remote nodes. Extension modules can be written in any language and
 are transferred to managed machines automatically.
 
-%package fireball
-Summary: Ansible fireball transport support
-Group: Development/Libraries
-Requires: %{name} = %{version}-%{release}
-%if 0%{?rhel} && 0%{?rhel} <= 5
-Requires: python26-keyczar
-Requires: python26-zmq
-%else
-Requires: python-keyczar
-Requires: python-zmq
-%endif
-
-%description fireball
-
-Ansible can optionally use a 0MQ based transport mechanism, which is
-considerably faster than the standard ssh mechanism when there are
-multiple actions, but requires additional supporting packages.
-
-%package node-fireball
-Summary: Ansible fireball transport - node end support
-Group: Development/Libraries
-%if 0%{?rhel} && 0%{?rhel} <= 5
-Requires: python26-keyczar
-Requires: python26-zmq
-%else
-Requires: python-keyczar
-Requires: python-zmq
-%endif
-
-%description node-fireball
-
-Ansible can optionally use a 0MQ based transport mechanism, which has
-additional requirements for nodes to use.  This package includes those
-requirements.
-
 %prep
 %setup -q
 
@@ -78,46 +75,44 @@ requirements.
 %{__python} setup.py build
 
 %install
-%{__python} setup.py install -O1 --root=$RPM_BUILD_ROOT
-mkdir -p $RPM_BUILD_ROOT/etc/ansible/
-cp examples/hosts $RPM_BUILD_ROOT/etc/ansible/
-cp examples/ansible.cfg $RPM_BUILD_ROOT/etc/ansible/
-mkdir -p $RPM_BUILD_ROOT/%{_mandir}/{man1,man3}/
-cp -v docs/man/man1/*.1 $RPM_BUILD_ROOT/%{_mandir}/man1/
-cp -v docs/man/man3/*.3 $RPM_BUILD_ROOT/%{_mandir}/man3/
-mkdir -p $RPM_BUILD_ROOT/%{_datadir}/ansible
-cp -rv library/* $RPM_BUILD_ROOT/%{_datadir}/ansible/
+%{__python} setup.py install -O1 --prefix=%{_prefix} --root=%{buildroot}
+mkdir -p %{buildroot}/etc/ansible/
+cp examples/hosts %{buildroot}/etc/ansible/
+cp examples/ansible.cfg %{buildroot}/etc/ansible/
+mkdir -p %{buildroot}/%{_mandir}/man1/
+cp -v docs/man/man1/*.1 %{buildroot}/%{_mandir}/man1/
+mkdir -p %{buildroot}/%{_datadir}/ansible
+cp -rv library/* %{buildroot}/%{_datadir}/ansible/
 
 %clean
-rm -rf $RPM_BUILD_ROOT
+rm -rf %{buildroot}
 
 %files
 %defattr(-,root,root)
 %{python_sitelib}/ansible*
 %{_bindir}/ansible*
 %dir %{_datadir}/ansible
+%dir %{_datadir}/ansible/*
 %{_datadir}/ansible/*/*
-#%{_datadir}/ansible/*/f[a-hj-z]*
-#%{_datadir}/ansible/*/file
 %config(noreplace) %{_sysconfdir}/ansible
 %doc README.md PKG-INFO COPYING
 %doc %{_mandir}/man1/ansible*
-%doc %{_mandir}/man3/ansible.*
-#%doc %{_mandir}/man3/ansible.f[a-hj-z]*
-#%doc %{_mandir}/man3/ansible.file*
 %doc examples/playbooks
 
-%files fireball
-%{_datadir}/ansible/utilities/fireball
-%doc %{_mandir}/man3/ansible.fireball.*
-
-%files node-fireball
-%doc README.md PKG-INFO COPYING
 
 %changelog
 
-* Fri Jul 05 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.3-0
-* (release pending)
+* Wed Nov 27 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.5-0
+* (PENDING)
+
+* Wed Nov 27 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.4-1
+* Release 1.4.1
+
+* Thu Nov 21 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.4-0
+* Release 1.4.0
+
+* Fri Sep 13 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.3-0
+* Release 1.3.0
 
 * Thu Jul 05 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.2-2
 * Release 1.2.2

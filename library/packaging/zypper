@@ -177,7 +177,7 @@ def main():
         argument_spec = dict(
             name = dict(required=True, aliases=['pkg']),
             state = dict(required=False, default='present', choices=['absent', 'installed', 'latest', 'present', 'removed']),
-            disable_gpg_check = dict(required=False, default='no', choices=BOOLEANS, type='bool'),
+            disable_gpg_check = dict(required=False, default='no', type='bool'),
         ),
         supports_check_mode = False
     )
@@ -224,6 +224,6 @@ def main():
 
     module.exit_json(**result)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 main()

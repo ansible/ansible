@@ -1,13 +1,22 @@
 '\" t
 .\"     Title: ansible-playbook
-.\"    Author: [see the "AUTHOR" section]
-.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 06/03/2013
+.\"    Author: :doctype:manpage
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 01/28/2014
 .\"    Manual: System administration commands
-.\"    Source: Ansible 1.2
+.\"    Source: Ansible 1.5
 .\"  Language: English
 .\"
-.TH "ANSIBLE\-PLAYBOOK" "1" "06/03/2013" "Ansible 1\&.2" "System administration commands"
+.TH "ANSIBLE\-PLAYBOOK" "1" "01/28/2014" "Ansible 1\&.5" "System administration commands"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -82,9 +91,14 @@ Prompt for the password to use for playbook plays that request sudo access, if a
 Desired sudo user (default=root)\&.
 .RE
 .PP
-\fB\-\-tags\fR
+\fB\-t\fR, \fITAGS\fR, \fB\fI\-\-tags=\fR\fR\fB\*(AqTAGS\fR
 .RS 4
-Run only these tags from the playbook
+Only run plays and tasks tagged with these values\&.
+.RE
+.PP
+\fB\fI\-\-skip\-tags=\fR\fR\fB\*(AqSKIP_TAGS\fR
+.RS 4
+Only run plays and tasks whose tags do not match these values\&.
 .RE
 .PP
 \fB\-\-syntax\-check\fR
@@ -113,7 +127,7 @@ Connection timeout to use when trying to talk to hosts, in
 Force all plays to use sudo, even if not marked as such\&.
 .RE
 .PP
-\fB\-u\fR \fIUSERNAME\fR, \fB\-\-remote\-user=\fR\fIUSERNAME\fR
+\fB\-u\fR \fIUSERNAME\fR, \fB\-\-user=\fR\fIUSERNAME\fR
 .RS 4
 Use this remote user name on playbook steps that do not indicate a user name to run as\&.
 .RE
@@ -162,3 +176,9 @@ Ansible is released under the terms of the GPLv3 License\&.
 \fBansible\fR(1), \fBansible\-pull\fR(1), \fBansible\-doc\fR(1)
 .sp
 Extensive documentation as well as IRC and mailing list info is available on the ansible home page: https://ansible\&.github\&.com/
+.SH "AUTHOR"
+.PP
+\fB:doctype:manpage\fR
+.RS 4
+Author.
+.RE

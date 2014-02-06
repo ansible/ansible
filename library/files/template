@@ -3,6 +3,7 @@
 DOCUMENTATION = '''
 ---
 module: template
+version_added: historical
 short_description: Templates a file out to a remote server.
 description:
      - Templates are processed by the Jinja2 templating language
@@ -14,7 +15,7 @@ description:
        which can be used to describe the template name, host, modification time of the
        template file and the owner uid, C(template_host) contains the node name of 
        the template's machine, C(template_uid) the owner, C(template_path) the
-       relative path of the template, C(template_fullpath) is the absolute path of the 
+       absolute path of the template, C(template_fullpath) is the absolute path of the 
        template, and C(template_run_date) is the date that the template was rendered."
 options:
   src:
@@ -46,9 +47,12 @@ options:
       - all arguments accepted by the M(file) module also work here
     required: false
 notes:
-  - Since Ansible version 0.9, templates are loaded with C(trim_blocks=True).
-  - 'You can override jinja2 settings by adding a special header to template file. 
-    i.e. C(#jinja2: trim_blocks: False)'
+  - "Since Ansible version 0.9, templates are loaded with C(trim_blocks=True)."
+
+  - "Also, you can override jinja2 settings by adding a special header to template file.
+  i.e. C(#jinja2:variable_start_string:'[%' , variable_end_string:'%]')
+  which changes the variable interpolation markers to  [% var %] instead of  {{ var }}. This is the best way to prevent evaluation of things that look like, but should not be Jinja2.  raw/endraw in Jinja2 will not work as you expect because templates in Ansible are recursively evaluated."
+
 requirements: []
 author: Michael DeHaan
 '''

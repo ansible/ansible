@@ -30,7 +30,7 @@ options:
   name:
     description:
       - The name of a node.js library to install
-    requires: false
+    required: false
   path:
     description:
       - The base path where to install the node.js libraries
@@ -101,7 +101,7 @@ class Npm(object):
         self.version = kwargs['version']
         self.path = kwargs['path']
         self.production = kwargs['production']
-        
+
         if kwargs['executable']:
             self.executable = kwargs['executable']
         else:
@@ -119,7 +119,7 @@ class Npm(object):
             if self.glbl:
                 cmd.append('--global')
             if self.production:
-                cmd.append('--production')                
+                cmd.append('--production')
             if self.name:
                 cmd.append(self.name_version)
 
@@ -163,7 +163,9 @@ class Npm(object):
         data = self._exec(['outdated'], True, False)
         for dep in data.splitlines():
             if dep:
-                pkg, other = dep.split('@', 1)
+                # node.js v0.10.22 changed the `npm outdated` module separator
+                # from "@" to " ". Split on both for backwards compatibility.
+                pkg, other = re.split('\s|@', dep, 1)
                 outdated.append(pkg)
 
         return outdated
@@ -178,7 +180,7 @@ def main():
         executable=dict(default=None),
         state=dict(default='present', choices=['present', 'absent', 'latest'])
     )
-    arg_spec['global']=dict(default='no', type='bool')
+    arg_spec['global'] = dict(default='no', type='bool')
     module = AnsibleModule(
         argument_spec=arg_spec,
         supports_check_mode=True
@@ -221,6 +223,6 @@ def main():
 
     module.exit_json(changed=changed)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 main()

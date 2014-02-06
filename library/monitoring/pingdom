@@ -9,7 +9,7 @@ description:
 version_added: "1.2"
 author: Justin Johns
 requirements:
-    - "pingdom python library"
+    - "This pingdom python library: https://github.com/mbabineau/pingdom-python"
 options:
     state:
         description:
@@ -66,7 +66,12 @@ EXAMPLES = '''
            state=running
 '''
 
-import pingdom
+try:
+    import pingdom
+    HAS_PINGDOM = True
+except:
+    HAS_PINGDOM = False
+
 
 
 def pause(checkid, uid, passwd, key):
@@ -105,6 +110,9 @@ def main():
         )
     )
 
+    if not HAS_PINGDOM:
+        module.fail_json(msg="Missing requried pingdom module (check docs)")
+
     checkid = module.params['checkid']
     state = module.params['state']
     uid = module.params['uid']
@@ -122,6 +130,6 @@ def main():
 
     module.exit_json(checkid=checkid, name=name, status=result)
 
-# include magic from lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 main()

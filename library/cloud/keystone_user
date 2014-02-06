@@ -6,6 +6,7 @@
 DOCUMENTATION = '''
 ---
 module: keystone_user
+version_added: "1.2"
 short_description: Manage OpenStack Identity (keystone) users, tenants and roles
 description:
    - Manage users,tenants, roles from OpenStack.
@@ -20,6 +21,11 @@ options:
         - Password of login user
      required: false
      default: 'yes'
+   login_tenant_name:
+     description:
+        - The tenant login_user belongs to
+     required: false
+     default: None
    token:
      description:
         - The token to be uses in case the password is not specified
@@ -88,14 +94,14 @@ else:
     keystoneclient_found = True
 
 
-def authenticate(endpoint, token, login_user, login_password):
+def authenticate(endpoint, token, login_user, login_password, login_tenant_name):
     """Return a keystone client object"""
 
     if token:
         return client.Client(endpoint=endpoint, token=token)
     else:
-        return client.Client(endpoint=endpoint, username=login_user,
-                             password=login_password)
+        return client.Client(auth_url=endpoint, username=login_user,
+                             password=login_password, tenant_name=login_tenant_name)
 
 
 def tenant_exists(keystone, tenant):
@@ -293,11 +299,13 @@ def main():
                           default="http://127.0.0.1:35357/v2.0"),
             token=dict(required=False),
             login_user=dict(required=False),
-            login_password=dict(required=False)
+            login_password=dict(required=False),
+            login_tenant_name=dict(required=False)
         ),
         supports_check_mode=True,
         mutually_exclusive=[['token', 'login_user'],
-                            ['token', 'login_password']]
+                            ['token', 'login_password'],
+                            ['token', 'login_tenant_name']]
     )
 
     if not keystoneclient_found:
@@ -314,8 +322,9 @@ def main():
     token = module.params['token']
     login_user = module.params['login_user']
     login_password = module.params['login_password']
+    login_tenant_name = module.params['login_tenant_name']
 
-    keystone = authenticate(endpoint, token, login_user, login_password)
+    keystone = authenticate(endpoint, token, login_user, login_password, login_tenant_name)
 
     check_mode = module.check_mode
 
@@ -323,7 +332,7 @@ def main():
         d = dispatch(keystone, user, password, tenant, tenant_description,
                      email, role, state, endpoint, token, login_user,
                      login_password, check_mode)
-    except Exception as e:
+    except Exception, e:
         if check_mode:
             # If we have a failure in check mode
             module.exit_json(changed=True,
@@ -376,7 +385,7 @@ def dispatch(keystone, user=None, password=None, tenant=None,
 
     return dict(changed=changed, id=id)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()

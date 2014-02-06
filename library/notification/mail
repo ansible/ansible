@@ -103,7 +103,7 @@ options:
 
 EXAMPLES = '''
 # Example playbook sending mail to root
-- local_action: mail msg='System ${ansible_hostname} has been successfully provisioned.'
+- local_action: mail msg='System {{ ansible_hostname }} has been successfully provisioned.'
 
 # Send e-mail to a bunch of users, attaching files
 - local_action: mail
@@ -247,6 +247,6 @@ def main():
 
     module.exit_json(changed=False)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 main()

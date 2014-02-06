@@ -1,4 +1,4 @@
-# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -25,6 +25,7 @@ from ansible.inventory.expand_hosts import expand_hostname_range
 from ansible import errors
 import shlex
 import re
+import ast
 
 class InventoryParser(object):
     """
@@ -64,8 +65,9 @@ class InventoryParser(object):
         active_group_name = 'ungrouped'
 
         for line in self.lines:
-            if line.startswith("["):
-                active_group_name = line.split(" #")[0].replace("[","").replace("]","").strip()
+            line = line.split("#")[0].strip()
+            if line.startswith("[") and line.endswith("]"):
+                active_group_name = line.replace("[","").replace("]","")
                 if line.find(":vars") != -1 or line.find(":children") != -1:
                     active_group_name = active_group_name.rsplit(":", 1)[0]
                     if active_group_name not in self.groups:
@@ -75,25 +77,29 @@ class InventoryParser(object):
                 elif active_group_name not in self.groups:
                     new_group = self.groups[active_group_name] = Group(name=active_group_name)
                     all.add_child_group(new_group)
-            elif line.startswith("#") or line == '':
+            elif line.startswith(";") or line == '':
                 pass
             elif active_group_name:
-                tokens = shlex.split(line.split(" #")[0])
+                tokens = shlex.split(line)
                 if len(tokens) == 0:
                     continue
                 hostname = tokens[0]
                 port = C.DEFAULT_REMOTE_PORT
-                # Two cases to check:
+                # Three cases to check:
                 # 0. A hostname that contains a range pesudo-code and a port
                 # 1. A hostname that contains just a port
-                if (hostname.find("[") != -1 and
+                if hostname.count(":") > 1:
+                    # Possible an IPv6 address, or maybe a host line with multiple ranges
+                    # IPv6 with Port  XXX:XXX::XXX.port
+                    # FQDN            foo.example.com
+                    if hostname.count(".") == 1:
+                        (hostname, port) = hostname.rsplit(".", 1)
+                elif (hostname.find("[") != -1 and
                     hostname.find("]") != -1 and
                     hostname.find(":") != -1 and
                     (hostname.rindex("]") < hostname.rindex(":")) or
                     (hostname.find("]") == -1 and hostname.find(":") != -1)):
-                        tokens2  = hostname.rsplit(":", 1)
-                        hostname = tokens2[0]
-                        port     = tokens2[1]
+                        (hostname, port) = hostname.rsplit(":", 1)
 
                 hostnames = []
                 if detect_range(hostname):
@@ -112,8 +118,16 @@ class InventoryParser(object):
                         for t in tokens[1:]:
                             if t.startswith('#'):
                                 break
-                            (k,v) = t.split("=")
-                            host.set_variable(k,v)
+                            try:
+                                (k,v) = t.split("=")
+                            except ValueError, e:
+                                raise errors.AnsibleError("Invalid ini entry: %s - %s" % (t, str(e)))
+                            try:
+                                host.set_variable(k,ast.literal_eval(v))
+                            except:
+                                # most likely a string that literal_eval
+                                # doesn't like, so just set it
+                                host.set_variable(k,v)
                     self.groups[active_group_name].add_host(host)
 
     # [southeast:children]
@@ -132,7 +146,7 @@ class InventoryParser(object):
                 group = self.groups.get(line, None)
                 if group is None:
                     group = self.groups[line] = Group(name=line)
-            elif line.startswith("#"):
+            elif line.startswith("#") or line.startswith(";"):
                 pass
             elif line.startswith("["):
                 group = None
@@ -157,7 +171,7 @@ class InventoryParser(object):
                 group = self.groups.get(line, None)
                 if group is None:
                     raise errors.AnsibleError("can't add vars to undefined group: %s" % line)
-            elif line.startswith("#"):
+            elif line.startswith("#") or line.startswith(";"):
                 pass
             elif line.startswith("["):
                 group = None

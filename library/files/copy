@@ -24,6 +24,7 @@ import time
 DOCUMENTATION = '''
 ---
 module: copy
+version_added: "historical"
 short_description: Copies files to remote locations.
 description:
      - The M(copy) module copies a file on the local box to remote locations.
@@ -31,6 +32,10 @@ options:
   src:
     description:
       - Local path to a file to copy to the remote server; can be absolute or relative.
+        If path is a directory, it is copied recursively. In this case, if path ends
+        with "/", only inside contents of that directory are copied to destination.
+        Otherwise, if it does not end with "/", the directory itself with all contents
+        is copied. This behavior is similar to Rsync.
     required: false
     default: null
     aliases: []
@@ -42,7 +47,8 @@ options:
     default: null
   dest:
     description:
-      - Remote absolute path where the file should be copied to.
+      - Remote absolute path where the file should be copied to. If src is a directory,
+        this must be a directory too.
     required: true
     default: null
   backup:
@@ -65,7 +71,8 @@ options:
     aliases: [ "thirsty" ]
   validate:
     description:
-      - validation to run before copying into place
+      - The validation command to run before copying into place.  The path to the file to
+        validate is passed in via '%s' which must be present as in the visudo example below.
     required: false
     default: ""
     version_added: "1.2"
@@ -75,8 +82,8 @@ options:
     required: false
 author: Michael DeHaan
 notes:
-   - The "copy" module can't be used to recursively copy directory structures to the target machine. Please see the
-     "Delegation" section of the Advanced Playbooks documentation for a better approach to recursive copies.
+   - The "copy" module recursively copy facility does not scale to lots (>hundreds) of files.
+     For alternative, see synchronize module, which is a wrapper around rsync.
 '''
 
 EXAMPLES = '''
@@ -120,6 +127,13 @@ def main():
 
     md5sum_src = module.md5(src)
     md5sum_dest = None
+
+    # Special handling for recursive copy - create intermediate dirs
+    if original_basename and dest.endswith("/"):
+        dest = os.path.join(dest, original_basename)
+        dirname = os.path.dirname(dest)
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
 
     if os.path.exists(dest):
         if not force:
@@ -170,6 +184,6 @@ def main():
 
     module.exit_json(**res_args)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 main()

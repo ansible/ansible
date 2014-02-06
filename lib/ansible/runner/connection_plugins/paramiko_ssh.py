@@ -121,6 +121,7 @@ class Connection(object):
         self.user = user
         self.password = password
         self.private_key_file = private_key_file
+        self.has_pipelining = False
 
     def _cache_key(self):
         return "%s__%s__" % (self.host, self.user)
@@ -175,8 +176,11 @@ class Connection(object):
 
         return ssh
 
-    def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False, executable='/bin/sh'):
+    def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable='/bin/sh', in_data=None, su=None, su_user=None):
         ''' run a command on the remote host '''
+
+        if in_data:
+            raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
 
         bufsize = 4096
         try:
@@ -187,7 +191,7 @@ class Connection(object):
                 msg += ": %s" % str(e)
             raise errors.AnsibleConnectionFailed(msg)
 
-        if not self.runner.sudo or not sudoable:
+        if not (self.runner.sudo and sudoable) and not (self.runner.su and su):
             if executable:
                 quoted_command = executable + ' -c ' + pipes.quote(cmd)
             else:
@@ -196,18 +200,22 @@ class Connection(object):
             chan.exec_command(quoted_command)
         else:
             # sudo usually requires a PTY (cf. requiretty option), therefore
-            # we give it one, and we try to initialise from the calling
-            # environment
-            chan.get_pty(term=os.getenv('TERM', 'vt100'),
-                         width=int(os.getenv('COLUMNS', 0)),
-                         height=int(os.getenv('LINES', 0)))
-            shcmd, prompt = utils.make_sudo_cmd(sudo_user, executable, cmd)
+            # we give it one by default (pty=True in ansble.cfg), and we try
+            # to initialise from the calling environment
+            if C.PARAMIKO_PTY:
+                chan.get_pty(term=os.getenv('TERM', 'vt100'),
+                             width=int(os.getenv('COLUMNS', 0)),
+                             height=int(os.getenv('LINES', 0)))
+            if self.runner.sudo or sudoable:
+                shcmd, prompt, success_key = utils.make_sudo_cmd(sudo_user, executable, cmd)
+            elif self.runner.su or su:
+                shcmd, prompt, success_key = utils.make_su_cmd(su_user, executable, cmd)
             vvv("EXEC %s" % shcmd, host=self.host)
             sudo_output = ''
             try:
                 chan.exec_command(shcmd)
-                if self.runner.sudo_pass:
-                    while not sudo_output.endswith(prompt):
+                if self.runner.sudo_pass or self.runner.su_pass:
+                    while not sudo_output.endswith(prompt) and success_key not in sudo_output:
                         chunk = chan.recv(bufsize)
                         if not chunk:
                             if 'unknown user' in sudo_output:
@@ -217,7 +225,11 @@ class Connection(object):
                                 raise errors.AnsibleError('ssh connection ' +
                                     'closed waiting for password prompt')
                         sudo_output += chunk
-                    chan.sendall(self.runner.sudo_pass + '\n')
+                    if success_key not in sudo_output:
+                        if sudoable:
+                            chan.sendall(self.runner.sudo_pass + '\n')
+                        elif su:
+                            chan.sendall(self.runner.su_pass + '\n')
             except socket.timeout:
                 raise errors.AnsibleError('ssh timed out waiting for sudo.\n' + sudo_output)
 
@@ -284,15 +296,15 @@ class Connection(object):
         f = open(filename, 'w')
         for hostname, keys in self.ssh._host_keys.iteritems():
             for keytype, key in keys.iteritems():
-               # was f.write
-               added_this_time = getattr(key, '_added_by_ansible_this_time', False)
-               if not added_this_time:
-                   f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
+                # was f.write
+                added_this_time = getattr(key, '_added_by_ansible_this_time', False)
+                if not added_this_time:
+                    f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
         for hostname, keys in self.ssh._host_keys.iteritems():
             for keytype, key in keys.iteritems():
-               added_this_time = getattr(key, '_added_by_ansible_this_time', False)
-               if added_this_time:
-                   f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
+                added_this_time = getattr(key, '_added_by_ansible_this_time', False)
+                if added_this_time:
+                    f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
         f.close()
 
     def close(self):

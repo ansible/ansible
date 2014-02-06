@@ -63,7 +63,9 @@ options:
     description:
       - If C(mounted) or C(unmounted), the device will be actively mounted or unmounted
         as well as just configured in I(fstab). C(absent) and C(present) only deal with
-        I(fstab).
+        I(fstab). C(mounted) will also automatically create the mount point
+        directory if it doesn't exist. If C(absent) changes anything, it will
+        remove the mount point directory.
     required: true
     choices: [ "present", "absent", "mounted", "unmounted" ]
     default: null
@@ -316,6 +318,6 @@ def main():
     module.fail_json(msg='Unexpected position reached')
     sys.exit(0)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 main()

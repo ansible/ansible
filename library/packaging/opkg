@@ -143,7 +143,7 @@ def main():
     elif p["state"] in ["absent", "removed"]:
         remove_packages(module, opkg_path, pkgs)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 
 main()

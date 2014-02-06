@@ -1,4 +1,4 @@
-# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -18,7 +18,7 @@
 class Group(object):
     ''' a group of ansible hosts '''
 
-    __slots__ = [ 'name', 'hosts', 'vars', 'child_groups', 'parent_groups', 'depth' ]
+    __slots__ = [ 'name', 'hosts', 'vars', 'child_groups', 'parent_groups', 'depth', '_hosts_cache' ]
 
     def __init__(self, name=None):
 
@@ -28,6 +28,7 @@ class Group(object):
         self.vars = {}
         self.child_groups = []
         self.parent_groups = []
+        self.clear_hosts_cache()
         if self.name is None:
             raise Exception("group name is required")
 
@@ -41,23 +42,46 @@ class Group(object):
             self.child_groups.append(group)
             group.depth = max([self.depth+1, group.depth])
             group.parent_groups.append(self)
+            self.clear_hosts_cache()
 
     def add_host(self, host):
 
         self.hosts.append(host)
         host.add_group(self)
+        self.clear_hosts_cache()
 
     def set_variable(self, key, value):
 
         self.vars[key] = value
 
+    def clear_hosts_cache(self):
+
+        self._hosts_cache = None
+        for g in self.parent_groups:
+            g.clear_hosts_cache()
+
     def get_hosts(self):
 
-        hosts = set()
+        if self._hosts_cache is None:
+            self._hosts_cache = self._get_hosts()
+
+        return self._hosts_cache
+
+    def _get_hosts(self):
+
+        hosts = []
+        seen = {}
         for kid in self.child_groups:
-            hosts.update(kid.get_hosts())
-        hosts.update(self.hosts)
-        return list(hosts)
+            kid_hosts = kid.get_hosts()
+            for kk in kid_hosts:
+                if kk not in seen:
+                    seen[kk] = 1
+                    hosts.append(kk)
+        for mine in self.hosts:
+            if mine not in seen:
+                seen[mine] = 1
+                hosts.append(mine)
+        return hosts
 
     def get_variables(self):
         return self.vars.copy()

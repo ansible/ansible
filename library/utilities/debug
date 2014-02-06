@@ -25,10 +25,8 @@ short_description: Print statements during execution
 description:
      - This module prints statements during execution and can be useful
        for debugging variables or expressions without necessarily halting
-       the playbook. Useful for debugging together with the only_if directive.
+       the playbook. Useful for debugging together with the 'when:' directive.
 
-       In order to see the debug message, you need to run ansible in verbose
-       mode (using the C(-v) option).
 version_added: "0.8"
 options:
   msg:
@@ -37,22 +35,21 @@ options:
         message.
     required: false
     default: "Hello world!"
-  fail:
+  var:
     description:
-      - A boolean that indicates whether the debug module should fail or not.
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
-author: Dag Wieers
+      - A variable name to debug.  Mutually exclusive with the 'msg' option.
+author: Dag Wieers, Michael DeHaan
 '''
 
 EXAMPLES = '''
 # Example that prints the loopback address and gateway for each host
-- debug: msg="System $inventory_hostname has uuid $ansible_product_uuid"
+- debug: msg="System {{ inventory_hostname }} has uuid {{ ansible_product_uuid }}"
 
-- debug: msg="System $inventory_hostname lacks a gateway" fail=yes
-  only_if: "is_unset('${ansible_default_ipv4.gateway}')"
+- debug: msg="System {{ inventory_hostname }} has gateway {{ ansible_default_ipv4.gateway }}"
+  when: ansible_default_ipv4.gateway is defined
 
-- debug: msg="System $inventory_hostname has gateway ${ansible_default_ipv4.gateway}"
-  only_if: "is_set('${ansible_default_ipv4.gateway}')"
+- shell: /usr/bin/uptime
+  register: result
+- debug: var=result
+
 '''

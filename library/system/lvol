@@ -71,13 +71,16 @@ EXAMPLES = '''
 - lvol: vg=firefly lv=test state=absent
 '''
 
+import re
+decimal_point = re.compile(r"(\.|,)")
+
 def parse_lvs(data):
     lvs = []
     for line in data.splitlines():
         parts = line.strip().split(';')
         lvs.append({
             'name': parts[0],
-            'size': int(parts[1].split('.')[0]),
+            'size': int(decimal_point.split(parts[1])[0]),
         })
     return lvs
 
@@ -96,6 +99,8 @@ def main():
     lv = module.params['lv']
     size = module.params['size']
     state = module.params['state']
+    size_opt = 'L'
+    size_unit = 'm'
 
     if state=='present' and not size:
         module.fail_json(msg="No size given.")
@@ -128,9 +133,7 @@ def main():
                 module.fail_json(msg="Size unit should be one of [bBsSkKmMgGtTpPeE]")
         # when no unit, megabytes by default
         elif size.isdigit():
-            size_unit = 'm'
             size = int(size)
-            size_opt = 'L'
         else:
             module.fail_json(msg="Bad size specification")
 
@@ -141,7 +144,10 @@ def main():
     rc,current_lvs,err = module.run_command("lvs --noheadings -o lv_name,size --units %s --separator ';' %s" % (unit, vg))
 
     if rc != 0:
-        module.fail_json(msg="Volume group %s does not exist."%vg, rc=rc, err=err)
+        if state == 'absent':
+            module.exit_json(changed=False,stdout="Volume group %s does not exist." % vg, stderr=False)
+        else:
+            module.fail_json(msg="Volume group %s does not exist."%vg, rc=rc, err=err)
 
     changed = False
 
@@ -199,6 +205,6 @@ def main():
 
     module.exit_json(changed=changed,msg=msg)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 main()

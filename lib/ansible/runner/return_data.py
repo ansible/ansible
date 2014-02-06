@@ -1,4 +1,4 @@
-# (c) 2012-2013, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -59,5 +59,5 @@ class ReturnData(object):
         return self.comm_ok
 
     def is_successful(self):
-        return self.comm_ok and (self.result.get('failed', False) == False) and (self.result.get('rc',0) == 0)
+        return self.comm_ok and (self.result.get('failed', False) == False) and ('failed_when_result' in self.result and [not self.result['failed_when_result']] or [self.result.get('rc',0) == 0])[0]
 

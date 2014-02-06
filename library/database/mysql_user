@@ -56,6 +56,12 @@ options:
       - Host running the database
     required: false
     default: localhost
+  login_port:
+    description:
+      - Port of the MySQL server
+    required: false
+    default: 3306
+    version_added: '1.4'
   login_unix_socket:
     description:
       - The path to a Unix domain socket for local connections
@@ -66,12 +72,27 @@ options:
       - "MySQL privileges string in the format: C(db.table:priv1,priv2)"
     required: false
     default: null
+  append_privs:
+    description:
+      - Append the privileges defined by priv to the existing ones for this
+        user instead of overwriting existing ones.
+    required: false
+    choices: [ "yes", "no" ]
+    default: "no"
+    version_added: "1.4"
   state:
     description:
-      - The database state
+      - Whether the user should exist.  When C(absent), removes
+        the user.
     required: false
     default: present
     choices: [ "present", "absent" ]
+  check_implicit_admin:
+    description:
+      - Check if mysql allows login as root/nopassword before trying supplied credentials.
+    required: false
+    default: false
+    version_added: "1.3"
 notes:
    - Requires the MySQLdb Python package on the remote host. For Ubuntu, this
      is as easy as apt-get install python-mysqldb.
@@ -93,6 +114,9 @@ EXAMPLES = """
 # Create database user with name 'bob' and password '12345' with all database privileges
 - mysql_user: name=bob password=12345 priv=*.*:ALL state=present
 
+# Creates database user 'bob' and password '12345' with all database privileges and 'WITH GRANT OPTION'
+- mysql_user: name=bob password=12345 priv=*.*:ALL,GRANT state=present
+
 # Ensure no user named 'sally' exists, also passing in the auth credentials.
 - mysql_user: login_user=root login_password=123456 name=sally state=absent
 
@@ -113,6 +137,7 @@ password=n<_665{vS43y
 
 import ConfigParser
 import getpass
+import tempfile
 try:
     import MySQLdb
 except ImportError:
@@ -136,8 +161,9 @@ def user_add(cursor, user, host, password, new_priv):
             privileges_grant(cursor, user,host,db_table,priv)
     return True
 
-def user_mod(cursor, user, host, password, new_priv):
+def user_mod(cursor, user, host, password, new_priv, append_privs):
     changed = False
+    grant_option = False
 
     # Handle passwords.
     if password is not None:
@@ -156,9 +182,12 @@ def user_mod(cursor, user, host, password, new_priv):
         # If the user has privileges on a db.table that doesn't appear at all in
         # the new specification, then revoke all privileges on it.
         for db_table, priv in curr_priv.iteritems():
+            # If the user has the GRANT OPTION on a db.table, revoke it first.
+            if "GRANT" in priv:
+                grant_option = True
             if db_table not in new_priv:
-                if user != "root" and "PROXY" not in priv:
-                    privileges_revoke(cursor, user,host,db_table)
+                if user != "root" and "PROXY" not in priv and not append_privs:
+                    privileges_revoke(cursor, user,host,db_table,grant_option)
                     changed = True
 
         # If the user doesn't currently have any privileges on a db.table, then
@@ -174,7 +203,7 @@ def user_mod(cursor, user, host, password, new_priv):
         for db_table in db_table_intersect:
             priv_diff = set(new_priv[db_table]) ^ set(curr_priv[db_table])
             if (len(priv_diff) > 0):
-                privileges_revoke(cursor, user,host,db_table)
+                privileges_revoke(cursor, user,host,db_table,grant_option)
                 privileges_grant(cursor, user,host,db_table,new_priv[db_table])
                 changed = True
 
@@ -212,7 +241,7 @@ def privileges_get(cursor, user,host):
         privileges = [ pick(x) for x in privileges]
         if "WITH GRANT OPTION" in res.group(4):
             privileges.append('GRANT')
-        db = res.group(2).replace('`', '')
+        db = res.group(2)
         output[db] = privileges
     return output
 
@@ -230,6 +259,13 @@ def privileges_unpack(priv):
     output = {}
     for item in priv.split('/'):
         pieces = item.split(':')
+        if pieces[0].find('.') != -1:
+            pieces[0] = pieces[0].split('.')
+            for idx, piece in enumerate(pieces):
+                if pieces[0][idx] != "*":
+                    pieces[0][idx] = "`" + pieces[0][idx] + "`"
+            pieces[0] = '.'.join(pieces[0])
+
         output[pieces[0]] = pieces[1].upper().split(',')
 
     if '*.*' not in output:
@@ -237,17 +273,12 @@ def privileges_unpack(priv):
 
     return output
 
-def privileges_revoke(cursor, user,host,db_table):
+def privileges_revoke(cursor, user,host,db_table,grant_option):
+    if grant_option:
+        query = "REVOKE GRANT OPTION ON %s FROM '%s'@'%s'" % (db_table,user,host)
+        cursor.execute(query)
     query = "REVOKE ALL PRIVILEGES ON %s FROM '%s'@'%s'" % (db_table,user,host)
     cursor.execute(query)
-    query = "REVOKE GRANT OPTION ON %s FROM '%s'@'%s'" % (db_table,user,host)
-    try:
-        cursor.execute(query)
-    except MySQLdb.OperationalError, e:
-        # 1141 -> There is no such grant defined for user ... on host ...
-        # If this exception is raised, there is no need to revoke the GRANT privilege
-        if e.args[0] != 1141 or not e.args[1].startswith("There is no such grant defined for user"):
-            raise e
 
 def privileges_grant(cursor, user,host,db_table,priv):
 
@@ -289,6 +320,32 @@ def config_get(config, section, option):
     return strip_quotes(config.get(section, option))
 
 
+def _safe_cnf_load(config, path):
+
+    data = {'user':'', 'password':''}
+
+    # read in user/pass
+    f = open(path, 'r')
+    for line in f.readlines():
+        line = line.strip()
+        if line.startswith('user='):
+            data['user'] = line.split('=', 1)[1].strip()
+        if line.startswith('password=') or line.startswith('pass='):
+            data['password'] = line.split('=', 1)[1].strip()
+    f.close()
+
+    # write out a new cnf file with only user/pass   
+    fh, newpath = tempfile.mkstemp(prefix=path + '.')
+    f = open(newpath, 'wb')
+    f.write('[client]\n')
+    f.write('user=%s\n' % data['user'])
+    f.write('password=%s\n' % data['password'])
+    f.close()
+
+    config.readfp(open(newpath))
+    os.remove(newpath)
+    return config
+
 def load_mycnf():
     config = ConfigParser.RawConfigParser()
     mycnf = os.path.expanduser('~/.my.cnf')
@@ -298,6 +355,9 @@ def load_mycnf():
         config.readfp(open(mycnf))
     except (IOError):
         return False
+    except:
+        config = _safe_cnf_load(config, mycnf)
+
     # We support two forms of passwords in .my.cnf, both pass= and password=,
     # as these are both supported by MySQL.
     try:
@@ -316,6 +376,13 @@ def load_mycnf():
     creds = dict(user=user,passwd=passwd)
     return creds
 
+def connect(module, login_user, login_password):
+    if module.params["login_unix_socket"]:
+        db_connection = MySQLdb.connect(host=module.params["login_host"], unix_socket=module.params["login_unix_socket"], user=login_user, passwd=login_password, db="mysql")
+    else:
+        db_connection = MySQLdb.connect(host=module.params["login_host"], port=int(module.params["login_port"]), user=login_user, passwd=login_password, db="mysql")
+    return db_connection.cursor()
+
 # ===========================================
 # Module execution.
 #
@@ -326,12 +393,15 @@ def main():
             login_user=dict(default=None),
             login_password=dict(default=None),
             login_host=dict(default="localhost"),
+            login_port=dict(default="3306"),
             login_unix_socket=dict(default=None),
             user=dict(required=True, aliases=['name']),
             password=dict(default=None),
             host=dict(default="localhost"),
             state=dict(default="present", choices=["absent", "present"]),
             priv=dict(default=None),
+            append_privs=dict(type="bool", default="no"),
+            check_implicit_admin=dict(default=False),
         )
     )
     user = module.params["user"]
@@ -339,6 +409,8 @@ def main():
     host = module.params["host"]
     state = module.params["state"]
     priv = module.params["priv"]
+    check_implicit_admin = module.params['check_implicit_admin']
+    append_privs = module.boolean(module.params["append_privs"])
 
     if not mysqldb_found:
         module.fail_json(msg="the python mysqldb module is required")
@@ -365,18 +437,22 @@ def main():
     elif login_password is None or login_user is None:
         module.fail_json(msg="when supplying login arguments, both login_user and login_password must be provided")
 
+    cursor = None
     try:
-        if module.params["login_unix_socket"]:
-            db_connection = MySQLdb.connect(host=module.params["login_host"], unix_socket=module.params["login_unix_socket"], user=login_user, passwd=login_password, db="mysql")
-        else:
-            db_connection = MySQLdb.connect(host=module.params["login_host"], user=login_user, passwd=login_password, db="mysql")
-        cursor = db_connection.cursor()
+        if check_implicit_admin:
+            try:
+                cursor = connect(module, 'root', '')
+            except:
+                pass
+
+        if not cursor:
+            cursor = connect(module, login_user, login_password)
     except Exception, e:
         module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or ~/.my.cnf has the credentials")
 
     if state == "present":
         if user_exists(cursor, user, host):
-            changed = user_mod(cursor, user, host, password, priv)
+            changed = user_mod(cursor, user, host, password, priv, append_privs)
         else:
             if password is None:
                 module.fail_json(msg="password parameter required when adding a user")
@@ -388,6 +464,6 @@ def main():
             changed = False
     module.exit_json(changed=changed, user=user)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 main()

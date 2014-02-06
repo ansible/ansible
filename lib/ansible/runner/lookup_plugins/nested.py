@@ -34,7 +34,7 @@ def combine(a,b):
     results = []
     for x in a:
         for y in b:
-            results.append([x,y])
+            results.append(flatten([x,y]))
     return results
 
 class LookupModule(object):
@@ -45,10 +45,8 @@ class LookupModule(object):
     def __lookup_injects(self, terms, inject):
         results = []
         for x in terms:
-            if isinstance(x, basestring) and x in inject:
-                results.append(inject[x])
-            else:
-                results.append(x)
+            intermediate = utils.listify_lookup_plugin_terms(x, self.basedir, inject)
+            results.append(intermediate)
         return results
 
     def run(self, terms, inject=None, **kwargs):

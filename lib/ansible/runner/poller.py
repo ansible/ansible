@@ -1,4 +1,4 @@
-# (c) 2012-2013, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -59,6 +59,7 @@ class AsyncPoller(object):
         self.runner.module_args = "jid=%s" % self.jid
         self.runner.pattern = "*"
         self.runner.background = 0
+        self.runner.complex_args = None
 
         self.runner.inventory.restrict_to(self.hosts_to_poll)
         results = self.runner.run()
@@ -73,7 +74,7 @@ class AsyncPoller(object):
             else:
                 self.results['contacted'][host] = res
                 poll_results['contacted'][host] = res
-                if 'failed' in res:
+                if res.get('failed', False) or res.get('rc', 0) != 0:
                     self.runner.callbacks.on_async_failed(host, res, self.jid)
                 else:
                     self.runner.callbacks.on_async_ok(host, res, self.jid)

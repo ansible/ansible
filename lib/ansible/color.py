@@ -1,4 +1,4 @@
-# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -17,11 +17,12 @@
 
 import os
 import sys
+import constants
 
 ANSIBLE_COLOR=True
-if os.getenv("ANSIBLE_NOCOLOR") is not None:
+if constants.ANSIBLE_NOCOLOR:
     ANSIBLE_COLOR=False
-elif not sys.stdout.isatty():
+elif not hasattr(sys.stdout, 'isatty') or not sys.stdout.isatty():
     ANSIBLE_COLOR=False
 else:
     try:

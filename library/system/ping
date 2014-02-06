@@ -22,6 +22,7 @@
 DOCUMENTATION = '''
 ---
 module: ping
+version_added: historical
 short_description: Try to connect to host and return C(pong) on success.
 description:
    - A trivial test module, this module always returns C(pong) on successful
@@ -48,7 +49,7 @@ def main():
         result['ping'] = module.params['data']
     module.exit_json(**result)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+from ansible.module_utils.basic import *
+
 main()
 

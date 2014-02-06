@@ -1,0 +1,206 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+#
+# (c) 2014, Richard Isaacson <richard.c.isaacson@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: at
+short_description: Schedule the execution of a command or scripts via the at command.
+description:
+ - Use this module to schedule a command or script to run once in the future.
+ - All jobs are executed in the a queue.
+version_added: "0.0"
+options:
+  user:
+    description:
+     - The user to execute the at command as.
+    required: false
+    default: null
+  command:
+    description:
+     - A command to be executed in the future.
+    required: false
+    default: null
+  script_file:
+    description:
+     - An existing script to be executed in the future.
+    required: false
+    default: null
+  unit_count:
+    description:
+     - The count of units in the future to execute the command or script.
+    required: true
+  unit_type:
+    description:
+     - The type of units in the future to execute the command or script.
+    required: true
+    choices: ["minutes", "hours", "days", "weeks"]
+  action:
+    description:
+     - The action to take for the job defaulting to add. Unique will verify that there is only one entry in the queue.
+     - Delete will remove all existing queued jobs.
+    required: true
+    choices: ["add", "delete", "unique"]
+    default: add
+requirements:
+ - at
+author: Richard Isaacson
+'''
+
+EXAMPLES = '''
+# Schedule a command to execute in 20 minutes as root.
+- at: command="ls -d / > /dev/null" unit_count=20 unit_type="minutes"
+
+# Schedule a script to execute in 1 hour as the neo user.
+- at: script_file="/some/script.sh" user="neo" unit_count=1 unit_type="hours"
+
+# Match a command to an existing job and delete the job.
+- at: command="ls -d / > /dev/null" action="delete"
+
+# Schedule a command to execute in 20 minutes making sure it is unique in the queue.
+- at: command="ls -d / > /dev/null" action="unique" unit_count=20 unit_type="minutes"
+'''
+
+import os
+import tempfile
+
+def matching_jobs(module, at_cmd, script_file, user=None):
+    matching_jobs = []
+
+    atq_cmd = module.get_bin_path('atq', True)
+
+    # Get list of job numbers for the user.
+    atq_command = "%s" % (atq_cmd)
+    if user:
+        atq_command = "su '%s' -c '%s'" % (user, atq_command)
+    rc, out, err = module.run_command(atq_command)
+    if rc != 0:
+        module.fail_json(msg=err)
+    current_jobs = out.splitlines()
+    if len(current_jobs) == 0:
+        return matching_jobs
+
+    # Read script_file into a string.
+    script_file_string = open(script_file).read().strip()
+
+    # Loop through the jobs.
+    #   If the script text is contained in a job add job number to list.
+    for current_job in current_jobs:
+        split_current_job = current_job.split()
+        at_command = "%s -c %s" % (at_cmd, split_current_job[0])
+        if user:
+            at_command = "su '%s' -c '%s'" % (user, at_command)
+        rc, out, err = module.run_command(at_command)
+        if rc != 0:
+            module.fail_json(msg=err)
+        if script_file_string in out:
+            matching_jobs.append(split_current_job[0])
+
+    # Return the list.
+    return matching_jobs
+
+#================================================
+
+def main():
+
+    module = AnsibleModule(
+        argument_spec = dict(
+            user=dict(required=False),
+            command=dict(required=False),
+            script_file=dict(required=False),
+            unit_count=dict(required=False,
+                            type='int'),
+            unit_type=dict(required=False,
+                           default=None,
+                           choices=["minutes", "hours", "days", "weeks"],
+                           type="str"),
+            action=dict(required=False,
+                        default="add",
+                        choices=["add", "delete", "unique"],
+                        type="str")
+        ),
+        supports_check_mode = False,
+    )
+
+    at_cmd = module.get_bin_path('at', True)
+
+    user           = module.params['user']
+    command        = module.params['command']
+    script_file    = module.params['script_file']
+    unit_count     = module.params['unit_count']
+    unit_type      = module.params['unit_type']
+    action         = module.params['action']
+
+    if ((action == 'add') and (not unit_count or not unit_type)):
+        module.fail_json(msg="add action requires unit_count and unit_type")
+
+    if (not command) and (not script_file):
+        module.fail_json(msg="command or script_file not specified")
+
+    if command and script_file:
+        module.fail_json(msg="command and script_file are mutually exclusive")
+
+    result = {}
+    result['action'] = action
+    result['changed'] = False
+
+    # If command transform it into a script_file
+    if command:
+        filed, script_file = tempfile.mkstemp(prefix='at')
+        fileh = os.fdopen(filed, 'w')
+        fileh.write(command)
+        fileh.close()
+
+    # if delete then return
+    if action == 'delete':
+        for matching_job in matching_jobs(module, at_cmd, script_file, user):
+            at_command = "%s -d %s" % (at_cmd, matching_job)
+            if user:
+                at_command = "su '%s' -c '%s'" % (user, at_ccommand)
+            rc, out, err = module.run_command(at_command)
+            if rc != 0:
+                module.fail_json(msg=err)
+            result['changed'] = True
+        module.exit_json(**result)
+
+    # if unique if existing return unchanged
+    if action == 'unique':
+        if len(matching_jobs(module, at_cmd, script_file, user)) != 0:
+            module.exit_json(**result)
+
+    result['script_file'] = script_file
+    result['unit_count'] = unit_count
+    result['unit_type'] = unit_type
+
+    at_command = "%s now + %s %s -f %s" % (at_cmd, unit_count, unit_type, script_file)
+    if user:
+        # We expect that if this is an installed the permissions are already correct for the user to execute it.
+        at_command = "su '%s' -c '%s'" % (user, at_command)
+    rc, out, err = module.run_command(at_command)
+    if rc != 0:
+        module.fail_json(msg=err)
+    if command:
+        os.unlink(script_file)
+    result['changed'] = True
+
+    module.exit_json(**result)
+
+# import module snippets
+from ansible.module_utils.basic import *
+main()

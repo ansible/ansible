@@ -9,20 +9,18 @@ from ansible import __version__, __author__
 from distutils.core import setup
 
 # find library modules
-from ansible.constants import DIST_MODULE_PATH
+from ansible.constants import DEFAULT_MODULE_PATH
 dirs=os.listdir("./library/")
 data_files = []
 for i in dirs:
-    data_files.append((DIST_MODULE_PATH + i, glob('./library/' + i + '/*')))
-
-print "DATA FILES=%s" % data_files
+    data_files.append((os.path.join(DEFAULT_MODULE_PATH, i), glob('./library/' + i + '/*')))
 
 setup(name='ansible',
       version=__version__,
-      description='Minimal SSH command and control',
+      description='Radically simple IT automation',
       author=__author__,
-      author_email='michael.dehaan@gmail.com',
-      url='http://ansible.github.com/',
+      author_email='michael@ansible.com',
+      url='http://ansible.com/',
       license='GPLv3',
       install_requires=['paramiko', 'jinja2', "PyYAML"],
       package_dir={ 'ansible': 'lib/ansible' },
@@ -38,12 +36,14 @@ setup(name='ansible',
          'ansible.runner.connection_plugins',
          'ansible.runner.filter_plugins',
          'ansible.callback_plugins',
+         'ansible.module_utils'
       ],
       scripts=[
          'bin/ansible',
          'bin/ansible-playbook',
          'bin/ansible-pull',
-         'bin/ansible-doc'
+         'bin/ansible-doc',
+         'bin/ansible-galaxy'
       ],
       data_files=data_files
 )

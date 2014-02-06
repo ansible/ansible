@@ -76,9 +76,13 @@ access, if any.
 
 Desired sudo user (default=root).
 
-*--tags*::
+*-t*, 'TAGS', *'--tags=*'TAGS'::
 
-Run only these tags from the playbook
+Only run plays and tasks tagged with these values.
+
+*'--skip-tags=*'SKIP_TAGS'::
+
+Only run plays and tasks whose tags do not match these values.
 
 *--syntax-check*::
 
@@ -105,7 +109,7 @@ Connection timeout to use when trying to talk to hosts, in 'SECONDS'.
 Force all plays to use sudo, even if not marked as such.
 
 
-*-u* 'USERNAME', *--remote-user=*'USERNAME'::
+*-u* 'USERNAME', *--user=*'USERNAME'::
 
 Use this remote user name on playbook steps that do not indicate a
 user name to run as.

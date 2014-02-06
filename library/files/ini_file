@@ -27,6 +27,8 @@ description:
      - Manage (add, remove, change) individual settings in an INI-style file without having
        to manage the file as a whole with, say, M(template) or M(assemble). Adds missing
        sections if they don't exist.
+     - Comments are discarded when the source file is read, and therefore will not 
+       show up in the destination file.
 version_added: "0.9"
 options:
   dest:
@@ -116,9 +118,9 @@ def do_ini(module, filename, section=None, option=None, value=None, state='prese
                     pass
 
     if state == 'present':
-        if cp.has_section(section) == False:
-            if section.upper() == 'DEFAULT':
-                module.fail_json(msg="[DEFAULT] is an illegal section name")
+
+        # DEFAULT section is always there by DEFAULT, so never try to add it.
+        if cp.has_section(section) == False and section.upper() != 'DEFAULT':
 
             cp.add_section(section)
             changed = True
@@ -182,6 +184,6 @@ def main():
     # Mission complete
     module.exit_json(dest=dest, changed=changed, msg="OK")
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 main()

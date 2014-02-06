@@ -174,6 +174,8 @@ def randompass():
     # we play it safe :)
     import random
     import string
+    # as of python 2.4, this reseeds the PRNG from urandom
+    random.seed() 
     lower = ''.join(random.choice(string.ascii_lowercase) for x in range(6))
     upper = ''.join(random.choice(string.ascii_uppercase) for x in range(6))
     number = ''.join(random.choice(string.digits) for x in range(6))
@@ -440,11 +442,11 @@ def main():
             distribution = dict(type='int'),
             datacenter = dict(type='int'),
             linode_id = dict(type='int', aliases=['lid']),
-            payment_term = dict(default=1, choices=[1, 12, 24]),
+            payment_term = dict(type='int', default=1, choices=[1, 12, 24]),
             password = dict(type='str'),
             ssh_pub_key = dict(type='str'),
             swap = dict(type='int', default=512),
-            wait = dict(type='bool', choices=BOOLEANS, default=True),
+            wait = dict(type='bool', default=True),
             wait_timeout = dict(default=300),
         )
     )
@@ -480,7 +482,7 @@ def main():
     linodeServers(module, api, state, name, plan, distribution, datacenter, linode_id, 
                  payment_term, password, ssh_pub_key, swap, wait, wait_timeout)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 
 main()

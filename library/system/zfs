@@ -70,7 +70,7 @@ options:
     description:
       - The compression property.
     required: False
-    choices: ['on','off',lzjb,gzip,gzip-1,gzip-2,gzip-3,gzip-4,gzip-5,gzip-6,gzip-7,gzip-8,gzip-9]
+    choices: ['on','off',lzjb,gzip,gzip-1,gzip-2,gzip-3,gzip-4,gzip-5,gzip-6,gzip-7,gzip-8,gzip-9,lz4,zle]
   copies:
     description:
       - The copies property.
@@ -292,11 +292,9 @@ class Zfs(object):
         if self.module.check_mode:
             self.changed = True
             return
-        cmd = [self.module.get_bin_path('zfs', True)]
-        cmd.append('set')
-        cmd.append(prop + '=' + value)
-        cmd.append(self.name)
-        (rc, err, out) = self.module.run_command(' '.join(cmd))
+        cmd = self.module.get_bin_path('zfs', True)
+        args = [cmd, 'set', prop + '=' + value, self.name]
+        (rc, err, out) = self.module.run_command(args)
         if rc == 0:
             self.changed = True
         else:
@@ -316,9 +314,9 @@ class Zfs(object):
         cmd.append('get -H all')
         cmd.append(self.name)
         rc, out, err = self.module.run_command(' '.join(cmd))
-        properties=dict()
+        properties = dict()
         for l in out.splitlines():
-            p, v = l.split()[1:3]
+            p, v = l.split('\t')[1:3]
             properties[p] = v
         return properties
 
@@ -340,7 +338,7 @@ def main():
             'canmount':        {'required': False, 'choices':['on', 'off', 'noauto']},
             'casesensitivity': {'required': False, 'choices':['sensitive', 'insensitive', 'mixed']},
             'checksum':        {'required': False, 'choices':['on', 'off', 'fletcher2', 'fletcher4', 'sha256']},
-            'compression':     {'required': False, 'choices':['on', 'off', 'lzjb', 'gzip', 'gzip-1', 'gzip-2', 'gzip-3', 'gzip-4', 'gzip-5', 'gzip-6', 'gzip-7', 'gzip-8', 'gzip-9']},
+            'compression':     {'required': False, 'choices':['on', 'off', 'lzjb', 'gzip', 'gzip-1', 'gzip-2', 'gzip-3', 'gzip-4', 'gzip-5', 'gzip-6', 'gzip-7', 'gzip-8', 'gzip-9', 'lz4', 'zle']},
             'copies':          {'required': False, 'choices':['1', '2', '3']},
             'dedup':           {'required': False, 'choices':['on', 'off']},
             'devices':         {'required': False, 'choices':['on', 'off']},
@@ -409,6 +407,6 @@ def main():
     result['changed'] = zfs.changed
     module.exit_json(**result)
 
-# include magic from lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 main()

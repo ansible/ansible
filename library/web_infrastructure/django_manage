@@ -101,9 +101,9 @@ EXAMPLES = """
 
 #Run syncdb on the application
 - django_manage: >
-      command=syncdb 
+      command=syncdb
       app_path={{ django_dir }}
-      settings={{ settings_app_name }} 
+      settings={{ settings_app_name }}
       pythonpath={{ settings_dir }}
       virtualenv={{ virtualenv_dir }}
 
@@ -129,12 +129,11 @@ def _ensure_virtualenv(module):
     if venv_param is None:
         return
 
-    virtualenv = module.get_bin_path('virtualenv', True)
-
-    vbin = os.path.join(venv_param, 'bin')
+    vbin = os.path.join(os.path.expanduser(venv_param), 'bin')
     activate = os.path.join(vbin, 'activate')
 
     if not os.path.exists(activate):
+        virtualenv = module.get_bin_path('virtualenv', True)
         vcmd = '%s %s' % (virtualenv, venv_param)
         vcmd = [virtualenv, venv_param]
         rc, out_venv, err_venv = module.run_command(vcmd)
@@ -155,6 +154,9 @@ def loaddata_filter_output(line):
 def syncdb_filter_output(line):
     return ("Creating table " in line) or ("Installed" in line and "Installed 0 object" not in line)
 
+def migrate_filter_output(line):
+    return ("Migrating forwards " in line) or ("Installed" in line and "Installed 0 object" not in line)
+
 def main():
     command_allowed_param_map = dict(
         cleanup=(),
@@ -164,7 +166,7 @@ def main():
         syncdb=('database', ),
         test=('failfast', 'testrunner', 'liveserver', 'apps', ),
         validate=(),
-        migrate=('apps', 'skip', 'database', 'merge'),
+        migrate=('apps', 'skip', 'merge'),
         collectstatic=('link', ),
         )
 
@@ -186,13 +188,13 @@ def main():
     specific_params = ('apps', 'database', 'failfast', 'fixtures', 'liveserver', 'testrunner')
 
     # These params are automatically added to the command if present
-    general_params = ('settings', 'pythonpath', )
+    general_params = ('settings', 'pythonpath', 'database',)
     specific_boolean_params = ('failfast', 'skip', 'merge', 'link')
     end_of_command_params = ('apps', 'cache_table', 'fixtures')
 
     module = AnsibleModule(
         argument_spec=dict(
-            command     = dict(default=None, required=True, choices=command_allowed_param_map.keys()),
+            command     = dict(default=None, required=True),
             app_path    = dict(default=None, required=True),
             settings    = dict(default=None, required=False),
             pythonpath  = dict(default=None, required=False, aliases=['python_path']),
@@ -254,6 +256,8 @@ def main():
         if command == 'createcachetable' and 'table' in err and 'already exists' in err:
             out = 'Already exists.'
         else:
+            if "Unknown command:" in err:
+                _fail(module, cmd, err, "Unknown django command: %s" % command)
             _fail(module, cmd, out, err, path=os.environ["PATH"], syspath=sys.path)
 
     changed = False
@@ -268,7 +272,7 @@ def main():
     module.exit_json(changed=changed, out=out, cmd=cmd, app_path=app_path, virtualenv=virtualenv,
                      settings=module.params['settings'], pythonpath=module.params['pythonpath'])
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 
 main()

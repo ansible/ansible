@@ -23,7 +23,7 @@ DOCUMENTATION = '''
 module: subversion
 short_description: Deploys a subversion repository.
 description:
-   - Deploy given repository URL / revision to dest.
+   - Deploy given repository URL / revision to dest. If dest exists, update to the specified revision, otherwise perform a checkout.
 version_added: "0.7"
 author: Dane Summers, njharman@gmail.com
 notes:
@@ -34,6 +34,7 @@ options:
     description:
       - The subversion URL to the repository.
     required: true
+    aliases: [ name, repository ]
     default: null
   dest:
     description:
@@ -45,6 +46,7 @@ options:
       - Specific revision to checkout.
     required: false
     default: HEAD
+    aliases: [ version ]
   force:
     description:
       - If C(yes), modified files will be discarded. If C(no), module will fail if it encounters modified files.
@@ -61,6 +63,13 @@ options:
       - --password parameter passed to svn.
     required: false
     default: null
+  executable:
+    required: false
+    default: null
+    version_added: "1.4"
+    description:
+      - Path to svn executable to use. If not supplied,
+        the normal mechanism for resolving binary paths will be used.
 '''
 
 EXAMPLES = '''
@@ -69,19 +78,28 @@ EXAMPLES = '''
 '''
 
 import re
+import tempfile
 
 
 class Subversion(object):
-    def __init__(self, module, dest, repo, revision, username, password):
+    def __init__(
+            self, module, dest, repo, revision, username, password, svn_path):
         self.module = module
         self.dest = dest
         self.repo = repo
         self.revision = revision
         self.username = username
         self.password = password
+        self.svn_path = svn_path
 
     def _exec(self, args):
-        bits = ["svn --non-interactive --trust-server-cert --no-auth-cache", ]
+        bits = [
+            'LANG=C',
+            self.svn_path,
+            '--non-interactive',
+            '--trust-server-cert',
+            '--no-auth-cache',
+        ]
         if self.username:
             bits.append("--username '%s'" % self.username)
         if self.password:
@@ -141,10 +159,11 @@ def main():
         argument_spec=dict(
             dest=dict(required=True),
             repo=dict(required=True, aliases=['name', 'repository']),
-            revision=dict(default='HEAD', aliases=['rev']),
+            revision=dict(default='HEAD', aliases=['rev', 'version']),
             force=dict(default='yes', type='bool'),
             username=dict(required=False),
             password=dict(required=False),
+            executable=dict(default=None),
         ),
         supports_check_mode=True
     )
@@ -155,8 +174,9 @@ def main():
     force = module.params['force']
     username = module.params['username']
     password = module.params['password']
+    svn_path = module.params['executable'] or module.get_bin_path('svn', True)
 
-    svn = Subversion(module, dest, repo, revision, username, password)
+    svn = Subversion(module, dest, repo, revision, username, password, svn_path)
 
     if not os.path.exists(dest):
         before = None
@@ -187,6 +207,6 @@ def main():
     changed = before != after or local_mods
     module.exit_json(changed=changed, before=before, after=after)
 
-# include magic from lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 main()

@@ -74,7 +74,6 @@ class TestRunner(unittest.TestCase):
         results = self.runner.run()
         # when using nosetests this will only show up on failure
         # which is pretty useful
-        print "RESULTS=%s" % results
         assert "localhost" in results['contacted']
         return results['contacted']['localhost']
 
@@ -147,46 +146,84 @@ class TestRunner(unittest.TestCase):
 
         result = self._run('command', ["/usr/bin/this_does_not_exist", "splat"])
         assert 'msg' in result
-        assert 'failed' in result
+        assert result.get('failed')
 
         result = self._run('shell', ["/bin/echo", "$HOME"])
         assert 'failed' not in result
         assert result['rc'] == 0
 
         result = self._run('command', ["creates='/tmp/ansible command test'", "chdir=/tmp", "touch", "'ansible command test'"])
-        assert 'changed' in result
+        assert result.get('changed')
         assert result['rc'] == 0
 
         result = self._run('command', ["creates='/tmp/ansible command test'", "false"])
-        assert 'skipped' in result
+        assert result.get('skipped')
 
         result = self._run('shell', ["removes=/tmp/ansible\\ command\\ test", "chdir=/tmp", "rm -f 'ansible command test'; echo $?"])
-        assert 'changed' in result
+        assert result.get('changed')
         assert result['rc'] == 0
         assert result['stdout'] == '0'
 
         result = self._run('shell', ["removes=/tmp/ansible\\ command\\ test", "false"])
-        assert 'skipped' in result
+        assert result.get('skipped')
 
     def test_git(self):
-        self._run('file', ['path=/tmp/gitdemo', 'state=absent'])
-        self._run('file', ['path=/tmp/gd', 'state=absent'])
-        self._run('command', ['git init gitdemo', 'chdir=/tmp'])
-        self._run('command', ['touch a', 'chdir=/tmp/gitdemo'])
-        self._run('command', ['git add *', 'chdir=/tmp/gitdemo'])
-        self._run('command', ['git commit -m "test commit 2"', 'chdir=/tmp/gitdemo'])
-        self._run('command', ['touch b', 'chdir=/tmp/gitdemo'])
-        self._run('command', ['git add *', 'chdir=/tmp/gitdemo'])
-        self._run('command', ['git commit -m "test commit 2"', 'chdir=/tmp/gitdemo'])
-        result = self._run('git', ["repo=\"file:///tmp/gitdemo\"", "dest=/tmp/gd"])
+        pid = os.getpid()
+        git_demo    = "gitdemo%d" % pid
+        git_dm      = "gitdm%d" % pid
+        git_bare    = "gdbare%d" % pid
+        git_ref     = "gdref%d" % pid
+        git_reftest = "gdreftest%d" % pid
+        self._run('file', ['path=/tmp/%s' % git_demo, 'state=absent'])
+        self._run('file', ['path=/tmp/%s' % git_dm, 'state=absent'])
+        self._run('file', ['path=/tmp/%s' % git_bare, 'state=absent'])
+        self._run('file', ['path=/tmp/%s' % git_ref, 'state=absent'])
+        self._run('file', ['path=/tmp/%s' % git_reftest, 'state=absent'])
+        self._run('command', ['git init %s' % git_demo, 'chdir=/tmp'])
+        self._run('command', ['touch a', 'chdir=/tmp/%s' % git_demo])
+        self._run('command', ['git add *', 'chdir=/tmp/%s' % git_demo])
+        self._run('command', ['git commit -m "test commit 1"', 'chdir=/tmp/%s' % git_demo])
+        self._run('command', ['touch b', 'chdir=/tmp/%s' % git_demo])
+        self._run('command', ['git add *', 'chdir=/tmp/%s' % git_demo])
+        self._run('command', ['git commit -m "test commit 2"', 'chdir=/tmp/%s' % git_demo])
+        result = self._run('git', ["repo=\"file:///tmp/%s\"" % git_demo, "dest=/tmp/%s" % git_dm])
         assert result['changed']
         # test the force option not set
-        self._run('file', ['path=/tmp/gd/a', 'state=absent'])
-        result = self._run('git', ["repo=\"file:///tmp/gitdemo\"", "dest=/tmp/gd", "force=no"])
+        self._run('file', ['path=/tmp/%s/a' % git_dm, 'state=absent'])
+        result = self._run('git', ["repo=\"file:///tmp/%s\"" % git_demo, "dest=/tmp/%s" % git_dm, "force=no"])
         assert result['failed']
         # test the force option when set
-        result = self._run('git', ["repo=\"file:///tmp/gitdemo\"", "dest=/tmp/gd", "force=yes"])
+        result = self._run('git', ["repo=\"file:///tmp/%s\"" % git_demo, "dest=/tmp/%s" % git_dm, "force=yes"])
         assert result['changed']
+        # test the bare option
+        result = self._run('git', ["repo=\"file:///tmp/%s\"" % git_demo, "dest=/tmp/%s" % git_bare, "bare=yes", "remote=test"])
+        assert result['changed']
+        # test a no-op fetch, add origin for el6 versions of git
+        self._run('command', ['git remote add origin file:///tmp/%s' % git_demo, 'chdir=/tmp/%s' % git_dm])
+        result = self._run('git', ["repo=\"file:///tmp/%s\"" % git_demo, "dest=/tmp/%s" % git_bare, "bare=yes"])
+        assert not result['changed']
+        # test whether fetch is working for bare repos
+        self._run('command', ['touch c', 'chdir=/tmp/%s' % git_demo])
+        self._run('command', ['git add *', 'chdir=/tmp/%s' % git_demo])
+        self._run('command', ['git commit -m "test commit 3"', 'chdir=/tmp/%s' % git_demo])
+        result = self._run('git', ["repo=\"file:///tmp/%s\"" % git_demo, "dest=/tmp/%s" % git_bare, "bare=yes"])
+        assert result['changed']
+        # test reference repos
+        result = self._run('git', ["repo=\"file:///tmp/%s\"" % git_bare, "dest=/tmp/%s" % git_ref, "bare=yes"])
+        assert result['changed']
+        result = self._run('git', ["repo=\"file:///tmp/%s\"" % git_demo, "dest=/tmp/%s" % git_reftest, "reference=/tmp/%s/" % git_ref])
+        assert result['changed']
+        assert os.path.isfile('/tmp/%s/a' % git_reftest)
+        result = self._run('command', ['ls', 'chdir=/tmp/%s/objects/pack' % git_ref])
+        assert result['stdout'] != ''
+        result = self._run('command', ['ls', 'chdir=/tmp/%s/.git/objects/pack' % git_reftest])
+        assert result['stdout'] == ''
+        # cleanup
+        self._run('file', ['path=/tmp/%s' % git_demo, 'state=absent'])
+        self._run('file', ['path=/tmp/%s' % git_dm, 'state=absent'])
+        self._run('file', ['path=/tmp/%s' % git_bare, 'state=absent'])
+        self._run('file', ['path=/tmp/%s' % git_ref, 'state=absent'])
+        self._run('file', ['path=/tmp/%s' % git_reftest, 'state=absent'])
 
     def test_file(self):
         filedemo = tempfile.mkstemp()[1]
@@ -197,7 +234,6 @@ class TestRunner(unittest.TestCase):
         assert os.path.isfile(filedemo)
 
         res = self._run('file', ['dest=' + filedemo, 'mode=604', 'state=file'])
-        print res
         assert res['changed']
         assert os.path.isfile(filedemo) and os.stat(filedemo).st_mode == 0100604
 
@@ -294,7 +330,6 @@ class TestRunner(unittest.TestCase):
             "src=%s" % input,
             "dest=%s" % output,
         ])
-        print result
         assert os.path.exists(output)
         out = file(output).read()
         assert out.find("first") != -1
@@ -307,7 +342,6 @@ class TestRunner(unittest.TestCase):
             "src=%s" % input,
             "dest=%s" % output,
         ])
-        print result
         assert result['changed'] is False
 
     def test_lineinfile(self):
@@ -463,6 +497,32 @@ class TestRunner(unittest.TestCase):
         assert artifact.count(testline) == 1
         idx = artifact.index('communication. Typically it is depicted as a lunch-box sized object with some')
         assert artifact[idx - 1] == testline
+
+        # Testing validate
+        testline = 'Tenth: Testing with validate'
+        testcase = ('lineinfile', [
+                        "dest=%s" % sample,
+                        "regexp='^Tenth: '",
+                        "line='%s'" % testline,
+                        "validate='grep -q Tenth %s'",
+                    ])
+        result = self._run(*testcase)
+        assert result['changed'], "File wasn't changed when it should have been"
+        assert result['msg'] == 'line added', "msg was incorrect"
+        artifact = [ x.strip() for x in open(sample) ]
+        assert artifact[-1] == testline
+
+
+        # Testing validate
+        testline = '#11: Testing with validate'
+        testcase = ('lineinfile', [
+                        "dest=%s" % sample,
+                        "regexp='^#11: '",
+                        "line='%s'" % testline,
+                        "validate='grep -q #12# %s'",
+                    ])
+        result = self._run(*testcase)
+        assert result['failed']
 
         # cleanup
         os.unlink(sample)

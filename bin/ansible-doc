@@ -24,6 +24,7 @@ import textwrap
 import re
 import optparse
 import datetime
+import subprocess
 from ansible import utils
 from ansible.utils import module_docs
 import ansible.constants as C
@@ -39,6 +40,40 @@ _BOLD   = re.compile(r"B\(([^)]+)\)")
 _MODULE = re.compile(r"M\(([^)]+)\)")
 _URL    = re.compile(r"U\(([^)]+)\)")
 _CONST  = re.compile(r"C\(([^)]+)\)")
+PAGER   = 'less'
+LESS_OPTS = 'FRSX' # -F (quit-if-one-screen) -R (allow raw ansi control chars)
+                   # -S (chop long lines) -X (disable termcap init and de-init)
+
+def pager_print(text):
+    ''' just print text '''
+    print text
+
+def pager_pipe(text, cmd):
+    ''' pipe text through a pager '''
+    if 'LESS' not in os.environ:
+        os.environ['LESS'] = LESS_OPTS
+    try:
+        cmd = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=sys.stdout)
+        cmd.communicate(input=text)
+    except IOError:
+        pass
+    except KeyboardInterrupt:
+        pass
+
+def pager(text):
+    ''' find reasonable way to display text '''
+    # this is a much simpler form of what is in pydoc.py
+    if not sys.stdout.isatty():
+        pager_print(text)
+    elif 'PAGER' in os.environ:
+        if sys.platform == 'win32':
+            pager_print(text)
+        else:
+            pager_pipe(text, os.environ['PAGER'])
+    elif hasattr(os, 'system') and os.system('(less) 2> /dev/null') == 0:
+        pager_pipe(text, 'less')
+    else:
+        pager_print(text)
 
 def tty_ify(text):
 
@@ -50,17 +85,18 @@ def tty_ify(text):
 
     return t
 
-def print_man(doc):
+def get_man_text(doc):
 
     opt_indent="        "
-    print "> %s\n" % doc['module'].upper()
+    text = []
+    text.append("> %s\n" % doc['module'].upper())
 
     desc = "".join(doc['description'])
 
-    print "%s\n" % textwrap.fill(tty_ify(desc), initial_indent="  ", subsequent_indent="  ")
+    text.append("%s\n" % textwrap.fill(tty_ify(desc), initial_indent="  ", subsequent_indent="  "))
     
     if 'option_keys' in doc and len(doc['option_keys']) > 0:
-        print "Options (= is mandatory):\n"
+        text.append("Options (= is mandatory):\n")
 
     for o in doc['option_keys']:
         opt = doc['options'][o]
@@ -70,47 +106,80 @@ def print_man(doc):
         else:
             opt_leadin = "-"
 
-        print "%s %s" % (opt_leadin, o)
+        text.append("%s %s" % (opt_leadin, o))
 
         desc = "".join(opt['description'])
 
         if 'choices' in opt:
             choices = ", ".join(str(i) for i in opt['choices'])
             desc = desc + " (Choices: " + choices + ")"
-        print "%s\n" % textwrap.fill(tty_ify(desc), initial_indent=opt_indent,
-                            subsequent_indent=opt_indent)
+        text.append("%s\n" % textwrap.fill(tty_ify(desc), initial_indent=opt_indent,
+                             subsequent_indent=opt_indent))
 
     if 'notes' in doc and len(doc['notes']) > 0:
         notes = "".join(doc['notes'])
-        print "Notes:%s\n" % textwrap.fill(tty_ify(notes), initial_indent="  ",
-                            subsequent_indent=opt_indent)
+        text.append("Notes:%s\n" % textwrap.fill(tty_ify(notes), initial_indent="  ",
+                            subsequent_indent=opt_indent))
 
 
     if 'requirements' in doc and doc['requirements'] is not None and len(doc['requirements']) > 0:
         req = ", ".join(doc['requirements'])
-        print "Requirements:%s\n" % textwrap.fill(tty_ify(req), initial_indent="  ",
-                            subsequent_indent=opt_indent)
+        text.append("Requirements:%s\n" % textwrap.fill(tty_ify(req), initial_indent="  ",
+                            subsequent_indent=opt_indent))
 
     if 'examples' in doc and len(doc['examples']) > 0:
-        print "Example%s:\n" % ('' if len(doc['examples']) < 2 else 's')
+        text.append("Example%s:\n" % ('' if len(doc['examples']) < 2 else 's'))
         for ex in doc['examples']:
-            print "%s\n" % (ex['code'])
+            text.append("%s\n" % (ex['code']))
 
     if 'plainexamples' in doc and doc['plainexamples'] is not None:
-        print doc['plainexamples']
+        text.append(doc['plainexamples'])
+    text.append('')
+
+    return "\n".join(text)
 
 
-def print_snippet(doc):
+def get_snippet_text(doc):
 
+    text = []
     desc = tty_ify("".join(doc['short_description']))
-    print "- name: %s" % (desc)
-    print "  action: %s" % (doc['module'])
+    text.append("- name: %s" % (desc))
+    text.append("  action: %s" % (doc['module']))
 
     for o in doc['options']:
         opt = doc['options'][o]
         desc = tty_ify("".join(opt['description']))
         s = o + "="
-        print "      %-20s   # %s" % (s, desc)
+        text.append("      %-20s   # %s" % (s, desc))
+    text.append('')
+
+    return "\n".join(text)
+
+def get_module_list_text(module_list):
+    text = []
+    for module in sorted(set(module_list)):
+
+        if module in module_docs.BLACKLIST_MODULES:
+            continue
+
+        filename = utils.plugins.module_finder.find_plugin(module)
+
+        if filename is None:
+            continue
+        if os.path.isdir(filename):
+            continue
+
+        try:
+            doc, plainexamples = module_docs.get_docstring(filename)
+            desc = tty_ify(doc.get('short_description', '?'))
+            if len(desc) > 55:
+                desc = desc + '...'
+            text.append("%-20s %-60.60s" % (module, desc))
+        except:
+            traceback.print_exc()
+            sys.stderr.write("ERROR: module %s has a documentation error formatting or is missing documentation\n" % module)
+            pass
+    return "\n".join(text)
 
 def main():
 
@@ -155,25 +224,7 @@ def main():
                         continue
                     module_list.append(module)
 
-        for module in sorted(set(module_list)):
-
-            if module in module_docs.BLACKLIST_MODULES:
-                continue
-
-            filename = utils.plugins.module_finder.find_plugin(module)
-            if os.path.isdir(filename):
-                continue
-            try:
-                doc, plainexamples = module_docs.get_docstring(filename)
-                desc = tty_ify(doc.get('short_description', '?'))
-                if len(desc) > 55:
-                    desc = desc + '...'
-                print "%-20s %-60.60s" % (module, desc)
-            except:
-                traceback.print_exc()
-                sys.stderr.write("ERROR: module %s has a documentation error formatting or is missing documentation\n" % module)
-                pass
-
+        pager(get_module_list_text(module_list))
         sys.exit()
 
     if len(args) == 0:
@@ -189,6 +240,7 @@ def main():
                 ret.append(i)
         return os.pathsep.join(ret)
  
+    text = ''
     for module in args:
 
         filename = utils.plugins.module_finder.find_plugin(module)
@@ -221,13 +273,14 @@ def main():
             doc['plainexamples']    = plainexamples
 
             if options.show_snippet:
-                print_snippet(doc)
+                text += get_snippet_text(doc)
             else:
-                print_man(doc)
+                text += get_man_text(doc)
         else:
             # this typically means we couldn't even parse the docstring, not just that the YAML is busted,
             # probably a quoting issue.
             sys.stderr.write("ERROR: module %s missing documentation (or could not parse documentation)\n" % module)
+    pager(text)
 
 if __name__ == '__main__':
     main()

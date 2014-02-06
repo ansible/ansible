@@ -1,43 +1,40 @@
-#Maintainer: Michel Blanc <mblanc@erasme.org>
+# Maintainer: Michel Blanc <mblanc@erasme.org>
+
 pkgname=ansible-git
-pkgver=1.1.912.gedb6a68
-pkgver(){
-	cd "$srcdir/$pkgname"
-	git describe --tags --long | sed 's/^v//;s/-/./g'
-}
+pkgver=1.1.3403.g5cd97e8
 pkgrel=1
-pkgdesc="A radically simple deployment, model-driven configuration management, and command execution framework"
+pkgdesc='A radically simple IT automation'
 arch=('any')
-url="http://www.ansibleworks.com"
+url='http://www.ansible.com'
 license=('GPL3')
 depends=('python2' 'python2-paramiko' 'python2-jinja' 'python2-yaml')
 makedepends=('git' 'asciidoc' 'fakeroot')
 optdepends=('python2-pyzmq: needed for fireball mode'
-	'python2-pyasn1: needed for fireball mode'
-	'python2-crypto: needed for fireball mode'
-	'python2-keyczar: needed for fireball mode')
+            'python2-pyasn1: needed for fireball mode'
+            'python2-crypto: needed for fireball mode'
+            'python2-keyczar: needed for fireball mode')
 conflicts=('ansible')
 provides=('ansible')
-source=("$pkgname::git://github.com/ansible/ansible.git"
-		"python-binary.diff")
-md5sums=("SKIP" "ab81876d8d4c86c27d137e3d86c25a3a")
 backup=('etc/ansible/ansible.cfg')
+source=($pkgname::git://github.com/ansible/ansible.git)
+md5sums=('SKIP')
 
-prepare(){
-  cd "$srcdir/$pkgname"
-  patch -p1 -i "$srcdir/python-binary.diff"
+pkgver() {
+  cd $pkgname
+  git describe --long | sed 's/^v//;s/-/./g'
 }
+
 build() {
-  cd "$srcdir/$pkgname"
-  make
+  cd $pkgname
+  make PYTHON=python2
 }
 
 package() {
-  cd "$srcdir/$pkgname"
+  cd $pkgname
 
-  mkdir -p "${pkgdir}/usr/share/ansible"
-  cp -dpr --no-preserve=ownership ./library/* "${pkgdir}/usr/share/ansible/"
-  cp -dpr --no-preserve=ownership ./examples "${pkgdir}/usr/share/ansible"
+  mkdir -p "$pkgdir/usr/share/ansible"
+  cp -dpr --no-preserve=ownership ./library/* "$pkgdir/usr/share/ansible/"
+  cp -dpr --no-preserve=ownership ./examples "$pkgdir/usr/share/ansible"
 
   python2 setup.py install -O1 --root="$pkgdir"
 
@@ -49,8 +46,8 @@ package() {
   install -D CONTRIBUTING.md "$pkgdir/usr/share/doc/ansible/CONTRIBUTING.md"
   install -D RELEASES.txt "$pkgdir/usr/share/doc/ansible/RELEASES.txt"
 
-  install -D docs/man/man1/ansible.1 "${pkgdir}/usr/share/man/man1/ansible.1"
-  install -D docs/man/man1/ansible-playbook.1 "${pkgdir}/usr/share/man/man1/ansible-playbook.1"
-  install -D docs/man/man1/ansible-pull.1 "${pkgdir}/usr/share/man/man1/ansible-pull.1"
-  install -D docs/man/man1/ansible-doc.1 "${pkgdir}/usr/share/man/man1/ansible-doc.1"
+  install -D docs/man/man1/ansible.1 "$pkgdir/usr/share/man/man1/ansible.1"
+  install -D docs/man/man1/ansible-playbook.1 "$pkgdir/usr/share/man/man1/ansible-playbook.1"
+  install -D docs/man/man1/ansible-pull.1 "$pkgdir/usr/share/man/man1/ansible-pull.1"
+  install -D docs/man/man1/ansible-doc.1 "$pkgdir/usr/share/man/man1/ansible-doc.1"
 }
