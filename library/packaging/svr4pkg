@@ -61,8 +61,9 @@ options:
     description:
       - Whether to install the package only in the current zone only, or install it into all zones.
       - The installation into all zones works only if you are working with the global zone.
+      - C(current) only works with Solaris 10 or newer.
     required: false
-    default: "current"
+    default: "all"
     choices: ["current", "all"]
 '''
 
@@ -126,7 +127,7 @@ def run_command(module, cmd):
 def package_install(module, name, src, proxy, response_file, zone):
     adminfile = create_admin_file()
     cmd = [ 'pkgadd', '-n'] 
-    if zone is 'current':
+    if zone == 'current':
         cmd += [ '-G' ]
     cmd += [ '-a', adminfile, '-d', src ]
     if proxy is not None:
@@ -152,8 +153,8 @@ def main():
             state = dict(required = True, choices=['present', 'absent']),
             src = dict(default = None),
             proxy = dict(default = None),
-            response_file = dict(default = None)
-            zone = dict(required=False, default = 'current', choices=['current','all'])
+            response_file = dict(default = None),
+            zone = dict(required=False, default = 'all', choices=['current','all'])
         ),
         supports_check_mode=True
     )
