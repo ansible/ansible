@@ -432,10 +432,13 @@ def template_from_file(basedir, path, vars):
     def my_lookup(*args, **kwargs):
         kwargs['vars'] = vars
         return lookup(*args, basedir=basedir, **kwargs)
+    def my_finalize(thing):
+        return thing if thing is not None else ''
 
     environment = jinja2.Environment(loader=loader, trim_blocks=True, extensions=_get_extensions())
     environment.filters.update(_get_filters())
     environment.globals['lookup'] = my_lookup
+    environment.globals['finalize'] = my_finalize
     if fail_on_undefined:
         environment.undefined = StrictUndefined
 
@@ -520,7 +523,11 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
     try:
         if type(data) == str:
             data = unicode(data, 'utf-8')
-        environment = jinja2.Environment(trim_blocks=True, undefined=StrictUndefined, extensions=_get_extensions())
+
+        def my_finalize(thing):
+            return thing if thing is not None else ''
+
+        environment = jinja2.Environment(trim_blocks=True, undefined=StrictUndefined, extensions=_get_extensions(), finalize=my_finalize)
         environment.filters.update(_get_filters())
         environment.template_class = J2Template
 
@@ -547,6 +554,7 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
             return lookup(*args, basedir=basedir, **kwargs)
 
         t.globals['lookup'] = my_lookup
+        t.globals['finalize'] = my_finalize
         jvars =_jinja2_vars(basedir, vars, t.globals, fail_on_undefined)
         new_context = t.new_context(jvars, shared=True)
         rf = t.root_render_func(new_context)
