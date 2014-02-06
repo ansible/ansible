@@ -97,16 +97,15 @@ except ImportError:
     sys.exit(1)
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
+    argument_spec = ec2_argument_spec()
+    argument_spec.update(dict(
             name=dict(required=True),
             key_material=dict(required=False),
-            ec2_url=dict(aliases=['EC2_URL']),
-            ec2_secret_key=dict(aliases=['aws_secret_key', 'secret_key'], no_log=True),
-            ec2_access_key=dict(aliases=['aws_access_key', 'access_key']),
-            region=dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS),
             state = dict(default='present', choices=['present', 'absent']),
-        ),
+        )
+    )
+    module = AnsibleModule(
+        argument_spec=argument_spec,
         supports_check_mode=True,
     )
 
