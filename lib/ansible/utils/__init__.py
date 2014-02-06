@@ -90,9 +90,13 @@ def key_for_hostname(hostname):
     key_path = os.path.expanduser(C.ACCELERATE_KEYS_DIR)
     if not os.path.exists(key_path):
         os.makedirs(key_path)
+        os.chmod(key_path, int(C.ACCELERATE_KEYS_DIR_PERMS, 8))
     elif not os.path.isdir(key_path):
         raise errors.AnsibleError('ACCELERATE_KEYS_DIR is not a directory.')
-    os.chmod(key_path, int(C.ACCELERATE_KEYS_DIR_PERMS, 8))
+
+    if stat.S_IMODE(os.stat(key_path).st_mode) != C.ACCELERATE_KEYS_DIR_PERMS:
+        raise errors.AnsibleError('Incorrect permissions on ACCELERATE_KEYS_DIR (%s)' % (C.ACCELERATE_KEYS_DIR,))
+
     key_path = os.path.join(key_path, hostname)
 
     # use new AES keys every 2 hours, which means fireball must not allow running for longer either
@@ -104,6 +108,8 @@ def key_for_hostname(hostname):
         fh.close()
         return key
     else:
+        if stat.S_IMODE(os.stat(key_path).st_mode) != C.ACCELERATE_KEYS_FILE_PERMS:
+            raise errors.AnsibleError('Incorrect permissions on ACCELERATE_KEYS_FILE (%s)' % (key_path,))
         fh = open(key_path)
         key = AesKey.Read(fh.read())
         fh.close()
