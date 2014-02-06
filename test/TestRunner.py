@@ -168,50 +168,62 @@ class TestRunner(unittest.TestCase):
         assert result.get('skipped')
 
     def test_git(self):
-        self._run('file', ['path=/tmp/gitdemo', 'state=absent'])
-        self._run('file', ['path=/tmp/gd', 'state=absent'])
-        self._run('file', ['path=/tmp/gdbare', 'state=absent'])
-        self._run('file', ['path=/tmp/gdreference', 'state=absent'])
-        self._run('file', ['path=/tmp/gdreftest', 'state=absent'])
-        self._run('command', ['git init gitdemo', 'chdir=/tmp'])
-        self._run('command', ['touch a', 'chdir=/tmp/gitdemo'])
-        self._run('command', ['git add *', 'chdir=/tmp/gitdemo'])
-        self._run('command', ['git commit -m "test commit 1"', 'chdir=/tmp/gitdemo'])
-        self._run('command', ['touch b', 'chdir=/tmp/gitdemo'])
-        self._run('command', ['git add *', 'chdir=/tmp/gitdemo'])
-        self._run('command', ['git commit -m "test commit 2"', 'chdir=/tmp/gitdemo'])
-        result = self._run('git', ["repo=\"file:///tmp/gitdemo\"", "dest=/tmp/gd"])
+        pid = os.getpid()
+        git_demo    = "gitdemo%d" % pid
+        git_dm      = "gitdm%d" % pid
+        git_bare    = "gdbare%d" % pid
+        git_ref     = "gdref%d" % pid
+        git_reftest = "gdreftest%d" % pid
+        self._run('file', ['path=/tmp/%s' % git_demo, 'state=absent'])
+        self._run('file', ['path=/tmp/%s' % git_dm, 'state=absent'])
+        self._run('file', ['path=/tmp/%s' % git_bare, 'state=absent'])
+        self._run('file', ['path=/tmp/%s' % git_ref, 'state=absent'])
+        self._run('file', ['path=/tmp/%s' % git_reftest, 'state=absent'])
+        self._run('command', ['git init %s' % git_demo, 'chdir=/tmp'])
+        self._run('command', ['touch a', 'chdir=/tmp/%s' % git_demo])
+        self._run('command', ['git add *', 'chdir=/tmp/%s' % git_demo])
+        self._run('command', ['git commit -m "test commit 1"', 'chdir=/tmp/%s' % git_demo])
+        self._run('command', ['touch b', 'chdir=/tmp/%s' % git_demo])
+        self._run('command', ['git add *', 'chdir=/tmp/%s' % git_demo])
+        self._run('command', ['git commit -m "test commit 2"', 'chdir=/tmp/%s' % git_demo])
+        result = self._run('git', ["repo=\"file:///tmp/%s\"" % git_demo, "dest=/tmp/%s" % git_dm])
         assert result['changed']
         # test the force option not set
-        self._run('file', ['path=/tmp/gd/a', 'state=absent'])
-        result = self._run('git', ["repo=\"file:///tmp/gitdemo\"", "dest=/tmp/gd", "force=no"])
+        self._run('file', ['path=/tmp/%s/a' % git_dm, 'state=absent'])
+        result = self._run('git', ["repo=\"file:///tmp/%s\"" % git_demo, "dest=/tmp/%s" % git_dm, "force=no"])
         assert result['failed']
         # test the force option when set
-        result = self._run('git', ["repo=\"file:///tmp/gitdemo\"", "dest=/tmp/gd", "force=yes"])
+        result = self._run('git', ["repo=\"file:///tmp/%s\"" % git_demo, "dest=/tmp/%s" % git_dm, "force=yes"])
         assert result['changed']
         # test the bare option
-        result = self._run('git', ["repo=\"file:///tmp/gitdemo\"", "dest=/tmp/gdbare", "bare=yes", "remote=test"])
+        result = self._run('git', ["repo=\"file:///tmp/%s\"" % git_demo, "dest=/tmp/%s" % git_bare, "bare=yes", "remote=test"])
         assert result['changed']
         # test a no-op fetch, add origin for el6 versions of git
-        self._run('command', ['git remote add origin file:///tmp/gitdemo', 'chdir=/tmp/gdbare'])
-        result = self._run('git', ["repo=\"file:///tmp/gitdemo\"", "dest=/tmp/gdbare", "bare=yes"])
+        self._run('command', ['git remote add origin file:///tmp/%s' % git_demo, 'chdir=/tmp/%s' % git_dm])
+        result = self._run('git', ["repo=\"file:///tmp/%s\"" % git_demo, "dest=/tmp/%s" % git_bare, "bare=yes"])
         assert not result['changed']
         # test whether fetch is working for bare repos
-        self._run('command', ['touch c', 'chdir=/tmp/gitdemo'])
-        self._run('command', ['git add *', 'chdir=/tmp/gitdemo'])
-        self._run('command', ['git commit -m "test commit 3"', 'chdir=/tmp/gitdemo'])
-        result = self._run('git', ["repo=\"file:///tmp/gitdemo\"", "dest=/tmp/gdbare", "bare=yes"])
+        self._run('command', ['touch c', 'chdir=/tmp/%s' % git_demo])
+        self._run('command', ['git add *', 'chdir=/tmp/%s' % git_demo])
+        self._run('command', ['git commit -m "test commit 3"', 'chdir=/tmp/%s' % git_demo])
+        result = self._run('git', ["repo=\"file:///tmp/%s\"" % git_demo, "dest=/tmp/%s" % git_bare, "bare=yes"])
         assert result['changed']
         # test reference repos
-        result = self._run('git', ["repo=\"file:///tmp/gdbare\"", "dest=/tmp/gdreference", "bare=yes"])
+        result = self._run('git', ["repo=\"file:///tmp/%s\"" % git_bare, "dest=/tmp/%s" % git_ref, "bare=yes"])
         assert result['changed']
-        result = self._run('git', ["repo=\"file:///tmp/gitdemo\"", "dest=/tmp/gdreftest", "reference=/tmp/gdreference/"])
+        result = self._run('git', ["repo=\"file:///tmp/%s\"" % git_demo, "dest=/tmp/%s" % git_reftest, "reference=/tmp/%s/" % git_ref])
         assert result['changed']
-        assert os.path.isfile('/tmp/gdreftest/a')
-        result = self._run('command', ['ls', 'chdir=/tmp/gdreference/objects/pack'])
+        assert os.path.isfile('/tmp/%s/a' % git_reftest)
+        result = self._run('command', ['ls', 'chdir=/tmp/%s/objects/pack' % git_ref])
         assert result['stdout'] != ''
-        result = self._run('command', ['ls', 'chdir=/tmp/gdreftest/.git/objects/pack'])
+        result = self._run('command', ['ls', 'chdir=/tmp/%s/.git/objects/pack' % git_reftest])
         assert result['stdout'] == ''
+        # cleanup
+        self._run('file', ['path=/tmp/%s' % git_demo, 'state=absent'])
+        self._run('file', ['path=/tmp/%s' % git_dm, 'state=absent'])
+        self._run('file', ['path=/tmp/%s' % git_bare, 'state=absent'])
+        self._run('file', ['path=/tmp/%s' % git_ref, 'state=absent'])
+        self._run('file', ['path=/tmp/%s' % git_reftest, 'state=absent'])
 
     def test_file(self):
         filedemo = tempfile.mkstemp()[1]
