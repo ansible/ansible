@@ -38,3 +38,5 @@ debian/
 # Vim swap files
 *.swp
 *.swo
+# Test related files
+.coverage

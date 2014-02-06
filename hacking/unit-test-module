@@ -1,0 +1,153 @@
+#!/usr/bin/env python
+
+# (c) 2014, Matt Martz <matt@sivel.net>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+# this script is for testing modules without running through the
+# entire guts of ansible, and is very helpful for when developing
+# modules
+#
+# example:
+#    unit-test-module -m ../library/cloud/rax_facts
+#    unit-test-module -c -m ../library/cloud/rax_facts
+
+import os
+import re
+import sys
+import optparse
+import subprocess
+import ansible.module_common as module_common
+
+try:
+    import coverage
+    HAS_COVERAGE = True
+    del coverage
+except:
+    HAS_COVERAGE = False
+
+
+def parse():
+    """parse command line
+
+    :return : (options, args)"""
+    parser = optparse.OptionParser()
+
+    parser.usage = "%prog -[options] (-h for help)"
+
+    parser.add_option('-m', '--module-path', dest='module_path',
+        help='REQUIRED: full path of module source to execute')
+    parser.add_option('-c', '--coverage', dest='coverage',
+        help='Check test coverage', action='store_true')
+    parser.add_option('-v', '--verbose', dest='verbose',
+        help='Show verbose unit test output', action='store_const',
+        const=' -v', default='')
+    parser.add_option('-I', '--interpreter', dest='interpreter',
+        help="path to interpeter to use for this module (e.g. ansible_python_interpreter=/usr/bin/python)",
+        metavar='INTERPRETER_TYPE=INTERPRETER_PATH')
+    options, args = parser.parse_args()
+    if not options.module_path:
+        parser.print_help()
+        sys.exit(1)
+    else:
+        return options, args
+
+
+def boilerplate_module(modfile, interpreter):
+    """ simulate what ansible does with new style modules """
+
+    main_pattern = re.compile('^main\(\)', flags=re.M)
+
+    replacer = module_common.ModuleReplacer()
+
+    complex_args = {}
+    args = ''
+    inject = {}
+    if interpreter:
+        if '=' not in interpreter:
+            print 'interpeter must by in the form of ansible_python_interpreter=/usr/bin/python'
+            sys.exit(1)
+        interpreter_type, interpreter_path = interpreter.split('=')
+        if not interpreter_type.startswith('ansible_'):
+            interpreter_type = 'ansible_%s' % interpreter_type
+        if not interpreter_type.endswith('_interpreter'):
+            interpreter_type = '%s_interpreter' % interpreter_type
+        inject[interpreter_type] = interpreter_path
+
+    (module_data, module_style, shebang) = replacer.modify_module(
+        modfile,
+        complex_args,
+        args,
+        inject
+    )
+
+    mod_name = os.path.basename(modfile)
+
+    mockfile = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'test',
+                            'inject_module_unit_test', '%s_tests.py' % mod_name)
+
+    if not os.path.isfile(mockfile):
+        print "ERROR: Tests for this module do not exist"
+        sys.exit(1)
+    f_mock = open(mockfile)
+    mockdata = f_mock.read()
+    f_mock.close()
+
+    module_data = main_pattern.sub(mockdata, module_data)
+
+    modfile2_path = os.path.expanduser("~/.ansible_unit_test_%s" % mod_name)
+    print "* Including generated source, if any, saving to: %s" % modfile2_path
+    print "* This may offset any line numbers in tracebacks/debuggers!\n"
+    modfile2 = open(modfile2_path, 'w')
+    modfile2.write(module_data)
+    modfile2.close()
+    modfile = modfile2_path
+
+    return (modfile2_path, module_style)
+
+
+def runtest(modfile, coverage, verbose):
+    """Test run a module, piping it's output for reporting."""
+
+    os.system("chmod +x %s" % modfile)
+
+    if coverage and not HAS_COVERAGE:
+        print '* Unable to check and report on unit test coverage'
+        print '* Please install the "coverage" python module for this functionality'
+        coverage = False
+
+    if coverage:
+        invoke = "coverage erase; coverage run --source=%s %s%s; coverage report -m" % (modfile, modfile, verbose)
+    else:
+        invoke = "%s%s" % (modfile, verbose)
+
+    cmd = subprocess.Popen(invoke, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out, err) = cmd.communicate()
+    print out
+    print err
+    sys.exit(cmd.returncode)
+
+
+def main():
+    options, args = parse()
+    (modfile, module_style) = boilerplate_module(options.module_path, options.interpreter)
+
+    runtest(modfile, options.coverage, options.verbose)
+
+
+if __name__ == "__main__":
+    main()
