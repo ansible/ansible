@@ -47,6 +47,12 @@ options:
             - options flags to install a package
         required: false
         default: null
+    cask:
+        description:
+            - use brew cask install instead of normal install
+        required: false
+        default: "no"
+        choices: [ "yes", "no" ]
 notes:  []
 '''
 EXAMPLES = '''
@@ -55,6 +61,7 @@ EXAMPLES = '''
 - homebrew: name=foo state=absent
 - homebrew: name=foo,bar state=absent
 - homebrew: name=foo state=present install_options=with-baz,enable-debug
+- homebrew: name=foo state=present cask=yes
 '''
 
 
@@ -67,18 +74,28 @@ def update_homebrew(module, brew_path):
         module.fail_json(msg="could not update homebrew")
 
 
-def query_package(module, brew_path, name, state="present"):
+def query_package(module, brew_path, name, cask, state="present"):
     """ Returns whether a package is installed or not. """
 
     if state == "present":
-        rc, out, err = module.run_command("%s list %s" % (brew_path, name))
+
+        if cask:
+            cmd = [brew_path, 'cask', 'list', name]
+        else:
+            cmd = [brew_path, 'list', name]
+
+        rc, out, err = module.run_command(cmd)
+
+        if cask and "is not installed" in err:
+            return False
+
         if rc == 0:
             return True
 
         return False
 
 
-def remove_packages(module, brew_path, packages):
+def remove_packages(module, brew_path, packages, cask):
     """ Uninstalls one or more packages if installed. """
 
     removed_count = 0
@@ -86,14 +103,20 @@ def remove_packages(module, brew_path, packages):
     # Using a for loop incase of error, we can report the package that failed
     for package in packages:
         # Query the package first, to see if we even need to remove.
-        if not query_package(module, brew_path, package):
+        if not query_package(module, brew_path, package, cask):
             continue
 
         if module.check_mode:
             module.exit_json(changed=True)
-        rc, out, err = module.run_command([brew_path, 'remove', package])
 
-        if query_package(module, brew_path, package):
+        if cask:
+            cmd = [brew_path, 'cask', 'uninstall', package]
+        else:
+            cmd = [brew_path, 'remove', package]
+
+        rc, out, err = module.run_command(cmd)
+
+        if query_package(module, brew_path, package, cask):
             module.fail_json(msg="failed to remove %s: %s" % (package, out.strip()))
 
         removed_count += 1
@@ -104,24 +127,28 @@ def remove_packages(module, brew_path, packages):
     module.exit_json(changed=False, msg="package(s) already absent")
 
 
-def install_packages(module, brew_path, packages, options):
+def install_packages(module, brew_path, packages, options, cask):
     """ Installs one or more packages if not already installed. """
 
     installed_count = 0
 
     for package in packages:
-        if query_package(module, brew_path, package):
+        if query_package(module, brew_path, package, cask):
             continue
 
         if module.check_mode:
             module.exit_json(changed=True)
 
-        cmd = [brew_path, 'install', package]
+        if cask:
+            cmd = [brew_path, 'cask', 'install', package]
+        else:
+            cmd = [brew_path, 'install', package]
+
         if options:
             cmd.extend(options)
         rc, out, err = module.run_command(cmd)
 
-        if not query_package(module, brew_path, package):
+        if not query_package(module, brew_path, package, cask):
             module.fail_json(msg="failed to install %s: '%s' %s" % (package, cmd, out.strip()))
 
         installed_count += 1
@@ -149,7 +176,8 @@ def main():
             name = dict(aliases=["pkg"], required=True),
             state = dict(default="present", choices=["present", "installed", "absent", "removed"]),
             update_homebrew = dict(default="no", aliases=["update-brew"], type='bool'),
-            install_options = dict(default=None, aliases=["options"], type='list')
+            install_options = dict(default=None, aliases=["options"], type='list'),
+            cask = dict(default="no", aliases=["use_cask"], type='bool')
         ),
         supports_check_mode=True
     )
@@ -163,12 +191,14 @@ def main():
 
     pkgs = p["name"].split(",")
 
+    cask = p["cask"]
+
     if p["state"] in ["present", "installed"]:
         opt = generate_options_string(p["install_options"])
-        install_packages(module, brew_path, pkgs, opt)
+        install_packages(module, brew_path, pkgs, opt, cask)
 
     elif p["state"] in ["absent", "removed"]:
-        remove_packages(module, brew_path, pkgs)
+        remove_packages(module, brew_path, pkgs, cask)
 
 # import module snippets
 from ansible.module_utils.basic import *
