@@ -14,6 +14,7 @@ Major features/changes:
 * when using accelerate mode, the daemon will now be restarted when specifying a different remote_user between plays.
 * added no_log: option for tasks. When used, no logging information will be sent to syslog during the module execution.
 * acl module now handles 'default' and allows for either shorthand entry or specific fields per entry section
+* play_hosts is a new magic variable to provide a list of hosts in scope for the current play.
 
 
 New modules:
