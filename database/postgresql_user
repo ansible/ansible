@@ -58,6 +58,11 @@ options:
     required: false
     default: 'yes'
     choices: [ "yes", "no" ]
+  port:
+    description:
+      - Database port to connect to.
+    required: false
+    default: 5432
   login_user:
     description:
       - User (role) used to authenticate with PostgreSQL
