@@ -35,7 +35,7 @@ options:
 
     state:
         description:
-            - state of the package.
+            - desired state of the package.
         required: false
         choices: [ "installed", "absent" ] 
 
