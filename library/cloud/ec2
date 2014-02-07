@@ -633,12 +633,19 @@ def enforce_count(module, ec2):
         if not checkmode:
             (instance_dict_array, changed_instance_ids, changed) \
                 = create_instances(module, ec2, override_count=to_create)
+
+            for inst in instance_dict_array:
+                instances.append(inst)
+
     elif len(instances) > exact_count:
         changed = True
         to_remove = len(instances) - exact_count
         if not checkmode:
             all_instance_ids = sorted([ x.id for x in instances ])
             remove_ids = all_instance_ids[0:to_remove]
+
+            instances = [ x for x in instances if x.id not in remove_ids]
+
             (changed, instance_dict_array, changed_instance_ids) \
                 = terminate_instances(module, ec2, remove_ids)
             terminated_list = []
@@ -646,8 +653,15 @@ def enforce_count(module, ec2):
                 inst['state'] = "terminated"
                 terminated_list.append(inst)
             instance_dict_array = terminated_list            
+   
+    # ensure all instances are dictionaries 
+    all_instances = []
+    for inst in instances:
+        if type(inst) is not dict:
+            inst = get_instance_info(inst)
+        all_instances.append(inst)            
 
-    return (instance_dict_array, changed_instance_ids, changed)
+    return (all_instances, instance_dict_array, changed_instance_ids, changed)
     
         
 def create_instances(module, ec2, override_count=None):
@@ -1041,13 +1055,14 @@ def main():
         # Changed is always set to true when provisioning new instances
         if not module.params.get('image'):
             module.fail_json(msg='image parameter is required for new instance')
-    
+   
+        tagged_instances = [] 
         if module.params.get('exact_count'):
-            (instance_dict_array, new_instance_ids, changed) = enforce_count(module, ec2)
+            (tagged_instances, instance_dict_array, new_instance_ids, changed) = enforce_count(module, ec2)
         else:            
             (instance_dict_array, new_instance_ids, changed) = create_instances(module, ec2)
 
-    module.exit_json(changed=changed, instance_ids=new_instance_ids, instances=instance_dict_array)
+    module.exit_json(changed=changed, instance_ids=new_instance_ids, instances=instance_dict_array, tagged_instances=tagged_instances)
 
 # import module snippets
 from ansible.module_utils.basic import *
