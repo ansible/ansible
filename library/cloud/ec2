@@ -34,6 +34,12 @@ options:
     required: false
     default: null
     aliases: []
+  name:
+    description:
+      - tag identifier for this instance or set of instances, so that the module will be idempotent with respect to EC2 instances. Do not use this in combination with "id" (they are mutually exclusive).
+    required: false
+    default: null
+    aliases: []
   group:
     description:
       - security group (or list of groups) to use with the instance
@@ -105,7 +111,7 @@ options:
     aliases: []
   aws_secret_key:
     description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
+      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used.
     required: false
     default: null
     aliases: [ 'ec2_secret_key', 'secret_key' ]
@@ -117,7 +123,7 @@ options:
     aliases: [ 'ec2_access_key', 'access_key' ]
   count:
     description:
-      - number of instances to launch
+      - number of instances to launch. If name is given, will make sure that there are exactly COUNT instances started, i.e. it will terminate any superfluous instances with the same name, and start new ones when missing. Ignored on state=absent.
     required: False
     default: 1
     aliases: []
@@ -187,7 +193,7 @@ options:
   state:
     version_added: "1.3"
     description:
-      - create or terminate instances
+      - create or terminate instances. If name is given, terminate all instances with tag "Name" with value name.
     required: false
     default: 'present'
     aliases: []
@@ -473,6 +479,31 @@ def create_block_device(module, ec2, volume):
                            delete_on_termination=volume.get('delete_on_termination', False),
                            iops=volume.get('iops'))
 
+def find_running_instances_by_name(module, ec2, name):
+    """
+    Return all running instances by tag Name with value "name"
+
+    module : AnsibleModule object
+    ec2: authenticated ec2 connection object
+    name: Tag name of the instances
+
+    Returns:
+         A list of running instances matching the tag Name
+         with value "name"
+    """
+    running_instances = []
+    tags = [tag for tag in ec2.get_all_tags({ "value": name })
+            if tag.res_type == "instance" and tag.name == "Name"]
+    instance_ids = [tag.res_id for tag in tags]
+    if len(instance_ids) > 0:
+        filter_dict = {'instance-state-name': 'running'}
+        previous_reservations = ec2.get_all_instances(instance_ids, filter_dict)
+        for res in previous_reservations:
+            for prev_instance in res.instances:
+                running_instances.append(prev_instance)
+    return running_instances
+
+
 def create_instances(module, ec2):
     """
     Creates new instances
@@ -487,6 +518,7 @@ def create_instances(module, ec2):
 
     key_name = module.params.get('key_name')
     id = module.params.get('id')
+    name = module.params.get('name')
     group_name = module.params.get('group')
     group_id = module.params.get('group_id')
     zone = module.params.get('zone')
@@ -537,7 +569,13 @@ def create_instances(module, ec2):
     # Lookup any instances that much our run id.
 
     running_instances = []
-    count_remaining = int(count)
+    required_instances = int(count)
+
+    if name and id:
+        raise("Cannot have both name and id!")
+
+    if name != None:
+        running_instances = find_running_instances_by_name(module, ec2, name)
 
     if id != None:
         filter_dict = {'client-token':id, 'instance-state-name' : 'running'}
@@ -545,14 +583,21 @@ def create_instances(module, ec2):
         for res in previous_reservations:
             for prev_instance in res.instances:
                 running_instances.append(prev_instance)
-        count_remaining = count_remaining - len(running_instances)
 
     # Both min_count and max_count equal count parameter. This means the launch request is explicit (we want count, or fail) in how many instances we want.
 
-    if count_remaining == 0:
+    if required_instances == len(running_instances):
         changed = False
+    elif required_instances < len(running_instances):
+        changed = True
+        count_extra_instances = len(running_instances) - required_instances
+        running_instances = running_instances[:count_extra_instances]
+        instances_to_terminate = running_instances[:count_extra_instances]
+        instance_ids_to_terminate = [inst.id for inst in instances_to_terminate]
+        terminate_instances(module, ec2, instance_ids_to_terminate)
     else:
         changed = True
+        count_remaining = required_instances - len(running_instances)
         try:
             params = {'image_id': image,
                       'key_name': key_name,
@@ -625,6 +670,9 @@ def create_instances(module, ec2):
                     continue
                 else:
                     module.fail_json(msg = str(e))
+
+        if name:
+            ec2.create_tags(instids, {"Name": name})
 
         if instance_tags:
             try:
@@ -812,6 +860,7 @@ def main():
     argument_spec.update(dict(
             key_name = dict(aliases = ['keypair']),
             id = dict(),
+            name = dict(),
             group = dict(type='list'),
             group_id = dict(type='list'),
             zone = dict(aliases=['aws_zone', 'ec2_zone']),
@@ -841,8 +890,17 @@ def main():
 
     if module.params.get('state') == 'absent':
         instance_ids = module.params.get('instance_ids')
+        name = module.params.get('name')
+
+        if instance_ids and name:
+            module.fail_json(msg='Use only one type of parameter (name) or (instance_ids)')
+        if not instance_ids and not name:
+            module.fail_json(msg='Wither (name) or (instance_ids) must be specified for termination')
+        if not instance_ids:
+            running_instances = find_running_instances_by_name(module, ec2, name)
+            instance_ids = [inst.id for inst in running_instances]
         if not isinstance(instance_ids, list):
-            module.fail_json(msg='termination_list needs to be a list of instances to terminate')
+            module.fail_json(msg='(instance_ids) needs to be a list of instances to terminate')
 
         (changed, instance_dict_array, new_instance_ids) = terminate_instances(module, ec2, instance_ids)
 
