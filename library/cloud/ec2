@@ -407,7 +407,7 @@ local_action:
     count_tag: foo
 
 #
-# Enforce that 5 instances with a tag "foo" that has a value "bar"
+# Enforce that 5 running instances named "database" with a "dbtype" of "postgres"
 #
 
 - local_action:
@@ -418,10 +418,12 @@ local_action:
     wait: yes
     group: webserver
     instance_tags: 
-        foo: bar
+        Name: database
+        dbtype: postgres
     exact_count: 5
     count_tag: 
-        foo: bar
+        Name: database
+        dbtype: postgres
 
 #
 # count_tag complex argument examples
