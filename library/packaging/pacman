@@ -35,8 +35,9 @@ options:
 
     state:
         description:
-            - state of the package (installed or absent).
+            - desired state of the package.
         required: false
+        choices: [ "installed", "absent" ] 
 
     update_cache:
         description:
