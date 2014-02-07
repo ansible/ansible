@@ -15,6 +15,7 @@ Major features/changes:
 * added no_log: option for tasks. When used, no logging information will be sent to syslog during the module execution.
 * acl module now handles 'default' and allows for either shorthand entry or specific fields per entry section
 * play_hosts is a new magic variable to provide a list of hosts in scope for the current play.
+* ec2 module now accepts 'exact_count' and 'count_tag' as a way to enforce a running number of nodes by tags.
 
 
 New modules:
