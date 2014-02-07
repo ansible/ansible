@@ -212,8 +212,8 @@ def main():
         installed, missing = npm.list()
         outdated = npm.list_outdated()
         if len(missing) or len(outdated):
-           changed = True
-           npm.install()
+            changed = True
+            npm.install()
     else: #absent
         installed, missing = npm.list()
         if name in installed:
