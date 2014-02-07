@@ -49,6 +49,11 @@ options:
       - Name of the role to set as owner of the database
     required: false
     default: null
+  port:
+    description:
+      - Database port to connect to.
+    required: false
+    default: 5432
   template:
     description:
       - Template used to create the database
