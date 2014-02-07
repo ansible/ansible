@@ -162,17 +162,21 @@ class PlayBook(object):
             vars['inventory_file'] = self.inventory.src()
 
         self.filename = playbook
-        (self.playbook, self.play_basedirs) = self._load_playbook_from_file(playbook, vars)
+        (self.playbook, self.play_basedirs) = self._load_playbook(playbook, vars)
         ansible.callbacks.load_callback_plugins()
 
     # *****************************************************
 
-    def _load_playbook_from_file(self, path, vars={}):
+    def _load_playbook(self, path, vars={}):
         '''
         run top level error checking on playbooks and allow them to include other playbooks.
         '''
 
-        playbook_data  = utils.parse_yaml_from_file(path)
+        if os.path.exists(path):
+            playbook_data  = utils.parse_yaml_from_file(path)
+        else:
+            playbook_data = path
+
         accumulated_plays = []
         play_basedirs = []
 
@@ -208,7 +212,7 @@ class PlayBook(object):
                     incvars[k] = template(basedir, v, incvars)
 
                 included_path = utils.path_dwim(basedir, template(basedir, tokens[0], incvars))
-                (plays, basedirs) = self._load_playbook_from_file(included_path, incvars)
+                (plays, basedirs) = self._load_playbook(included_path, incvars)
                 for p in plays:
                     # support for parameterized play includes works by passing
                     # those variables along to the subservient play
