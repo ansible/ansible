@@ -149,7 +149,6 @@ def main():
             original_basename = dict(required=False), # Internal use only, for recursive ops
             recurse  = dict(default='no', type='bool'),
             force = dict(required=False,default=False,type='bool'),
-            chdir = dict(required=False,default=False),
             diff_peek = dict(default=None),
             validate = dict(required=False, default=None),
         ),
@@ -161,14 +160,7 @@ def main():
     state  = params['state']
     force = params['force']
 
-    params['chdir'] = chdir = os.path.expanduser(params['chdir'])
     params['path'] = path = os.path.expanduser(params['path'])
-
-    if state == 'link' and chdir is not None and os.isdir(chdir):
-        os.chdir(chdir)
-        # catch exception permission deny, no directory, etc
-        # save current working directory, chdir to it at the end of the module
-        # or before any escape
 
     # short-circuit for diff_peek
     if params.get('diff_peek', None) is not None:
@@ -298,7 +290,7 @@ def main():
             else:
                 module.fail_json(msg="absolute paths are required")
 
-            if not os.path.exists(abs_src) and not force:
+            if not os.path.exists(abs_src):
                 module.fail_json(path=path, src=src, msg='src file does not exist')
 
         if prev_state == 'absent':
