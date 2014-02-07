@@ -196,13 +196,16 @@ class AnsibleModule(object):
         self._check_for_check_mode()
         self._check_for_no_log()
 
+        # check exclusive early 
+        if not bypass_checks:
+            self._check_mutually_exclusive(mutually_exclusive)
+
         self._set_defaults(pre=True)
 
         if not bypass_checks:
             self._check_required_arguments()
             self._check_argument_values()
             self._check_argument_types()
-            self._check_mutually_exclusive(mutually_exclusive)
             self._check_required_together(required_together)
             self._check_required_one_of(required_one_of)
 
