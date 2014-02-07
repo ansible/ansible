@@ -373,7 +373,7 @@ class Runner(object):
     # *****************************************************
 
     def _execute_module(self, conn, tmp, module_name, args,
-        async_jid=None, async_module=None, async_limit=None, inject=None, persist_files=False, complex_args=None):
+        async_jid=None, async_module=None, async_limit=None, inject=None, persist_files=False, complex_args=None, delete_remote_tmp=True):
 
         ''' transfer and run a module along with its arguments on the remote side'''
 
@@ -459,7 +459,7 @@ class Runner(object):
         cmd = " ".join([environment_string.strip(), shebang.replace("#!","").strip(), cmd])
         cmd = cmd.strip()
 
-        if tmp.find("tmp") != -1 and not C.DEFAULT_KEEP_REMOTE_FILES and not persist_files:
+        if tmp.find("tmp") != -1 and not C.DEFAULT_KEEP_REMOTE_FILES and not persist_files and delete_remote_tmp:
             if not self.sudo or self.su or self.sudo_user == 'root' or self.su_user == 'root':
                 # not sudoing or sudoing to root, so can cleanup files in the same step
                 cmd = cmd + "; rm -rf %s >/dev/null 2>&1" % tmp
@@ -475,7 +475,7 @@ class Runner(object):
         else:
             res = self._low_level_exec_command(conn, cmd, tmp, sudoable=sudoable, in_data=in_data)
 
-        if tmp.find("tmp") != -1 and not C.DEFAULT_KEEP_REMOTE_FILES and not persist_files:
+        if tmp.find("tmp") != -1 and not C.DEFAULT_KEEP_REMOTE_FILES and not persist_files and delete_remote_tmp:
             if (self.sudo or self.su) and (self.sudo_user != 'root' or self.su_user != 'root'):
             # not sudoing to root, so maybe can't delete files as that other user
             # have to clean up temp files as original user in a second step
@@ -1008,6 +1008,17 @@ class Runner(object):
         if rc == '/': 
             raise errors.AnsibleError('failed to resolve remote temporary directory from %s: `%s` returned empty string' % (basetmp, cmd))
         return rc
+
+    # *****************************************************
+
+    def _remove_tmp_path(self, conn, tmp_path):
+        ''' Remove a tmp_path. '''
+
+        if "-tmp-" in tmp_path:
+            cmd = "rm -rf %s >/dev/null 2>&1" % tmp_path
+            self._low_level_exec_command(conn, cmd, None, sudoable=False)
+            # If we have gotten here we have a working ssh configuration.
+            # If ssh breaks we could leave tmp directories out on the remote system.
 
     # *****************************************************
 

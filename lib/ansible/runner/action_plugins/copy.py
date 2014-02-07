@@ -18,6 +18,7 @@
 import os
 
 from ansible import utils
+import ansible.constants as C
 import ansible.utils.template as template
 from ansible import errors
 from ansible.runner.return_data import ReturnData
@@ -38,7 +39,7 @@ class ActionModule(object):
     def __init__(self, runner):
         self.runner = runner
 
-    def run(self, conn, tmp, module_name, module_args, inject, complex_args=None, **kwargs):
+    def run(self, conn, tmp_path, module_name, module_args, inject, complex_args=None, **kwargs):
         ''' handler for file transfer operations '''
 
         # load up options
@@ -59,13 +60,25 @@ class ActionModule(object):
             result=dict(failed=True, msg="src and content are mutually exclusive")
             return ReturnData(conn=conn, result=result)
 
+        # Check if the source ends with a "/"
         source_trailing_slash = False
         if source:
             source_trailing_slash = source.endswith("/")
 
+        # Define content_tempfile in case we set it after finding content populated.
+        content_tempfile = None
+
+        # If content is defined make a temp file and write the content into it.
+        if content is not None:
+            try:
+                content_tempfile = self._create_content_tempfile(content)
+                source = content_tempfile
+            except Exception, err:
+                result = dict(failed=True, msg="could not write content temp file: %s" % err)
+                return ReturnData(conn=conn, result=result)
         # if we have first_available_file in our vars
         # look up the files and use the first one we find as src
-        if 'first_available_file' in inject:
+        elif 'first_available_file' in inject:
             found = False
             for fn in inject.get('first_available_file'):
                 fn_orig = fn
@@ -78,19 +91,8 @@ class ActionModule(object):
                     found = True
                     break
             if not found:
-                results=dict(failed=True, msg="could not find src in first_available_file list")
+                results = dict(failed=True, msg="could not find src in first_available_file list")
                 return ReturnData(conn=conn, result=results)
-        elif content is not None:
-            fd, tmp_content = tempfile.mkstemp()
-            f = os.fdopen(fd, 'w')
-            try:
-                f.write(content)
-            except Exception, err:
-                os.remove(tmp_content)
-                result = dict(failed=True, msg="could not write content temp file: %s" % err)
-                return ReturnData(conn=conn, result=result)
-            f.close()
-            source = tmp_content
         else:
             source = template.template(self.runner.basedir, source, inject)
             if '_original_file' in inject:
@@ -98,23 +100,26 @@ class ActionModule(object):
             else:
                 source = utils.path_dwim(self.runner.basedir, source)
 
-
+        # A list of source file tuples (full_path, relative_path) which will try to copy to the destination
         source_files = []
+
+        # If source is a directory populate our list else source is a file and translate it to a tuple.
         if os.path.isdir(source):
-            # Implement rsync-like behavior: if source is "dir/" , only
-            # inside its contents will be copied to destination. Otherwise
-            # if it's "dir", dir itself will be copied to destination.
+            # Get the amount of spaces to remove to get the relative path.
             if source_trailing_slash:
                 sz = len(source) + 1
             else:
                 sz = len(source.rsplit('/', 1)[0]) + 1
+
+            # Walk the directory and append the file tuples to source_files.
             for base_path, sub_folders, files in os.walk(source):
                 for file in files:
                     full_path = os.path.join(base_path, file)
                     rel_path = full_path[sz:]
                     source_files.append((full_path, rel_path))
+
             # If it's recursive copy, destination is always a dir,
-            # explictly mark it so (note - copy module relies on this).
+            # explicitly mark it so (note - copy module relies on this).
             if not dest.endswith("/"):
                 dest += "/"
         else:
@@ -123,13 +128,17 @@ class ActionModule(object):
         changed = False
         diffs = []
         module_result = {"changed": False}
+
+        # Don't remove the directory if there are more than 1 source file.
+        delete_remote_tmp = not (len(source_files) < 1)
+
         for source_full, source_rel in source_files:
-            # We need to get a new tmp path for each file, otherwise the copy module deletes the folder.
-            tmp = self.runner._make_tmp_path(conn)
+            # Generate the MD5 hash of the local file.
             local_md5 = utils.md5(source_full)
 
+            # If local_md5 is not defined we can't find the file so we should fail out.
             if local_md5 is None:
-                result=dict(failed=True, msg="could not find src=%s" % source_full)
+                result = dict(failed=True, msg="could not find src=%s" % source_full)
                 return ReturnData(conn=conn, result=result)
 
             # This is kind of optimization - if user told us destination is
@@ -140,89 +149,93 @@ class ActionModule(object):
             else:
                 dest_file = dest
 
-            remote_md5 = self.runner._remote_md5(conn, tmp, dest_file)
+            # Attempt to get the remote MD5 Hash.
+            remote_md5 = self.runner._remote_md5(conn, tmp_path, dest_file)
+
             if remote_md5 == '3':
-                # Destination is a directory
+                # The remote_md5 was executed on a directory.
                 if content is not None:
-                    os.remove(tmp_content)
+                    # If source was defined as content remove the temporary file and fail out.
+                    self._remove_tempfile_if_content_defined(content, content_tempfile)
                     result = dict(failed=True, msg="can not use content with a dir as dest")
                     return ReturnData(conn=conn, result=result)
-                dest_file = os.path.join(dest, source_rel)
-                remote_md5 = self.runner._remote_md5(conn, tmp, dest_file)
+                else:
+                    # Append the relative source location to the destination and retry remote_md5.
+                    dest_file = os.path.join(dest, source_rel)
+                    remote_md5 = self.runner._remote_md5(conn, tmp_path, dest_file)
 
-            # remote_md5 == '1' would mean that the file does not exist.
             if remote_md5 != '1' and not force:
+                # remote_file does not exist so continue to next iteration.
                 continue
 
-            exec_rc = None
             if local_md5 != remote_md5:
-                # Assume we either really change file or error out
+                # The MD5 hashes don't match and we will change or error out.
                 changed = True
 
                 if self.runner.diff and not raw:
-                    diff = self._get_diff_data(conn, tmp, inject, dest_file, source_full)
+                    diff = self._get_diff_data(conn, tmp_path, inject, dest_file, source_full)
                 else:
                     diff = {}
 
                 if self.runner.noop_on_check(inject):
-                    if content is not None:
-                        os.remove(tmp_content)
+                    self._remove_tempfile_if_content_defined(content, content_tempfile)
                     diffs.append(diff)
                     changed = True
                     module_result = dict(changed=True)
                     continue
 
-
-                # transfer the file to a remote tmp location
-                tmp_src = tmp + 'source'
+                # Define a remote directory that we will copy the file to.
+                tmp_src = tmp_path + 'source'
 
                 if not raw:
                     conn.put_file(source_full, tmp_src)
                 else:
                     conn.put_file(source_full, dest_file)
 
-                if content is not None:
-                    os.remove(tmp_content)
+                # We have copied the file remotely and no longer require our content_tempfile
+                self._remove_tempfile_if_content_defined(content, content_tempfile)
 
                 # fix file permissions when the copy is done as a different user
                 if self.runner.sudo and self.runner.sudo_user != 'root' and not raw:
-                    self.runner._low_level_exec_command(conn, "chmod a+r %s" % tmp_src, tmp)
+                    self.runner._low_level_exec_command(conn, "chmod a+r %s" % tmp_src, tmp_path)
 
                 if raw:
+                    # Continue to next iteration if raw is defined.
                     continue
 
-                # run the copy module
-                if raw:
-                    # don't send down raw=no
-                    module_args.pop('raw')
+                # Run the copy module
 
                 # src and dest here come after original and override them
-                # we pass dest only to make sure it includes trailing slash
-                # in case of recursive copy
+                # we pass dest only to make sure it includes trailing slash in case of recursive copy
                 module_args_tmp = "%s src=%s dest=%s original_basename=%s" % (module_args,
                                   pipes.quote(tmp_src), pipes.quote(dest), pipes.quote(source_rel))
-                module_return = self.runner._execute_module(conn, tmp, 'copy', module_args_tmp, inject=inject, complex_args=complex_args)
+                module_return = self.runner._execute_module(conn, tmp_path, 'copy', module_args_tmp, inject=inject, complex_args=complex_args, delete_remote_tmp=delete_remote_tmp)
 
             else:
                 # no need to transfer the file, already correct md5, but still need to call
                 # the file module in case we want to change attributes
-                if content is not None:
-                    os.remove(tmp_content)
+                self._remove_tempfile_if_content_defined(content, content_tempfile)
 
                 if raw:
+                    # Continue to next iteration if raw is defined.
+                    # self.runner._remove_tmp_path(conn, tmp_path)
                     continue
 
-                tmp_src = tmp + source_rel
-                if raw:
-                    # don't send down raw=no
-                    module_args.pop('raw')
+                tmp_src = tmp_path + source_rel
+
+                # Build temporary module_args.
                 module_args_tmp = "%s src=%s original_basename=%s" % (module_args,
                                   pipes.quote(tmp_src), pipes.quote(source_rel))
                 if self.runner.noop_on_check(inject):
                     module_args_tmp = "%s CHECKMODE=True" % module_args_tmp
                 if self.runner.no_log:
                     module_args_tmp = "%s NO_LOG=True" % module_args_tmp
-                module_return = self.runner._execute_module(conn, tmp, 'file', module_args_tmp, inject=inject, complex_args=complex_args)
+
+                # Execute the file module.
+                module_return = self.runner._execute_module(conn, tmp_path, 'file', module_args_tmp, inject=inject, complex_args=complex_args, delete_remote_tmp=delete_remote_tmp)
+
+                if not C.DEFAULT_KEEP_REMOTE_FILES and not delete_remote_tmp:
+                    self.runner._remove_tmp_path(conn, tmp_path)
 
             module_result = module_return.result
             if module_result.get('failed') == True:
@@ -239,6 +252,19 @@ class ActionModule(object):
             return ReturnData(conn=conn, result=result, diff=diffs[0])
         else:
             return ReturnData(conn=conn, result=result)
+
+    def _create_content_tempfile(self, content):
+        ''' Create a tempfile containing defined content '''
+        fd, content_tempfile = tempfile.mkstemp()
+        f = os.fdopen(fd, 'w')
+        try:
+            f.write(content)
+        except Exception, err:
+            os.remove(content_tempfile)
+            raise Exception(err)
+        finally:
+            f.close()
+        return content_tempfile
 
     def _get_diff_data(self, conn, tmp, inject, destination, source):
         peek_result = self.runner._execute_module(conn, tmp, 'file', "path=%s diff_peek=1" % destination, inject=inject, persist_files=True)
@@ -277,6 +303,11 @@ class ActionModule(object):
             diff['after'] = src.read()
 
         return diff
+
+    def _remove_tempfile_if_content_defined(self, content, content_tempfile):
+        if content is not None:
+            os.remove(content_tempfile)
+
     
     def _result_key_merge(self, options, results):
         # add keys to file module results to mimic copy
