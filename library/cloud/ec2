@@ -198,6 +198,21 @@ options:
     required: false
     default: null
     aliases: []
+  exact_count:
+    version_added: "1.5"
+    description:
+      - An integer value which indicates how many instances that match the 'count_tag' parameter should be running. Instances are either created or terminated based on this value. 
+    required: false
+    default: null
+    aliases: []
+  count_tag:
+    version_added: "1.5"
+    description:
+      - Used with 'exact_count' to determine how many nodes based on a specific tag criteria should be running.  This can be expressed in multiple ways and is shown in the EXAMPLES section.  For instance, one can request 25 servers that are tagged with "class=webserver".  
+    required: false
+    default: null
+    aliases: []
+       
 
 requirements: [ "boto" ]
 author: Seth Vidal, Tim Gerla, Lester Wade
@@ -227,8 +242,9 @@ EXAMPLES = '''
     wait: yes
     wait_timeout: 500
     count: 5
-    instance_tags: '{"db":"postgres"}'
-    monitoring=yes
+    instance_tags: 
+       db: postgres
+    monitoring: yes
 
 # Single instance with additional IOPS volume from snapshot
 local_action:
@@ -245,7 +261,7 @@ local_action:
       device_type: io1
       iops: 1000
       volume_size: 100
-    monitoring=yes
+    monitoring: yes
 
 # Multiple groups example
 local_action:
@@ -257,8 +273,9 @@ local_action:
     wait: yes
     wait_timeout: 500
     count: 5
-    instance_tags: '{"db":"postgres"}'
-    monitoring=yes
+    instance_tags: 
+        db: postgres
+    monitoring: yes
 
 # Multiple instances with additional volume from snapshot
 local_action:
@@ -274,7 +291,7 @@ local_action:
     - device_name: /dev/sdb
       snapshot: snap-abcdef12
       volume_size: 10
-    monitoring=yes
+    monitoring: yes
 
 # VPC example
 - local_action:
@@ -372,6 +389,63 @@ local_action:
       region: '{{ region }}'
       state: stopped
       wait: True
+
+#
+# Enforce that 5 instances with a tag "foo" are running
+#
+
+- local_action:
+    module: ec2
+    keypair: mykey
+    instance_type: c1.medium
+    image: emi-40603AD1
+    wait: yes
+    group: webserver
+    instance_tags:
+        foo: bar
+    exact_count: 5
+    count_tag: foo
+
+#
+# Enforce that 5 instances with a tag "foo" that has a value "bar"
+#
+
+- local_action:
+    module: ec2
+    keypair: mykey
+    instance_type: c1.medium
+    image: emi-40603AD1
+    wait: yes
+    group: webserver
+    instance_tags: 
+        foo: bar
+    exact_count: 5
+    count_tag: 
+        foo: bar
+
+#
+# count_tag complex argument examples
+#
+
+    # instances with tag foo
+    count_tag:
+        foo:
+
+    # instances with tag foo=bar
+    count_tag:
+        foo: bar
+
+    # instances with tags foo=bar & baz
+    count_tag:
+        foo: bar
+        baz:
+
+    # instances with tags foo & bar & baz=bang
+    count_tag:
+        - foo
+        - bar
+        - baz: bang
+
 '''
 
 import sys
