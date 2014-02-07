@@ -1033,7 +1033,15 @@ def main():
             volumes = dict(type='list'),
         )
     )
-    module = AnsibleModule(argument_spec=argument_spec)
+
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        mutually_exclusive = [
+                                ['exact_count', 'count'],
+                                ['exact_count', 'state'],
+                                ['exact_count', 'instance_ids']
+                             ],
+    )
 
     ec2 = ec2_connect(module)
 
