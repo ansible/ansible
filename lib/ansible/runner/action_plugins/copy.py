@@ -129,8 +129,17 @@ class ActionModule(object):
         diffs = []
         module_result = {"changed": False}
 
-        # Don't remove the directory if there are more than 1 source file.
-        delete_remote_tmp = not (len(source_files) < 1)
+        # A register for if we executed a module.
+        # Used to cut down on command calls when not recursive.
+        module_executed = False
+
+        # Tell _execute_module to delete the file if there is one file.
+        delete_remote_tmp = (len(source_files) == 1)
+
+        # If this is a recursive action create a tmp_path that we can share as the _exec_module create is too late.
+        if not delete_remote_tmp:
+            if "-tmp-" not in tmp_path:
+                tmp_path = self.runner._make_tmp_path(conn)
 
         for source_full, source_rel in source_files:
             # Generate the MD5 hash of the local file.
@@ -172,6 +181,12 @@ class ActionModule(object):
                 # The MD5 hashes don't match and we will change or error out.
                 changed = True
 
+                # Create a tmp_path if missing only if this is not recursive.
+                # If this is recursive we already have a tmp_path.
+                if delete_remote_tmp:
+                    if "-tmp-" not in tmp_path:
+                        tmp_path = self.runner._make_tmp_path(conn)
+
                 if self.runner.diff and not raw:
                     diff = self._get_diff_data(conn, tmp_path, inject, dest_file, source_full)
                 else:
@@ -210,6 +225,7 @@ class ActionModule(object):
                 module_args_tmp = "%s src=%s dest=%s original_basename=%s" % (module_args,
                                   pipes.quote(tmp_src), pipes.quote(dest), pipes.quote(source_rel))
                 module_return = self.runner._execute_module(conn, tmp_path, 'copy', module_args_tmp, inject=inject, complex_args=complex_args, delete_remote_tmp=delete_remote_tmp)
+                module_executed = True
 
             else:
                 # no need to transfer the file, already correct md5, but still need to call
@@ -233,15 +249,18 @@ class ActionModule(object):
 
                 # Execute the file module.
                 module_return = self.runner._execute_module(conn, tmp_path, 'file', module_args_tmp, inject=inject, complex_args=complex_args, delete_remote_tmp=delete_remote_tmp)
-
-                if not C.DEFAULT_KEEP_REMOTE_FILES and not delete_remote_tmp:
-                    self.runner._remove_tmp_path(conn, tmp_path)
+                module_executed = True
 
             module_result = module_return.result
             if module_result.get('failed') == True:
                 return module_return
             if module_result.get('changed') == True:
                 changed = True
+
+        # Delete tmp_path if we were recursive or if we did not execute a module.
+        if (not C.DEFAULT_KEEP_REMOTE_FILES and not delete_remote_tmp) \
+            or (not C.DEFAULT_KEEP_REMOTE_FILES and delete_remote_tmp and not module_executed):
+            self.runner._remove_tmp_path(conn, tmp_path)
 
         # TODO: Support detailed status/diff for multiple files
         if len(source_files) == 1:
