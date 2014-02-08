@@ -63,15 +63,15 @@ def get_cowsay_info():
         cowsay = "/opt/local/bin/cowsay"
 
     noncow = os.getenv("ANSIBLE_COW_SELECTION",None)
+    cowfiles = []
     if cowsay and noncow == 'random':
         cmd = subprocess.Popen([cowsay, "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (out, err) = cmd.communicate()
-        cows = out.split()
-        cows.append(False)
-        noncow = random.choice(cows)
-    return (cowsay, noncow)
+        cowfiles = out.split()
+        cowfiles.append(False)
+    return (cowsay, noncow, cowfiles)
 
-cowsay, noncow = get_cowsay_info()
+cowsay, noncow, cowfiles = get_cowsay_info()
 
 def log_lockfile():
     tempdir = tempfile.gettempdir()
@@ -247,7 +247,12 @@ def banner_cowsay(msg):
         if msg.endswith("]"):
             msg = msg[:-1]
     runcmd = [cowsay,"-W", "60"]
-    if noncow:
+    if cowfiles:
+        cowfile = random.choice(cowfiles)
+        if cowfile:
+            runcmd.append('-f')
+            runcmd.append(cowfile)
+    elif noncow:
         runcmd.append('-f')
         runcmd.append(noncow)
     runcmd.append(msg)
