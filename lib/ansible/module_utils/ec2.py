@@ -22,9 +22,9 @@ def get_ec2_creds(module):
     # Check module args for credentials, then check environment vars
 
     ec2_url = module.params.get('ec2_url')
-    ec2_secret_key = module.params.get('ec2_secret_key')
-    ec2_access_key = module.params.get('ec2_access_key')
-    region = module.params.get('region')
+    ec2_secret_key = module.params.get('ec2_secret_key') or module.params.get('aws_secret_key') or module.params.get('secret_key')
+    ec2_access_key = module.params.get('ec2_access_key') or module.params.get('aws_access_key') or module.params.get('access_key')
+    region = module.params.get('region') or module.params.get('aws_region') or module.params.get('ec2_region')
 
     if not ec2_url:
         if 'EC2_URL' in os.environ:
