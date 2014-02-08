@@ -99,30 +99,18 @@ class MyPool(mpool.Pool):
 
 class Foon(object):
 
-   def __init__(self):
-       self.set_size(0)
+   def __init__(self, size):
+       self.pool = self._make_pool(size)
 
-   def make_pool(self, processes=None, initializer=None, initargs=()):
+   def _make_pool(self, processes=None, initializer=None, initargs=()):
        '''
        Returns a process pool object
        '''
        return MyPool(processes, initializer, initargs)
 
-   def set_size(self, size): 
-
-       global OLD_SIZE
-       global POOL
-
-       if size > OLD_SIZE or POOL is None:
-           OLD_SIZE = size
-           POOL = self.make_pool()
-
-
    def map(self, function, data_list):
-
-       global POOL
        try:
-           return POOL.map(function, data_list)
+           return self.pool.map(function, data_list)
        except KeyboardInterrupt:
            print "KEYBOARD INTERRUPT!"
            sys.exit(1)
