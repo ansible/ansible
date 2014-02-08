@@ -151,7 +151,7 @@ class PlayBook(object):
         if self.module_path is not None:
             utils.plugins.module_finder.add_directory(self.module_path)
 
-        self.basedir     = os.path.dirname(playbook) or '.'
+        self.basedir     = (type(playbook) != list and os.path.dirname(playbook)) or '.'
         utils.plugins.push_basedir(self.basedir)
         vars = extra_vars.copy()
         vars['playbook_dir'] = self.basedir
@@ -172,8 +172,8 @@ class PlayBook(object):
         run top level error checking on playbooks and allow them to include other playbooks.
         '''
 
-        if os.path.exists(path):
-            playbook_data  = utils.parse_yaml_from_file(path)
+        if type(path) != list and os.path.exists(path):
+            playbook_data = utils.parse_yaml_from_file(path)
         else:
             playbook_data = path
 
@@ -183,7 +183,7 @@ class PlayBook(object):
         if type(playbook_data) != list:
             raise errors.AnsibleError("parse error: playbooks must be formatted as a YAML list, got %s" % type(playbook_data))
 
-        basedir = os.path.dirname(path) or '.'
+        basedir = (type(path) != list and os.path.dirname(path)) or '.'
         utils.plugins.push_basedir(basedir)
         for play in playbook_data:
             if type(play) != dict:
