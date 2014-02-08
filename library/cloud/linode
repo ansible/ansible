@@ -25,7 +25,7 @@ options:
   state:
     description:
      - Indicate desired state of the resource
-    choices: ['present', 'active', 'started', absent', 'deleted', 'stopped', 'restarted']
+    choices: ['present', 'active', 'started', 'absent', 'deleted', 'stopped', 'restarted']
     default: present
   api_key:
     description:
