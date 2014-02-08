@@ -161,7 +161,7 @@ class PlayBook(object):
         if self.inventory.src() is not None:
             vars['inventory_file'] = self.inventory.src()
 
-        self.filename = playbook
+        self.filename = (type(playbook) != list and os.path.exists(playbook)) or None
         (self.playbook, self.play_basedirs) = self._load_playbook(playbook, vars)
         ansible.callbacks.load_callback_plugins()
 
@@ -543,7 +543,7 @@ class PlayBook(object):
         for x in replay_hosts:
             buf.write("%s\n" % x)
         basedir = self.inventory.basedir()
-        filename = "%s.retry" % os.path.basename(self.filename)
+        filename = "%s.retry" % os.path.basename(self.filename or 'dynamic')
         filename = filename.replace(".yml","")
         filename = os.path.join(os.path.expandvars('$HOME/'), filename)
 
