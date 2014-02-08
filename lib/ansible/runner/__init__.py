@@ -63,7 +63,6 @@ PROCESS_LOCKFILE = tempfile.TemporaryFile()
 
 from foon import Foon
 
-FOON = Foon()
 
 ################################################
 
@@ -1058,11 +1057,10 @@ class Runner(object):
 
     # *****************************************************
 
-    def _parallel_exec(self, hosts):
+    def _parallel_exec(self, params):
         ''' handles mulitprocessing when more than 1 fork is required '''
 
-        FOON.set_size(self.forks)
-        return FOON.map(_executor_hook, hosts)
+        return self.foon.map(_executor_hook, params)
 
     # *****************************************************
 
@@ -1113,6 +1111,8 @@ class Runner(object):
 
         if self.forks == 0 or self.forks > len(hosts):
             self.forks = len(hosts)
+
+        self.foon = Foon(self.forks)
 
         if p and getattr(p, 'BYPASS_HOST_LOOP', None):
 
