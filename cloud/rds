@@ -277,8 +277,8 @@ def get_current_resource(conn, resource, command):
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec = dict(
+    argument_spec = ec2_argument_spec()
+    argument_spec.update(dict(
             command           = dict(choices=['create', 'replicate', 'delete', 'facts', 'modify', 'promote', 'snapshot', 'restore'], required=True),
             instance_name     = dict(required=True),
             source_instance   = dict(required=False),
@@ -300,17 +300,18 @@ def main():
             maint_window      = dict(required=False),
             backup_window     = dict(required=False),
             backup_retention  = dict(required=False), 
-            region            = dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS, required=False),
             zone              = dict(aliases=['aws_zone', 'ec2_zone'], required=False),
             subnet            = dict(required=False),
-            aws_secret_key    = dict(aliases=['ec2_secret_key', 'secret_key'], no_log=True, required=False),
-            aws_access_key    = dict(aliases=['ec2_access_key', 'access_key'], required=False),
             wait              = dict(type='bool', default=False),
             wait_timeout      = dict(default=300),
             snapshot          = dict(required=False),
             apply_immediately = dict(type='bool', default=False),
             new_instance_name = dict(required=False),
         )
+    )
+
+    module = AnsibleModule(
+        argument_spec=argument_spec,
     )
 
     command            = module.params.get('command')
