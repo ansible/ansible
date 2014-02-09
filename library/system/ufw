@@ -91,7 +91,7 @@ options:
   proto:
     description:
       - TCP/IP protocol.
-    choices: ['any', 'tcp', 'udp', 'ipv6']
+    choices: ['any', 'tcp', 'udp', 'ipv6', 'esp', 'ah']
     required: false
   name:
     description:
@@ -169,7 +169,7 @@ def main():
             from_port = dict(default=None),
             to_ip     = dict(default='any', aliases=['dest', 'to']),
             to_port   = dict(default=None,  aliases=['port']),
-            proto     = dict(default=None,  aliases=['protocol'], choices=['any', 'tcp', 'udp', 'ipv6']),
+            proto     = dict(default=None,  aliases=['protocol'], choices=['any', 'tcp', 'udp', 'ipv6', 'esp', 'ah']),
             app       = dict(default=None,  aliases=['name'])
         ),
         supports_check_mode = True,
