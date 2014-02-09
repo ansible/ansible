@@ -43,6 +43,17 @@ If you have a list of hashes, you can reference subkeys using things like::
         - { name: 'testuser1', groups: 'wheel' }
         - { name: 'testuser2', groups: 'root' }
 
+For historical reasons, 'with_items' flatten supplied list if it contains lists.
+If you want to iterate for each lists as `item`, you need wrap the list of lists. like::
+
+    - name: add several users
+      user: name={{ item.0 }} state=present groups={{ item.1 }}
+      with_items:
+        - 
+          - [ 'testuser1', 'wheel' ]
+          - [ 'testuser2', 'root' ]
+
+
 .. _nested_loops:
 
 Nested Loops
