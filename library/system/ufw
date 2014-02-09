@@ -157,7 +157,7 @@ from operator import itemgetter
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            state     = dict(default=None,  choices=['enabled', 'disabled', 'reloaded', 'reseted']),
+            state     = dict(default=None,  choices=['enabled', 'disabled', 'reloaded', 'reset']),
             default   = dict(default=None,  aliases=['policy'], choices=['allow', 'deny', 'reject']),
             logging   = dict(default=None,  choises=['on', 'off', 'low', 'medium', 'high', 'full']),
             direction = dict(default=None,  choises=['in', 'incoming', 'out', 'outgoing']),
@@ -207,7 +207,7 @@ def main():
 
         if command == 'state':
             states = { 'enabled': 'enable',  'disabled': 'disable',
-                       'reloaded': 'reload', 'reseted':  'reset' }
+                       'reloaded': 'reload', 'reset': 'reset' }
             execute(cmd + [['-f'], [states[value]]])
 
         elif command == 'logging':
