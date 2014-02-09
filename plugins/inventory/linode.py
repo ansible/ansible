@@ -132,7 +132,7 @@ class LinodeInventory(object):
                 if os.path.isfile(self.cache_path_index):
                     return True
         return False
- 
+
     def read_settings(self):
         """Reads the settings from the .ini file."""
         config = ConfigParser.SafeConfigParser()
@@ -204,7 +204,7 @@ class LinodeInventory(object):
         dest = node.label
 
         # Add to index
-        self.index[dest] = [node.api_id]
+        self.index[dest] = node.api_id
 
         # Inventory: Group by node ID (always a group of 1)
         self.inventory[node.api_id] = [dest]
