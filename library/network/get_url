@@ -151,7 +151,10 @@ def url_do_get(module, url, dest, use_proxy, last_mod_time, force):
             username = credentials
             password = ''
         parsed = list(parsed)
-        parsed[1] = netloc
+
+        # Skip credential stripping if URL scheme is ftp
+        if parsed[0] != 'ftp':
+            parsed[1] = netloc
 
         passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
         # this creates a password manager
