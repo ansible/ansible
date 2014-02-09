@@ -26,9 +26,10 @@ DOCUMENTATION = '''
 module: debconf
 short_description: Configure a .deb package
 description:
-     - Configure a .deb package using debconf-set-selections
+     - Configure a .deb package using debconf-set-selections.
 version_added: "1.5"
 notes:
+    - This module requires the command line debconf tools.
     - A number of questions have to be answered (depending on the package).
       Use 'debconf-show <package>' on any Debian or derivative with the package
       installed to see questions/settings available.
@@ -39,12 +40,12 @@ options:
     required: true
     default: null
     aliases: ['pkg']
-  setting:
+  question:
     description:
       - A debconf configuration setting
     required: false
     default: null
-    aliases: ['question', 'selection']
+    aliases: ['setting', 'selection']
   vtype:
     description:
       - The type of the value supplied
@@ -70,10 +71,10 @@ author: Brian Coca
 
 EXAMPLES = '''
 # Set default locale to fr_FR.UTF-8
-debconf: name=locales setting='locales/default_environment_locale' value=fr_FR.UTF-8
+debconf: name=locales question='locales/default_environment_locale' value=fr_FR.UTF-8
 
 # set to generate locales:
-debconf: name=locales setting='locales/locales_to_be_generated  value='en_US.UTF-8 UTF-8, fr_FR.UTF-8 UTF-8'
+debconf: name=locales question='locales/locales_to_be_generated  value='en_US.UTF-8 UTF-8, fr_FR.UTF-8 UTF-8'
 
 # Accept oracle license
 debconf: name='oracle-java7-installer' question='shared/accepted-oracle-license-v1-1' value='true' vtype='select'
@@ -118,7 +119,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
            name = dict(required=True, aliases=['pkg'], type='str'),
-           setting = dict(required=False, aliases=['question', 'selection'], type='str'),
+           question = dict(required=False, aliases=['setting', 'selection'], type='str'),
            vtype = dict(required=False, type='str', choices=['string', 'boolean', 'select',  'multiselect', 'note', 'text', 'password', 'title']),
            value= dict(required=False, type='str'),
            unseen = dict(required=False, type='bool'),
@@ -128,7 +129,7 @@ def main():
 
     #TODO: enable passing array of optionas and/or debconf file from get-selections dump
     pkg      = module.params["name"]
-    question = module.params["setting"]
+    question = module.params["question"]
     vtype     = module.params["vtype"]
     value    = module.params["value"]
     unseen   = module.params["unseen"]
@@ -138,6 +139,12 @@ def main():
 
     changed = False
     msg = ""
+
+    # Adjust value field if needed
+    if vtype == 'boolean':
+        value = boolean(value)
+    elif vtype == 'multiselect' and (isisntance(value, list) or isinstace(value, set)):
+        value = ','.join(value)
 
     if question is not None:
         if not question in prev or prev[question] != value:
