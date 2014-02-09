@@ -46,6 +46,11 @@ options:
             - The port to connect to
         required: false
         default: 27017
+    replicaset:
+        description:
+            - Replicaset to connect to (automatically connects to primary for writes)
+        required: false
+        default: null
     database:
         description:
             - The name of the database to add/remove the user from
@@ -98,6 +103,7 @@ import ConfigParser
 try:
     from pymongo.errors import ConnectionFailure
     from pymongo.errors import OperationFailure
+    from pymongo.errors import PyMongoError
     from pymongo import MongoClient
 except ImportError:
     try:  # for older PyMongo 2.2
@@ -165,6 +171,7 @@ def main():
             login_password=dict(default=None),
             login_host=dict(default='localhost'),
             login_port=dict(default='27017'),
+            replicaset=dict(default=None),
             database=dict(required=True, aliases=['db']),
             user=dict(required=True, aliases=['name']),
             password=dict(aliases=['pass']),
@@ -180,6 +187,7 @@ def main():
     login_password = module.params['login_password']
     login_host = module.params['login_host']
     login_port = module.params['login_port']
+    replicaset = module.params['replicaset']
     db_name = module.params['database']
     user = module.params['user']
     password = module.params['password']
@@ -187,7 +195,11 @@ def main():
     state = module.params['state']
 
     try:
-        client = MongoClient(login_host, int(login_port))
+    	if replicaset:
+    	   client = MongoClient(login_host, int(login_port), replicaset=replicaset)
+    	else:
+    	   client = MongoClient(login_host, int(login_port))
+
         if login_user is None and login_password is None:
             mongocnf_creds = load_mongocnf()
             if mongocnf_creds is not False:
