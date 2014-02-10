@@ -18,6 +18,7 @@
 #############################################
 
 import os
+import tempfile
 import ansible.constants as C
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
@@ -36,6 +37,8 @@ class InventoryDirectory(object):
         self.parsers = []
         self.hosts = {}
         self.groups = {}
+
+        inis = tempfile.NamedTemporaryFile()
  
         for i in self.names:
             
@@ -57,34 +60,44 @@ class InventoryDirectory(object):
             fullpath = os.path.join(self.directory, i)
             if os.path.isdir(fullpath):
                 parser = InventoryDirectory(filename=fullpath)
+                self.parsers.append(parser)
+                self._blend_objects(parser)
             elif utils.is_executable(fullpath):
                 parser = InventoryScript(filename=fullpath)
+                self.parsers.append(parser)
+                self._blend_objects(parser)
             else:
-                parser = InventoryParser(filename=fullpath)
-            self.parsers.append(parser)
-            # This takes a lot of code because we can't directly use any of the objects, as they have to blend
-            for name, group in parser.groups.iteritems():
-                if name not in self.groups:
-                    self.groups[name] = group
-                else:
-                    # group is already there, copy variables
-                    # note: depth numbers on duplicates may be bogus
-                    for k, v in group.get_variables().iteritems():
-                        self.groups[name].set_variable(k, v)
-                for host in group.get_hosts():
-                    if host.name not in self.hosts:
-                        self.hosts[host.name] = host
-                    else:
-                        # host is already there, copy variables
-                        # note: depth numbers on duplicates may be bogus
-                        for k, v in host.vars.iteritems():
-                            self.hosts[host.name].set_variable(k, v)
-                    self.groups[name].add_host(self.hosts[host.name])
+                inis.write(inis.read() + file(fullpath).read())
 
-            # This needs to be a second loop to ensure all the parent groups exist
-            for name, group in parser.groups.iteritems():
-                for ancestor in group.get_ancestors():
-                    self.groups[ancestor.name].add_child_group(self.groups[name])
+        parser = InventoryParser(filename=inis.name)
+        self.parsers.append(parser)
+        self._blend_objects(parser)
+        inis.close()
+
+    def _blend_objects(self, parser):
+        # This takes a lot of code because we can't directly use any of the objects, as they have to blend
+        for name, group in parser.groups.iteritems():
+            if name not in self.groups:
+                self.groups[name] = group
+            else:
+                # group is already there, copy variables
+                # note: depth numbers on duplicates may be bogus
+                for k, v in group.get_variables().iteritems():
+                    self.groups[name].set_variable(k, v)
+            for host in group.get_hosts():
+                if host.name not in self.hosts:
+                    self.hosts[host.name] = host
+                else:
+                    # host is already there, copy variables
+                    # note: depth numbers on duplicates may be bogus
+                    for k, v in host.vars.iteritems():
+                        self.hosts[host.name].set_variable(k, v)
+                self.groups[name].add_host(self.hosts[host.name])
+
+        # This needs to be a second loop to ensure all the parent groups exist
+        for name, group in parser.groups.iteritems():
+            for ancestor in group.get_ancestors():
+                self.groups[ancestor.name].add_child_group(self.groups[name])
 
     def get_host_variables(self, host):
         """ Gets additional host variables from all inventories """
