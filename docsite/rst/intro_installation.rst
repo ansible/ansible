@@ -189,6 +189,21 @@ Debian/Ubuntu packages can also be built from the source checkout, run:
 
 You may also wish to run from source to get the latest, which is covered above.
 
+.. _from_pkg:
+
+Latest Releases Via pkg (FreeBSD)
++++++++++++++++++++++++++++++++++
+
+.. code-block:: bash
+
+    $ sudo pkg install ansible
+
+You may also wish to install from ports, run:
+
+.. code-block:: bash
+
+    $ sudo make -C /usr/ports/sysutils/ansible install
+
 .. _from_pip:
 
 Latest Releases Via Pip
