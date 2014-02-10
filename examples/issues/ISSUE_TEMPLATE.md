@@ -8,7 +8,7 @@ Please supply the verbatim output from running “ansible --version”.
 
 ##### Environment:
 
-What OS are you running Ansible from and what OS are you managing?  Examples include RHEL 5/6, Centos 5/6, Ubuntu 12.04/13.07, *BSD, Solaris.  If this is a generic feature request or it doesn’t apply, just say “N/A”. 
+What OS are you running Ansible from and what OS are you managing?  Examples include RHEL 5/6, Centos 5/6, Ubuntu 12.04/13.10, *BSD, Solaris.  If this is a generic feature request or it doesn’t apply, just say “N/A”. 
 
 ##### Summary:
 
@@ -16,7 +16,7 @@ Please summarize your request in this space.  You will earn bonus points for bei
 
 ##### Steps To Reproduce:
 
-If this is a bug ticket, please enter the steps you use to reproduce the problem in the space below.  If this is a feature request, please enter the steps you would use to use the feature.  If an example playbook is useful, please include a short reproducer inline, indented by four spaces.  If a longer one is neccessary, please link one uploaded to gist.github.com. 
+If this is a bug ticket, please enter the steps you use to reproduce the problem in the space below.  If this is a feature request, please enter the steps you would use to use the feature.  If an example playbook is useful, please include a short reproducer inline, indented by four spaces.  If a longer one is necessary, please link one uploaded to gist.github.com. 
 
 ##### Expected Results:
 
