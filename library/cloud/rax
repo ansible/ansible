@@ -576,7 +576,7 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                     names = [name] * count
             else:
                 search_opts = {
-                    'name': name,
+                    'name': '^%s$' % name,
                     'image': image,
                     'flavor': flavor
                 }
@@ -612,7 +612,7 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                     module.fail_json(msg='%s is required for the "rax" '
                                          'module' % arg)
             search_opts = {
-                'name': name,
+                'name': '^%s$' % name,
                 'image': image,
                 'flavor': flavor
             }
