@@ -262,7 +262,7 @@ To test if something is a string, consider that it may be unicode.
     if type(x) == str:
 
     # yes
-    if isintance(x, basestr):
+    if isintance(x, basestring):
 
 Cleverness
 ==========
@@ -288,7 +288,7 @@ All code in Ansible core must support a minimum version of Python 2.6.
 
 Module code must support a minimum of Python 2.4, with occasional exception for modules that require code that themselves require 2.6 and later.
 
-A quick reminder is that list comprehensions in Python 2.4 are not as fully fleshed out, there are not 'dict' comprehensions, and there is no 'with' statement.
+A quick reminder is that list comprehensions in Python 2.4 are not as fully fleshed out, there are no 'dict' comprehensions, and there is no 'with' statement.
 But otherwise it's pretty much all the same.
 
 The End
