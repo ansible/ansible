@@ -94,7 +94,7 @@ to see if the issue has already been reported.
 When filing a bug, the following information is always required:
 
 * A good name for the bug ("Foo module raises exception when xyz=glork is used", vs "foo doesn't work")
-* A succint description of the problem
+* A succinct description of the problem
 * What version of ansible you are using (ansible --version)
 * Steps to reproduce the problem, including commands or playbook snippets as relevant
 * Expected results
