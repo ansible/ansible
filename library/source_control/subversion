@@ -81,6 +81,9 @@ options:
 EXAMPLES = '''
 # Checkout subversion repository to specified folder.
 - subversion: repo=svn+ssh://an.example.org/path/to/repo dest=/src/checkout
+
+# Export subversion directory to folder
+- subversion: repo=svn+ssh://an.example.org/path/to/repo dest=/src/export export=True
 '''
 
 import re
