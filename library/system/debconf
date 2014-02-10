@@ -26,7 +26,8 @@ DOCUMENTATION = '''
 module: debconf
 short_description: Configure a .deb package
 description:
-     - Configure a .deb package using debconf-set-selections.
+     - Configure a .deb package using debconf-set-selections. Or just query
+     existing selections.
 version_added: "1.5"
 notes:
     - This module requires the command line debconf tools.
@@ -78,6 +79,9 @@ debconf: name=locales question='locales/locales_to_be_generated  value='en_US.UT
 
 # Accept oracle license
 debconf: name='oracle-java7-installer' question='shared/accepted-oracle-license-v1-1' value='true' vtype='select'
+
+# Specifying package you can register/return the list of questions and current values
+debconf: name='tzdata'
 '''
 
 def get_selections(module, pkg):
@@ -98,14 +102,7 @@ def get_selections(module, pkg):
 
 def set_selection(module, pkg, question, vtype, value, unseen):
 
-    answer = [ question ]
-    if 'vtype':
-        answer.append(vtype)
-
-    if value is None:
-        value = ''
-    answer.append(value)
-    data = ' '.join(answer)
+    data = ' '.join([ question, vtype, value ])
 
     setsel = module.get_bin_path('debconf-set-selections', True)
     cmd = ["echo '%s %s' |" % (pkg, data), setsel]
@@ -124,6 +121,7 @@ def main():
            value= dict(required=False, type='str'),
            unseen = dict(required=False, type='bool'),
         ),
+        required_together = ( ['question','vtype', 'value'],),
         supports_check_mode=True,
     )
 
@@ -140,13 +138,10 @@ def main():
     changed = False
     msg = ""
 
-    # Adjust value field if needed
-    if vtype == 'boolean':
-        value = boolean(value)
-    elif vtype == 'multiselect' and (isisntance(value, list) or isinstace(value, set)):
-        value = ','.join(value)
-
     if question is not None:
+        if vtype is None or value is None:
+            module.fail_json(msg="when supliying a question you must supply a valide vtype and value")
+
         if not question in prev or prev[question] != value:
             changed = True
 
