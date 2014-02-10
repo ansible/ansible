@@ -75,6 +75,12 @@ options:
     version_added: "1.4"
     default: "no"
     choices: [ "yes", "no" ]
+  backups_enabled:
+    description:
+     - Optional, Boolean, enables backups for your droplet.
+    version_added: "1.5"
+    default: "no"
+    choices: [ "yes", "no" ]
   wait:
     description:
      - Wait for the droplet to be in state 'running' before returning.  If wait is "no" an ip_address may not be returned.
@@ -164,11 +170,11 @@ try:
     import dopy
     from dopy.manager import DoError, DoManager
 except ImportError, e:
-    print "failed=True msg='dopy >= 0.2.2 required for this module'"
+    print "failed=True msg='dopy >= 0.2.3 required for this module'"
     sys.exit(1)
 
-if dopy.__version__ < '0.2.2':
-    print "failed=True msg='dopy >= 0.2.2 required for this module'"
+if dopy.__version__ < '0.2.3':
+    print "failed=True msg='dopy >= 0.2.3 required for this module'"
     sys.exit(1)
 
 class TimeoutError(DoError):
@@ -229,8 +235,8 @@ class Droplet(JsonfyMixIn):
         cls.manager = DoManager(client_id, api_key)
 
     @classmethod
-    def add(cls, name, size_id, image_id, region_id, ssh_key_ids=None, virtio=True, private_networking=False):
-        json = cls.manager.new_droplet(name, size_id, image_id, region_id, ssh_key_ids, virtio, private_networking)
+    def add(cls, name, size_id, image_id, region_id, ssh_key_ids=None, virtio=True, private_networking=False, backups_enabled=False):
+        json = cls.manager.new_droplet(name, size_id, image_id, region_id, ssh_key_ids, virtio, private_networking, backups_enabled)
         droplet = cls(json)
         return droplet
 
@@ -333,7 +339,8 @@ def core(module):
                     region_id=getkeyordie('region_id'),
                     ssh_key_ids=module.params['ssh_key_ids'],
                     virtio=module.params['virtio'],
-                    private_networking=module.params['private_networking']
+                    private_networking=module.params['private_networking'],
+                    backups_enabled=module.params['backups_enabled'],
                 )
 
             if droplet.is_powered_on():
@@ -394,6 +401,7 @@ def main():
             ssh_key_ids = dict(default=''),
             virtio = dict(type='bool', choices=BOOLEANS, default='yes'),
             private_networking = dict(type='bool', choices=BOOLEANS, default='no'),
+            backups_enabled = dict(type='bool', choices=BOOLEANS, default='no'),
             id = dict(aliases=['droplet_id'], type='int'),
             unique_name = dict(type='bool', default='no'),
             wait = dict(type='bool', default=True),
