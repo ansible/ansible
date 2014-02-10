@@ -122,6 +122,7 @@ import boto
 from boto import ec2
 from boto import rds
 from boto import route53
+from boto.ec2 import autoscale
 import ConfigParser
 
 try:
@@ -255,6 +256,7 @@ class Ec2Inventory(object):
         for region in self.regions:
             self.get_instances_by_region(region)
             self.get_rds_instances_by_region(region)
+            self.get_autoscaling_instances_by_region(region)
 
         self.write_to_cache(self.inventory, self.cache_path_cache)
         self.write_to_cache(self.index, self.cache_path_index)
@@ -288,7 +290,7 @@ class Ec2Inventory(object):
             sys.exit(1)
 
     def get_rds_instances_by_region(self, region):
-	''' Makes an AWS API call to the list of RDS instances in a particular
+        ''' Makes an AWS API call to the list of RDS instances in a particular
         region '''
 
         try:
@@ -302,6 +304,18 @@ class Ec2Inventory(object):
                 print "Looks like AWS RDS is down: "
                 print e
                 sys.exit(1)
+    
+    def get_autoscaling_instances_by_region(self, region):
+        '''Get list of AWS Autoscaling instances in a region.'''
+        try:
+            conn = autoscale.connect_to_region(region)
+            if conn:
+                instances = conn.get_all_autoscaling_instances()
+                for instance in instances:
+                    self.add_autoscaling_instance(instance, region)
+        except boto.exception.BotoServerError as e:
+            print "Error talking to AWS API:\n", e
+            sys.exit(1)        
 
     def get_instance(self, region, instance_id):
         ''' Gets details about a specific instance '''
@@ -439,6 +453,32 @@ class Ec2Inventory(object):
         # Global Tag: all RDS instances
         self.push(self.inventory, 'rds', dest)
 
+    def add_autoscaling_instance(self, instance, region):
+        '''Adds an Autoscaling instance to the inventory.'''
+        
+        # Look up destination address
+        dest = self.inventory[instance.instance_id][0]
+        
+        if not dest:
+            # Skip instances we cannot address (e.g. private VPC subnet)
+            return
+            
+        # All other tags are already covered by add_instance, as Autoscaling instances show up in get_all_instances()
+        
+        # Inventory: Group by Autoscaling group
+        self.push(self.inventory, self.to_safe("as_group_" + instance.group_name), dest)
+        
+        # Inventory: Group by launch config
+        self.push(self.inventory, self.to_safe("as_launch_config_" + instance.launch_config_name), dest)
+
+        # Inventory: Group by lifecycle state
+        self.push(self.inventory, self.to_safe("as_lifecycle_state_" + instance.lifecycle_state), dest)
+
+        # Inventory: Group by health status
+        self.push(self.inventory, self.to_safe("as_health_status_" + instance.health_status), dest)
+        
+        # Global Tag: all Autoscaling instances
+        self.push(self.inventory, 'autoscaling', dest)
 
     def get_route53_records(self):
         ''' Get and store the map of resource records to domain names that
