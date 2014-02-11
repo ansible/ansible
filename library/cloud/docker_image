@@ -111,36 +111,7 @@ except ImportError, e:
     print "failed=True msg='failed to import python module: %s'" % e
     sys.exit(1)
 
-def _human_to_bytes(number):
-    suffixes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
-
-    if isinstance(number, int):
-        return number
-    if number[-1] == suffixes[0] and number[-2].isdigit():
-        return number[:-1]
-
-    i = 1
-    for each in suffixes[1:]:
-        if number[-len(each):] == suffixes[i]:
-            return int(number[:-len(each)]) * (1024 ** i)
-        i = i + 1
-
-    print "failed=True msg='Could not convert %s to integer'" % (number)
-    sys.exit(1)
-
-def _ansible_facts(container_list):
-    return {"docker_containers": container_list}
-
-def _docker_id_quirk(inspect):
-    # XXX: some quirk in docker
-    if 'ID' in inspect:
-        inspect['Id'] = inspect['ID']
-        del inspect['ID']
-    return inspect
-
 class DockerImageManager:
-
-    counters = {'created':0, 'started':0, 'stopped':0, 'killed':0, 'removed':0, 'restarted':0, 'pull':0}
 
     def __init__(self, module):
         self.module = module
