@@ -2,7 +2,7 @@
 
 import unittest
 
-from ansible.constants import get_config
+from ansible.constants import get_config, combine_config, shell_expand_path
 import ConfigParser
 import random
 import string
@@ -62,3 +62,56 @@ class TestConstants(unittest.TestCase):
         res = get_config(p, 'defaults', 'doesnt_exist', env_var, 'default')
 
         assert res == 'default'
+
+
+    def test_combine_paths_all_set(self):
+        r = random_string(6)
+        env_var = 'ANSIBLE_TEST_%s' % r
+        os.environ[env_var] = r
+        
+        res = combine_config(p, 'defaults', 'test_key', env_var, 'default')
+        del os.environ[env_var]
+        assert res == os.pathsep.join([r, 'test_value', 'default'])
+
+
+    def test_combine_paths_configfile_set_env_var_not_set(self):
+        r = random_string(6)
+        env_var = 'ANSIBLE_TEST_%s' % r
+        assert env_var not in os.environ
+        
+        res = combine_config(p, 'defaults', 'test_key', env_var, 'default')
+        assert res == os.pathsep.join(['test_value', 'default'])
+
+
+    def test_combine_paths_configfile_not_set_env_var_set(self):
+        r = random_string(6)
+        env_var = 'ANSIBLE_TEST_%s' % r
+        os.environ[env_var] = r
+        
+        res = combine_config(p, 'defaults', 'doesnt_exist', env_var, 'default')
+        del os.environ[env_var]
+        assert res == os.pathsep.join([r, 'default'])
+
+
+    def test_combine_paths_configfile_not_set_env_var_not_set(self):
+        r = random_string(6)
+        env_var = 'ANSIBLE_TEST_%s' % r
+        assert env_var not in os.environ
+        
+        res = combine_config(p, 'defaults', 'doesnt_exist', env_var, 'default')
+        assert res == 'default'
+
+
+    def test_combine_paths_nothing_set(self):
+        r = random_string(6)
+        env_var = 'ANSIBLE_TEST_%s' % r
+        assert env_var not in os.environ
+        
+        res = combine_config(p, 'defaults', 'doesnt_exist', env_var)
+        assert res == ''
+
+
+    def test_shell_expand_path_expands_multiple_diretories(self):
+        p = shell_expand_path(os.pathsep.join(['hello', '~/test', 'goodbye']))
+
+        assert p == 'hello' + os.pathsep + os.path.expanduser('~/test') + os.pathsep + 'goodbye'
