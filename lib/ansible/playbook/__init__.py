@@ -161,7 +161,7 @@ class PlayBook(object):
         if self.inventory.src() is not None:
             vars['inventory_file'] = self.inventory.src()
 
-        self.filename = (type(playbook) != list and os.path.exists(playbook)) or None
+        self.filename = (type(playbook) != list and os.path.exists(playbook)) and playbook or None
         (self.playbook, self.play_basedirs) = self._load_playbook(playbook, vars)
         ansible.callbacks.load_callback_plugins()
 
