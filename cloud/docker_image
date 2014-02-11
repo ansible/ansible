@@ -3,6 +3,8 @@
 
 # (c) 2014, Pavel Antonov <antonov@adwz.ru>
 #
+# This file is part of Ansible
+#
 # This module is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -20,167 +22,84 @@
 
 DOCUMENTATION = '''
 ---
-module: docker
-version_added: "1.4"
-short_description: manage docker containers
+module: docker_image
+author: Pavel Antonov
+version_added: "1.5"
+short_description: manage docker images
 description:
-     - Manage the life cycle of docker containers.
+     - Create, check and remove docker images
 options:
-  count:
+  path:
     description:
-      - Set number of containers to run
-    required: False
-    default: 1
+       - Path to directory with Dockerfile
+    required: false
+    default: null
     aliases: []
-  image:
+  name:
     description:
-       - Set container image to use
+       - Image name to work with
     required: true
     default: null
     aliases: []
-  command:
+  tag:
     description:
-       - Set command to run in a container on startup
+       - Image tag to work with
     required: false
-    default: null
+    default: ""
     aliases: []
-  ports:
+  nocache:
     description:
-      - Set private to public port mapping specification (e.g. ports=22,80 or ports=:8080 maps 8080 directly to host)
+      - Do not use cache with building
     required: false
-    default: null
+    default: false
     aliases: []
-  volumes:
-    description:
-      - Set volume(s) to mount on the container
-    required: false
-    default: null
-    aliases: []
-  volumes_from:
-    description:
-      - Set shared volume(s) from another container
-    required: false
-    default: null
-    aliases: []
-  memory_limit:
-    description:
-      - Set RAM allocated to container
-    required: false
-    default: null
-    aliases: []
-    default: 256MB
   docker_url:
     description:
       - URL of docker host to issue commands to
     required: false
     default: unix://var/run/docker.sock
     aliases: []
-  username:
-    description:
-      - Set remote API username
-    required: false
-    default: null
-    aliases: []
-  password:
-    description:
-      - Set remote API password
-    required: false
-    default: null
-    aliases: []
-  hostname:
-    description:
-      - Set container hostname
-    required: false
-    default: null
-    aliases: []
-  env:
-    description:
-      - Set environment variables (e.g. env="PASSWORD=sEcRe7,WORKERS=4")
-    required: false
-    default: null
-    aliases: []
-  dns:
-    description:
-      - Set custom DNS servers for the container
-    required: false
-    default: null
-    aliases: []
-  detach:
-    description:
-      - Enable detached mode on start up, leaves container running in background
-    required: false
-    default: true
-    aliases: []
   state:
     description:
-      - Set the state of the container
+      - Set the state of the image
     required: false
     default: present
-    choices: [ "present", "stopped", "absent", "killed", "restarted" ]
+    choices: [ "present", "absent", "build" ]
     aliases: []
-  privileged:
+  timeout:
     description:
-      - Set whether the container should run in privileged mode
+      - Set image operation timeout
     required: false
-    default: false
+    default: 600
     aliases: []
-  lxc_conf:
-    description:
-      - LXC config parameters,  e.g. lxc.aa_profile:unconfined
-    required: false
-    default:
-    aliases: []
-author: Cove Schneider
 requirements: [ "docker-py" ]
-notes:
-    - Currently supports Docker version <= 0.6.4 only.
 '''
 
 EXAMPLES = '''
-Start one docker container running tomcat in each host of the web group and bind tomcat's listening port to 8080
-on the host:
+Build docker image if required. Path should contains Dockerfile to build image:
+
+- hosts: web
+  sudo: yes
+  tasks:
+  - name: check or build image
+    docker_image: path="/path/to/build/dir" name="my/app" state=present
+
+Build new version of image:
+
+- hosts: web
+  sudo: yes
+  tasks:
+  - name: check or build image
+    docker_image: path="/path/to/build/dir" name="my/app" state=build
+
+Remove image from local docker storage:
 
 - hosts: web
   sudo: yes
   tasks:
   - name: run tomcat servers
-    docker: image=centos command="service tomcat6 start" ports=:8080
+    docker_image: name="my/app" state=absent
 
-The tomcat server's port is NAT'ed to a dynamic port on the host, but you can determine which port the server was
-mapped to using docker_containers:
-
-- hosts: web
-  sudo: yes
-  tasks:
-  - name: run tomcat servers
-    docker: image=centos command="service tomcat6 start" ports=8080 count=5
-  - name: Display IP address and port mappings for containers
-    debug: msg={{inventory_hostname}}:{{item.NetworkSettings.Ports['8080/tcp'][0].HostPort}}
-    with_items: docker_containers
-
-Just as in the previous example, but iterates over the list of docker containers with a sequence:
-
-- hosts: web
-  sudo: yes
-  vars:
-    start_containers_count: 5
-  tasks:
-  - name: run tomcat servers
-    docker: image=centos command="service tomcat6 start" ports=8080 count={{start_containers_count}}
-  - name: Display IP address and port mappings for containers
-    debug: msg={{inventory_hostname}}:{{docker_containers[{{item}}].NetworkSettings.Ports['8080/tcp'][0].HostPort}}"
-    with_sequence: start=0 end={{start_containers_count - 1}}
-
-Stop, remove all of the running tomcat containers and list the exit code from the stopped containers:
-
-- hosts: web
-  sudo: yes
-  tasks:
-  - name: stop tomcat servers
-    docker: image=centos command="service tomcat6 start" state=absent
-  - name: Display return codes from stopped containers
-    debug: msg="Returned {{inventory_hostname}}:{{item}}"
-    with_items: docker_containers
 '''
 
 try:
@@ -266,7 +185,6 @@ def main():
         argument_spec = dict(
             path            = dict(required=False, default=None),
             name            = dict(required=True),
-            #id              = dict(required=False, default=None),
             tag             = dict(required=False, default=""),
             nocache         = dict(default=False, type='bool'),
             state           = dict(default='present', choices=['absent', 'present', 'build']),
