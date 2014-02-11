@@ -144,10 +144,8 @@ options:
     required: false
     default:
     aliases: []
-author: Cove Schneider
+author: Cove Schneider, Pavel Antonov
 requirements: [ "docker-py" ]
-notes:
-    - Currently supports Docker version <= 0.6.4 only.
 '''
 
 EXAMPLES = '''
