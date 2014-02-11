@@ -34,7 +34,7 @@ class Play(object):
        'handlers', 'remote_user', 'remote_port', 'included_roles', 'accelerate',
        'accelerate_port', 'accelerate_ipv6', 'sudo', 'sudo_user', 'transport', 'playbook',
        'tags', 'gather_facts', 'serial', '_ds', '_handlers', '_tasks',
-       'basedir', 'any_errors_fatal', 'roles', 'max_fail_pct', '_play_hosts', 'su', 'su_user'
+       'basedir', 'any_errors_fatal', 'roles', 'max_fail_pct', '_play_hosts', 'su', 'su_user', 'vault_password'
     ]
 
     # to catch typos and so forth -- these are userland names
@@ -44,12 +44,12 @@ class Play(object):
        'tasks', 'handlers', 'remote_user', 'user', 'port', 'include', 'accelerate', 'accelerate_port', 'accelerate_ipv6',
        'sudo', 'sudo_user', 'connection', 'tags', 'gather_facts', 'serial',
        'any_errors_fatal', 'roles', 'pre_tasks', 'post_tasks', 'max_fail_percentage',
-       'su', 'su_user'
+       'su', 'su_user', 'vault_password'
     ]
 
     # *************************************************
 
-    def __init__(self, playbook, ds, basedir):
+    def __init__(self, playbook, ds, basedir, vault_password=None):
         ''' constructor loads from a play datastructure '''
 
         for x in ds.keys():
@@ -124,6 +124,7 @@ class Play(object):
         self.max_fail_pct     = int(ds.get('max_fail_percentage', 100))
         self.su               = ds.get('su', self.playbook.su)
         self.su_user          = ds.get('su_user', self.playbook.su_user)
+        self.vault_password   = vault_password
 
         # Fail out if user specifies a sudo param with a su param in a given play
         if (ds.get('sudo') or ds.get('sudo_user')) and (ds.get('su') or ds.get('su_user')):
@@ -540,7 +541,7 @@ class Play(object):
                         dirname = os.path.dirname(original_file)
                     include_file = template(dirname, tokens[0], mv)
                     include_filename = utils.path_dwim(dirname, include_file)
-                    data = utils.parse_yaml_from_file(include_filename)
+                    data = utils.parse_yaml_from_file(include_filename, vault_password=self.vault_password)
                     if 'role_name' in x and data is not None:
                         for x in data:
                             if 'include' in x:
@@ -652,12 +653,12 @@ class Play(object):
 
     # *************************************************
 
-    def update_vars_files(self, hosts):
+    def update_vars_files(self, hosts, vault_password=None):
         ''' calculate vars_files, which requires that setup runs first so ansible facts can be mixed in '''
 
         # now loop through all the hosts...
         for h in hosts:
-            self._update_vars_files_for_host(h)
+            self._update_vars_files_for_host(h, vault_password=vault_password)
 
     # *************************************************
 
@@ -689,14 +690,14 @@ class Play(object):
 
     # *************************************************
 
-    def _update_vars_files_for_host(self, host):
+    def _update_vars_files_for_host(self, host, vault_password=None):
 
         if type(self.vars_files) != list:
             self.vars_files = [ self.vars_files ]
 
         if host is not None:
             inject = {}
-            inject.update(self.playbook.inventory.get_variables(host))
+            inject.update(self.playbook.inventory.get_variables(host, vault_password=vault_password))
             inject.update(self.playbook.SETUP_CACHE[host])
 
         for filename in self.vars_files:

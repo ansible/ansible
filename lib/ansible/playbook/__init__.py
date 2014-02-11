@@ -72,6 +72,7 @@ class PlayBook(object):
         su               = False,
         su_user          = False,
         su_pass          = False,
+        vault_password   = False,
     ):
 
         """
@@ -138,6 +139,7 @@ class PlayBook(object):
         self.su               = su
         self.su_user          = su_user
         self.su_pass          = su_pass
+        self.vault_password   = vault_password
 
         self.callbacks.playbook = self
         self.runner_callbacks.playbook = self
@@ -172,7 +174,7 @@ class PlayBook(object):
         run top level error checking on playbooks and allow them to include other playbooks.
         '''
 
-        playbook_data  = utils.parse_yaml_from_file(path)
+        playbook_data  = utils.parse_yaml_from_file(path, vault_password=self.vault_password)
         accumulated_plays = []
         play_basedirs = []
 
@@ -242,7 +244,7 @@ class PlayBook(object):
         # loop through all patterns and run them
         self.callbacks.on_start()
         for (play_ds, play_basedir) in zip(self.playbook, self.play_basedirs):
-            play = Play(self, play_ds, play_basedir)
+            play = Play(self, play_ds, play_basedir, vault_password=self.vault_password)
             assert play is not None
 
             matched_tags, unmatched_tags = play.compare_tags(self.only_tags)
@@ -569,9 +571,8 @@ class PlayBook(object):
         self._do_setup_step(play)
 
         # now with that data, handle contentional variable file imports!
-
         all_hosts = self._trim_unavailable_hosts(play._play_hosts)
-        play.update_vars_files(all_hosts)
+        play.update_vars_files(all_hosts, vault_password=self.vault_password)
         hosts_count = len(all_hosts)
 
         serialized_batch = []

@@ -1,0 +1,467 @@
+# (c) 2014, James Tanner <tanner.jc@gmail.com>
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+# ansible-pull is a script that runs ansible in local mode
+# after checking out a playbooks directory from source repo.  There is an
+# example playbook to bootstrap this script in the examples/ dir which
+# installs ansible and sets it up to run on cron.
+
+import os
+import shutil
+import tempfile
+from subprocess import call
+from ansible import errors
+from hashlib import sha256
+
+# AES IMPORTS
+from hashlib import md5
+from Crypto.Cipher import AES as AES_
+from Crypto import Random
+
+HEADER='$ANSIBLE_VAULT'
+
+def is_encrypted(filename):
+
+    ''' 
+    Check a file for the encrypted header and return True or False 
+    
+    The first line should start with the header
+    defined by the global HEADER. If true, we 
+    assume this is a properly encrypted file.
+    '''
+
+    # read first line of the file
+    with open(filename) as f:
+        head=[f.next() for x in xrange(1)]
+
+    if head[0].startswith(HEADER):
+        return True
+    else:
+        return False
+
+def decrypt(filename, password):
+
+    ''' 
+    Return a decrypted string of the contents in an encrypted file
+
+    This is used by the yaml loading code in ansible
+    to automatically determine the encryption type
+    and return a plaintext string of the unencrypted
+    data.  
+    '''
+
+    if not password:
+        raise errors.AnsibleError("A vault password must be specified to decrypt %s" % filename)
+
+    V = Vault(filename=filename, vault_password=password)
+    return_data = V._decrypt_to_string()
+
+    if not V._verify_decryption(return_data):
+        raise errors.AnsibleError("Decryption of %s failed" % filename)
+
+    this_sha, return_data = V._strip_sha(return_data)    
+    return return_data.strip()
+
+
+class Vault(object):
+    def __init__(self, filename=None, cipher=None, vault_password=None):
+        self.filename = filename
+        self.vault_password = vault_password
+        self.cipher = cipher
+        self.version = '1.0'
+
+    def __load_cipher(self):
+
+        """ 
+        Load a cipher class by it's name
+
+        This is a lightweight "plugin" implementation to allow
+        for future support of other cipher types
+        """
+
+        whitelist = ['AES']
+
+        if self.cipher in whitelist:
+            self.cipher_obj = None
+            if self.cipher in globals():
+                this_cipher = globals()[self.cipher]
+                self.cipher_obj = this_cipher()
+            else:
+                raise errors.AnsibleError("%s cipher could not be loaded" % self.cipher)
+        else:
+            raise errors.AnsibleError("%s is not an allowed encryption cipher" % self.cipher)
+
+
+    def eval_header(self):
+
+        """ Read first line of the file and parse header """
+
+        # read first line
+        with open(self.filename) as f:
+            head=[f.next() for x in xrange(1)]
+
+        this_version = None
+        this_cipher = None
+
+        # split segments
+        header = head[0].strip()
+        if len(header.split(';')) == 3:
+            this_version = header.split(';')[1]
+            this_cipher = header.split(';')[2]            
+
+        # set properties
+        self.cipher = this_cipher
+        self.version = this_version
+
+    def create(self):
+        """ create a new encrypted file """
+
+        if os.path.isfile(self.filename):
+            raise errors.AnsibleError("%s exists, please use 'edit' instead" % self.filename)
+
+        f = open(self.filename, "wb")
+        f.write("---")
+        f.close()
+
+        # drop the user into vim on file
+        EDITOR = os.environ.get('EDITOR','vim')
+        call([EDITOR, self.filename])
+
+        self.encrypt()
+
+    def decrypt(self):
+        """ unencrypt a file inplace """
+
+        if not is_encrypted(self.filename):
+            raise errors.AnsibleError("%s is not encrypted" % self.filename)
+
+        # set cipher based on file header
+        self.eval_header()
+
+        # decrypt it
+        data = self._decrypt_to_string()
+
+        # verify sha and then strip it out
+        if not self._verify_decryption(data):
+            raise errors.AnsibleError("decryption of %s failed" % self.filename)
+        this_sha, clean_data = self._strip_sha(data)
+        
+        # write back to original file
+        f = open(self.filename, "wb")
+        f.write(clean_data)
+        f.close()
+
+    def encrypt(self):
+        """ encrypt a file inplace """
+
+        if is_encrypted(self.filename):
+            raise errors.AnsibleError("%s is already encrypted" % self.filename)
+
+        #self.eval_header()
+        self.__load_cipher()
+
+        # read data
+        f = open(self.filename, "rb")
+        tmpdata = f.read()
+        f.close()
+
+        # sha256 the data
+        this_sha = sha256(tmpdata).hexdigest()
+
+        # combine sha + data to tmpfile
+        _, combined_path = tempfile.mkstemp()
+        f = open(combined_path, "wb")
+        f.write(this_sha + "\n")
+        f.write(tmpdata)
+        f.close()
+
+        # encrypt combined data
+        _, out_path = tempfile.mkstemp()
+        f = open(combined_path, "rb")
+        j = open(out_path, "wb")
+        self.cipher_obj.encrypt(f, j, self.vault_password)
+        f.close()
+        j.close()
+
+        # combine header and encrypted data
+        f = open(out_path, "rb")
+        tmpdata = f.read()
+        f.close()
+        tmpdata = HEADER + ";" + self.version + ";" + self.cipher + "\n" + tmpdata
+        f = open(out_path, "wb")
+        f.write(tmpdata)
+        f.close()
+
+        # clean up
+        if os.path.isfile(self.filename):
+            os.remove(self.filename)
+        shutil.move(out_path, self.filename)
+
+    def rekey(self, newpassword):
+
+        """ unencrypt file then encrypt with new password """
+
+        if not is_encrypted(self.filename):
+            raise errors.AnsibleError("%s is not encrypted" % self.filename)
+
+        # unencrypt to string with old password
+        data = self._decrypt_to_string()
+
+        # verify sha and then strip it out
+        if not self._verify_decryption(data):
+            raise errors.AnsibleError("decryption of %s failed" % self.filename)
+        this_sha, clean_data = self._strip_sha(data)
+    
+        # set password     
+        self.vault_password = newpassword
+
+        # combine sha + data to tmpfile
+        _, combined_path = tempfile.mkstemp()
+        f = open(combined_path, "wb")
+        f.write(this_sha + "\n")
+        f.write(clean_data)
+        f.close()
+
+        # get the cipher and encrypt data with new key
+        self.__load_cipher()
+        #f = open(in_path, "rb")
+        f = open(combined_path, "rb")
+        j = open(out_path, "wb")
+        self.cipher_obj.encrypt(f, j, self.vault_password)        
+        f.close()
+        j.close()
+
+        # combine header and encrypted data
+        f = open(out_path, "rb")
+        tmpdata = f.read()
+        f.close()
+        tmpdata = HEADER + ";" + self.version + ";" + self.cipher + "\n" + tmpdata
+        f = open(out_path, "wb")
+        f.write(tmpdata)
+        f.close()
+
+        # move tmp file into place
+        os.remove(in_path)
+        os.remove(combined_path)
+        os.remove(self.filename)
+        shutil.move(out_path, self.filename)
+
+
+    def _decrypt_to_string(self):
+
+        """ decrypt file to string """
+
+        if not is_encrypted(self.filename):
+            raise errors.AnsibleError("%s is not encrypted" % self.filename)
+
+        # figure out what this is
+        self.eval_header()
+        self.__load_cipher()
+
+        # strip data from header
+        _, in_path = tempfile.mkstemp()
+        f = open(self.filename, "rb")
+        tmpdata = f.readlines()
+        f.close()
+        del tmpdata[0]
+        tmpdata = ''.join(tmpdata)
+        f = open(in_path, "wb")
+        f.write(tmpdata)
+        f.close()
+
+        # decrypt to tmp file then read
+        _, out_path = tempfile.mkstemp()
+        f = open(in_path, "rb")
+        j = open(out_path, "wb")
+        self.cipher_obj.decrypt(f, j, self.vault_password)
+        f.close()
+        j.close()
+
+        f = open(out_path, "rb")
+        data = f.read()
+        f.close()
+
+        # cleanup and return
+        os.remove(in_path)
+        os.remove(out_path)
+        return data 
+
+
+    def edit(self, filename=None, password=None, cipher=None, version=None):
+
+        if not is_encrypted(self.filename):
+            raise errors.AnsibleError("%s is not encrypted" % self.filename)
+
+        # figure out what this file is
+        self.eval_header()
+        self.__load_cipher()
+
+        _, in_path = tempfile.mkstemp()
+        _, out_path = tempfile.mkstemp()
+
+
+        # strip header from data, write rest to tmp file
+        f = open(self.filename, "rb")
+        tmpdata = f.readlines()
+        f.close()
+        tmpheader = tmpdata[0].strip()
+        del tmpdata[0]
+        tmpdata = ''.join(tmpdata)
+
+        # write headerless data to tmpfile
+        _, io_path = tempfile.mkstemp()
+        f = open(io_path, "wb")
+        f.write(tmpdata)
+        f.close()
+
+        #decrypt to string
+        data = self._decrypt_to_string()
+
+        # verify sha and then strip it out
+        if not self._verify_decryption(data):
+            raise errors.AnsibleError("decryption of %s failed" % self.filename)
+        this_sha, clean_data = self._strip_sha(data)
+
+        # rewrite file without sha        
+        f = open(in_path, "wb")
+        tmpdata = f.write(clean_data)
+        f.close()
+
+        # drop the user into vim on the unencrypted tmp file
+        EDITOR = os.environ.get('EDITOR','vim')
+        call([EDITOR, in_path])
+
+        f = open(in_path, "rb")
+        tmpdata = f.read()
+        f.close()
+
+        # sha256 the data
+        this_sha = sha256(tmpdata).hexdigest()
+
+        # combine sha + data to tmpfile
+        _, combined_path = tempfile.mkstemp()
+        f = open(in_path, "wb")
+        f.write(this_sha + "\n")
+        f.write(tmpdata)
+        f.close()
+
+        # encrypt data
+        f = open(in_path, "rb")
+        j = open(out_path, "wb")
+        self.cipher_obj.encrypt(f, j, self.password)
+        f.close()
+        j.close()
+
+        # combine header and encrypted data
+        f = open(out_path, "rb")
+        tmpdata = f.read()
+        tmpdata = HEADER + ";" + self.version + ";" + self.cipher + "\n" + tmpdata
+        f.close()
+        f = open(out_path, "wb")
+        f.write(tmpdata)
+        f.close()
+
+        # clean up
+        if os.path.isfile(combined_path):
+            os.remove(combined_path)
+        if os.path.isfile(io_path):
+            os.remove(io_path)
+        if os.path.isfile(in_path):
+            os.remove(in_path)
+        if os.path.isfile(self.filename):
+            os.remove(self.filename)
+        shutil.move(out_path, self.filename)
+
+
+    def _verify_decryption(self, data):
+
+        # split the sha and other data
+        this_sha, clean_data = self._strip_sha(data)
+
+        # does the decrypted data match the sha ?
+        clean_sha = sha256(clean_data).hexdigest()
+       
+        # compare, return result 
+        if this_sha == clean_sha:
+            return True
+        else:
+            return False
+
+    def _strip_sha(self, data):
+         # is the first line a sha?
+        lines = data.split("\n")
+        this_sha = lines[0]
+        del lines[0]
+
+        clean_data = '\n'.join(lines)
+        return this_sha, clean_data       
+
+
+class AES(object):
+
+    # http://stackoverflow.com/a/16761459
+
+    def aes_derive_key_and_iv(self, password, salt, key_length, iv_length):
+
+        """ Create a key and an initialization vector """
+
+        d = d_i = ''
+        while len(d) < key_length + iv_length:
+            d_i = md5(d_i + password + salt).digest()
+            d += d_i
+
+        key = d[:key_length]
+        iv = d[key_length:key_length+iv_length]
+
+        return key, iv
+
+    def encrypt(self, in_file, out_file, password, key_length=32):
+
+        """ Read plaintext data from in_file and write encrypted to out_file """
+
+        bs = AES_.block_size
+        salt = Random.new().read(bs - len('Salted__'))
+        key, iv = self.aes_derive_key_and_iv(password, salt, key_length, bs)
+        cipher = AES_.new(key, AES_.MODE_CBC, iv)
+        out_file.write('Salted__' + salt)
+        finished = False
+        while not finished:
+            chunk = in_file.read(1024 * bs)
+            if len(chunk) == 0 or len(chunk) % bs != 0:
+                padding_length = (bs - len(chunk) % bs) or bs
+                chunk += padding_length * chr(padding_length)
+                finished = True
+            out_file.write(cipher.encrypt(chunk))
+
+    def decrypt(self, in_file, out_file, password, key_length=32):
+
+        """ Read encrypted data from in_file and write decrypted to out_file """
+
+        # http://stackoverflow.com/a/14989032
+
+        bs = AES_.block_size
+        salt = in_file.read(bs)[len('Salted__'):]
+        key, iv = self.aes_derive_key_and_iv(password, salt, key_length, bs)
+        cipher = AES_.new(key, AES_.MODE_CBC, iv)
+        next_chunk = ''
+        finished = False
+        while not finished:
+            chunk, next_chunk = next_chunk, cipher.decrypt(in_file.read(1024 * bs))
+            if len(next_chunk) == 0:
+                padding_length = ord(chunk[-1])
+                chunk = chunk[:-padding_length]
+                finished = True
+            out_file.write(chunk)
+
