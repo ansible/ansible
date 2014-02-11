@@ -55,6 +55,15 @@ def _get_config(p, section, key, env_var, default):
             return default
     return default
 
+def combine_config(p, section, key, env_var, default=None, separator=os.pathsep): 
+    env_config = os.environ.get(env_var)
+    try: 
+        file_config = p.get(section, key)
+    except:
+        file_config = None
+    config = [ c for c in (env_config, file_config, default) if c ]
+    return separator.join(config)
+
 def load_config_file():
     p = ConfigParser.ConfigParser()
     path1 = os.getcwd() + "/ansible.cfg"
@@ -73,9 +82,10 @@ def load_config_file():
 
 def shell_expand_path(path):
     ''' shell_expand_path is needed as os.path.expanduser does not work
-        when path is None, which is the default for ANSIBLE_PRIVATE_KEY_FILE '''
+        when path is None, which is the default for ANSIBLE_PRIVATE_KEY_FILE.
+        Also works for PATHs containing multiple directories '''
     if path:
-        path = os.path.expanduser(path)
+        path = os.pathsep.join([os.path.expanduser(p) for p in path.split(os.pathsep)])
     return path
 
 p = load_config_file()
@@ -99,7 +109,7 @@ DEFAULTS='defaults'
 
 # configurable things
 DEFAULT_HOST_LIST         = shell_expand_path(get_config(p, DEFAULTS, 'hostfile', 'ANSIBLE_HOSTS', '/etc/ansible/hosts'))
-DEFAULT_MODULE_PATH       = get_config(p, DEFAULTS, 'library',          'ANSIBLE_LIBRARY',          DIST_MODULE_PATH)
+DEFAULT_MODULE_PATH       = shell_expand_path(combine_config(p, DEFAULTS, 'library',          'ANSIBLE_LIBRARY', DIST_MODULE_PATH))
 DEFAULT_ROLES_PATH        = get_config(p, DEFAULTS, 'roles_path',       'ANSIBLE_ROLES_PATH',       '/etc/ansible/roles')
 DEFAULT_REMOTE_TMP        = shell_expand_path(get_config(p, DEFAULTS, 'remote_tmp',       'ANSIBLE_REMOTE_TEMP',      '$HOME/.ansible/tmp'))
 DEFAULT_MODULE_NAME       = get_config(p, DEFAULTS, 'module_name',      None,                       'command')
