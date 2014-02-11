@@ -6,7 +6,7 @@ Hi!  Thanks for interest in contributing to Ansible.
 Here are some guidelines for contributing code.  The purpose of this document are to establish what we're looking for in code contributions, and to make sure
 new contributions know some of the conventions that we've been using.
 
-We don't think much of this should be too strange to readers familar with contributing to Python projects, though it helps if we all get on the same page.
+We don't think much of this should be too strange to readers familiar with contributing to Python projects, though it helps if we all get on the same page.
 
 Language
 ========
@@ -44,7 +44,7 @@ Shebang Lines
 =============
  
   * /usr/bin/scripts should start with '/usr/bin/env python'
-  * module code should still use '/usr/bin/python' as this is replaced automatically by 'ansible_python_interpeter', see the FAQ in the docs for more info.
+  * module code should still use '/usr/bin/python' as this is replaced automatically by 'ansible_python_interpreter', see the FAQ in the docs for more info.
 
 Comments
 ========
@@ -58,7 +58,7 @@ Comments
 Classes
 =======
 
-  * With the exception of module code (where inline is better), it is deseriable to see classes in their own files.
+  * With the exception of module code (where inline is better), it is desirable to see classes in their own files.
   * Classes should generally not cause side effects as soon as they are instantiated, move meaningful behavior to methods rather than constructors.
  
 Functions and Methods
@@ -262,7 +262,7 @@ To test if something is a string, consider that it may be unicode.
     if type(x) == str:
 
     # yes
-    if isintance(x, basestring):
+    if isinstance(x, basestring):
 
 Cleverness
 ==========
