@@ -199,7 +199,7 @@ class TestRunner(unittest.TestCase):
         result = self._run('git', ["repo=\"file:///tmp/%s\"" % git_demo, "dest=/tmp/%s" % git_bare, "bare=yes", "remote=test"])
         assert result['changed']
         # test a no-op fetch, add origin for el6 versions of git
-        self._run('command', ['git remote add origin file:///tmp/%s' % git_demo, 'chdir=/tmp/%s' % git_dm])
+        self._run('command', ['git', 'remote', 'add', 'origin', 'file:///tmp/%s' % git_demo, 'chdir=/tmp/%s' % git_bare])
         result = self._run('git', ["repo=\"file:///tmp/%s\"" % git_demo, "dest=/tmp/%s" % git_bare, "bare=yes"])
         assert not result['changed']
         # test whether fetch is working for bare repos
