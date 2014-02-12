@@ -131,7 +131,7 @@ are included on their own line, enclosed in square brackets that
 start the line.
 
 Ranges of hosts are also supported.  For more information and
-additional options, see the documentation on http://ansible.github.com/.
+additional options, see the documentation on http://docs.ansible.com/.
 
 FILES
 -----
@@ -147,7 +147,7 @@ FILES
 ENVIRONMENT
 -----------
 
-The following environment variables may specified.
+The following environment variables may be specified.
 
 ANSIBLE_HOSTS  -- Override the default ansible hosts file
 
