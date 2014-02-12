@@ -151,7 +151,7 @@ class PlayBook(object):
         if self.module_path is not None:
             utils.plugins.module_finder.add_directory(self.module_path)
 
-        self.basedir     = os.path.dirname(playbook) or '.'
+        self.basedir     = (type(playbook) != list and os.path.dirname(playbook)) and os.path.dirname(playbook) or '.'
         utils.plugins.push_basedir(self.basedir)
         vars = extra_vars.copy()
         vars['playbook_dir'] = self.basedir
@@ -161,25 +161,29 @@ class PlayBook(object):
         if self.inventory.src() is not None:
             vars['inventory_file'] = self.inventory.src()
 
-        self.filename = playbook
-        (self.playbook, self.play_basedirs) = self._load_playbook_from_file(playbook, vars)
+        self.filename = (type(playbook) != list and os.path.exists(playbook)) and playbook or None
+        (self.playbook, self.play_basedirs) = self._load_playbook(playbook, vars)
         ansible.callbacks.load_callback_plugins()
 
     # *****************************************************
 
-    def _load_playbook_from_file(self, path, vars={}):
+    def _load_playbook(self, path, vars={}):
         '''
         run top level error checking on playbooks and allow them to include other playbooks.
         '''
 
-        playbook_data  = utils.parse_yaml_from_file(path)
+        if type(path) != list and os.path.exists(path):
+            playbook_data = utils.parse_yaml_from_file(path)
+        else:
+            playbook_data = path
+
         accumulated_plays = []
         play_basedirs = []
 
         if type(playbook_data) != list:
             raise errors.AnsibleError("parse error: playbooks must be formatted as a YAML list, got %s" % type(playbook_data))
 
-        basedir = os.path.dirname(path) or '.'
+        basedir = (type(path) != list and os.path.dirname(path)) and os.path.dirname(path) or '.'
         utils.plugins.push_basedir(basedir)
         for play in playbook_data:
             if type(play) != dict:
@@ -208,7 +212,7 @@ class PlayBook(object):
                     incvars[k] = template(basedir, v, incvars)
 
                 included_path = utils.path_dwim(basedir, template(basedir, tokens[0], incvars))
-                (plays, basedirs) = self._load_playbook_from_file(included_path, incvars)
+                (plays, basedirs) = self._load_playbook(included_path, incvars)
                 for p in plays:
                     # support for parameterized play includes works by passing
                     # those variables along to the subservient play
@@ -539,7 +543,7 @@ class PlayBook(object):
         for x in replay_hosts:
             buf.write("%s\n" % x)
         basedir = self.inventory.basedir()
-        filename = "%s.retry" % os.path.basename(self.filename)
+        filename = "%s.retry" % os.path.basename(self.filename or 'dynamic')
         filename = filename.replace(".yml","")
         filename = os.path.join(os.path.expandvars('$HOME/'), filename)
 
