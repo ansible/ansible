@@ -538,19 +538,29 @@ class PlayBook(object):
         buf = StringIO.StringIO()
         for x in replay_hosts:
             buf.write("%s\n" % x)
-        basedir = self.inventory.basedir()
         filename = "%s.retry" % os.path.basename(self.filename)
         filename = filename.replace(".yml","")
-        filename = os.path.join(os.path.expandvars('$HOME/'), filename)
+
+        basedir = os.path.expandvars(C.RETRY_FILES_SAVE_PATH)
+        target = os.path.join(basedir, filename)
 
         try:
-            fd = open(filename, 'w')
+            if C.RETRY_FILES_SAVE_PATH == '$HOME/.ansible-retry' and not os.path.exists(basedir):
+                os.makedirs(basedir)
+
+            fd = open(target, 'w')
             fd.write(buf.getvalue())
             fd.close()
-            return filename
         except:
-            pass
-        return None
+            ansible.callbacks.display(
+                "\nERROR: could not create retry file. Check the value of \n"
+                + "the configuration variable 'retry_files_save_path' or set \n" 
+                + "'retry_files_enabled' to False to avoid this message.\n",
+                color='red'
+            )
+            return None
+
+        return target
 
     # *****************************************************
 
