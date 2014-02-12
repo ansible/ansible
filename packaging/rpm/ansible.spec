@@ -105,6 +105,18 @@ rm -rf %{buildroot}
 * Wed Nov 27 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.5-0
 * (PENDING)
 
+* Wed Feb 12 2014 Michael DeHaan <michael.dehaan@gmail.com> - 1.4.5
+* Release 1.4.5
+
+* Mon Jan 06 2014 Michael DeHaan <michael.dehaan@gmail.com> - 1.4.4
+* Release 1.4.4
+
+* Fri Dec 20 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.4.3
+* Release 1.4.3
+
+* Wed Dec 18 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.4.2
+* Release 1.4.2
+
 * Wed Nov 27 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.4-1
 * Release 1.4.1
 

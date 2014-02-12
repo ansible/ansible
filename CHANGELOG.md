@@ -56,6 +56,10 @@ Misc:
 * significant enhancement and cleanup of rackspace modules
 * various other bug fixes
 
+## 1.4.5 "Could This Be Magic" - February 12, 2014
+
+- fixed issue with permissions being incorrect on fireball/accelerate keys when the umask setting was too loose.
+
 ## 1.4.4 "Could This Be Magic" - January 6, 2014
 
 - fixed a minor issue with newer versions of pip dropping the "use-mirrors" parameter.
