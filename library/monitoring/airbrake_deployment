@@ -47,6 +47,11 @@ options:
     description:
       - A hash, number, tag, or other identifier showing what revision was deployed
     required: false
+  url:
+    description:
+      - Optional URL to submit the notification to. Use to send notifications to Airbrake-compliant tools like Errbit.
+    required: false
+    default: https://airbrake.io/deploys
 
 # informational: requirements for nodes
 requirements: [ urllib, urllib2 ]
@@ -89,6 +94,7 @@ def main():
             user=dict(required=False),
             repo=dict(required=False),
             revision=dict(required=False),
+            url=dict(required=False, default='https://api.airbrake.io/deploys.txt')
         ),
         supports_check_mode=True
     )
@@ -110,21 +116,23 @@ def main():
 
     params["api_key"] = module.params["token"]
 
+    url = module.params.get('url')
+
     # If we're in check mode, just exit pretending like we succeeded
     if module.check_mode:
         module.exit_json(changed=True)
 
     # Send the data to airbrake
     try:
-        req = urllib2.Request("https://airbrake.io/deploys", urllib.urlencode(params))
+        req = urllib2.Request(url, urllib.urlencode(params))
         result=urllib2.urlopen(req)
     except Exception, e:
-        module.fail_json(msg="unable to update airbrake: %s" % e)
+        module.fail_json(msg="unable to update airbrake via %s?%s : %s" % (url, urllib.urlencode(params), e))
     else:
         if result.code == 200:
             module.exit_json(changed=True)
         else:
-            module.fail_json(msg="HTTP result code: %d" % result.code)
+            module.fail_json(msg="HTTP result code: %d connecting to %s" % (result.code, url))
 
 # import module snippets
 from ansible.module_utils.basic import *
