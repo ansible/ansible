@@ -28,10 +28,8 @@ from ansible.runner.return_data import ReturnData
 import sys
 reload(sys)
 sys.setdefaultencoding("utf8")
-#import base64
-#import stat
-#import tempfile
 import pipes
+
 
 class ActionModule(object):
 
@@ -53,7 +51,7 @@ class ActionModule(object):
         copy    = utils.boolean(options.get('copy', 'yes'))
 
         if source is None or dest is None:
-            result=dict(failed=True, msg="src (or content) and dest are required")
+            result = dict(failed=True, msg="src (or content) and dest are required")
             return ReturnData(conn=conn, result=result)
 
         source = template.template(self.runner.basedir, source, inject)
@@ -65,7 +63,7 @@ class ActionModule(object):
 
         remote_md5 = self.runner._remote_md5(conn, tmp, dest)
         if remote_md5 != '3':
-            result = dict(failed=True, msg="dest must be an existing dir")
+            result = dict(failed=True, msg="dest must be an existing dir", rc=remote_md5)
             return ReturnData(conn=conn, result=result)
 
         if copy:
