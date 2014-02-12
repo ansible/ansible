@@ -416,10 +416,10 @@ class TestPlaybook(unittest.TestCase):
 
         expected =  {
             "localhost": {
-                "changed": 41,
+                "changed": 29,
                 "failures": 0,
-                "ok": 45,
-                "skipped": 0,
+                "ok": 33,
+                "skipped": 12,
                 "unreachable": 0
             }
         }
