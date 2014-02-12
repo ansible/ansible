@@ -104,7 +104,7 @@ EXAMPLES = '''
         container: mycontainer2
         meta:
           key: value
-          file_for: paul.durivage@rackspace.com
+          file_for: someuser@example.com
 
     - name: "Set a container's web index page"
       rax_files: container=mycontainer web_index=index.html
@@ -135,7 +135,7 @@ EXAMPLES = '''
         container: mycontainer2
         type: meta
         meta:
-          uploaded_by: paul.durivage@rackspace.com
+          uploaded_by: someuser@example.com
 
     - name: "Remove mycontainer2 metadata"
       rax_files:
