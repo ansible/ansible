@@ -78,8 +78,10 @@ else:
 
 def getvariable(cursor, mysqlvar):
     cursor.execute("SHOW VARIABLES LIKE '" + mysqlvar + "'")
-    mysqlvar_val = cursor.fetchall()
-    return mysqlvar_val
+    mysqlvar_val = cursor.fetchone()
+    if mysqlvar_val is not None:
+        return mysqlvar_val[1]
+    return None
 
 def setvariable(cursor, mysqlvar, value):
     try:
@@ -201,9 +203,9 @@ def main():
     if value is None:
         module.exit_json(msg=mysqlvar_val)
     else:
-        if len(mysqlvar_val) < 1:
+        if mysqlvar_val is None:
             module.fail_json(msg="Variable not available", changed=False)
-        if value == mysqlvar_val[0][1]:
+        if value == mysqlvar_val:
             module.exit_json(msg="Variable already set to requested value", changed=False)
         result = setvariable(cursor, mysqlvar, value)
         if result is True:
