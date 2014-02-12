@@ -1,0 +1,78 @@
+---
+# To run me manually, use: -i "localhost,"
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  vars:
+    - testdir: /tmp/ansible-unarchive
+    - filesdir: test_unarchive/files
+  tasks:
+
+   - name: "Simple tar unarchive."
+     command: rm -rf {{testdir}}
+   - file: state=directory dest={{testdir}}
+   - unarchive: src={{filesdir}}/test.tar dest={{testdir}}
+     register: res
+   - command: test -f {{testdir}}/foo
+   - command: test "{{res.changed}}" = "True"
+   - unarchive: src={{filesdir}}/test.tar dest={{testdir}}
+     register: res
+   - command: test "{{res.changed}}" = "False"
+
+   - name: "Simple tar.gz unarchive."
+     command: rm -rf {{testdir}}
+   - file: state=directory dest={{testdir}}
+   - unarchive: src={{filesdir}}/test.tar.gz dest={{testdir}}
+     register: res
+   - command: test -f {{testdir}}/foo
+   - command: test "{{res.changed}}" = "True"
+   - unarchive: src={{filesdir}}/test.tar.gz dest={{testdir}}
+     register: res
+   - command: test "{{res.changed}}" = "False"
+
+   - name: "Simple zip unarchive."
+     command: rm -rf {{testdir}}
+   - file: state=directory dest={{testdir}}
+   - unarchive: src={{filesdir}}/test.zip dest={{testdir}}
+     register: res
+   - command: test -f {{testdir}}/foo
+   - command: test "{{res.changed}}" = "True"
+   - unarchive: src={{filesdir}}/test.zip dest={{testdir}}
+     register: res
+   - command: test "{{res.changed}}" = "True"
+
+   - name: "Unarchive a local tar file."
+     command : rm -rf {{testdir}}
+   - file: state=directory dest={{testdir}}
+   - copy: src={{filesdir}}/test.tar dest={{testdir}}
+   - unarchive: src={{testdir}}/test.tar dest={{testdir}}
+     register: res
+   - command: test -f {{testdir}}/foo
+   - command: test "{{res.changed}}" = "True"
+   - unarchive: src={{testdir}}/test.tar dest={{testdir}}
+     register: res
+   - command: test "{{res.changed}}" = "False"
+
+   - name: "Unarchive a local tar.gz file."
+     command : rm -rf {{testdir}}
+   - file: state=directory dest={{testdir}}
+   - copy: src={{filesdir}}/test.tar.gz dest={{testdir}}
+   - unarchive: src={{testdir}}/test.tar.gz dest={{testdir}}
+     register: res
+   - command: test -f {{testdir}}/foo
+   - command: test "{{res.changed}}" = "True"
+   - unarchive: src={{testdir}}/test.tar.gz dest={{testdir}}
+     register: res
+   - command: test "{{res.changed}}" = "False"
+
+   - name: "Unarchive a local zip file."
+     command : rm -rf {{testdir}}
+   - file: state=directory dest={{testdir}}
+   - copy: src={{filesdir}}/test.zip dest={{testdir}}
+   - unarchive: src={{testdir}}/test.zip dest={{testdir}}
+     register: res
+   - command: test -f {{testdir}}/foo
+   - command: test "{{res.changed}}" = "True"
+   - unarchive: src={{testdir}}/test.zip dest={{testdir}}
+     register: res
+   - command: test "{{res.changed}}" = "True"
