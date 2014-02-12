@@ -777,7 +777,10 @@ class AnsibleModule(object):
         module = 'ansible-%s' % os.path.basename(__file__)
         msg = ''
         for arg in log_args:
-            msg = msg + arg + '=' + str(log_args[arg]) + ' '
+            if isinstance(log_args[arg], unicode):
+                msg = msg + arg + '=' + log_args[arg] + ' '
+            else:
+                msg = msg + arg + '=' + str(log_args[arg]) + ' '
         if msg:
             msg = 'Invoked with %s' % msg
         else:
@@ -793,10 +796,10 @@ class AnsibleModule(object):
             except IOError, e:
                 # fall back to syslog since logging to journal failed
                 syslog.openlog(str(module), 0, syslog.LOG_USER)
-                syslog.syslog(syslog.LOG_NOTICE, msg)
+                syslog.syslog(syslog.LOG_NOTICE, msg.encode('utf8'))
         else:
             syslog.openlog(str(module), 0, syslog.LOG_USER)
-            syslog.syslog(syslog.LOG_NOTICE, msg)
+            syslog.syslog(syslog.LOG_NOTICE, msg.encode('utf8'))
 
     def get_bin_path(self, arg, required=False, opt_dirs=[]):
         '''
