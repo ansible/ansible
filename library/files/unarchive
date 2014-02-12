@@ -69,7 +69,7 @@ import os
 
 
 # class to handle .zip files
-class _zipfile(object):
+class ZipFile(object):
     
     def __init__(self, src, dest, module):
         self.src = src
@@ -93,7 +93,7 @@ class _zipfile(object):
 
 
 # class to handle gzipped tar files
-class _tgzfile(object):
+class TgzFile(object):
     
     def __init__(self, src, dest, module):
         self.src = src
@@ -124,7 +124,7 @@ class _tgzfile(object):
 
 
 # class to handle tar files that aren't compressed
-class _tarfile(_tgzfile):
+class TarFile(TgzFile):
     def __init__(self, src, dest, module):
         self.src = src
         self.dest = dest
@@ -133,7 +133,7 @@ class _tarfile(_tgzfile):
 
 
 # class to handle bzip2 compressed tar files
-class _tarbzip(_tgzfile):
+class TarBzip(TgzFile):
     def __init__(self, src, dest, module):
         self.src = src
         self.dest = dest
@@ -142,7 +142,7 @@ class _tarbzip(_tgzfile):
 
 
 # class to handle xz compressed tar files
-class _tarxz(_tgzfile):
+class TarXz(TgzFile):
     def __init__(self, src, dest, module):
         self.src = src
         self.dest = dest
@@ -152,7 +152,7 @@ class _tarxz(_tgzfile):
 
 # try handlers in order and return the one that works or bail if none work
 def pick_handler(src, dest, module):
-    handlers = [_tgzfile, _zipfile, _tarfile, _tarbzip, _tarxz]
+    handlers = [TgzFile, ZipFile, TarFile, TarBzip, TarXz]
     for handler in handlers:
         obj = handler(src, dest, module)
         if obj.can_handle_archive():
