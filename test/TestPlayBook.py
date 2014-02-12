@@ -410,21 +410,23 @@ class TestPlaybook(unittest.TestCase):
         assert utils.jsonify(expected, format=True) == utils.jsonify(actual,format=True)
 
 
-    def test_unarchive(self):
-        pb = 'test/playbook-unarchive.yml'
-        actual = self._run(pb)
-
-        expected =  {
-            "localhost": {
-                "changed": 29,
-                "failures": 0,
-                "ok": 33,
-                "skipped": 12,
-                "unreachable": 0
-            }
-        }
-
-        assert utils.jsonify(expected, format=True) == utils.jsonify(actual,format=True)
+    # Disabled for now as there are permissions issues that happen if you are not the owner that created files
+    # in the archive.
+    # def test_unarchive(self):
+    #     pb = 'test/playbook-unarchive.yml'
+    #     actual = self._run(pb)
+    #
+    #     expected =  {
+    #         "localhost": {
+    #             "changed": 29,
+    #             "failures": 0,
+    #             "ok": 33,
+    #             "skipped": 12,
+    #             "unreachable": 0
+    #         }
+    #     }
+    #
+    #     assert utils.jsonify(expected, format=True) == utils.jsonify(actual,format=True)
 
 
     def _compare_file_output(self, filename, expected_lines):
