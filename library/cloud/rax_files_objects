@@ -140,7 +140,7 @@ EXAMPLES = '''
         method: put
         meta:
           testkey: testdata
-          who_uploaded_this: paul.durivage@rackspace.com
+          who_uploaded_this: someuser@example.com
 
     - name: "Upload one file to test container with TTL of 60 seconds"
       rax_files_objects: container=testcont method=put src=~/Downloads/testcont/file3 expires=60
