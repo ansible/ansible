@@ -102,7 +102,7 @@ rm -rf %{buildroot}
 
 %changelog
 
-* Wed Nov 27 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.5-0
+* Thu Feb 13 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.5-0
 * (PENDING)
 
 * Wed Feb 12 2014 Michael DeHaan <michael.dehaan@gmail.com> - 1.4.5
