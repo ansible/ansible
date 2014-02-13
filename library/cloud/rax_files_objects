@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python
 
 # (c) 2013, Paul Durivage <paul.durivage@rackspace.com>
 #
@@ -200,9 +200,9 @@ import os
 
 try:
     import pyrax
-except ImportError, e:
-    print("failed=True msg='pyrax is required for this module'")
-    sys.exit(1)
+    HAS_PYRAX = True
+except ImportError:
+    HAS_PYRAX = False
 
 EXIT_DICT = dict(success=False)
 META_PREFIX = 'x-object-meta-'
@@ -446,7 +446,6 @@ def get_meta(module, cf, container, src, dest):
                 meta_key = k.split(META_PREFIX)[-1]
                 results[obj][meta_key] = v
 
-
     EXIT_DICT['container'] = c.name
     if results:
         EXIT_DICT['meta_results'] = results
@@ -543,28 +542,33 @@ def delete_meta(module, cf, container, src, dest, meta):
 
 def cloudfiles(module, container, src, dest, method, typ, meta, clear_meta,
                structure, expires):
-        """ Dispatch from here to work with metadata or file objects """
-        cf = pyrax.cloudfiles
+    """ Dispatch from here to work with metadata or file objects """
+    cf = pyrax.cloudfiles
 
-        if typ == "file":
-            if method == 'put':
-                upload(module, cf, container, src, dest, meta, expires)
+    if cf is None:
+        module.fail_json(msg='Failed to instantiate client. This '
+                             'typically indicates an invalid region or an '
+                             'incorrectly capitalized region name.')
 
-            elif method == 'get':
-                download(module, cf, container, src, dest, structure)
+    if typ == "file":
+        if method == 'put':
+            upload(module, cf, container, src, dest, meta, expires)
 
-            elif method == 'delete':
-                delete(module, cf, container, src, dest)
+        elif method == 'get':
+            download(module, cf, container, src, dest, structure)
 
-        else:
-            if method == 'get':
-                get_meta(module, cf, container, src, dest)
+        elif method == 'delete':
+            delete(module, cf, container, src, dest)
 
-            if method == 'put':
-                put_meta(module, cf, container, src, dest, meta, clear_meta)
+    else:
+        if method == 'get':
+            get_meta(module, cf, container, src, dest)
 
-            if method == 'delete':
-                delete_meta(module, cf, container, src, dest, meta)
+        if method == 'put':
+            put_meta(module, cf, container, src, dest, meta, clear_meta)
+
+        if method == 'delete':
+            delete_meta(module, cf, container, src, dest, meta)
 
 
 def main():
@@ -587,6 +591,9 @@ def main():
         argument_spec=argument_spec,
         required_together=rax_required_together()
     )
+
+    if not HAS_PYRAX:
+        module.fail_json(msg='pyrax is required for this module')
 
     container = module.params.get('container')
     src = module.params.get('src')

@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python
 
 # (c) 2013, Paul Durivage <paul.durivage@rackspace.com>
 #
@@ -156,9 +156,9 @@ from ansible import __version__
 
 try:
     import pyrax
+    HAS_PYRAX = True
 except ImportError, e:
-    print("failed=True msg='pyrax is required for this module'")
-    sys.exit(1)
+    HAS_PYRAX = False
 
 EXIT_DICT = dict(success=True)
 META_PREFIX = 'x-container-meta-'
@@ -213,7 +213,8 @@ def meta(cf, module, container_, state, meta_, clear_meta):
     module.exit_json(**EXIT_DICT)
 
 
-def container(cf, module, container_, state, meta_, clear_meta, ttl, public, private, web_index, web_error):
+def container(cf, module, container_, state, meta_, clear_meta, ttl, public,
+              private, web_index, web_error):
     if public and private:
         module.fail_json(msg='container cannot be simultaneously '
                              'set to public and private')
@@ -309,9 +310,9 @@ def container(cf, module, container_, state, meta_, clear_meta, ttl, public, pri
     EXIT_DICT['container'] = c.name
     EXIT_DICT['objs_in_container'] = c.object_count
     EXIT_DICT['total_bytes'] = c.total_bytes
-    
+
     _locals = locals().keys()
-    
+
     if ('cont_created' in _locals
             or 'cont_deleted' in _locals
             or 'meta_set' in _locals
@@ -324,15 +325,23 @@ def container(cf, module, container_, state, meta_, clear_meta, ttl, public, pri
     module.exit_json(**EXIT_DICT)
 
 
-def cloudfiles(module, container_, state, meta_, clear_meta, typ, ttl, public, private, web_index, web_error):
-        """ Dispatch from here to work with metadata or file objects """
-        cf = pyrax.cloudfiles
-        cf.user_agent = USER_AGENT
+def cloudfiles(module, container_, state, meta_, clear_meta, typ, ttl, public,
+               private, web_index, web_error):
+    """ Dispatch from here to work with metadata or file objects """
+    cf = pyrax.cloudfiles
 
-        if typ == "container":
-            container(cf, module, container_, state, meta_, clear_meta, ttl, public, private, web_index, web_error)
-        else:
-            meta(cf, module, container_, state, meta_, clear_meta)
+    if cf is None:
+        module.fail_json(msg='Failed to instantiate client. This '
+                             'typically indicates an invalid region or an '
+                             'incorrectly capitalized region name.')
+
+    cf.user_agent = USER_AGENT
+
+    if typ == "container":
+        container(cf, module, container_, state, meta_, clear_meta, ttl,
+                  public, private, web_index, web_error)
+    else:
+        meta(cf, module, container_, state, meta_, clear_meta)
 
 
 def main():
@@ -340,7 +349,8 @@ def main():
     argument_spec.update(
         dict(
             container=dict(),
-            state=dict(choices=['present', 'absent', 'list'], default='present'),
+            state=dict(choices=['present', 'absent', 'list'],
+                       default='present'),
             meta=dict(type='dict', default=dict()),
             clear_meta=dict(default=False, type='bool'),
             type=dict(choices=['container', 'meta'], default='container'),
@@ -357,6 +367,9 @@ def main():
         required_together=rax_required_together()
     )
 
+    if not HAS_PYRAX:
+        module.fail_json(msg='pyrax is required for this module')
+
     container_ = module.params.get('container')
     state = module.params.get('state')
     meta_ = module.params.get('meta')
@@ -371,10 +384,12 @@ def main():
     if state in ['present', 'absent'] and not container_:
         module.fail_json(msg='please specify a container name')
     if clear_meta and not typ == 'meta':
-        module.fail_json(msg='clear_meta can only be used when setting metadata')
+        module.fail_json(msg='clear_meta can only be used when setting '
+                             'metadata')
 
     setup_rax_module(module, pyrax)
-    cloudfiles(module, container_, state, meta_, clear_meta, typ, ttl, public, private, web_index, web_error)
+    cloudfiles(module, container_, state, meta_, clear_meta, typ, ttl, public,
+               private, web_index, web_error)
 
 
 from ansible.module_utils.basic import *
