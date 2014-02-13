@@ -124,6 +124,8 @@ def main(args):
 
     if 'sudopass' in extra_vars:
         sudopass = extra_vars['sudopass']
+    elif sudopass:
+        extra_vars['sudopass'] = sudopass
 
     only_tags = options.tags.split(",")
     skip_tags = options.skip_tags
