@@ -67,10 +67,16 @@ class Inventory(object):
         self._also_restriction = None
         self._subset = None
 
+        args = []
         if isinstance(host_list, basestring):
             if "," in host_list:
                 host_list = host_list.split(",")
                 host_list = [ h for h in host_list if h and h.strip() ]
+            elif " " in host_list:
+                # presumably a script with arguments. Don't further parse lists though!
+                tokens = host_list.split()
+                self.host_list = host_list = tokens[0]
+                args = tokens[1:]
 
         if host_list is None:
             self.parser = None
@@ -115,7 +121,7 @@ class Inventory(object):
 
                 if utils.is_executable(host_list):
                     try:
-                        self.parser = InventoryScript(filename=host_list)
+                        self.parser = InventoryScript(filename=host_list, args=args)
                         self.groups = self.parser.groups.values()
                     except:
                         if not shebang_present:
