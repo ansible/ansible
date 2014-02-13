@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -68,15 +68,13 @@ EXAMPLES = '''
       register: rackspace_identity
 '''
 
-import sys
-
 from types import NoneType
 
 try:
     import pyrax
+    HAS_PYRAX = True
 except ImportError:
-    print("failed=True msg='pyrax required for this module'")
-    sys.exit(1)
+    HAS_PYRAX = False
 
 
 NON_CALLABLES = (basestring, bool, dict, int, list, NoneType)
@@ -118,9 +116,17 @@ def main():
         required_together=rax_required_together()
     )
 
+    if not HAS_PYRAX:
+        module.fail_json(msg='pyrax is required for this module')
+
     state = module.params.get('state')
 
     setup_rax_module(module, pyrax)
+
+    if pyrax.identity is None:
+        module.fail_json(msg='Failed to instantiate client. This '
+                             'typically indicates an invalid region or an '
+                             'incorrectly capitalized region name.')
 
     cloud_identity(module, state, pyrax.identity)
 
