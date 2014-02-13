@@ -16,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# FIXME: replace all fail_when's with asserts
-
 - set_fact: output_file={{output_dir}}/foo.txt
 
 - name: initiate a basic copy
