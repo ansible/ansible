@@ -17,7 +17,7 @@ Major features/changes:
 * play_hosts is a new magic variable to provide a list of hosts in scope for the current play.
 * ec2 module now accepts 'exact_count' and 'count_tag' as a way to enforce a running number of nodes by tags.
 * all ec2 modules that work with Eucalyptus also now support a 'validate_certs' option, which can be set to 'off' for installations using self-signed certs.
-
+* Start of new integration test infrastructure (WIP, more details TBD)
 
 New modules:
 
@@ -31,7 +31,7 @@ New modules:
 * cloud: rax_queue
 * messaging: rabbitmq_policy
 * system: at
-
+* utilities: assert
 
 Misc:
 
