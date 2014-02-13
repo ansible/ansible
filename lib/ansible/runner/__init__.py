@@ -944,15 +944,16 @@ class Runner(object):
         path = pipes.quote(path)
         # The following test needs to be SH-compliant.  BASH-isms will
         # not work if /bin/sh points to a non-BASH shell.
-        test = "rc=0; [ -r \"%s\" ] || rc=2; [ -f \"%s\" ] || rc=1; [ -d \"%s\" ] && rc=3" % ((path,) * 3)
+        test = "rc=0; [ -r \"%s\" ] || rc=2; [ -f \"%s\" ] || rc=1; [ -d \"%s\" ] && echo 3 && exit 0" % ((path,) * 3)
         md5s = [
-            "(/usr/bin/md5sum %s 2>/dev/null)" % path,  # Linux
-            "(/sbin/md5sum -q %s 2>/dev/null)" % path,  # ?
+            "(/usr/bin/md5sum %s 2>/dev/null)" % path,          # Linux
+            "(/sbin/md5sum -q %s 2>/dev/null)" % path,          # ?
             "(/usr/bin/digest -a md5 %s 2>/dev/null)" % path,   # Solaris 10+
-            "(/sbin/md5 -q %s 2>/dev/null)" % path,     # Freebsd
-            "(/usr/bin/md5 -n %s 2>/dev/null)" % path,  # Netbsd
-            "(/bin/md5 -q %s 2>/dev/null)" % path,      # Openbsd
-            "(/usr/bin/csum -h MD5 %s 2>/dev/null)" % path # AIX
+            "(/sbin/md5 -q %s 2>/dev/null)" % path,             # Freebsd
+            "(/usr/bin/md5 -n %s 2>/dev/null)" % path,          # Netbsd
+            "(/bin/md5 -q %s 2>/dev/null)" % path,              # Openbsd
+            "(/usr/bin/csum -h MD5 %s 2>/dev/null)" % path,     # AIX
+            "(/bin/csum -h MD5 %s 2>/dev/null)" % path          # AIX also
         ]
 
         cmd = " || ".join(md5s)
