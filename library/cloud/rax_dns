@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -62,16 +62,13 @@ EXAMPLES = '''
       register: rax_dns
 '''
 
-import sys
-import os
-
 from types import NoneType
 
 try:
     import pyrax
+    HAS_PYRAX = True
 except ImportError:
-    print("failed=True msg='pyrax required for this module'")
-    sys.exit(1)
+    HAS_PYRAX = False
 
 NON_CALLABLES = (basestring, bool, dict, int, list, NoneType)
 
@@ -89,6 +86,10 @@ def rax_dns(module, comment, email, name, state, ttl):
     changed = False
 
     dns = pyrax.cloud_dns
+    if not dns:
+        module.fail_json(msg='Failed to instantiate client. This '
+                             'typically indicates an invalid region or an '
+                             'incorrectly capitalized region name.')
 
     if state == 'present':
         if not email:
@@ -158,6 +159,9 @@ def main():
         argument_spec=argument_spec,
         required_together=rax_required_together(),
     )
+
+    if not HAS_PYRAX:
+        module.fail_json(msg='pyrax is required for this module')
 
     comment = module.params.get('comment')
     email = module.params.get('email')

@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -175,18 +175,18 @@ EXAMPLES = '''
       register: rax
 '''
 
-import sys
-import time
 import os
 import re
+import time
+
 from uuid import UUID
 from types import NoneType
 
 try:
     import pyrax
+    HAS_PYRAX = True
 except ImportError:
-    print("failed=True msg='pyrax is required for this module'")
-    sys.exit(1)
+    HAS_PYRAX = False
 
 ACTIVE_STATUSES = ('ACTIVE', 'BUILD', 'HARD_REBOOT', 'MIGRATING', 'PASSWORD',
                    'REBOOT', 'REBUILD', 'RESCUE', 'RESIZE', 'REVERT_RESIZE')
@@ -379,7 +379,15 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                  auto_increment, extra_create_args):
     cs = pyrax.cloudservers
     cnw = pyrax.cloud_networks
+    if not cnw:
+        module.fail_json(msg='Failed to instantiate client. This '
+                             'typically indicates an invalid region or an '
+                             'incorrectly capitalized region name.')
+
     servers = []
+
+    for key, value in meta.items():
+        meta[key] = repr(value)
 
     # Add the group meta key
     if group and 'group' not in meta:
@@ -641,6 +649,9 @@ def main():
         required_together=rax_required_together(),
     )
 
+    if not HAS_PYRAX:
+        module.fail_json(msg='pyrax is required for this module')
+
     service = module.params.get('service')
 
     if service is not None:
@@ -672,11 +683,6 @@ def main():
 
     setup_rax_module(module, pyrax)
 
-    if pyrax.cloudservers is None:
-        module.fail_json(msg='Failed to instantiate client. This '
-                             'typically indicates an invalid region or an '
-                             'incorrectly capitalized region name.')
-
     if extra_client_args:
         pyrax.cloudservers = pyrax.connect_to_cloudservers(
             region=pyrax.cloudservers.client.region_name,
@@ -684,6 +690,11 @@ def main():
         client = pyrax.cloudservers.client
         if 'bypass_url' in extra_client_args:
             client.management_url = extra_client_args['bypass_url']
+
+    if pyrax.cloudservers is None:
+        module.fail_json(msg='Failed to instantiate client. This '
+                             'typically indicates an invalid region or an '
+                             'incorrectly capitalized region name.')
 
     cloudservers(module, state, name, flavor, image, meta, key_name, files,
                  wait, wait_timeout, disk_config, count, group,

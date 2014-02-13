@@ -121,13 +121,12 @@ EXAMPLES = '''
 '''
 
 import os
-import sys
 
 try:
     import pyrax
+    HAS_PYRAX = True
 except ImportError:
-    print("failed=True msg='pyrax is required for this module'")
-    sys.exit(1)
+    HAS_PYRAX = False
 
 
 def _activate_virtualenv(path):
@@ -196,6 +195,9 @@ def main():
         required_together=rax_required_together(),
     )
 
+    if not HAS_PYRAX:
+        module.fail_json(msg='pyrax is required for this module')
+
     address = module.params['address']
     condition = (module.params['condition'] and
                  module.params['condition'].upper())
@@ -219,8 +221,9 @@ def main():
     setup_rax_module(module, pyrax)
 
     if not pyrax.cloud_loadbalancers:
-        module.fail_json(msg='Failed to instantiate load balancer client '
-                             '(possibly incorrect region)')
+        module.fail_json(msg='Failed to instantiate client. This '
+                             'typically indicates an invalid region or an '
+                             'incorrectly capitalized region name.')
 
     try:
         lb = pyrax.cloud_loadbalancers.get(load_balancer_id)
