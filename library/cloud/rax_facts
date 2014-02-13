@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -55,16 +55,13 @@ EXAMPLES = '''
         ansible_ssh_host: "{{ rax_accessipv4 }}"
 '''
 
-import sys
-import os
-
 from types import NoneType
 
 try:
     import pyrax
+    HAS_PYRAX = True
 except ImportError:
-    print("failed=True msg='pyrax required for this module'")
-    sys.exit(1)
+    HAS_PYRAX = False
 
 NON_CALLABLES = (basestring, bool, dict, int, list, NoneType)
 
@@ -87,6 +84,12 @@ def rax_facts(module, address, name, server_id):
     changed = False
 
     cs = pyrax.cloudservers
+
+    if cs is None:
+        module.fail_json(msg='Failed to instantiate client. This '
+                             'typically indicates an invalid region or an '
+                             'incorrectly capitalized region name.')
+
     ansible_facts = {}
 
     search_opts = {}
@@ -138,6 +141,9 @@ def main():
         mutually_exclusive=[['address', 'id', 'name']],
         required_one_of=[['address', 'id', 'name']],
     )
+
+    if not HAS_PYRAX:
+        module.fail_json(msg='pyrax is required for this module')
 
     address = module.params.get('address')
     server_id = module.params.get('id')

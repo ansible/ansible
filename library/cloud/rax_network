@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -57,16 +57,11 @@ EXAMPLES = '''
         state: present
 '''
 
-import sys
-import os
-
 try:
     import pyrax
-    import pyrax.utils
-    from pyrax import exc
+    HAS_PYRAX = True
 except ImportError:
-    print("failed=True msg='pyrax required for this module'")
-    sys.exit(1)
+    HAS_PYRAX = False
 
 
 def cloud_network(module, state, label, cidr):
@@ -78,10 +73,15 @@ def cloud_network(module, state, label, cidr):
     network = None
     networks = []
 
+    if not pyrax.cloud_networks:
+        module.fail_json(msg='Failed to instantiate client. This '
+                             'typically indicates an invalid region or an '
+                             'incorrectly capitalized region name.')
+
     if state == 'present':
         try:
             network = pyrax.cloud_networks.find_network_by_label(label)
-        except exc.NetworkNotFound:
+        except pyrax.exceptions.NetworkNotFound:
             try:
                 network = pyrax.cloud_networks.create(label, cidr=cidr)
                 changed = True
@@ -95,7 +95,7 @@ def cloud_network(module, state, label, cidr):
             network = pyrax.cloud_networks.find_network_by_label(label)
             network.delete()
             changed = True
-        except exc.NetworkNotFound:
+        except pyrax.exceptions.NetworkNotFound:
             pass
         except Exception, e:
             module.fail_json(msg='%s' % e.message)
@@ -124,6 +124,9 @@ def main():
         argument_spec=argument_spec,
         required_together=rax_required_together(),
     )
+
+    if not HAS_PYRAX:
+        module.fail_json(msg='pyrax is required for this module')
 
     state = module.params.get('state')
     label = module.params.get('label')

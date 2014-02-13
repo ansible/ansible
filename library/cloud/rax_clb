@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -130,15 +130,13 @@ EXAMPLES = '''
       register: my_lb
 '''
 
-import sys
-
 from types import NoneType
 
 try:
     import pyrax
+    HAS_PYRAX = True
 except ImportError:
-    print("failed=True msg='pyrax required for this module'")
-    sys.exit(1)
+    HAS_PYRAX = False
 
 NON_CALLABLES = (basestring, bool, dict, int, list, NoneType)
 ALGORITHMS = ['RANDOM', 'LEAST_CONNECTIONS', 'ROUND_ROBIN',
@@ -190,6 +188,10 @@ def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
     balancers = []
 
     clb = pyrax.cloud_loadbalancers
+    if not clb:
+        module.fail_json(msg='Failed to instantiate client. This '
+                             'typically indicates an invalid region or an '
+                             'incorrectly capitalized region name.')
 
     for balancer in clb.list():
         if name != balancer.name and name != balancer.id:
@@ -307,6 +309,9 @@ def main():
         argument_spec=argument_spec,
         required_together=rax_required_together(),
     )
+
+    if not HAS_PYRAX:
+        module.fail_json(msg='pyrax is required for this module')
 
     algorithm = module.params.get('algorithm')
     meta = module.params.get('meta')
