@@ -1045,6 +1045,7 @@ def main():
 
     ec2 = ec2_connect(module)
 
+    tagged_instances = [] 
     if module.params.get('state') == 'absent':
         instance_ids = module.params.get('instance_ids')
         if not isinstance(instance_ids, list):
@@ -1064,7 +1065,6 @@ def main():
         if not module.params.get('image'):
             module.fail_json(msg='image parameter is required for new instance')
    
-        tagged_instances = [] 
         if module.params.get('exact_count'):
             (tagged_instances, instance_dict_array, new_instance_ids, changed) = enforce_count(module, ec2)
         else:            
