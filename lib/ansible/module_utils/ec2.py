@@ -69,7 +69,7 @@ def ec2_connect(module):
     """ Return an ec2 connection"""
 
     ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
-    validate_certs = module.get('validate_certs', True)
+    validate_certs = module.params.get('validate_certs', True)
 
     # If we have a region specified, connect to its endpoint.
     if region:
