@@ -73,6 +73,14 @@ options:
       - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
     required: false
     aliases: ['aws_region', 'ec2_region']
+  validate_certs:
+    description:
+      - When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+    required: false
+    default: "yes"
+    choices: ["yes", "no"]
+    aliases: []
+    version_added: "1.5"
 
 """
 
