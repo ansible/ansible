@@ -573,8 +573,8 @@ def main():
         count = int(module.params.get('count'))
         name = module.params.get('name')
 
-        if count < 1:
-            module.fail_json(msg="Count must be positive number")
+        if count < 0:
+            module.fail_json(msg="Count must be greater than zero")
         if count > 1 and name:
             module.fail_json(msg="Count and name must not be used together")
 
