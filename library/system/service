@@ -406,6 +406,9 @@ class LinuxService(Service):
                 name = "%s.service" % name
 
             rc, out, err = self.execute_command("%s list-unit-files" % (location['systemctl']))
+            # LSB services are only listed in `systemctl list-units`
+            rc_, out_, err_ = self.execute_command("%s list-units --all --full" % (location['systemctl']))
+            out += out_
 
             # adjust the service name to account for template service unit files
             index = name.find('@')
