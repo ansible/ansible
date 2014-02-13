@@ -2,6 +2,7 @@
 #
 
 # (c) 2013, Cove Schneider
+# (c) 2014, Joshua Conner <joshua.conner@gmail.com>
 #
 # This file is part of Ansible,
 #
@@ -156,7 +157,7 @@ options:
     required: false
     default: null
     aliases: []
-author: Cove Schneider
+author: Cove Schneider, Joshua Conner
 requirements: [ "docker-py" ]
 '''
 
