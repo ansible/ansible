@@ -623,6 +623,40 @@ def getch():
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
     return ch
 
+def sanitize_output(str):
+    ''' strips private info out of a string '''
+
+    private_keys = ['password', 'login_password']
+
+    filter_re = [
+        # filter out things like user:pass@foo/whatever
+        # and http://username:pass@wherever/foo
+        re.compile('^(?P<before>.*:)(?P<password>.*)(?P<after>\@.*)$'),
+    ]
+
+    parts = str.split()
+    output = ''
+    for part in parts:
+        try:
+            (k,v) = part.split('=', 1)
+            if k in private_keys:
+                output += " %s=VALUE_HIDDEN" % k
+            else:
+                found = False
+                for filter in filter_re:
+                    m = filter.match(v)
+                    if m:
+                        d = m.groupdict()
+                        output += " %s=%s" % (k, d['before'] + "********" + d['after'])
+                        found = True
+                        break
+                if not found:
+                    output += " %s" % part
+        except:
+            output += " %s" % part
+
+    return output.strip()
+
 ####################################################################
 # option handling code for /usr/bin/ansible and ansible-playbook
 # below this line
