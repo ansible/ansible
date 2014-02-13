@@ -248,7 +248,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
     # if insertafter=/insertbefore didn't match anything
     # (so default behaviour is to add at the end)
     elif insertafter == 'EOF':
-        lines.append(line + os.linesep)
+        lines.append(os.linesep + line + os.linesep)
         msg = 'line added'
         changed = True
     # Do nothing if insert* didn't match
