@@ -16,6 +16,7 @@ Major features/changes:
 * acl module now handles 'default' and allows for either shorthand entry or specific fields per entry section
 * play_hosts is a new magic variable to provide a list of hosts in scope for the current play.
 * ec2 module now accepts 'exact_count' and 'count_tag' as a way to enforce a running number of nodes by tags.
+* all ec2 modules that work with Eucalyptus also now support a 'validate_certs' option, which can be set to 'off' for installations using self-signed certs.
 
 
 New modules:
