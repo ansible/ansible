@@ -5,13 +5,20 @@ The Ansible Configuration File
 
 .. highlight:: bash
 
-Certain things in Ansible are adjustable in a configuration file.  In general, the stock configuration is probably
-right for most users, but that doesn't mean you might not want to change them.
+Certain settings in Ansible are adjustable via a configuration file.  The stock configuration should be sufficient
+for most users, but there may be reasons you would want to change them.
 
-The mechanism for doing this is the "ansible.cfg" file, which is looked for in the order, in the following locations::
+Changes can be made and used in a configuration file which will be processed processed in the following order::
 
     * ANSIBLE_CONFIG (an environment variable)
     * ansible.cfg (in the current directory)
+    * .ansible.cfg (in the home directory)
+    * /etc/ansible/ansible.cfg
+
+Prior to 1.5 the order was::
+
+    * ansible.cfg (in the current directory)
+    * ANSIBLE_CONFIG (an environment variable)
     * .ansible.cfg (in the home directory)
     * /etc/ansible/ansible.cfg
 
