@@ -69,19 +69,14 @@ def load_config_file():
     path3 = "/etc/ansible/ansible.cfg"
 
     if path0 is not None and os.path.exists(path0):
-        print "path0"
         p.read(path0)
     elif os.path.exists(path1):
-        print "path1"
         p.read(path1)
     elif os.path.exists(path2):
-        print "path2"
         p.read(path2)
     elif os.path.exists(path3):
-        print "path3"
         p.read(path3)
     else:
-        print "fail"
         return None
     return p
 
