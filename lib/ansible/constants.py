@@ -60,13 +60,15 @@ def load_config_file():
 
     p = ConfigParser.ConfigParser()
 
-    path0 = os.path.expanduser(os.getenv('ANSIBLE_CONFIG'))
-    print "path0=%s" % path0
+    path0 = None
+    env = os.getenv("ANSIBLE_CONFIG", None)
+    if env is not None:
+        path0 = os.path.expanduser(env)
     path1 = os.getcwd() + "/ansible.cfg"
     path2 = os.path.expanduser("~/.ansible.cfg")
     path3 = "/etc/ansible/ansible.cfg"
 
-    if os.path.exists(path0):
+    if path0 is not None and os.path.exists(path0):
         print "path0"
         p.read(path0)
     elif os.path.exists(path1):
