@@ -22,7 +22,7 @@ Prior to 1.5 the order was::
     * .ansible.cfg (in the home directory)
     * /etc/ansible/ansible.cfg
 
-Ansible will process the above list and use the first file found. Settings in file are not merged together.
+Ansible will process the above list and use the first file found. Settings in files are not merged together.
 
 .. _getting_the_latest_configuration:
 
