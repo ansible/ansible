@@ -761,7 +761,13 @@ class AnsibleModule(object):
         # Sanitize possible password argument when logging.
         log_args = dict()
         passwd_keys = ['password', 'login_password']
-        
+
+        filter_re = [
+            # filter out things like user:pass@foo/whatever
+            # and http://username:pass@wherever/foo
+            re.compile('^(?P<before>.*:)(?P<password>.*)(?P<after>\@.*)$'), 
+        ]
+
         for param in self.params:
             canon  = self.aliases.get(param, param)
             arg_opts = self.argument_spec.get(canon, {})
@@ -772,7 +778,16 @@ class AnsibleModule(object):
             elif param in passwd_keys:
                 log_args[param] = 'NOT_LOGGING_PASSWORD'
             else:
-                log_args[param] = self.params[param]
+                found = False
+                for filter in filter_re:
+                    m = filter.match(str(self.params[param]))
+                    if m:
+                        d = m.groupdict()
+                        log_args[param] = d['before'] + "********" + d['after']
+                        found = True
+                        break
+                if not found:
+                    log_args[param] = self.params[param]
 
         module = 'ansible-%s' % os.path.basename(__file__)
         msg = ''

@@ -179,6 +179,7 @@ def vvvv(msg, host=None):
     return verbose(msg, host=host, caplevel=3)
 
 def verbose(msg, host=None, caplevel=2):
+    msg = utils.sanitize_output(msg)
     if utils.VERBOSITY > caplevel:
         if host is None:
             display(msg, color='blue')
