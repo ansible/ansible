@@ -55,7 +55,7 @@ class TestInventory(unittest.TestCase):
             'thrudgelmir0', 'thrudgelmir1', 'thrudgelmir2',
             'thrudgelmir3', 'thrudgelmir4', 'thrudgelmir5',
             'Hotep-a', 'Hotep-b', 'Hotep-c',
-            'BastC', 'BastD', ]
+            'BastC', 'BastD', 'neptun', ]
 
     #####################################
     ### Empty inventory format tests
@@ -400,6 +400,11 @@ class TestInventory(unittest.TestCase):
         assert vars == {'inventory_hostname': 'zeus',
                         'inventory_hostname_short': 'zeus',
                         'group_names': ['greek', 'major-god']}
+
+    def test_allows_equals_sign_in_var(self):
+        inventory = self.simple_inventory()
+        auth = inventory.get_variables('neptun')['auth']
+        assert auth == 'YWRtaW46YWRtaW4='
 
     # test disabled as needs to be updated to model desired behavior
     #
