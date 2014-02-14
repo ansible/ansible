@@ -191,7 +191,7 @@ def package_status(m, pkgname, version, cache, state):
             # assume older version of python-apt is installed
             package_is_installed = pkg.isInstalled
 
-    if version:
+    if version and package_is_installed:
         try:
             installed_version = pkg.installed.version
         except AttributeError:
