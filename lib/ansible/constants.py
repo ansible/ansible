@@ -56,20 +56,22 @@ def _get_config(p, section, key, env_var, default):
     return default
 
 def load_config_file():
+    ''' Load Config File order(first found is used): ENV, CWD, HOME, /etc/ansible '''
+
     p = ConfigParser.ConfigParser()
+
+    path0 = os.getenv("ANSIBLE_CONFIG", None)
+    if path0 is not None:
+        path0 = os.path.expanduser(path0)
     path1 = os.getcwd() + "/ansible.cfg"
-    path2 = os.path.expanduser(os.environ.get('ANSIBLE_CONFIG', "~/.ansible.cfg"))
+    path2 = os.path.expanduser("~/.ansible.cfg")
     path3 = "/etc/ansible/ansible.cfg"
 
-    if os.path.exists(path1):
-        p.read(path1)
-    elif os.path.exists(path2):
-        p.read(path2)
-    elif os.path.exists(path3):
-        p.read(path3)
-    else:
-        return None
-    return p
+    for path in [path0, path1, path2, path3]:
+        if path is not None and os.path.exists(path):
+            p.read(path)
+            return p
+    return None
 
 def shell_expand_path(path):
     ''' shell_expand_path is needed as os.path.expanduser does not work
