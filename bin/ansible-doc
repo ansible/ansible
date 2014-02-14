@@ -149,7 +149,12 @@ def get_snippet_text(doc):
     for o in sorted(doc['options'].keys()):
         opt = doc['options'][o]
         desc = tty_ify("".join(opt['description']))
-        s = o + "="
+
+        if opt.get('required', False):
+            s = o + "="
+        else:
+            s = o
+
         text.append("      %-20s   # %s" % (s, desc))
     text.append('')
 
