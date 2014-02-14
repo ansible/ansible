@@ -8,14 +8,14 @@ The Ansible Configuration File
 Certain things in Ansible are adjustable in a configuration file.  In general, the stock configuration is probably
 right for most users, but that doesn't mean you might not want to change them.
 
-The mechanism for doing this is the "ansible.cfg" file, which is looked for in the following locations::
+The mechanism for doing this is the "ansible.cfg" file, which is looked for in the order, in the following locations::
 
-    * /etc/ansible/ansible.cfg
-    * ~/.ansible.cfg
+    * ANSIBLE_CONFIG (an environment variable)
     * ansible.cfg (in the current directory)
+    * .ansible.cfg (in the home directory)
+    * /etc/ansible/ansible.cfg
 
-If multiple file locations matching the above exist, the last location on the above list is used.  Settings in files
-are not merged together.
+Ansible will process the above list and use the first file found. Settings in file are not merged together.
 
 .. _getting_the_latest_configuration:
 
