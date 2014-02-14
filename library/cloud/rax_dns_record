@@ -45,7 +45,7 @@ options:
     required: True
   name:
     description:
-      - FWQN record name to create
+      - FQDN record name to create
     required: True
   priority:
     description:
