@@ -17,3 +17,6 @@ loki
 [egyptian]
 Hotep-[a:c]
 Bast[C:D]
+
+[auth]
+neptun auth="YWRtaW46YWRtaW4="
