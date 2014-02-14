@@ -111,7 +111,7 @@ EXAMPLES = '''
 # Add an AAAA record.  Note that because there are colons in the value
 # that the entire parameter list must be quoted:
 - route53: >
-      "command=create
+      command=create
       zone=foo.com
       record=localhost.foo.com
       type=AAAA
