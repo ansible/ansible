@@ -181,7 +181,7 @@ class Facts(object):
                 self.facts['userspace_architecture'] = 'i386'
         else:
             self.facts['architecture'] = self.facts['machine']
-        if self.facts['system'] == 'Linux':
+        if self.facts['system'] in [ 'Linux', 'GNU/kFreeBSD' ]:
             self.get_distribution_facts()
         elif self.facts['system'] == 'AIX':
             rc, out, err = module.run_command("/usr/sbin/bootinfo -p")
@@ -798,6 +798,15 @@ class LinuxHardware(Hardware):
 
             self.facts['devices'][diskname] = d
 
+class GNUkFreeBSDHardware(LinuxHardware, Hardware):
+    """
+    This is the GNUkFreeBSD Hardware class
+    It uses the LinuxHardware class directly as some Linux properties
+    are retrievablee in the same way
+    (although this might be worth extending to query some properties
+    of the kFreeBSD kernel that the FreeBSDHardware class can get)
+    """
+    platform = 'GNU/kFreeBSD'
 
 class SunOSHardware(Hardware):
     """
@@ -1851,6 +1860,13 @@ class DarwinNetwork(GenericBsdIfconfigNetwork, Network):
             current_if['media_options'] = self.get_options(words[3])
 
 
+class GNUkFreeBSDNetwork(GenericBsdIfconfigNetwork, Network):
+    """
+    This is the GNUkFreeBSD Network Class.
+    It uses the GenericBsdIfconfigNetwork unchanged.
+    """
+    platform = 'GNU/kFreeBSD'
+
 class FreeBSDNetwork(GenericBsdIfconfigNetwork, Network):
     """
     This is the FreeBSD Network Class.
@@ -2164,6 +2180,13 @@ class LinuxVirtual(Virtual):
                 self.facts['virtualization_type'] = 'virtualbox'
                 self.facts['virtualization_role'] = 'host'
                 return
+
+class GNUkFreeBSDVirtual(LinuxVirtual, Virtual):
+    """
+    This is the GNUkFreeBSD Virtual Class.
+    It uses the LinuxVirtual unchanged.
+    """
+    platform = 'GNU/kFreeBSD'
 
 class HPUXVirtual(Virtual):
     """

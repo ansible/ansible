@@ -183,6 +183,11 @@ class UbuntuHostname(Hostname):
     distribution = 'Ubuntu'
     strategy_class = DebianStrategy
 
+class DebianGNUkFresBSDHostname(Hostname):
+    platform = 'GNU/kFreeBSD'
+    distribution = 'Debian'
+    strategy_class = DebianStrategy
+
 # ===========================================
 
 class RedHatStrategy(GenericStrategy):
