@@ -90,6 +90,8 @@ The default configuration shows who modified a file and when::
 
 This is useful to tell users that a file has been placed by Ansible and manual changes are likely to be overwritten.
 
+Note that if using this feature, and there is a date in the string, the template will be reported changed each time as the date is updated.
+
 .. _ask_pass:
 
 ask_pass
