@@ -166,6 +166,19 @@ This allows an explicit check with this feature off::
 
 The variable value will be used as is, but the template evaluation will raise an error if it is undefined.
 
+
+.. _defaulting_undefined_variables:
+
+Defaulting Undefined Variables
+------------------------------
+
+Jinja2 provides a useful 'defaults' filter, that is often a better approach to failing if a variable is not defined.
+
+    {{ some_variable | default(5) }}
+
+In the above example, if the variable 'some_variable' is not defined, the value used will be 5, rather than an error
+being raised.
+
 .. _set_theory_filters:
 
 Set Theory Filters
