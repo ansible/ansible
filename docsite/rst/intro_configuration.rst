@@ -561,12 +561,31 @@ cause scp to be used to transfer remote files instead::
 There's really no reason to change this unless problems are encountered, and then there's also no real drawback
 to managing the switch.  Most environments support SFTP by default and this doesn't usually need to be changed.
 
+
+.. _pipelining:
+
+pipelining
+==========
+
+Enabling pipelining reduces the number of SSH operations required to
+execute a module on the remote server, by executing many ansible modules without actual file transfer. 
+This can result in a very significant performance improvement when enabled, however when using "sudo:" operations you must
+first disable 'requiretty' in /etc/sudoers on all managed hosts.
+
+By default, this option is disabled to preserve compatibility with
+sudoers configurations that have requiretty (the default on many distros), but is highly
+recommended if you can enable it, eliminating the need for :doc:`playbooks_acceleration`::
+
+    pipelining=False
+
 .. _accelerate_settings:
 
 Accelerate Mode Settings
 ------------------------
 
-Under the [accelerate] header, the following settings are tunable for :doc:`playbooks_acceleration`
+Under the [accelerate] header, the following settings are tunable for :doc:`playbooks_acceleration`.  Acceleration is 
+a useful performance feature to use if you cannot enable :ref:`ssh_pipelining` in your environment, but is probably
+not needed if you can.
 
 .. _accelerate_port:
 
