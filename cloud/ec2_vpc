@@ -46,7 +46,7 @@ options:
     choices: [ "yes", "no" ]
   subnets:
     description:
-      - "A dictionary array of subnets to add of the form: { cidr: ..., az: ... }. Where az is the desired availability zone of the subnet, but it is not required. All VPC subnets not in this list will be removed."
+      - "A dictionary array of subnets to add of the form: { cidr: ..., az: ... , tags: ... }. Where az is the desired availability zone of the subnet, but it is not required. Tags (i.e.: tags) is also optional and use dictionary form: { "Environment":"Dev", "Tier":"Web", ...}. All VPC subnets not in this list will be removed."
     required: false
     default: null
     aliases: []
@@ -137,10 +137,13 @@ EXAMPLES = '''
         subnets: 
           - cidr: 172.22.1.0/24
             az: us-west-2c
+            tags: { "Environment":"Dev", "Tier" : "Web" }
           - cidr: 172.22.2.0/24
             az: us-west-2b
+            tags: { "Environment":"Dev", "Tier" : "App" }
           - cidr: 172.22.3.0/24
             az: us-west-2a
+            tags: { "Environment":"Dev", "Tier" : "DB" }
         internet_gateway: True
         route_tables:
           - subnets: 
