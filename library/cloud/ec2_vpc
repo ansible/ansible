@@ -277,7 +277,10 @@ def create_vpc(module, vpc_conn):
                 add_subnet = False
         if add_subnet:
             try:
-                vpc_conn.create_subnet(vpc.id, subnet['cidr'], subnet.get('az', None))
+                created_subnet = vpc_conn.create_subnet(vpc.id, subnet['cidr'], subnet.get('az', None))
+                subnet_tags = subnet.get('tags', None)
+                if subnet_tags:
+                    vpc_conn.create_tags(created_subnet.id, subnet_tags)
                 changed = True
             except EC2ResponseError, e:
                 module.fail_json(msg='Unable to create subnet {0}, error: {1}'.format(subnet['cidr'], e))
