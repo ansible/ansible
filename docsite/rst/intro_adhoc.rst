@@ -74,6 +74,14 @@ It is also possible to sudo to a user other than root using
 
     $ ansible atlanta -a "/usr/bin/foo" -u username -U otheruser [--ask-sudo-pass]
 
+.. note::
+   
+    Rarely, some users have security rules where they constrain their sudo environment to running specific command paths only.  
+    This does not work with ansible's no-bootstrapping philosophy and hundreds of different modules.
+    If doing this, use Ansible from a special account that does not have this constraint.  
+    One way of doing this without sharing access to unauthorized users would be gating Ansible with :doc:`tower`, which
+    can hold on to an SSH credential and let members of certain organizations use it on their behalf without having direct access.
+
 Ok, so those are basics.  If you didn't read about patterns and groups yet, go back and read :doc:`intro_patterns`.
 
 The ``-f 10`` in the above specifies the usage of 10 simultaneous
