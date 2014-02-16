@@ -176,8 +176,11 @@ class Connection(object):
 
         return ssh
 
-    def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable='/bin/sh', in_data=None, su=None, su_user=None):
+    def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable='/bin/sh', in_data=None, su=None, su_user=None, capture_output=True):
         ''' run a command on the remote host '''
+
+        if not capture_output:
+            raise errors.AnsibleError("Internal Error: this module does not support sending output to the console")
 
         bufsize = 4096
         try:

@@ -91,7 +91,7 @@ class Connection(object):
             local_cmd = '%s "%s" %s' % (self.jexec_cmd, self.jail, cmd)
         return local_cmd
 
-    def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable='/bin/sh', in_data=None, su=None, su_user=None):
+    def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable='/bin/sh', in_data=None, su=None, su_user=None, capture_output=True):
         ''' run a command on the chroot '''
 
         if su or su_user:
@@ -103,11 +103,18 @@ class Connection(object):
         # We enter chroot as root so sudo stuff can be ignored
         local_cmd = self._generate_cmd(executable, cmd)
 
+        if capture_output:
+            stdout_arg=subprocess.PIPE
+            stderr_arg=subprocess.PIPE
+        else:
+            stdout_arg=None
+            stderr_arg=None
+
         vvv("EXEC %s" % (local_cmd), host=self.jail)
         p = subprocess.Popen(local_cmd, shell=isinstance(local_cmd, basestring),
                              cwd=self.runner.basedir,
                              stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                             stdout=stdout_arg, stderr=stderr_arg)
 
         stdout, stderr = p.communicate()
         return (p.returncode, '', stdout, stderr)

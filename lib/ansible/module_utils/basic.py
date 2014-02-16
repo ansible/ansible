@@ -32,6 +32,7 @@
 MODULE_ARGS = "<<INCLUDE_ANSIBLE_MODULE_ARGS>>"
 MODULE_LANG = "<<INCLUDE_ANSIBLE_MODULE_LANG>>"
 MODULE_COMPLEX_ARGS = "<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>"
+MODULE_STDOUT_STDERR_FILES = "<<INCLUDE_ANSIBLE_MODULE_STDOUT_STDERR_FILES>>"
 
 BOOLEANS_TRUE = ['yes', 'on', '1', 'true', 1]
 BOOLEANS_FALSE = ['no', 'off', '0', 'false', 0]
@@ -983,6 +984,10 @@ class AnsibleModule(object):
             # rename might not preserve context
             self.set_context_if_different(dest, context, False)
 
+    def _should_write_stdout_stderr_to_file(self):
+        ''' Return true if stdout and stderr should be written to files '''
+        return bool(MODULE_STDOUT_STDERR_FILES)
+
     def run_command(self, args, check_rc=False, close_fds=False, executable=None, data=None, binary_data=False, path_prefix=None):
         '''
         Execute a command, returns rc, stdout, and stderr.
@@ -1013,6 +1018,16 @@ class AnsibleModule(object):
         if path_prefix:
             env['PATH']="%s:%s" % (path_prefix, env['PATH'])
 
+        if self._should_write_stdout_stderr_to_file():
+            (stdout_fname, stderr_fname) = MODULE_STDOUT_STDERR_FILES
+            stdout = open(stdout_fname, 'a+')
+            stderr = open(stderr_fname, 'a+')
+            stdout_start_pos = stdout.tell()
+            stderr_start_pos = stderr.tell()
+        else:
+            stdout = subprocess.PIPE
+            stderr = subprocess.PIPE
+
         if data:
             st_in = subprocess.PIPE
         try:
@@ -1022,8 +1037,8 @@ class AnsibleModule(object):
                                        shell=shell,
                                        close_fds=close_fds,
                                        stdin=st_in,
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE,
+                                       stdout=stdout,
+                                       stderr=stderr,
                                        env=env)
             else:
                 cmd = subprocess.Popen(args,
@@ -1031,13 +1046,20 @@ class AnsibleModule(object):
                                        shell=shell,
                                        close_fds=close_fds,
                                        stdin=st_in,
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE)
-            
+                                       stdout=stdout,
+                                       stderr=stderr)
+
             if data:
                 if not binary_data:
                     data += '\\n'
             out, err = cmd.communicate(input=data)
+            if self._should_write_stdout_stderr_to_file():
+                stdout.seek(stdout_start_pos)
+                out = stdout.read()
+                stderr.seek(stderr_start_pos)
+                err = stderr.read()
+                stdout.close()
+                stderr.close()
             rc = cmd.returncode
         except (OSError, IOError), e:
             self.fail_json(rc=e.errno, msg=str(e), cmd=args)

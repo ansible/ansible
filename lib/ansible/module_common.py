@@ -30,6 +30,7 @@ REPLACER = "#<<INCLUDE_ANSIBLE_MODULE_COMMON>>"
 REPLACER_ARGS = "\"<<INCLUDE_ANSIBLE_MODULE_ARGS>>\""
 REPLACER_LANG = "\"<<INCLUDE_ANSIBLE_MODULE_LANG>>\""
 REPLACER_COMPLEX = "\"<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>\""
+REPLACER_STDOUT_STDERR_FILES = "\"<<INCLUDE_ANSIBLE_MODULE_STDOUT_STDERR_FILES>>\""
 
 class ModuleReplacer(object):
 
@@ -154,6 +155,15 @@ class ModuleReplacer(object):
                     facility = inject['ansible_syslog_facility']
                 module_data = module_data.replace('syslog.LOG_USER', "syslog.%s" % facility)
 
+            if 'ansible_stdout_file' in inject:
+                stdout_stderr_file = (inject['ansible_stdout_file'], inject['ansible_stderr_file'])
+                stdout_stderr_file
+            else:
+                stdout_stderr_file = None
+
+            encoded_stdout_stderr_file = repr(stdout_stderr_file)
+
+            module_data = module_data.replace(REPLACER_STDOUT_STDERR_FILES, encoded_stdout_stderr_file)
 
             lines = module_data.split("\n")
             shebang = None
