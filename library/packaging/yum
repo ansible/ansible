@@ -28,6 +28,7 @@ import yum
 try:
     from yum.misc import find_unfinished_transactions, find_ts_remaining
     from rpmUtils.miscutils import splitFilename
+    from rpmUtils.miscutils import compareEVR
     transaction_helpers = True
 except:
     transaction_helpers = False
@@ -38,7 +39,7 @@ module: yum
 version_added: historical
 short_description: Manages packages with the I(yum) package manager
 description:
-     - Installs, upgrade, removes, and lists packages and groups with the I(yum) package manager.
+     - Installs, upgrades, downgrades, removes and lists packages and groups with the I(yum) package manager.
 options:
   name:
     description:
@@ -450,6 +451,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
     res['msg'] = ''
     res['rc'] = 0
     res['changed'] = False
+    downgrade = False
 
     for spec in items:
         pkg = None
@@ -524,12 +526,30 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
                     
             if found:
                 continue
+
+            # downgrade - the yum install command will only install or upgrade to a spec version, it will
+            # not install an older version of an RPM even if specifed by the install spec. So we need to 
+            # determine if this is a downgrade, and then use the yum downgrade command to install the RPM.
+            pkg_name = splitFilename(spec)[0]
+            pkgs = is_installed(module, repoq, pkg_name, conf_file, en_repos=en_repos, dis_repos=dis_repos, is_pkg=True)
+            if pkgs:
+                (cur_name, cur_ver, cur_rel, cur_epoch, cur_arch) = splitFilename(pkgs[0])
+                (new_name, new_ver, new_rel, new_epoch, new_arch) = splitFilename(spec)
+
+                compare = compareEVR((cur_epoch, cur_ver, cur_rel), (new_epoch, new_ver, new_rel))
+                if compare > 0:
+                    downgrade = True
+
             # if not - then pass in the spec as what to install
             # we could get here if nothing provides it but that's not
             # the error we're catching here
             pkg = spec
 
-        cmd = yum_basecmd + ['install', pkg]
+        operation = 'install'
+        if downgrade:
+            operation = 'downgrade'
+
+        cmd = yum_basecmd + [operation, pkg]
 
         if module.check_mode:
             module.exit_json(changed=True)
