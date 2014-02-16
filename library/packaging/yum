@@ -1,9 +1,9 @@
 #!/usr/bin/python -tt
 # -*- coding: utf-8 -*-
 
-# (c) 2014, Epic Games, Inc.
 # (c) 2012, Red Hat, Inc
 # Written by Seth Vidal <skvidal at fedoraproject.org>
+# (c) 2014, Epic Games, Inc.
 #
 # This file is part of Ansible
 #
