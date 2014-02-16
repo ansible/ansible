@@ -47,9 +47,9 @@ options:
             - The port to connect to
         required: false
         default: 27017
-    replicaset:
+    replica_set:
         description:
-            - Replicaset to connect to (automatically connects to primary for writes)
+            - Replica set to connect to (automatically connects to primary for writes)
         required: false
         default: null
     database:
@@ -98,6 +98,9 @@ EXAMPLES = '''
 - mongodb_user: database=burgers name=ben password=12345 roles='read' state=present
 - mongodb_user: database=burgers name=jim password=12345 roles='readWrite,dbAdmin,userAdmin' state=present
 - mongodb_user: database=burgers name=joe password=12345 roles='readWriteAnyDatabase' state=present
+
+# add a user to database in a replica set, the primary server is automatically discovered and written to
+- mongodb_user: database=burgers name=bob replica_set=blecher password=12345 roles='readWriteAnyDatabase' state=present
 '''
 
 import ConfigParser
@@ -165,7 +168,7 @@ def main():
             login_password=dict(default=None),
             login_host=dict(default='localhost'),
             login_port=dict(default='27017'),
-            replicaset=dict(default=None),
+            replica_set=dict(default=None),
             database=dict(required=True, aliases=['db']),
             user=dict(required=True, aliases=['name']),
             password=dict(aliases=['pass']),
@@ -181,7 +184,7 @@ def main():
     login_password = module.params['login_password']
     login_host = module.params['login_host']
     login_port = module.params['login_port']
-    replicaset = module.params['replicaset']
+    replica_set = module.params['replica_set']
     db_name = module.params['database']
     user = module.params['user']
     password = module.params['password']
@@ -189,8 +192,8 @@ def main():
     state = module.params['state']
 
     try:
-    	if replicaset:
-    	   client = MongoClient(login_host, int(login_port), replicaset=replicaset)
+    	if replica_set:
+    	   client = MongoClient(login_host, int(login_port), replicaset=replica_set)
     	else:
     	   client = MongoClient(login_host, int(login_port))
 
