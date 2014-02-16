@@ -157,7 +157,6 @@ class ModuleReplacer(object):
 
             if 'ansible_stdout_file' in inject:
                 stdout_stderr_file = (inject['ansible_stdout_file'], inject['ansible_stderr_file'])
-                stdout_stderr_file
             else:
                 stdout_stderr_file = None
 
