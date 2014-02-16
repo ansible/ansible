@@ -270,7 +270,7 @@ def fstype_swap(module, state, **kwargs):
         name, changed = set_mount(**args)
     if state == 'mounted' and not exists:
         changed = True
-        res,msg  = swaponon(module, 'swapon', **args)
+        res,msg  = swaponoff(module, 'swapon', **args)
         if res:
             module.fail_json(msg="Error turning on swap %s: %s" % (src, msg))
 
