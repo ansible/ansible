@@ -184,7 +184,7 @@ def main():
         except IOError as e:
             module.fail_json(
                 rc=258,
-                msg='failed to get checksum of %s: %s' % (v, e.message)
+                msg='failed to get checksum of %s: %s' % (v, e)
             )
 
     if not shell:
