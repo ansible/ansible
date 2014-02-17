@@ -67,7 +67,6 @@ def build_option_parser(action):
         parser.set_usage("usage: %prog encrypt [options] file_name")
     elif action == "rekey":
         parser.set_usage("usage: %prog rekey [options] file_name")
-        parser.add_option('-n', '--new-key', dest="new_password", help="new encryption key")
     
     # done, return the parser
     return parser
