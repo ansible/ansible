@@ -65,13 +65,14 @@ class Connection(object):
                              stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
+        sudo_stdout_extra = ''
         if self.runner.sudo and sudoable and self.runner.sudo_pass:
             fcntl.fcntl(p.stdout, fcntl.F_SETFL,
                         fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
             fcntl.fcntl(p.stderr, fcntl.F_SETFL,
                         fcntl.fcntl(p.stderr, fcntl.F_GETFL) | os.O_NONBLOCK)
             sudo_output = ''
-            while not sudo_output.endswith(prompt) and success_key not in sudo_output:
+            while success_key not in sudo_output:
                 rfd, wfd, efd = select.select([p.stdout, p.stderr], [],
                                               [p.stdout, p.stderr], self.runner.timeout)
                 if p.stdout in rfd:
@@ -85,13 +86,18 @@ class Connection(object):
                     stdout, stderr = p.communicate()
                     raise errors.AnsibleError('sudo output closed while waiting for password prompt:\n' + sudo_output)
                 sudo_output += chunk
-            if success_key not in sudo_output:
-                p.stdin.write(self.runner.sudo_pass + '\n')
+                if sudo_output.endswith(prompt):
+                    p.stdin.write(self.runner.sudo_pass + '\n')
+            # preserve any extra data after the success_key in stdout since it will belong
+            # to the real command output
+            end_of_sudo_output = sudo_output.find('\n', sudo_output.find(success_key)+len(success_key))
+            sudo_stdout_extra = sudo_output[end_of_sudo_output+1:]
+
             fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
             fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) & ~os.O_NONBLOCK)
 
         stdout, stderr = p.communicate()
-        return (p.returncode, '', stdout, stderr)
+        return (p.returncode, '', sudo_stdout_extra+stdout, stderr)
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to local '''
