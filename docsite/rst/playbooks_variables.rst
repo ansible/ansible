@@ -113,9 +113,9 @@ Jinja2 Filters
 .. note:: These are infrequently utilized features.  Use them if they fit a use case you have, but this is optional knowledge.
 
 Filters in Jinja2 are a way of transforming template expressions from one kind of data into another.  Jinja2
-ships with many of these as documented on the official Jinja2 template documentation.
+ships with many of these. See `builtin filters`_ in the official Jinja2 template documentation.
 
-In addition to these, Ansible supplies many more.  
+In addition to those, Ansible supplies many more.
 
 .. _filters_for_formatting_data:
 
@@ -172,7 +172,7 @@ The variable value will be used as is, but the template evaluation will raise an
 Defaulting Undefined Variables
 ------------------------------
 
-Jinja2 provides a useful 'defaults' filter, that is often a better approach to failing if a variable is not defined.
+Jinja2 provides a useful 'default' filter, that is often a better approach to failing if a variable is not defined.
 
     {{ some_variable | default(5) }}
 
@@ -189,7 +189,7 @@ All these functions return a unique set from sets or lists.
 
 To get a unique set from a list::
 
-    {{ list1 |unique }}
+    {{ list1 | unique }}
 
 To get a union of two lists::
 
@@ -197,15 +197,15 @@ To get a union of two lists::
 
 To get the intersection of 2 lists (unique list of all items in both)::
 
-    {{ list1 |intersect(list2)}}
+    {{ list1 | intersect(list2) }}
 
 To get the difference of 2 lists (items in 1 that don't exist in 2)::
 
-    {{ list1 |difference(list2)}}
+    {{ list1 | difference(list2) }}
 
 To get the symmetric difference of 2 lists (items exclusive to each list)::
 
-    {{ list1 |symmetric_difference(list2)}}
+    {{ list1 | symmetric_difference(list2) }}
 
 .. _other_useful_filters:
 
@@ -925,8 +925,11 @@ So, that's precedence, explained in a more direct way.  Don't worry about preced
 variable that is a default, or a "live" variable you definitely want to use.  Inventory lies in precedence right in the middle, and
 if you want to forcibly override something, use -e.
 
-If you found that a little hard to understand, take a look at the "ansible-examples" repo on our github for a bit more about
+If you found that a little hard to understand, take a look at the `ansible-examples`_ repo on our github for a bit more about
 how all of these things can work together.
+
+.. _ansible-examples: https://github.com/ansible/ansible-examples
+.. _builtin filters: http://jinja.pocoo.org/docs/templates/#builtin-filters
 
 .. seealso::
 
