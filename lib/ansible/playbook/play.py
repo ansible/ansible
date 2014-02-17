@@ -64,6 +64,7 @@ class Play(object):
         self.basedir          = basedir
         self.roles            = ds.get('roles', None)
         self.tags             = ds.get('tags', None)
+        self.vault_password   = vault_password
 
         if self.tags is None:
             self.tags = []
@@ -88,6 +89,7 @@ class Play(object):
         self.vars_files = ds.get('vars_files', [])
         if not isinstance(self.vars_files, list):
             raise errors.AnsibleError('vars_files must be a list')
+
         self._update_vars_files_for_host(None)
 
         # template everything to be efficient, but do not pre-mature template
@@ -124,7 +126,7 @@ class Play(object):
         self.max_fail_pct     = int(ds.get('max_fail_percentage', 100))
         self.su               = ds.get('su', self.playbook.su)
         self.su_user          = ds.get('su_user', self.playbook.su_user)
-        self.vault_password   = vault_password
+        #self.vault_password   = vault_password
 
         # Fail out if user specifies a sudo param with a su param in a given play
         if (ds.get('sudo') or ds.get('sudo_user')) and (ds.get('su') or ds.get('su_user')):
@@ -748,7 +750,7 @@ class Play(object):
                 filename4 = utils.path_dwim(self.basedir, filename3)
                 if self._has_vars_in(filename4):
                     continue
-                new_vars = utils.parse_yaml_from_file(filename4)
+                new_vars = utils.parse_yaml_from_file(filename4, vault_password=self.vault_password)
                 if new_vars:
                     if type(new_vars) != dict:
                         raise errors.AnsibleError("%s must be stored as dictionary/hash: %s" % (filename4, type(new_vars)))
