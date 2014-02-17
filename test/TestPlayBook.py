@@ -409,6 +409,22 @@ class TestPlaybook(unittest.TestCase):
 
         assert utils.jsonify(expected, format=True) == utils.jsonify(actual,format=True)
 
+    def test_playbook_logging_non_ascii(self):
+        pb = 'test/playbook-logging-non-ascii.yml'
+        actual = self._run(pb)
+
+        expected = {
+            "localhost": {
+                "changed": 3,
+                "failures": 0,
+                "ok": 3,
+                "skipped": 0,
+                "unreachable": 0
+            }
+        }
+
+        assert utils.jsonify(expected, format=True) == utils.jsonify(actual, format=True)
+
 
     # Disabled for now as there are permissions issues that happen if you are not the owner that created files
     # in the archive.

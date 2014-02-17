@@ -814,10 +814,10 @@ class AnsibleModule(object):
             except IOError, e:
                 # fall back to syslog since logging to journal failed
                 syslog.openlog(str(module), 0, syslog.LOG_USER)
-                syslog.syslog(syslog.LOG_NOTICE, msg.encode('utf8'))
+                syslog.syslog(syslog.LOG_NOTICE, msg.decode('utf8').encode('utf8'))
         else:
             syslog.openlog(str(module), 0, syslog.LOG_USER)
-            syslog.syslog(syslog.LOG_NOTICE, msg.encode('utf8'))
+            syslog.syslog(syslog.LOG_NOTICE, msg.decode('utf8').encode('utf8'))
 
     def get_bin_path(self, arg, required=False, opt_dirs=[]):
         '''
