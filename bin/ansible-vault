@@ -166,15 +166,14 @@ def main():
     (options, args) = parser.parse_args()
 
     # execute the desired action
-    if 1: 
-        try:
-            fn = globals()["execute_%s" % action]
-            fn(args, options, parser)
-        except Exception, err:
-            if options.debug:
-                print traceback.format_exc()
-            print "ERROR:",err
-            sys.exit(1)
+    try:
+        fn = globals()["execute_%s" % action]
+        fn(args, options, parser)
+    except Exception, err:
+        if options.debug:
+            print traceback.format_exc()
+        print "ERROR:",err
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
