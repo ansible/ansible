@@ -218,3 +218,21 @@ def get_network_id(module, name, tenant_id=None, neutron=None):
         return None
 
     return networks['networks'][0]['id']
+
+
+def get_subnet_id(module, name, tenant_id=None, neutron=None):
+
+    kwargs = {
+        'name': name
+    }
+
+    if tenant_id:
+        kwargs['tenant_id'] = tenant_id
+
+    try:
+        subnets = neutron.list_subnets(**kwargs)
+    except Exception, e:
+        module.fail_json(msg="Error in getting the subnet list: %s" % e.message)
+    if not subnets['subnets']:
+        return None
+    return subnets['subnets'][0]['id']
