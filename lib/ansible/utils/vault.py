@@ -25,6 +25,8 @@ from subprocess import call
 from ansible import errors
 from hashlib import sha256
 from hashlib import md5
+from binascii import hexlify
+from binascii import unhexlify
 
 # AES IMPORTS
 try:
@@ -198,13 +200,18 @@ class Vault(object):
         f.close()
         j.close()
 
-        # combine header and encrypted data
+        # combine header and hexlify'ed encrypted data
         f = open(out_path, "rb")
         tmpdata = f.read()
         f.close()
-        tmpdata = HEADER + ";" + self.version + ";" + self.cipher + "\n" + tmpdata
+
+        tmpdata = hexlify(tmpdata)
+        tmpdata = [tmpdata[i:i+80] for i in range(0, len(tmpdata), 80)]
+
         f = open(out_path, "wb")
-        f.write(tmpdata)
+        f.write(HEADER + ";" + self.version + ";" + self.cipher + "\n")
+        for l in tmpdata:
+            f.write(l + '\n')
         f.close()
 
         # clean up
@@ -250,9 +257,14 @@ class Vault(object):
         f = open(out_path, "rb")
         tmpdata = f.read()
         f.close()
-        tmpdata = HEADER + ";" + self.version + ";" + self.cipher + "\n" + tmpdata
+
+        tmpdata = hexlify(tmpdata)
+        tmpdata = [tmpdata[i:i+80] for i in range(0, len(tmpdata), 80)]
+
         f = open(out_path, "wb")
-        f.write(tmpdata)
+        f.write(HEADER + ";" + self.version + ";" + self.cipher + "\n")
+        for l in tmpdata:
+            f.write(l + '\n')
         f.close()
 
         # move tmp file into place
@@ -279,7 +291,11 @@ class Vault(object):
         tmpdata = f.readlines()
         f.close()
         del tmpdata[0]
-        tmpdata = ''.join(tmpdata)
+
+        # strip out newline, join, unhex        
+        tmpdata = [ x.strip() for x in tmpdata ]
+        tmpdata = unhexlify(''.join(tmpdata))
+
         f = open(in_path, "wb")
         f.write(tmpdata)
         f.close()
@@ -299,6 +315,7 @@ class Vault(object):
         # cleanup and return
         os.remove(in_path)
         os.remove(out_path)
+
         return data 
 
 
@@ -367,13 +384,16 @@ class Vault(object):
         f.close()
         j.close()
 
-        # combine header and encrypted data
+        # combine header and hexlified encrypted data
         f = open(out_path, "rb")
         tmpdata = f.read()
-        tmpdata = HEADER + ";" + self.version + ";" + self.cipher + "\n" + tmpdata
-        f.close()
+        tmpdata = hexlify(tmpdata)
+        tmpdata = [tmpdata[i:i+80] for i in range(0, len(tmpdata), 80)]
+
         f = open(out_path, "wb")
-        f.write(tmpdata)
+        f.write(HEADER + ";" + self.version + ";" + self.cipher + "\n")
+        for l in tmpdata:
+            f.write(l + '\n')
         f.close()
 
         # clean up
