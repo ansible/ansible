@@ -49,9 +49,9 @@ def is_encrypted(filename):
 
     # read first line of the file
     with open(filename) as f:
-        head=[f.next() for x in xrange(1)]
+        head = f.next()
 
-    if head[0].startswith(HEADER):
+    if head.startswith(HEADER):
         return True
     else:
         return False
