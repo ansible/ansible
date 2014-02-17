@@ -136,10 +136,6 @@ class Vault(object):
         if os.path.isfile(self.filename):
             raise errors.AnsibleError("%s exists, please use 'edit' instead" % self.filename)
 
-        f = open(self.filename, "wb")
-        f.write("---")
-        f.close()
-
         # drop the user into vim on file
         EDITOR = os.environ.get('EDITOR','vim')
         call([EDITOR, self.filename])
