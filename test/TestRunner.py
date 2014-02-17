@@ -524,6 +524,23 @@ class TestRunner(unittest.TestCase):
         result = self._run(*testcase)
         assert result['failed']
 
+        # insert multiline at the end of the file
+        testline1 = '#12: The \\n character replaced with'
+        testline2 = 'an actual newline.'
+        testcase = ('lineinfile', [
+                    "dest=%s" % sample,
+                    "regexp='^#12: '",
+                    "line='%s\n%s'" % (testline1, testline2)
+                    ])
+        result = self._run(*testcase)
+        assert result['changed']
+        assert result['msg'] == 'line added'
+        artifact = [x.strip() for x in open(sample)]
+        assert artifact[-2] == testline1
+        assert artifact[-1] == testline2
+        assert artifact.count(testline1) == 1
+        assert artifact.count(testline2) == 1
+
         # cleanup
         os.unlink(sample)
 
