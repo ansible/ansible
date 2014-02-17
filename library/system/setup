@@ -675,6 +675,48 @@ class LinuxHardware(Hardware):
                 else:
                     self.facts[k] = 'NA'
 
+    def resolve_disks(self, volume, disks):
+
+        lsblk_bin = module.get_bin_path('lsblk')
+        lvs_bin = module.get_bin_path('lvs')
+        vgs_bin = module.get_bin_path('vgs')
+        not_disks = []
+
+        rc, out, err = module.run_command([lsblk_bin, '-o', 'TYPE', '-n', volume])
+        if 'not a block device' in err:
+            return 'Not a block device.'
+        if rc != 0:
+            module.fail_json(msg='Could not run lsblk. %s %s' % (out,err))
+        device_type = out.split('\n')[0].rstrip()
+
+        if device_type == 'disk':
+            disks.append(volume)
+            return disks
+        elif device_type == 'part':
+            disk = ''.join([i for i in volume if not i.isdigit()])
+            not_disks.append(disk)
+        elif 'raid' in device_type:
+            device = os.path.basename(volume)
+            for slave in glob.glob('/sys/block/%s/slaves/*' % device):
+                not_disks.append('/dev/' + os.path.basename(slave))
+        elif device_type == 'lvm':
+            rc, out, err = module.run_command(
+                [lvs_bin, '--noheadings', '-o', 'vg_name', volume])
+            if rc != 0:
+                module.fail_json(msg='Could not run lvs. %s %s' % (out, err))
+            volume_group = out.strip()
+            rc, out, err = module.run_command(
+                [vgs_bin, '--noheadings', '-o' 'pv_name', volume_group])
+            if rc != 0:
+                module.fail_json(msg='Could not run vgs. %s %s' % (out, err))
+            for line in out.strip().split('\n'):
+                not_disks.append(line)
+        else:
+            return ['Unknown' ]
+        for thing in not_disks:
+            self.resolve_disks(thing, disks)
+        return disks
+
     def get_mount_facts(self):
         self.facts['mounts'] = []
         mtab = get_file_content('/etc/mtab', '')
@@ -691,6 +733,7 @@ class LinuxHardware(Hardware):
                     except OSError, e:
                         continue
 
+                    disks = self.resolve_disks(fields[0],[])
                     self.facts['mounts'].append(
                         {'mount': fields[1],
                          'device':fields[0],
@@ -699,6 +742,7 @@ class LinuxHardware(Hardware):
                          # statvfs data
                          'size_total': size_total,
                          'size_available': size_available,
+                         'disks': disks
                          })
 
     def get_device_facts(self):
