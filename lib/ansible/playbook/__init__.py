@@ -354,6 +354,7 @@ class PlayBook(object):
             su=task.su,
             su_user=task.su_user,
             su_pass=task.su_pass,
+            vault_pass = self.vault_password,
             run_hosts=hosts,
             no_log=task.no_log,
         )
@@ -506,6 +507,7 @@ class PlayBook(object):
             su=play.su,
             su_user=play.su_user,
             su_pass=self.su_pass,
+            vault_pass=self.vault_password,
             transport=play.transport,
             is_playbook=True,
             module_vars=play.vars,

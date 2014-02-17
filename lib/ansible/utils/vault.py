@@ -462,7 +462,7 @@ class AES(object):
 
         # Get a block of random data. EL does not have Crypto.Random.new() 
         # so os.urandom is used for cross platform purposes
-        print "WARNING: if encryption hangs, add more entropy"
+        print "WARNING: if encryption hangs, add more entropy (suggest using mouse inputs)"
         salt = os.urandom(bs - len('Salted__'))
 
         key, iv = self.aes_derive_key_and_iv(password, salt, key_length, bs)
