@@ -24,11 +24,14 @@ import tempfile
 from subprocess import call
 from ansible import errors
 from hashlib import sha256
+from hashlib import md5
 
 # AES IMPORTS
-from hashlib import md5
-from Crypto.Cipher import AES as AES_
-from Crypto import Random
+try:
+    from Crypto.Cipher import AES as AES_
+    HAS_AES = True   
+except ImportError:
+    HAS_AES = False    
 
 HEADER='$ANSIBLE_VAULT'
 
@@ -413,6 +416,10 @@ class AES(object):
 
     # http://stackoverflow.com/a/16761459
 
+    def __init__(self):
+        if not HAS_AES:
+            raise errors.AnsibleError("Crypto.Cipher.AES is not installed")
+
     def aes_derive_key_and_iv(self, password, salt, key_length, iv_length):
 
         """ Create a key and an initialization vector """
@@ -432,7 +439,11 @@ class AES(object):
         """ Read plaintext data from in_file and write encrypted to out_file """
 
         bs = AES_.block_size
-        salt = Random.new().read(bs - len('Salted__'))
+
+        # Get a block of random data. EL does not have Crypto.Random.new() 
+        # so os.urandom is used for cross platform purposes
+        salt = os.urandom(bs - len('Salted__'))
+
         key, iv = self.aes_derive_key_and_iv(password, salt, key_length, bs)
         cipher = AES_.new(key, AES_.MODE_CBC, iv)
         out_file.write('Salted__' + salt)
