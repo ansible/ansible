@@ -113,9 +113,9 @@ Jinja2 Filters
 .. note:: These are infrequently utilized features.  Use them if they fit a use case you have, but this is optional knowledge.
 
 Filters in Jinja2 are a way of transforming template expressions from one kind of data into another.  Jinja2
-ships with many of these as documented on the official Jinja2 template documentation.
+ships with many of these. See `builtin filters`_ in the official Jinja2 template documentation.
 
-In addition to these, Ansible supplies many more.  
+In addition to those, Ansible supplies many more.
 
 .. _filters_for_formatting_data:
 
@@ -929,6 +929,7 @@ If you found that a little hard to understand, take a look at the `ansible-examp
 how all of these things can work together.
 
 .. _ansible-examples: https://github.com/ansible/ansible-examples
+.. _builtin filters: http://jinja.pocoo.org/docs/templates/#builtin-filters
 
 .. seealso::
 
