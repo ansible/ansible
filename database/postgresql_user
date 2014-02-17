@@ -265,16 +265,35 @@ def get_table_privileges(cursor, user, table):
     return set([x[0] for x in cursor.fetchall()])
 
 
+def quote_pg_identifier(identifier):
+    """
+    quote postgresql identifiers involving zero or more namespaces
+    """
+
+    if '"' in identifier:
+        # the user has supplied their own quoting. we have to hope they're
+        # doing it right.  Maybe they have an unfortunately named table
+        # containing a period in the name, such as: "public"."users.2013"
+        return identifier
+
+    tokens = identifier.strip().split(".")
+    quoted_tokens = []
+    for token in tokens:
+        quoted_tokens.append('"%s"' % (token, ))
+    return ".".join(quoted_tokens)
+
 def grant_table_privilege(cursor, user, table, priv):
     prev_priv = get_table_privileges(cursor, user, table)
-    query = 'GRANT %s ON TABLE \"%s\" TO \"%s\"' % (priv, table, user)
+    query = 'GRANT %s ON TABLE %s TO %s' % (
+        priv, quote_pg_identifier(table), quote_pg_identifier(user), )
     cursor.execute(query)
     curr_priv = get_table_privileges(cursor, user, table)
     return len(curr_priv) > len(prev_priv)
 
 def revoke_table_privilege(cursor, user, table, priv):
     prev_priv = get_table_privileges(cursor, user, table)
-    query = 'REVOKE %s ON TABLE \"%s\" FROM \"%s\"' % (priv, table, user)
+    query = 'REVOKE %s ON TABLE %s FROM %s' % (
+        priv, quote_pg_identifier(table), quote_pg_identifier(user), )
     cursor.execute(query)
     curr_priv = get_table_privileges(cursor, user, table)
     return len(curr_priv) < len(prev_priv)
