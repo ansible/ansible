@@ -242,7 +242,7 @@ class Vault(object):
 
         # get the cipher and encrypt data with new key
         self.__load_cipher()
-        #f = open(in_path, "rb")
+        _, out_path = tempfile.mkstemp()
         f = open(combined_path, "rb")
         j = open(out_path, "wb")
         self.cipher_obj.encrypt(f, j, self.vault_password)        
@@ -264,7 +264,6 @@ class Vault(object):
         f.close()
 
         # move tmp file into place
-        os.remove(in_path)
         os.remove(combined_path)
         os.remove(self.filename)
         shutil.move(out_path, self.filename)
@@ -375,16 +374,18 @@ class Vault(object):
 
         # encrypt data
         f = open(in_path, "rb")
-        j = open(out_path, "wb")
+        j = open(combined_path, "wb")
         self.cipher_obj.encrypt(f, j, self.password)
         f.close()
         j.close()
 
         # combine header and hexlified encrypted data
+        _, out_path = tempfile.mkstemp()
         f = open(out_path, "rb")
         tmpdata = f.read()
         tmpdata = hexlify(tmpdata)
         tmpdata = [tmpdata[i:i+80] for i in range(0, len(tmpdata), 80)]
+        f.close()
 
         f = open(out_path, "wb")
         f.write(HEADER + ";" + self.version + ";" + self.cipher + "\n")
