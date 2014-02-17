@@ -24,6 +24,8 @@ import traceback
 import re
 import shlex
 import os
+import sha
+import errno
 
 DOCUMENTATION = '''
 ---
@@ -54,6 +56,13 @@ options:
     version_added: "0.8"
     required: no
     default: null
+  maybe_changes:
+    description:
+      - A filename. When this file's contents have not changed after the
+        command has been run, return C(changed=false).
+    version_added: "1.5"
+    required: no
+    default: null
   chdir:
     description:
       - cd into this directory before running the command
@@ -71,7 +80,15 @@ notes:
        C(>), C(|), etc), you actually want the M(shell) module instead. The
        M(command) module is much more secure as it's not affected by the user's
        environment.
-    -  " C(creates), C(removes), and C(chdir) can be specified after the command. For instance, if you only want to run a command if a certain file does not exist, use this."
+    -  " C(creates), C(removes), C(maybe_changes), and C(chdir) can be
+       specified after the command. For instance, if you only want to run a
+       command if a certain file does not exist, use this."
+    -  "C(maybe_changes) only watches for changes to the I(contents) of the
+       I(specified file). It will report C(changed=false) even if the
+       permissions, ACL, date or extended attributes of the file have changed.
+       It will also report C(changed=false) if the command has changed some
+       other part of the target system. If the specified file gets created or
+       deleted by the command, this counts as a change to its contents."
 author: Michael DeHaan
 '''
 
@@ -81,7 +98,32 @@ EXAMPLES = '''
 
 # Run the command if the specified file does not exist
 - command: /usr/bin/make_database.sh arg1 arg2 creates=/path/to/database
+
+# Run the command, report changed=false if the contents of /path/to/database
+# have not changed afterwards. This can be useful for notifying handlers.
+- command: /usr/bin/update_database.sh arg1 maybe_changes=/path/to/database
 '''
+
+
+def _checksum(path):
+    """
+    Return SHA-1-sum of the contents of a file (or None if file does not exist)
+    """
+    try:
+        s = sha.new()
+        f = open(path, 'rb')
+        try:
+            # Avoid keeping big files in memory: read file in 1 MiB-chunks
+            for chunk in iter(lambda: f.read(2 ** 20), ''):
+                s.update(chunk)
+        finally:
+            f.close()
+        return s.hexdigest()
+    except IOError as e:
+        if e.errno == errno.ENOENT:
+            return None
+        raise
+
 
 def main():
 
@@ -95,6 +137,7 @@ def main():
     args  = module.params['args']
     creates  = module.params['creates']
     removes  = module.params['removes']
+    maybe_changes = module.params['maybe_changes']
 
     if args.strip() == '':
         module.fail_json(rc=256, msg="no command given")
@@ -132,6 +175,18 @@ def main():
                 rc=0
             )
 
+    if maybe_changes:
+        # if the line contains maybe_changes=filename try to get
+        # a checksum of this file's contents to detect changes
+        v = os.path.expanduser(maybe_changes)
+        try:
+            checksum_before = _checksum(v)
+        except IOError as e:
+            module.fail_json(
+                rc=258,
+                msg='failed to get checksum of %s: %s' % (v, e)
+            )
+
     if not shell:
         args = shlex.split(args)
     startd = datetime.datetime.now()
@@ -140,6 +195,19 @@ def main():
 
     endd = datetime.datetime.now()
     delta = endd - startd
+
+    # assume the command changed something
+    changed = True
+
+    if maybe_changes:
+        try:
+            checksum_after = _checksum(os.path.expanduser(maybe_changes))
+        except IOError:
+            # if there is trouble getting a checksum, "changed" remains True
+            pass
+        else:
+            # else changed depends on the contents of the file having changed
+            changed = checksum_before != checksum_after
 
     if out is None:
         out = ''
@@ -154,7 +222,7 @@ def main():
         start   = str(startd),
         end     = str(endd),
         delta   = str(delta),
-        changed = True
+        changed = changed
     )
 
 # import module snippets
@@ -178,19 +246,22 @@ class CommandModule(AnsibleModule):
         params['chdir'] = None
         params['creates'] = None
         params['removes'] = None
+        params['maybe_changes'] = None
         params['shell'] = False
         params['executable'] = None
         if args.find("#USE_SHELL") != -1:
             args = args.replace("#USE_SHELL", "")
             params['shell'] = True
 
-        r = re.compile(r'(^|\s)(creates|removes|chdir|executable|NO_LOG)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)')
+        r = re.compile(r'(^|\s)(creates|removes|maybe_changes|chdir|executable|NO_LOG)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)')
         for m in r.finditer(args):
             v = m.group(4).replace("\\", "")
             if m.group(2) == "creates":
                 params['creates'] = v
             elif m.group(2) == "removes":
                 params['removes'] = v
+            elif m.group(2) == "maybe_changes":
+                params['maybe_changes'] = v
             elif m.group(2) == "chdir":
                 v = os.path.expanduser(v)
                 v = os.path.abspath(v)
