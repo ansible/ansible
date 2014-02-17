@@ -102,6 +102,7 @@ def main(args):
     su_pass = None
     if not options.listhosts and not options.syntax and not options.listtasks:
         options.ask_pass = options.ask_pass or C.DEFAULT_ASK_PASS
+        options.ask_vault_pass = options.ask_vault_pass or C.DEFAULT_ASK_VAULT_PASS
         # Never ask for an SSH password when we run with local connection
         if options.connection == "local":
             options.ask_pass = False
