@@ -105,6 +105,17 @@ def get_keystone_client(module):
     return keystone
 
 
+def get_tenant_id(module, tenant_name, keystone=None):
+    if not keystone:
+        keystone = get_keystone_client(module)
+
+    tenant_name = module.params['tenant_name']
+
+    for tenant in keystone.tenants.list():
+        if tenant.name == tenant_name:
+            return tenant.id
+
+
 def get_token_and_endpoint(module, service_type, endpoint_type=None):
     keystone = get_keystone_client(module)
 
@@ -146,13 +157,12 @@ def get_nova_client(module):
 
 
 def get_glance_client(module):
-
-    token, endpoint = get_token_and_endpoint(module, 'image')
-
     try:
         import glanceclient.v1.client
     except ImportError:
         module.fail_json(msg="glanceclient is required for this feature")
+
+    token, endpoint = get_token_and_endpoint(module, 'image')
 
     return glanceclient.v1.client.Client(endpoint, token=token)
 
@@ -167,3 +177,44 @@ def get_glance_image_id(module, name, glance=None):
                 return image.id
     except Exception, e:
         module.fail_json(msg="Error in fetching image list: %s" % e.message)
+
+
+def get_neutron_client(module):
+    try:
+        try:
+            from neutronclient.neutron import client as nclient
+        except ImportError:
+            from quantumclient.quantum import client as nclient
+    except ImportError:
+        module.fail_json(msg="quantumclient or neutronclient are required")
+
+    token, endpoint = get_token_and_endpoint(module, 'network')
+
+    try:
+        neutron = nclient.Client('2.0', token=token, endpoint_url=endpoint)
+    except Exception, e:
+        module.fail_json(msg="Error in connecting to neutron: %s " % e.message)
+    return neutron
+
+
+def get_network_id(module, name, tenant_id=None, neutron=None):
+    if not neutron:
+        neutron = get_neutron_client(module)
+
+    kwargs = {
+        'name': module.params['name'],
+    }
+
+    if tenant_id:
+        kwargs['tenant_id'] = tenant_id
+
+    try:
+        networks = neutron.list_networks(**kwargs)
+    except Exception, e:
+        module.fail_json(
+            msg="Error in listing neutron networks: %s" % e.message)
+
+    if not networks['networks']:
+        return None
+
+    return networks['networks'][0]['id']
