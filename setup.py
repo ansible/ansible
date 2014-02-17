@@ -10,7 +10,13 @@ from distutils.core import setup
 
 # find library modules
 from ansible.constants import DEFAULT_MODULE_PATH
-install_path = DEFAULT_MODULE_PATH.split(os.pathsep)[0]
+module_paths = DEFAULT_MODULE_PATH.split(os.pathsep)
+# always install in /usr/share/ansible if specified
+# otherwise use the first module path listed
+if '/usr/share/ansible' in module_paths:
+    install_path = '/usr/share/ansible'
+else:
+    install_path = module_paths[0]
 dirs=os.listdir("./library/")
 data_files = []
 for i in dirs:
