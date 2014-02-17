@@ -780,7 +780,10 @@ class AnsibleModule(object):
             else:
                 found = False
                 for filter in filter_re:
-                    m = filter.match(str(self.params[param]))
+                    if isinstance(self.params[param], unicode):
+                        m = filter.match(self.params[param])
+                    else:
+                        m = filter.match(str(self.params[param]))
                     if m:
                         d = m.groupdict()
                         log_args[param] = d['before'] + "********" + d['after']
