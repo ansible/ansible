@@ -438,7 +438,7 @@ class AES(object):
 
     def __init__(self):
         if not HAS_AES:
-            raise errors.AnsibleError("Crypto.Cipher.AES is not installed")
+            raise errors.AnsibleError("pycrypto is not installed. Fix this with your package manager, for instance, yum-install python-crypto OR (apt equivalent)")
 
     def aes_derive_key_and_iv(self, password, salt, key_length, iv_length):
 
