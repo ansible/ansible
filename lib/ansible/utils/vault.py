@@ -28,6 +28,8 @@ from hashlib import md5
 from binascii import hexlify
 from binascii import unhexlify
 
+from ansible import constants as C
+
 # AES IMPORTS
 try:
     from Crypto.Cipher import AES as AES_
@@ -115,17 +117,25 @@ class Vault(object):
 
         # read first line
         with open(self.filename) as f:
-            head=[f.next() for x in xrange(1)]
+            #head=[f.next() for x in xrange(1)]
+            head = f.next()
 
         this_version = None
         this_cipher = None
 
         # split segments
-        header = head[0].strip()
-        if len(header.split(';')) == 3:
-            this_version = header.split(';')[1]
-            this_cipher = header.split(';')[2]            
+        if len(head.split(';')) == 3:
+            this_version = head.split(';')[1].strip()
+            this_cipher = head.split(';')[2].strip()            
+        else:
+            raise errors.AnsibleError("%s has an invalid header" % self.filename)
 
+        # validate acceptable version
+        this_version = float(this_version)
+        if this_version < C.VAULT_VERSION_MIN or this_version > C.VAULT_VERSION_MAX:
+            raise errors.AnsibleError("%s must have a version between %s and %s " % (self.filename, 
+                                                                            C.VAULT_VERSION_MIN,
+                                                                            C.VAULT_VERSION_MAX))
         # set properties
         self.cipher = this_cipher
         self.version = this_version
@@ -205,7 +215,7 @@ class Vault(object):
         tmpdata = [tmpdata[i:i+80] for i in range(0, len(tmpdata), 80)]
 
         f = open(out_path, "wb")
-        f.write(HEADER + ";" + self.version + ";" + self.cipher + "\n")
+        f.write(HEADER + ";" + str(self.version) + ";" + self.cipher + "\n")
         for l in tmpdata:
             f.write(l + '\n')
         f.close()
@@ -258,7 +268,7 @@ class Vault(object):
         tmpdata = [tmpdata[i:i+80] for i in range(0, len(tmpdata), 80)]
 
         f = open(out_path, "wb")
-        f.write(HEADER + ";" + self.version + ";" + self.cipher + "\n")
+        f.write(HEADER + ";" + str(self.version) + ";" + self.cipher + "\n")
         for l in tmpdata:
             f.write(l + '\n')
         f.close()
@@ -387,7 +397,7 @@ class Vault(object):
         f.close()
 
         f = open(out_path, "wb")
-        f.write(HEADER + ";" + self.version + ";" + self.cipher + "\n")
+        f.write(HEADER + ";" + str(self.version) + ";" + self.cipher + "\n")
         for l in tmpdata:
             f.write(l + '\n')
         f.close()

@@ -101,11 +101,11 @@ def get_opt(options, k, defval=""):
 #-------------------------------------------------------------------------------------
 
 def _get_vault(filename, options, password):
-    V = Vault()
-    V.filename = filename
-    V.vault_password = password
-    V.password = password
-    return V
+    this_vault = Vault()
+    this_vault.filename = filename
+    this_vault.vault_password = password
+    this_vault.password = password
+    return this_vault
 
 def _get_password(ask_new=False):
     a, b, c, d, e = utils.ask_passwords(ask_vault_pass=True, 
@@ -117,17 +117,17 @@ def execute_create(args, options, parser):
         raise errors.AnsibleError("create does not accept more than one filename")        
     password, new_password = _get_password()
 
-    V = _get_vault(args[0], options, password)
+    this_vault = _get_vault(args[0], options, password)
     if not hasattr(options, 'cipher'):
-        V.cipher = 'AES'
-    V.create()
+        this_vault.cipher = 'AES'
+    this_vault.create()
 
 def execute_decrypt(args, options, parser):
     password, new_password = _get_password()
 
     for f in args:
-        V = _get_vault(f, options, password)
-        V.decrypt()
+        this_vault = _get_vault(f, options, password)
+        this_vault.decrypt()
 
 def execute_edit(args, options, parser):
     if len(args) > 1:
@@ -135,24 +135,24 @@ def execute_edit(args, options, parser):
     password, new_password = _get_password()
 
     for f in args:
-        V = _get_vault(f, options, password)
-        V.edit()
+        this_vault = _get_vault(f, options, password)
+        this_vault.edit()
 
 def execute_encrypt(args, options, parser):
     password, new_password = _get_password()
 
     for f in args:
-        V = _get_vault(f, options, password)
+        this_vault = _get_vault(f, options, password)
         if not hasattr(options, 'cipher'):
-            V.cipher = 'AES'
-        V.encrypt()
+            this_vault.cipher = 'AES'
+        this_vault.encrypt()
 
 def execute_rekey(args, options, parser):
     password, new_password = _get_password(ask_new=True)
 
     for f in args:
-        V = _get_vault(f, options, password)
-        V.rekey(new_password)
+        this_vault = _get_vault(f, options, password)
+        this_vault.rekey(new_password)
 
 #-------------------------------------------------------------------------------------
 # MAIN
