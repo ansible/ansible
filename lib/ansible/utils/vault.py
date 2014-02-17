@@ -332,8 +332,7 @@ class Vault(object):
         tmpdata = f.readlines()
         f.close()
         tmpheader = tmpdata[0].strip()
-        del tmpdata[0]
-        tmpdata = ''.join(tmpdata)
+        tmpdata = ''.join(tmpdata[1:])
 
         # write headerless data to tmpfile
         _, io_path = tempfile.mkstemp()
@@ -423,9 +422,8 @@ class Vault(object):
          # is the first line a sha?
         lines = data.split("\n")
         this_sha = lines[0]
-        del lines[0]
 
-        clean_data = '\n'.join(lines)
+        clean_data = '\n'.join(lines[1:])
         return this_sha, clean_data       
 
 
