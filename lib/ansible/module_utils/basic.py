@@ -1020,6 +1020,17 @@ class AnsibleModule(object):
 
         if self._should_write_stdout_stderr_to_file():
             (stdout_fname, stderr_fname) = MODULE_STDOUT_STDERR_FILES
+
+            # We open files in append mode because:
+            # - another process will be tail'ing this file and if we 
+            #   open it in write mode, the tail won't work anymore
+            # - Even if the process running tail started up after we
+            #   created this here, run_command may be invoked multiple times
+            #   and we want the tail to keep working
+            #
+            # Because we're appending, we need to remember the beginning
+            # of where we started writing, so we open in read/append mode
+            # and record the initial position
             stdout = open(stdout_fname, 'a+')
             stderr = open(stderr_fname, 'a+')
             stdout_start_pos = stdout.tell()
