@@ -46,32 +46,32 @@
 DOCUMENTATION = '''
 ---
 module: zabbix_group
-short_description: Create host groups in zabbix.
+short_description: Create host groups in Zabbix.
 description:
-   - Can create host groups when not exist.
+   - Can create host groups in Zabbix if they don't exist.
 version_added: "1.5"
 author: Tony Minfei Ding
 options:
     zabbix_server:
         description:
-            - The website of zabbix server.
+            - Zabbix server to connect to.
         required: true
     zabbix_login_user:
         description:
-            - User of zabbix.
+            - Zabbix user to login with.
         required: true
     zabbix_login_password:
         description:
-            - Password of login user.
+            - Zabbix user password.
         required: true
     zabbix_access_protocol:
         description:
-            - Protocol of zabbix.
+            - Protocol to use when connecting to Zabbix.
         required: false
         default: "http"
     zabbix_host_groups:
         description:
-            - The host groups you want to create.
+            - The host groups create.
         required: true
 '''
 
@@ -143,7 +143,7 @@ class ZabbixAPI(object):
 
         self._auth = parse_response['result']
         if not self.check_auth():
-            self._module.fail_json(msg="Login failed, please check your configure.")
+            self._module.fail_json(msg="Login failed")
 
     # do request to zabbix and get response
     def do_request(self, json_string):
@@ -168,13 +168,13 @@ class ZabbixAPI(object):
             http_handler = urllib2.HTTPHandler()
             opener = urllib2.build_opener(http_handler)
         else:
-            self._module.fail_json(msg="Unknown protocol %s." % self._protocol)
+            self._module.fail_json(msg="Unknown protocol: %s" % self._protocol)
         return opener
 
     # check and parse http response
     def parse_response(self, response):
         if response.code != 200:
-            self._module.fail_json(msg="Get error status code %s, error reason: %s" % (response.status, response.reason))
+            self._module.fail_json(msg="Error status code %s: %s" % (response.status, response.reason))
 
         reads = response.read()
         if not len(reads):
@@ -183,7 +183,7 @@ class ZabbixAPI(object):
             # load string to json obj
             response_obj = json.loads(reads.decode('utf-8'))
         except ValueError, e:
-            self._module.fail_json(msg="Unable to decode. the response string: %s" % reads)
+           self._module.fail_json(msg="Unable to decode response: %s" % reads)
 
         if 'error' in response_obj:
             error_code = response_obj['error']['code']
@@ -241,7 +241,7 @@ class ZabbixAPIObjectClass(ZabbixAPI):
             parse_response = self._zabbix_api.parse_response(response)
             return parse_response['result']
         else:
-            self._module.fail_json(msg="The user %s not logged in %s." % (self._username, self._server_address))
+            self._module.fail_json(msg="User %s not logged into %s" % (self._username, self._server_address))
 
 class HostGroup(object):
     def __init__(self, module):
@@ -255,7 +255,7 @@ class HostGroup(object):
                 if not self._zapi.check_auth():
                     self._zapi.do_login(zabbix_server, zabbix_login_user, zabbix_login_password, zabbix_access_protocol)
         except Exception, e:
-            self._module.fail_json(msg="Login to Zabbix %s failed.%s" % (zabbix_server, e))
+            self._module.fail_json(msg="Login to Zabbix server %s failed: %s" % (zabbix_server, e))
 
     # create host group if not exists
     def create_host_group(self, group_names):
@@ -276,7 +276,7 @@ class HostGroup(object):
                         return group_add_list
             return group_add_list
         except Exception, e:
-            self._module.fail_json(msg="Create host groups failed. %s" % e)
+            self._module.fail_json(msg="Failed to create host group(s): %s" % e)
 
     def get_group_ids(self, group_names):
         group_ids = []
@@ -310,7 +310,7 @@ def main():
     hostGroup.login(zabbix_server, zabbix_login_user, zabbix_login_password, zabbix_access_protocol)
     group_add_list = hostGroup.create_host_group(zabbix_host_groups)
     if len(group_add_list) > 0:
-        module.exit_json(changed=True, result="Create host groups %s successful" % group_add_list)
+        module.exit_json(changed=True, result="Successfully create host group(s): %s" % group_add_list)
     else:
         module.exit_json(changed=False)
 
