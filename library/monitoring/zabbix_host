@@ -75,11 +75,11 @@ options:
         required: true
     zabbix_host_groups:
         description:
-            - Host groups to add the host to.
+            - List of host groups to add the host to.
         required: true
     zabbix_link_templates:
         description:
-            - Templates to be linked to the host.
+            - List of templates to be linked to the host.
         required: false
         default: None
     status:
@@ -103,8 +103,12 @@ EXAMPLES = '''
     zabbix_login_password: password
     zabbix_access_protocol: http
     zabbix_host_name: ExampleHost
-    zabbix_host_groups: Example group1,Example group2
-    zabbix_link_templates: Example template1,Example template2
+    zabbix_host_groups:
+      - Example group1
+      - Example group2
+    zabbix_link_templates:
+      - Example template1
+      - Example template2
     status: 1
     interfaces:
       - type: 1

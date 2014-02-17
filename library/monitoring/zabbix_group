@@ -46,9 +46,9 @@
 DOCUMENTATION = '''
 ---
 module: zabbix_group
-short_description: Create host groups in Zabbix.
+short_description: Creates Zabbix host groups.
 description:
-   - Can create host groups in Zabbix if they don't exist.
+   - Creates Zabbix host groups if they don't already exist.
 version_added: "1.5"
 author: Tony Minfei Ding
 options:
@@ -71,7 +71,7 @@ options:
         default: "http"
     zabbix_host_groups:
         description:
-            - The host groups create.
+            - List of host groups to create.
         required: true
 '''
 
@@ -83,7 +83,9 @@ EXAMPLES = '''
     zabbix_login_user: username
     zabbix_login_password: password
     zabbix_access_protocol: http
-    zabbix_host_groups: Example group1,Example group2
+    zabbix_host_groups: 
+      - Example group1
+      - Example group2
 '''
 
 import json
