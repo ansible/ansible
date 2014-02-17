@@ -24,5 +24,6 @@ It is recommended to look at `Example Playbooks <https://github.com/ansible/ansi
    playbooks_conditionals
    playbooks_loops
    playbooks_best_practices
+   playbooks_troubleshooting
 
 
