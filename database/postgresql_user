@@ -181,7 +181,7 @@ def user_add(cursor, user, password, role_attr_flags,  encrypted, expires):
     cursor.execute(query, query_password_data)
     return True
 
-def user_alter(cursor, user, password, role_attr_flags, encrypted, expires):
+def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expires):
     """Change user password and/or attributes. Return True if changed, False otherwise."""
     changed = False
 
@@ -213,7 +213,17 @@ def user_alter(cursor, user, password, role_attr_flags, encrypted, expires):
         if expires is not None:
             alter = alter + " VALID UNTIL '%(expires)s'" % { "exipres": expires }
 
-        cursor.execute(alter, query_password_data)
+        try:
+            cursor.execute(alter, query_password_data)
+        except psycopg2.InternalError, e:
+            if e.pgcode == '25006':
+                # Handle errors due to read-only transactions indicated by pgcode 25006
+                # ERROR:  cannot execute ALTER ROLE in a read-only transaction
+                changed = False
+                module.fail_json(msg=e.pgerror)
+                return changed
+            else:
+                raise psycopg2.InternalError, e
 
         # Grab new role attributes.
         cursor.execute(select, {"user": user})
@@ -465,7 +475,7 @@ def main():
 
     if state == "present":
         if user_exists(cursor, user):
-            changed = user_alter(cursor, user, password, role_attr_flags, encrypted, expires)
+            changed = user_alter(cursor, module, user, password, role_attr_flags, encrypted, expires)
         else:
             changed = user_add(cursor, user, password, role_attr_flags, encrypted, expires)
         changed = grant_privileges(cursor, user, privs) or changed
