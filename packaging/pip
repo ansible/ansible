@@ -287,8 +287,6 @@ def main():
     if env:
         path_prefix="/".join(pip.split('/')[:-1])
 
-    if extra_args:
-        cmd += ' %s' % extra_args
     if name:
         # pip can accept a path to a local project or a VCS url beginning
         # with svn+, git+, hg+, or bz+ and these sources usually do not qualify
@@ -326,6 +324,10 @@ def main():
 
         if not is_package and state != 'absent' and use_mirrors and '--use-mirrors' in cmd_opts:
             cmd += ' --use-mirrors'
+
+    if extra_args:
+        cmd += ' %s' % extra_args
+    if name:
         cmd += ' %s' % _get_full_name(name, version)
     elif requirements:
         cmd += ' -r %s' % requirements
