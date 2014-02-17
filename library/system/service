@@ -753,6 +753,18 @@ class LinuxService(Service):
         return(rc_state, stdout, stderr)
 
 # ===========================================
+# Subclass: GNUkFreeBSD
+
+class GNUkFreeBsdService(LinuxService, Service):
+    """
+    This is the GNUkFreeBSD Service manipulation class
+    It uses the LinuxService class directly
+    """
+
+    platform = 'GNU/kFreeBSD'
+    distribution = None
+
+# ===========================================
 # Subclass: FreeBSD
 
 class FreeBsdService(Service):
