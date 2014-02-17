@@ -101,7 +101,21 @@ def get_keystone_client(module):
     except ImportError:
         module.fail_json(msg="keystoneclient is required for this feature")
 
-    return keystoneclient.v2_0.client.Client(**kwargs)
+    keystone = keystoneclient.v2_0.client.Client(**kwargs)
+    return keystone
+
+
+def get_token_and_endpoint(module, service_type, endpoint_type=None):
+    keystone = get_keystone_client(module)
+
+    kwargs = {"service_type": service_type}
+
+    if endpoint_type:
+        kwargs["endpoint_type"] = endpoint_type
+    elif module.params.get('endpoint_type'):
+        kwargs["endpoint_type"] = module.params['endpoint_type']
+
+    return keystone.auth_token, keystone.service_catalog.url_for(**kwargs)
 
 
 def get_nova_client(module):
@@ -111,11 +125,14 @@ def get_nova_client(module):
     password = kwargs.pop("password")
     tenant_id = kwargs.pop("tenant_name", None) or kwargs.pop("tenant_id")
 
+    if module.params.get('endpoint_type'):
+        kwargs['endpoint_type'] = module.params['endpoint_type']
+
     try:
         import novaclient.v1_1.client
         import novaclient.exceptions
     except ImportError:
-        module.fail_json(msg="keystoneclient is required for this feature")
+        module.fail_json(msg="novaclient is required for this feature")
 
     nova = novaclient.v1_1.client.Client(user, password, tenant_id, **kwargs)
     try:
@@ -126,3 +143,27 @@ def get_nova_client(module):
         module.fail_json(msg="Unable to authorize user: %s" % e.message)
 
     return nova
+
+
+def get_glance_client(module):
+
+    token, endpoint = get_token_and_endpoint(module, 'image')
+
+    try:
+        import glanceclient.v1.client
+    except ImportError:
+        module.fail_json(msg="glanceclient is required for this feature")
+
+    return glanceclient.v1.client.Client(endpoint, token=token)
+
+
+def get_glance_image_id(module, name, glance=None):
+    if not glance:
+        glance = get_glance_client(module)
+
+    try:
+        for image in glance.images.list():
+            if image.name == name:
+                return image.id
+    except Exception, e:
+        module.fail_json(msg="Error in fetching image list: %s" % e.message)

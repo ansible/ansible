@@ -181,9 +181,9 @@ def rebuild_server(module, nova, server):
     module.exit_json(changed=True, **state)
 
 
-def create_server(module, nova):
+def create_server(module, nova, image_id):
     bootargs = [module.params['name'],
-                module.params['image_id'],
+                image_id,
                 module.params['flavor_id']]
 
     security_groups = module.params['security_groups']
@@ -268,6 +268,7 @@ def main():
     argument_spec.update(dict(
         name=dict(required=True),
         image_id=dict(default=None),
+        image_name=dict(default=None),
         flavor_id=dict(default=1),
         key_name=dict(default=None),
         security_groups=dict(default='default'),
@@ -281,22 +282,28 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        mutually_exclusive=os_mutually_exclusive()
+        mutually_exclusive=os_mutually_exclusive() + [
+            ['image_id', 'image_name']
+        ]
     )
 
     nova = get_nova_client(module)
 
     if module.params['state'] == 'present':
-        if not module.params['image_id']:
-            module.fail_json(msg="Parameter 'image_id' is required "
-                                 "if state == 'present'")
+        if module.params['image_id']:
+            image_id = module.params['image_id']
+        elif module.params['image_name']:
+            image_id = get_glance_image_id(module, module.params['image_name'])
+        else:
+            module.fail_json(msg="Parameter 'image_id' or 'image_name' is "
+                                 "required if state == 'present'")
 
         server = get_server(module, nova)
         if server:
             state = get_server_state(module, nova, server)
             module.exit_json(changed=False, **state)
 
-        create_server(module, nova)
+        create_server(module, nova, image_id)
 
     elif module.params['state'] == 'absent':
         get_server_state(module, nova)
