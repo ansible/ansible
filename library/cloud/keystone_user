@@ -23,17 +23,23 @@ options:
      default: 'yes'
    login_tenant_name:
      description:
-        - The tenant login_user belongs to
+        - The name of the tenant login_user belongs to
+     required: false
+     default: None
+   login_tenant_id:
+     description:
+        - The id of the tenant login_user belongs to
      required: false
      default: None
    token:
      description:
-        - The token to be uses in case the password is not specified
+        - The token to be used in case the password is not specified
      required: false
      default: None
+     
    endpoint:
      description:
-        - The keystone url for authentication
+        - The keystone admin url for authentication
      required: false
      default: 'http://127.0.0.1:35357/v2.0/'
    user:
@@ -86,13 +92,7 @@ EXAMPLES = '''
 - keystone_user: role=admin user=john tenant=demo
 '''
 
-try:
-    from keystoneclient.v2_0 import client
-except ImportError:
-    keystoneclient_found = False
-else:
-    keystoneclient_found = True
-
+import keystoneclient.v2_0.client
 
 def authenticate(endpoint, token, login_user, login_password, login_tenant_name):
     """Return a keystone client object"""
@@ -285,53 +285,44 @@ def ensure_role_absent(keystone, uesr, tenant, role, check_mode):
 
 
 def main():
+    argument_spec = os_argument_spec()
+    argument_spec.update(dict(
+        user=dict(required=False),
+        password=dict(required=False),
+        tenant=dict(required=False),
+        tenant_description=dict(required=False),
+        email=dict(required=False),
+        role=dict(required=False),
+        state=dict(default='present', choices=['present', 'absent']),
+
+        # override default endpoint_type, as keystone cannot be adminsitered
+        # from the publicURL
+        endpoint_type=dict(default="adminURL"),
+    ))
 
     module = AnsibleModule(
-        argument_spec=dict(
-            user=dict(required=False),
-            password=dict(required=False),
-            tenant=dict(required=False),
-            tenant_description=dict(required=False),
-            email=dict(required=False),
-            role=dict(required=False),
-            state=dict(default='present', choices=['present', 'absent']),
-            endpoint=dict(required=False,
-                          default="http://127.0.0.1:35357/v2.0"),
-            token=dict(required=False),
-            login_user=dict(required=False),
-            login_password=dict(required=False),
-            login_tenant_name=dict(required=False)
-        ),
+        argument_spec=argument_spec,
         supports_check_mode=True,
-        mutually_exclusive=[['token', 'login_user'],
-                            ['token', 'login_password'],
-                            ['token', 'login_tenant_name']]
+        mutually_exclusive=os_mutually_exclusive()
     )
 
-    if not keystoneclient_found:
-        module.fail_json(msg="the python-keystoneclient module is required")
+    token, endpoint = os_authenticate(module, 'identity')
 
-    user = module.params['user']
-    password = module.params['password']
-    tenant = module.params['tenant']
-    tenant_description = module.params['tenant_description']
-    email = module.params['email']
-    role = module.params['role']
-    state = module.params['state']
-    endpoint = module.params['endpoint']
-    token = module.params['token']
-    login_user = module.params['login_user']
-    login_password = module.params['login_password']
-    login_tenant_name = module.params['login_tenant_name']
-
-    keystone = authenticate(endpoint, token, login_user, login_password, login_tenant_name)
+    keystone = keystoneclient.v2_0.client.Client(
+        token=token,
+        endpoint=endpoint,
+    )
 
     check_mode = module.check_mode
 
+    tenant = module.params['tenant'] or module.params['login_tenant_name']
+
     try:
-        d = dispatch(keystone, user, password, tenant, tenant_description,
-                     email, role, state, endpoint, token, login_user,
-                     login_password, check_mode)
+        d = dispatch(keystone, module.params['user'],
+                     module.params['password'], tenant,
+                     module.params['tenant_description'],
+                     module.params['email'], module.params['role'],
+                     module.params['state'], module.check_mode)
     except Exception, e:
         if check_mode:
             # If we have a failure in check mode
@@ -345,8 +336,7 @@ def main():
 
 def dispatch(keystone, user=None, password=None, tenant=None,
              tenant_description=None, email=None, role=None,
-             state="present", endpoint=None, token=None, login_user=None,
-             login_password=None, check_mode=False):
+             state="present", check_mode=False):
     """ Dispatch to the appropriate method.
 
         Returns a dict that will be passed to exit_json
@@ -386,6 +376,8 @@ def dispatch(keystone, user=None, password=None, tenant=None,
     return dict(changed=changed, id=id)
 
 # import module snippets
+
 from ansible.module_utils.basic import *
+from ansible.module_utils.openstack import *
 if __name__ == '__main__':
     main()
