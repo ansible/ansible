@@ -36,12 +36,22 @@ options:
         - The token to be used in case the password is not specified
      required: false
      default: None
-     
    endpoint:
      description:
-        - The keystone admin url for authentication
+        - The admin url for keystone
      required: false
-     default: 'http://127.0.0.1:35357/v2.0/'
+     default: None
+   endpoint_type:
+     description:
+        - The type of endpoint to use from the service catalog
+     required: false
+     default: 'adminURL'
+   region_name:
+     description:
+        - The region to use when selecting an endpoint from the service catalog
+     required: false
+     default: None
+
    user:
      description:
         - The name of the user that has to added/removed from OpenStack
@@ -294,6 +304,7 @@ def main():
         email=dict(required=False),
         role=dict(required=False),
         state=dict(default='present', choices=['present', 'absent']),
+        endpoint=dict(default="http://127.0.0.1:35357"),
 
         # override default endpoint_type, as keystone cannot be adminsitered
         # from the publicURL
@@ -306,14 +317,7 @@ def main():
         mutually_exclusive=os_mutually_exclusive()
     )
 
-    token, endpoint = os_authenticate(module, 'identity')
-
-    keystone = keystoneclient.v2_0.client.Client(
-        token=token,
-        endpoint=endpoint,
-    )
-
-    check_mode = module.check_mode
+    keystone = get_keystone_client(module)
 
     tenant = module.params['tenant'] or module.params['login_tenant_name']
 
@@ -324,7 +328,7 @@ def main():
                      module.params['email'], module.params['role'],
                      module.params['state'], module.check_mode)
     except Exception, e:
-        if check_mode:
+        if module.check_mode:
             # If we have a failure in check mode
             module.exit_json(changed=True,
                              msg="exception: %s" % e.message)

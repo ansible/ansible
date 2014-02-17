@@ -17,17 +17,14 @@
 
 #############################################
 
-import keystoneclient.v2_0.client
 import os
-
-# TODO: implement CA cert
-# TODO: implement token caching
 
 
 def os_argument_spec():
     return dict(
         auth_url=dict(required=False),
         login_user=dict(required=False),
+        login_username=dict(required=False),
         login_password=dict(required=False),
         login_tenant_name=dict(required=False, default="admin"),
         login_tenant_id=dict(required=False),
@@ -35,12 +32,12 @@ def os_argument_spec():
         region_name=dict(default=None),
         endpoint_type=dict(default="publicURL"),
         insecure=dict(default="no", type="bool"),
-        endpoint=dict(default=None),
     )
 
 
 def os_mutually_exclusive():
     return [
+        ['login_username', 'login_user'],
         ['token', 'login_user'],
         ['token', 'login_password'],
         ['token', 'login_tenant_name'],
@@ -51,50 +48,81 @@ def os_mutually_exclusive():
     ]
 
 
-def os_authenticate(module, service_type):
-    if module.params.get('token') and module.params.get('endpoint'):
-        # User already provided token and endpoint, no further auth required
-        return module.params['token'], module.params.get['endpoint']
+def os_auth_info(module):
+    result = {}
 
-    kwargs = {}
+    result["username"] = (module.params.get("login_user") or
+                          module.params.get("login_username") or
+                          os.environ.get("OS_USERNAME", 'admin'))
 
-    if module.params.get("token"):
-        kwargs["token"] = module.params["token"]
-    else:
-        kwargs["username"] = (module.params.get("login_user") or
-                              os.environ.get("OS_USERNAME", 'admin'))
-
-        kwargs["password"] = (module.params.get("login_password") or
-                              os.environ.get("OS_PASSWORD"))
-
-        if not kwargs["password"]:
-            module.fail_json(msg="Please provide either a token or a password", env=dict(os.environ))
+    result["password"] = (module.params.get("login_password") or
+                          os.environ.get("OS_PASSWORD"))
 
     if module.params.get('tenant_name'):
-        kwargs['tenant_name'] = module.params['tenant_name']
+        result['tenant_name'] = module.params['tenant_name']
     elif module.params.get('tenant_id'):
-        kwargs['tenant_id'] = module.params['tenant_id']
+        result['tenant_id'] = module.params['tenant_id']
     elif os.environ.get("OS_TENANT_ID"):
-        kwargs["tenant_id"] = os.environ.get("OS_TENANT_ID")
+        result["tenant_id"] = os.environ.get("OS_TENANT_ID")
     elif os.environ.get("OS_TENANT_NAME"):
-        kwargs["tenant_name"] = os.environ.get("OS_TENANT_NAME")
+        result["tenant_name"] = os.environ.get("OS_TENANT_NAME")
     elif os.environ.get("OS_PROJECT_ID"):
-        kwargs["tenant_id"] = os.environ.get("OS_PROJECT_ID")
+        result["tenant_id"] = os.environ.get("OS_PROJECT_ID")
     elif os.environ.get("OS_PROJECT_NAME"):
-        kwargs["tenant_name"] = os.environ.get("OS_PROJECT_NAME")
+        result["tenant_name"] = os.environ.get("OS_PROJECT_NAME")
 
-    kwargs["auth_url"] = (module.params.get("auth_url") or
+    result["auth_url"] = (module.params.get("auth_url") or
                           os.environ.get("OS_AUTH_URL"))
 
     if module.params['region_name']:
-        kwargs['region_name'] = module.params['region_name']
+        result['region_name'] = module.params['region_name']
 
-    kwargs['insecure'] = module.params['insecure']
+    result['insecure'] = module.params['insecure']
 
-    ksclient = keystoneclient.v2_0.client.Client(**kwargs)
-    ksclient.authenticate()
+    return result
 
-    endpoint = ksclient.service_catalog.url_for(service_type=service_type,
-                                                endpoint_type='admin')
 
-    return ksclient.auth_token, endpoint
+def get_keystone_client(module):
+    # interpret the authentication paramers from keystone
+    kwargs = os_auth_info(module)
+
+    if module.params.get('token'):
+        kwargs.pop("username")
+        kwargs.pop("password")
+        kwargs['token'] = module.params['token']
+
+    if not kwargs['auth_url']:
+        # Admins can also authenticate against the admin endpoint,
+        # so that's an excelent alternative to auth_url
+        kwargs['auth_url'] = module.params['endpoint']
+
+    try:
+        import keystoneclient.v2_0.client
+    except ImportError:
+        module.fail_json(msg="keystoneclient is required for this feature")
+
+    return keystoneclient.v2_0.client.Client(**kwargs)
+
+
+def get_nova_client(module):
+    kwargs = os_auth_info(module)
+
+    user = kwargs.pop("username")
+    password = kwargs.pop("password")
+    tenant_id = kwargs.pop("tenant_name", None) or kwargs.pop("tenant_id")
+
+    try:
+        import novaclient.v1_1.client
+        import novaclient.exceptions
+    except ImportError:
+        module.fail_json(msg="keystoneclient is required for this feature")
+
+    nova = novaclient.v1_1.client.Client(user, password, tenant_id, **kwargs)
+    try:
+        nova.authenticate()
+    except novaclient.exceptions.Unauthorized, e:
+        module.fail_json(msg="Invalid OpenStack Nova credentials: %s" % e.message)
+    except novaclient.exceptions.AuthorizationFailure, e:
+        module.fail_json(msg="Unable to authorize user: %s" % e.message)
+
+    return nova
