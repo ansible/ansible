@@ -925,8 +925,10 @@ So, that's precedence, explained in a more direct way.  Don't worry about preced
 variable that is a default, or a "live" variable you definitely want to use.  Inventory lies in precedence right in the middle, and
 if you want to forcibly override something, use -e.
 
-If you found that a little hard to understand, take a look at the "ansible-examples" repo on our github for a bit more about
+If you found that a little hard to understand, take a look at the `ansible-examples`_ repo on our github for a bit more about
 how all of these things can work together.
+
+.. _ansible-examples: https://github.com/ansible/ansible-examples
 
 .. seealso::
 
