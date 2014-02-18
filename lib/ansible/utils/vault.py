@@ -161,26 +161,6 @@ class Vault(object):
         if not is_encrypted(self.filename):
             raise errors.AnsibleError("%s is not encrypted" % self.filename)
 
-        # figure out what this file is
-        self.eval_header()
-        self.__load_cipher()
-
-        _, in_path = tempfile.mkstemp()
-        _, out_path = tempfile.mkstemp()
-
-        # strip header from data, write rest to tmp file
-        f = open(self.filename, "rb")
-        tmpdata = f.readlines()
-        f.close()
-        tmpheader = tmpdata[0].strip()
-        tmpdata = ''.join(tmpdata[1:])
-
-        # write headerless data to tmpfile
-        _, io_path = tempfile.mkstemp()
-        f = open(io_path, "wb")
-        f.write(tmpdata)
-        f.close()
-
         #decrypt to string
         data = self._decrypt_to_string()
 
@@ -190,6 +170,7 @@ class Vault(object):
         this_sha, clean_data = self._strip_sha(data)
 
         # rewrite file without sha        
+        _, in_path = tempfile.mkstemp()
         f = open(in_path, "wb")
         tmpdata = f.write(clean_data)
         f.close()
