@@ -187,12 +187,12 @@ def create_server(module, nova, image_id):
                 module.params['flavor_id']]
 
     security_groups = module.params['security_groups']
-    security_groups = (security_groups
+    security_groups = (security_groups.split(',')
                        if isinstance(security_groups, basestring)
-                       else security_groups.split(','))
+                       else security_groups)
 
     nics = module.params['nics']
-    nics = nics.split if isinstance(nics, basestring) else nics.split(',')
+    nics = nics.split(',') if isinstance(nics, basestring) else nics
 
     bootkwargs = {
         'nics': nics,
