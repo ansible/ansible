@@ -202,7 +202,7 @@ def user_mod(cursor, user, host, password, password_hash, new_priv, append_privs
                 changed = True
         elif password_hash:
             if is_hash(password_hash):
-                if current_pass_hash[0] != password:
+                if current_pass_hash[0] != password_hash:
                     cursor.execute("SET PASSWORD FOR %s@%s = %s", (user, host, password))
                     changed = True
             else:
