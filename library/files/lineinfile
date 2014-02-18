@@ -58,8 +58,8 @@ options:
     required: false
     description:
       - Required for C(state=present). The line to insert/replace into the
-        file. If backrefs is set, may contain backreferences that will get
-        expanded with the regexp capture groups if the regexp matches. The
+        file. If C(backrefs) is set, may contain backreferences that will get
+        expanded with the C(regexp) capture groups if the regexp matches. The
         backreferences should be double escaped (see examples).
   backrefs:
     required: false
@@ -68,11 +68,11 @@ options:
     version_added: "1.1"
     description:
       - Used with C(state=present). If set, line can contain backreferences
-        (both positional and named) that will get populated if the regexp
+        (both positional and named) that will get populated if the C(regexp)
         matches. This flag changes the operation of the module slightly;
-        insertbefore and insertafter will be ignored, and if the regexp
+        C(insertbefore) and C(insertafter) will be ignored, and if the C(regexp)
         doesn't match anywhere in the file, the file will be left unchanged.
-        If the regexp does match, the last matching line will be replaced by
+        If the C(regexp) does match, the last matching line will be replaced by
         the expanded line parameter.
   insertafter:
     required: false
@@ -81,7 +81,7 @@ options:
       - Used with C(state=present). If specified, the line will be inserted
         after the specified regular expression. A special value is
         available; C(EOF) for inserting the line at the end of the file.
-        May not be used with backrefs.
+        May not be used with C(backrefs).
     choices: [ 'EOF', '*regex*' ]
   insertbefore:
     required: false
@@ -90,7 +90,7 @@ options:
       - Used with C(state=present). If specified, the line will be inserted
         before the specified regular expression. A value is available;
         C(BOF) for inserting the line at the beginning of the file.
-        May not be used with backrefs.
+        May not be used with C(backrefs).
     choices: [ 'BOF', '*regex*' ]
   create:
     required: false
