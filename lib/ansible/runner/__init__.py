@@ -144,6 +144,7 @@ class Runner(object):
         su=False,                           # Are we running our command via su?
         su_user=None,                       # User to su to when running command, ex: 'root'
         su_pass=C.DEFAULT_SU_PASS,
+        vault_pass=None,
         run_hosts=None,                     # an optional list of pre-calculated hosts to run on
         no_log=False,                       # option to enable/disable logging for a given task
         ):
@@ -197,6 +198,7 @@ class Runner(object):
         self.su_user_var      = su_user
         self.su_user          = None
         self.su_pass          = su_pass
+        self.vault_pass       = vault_pass
         self.no_log           = no_log
 
         if self.transport == 'smart':
@@ -534,7 +536,7 @@ class Runner(object):
     def _executor_internal(self, host, new_stdin):
         ''' executes any module one or more times '''
 
-        host_variables = self.inventory.get_variables(host)
+        host_variables = self.inventory.get_variables(host, vault_password=self.vault_pass)
         host_connection = host_variables.get('ansible_connection', self.transport)
         if host_connection in [ 'paramiko', 'paramiko_alt', 'ssh', 'ssh_old', 'accelerate' ]:
             port = host_variables.get('ansible_ssh_port', self.remote_port)
