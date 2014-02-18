@@ -269,37 +269,34 @@ class Vault(object):
         self.__load_cipher()
 
         # strip out header and unhex the file
-        clean_path = self._dirty_file_to_clean_file(self.filename)
+        clean_stream = self._dirty_file_to_clean_file(self.filename)
 
-        f = open(clean_path, "rb")
-        src_data = f.read()
-        f.close()
+        # reset pointer
+        clean_stream.seek(0)
 
-        # create some byte streams to hold data
-        src = BytesIO(src_data)
+        # create a byte stream to hold unencrypted
         dst = BytesIO()
 
         # decrypt from src stream to dst stream
-        self.cipher_obj.decrypt(src, dst, self.vault_password)
+        self.cipher_obj.decrypt(clean_stream, dst, self.vault_password)
 
         # read data from the unencrypted stream
         data = dst.read()
-
-        # cleanup and return
-        os.remove(clean_path)
 
         return data 
 
     def _dirty_file_to_clean_file(self, dirty_filename):
         """ Strip out headers from a file, unhex and write to new file"""
 
+
         _, in_path = tempfile.mkstemp()
-        _, out_path = tempfile.mkstemp()
+        #_, out_path = tempfile.mkstemp()
 
         # strip header from data, write rest to tmp file
         f = open(dirty_filename, "rb")
         tmpdata = f.readlines()
         f.close()
+
         tmpheader = tmpdata[0].strip()
         tmpdata = ''.join(tmpdata[1:])
 
@@ -307,14 +304,24 @@ class Vault(object):
         tmpdata = [ x.strip() for x in tmpdata ]
         tmpdata = unhexlify(''.join(tmpdata))
 
-        # write headerless/unhexed data to tmpfile
-        _, io_path = tempfile.mkstemp()
-        f = open(io_path, "wb")
-        f.write(tmpdata)
-        f.close()
+        # create and return stream
+        clean_stream = BytesIO(tmpdata)
+        return clean_stream
 
-        return io_path
+    def _clean_stream_to_dirty_stream(self, clean_stream):
+ 
+        # combine header and hexlified encrypted data in 80 char columns
+        clean_stream.seek(0)
+        tmpdata = clean_stream.read()
+        tmpdata = hexlify(tmpdata)
+        tmpdata = [tmpdata[i:i+80] for i in range(0, len(tmpdata), 80)]
 
+        dirty_data = HEADER + ";" + str(self.version) + ";" + self.cipher + "\n"
+        for l in tmpdata:
+            dirty_data += l + '\n'
+
+        dirty_stream = BytesIO(dirty_data)
+        return dirty_stream
 
     def _string_to_encrypted_file(self, tmpdata, filename):
 
@@ -328,42 +335,24 @@ class Vault(object):
         this_sha = sha256(tmpdata).hexdigest()
 
         # combine sha + data to tmpfile
-        _, in_path = tempfile.mkstemp()
-        f = open(in_path, "wb")
-        f.write(this_sha + "\n")
-        f.write(tmpdata)
-        f.close()
+        tmpdata = this_sha + "\n" + tmpdata 
+        src_stream = BytesIO(tmpdata)
+        dst_stream = BytesIO()
 
-        # encrypt sha + data
-        _, combined_path = tempfile.mkstemp()
-        f = open(in_path, "rb")
-        j = open(combined_path, "wb")
-        self.cipher_obj.encrypt(f, j, self.password)
-        f.close()
-        j.close()
+        # encrypt tmpfile
+        self.cipher_obj.encrypt(src_stream, dst_stream, self.password)
 
-        # combine header and hexlified encrypted data in 80 char columns
-        f = open(combined_path, "rb")
-        tmpdata = f.read()
-        tmpdata = hexlify(tmpdata)
-        tmpdata = [tmpdata[i:i+80] for i in range(0, len(tmpdata), 80)]
-        f.close()
+        # hexlify tmpfile and combine with header
+        dirty_stream = self._clean_stream_to_dirty_stream(dst_stream)
 
-        _, hexed_path = tempfile.mkstemp()
-        f = open(hexed_path, "wb")
-        f.write(HEADER + ";" + str(self.version) + ";" + self.cipher + "\n")
-        for l in tmpdata:
-            f.write(l + '\n')
-        f.close()
-
-        # clean up
-        if os.path.isfile(combined_path):
-            os.remove(combined_path)
-        if os.path.isfile(in_path):
-            os.remove(in_path)
         if os.path.isfile(filename):
             os.remove(filename)
-        shutil.move(hexed_path, filename)
+        
+        # write back to original file
+        dirty_stream.seek(0)
+        f = open(filename, "wb")
+        f.write(dirty_stream.read())
+        f.close()
 
 
     def _verify_decryption(self, data):
