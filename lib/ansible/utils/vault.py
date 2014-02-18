@@ -334,7 +334,7 @@ class Vault(object):
         f.close()
         j.close()
 
-        # combine header and hexlified encrypted data
+        # combine header and hexlified encrypted data in 80 char columns
         f = open(combined_path, "rb")
         tmpdata = f.read()
         tmpdata = hexlify(tmpdata)

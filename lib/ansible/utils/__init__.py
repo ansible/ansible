@@ -763,12 +763,34 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
 
     return parser
 
-def ask_passwords(ask_pass=False, ask_sudo_pass=False, ask_su_pass=False, ask_vault_pass=False, ask_new_vault_pass=False):
+def ask_vaultpasswords(ask_vault_pass=False, ask_new_vault_pass=False, confirm_vault=False, confirm_new=False):
+
+    vault_pass = None
+    new_vault_pass = None
+
+    if ask_vault_pass:
+        vault_pass = getpass.getpass(prompt="Vault password: ")
+
+    if ask_vault_pass and confirm_vault:
+        vault_pass2 = getpass.getpass(prompt="Retype Vault password: ")
+        if vault_pass != vault_pass2:
+            raise errors.AnsibleError("Passwords do not match")
+
+    if ask_new_vault_pass:
+        new_vault_pass = getpass.getpass(prompt="New Vault password: ")
+
+    if ask_new_vault_pass and confirm_new:
+        new_vault_pass2 = getpass.getpass(prompt="Retype New Vault password: ")
+        if new_vault_pass != new_vault_pass2:
+            raise errors.AnsibleError("Passwords do not match")
+
+    return vault_pass, new_vault_pass
+
+def ask_passwords(ask_pass=False, ask_sudo_pass=False, ask_su_pass=False, ask_vault_pass=False):
     sshpass = None
     sudopass = None
     su_pass = None
     vault_pass = None
-    new_vault_pass = None
     sudo_prompt = "sudo password: "
     su_prompt = "su password: "
 
@@ -787,10 +809,7 @@ def ask_passwords(ask_pass=False, ask_sudo_pass=False, ask_su_pass=False, ask_va
     if ask_vault_pass:
         vault_pass = getpass.getpass(prompt="Vault password: ")
 
-    if ask_new_vault_pass:
-        new_vault_pass = getpass.getpass(prompt="New Vault password: ")
-
-    return (sshpass, sudopass, su_pass, vault_pass, new_vault_pass)
+    return (sshpass, sudopass, su_pass, vault_pass)
 
 def do_encrypt(result, encrypt, salt_size=None, salt=None):
     if PASSLIB_AVAILABLE:

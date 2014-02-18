@@ -107,15 +107,12 @@ def _get_vault(filename, options, password):
     this_vault.password = password
     return this_vault
 
-def _get_password(ask_new=False):
-    a, b, c, d, e = utils.ask_passwords(ask_vault_pass=True, 
-        ask_new_vault_pass=ask_new)
-    return d, e
-
 def execute_create(args, options, parser):
+
     if len(args) > 1:
         raise errors.AnsibleError("create does not accept more than one filename")        
-    password, new_password = _get_password()
+
+    password, new_password = utils.ask_vaultpasswords(ask_vault_pass=True, confirm_vault=True)
 
     this_vault = _get_vault(args[0], options, password)
     if not hasattr(options, 'cipher'):
@@ -123,23 +120,27 @@ def execute_create(args, options, parser):
     this_vault.create()
 
 def execute_decrypt(args, options, parser):
-    password, new_password = _get_password()
+
+    password, new_password = utils.ask_vaultpasswords(ask_vault_pass=True)
 
     for f in args:
         this_vault = _get_vault(f, options, password)
         this_vault.decrypt()
 
 def execute_edit(args, options, parser):
+
     if len(args) > 1:
         raise errors.AnsibleError("create does not accept more than one filename")        
-    password, new_password = _get_password()
+
+    password, new_password = utils.ask_vaultpasswords(ask_vault_pass=True)
 
     for f in args:
         this_vault = _get_vault(f, options, password)
         this_vault.edit()
 
 def execute_encrypt(args, options, parser):
-    password, new_password = _get_password()
+
+    password, new_password = utils.ask_vaultpasswords(ask_vault_pass=True, confirm_vault=True)
 
     for f in args:
         this_vault = _get_vault(f, options, password)
@@ -148,7 +149,8 @@ def execute_encrypt(args, options, parser):
         this_vault.encrypt()
 
 def execute_rekey(args, options, parser):
-    password, new_password = _get_password(ask_new=True)
+
+    password, new_password = utils.ask_vaultpasswords(ask_vault_pass=True, ask_new_vault_pass=True, confirm_new=True)
 
     for f in args:
         this_vault = _get_vault(f, options, password)
