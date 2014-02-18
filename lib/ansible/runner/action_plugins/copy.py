@@ -23,6 +23,7 @@ import ansible.utils.template as template
 from ansible import errors
 from ansible.runner.return_data import ReturnData
 import base64
+import json
 import stat
 import tempfile
 import pipes
@@ -71,7 +72,12 @@ class ActionModule(object):
         # If content is defined make a temp file and write the content into it.
         if content is not None:
             try:
-                content_tempfile = self._create_content_tempfile(content)
+                # If content comes to us as a dict it should be decoded json.
+                # We need to encode it back into a string to write it out.
+                if type(content) is dict:
+                    content_tempfile = self._create_content_tempfile(json.dumps(content))
+                else:
+                    content_tempfile = self._create_content_tempfile(content)
                 source = content_tempfile
             except Exception, err:
                 result = dict(failed=True, msg="could not write content temp file: %s" % err)
