@@ -21,6 +21,7 @@
 import os
 import shutil
 import tempfile
+from io import BytesIO
 from subprocess import call
 from ansible import errors
 from hashlib import sha256
@@ -28,13 +29,6 @@ from hashlib import md5
 from binascii import hexlify
 from binascii import unhexlify
 from ansible import constants as C
-
-try:
-    from cStringIO import StringIO
-except:
-    from StringIO import StringIO
-
-from io import BytesIO
 
 # AES IMPORTS
 try:
