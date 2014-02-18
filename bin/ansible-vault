@@ -127,6 +127,8 @@ def execute_decrypt(args, options, parser):
         this_vault = _get_vault(f, options, password)
         this_vault.decrypt()
 
+    print "Decryption successful"
+
 def execute_edit(args, options, parser):
 
     if len(args) > 1:
@@ -148,6 +150,8 @@ def execute_encrypt(args, options, parser):
             this_vault.cipher = 'AES'
         this_vault.encrypt()
 
+    print "Encryption successful"
+
 def execute_rekey(args, options, parser):
 
     password, new_password = utils.ask_vaultpasswords(ask_vault_pass=True, ask_new_vault_pass=True, confirm_new=True)
@@ -155,6 +159,8 @@ def execute_rekey(args, options, parser):
     for f in args:
         this_vault = _get_vault(f, options, password)
         this_vault.rekey(new_password)
+
+    print "Rekey successful"
 
 #-------------------------------------------------------------------------------------
 # MAIN
