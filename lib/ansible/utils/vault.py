@@ -27,8 +27,14 @@ from hashlib import sha256
 from hashlib import md5
 from binascii import hexlify
 from binascii import unhexlify
-
 from ansible import constants as C
+
+try:
+    from cStringIO import StringIO
+except:
+    from StringIO import StringIO
+
+from io import BytesIO
 
 # AES IMPORTS
 try:
@@ -262,23 +268,25 @@ class Vault(object):
         self.eval_header()
         self.__load_cipher()
 
+        # strip out header and unhex the file
         clean_path = self._dirty_file_to_clean_file(self.filename)
 
-        # decrypt to tmp file then read
-        _, out_path = tempfile.mkstemp()
         f = open(clean_path, "rb")
-        j = open(out_path, "wb")
-        self.cipher_obj.decrypt(f, j, self.vault_password)
+        src_data = f.read()
         f.close()
-        j.close()
 
-        f = open(out_path, "rb")
-        data = f.read()
-        f.close()
+        # create some byte streams to hold data
+        src = BytesIO(src_data)
+        dst = BytesIO()
+
+        # decrypt from src stream to dst stream
+        self.cipher_obj.decrypt(src, dst, self.vault_password)
+
+        # read data from the unencrypted stream
+        data = dst.read()
 
         # cleanup and return
         os.remove(clean_path)
-        os.remove(out_path)
 
         return data 
 
@@ -440,11 +448,20 @@ class AES(object):
         cipher = AES_.new(key, AES_.MODE_CBC, iv)
         next_chunk = ''
         finished = False
+
+        out_data = ''
+
         while not finished:
             chunk, next_chunk = next_chunk, cipher.decrypt(in_file.read(1024 * bs))
             if len(next_chunk) == 0:
                 padding_length = ord(chunk[-1])
                 chunk = chunk[:-padding_length]
                 finished = True
-            out_file.write(chunk)
+            out_data += chunk
 
+        # write decrypted data to out stream
+        out_file.write(out_data)
+
+        # reset the stream pointer to the beginning
+        if hasattr(out_file, 'seek'):
+            out_file.seek(0)
