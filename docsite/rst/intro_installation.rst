@@ -55,7 +55,7 @@ This includes Red Hat, Debian, CentOS, OS X, any of the BSDs, and so on.
 Managed Node Requirements
 `````````````````````````
 
-On the managed nodes, you only need Python 2.4 or later, but if you are are running less than Python 2.5 on the remotes, you will also need:
+On the managed nodes, you only need Python 2.4 or later, but if you are running less than Python 2.5 on the remotes, you will also need:
 
 * ``python-simplejson`` 
 
