@@ -89,27 +89,9 @@ class Vault(object):
         self.cipher = cipher
         self.version = '1.0'
 
-    def __load_cipher(self):
-
-        """ 
-        Load a cipher class by it's name
-
-        This is a lightweight "plugin" implementation to allow
-        for future support of other cipher types
-        """
-
-        whitelist = ['AES']
-
-        if self.cipher in whitelist:
-            self.cipher_obj = None
-            if self.cipher in globals():
-                this_cipher = globals()[self.cipher]
-                self.cipher_obj = this_cipher()
-            else:
-                raise errors.AnsibleError("%s cipher could not be loaded" % self.cipher)
-        else:
-            raise errors.AnsibleError("%s is not an allowed encryption cipher" % self.cipher)
-
+    ###############
+    #   PUBLIC
+    ###############
 
     def eval_header(self):
 
@@ -174,156 +156,6 @@ class Vault(object):
         f.write(clean_data)
         f.close()
 
-    def encrypt(self):
-        """ encrypt a file inplace """
-
-        if is_encrypted(self.filename):
-            raise errors.AnsibleError("%s is already encrypted" % self.filename)
-
-        #self.eval_header()
-        self.__load_cipher()
-
-        # read data
-        f = open(self.filename, "rb")
-        tmpdata = f.read()
-        f.close()
-
-        # sha256 the data
-        this_sha = sha256(tmpdata).hexdigest()
-
-        # combine sha + data to tmpfile
-        _, combined_path = tempfile.mkstemp()
-        f = open(combined_path, "wb")
-        f.write(this_sha + "\n")
-        f.write(tmpdata)
-        f.close()
-
-        # encrypt combined data
-        _, out_path = tempfile.mkstemp()
-        f = open(combined_path, "rb")
-        j = open(out_path, "wb")
-        self.cipher_obj.encrypt(f, j, self.vault_password)
-        f.close()
-        j.close()
-
-        # combine header and hexlify'ed encrypted data
-        f = open(out_path, "rb")
-        tmpdata = f.read()
-        f.close()
-
-        tmpdata = hexlify(tmpdata)
-        tmpdata = [tmpdata[i:i+80] for i in range(0, len(tmpdata), 80)]
-
-        f = open(out_path, "wb")
-        f.write(HEADER + ";" + str(self.version) + ";" + self.cipher + "\n")
-        for l in tmpdata:
-            f.write(l + '\n')
-        f.close()
-
-        # clean up
-        if os.path.isfile(self.filename):
-            os.remove(self.filename)
-        shutil.move(out_path, self.filename)
-
-    def rekey(self, newpassword):
-
-        """ unencrypt file then encrypt with new password """
-
-        if not is_encrypted(self.filename):
-            raise errors.AnsibleError("%s is not encrypted" % self.filename)
-
-        # unencrypt to string with old password
-        data = self._decrypt_to_string()
-
-        # verify sha and then strip it out
-        if not self._verify_decryption(data):
-            raise errors.AnsibleError("decryption of %s failed" % self.filename)
-        this_sha, clean_data = self._strip_sha(data)
-    
-        # set password     
-        self.vault_password = newpassword
-
-        # combine sha + data to tmpfile
-        _, combined_path = tempfile.mkstemp()
-        f = open(combined_path, "wb")
-        f.write(this_sha + "\n")
-        f.write(clean_data)
-        f.close()
-
-        # get the cipher and encrypt data with new key
-        self.__load_cipher()
-        _, out_path = tempfile.mkstemp()
-        f = open(combined_path, "rb")
-        j = open(out_path, "wb")
-        self.cipher_obj.encrypt(f, j, self.vault_password)        
-        f.close()
-        j.close()
-
-        # combine header and encrypted data
-        f = open(out_path, "rb")
-        tmpdata = f.read()
-        f.close()
-
-        tmpdata = hexlify(tmpdata)
-        tmpdata = [tmpdata[i:i+80] for i in range(0, len(tmpdata), 80)]
-
-        f = open(out_path, "wb")
-        f.write(HEADER + ";" + str(self.version) + ";" + self.cipher + "\n")
-        for l in tmpdata:
-            f.write(l + '\n')
-        f.close()
-
-        # move tmp file into place
-        os.remove(combined_path)
-        os.remove(self.filename)
-        shutil.move(out_path, self.filename)
-
-
-    def _decrypt_to_string(self):
-
-        """ decrypt file to string """
-
-        if not is_encrypted(self.filename):
-            raise errors.AnsibleError("%s is not encrypted" % self.filename)
-
-        # figure out what this is
-        self.eval_header()
-        self.__load_cipher()
-
-        # strip data from header
-        _, in_path = tempfile.mkstemp()
-        f = open(self.filename, "rb")
-        tmpdata = f.readlines()
-        f.close()
-        del tmpdata[0]
-
-        # strip out newline, join, unhex        
-        tmpdata = [ x.strip() for x in tmpdata ]
-        tmpdata = unhexlify(''.join(tmpdata))
-
-        f = open(in_path, "wb")
-        f.write(tmpdata)
-        f.close()
-
-        # decrypt to tmp file then read
-        _, out_path = tempfile.mkstemp()
-        f = open(in_path, "rb")
-        j = open(out_path, "wb")
-        self.cipher_obj.decrypt(f, j, self.vault_password)
-        f.close()
-        j.close()
-
-        f = open(out_path, "rb")
-        data = f.read()
-        f.close()
-
-        # cleanup and return
-        os.remove(in_path)
-        os.remove(out_path)
-
-        return data 
-
-
     def edit(self, filename=None, password=None, cipher=None, version=None):
 
         if not is_encrypted(self.filename):
@@ -335,7 +167,6 @@ class Vault(object):
 
         _, in_path = tempfile.mkstemp()
         _, out_path = tempfile.mkstemp()
-
 
         # strip header from data, write rest to tmp file
         f = open(self.filename, "rb")
@@ -371,17 +202,151 @@ class Vault(object):
         tmpdata = f.read()
         f.close()
 
+        self._string_to_encrypted_file(tmpdata, self.filename)
+
+
+    def encrypt(self):
+        """ encrypt a file inplace """
+
+        if is_encrypted(self.filename):
+            raise errors.AnsibleError("%s is already encrypted" % self.filename)
+
+        #self.eval_header()
+        self.__load_cipher()
+
+        # read data
+        f = open(self.filename, "rb")
+        tmpdata = f.read()
+        f.close()
+
+        self._string_to_encrypted_file(tmpdata, self.filename)
+
+
+    def rekey(self, newpassword):
+
+        """ unencrypt file then encrypt with new password """
+
+        if not is_encrypted(self.filename):
+            raise errors.AnsibleError("%s is not encrypted" % self.filename)
+
+        # unencrypt to string with old password
+        data = self._decrypt_to_string()
+
+        # verify sha and then strip it out
+        if not self._verify_decryption(data):
+            raise errors.AnsibleError("decryption of %s failed" % self.filename)
+        this_sha, clean_data = self._strip_sha(data)
+    
+        # set password     
+        self.vault_password = newpassword
+
+        self._string_to_encrypted_file(clean_data, self.filename)
+
+
+    ###############
+    #   PRIVATE
+    ###############
+
+    def __load_cipher(self):
+
+        """ 
+        Load a cipher class by it's name
+
+        This is a lightweight "plugin" implementation to allow
+        for future support of other cipher types
+        """
+
+        whitelist = ['AES']
+
+        if self.cipher in whitelist:
+            self.cipher_obj = None
+            if self.cipher in globals():
+                this_cipher = globals()[self.cipher]
+                self.cipher_obj = this_cipher()
+            else:
+                raise errors.AnsibleError("%s cipher could not be loaded" % self.cipher)
+        else:
+            raise errors.AnsibleError("%s is not an allowed encryption cipher" % self.cipher)
+
+
+
+    def _decrypt_to_string(self):
+
+        """ decrypt file to string """
+
+        if not is_encrypted(self.filename):
+            raise errors.AnsibleError("%s is not encrypted" % self.filename)
+
+        # figure out what this is
+        self.eval_header()
+        self.__load_cipher()
+
+        clean_path = self._dirty_file_to_clean_file(self.filename)
+
+        # decrypt to tmp file then read
+        _, out_path = tempfile.mkstemp()
+        f = open(clean_path, "rb")
+        j = open(out_path, "wb")
+        self.cipher_obj.decrypt(f, j, self.vault_password)
+        f.close()
+        j.close()
+
+        f = open(out_path, "rb")
+        data = f.read()
+        f.close()
+
+        # cleanup and return
+        os.remove(clean_path)
+        os.remove(out_path)
+
+        return data 
+
+    def _dirty_file_to_clean_file(self, dirty_filename):
+        """ Strip out headers from a file, unhex and write to new file"""
+
+        _, in_path = tempfile.mkstemp()
+        _, out_path = tempfile.mkstemp()
+
+        # strip header from data, write rest to tmp file
+        f = open(dirty_filename, "rb")
+        tmpdata = f.readlines()
+        f.close()
+        tmpheader = tmpdata[0].strip()
+        tmpdata = ''.join(tmpdata[1:])
+
+        # strip out newline, join, unhex        
+        tmpdata = [ x.strip() for x in tmpdata ]
+        tmpdata = unhexlify(''.join(tmpdata))
+
+        # write headerless/unhexed data to tmpfile
+        _, io_path = tempfile.mkstemp()
+        f = open(io_path, "wb")
+        f.write(tmpdata)
+        f.close()
+
+        return io_path
+
+
+    def _string_to_encrypted_file(self, tmpdata, filename):
+
+        """ Write a string of data to a file with the format ...
+
+        HEADER;VERSION;CIPHER
+        HEX(ENCRYPTED(SHA256(STRING)+STRING))
+        """
+
         # sha256 the data
         this_sha = sha256(tmpdata).hexdigest()
 
         # combine sha + data to tmpfile
-        _, combined_path = tempfile.mkstemp()
+        _, in_path = tempfile.mkstemp()
         f = open(in_path, "wb")
         f.write(this_sha + "\n")
         f.write(tmpdata)
         f.close()
 
-        # encrypt data
+        # encrypt sha + data
+        _, combined_path = tempfile.mkstemp()
         f = open(in_path, "rb")
         j = open(combined_path, "wb")
         self.cipher_obj.encrypt(f, j, self.password)
@@ -389,14 +354,14 @@ class Vault(object):
         j.close()
 
         # combine header and hexlified encrypted data
-        _, out_path = tempfile.mkstemp()
-        f = open(out_path, "rb")
+        f = open(combined_path, "rb")
         tmpdata = f.read()
         tmpdata = hexlify(tmpdata)
         tmpdata = [tmpdata[i:i+80] for i in range(0, len(tmpdata), 80)]
         f.close()
 
-        f = open(out_path, "wb")
+        _, hexed_path = tempfile.mkstemp()
+        f = open(hexed_path, "wb")
         f.write(HEADER + ";" + str(self.version) + ";" + self.cipher + "\n")
         for l in tmpdata:
             f.write(l + '\n')
@@ -405,16 +370,16 @@ class Vault(object):
         # clean up
         if os.path.isfile(combined_path):
             os.remove(combined_path)
-        if os.path.isfile(io_path):
-            os.remove(io_path)
         if os.path.isfile(in_path):
             os.remove(in_path)
-        if os.path.isfile(self.filename):
-            os.remove(self.filename)
-        shutil.move(out_path, self.filename)
+        if os.path.isfile(filename):
+            os.remove(filename)
+        shutil.move(hexed_path, filename)
 
 
     def _verify_decryption(self, data):
+
+        """ Split data to sha/data and check the sha """
 
         # split the sha and other data
         this_sha, clean_data = self._strip_sha(data)
@@ -429,7 +394,7 @@ class Vault(object):
             return False
 
     def _strip_sha(self, data):
-         # is the first line a sha?
+        # is the first line a sha?
         lines = data.split("\n")
         this_sha = lines[0]
 
