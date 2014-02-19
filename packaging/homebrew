@@ -35,7 +35,7 @@ options:
     state:
         description:
             - state of the package
-        choices: [ 'head', 'latest', 'present', 'absent', 'linked', 'uninstalled' ]
+        choices: [ 'head', 'latest', 'present', 'absent', 'linked', 'unlinked' ]
         required: false
         default: present
     update_homebrew:
