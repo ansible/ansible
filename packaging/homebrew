@@ -626,9 +626,17 @@ class Homebrew(object):
                if opt]
 
         rc, out, err = self.module.run_command(cmd)
-        self.changed_count += 1
-        self.changed = True
-        self.message = 'Package linked: {0}'.format(self.current_package)
+
+        if rc == 0:
+            self.changed_count += 1
+            self.changed = True
+            self.message = 'Package linked: {0}'.format(self.current_package)
+
+            return True
+        else:
+            self.failed = True
+            self.message = 'Package could not be linked: {0}.'.format(self.current_package)
+            raise HomebrewException(self.message)
 
     def _link_packages(self):
         for package in self.packages:
@@ -662,9 +670,17 @@ class Homebrew(object):
                if opt]
 
         rc, out, err = self.module.run_command(cmd)
-        self.changed_count += 1
-        self.changed = True
-        self.message = 'Package unlinked: {0}'.format(self.current_package)
+
+        if rc == 0:
+            self.changed_count += 1
+            self.changed = True
+            self.message = 'Package unlinked: {0}'.format(self.current_package)
+
+            return True
+        else:
+            self.failed = True
+            self.message = 'Package could not be unlinked: {0}.'.format(self.current_package)
+            raise HomebrewException(self.message)
 
     def _unlink_packages(self):
         for package in self.packages:
