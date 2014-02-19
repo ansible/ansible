@@ -1,0 +1,144 @@
+# Test code for the file module.
+# (c) 2014, Richard Isaacson <richard.c.isaacson@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- set_fact: output_file={{output_dir}}/foo.txt
+
+- name: prep with a basic copy
+  file: src=foo.txt dest={{output_file}}
+
+- name: verify that we are checking a file and it is present
+  file: path={{output_file}} state=file
+  register: file_result
+
+- name: assert verify that we are checking a file and it is present worked
+  assert:
+    that:
+    - "'changed' in file_result"
+    - "'state' in file_result"
+
+- name: verify that the file was marked as changed
+  assert: { that: "file_result.changed == false" }
+
+- name: verify that the state is that of a file
+  assert: { that: "file_result.state == \"file\"" }
+
+- name: verify that we are checking an absent file
+  file: path={{output_dir}}/bar.txt state=absent
+  register: file2_result
+
+- name: assert verify that we are checking an absent file worked
+  assert:
+    that:
+    - "'changed' in file2_result"
+    - "'state' in file2_result"
+
+- name: verify that the file was marked as changed
+  assert: { that: "file2_result.changed == false" }
+
+- name: verify that the file was marked as changed
+  assert: { that: "file2_result.state == \"absent\"" }
+
+- name: verify we can touch a file
+  file: path={{output_dir}}/baz.txt state=touch
+  register: file3_result
+
+- name: assert verify that we can touch a file worked
+  assert:
+    that:
+    - "'changed' in file3_result"
+    - "'state' in file3_result"
+
+- name: verify that the file was marked as changed
+  assert: { that: "file3_result.changed == true" }
+
+- name: verify that the state is that of a file
+  assert: { that: "file3_result.state == \"file\"" }
+
+- name: assert that the test file has a mode of 0644
+  assert: { that: "file_result.mode == \"0644\"" }
+
+- name: change file mode
+  file: path={{output_file}} mode=0600
+  register: file4_result
+
+- name: assert change file mode worked
+  assert:
+    that:
+    - "'changed' in file4_result"
+    - "'state' in file4_result"
+
+- name: verify that the file was marked as changed
+  assert: { that: "file4_result.changed == true" }
+
+- name: assert that the test file has a mode of 0600
+  assert: { that: "file4_result.mode == \"0600\"" }
+
+- name: create soft link to file
+  file: src={{output_file}} dest={{output_dir}}/soft.txt state=link
+  register: file5_result
+
+- name: assert change file mode worked
+  assert:
+    that:
+    - "'changed' in file5_result"
+    - "'state' in file5_result"
+
+- name: verify that the file was marked as changed
+  assert: { that: "file5_result.changed == true" }
+
+- name: create hard link to file
+  file: src={{output_file}} dest={{output_dir}}/hard.txt state=hard
+  register: file6_result
+
+- name: assert change file mode worked
+  assert:
+    that:
+    - "'changed' in file6_result"
+    - "'state' in file6_result"
+
+- name: verify that the file was marked as changed
+  assert: { that: "file6_result.changed == true" }
+
+- name: create a directory
+  file: path={{output_dir}}/foobar state=directory
+  register: file7_result
+
+- name: assert change file mode worked
+  assert:
+    that:
+    - "'changed' in file7_result"
+    - "'state' in file7_result"
+
+- name: verify that the file was marked as changed
+  assert: { that: "file7_result.changed == true" }
+
+- name: assert that the test file has a mode of 0600
+  assert: { that: "file7_result.state == \"directory\"" }
+
+- name: remove file foo.txt
+  file: path={{output_dir}}/foo.txt state=absent
+
+- name: remove file bar.txt
+  file: path={{output_dir}}/foo.txt state=absent
+
+- name: remove file baz.txt
+  file: path={{output_dir}}/foo.txt state=absent
+
+- name: remote directory foobar
+  file: path={{output_dir}}/foobar state=absent
+
