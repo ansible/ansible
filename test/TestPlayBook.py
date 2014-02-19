@@ -392,23 +392,6 @@ class TestPlaybook(unittest.TestCase):
 
         assert utils.jsonify(expected, format=True) == utils.jsonify(actual,format=True)
 
-
-    def test_recursive_copy(self):
-        pb = 'test/playbook-recursive-copy.yml'
-        actual = self._run(pb)
-
-        expected =  {
-            "localhost": {
-                "changed": 65,
-                "failures": 0,
-                "ok": 73,
-                "skipped": 0,
-                "unreachable": 0
-            }
-        }
-
-        assert utils.jsonify(expected, format=True) == utils.jsonify(actual,format=True)
-
     def test_playbook_logging_non_ascii(self):
         pb = 'test/playbook-logging-non-ascii.yml'
         actual = self._run(pb)
