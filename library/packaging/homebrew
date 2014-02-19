@@ -171,6 +171,7 @@ class Homebrew(object):
             - upgraded
             - head
             - linked
+            - unlinked
             - absent
         '''
 
@@ -184,6 +185,7 @@ class Homebrew(object):
                     'upgraded',
                     'head',
                     'linked',
+                    'unlinked',
                     'absent',
                 )
             )
@@ -406,8 +408,10 @@ class Homebrew(object):
                 return self._upgrade_packages()
             elif self.state == 'head':
                 return self._install_packages()
-            # elif self.state == 'linked':
-            #     return self._linked()
+            elif self.state == 'linked':
+                return self._link_packages()
+            elif self.state == 'unlinked':
+                return self._unlink_packages()
             elif self.state == 'absent':
                 return self._uninstall_packages()
 
@@ -597,131 +601,79 @@ class Homebrew(object):
 
         return True
     # /uninstalled ----------------------------- }}}
+
+    # linked --------------------------------- {{{
+    def _link_current_package(self):
+        if not self.valid_package(self.current_package):
+            self.failed = True
+            self.message = 'Invalid package: {0}.'.format(self.current_package)
+            raise HomebrewException(self.message)
+
+        if not self._current_package_is_installed():
+            self.failed = True
+            self.message = 'Package not installed: {0}.'.format(self.current_package)
+            raise HomebrewException(self.message)
+
+        if self.module.check_mode:
+            self.changed = True
+            self.message = 'Package would be linked: {0}'.format(
+                self.current_package
+            )
+            raise HomebrewException(self.message)
+
+        cmd = [opt
+               for opt in (self.brew_path, 'link', self.current_package)
+               if opt]
+
+        rc, out, err = self.module.run_command(cmd)
+        self.changed_count += 1
+        self.changed = True
+        self.message = 'Package linked: {0}'.format(self.current_package)
+
+    def _link_packages(self):
+        for package in self.packages:
+            self.current_package = package
+            self._link_current_package()
+
+        return True
+    # /linked -------------------------------- }}}
+
+    # unlinked ------------------------------- {{{
+    def _unlink_current_package(self):
+        if not self.valid_package(self.current_package):
+            self.failed = True
+            self.message = 'Invalid package: {0}.'.format(self.current_package)
+            raise HomebrewException(self.message)
+
+        if not self._current_package_is_installed():
+            self.failed = True
+            self.message = 'Package not installed: {0}.'.format(self.current_package)
+            raise HomebrewException(self.message)
+
+        if self.module.check_mode:
+            self.changed = True
+            self.message = 'Package would be unlinked: {0}'.format(
+                self.current_package
+            )
+            raise HomebrewException(self.message)
+
+        cmd = [opt
+               for opt in (self.brew_path, 'unlink', self.current_package)
+               if opt]
+
+        rc, out, err = self.module.run_command(cmd)
+        self.changed_count += 1
+        self.changed = True
+        self.message = 'Package unlinked: {0}'.format(self.current_package)
+
+    def _unlink_packages(self):
+        for package in self.packages:
+            self.current_package = package
+            self._unlink_current_package()
+
+        return True
+    # /unlinked ------------------------------ }}}
     # /commands ---------------------------------------------------- }}}
-
-
-# def link_package(module, brew_path, package):
-#     """ Links a single homebrew package. """
-#
-#     failed, changed, msg = False, False, ''
-#
-#     if not a_valid_package(package):
-#         failed = True
-#         msg = 'invalid package'
-#
-#     elif not query_package(module, brew_path, package):
-#         failed = True
-#         msg = 'not installed'
-#
-#     else:
-#         if module.check_mode:
-#             module.exit_json(changed=True)
-#
-#         rc, out, err = module.run_command([
-#             brew_path,
-#             'link',
-#             package,
-#         ])
-#
-#         if rc:
-#             failed = True
-#             msg = out.strip()
-#         else:
-#             if err.strip().lower().find('already linked') != -1:
-#                 msg = 'already linked'
-#             else:
-#                 changed = True
-#                 msg = 'linked'
-#
-#     return (failed, changed, msg)
-#
-#
-# def link_packages(module, brew_path, packages):
-#     """ Upgrades one or more packages. """
-#
-#     failed, linked, unchanged, msg = False, 0, 0, ''
-#
-#     for package in packages:
-#         failed, changed, msg = link_package(module, brew_path, package)
-#         if failed:
-#             break
-#         if changed:
-#             linked += 1
-#         else:
-#             unchanged += 1
-#
-#     if failed:
-#         msg = 'installed: %d, unchanged: %d, error: ' + msg
-#         msg = msg % (linked, unchanged)
-#     elif linked:
-#         changed = True
-#         msg = 'linked: %d, unchanged: %d' % (linked, unchanged)
-#     else:
-#         msg = 'linked: %d, unchanged: %d' % (linked, unchanged)
-#
-#     return (failed, changed, msg)
-#
-#
-# def unlink_package(module, brew_path, package):
-#     """ Unlinks a single homebrew package. """
-#
-#     failed, changed, msg = False, False, ''
-#
-#     if not a_valid_package(package):
-#         failed = True
-#         msg = 'invalid package'
-#
-#     elif not query_package(module, brew_path, package):
-#         failed = True
-#         msg = 'not installed'
-#
-#     else:
-#         if module.check_mode:
-#             module.exit_json(changed=True)
-#
-#         rc, out, err = module.run_command([
-#             brew_path,
-#             'unlink',
-#             package,
-#         ])
-#
-#         if rc:
-#             failed = True
-#             msg = out.strip()
-#         else:
-#             if out.find('0 links') != -1:
-#                 msg = 'already unlinked'
-#             else:
-#                 changed = True
-#                 msg = 'linked'
-#
-#     return (failed, changed, msg)
-#
-#
-# def unlink_packages(module, brew_path, packages):
-#     """ Unlinks one or more packages. """
-#
-#     failed, unlinked, unchanged, msg = False, 0, 0, ''
-#
-#     for package in packages:
-#         failed, changed, msg = unlink_package(module, brew_path, package)
-#         if failed:
-#             break
-#         if changed:
-#             unlinked += 1
-#         else:
-#             unchanged += 1
-#
-#     if failed:
-#         msg = 'installed: %d, unchanged: %d, error: ' + msg
-#         msg = msg % (unlinked, unchanged)
-#     elif unlinked:
-#         changed = True
-#         msg = 'unlinked: %d, unchanged: %d' % (unlinked, unchanged)
-#     else:
-#         msg = 'unlinked: %d, unchanged: %d' % (unlinked, unchanged)
-#
-#     return (failed, changed, msg)
 
 
 def main():
@@ -764,6 +716,10 @@ def main():
         state = 'installed'
     if state in ('latest', 'upgraded'):
         state = 'upgraded'
+    if state == 'linked':
+        state = 'linked'
+    if state == 'unlinked':
+        state = 'unlinked'
     if state in ('absent', 'removed', 'uninstalled'):
         state = 'absent'
 
