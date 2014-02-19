@@ -772,7 +772,7 @@ def ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=False, confirm_
         vault_pass = getpass.getpass(prompt="Vault password: ")
 
     if ask_vault_pass and confirm_vault:
-        vault_pass2 = getpass.getpass(prompt="Retype Vault password: ")
+        vault_pass2 = getpass.getpass(prompt="Confirm Vault password: ")
         if vault_pass != vault_pass2:
             raise errors.AnsibleError("Passwords do not match")
 
@@ -780,7 +780,7 @@ def ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=False, confirm_
         new_vault_pass = getpass.getpass(prompt="New Vault password: ")
 
     if ask_new_vault_pass and confirm_new:
-        new_vault_pass2 = getpass.getpass(prompt="Retype New Vault password: ")
+        new_vault_pass2 = getpass.getpass(prompt="Confirm New Vault password: ")
         if new_vault_pass != new_vault_pass2:
             raise errors.AnsibleError("Passwords do not match")
 
