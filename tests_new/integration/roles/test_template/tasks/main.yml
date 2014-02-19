@@ -40,7 +40,7 @@
   copy: src=foo.txt dest={{output_dir}}/foo.txt
 
 - name: compare templated file to known good
-  command: diff {{output_dir}}/foo.templated {{output_dir}}/foo.txt
+  shell: diff {{output_dir}}/foo.templated {{output_dir}}/foo.txt
   register: diff_result
 
 - name: verify templated file matches known good
