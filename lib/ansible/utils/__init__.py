@@ -42,6 +42,7 @@ import traceback
 import getpass
 import sys
 import textwrap
+import zipfile
 
 VERBOSITY=0
 
@@ -495,6 +496,20 @@ Should be written as:
 
 
 def parse_yaml_from_file(path):
+    '''
+    Try to load a yaml file from a path that may contain a direct file path
+    or a path inside a zip archive
+    '''
+
+    if os.path.exists(path):
+        return parse_yaml_from_path(path)
+    else:
+        data = parse_yaml_from_zip(path)
+        if data is not None:
+            return data
+    raise errors.AnsibleError("file not found: %s" % path)
+
+def parse_yaml_from_path(path):
     ''' convert a yaml file to a data structure '''
 
     try:
@@ -502,6 +517,36 @@ def parse_yaml_from_file(path):
         return parse_yaml(data)
     except IOError:
         raise errors.AnsibleError("file not found: %s" % path)
+    except yaml.YAMLError, exc:
+        process_yaml_error(exc, data, path)
+
+def parse_yaml_from_zip(path):
+    ''' try to extract a yaml file from a zip or pex archive '''
+
+    (zip_path, yml_path) = os.path.split(path)
+    yml_path = [yml_path]
+
+    while len(zip_path) > 0:
+        if os.path.exists(zip_path):
+            break
+
+        (zip_path, prepend_path) = os.path.split(zip_path)
+        yml_path.insert(0, prepend_path)
+
+    yml_path = os.path.join(*yml_path)
+
+    if not os.path.exists(zip_path):
+        return None
+
+    if not zipfile.is_zipfile(zip_path):
+        return None
+
+    try:
+        zf = zipfile.ZipFile(zip_path, 'r')
+        print yml_path
+        data = zf.read(yml_path)
+        zf.close()
+        return parse_yaml(data)
     except yaml.YAMLError, exc:
         process_yaml_error(exc, data, path)
 
