@@ -1,3 +1,4 @@
 ---
 output_dir: ~/ansible_testing
 non_root_test_user: ansible
+pip_test_package: epdb
