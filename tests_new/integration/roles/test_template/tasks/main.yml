@@ -34,7 +34,9 @@
         - "'uid' in template_result" 
 
 - name: verify that the file was marked as changed
-  assert: { that: "template_result.changed == true" }
+  assert: 
+    that: 
+      - "template_result.changed == true"
 
 # VERIFY CONTENTS
 
@@ -58,5 +60,7 @@
   register: file_result
 
 - name: ensure file mode did not change
-  assert: { that: "file_result.changed != True" }
+  assert: 
+    that: 
+      - "file_result.changed != True"
         
