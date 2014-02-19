@@ -4,4 +4,5 @@
     - { role: test_copy, tags: test_copy }
     - { role: test_template, tags: test_template }
     - { role: test_file, tags: test_file }
+    - { role: test_fetch, tags: test_fetch }
 
