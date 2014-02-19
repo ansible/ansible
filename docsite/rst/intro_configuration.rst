@@ -8,7 +8,7 @@ The Ansible Configuration File
 Certain settings in Ansible are adjustable via a configuration file.  The stock configuration should be sufficient
 for most users, but there may be reasons you would want to change them.
 
-Changes can be made and used in a configuration file which will be processed processed in the following order::
+Changes can be made and used in a configuration file which will be processed in the following order::
 
     * ANSIBLE_CONFIG (an environment variable)
     * ansible.cfg (in the current directory)
