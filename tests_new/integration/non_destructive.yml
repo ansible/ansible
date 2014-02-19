@@ -6,4 +6,5 @@
     - { role: test_template, tags: test_template }
     - { role: test_file, tags: test_file }
     - { role: test_fetch, tags: test_fetch }
+    - { role: test_synchronize, tags: test_synchronize }
 
