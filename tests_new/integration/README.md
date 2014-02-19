@@ -15,6 +15,13 @@ Configuration
 Making your own version of integration_config.yml can allow for setting some tunable parameters to help run
 the tests better in your environment.
 
+Prerequisites
+=============
+
+The tests will assume things like hg, svn, and git are installed and in path.
+
+(Complete list pending)
+
 Non-destructive Tests
 =====================
 
