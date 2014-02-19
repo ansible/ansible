@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 # (c) 2013, James Martin <jmartin@basho.com>, Drew Kerrigan <dkerrigan@basho.com>
@@ -164,8 +164,9 @@ def main():
     node_name = stats['nodename']
     nodes = stats['ring_members']
     ring_size = stats['ring_creation_size']
-    version = stats['riak_core_version']
-
+    rc, out, err = module.run_command([riak_bin, 'version'] )
+    version = out.strip()
+    
     result = dict(node_name=node_name,
               nodes=nodes,
               ring_size=ring_size,
