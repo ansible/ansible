@@ -91,9 +91,51 @@
     that: 
       - "not copy_result4|changed"
 
-# TODO: test recursive copy
-# TODO: test copy where destination is a directory like {{output_dir}}/ 
+# test recursive copy
+
+- name: set the output subdirectory
+  set_fact: output_subdir={{output_dir}}/sub
+
+- name: make an output subdirectory
+  file: name={{output_subdir}} state=directory
+
+- name: test recursive copy to directory
+  copy: src=subdir dest={{output_subdir}}
+  register: recursive_copy_result
+
+- debug: var=recursive_copy_result
+
+- name: check that a file in a directory was transferred
+  stat: path={{output_dir}}/sub/subdir/bar.txt
+  register: stat_bar
+
+- name: check that a file in a deeper directory was transferred
+  stat: path={{output_dir}}/sub/subdir/subdir2/bar2.txt
+  register: stat_bar2
+
+
+- debug: var=stat_bar
+
+- fail: msg="boom!"
+  when: not stat_bar.stat.exists
+
+- assert: { that: "stat_bar.stat.exists" }
+
+- name: assert recursive copy things
+  assert:
+    that:
+      - "stat_bar.stat.exists"
+      - "stat_bar2.stat.exists"
+
 # TODO: test that copy fails if the path does not exist
+
+- name: assert invalid copy location fails
+  copy: src=invalid_file_location_does_not_exist dest={{output_dir}}/file.txt
+  ignore_errors: True
+  register: failed_copy
+
+- debug: var=failed_copy
+
 # TODO: ...
 
 
