@@ -2,4 +2,5 @@
   gather_facts: True
   roles: 
     - { role: test_pip, tags: test_pip }
+    - { role: test_gem, tags: test_gem }
 
