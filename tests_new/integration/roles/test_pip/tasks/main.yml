@@ -32,7 +32,6 @@
   pip: name={{ pip_test_package }} state=absent
   register: uninstall_result
 
-- debug: var=installed_result
 - name: removing an unremoved package should return unchanged
   assert: 
     that:
