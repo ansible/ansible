@@ -1,0 +1,40 @@
+# test code for the synchronize module
+# (c) 2014, James Tanner <tanner.jc@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# FIXME: tags should auto-apply to role dependencies
+- name: cleanup old files
+  shell: rm -rf {{output_dir}}/*
+
+- name: make a new file
+  copy: dest={{output_dir}}/foo.txt mode=0644 content="hello world"
+
+- name: synchronize file to new filename
+  synchronize: src={{output_dir}}/foo.txt dest={{output_dir}}/foo.result
+  register: sync_result
+
+- debug: var=sync_result
+
+- assert: 
+    that: 
+        - "'changed' in sync_result"
+        - "sync_result.changed == true"
+        - "'cmd' in sync_result"
+        - "'rsync' in sync_result.cmd"
+        - "'msg' in sync_result"
+        - "sync_result.msg == '>f+++++++++ foo.txt\n'"
+
