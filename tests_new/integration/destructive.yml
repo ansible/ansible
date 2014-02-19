@@ -1,4 +1,5 @@
 - hosts: testhost
   gather_facts: True
-  roles: []
+  roles: 
+    - { role: test_pip, tags: test_pip }
 
