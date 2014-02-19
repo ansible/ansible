@@ -22,7 +22,7 @@
 DOCUMENTATION = '''
 ---
 module: homebrew
-author: Andrew Dunham
+author: Andrew Dunham and Daniel Jaouen
 short_description: Package manager for Homebrew
 description:
     - Manages Homebrew packages
@@ -35,7 +35,7 @@ options:
     state:
         description:
             - state of the package
-        choices: [ 'head', 'latest', 'installed', 'linked', 'uninstalled' ]
+        choices: [ 'head', 'latest', 'present', 'absent', 'linked', 'uninstalled' ]
         required: false
         default: present
     update_homebrew:
@@ -44,6 +44,11 @@ options:
         required: false
         default: "no"
         choices: [ "yes", "no" ]
+    install_options:
+        description:
+            - options flags to install a package
+        required: false
+        default: null
 notes:  []
 '''
 EXAMPLES = '''
@@ -55,6 +60,7 @@ EXAMPLES = '''
 - homebrew: name=foo state=linked
 - homebrew: name=foo state=absent
 - homebrew: name=foo,bar state=absent
+- homebrew: name=foo state=present install_options=with-baz,enable-debug
 '''
 
 import os.path
