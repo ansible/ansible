@@ -200,7 +200,7 @@ class Play(object):
             vars = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(role_path, 'vars')))
             vars_data = {}
             if os.path.isfile(vars):
-                vars_data = utils.parse_yaml_from_file(vars)
+                vars_data = utils.parse_yaml_from_file(vars, vault_password=self.vault_password)
                 if vars_data:
                     if not isinstance(vars_data, dict):
                         raise errors.AnsibleError("vars from '%s' are not a dict" % vars)
@@ -208,12 +208,12 @@ class Play(object):
             defaults = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(role_path, 'defaults')))
             defaults_data = {}
             if os.path.isfile(defaults):
-                defaults_data = utils.parse_yaml_from_file(defaults)
+                defaults_data = utils.parse_yaml_from_file(defaults, vault_password=self.vault_password)
             # the meta directory contains the yaml that should
             # hold the list of dependencies (if any)
             meta = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(role_path, 'meta')))
             if os.path.isfile(meta):
-                data = utils.parse_yaml_from_file(meta)
+                data = utils.parse_yaml_from_file(meta, vault_password=self.vault_password)
                 if data:
                     dependencies = data.get('dependencies',[])
                     if dependencies is None:
@@ -223,7 +223,7 @@ class Play(object):
                         (dep_path,dep_vars) = self._get_role_path(dep)
                         meta = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(dep_path, 'meta')))
                         if os.path.isfile(meta):
-                            meta_data = utils.parse_yaml_from_file(meta)
+                            meta_data = utils.parse_yaml_from_file(meta, vault_password=self.vault_password)
                             if meta_data:
                                 allow_dupes = utils.boolean(meta_data.get('allow_duplicates',''))
 
@@ -244,13 +244,13 @@ class Play(object):
                         vars = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(dep_path, 'vars')))
                         vars_data = {}
                         if os.path.isfile(vars):
-                            vars_data = utils.parse_yaml_from_file(vars)
+                            vars_data = utils.parse_yaml_from_file(vars, vault_password=self.vault_password)
                             if vars_data:
                                 dep_vars = utils.combine_vars(vars_data, dep_vars)
                         defaults = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(dep_path, 'defaults')))
                         dep_defaults_data = {}
                         if os.path.isfile(defaults):
-                            dep_defaults_data = utils.parse_yaml_from_file(defaults)
+                            dep_defaults_data = utils.parse_yaml_from_file(defaults, vault_password=self.vault_password)
                         if 'role' in dep_vars:
                             del dep_vars['role']
 
@@ -305,7 +305,7 @@ class Play(object):
         default_vars = {}
         for filename in defaults_files:
             if os.path.exists(filename):
-                new_default_vars = utils.parse_yaml_from_file(filename)
+                new_default_vars = utils.parse_yaml_from_file(filename, vault_password=self.vault_password)
                 if new_default_vars:
                     if type(new_default_vars) != dict:
                         raise errors.AnsibleError("%s must be stored as dictionary/hash: %s" % (filename, type(new_default_vars)))
@@ -718,7 +718,7 @@ class Play(object):
                     sequence.append(filename4)
                     if os.path.exists(filename4):
                         found = True
-                        data = utils.parse_yaml_from_file(filename4)
+                        data = utils.parse_yaml_from_file(filename4, vault_password=self.vault_password)
                         if type(data) != dict:
                             raise errors.AnsibleError("%s must be stored as a dictionary/hash" % filename4)
                         if host is not None:

@@ -70,6 +70,7 @@ def decrypt(filename, password):
     '''
 
     if password is None:
+        import epdb; epdb.st()
         raise errors.AnsibleError("A vault password must be specified to decrypt %s" % filename)
 
     V = Vault(filename=filename, vault_password=password)
