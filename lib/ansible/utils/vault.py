@@ -432,18 +432,13 @@ class AES(object):
         next_chunk = ''
         finished = False
 
-        out_data = ''
-
         while not finished:
             chunk, next_chunk = next_chunk, cipher.decrypt(in_file.read(1024 * bs))
             if len(next_chunk) == 0:
                 padding_length = ord(chunk[-1])
                 chunk = chunk[:-padding_length]
                 finished = True
-            out_data += chunk
-
-        # write decrypted data to out stream
-        out_file.write(out_data)
+            out_file.write(chunk)
 
         # reset the stream pointer to the beginning
         if hasattr(out_file, 'seek'):
