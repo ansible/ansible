@@ -328,7 +328,7 @@ class HomebrewCask(object):
         rc, out, err = self.module.run_command(cmd)
 
         if 'nothing to list' in out:
-            return True
+            return False
         elif rc == 0:
             casks = [cask_.strip() for cask_ in out.split('\n') if cask_.strip()]
             return self.current_cask in casks
