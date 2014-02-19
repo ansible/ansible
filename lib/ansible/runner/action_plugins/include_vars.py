@@ -43,7 +43,7 @@ class ActionModule(object):
             source = utils.path_dwim(self.runner.basedir, source)
 
         if os.path.exists(source):
-            data = utils.parse_yaml_from_file(source)
+            data = utils.parse_yaml_from_file(source, vault_password=self.runner.vault_pass)
             if type(data) != dict:
                 raise errors.AnsibleError("%s must be stored as a dictionary/hash" % source)
             result = dict(ansible_facts=data)
