@@ -41,7 +41,7 @@ class Connection(object):
 
         return self
 
-    def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable='/bin/sh', in_data=None, su=None, su_user=None):
+    def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable='/bin/sh', in_data=None, su=None, su_user=None, capture_output=True):
         ''' run a command on the local host '''
 
         # su requires to be run from a terminal, and therefore isn't supported here (yet?)
@@ -59,13 +59,21 @@ class Connection(object):
         else:
             local_cmd, prompt, success_key = utils.make_sudo_cmd(sudo_user, executable, cmd)
 
+        if capture_output:
+            stdout_arg=subprocess.PIPE
+            stderr_arg=subprocess.PIPE
+        else:
+            stdout_arg=None
+            stderr_arg=None
+
+
         vvv("EXEC %s" % (local_cmd), host=self.host)
         p = subprocess.Popen(local_cmd, shell=isinstance(local_cmd, basestring),
                              cwd=self.runner.basedir, executable=executable or None,
                              stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                             stdout=stdout_arg, stderr=stderr_arg)
 
-        if self.runner.sudo and sudoable and self.runner.sudo_pass:
+        if capture_output and self.runner.sudo and sudoable and self.runner.sudo_pass:
             fcntl.fcntl(p.stdout, fcntl.F_SETFL,
                         fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
             fcntl.fcntl(p.stderr, fcntl.F_SETFL,

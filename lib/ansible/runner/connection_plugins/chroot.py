@@ -60,7 +60,7 @@ class Connection(object):
 
         return self
 
-    def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable='/bin/sh', in_data=None, su=None, su_user=None):
+    def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable='/bin/sh', in_data=None, su=None, su_user=None, capture_output=True):
         ''' run a command on the chroot '''
 
         if su or su_user:
@@ -77,10 +77,17 @@ class Connection(object):
             local_cmd = '%s "%s" %s' % (self.chroot_cmd, self.chroot, cmd)
 
         vvv("EXEC %s" % (local_cmd), host=self.chroot)
+        if capture_output:
+            stdout_arg=subprocess.PIPE
+            stderr_arg=subprocess.PIPE
+        else:
+            stdout_arg=None
+            stderr_arg=None
+
         p = subprocess.Popen(local_cmd, shell=isinstance(local_cmd, basestring),
                              cwd=self.runner.basedir,
                              stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                             stdout=stdout_arg, stderr=stderr_arg)
 
         stdout, stderr = p.communicate()
         return (p.returncode, '', stdout, stderr)

@@ -207,7 +207,7 @@ class Connection(object):
         else:
             return response.get('rc') == 0
 
-    def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable='/bin/sh', in_data=None, su=None, su_user=None):
+    def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable='/bin/sh', in_data=None, su=None, su_user=None, capture_output=True):
         ''' run a command on the remote host '''
 
         if su or su_user:
@@ -215,6 +215,9 @@ class Connection(object):
 
         if in_data:
             raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
+
+        if not capture_output:
+            raise errors.AnsibleError("Internal Error: this module does not support sending output to the console")
 
         if executable == "":
             executable = constants.DEFAULT_EXECUTABLE

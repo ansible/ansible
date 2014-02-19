@@ -43,6 +43,7 @@ from ansible import errors
 from ansible import module_common
 import poller
 import connection
+from live_output import LiveOutput
 from return_data import ReturnData
 from ansible.callbacks import DefaultRunnerCallbacks, vv
 from ansible.module_common import ModuleReplacer
@@ -146,6 +147,7 @@ class Runner(object):
         su_pass=C.DEFAULT_SU_PASS,
         run_hosts=None,                     # an optional list of pre-calculated hosts to run on
         no_log=False,                       # option to enable/disable logging for a given task
+        show_output=False                   # show the output of a task on the console
         ):
 
         # used to lock multiprocess inputs and outputs at various levels
@@ -198,6 +200,7 @@ class Runner(object):
         self.su_user          = None
         self.su_pass          = su_pass
         self.no_log           = no_log
+        self.show_output      = show_output
 
         if self.transport == 'smart':
             # if the transport is 'smart' see if SSH can support ControlPersist if not use paramiko
@@ -778,6 +781,15 @@ class Runner(object):
         if self._early_needs_tmp_path(module_name, handler):
             tmp = self._make_tmp_path(conn)
 
+
+        # Create a temporary path for stdout and stderr files, and inject them
+        if self.show_output:
+            (stdout_file, stderr_file) = self._make_live_output_files(conn)
+            inject['ansible_stdout_file'] = stdout_file
+            inject['ansible_stderr_file'] = stderr_file
+            live = LiveOutput(self, conn, stdout_file, stderr_file)
+            live.follow()
+
         # render module_args and complex_args templates
         try:
             module_args = template.template(self.basedir, module_args, inject, fail_on_undefined=self.error_on_undefined_vars)
@@ -816,6 +828,12 @@ class Runner(object):
             else:
                 result.result['attempts'] = 0
         conn.close()
+
+        # Clean up live output
+        if self.show_output:
+            live.stop()
+            self._remove_tmp_path(conn, stdout_file)
+            self._remove_tmp_path(conn, stderr_file)
 
         if not result.comm_ok:
             # connection or parsing errors...
@@ -891,7 +909,8 @@ class Runner(object):
     # *****************************************************
 
     def _low_level_exec_command(self, conn, cmd, tmp, sudoable=False,
-                                executable=None, su=False, in_data=None):
+                                executable=None, su=False, in_data=None,
+                                capture_output=True):
         ''' execute a command string over SSH, return the output '''
 
         if executable is None:
@@ -912,14 +931,16 @@ class Runner(object):
                                                           su=su,
                                                           su_user=su_user,
                                                           executable=executable,
-                                                          in_data=in_data)
+                                                          in_data=in_data,
+                                                          capture_output=capture_output)
         else:
             rc, stdin, stdout, stderr = conn.exec_command(cmd,
                                                           tmp,
                                                           sudo_user,
                                                           sudoable=sudoable,
                                                           executable=executable,
-                                                          in_data=in_data)
+                                                          in_data=in_data,
+                                                          capture_output=capture_output)
 
         if type(stdout) not in [ str, unicode ]:
             out = ''.join(stdout.readlines())
@@ -1191,3 +1212,40 @@ class Runner(object):
                 self.always_run, self.basedir, inject, fail_on_undefined=True)
 
         return (self.check and not self.always_run)
+
+    # *****************************************************
+
+    def _create_file(self, conn, path):
+        ''' create an empty file on a remote box'''
+        cmd = 'touch %s' % path
+        if self.remote_user != 'root' or ((self.sudo or self.su) and (self.sudo_user != 'root' or self.su != 'root')):
+            cmd += ' && chmod a+rw %s' % path
+
+        result = self._low_level_exec_command(conn, cmd, None, sudoable=False)
+
+        if result['rc'] != 0:
+            if result['rc'] == 5:
+                output = 'Authentication failure.'
+            elif result['rc'] == 255 and self.transport in ['ssh', 'ssh_old']:
+                if utils.VERBOSITY > 3:
+                    output = 'SSH encountered an unknown error. The output was:\n%s' % (result['stdout']+result['stderr'])
+                else:
+                    output = 'SSH encountered an unknown error during the connection. We recommend you re-run the command using -vvvv, which will enable SSH debugging output to help diagnose the issue'
+            else:
+                output = 'Authentication or permission failure.  In some cases, you may have been able to authenticate and did not have permissions on the remote directory. Consider changing the remote temp path in ansible.cfg to a path rooted in "/tmp". Failed command was: %s, exited with result %d' % (cmd, result['rc'])
+            if 'stdout' in result and result['stdout'] != '':
+                output = output + ": %s" % result['stdout']
+            raise errors.AnsibleError(output)
+        return result['rc']
+
+    # *****************************************************
+
+    def _make_live_output_files(self, conn):
+        ''' Create empty files in temp directory for live output '''
+        live_output_path = self._make_tmp_path(conn)
+        stdout_file = os.path.join(live_output_path, "stdout")
+        stderr_file = os.path.join(live_output_path, "stderr")
+        self._create_file(conn, stdout_file)
+        self._create_file(conn, stderr_file)
+        return (stdout_file, stderr_file)
+

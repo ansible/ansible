@@ -72,6 +72,7 @@ class PlayBook(object):
         su               = False,
         su_user          = False,
         su_pass          = False,
+        show_output      = C.DEFAULT_SHOW_OUTPUT
     ):
 
         """
@@ -138,6 +139,7 @@ class PlayBook(object):
         self.su               = su
         self.su_user          = su_user
         self.su_pass          = su_pass
+        self.show_output      = show_output
 
         self.callbacks.playbook = self
         self.runner_callbacks.playbook = self
@@ -354,6 +356,7 @@ class PlayBook(object):
             su_pass=task.su_pass,
             run_hosts=hosts,
             no_log=task.no_log,
+            show_output=task.show_output
         )
 
         runner.module_vars.update({'play_hosts': hosts})

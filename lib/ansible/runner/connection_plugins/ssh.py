@@ -149,7 +149,7 @@ class Connection(object):
                     return False
         return True
 
-    def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable='/bin/sh', in_data=None, su_user=None, su=False):
+    def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable='/bin/sh', in_data=None, su_user=None, su=False, capture_output=True):
         ''' run a command on the remote host '''
 
         ssh_cmd = self._password_cmd()
@@ -186,16 +186,23 @@ class Connection(object):
         not_in_host_file = self.not_in_host_file(self.host)
 
         if C.HOST_KEY_CHECKING and not_in_host_file:
-            # lock around the initial SSH connectivity so the user prompt about whether to add 
+            # lock around the initial SSH connectivity so the user prompt about whether to add
             # the host to known hosts is not intermingled with multiprocess output.
             fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_EX)
             fcntl.lockf(self.runner.output_lockfile, fcntl.LOCK_EX)
+
+        if capture_output:
+            stdout_arg=subprocess.PIPE
+            stderr_arg=subprocess.PIPE
+        else:
+            stdout_arg=None
+            stderr_arg=None
 
         # create process
         if in_data:
             # do not use pseudo-pty
             p = subprocess.Popen(ssh_cmd, stdin=subprocess.PIPE,
-                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                                     stdout=stdout_arg, stderr=stderr_arg)
             stdin = p.stdin
         else:
             # try to use upseudo-pty
@@ -203,18 +210,20 @@ class Connection(object):
                 # Make sure stdin is a proper (pseudo) pty to avoid: tcgetattr errors
                 master, slave = pty.openpty()
                 p = subprocess.Popen(ssh_cmd, stdin=slave,
-                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                                     stdout=stdout_arg, stderr=stderr_arg)
                 stdin = os.fdopen(master, 'w', 0)
                 os.close(slave)
             except:
                 p = subprocess.Popen(ssh_cmd, stdin=subprocess.PIPE,
-                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                                     stdout=stdout_arg, stderr=stderr_arg)
                 stdin = p.stdin
 
         self._send_password()
 
-        if (self.runner.sudo and sudoable and self.runner.sudo_pass) or \
-                (self.runner.su and su and self.runner.su_pass):
+        detect_prompt = (self.runner.sudo and sudoable and self.runner.sudo_pass) or \
+                        (self.runner.su and su and self.runner.su_pass)
+
+        if capture_output and detect_prompt:
             # several cases are handled for sudo privileges with password
             # * NOPASSWD (tty & no-tty): detect success_key on stdout
             # * without NOPASSWD:
@@ -270,7 +279,7 @@ class Connection(object):
                 stdin.close()
             except:
                 raise errors.AnsibleError('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
-        while True:
+        while capture_output:  # Infinite loop if capture_output is true
             rfd, wfd, efd = select.select(rpipes, [], rpipes, 1)
 
             # fail early if the sudo/su password is wrong
