@@ -112,7 +112,7 @@ def execute_create(args, options, parser):
     if len(args) > 1:
         raise errors.AnsibleError("create does not accept more than one filename")        
 
-    password, new_password = utils.ask_vaultpasswords(ask_vault_pass=True, confirm_vault=True)
+    password, new_password = utils.ask_vault_passwords(ask_vault_pass=True, confirm_vault=True)
 
     this_vault = _get_vault(args[0], options, password)
     if not hasattr(options, 'cipher'):
@@ -121,7 +121,7 @@ def execute_create(args, options, parser):
 
 def execute_decrypt(args, options, parser):
 
-    password, new_password = utils.ask_vaultpasswords(ask_vault_pass=True)
+    password, new_password = utils.ask_vault_passwords(ask_vault_pass=True)
 
     for f in args:
         this_vault = _get_vault(f, options, password)
@@ -134,7 +134,7 @@ def execute_edit(args, options, parser):
     if len(args) > 1:
         raise errors.AnsibleError("create does not accept more than one filename")        
 
-    password, new_password = utils.ask_vaultpasswords(ask_vault_pass=True)
+    password, new_password = utils.ask_vault_passwords(ask_vault_pass=True)
 
     for f in args:
         this_vault = _get_vault(f, options, password)
@@ -142,7 +142,7 @@ def execute_edit(args, options, parser):
 
 def execute_encrypt(args, options, parser):
 
-    password, new_password = utils.ask_vaultpasswords(ask_vault_pass=True, confirm_vault=True)
+    password, new_password = utils.ask_vault_passwords(ask_vault_pass=True, confirm_vault=True)
 
     for f in args:
         this_vault = _get_vault(f, options, password)
@@ -154,7 +154,7 @@ def execute_encrypt(args, options, parser):
 
 def execute_rekey(args, options, parser):
 
-    password, new_password = utils.ask_vaultpasswords(ask_vault_pass=True, ask_new_vault_pass=True, confirm_new=True)
+    password, new_password = utils.ask_vault_passwords(ask_vault_pass=True, ask_new_vault_pass=True, confirm_new=True)
 
     for f in args:
         this_vault = _get_vault(f, options, password)
