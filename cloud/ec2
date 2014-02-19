@@ -1035,7 +1035,7 @@ def main():
             instance_profile_name = dict(),
             instance_ids = dict(type='list'),
             state = dict(default='present'),
-            exact_count = dict(type='int'),
+            exact_count = dict(type='int', default=None),
             count_tag = dict(),
             volumes = dict(type='list'),
         )
@@ -1071,11 +1071,11 @@ def main():
         # Changed is always set to true when provisioning new instances
         if not module.params.get('image'):
             module.fail_json(msg='image parameter is required for new instance')
-   
-        if module.params.get('exact_count'):
-            (tagged_instances, instance_dict_array, new_instance_ids, changed) = enforce_count(module, ec2)
-        else:            
+
+        if module.params.get('exact_count') is None:
             (instance_dict_array, new_instance_ids, changed) = create_instances(module, ec2)
+        else:
+            (tagged_instances, instance_dict_array, new_instance_ids, changed) = enforce_count(module, ec2)
 
     module.exit_json(changed=changed, instance_ids=new_instance_ids, instances=instance_dict_array, tagged_instances=tagged_instances)
 
