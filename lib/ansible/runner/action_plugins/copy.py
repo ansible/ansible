@@ -258,6 +258,8 @@ class ActionModule(object):
                 module_executed = True
 
             module_result = module_return.result
+            if not module_result.get('md5sum'):
+                module_result['md5sum'] = local_md5
             if module_result.get('failed') == True:
                 return module_return
             if module_result.get('changed') == True:
@@ -267,6 +269,11 @@ class ActionModule(object):
         if (not C.DEFAULT_KEEP_REMOTE_FILES and not delete_remote_tmp) \
             or (not C.DEFAULT_KEEP_REMOTE_FILES and delete_remote_tmp and not module_executed):
             self.runner._remove_tmp_path(conn, tmp_path)
+
+        # the file module returns the file path as 'path', but 
+        # the copy module uses 'dest', so add it if it's not there
+        if 'path' in module_result and 'dest' not in module_result:
+            module_result['dest'] = module_result['path']
 
         # TODO: Support detailed status/diff for multiple files
         if len(source_files) == 1:
