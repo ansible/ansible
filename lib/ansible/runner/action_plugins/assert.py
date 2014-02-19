@@ -50,7 +50,7 @@ class ActionModule(object):
             args['that'] = [ args['that'] ]
 
         for that in args['that']:
-            result = utils.check_conditional(args['that'], self.runner.basedir, inject, fail_on_undefined=True)
+            result = utils.check_conditional(that, self.runner.basedir, inject, fail_on_undefined=True)
             if not result:
                 return ReturnData(conn=conn, result=dict(failed=True, assertion=that, evaluated_to=result))
 
