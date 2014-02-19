@@ -22,16 +22,19 @@
   copy: src=foo.txt dest={{output_file}}
   register: copy_result
 
-- assert: { that: "'changed' in copy_result" }
-- assert: { that: "'dest' in copy_result" }
-- assert: { that: "'group' in copy_result" }
-- assert: { that: "'gid' in copy_result" }
-- assert: { that: "'md5sum' in copy_result" }
-- assert: { that: "'owner' in copy_result" }
-- assert: { that: "'size' in copy_result" }
-- assert: { that: "'src' in copy_result" }
-- assert: { that: "'state' in copy_result" }
-- assert: { that: "'uid' in copy_result" }
+- name: assert basic copy worked
+  assert: 
+    that: 
+    - "'changed' in copy_result"
+    - "'dest' in copy_result"
+    - "'group' in copy_result"
+    - "'gid' in copy_result"
+    - "'md5sum' in copy_result"
+    - "'owner' in copy_result"
+    - "'size' in copy_result"
+    - "'src' in copy_result"
+    - "'state' in copy_result"
+    - "'uid' in copy_result"
 
 
 - name: verify that the file was marked as changed
