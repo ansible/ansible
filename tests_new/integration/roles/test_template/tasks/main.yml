@@ -17,7 +17,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 - name: fill in a basic template
-  template: src=foo.j2 dest={{output_dir}}/foo.templated
+  template: src=foo.j2 dest={{output_dir}}/foo.templated mode=0644
   register: template_result
 
 - assert: 
@@ -36,6 +36,8 @@
 - name: verify that the file was marked as changed
   assert: { that: "template_result.changed == true" }
 
+# VERIFY CONTENTS
+
 - name: copy known good into place
   copy: src=foo.txt dest={{output_dir}}/foo.txt
 
@@ -48,3 +50,13 @@
     that: 
         - 'diff_result.stdout == ""' 
         - "diff_result.rc == 0" 
+
+# VERIFY MODE
+
+- name: set file mode
+  file: path={{output_dir}}/foo.templated mode=0644
+  register: file_result
+
+- name: ensure file mode did not change
+  assert: { that: "file_result.changed != True" }
+        
