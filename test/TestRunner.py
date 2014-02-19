@@ -103,34 +103,6 @@ class TestRunner(unittest.TestCase):
     #    result = self._run('ohai',[])
     #    assert "hostname" in result
 
-    def test_copy(self):
-        # test copy module, change trigger, etc
-        input_ = self._get_test_file('sample.j2')
-        output = self._get_stage_file('sample.out')
-        assert not os.path.exists(output)
-        result = self._run('copy', [
-            "src=%s" % input_,
-            "dest=%s" % output,
-        ])
-        assert os.path.exists(output)
-        data_in = file(input_).read()
-        data_out = file(output).read()
-        assert data_in == data_out
-        assert 'failed' not in result
-        assert result['changed'] is True
-        assert 'md5sum' in result
-        result = self._run('copy', [
-            "src=%s" % input_,
-            "dest=%s" % output,
-        ])
-        assert result['changed'] is False
-        with open(output, "a") as output_stream:
-            output_stream.write("output file now differs from input")
-        result = self._run('copy',
-                           ["src=%s" % input_, "dest=%s" % output, "force=no"],
-                           check_mode=True)
-        assert result['changed'] is False
-
     def test_command(self):
         # test command module, change trigger, etc
         result = self._run('command', ["/bin/echo", "hi"])
@@ -225,64 +197,6 @@ class TestRunner(unittest.TestCase):
         self._run('file', ['path=/tmp/%s' % git_ref, 'state=absent'])
         self._run('file', ['path=/tmp/%s' % git_reftest, 'state=absent'])
 
-    def test_file(self):
-        filedemo = tempfile.mkstemp()[1]
-        assert self._run('file', ['dest=' + filedemo, 'state=directory'])['failed']
-        assert os.path.isfile(filedemo)
-
-        assert self._run('file', ['dest=' + filedemo, 'src=/dev/null', 'state=link'])['failed']
-        assert os.path.isfile(filedemo)
-
-        res = self._run('file', ['dest=' + filedemo, 'mode=604', 'state=file'])
-        assert res['changed']
-        assert os.path.isfile(filedemo) and os.stat(filedemo).st_mode == 0100604
-
-        assert self._run('file', ['dest=' + filedemo, 'state=absent'])['changed']
-        assert not os.path.exists(filedemo)
-        assert not self._run('file', ['dest=' + filedemo, 'state=absent'])['changed']
-
-        filedemo = tempfile.mkdtemp()
-        assert self._run('file', ['dest=' + filedemo, 'state=file'])['failed']
-        assert os.path.isdir(filedemo)
-
-        # this used to fail but will now make a 'null' symlink in the directory pointing to dev/null.
-        # I feel this is ok but don't want to enforce it with a test.
-        #result = self._run('file', ['dest=' + filedemo, 'src=/dev/null', 'state=link'])
-        #assert result['failed']
-        #assert os.path.isdir(filedemo)
-
-        assert self._run('file', ['dest=' + filedemo, 'mode=701', 'state=directory'])['changed']
-        assert os.path.isdir(filedemo) and os.stat(filedemo).st_mode == 040701
-
-        assert self._run('file', ['dest=' + filedemo, 'state=absent'])['changed']
-        assert not os.path.exists(filedemo)
-        assert not self._run('file', ['dest=' + filedemo, 'state=absent'])['changed']
-
-        tmp_dir = tempfile.mkdtemp()
-        filedemo = os.path.join(tmp_dir, 'link')
-        os.symlink('/dev/zero', filedemo)
-        assert self._run('file', ['dest=' + filedemo, 'state=file'])['failed']
-        assert os.path.islink(filedemo)
-
-        assert self._run('file', ['dest=' + filedemo, 'state=directory'])['failed']
-        assert os.path.islink(filedemo)
-
-        assert self._run('file', ['dest=' + filedemo, 'src=/dev/null', 'state=link'])['changed']
-        assert os.path.islink(filedemo) and os.path.realpath(filedemo) == '/dev/null'
-
-        assert self._run('file', ['dest=' + filedemo, 'state=absent'])['changed']
-        assert not os.path.exists(filedemo)
-        assert not self._run('file', ['dest=' + filedemo, 'state=absent'])['changed']
-
-        # Make sure that we can deal safely with bad symlinks
-        os.symlink('/tmp/non_existent_target', filedemo)
-        assert self._run('file', ['dest=' + tmp_dir, 'state=directory recurse=yes mode=701'])['changed']
-        assert not self._run('file', ['dest=' + tmp_dir, 'state=directory', 'recurse=yes', 'owner=' + str(os.getuid())])['changed']
-        assert os.path.islink(filedemo)
-        assert self._run('file', ['dest=' + filedemo, 'state=absent'])['changed']
-        assert not os.path.exists(filedemo)
-        os.rmdir(tmp_dir)
-
     def test_large_output(self):
         large_path = "/usr/share/dict/words"
         if not os.path.exists(large_path):
@@ -315,13 +229,6 @@ class TestRunner(unittest.TestCase):
         assert 'rc' in result
         assert 'stdout' in result
         assert result['ansible_job_id'] == jid
-
-    def test_fetch(self):
-        input_ = self._get_test_file('sample.j2')
-        output = os.path.join(self.stage_dir, 'localhost', input_)
-        self._run('fetch', ["src=%s" % input_, "dest=%s" % self.stage_dir])
-        assert os.path.exists(output)
-        assert open(input_).read() == open(output).read()
 
     def test_assemble(self):
         input = self._get_test_file('assemble.d')
