@@ -2,6 +2,7 @@
   gather_facts: True
   roles: 
     - { role: test_copy, tags: test_copy }
+    - { role: test_stat, tags: test_stat }
     - { role: test_template, tags: test_template }
     - { role: test_file, tags: test_file }
     - { role: test_fetch, tags: test_fetch }
