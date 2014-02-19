@@ -19,9 +19,18 @@
 - name: record the output directory
   set_fact: output_file={{output_dir}}/foo.txt
 
-- name: initiate a basic copy
-  copy: src=foo.txt dest={{output_file}}
+- name: initiate a basic copy, and also test the mode
+  copy: src=foo.txt dest={{output_file}} mode=0444
   register: copy_result
+
+- name: check the mode of the output file
+  file: name={{output_file}} state=file
+  register: file_result_check
+
+- name: assert the mode is correct
+  assert:
+    that:
+      - "file_result_check.mode == '0444'"
 
 - name: assert basic copy worked
   assert: 
@@ -81,15 +90,6 @@
      that: 
        - "copy_result3|changed"
 
-- name: overwrite the file again using the content system
-  copy: content="modified" dest={{output_file}}
-  register: copy_result4
-  
-- name: assert that the copy result has not changed
-  assert: 
-    that: 
-      - "not copy_result4|changed"
-
 # test recursive copy
 
 - name: set the output subdirectory
@@ -109,7 +109,7 @@
   register: stat_bar
 
 - name: check that a file in a deeper directory was transferred
-  stat: path={{output_dir}}/sub/subdir/subdir2/baz.txt
+  stat: path={{output_dir}}/sub/subdir/subdir2/baz.txt 
   register: stat_bar2
 
 - name: assert recursive copy things
@@ -120,6 +120,11 @@
 
 # errors on this aren't presently ignored so this test is commented out.  But it would be nice to fix.
 #
+
+- name: overwrite the file again using the content system, also passing along file params
+  copy: content="modified" dest={{output_file}} 
+  register: copy_result4
+  
 #- name: assert invalid copy input location fails
 #  copy: src=invalid_file_location_does_not_exist dest={{output_dir}}/file.txt
 #  ignore_errors: True
