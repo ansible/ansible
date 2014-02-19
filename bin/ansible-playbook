@@ -62,6 +62,8 @@ def main(args):
         check_opts=True,
         diff_opts=True
     )
+    #parser.add_option('--vault-password', dest="vault_password",
+    #    help="password for vault encrypted files")
     parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
         help="set additional variables as key=value or YAML/JSON", default=[])
     parser.add_option('-t', '--tags', dest='tags', default='all',
@@ -100,12 +102,13 @@ def main(args):
     su_pass = None
     if not options.listhosts and not options.syntax and not options.listtasks:
         options.ask_pass = options.ask_pass or C.DEFAULT_ASK_PASS
+        options.ask_vault_pass = options.ask_vault_pass or C.DEFAULT_ASK_VAULT_PASS
         # Never ask for an SSH password when we run with local connection
         if options.connection == "local":
             options.ask_pass = False
         options.ask_sudo_pass = options.ask_sudo_pass or C.DEFAULT_ASK_SUDO_PASS
         options.ask_su_pass = options.ask_su_pass or C.DEFAULT_ASK_SU_PASS
-        (sshpass, sudopass, su_pass) = utils.ask_passwords(ask_pass=options.ask_pass, ask_sudo_pass=options.ask_sudo_pass, ask_su_pass=options.ask_su_pass)
+        (sshpass, sudopass, su_pass, vault_pass) = utils.ask_passwords(ask_pass=options.ask_pass, ask_sudo_pass=options.ask_sudo_pass, ask_su_pass=options.ask_su_pass, ask_vault_pass=options.ask_vault_pass)
         options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
         options.su_user = options.su_user or C.DEFAULT_SU_USER
 
@@ -170,7 +173,8 @@ def main(args):
             diff=options.diff,
             su=options.su,
             su_pass=su_pass,
-            su_user=options.su_user
+            su_user=options.su_user,
+            vault_password=vault_pass
         )
 
         if options.listhosts or options.listtasks or options.syntax:
