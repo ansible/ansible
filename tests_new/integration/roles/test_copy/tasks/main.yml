@@ -16,7 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- set_fact: output_file={{output_dir}}/foo.txt
+- name: record the output directory
+  set_fact: output_file={{output_dir}}/foo.txt
 
 - name: initiate a basic copy
   copy: src=foo.txt dest={{output_file}}
@@ -38,10 +39,14 @@
 
 
 - name: verify that the file was marked as changed
-  assert: { that: "copy_result.changed == true" }
+  assert:
+    that:
+      - "copy_result.changed == true"
 
 - name: verify that the file md5sum is correct
-  assert: { that: "copy_result.md5sum == 'c47397529fe81ab62ba3f85e9f4c71f2'" }
+  assert: 
+    that: 
+      - "copy_result.md5sum == 'c47397529fe81ab62ba3f85e9f4c71f2'"
 
 - name: check the stat results of the file
   stat: path={{output_file}}
@@ -49,33 +54,42 @@
 
 - debug: var=stat_results
 
-- assert: { that: "stat_results.stat.exists == true" }
-- assert: { that: "stat_results.stat.isblk == false" }
-- assert: { that: "stat_results.stat.isfifo == false" }
-- assert: { that: "stat_results.stat.isreg == true" }
-- assert: { that: "stat_results.stat.issock == false" }
-- assert: { that: "stat_results.stat.md5 == 'c47397529fe81ab62ba3f85e9f4c71f2'" }
+- name: assert the stat results are correct
+  assert: 
+    that:
+      - "stat_results.stat.exists == true"
+      - "stat_results.stat.isblk == false"
+      - "stat_results.stat.isfifo == false"
+      - "stat_results.stat.isreg == true"
+      - "stat_results.stat.issock == false"
+      - "stat_results.stat.md5 == 'c47397529fe81ab62ba3f85e9f4c71f2'"
 
 - name: overwrite the file via same means
   copy: src=foo.txt dest={{output_file}}
   register: copy_result2
 
-- name: verify the copy was marked unchanged
-  assert: { that: "not copy_result2|changed" }
+- name: assert that the file was not changed
+  assert: 
+    that: 
+      - "not copy_result2|changed"
 
 - name: overwrite the file using the content system
   copy: content="modified" dest={{output_file}}
   register: copy_result3
 
-- name: verify the copy result was marked changed
-  assert: { that: "copy_result3|changed" }
+- name: assert that the file has changed
+  assert: 
+     that: 
+       - "copy_result3|changed"
 
 - name: overwrite the file again using the content system
   copy: content="modified" dest={{output_file}}
   register: copy_result4
   
-- name: verify the copy result was marked unchanged
-  assert: { that: "not copy_result4|changed" }
+- name: assert that the copy result has not changed
+  assert: 
+    that: 
+      - "not copy_result4|changed"
 
 # TODO: test recursive copy
 # TODO: test copy where destination is a directory like {{output_dir}}/ 
