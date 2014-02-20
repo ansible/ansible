@@ -220,6 +220,10 @@ To get the directory from a path::
 
     {{ path | dirname }}
 
+To expand a path containing a tilde (`~`) character:
+
+    {{ path | expanduser }}
+
 To work with Base64 encoded strings::
 
     {{ encoded | b64decode }}
