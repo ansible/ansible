@@ -17,6 +17,16 @@
         - "'changed' in apt_result"
         - "dpkg_result.rc == 1"
 
+# UNINSTALL AGAIN
+- name: uninstall wget with apt
+  apt: pkg=wget state=absent purge=yes 
+  register: apt_result
+
+- name: verify no change on re-uninstall
+  assert:
+    that: 
+        - "not apt_result.changed"
+
 # INSTALL
 - name: install wget with apt
   apt: name=wget state=present
@@ -45,3 +55,15 @@
         - "'stderr' in apt_result"
         - "'stdout' in apt_result"        
         - "'stdout_lines' in apt_result"        
+
+# INSTALL AGAIN
+- name: install wget with apt
+  apt: name=wget state=present
+  register: apt_result
+
+- name: verify no change on re-install
+  assert:
+    that: 
+        - "not apt_result.changed"
+
+      
