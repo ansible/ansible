@@ -30,10 +30,11 @@ outside of those test subdirectories.  They will also not reconfigure or bounce 
 
 Run as follows:
 
-    # sh test.sh # OR
-    # ansible-playbook non_destructive.yml -i inventory -e @integration_config.yml -v $*
+    make non_destructive
 
 You can select specific tests with the --tags parameter.
+
+    TEST_FLAGS="--tags test_vars_blending" make
 
 Destructive Tests
 =================
@@ -41,7 +42,7 @@ Destructive Tests
 These tests are allowed to install and remove some trivial packages.  You will likely want to devote these
 to a virtual environment.  They won't reformat your filesystem, however :)
     
-    # ansible-playbook destructive.yml -i inventory -e @integration_config.yml -v $*
+    make destructive
 
 Cloud Tests
 ===========
