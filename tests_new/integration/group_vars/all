@@ -7,3 +7,5 @@ dos: 2
 tres: 3
 etest: 'from group_vars'
 inventory_beats_default: 'narf'
+test_hash:
+  group_vars_all: "this is in group_vars/all"
