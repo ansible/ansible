@@ -107,7 +107,7 @@ try:
     import docker.client
     from requests.exceptions import *
     from urlparse import urlparse
-    from module_utils.basic import json
+    from ansible.module_utils.basic import json
 except ImportError, e:
     print "failed=True msg='failed to import python module: %s'" % e
     sys.exit(1)
