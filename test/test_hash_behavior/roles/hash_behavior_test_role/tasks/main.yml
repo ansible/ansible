@@ -1,2 +1,0 @@
-- name: generate role messages
-  action: template src=role_message.j2 dest=/tmp/ansible_test_role_messages.out

@@ -8,8 +8,9 @@ from ansible.inventory import Inventory
 class TestInventory(unittest.TestCase):
 
     def setUp(self):
+
         self.cwd = os.getcwd()
-        self.test_dir = os.path.join(self.cwd, 'test')
+        self.test_dir = os.path.join(self.cwd, 'test', 'inventory_test_data')
 
         self.inventory_file             = os.path.join(self.test_dir, 'simple_hosts')
         self.large_range_inventory_file = os.path.join(self.test_dir, 'large_range')
