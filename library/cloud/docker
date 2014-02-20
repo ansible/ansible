@@ -116,7 +116,7 @@ options:
     aliases: []
   env:
     description:
-      - Set environment variables (e.g. env="PASSWORD=sEcRe7,WORKERS=4")
+      - Set environment variables (e.g. env="PASSWORD=sEcRe7,WORKERS=4" - a list or a comma-separated string is valid)
     required: false
     default: null
     aliases: []
@@ -238,7 +238,7 @@ Create containers named in a sequence:
     docker: image=centos name={{item}} command="service tomcat6 start" ports=:8080
     with_sequence: start=1 end=5 format=tomcat_%d.example.com
 
-Create two linked containers
+Create two linked containers:
 
 - hosts: web
   sudo: yes
@@ -299,7 +299,7 @@ class DockerManager:
         if self.module.params.get('volumes'):
             self.binds = {}
             self.volumes = {}
-            vols = self.module.params.get('volumes').split(" ")
+            vols = self.parse_list_from_param('volumes')
             for vol in vols:
                 parts = vol.split(":")
                 # host mount (e.g. /mnt:/tmp, bind mounts host's /tmp to /mnt in the container)
@@ -313,43 +313,53 @@ class DockerManager:
         self.lxc_conf = None
         if self.module.params.get('lxc_conf'):
             self.lxc_conf = []
-            options = self.module.params.get('lxc_conf').split(" ")
+            options = self.parse_list_from_param('lxc_conf')
             for option in options:
                 parts = option.split(':')
                 self.lxc_conf.append({"Key": parts[0], "Value": parts[1]})
 
         self.exposed_ports = None
         if self.module.params.get('expose'):
-            self.exposed_ports = self.get_exposed_ports(self.module.params.get('expose'))
+            expose = self.parse_list_from_param('expose')
+            self.exposed_ports = self.get_exposed_ports(expose)
 
         self.port_bindings = None
         if self.module.params.get('ports'):
-            self.port_bindings = self.get_port_bindings(self.module.params.get('ports'))
+            ports = self.parse_list_from_param('ports')
+            self.port_bindings = self.get_port_bindings(ports)
 
         self.links = None
         if self.module.params.get('links'):
-            links = {}
-            for link in self.module.params.get('links').split(','):
-                (source, dest) = link.split(':')
-                links[source] = dest
-            self.links = links
+            links = self.parse_list_from_param('links')
+            self.links = dict(map(lamda x: x.split(':'), links))
 
         self.env = None
         if self.module.params.get('env'):
-            self.env = dict(map(lambda x: x.split("="), self.module.params.get('env').split(",")))
+            env = self.parse_list_from_param('env')
+            self.env = dict(map(lambda x: x.split("="), env))
 
         # connect to docker server
         docker_url = urlparse(module.params.get('docker_url'))
         self.client = docker.Client(base_url=docker_url.geturl())
 
 
-    def get_exposed_ports(self, expose):
+    def parse_list_from_param(self, param_name, delimiter=','):
+        """
+        Get a list from a module parameter, whether it's specified as a delimiter-separated string or is already in list form.
+        """
+        param_list = self.module.params.get(param_name)
+        if not isinstance(param_list, list):
+            param_list = param_list.split(delimiter)
+        return param_list
+
+
+    def get_exposed_ports(self, expose_list):
         """
         Parse the ports and protocols (TCP/UDP) to expose in the docker-py `create_container` call from the docker CLI-style syntax.
         """
-        if expose :
+        if expose_list:
             exposed = []
-            for port in expose.split(','):
+            for port in expose_list:
                 if port.endswith('/tcp') or port.endswith('/udp'):
                     port_with_proto = tuple(port.split('/'))
                 else:
