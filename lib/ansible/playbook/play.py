@@ -649,7 +649,7 @@ class Play(object):
             raise errors.AnsibleError("'vars_prompt' section is malformed, see docs")
 
         if type(self.playbook.extra_vars) == dict:
-            vars.update(self.playbook.extra_vars)
+            vars = utils.combine_vars(vars, self.playbook.extra_vars)
 
         return vars
 
