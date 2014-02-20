@@ -1,7 +1,0 @@
-- hosts: all
-  vars:
-    playbook_var_good: "ok"
-    playbook_var_bad: "{{ undefined_var }}"
-  tasks:
-  - debug: msg="{{ playbook_var_good }}"
-  - debug: msg="{{ playbook_var_bad }}"
