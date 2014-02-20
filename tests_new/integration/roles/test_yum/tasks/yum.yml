@@ -17,6 +17,16 @@
         - "yum_result.rc == 0"
         - "rpm_result.rc == 1"
 
+# UNINSTALL AGAIN
+- name: uninstall sos again
+  yum: name=sos state=removed
+  register: yum_result
+
+- name: verify no change on re-uninstall
+  assert:
+    that: 
+        - "not yum_result.changed"
+
 # INSTALL
 - name: install sos
   yum: name=sos state=present
@@ -46,4 +56,15 @@
         - "'msg' in yum_result"
         - "'rc' in yum_result"
         - "'results' in yum_result"
-        
+
+# INSTALL AGAIN        
+- name: install sos again
+  yum: name=sos state=present
+  register: yum_result
+
+- name: verify no change on second install
+  assert:
+    that: 
+        - "not yum_result.changed"
+ 
+
