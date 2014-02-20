@@ -349,7 +349,7 @@ class DockerManager:
         self.links = None
         if self.module.params.get('links'):
             links = self.parse_list_from_param('links')
-            self.links = dict(map(lamda x: x.split(':'), links))
+            self.links = dict(map(lambda x: x.split(':'), links))
 
         self.env = None
         if self.module.params.get('env'):
@@ -394,7 +394,7 @@ class DockerManager:
         Parse the `ports` string into a port bindings dict for the `start_container` call.
         """
         binds = {}
-        for port in ports.split(','):
+        for port in ports:
             parts = port.split(':')
             container_port = parts[-1]
             if '/' not in container_port:
