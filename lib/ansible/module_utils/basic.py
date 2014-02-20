@@ -1039,7 +1039,7 @@ class AnsibleModule(object):
             
             if data:
                 if not binary_data:
-                    data += '\\n'
+                    data += '\n'
             out, err = cmd.communicate(input=data)
             rc = cmd.returncode
         except (OSError, IOError), e:
