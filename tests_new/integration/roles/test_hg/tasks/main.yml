@@ -55,13 +55,12 @@
   stat: path={{ checkout_dir }}/.hgtags
   register: tags
 
-- name: check for HEAD
-  stat: path={{ checkout_dir }}/.hg/cache/branchheads
-  register: head
-
 - name: check for remotes
   stat: path={{ checkout_dir }}/.hg/branch
   register: branches
+
+- debug: var=tags
+- debug: var=branches
 
 - name: assert presense of tags/trunk/branches
   assert:
