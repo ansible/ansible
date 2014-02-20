@@ -60,8 +60,9 @@ def main():
     try:
         modules = open('/proc/modules')
         present = False
+        module_name = args['name'].replace('-', '_') + ' '
         for line in modules:
-            if line.startswith(args['name'] + ' '):
+            if line.startswith(module_name):
                 present = True
                 break
         modules.close()
