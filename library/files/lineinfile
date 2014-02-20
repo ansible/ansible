@@ -260,13 +260,14 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         msg = 'line added'
         changed = True
 
+    backupdest = ""
     if changed and not module.check_mode:
         if backup and os.path.exists(dest):
-            module.backup_local(dest)
+            backupdest = module.backup_local(dest)
         write_changes(module, lines, dest)
 
     msg, changed = check_file_attrs(module, changed, msg)
-    module.exit_json(changed=changed, msg=msg)
+    module.exit_json(changed=changed, msg=msg, backup=backupdest)
 
 
 def absent(module, dest, regexp, line, backup):
@@ -294,16 +295,17 @@ def absent(module, dest, regexp, line, backup):
 
     lines = filter(matcher, lines)
     changed = len(found) > 0
+    backupdest = ""
     if changed and not module.check_mode:
         if backup:
-            module.backup_local(dest)
+            backupdest = module.backup_local(dest)
         write_changes(module, lines, dest)
 
     if changed:
         msg = "%s line(s) removed" % len(found)
 
     msg, changed = check_file_attrs(module, changed, msg)
-    module.exit_json(changed=changed, found=len(found), msg=msg)
+    module.exit_json(changed=changed, found=len(found), msg=msg, backup=backupdest)
 
 
 def main():
