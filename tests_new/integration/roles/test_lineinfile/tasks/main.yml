@@ -1,0 +1,211 @@
+# test code for the lineinfile module
+# (c) 2014, James Cammarata <jcammarata@ansible.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: deploy the test file for lineinfile
+  copy: src=test.txt dest={{output_dir}}/test.txt
+  register: result
+
+- name: assert that the test file was deployed
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.md5sum == '6be7fb7fa7fb758c80a6dc0722979c40'"
+    - "result.state == 'file'"
+
+- name: insert a line at the beginning of the file, and back it up
+  lineinfile: dest={{output_dir}}/test.txt state=present line="New line at the beginning" insertbefore="BOF" backup=yes
+  register: result
+
+- name: assert that the line was inserted at the head of the file
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line added'"
+    - "result.backup != ''"
+
+- name: stat the backup file
+  stat: path={{result.backup}}
+  register: result
+
+- name: assert the backup file matches the previous md5
+  assert:
+    that:
+    - "result.stat.md5 == '6be7fb7fa7fb758c80a6dc0722979c40'"
+
+- name: stat the test after the insert at the head
+  stat: path={{output_dir}}/test.txt
+  register: result
+
+- name: assert test md5 matches after the insert at the head
+  assert:
+    that:
+    - "result.stat.md5 == '07c16434644a2a3cc1807c685917443a'"
+
+- name: insert a line at the end of the file
+  lineinfile: dest={{output_dir}}/test.txt state=present line="New line at the end" insertafter="EOF"
+  register: result
+
+- name: assert that the line was inserted at the end of the file
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line added'"
+
+- name: stat the test after the insert at the end
+  stat: path={{output_dir}}/test.txt
+  register: result
+
+- name: assert test md5 matches after the insert at the end
+  assert:
+    that:
+    - "result.stat.md5 == 'da4c2150e5782fcede1840280ab87eff'"
+
+- name: insert a line after the first line
+  lineinfile: dest={{output_dir}}/test.txt state=present line="New line after line 1" insertafter="^This is line 1$"
+  register: result
+
+- name: assert that the line was inserted after the first line
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line added'"
+
+- name: stat the test after insert after the first line
+  stat: path={{output_dir}}/test.txt
+  register: result
+
+- name: assert test md5 matches after the insert after the first line
+  assert:
+    that:
+    - "result.stat.md5 == '196722c8faaa28b960bee66fa4cce58c'"
+
+- name: insert a line before the last line
+  lineinfile: dest={{output_dir}}/test.txt state=present line="New line after line 5" insertbefore="^This is line 5$"
+  register: result
+
+- name: assert that the line was inserted before the last line
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line added'"
+
+- name: stat the test after the insert before the last line
+  stat: path={{output_dir}}/test.txt
+  register: result
+
+- name: assert test md5 matches after the insert before the last line
+  assert:
+    that:
+    - "result.stat.md5 == 'd5955ee042139dfef16dbe3a7334475f'"
+
+- name: replace a line with backrefs
+  lineinfile: dest={{output_dir}}/test.txt state=present line="This is line 3" backrefs=yes regexp="^(REF) .* \1$"
+  register: result
+
+- name: assert that the line with backrefs was changed
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line replaced'"
+
+- name: stat the test after the backref line was replaced
+  stat: path={{output_dir}}/test.txt
+  register: result
+
+- name: assert test md5 matches after backref line was replaced
+  assert:
+    that:
+    - "result.stat.md5 == '0f585270054e17be242743dd31c6f593'"
+
+- name: remove the middle line
+  lineinfile: dest={{output_dir}}/test.txt state=absent regexp="^This is line 3$"
+  register: result
+
+- name: assert that the line was inserted at the head of the file
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == '1 line(s) removed'"
+
+- name: stat the test after the middle line was removed
+  stat: path={{output_dir}}/test.txt
+  register: result
+
+- name: assert test md5 matches after the middle line was removed
+  assert:
+    that:
+    - "result.stat.md5 == '661603660051991b79429c2dc68d9a67'"
+
+- name: run a validation script that succeeds
+  lineinfile: dest={{output_dir}}/test.txt state=absent regexp="^This is line 5$" validate="/bin/true %s"
+  register: result
+
+- name: assert that the file validated after removing a line
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == '1 line(s) removed'"
+
+- name: stat the test after the validation succeeded
+  stat: path={{output_dir}}/test.txt
+  register: result
+
+- name: assert test md5 matches after the validation succeeded
+  assert:
+    that:
+    - "result.stat.md5 == '9af984939bd859f7794661e501b4f1a4'"
+
+- name: run a validation script that fails
+  lineinfile: dest={{output_dir}}/test.txt state=absent regexp="^This is line 1$" validate="/bin/false %s"
+  register: result
+  ignore_errors: yes
+
+- name: assert that the validate failed
+  assert:
+    that:
+    - "result.failed == true"
+
+- name: stat the test after the validation failed
+  stat: path={{output_dir}}/test.txt
+  register: result
+
+- name: assert test md5 matches the previous after the validation failed
+  assert:
+    that:
+    - "result.stat.md5 == '9af984939bd859f7794661e501b4f1a4'"
+
+- name: use create=yes
+  lineinfile: dest={{output_dir}}/new_test.txt create=yes insertbefore=BOF state=present line="This is a new file"
+  register: result
+
+- name: assert that the new file was created
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line added'"
+
+- name: validate that the newly created file exists
+  stat: path={{output_dir}}/new_test.txt
+  register: result
+  ignore_errors: yes
+
+- name: assert the newly created test md5 matches
+  assert:
+    that:
+    - "result.stat.md5 == 'fef1d487711facfd7aa2c87d788c19d9'"
+
