@@ -63,7 +63,7 @@
       - "file4_result.mode == '0600'"
 
 - name: change ownership and group
-  file: path={{output_dir}}/baz.txt owner=1000 group=1000
+  file: path={{output_dir}}/baz.txt owner=1234 group=1234
 
 - name: create soft link to file
   file: src={{output_file}} dest={{output_dir}}/soft.txt state=link
@@ -122,7 +122,7 @@
   copy: src=foobar dest={{output_dir}}
 
 - name: Change ownership of a directory with recurse=no(default)
-  file: path={{output_dir}}/foobar owner=1000
+  file: path={{output_dir}}/foobar owner=1234
 
 - name: verify that the permission of the directory was set
   file: path={{output_dir}}/foobar state=directory
@@ -137,7 +137,7 @@
   file: path={{output_dir}}/foobar/fileA state=file
   register: file9_result
 
-- name: assert the file owner has not changed to 1000
+- name: assert the file owner has not changed to 1234
   assert:
     that:
       - "file9_result.uid != 1234"
