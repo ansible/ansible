@@ -10,4 +10,5 @@
     - { role: test_subversion, tags: test_subversion }
     - { role: test_git, tags: test_git }
     - { role: test_hg, tags: test_hg }
+    - { role: test_changed_when, tags: test_changed_when }
 
