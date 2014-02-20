@@ -244,11 +244,29 @@ Create two linked containers:
   sudo: yes
   tasks:
   - name: ensure redis container is running
-    docker_test: image=crosbymichael/redis name=redis
+    docker: image=crosbymichael/redis name=redis
 
   - name: ensure redis_ambassador container is running
     docker: image=svendowideit/ambassador ports=6379:6379 links=redis:redis name=redis_ambassador_ansible
 
+Create containers with options specified as key-value pairs and lists:
+
+- hosts: web
+  sudo: yes
+  tasks:
+  - docker:
+        image: namespace/image_name
+        links:
+          - postgresql:db
+          - redis:redis
+
+
+Create containers with options specified as strings and lists as comma-separated strings:
+
+- hosts: web
+  sudo: yes
+  tasks:
+  docker: image=namespace/image_name links=postgresql:db,redis:redis
 '''
 
 try:
