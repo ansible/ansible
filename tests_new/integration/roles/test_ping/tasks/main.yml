@@ -25,3 +25,13 @@
     that:
     - "result.changed == false"
     - "result.ping == 'pong'"
+
+- name: ping with data
+  ping: data="testing"
+  register: result
+
+- name: assert the ping worked with data
+  assert:
+    that:
+    - "result.changed == false"
+    - "result.ping == 'testing'"
