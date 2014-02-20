@@ -26,43 +26,41 @@
   register: file_result
 
 - name: verify that the file was marked as changed
-  assert: { that: "file_result.changed == false" }
-
-- name: verify that the state is that of a file
-  assert: { that: "file_result.state == 'file'" }
+  assert:
+    that:
+      - "file_result.changed == false"
+      - "file_result.state == 'file'"
 
 - name: verify that we are checking an absent file
   file: path={{output_dir}}/bar.txt state=absent
   register: file2_result
 
 - name: verify that the file was marked as changed
-  assert: { that: "file2_result.changed == false" }
-
-- name: verify that the file was marked as changed
-  assert: { that: "file2_result.state == 'absent'" }
+  assert:
+    that:
+      - "file2_result.changed == false"
+      - "file2_result.state == 'absent'"
 
 - name: verify we can touch a file
   file: path={{output_dir}}/baz.txt state=touch
   register: file3_result
 
 - name: verify that the file was marked as changed
-  assert: { that: "file3_result.changed == true" }
-
-- name: verify that the state is that of a file
-  assert: { that: "file3_result.state == 'file'" }
-
-- name: assert that the test file has a mode of 0644
-  assert: { that: "file3_result.mode == '0644'" }
+  assert:
+    that:
+      - "file3_result.changed == true"
+      - "file3_result.state == 'file'"
+      - "file3_result.mode == '0644'"
 
 - name: change file mode
   file: path={{output_dir}}/baz.txt mode=0600
   register: file4_result
 
 - name: verify that the file was marked as changed
-  assert: { that: "file4_result.changed == true" }
-
-- name: assert that the test file has a mode of 0600
-  assert: { that: "file4_result.mode == '0600'" }
+  assert:
+    that:
+      - "file4_result.changed == true"
+      - "file4_result.mode == '0600'"
 
 - name: change ownership and group
   file: path={{output_dir}}/baz.txt owner=1000 group=1000
@@ -72,24 +70,28 @@
   register: file5_result
 
 - name: verify that the file was marked as changed
-  assert: { that: "file5_result.changed == true" }
+  assert:
+    that:
+      - "file5_result.changed == true"
 
 - name: create hard link to file
   file: src={{output_file}} dest={{output_dir}}/hard.txt state=hard
   register: file6_result
 
 - name: verify that the file was marked as changed
-  assert: { that: "file6_result.changed == true" }
+  assert:
+    that:
+      - "file6_result.changed == true"
 
 - name: create a directory
   file: path={{output_dir}}/foobar state=directory
   register: file7_result
 
 - name: verify that the file was marked as changed
-  assert: { that: "file7_result.changed == true" }
-
-- name: assert that the test file has a mode of 0600
-  assert: { that: "file7_result.state == 'directory'" }
+  assert:
+    that:
+      - "file7_result.changed == true"
+      - "file7_result.state == 'directory'"
 
 - name: determine if selinux is installed
   shell: which getenforce || exit 0
@@ -127,14 +129,18 @@
   register: file8_result
 
 - name: assert that the directory has changed to have owner 1234
-  assert: { that: "file8_result.uid == 1234" }
+  assert:
+    that:
+      - "file8_result.uid == 1234"
 
 - name: verify that the permission of a file under the directory was not set
   file: path={{output_dir}}/foobar/fileA state=file
   register: file9_result
 
 - name: assert the file owner has not changed to 1000
-  assert: { that: "file9_result.uid != 1234" }
+  assert:
+    that:
+      - "file9_result.uid != 1234"
 
 - name: change the ownership of a directory with recurse=yes
   file: path={{output_dir}}/foobar owner=1235 recurse=yes
@@ -144,14 +150,18 @@
   register: file10_result
 
 - name: assert that the directory has changed to have owner 1235
-  assert: { that: "file10_result.uid == 1235" }
+  assert:
+    that:
+      - "file10_result.uid == 1235"
 
 - name: verify that the permission of a file under the directory was not set
   file: path={{output_dir}}/foobar/fileA state=file
   register: file11_result
 
 - name: assert that the file has changed to have owner 1235
-  assert: { that: "file11_result.uid == 1235" }
+  assert:
+    that:
+      - "file11_result.uid == 1235"
 
 - name: remote directory foobar
   file: path={{output_dir}}/foobar state=absent

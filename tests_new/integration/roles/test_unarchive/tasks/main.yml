@@ -36,7 +36,9 @@
   register: unarchive01
 
 - name: verify that the file was marked as changed
-  assert: { that: "unarchive01.changed == true" }
+  assert:
+    that:
+      - "unarchive01.changed == true"
 
 - name: verify that the file was unarchived
   file: path={{output_dir}}/test-unarchive-tar/foo-unarchive.txt state=file
@@ -52,7 +54,9 @@
   register: unarchive02
 
 - name: verify that the file was marked as changed
-  assert: { that: "unarchive02.changed == true" }
+  assert:
+    that:
+      - "unarchive02.changed == true"
 
 - name: verify that the file was unarchived
   file: path={{output_dir}}/test-unarchive-tar-gz/foo-unarchive.txt state=file
@@ -68,7 +72,9 @@
   register: unarchive03
 
 - name: verify that the file was marked as changed
-  assert: { that: "unarchive03.changed == true" }
+  assert:
+    that:
+      - "unarchive03.changed == true"
 
 - name: verify that the file was unarchived
   file: path={{output_dir}}/test-unarchive-zip/foo-unarchive.txt state=file
