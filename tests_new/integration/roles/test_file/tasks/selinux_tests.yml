@@ -21,10 +21,10 @@
   register: file_se_result
 
 - name: verify that the file was marked as changed
-  assert: { that: "file_se_result.changed == true" }
-
-- name: assert touch a file for testing matches expected selinux context
-  assert: { that: "file_se_result.secontext == 'unconfined_u:object_r:admin_home_t:s0'" }
+  assert:
+    that:
+      - "file_se_result.changed == true"
+      - "file_se_result.secontext == 'unconfined_u:object_r:admin_home_t:s0'"
 
 - name: remove the file used for testing
   file: path={{output_dir}}/foo-se.txt state=absent
