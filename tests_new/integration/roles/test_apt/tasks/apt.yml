@@ -1,0 +1,47 @@
+# UNINSTALL
+- name: uninstall wget with apt
+  apt: pkg=wget state=absent purge=yes 
+  register: apt_result
+
+- name: check wget with dpkg
+  shell: dpkg --get-selections | fgrep wget
+  failed_when: False
+  register: dpkg_result
+
+- debug: var=apt_result
+- debug: var=dpkg_result
+
+- name: verify uninstallation of wget
+  assert:
+    that: 
+        - "'changed' in apt_result"
+        - "dpkg_result.rc == 1"
+
+# INSTALL
+- name: install wget with apt
+  apt: name=wget state=present
+  register: apt_result
+
+- name: check wget with dpkg
+  shell: dpkg --get-selections | fgrep wget
+  failed_when: False
+  register: dpkg_result
+
+- debug: var=apt_result
+- debug: var=dpkg_result
+
+- name: verify installation of wget
+  assert:
+    that: 
+        - "apt_result.changed"
+        - "dpkg_result.rc == 0"
+
+- name: verify apt module outputs
+  assert:
+    that:
+        - "'invocation' in apt_result"
+        - "'changed' in apt_result"
+        - "'item' in apt_result"
+        - "'stderr' in apt_result"
+        - "'stdout' in apt_result"        
+        - "'stdout_lines' in apt_result"        
