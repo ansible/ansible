@@ -10,6 +10,7 @@
 
   gather_facts: True
   roles: 
+    - { role: test_ping, tags: test_ping }
     - { role: test_copy, tags: test_copy }
     - { role: test_stat, tags: test_stat }
     - { role: test_template, tags: test_template }
