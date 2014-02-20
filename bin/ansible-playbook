@@ -100,6 +100,8 @@ def main(args):
     sshpass = None
     sudopass = None
     su_pass = None
+    vault_pass = None
+
     if not options.listhosts and not options.syntax and not options.listtasks:
         options.ask_pass = options.ask_pass or C.DEFAULT_ASK_PASS
         options.ask_vault_pass = options.ask_vault_pass or C.DEFAULT_ASK_VAULT_PASS
