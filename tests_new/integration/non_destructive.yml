@@ -20,5 +20,5 @@
     - { role: test_git, tags: test_git }
     - { role: test_hg, tags: test_hg }
     - { role: test_changed_when, tags: test_changed_when }
-    - { role: test_var_blending, tags: test_var_blending }
+    - { role: test_var_blending, parameterized_beats_default: 1234, tags: test_var_blending }
 

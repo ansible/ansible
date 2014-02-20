@@ -1,0 +1,4 @@
+etest: "from role defaults"
+role_var_beats_default: "shouldn't see this"
+parameterized_beats_default: "shouldn't see this"
+inventory_beats_default: "shouldn't see this"
