@@ -1,9 +1,0 @@
----
-- hosts: all
-  connection: local
-  gather_facts: False
-
-  tasks:
-  - action: command false
-    ignore_errors: true
-  - action: command false
