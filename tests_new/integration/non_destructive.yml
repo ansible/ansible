@@ -22,4 +22,5 @@
     - { role: test_changed_when, tags: test_changed_when }
     - { role: test_var_blending, parameterized_beats_default: 1234, tags: test_var_blending }
     - { role: test_lineinfile, tags: test_lineinfile }
+    - { role: test_ignore_errors, tags: test_ignore_errors }
 
