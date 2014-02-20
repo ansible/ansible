@@ -164,6 +164,7 @@ class FilterModule(object):
             # path
             'basename': os.path.basename,
             'dirname': os.path.dirname,
+            'expanduser': os.path.expanduser,
             'realpath': os.path.realpath,
 
             # failure testing
