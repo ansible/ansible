@@ -303,7 +303,7 @@ class Runner(object):
     def _compute_delegate(self, host, password, remote_inject):
 
         """ Build a dictionary of all attributes for the delegate host """
-       
+
         delegate = {}
 
         # allow ansible_ssh_host to be templated
@@ -324,13 +324,19 @@ class Runner(object):
         this_host = delegate['host']
 
         # get the vars for the delegate by it's name        
-        this_info = delegate['inject']['hostvars'][this_host]
+        if this_host in delegate['inject']['hostvars']:
+            this_info = delegate['inject']['hostvars'][this_host]
+        else:
+            # make sure the inject is empty for non-inventory hosts
+            this_info = {}
 
         # get the real ssh_address for the delegate        
         delegate['ssh_host'] = this_info.get('ansible_ssh_host', delegate['host'])
 
         delegate['port'] = this_info.get('ansible_ssh_port', port)
+
         delegate['user'] = self._compute_delegate_user(this_host, delegate['inject'])
+
         delegate['pass'] = this_info.get('ansible_ssh_pass', password)
         delegate['private_key_file'] = this_info.get('ansible_ssh_private_key_file', 
                                         self.private_key_file)
@@ -355,9 +361,11 @@ class Runner(object):
         actual_user = inject.get('ansible_ssh_user', self.remote_user)
         thisuser = None
 
-        if inject['hostvars'][host].get('ansible_ssh_user'):
-            # user for delegate host in inventory
-            thisuser = inject['hostvars'][host].get('ansible_ssh_user')
+        if host in inject['hostvars']:
+            if inject['hostvars'][host].get('ansible_ssh_user'):
+                # user for delegate host in inventory
+                thisuser = inject['hostvars'][host].get('ansible_ssh_user')
+
         if thisuser is None and self.remote_user:
             # user defined by play/runner
             thisuser = self.remote_user
