@@ -83,6 +83,12 @@ options:
     required: false
     default: null
     aliases: [ 'ec2_access_key', 'access_key' ]
+  aws_security_token:
+    description:
+      - AWS security token. If not set then the value of the AWS_SECURITY_TOKEN environment variable is used.
+    required: false
+    default: null
+    version_added: "1.5"
 requirements: [ "boto" ]
 author: Lester Wade, Ralph Tice
 '''
@@ -260,6 +266,7 @@ def main():
             s3_url         = dict(aliases=['S3_URL']),
             ec2_secret_key = dict(aliases=['aws_secret_key', 'secret_key'], no_log=True),
             ec2_access_key = dict(aliases=['aws_access_key', 'access_key']),
+            aws_security_token = dict(),
             overwrite      = dict(aliases=['force'], default=True, type='bool'),
         ),
     )
@@ -274,7 +281,7 @@ def main():
     s3_url = module.params.get('s3_url')
     overwrite = module.params.get('overwrite')
 
-    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
+    ec2_url, aws_access_key, aws_secret_key, region, aws_security_token = get_ec2_creds(module)
     
     if module.params.get('object'):
         obj = os.path.expanduser(module.params['object'])
@@ -287,12 +294,12 @@ def main():
     if is_walrus(s3_url):
         try:
             walrus = urlparse.urlparse(s3_url).hostname
-            s3 = boto.connect_walrus(walrus, aws_access_key, aws_secret_key)
+            s3 = boto.connect_walrus(walrus, aws_access_key, aws_secret_key, security_token=aws_security_token)
         except boto.exception.NoAuthHandlerFound, e:
             module.fail_json(msg = str(e))
     else:
         try:
-            s3 = boto.connect_s3(aws_access_key, aws_secret_key)
+            s3 = boto.connect_s3(aws_access_key, aws_secret_key, security_token=aws_security_token)
         except boto.exception.NoAuthHandlerFound, e:
             module.fail_json(msg = str(e))
  

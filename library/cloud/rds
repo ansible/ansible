@@ -196,6 +196,12 @@ options:
     required: false
     default: null
     aliases: [ 'ec2_access_key', 'access_key' ]
+  aws_secuirty_token:
+    description:
+      - AWS security token. If not set then the value of the AWS_SECURITY_TOKEN environment variable is used.
+    required: false
+    default: null
+    version_added: "1.5"
   wait:
     description:
       - When command=create, replicate, modify or restore then wait for the database to enter the 'available' state.  When command=delete wait for the database to be terminated.
@@ -312,6 +318,7 @@ def main():
             subnet            = dict(required=False),
             aws_secret_key    = dict(aliases=['ec2_secret_key', 'secret_key'], no_log=True, required=False),
             aws_access_key    = dict(aliases=['ec2_access_key', 'access_key'], required=False),
+            aws_security_token = dict(required=False),
             wait              = dict(type='bool', default=False),
             wait_timeout      = dict(default=300),
             snapshot          = dict(required=False),
@@ -347,19 +354,20 @@ def main():
     zone               = module.params.get('zone')
     aws_secret_key     = module.params.get('aws_secret_key')
     aws_access_key     = module.params.get('aws_access_key')
+    aws_security_token = module.params.get('aws_security_token')
     wait               = module.params.get('wait')
     wait_timeout       = int(module.params.get('wait_timeout'))
     snapshot           = module.params.get('snapshot')
     apply_immediately  = module.params.get('apply_immediately')
     new_instance_name  = module.params.get('new_instance_name')
 
-    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
+    ec2_url, aws_access_key, aws_secret_key, region, aws_security_token = get_ec2_creds(module)
     if not region:
         module.fail_json(msg = str("region not specified and unable to determine region from EC2_REGION."))
 
     # connect to the rds endpoint
     try:
-        conn = boto.rds.connect_to_region(region, aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key)
+        conn = boto.rds.connect_to_region(region, aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key, security_token=aws_security_token)
     except boto.exception.BotoServerError, e:
         module.fail_json(msg = e.error_message)
 

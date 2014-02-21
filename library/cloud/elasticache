@@ -92,6 +92,12 @@ options:
     required: false
     default: None
     aliases: ['ec2_access_key', 'access_key']
+  aws_security_key:
+    description:
+      - AWS security key. If not set then the value of the AWS_SECURITY_KEY environment variable is used.
+    required: false
+    default: None
+    version_added: "1.5"
   region:
     description:
       - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
@@ -153,7 +159,7 @@ class ElastiCacheManager(object):
 
     def __init__(self, module, name, engine, cache_engine_version, node_type,
                  num_nodes, cache_port, cache_security_groups, zone, wait,
-                 hard_modify, aws_access_key, aws_secret_key, region):
+                 hard_modify, aws_access_key, aws_secret_key, region, aws_security_token):
         self.module = module
         self.name = name
         self.engine = engine
@@ -169,6 +175,7 @@ class ElastiCacheManager(object):
         self.aws_access_key = aws_access_key
         self.aws_secret_key = aws_secret_key
         self.region = region
+        self.aws_security_token = aws_security_token
 
         self.changed = False
         self.data = None
@@ -409,7 +416,8 @@ class ElastiCacheManager(object):
             connect_region = RegionInfo(name=self.region, endpoint=endpoint)
             return ElastiCacheConnection(aws_access_key_id=self.aws_access_key,
                                          aws_secret_access_key=self.aws_secret_key,
-                                         region=connect_region)
+                                         region=connect_region,
+                                         security_token=aws_security_token)
         except boto.exception.NoAuthHandlerFound, e:
             self.module.fail_json(msg=e.message)
 
@@ -478,12 +486,13 @@ def main():
             region={'default': None, 'required': False,
                     'aliases': ['aws_region', 'ec2_region'],
                     'choices': AWS_REGIONS},
+            aws_security_token={'default': None, 'required': False}
             wait={'required': False, 'choices': BOOLEANS, 'default': True},
             hard_modify={'required': False, 'choices': BOOLEANS, 'default': False}
         )
     )
 
-    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
+    ec2_url, aws_access_key, aws_secret_key, region, aws_security_token = get_ec2_creds(module)
 
     name = module.params['name']
     state = module.params['state']
@@ -508,7 +517,7 @@ def main():
                                              num_nodes, cache_port,
                                              cache_security_groups, zone, wait,
                                              hard_modify, aws_access_key,
-                                             aws_secret_key, region)
+                                             aws_secret_key, region, aws_security_token)
 
     if state == 'present':
         elasticache_manager.ensure_present()

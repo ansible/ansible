@@ -99,6 +99,12 @@ options:
     required: false
     default: None
     aliases: ['ec2_access_key', 'access_key' ]
+  aws_security_token:
+    description:
+      - AWS security token. If not set then the value of the AWS_SECURITY_TOKEN environment variable is used.
+    required: false
+    default: None
+    version_added: "1.5"
   validate_certs:
     description:
       - When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
@@ -495,12 +501,13 @@ def main():
             state = dict(choices=['present', 'absent'], default='present'),
             ec2_secret_key = dict(aliases=['aws_secret_key', 'secret_key'], no_log=True),
             ec2_access_key = dict(aliases=['aws_access_key', 'access_key']),
+            aws_security_token = dict(),
         )
     )
 
     state = module.params.get('state')
 
-    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
+    ec2_url, aws_access_key, aws_secret_key, region, aws_security_token = get_ec2_creds(module)
    
     # If we have a region specified, connect to its endpoint.
     if region: 
@@ -508,6 +515,7 @@ def main():
             vpc_conn = boto.vpc.connect_to_region(
                 region, 
                 aws_access_key_id=aws_access_key,
+                security_token=aws_security_token,
                 aws_secret_access_key=aws_secret_key
             )
         except boto.exception.NoAuthHandlerFound, e:
