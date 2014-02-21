@@ -55,7 +55,7 @@ ifeq ($(OFFICIAL),)
 endif
 RPMNVR = "$(NAME)-$(VERSION)-$(RPMRELEASE)$(RPMDIST)"
 
-NOSETESTS := nosetests
+NOSETESTS ?= nosetests
 
 ########################################################
 
