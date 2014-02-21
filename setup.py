@@ -50,7 +50,8 @@ setup(name='ansible',
          'bin/ansible-playbook',
          'bin/ansible-pull',
          'bin/ansible-doc',
-         'bin/ansible-galaxy'
+         'bin/ansible-galaxy',
+         'bin/ansible-vault',
       ],
       data_files=data_files
 )
