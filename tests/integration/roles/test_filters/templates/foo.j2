@@ -47,7 +47,6 @@ fileglob = {{ (output_dir + '/*') | fileglob }}
 There are also various string operations that work on paths.  These do not require
 files to exist and are passthrus to the python os.path functions
 
-'~/foo' with expanduser = {{ '~/foo' | expanduser }}
 /etc/motd with basename = {{ '/etc/motd' | basename }}
 /etc/motd with dirname  = {{ '/etc/motd' | dirname }}
 

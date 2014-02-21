@@ -60,7 +60,6 @@ fileglob = []
 There are also various string operations that work on paths.  These do not require
 files to exist and are passthrus to the python os.path functions
 
-'~/foo' with expanduser = /root/foo
 /etc/motd with basename = motd
 /etc/motd with dirname  = /etc
 
