@@ -31,7 +31,7 @@ When the external node script is called with the single argument ``--list``, the
             "vars"    : {
                 "b"   : false
             },
-            "children": [ "marietta", "5points" ],
+            "children": [ "marietta", "5points" ]
         },
         "marietta"    : [ "host6.example.com" ],
         "5points"     : [ "host7.example.com" ]
