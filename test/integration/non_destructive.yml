@@ -30,4 +30,5 @@
     - { role: test_conditionals, tags: test_conditionals }
     - { role: test_async, tags: test_async }
     - { role: test_handlers, tags: test_handlers }
+    - { role: test_lookups, tags: test_lookups }
 
