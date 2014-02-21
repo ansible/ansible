@@ -13,10 +13,11 @@ instructions [here](http://docs.ansible.com/intro_getting_started.html) for a va
 Design Principles
 =================
 
-   * Dead simple setup
+   * Have a dead simple setup process and a minimal learning curve
    * Be super fast & parallel by default
    * Require no server or client daemons; use existing SSHd
-   * Use a simple language (playbooks) that is easily readable and writeable by everyone
+   * Use a language that is both machine and human friendly
+   * Focus on security and easy auditability/review/rewriting of content
    * Manage remote machines instantly, without bootstrapping
    * Allow module development in any dynamic language, not just Python
    * Be usable as non-root
