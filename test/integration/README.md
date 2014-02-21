@@ -50,8 +50,3 @@ Cloud Tests
 Details pending, but these require cloud credentials.  These are not 'tests run in the cloud' so much as tests
 that leverage the cloud modules and are organized by cloud provider.
 
-
-Instructions
-============
-
-Pending
