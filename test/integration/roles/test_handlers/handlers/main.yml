@@ -1,0 +1,3 @@
+- name: set handler fact
+  set_fact: 
+    handler_called: True
