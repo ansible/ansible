@@ -62,7 +62,7 @@ NOSETESTS := nosetests
 all: clean python
 
 tests:
-	PYTHONPATH=./lib ANSIBLE_LIBRARY=./library  $(NOSETESTS) -d -v
+	PYTHONPATH=./lib ANSIBLE_LIBRARY=./library  $(NOSETESTS) -d -w test/units -v
 
 authors:
 	sh hacking/authors.sh
