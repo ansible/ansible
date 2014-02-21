@@ -28,4 +28,5 @@
     - { role: test_filters, tags: test_filters }
     - { role: test_facts_d, tags: test_facts_d }
     - { role: test_conditionals, tags: test_conditionals }
+    - { role: test_async, tags: test_async }
 
