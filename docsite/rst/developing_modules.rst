@@ -416,23 +416,6 @@ Put your completed module file into the 'library' directory and then
 run the command: ``make webdocs``. The new 'modules.html' file will be
 built and appear in the 'docsite/' directory.
 
-You can also test-build your docs one-by-one using the
-``module_formatter.py`` script:
-
-.. code-block:: bash
-
-   $ ./hacking/module_formatter.py -t man -M library/ -m git > ansible-git.1
-   $ man ./ansible-git.1
-
-This will build a manpage for the git module, and look in the
-'library/' directory for the module source. To see all the other
-output formats available:
-
-.. code-block:: bash
-
-   $ ./hacking/module_formatter.py -t --help
-
-
 .. tip::
 
    If you're having a problem with the syntax of your YAML you can
