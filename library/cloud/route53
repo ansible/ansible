@@ -117,6 +117,18 @@ EXAMPLES = '''
       type=AAAA
       ttl=7200
       value="::1"
+
+# Add a TXT record. Note that TXT and SPF records must be surrounded
+# by quotes when sent to Route 53:
+- route53: >
+      command=create
+      zone=foo.com
+      record=localhost.foo.com
+      type=TXT
+      ttl=7200
+      value="\"bar\""
+
+
 '''
 
 import sys
