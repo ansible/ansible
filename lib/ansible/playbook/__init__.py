@@ -80,6 +80,7 @@ class PlayBook(object):
         su_pass          = False,
         vault_password   = False,
         force_handlers   = False,
+        no_log           = C.DEFAULT_NO_LOG,
     ):
 
         """
@@ -151,6 +152,7 @@ class PlayBook(object):
         self.su_pass          = su_pass
         self.vault_password   = vault_password
         self.force_handlers   = force_handlers
+        self.no_log           = no_log
 
         self.callbacks.playbook = self
         self.runner_callbacks.playbook = self
