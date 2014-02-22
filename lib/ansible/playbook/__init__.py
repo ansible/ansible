@@ -451,21 +451,27 @@ class PlayBook(object):
 
     # *****************************************************
 
-    def _flag_handler(self, play, handler_name, host):
+    def _flag_handler(self, play, handlers_or_handler, host):
         '''
         if a task has any notify elements, flag handlers for run
         at end of execution cycle for hosts that have indicated
         changes have been made
         '''
 
-        found = False
-        for x in play.handlers():
-            if handler_name == template(play.basedir, x.name, x.module_vars):
-                found = True
-                self.callbacks.on_notify(host, x.name)
-                x.notified_by.append(host)
-        if not found:
-            raise errors.AnsibleError("change handler (%s) is not defined" % handler_name)
+        if isinstance(handlers_or_handler, basestring):
+          handlers = [ handlers_or_handler ]
+        else:
+          handlers = handlers_or_handler
+
+        for handler in handlers:
+          found = False
+          for x in play.handlers():
+              if handler == template(play.basedir, x.name, x.module_vars):
+                  found = True
+                  self.callbacks.on_notify(host, x.name)
+                  x.notified_by.append(host)
+          if not found:
+              raise errors.AnsibleError("change handler (%s) is not defined" % handler )
 
     # *****************************************************
 
