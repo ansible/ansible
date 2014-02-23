@@ -59,19 +59,20 @@ options:
     default: "no"
   prefix:
     description:
-      - A prefix prepended at the start of the assembled file.
+      - A prefix prepended at the start of the assembled file. Accepts string literals like \\n for new line.
     version_added: "1.5"
     required: false
     default: null
   suffix:
     description:
-      - A suffix appended at the end of the assembled file.
+      - A suffix appended at the end of the assembled file. Accepts string literals like \\n for new line.
+
     version_added: "1.5"
     required: false
     default: null
   delimiter:
     description:
-      - A delimiter to seperate the file contents.
+      - A delimiter to seperate the file contents. Accepts string literals like \\n for new line.
     version_added: "1.4"
     required: false
     default: null
@@ -105,8 +106,8 @@ EXAMPLES = '''
 # When a delimiter is specified, it will be inserted in between each fragment
 - assemble: src=/etc/someapp/fragments dest=/etc/someapp/someapp.conf delimiter='### START FRAGMENT ###'
 
-# Add prefix and suffix for php configuration file
-- assemble: src=/srv/project/php_configuration_fragments dest=/srv/project/configuration.php prefix='<?php ' suffix='?>'
+# Add prefix and suffix with newlines 
+- assemble: src=/srv/project/php_configuration_fragments dest=/srv/project/configuration.php prefix='<?php\\n' suffix='\\n?>'
 '''
 
 # ===========================================
@@ -118,17 +119,20 @@ def assemble_from_fragments(src_path, prefix=None, suffix=None, delimiter=None, 
     tmp = os.fdopen(tmpfd,'w+')
     delimit_me = False
     if prefix:
+        prefix = prefix.decode('string_escape')
         tmp.write(prefix)
     for f in sorted(os.listdir(src_path)):
         if compiled_regexp and not compiled_regexp.search(f):
             continue
         fragment = "%s/%s" % (src_path, f)
         if delimit_me and delimiter:
+            delimiter = delimiter.decode('string_escape')
             tmp.write(delimiter)
         if os.path.isfile(fragment):
             tmp.write(file(fragment).read())
         delimit_me = True
     if suffix:
+        suffix = suffix.decode('string_escape')
         tmp.write(suffix)
     tmp.close()
     return temp_path
