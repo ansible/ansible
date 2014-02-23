@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-echo -n "win"
+echo "win" > "$1"
