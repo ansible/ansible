@@ -751,6 +751,7 @@ class LinuxHardware(Hardware):
             return
 
         links = self.get_all_device_links()
+        self.facts['device_links'] = links
 
         for block in block_devs:
             virtual = 1
