@@ -28,11 +28,11 @@ PEP8 and basic style checks
 Testing
 =======
 
-  * Much of ansible's testing needs are in integration, not unit tests.  We're working on releasing wide array of integration tests that use modules in a live environment.
-  * That being said, there are unit tests
-  * Code written must absolutely pass unit tests (i.e. "make tests")
+  * Much of ansible's testing needs are in integration, not unit tests.  Add module tests there.
+  * That being said, there are unit tests too!
+  * Code written must absolutely pass tests (i.e. "make tests")
   * You should anticipate any error paths in your code and test down those error paths.
-  * Additions to unit tests for core code is welcome, but modules tend to be more integration-testey, so it's not always possible to add them (examples: ec2, etc).
+  * Additions to tests for core code is welcome, but not always possible.  Be sure things are at least well tested manually in that case.
 
 Whitespace
 ==========
