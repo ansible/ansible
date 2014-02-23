@@ -32,4 +32,4 @@
     - { role: test_handlers, tags: test_handlers }
     - { role: test_lookups, tags: test_lookups }
     - { role: test_iterators, tags: test_iterators }
-
+    - { role: test_command_shell, tags: test_command_shell }
