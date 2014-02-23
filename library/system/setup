@@ -764,17 +764,14 @@ class LinuxHardware(Hardware):
                     sysfs_no_links = 1
                 else:
                     continue
-            if "virtual" in path:
-                continue
             sysdir = os.path.join("/sys/block", path)
             if sysfs_no_links == 1:
                 for folder in os.listdir(sysdir):
                     if "device" in folder:
                         virtual = 0
                         break
-                if virtual:
-                    continue
             d = {}
+            d['virtual'] = virtual
             d['links'] = {}
             for (link_type, link_values) in links.iteritems():
                 d['links'][link_type] = link_values.get(block, [])
