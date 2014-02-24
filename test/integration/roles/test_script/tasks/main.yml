@@ -1,4 +1,4 @@
-# Test code for the command and shell modules.
+# Test code for the script module and action_plugin.
 # (c) 2014, Richard Isaacson <richard.c.isaacson@gmail.com>
 
 # This file is part of Ansible
