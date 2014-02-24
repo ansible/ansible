@@ -73,7 +73,7 @@ You can use any crypt scheme supported by 'Passlib':
 - *scram* - SCRAM Hash
 - *bsd_nthash* - FreeBSD’s MCF-compatible nthash encoding
 
-However, the only parameters accepted are 'salt' or 'salt_size'. You can use you own salt using
+However, the only parameters accepted are 'salt' or 'salt_size'. You can use your own salt using
 'salt', or have one generated automatically using 'salt_size'. If nothing is specified, a salt
 of size 8 will be generated.
 

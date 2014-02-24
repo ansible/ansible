@@ -780,7 +780,10 @@ class AnsibleModule(object):
             else:
                 found = False
                 for filter in filter_re:
-                    m = filter.match(str(self.params[param]))
+                    if isinstance(self.params[param], unicode):
+                        m = filter.match(self.params[param])
+                    else:
+                        m = filter.match(str(self.params[param]))
                     if m:
                         d = m.groupdict()
                         log_args[param] = d['before'] + "********" + d['after']
@@ -811,10 +814,10 @@ class AnsibleModule(object):
             except IOError, e:
                 # fall back to syslog since logging to journal failed
                 syslog.openlog(str(module), 0, syslog.LOG_USER)
-                syslog.syslog(syslog.LOG_NOTICE, msg.encode('utf8'))
+                syslog.syslog(syslog.LOG_NOTICE, unicode(msg).encode('utf8'))
         else:
             syslog.openlog(str(module), 0, syslog.LOG_USER)
-            syslog.syslog(syslog.LOG_NOTICE, msg.encode('utf8'))
+            syslog.syslog(syslog.LOG_NOTICE, unicode(msg).encode('utf8'))
 
     def get_bin_path(self, arg, required=False, opt_dirs=[]):
         '''

@@ -46,11 +46,12 @@ class ActionModule(object):
         if not 'that' in args:
             raise errors.AnsibleError('conditional required in "that" string')
 
-        result = utils.check_conditional(args['that'], self.runner.basedir, inject, fail_on_undefined=True)
+        if not isinstance(args['that'], list):
+            args['that'] = [ args['that'] ]
 
-        if not result:
-            result = dict(failed=True, assertion=args['that'], evaluated_to=result)
-        else:
-            result = dict(msg='ok', assertion=args['that'], evaluated_to=result)
+        for that in args['that']:
+            result = utils.check_conditional(that, self.runner.basedir, inject, fail_on_undefined=True)
+            if not result:
+                return ReturnData(conn=conn, result=dict(failed=True, assertion=that, evaluated_to=result))
 
-        return ReturnData(conn=conn, result=result)
+        return ReturnData(conn=conn, result=dict(msg='all assertions passed'))

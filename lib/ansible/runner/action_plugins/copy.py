@@ -23,6 +23,7 @@ import ansible.utils.template as template
 from ansible import errors
 from ansible.runner.return_data import ReturnData
 import base64
+import json
 import stat
 import tempfile
 import pipes
@@ -71,7 +72,12 @@ class ActionModule(object):
         # If content is defined make a temp file and write the content into it.
         if content is not None:
             try:
-                content_tempfile = self._create_content_tempfile(content)
+                # If content comes to us as a dict it should be decoded json.
+                # We need to encode it back into a string to write it out.
+                if type(content) is dict:
+                    content_tempfile = self._create_content_tempfile(json.dumps(content))
+                else:
+                    content_tempfile = self._create_content_tempfile(content)
                 source = content_tempfile
             except Exception, err:
                 result = dict(failed=True, msg="could not write content temp file: %s" % err)
@@ -252,6 +258,8 @@ class ActionModule(object):
                 module_executed = True
 
             module_result = module_return.result
+            if not module_result.get('md5sum'):
+                module_result['md5sum'] = local_md5
             if module_result.get('failed') == True:
                 return module_return
             if module_result.get('changed') == True:
@@ -261,6 +269,11 @@ class ActionModule(object):
         if (not C.DEFAULT_KEEP_REMOTE_FILES and not delete_remote_tmp) \
             or (not C.DEFAULT_KEEP_REMOTE_FILES and delete_remote_tmp and not module_executed):
             self.runner._remove_tmp_path(conn, tmp_path)
+
+        # the file module returns the file path as 'path', but 
+        # the copy module uses 'dest', so add it if it's not there
+        if 'path' in module_result and 'dest' not in module_result:
+            module_result['dest'] = module_result['path']
 
         # TODO: Support detailed status/diff for multiple files
         if len(source_files) == 1:

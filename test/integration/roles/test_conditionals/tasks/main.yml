@@ -1,0 +1,195 @@
+# test code for conditional statements
+# (c) 2014, James Cammarata <jcammarata@ansible.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: test conditional '=='
+  shell: echo 'testing'
+  when: 1 == 1
+  register: result
+ 
+- name: assert conditional '==' ran
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.stdout == 'testing'"
+    - "result.rc == 0"
+
+- name: test bad conditional '=='
+  shell: echo 'testing'
+  when: 0 == 1
+  register: result
+
+- name: assert bad conditional '==' did NOT run
+  assert:
+    that:
+    - "result.skipped == true"
+
+- name: test conditional '!='
+  shell: echo 'testing'
+  when: 0 != 1
+  register: result
+
+- name: assert conditional '!=' ran
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.stdout == 'testing'"
+    - "result.rc == 0"
+
+- name: test bad conditional '!='
+  shell: echo 'testing'
+  when: 1 != 1
+  register: result
+
+- name: assert bad conditional '!=' did NOT run
+  assert:
+    that:
+    - "result.skipped == true"
+
+- name: test conditional 'in'
+  shell: echo 'testing'
+  when: 1 in [1,2,3]
+  register: result
+
+- name: assert conditional 'in' ran
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.stdout == 'testing'"
+    - "result.rc == 0"
+
+- name: test bad conditional 'in'
+  shell: echo 'testing'
+  when: 1 in [7,8,9]
+  register: result
+
+- name: assert bad conditional 'in' did NOT run
+  assert:
+    that:
+    - "result.skipped == true"
+
+- name: test conditional 'not in'
+  shell: echo 'testing'
+  when: 0 not in [1,2,3]
+  register: result
+
+- name: assert conditional 'not in' ran
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.stdout == 'testing'"
+    - "result.rc == 0"
+
+- name: test bad conditional 'not in'
+  shell: echo 'testing'
+  when: 1 not in [1,2,3]
+  register: result
+
+- name: assert bad conditional 'not in' did NOT run
+  assert:
+    that:
+    - "result.skipped == true"
+
+- name: test conditional 'is defined'
+  shell: echo 'testing'
+  when: test_bare is defined
+  register: result
+
+- name: assert conditional 'is defined' ran
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.stdout == 'testing'"
+    - "result.rc == 0"
+
+- name: test bad conditional 'is defined'
+  shell: echo 'testing'
+  when: foo_asdf_xyz is defined
+  register: result
+
+- name: assert bad conditional 'is defined' did NOT run
+  assert:
+    that:
+    - "result.skipped == true"
+
+- name: test conditional 'is not defined'
+  shell: echo 'testing'
+  when: foo_asdf_xyz is not defined
+  register: result
+
+- name: assert conditional 'is not defined' ran
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.stdout == 'testing'"
+    - "result.rc == 0"
+
+- name: test bad conditional 'is not defined'
+  shell: echo 'testing'
+  when: test_bare is not defined
+  register: result
+
+- name: assert bad conditional 'is not defined' did NOT run
+  assert:
+    that:
+    - "result.skipped == true"
+
+- name: test bare conditional
+  shell: echo 'testing'
+  when: test_bare
+  register: result
+
+- name: assert bare conditional ran
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.stdout == 'testing'"
+    - "result.rc == 0"
+
+- name: test conditional using a variable
+  shell: echo 'testing'
+  when: test_bare_var == 123
+  register: result
+
+- name: assert conditional using a variable ran
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.stdout == 'testing'"
+    - "result.rc == 0"
+
+- name: test good conditional based on nested variables
+  shell: echo 'testing'
+  when: test_bare_nested_good
+  register: result
+
+- name: assert good conditional based on nested var ran
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.stdout == 'testing'"
+    - "result.rc == 0"
+
+- name: test bad conditional based on nested variables
+  shell: echo 'testing'
+  when: test_bare_nested_bad
+  register: result
+
+- name: assert that the bad nested conditional did NOT run
+  assert:
+    that:
+    - "result.skipped == true"

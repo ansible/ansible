@@ -347,19 +347,19 @@ class Inventory(object):
             raise Exception("group not found: %s" % groupname)
         return group.get_variables()
 
-    def get_variables(self, hostname):
+    def get_variables(self, hostname, vault_password=None):
         if hostname not in self._vars_per_host:
-            self._vars_per_host[hostname] = self._get_variables(hostname)
+            self._vars_per_host[hostname] = self._get_variables(hostname, vault_password=vault_password)
         return self._vars_per_host[hostname]
 
-    def _get_variables(self, hostname):
+    def _get_variables(self, hostname, vault_password=None):
 
         host = self.get_host(hostname)
         if host is None:
             raise errors.AnsibleError("host not found: %s" % hostname)
 
         vars = {}
-        vars_results = [ plugin.run(host) for plugin in self._vars_plugins ] 
+        vars_results = [ plugin.run(host, vault_password=vault_password) for plugin in self._vars_plugins ] 
         for updated in vars_results:
             if updated is not None:
                 vars.update(updated)

@@ -42,6 +42,8 @@ def failed(*a, **kw):
     ''' Test if task result yields failed '''
     item = a[0]
     if type(item) != dict:
+        print "DEBUG: GOT A"
+        print item
         raise errors.AnsibleFilterError("|failed expects a dictionary")
     rc = item.get('rc',0)
     failed = item.get('failed',False)
@@ -164,6 +166,7 @@ class FilterModule(object):
             # path
             'basename': os.path.basename,
             'dirname': os.path.dirname,
+            'expanduser': os.path.expanduser,
             'realpath': os.path.realpath,
 
             # failure testing
