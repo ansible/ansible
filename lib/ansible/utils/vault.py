@@ -99,7 +99,7 @@ class VaultLib(object):
         this_data = '\n'.join(split_data[1:])
         test_sha = sha256(this_data).hexdigest()
         if this_sha != test_sha:
-            raise errors.AnsibleError("Decryption of %s failed" % filename)
+            raise errors.AnsibleError("Decryption failed")
 
         return this_data            
 
