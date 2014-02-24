@@ -33,3 +33,4 @@
     - { role: test_lookups, tags: test_lookups }
     - { role: test_iterators, tags: test_iterators }
     - { role: test_command_shell, tags: test_command_shell }
+    - { role: test_failed_when, tags: test_failed_when }
