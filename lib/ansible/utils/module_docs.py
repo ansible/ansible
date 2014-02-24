@@ -23,6 +23,9 @@ import ast
 import yaml
 import traceback
 
+from ansible.utils import module_docs_fragments as fragments
+
+
 # modules that are ok that they do not have documentation strings
 BLACKLIST_MODULES = [
    'async_wrapper', 'accelerate', 'async_status'
@@ -46,6 +49,23 @@ def get_docstring(filename, verbose=False):
             if isinstance(child, ast.Assign):
                 if 'DOCUMENTATION' in (t.id for t in child.targets):
                     doc = yaml.safe_load(child.value.s)
+                    fragment_name = doc.get('extends_documentation_fragment',
+                                            'DOESNOTEXIST').upper()
+                    fragment_yaml = getattr(fragments, fragment_name, None)
+                    if fragment_yaml:
+                        fragment = yaml.safe_load(fragment_yaml)
+                        if fragment.has_key('notes'):
+                            notes = fragment.pop('notes')
+                            if notes:
+                                if not doc.has_key('notes'):
+                                    doc['notes'] = []
+                                doc['notes'].extend(notes)
+                        for key, value in fragment.items():
+                            if not doc.has_key(key):
+                                doc[key] = value
+                            else:
+                                doc[key].update(value)
+
                 if 'EXAMPLES' in (t.id for t in child.targets):
                     plainexamples = child.value.s[1:]  # Skip first empty line
     except:

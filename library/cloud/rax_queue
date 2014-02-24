@@ -22,40 +22,19 @@ description:
      - creates / deletes a Rackspace Public Cloud queue.
 version_added: "1.5"
 options:
-  api_key:
-    description:
-      - Rackspace API key (overrides C(credentials))
-  credentials:
-    description:
-      - File to find the Rackspace credentials in (ignored if C(api_key) and
-        C(username) are provided)
-    default: null
-    aliases: ['creds_file']
   name:
     description:
       - Name to give the queue
     default: null
-  region:
-    description:
-      - Region to create the load balancer in
-    default: DFW
   state:
     description:
       - Indicate desired state of the resource
-    choices: ['present', 'absent']
+    choices:
+      - present
+      - absent
     default: present
-  username:
-    description:
-      - Rackspace username (overrides C(credentials))
-requirements: [ "pyrax" ]
 author: Christopher H. Laco, Matt Martz
-notes:
-  - The following environment variables can be used, C(RAX_USERNAME),
-    C(RAX_API_KEY), C(RAX_CREDS_FILE), C(RAX_CREDENTIALS), C(RAX_REGION).
-  - C(RAX_CREDENTIALS) and C(RAX_CREDS_FILE) points to a credentials file
-    appropriate for pyrax. See U(https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating)
-  - C(RAX_USERNAME) and C(RAX_API_KEY) obviate the use of a credentials file
-  - C(RAX_REGION) defines a Rackspace Public Cloud region (DFW, ORD, LON, ...)
+extends_documentation_fragment: RACKSPACE
 '''
 
 EXAMPLES = '''
@@ -68,7 +47,6 @@ EXAMPLES = '''
       local_action:
         module: rax_queue
         credentials: ~/.raxpub
-        client_id: unique-client-name
         name: my-queue
         region: DFW
         state: present
