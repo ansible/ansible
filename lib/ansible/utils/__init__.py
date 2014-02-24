@@ -43,7 +43,8 @@ import getpass
 import sys
 import textwrap
 
-import vault
+#import vault
+from vault import VaultLib
 
 VERBOSITY=0
 
@@ -501,14 +502,14 @@ def parse_yaml_from_file(path, vault_password=None):
 
     data = None
 
-    #VAULT
-    if vault.is_encrypted(path):
-        data = vault.decrypt(path, vault_password)
-    else:
-        try:
-            data = open(path).read()
-        except IOError:
-            raise errors.AnsibleError("file could not read: %s" % path)
+    try:
+        data = open(path).read()
+    except IOError:
+        raise errors.AnsibleError("file could not read: %s" % path)
+
+    vault = VaultLib(password=vault_password)
+    if vault.is_encrypted(data):
+        data = vault.decrypt(data)
 
     try:
         return parse_yaml(data)
