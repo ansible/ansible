@@ -220,7 +220,7 @@ To get the directory from a path::
 
     {{ path | dirname }}
 
-To expand a path containing a tilde (`~`) character:
+To expand a path containing a tilde (`~`) character (new in version 1.5)::
 
     {{ path | expanduser }}
 
