@@ -1,0 +1,106 @@
+#!/usr/bin/python
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: exists
+version_added: "1.5"
+short_description: checks if file or directory exists
+description:
+     - Check if file or directory exists
+options:
+  path:
+    description:
+      - The full path of the file/object to check existance of.
+    required: true
+    default: null
+    aliases: []
+  follow:
+    description:
+      - Whether to follow symlinks
+    required: false
+    default: no
+    aliases: []
+  state:
+    description:
+      - Explicitly match to a specific type of entry on the filesystem.
+    required: false
+    default: any
+    choices: [ any, file, link, directory, absent ]
+    aliases: []
+author: Bas van Oostveen
+'''
+
+EXAMPLES = '''
+# Check if entry /etc/foo.conf exists.
+- exists: path=/etc/foo.conf
+
+# Check if entry /etc/foo.conf exists and is a file.
+- exists: path=/etc/foo.conf state=file
+
+# Check if entry /etc/foo.conf exists and is a symlink.
+- exists: path=/etc/foo.conf state=link
+
+# Check if entry /etc/foo.conf does not exists.
+- exists: path=/etc/foo.conf state=absent
+
+# Determine if a path exists and is a directory.
+- exists: path=/path/to/something state=directory
+'''
+
+import os
+import sys
+import pwd
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            path = dict(required=True),
+            follow = dict(default='no', type='bool'),
+            state = dict(choices=['any', 'file', 'directory', 'link', 'absent'], default="any"),
+        ),
+        supports_check_mode = True
+    )
+
+    path = os.path.expanduser(module.params.get('path'))
+    follow = module.params.get('follow')
+    state = module.params.get('state')
+
+    if follow and os.path.islink(path):
+        path = os.path.realpath(path)
+
+    if state == "absent":
+        if os.path.lexists(path):
+            module.fail_json(msg="File or directory exists")
+    elif state == "file":
+        if not os.path.isfile(path):
+            module.fail_json(msg="Path is not a file")
+    elif state == "link":
+        if not os.path.islink(path):
+            module.fail_json(msg="Path is not a link")
+    elif state == "directory":
+        if not os.path.isdir(path):
+            module.fail_json(msg="Path is not a directory")
+    else:
+        if not os.path.lexists(path):
+            module.fail_json(msg="File or directory does not exist")
+
+    module.exit_json(changed=False)
+
+# import module snippets
+from ansible.module_utils.basic import *
+
+main()
