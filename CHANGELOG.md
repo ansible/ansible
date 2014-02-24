@@ -56,6 +56,7 @@ Misc:
 * additional volumes can be created when creating new ec2 instances
 * user module can move a home directory
 * significant enhancement and cleanup of rackspace modules
+* ansible_ssh_private_key_file can be templated
 * various other bug fixes
 
 ## 1.4.5 "Could This Be Magic" - February 12, 2014
