@@ -196,7 +196,7 @@ def main():
             if module.check_mode:
                 module.exit_json(changed=True)
             if not force:
-                module.fail_json(msg="Sorry, no removal of logical volume %s without force=yes."%(this_lv['name']))
+                module.fail_json(msg="Sorry, no removal of logical volume %s without force=yes." % (this_lv['name']))
             rc, _, err = module.run_command("lvremove --force %s/%s" % (vg, this_lv['name']))
             if rc == 0:
                 module.exit_json(changed=True)
@@ -212,7 +212,7 @@ def main():
                 tool = 'lvextend'
             elif size < this_lv['size']:
                 if not force:
-                    module.fail_json(msg="Sorry, no shrinking of %s without force=yes."%(this_lv['name']))
+                    module.fail_json(msg="Sorry, no shrinking of %s without force=yes." % (this_lv['name']))
                 tool = 'lvreduce --force'
 
             if tool:
@@ -231,4 +231,5 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+
 main()
