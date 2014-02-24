@@ -167,6 +167,35 @@ def get_glance_client(module):
     return glanceclient.v1.client.Client(endpoint, token=token)
 
 
+def get_server(module, name=None, id=None, required=True, detailed=False,
+               nova=None):
+    if not nova:
+        nova = get_nova_client(module)
+
+    try:
+        if name:
+            servers = nova.servers.list(search_opts={"name": name},
+                                        detailed=detailed)
+        else:
+            servers = nova.servers.list(search_opts={"id": id},
+                                        detailed=detailed)
+
+    except Exception, e:
+        module.fail_json(msg="Error in getting instance: %s " % e.message)
+
+    if not servers:
+        if required:
+            module.fail_json(msg="Servers not found")
+
+        return None
+
+    if len(servers) > 1:
+        module.fail_json(msg="Ambigious servername")
+
+    return servers[0]
+
+
+
 def get_glance_image_id(module, name, glance=None):
     if not glance:
         glance = get_glance_client(module)
@@ -288,6 +317,13 @@ def get_router(module, name=None, id=None, tenant_id=None, required=True,
 
 
 def get_port_id(module, network_id, device_id, subnet_id=None, neutron=None):
+    port = get_port(module, network_id, device_id, subnet_id, neutron)
+
+    return port['id'] if port else None
+
+
+def get_port(module, network_id, device_id, subnet_id=None, neutron=None,
+             required=True):
     if not neutron:
         neutron = get_neutron_client(module)
 
@@ -295,13 +331,21 @@ def get_port_id(module, network_id, device_id, subnet_id=None, neutron=None):
         ports = neutron.list_ports(device_id=device_id, network_id=network_id)
     except Exception, e:
         module.fail_json(msg="Error in listing ports: %s" % e.message)
+
     if not ports['ports']:
+        if required:
+            module.fail_json(msg="Port not found", net=network_id, dev=device_id)
+
         return None
 
     if subnet_id:
         for port in ports['ports']:
             if any(ip["subnet_id"] == subnet_id for ip in port['fixed_ips']):
-                return port['id']
-        return None
+                return port
 
-    return ports['ports'][0]['id']
+        if required:
+            module.fail_json(msg="Port not found")
+
+        return None
+    else:
+        return ports['ports'][0]
