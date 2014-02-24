@@ -151,7 +151,7 @@ def create_subnet(module, neutron, network_id, tenant_id):
     except Exception, e:
         module.fail_json(msg="Failure in creating subnet: %s" % e.message)
 
-    return new_subnet['subnet']['id']
+    return new_subnet['subnet']
 
 
 def delete_subnet(module, neutron, subnet_id):
@@ -201,29 +201,33 @@ def main():
     if module.params['network_name']:
         network_id = get_network_id(module, module.params['network_name'],
                                     neutron=neutron)
+        if not network_id:
+            module.fail_json(msg="Network not found", 
+                             network=module.params['network_name'])
+
     elif module.params['network_id']:
         network_id = module.params['network_id']
     else:
         module.fail_json(msg="Either network_name or network_id is required.")
 
-    subnet_id = get_subnet_id(module, module.params['name'], neutron=neutron)
+    subnet = get_subnet(module, module.params['name'], neutron=neutron)
 
     if module.params['state'] == 'present':
-        if subnet_id:
-            module.exit_json(changed=False, result="success", id=subnet_id)
+        if subnet:
+            module.exit_json(changed=False, result="success", id=subnet['id'])
         elif module.check_mode:
             module.exit_json(changed=True, result="success")
         else:
-            subnet_id = create_subnet(module, neutron, network_id, tenant_id)
-            module.exit_json(changed=True, result="Created", id=subnet_id)
+            subnet = create_subnet(module, neutron, network_id, tenant_id)
+            module.exit_json(changed=True, result="Created", id=subnet['id'])
 
     elif module.params['state'] == 'absent':
-        if not subnet_id:
+        if not subnet:
             module.exit_json(changed=False, result="success")
         elif module.check_mode:
             module.exit_json(changed=True, result="success")
         else:
-            delete_subnet(module, neutron, subnet_id)
+            delete_subnet(module, neutron, subnet)
             module.exit_json(changed=True, result="deleted")
 
 

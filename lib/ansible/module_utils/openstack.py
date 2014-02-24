@@ -185,7 +185,8 @@ def get_neutron_client(module):
             from neutronclient.neutron import client as nclient
         except ImportError:
             from quantumclient.quantum import client as nclient
-    except ImportError:
+    except ImportError, e:
+        import sys
         module.fail_json(msg="quantumclient or neutronclient are required")
 
     token, endpoint = get_token_and_endpoint(module, 'network')
@@ -201,9 +202,7 @@ def get_network_id(module, name, tenant_id=None, neutron=None):
     if not neutron:
         neutron = get_neutron_client(module)
 
-    kwargs = {
-        'name': module.params['name'],
-    }
+    kwargs = {'name': name}
 
     if tenant_id:
         kwargs['tenant_id'] = tenant_id
@@ -215,24 +214,89 @@ def get_network_id(module, name, tenant_id=None, neutron=None):
             msg="Error in listing neutron networks: %s" % e.message)
 
     if not networks['networks']:
+        module.fail_json(
+            msg="Not found",
+            network_name=name,
+            tenant_id=tenant_id,
+            kwargs=kwargs)
         return None
 
     return networks['networks'][0]['id']
 
 
-def get_subnet_id(module, name, tenant_id=None, neutron=None):
+def get_subnet(module, name=None, id=None, tenant_id=None, required=False,
+               neutron=None):
+    if not neutron:
+        neutron = get_neutron_client(module)
 
-    kwargs = {
-        'name': name
-    }
-
+    kwargs = {}
     if tenant_id:
         kwargs['tenant_id'] = tenant_id
 
     try:
-        subnets = neutron.list_subnets(**kwargs)
+        if name:
+            subnets = neutron.list_subnets(name=name, **kwargs)
+        else:
+            subnets = neutron.list_subnets(id=id, **kwargs)
     except Exception, e:
         module.fail_json(msg="Error in getting the subnet list: %s" % e.message)
+    
     if not subnets['subnets']:
+        if required:
+            module.fail_json(msg="Subnet not found")
         return None
-    return subnets['subnets'][0]['id']
+
+    if len(subnets['subnets']) > 1:
+        module.fail_json(msg="Multiple subnets not found, specify tenant to "
+                             "disambiguate")
+
+    return subnets['subnets'][0]
+
+
+def get_router(module, name=None, id=None, tenant_id=None, required=False,
+               neutron=None):
+    if not neutron:
+        neutron = get_neutron_client(module)
+
+    kwargs = {}
+    if tenant_id:
+        kwargs['tenant_id'] = tenant_id
+
+    try:
+        if name:
+            routers = neutron.list_routers(name=name, **kwargs)
+        elif id:
+            routers = neutron.list_routers(id=id, **kwargs)
+    except Exception, e:
+        module.fail_json(msg="Error in getting the router list: %s " % e.message)
+
+    if not routers['routers']:
+        if required:
+            module.fail_json(msg="Router not found")
+        return None
+
+    if len(routers['routers']) > 1:
+        module.fail_json(msg="Multiple router not found, specify tenant to "
+                             "disambiguate")
+
+    return routers['routers'][0]
+
+
+def get_port_id(module, network_id, device_id, subnet_id=None, neutron=None):
+    if not neutron:
+        neutron = get_neutron_client(module)
+
+    try:
+        ports = neutron.list_ports(device_id=device_id, network_id=network_id)
+    except Exception, e:
+        module.fail_json(msg="Error in listing ports: %s" % e.message)
+    if not ports['ports']:
+        return None
+
+    if subnet_id:
+        for port in ports['ports']:
+            if any(ip["subnet_id"] == subnet_id for ip in port['fixed_ips']):
+                return port['id']
+        return None
+
+    return ports['ports'][0]['id']

@@ -131,13 +131,16 @@ def glance_image_create(module, client):
         'owner':            module.params.get('owner'),
         'is_public':        module.params.get('is_public'),
         'copy_from':        module.params.get('copy_from'),
+        'location':         module.params.get('location'),
     }
+
     try:
-        timeout = float(params.get('timeout'))
+        timeout = float(module.params.get('timeout'))
         expire = time.time() + timeout
         image = client.images.create(**kwargs)
-        if not module.params['copy_from']:
-            image.update(data=open(params['file'], 'rb'))
+        if module.params['file']:
+            image.update(data=open(module.params['file'], 'rb'))
+
         while time.time() < expire:
             image = client.images.get(image.id)
             if image.status == 'active':
@@ -176,6 +179,7 @@ def main():
         min_ram=dict(default=None),
         is_public=dict(default=True),
         copy_from=dict(default=None),
+        location=dict(default=None),
         timeout=dict(default=180),
         file=dict(default=None),
         state=dict(default='present', choices=['absent', 'present'])
@@ -184,7 +188,9 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        mutually_exclusive=os_mutually_exclusive()
+        mutually_exclusive=os_mutually_exclusive() + [
+            ['location', 'file', 'copy_from']
+        ]
     )
 
     glance = get_glance_client(module)
@@ -192,16 +198,12 @@ def main():
     image_id = get_glance_image_id(module, module.params['name'], glance)
 
     if module.params['state'] == 'present':
-        if not module.params['file'] and not module.params['copy_from']:
-            module.fail_json(msg="Either file or copy_from variable should be "
-                                 "set to create the image")
-
         if image_id:
             module.exit_json(changed=False, id=image_id, result="success")
         elif module.check_mode:
             module.exit_json(changed=True, result="To be created")
         else:
-            glance_image_create(module, module.params, glance)
+            glance_image_create(module, glance)
 
     elif module.params['state'] == 'absent':
         if not image_id:

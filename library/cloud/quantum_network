@@ -193,14 +193,14 @@ def main():
                     msg="For vlan & gre networks, variable "
                         "provider_segmentation_id should be set.")
 
-    neutron = get_neutron_client(module)
-
     if module.params['tenant_name']:
         tenant_id = get_tenant_id(module.params['tenant_name'])
     elif module.params['tenant_id']:
         tenant_id = module.params['tenant_id']
     else:
         tenant_id = None
+
+    neutron = get_neutron_client(module)
 
     network_id = get_network_id(module, module.params['name'], tenant_id,
                                 neutron)
@@ -213,7 +213,7 @@ def main():
         else:
             network_id = create_network(module, neutron, tenant_id)
             module.exit_json(changed=True, result="Created", id=network_id)
-            
+
     elif module.params['state'] == 'absent':
         if not network_id:
             module.exit_json(changed=False, result="Success")

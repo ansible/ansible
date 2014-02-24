@@ -194,6 +194,12 @@ def create_server(module, nova, image_id):
     nics = module.params['nics']
     nics = nics.split(',') if isinstance(nics, basestring) else nics
 
+    for nic in nics:
+        if "net-name" in nic:
+            if "net-id" in nic:
+                module.fail_json(msg="net-id and net-name are mutually exclusive")
+            nic['net-id'] = get_network_id(module, nic.pop('net-name'))
+
     bootkwargs = {
         'nics': nics,
         'meta': module.params['meta'],
