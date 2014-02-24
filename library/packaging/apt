@@ -384,7 +384,10 @@ def main():
     try:
         cache = apt.Cache()
         if p['default_release']:
-            apt_pkg.config['APT::Default-Release'] = p['default_release']
+            try:
+                apt_pkg.config['APT::Default-Release'] = p['default_release']
+            except AttributeError:
+                apt_pkg.Config['APT::Default-Release'] = p['default_release']
             # reopen cache w/ modified config
             cache.open(progress=None)
 
