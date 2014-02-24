@@ -118,6 +118,7 @@ EXAMPLES = '''
                   network_name=network1 name=net1subnet cidr=192.168.0.0/24"
 '''
 
+
 def create_subnet(module, neutron, network_id, tenant_id):
     neutron.format = 'json'
     subnet = {
@@ -191,6 +192,10 @@ def main():
 
     neutron = get_neutron_client(module)
 
+    # validate:
+    if not module.params['network_name'] and not module.params['network_id']:
+        module.fail_json(msg="either network_id or network_name is required.")
+
     if module.params['tenant_name']:
         tenant_id = get_tenant_id(module.params['tenant_name'])
     elif module.params['tenant_id']:
@@ -199,16 +204,10 @@ def main():
         tenant_id = None
 
     if module.params['network_name']:
-        network_id = get_network_id(module, module.params['network_name'],
-                                    neutron=neutron)
-        if not network_id:
-            module.fail_json(msg="Network not found", 
-                             network=module.params['network_name'])
-
-    elif module.params['network_id']:
-        network_id = module.params['network_id']
+        network_id = get_network(module, module.params['network_name'],
+                                 neutron=neutron)['id']
     else:
-        module.fail_json(msg="Either network_name or network_id is required.")
+        network_id = module.params['network_id']
 
     subnet = get_subnet(module, module.params['name'], neutron=neutron)
 

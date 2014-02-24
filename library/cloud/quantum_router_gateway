@@ -123,6 +123,16 @@ def main():
         ]
     )
 
+    # validate:
+    if not module.params['router_name'] and not module.params['router_id']:
+        module.fail_json(msg="either router_id or router_name is required.")
+
+    if module.params['state'] == 'present' and \
+            not module.params['network_name'] and \
+            not module.params['network_id']:
+        module.fail_json(msg="When state==present, either network_id or "
+                         "network_name is required.")
+
     # Figure out what tenant_id to use.
     if module.params['tenant_name']:
         tenant_id = get_tenant_id(module.params['tenant_name'])
@@ -138,27 +148,16 @@ def main():
 
     # Figure out which network to use.
     if module.params['network_name']:
-        network_id = get_network_id(module, module.params['network_name'],
-                                    tenant_id=tenant_id, neutron=neutron)
-        if not network_id:
-            module.exit_json(msg="Network '%s' not found" %
-                                 module.params['network_name'])
+        network_id = get_network(module, module.params['network_name'],
+                                 tenant_id=tenant_id, neutron=neutron)['id']
     elif module.params['network_id']:
         network_id = module.params['network_id']
     else:
         network_id = None
 
-    # Figure out which router to use.
-    if module.params['router_name']:
-        router = get_router(module, name=module.params['router_name'],
-                            tenant_id=tenant_id, neutron=neutron,
-                            required=True)
-    elif module.params['router_id']:
-        router = get_router(module, id=module.params['router_id'],
-                            tenant_id=tenant_id, neutron=neutron,
-                            required=True)
-    else:
-        module.fail_json(msg="either router_id or router_name is required.")
+    router = get_router(module, name=module.params['router_name'],
+                        id=module.params['router_id'], tenant_id=tenant_id,
+                        neutron=neutron)
 
     if module.params['state'] == 'present':
         if not network_id:

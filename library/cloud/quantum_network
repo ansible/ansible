@@ -116,9 +116,9 @@ def create_network(module, neutron, tenant_id):
     neutron.format = 'json'
 
     network = {
-        'name':                      module.params.get('name'),
-        'shared':                    module.params.get('shared'),
-        'admin_state_up':            module.params.get('admin_state_up'),
+        'name': module.params.get('name'),
+        'shared': module.params.get('shared'),
+        'admin_state_up': module.params.get('admin_state_up'),
     }
 
     if tenant_id:
@@ -148,7 +148,7 @@ def create_network(module, neutron, tenant_id):
     except Exception, e:
         module.fail_json(msg="Error in creating network: %s" % e.message)
 
-    return net['network']['id']
+    return net['network']
 
 
 def delete_network(module, neutron, net_id):
@@ -202,25 +202,25 @@ def main():
 
     neutron = get_neutron_client(module)
 
-    network_id = get_network_id(module, module.params['name'], tenant_id,
-                                neutron)
+    network = get_network(module, name=module.params['name'],
+                          tenant_id=tenant_id, neutron=neutron)
 
     if module.params['state'] == 'present':
-        if network_id:
-            module.exit_json(changed=False, result="Success", id=network_id)
+        if network:
+            module.exit_json(changed=False, result="Success", id=network['id'])
         elif module.check_mode:
             module.exit_json(changed=True, result="Success")
         else:
-            network_id = create_network(module, neutron, tenant_id)
-            module.exit_json(changed=True, result="Created", id=network_id)
+            network = create_network(module, neutron, tenant_id)
+            module.exit_json(changed=True, result="Created", id=network['id'])
 
     elif module.params['state'] == 'absent':
-        if not network_id:
+        if not network:
             module.exit_json(changed=False, result="Success")
         elif module.check_mode:
             module.exit_json(changed=True, result="Success")
         else:
-            delete_network(module, neutron, network_id)
+            delete_network(module, neutron, network['id'])
             module.exit_json(changed=True, result="Deleted")
 
 

@@ -198,33 +198,38 @@ def get_neutron_client(module):
     return neutron
 
 
-def get_network_id(module, name, tenant_id=None, neutron=None):
+def get_network(module, name=None, id=None, tenant_id=None, required=True,
+                neutron=None):
     if not neutron:
         neutron = get_neutron_client(module)
 
-    kwargs = {'name': name}
-
+    kwargs = {}
     if tenant_id:
         kwargs['tenant_id'] = tenant_id
 
     try:
-        networks = neutron.list_networks(**kwargs)
+        if name:
+            networks = neutron.list_networks(name=name, **kwargs)
+        else:
+            networks = neutron.list_networks(name=id, **kwargs)
     except Exception, e:
         module.fail_json(
             msg="Error in listing neutron networks: %s" % e.message)
 
     if not networks['networks']:
-        module.fail_json(
-            msg="Not found",
-            network_name=name,
-            tenant_id=tenant_id,
-            kwargs=kwargs)
+        if required:
+            module.fail_json(msg="Not found", network_name=name,
+                             tenant_id=tenant_id, kwargs=kwargs)
         return None
 
-    return networks['networks'][0]['id']
+    if len(networks['networks']) > 1:
+        module.fail_json(msg="Multiple networks found, use tenant_id to "
+                         "disambiguate")
+
+    return networks['networks'][0]
 
 
-def get_subnet(module, name=None, id=None, tenant_id=None, required=False,
+def get_subnet(module, name=None, id=None, tenant_id=None, required=True,
                neutron=None):
     if not neutron:
         neutron = get_neutron_client(module)
@@ -253,7 +258,7 @@ def get_subnet(module, name=None, id=None, tenant_id=None, required=False,
     return subnets['subnets'][0]
 
 
-def get_router(module, name=None, id=None, tenant_id=None, required=False,
+def get_router(module, name=None, id=None, tenant_id=None, required=True,
                neutron=None):
     if not neutron:
         neutron = get_neutron_client(module)
