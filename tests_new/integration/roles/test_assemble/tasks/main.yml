@@ -60,7 +60,7 @@
     - "result.md5sum == '4773eac67aba3f0be745876331c8a450'"
 
 - name: test assemble with remote_src=False
-  assemble: src="{{output_dir}}/src" dest="{{output_dir}}/assembled4" remote_src=False
+  assemble: src="./" dest="{{output_dir}}/assembled4" remote_src=no
   register: result
 
 - name: assert the fragments were assembled without remote
