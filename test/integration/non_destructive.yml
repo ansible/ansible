@@ -17,6 +17,7 @@
     - { role: test_file, tags: test_file }
     - { role: test_fetch, tags: test_fetch }
     - { role: test_synchronize, tags: test_synchronize }
+    - { role: test_assemble, tags: test_assemble }
     - { role: test_subversion, tags: test_subversion }
     - { role: test_git, tags: test_git }
     - { role: test_hg, tags: test_hg }
