@@ -20,13 +20,13 @@
 # example playbook to bootstrap this script in the examples/ dir which
 # installs ansible and sets it up to run on cron.
 
+import os
 import sys
 import traceback
 
 from ansible import utils
 from ansible import errors
-from ansible.utils.vault import *
-from ansible.utils.vault import Vault
+from ansible.utils.vault import VaultEditor
 
 from optparse import OptionParser
 
@@ -100,32 +100,30 @@ def get_opt(options, k, defval=""):
 # Command functions
 #-------------------------------------------------------------------------------------
 
-def _get_vault(filename, options, password):
-    this_vault = Vault()
-    this_vault.filename = filename
-    this_vault.vault_password = password
-    this_vault.password = password
-    return this_vault
-
 def execute_create(args, options, parser):
 
     if len(args) > 1:
-        raise errors.AnsibleError("create does not accept more than one filename")        
-
+        raise errors.AnsibleError("'create' does not accept more than one filename")        
     password, new_password = utils.ask_vault_passwords(ask_vault_pass=True, confirm_vault=True)
 
-    this_vault = _get_vault(args[0], options, password)
-    if not hasattr(options, 'cipher'):
-        this_vault.cipher = 'AES'
-    this_vault.create()
+    cipher = 'AES'
+    if hasattr(options, 'cipher'):
+        cipher = options.cipher
+
+    this_editor = VaultEditor(cipher, password, args[0])
+    this_editor.create_file()
 
 def execute_decrypt(args, options, parser):
 
     password, new_password = utils.ask_vault_passwords(ask_vault_pass=True)
 
+    cipher = 'AES'
+    if hasattr(options, 'cipher'):
+        cipher = options.cipher
+
     for f in args:
-        this_vault = _get_vault(f, options, password)
-        this_vault.decrypt()
+        this_editor = VaultEditor(cipher, password, f)
+        this_editor.decrypt_file()
 
     print "Decryption successful"
 
@@ -136,29 +134,35 @@ def execute_edit(args, options, parser):
 
     password, new_password = utils.ask_vault_passwords(ask_vault_pass=True)
 
+    cipher = None
+
     for f in args:
-        this_vault = _get_vault(f, options, password)
-        this_vault.edit()
+        this_editor = VaultEditor(cipher, password, f)
+        this_editor.edit_file()
 
 def execute_encrypt(args, options, parser):
 
+    if len(args) > 1:
+        raise errors.AnsibleError("'create' does not accept more than one filename")        
     password, new_password = utils.ask_vault_passwords(ask_vault_pass=True, confirm_vault=True)
 
+    cipher = 'AES'
+    if hasattr(options, 'cipher'):
+        cipher = options.cipher
+
     for f in args:
-        this_vault = _get_vault(f, options, password)
-        if not hasattr(options, 'cipher'):
-            this_vault.cipher = 'AES'
-        this_vault.encrypt()
+        this_editor = VaultEditor(cipher, password, f)
+        this_editor.encrypt_file()
 
     print "Encryption successful"
 
 def execute_rekey(args, options, parser):
 
     password, new_password = utils.ask_vault_passwords(ask_vault_pass=True, ask_new_vault_pass=True, confirm_new=True)
-
+    cipher = None
     for f in args:
-        this_vault = _get_vault(f, options, password)
-        this_vault.rekey(new_password)
+        this_editor = VaultEditor(cipher, password, f)
+        this_editor.rekey_file(new_password)
 
     print "Rekey successful"
 
