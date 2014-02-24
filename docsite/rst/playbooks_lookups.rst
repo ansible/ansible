@@ -58,6 +58,11 @@ Starting in version 1.4, password accepts a "chars" parameter to allow defining 
     - hosts: all
 
       tasks:
+        # create a user account with encryption sha256 and read the password from the file password if it exists
+        # if password file does not exist, create a random password and store it in this file
+        - user: name=newuser 
+                password=' {{ lookup('password', 'credentials/' + 'password encrypt=sha256_crypt' 
+      
 
         # create a mysql user with a random password using only ascii letters:
         - mysql_user: name={{ client }}
