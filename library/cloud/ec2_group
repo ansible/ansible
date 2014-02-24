@@ -57,6 +57,14 @@ options:
     required: false
     default: 'present'
     aliases: []
+  validate_certs:
+    description:
+      - When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+    required: false
+    default: "yes"
+    choices: ["yes", "no"]
+    aliases: []
+    version_added: "1.5"
 
 requirements: [ "boto" ]
 '''
@@ -107,18 +115,17 @@ def addRulesToLookup(rules, prefix, dict):
                                         grant.group_id, grant.cidr_ip)] = rule
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
+    argument_spec = ec2_argument_spec()
+    argument_spec.update(dict(
             name=dict(required=True),
             description=dict(required=True),
             vpc_id=dict(),
             rules=dict(),
-            ec2_url=dict(aliases=['EC2_URL']),
-            ec2_secret_key=dict(aliases=['EC2_SECRET_KEY', 'aws_secret_key'], no_log=True),
-            ec2_access_key=dict(aliases=['EC2_ACCESS_KEY', 'aws_access_key']),
-            region=dict(choices=AWS_REGIONS),
             state = dict(default='present', choices=['present', 'absent']),
-        ),
+        )
+    )
+    module = AnsibleModule(
+        argument_spec=argument_spec,
         supports_check_mode=True,
     )
 

@@ -167,7 +167,7 @@ class Hg(object):
 
     def pull(self):
         return self._command(
-            ['pull', '-r', self.revision, '-R', self.dest, self.repo])
+            ['pull', '-R', self.dest, self.repo])
 
     def update(self):
         return self._command(['update', '-R', self.dest])

@@ -117,7 +117,7 @@ class Connection(object):
         self.sftp = None
         self.runner = runner
         self.host = host
-        self.port = port
+        self.port = port or 22
         self.user = user
         self.password = password
         self.private_key_file = private_key_file

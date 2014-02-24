@@ -53,6 +53,15 @@ options:
     required: false
     default: false
     version_added: "1.4"
+  validate_certs:
+    description:
+      - When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+    required: false
+    default: "yes"
+    choices: ["yes", "no"]
+    aliases: []
+    version_added: "1.5"
+
 requirements: [ "boto" ]
 author: Lorin Hochstein <lorin@nimbisservices.com>
 notes:
@@ -209,18 +218,18 @@ def find_instance(ec2, instance_id, module):
     
 
 def main():
-    module = AnsibleModule(
-        argument_spec = dict(
+    argument_spec = ec2_argument_spec()
+    argument_spec.update(dict(
             instance_id = dict(required=False),
             public_ip = dict(required=False, aliases= ['ip']),
             state = dict(required=False, default='present',
                          choices=['present', 'absent']),
-            ec2_url = dict(required=False, aliases=['EC2_URL']),
-            ec2_secret_key = dict(aliases=['aws_secret_key', 'secret_key'], no_log=True),
-            ec2_access_key = dict(aliases=['aws_access_key', 'access_key']),
-            region = dict(required=False, aliases=['ec2_region']),
             in_vpc = dict(required=False, choices=BOOLEANS, default=False),
-        ),
+        )
+    )
+
+    module = AnsibleModule(
+        argument_spec=argument_spec,
         supports_check_mode=True
     )
 

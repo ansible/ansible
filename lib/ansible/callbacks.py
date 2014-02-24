@@ -74,12 +74,19 @@ def get_cowsay_info():
 cowsay, noncow = get_cowsay_info()
 
 def log_lockfile():
+    # create the path for the lockfile and open it
     tempdir = tempfile.gettempdir()
     uid = os.getuid()
     path = os.path.join(tempdir, ".ansible-lock.%s" % uid)
-    return path
-
-LOG_LOCK = open(log_lockfile(), 'w')
+    lockfile = open(path, 'w')
+    # use fcntl to set FD_CLOEXEC on the file descriptor, 
+    # so that we don't leak the file descriptor later
+    lockfile_fd = lockfile.fileno()
+    old_flags = fcntl.fcntl(lockfile_fd, fcntl.F_GETFD)
+    fcntl.fcntl(lockfile_fd, fcntl.F_SETFD, old_flags | fcntl.FD_CLOEXEC)
+    return lockfile
+    
+LOG_LOCK = log_lockfile()
 
 def log_flock(runner):
     if runner is not None:
@@ -172,6 +179,7 @@ def vvvv(msg, host=None):
     return verbose(msg, host=host, caplevel=3)
 
 def verbose(msg, host=None, caplevel=2):
+    msg = utils.sanitize_output(msg)
     if utils.VERBOSITY > caplevel:
         if host is None:
             display(msg, color='blue')

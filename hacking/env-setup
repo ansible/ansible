@@ -21,7 +21,8 @@ PREFIX_MANPATH="$ANSIBLE_HOME/docs/man"
 
 [[ $PYTHONPATH != ${PREFIX_PYTHONPATH}* ]] && export PYTHONPATH=$PREFIX_PYTHONPATH:$PYTHONPATH
 [[ $PATH != ${PREFIX_PATH}* ]] && export PATH=$PREFIX_PATH:$PATH
-export ANSIBLE_LIBRARY="$ANSIBLE_HOME/library"
+unset ANSIBLE_LIBRARY
+export ANSIBLE_LIBRARY="$ANSIBLE_HOME/library:`python $HACKING_DIR/get_library.py`"
 [[ $MANPATH != ${PREFIX_MANPATH}* ]] && export MANPATH=$PREFIX_MANPATH:$MANPATH
 
 # Print out values unless -q is set

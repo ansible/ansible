@@ -264,7 +264,7 @@ class Zfs(object):
             cmd.append('-b %s' % volblocksize)
         if properties:
             for prop, value in properties.iteritems():
-                cmd.append('-o %s=%s' % (prop, value))
+                cmd.append('-o %s="%s"' % (prop, value))
         if volsize:
             cmd.append('-V')
             cmd.append(volsize)

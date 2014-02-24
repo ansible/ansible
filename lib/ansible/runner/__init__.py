@@ -144,6 +144,7 @@ class Runner(object):
         su=False,                           # Are we running our command via su?
         su_user=None,                       # User to su to when running command, ex: 'root'
         su_pass=C.DEFAULT_SU_PASS,
+        vault_pass=None,
         run_hosts=None,                     # an optional list of pre-calculated hosts to run on
         no_log=False,                       # option to enable/disable logging for a given task
         ):
@@ -197,6 +198,7 @@ class Runner(object):
         self.su_user_var      = su_user
         self.su_user          = None
         self.su_pass          = su_pass
+        self.vault_pass       = vault_pass
         self.no_log           = no_log
 
         if self.transport == 'smart':
@@ -301,7 +303,7 @@ class Runner(object):
     def _compute_delegate(self, host, password, remote_inject):
 
         """ Build a dictionary of all attributes for the delegate host """
-       
+
         delegate = {}
 
         # allow ansible_ssh_host to be templated
@@ -322,13 +324,19 @@ class Runner(object):
         this_host = delegate['host']
 
         # get the vars for the delegate by it's name        
-        this_info = delegate['inject']['hostvars'][this_host]
+        if this_host in delegate['inject']['hostvars']:
+            this_info = delegate['inject']['hostvars'][this_host]
+        else:
+            # make sure the inject is empty for non-inventory hosts
+            this_info = {}
 
         # get the real ssh_address for the delegate        
         delegate['ssh_host'] = this_info.get('ansible_ssh_host', delegate['host'])
 
         delegate['port'] = this_info.get('ansible_ssh_port', port)
+
         delegate['user'] = self._compute_delegate_user(this_host, delegate['inject'])
+
         delegate['pass'] = this_info.get('ansible_ssh_pass', password)
         delegate['private_key_file'] = this_info.get('ansible_ssh_private_key_file', 
                                         self.private_key_file)
@@ -353,9 +361,11 @@ class Runner(object):
         actual_user = inject.get('ansible_ssh_user', self.remote_user)
         thisuser = None
 
-        if inject['hostvars'][host].get('ansible_ssh_user'):
-            # user for delegate host in inventory
-            thisuser = inject['hostvars'][host].get('ansible_ssh_user')
+        if host in inject['hostvars']:
+            if inject['hostvars'][host].get('ansible_ssh_user'):
+                # user for delegate host in inventory
+                thisuser = inject['hostvars'][host].get('ansible_ssh_user')
+
         if thisuser is None and self.remote_user:
             # user defined by play/runner
             thisuser = self.remote_user
@@ -373,7 +383,7 @@ class Runner(object):
     # *****************************************************
 
     def _execute_module(self, conn, tmp, module_name, args,
-        async_jid=None, async_module=None, async_limit=None, inject=None, persist_files=False, complex_args=None):
+        async_jid=None, async_module=None, async_limit=None, inject=None, persist_files=False, complex_args=None, delete_remote_tmp=True):
 
         ''' transfer and run a module along with its arguments on the remote side'''
 
@@ -459,7 +469,7 @@ class Runner(object):
         cmd = " ".join([environment_string.strip(), shebang.replace("#!","").strip(), cmd])
         cmd = cmd.strip()
 
-        if tmp.find("tmp") != -1 and not C.DEFAULT_KEEP_REMOTE_FILES and not persist_files:
+        if tmp.find("tmp") != -1 and not C.DEFAULT_KEEP_REMOTE_FILES and not persist_files and delete_remote_tmp:
             if not self.sudo or self.su or self.sudo_user == 'root' or self.su_user == 'root':
                 # not sudoing or sudoing to root, so can cleanup files in the same step
                 cmd = cmd + "; rm -rf %s >/dev/null 2>&1" % tmp
@@ -475,7 +485,7 @@ class Runner(object):
         else:
             res = self._low_level_exec_command(conn, cmd, tmp, sudoable=sudoable, in_data=in_data)
 
-        if tmp.find("tmp") != -1 and not C.DEFAULT_KEEP_REMOTE_FILES and not persist_files:
+        if tmp.find("tmp") != -1 and not C.DEFAULT_KEEP_REMOTE_FILES and not persist_files and delete_remote_tmp:
             if (self.sudo or self.su) and (self.sudo_user != 'root' or self.su_user != 'root'):
             # not sudoing to root, so maybe can't delete files as that other user
             # have to clean up temp files as original user in a second step
@@ -534,7 +544,7 @@ class Runner(object):
     def _executor_internal(self, host, new_stdin):
         ''' executes any module one or more times '''
 
-        host_variables = self.inventory.get_variables(host)
+        host_variables = self.inventory.get_variables(host, vault_password=self.vault_pass)
         host_connection = host_variables.get('ansible_connection', self.transport)
         if host_connection in [ 'paramiko', 'paramiko_alt', 'ssh', 'ssh_old', 'accelerate' ]:
             port = host_variables.get('ansible_ssh_port', self.remote_port)
@@ -944,15 +954,16 @@ class Runner(object):
         path = pipes.quote(path)
         # The following test needs to be SH-compliant.  BASH-isms will
         # not work if /bin/sh points to a non-BASH shell.
-        test = "rc=0; [ -r \"%s\" ] || rc=2; [ -f \"%s\" ] || rc=1; [ -d \"%s\" ] && rc=3" % ((path,) * 3)
+        test = "rc=0; [ -r \"%s\" ] || rc=2; [ -f \"%s\" ] || rc=1; [ -d \"%s\" ] && echo 3 && exit 0" % ((path,) * 3)
         md5s = [
-            "(/usr/bin/md5sum %s 2>/dev/null)" % path,  # Linux
-            "(/sbin/md5sum -q %s 2>/dev/null)" % path,  # ?
+            "(/usr/bin/md5sum %s 2>/dev/null)" % path,          # Linux
+            "(/sbin/md5sum -q %s 2>/dev/null)" % path,          # ?
             "(/usr/bin/digest -a md5 %s 2>/dev/null)" % path,   # Solaris 10+
-            "(/sbin/md5 -q %s 2>/dev/null)" % path,     # Freebsd
-            "(/usr/bin/md5 -n %s 2>/dev/null)" % path,  # Netbsd
-            "(/bin/md5 -q %s 2>/dev/null)" % path,      # Openbsd
-            "(/usr/bin/csum -h MD5 %s 2>/dev/null)" % path # AIX
+            "(/sbin/md5 -q %s 2>/dev/null)" % path,             # Freebsd
+            "(/usr/bin/md5 -n %s 2>/dev/null)" % path,          # Netbsd
+            "(/bin/md5 -q %s 2>/dev/null)" % path,              # Openbsd
+            "(/usr/bin/csum -h MD5 %s 2>/dev/null)" % path,     # AIX
+            "(/bin/csum -h MD5 %s 2>/dev/null)" % path          # AIX also
         ]
 
         cmd = " || ".join(md5s)
@@ -1008,6 +1019,17 @@ class Runner(object):
         if rc == '/': 
             raise errors.AnsibleError('failed to resolve remote temporary directory from %s: `%s` returned empty string' % (basetmp, cmd))
         return rc
+
+    # *****************************************************
+
+    def _remove_tmp_path(self, conn, tmp_path):
+        ''' Remove a tmp_path. '''
+
+        if "-tmp-" in tmp_path:
+            cmd = "rm -rf %s >/dev/null 2>&1" % tmp_path
+            self._low_level_exec_command(conn, cmd, None, sudoable=False)
+            # If we have gotten here we have a working ssh configuration.
+            # If ssh breaks we could leave tmp directories out on the remote system.
 
     # *****************************************************
 

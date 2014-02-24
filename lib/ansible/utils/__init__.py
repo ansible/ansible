@@ -43,6 +43,8 @@ import getpass
 import sys
 import textwrap
 
+import vault
+
 VERBOSITY=0
 
 # list of all deprecation messages to prevent duplicate display
@@ -87,19 +89,29 @@ def key_for_hostname(hostname):
     if not KEYCZAR_AVAILABLE:
         raise errors.AnsibleError("python-keyczar must be installed on the control machine to use accelerated modes")
 
-    key_path = os.path.expanduser("~/.fireball.keys")
+    key_path = os.path.expanduser(C.ACCELERATE_KEYS_DIR)
     if not os.path.exists(key_path):
-        os.makedirs(key_path)
-    key_path = os.path.expanduser("~/.fireball.keys/%s" % hostname)
+        os.makedirs(key_path, mode=0700)
+        os.chmod(key_path, int(C.ACCELERATE_KEYS_DIR_PERMS, 8))
+    elif not os.path.isdir(key_path):
+        raise errors.AnsibleError('ACCELERATE_KEYS_DIR is not a directory.')
+
+    if stat.S_IMODE(os.stat(key_path).st_mode) != int(C.ACCELERATE_KEYS_DIR_PERMS, 8):
+        raise errors.AnsibleError('Incorrect permissions on ACCELERATE_KEYS_DIR (%s)' % (C.ACCELERATE_KEYS_DIR,))
+
+    key_path = os.path.join(key_path, hostname)
 
     # use new AES keys every 2 hours, which means fireball must not allow running for longer either
     if not os.path.exists(key_path) or (time.time() - os.path.getmtime(key_path) > 60*60*2):
         key = AesKey.Generate()
-        fh = open(key_path, "w")
+        fd = os.open(key_path, os.O_WRONLY | os.O_CREAT, int(C.ACCELERATE_KEYS_FILE_PERMS, 8))
+        fh = os.fdopen(fd, 'w')
         fh.write(str(key))
         fh.close()
         return key
     else:
+        if stat.S_IMODE(os.stat(key_path).st_mode) != int(C.ACCELERATE_KEYS_FILE_PERMS, 8):
+            raise errors.AnsibleError('Incorrect permissions on ACCELERATE_KEYS_FILE (%s)' % (key_path,))
         fh = open(key_path)
         key = AesKey.Read(fh.read())
         fh.close()
@@ -484,14 +496,22 @@ Should be written as:
     raise errors.AnsibleYAMLValidationFailed(msg)
 
 
-def parse_yaml_from_file(path):
+def parse_yaml_from_file(path, vault_password=None):
     ''' convert a yaml file to a data structure '''
 
+    data = None
+
+    #VAULT
+    if vault.is_encrypted(path):
+        data = vault.decrypt(path, vault_password)
+    else:
+        try:
+            data = open(path).read()
+        except IOError:
+            raise errors.AnsibleError("file could not read: %s" % path)
+
     try:
-        data = file(path).read()
         return parse_yaml(data)
-    except IOError:
-        raise errors.AnsibleError("file not found: %s" % path)
     except yaml.YAMLError, exc:
         process_yaml_error(exc, data, path)
 
@@ -613,6 +633,40 @@ def getch():
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
     return ch
 
+def sanitize_output(str):
+    ''' strips private info out of a string '''
+
+    private_keys = ['password', 'login_password']
+
+    filter_re = [
+        # filter out things like user:pass@foo/whatever
+        # and http://username:pass@wherever/foo
+        re.compile('^(?P<before>.*:)(?P<password>.*)(?P<after>\@.*)$'),
+    ]
+
+    parts = str.split()
+    output = ''
+    for part in parts:
+        try:
+            (k,v) = part.split('=', 1)
+            if k in private_keys:
+                output += " %s=VALUE_HIDDEN" % k
+            else:
+                found = False
+                for filter in filter_re:
+                    m = filter.match(v)
+                    if m:
+                        d = m.groupdict()
+                        output += " %s=%s" % (k, d['before'] + "********" + d['after'])
+                        found = True
+                        break
+                if not found:
+                    output += " %s" % part
+        except:
+            output += " %s" % part
+
+    return output.strip()
+
 ####################################################################
 # option handling code for /usr/bin/ansible and ansible-playbook
 # below this line
@@ -649,6 +703,8 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
         help='ask for sudo password')
     parser.add_option('--ask-su-pass', default=False, dest='ask_su_pass',
                       action='store_true', help='ask for su password')
+    parser.add_option('--ask-vault-pass', default=False, dest='ask_vault_pass',
+                      action='store_true', help='ask for vault password')
     parser.add_option('--list-hosts', dest='listhosts', action='store_true',
         help='outputs a list of matching hosts; does not execute anything else')
     parser.add_option('-M', '--module-path', dest='module_path',
@@ -707,10 +763,34 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
 
     return parser
 
-def ask_passwords(ask_pass=False, ask_sudo_pass=False, ask_su_pass=False):
+def ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=False, confirm_vault=False, confirm_new=False):
+
+    vault_pass = None
+    new_vault_pass = None
+
+    if ask_vault_pass:
+        vault_pass = getpass.getpass(prompt="Vault password: ")
+
+    if ask_vault_pass and confirm_vault:
+        vault_pass2 = getpass.getpass(prompt="Confirm Vault password: ")
+        if vault_pass != vault_pass2:
+            raise errors.AnsibleError("Passwords do not match")
+
+    if ask_new_vault_pass:
+        new_vault_pass = getpass.getpass(prompt="New Vault password: ")
+
+    if ask_new_vault_pass and confirm_new:
+        new_vault_pass2 = getpass.getpass(prompt="Confirm New Vault password: ")
+        if new_vault_pass != new_vault_pass2:
+            raise errors.AnsibleError("Passwords do not match")
+
+    return vault_pass, new_vault_pass
+
+def ask_passwords(ask_pass=False, ask_sudo_pass=False, ask_su_pass=False, ask_vault_pass=False):
     sshpass = None
     sudopass = None
     su_pass = None
+    vault_pass = None
     sudo_prompt = "sudo password: "
     su_prompt = "su password: "
 
@@ -726,7 +806,10 @@ def ask_passwords(ask_pass=False, ask_sudo_pass=False, ask_su_pass=False):
     if ask_su_pass:
         su_pass = getpass.getpass(prompt=su_prompt)
 
-    return (sshpass, sudopass, su_pass)
+    if ask_vault_pass:
+        vault_pass = getpass.getpass(prompt="Vault password: ")
+
+    return (sshpass, sudopass, su_pass, vault_pass)
 
 def do_encrypt(result, encrypt, salt_size=None, salt=None):
     if PASSLIB_AVAILABLE:
