@@ -185,7 +185,7 @@ def get_server(module, name=None, id=None, required=True, detailed=False,
 
     if not servers:
         if required:
-            module.fail_json(msg="Servers not found")
+            module.fail_json(msg="Server not found")
 
         return None
 
@@ -195,17 +195,19 @@ def get_server(module, name=None, id=None, required=True, detailed=False,
     return servers[0]
 
 
-
-def get_glance_image_id(module, name, glance=None):
+def get_glance_image(module, name, required=True, glance=None):
     if not glance:
         glance = get_glance_client(module)
 
     try:
         for image in glance.images.list():
             if image.name == name:
-                return image.id
+                return image
     except Exception, e:
         module.fail_json(msg="Error in fetching image list: %s" % e.message)
+
+    if required:
+        module.fail_json(msg="image not found")
 
 
 def get_neutron_client(module):

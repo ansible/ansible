@@ -148,24 +148,25 @@ EXAMPLES = '''
 '''
 
 
-def delete_server(module, nova):
+def delete_server(module, nova, server):
     name = None
     server_list = None
     try:
-        server_list = nova.servers.list(True, {'name': module.params['name']})
+        server_list = nova.servers.list(True, {'name': name})
         if server_list:
-            server = [x for x in server_list
-                      if x.name == module.params['name']]
+            server = [x for x in server_list if x.name == name]
             nova.servers.delete(server.pop())
     except Exception, e:
         module.fail_json(msg="Error in deleting vm: %s" % e.message)
+
+    nova.servers.delete(server)
 
     if not module.params['wait']:
         module.exit_json(changed=True, result="deleted")
 
     expire = time.time() + int(module.params['wait_for'])
     while time.time() < expire:
-        name = nova.servers.list(True, {'name': module.params['name']})
+        name = nova.servers.list(True, {'name': server['name']})
         if not name:
             module.exit_json(changed=True, result="deleted")
         time.sleep(5)
@@ -174,8 +175,8 @@ def delete_server(module, nova):
                          "please check manually")
 
 
-def rebuild_server(module, nova, server):
-    server.rebuild(module.params['image_id'])
+def rebuild_server(module, nova, server, image_id):
+    server.rebuild(image_id)
 
     state = get_server_state(module, nova, server)
     module.exit_json(changed=True, **state)
@@ -218,9 +219,7 @@ def create_server(module, nova, image_id):
                          tb=traceback.format_exc()
                          )
 
-    state = get_server_state(module, nova, server)
-
-    module.exit_json(changed=True, **state)
+    return server
 
 
 def get_server_state(module, nova, server):
@@ -294,36 +293,44 @@ def main():
     )
 
     nova = get_nova_client(module)
+    server = get_server(module, name=module.params['name'], required=False,
+                        nova=nova)
+
+    if module.params['image_id']:
+        image_id = module.params['image_id']
+    elif module.params['image_name']:
+        image_id = get_glance_image(module, module.params['image_name']).id
+    elif state != 'absent':
+        module.fail_json(msg="Parameter 'image_id' or 'image_name' is "
+                             "required if state == 'present'")
 
     if module.params['state'] == 'present':
-        if module.params['image_id']:
-            image_id = module.params['image_id']
-        elif module.params['image_name']:
-            image_id = get_glance_image_id(module, module.params['image_name'])
-        else:
-            module.fail_json(msg="Parameter 'image_id' or 'image_name' is "
-                                 "required if state == 'present'")
-
-        server = get_server(module, nova)
         if server:
             state = get_server_state(module, nova, server)
             module.exit_json(changed=False, **state)
-
-        create_server(module, nova, image_id)
+        elif module.check_mode:
+            module.exit_json(changed=True, **state)
+        else:
+            server = create_server(module, nova, image_id)
+            state = get_server_state(module, nova, server)
+            module.exit_json(changed=True, **state)
 
     elif module.params['state'] == 'absent':
-        get_server_state(module, nova)
-        delete_server(module, nova)
-    elif module.params['state'] == 'rebuilt':
-        if not module.params['image_id']:
-            module.fail_json(msg="Parameter 'image_id' is required "
-                                 "if state == 'present'")
-
-        server = get_server(module, nova)
-        if server:
-            rebuild_server(module, nova, server)
+        if not server:
+            module.exit_json(changed=False)
+        elif module.check_mode:
+            module.exit_json(changed=True)
         else:
-            create_server(module, nova)
+            delete_server(module, nova)
+            module.exit_json(changed=True)
+            
+    elif module.params['state'] == 'rebuilt':
+        if module.check_mode:
+            module.exit_json(changed=True)
+        elif server:
+            rebuild_server(module, nova, server, image_id)
+        else:
+            create_server(module, nova, image_id)
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.openstack import *

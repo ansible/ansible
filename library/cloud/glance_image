@@ -148,11 +148,12 @@ def glance_image_create(module, client):
             time.sleep(5)
     except Exception, e:
         module.fail_json(msg="Error in creating image: %s" % e.message)
+
     if image.status == 'active':
-        module.exit_json(changed=True, result=image.status, id=image.id)
-    else:
-        module.fail_json(
-            msg=" The module timed out, please check manually " + image.status)
+        return image
+
+    module.fail_json(
+        msg=" The module timed out, please check manually " + image.status)
 
 
 def glance_delete_image(module, client):
@@ -162,8 +163,6 @@ def glance_delete_image(module, client):
                 client.images.delete(image)
     except Exception, e:
         module.fail_json(msg="Error in deleting image: %s" % e.message)
-
-    module.exit_json(changed=True, result="Deleted")
 
 
 def main():
@@ -195,23 +194,26 @@ def main():
 
     glance = get_glance_client(module)
 
-    image_id = get_glance_image_id(module, module.params['name'], glance)
+    image = get_glance_image(module, module.params['name'], required=False,
+                             glance=glance)
 
     if module.params['state'] == 'present':
-        if image_id:
-            module.exit_json(changed=False, id=image_id, result="success")
+        if image:
+            module.exit_json(changed=False, id=image.id, result="success")
         elif module.check_mode:
             module.exit_json(changed=True, result="To be created")
         else:
-            glance_image_create(module, glance)
+            image = glance_image_create(module, glance)
+            module.exit_json(changed=True, id=image.id, result="success")
 
     elif module.params['state'] == 'absent':
-        if not image_id:
+        if not image:
             module.exit_json(changed=False, result="Success")
         elif module.check_mode:
-            module.exit_json(changed=True, result="To be removed", id=image_id)
+            module.exit_json(changed=True, result="To be removed", id=image.id)
         else:
             _glance_delete_image(odule, client)
+            module.exit_json(changed=True, result="removed", id=image.id)
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.openstack import *
