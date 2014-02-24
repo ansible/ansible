@@ -49,7 +49,7 @@
   file: path={{output_dir_test}}/afile.txt state=absent
 
 - name: create afile.txt with create_afile.sh via command
-  shell: create_afile.sh {{output_dir_test | expanduser}}/afile.txt creates={{output_dir_test | expanduser}}/afile.txt
+  script: create_afile.sh {{output_dir_test | expanduser}}/afile.txt creates={{output_dir_test | expanduser}}/afile.txt
 
 - name: verify that afile.txt is present
   file: path={{output_dir_test}}/afile.txt state=file
@@ -57,7 +57,7 @@
 # removes
 
 - name: remove afile.txt with remote_afile.sh via command
-  shell: remove_afile.sh {{output_dir_test | expanduser}}/afile.txt removes={{output_dir_test | expanduser}}/afile.txt
+  script: remove_afile.sh {{output_dir_test | expanduser}}/afile.txt removes={{output_dir_test | expanduser}}/afile.txt
 
 - name: verify that afile.txt is absent
   file: path={{output_dir_test}}/afile.txt state=absent
