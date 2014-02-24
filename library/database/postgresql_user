@@ -176,7 +176,7 @@ def user_add(cursor, user, password, role_attr_flags,  encrypted, expires):
         query = query + " PASSWORD %(password)s"
         query_password_data.update(password=password)
     if expires is not None:
-        query = query + " VALID UNTIL '%(expires)s'" % { "exipres": expires }
+        query = query + " VALID UNTIL '%(expires)s'" % { "expires": expires }
     query = query + " " + role_attr_flags
     cursor.execute(query, query_password_data)
     return True
