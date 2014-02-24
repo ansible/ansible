@@ -718,9 +718,17 @@ class Runner(object):
         actual_pass = inject.get('ansible_ssh_pass', self.remote_pass)
         actual_transport = inject.get('ansible_connection', self.transport)
         actual_private_key_file = inject.get('ansible_ssh_private_key_file', self.private_key_file)
+        self.sudo = utils.boolean(inject.get('ansible_sudo', self.sudo))
+        self.sudo_user = inject.get('ansible_sudo_user', self.sudo_user)
         self.sudo_pass = inject.get('ansible_sudo_pass', self.sudo_pass)
         self.su = inject.get('ansible_su', self.su)
         self.su_pass = inject.get('ansible_su_pass', self.su_pass)
+
+        # select default root user in case self.sudo requested
+        # but no user specified; happens e.g. in host vars when
+        # just ansible_sudo=True is specified
+        if self.sudo and self.sudo_user is None:
+            self.sudo_user = 'root'
 
         if actual_private_key_file is not None:
             actual_private_key_file = os.path.expanduser(actual_private_key_file)
