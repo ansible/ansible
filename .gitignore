@@ -38,3 +38,4 @@ debian/
 # Vim swap files
 *.swp
 *.swo
+credentials.yml
