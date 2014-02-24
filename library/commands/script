@@ -18,6 +18,18 @@ options:
     required: true
     default: null
     aliases: []
+  creates:
+    description:
+      - a filename, when it already exists, this step will B(not) be run.
+    required: no
+    default: null
+    version_added: "1.5"
+  removes:
+    description:
+      - a filename, when it does not exist, this step will B(not) be run.
+    required: no
+    default: null
+    version_added: "1.5"
 notes:
   - It is usually preferable to write Ansible modules than pushing scripts. Convert your script to an Ansible module for bonus points!
 author: Michael DeHaan
@@ -26,4 +38,10 @@ author: Michael DeHaan
 EXAMPLES = '''
 # Example from Ansible Playbooks
 - script: /some/local/script.sh --some-arguments 1234
+
+# Run a script that creates a file, but only if the file is not yet created
+- script: /some/local/create_file.sh --some-arguments 1234 creates=/the/created/file.txt
+
+# Run a script that removes a file, but only if the file is not yet removed
+- script: /some/local/remove_file.sh --some-arguments 1234 removes=/the/removed/file.txt
 '''
