@@ -25,26 +25,19 @@ description:
   - Upload, download, and delete objects in Rackspace Cloud Files
 version_added: "1.5"
 options:
-  api_key:
-    description:
-      - Rackspace API key (overrides I(credentials))
-    default: null
   clear_meta:
     description:
       - Optionally clear existing metadata when applying metadata to existing objects.
         Selecting this option is only appropriate when setting type=meta
-    choices: ["yes", "no"]
+    choices:
+      - "yes"
+      - "no"
     default: "no"
   container:
     description:
       - The container to use for file object operations.
     required: true
     default: null
-  credentials:
-    description:
-      - File to find the Rackspace credentials in (ignored if I(api_key) and I(username) are provided)
-    default: null
-    aliases: ['creds_file']
   dest:
     description:
       - The destination of a "get" operation; i.e. a local directory, "/home/user/myfolder".
@@ -64,12 +57,11 @@ options:
       - The method of operation to be performed.  For example, put to upload files
         to Cloud Files, get to download files from Cloud Files or delete to delete
         remote objects in Cloud Files
-    choices: ["get", "put", "delete"]
-    default: "get"
-  region:
-    description:
-      - Region in which to work.  Maps to a Rackspace Cloud region, i.e. DFW, ORD, IAD, SYD, LON
-    default: DFW
+    choices:
+      - get
+      - put
+      - delete
+    default: get
   src:
     description:
       - Source from which to upload files.  Used to specify a remote object as a source for
@@ -81,7 +73,9 @@ options:
       - Used to specify whether to maintain nested directory structure when downloading objects
         from Cloud Files.  Setting to false downloads the contents of a container to a single,
         flat directory
-    choices: ["yes", "no"]
+    choices:
+      - yes
+      - "no"
     default: "yes"
   state:
     description:
@@ -92,21 +86,12 @@ options:
     description:
       - Type of object to do work on
       - Metadata object or a file object
-    choices: ["file", "meta"]
-    default: "file"
-  username:
-    description:
-      - Rackspace username (overrides I(credentials))
-    default: null
-requirements: [ "pyrax" ]
+    choices:
+      - file
+      - meta
+    default: file
 author: Paul Durivage
-notes:
-  - The following environment variables can be used, C(RAX_USERNAME), C(RAX_API_KEY),
-    C(RAX_CREDS_FILE), C(RAX_CREDENTIALS), C(RAX_REGION).
-  - C(RAX_CREDENTIALS) and C(RAX_CREDS_FILE) points to a credentials file appropriate
-    for pyrax. See U(https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating)
-  - C(RAX_USERNAME) and C(RAX_API_KEY) obviate the use of a credentials file
-  - C(RAX_REGION) defines a Rackspace Public Cloud region (DFW, ORD, LON, ...)
+extends_documentation_fragment: RACKSPACE
 '''
 
 EXAMPLES = '''

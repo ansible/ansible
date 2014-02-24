@@ -25,20 +25,10 @@ options:
   state:
     description:
      - Indicate desired state of the resource
-    choices: ['present', 'absent']
+    choices:
+      - present
+      - absent
     default: present
-  credentials:
-    description:
-     - File to find the Rackspace credentials in (ignored if C(api_key) and
-       C(username) are provided)
-    default: null
-    aliases: ['creds_file']
-  api_key:
-    description:
-     - Rackspace API key (overrides C(credentials))
-  username:
-    description:
-     - Rackspace username (overrides C(credentials))
   label:
     description:
      - Label (name) to give the network
@@ -47,19 +37,8 @@ options:
     description:
      - cidr of the network being created
     default: null
-  region:
-    description:
-     - Region to create the network in
-    default: DFW
-requirements: [ "pyrax" ]
 author: Christopher H. Laco, Jesse Keating
-notes:
-  - The following environment variables can be used, C(RAX_USERNAME),
-    C(RAX_API_KEY), C(RAX_CREDS), C(RAX_CREDENTIALS), C(RAX_REGION).
-  - C(RAX_CREDENTIALS) and C(RAX_CREDS) points to a credentials file
-    appropriate for pyrax
-  - C(RAX_USERNAME) and C(RAX_API_KEY) obviate the use of a credentials file
-  - C(RAX_REGION) defines a Rackspace Public Cloud region (DFW, ORD, LON, ...)
+extends_documentation_fragment: RACKSPACE_AND_OPENSTACK
 '''
 
 EXAMPLES = '''
