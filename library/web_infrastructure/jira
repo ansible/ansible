@@ -314,7 +314,7 @@ def main():
     try:
         
         # Lookup the corresponding operation for this operation. This
-        # is safe as we check valid operations above.
+        # is safe as the AnsibleModule should remove any unknown operations.
         thismod = sys.modules[__name__]
         method = getattr(thismod, op)
 
@@ -322,8 +322,10 @@ def main():
 
     except urllib2.HTTPError as e:
         return module.fail_json(msg=e.msg)
+
     except Exception as e:
         return module.fail_json(msg=e.message)
+
 
     module.exit_json(changed=True, meta=ret)
 
