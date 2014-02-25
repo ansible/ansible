@@ -144,6 +144,13 @@ def comment(restbase, user, passwd, params):
     return ret
 
 
+# Some parameters are required depending on the operation:
+OP_REQUIRED = dict(
+    create=['project', 'issuetype', 'summary', 'description'],
+    comment=['issue', 'comment']
+    )
+
+
 def main():
 
     module = AnsibleModule(
@@ -168,6 +175,14 @@ def main():
     user = module.params['username']
     passwd = module.params['password']
 
+    # Check with have the necessary per-operation parameters
+    missing = []
+    for parm in OP_REQUIRED[op]:
+        if not module.params[parm]:
+            missing.append(parm)
+    if missing:
+        module.fail_json(msg="Operation %s require the following missing parameters: %s" % (op, ",".join(missing)))
+
     if not uri.endswith('/'):
         uri = uri+'/'
     restbase = uri + 'rest/api/2'
@@ -185,9 +200,7 @@ def main():
             return module.fail_json(msg="Unknown JIRA operation")
 
     except Exception as e:
-        print type(e)
-        print "msg",e.msg
-        return module.fail_json(msg=e.message)
+        return module.fail_json(msg=e.msg)
 
 
     module.exit_json(changed=True, meta=ret)
