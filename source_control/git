@@ -280,6 +280,17 @@ def get_branches(git_path, module, dest):
         branches.append(line.strip())
     return branches
 
+def get_tags(git_path, module, dest):
+    os.chdir(dest)
+    tags = []
+    cmd = '%s tag' % (git_path,)
+    (rc, out, err) = module.run_command(cmd)
+    if rc != 0:
+        module.fail_json(msg="Could not determine tag data - received %s" % out)
+    for line in out.split('\n'):
+        tags.append(line.strip())
+    return tags
+
 def is_remote_branch(git_path, module, dest, remote, version):
     cmd = '%s ls-remote %s -h refs/heads/%s' % (git_path, remote, version)
     (rc, out, err) = module.run_command(cmd, check_rc=True)
@@ -492,6 +503,10 @@ def main():
             if local_mods:
                 module.exit_json(changed=True, before=before, after=remote_head,
                     msg="Local modifications exist")
+            elif is_remote_tag(git_path, module, dest, repo, version):
+                # if the remote is a tag and we have the tag locally, exit early
+                if version in get_tags(git_path, module, dest):
+                    module.exit_json(changed=False, before=before, after=remote_head)
             else:
                 module.exit_json(changed=False, before=before, after=remote_head)
         if module.check_mode:
