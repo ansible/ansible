@@ -19,7 +19,7 @@ from ansible.utils import safe_eval
 import ansible.utils as utils
 import ansible.errors as errors
 
-def flatten(terms):
+def flatten_hash_to_list(terms):
     ret = []
     for key in terms:
         ret.append({'key': key, 'value': terms[key]})
@@ -36,4 +36,4 @@ class LookupModule(object):
         if not isinstance(terms, dict):
             raise errors.AnsibleError("with_dict expects a dict")
 
-        return flatten(terms)
+        return flatten_hash_to_list(terms)
