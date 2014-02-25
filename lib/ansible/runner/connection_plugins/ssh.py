@@ -151,6 +151,7 @@ class Connection(object):
                 stdin.close()
             except:
                 raise errors.AnsibleError('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
+        # Read stdout/stderr from process
         while True:
             rfd, wfd, efd = select.select(rpipes, [], rpipes, 1)
 
@@ -177,17 +178,22 @@ class Connection(object):
                 stderr += dat
                 if dat == '':
                     rpipes.remove(p.stderr)
-            # only break out if we've emptied the pipes, or there is nothing to
-            # read from and the process has finished.
+            # only break out if no pipes are left to read or
+            # the pipes are completely read and
+            # the process is terminated
             if (not rpipes or not rfd) and p.poll() is not None:
                 break
-            # Calling wait while there are still pipes to read can cause a lock
+            # No pipes are left to read but process is not yet terminated
+            # Only then it is safe to wait for the process to be finished
+            # NOTE: Actually p.poll() is always None here if rpipes is empty
             elif not rpipes and p.poll() == None:
                 p.wait()
-                # the process has finished and the pipes are empty,
-                # if we loop and do the select it waits all the timeout
+                # The process is terminated. Since no pipes to read from are
+                # left, there is no need to call select() again.
                 break
-        stdin.close() # close stdin after we read from stdout (see also issue #848)
+        # close stdin after process is terminated and stdout/stderr are read
+        # completely (see also issue #848)
+        stdin.close()
         return (p.returncode, stdout, stderr)
 
     def not_in_host_file(self, host):
