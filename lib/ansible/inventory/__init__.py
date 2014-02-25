@@ -207,24 +207,19 @@ class Inventory(object):
         a tuple of (start, stop) or None
         """
 
-        if not "[" in pattern or pattern.startswith('~'):
-            return (pattern, None)
-        (first, rest) = pattern.split("[")
-        rest = rest.replace("]","")
-        try:
-            # support selectors like webservers[0]
-            x = int(rest)
-            return (first, (x,x)) 
-        except:
-            pass
-        if "-" in rest:
-            (left, right) = rest.split("-",1)
-            return (first, (left, right))
-        elif ":" in rest:
-            (left, right) = rest.split(":",1)
-            return (first, (left, right))
+        # The regex used to match on the range, which can be [x] or [x-y].
+        pattern_re = re.compile("^(.*)\[([0-9]+)(?:(?:-)([0-9]+))?\](.*)$")
+        m = pattern_re.match(pattern)
+        if m:
+            (target, first, last, rest) = m.groups()
+            first = int(first)
+            if last:
+                last = int(last)
+            else:
+                last = first
+            return (target, (first, last))
         else:
-            return (first, (rest, rest))
+            return (pattern, None)
 
     def _apply_ranges(self, pat, hosts):
         """
