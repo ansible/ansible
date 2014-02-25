@@ -1359,14 +1359,30 @@ class Darwin(Hardware):
                 sysctl[key] = value.strip()
         return sysctl
 
+    def get_system_profile(self):
+        rc, out, err = module.run_command(["/usr/sbin/system_profiler", "SPHardwareDataType"])
+        if rc != 0:
+            return dict()
+        system_profile = dict()
+        for line in out.splitlines():
+            if ': ' in line:
+                (key, value) = line.split(': ', 1)
+                system_profile[key.strip()] = ' '.join(value.strip().split())
+        return system_profile
+
     def get_mac_facts(self):
         self.facts['model'] = self.sysctl['hw.model']
         self.facts['osversion'] = self.sysctl['kern.osversion']
         self.facts['osrevision'] = self.sysctl['kern.osrevision']
 
     def get_cpu_facts(self):
-        self.facts['processor'] = self.sysctl['machdep.cpu.brand_string']
-        self.facts['processor_cores'] = self.sysctl['machdep.cpu.core_count']
+        if 'machdep.cpu.brand_string' in self.sysctl: # Intel
+            self.facts['processor'] = self.sysctl['machdep.cpu.brand_string']
+            self.facts['processor_cores'] = self.sysctl['machdep.cpu.core_count']
+        else: # PowerPC
+            system_profile = self.get_system_profile()
+            self.facts['processor'] = '%s @ %s' % (system_profile['Processor Name'], system_profile['Processor Speed'])
+            self.facts['processor_cores'] = self.sysctl['hw.physicalcpu']
 
     def get_memory_facts(self):
         self.facts['memtotal_mb'] = long(self.sysctl['hw.memsize']) / 1024 / 1024
