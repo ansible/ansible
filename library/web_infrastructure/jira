@@ -19,6 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+
 DOCUMENTATION = """
 module: jira
 version_added: "1.6"
@@ -175,7 +176,16 @@ def main():
     user = module.params['username']
     passwd = module.params['password']
 
-    # Check with have the necessary per-operation parameters
+    if not uri.endswith('/'):
+        uri = uri+'/'
+    restbase = uri + 'rest/api/2'
+
+
+    # Check the operation is a valid one, Ansible doesn't currently enforce this:
+    if op not in OP_REQUIRED.keys():
+        module.fail_json(msg="Operation '%s' is not valid")
+
+    # Check we have the necessary per-operation parameters
     missing = []
     for parm in OP_REQUIRED[op]:
         if not module.params[parm]:
@@ -183,29 +193,22 @@ def main():
     if missing:
         module.fail_json(msg="Operation %s require the following missing parameters: %s" % (op, ",".join(missing)))
 
-    if not uri.endswith('/'):
-        uri = uri+'/'
-    restbase = uri + 'rest/api/2'
 
     # Dispatch
     try:
+        
+        # Lookup the corresponding operation for this operation. This
+        # is safe as we check valid operations above.
+        thismod = sys.modules[__name__]
+        method = getattr(thismod, op)
 
-        if op == 'create':
-            ret = create(restbase, user, passwd, module.params)
-
-        elif op == 'comment':
-            ret = comment(restbase, user, passwd, module.params)
-
-        else:
-            return module.fail_json(msg="Unknown JIRA operation")
+        ret = method(restbase, user, passwd, module.params)
 
     except Exception as e:
         return module.fail_json(msg=e.msg)
 
-
     module.exit_json(changed=True, meta=ret)
-    
-    
+
 
 from ansible.module_utils.basic import *
 main()
