@@ -628,7 +628,9 @@ class Runner(object):
             all_failed = False
             results = []
             for x in items:
-                inject['item'] = x
+                # use a fresh inject for each item                
+                this_inject = inject.copy()
+                this_inject['item'] = x
 
                 # TODO: this idiom should be replaced with an up-conversion to a Jinja2 template evaluation
                 if isinstance(self.complex_args, basestring):
@@ -640,7 +642,7 @@ class Runner(object):
                      host,
                      self.module_name,
                      self.module_args,
-                     inject,
+                     this_inject,
                      port,
                      complex_args=complex_args
                 )
