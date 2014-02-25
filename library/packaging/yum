@@ -223,13 +223,13 @@ def is_available(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=[], dis_
 
     else:
         myrepoq = list(repoq)
+                 
+        for repoid in dis_repos:
+            r_cmd = ['--disablerepo', repoid]
+            myrepoq.extend(r_cmd)
 
         for repoid in en_repos:
             r_cmd = ['--enablerepo', repoid]
-            myrepoq.extend(r_cmd)
-    
-        for repoid in dis_repos:
-            r_cmd = ['--disablerepo', repoid]
             myrepoq.extend(r_cmd)
 
         cmd = myrepoq + ["--qf", qf, pkgspec]
@@ -273,14 +273,13 @@ def is_update(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=[], dis_rep
 
     else:
         myrepoq = list(repoq)
-        for repoid in en_repos:
-            r_cmd = ['--enablerepo', repoid]
-            myrepoq.extend(r_cmd)
-    
         for repoid in dis_repos:
             r_cmd = ['--disablerepo', repoid]
             myrepoq.extend(r_cmd)
 
+        for repoid in en_repos:
+            r_cmd = ['--enablerepo', repoid]
+            myrepoq.extend(r_cmd)
 
         cmd = myrepoq + ["--pkgnarrow=updates", "--qf", qf, pkgspec]
         rc,out,err = module.run_command(cmd)
@@ -319,12 +318,12 @@ def what_provides(module, repoq, req_spec, conf_file,  qf=def_qf, en_repos=[], d
 
     else:
         myrepoq = list(repoq)
-        for repoid in en_repos:
-            r_cmd = ['--enablerepo', repoid]
-            myrepoq.extend(r_cmd)
-    
         for repoid in dis_repos:
             r_cmd = ['--disablerepo', repoid]
+            myrepoq.extend(r_cmd)
+
+        for repoid in en_repos:
+            r_cmd = ['--enablerepo', repoid]
             myrepoq.extend(r_cmd)
 
         cmd = myrepoq + ["--qf", qf, "--whatprovides", req_spec]
@@ -723,13 +722,13 @@ def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo,
         dis_repos = disablerepo.split(',')
     if enablerepo:
         en_repos = enablerepo.split(',')
+           
+    for repoid in dis_repos:
+        r_cmd = ['--disablerepo=%s' % repoid]
+        yum_basecmd.extend(r_cmd)
 
     for repoid in en_repos:
-        r_cmd = ['--enablerepo', repoid]
-        yum_basecmd.extend(r_cmd)
-        
-    for repoid in dis_repos:
-        r_cmd = ['--disablerepo', repoid]
+        r_cmd = ['--enablerepo=%s' % repoid]
         yum_basecmd.extend(r_cmd)
 
     if state in ['installed', 'present', 'latest']:
