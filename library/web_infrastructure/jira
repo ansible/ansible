@@ -36,7 +36,7 @@ options:
   operation:
     required: true
     aliases: [ command ]
-    choices: [ create, comment, edit ]
+    choices: [ create, comment, edit, fetch ]
     description:
       - The operation to perform.
 
@@ -124,6 +124,16 @@ EXAMPLES = """
         issue={{issue.meta.key}} operation=edit 
   args: { fields: {labels: ["autocreated", "ansible"]}}
 
+# Retrieve metadata for an issue and use it to create an account
+- name: Get an issue
+  jira: uri={{server}} username={{user}} password={{pass}}
+        project=ANS operation=fetch issue="ANS-63"
+  register: issue
+
+- name: Create a user for the reporter
+  sudo: true
+  user: name="{{issue.meta.fields.creator.name}}" comment="{{issue.meta.fields.creator.displayName}}"
+
 """
 
 import urllib2
@@ -205,7 +215,7 @@ def edit(restbase, user, passwd, params):
     return ret
 
 
-def getissue(restbase, user, passwd, params):
+def fetch(restbase, user, passwd, params):
     url = restbase + '/issue/' + params['issue']
     ret = get(url, user, passwd) 
     return ret
@@ -215,14 +225,14 @@ def getissue(restbase, user, passwd, params):
 OP_REQUIRED = dict(create=['project', 'issuetype', 'summary', 'description'],
                    comment=['issue', 'comment'],
                    edit=['fields'],
-                   getissue=['issue'])
+                   fetch=['issue'])
 
 def main():
 
     module = AnsibleModule(
         argument_spec=dict(
             uri=dict(required=True),
-            operation=dict(choices=['create', 'comment', 'edit', 'getissue'],
+            operation=dict(choices=['create', 'comment', 'edit', 'fetch'],
                            aliases=['command'], required=True),
             username=dict(required=True),
             password=dict(required=True),
