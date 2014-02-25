@@ -170,6 +170,9 @@ class ActionModule(object):
         module_items = ' '.join(['%s=%s' % (k, v) for (k,
                 v) in options.items()])
 
+        if self.runner.noop_on_check(inject):
+            module_items += " CHECKMODE=True"
+
         return self.runner._execute_module(conn, tmp, 'synchronize',
                 module_items, inject=inject)
 
