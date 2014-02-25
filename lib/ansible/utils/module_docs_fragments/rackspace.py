@@ -1,4 +1,4 @@
-# (c) 2012, Matt Martz <matt@sivel.net>
+# (c) 2014, Matt Martz <matt@sivel.net>
 #
 # This file is part of Ansible
 #
@@ -15,7 +15,54 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-RACKSPACE_AND_OPENSTACK = """
+
+class ModuleDocFragment(object):
+
+    # Standard Rackspace only documentation fragment
+    DOCUMENTATION = """
+options:
+  api_key:
+    description:
+      - Rackspace API key (overrides I(credentials))
+    aliases:
+      - password
+  credentials:
+    description:
+      - File to find the Rackspace credentials in (ignored if I(api_key) and
+        I(username) are provided)
+    default: null
+    aliases:
+      - creds_file
+  env:
+    description:
+      - Environment as configured in ~/.pyrax.cfg,
+        see U(https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#pyrax-configuration)
+    version_added: 1.5
+  region:
+    description:
+      - Region to create an instance in
+    default: DFW
+  username:
+    description:
+      - Rackspace username (overrides I(credentials))
+  verify_ssl:
+    description:
+      - Whether or not to require SSL validation of API endpoints
+    version_added: 1.5
+requirements:
+  - pyrax
+notes:
+  - The following environment variables can be used, C(RAX_USERNAME),
+    C(RAX_API_KEY), C(RAX_CREDS_FILE), C(RAX_CREDENTIALS), C(RAX_REGION).
+  - C(RAX_CREDENTIALS) and C(RAX_CREDS_FILE) points to a credentials file
+    appropriate for pyrax. See U(https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating)
+  - C(RAX_USERNAME) and C(RAX_API_KEY) obviate the use of a credentials file
+  - C(RAX_REGION) defines a Rackspace Public Cloud region (DFW, ORD, LON, ...)
+"""
+
+    # Documentation fragment including attributes to enable communication
+    # of other OpenStack clouds. Not all rax modules support this.
+    OPENSTACK = """
 options:
   api_key:
     description:
@@ -56,47 +103,6 @@ options:
     description:
       - The tenant name used for authentication
     version_added: 1.5
-  username:
-    description:
-      - Rackspace username (overrides I(credentials))
-  verify_ssl:
-    description:
-      - Whether or not to require SSL validation of API endpoints
-    version_added: 1.5
-requirements:
-  - pyrax
-notes:
-  - The following environment variables can be used, C(RAX_USERNAME),
-    C(RAX_API_KEY), C(RAX_CREDS_FILE), C(RAX_CREDENTIALS), C(RAX_REGION).
-  - C(RAX_CREDENTIALS) and C(RAX_CREDS_FILE) points to a credentials file
-    appropriate for pyrax. See U(https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating)
-  - C(RAX_USERNAME) and C(RAX_API_KEY) obviate the use of a credentials file
-  - C(RAX_REGION) defines a Rackspace Public Cloud region (DFW, ORD, LON, ...)
-"""
-
-RACKSPACE = """
-options:
-  api_key:
-    description:
-      - Rackspace API key (overrides I(credentials))
-    aliases:
-      - password
-  credentials:
-    description:
-      - File to find the Rackspace credentials in (ignored if I(api_key) and
-        I(username) are provided)
-    default: null
-    aliases:
-      - creds_file
-  env:
-    description:
-      - Environment as configured in ~/.pyrax.cfg,
-        see U(https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#pyrax-configuration)
-    version_added: 1.5
-  region:
-    description:
-      - Region to create an instance in
-    default: DFW
   username:
     description:
       - Rackspace username (overrides I(credentials))
