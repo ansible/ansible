@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+# This is a DOCUMENTATION stub specific to this module, it extends
+# a documentation fragment located in ansible.utils.module_docs_fragments
 DOCUMENTATION = '''
 ---
 module: rax_network
@@ -38,7 +40,7 @@ options:
      - cidr of the network being created
     default: null
 author: Christopher H. Laco, Jesse Keating
-extends_documentation_fragment: RACKSPACE_AND_OPENSTACK
+extends_documentation_fragment: rackspace.openstack
 '''
 
 EXAMPLES = '''

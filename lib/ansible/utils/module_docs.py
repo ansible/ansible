@@ -23,8 +23,7 @@ import ast
 import yaml
 import traceback
 
-from ansible.utils import module_docs_fragments as fragments
-
+from ansible import utils
 
 # modules that are ok that they do not have documentation strings
 BLACKLIST_MODULES = [
@@ -37,6 +36,10 @@ def get_docstring(filename, verbose=False):
     in the given file.
     Parse DOCUMENTATION from YAML and return the YAML doc or None
     together with EXAMPLES, as plain text.
+
+    DOCUMENTATION can be extended using documentation fragments
+    loaded by the PluginLoader from the module_docs_fragments
+    directory.
     """
 
     doc = None
@@ -49,10 +52,20 @@ def get_docstring(filename, verbose=False):
             if isinstance(child, ast.Assign):
                 if 'DOCUMENTATION' in (t.id for t in child.targets):
                     doc = yaml.safe_load(child.value.s)
-                    fragment_name = doc.get('extends_documentation_fragment',
-                                            'DOESNOTEXIST').upper()
-                    fragment_yaml = getattr(fragments, fragment_name, None)
-                    if fragment_yaml:
+                    fragment_slug = doc.get('extends_documentation_fragment',
+                                            'doesnotexist').lower()
+
+                    # Allow the module to specify a var other than DOCUMENTATION
+                    # to pull the fragment from, using dot notation as a separator
+                    if '.' in fragment_slug:
+                        fragment_name, fragment_var = fragment_slug.split('.', 1)
+                        fragment_var = fragment_var.upper()
+                    else:
+                        fragment_name, fragment_var = fragment_slug, 'DOCUMENTATION'
+
+                    fragment_class = utils.plugins.fragment_loader.get(fragment_name)
+                    if fragment_class:
+                        fragment_yaml = getattr(fragment_class, fragment_var, '{}')
                         fragment = yaml.safe_load(fragment_yaml)
                         if fragment.has_key('notes'):
                             notes = fragment.pop('notes')
