@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2014, Steve Smith <ssmith@atlassian.com>
-# Atlassian open-source approval reference OSR-76/
+# Atlassian open-source approval reference OSR-76.
 #
 # This file is part of Ansible.
 #
@@ -19,6 +19,86 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+DOCUMENTATION = """
+module: jira
+version_added: "1.6"
+short_description: create and modify issues in a JIRA instance
+description:
+  - Create and modify issues in a JIRA instance.
+
+options:
+  uri:
+    required: true
+    description:
+      - Base URI for the JIRA instance
+
+  operation:
+    required: true
+    aliases: [ command ]
+    choices: [ create, comment ]
+    description:
+      - The operation to perform.
+
+  username:
+    required: true
+    description:
+      - The username to log-in with.
+
+  password:
+    required: true
+    description:
+      - The password to log-in with.
+
+  project:
+    aliases: [ prj ]
+    required: false
+    description:
+      - The project for this operation. Required for issue creation.
+
+  summary:
+    required: false
+    description:
+     - The issue summary, where appropriate.
+
+  description:
+    required: false
+    description:
+     - The issue description, where appropriate.
+
+  issuetype:
+    required: false
+    description:
+     - The issue type, for issue creation.
+
+  issue:
+    required: false
+    description:
+     - An existing issue key to operate on.
+
+  comment:
+    required: false
+    description:
+     - The comment text to add.
+
+notes:
+  - "Currently this only works with basic-auth."
+
+author: Steve Smith
+"""
+
+EXAMPLES = """
+# Create a new issue and add a comment to it:
+- name: Create an issue
+  jira: uri={{server}} username={{user}} password={{pass}}
+        project=ANS operation=create
+        summary="Example Issue" description="Created using Ansible" issuetype=Task
+  register: issue
+
+- name: Comment on issue
+  jira: uri={{server}} username={{user}} password={{pass}}
+        issue={{issue.meta.key}} operation=comment 
+        comment="A comment added by Ansible"
+"""
 
 import urllib2
 import json
@@ -71,8 +151,8 @@ def main():
             uri=dict(required=True),
             operation=dict(choices=['create', 'comment'],
                            aliases=['command'], required=True),
-            username=dict(),
-            password=dict(),
+            username=dict(required=True),
+            password=dict(required=True),
             project=dict(),
             summary=dict(),
             description=dict(),
@@ -110,7 +190,7 @@ def main():
         return module.fail_json(msg=e.message)
 
 
-    module.exit_json(changed=True, body=ret)
+    module.exit_json(changed=True, meta=ret)
     
     
 
