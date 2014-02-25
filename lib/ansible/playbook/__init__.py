@@ -642,7 +642,7 @@ class PlayBook(object):
             # This is a percentage, so calculate it based on the
             # number of hosts
             serial_pct = int(play.serial.replace("%",""))
-            serial = int((serial_pct)/100.0 * len(all_hosts))
+            serial = int((serial_pct/100.0) * len(all_hosts))
 
             # Ensure that no matter how small the percentage, serial
             # can never fall below 1, so that things actually happen
