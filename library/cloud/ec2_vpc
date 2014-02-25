@@ -46,7 +46,7 @@ options:
     choices: [ "yes", "no" ]
   subnets:
     description:
-      - "A dictionary array of subnets to add of the form: { cidr: ..., az: ... , tags: ... }. Where az is the desired availability zone of the subnet, but it is not required. Tags (i.e.: tags) is also optional and use dictionary form: { "Environment":"Dev", "Tier":"Web", ...}. All VPC subnets not in this list will be removed."
+      - "A dictionary array of subnets to add of the form: { cidr: ..., az: ... , instance_tags: ... }. Where az is the desired availability zone of the subnet, but it is not required. Tags (i.e.: instance_tags) is also optional and use dictionary form: { "Environment":"Dev", "Tier":"Web", ...}. All VPC subnets not in this list will be removed."
     required: false
     default: null
     aliases: []
@@ -137,13 +137,13 @@ EXAMPLES = '''
         subnets: 
           - cidr: 172.22.1.0/24
             az: us-west-2c
-            tags: { "Environment":"Dev", "Tier" : "Web" }
+            instance_tags: { "Environment":"Dev", "Tier" : "Web" }
           - cidr: 172.22.2.0/24
             az: us-west-2b
-            tags: { "Environment":"Dev", "Tier" : "App" }
+            instance_tags: { "Environment":"Dev", "Tier" : "App" }
           - cidr: 172.22.3.0/24
             az: us-west-2a
-            tags: { "Environment":"Dev", "Tier" : "DB" }
+            instance_tags: { "Environment":"Dev", "Tier" : "DB" }
         internet_gateway: True
         route_tables:
           - subnets: 
@@ -281,7 +281,7 @@ def create_vpc(module, vpc_conn):
         if add_subnet:
             try:
                 new_subnet = vpc_conn.create_subnet(vpc.id, subnet['cidr'], subnet.get('az', None))
-                new_subnet_tags = subnet.get('tags', None)
+                new_subnet_tags = subnet.get('instance_tags', None)
                 if new_subnet_tags:
                     # Sometimes AWS takes its time to create a subnet and so using new subnets's id
                     # to create tags results in exception.
@@ -422,7 +422,7 @@ def create_vpc(module, vpc_conn):
     
     for sn in current_subnets:
         returned_subnets.append({
-            'tags': dict((t.name, t.value) for t in vpc_conn.get_all_tags(filters={'resource-id': sn.id})),
+            'instance_tags': dict((t.name, t.value) for t in vpc_conn.get_all_tags(filters={'resource-id': sn.id})),
             'cidr': sn.cidr_block, 
             'az': sn.availability_zone,
             'id': sn.id,
