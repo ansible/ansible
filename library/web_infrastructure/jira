@@ -36,7 +36,7 @@ options:
   operation:
     required: true
     aliases: [ command ]
-    choices: [ create, comment ]
+    choices: [ create, comment, edit ]
     description:
       - The operation to perform.
 
@@ -81,6 +81,11 @@ options:
     description:
      - The comment text to add.
 
+  fields:
+    required: false
+    description:
+     - This is a free-form data structure that can contain arbitrary data. This is passed directly to the JIRA REST API (possibly after merging with other required data, as when passed to create). See examples for more information, and the JIRA REST API for the structure required for various fields.
+
 notes:
   - "Currently this only works with basic-auth."
 
@@ -99,6 +104,26 @@ EXAMPLES = """
   jira: uri={{server}} username={{user}} password={{pass}}
         issue={{issue.meta.key}} operation=comment 
         comment="A comment added by Ansible"
+
+# Assign an existing issue using the edit
+- name: Assign an issue using free-form fields
+  jira: uri={{server}} username={{user}} password={{pass}}
+        issue={{issue.meta.key}} operation=edit 
+  args: { fields: {assignee: {name: "ssmith"}}}
+
+# Create an issue with an existing assignee
+- name: Create an assigned issue
+  jira: uri={{server}} username={{user}} password={{pass}}
+        project=ANS operation=create
+        summary="Assigned issue" description="Created and assigned using Ansible" issuetype=Task
+  args: { fields: {assignee: {name: "ssmith"}}}
+
+# Set the labels on an issue
+- name: Set the labels on an issue
+  jira: uri={{server}} username={{user}} password={{pass}}
+        issue={{issue.meta.key}} operation=edit 
+  args: { fields: {labels: ["autocreated", "ansible"]}}
+
 """
 
 import urllib2
