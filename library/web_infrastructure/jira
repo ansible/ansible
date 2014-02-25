@@ -151,10 +151,10 @@ def request(url, user, passwd, data=None, method=None):
         return {}
 
 
-def post(url, data, user, passwd):
+def post(url, user, passwd, data):
     return request(url, user, passwd, data=data)
 
-def put(url, data, user, passwd):
+def put(url, user, passwd, data):
     req = request(url, user, passwd, data=data, method='PUT')
 
 
@@ -173,7 +173,7 @@ def create(restbase, user, passwd, params):
 
     url = restbase + '/issue/'
 
-    ret = post(url, data, user, passwd) 
+    ret = post(url, user, passwd, data) 
 
     return ret
 
@@ -185,7 +185,7 @@ def comment(restbase, user, passwd, params):
 
     url = restbase + '/issue/' + params['issue'] + '/comment'
 
-    ret = post(url, data, user, passwd)
+    ret = post(url, user, passwd, data)
 
     return ret
 
@@ -197,7 +197,7 @@ def edit(restbase, user, passwd, params):
 
     url = restbase + '/issue/' + params['issue']    
 
-    ret = put(url, data, user, passwd) 
+    ret = put(url, user, passwd, data) 
 
     return ret
 
