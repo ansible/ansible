@@ -324,9 +324,9 @@ class Runner(object):
         this_host = delegate['host']
 
         # get the vars for the delegate by it's name        
-        if this_host in delegate['inject']['hostvars']:
+        try:
             this_info = delegate['inject']['hostvars'][this_host]
-        else:
+        except:
             # make sure the inject is empty for non-inventory hosts
             this_info = {}
 
