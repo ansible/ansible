@@ -105,30 +105,51 @@ import urllib2
 import json
 import base64
 
-def post(url, data, user, passwd):
-    auth = base64.encodestring('%s:%s' % (user, passwd)).replace('\n', '')
-
+def request(url, data, user, passwd):
     req = urllib2.Request(url, json.dumps(data))
+
+    auth = base64.encodestring('%s:%s' % (user, passwd)).replace('\n', '')
     req.add_header("Authorization", "Basic %s" % auth)
     req.add_header('Content-Type', 'application/json')
 
-    res = urllib2.urlopen(req)
+    return req
 
+
+def post(url, data, user, passwd):
+    req = request(url, data, user, passwd)
+
+    res = urllib2.urlopen(req)
     return json.loads(res.read())
 
 
+def put(url, data, user, passwd):
+    req = request(url, data, user, passwd)
+    req.get_method = lambda: 'PUT'
+
+    res = urllib2.urlopen(req)
+    res = res.read()
+    if res:
+        return json.loads(res)
+    else:
+        return {}
+
+
 def create(restbase, user, passwd, params):
-    create = {
-        'fields': {
-            'project': { 'key': params['project'] },
-            'summary': params['summary'],
-            'description': params['description'],
-            'issuetype': { 'name': params['issuetype'] }
-        }
-    }
+    createfields = {
+        'project': { 'key': params['project'] },
+        'summary': params['summary'],
+        'description': params['description'],
+        'issuetype': { 'name': params['issuetype'] }}
+
+    # Merge in any additional or overridden fields
+    if params['fields']:
+        createfields.update(params['fields'])
+
+    data = {'fields': createfields}
+
     url = restbase + '/issue/'
 
-    ret = post(url, create, user, passwd) 
+    ret = post(url, data, user, passwd) 
 
     return ret
 
@@ -140,24 +161,34 @@ def comment(restbase, user, passwd, params):
 
     url = restbase + '/issue/' + params['issue'] + '/comment'
 
-    ret = post(url, data, user, passwd) 
+    ret = post(url, data, user, passwd)
+
+    return ret
+
+
+def edit(restbase, user, passwd, params):
+    data = {
+        'fields': params['fields']
+        }
+
+    url = restbase + '/issue/' + params['issue']    
+
+    ret = put(url, data, user, passwd) 
 
     return ret
 
 
 # Some parameters are required depending on the operation:
-OP_REQUIRED = dict(
-    create=['project', 'issuetype', 'summary', 'description'],
-    comment=['issue', 'comment']
-    )
-
+OP_REQUIRED = dict(create=['project', 'issuetype', 'summary', 'description'],
+                   comment=['issue', 'comment'],
+                   edit=['fields'])
 
 def main():
 
     module = AnsibleModule(
         argument_spec=dict(
             uri=dict(required=True),
-            operation=dict(choices=['create', 'comment'],
+            operation=dict(choices=['create', 'comment', 'edit'],
                            aliases=['command'], required=True),
             username=dict(required=True),
             password=dict(required=True),
@@ -166,7 +197,8 @@ def main():
             description=dict(),
             issuetype=dict(),
             issue=dict(aliases=['ticket']),
-            comment=dict()
+            comment=dict(),
+            fields=dict()
         ),
         supports_check_mode=False
     )
@@ -180,10 +212,6 @@ def main():
         uri = uri+'/'
     restbase = uri + 'rest/api/2'
 
-
-    # Check the operation is a valid one, Ansible doesn't currently enforce this:
-    if op not in OP_REQUIRED.keys():
-        module.fail_json(msg="Operation '%s' is not valid")
 
     # Check we have the necessary per-operation parameters
     missing = []
@@ -204,8 +232,10 @@ def main():
 
         ret = method(restbase, user, passwd, module.params)
 
-    except Exception as e:
+    except urllib2.HTTPError as e:
         return module.fail_json(msg=e.msg)
+    except Exception as e:
+        return module.fail_json(msg=e.message)
 
     module.exit_json(changed=True, meta=ret)
 
