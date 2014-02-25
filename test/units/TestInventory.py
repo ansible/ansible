@@ -207,6 +207,11 @@ class TestInventory(unittest.TestCase):
         inventory.subset('odin;thor,loki')
         self.assertEqual(sorted(inventory.list_hosts()),  sorted(['thor','odin','loki']))
 
+    def test_subset_range(self):
+        inventory = self.simple_inventory()
+        inventory.subset('greek[0-2];norse[0]')
+        self.assertEqual(sorted(inventory.list_hosts()),  sorted(['zeus','hera','thor']))
+
     def test_subset_filename(self):
         inventory = self.simple_inventory()
         inventory.subset('@' + os.path.join(self.test_dir, 'restrict_pattern'))
