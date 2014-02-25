@@ -60,6 +60,18 @@ options:
     required: false
     default: null
     aliases: []
+  alias_id:
+    description:
+      - The hosted zone ID
+    required: false
+    default: null
+    aliases: []
+  alias_dns:
+    description:
+      - DNS domain name
+    required: false
+    default: null
+    aliases: []
   aws_secret_key:
     description:
       - AWS secret key. 
@@ -153,6 +165,8 @@ def main():
             ttl             = dict(required=False, default=3600),
             type            = dict(choices=['A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'NS'], required=True),
             value           = dict(required=False), 
+            alias_id        = dict(required=False),
+            alias_dns       = dict(required=False),
             ec2_secret_key  = dict(aliases=['aws_secret_key', 'secret_key'], no_log=True, required=False),
             ec2_access_key  = dict(aliases=['aws_access_key', 'access_key'], required=False),
             overwrite       = dict(required=False, type='bool')
@@ -165,6 +179,8 @@ def main():
     record_in             = module.params.get('record')
     type_in               = module.params.get('type')
     value_in              = module.params.get('value')
+    alias_id_in           = module.params.get('alias_id')
+    alias_dns_in          = module.params.get('alias_dns')
 
     ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
 
@@ -183,8 +199,8 @@ def main():
         record_in += "."
 
     if command_in == 'create' or command_in == 'delete':
-        if not value_in:
-            module.fail_json(msg = "parameter 'value' required for create/delete")
+        if not value_in and not (alias_id_in and alias_dns_in):
+            module.fail_json(msg = "parameter 'value' or 'alias_id' and 'alias_dns' required for create/delete")
 
     # connect to the route53 endpoint 
     try:
@@ -232,12 +248,16 @@ def main():
         if not module.params['overwrite']:
             module.fail_json(msg = "Record already exists with different value. Set 'overwrite' to replace it")
         else:
-            change = changes.add_change("DELETE", record_in, type_in, record['ttl'])
+            change = changes.add_change("DELETE", record_in, type_in,
+                record['ttl'], alias_dns_name=alias_dns_in,
+                alias_hosted_zone_id=alias_id_in)
         for v in record['values']:
             change.add_value(v)
 
     if command_in == 'create' or command_in == 'delete':
-        change = changes.add_change(command_in.upper(), record_in, type_in, ttl_in)
+        change = changes.add_change(command_in.upper(), record_in, type_in,
+            ttl_in, alias_dns_name=alias_dns_in,
+            alias_hosted_zone_id=alias_id_in)
         for v in value_list:
             change.add_value(v)
 
