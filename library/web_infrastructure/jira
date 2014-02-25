@@ -1,0 +1,118 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2014, Steve Smith <ssmith@atlassian.com>
+# Atlassian open-source approval reference OSR-76/
+#
+# This file is part of Ansible.
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+import urllib2
+import json
+import base64
+
+def post(url, data, user, passwd):
+    auth = base64.encodestring('%s:%s' % (user, passwd)).replace('\n', '')
+
+    req = urllib2.Request(url, json.dumps(data))
+    req.add_header("Authorization", "Basic %s" % auth)
+    req.add_header('Content-Type', 'application/json')
+
+    res = urllib2.urlopen(req)
+
+    return json.loads(res.read())
+
+
+def create(restbase, user, passwd, params):
+    create = {
+        'fields': {
+            'project': { 'key': params['project'] },
+            'summary': params['summary'],
+            'description': params['description'],
+            'issuetype': { 'name': params['issuetype'] }
+        }
+    }
+    url = restbase + '/issue/'
+
+    ret = post(url, create, user, passwd) 
+
+    return ret
+
+
+def comment(restbase, user, passwd, params):
+    data = {
+        'body': params['comment']
+        }
+
+    url = restbase + '/issue/' + params['issue'] + '/comment'
+
+    ret = post(url, data, user, passwd) 
+
+    return ret
+
+
+def main():
+
+    module = AnsibleModule(
+        argument_spec=dict(
+            uri=dict(required=True),
+            operation=dict(choices=['create', 'comment'],
+                           aliases=['command'], required=True),
+            username=dict(),
+            password=dict(),
+            project=dict(),
+            summary=dict(),
+            description=dict(),
+            issuetype=dict(),
+            issue=dict(aliases=['ticket']),
+            comment=dict()
+        ),
+        supports_check_mode=False
+    )
+
+    op = module.params['operation']
+    uri = module.params['uri']
+    user = module.params['username']
+    passwd = module.params['password']
+
+    if not uri.endswith('/'):
+        uri = uri+'/'
+    restbase = uri + 'rest/api/2'
+
+    # Dispatch
+    try:
+
+        if op == 'create':
+            ret = create(restbase, user, passwd, module.params)
+
+        elif op == 'comment':
+            ret = comment(restbase, user, passwd, module.params)
+
+        else:
+            return module.fail_json(msg="Unknown JIRA operation")
+
+    except Exception as e:
+        print type(e)
+        print "msg",e.msg
+        return module.fail_json(msg=e.message)
+
+
+    module.exit_json(changed=True, body=ret)
+    
+    
+
+from ansible.module_utils.basic import *
+main()
