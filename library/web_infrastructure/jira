@@ -130,33 +130,32 @@ import urllib2
 import json
 import base64
 
-def request(url, data, user, passwd):
-    req = urllib2.Request(url, json.dumps(data))
+def request(url, user, passwd, data=None, method=None):
+    if data:
+        req = urllib2.Request(url, json.dumps(data))
+    else:
+        req = urllib2.Request(url)
+
+    if method:
+        req.get_method = lambda: method
 
     auth = base64.encodestring('%s:%s' % (user, passwd)).replace('\n', '')
     req.add_header("Authorization", "Basic %s" % auth)
     req.add_header('Content-Type', 'application/json')
 
-    return req
+    res = urllib2.urlopen(req)
+    body = res.read()
+    if body:
+        return json.loads(body)
+    else:
+        return {}
 
 
 def post(url, data, user, passwd):
-    req = request(url, data, user, passwd)
-
-    res = urllib2.urlopen(req)
-    return json.loads(res.read())
-
+    return request(url, user, passwd, data=data)
 
 def put(url, data, user, passwd):
-    req = request(url, data, user, passwd)
-    req.get_method = lambda: 'PUT'
-
-    res = urllib2.urlopen(req)
-    res = res.read()
-    if res:
-        return json.loads(res)
-    else:
-        return {}
+    req = request(url, user, passwd, data=data, method='PUT')
 
 
 def create(restbase, user, passwd, params):
