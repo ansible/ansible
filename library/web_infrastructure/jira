@@ -155,7 +155,10 @@ def post(url, user, passwd, data):
     return request(url, user, passwd, data=data)
 
 def put(url, user, passwd, data):
-    req = request(url, user, passwd, data=data, method='PUT')
+    return request(url, user, passwd, data=data, method='PUT')
+
+def get(url, user, passwd):
+    return request(url, user, passwd)
 
 
 def create(restbase, user, passwd, params):
@@ -202,17 +205,24 @@ def edit(restbase, user, passwd, params):
     return ret
 
 
+def getissue(restbase, user, passwd, params):
+    url = restbase + '/issue/' + params['issue']
+    ret = get(url, user, passwd) 
+    return ret
+
+
 # Some parameters are required depending on the operation:
 OP_REQUIRED = dict(create=['project', 'issuetype', 'summary', 'description'],
                    comment=['issue', 'comment'],
-                   edit=['fields'])
+                   edit=['fields'],
+                   getissue=['issue'])
 
 def main():
 
     module = AnsibleModule(
         argument_spec=dict(
             uri=dict(required=True),
-            operation=dict(choices=['create', 'comment', 'edit'],
+            operation=dict(choices=['create', 'comment', 'edit', 'getissue'],
                            aliases=['command'], required=True),
             username=dict(required=True),
             password=dict(required=True),
