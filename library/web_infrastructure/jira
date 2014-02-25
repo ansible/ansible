@@ -124,6 +124,16 @@ EXAMPLES = """
         issue={{issue.meta.key}} operation=edit 
   args: { fields: {labels: ["autocreated", "ansible"]}}
 
+- name: Set the labels on an issue, YAML version
+  jira: uri={{server}} username={{user}} password={{pass}}
+        issue={{issue.meta.key}} operation=edit 
+  args: 
+    fields: 
+      labels:
+        - "autocreated"
+        - "ansible"
+        - "yaml"
+
 # Retrieve metadata for an issue and use it to create an account
 - name: Get an issue
   jira: uri={{server}} username={{user}} password={{pass}}
