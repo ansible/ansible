@@ -36,7 +36,7 @@ options:
   operation:
     required: true
     aliases: [ command ]
-    choices: [ create, comment, edit, fetch ]
+    choices: [ create, comment, edit, fetch, transition ]
     description:
       - The operation to perform.
 
@@ -80,6 +80,11 @@ options:
     required: false
     description:
      - The comment text to add.
+
+  status:
+    required: false
+    description:
+     - The desired status; only relevant for the transition operation.
 
   fields:
     required: false
@@ -144,6 +149,10 @@ EXAMPLES = """
   sudo: true
   user: name="{{issue.meta.fields.creator.name}}" comment="{{issue.meta.fields.creator.displayName}}"
 
+# Transition an issue by target status
+- name: Close the issue
+  jira: uri={{server}} username={{user}} password={{pass}}
+        issue={{issue.meta.key}} operation=transition status="Done"
 """
 
 import urllib2
@@ -231,18 +240,42 @@ def fetch(restbase, user, passwd, params):
     return ret
 
 
+def transition(restbase, user, passwd, params):
+    # Find the transition id
+    turl = restbase + '/issue/' + params['issue'] + "/transitions"
+    tmeta = get(turl, user, passwd)
+
+    target = params['status']
+    tid = None
+    for t in tmeta['transitions']:
+        if t['name'] == target:
+            tid = t['id']
+            break
+
+    if not tid:
+        raise ValueError("Failed find valid transition for '%s'" % target)
+
+    # Perform it
+    url = restbase + '/issue/' + params['issue'] + "/transitions"
+    data = { "transition": { "id" : tid }}
+    ret = post(url, user, passwd, data)
+
+    return ret
+
+
 # Some parameters are required depending on the operation:
 OP_REQUIRED = dict(create=['project', 'issuetype', 'summary', 'description'],
                    comment=['issue', 'comment'],
                    edit=['fields'],
-                   fetch=['issue'])
+                   fetch=['issue'],
+                   transition=['status'])
 
 def main():
 
     module = AnsibleModule(
         argument_spec=dict(
             uri=dict(required=True),
-            operation=dict(choices=['create', 'comment', 'edit', 'fetch'],
+            operation=dict(choices=['create', 'comment', 'edit', 'fetch', 'transition'],
                            aliases=['command'], required=True),
             username=dict(required=True),
             password=dict(required=True),
@@ -252,6 +285,7 @@ def main():
             issuetype=dict(),
             issue=dict(aliases=['ticket']),
             comment=dict(),
+            status=dict(),
             fields=dict()
         ),
         supports_check_mode=False
