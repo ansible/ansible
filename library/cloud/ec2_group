@@ -193,11 +193,14 @@ def main():
         addRulesToLookup(group.rules_egress, 'out', groupRules)
 
         # Now, go through all provided rules and ensure they are there.
+        egressRulesExist = False
         if rules:
             for rule in rules:
                 group_id = None
                 group_name = None
                 egress = 'egress' in rule and rule['egress']
+                if egress:
+                    egressRulesExist = True
                 ip = None
                 if 'group_id' in rule and 'cidr_ip' in rule:
                     module.fail_json(msg="Specify group_id OR cidr_ip, not both")
@@ -215,6 +218,8 @@ def main():
                         group_id = group.id
                         groups[group_id] = group
                         groups[group_name] = group
+                    else:
+                        module.fail_json(msg="Group name '%s' doesn't exist" % group_name)
                 elif 'cidr_ip' in rule:
                     ip = rule['cidr_ip']
 
@@ -241,6 +246,12 @@ def main():
                             group.authorize(rule['proto'], rule['from_port'], rule['to_port'], ip, grantGroup)
                     changed = True
 
+            # If there is any egress rules, the default rule needs to be removed first. The default rule will not appear on the rules_egress
+            # list of the group as it is not returned when creating a new group. This is one sulotion to the problem, another could be getting
+            # the group again but I think that this is better because it's faster.
+            if egressRulesExist:
+                ec2.revoke_security_group_egress(group.id, -1, None, None, None, "0.0.0.0/0")
+
         # Finally, remove anything left in the groupRules -- these will be defunct rules
         for (ruleKey, rule) in groupRules.iteritems():
             for grant in rule.grants:
@@ -249,7 +260,7 @@ def main():
                     grantGroup = groups[grant.group_id]
                 if not module.check_mode:
                     egress = ruleKey.startswith('out-')
-                    if egress:
+                    if egress and egressRulesExist:
                         ec2.revoke_security_group_egress(group.id, rule.ip_protocol, rule.from_port, rule.to_port, grant.group_id, grant.cidr_ip)
                     else:
                         group.revoke(rule.ip_protocol, rule.from_port, rule.to_port, grant.cidr_ip, grantGroup)
