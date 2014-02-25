@@ -228,7 +228,9 @@ class ElbManager(object):
                 'name': self.elb.name,
                 'dns_name': self.elb.dns_name,
                 'zones': self.elb.availability_zones,
-                'status': self.status
+                'status': self.status,
+                'hosted_zone_name': self.elb.canonical_hosted_zone_name,
+                'hosted_zone_id': self.elb.canonical_hosted_zone_name_id,
             }
 
             if self.elb.health_check:
