@@ -702,10 +702,12 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
         help='use this file to authenticate the connection')
     parser.add_option('-K', '--ask-sudo-pass', default=False, dest='ask_sudo_pass', action='store_true',
         help='ask for sudo password')
-    parser.add_option('--ask-su-pass', default=False, dest='ask_su_pass',
-                      action='store_true', help='ask for su password')
-    parser.add_option('--ask-vault-pass', default=False, dest='ask_vault_pass',
-                      action='store_true', help='ask for vault password')
+    parser.add_option('--ask-su-pass', default=False, dest='ask_su_pass', action='store_true', 
+        help='ask for su password')
+    parser.add_option('--ask-vault-pass', default=False, dest='ask_vault_pass', action='store_true', 
+        help='ask for vault password')
+    parser.add_option('--vault-password-file', default=None, dest='vault_password_file',
+        help="vault password file")
     parser.add_option('--list-hosts', dest='listhosts', action='store_true',
         help='outputs a list of matching hosts; does not execute anything else')
     parser.add_option('-M', '--module-path', dest='module_path',
