@@ -76,7 +76,8 @@ options:
     default: null
   target:
     description:
-      - Where to dump/get the C(.sql) file
+      - Location, on the remote host, of the dump file to read from or write to. Uncompressed SQL
+        files (C(.sql)) as well as bzip2 (C(.bz2)) and gzip (C(.gz)) compressed files are supported.
     required: false
 notes:
    - Requires the MySQLdb Python package on the remote host. For Ubuntu, this
@@ -92,6 +93,10 @@ author: Mark Theunissen
 EXAMPLES = '''
 # Create a new database with name 'bobdata'
 - mysql_db: name=bobdata state=present
+
+# Copy database dump file to remote host and restore it to database 'my_db'
+- copy: src=dump.sql.bz2 dest=/tmp
+- mysql_db: name=my_db state=import target=/tmp/dump.sql.bz2
 '''
 
 import ConfigParser
