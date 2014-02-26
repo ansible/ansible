@@ -53,24 +53,28 @@ options:
     required: false
     default: null
     aliases: []
+    version_added: "1.5"
   ports:
     description:
       - Set private to public port mapping specification using docker CLI-style syntax [([<host_interface>:[host_port]])|(<host_port>):]<container_port>[/udp]
     required: false
     default: null
     aliases: []
+    version_added: "1.5"
   expose:
     description:
       - Set container ports to expose for port mappings or links. (If the port is already exposed using EXPOSE in a Dockerfile, you don't need to expose it again.)
     required: false
     default: null
     aliases: []
+    version_added: "1.5"
   publish_all_ports:
     description:
       - Publish all exposed ports to the host interfaces
-      required: false
-      default: false
-      aliases: []
+    required: false
+    default: false
+    aliases: []
+    version_added: "1.5"
   volumes:
     description:
       - Set volume(s) to mount on the container
@@ -89,6 +93,7 @@ options:
     required: false
     default: null
     aliases: []
+    version_added: "1.5"
   memory_limit:
     description:
       - Set RAM allocated to container
@@ -122,7 +127,7 @@ options:
     aliases: []
   env:
     description:
-      - Set environment variables (e.g. env="PASSWORD=sEcRe7,WORKERS=4" - a list or a comma-separated string is valid)
+      - Set environment variables (e.g. env="PASSWORD=sEcRe7,WORKERS=4")
     required: false
     default: null
     aliases: []
@@ -163,6 +168,7 @@ options:
     required: false
     default: null
     aliases: []
+    version_added: "1.5"
 author: Cove Schneider, Joshua Conner, Pavel Antonov
 requirements: [ "docker-py >= 0.3.0" ]
 '''
