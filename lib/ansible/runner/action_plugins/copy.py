@@ -61,15 +61,10 @@ class ActionModule(object):
             result=dict(failed=True, msg="src and content are mutually exclusive")
             return ReturnData(conn=conn, result=result)
 
-        # Check if the source ends with a "/" and 
-        # expand any tildes that may be in the path
+        # Check if the source ends with a "/"
         source_trailing_slash = False
         if source:
             source_trailing_slash = source.endswith("/")
-            source = os.path.expanduser(source)
-        # And expand the path for the destination
-        if dest:
-            dest = os.path.expanduser(dest)
 
         # Define content_tempfile in case we set it after finding content populated.
         content_tempfile = None
