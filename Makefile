@@ -61,6 +61,9 @@ NOSETESTS ?= nosetests
 
 all: clean python
 
+integration:
+	(cd test/integration; make all)
+
 tests:
 	PYTHONPATH=./lib ANSIBLE_LIBRARY=./library  $(NOSETESTS) -d -w test/units -v
 
