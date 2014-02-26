@@ -48,9 +48,9 @@ class ActionModule(object):
         if complex_args:
             options.update(complex_args)
         options.update(utils.parse_kv(module_args))
-        source  = options.get('src', None)
+        source  = os.path.expanduser(options.get('src', None))
         content = options.get('content', None)
-        dest    = options.get('dest', None)
+        dest    = os.path.expanduser(options.get('dest', None))
         raw     = utils.boolean(options.get('raw', 'no'))
         force   = utils.boolean(options.get('force', 'yes'))
 
