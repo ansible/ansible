@@ -23,6 +23,7 @@ New modules:
 
 * cloud: ec2_elb_lb
 * cloud: ec2_key
+* cloud: ec2_snapshot
 * cloud: rax_dns
 * cloud: rax_dns_record
 * cloud: rax_files
