@@ -14,14 +14,23 @@ AWS_REGIONS = ['ap-northeast-1',
                'us-west-2']
 
 
-def ec2_argument_spec():
+def ec2_argument_keys_spec():
     return dict(
-        region=dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS),
-        ec2_url=dict(),
-        ec2_secret_key=dict(aliases=['aws_secret_key', 'secret_key'], no_log=True),
-        ec2_access_key=dict(aliases=['aws_access_key', 'access_key']),
-        validate_certs=dict(default=True, type='bool'),
+        aws_secret_key=dict(aliases=['ec2_secret_key', 'secret_key'], no_log=True),
+        aws_access_key=dict(aliases=['ec2_access_key', 'access_key']),
     )
+
+
+def ec2_argument_spec():
+    spec = ec2_argument_keys_spec()
+    spec.update(
+        dict(
+            region=dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS),
+            validate_certs=dict(default=True, type='bool'),
+            ec2_url=dict(),
+        )
+    )
+    return spec
 
 
 def get_ec2_creds(module):
@@ -29,8 +38,8 @@ def get_ec2_creds(module):
     # Check module args for credentials, then check environment vars
 
     ec2_url = module.params.get('ec2_url')
-    ec2_secret_key = module.params.get('ec2_secret_key')
-    ec2_access_key = module.params.get('ec2_access_key')
+    ec2_secret_key = module.params.get('aws_secret_key')
+    ec2_access_key = module.params.get('aws_access_key')
     region = module.params.get('region')
 
     if not ec2_url:

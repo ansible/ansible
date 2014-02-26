@@ -249,8 +249,8 @@ def is_walrus(s3_url):
         return False
 
 def main():
-    module = AnsibleModule(
-        argument_spec = dict(
+    argument_spec = ec2_argument_keys_spec()
+    argument_spec.update(dict(
             bucket         = dict(required=True),
             object         = dict(),
             src            = dict(),
@@ -258,11 +258,10 @@ def main():
             mode           = dict(choices=['get', 'put', 'delete', 'create', 'geturl', 'getstr'], required=True),
             expiry         = dict(default=600, aliases=['expiration']),
             s3_url         = dict(aliases=['S3_URL']),
-            ec2_secret_key = dict(aliases=['aws_secret_key', 'secret_key'], no_log=True),
-            ec2_access_key = dict(aliases=['aws_access_key', 'access_key']),
             overwrite      = dict(aliases=['force'], default=True, type='bool'),
-        ),
+        )
     )
+    module = AnsibleModule(argument_spec=argument_spec)
 
     bucket = module.params.get('bucket')
     obj = module.params.get('object')
