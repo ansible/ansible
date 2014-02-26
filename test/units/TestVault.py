@@ -11,6 +11,7 @@ from binascii import unhexlify
 from binascii import hexlify
 from nose.plugins.skip import SkipTest
 
+from ansible import errors
 from ansible.utils.vault import VaultLib
 # AES IMPORTS
 try:
@@ -73,3 +74,37 @@ class TestVaultLib(TestCase):
         assert enc_data != "foobar", "encryption failed"
         assert dec_data == "foobar", "decryption failed"           
 
+    @unittest.skipIf(not HAS_AES, "aes not installed")
+    def test_encrypt_encrypted(self):
+        v = VaultLib('ansible')
+        v.cipher_name = 'AES'
+        data = "$ANSIBLE_VAULT;9.9;TEST\n%s" % hexlify("ansible")
+        error_hit = False
+        try:
+            enc_data = v.encrypt(data)
+        except errors.AnsibleError, e:
+            error_hit = True
+        assert error_hit, "No error was thrown when trying to encrypt data with a header"    
+
+    def test_decrypt_decrypted(self):
+        v = VaultLib('ansible')
+        data = "ansible"
+        error_hit = False
+        try:
+            dec_data = v.decrypt(data)
+        except errors.AnsibleError, e:
+            error_hit = True
+        assert error_hit, "No error was thrown when trying to decrypt data without a header"    
+
+    @unittest.skipIf(not HAS_AES, "aes not installed")
+    def test_cipher_not_set(self):
+        v = VaultLib('ansible')
+        data = "ansible"
+        error_hit = False
+        try:
+            enc_data = v.encrypt(data)
+        except errors.AnsibleError, e:
+            error_hit = True
+        assert error_hit, "No error was thrown when trying to encrypt data without the cipher set"    
+
+               
