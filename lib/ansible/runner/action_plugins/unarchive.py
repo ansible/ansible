@@ -46,8 +46,8 @@ class ActionModule(object):
         if complex_args:
             options.update(complex_args)
         options.update(utils.parse_kv(module_args))
-        source  = options.get('src', None)
-        dest    = options.get('dest', None)
+        source  = os.path.expanduser(options.get('src', None))
+        dest    = os.path.expanduser(options.get('dest', None))
         copy    = utils.boolean(options.get('copy', 'yes'))
 
         if source is None or dest is None:
