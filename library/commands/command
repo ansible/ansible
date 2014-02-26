@@ -185,7 +185,7 @@ def main():
     if shell:
         if isinstance(args, list):
             args = ' '.join(args).strip()
-     else:
+    else:
         if not isinstance(args, list):
             args = shlex.split(args)
 
