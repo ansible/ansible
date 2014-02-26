@@ -1053,6 +1053,7 @@ def main():
     ec2 = ec2_connect(module)
 
     tagged_instances = [] 
+
     if module.params.get('state') == 'absent':
         instance_ids = module.params.get('instance_ids')
         if not isinstance(instance_ids, list):
