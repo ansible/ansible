@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import unittest
 from unittest import TestCase
 import getpass
 import os
@@ -65,8 +64,9 @@ class TestVaultLib(TestCase):
         assert v.cipher_name == 'TEST', "cipher name was not set"
         assert v.version == "9.9"
 
-    @unittest.skipIf(not HAS_AES, "aes not installed")
     def test_encyrpt_decrypt(self):
+        if not HAS_AES:
+            raise SkipTest
         v = VaultLib('ansible')
         v.cipher_name = 'AES'
         enc_data = v.encrypt("foobar")
@@ -74,8 +74,9 @@ class TestVaultLib(TestCase):
         assert enc_data != "foobar", "encryption failed"
         assert dec_data == "foobar", "decryption failed"           
 
-    @unittest.skipIf(not HAS_AES, "aes not installed")
     def test_encrypt_encrypted(self):
+        if not HAS_AES:
+            raise SkipTest
         v = VaultLib('ansible')
         v.cipher_name = 'AES'
         data = "$ANSIBLE_VAULT;9.9;TEST\n%s" % hexlify("ansible")
@@ -87,6 +88,8 @@ class TestVaultLib(TestCase):
         assert error_hit, "No error was thrown when trying to encrypt data with a header"    
 
     def test_decrypt_decrypted(self):
+        if not HAS_AES:
+            raise SkipTest
         v = VaultLib('ansible')
         data = "ansible"
         error_hit = False
@@ -96,8 +99,9 @@ class TestVaultLib(TestCase):
             error_hit = True
         assert error_hit, "No error was thrown when trying to decrypt data without a header"    
 
-    @unittest.skipIf(not HAS_AES, "aes not installed")
     def test_cipher_not_set(self):
+        if not HAS_AES:
+            raise SkipTest
         v = VaultLib('ansible')
         data = "ansible"
         error_hit = False
