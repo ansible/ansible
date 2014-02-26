@@ -146,7 +146,7 @@ def main():
         groups[curGroup.id] = curGroup
         groups[curGroup.name] = curGroup
 
-        if curGroup.name == name and curGroup.vpc_id == vpc_id:
+        if curGroup.name == name and (vpc_id is None or curGroup.vpc_id == vpc_id):
             group = curGroup
 
     # Ensure requested group is absent
