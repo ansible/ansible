@@ -58,6 +58,9 @@ class VaultLib(object):
         if self.is_encrypted(data):
             raise errors.AnsibleError("data is already encrypted")
 
+        if not self.cipher_name:
+            raise errors.AnsibleError("the cipher must be set before encrypting data")
+
         if 'Vault' + self.cipher_name in globals() and self.cipher_name in CIPHER_WHITELIST: 
             cipher = globals()['Vault' + self.cipher_name]
             this_cipher = cipher()
