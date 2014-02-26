@@ -72,6 +72,12 @@ options:
     required: false
     default: null
     aliases: ['ec2_access_key', 'access_key']
+  aws_security_token:
+    description:
+      - AWS security token. If not set then the value of the AWS_SECURITY_TOKEN environment variable is used.
+    required: false
+    default: null
+    version_added: "1.5"
   overwrite:
     description:
       - Whether an existing record should be overwritten on create if values do not match
@@ -167,6 +173,7 @@ def main():
             value           = dict(required=False), 
             ec2_secret_key  = dict(aliases=['aws_secret_key', 'secret_key'], no_log=True, required=False),
             ec2_access_key  = dict(aliases=['aws_access_key', 'access_key'], required=False),
+            aws_security_token = dict(required=False), 
             overwrite       = dict(required=False, type='bool')
         )
     )
@@ -178,7 +185,7 @@ def main():
     type_in               = module.params.get('type')
     value_in              = module.params.get('value')
 
-    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
+    ec2_url, aws_access_key, aws_secret_key, region, aws_security_token = get_ec2_creds(module)
 
     value_list = ()
 
@@ -200,7 +207,7 @@ def main():
 
     # connect to the route53 endpoint 
     try:
-        conn = boto.route53.connection.Route53Connection(aws_access_key, aws_secret_key)
+        conn = boto.route53.connection.Route53Connection(aws_access_key, aws_secret_key, security_token=aws_security_token)
     except boto.exception.BotoServerError, e:
         module.fail_json(msg = e.error_message)
 

@@ -68,6 +68,12 @@ options:
     required: false
     default: None
     aliases: ['ec2_access_key', 'access_key']
+  aws_security_token:
+    description:
+      - AWS security token. If not set then the value of the AWS_SECURITY_TOKEN environment variable is used.
+    required: false
+    default: None
+    version_added: "1.5"
   region:
     description:
       - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
@@ -184,7 +190,7 @@ class ElbManager(object):
 
     def __init__(self, module, name, listeners=None, purge_listeners=None,
                  zones=None, purge_zones=None, health_check=None,
-                 aws_access_key=None, aws_secret_key=None, region=None):
+                 aws_access_key=None, aws_secret_key=None, region=None, aws_security_token=None):
         self.module = module
         self.name = name
         self.listeners = listeners
@@ -195,6 +201,7 @@ class ElbManager(object):
 
         self.aws_access_key = aws_access_key
         self.aws_secret_key = aws_secret_key
+        self.aws_security_token = aws_security_token
         self.region = region
 
         self.changed = False
@@ -266,7 +273,8 @@ class ElbManager(object):
             connect_region = RegionInfo(name=self.region, endpoint=endpoint)
             return boto.ec2.elb.ELBConnection(self.aws_access_key,
                                               self.aws_secret_key,
-                                              region=connect_region)
+                                              region=connect_region,
+                                              self.aws_security_token)
         except boto.exception.NoAuthHandlerFound, e:
             self.module.fail_json(msg=str(e))
 
@@ -463,6 +471,7 @@ def main():
                             'no_log': True},
             ec2_access_key={'default': None,
                             'aliases': ['aws_access_key', 'access_key']},
+            aws_security_token={'default': None, 'required': False},
             region={'default': None, 'required': False,
                     'aliases': ['aws_region', 'ec2_region'],
                     'choices': AWS_REGIONS},
@@ -471,7 +480,7 @@ def main():
 
     # def get_ec2_creds(module):
     #   return ec2_url, ec2_access_key, ec2_secret_key, region
-    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
+    ec2_url, aws_access_key, aws_secret_key, region, aws_security_token = get_ec2_creds(module)
 
     name = module.params['name']
     state = module.params['state']
@@ -489,7 +498,7 @@ def main():
 
     elb_man = ElbManager(module, name, listeners, purge_listeners, zones,
                          purge_zones, health_check, aws_access_key,
-                         aws_secret_key, region=region)
+                         aws_secret_key, region=region, security_token=aws_security_token)
 
     if state == 'present':
         elb_man.ensure_ok()

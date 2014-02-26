@@ -56,6 +56,12 @@ options:
     required: false
     default: None
     aliases: ['ec2_access_key', 'access_key' ]
+  aws_security_token:
+    description:
+      - AWS security token. If not set then the value of the AWS_SECURITY_TOKEN environment variable is used.
+    required: false
+    default: None
+    version_added: "1.5"
   region:
     description:
       - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
@@ -124,11 +130,12 @@ class ElbManager:
     """Handles EC2 instance ELB registration and de-registration"""
 
     def __init__(self, module, instance_id=None, ec2_elbs=None,
-                 aws_access_key=None, aws_secret_key=None, region=None):
+                 aws_access_key=None, aws_secret_key=None, aws_security_token=None, region=None):
         self.aws_access_key = aws_access_key
         self.aws_secret_key = aws_secret_key
         self.module = module
         self.instance_id = instance_id
+        self.aws_security_token = aws_security_token
         self.region = region
         self.lbs = self._get_instance_lbs(ec2_elbs)
         self.changed = False
@@ -264,7 +271,7 @@ class ElbManager:
         try:
             endpoint="elasticloadbalancing.%s.amazonaws.com" % self.region
             connect_region = RegionInfo(name=self.region, endpoint=endpoint)
-            elb = boto.ec2.elb.ELBConnection(self.aws_access_key, self.aws_secret_key, region=connect_region)
+            elb = boto.ec2.elb.ELBConnection(self.aws_access_key, self.aws_secret_key, security_token=self.aws_security_token, region=connect_region)
         except boto.exception.NoAuthHandlerFound, e:
             self.module.fail_json(msg=str(e))
 
@@ -285,7 +292,7 @@ class ElbManager:
         try:
             endpoint = "ec2.%s.amazonaws.com" % self.region
             connect_region = RegionInfo(name=self.region, endpoint=endpoint)
-            ec2_conn = boto.ec2.EC2Connection(self.aws_access_key, self.aws_secret_key, region=connect_region)
+            ec2_conn = boto.ec2.EC2Connection(self.aws_access_key, self.aws_secret_key, security_token=self.aws_security_token, region=connect_region)
         except boto.exception.NoAuthHandlerFound, e:
             self.module.fail_json(msg=str(e))
         return ec2_conn.get_only_instances(instance_ids=[self.instance_id])[0]
@@ -301,6 +308,7 @@ def main():
             ec2_elbs={'default': None, 'required': False, 'type':'list'},
             ec2_secret_key={'default': None, 'aliases': ['aws_secret_key', 'secret_key'], 'no_log': True},
             ec2_access_key={'default': None, 'aliases': ['aws_access_key', 'access_key']},
+            aws_security_token={'default': None, 'required': False},
             region={'default': None, 'required': False, 'aliases':['aws_region', 'ec2_region'], 'choices':AWS_REGIONS},
             enable_availability_zone={'default': True, 'required': False, 'choices': BOOLEANS, 'type': 'bool'},
             wait={'required': False, 'choices': BOOLEANS, 'default': True, 'type': 'bool'}
@@ -309,7 +317,7 @@ def main():
 
     # def get_ec2_creds(module):
     #   return ec2_url, ec2_access_key, ec2_secret_key, region
-    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
+    ec2_url, aws_access_key, aws_secret_key, region, aws_security_token = get_ec2_creds(module)
 
     ec2_elbs = module.params['ec2_elbs']
     region = module.params['region']
@@ -321,7 +329,7 @@ def main():
 
     instance_id = module.params['instance_id']
     elb_man = ElbManager(module, instance_id, ec2_elbs, aws_access_key,
-                         aws_secret_key, region=region)
+                         aws_secret_key, region=region, security_token=aws_security_token)
 
     if ec2_elbs is not None:
         for elb in ec2_elbs:

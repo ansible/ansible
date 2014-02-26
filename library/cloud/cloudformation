@@ -82,6 +82,12 @@ options:
     default: null
     aliases: [ 'ec2_access_key', 'access_key' ]
     version_added: "1.5"
+  aws_security_token:
+    description:
+      - AWS security token. If not set then the value of the AWS_SECURITY_TOKEN environment variable is used.
+    required: false
+    default: null
+    version_added: "1.5"
   region:
     description:
       - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
@@ -212,7 +218,7 @@ def main():
     template_parameters = module.params['template_parameters']
     tags = module.params['tags']
 
-    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
+    ec2_url, aws_access_key, aws_secret_key, region, aws_security_token = get_ec2_creds(module)
 
     kwargs = dict()
     if tags is not None:
@@ -230,6 +236,7 @@ def main():
         cfn = boto.cloudformation.connection.CloudFormationConnection(
                   aws_access_key_id=aws_access_key, 
                   aws_secret_access_key=aws_secret_key,
+                  security_token=aws_security_token,
                   region=cf_region,
               )
     except boto.exception.NoAuthHandlerFound, e:
