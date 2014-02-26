@@ -181,7 +181,6 @@ def main(args):
         return 1
 
     cmd = 'ansible-playbook %s %s' % (base_opts, playbook)
-    import epdb; epdb.st()
     if options.vault_password_file:
         cmd += " --vault-password-file=%s" % options.vault_password_file
     if options.inventory:
