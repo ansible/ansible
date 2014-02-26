@@ -63,6 +63,13 @@ options:
     required: false
     default: null
     aliases: []
+  network_acls:
+    description:
+      - "A list of dictionaries that represent Network ACLs to create. Any subnets not associated here will be assigned to the default Network ACL. This method also deletes any ACLs it doesn't create."
+      - "Each dictionary should be of the form { subnets: [ cidr1, cidr2 ], inbound_rules: [], outbound_rules: [] }. Each rules array is the same format as ec2_groups, with an extra parameter C(number) that determines the order of rule processing."
+    required: false
+    default: []
+    aliases: []
   wait:
     description:
       - wait for the VPC to be in state 'available' before returning
@@ -206,6 +213,7 @@ def create_vpc(module, vpc_conn):
     subnets = module.params.get('subnets')
     internet_gateway = module.params.get('internet_gateway')
     route_tables = module.params.get('route_tables')
+    network_acls = module.params.get('network_acls')
     wait = module.params.get('wait')
     wait_timeout = int(module.params.get('wait_timeout'))
     changed = False
@@ -394,6 +402,83 @@ def create_vpc(module, vpc_conn):
             except EC2ResponseError, e:
                 module.fail_json(msg='Unable to delete old route table {0}, error: {1}'.format(rt.id, e))
 
+    # Process all network ACLs
+    if not isinstance(network_acls, list):
+        module.fail_json(msg='network acls need to be a list of dictionaries')
+
+    # only do all this work if they gave us a list in the first place
+    if network_acls:
+        subnets = vpc_conn.get_all_subnets(filters={ 'vpc_id': vpc.id })
+        subnets_by_cidr = {}
+        for subnet in subnets:
+            subnets_by_cidr[subnet.cidr_block] = subnet.id
+
+        # create new ones
+        non_default_subnets = []
+        for nacl in network_acls:
+            try:
+                new_nacl = vpc_conn.create_network_acl(vpc.id)
+
+                for t, egress in { 'inbound': False, 'outbound': True }.items():
+                    for rule in nacl.get(t + '_rules', []):
+                        proto = rule.get('proto', -1)
+                        if proto == 'all':
+                            rule['proto'] = -1
+                            rule['from_port'] = None
+                            rule['to_port'] = None
+                        elif proto == 'icmp':
+                            rule['proto'] = 1
+                        elif proto == 'tcp':
+                            rule['proto'] = 6
+                        elif proto == 'udp':
+                            rule['proto'] = 17
+                        else:
+                            if not rule['proto'].isdigit():
+                                module.fail_json(msg='Invalid proto type: {0}. Valid options: all, icmp, tcp, udp or an integer'.format(rule['proto']))
+                        args = {
+                            'network_acl_id': new_nacl.id,
+                            'rule_number':    rule['number'],
+                            'protocol':       rule.get('proto', -1),
+                            'rule_action':    rule['rule'],
+                            'cidr_block':     rule['cidr'],
+                            'egress':         egress,
+                        }
+                        if rule.get('icmp_code'): args['icmp_code']       = rule['icmp_code']
+                        if rule.get('icmp_type'): args['icmp_type']       = rule['icmp_type']
+                        if rule.get('from_port'): args['port_range_from'] = rule['from_port']
+                        if rule.get('to_port'):   args['port_range_to']   = rule['to_port']
+                        vpc_conn.create_network_acl_entry(**args)
+
+                for subnet in nacl['subnets']:
+                    subnet_id = subnets_by_cidr.get(subnet)
+                    if not subnet_id:
+                        module.fail_json(
+                            msg='The subnet {0} to associate with network_acl {1} ' \
+                            'does not exist, aborting'.format(subnet, nacl)
+                        )
+
+                    vpc_conn.associate_network_acl(new_nacl.id, subnet_id)
+                    non_default_subnets.append(subnet_id)
+            except EC2ResponseError as e:
+                module.fail_json(
+                    msg='Unable to create and associate route table {0}, error: ' \
+                    '{1}'.format(rt, e)
+                )
+
+        # reset subnets not linked
+        for subnet_id in list(set(subnets_by_cidr.values()) - set(non_default_subnets)):
+            vpc_conn.disassociate_network_acl(subnet_id, vpc.id)
+
+        # delete old ones - we have to manually filter out the default since AWS doesnt work correctly
+        all_nacls = vpc_conn.get_all_network_acls(filters={ 'vpc-id': vpc.id })
+        for nacl in all_nacls:
+            if not module.boolean(nacl.default) and not len(nacl.associations):
+                try:
+                    vpc_conn.delete_network_acl(nacl.id)
+                except EC2ResponseError as e:
+                    module.fail_json(msg='Unable to delete old NACL {0}, error: {1}'.format(nacl.id, e))
+
+    # All done
     vpc_dict = get_vpc_info(vpc)
     created_vpc_id = vpc.id
     returned_subnets = []
@@ -491,6 +576,7 @@ def main():
             vpc_id = dict(),
             internet_gateway = dict(choices=BOOLEANS, default=False),
             route_tables = dict(type='list'),
+            network_acls = dict(type='list', default=list()),
             region = dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS),
             state = dict(choices=['present', 'absent'], default='present'),
             ec2_secret_key = dict(aliases=['aws_secret_key', 'secret_key'], no_log=True),
