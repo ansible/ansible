@@ -69,6 +69,9 @@ def get_ec2_creds(module):
             region = os.environ['EC2_REGION']
         elif 'AWS_REGION' in os.environ:
             region = os.environ['AWS_REGION']
+        else:
+            # boto.config.get returns None if config not found
+            region = boto.config.get('Boto', 'ec2_region_name')
 
     return ec2_url, ec2_access_key, ec2_secret_key, region
 
