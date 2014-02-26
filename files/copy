@@ -113,8 +113,8 @@ def main():
         add_file_common_args=True,
     )
 
-    src    = module.params['src']
-    dest   = module.params['dest']
+    src    = os.path.expanduser(module.params['src'])
+    dest   = os.path.expanduser(module.params['dest'])
     backup = module.params['backup']
     force  = module.params['force']
     original_basename = module.params.get('original_basename',None)
