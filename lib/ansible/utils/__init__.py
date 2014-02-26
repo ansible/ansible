@@ -375,7 +375,7 @@ It should be written as:
 """
         return msg
 
-    elif len(probline) and len(probline) > 1 and len(probline) >= column and probline[column] == ":" and probline.count(':') > 1:
+    elif len(probline) and len(probline) > 1 and len(probline) > column and probline[column] == ":" and probline.count(':') > 1:
         msg = msg + """
 This one looks easy to fix.  There seems to be an extra unquoted colon in the line 
 and this is confusing the parser. It was only expecting to find one free 
