@@ -56,6 +56,12 @@ options:
       - An associative array of health check configuration settigs (see example)
     require: false
     default: None
+  group:
+    description:
+      - security group (or list of groups) to use with the ELB
+    required: false
+    default: null
+    aliases: [ 'groups' ]
   aws_secret_key:
     description:
       - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
@@ -81,6 +87,13 @@ options:
     choices: ["yes", "no"]
     aliases: []
     version_added: "1.5"
+  subnets:
+    description:
+      - A list of VPC subnets to use when creating it
+    required: false
+    default: None
+    aliases: []
+    version_added: "1.6"
 
 """
 
@@ -184,7 +197,8 @@ class ElbManager(object):
 
     def __init__(self, module, name, listeners=None, purge_listeners=None,
                  zones=None, purge_zones=None, health_check=None,
-                 aws_access_key=None, aws_secret_key=None, region=None):
+                 aws_access_key=None, aws_secret_key=None, region=None,
+                 subnets=None, groups=None):
         self.module = module
         self.name = name
         self.listeners = listeners
@@ -196,6 +210,8 @@ class ElbManager(object):
         self.aws_access_key = aws_access_key
         self.aws_secret_key = aws_secret_key
         self.region = region
+        self.subnets = subnets
+        self.groups = groups
 
         self.changed = False
         self.status = 'gone'
@@ -281,7 +297,9 @@ class ElbManager(object):
         listeners = [self._listener_as_tuple(l) for l in self.listeners]
         self.elb = self.elb_conn.create_load_balancer(name=self.name,
                                                       zones=self.zones,
-                                                      complex_listeners=listeners)
+                                                      complex_listeners=listeners,
+                                                      subnets=self.subnets,
+                                                      security_groups=self.groups)
         if self.elb:
             self.changed = True
             self.status = 'created'
@@ -390,20 +408,21 @@ class ElbManager(object):
 
     def _set_zones(self):
         """Determine which zones need to be enabled or disabled on the ELB"""
-        if self.purge_zones:
-            zones_to_disable = list(set(self.elb.availability_zones) -
-                                    set(self.zones))
-            zones_to_enable = list(set(self.zones) -
-                                   set(self.elb.availability_zones))
-        else:
-            zones_to_disable = None
-            zones_to_enable = list(set(self.zones) -
-                                   set(self.elb.availability_zones))
-        if zones_to_enable:
-            self._enable_zones(zones_to_enable)
-        # N.B. This must come second, in case it would have removed all zones
-        if zones_to_disable:
-            self._disable_zones(zones_to_disable)
+        if self.zones:
+          if self.purge_zones:
+              zones_to_disable = list(set(self.elb.availability_zones) -
+                                      set(self.zones))
+              zones_to_enable = list(set(self.zones) -
+                                     set(self.elb.availability_zones))
+          else:
+              zones_to_disable = None
+              zones_to_enable = list(set(self.zones) -
+                                     set(self.elb.availability_zones))
+          if zones_to_enable:
+              self._enable_zones(zones_to_enable)
+          # N.B. This must come second, in case it would have removed all zones
+          if zones_to_disable:
+              self._disable_zones(zones_to_disable)
 
     def _set_health_check(self):
         """Set health check values on ELB as needed"""
@@ -466,6 +485,8 @@ def main():
             region={'default': None, 'required': False,
                     'aliases': ['aws_region', 'ec2_region'],
                     'choices': AWS_REGIONS},
+            subnets={'default': None, 'required': False, 'type': 'list'},
+            group={'default': None, 'required': False, 'type': 'list'}
         )
     )
 
@@ -481,15 +502,20 @@ def main():
     purge_zones = module.params['purge_zones']
     health_check = module.params['health_check']
 
+    subnets = module.params['subnets']
+    groups = module.params['group']
+
+
     if state == 'present' and not listeners:
         module.fail_json(msg="At least one port is required for ELB creation")
 
-    if state == 'present' and not zones:
-        module.fail_json(msg="At least one availability zone is required for ELB creation")
+    if state == 'present' and not (zones or subnets):
+        module.fail_json(msg="At least one availability zone or subnet is required for ELB creation")
 
     elb_man = ElbManager(module, name, listeners, purge_listeners, zones,
                          purge_zones, health_check, aws_access_key,
-                         aws_secret_key, region=region)
+                         aws_secret_key, region=region, subnets=subnets,
+                         groups=groups)
 
     if state == 'present':
         elb_man.ensure_ok()
