@@ -101,6 +101,7 @@ class Connection(object):
 
         try:
             if not self.is_connected:
+                wrong_user = False
                 tries = 3
                 self.conn = socket.socket()
                 self.conn.settimeout(constants.ACCELERATE_CONNECT_TIMEOUT)
@@ -108,6 +109,12 @@ class Connection(object):
                 while tries > 0:
                     try:
                         self.conn.connect((self.host,self.accport))
+                        if not self.validate_user():
+                            # the accelerated daemon was started with a 
+                            # different remote_user. The above command
+                            # should have caused the accelerate daemon to
+                            # shutdown, so we'll reconnect.
+                            wrong_user = True
                         break
                     except:
                         vvvv("failed, retrying...")
@@ -116,6 +123,9 @@ class Connection(object):
                 if tries == 0:
                     vvv("Could not connect via the accelerated connection, exceeded # of tries")
                     raise errors.AnsibleError("Failed to connect")
+                elif wrong_user:
+                    vvv("Restarting daemon with a different remote_user")
+                    raise errors.AnsibleError("Wrong user")
                 self.conn.settimeout(constants.ACCELERATE_TIMEOUT)
         except:
             if allow_ssh:
@@ -159,8 +169,49 @@ class Connection(object):
         except socket.timeout:
             raise errors.AnsibleError("timed out while waiting to receive data")
 
-    def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False, executable='/bin/sh', in_data=None):
+    def validate_user(self):
+        '''
+        Checks the remote uid of the accelerated daemon vs. the 
+        one specified for this play and will cause the accel 
+        daemon to exit if they don't match
+        '''
+
+        data = dict(
+            mode='validate_user',
+            username=self.user,
+        )
+        data = utils.jsonify(data)
+        data = utils.encrypt(self.key, data)
+        if self.send_data(data):
+            raise errors.AnsibleError("Failed to send command to %s" % self.host)
+
+        while True:
+            # we loop here while waiting for the response, because a
+            # long running command may cause us to receive keepalive packets
+            # ({"pong":"true"}) rather than the response we want.
+            response = self.recv_data()
+            if not response:
+                raise errors.AnsibleError("Failed to get a response from %s" % self.host)
+            response = utils.decrypt(self.key, response)
+            response = utils.parse_json(response)
+            if "pong" in response:
+                # it's a keepalive, go back to waiting
+                vvvv("%s: received a keepalive packet" % self.host)
+                continue
+            else:
+                vvvv("%s: received the response" % self.host)
+                break
+
+        if response.get('failed'):
+            raise errors.AnsibleError("Error while validating user: %s" % response.get("msg"))
+        else:
+            return response.get('rc') == 0
+
+    def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable='/bin/sh', in_data=None, su=None, su_user=None):
         ''' run a command on the remote host '''
+
+        if su or su_user:
+            raise errors.AnsibleError("Internal Error: this module does not support running commands via su")
 
         if in_data:
             raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")

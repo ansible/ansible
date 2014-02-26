@@ -59,6 +59,15 @@ options:
     required: false
     default: null
     aliases: []
+  validate_certs:
+    description:
+      - When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+    required: false
+    default: "yes"
+    choices: ["yes", "no"]
+    aliases: []
+    version_added: "1.5"
+
 requirements: [ "boto" ]
 author: Lester Wade
 '''
@@ -103,17 +112,14 @@ except ImportError:
     sys.exit(1)
 
 def main():
-    module = AnsibleModule(
-        argument_spec = dict(
+    argument_spec = ec2_argument_spec()
+    argument_spec.update(dict(
             resource = dict(required=True),
             tags = dict(required=True),
-            region = dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS),
             state = dict(default='present', choices=['present', 'absent']),
-            ec2_url = dict(aliases=['EC2_URL']),
-            ec2_secret_key = dict(aliases=['aws_secret_key', 'secret_key'], no_log=True),
-            ec2_access_key = dict(aliases=['aws_access_key', 'access_key']),
         )
     )
+    module = AnsibleModule(argument_spec=argument_spec)
 
     resource = module.params.get('resource')
     tags = module.params['tags']

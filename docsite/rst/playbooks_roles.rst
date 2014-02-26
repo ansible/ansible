@@ -17,8 +17,8 @@ See :doc:`playbooks` if you need a review of these concepts.
 Playbooks can also include plays from other playbook files.  When that is done, the plays will be inserted into the playbook to form
 a longer list of plays.
 
-When you start to think about it -- tasks, handlers, variables, and so -- begin to form larger concepts.  You start to think about modeling
-what something is, rather than how to make something look like something.  It's no longer "apply this handful of THINGS" to these hosts, you say "these hosts are a dbservers" or "these hosts are webservers".  In programming, we might call that 'encapsulating' how things work.  For instance,
+When you start to think about it -- tasks, handlers, variables, and so on -- begin to form larger concepts.  You start to think about modeling
+what something is, rather than how to make something look like something.  It's no longer "apply this handful of THINGS to these hosts", you say "these hosts are dbservers" or "these hosts are webservers".  In programming, we might call that "encapsulating" how things work.  For instance,
 you can drive a car without knowing how the engine works.
 
 Roles in Ansible build on the idea of include files and combine them to form clean, reusable abstractions -- they allow you to focus
@@ -193,6 +193,7 @@ This designates the following behaviors, for each role 'x':
 - Any copy tasks can reference files in roles/x/files/ without having to path them relatively or absolutely
 - Any script tasks can reference scripts in roles/x/files/ without having to path them relatively or absolutely
 - Any template tasks can reference files in roles/x/templates/ without having to path them relatively or absolutely
+- Any include tasks can reference files in roles/x/tasks/ without having to path them relatively or absolutely
    
 In Ansible 1.4 and later you can configure a roles_path to search for roles.  Use this to check all of your common roles out to one location, and share
 them easily between multiple playbook projects.  See :doc:`intro_configuration` for details about how to set this up in ansible.cfg.
@@ -319,15 +320,10 @@ The resulting order of execution would be as follows::
 .. note::
    Variable inheritance and scope are detailed in the :doc:`playbooks_variables`.
 
-AnsibleWorks Galaxy
-```````````````````
+Ansible Galaxy
+``````````````
 
-.. image:: https://galaxy.ansibleworks.com/static/img/galaxy_logo_small.png
-   :alt: AnsibleWorks Galaxy Logo
-   :width: 619px
-   :height: 109px
-
-`AnsibleWorks Galaxy <http://galaxy.ansibleworks.com>`_, is a free site for finding, downloading, rating, and reviewing all kinds of community developed Ansible roles and can be a great way to get a jumpstart on your automation projects.
+`Ansible Galaxy <http://galaxy.ansible.com>`_, is a free site for finding, downloading, rating, and reviewing all kinds of community developed Ansible roles and can be a great way to get a jumpstart on your automation projects.
 
 You can sign up with social auth, and the download client 'ansible-galaxy' is included in Ansible 1.4.2 and later.
 

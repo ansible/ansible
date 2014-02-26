@@ -113,9 +113,9 @@ Jinja2 Filters
 .. note:: These are infrequently utilized features.  Use them if they fit a use case you have, but this is optional knowledge.
 
 Filters in Jinja2 are a way of transforming template expressions from one kind of data into another.  Jinja2
-ships with many of these as documented on the official Jinja2 template documentation.
+ships with many of these. See `builtin filters`_ in the official Jinja2 template documentation.
 
-In addition to these, Ansible supplies many more.  
+In addition to those, Ansible supplies many more.
 
 .. _filters_for_formatting_data:
 
@@ -166,6 +166,19 @@ This allows an explicit check with this feature off::
 
 The variable value will be used as is, but the template evaluation will raise an error if it is undefined.
 
+
+.. _defaulting_undefined_variables:
+
+Defaulting Undefined Variables
+------------------------------
+
+Jinja2 provides a useful 'default' filter, that is often a better approach to failing if a variable is not defined.
+
+    {{ some_variable | default(5) }}
+
+In the above example, if the variable 'some_variable' is not defined, the value used will be 5, rather than an error
+being raised.
+
 .. _set_theory_filters:
 
 Set Theory Filters
@@ -176,7 +189,7 @@ All these functions return a unique set from sets or lists.
 
 To get a unique set from a list::
 
-    {{ list1 |unique }}
+    {{ list1 | unique }}
 
 To get a union of two lists::
 
@@ -184,15 +197,15 @@ To get a union of two lists::
 
 To get the intersection of 2 lists (unique list of all items in both)::
 
-    {{ list1 |intersect(list2)}}
+    {{ list1 | intersect(list2) }}
 
 To get the difference of 2 lists (items in 1 that don't exist in 2)::
 
-    {{ list1 |difference(list2)}}
+    {{ list1 | difference(list2) }}
 
 To get the symmetric difference of 2 lists (items exclusive to each list)::
 
-    {{ list1 |symmetric_difference(list2)}}
+    {{ list1 | symmetric_difference(list2) }}
 
 .. _other_useful_filters:
 
@@ -206,6 +219,10 @@ To get the last name of a file path, like 'foo.txt' out of '/etc/asdf/foo.txt'::
 To get the directory from a path::
 
     {{ path | dirname }}
+
+To expand a path containing a tilde (`~`) character (new in version 1.5)::
+
+    {{ path | expanduser }}
 
 To work with Base64 encoded strings::
 
@@ -500,9 +517,9 @@ Similarly, the hostname as the system reports it is::
     {{ ansible_hostname }}
 
 
-Facts are frequently used in conditionals (see `playbook_conditionals`) and also in templates.
+Facts are frequently used in conditionals (see :doc:`playbooks_conditionals`) and also in templates.
 
-Facts can be also used to create dynamic groups of hosts that match particular criteria, see the :doc:`modules` documentation on 'group_by' for details, as well as in generalized conditional statements as discussed in the `playbook_conditionals` chapter.
+Facts can be also used to create dynamic groups of hosts that match particular criteria, see the :doc:`modules` documentation on 'group_by' for details, as well as in generalized conditional statements as discussed in the :doc:`playbooks_conditionals` chapter.
 
 .. _disabling_facts:
 
@@ -569,7 +586,7 @@ or variables defined elsewhere in the playbook.
 Registered Variables
 ````````````````````
 
-Another major use of variables is running a command and using the result of that command to save the result into a variable.
+Another major use of variables is running a command and using the result of that command to save the result into a variable. Results will vary from module to module. Use of -v when executing playbooks will show possible values for the results.
 
 The value of a task being executed in ansible can be saved in a variable and used later.  See some examples of this in the
 :doc:`playbooks_conditionals` chapter.
@@ -653,6 +670,8 @@ Additionally, *inventory_hostname* is the name of the hostname as configured in 
 be useful for when you don't want to rely on the discovered hostname `ansible_hostname` or for other mysterious
 reasons.  If you have a long FQDN, *inventory_hostname_short* also contains the part up to the first
 period, without the rest of the domain.
+
+*play_hosts* is available as a list of hostnames that are in scope for the current play. This may be useful for filling out templates with multiple hostnames or for injecting the list into the rules for a load balancer.
 
 Don't worry about any of this unless you think you need it.  You'll know when you do.
 
@@ -818,7 +837,7 @@ First off, group variables are super powerful.
 
 Site wide defaults should be defined as a 'group_vars/all' setting.  Group variables are generally placed alongside
 your inventory file.  They can also be returned by a dynamic inventory script (see :doc:`intro_dynamic_inventory`) or defined
-in things like AnsibleWorks AWX from the UI or API::
+in things like :doc:`tower` from the UI or API::
 
     ---
     # file: /etc/ansible/group_vars/all
@@ -848,7 +867,7 @@ roles aren't you?  Hint hint.
 
 Ok, so if you are writing a redistributable role with reasonable defaults, put those in the 'roles/x/defaults/main.yml' file.  This means
 the role will bring along a default value but ANYTHING in Ansible will override it.  It's just a default.  That's why it says "defaults" :)
-See `intro_roles` for more info about this::
+See :doc:`playbooks_roles` for more info about this::
 
     ---
     # file: roles/x/defaults/main.yml
@@ -910,8 +929,11 @@ So, that's precedence, explained in a more direct way.  Don't worry about preced
 variable that is a default, or a "live" variable you definitely want to use.  Inventory lies in precedence right in the middle, and
 if you want to forcibly override something, use -e.
 
-If you found that a little hard to understand, take a look at the "ansible-examples" repo on our github for a bit more about
+If you found that a little hard to understand, take a look at the `ansible-examples`_ repo on our github for a bit more about
 how all of these things can work together.
+
+.. _ansible-examples: https://github.com/ansible/ansible-examples
+.. _builtin filters: http://jinja.pocoo.org/docs/templates/#builtin-filters
 
 .. seealso::
 

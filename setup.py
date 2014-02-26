@@ -10,17 +10,24 @@ from distutils.core import setup
 
 # find library modules
 from ansible.constants import DEFAULT_MODULE_PATH
+module_paths = DEFAULT_MODULE_PATH.split(os.pathsep)
+# always install in /usr/share/ansible if specified
+# otherwise use the first module path listed
+if '/usr/share/ansible' in module_paths:
+    install_path = '/usr/share/ansible'
+else:
+    install_path = module_paths[0]
 dirs=os.listdir("./library/")
 data_files = []
 for i in dirs:
-    data_files.append((os.path.join(DEFAULT_MODULE_PATH, i), glob('./library/' + i + '/*')))
+    data_files.append((os.path.join(install_path, i), glob('./library/' + i + '/*')))
 
 setup(name='ansible',
       version=__version__,
       description='Radically simple IT automation',
       author=__author__,
-      author_email='michael@ansibleworks.com',
-      url='http://ansibleworks.com/',
+      author_email='michael@ansible.com',
+      url='http://ansible.com/',
       license='GPLv3',
       install_requires=['paramiko', 'jinja2', "PyYAML"],
       package_dir={ 'ansible': 'lib/ansible' },
@@ -43,7 +50,8 @@ setup(name='ansible',
          'bin/ansible-playbook',
          'bin/ansible-pull',
          'bin/ansible-doc',
-         'bin/ansible-galaxy'
+         'bin/ansible-galaxy',
+         'bin/ansible-vault',
       ],
       data_files=data_files
 )

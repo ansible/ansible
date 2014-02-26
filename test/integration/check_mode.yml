@@ -1,0 +1,3 @@
+- hosts: testhost
+  roles:
+  - { role: test_always_run, tags: test_always_run }

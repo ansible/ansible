@@ -1,0 +1,185 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+
+DOCUMENTATION = '''
+---
+module: ec2_key
+version_added: "1.5"
+short_description: maintain an ec2 key pair.
+description:
+    - maintains ec2 key pairs. This module has a dependency on python-boto >= 2.5
+options:
+  name:
+    description:
+      - Name of the key pair.
+    required: true
+  key_material:
+    description:
+      - Public key material.
+    required: false
+  region:
+    description:
+      - the EC2 region to use
+    required: false
+    default: null
+    aliases: []
+  ec2_url:
+    description:
+      - Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints)
+    required: false
+    default: null
+    aliases: []
+  ec2_secret_key:
+    description:
+      - EC2 secret key
+    required: false
+    default: null
+    aliases: ['aws_secret_key', 'secret_key']
+  ec2_access_key:
+    description:
+      - EC2 access key
+    required: false
+    default: null
+    aliases: ['aws_access_key', 'access_key']
+  state:
+    description:
+      - create or delete keypair
+    required: false
+    default: 'present'
+    aliases: []
+  validate_certs:
+    description:
+      - When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+    required: false
+    default: "yes"
+    choices: ["yes", "no"]
+    aliases: []
+    version_added: "1.5"
+
+requirements: [ "boto" ]
+author: Vincent Viallet
+'''
+
+EXAMPLES = '''
+# Note: None of these examples set aws_access_key, aws_secret_key, or region.
+# It is assumed that their matching environment variables are set.
+
+# Creates a new ec2 key pair named `example` if not present, returns generated
+# private key
+- name: example ec2 key
+  local_action:
+    module: ec2_key
+    name: example
+
+# Creates a new ec2 key pair named `example` if not present using provided key
+# material
+- name: example2 ec2 key
+  local_action:
+    module: ec2_key
+    name: example2
+    key_material: 'ssh-rsa AAAAxyz...== me@example.com'
+    state: present
+
+# Creates a new ec2 key pair named `example` if not present using provided key
+# material
+- name: example3 ec2 key
+  local_action:
+    module: ec2_key
+    name: example3
+    key_material: "{{ item }}"
+  with_file: /path/to/public_key.id_rsa.pub
+
+# Removes ec2 key pair by name
+- name: remove example key
+  local_action:
+    module: ec2_key
+    name: example
+    state: absent
+'''
+
+try:
+    import boto.ec2
+except ImportError:
+    print "failed=True msg='boto required for this module'"
+    sys.exit(1)
+
+def main():
+    argument_spec = ec2_argument_spec()
+    argument_spec.update(dict(
+            name=dict(required=True),
+            key_material=dict(required=False),
+            state = dict(default='present', choices=['present', 'absent']),
+        )
+    )
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True,
+    )
+
+    name = module.params['name']
+    state = module.params.get('state')
+    key_material = module.params.get('key_material')
+
+    changed = False
+
+    ec2 = ec2_connect(module)
+
+    # find the key if present
+    key = ec2.get_key_pair(name)
+
+    # Ensure requested key is absent
+    if state == 'absent':
+        if key:
+            '''found a match, delete it'''
+            try:
+                key.delete()
+            except Exception, e:
+                module.fail_json(msg="Unable to delete key pair '%s' - %s" % (key, e))
+            else:
+                key = None
+                changed = True
+        else:
+            '''no match found, no changes required'''
+
+    # Ensure requested key is present
+    elif state == 'present':
+        if key:
+            '''existing key found'''
+            # Should check if the fingerprint is the same - but lack of info
+            # and different fingerprint provided (pub or private) depending if
+            # the key has been created of imported.
+            pass
+
+        # if the key doesn't exist, create it now
+        else:
+            '''no match found, create it'''
+            if not module.check_mode:
+                if key_material:
+                    '''We are providing the key, need to import'''
+                    key = ec2.import_key_pair(name, key_material)
+                else:
+                    '''
+                    No material provided, let AWS handle the key creation and 
+                    retrieve the private key
+                    '''
+                    key = ec2.create_key_pair(name)
+            changed = True
+
+    if key:
+        data = {
+            'name': key.name,
+            'fingerprint': key.fingerprint
+        }
+        if key.material:
+            data.update({'private_key': key.material})
+
+        module.exit_json(changed=changed, key=data)
+    else:
+        module.exit_json(changed=changed, key=None)
+
+# import module snippets
+from ansible.module_utils.basic import *
+from ansible.module_utils.ec2 import *
+
+main()

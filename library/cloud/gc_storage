@@ -83,7 +83,7 @@ options:
 
 requirements: [ "boto 2.9+" ]
 
-author: benno@ansibleworks.com Note. Most of the code has been taken from the S3 module.
+author: benno@ansible.com Note. Most of the code has been taken from the S3 module.
 
 '''
 

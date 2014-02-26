@@ -191,7 +191,7 @@ def package_status(m, pkgname, version, cache, state):
             # assume older version of python-apt is installed
             package_is_installed = pkg.isInstalled
 
-    if version:
+    if version and package_is_installed:
         try:
             installed_version = pkg.installed.version
         except AttributeError:
@@ -384,7 +384,10 @@ def main():
     try:
         cache = apt.Cache()
         if p['default_release']:
-            apt_pkg.config['APT::Default-Release'] = p['default_release']
+            try:
+                apt_pkg.config['APT::Default-Release'] = p['default_release']
+            except AttributeError:
+                apt_pkg.Config['APT::Default-Release'] = p['default_release']
             # reopen cache w/ modified config
             cache.open(progress=None)
 

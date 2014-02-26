@@ -56,6 +56,9 @@ def parse():
         help="module argument string")
     parser.add_option('-D', '--debugger', dest='debugger', 
         help="path to python debugger (e.g. /usr/bin/pdb)")
+    parser.add_option('-I', '--interpreter', dest='interpreter',
+        help="path to interpeter to use for this module (e.g. ansible_python_interpreter=/usr/bin/python)",
+        metavar='INTERPRETER_TYPE=INTERPRETER_PATH')
     options, args = parser.parse_args()
     if not options.module_path:
         parser.print_help()
@@ -74,7 +77,7 @@ def write_argsfile(argstring, json=False):
     argsfile.close()
     return argspath
 
-def boilerplate_module(modfile, args):
+def boilerplate_module(modfile, args, interpreter):
     """ simulate what ansible does with new style modules """
 
     #module_fh = open(modfile)
@@ -86,7 +89,22 @@ def boilerplate_module(modfile, args):
     #included_boilerplate = module_data.find(module_common.REPLACER) != -1 or module_data.find("import ansible.module_utils") != -1
 
     complex_args = {}
+    if args.startswith("@"):
+        # Argument is a YAML file (JSON is a subset of YAML)
+        complex_args = utils.combine_vars(complex_args, utils.parse_yaml_from_file(args[1:]))
+        args=''
+
     inject = {}
+    if interpreter:
+        if '=' not in interpreter:
+            print 'interpeter must by in the form of ansible_python_interpreter=/usr/bin/python'
+            sys.exit(1)
+        interpreter_type, interpreter_path = interpreter.split('=')
+        if not interpreter_type.startswith('ansible_'):
+            interpreter_type = 'ansible_%s' % interpreter_type
+        if not interpreter_type.endswith('_interpreter'):
+            interpreter_type = '%s_interpreter' % interpreter_type
+        inject[interpreter_type] = interpreter_path
     (module_data, module_style, shebang) = replacer.modify_module(
         modfile, 
         complex_args,
@@ -144,7 +162,7 @@ def rundebug(debugger, modfile, argspath):
 def main(): 
 
     options, args = parse()
-    (modfile, module_style) = boilerplate_module(options.module_path, options.module_args)
+    (modfile, module_style) = boilerplate_module(options.module_path, options.module_args, options.interpreter)
 
     argspath=None
     if module_style != 'new':

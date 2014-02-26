@@ -1,0 +1,79 @@
+# test code for the git module
+# (c) 2014, James Tanner <tanner.jc@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: set where to extract the repo
+  set_fact: checkout_dir={{ output_dir }}/git
+
+- name: set what repo to use
+  set_fact: repo=https://github.com/jimi-c/test_role
+
+- name: clean out the output_dir
+  shell: rm -rf {{ output_dir }}/*
+
+- name: verify that git is installed so this test can continue
+  shell: which git
+
+- name: initial checkout
+  git: repo={{ repo }} dest={{ checkout_dir }}
+  register: git_result
+
+- debug: var=git_result
+
+- shell: ls ~/ansible_testing/git
+
+- name: verify information about the initial clone
+  assert:
+    that:
+      - "'before' in git_result"
+      - "'after' in git_result"
+      - "not git_result.before"
+      - "git_result.changed"      
+
+- name: repeated checkout
+  git: repo={{ repo }} dest={{ checkout_dir }}
+  register: git_result2
+
+- debug: var=git_result2
+
+- name: check for tags
+  stat: path={{ checkout_dir }}/.git/refs/tags
+  register: tags
+
+- name: check for HEAD
+  stat: path={{ checkout_dir }}/.git/HEAD
+  register: head
+
+- name: check for remotes
+  stat: path={{ checkout_dir }}/.git/branches
+  register: branches
+
+- name: assert presense of tags/trunk/branches
+  assert:
+    that:
+      - "tags.stat.isdir"
+      - "head.stat.isreg"
+      - "branches.stat.isdir"
+
+- name: verify on a reclone things are marked unchanged
+  assert:
+    that:
+      - "not git_result2.changed"
+
+
+
+

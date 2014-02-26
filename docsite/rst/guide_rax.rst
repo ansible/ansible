@@ -160,7 +160,7 @@ You might want to use this even if you are spinning up Ansible via other tools, 
 The inventory plugin can be used to group resources by their meta data.  Utilizing meta data is highly 
 recommended in rax and can provide an easy way to sort between host groups and roles.
 
-If you don't want to use the ``rax.py`` dynamic inventory script, you could also still choose to manually manage your INI inventroy file,
+If you don't want to use the ``rax.py`` dynamic inventory script, you could also still choose to manually manage your INI inventory file,
 though this is less recommended.   
 
 In Ansible it is quite possible to use multiple dynamic inventory plugins along with INI file data.  Just put them in a common
@@ -171,10 +171,9 @@ directory and be sure the scripts are chmod +x, and the INI-based ones are not.
 rax.py
 ++++++
 
-To use the rackspace dynamic inventory script, copy ``rax.py`` from ``plugins/inventory`` into your inventory directory.  You can specify credentials 
-for ``rax.py`` utilizing the ``RAX_CREDS_FILE`` environment variable.
+To use the rackspace dynamic inventory script, copy ``rax.py`` from ``plugins/inventory`` into your inventory directory and make it executable. You can specify credentials for ``rax.py`` utilizing the ``RAX_CREDS_FILE`` environment variable.
 
-.. note:: Users of AnsibleWorks AWX will note that dynamic inventory is natively supported by AWX, and all you have to do is associate a group with your Rackspace Cloud credentials, and it will easily synchronize without going through these steps::
+.. note:: Users of :doc:`tower` will note that dynamic inventory is natively supported by Tower, and all you have to do is associate a group with your Rackspace Cloud credentials, and it will easily synchronize without going through these steps::
 
     $ RAX_CREDS_FILE=~/.raxpub ansible all -i rax.py -m setup
 
@@ -575,15 +574,15 @@ Advanced Usage
 
 .. _awx_autoscale:
 
-AWX Autoscaling
-+++++++++++++++
+Autoscaling with Tower
+++++++++++++++++++++++
 
-AnsibleWorks's "AWX" solution also contains a very nice feature for auto-scaling use cases.  
+:doc:`tower` also contains a very nice feature for auto-scaling use cases.  
 In this mode, a simple curl script can call a defined URL and the server will "dial out" to the requester 
 and configure an instance that is spinning up.  This can be a great way to reconfigure ephmeral nodes.  
-See the AWX documentation for more details.  Click on the AWX link in the sidebar for details.
+See the Tower documentation for more details.  
 
-A benefit of using the callback in AWX over pull mode is that job results are still centrally recorded 
+A benefit of using the callback in Tower over pull mode is that job results are still centrally recorded 
 and less information has to be shared with remote hosts.
 
 .. _pending_information:

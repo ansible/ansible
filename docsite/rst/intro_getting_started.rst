@@ -26,17 +26,17 @@ Before we get started, it's important to understand how Ansible is communicating
 machines over SSH. 
 
 By default, Ansible 1.3 and later will try to use native 
-OpenSSH for remote communication  when possible.  This enables both ControlPersist (a performance feature), Kerberos, and options in ~/.ssh/config such as Jump Host setup.  When using Enterprise Linux 6 operating systems as the control machine (Red Hat Enterprise Linux and derivatives such as CentOS), however, the version of OpenSSH may be too old to support Control Persist. On these operating systems, Ansible will fallback into using a high-quality python implementation of
+OpenSSH for remote communication  when possible.  This enables both ControlPersist (a performance feature), Kerberos, and options in ~/.ssh/config such as Jump Host setup.  When using Enterprise Linux 6 operating systems as the control machine (Red Hat Enterprise Linux and derivatives such as CentOS), however, the version of OpenSSH may be too old to support ControlPersist. On these operating systems, Ansible will fallback into using a high-quality Python implementation of
 OpenSSH called 'paramiko'.  If you wish to use features like Kerberized SSH and more, consider using Fedora, OS X, or Ubuntu as your control machine until a newer version of OpenSSH is available for your platform -- or engage 'accelerated mode' in Ansible.  See :doc:`playbooks_acceleration`.
 
 In Ansible 1.2 and before, the default was strictly paramiko and native SSH had to be explicitly selected with -c ssh or set in the configuration file.
 
 Occasionally you'll encounter a device that doesn't do SFTP. This is rare, but if talking with some remote devices that don't support SFTP, you can switch to SCP mode in :doc:`intro_configuration`.
 
-When speaking with remote machines, Ansible will by default assume you are using SSH keys -- which we encourage -- but passwords are fine too.  To enable password auth, supply the option --ask-pass where needed.  If using sudo features and when sudo requires a password, also supply --ask-sudo-pass as appropriate.
+When speaking with remote machines, Ansible will by default assume you are using SSH keys -- which we encourage -- but passwords are fine too.  To enable password auth, supply the option ``--ask-pass`` where needed.  If using sudo features and when sudo requires a password, also supply ``--ask-sudo-pass`` as appropriate.
 
-While it may be common sense, it is worth sharing: Any management system benefits from being run near your machines you are being managed. If running in a cloud, consider running Ansible from a machine inside that cloud.  It will work better than on the open
-intranet in most cases.
+While it may be common sense, it is worth sharing: Any management system benefits from being run near the machines being managed. If running in a cloud, consider running Ansible from a machine inside that cloud.  It will work better than on the open
+internet in most cases.
 
 As an advanced topic, Ansible doesn't just have to connect remotely over SSH.  The transports are pluggable, and there are options for managing things locally, as well as managing chroot, lxc, and jail containers.  A mode called 'ansible-pull' can also invert the system and have systems 'phone home' via scheduled git checkouts to pull configuration directives from a central repository.
 
@@ -64,7 +64,7 @@ do:
     $ ssh-agent bash
     $ ssh-add ~/.ssh/id_rsa
 
-(Depending on your setup, you may wish to use Ansible's --private-key option to specify a pem file instead)
+(Depending on your setup, you may wish to use Ansible's ``--private-key`` option to specify a pem file instead)
 
 Now ping all your nodes:
 
@@ -127,7 +127,7 @@ Also note that host key checking in paramiko mode is reasonably slow, therefore 
 .. _a_note_about_logging:
 
 Ansible will log some information about module arguments on the remote system in the remote syslog.  To enable basic
-logging on the control machine see `intro_config` document and set the 'log_path' configuration file setting.  Enterprise users may also be interested in `AnsibleWorks AWX <http://ansibleworks.com/ansibleworks-awx>`_.  AWX provides a very robust database logging feature where it is possible to drill down and see history based on hosts, projects, and particular inventories over time -- explorable both graphically and through a REST API.
+logging on the control machine see :doc:`intro_configuration` document and set the 'log_path' configuration file setting.  Enterprise users may also be interested in :doc:`tower`.  Tower provides a very robust database logging feature where it is possible to drill down and see history based on hosts, projects, and particular inventories over time -- explorable both graphically and through a REST API.
 
 .. seealso::
 

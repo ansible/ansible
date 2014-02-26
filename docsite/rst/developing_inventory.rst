@@ -16,7 +16,7 @@ You can do this in any language.
 Script Conventions
 ``````````````````
 
-When the external node script is called with the single argument '--list', the script must return a JSON hash/dictionary of all the groups to be managed. Each group's value should be either a hash/dictionary containing a list of each host/IP, potential child groups, and potential group variables, or simply a list of host/IP addresses, like so::
+When the external node script is called with the single argument ``--list``, the script must return a JSON hash/dictionary of all the groups to be managed. Each group's value should be either a hash/dictionary containing a list of each host/IP, potential child groups, and potential group variables, or simply a list of host/IP addresses, like so::
 
     {
         "databases"   : {
@@ -31,7 +31,7 @@ When the external node script is called with the single argument '--list', the s
             "vars"    : {
                 "b"   : false
             },
-            "children": [ "marietta", "5points" ],
+            "children": [ "marietta", "5points" ]
         },
         "marietta"    : [ "host6.example.com" ],
         "5points"     : [ "host7.example.com" ]
@@ -41,7 +41,7 @@ When the external node script is called with the single argument '--list', the s
 
 Before version 1.0, each group could only have a list of hostnames/IP addresses, like the webservers, marietta, and 5points groups above.
 
-When called with the arguments '--host <hostname>' (where <hostname> is a host from above), the script must return either an empty JSON
+When called with the arguments ``--host <hostname>`` (where <hostname> is a host from above), the script must return either an empty JSON
 hash/dictionary, or a hash/dictionary of variables to make available to templates and playbooks.  Returning variables is optional,
 if the script does not wish to do this, returning an empty hash/dictionary is the way to go::
 
@@ -59,11 +59,11 @@ Tuning the External Inventory Script
 .. versionadded:: 1.3
 
 The stock inventory script system detailed above works for all versions of Ansible, but calling
-'--host' for every host can be rather expensive,  especially if it involves expensive API calls to
+``--host`` for every host can be rather expensive,  especially if it involves expensive API calls to
 a remote subsystem.  In Ansible
 1.3 or later, if the inventory script returns a top level element called "_meta", it is possible
 to return all of the host variables in one inventory script call.  When this meta element contains
-a value for "hostvars", the inventory script will not be invoked with "--host" for each host.  This
+a value for "hostvars", the inventory script will not be invoked with ``--host`` for each host.  This
 results in a significant performance increase for large numbers of hosts, and also makes client
 side caching easier to implement for the inventory script.
 
@@ -91,7 +91,7 @@ The data to be added to the top level JSON dictionary looks like this::
        How to develop modules
    :doc:`developing_plugins`
        How to develop plugins
-   `AnsibleWorks AWX <http://ansibleworks.com/ansibleworks-awx>`_
+   `Ansible Tower <http://ansible.com/ansible-tower>`_
        REST API endpoint and GUI for Ansible, syncs with dynamic inventory
    `Development Mailing List <http://groups.google.com/group/ansible-devel>`_
        Mailing list for development topics

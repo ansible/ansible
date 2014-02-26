@@ -36,7 +36,7 @@ description:
        the target host, requests will be sent through that proxy. This
        behaviour can be overridden by setting a variable for this task
        (see `setting the environment
-       <http://www.ansibleworks.com/docs/playbooks_environment.html#setting-the-environment-and-working-with-proxies>`_),
+       <http://docs.ansible.com/playbooks_environment.html>`_),
        or by using the use_proxy option.
 version_added: "0.6"
 options:
@@ -52,6 +52,8 @@ options:
       - If C(dest) is a directory, either the server provided filename or, if
         none provided, the base name of the URL on the remote server will be
         used. If a directory, C(force) has no effect.
+        If C(dest) is a directory, the file will always be
+        downloaded (regardless of the force option), but replaced only if the contents changed.
     required: true
     default: null
   force:
@@ -61,8 +63,6 @@ options:
         will only be downloaded if the destination does not exist. Generally
         should be C(yes) only for small local files. Prior to 0.6, this module
         behaved as if C(yes) was the default.
-        Has no effect if C(dest) is a directory - the file will always be
-        downloaded, but replaced only if the contents changed.
     version_added: "0.7"
     required: false
     choices: [ "yes", "no" ]
@@ -130,7 +130,7 @@ def url_filename(url):
         return 'index.html'
     return fn
 
-def url_do_get(module, url, dest, use_proxy, last_mod_time):
+def url_do_get(module, url, dest, use_proxy, last_mod_time, force):
     """
     Get url and return request and info
     Credits: http://stackoverflow.com/questions/7006574/how-to-download-file-from-ftp
@@ -176,9 +176,11 @@ def url_do_get(module, url, dest, use_proxy, last_mod_time):
     request = urllib2.Request(url)
     request.add_header('User-agent', USERAGENT)
 
-    if last_mod_time:
+    if last_mod_time and not force:
         tstamp = last_mod_time.strftime('%a, %d %b %Y %H:%M:%S +0000')
         request.add_header('If-Modified-Since', tstamp)
+    else:
+        request.add_header('cache-control', 'no-cache')
 
     try:
         r = urllib2.urlopen(request)
@@ -194,16 +196,15 @@ def url_do_get(module, url, dest, use_proxy, last_mod_time):
 
     return r, info
 
-def url_get(module, url, dest, use_proxy, last_mod_time):
+def url_get(module, url, dest, use_proxy, last_mod_time, force):
     """
     Download data from the url and store in a temporary file.
 
     Return (tempfile, info about the request)
     """
 
-    req, info = url_do_get(module, url, dest, use_proxy, last_mod_time)
+    req, info = url_do_get(module, url, dest, use_proxy, last_mod_time, force)
 
-    # TODO: should really handle 304, but how? src file could exist (and be newer) but empty
     if info['status'] == 304:
         module.exit_json(url=url, dest=dest, changed=False, msg=info.get('msg', ''))
 
@@ -283,7 +284,7 @@ def main():
         last_mod_time = datetime.datetime.utcfromtimestamp(mtime)
 
     # download to tmpsrc
-    tmpsrc, info = url_get(module, url, dest, use_proxy, last_mod_time)
+    tmpsrc, info = url_get(module, url, dest, use_proxy, last_mod_time, force)
 
     # Now the request has completed, we can finally generate the final
     # destination file name from the info dict.
@@ -334,7 +335,7 @@ def main():
     else:
         changed = False
 
-    # Check the digest of the destination file and ensure that it matches the 
+    # Check the digest of the destination file and ensure that it matches the
     # sha256sum parameter if it is present
     if sha256sum != '':
         # Remove any non-alphanumeric characters, including the infamous

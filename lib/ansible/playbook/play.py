@@ -34,7 +34,7 @@ class Play(object):
        'handlers', 'remote_user', 'remote_port', 'included_roles', 'accelerate',
        'accelerate_port', 'accelerate_ipv6', 'sudo', 'sudo_user', 'transport', 'playbook',
        'tags', 'gather_facts', 'serial', '_ds', '_handlers', '_tasks',
-       'basedir', 'any_errors_fatal', 'roles', 'max_fail_pct'
+       'basedir', 'any_errors_fatal', 'roles', 'max_fail_pct', '_play_hosts', 'su', 'su_user', 'vault_password'
     ]
 
     # to catch typos and so forth -- these are userland names
@@ -43,12 +43,13 @@ class Play(object):
        'hosts', 'name', 'vars', 'vars_prompt', 'vars_files',
        'tasks', 'handlers', 'remote_user', 'user', 'port', 'include', 'accelerate', 'accelerate_port', 'accelerate_ipv6',
        'sudo', 'sudo_user', 'connection', 'tags', 'gather_facts', 'serial',
-       'any_errors_fatal', 'roles', 'pre_tasks', 'post_tasks', 'max_fail_percentage' 
+       'any_errors_fatal', 'roles', 'pre_tasks', 'post_tasks', 'max_fail_percentage',
+       'su', 'su_user', 'vault_password'
     ]
 
     # *************************************************
 
-    def __init__(self, playbook, ds, basedir):
+    def __init__(self, playbook, ds, basedir, vault_password=None):
         ''' constructor loads from a play datastructure '''
 
         for x in ds.keys():
@@ -63,6 +64,7 @@ class Play(object):
         self.basedir          = basedir
         self.roles            = ds.get('roles', None)
         self.tags             = ds.get('tags', None)
+        self.vault_password   = vault_password
 
         if self.tags is None:
             self.tags = []
@@ -87,6 +89,7 @@ class Play(object):
         self.vars_files = ds.get('vars_files', [])
         if not isinstance(self.vars_files, list):
             raise errors.AnsibleError('vars_files must be a list')
+
         self._update_vars_files_for_host(None)
 
         # template everything to be efficient, but do not pre-mature template
@@ -121,6 +124,14 @@ class Play(object):
         self.accelerate_port  = ds.get('accelerate_port', None)
         self.accelerate_ipv6  = ds.get('accelerate_ipv6', False)
         self.max_fail_pct     = int(ds.get('max_fail_percentage', 100))
+        self.su               = ds.get('su', self.playbook.su)
+        self.su_user          = ds.get('su_user', self.playbook.su_user)
+        #self.vault_password   = vault_password
+
+        # Fail out if user specifies a sudo param with a su param in a given play
+        if (ds.get('sudo') or ds.get('sudo_user')) and (ds.get('su') or ds.get('su_user')):
+            raise errors.AnsibleError('sudo params ("sudo", "sudo_user") and su params '
+                                      '("su", "su_user") cannot be used together')
 
         load_vars = {}
         load_vars['playbook_dir'] = self.basedir
@@ -134,6 +145,8 @@ class Play(object):
         if self.sudo_user != 'root':
             self.sudo = True
 
+        # place holder for the discovered hosts to be used in this play
+        self._play_hosts = None
 
     # *************************************************
 
@@ -187,7 +200,7 @@ class Play(object):
             vars = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(role_path, 'vars')))
             vars_data = {}
             if os.path.isfile(vars):
-                vars_data = utils.parse_yaml_from_file(vars)
+                vars_data = utils.parse_yaml_from_file(vars, vault_password=self.vault_password)
                 if vars_data:
                     if not isinstance(vars_data, dict):
                         raise errors.AnsibleError("vars from '%s' are not a dict" % vars)
@@ -195,12 +208,12 @@ class Play(object):
             defaults = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(role_path, 'defaults')))
             defaults_data = {}
             if os.path.isfile(defaults):
-                defaults_data = utils.parse_yaml_from_file(defaults)
+                defaults_data = utils.parse_yaml_from_file(defaults, vault_password=self.vault_password)
             # the meta directory contains the yaml that should
             # hold the list of dependencies (if any)
             meta = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(role_path, 'meta')))
             if os.path.isfile(meta):
-                data = utils.parse_yaml_from_file(meta)
+                data = utils.parse_yaml_from_file(meta, vault_password=self.vault_password)
                 if data:
                     dependencies = data.get('dependencies',[])
                     if dependencies is None:
@@ -210,7 +223,7 @@ class Play(object):
                         (dep_path,dep_vars) = self._get_role_path(dep)
                         meta = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(dep_path, 'meta')))
                         if os.path.isfile(meta):
-                            meta_data = utils.parse_yaml_from_file(meta)
+                            meta_data = utils.parse_yaml_from_file(meta, vault_password=self.vault_password)
                             if meta_data:
                                 allow_dupes = utils.boolean(meta_data.get('allow_duplicates',''))
 
@@ -231,13 +244,13 @@ class Play(object):
                         vars = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(dep_path, 'vars')))
                         vars_data = {}
                         if os.path.isfile(vars):
-                            vars_data = utils.parse_yaml_from_file(vars)
+                            vars_data = utils.parse_yaml_from_file(vars, vault_password=self.vault_password)
                             if vars_data:
                                 dep_vars = utils.combine_vars(vars_data, dep_vars)
                         defaults = self._resolve_main(utils.path_dwim(self.basedir, os.path.join(dep_path, 'defaults')))
                         dep_defaults_data = {}
                         if os.path.isfile(defaults):
-                            dep_defaults_data = utils.parse_yaml_from_file(defaults)
+                            dep_defaults_data = utils.parse_yaml_from_file(defaults, vault_password=self.vault_password)
                         if 'role' in dep_vars:
                             del dep_vars['role']
 
@@ -292,7 +305,7 @@ class Play(object):
         default_vars = {}
         for filename in defaults_files:
             if os.path.exists(filename):
-                new_default_vars = utils.parse_yaml_from_file(filename)
+                new_default_vars = utils.parse_yaml_from_file(filename, vault_password=self.vault_password)
                 if new_default_vars:
                     if type(new_default_vars) != dict:
                         raise errors.AnsibleError("%s must be stored as dictionary/hash: %s" % (filename, type(new_default_vars)))
@@ -432,7 +445,8 @@ class Play(object):
 
     # *************************************************
 
-    def _load_tasks(self, tasks, vars=None, default_vars=None, sudo_vars=None, additional_conditions=None, original_file=None, role_name=None):
+    def _load_tasks(self, tasks, vars=None, default_vars=None, sudo_vars=None,
+                    additional_conditions=None, original_file=None, role_name=None):
         ''' handle task and handler include statements '''
 
         results = []
@@ -469,7 +483,7 @@ class Play(object):
 
             if 'meta' in x:
                 if x['meta'] == 'flush_handlers':
-                    results.append(Task(self,x))
+                    results.append(Task(self, x))
                     continue
 
             task_vars = self.vars.copy()
@@ -493,7 +507,7 @@ class Play(object):
                         elif type(x[k]) is list:
                             for i in x[k]:
                                 included_additional_conditions.insert(0, i)
-                    elif k in ("include", "vars", "default_vars", "sudo", "sudo_user", "role_name"):
+                    elif k in ("include", "vars", "default_vars", "sudo", "sudo_user", "role_name", "no_log"):
                         continue
                     else:
                         include_vars[k] = x[k]
@@ -529,7 +543,7 @@ class Play(object):
                         dirname = os.path.dirname(original_file)
                     include_file = template(dirname, tokens[0], mv)
                     include_filename = utils.path_dwim(dirname, include_file)
-                    data = utils.parse_yaml_from_file(include_filename)
+                    data = utils.parse_yaml_from_file(include_filename, vault_password=self.vault_password)
                     if 'role_name' in x and data is not None:
                         for x in data:
                             if 'include' in x:
@@ -537,7 +551,13 @@ class Play(object):
                     loaded = self._load_tasks(data, mv, default_vars, included_sudo_vars, list(included_additional_conditions), original_file=include_filename, role_name=new_role)
                     results += loaded
             elif type(x) == dict:
-                task = Task(self,x,module_vars=task_vars,default_vars=default_vars,additional_conditions=list(additional_conditions),role_name=role_name)
+                task = Task(
+                    self, x,
+                    module_vars=task_vars,
+                    default_vars=default_vars,
+                    additional_conditions=list(additional_conditions),
+                    role_name=role_name
+                )
                 results.append(task)
             else:
                 raise Exception("unexpected task type")
@@ -629,18 +649,18 @@ class Play(object):
             raise errors.AnsibleError("'vars_prompt' section is malformed, see docs")
 
         if type(self.playbook.extra_vars) == dict:
-            vars.update(self.playbook.extra_vars)
+            vars = utils.combine_vars(vars, self.playbook.extra_vars)
 
         return vars
 
     # *************************************************
 
-    def update_vars_files(self, hosts):
+    def update_vars_files(self, hosts, vault_password=None):
         ''' calculate vars_files, which requires that setup runs first so ansible facts can be mixed in '''
 
         # now loop through all the hosts...
         for h in hosts:
-            self._update_vars_files_for_host(h)
+            self._update_vars_files_for_host(h, vault_password=vault_password)
 
     # *************************************************
 
@@ -672,14 +692,14 @@ class Play(object):
 
     # *************************************************
 
-    def _update_vars_files_for_host(self, host):
+    def _update_vars_files_for_host(self, host, vault_password=None):
 
         if type(self.vars_files) != list:
             self.vars_files = [ self.vars_files ]
 
         if host is not None:
             inject = {}
-            inject.update(self.playbook.inventory.get_variables(host))
+            inject.update(self.playbook.inventory.get_variables(host, vault_password=vault_password))
             inject.update(self.playbook.SETUP_CACHE[host])
 
         for filename in self.vars_files:
@@ -698,7 +718,7 @@ class Play(object):
                     sequence.append(filename4)
                     if os.path.exists(filename4):
                         found = True
-                        data = utils.parse_yaml_from_file(filename4)
+                        data = utils.parse_yaml_from_file(filename4, vault_password=self.vault_password)
                         if type(data) != dict:
                             raise errors.AnsibleError("%s must be stored as a dictionary/hash" % filename4)
                         if host is not None:
@@ -730,7 +750,7 @@ class Play(object):
                 filename4 = utils.path_dwim(self.basedir, filename3)
                 if self._has_vars_in(filename4):
                     continue
-                new_vars = utils.parse_yaml_from_file(filename4)
+                new_vars = utils.parse_yaml_from_file(filename4, vault_password=self.vault_password)
                 if new_vars:
                     if type(new_vars) != dict:
                         raise errors.AnsibleError("%s must be stored as dictionary/hash: %s" % (filename4, type(new_vars)))

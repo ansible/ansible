@@ -28,6 +28,7 @@ class ActionModule(object):
 
     def __init__(self, runner):
         self.runner = runner
+        self.basedir = runner.basedir
 
     def run(self, conn, tmp, module_name, module_args, inject, complex_args=None, **kwargs):
         args = {}
@@ -50,7 +51,7 @@ class ActionModule(object):
             else:
                 result = dict(msg=args['msg'])
         elif 'var' in args:
-            results = template.template(None, "{{ %s }}" % args['var'], inject)
+            results = template.template(self.basedir, "{{ %s }}" % args['var'], inject)
             result[args['var']] = results
 
         # force flag to make debug output module always verbose

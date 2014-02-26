@@ -111,6 +111,7 @@ FILE_COMMON_ARGUMENTS=dict(
     content = dict(),
     backup = dict(),
     force = dict(),
+    remote_src = dict(), # used by assemble
 )
 
 def get_platform():
@@ -175,6 +176,7 @@ class AnsibleModule(object):
         self.argument_spec = argument_spec
         self.supports_check_mode = supports_check_mode
         self.check_mode = False
+        self.no_log = no_log
         
         self.aliases = {}
         
@@ -186,13 +188,18 @@ class AnsibleModule(object):
         os.environ['LANG'] = MODULE_LANG
         (self.params, self.args) = self._load_params()
 
-        self._legal_inputs = [ 'CHECKMODE' ]
+        self._legal_inputs = [ 'CHECKMODE', 'NO_LOG' ]
         
         self.aliases = self._handle_aliases()
 
         if check_invalid_arguments:
             self._check_invalid_arguments()
         self._check_for_check_mode()
+        self._check_for_no_log()
+
+        # check exclusive early 
+        if not bypass_checks:
+            self._check_mutually_exclusive(mutually_exclusive)
 
         self._set_defaults(pre=True)
 
@@ -200,12 +207,11 @@ class AnsibleModule(object):
             self._check_required_arguments()
             self._check_argument_values()
             self._check_argument_types()
-            self._check_mutually_exclusive(mutually_exclusive)
             self._check_required_together(required_together)
             self._check_required_one_of(required_one_of)
 
         self._set_defaults(pre=False)
-        if not no_log:
+        if not self.no_log:
             self._log_invocation()
 
     def load_file_common_arguments(self, params):
@@ -558,9 +564,14 @@ class AnsibleModule(object):
                 if self.supports_check_mode:
                     self.check_mode = True
 
+    def _check_for_no_log(self):
+        for (k,v) in self.params.iteritems():
+            if k == 'NO_LOG':
+                self.no_log = self.boolean(v)
+
     def _check_invalid_arguments(self):
         for (k,v) in self.params.iteritems():
-            if k == 'CHECKMODE':
+            if k in ('CHECKMODE', 'NO_LOG'):
                 continue
             if k not in self._legal_inputs:
                 self.fail_json(msg="unsupported parameter for module: %s" % k)
@@ -706,6 +717,12 @@ class AnsibleModule(object):
                         self.params[k] = int(value)
                     else:
                         is_invalid = True
+            elif wanted == 'float':
+                if not isinstance(value, float):
+                    if isinstance(value, basestring):
+                        self.params[k] = float(value)
+                    else:
+                        is_invalid = True
             else:
                 self.fail_json(msg="implementation error: unknown type %s requested for %s" % (wanted, k))
 
@@ -745,7 +762,13 @@ class AnsibleModule(object):
         # Sanitize possible password argument when logging.
         log_args = dict()
         passwd_keys = ['password', 'login_password']
-        
+
+        filter_re = [
+            # filter out things like user:pass@foo/whatever
+            # and http://username:pass@wherever/foo
+            re.compile('^(?P<before>.*:)(?P<password>.*)(?P<after>\@.*)$'), 
+        ]
+
         for param in self.params:
             canon  = self.aliases.get(param, param)
             arg_opts = self.argument_spec.get(canon, {})
@@ -756,12 +779,27 @@ class AnsibleModule(object):
             elif param in passwd_keys:
                 log_args[param] = 'NOT_LOGGING_PASSWORD'
             else:
-                log_args[param] = self.params[param]
+                found = False
+                for filter in filter_re:
+                    if isinstance(self.params[param], unicode):
+                        m = filter.match(self.params[param])
+                    else:
+                        m = filter.match(str(self.params[param]))
+                    if m:
+                        d = m.groupdict()
+                        log_args[param] = d['before'] + "********" + d['after']
+                        found = True
+                        break
+                if not found:
+                    log_args[param] = self.params[param]
 
         module = 'ansible-%s' % os.path.basename(__file__)
         msg = ''
         for arg in log_args:
-            msg = msg + arg + '=' + str(log_args[arg]) + ' '
+            if isinstance(log_args[arg], unicode):
+                msg = msg + arg + '=' + log_args[arg] + ' '
+            else:
+                msg = msg + arg + '=' + str(log_args[arg]) + ' '
         if msg:
             msg = 'Invoked with %s' % msg
         else:
@@ -777,10 +815,10 @@ class AnsibleModule(object):
             except IOError, e:
                 # fall back to syslog since logging to journal failed
                 syslog.openlog(str(module), 0, syslog.LOG_USER)
-                syslog.syslog(syslog.LOG_NOTICE, msg)
+                syslog.syslog(syslog.LOG_NOTICE, unicode(msg).encode('utf8'))
         else:
             syslog.openlog(str(module), 0, syslog.LOG_USER)
-            syslog.syslog(syslog.LOG_NOTICE, msg)
+            syslog.syslog(syslog.LOG_NOTICE, unicode(msg).encode('utf8'))
 
     def get_bin_path(self, arg, required=False, opt_dirs=[]):
         '''
@@ -824,7 +862,12 @@ class AnsibleModule(object):
             self.fail_json(msg='Boolean %s not in either boolean list' % arg)
 
     def jsonify(self, data):
-        return json.dumps(data)
+        for encoding in ("utf-8", "latin-1", "unicode_escape"):
+            try:
+                return json.dumps(data, encoding=encoding)
+            except UnicodeDecodeError, e:
+                continue
+        self.fail_json(msg='Invalid unicode encoding encountered')
 
     def from_json(self, data):
         return json.loads(data)

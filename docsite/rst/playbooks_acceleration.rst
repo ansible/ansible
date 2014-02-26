@@ -3,6 +3,19 @@ Accelerated Mode
 
 .. versionadded:: 1.3
 
+.. note:
+
+   Are you running Ansible 1.5 or later?  If so, you may not need accelerate mode due to a new feature called "SSH pipelining"
+
+   For users on 1.5 and later, accelerate mode only makes sense if you are (A) are managing from an Enterprise Linux 6 or earlier host
+   and still are on paramiko, or (B) can't enable TTYs with sudo as described in the pipelining section of 
+   ref:`intro_configuration`.  
+
+   If you can use it, the pipelining feature in Ansible reduces the amount of files transferred over the wire, 
+   making everything much more efficient. If you can enable pipelining in ansible.cfg, it is
+   preferable to accelerate mode in most cases and requires fewer moving parts.  Accelerate mode remains around in support of EL6
+   control machines and other constrained environments.
+
 While OpenSSH using the ControlPersist feature is quite fast and scalable, there is a certain small amount of overhead involved in
 using SSH connections.  While many people will not encounter a need, if you are running on a platform that doesn't have ControlPersist support (such as an EL6 control machine), you'll probably be even more interested in tuning options.
 

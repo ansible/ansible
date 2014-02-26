@@ -32,6 +32,8 @@ import pwd
 import ast
 import traceback
 
+from ansible.utils.string_functions import count_newlines_from_end
+
 class Globals(object):
 
     FILTERS = None
@@ -430,10 +432,13 @@ def template_from_file(basedir, path, vars):
     def my_lookup(*args, **kwargs):
         kwargs['vars'] = vars
         return lookup(*args, basedir=basedir, **kwargs)
+    def my_finalize(thing):
+        return thing if thing is not None else ''
 
     environment = jinja2.Environment(loader=loader, trim_blocks=True, extensions=_get_extensions())
     environment.filters.update(_get_filters())
     environment.globals['lookup'] = my_lookup
+    environment.globals['finalize'] = my_finalize
     if fail_on_undefined:
         environment.undefined = StrictUndefined
 
@@ -495,8 +500,14 @@ def template_from_file(basedir, path, vars):
     except jinja2.exceptions.UndefinedError, e:
         raise errors.AnsibleUndefinedVariable("One or more undefined variables: %s" % str(e))
 
-    if data.endswith('\n') and not res.endswith('\n'):
-        res = res + '\n'
+    # The low level calls above do not preserve the newline
+    # characters at the end of the input data, so we use the
+    # calculate the difference in newlines and append them 
+    # to the resulting output for parity
+    res_newlines  = count_newlines_from_end(res)
+    data_newlines = count_newlines_from_end(data)
+    if data_newlines > res_newlines:
+        res += '\n' * (data_newlines - res_newlines)
 
     if isinstance(res, unicode):
         # do not try to re-template a unicode string
@@ -512,7 +523,11 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
     try:
         if type(data) == str:
             data = unicode(data, 'utf-8')
-        environment = jinja2.Environment(trim_blocks=True, undefined=StrictUndefined, extensions=_get_extensions())
+
+        def my_finalize(thing):
+            return thing if thing is not None else ''
+
+        environment = jinja2.Environment(trim_blocks=True, undefined=StrictUndefined, extensions=_get_extensions(), finalize=my_finalize)
         environment.filters.update(_get_filters())
         environment.template_class = J2Template
 
@@ -539,6 +554,7 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
             return lookup(*args, basedir=basedir, **kwargs)
 
         t.globals['lookup'] = my_lookup
+        t.globals['finalize'] = my_finalize
         jvars =_jinja2_vars(basedir, vars, t.globals, fail_on_undefined)
         new_context = t.new_context(jvars, shared=True)
         rf = t.root_render_func(new_context)
@@ -547,6 +563,8 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
         except TypeError, te:
             if 'StrictUndefined' in str(te):
                 raise errors.AnsibleUndefinedVariable("unable to look up a name or access an attribute in template string")
+            else:
+                raise errors.AnsibleError("an unexpected type error occured. Error was %s" % te)
         return res
     except (jinja2.exceptions.UndefinedError, errors.AnsibleUndefinedVariable):
         if fail_on_undefined:

@@ -325,7 +325,7 @@ class Service(object):
             if len(rcarray) >= 1 and '=' in rcarray[0]:
                 (key, value) = rcarray[0].split("=", 1)
                 if key == self.rcconf_key:
-                    if value == self.rcconf_value:
+                    if value.upper() == self.rcconf_value:
                         # Since the proper entry already exists we can stop iterating.
                         changed = False
                         break
@@ -784,7 +784,7 @@ class FreeBsdService(Service):
         else:
             self.rcconf_value = "NO"
 
-        rcfiles = [ '/etc/rc.conf','/usr/local/etc/rc.conf' ]
+        rcfiles = [ '/etc/rc.conf','/etc/rc.conf.local', '/usr/local/etc/rc.conf' ]
         for rcfile in rcfiles:
             if os.path.isfile(rcfile):
                 self.rcconf_file = rcfile

@@ -23,7 +23,7 @@ DOCUMENTATION = '''
 ---
 module: gem
 short_description: Manage Ruby gems
-description: 
+description:
   - Manage installation and uninstallation of Ruby gems.
 version_added: "1.1"
 options:
@@ -32,7 +32,7 @@ options:
       - The name of the gem to be managed.
     required: true
   state:
-    description: 
+    description:
       - The desired state of the gem. C(latest) ensures that the latest version is installed.
     required: true
     choices: [present, absent, latest]
@@ -143,6 +143,7 @@ def uninstall(module):
         cmd.extend([ '--version', module.params['version'] ])
     else:
         cmd.append('--all')
+        cmd.append('--executable')
     cmd.append(module.params['name'])
     module.run_command(cmd, check_rc=True)
 

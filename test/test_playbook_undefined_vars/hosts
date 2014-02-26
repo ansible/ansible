@@ -1,5 +1,0 @@
-localhost
-
-[all:vars]
-inventory_var_good="{{ playbook_var_good }}"
-inventory_var_bad="{{ playbook_var_bad }}"

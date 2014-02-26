@@ -76,9 +76,13 @@ access, if any.
 
 Desired sudo user (default=root).
 
-*--tags*::
+*-t*, 'TAGS', *'--tags=*'TAGS'::
 
-Run only these tags from the playbook
+Only run plays and tasks tagged with these values.
+
+*'--skip-tags=*'SKIP_TAGS'::
+
+Only run plays and tasks whose tags do not match these values.
 
 *--syntax-check*::
 
@@ -123,7 +127,7 @@ Further limits the selected host/group patterns.
 ENVIRONMENT
 -----------
 
-The following environment variables may specified.
+The following environment variables may be specified.
 
 ANSIBLE_HOSTS  -- Override the default ansible hosts file
 
@@ -160,5 +164,6 @@ SEE ALSO
 
 *ansible*(1), *ansible-pull*(1), *ansible-doc*(1)
 
-Extensive documentation as well as IRC and mailing list info
-is available on the ansible home page: <https://ansible.github.com/>
+Extensive documentation is available in the documentation site:
+<http://docs.ansible.com>. IRC and mailing list info can be found
+in file CONTRIBUTING.md, available in: <https://github.com/ansible/ansible>

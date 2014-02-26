@@ -7,11 +7,11 @@
 Name:      %{name}
 Version:   1.5
 Release:   1%{?dist}
-Url:       http://www.ansibleworks.com
-Summary:   SSH-based configuration management, deployment, and orchestration engine
+Url:       http://www.ansible.com
+Summary:   SSH-based application deployment, configuration management, and IT orchestration platform
 License:   GPLv3
 Group:     Development/Libraries
-Source:    http://www.ansibleworks.com/releases/%{name}-%{version}.tar.gz
+Source:    http://releases.ansible.com/ansible/%{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
 
@@ -102,8 +102,20 @@ rm -rf %{buildroot}
 
 %changelog
 
-* Wed Nov 27 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.5-0
+* Thu Feb 13 2014 Michael DeHaan <michael.dehaan@gmail.com> - 1.5-0
 * (PENDING)
+
+* Wed Feb 12 2014 Michael DeHaan <michael.dehaan@gmail.com> - 1.4.5
+* Release 1.4.5
+
+* Mon Jan 06 2014 Michael DeHaan <michael.dehaan@gmail.com> - 1.4.4
+* Release 1.4.4
+
+* Fri Dec 20 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.4.3
+* Release 1.4.3
+
+* Wed Dec 18 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.4.2
+* Release 1.4.2
 
 * Wed Nov 27 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.4-1
 * Release 1.4.1

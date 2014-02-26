@@ -6,6 +6,9 @@ all: clean docs
 
 docs: clean modules staticmin
 	./build-site.py
+	-(cp *.ico htmlout/)
+	-(cp *.jpg htmlout/)
+	-(cp *.png htmlout/)
 
 viewdocs: clean staticmin
 	./build-site.py view
@@ -25,6 +28,10 @@ clean:
 	@echo "Cleaning up editor backup files"
 	find . -type f \( -name "*~" -or -name "#*" \) -delete
 	find . -type f \( -name "*.swp" \) -delete
+	@echo "Cleaning up generated rst"
+	-rm rst/list_of_*.rst
+	-rm rst/*_by_category.rst
+	-rm rst/*_module.rst
 
 .PHONEY: docs clean
 

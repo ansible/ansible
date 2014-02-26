@@ -57,6 +57,14 @@ options:
     required: false
     default: 'present'
     aliases: []
+  validate_certs:
+    description:
+      - When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+    required: false
+    default: "yes"
+    choices: ["yes", "no"]
+    aliases: []
+    version_added: "1.5"
 
 requirements: [ "boto" ]
 '''
@@ -87,7 +95,10 @@ EXAMPLES = '''
       - proto: udp
         from_port: 10051
         to_port: 10051
-        group_id: abcdef
+        group_id: sg-12345678
+      - proto: all
+        # the containing group name may be specified here
+        group_name: example
 '''
 
 try:
@@ -104,18 +115,17 @@ def addRulesToLookup(rules, prefix, dict):
                                         grant.group_id, grant.cidr_ip)] = rule
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
+    argument_spec = ec2_argument_spec()
+    argument_spec.update(dict(
             name=dict(required=True),
             description=dict(required=True),
             vpc_id=dict(),
             rules=dict(),
-            ec2_url=dict(aliases=['EC2_URL']),
-            ec2_secret_key=dict(aliases=['EC2_SECRET_KEY', 'aws_secret_key'], no_log=True),
-            ec2_access_key=dict(aliases=['EC2_ACCESS_KEY', 'aws_access_key']),
-            region=dict(choices=AWS_REGIONS),
             state = dict(default='present', choices=['present', 'absent']),
-        ),
+        )
+    )
+    module = AnsibleModule(
+        argument_spec=argument_spec,
         supports_check_mode=True,
     )
 
@@ -134,6 +144,7 @@ def main():
     groups = {}
     for curGroup in ec2.get_all_security_groups():
         groups[curGroup.id] = curGroup
+        groups[curGroup.name] = curGroup
 
         if curGroup.name == name and curGroup.vpc_id == vpc_id:
             group = curGroup
@@ -185,11 +196,24 @@ def main():
         if rules:
             for rule in rules:
                 group_id = None
+                group_name = None
                 ip = None
                 if 'group_id' in rule and 'cidr_ip' in rule:
                     module.fail_json(msg="Specify group_id OR cidr_ip, not both")
+                elif 'group_name' in rule and 'cidr_ip' in rule:
+                    module.fail_json(msg="Specify group_name OR cidr_ip, not both")
+                elif 'group_id' in rule and 'group_name' in rule:
+                    module.fail_json(msg="Specify group_id OR group_name, not both")
                 elif 'group_id' in rule:
                     group_id = rule['group_id']
+                elif 'group_name' in rule:
+                    group_name = rule['group_name']
+                    if group_name in groups:
+                        group_id = groups[group_name].id
+                    elif group_name == name:
+                        group_id = group.id
+                        groups[group_id] = group
+                        groups[group_name] = group
                 elif 'cidr_ip' in rule:
                     ip = rule['cidr_ip']
 

@@ -36,14 +36,17 @@ class ActionModule(object):
 
     def _process_remote(self, host, path, user):
         transport = self.runner.transport
+        return_data = None
         if not host in ['127.0.0.1', 'localhost'] or transport != "local":
-            return '%s@%s:%s' % (user, host, path)
+            return_data = '%s@%s:%s' % (user, host, path)
         else:
-            return path
+            return_data = path
+
+        return return_data
 
     def setup(self, module_name, inject):
         ''' Always default to localhost as delegate if None defined '''
-
+    
         # Store original transport and sudo values.
         self.original_transport = inject.get('ansible_connection', self.runner.transport)
         self.original_sudo = self.runner.sudo
@@ -63,7 +66,6 @@ class ActionModule(object):
         ''' generates params and passes them on to the rsync module '''
 
         # load up options
-
         options = {}
         if complex_args:
             options.update(complex_args)
@@ -83,26 +85,58 @@ class ActionModule(object):
         # from the perspective of the rsync call the delegate is the localhost
         src_host = '127.0.0.1'
         dest_host = inject.get('ansible_ssh_host', inject['inventory_hostname'])
+
         # allow ansible_ssh_host to be templated
         dest_host = template.template(self.runner.basedir, dest_host, inject, fail_on_undefined=True)
         dest_is_local = dest_host in ['127.0.0.1', 'localhost']
 
+        # CHECK FOR NON-DEFAULT SSH PORT
         dest_port = options.get('dest_port')
         inv_port = inject.get('ansible_ssh_port', inject['inventory_hostname'])
         if inv_port != dest_port and inv_port != inject['inventory_hostname']:
             options['dest_port'] = inv_port
-        
 
         # edge case: explicit delegate and dest_host are the same
         if dest_host == inject['delegate_to']:
             dest_host = '127.0.0.1'
 
+        # SWITCH SRC AND DEST PER MODE
         if options.get('mode', 'push') == 'pull':
             (dest_host, src_host) = (src_host, dest_host)
-        if not dest_host is src_host:
-            user = inject.get('ansible_ssh_user',
-                              self.runner.remote_user)
-            private_key = inject.get('ansible_ssh_private_key_file', self.runner.private_key_file)
+
+        # CHECK DELEGATE HOST INFO
+        use_delegate = False
+        if conn.delegate != conn.host:
+            if 'hostvars' in inject:
+                if conn.delegate in inject['hostvars'] and self.original_transport != 'local':
+                    # use a delegate host instead of localhost
+                    use_delegate = True
+
+        # COMPARE DELEGATE, HOST AND TRANSPORT                             
+        process_args = False
+        if not dest_host is src_host and self.original_transport != 'local':
+            # interpret and inject remote host info into src or dest
+            process_args = True
+
+        # MUNGE SRC AND DEST PER REMOTE_HOST INFO
+        if process_args or use_delegate:
+
+            user = None
+            if use_delegate:
+                user = inject['hostvars'][conn.delegate].get('ansible_ssh_user')
+
+            if not use_delegate or not user:
+                user = inject.get('ansible_ssh_user',
+                                self.runner.remote_user)
+
+            if use_delegate:
+                # FIXME
+                private_key = inject.get('ansible_ssh_private_key_file', self.runner.private_key_file)
+            else:
+                private_key = inject.get('ansible_ssh_private_key_file', self.runner.private_key_file)
+
+            private_key = template.template(self.runner.basedir, private_key, inject, fail_on_undefined=True)
+
             if not private_key is None:
                 private_key = os.path.expanduser(private_key)
                 options['private_key'] = private_key
@@ -135,6 +169,10 @@ class ActionModule(object):
 
         module_items = ' '.join(['%s=%s' % (k, v) for (k,
                 v) in options.items()])
+
+        if self.runner.noop_on_check(inject):
+            module_items += " CHECKMODE=True"
+
         return self.runner._execute_module(conn, tmp, 'synchronize',
                 module_items, inject=inject)
 
