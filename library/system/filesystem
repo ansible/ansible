@@ -79,7 +79,7 @@ def main():
 
     cmd = module.get_bin_path('blkid', required=True)
 
-    rc,raw_fs,err = module.run_command("%s -o value -s TYPE %s" % (cmd, dev))
+    rc,raw_fs,err = module.run_command("%s -c /dev/null -o value -s TYPE %s" % (cmd, dev))
     fs = raw_fs.strip()
 
 
