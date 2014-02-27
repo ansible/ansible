@@ -26,6 +26,12 @@ options:
     description:
       - "The cidr block representing the VPC, e.g. 10.0.0.0/16"
     required: false, unless state=present
+  instance_tenancy:
+    description:
+      - "The supported tenancy options for instances launched into the VPC."
+    required: false
+    default: "default"
+    choices: [ "default", "dedicated" ]
   dns_support:
     description:
       - toggles the "Enable DNS resolution" flag
