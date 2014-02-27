@@ -262,7 +262,7 @@ def main():
                     egress = ruleKey.startswith('out-')
                     if egress and egressRulesExist:
                         ec2.revoke_security_group_egress(group.id, rule.ip_protocol, rule.from_port, rule.to_port, grant.group_id, grant.cidr_ip)
-                    else:
+                    elif not egress:
                         group.revoke(rule.ip_protocol, rule.from_port, rule.to_port, grant.cidr_ip, grantGroup)
                 changed = True
 
