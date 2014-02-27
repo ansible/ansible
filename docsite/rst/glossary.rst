@@ -48,7 +48,7 @@ Connection Type, Connection Plugin
 By default, Ansible talks to remote machines through pluggable libraries.  Ansible supports native OpenSSH ('ssh'), or a Python
 implementation called 'paramiko'.  OpenSSH is preferred if you are using a recent version, and also enables some features 
 like Kerberos and jump hosts.  This is covered in the getting started section.  
-There are also other connection types like 'fireball' mode, which must be bootstrapped
+There are also other connection types like 'accelerate' mode, which must be bootstrapped
 over one of the SSH-based connection types but is very fast, and local mode, which acts on the local system.  
 Users can also write their own connection plugins.
 
@@ -80,15 +80,6 @@ Filter Plugin
 A filter plugin is something that most users will never need to understand.  These allow for the creation of new Jinja2 filters, which
 are more or less only of use to people who know what Jinja2 filters are.  If you need them, you can learn how to write them in the API
 docs section.
-
-Fireball Mode
-+++++++++++++
-
-By default, Ansible uses SSH for connections -- either paramiko or native OpenSSH, a common alternative.  (Ansible tries to use
-'ssh' by default if possible in Ansible 1.2.1 and later, but previously defaulted to paramiko).  Some users
-may want to execute operations even faster though, and they can if they opt to run their tasks using an ephemeral 'fireball' message bus.  What happens in this mode is that Ansible
-will start talking to a node over SSH, and then set up a secure, temporary message bus that authenticates only a single machine, and that will
-self destruct after a set period of time.  This means the bus does not allow management of any kind after the time interval has expired.
 
 Forks
 +++++
@@ -398,7 +389,7 @@ constructs like loops and if statements.
 Transport
 +++++++++
 
-Ansible uses "Connection Plugins" to define types of available transports.  These are simply how Ansible will reach out to managed systems.  Transports included are paramiko, SSH (using OpenSSH), fireball (an SSH-bootstrapped accelerated connection plugin), and local. 
+Ansible uses "Connection Plugins" to define types of available transports.  These are simply how Ansible will reach out to managed systems.  Transports included are paramiko, SSH (using OpenSSH), and local.
 
 When
 ++++
