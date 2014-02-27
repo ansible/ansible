@@ -94,6 +94,7 @@ options:
     default: "no"
     choices: ["yes", "no"]
     aliases: []
+
 notes: []
 # informational: requirements for nodes
 requirements: [ yum, rpm ]
@@ -153,6 +154,17 @@ def yum_base(conf_file=None, cachedir=False):
             my.conf.cache = 0 
 
     return my
+
+def install_yum_utils(module):
+
+    if not module.check_mode:    
+        yum_path = module.get_bin_path('yum')
+        if yum_path:
+            rc, so, se = module.run_command('%s -y install yum-utils' % yum_path) 
+            if rc == 0:
+                this_path = module.get_bin_path('repoquery')
+                global repoquery
+                repoquery = this_path
 
 def po_to_nevra(po):
 
@@ -789,13 +801,18 @@ def main():
             list=dict(),
             conf_file=dict(default=None),
             disable_gpg_check=dict(required=False, default="no", type='bool'),
+            # this should not be needed, but exists as a failsafe
+            install_repoquery=dict(required=False, default="yes", type='bool'),
         ),
         required_one_of = [['name','list']],
         mutually_exclusive = [['name','list']],
         supports_check_mode = True
     )
 
+    # this should not be needed, but exists as a failsafe
     params = module.params
+    if params['install_repoquery'] and not repoquery and not module.check_mode:
+        install_yum_utils(module)
 
     if params['list']:
         if not repoquery:
