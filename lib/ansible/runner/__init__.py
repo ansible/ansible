@@ -193,7 +193,6 @@ class Runner(object):
         self.accelerate_port  = accelerate_port
         self.accelerate_ipv6  = accelerate_ipv6
         self.callbacks.runner = self
-        self.original_transport = self.transport
         self.su               = su
         self.su_user_var      = su_user
         self.su_user          = None
@@ -211,6 +210,9 @@ class Runner(object):
             else:
                 self.transport = "ssh" 
 
+        # save the original transport, in case it gets
+        # changed later via options like accelerate
+        self.original_transport = self.transport
 
         # misc housekeeping
         if subset and self.inventory._subset is None:
