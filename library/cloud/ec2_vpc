@@ -201,6 +201,7 @@ def create_vpc(module, vpc_conn):
     
     id = module.params.get('id')
     cidr_block = module.params.get('cidr_block')
+    instance_tenancy = module.params.get('instance_tenancy')
     dns_support = module.params.get('dns_support')
     dns_hostnames = module.params.get('dns_hostnames')
     subnets = module.params.get('subnets')
@@ -227,7 +228,7 @@ def create_vpc(module, vpc_conn):
     else:
         changed = True
         try:
-            vpc = vpc_conn.create_vpc(cidr_block)
+            vpc = vpc_conn.create_vpc(cidr_block, instance_tenancy)
             # wait here until the vpc is available
             pending = True
             wait_timeout = time.time() + wait_timeout
@@ -483,6 +484,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
             cidr_block = dict(),
+            instance_tenancy = dict(choices=['default', 'dedicated'], default='default'),
             wait = dict(choices=BOOLEANS, default=False),
             wait_timeout = dict(default=300),
             dns_support = dict(choices=BOOLEANS, default=True),
