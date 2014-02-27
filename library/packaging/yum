@@ -99,7 +99,7 @@ options:
     description:
         - If repoquery is not available, install yum-utils. If the system is
           registered to RHN or an RHN Satellite, repoquery allows for querying
-          all channels assigned to the system. repoquery is also requires to
+          all channels assigned to the system. repoquery is also required to
           use the "list" parameter.
     required: false
     version_added: "1.5"
