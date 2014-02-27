@@ -63,7 +63,7 @@ class ActionModule(object):
 
         remote_md5 = self.runner._remote_md5(conn, tmp, dest)
         if remote_md5 != '3':
-            result = dict(failed=True, msg="dest must be an existing dir")
+            result = dict(failed=True, msg="dest '%s' must be an existing dir" % dest)
             return ReturnData(conn=conn, result=result)
 
         if copy:
