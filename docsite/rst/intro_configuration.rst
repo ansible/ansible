@@ -584,7 +584,7 @@ Accelerate Mode Settings
 ------------------------
 
 Under the [accelerate] header, the following settings are tunable for :doc:`playbooks_acceleration`.  Acceleration is 
-a useful performance feature to use if you cannot enable :ref:`ssh_pipelining` in your environment, but is probably
+a useful performance feature to use if you cannot enable :ref:`pipelining` in your environment, but is probably
 not needed if you can.
 
 .. _accelerate_port:
