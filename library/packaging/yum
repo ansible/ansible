@@ -97,7 +97,9 @@ options:
 
   install_repoquery:
     description:
-        - If repoquery is not available, install yum-utils
+        - If repoquery is not available, install yum-utils. If the system is
+          registered to RHN or an RHN Satellite, repoquery allows for querying
+          all channels assigned to the system.
     required: false
     version_added: "1.5"
     default: no
