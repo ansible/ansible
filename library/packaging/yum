@@ -103,7 +103,7 @@ options:
           use the "list" parameter.
     required: false
     version_added: "1.5"
-    default: no
+    default: "yes"
     choices: ["yes", "no"]
     aliases: []
 
@@ -813,7 +813,7 @@ def main():
             list=dict(),
             conf_file=dict(default=None),
             disable_gpg_check=dict(required=False, default="no", type='bool'),
-            install_repoquery=dict(required=False, default="no", type='bool'),
+            install_repoquery=dict(required=False, default="yes", type='bool'),
         ),
         required_one_of = [['name','list']],
         mutually_exclusive = [['name','list']],
