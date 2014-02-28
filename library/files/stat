@@ -99,8 +99,7 @@ def main():
     # back to ansible
     d = {
         'exists'   : True,
-        'mode'     : S_IMODE(mode),
-        'octal'    : "%04o" % S_IMODE(mode),
+        'mode'    : "%04o" % S_IMODE(mode),
         'isdir'    : S_ISDIR(mode),
         'ischr'    : S_ISCHR(mode),
         'isblk'    : S_ISBLK(mode),
