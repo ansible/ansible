@@ -18,6 +18,7 @@ Major features/changes:
 * ec2 module now accepts 'exact_count' and 'count_tag' as a way to enforce a running number of nodes by tags.
 * all ec2 modules that work with Eucalyptus also now support a 'validate_certs' option, which can be set to 'off' for installations using self-signed certs.
 * Start of new integration test infrastructure (WIP, more details TBD)
+* if repoquery is unavailble, the yum module will automatically attempt to install yum-utils
 
 New modules:
 
