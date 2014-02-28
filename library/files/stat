@@ -131,6 +131,10 @@ def main():
     except:
         pass
         
+    try:
+        d['ismnt']     = os.path.ismount(path)
+    except OSError:
+        pass
 
     module.exit_json(changed=False, stat=d)
 
