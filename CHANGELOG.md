@@ -1,7 +1,21 @@
 Ansible Changes By Release
 ==========================
 
-## 1.5 "Love Walks In" - Release pending!
+## 1.6 "And the Cradle Will Rock" - Active Development
+
+Major features/changes:
+
+* The deprecated legacy variable templating system has been finally removed.  Use {{ foo }} always not $foo or ${foo}.
+
+New modules:
+
+* info pending
+
+Other notable changes:
+
+* info pending
+
+## 1.5 "Love Walks In" - Feb 28, 2012
 
 Major features/changes:
 
