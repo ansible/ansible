@@ -78,8 +78,8 @@ options:
     version_added: "1.2"
   directory_mode:
     description:
-      - When doing a recursive copy set the mode for the directories. If this is not set we will default to the file
-        permissions if set.
+      - When doing a recursive copy set the mode for the directories. If this is not set we will default the system
+        defaults.
     required: false
     version_added: "1.5"
   others:
