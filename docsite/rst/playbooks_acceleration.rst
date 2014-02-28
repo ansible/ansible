@@ -44,9 +44,12 @@ Accelerated mode offers several improvements over the (deprecated) original fire
 In order to use accelerated mode, simply add `accelerate: true` to your play::
 
     ---
+
     - hosts: all
       accelerate: true
+
       tasks:
+
       - name: some task
         command: echo {{ item }}
         with_items:
@@ -57,6 +60,7 @@ In order to use accelerated mode, simply add `accelerate: true` to your play::
 If you wish to change the port Ansible will use for the accelerated connection, just add the `accelerated_port` option::
 
     ---
+
     - hosts: all
       accelerate: true
       # default port is 5099

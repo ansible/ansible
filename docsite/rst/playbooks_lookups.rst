@@ -21,7 +21,9 @@ Contents can be read off the filesystem as follows::
     - hosts: all
       vars:
          contents: "{{ lookup('file', '/etc/foo.txt') }}"
+
       tasks:
+
          - debug: msg="the value of foo.txt is {{ contents }}"
 
 .. _password_lookup:
@@ -128,6 +130,7 @@ template)::
       motd_value: "{{ lookup('file', '/etc/motd') }}"
 
     tasks:
+
       - debug: msg="motd value is {{ motd_value }}"
 
 .. seealso::
