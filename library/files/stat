@@ -36,7 +36,7 @@ options:
     aliases: []
   get_md5:
     description:
-      - Whether to return the md5 sum o fthe file
+      - Whether to return the md5 sum of the file
     required: false
     default: yes
     aliases: []
