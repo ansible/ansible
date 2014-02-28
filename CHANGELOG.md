@@ -19,7 +19,7 @@ Major features/changes:
 * all ec2 modules that work with Eucalyptus also now support a 'validate_certs' option, which can be set to 'off' for installations using self-signed certs.
 * Start of new integration test infrastructure (WIP, more details TBD)
 * if repoquery is unavailble, the yum module will automatically attempt to install yum-utils
-* ansible-vault: a framework for encrypting your playbook ad vars files 
+* ansible-vault: a framework for encrypting your playbooks and variable files 
 
 New modules:
 
@@ -37,7 +37,7 @@ New modules:
 * system: at
 * utilities: assert
 
-Misc:
+Other notable changes (many new module params & bugfixes may not not listed):
 
 * no_reboot is now defaulted to "no" in the ec2_ami module to ensure filesystem consistency in the resulting AMI.
 * sysctl module overhauled
@@ -62,6 +62,10 @@ Misc:
 * ansible_ssh_private_key_file can be templated
 * docker module updated to support docker-py 0.3.0
 * various other bug fixes
+* md5 logic improved during sudo operation
+* support for ed25519 keys in authorized_key module
+* ability to set directory permissions during a recursive copy (directory_mode parameter)
+* update docker module, support for using docker python library 0.3.0
 
 ## 1.4.5 "Could This Be Magic" - February 12, 2014
 
