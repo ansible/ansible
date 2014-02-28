@@ -103,7 +103,12 @@ EXAMPLES = '''
 - copy: src=/mine/sudoers dest=/etc/sudoers validate='visudo -cf %s'
 '''
 
+
 def split_pre_existing_dir(dirname):
+    '''
+    Return the first pre-existing directory and a list of the new directories that will be created.
+    '''
+
     head, tail = os.path.split(dirname)
     if not os.path.exists(head):
         (pre_existing_dir, new_directory_list) = split_pre_existing_dir(head)
@@ -112,13 +117,19 @@ def split_pre_existing_dir(dirname):
     new_directory_list.insert(0, tail)
     return (pre_existing_dir, new_directory_list)
 
+
 def adjust_recursive_directory_permissions(pre_existing_dir, new_directory_list, module, directory_args, changed):
+    '''
+    Walk the new directories list and make sure that permissions are as we would expect
+    '''
+
     if len(new_directory_list) > 0:
         working_dir = os.path.join(pre_existing_dir, new_directory_list.pop(0))
         directory_args['path'] = working_dir
         changed = module.set_directory_attributes_if_different(directory_args, changed)
         changed = adjust_recursive_directory_permissions(working_dir, new_directory_list, module, directory_args, changed)
     return changed
+
 
 def main():
 
@@ -132,7 +143,7 @@ def main():
             backup            = dict(default=False, type='bool'),
             force             = dict(default=True, aliases=['thirsty'], type='bool'),
             validate          = dict(required=False, type='str'),
-            directory_mode          = dict(required=False)
+            directory_mode    = dict(required=False)
         ),
         add_file_common_args=True,
     )
@@ -165,6 +176,8 @@ def main():
             directory_mode = module.params["directory_mode"]
             if directory_mode is not None:
                 directory_args['mode'] = directory_mode
+            else:
+                directory_args['mode'] = None
             adjust_recursive_directory_permissions(pre_existing_dir, new_directory_list, module, directory_args, changed)
 
     if os.path.exists(dest):
