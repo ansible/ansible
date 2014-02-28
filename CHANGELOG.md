@@ -59,6 +59,7 @@ Misc:
 * user module can move a home directory
 * significant enhancement and cleanup of rackspace modules
 * ansible_ssh_private_key_file can be templated
+* docker module updated to support docker-py 0.3.0
 * various other bug fixes
 
 ## 1.4.5 "Could This Be Magic" - February 12, 2014
