@@ -189,6 +189,14 @@ class Ec2Inventory(object):
         ec2_ini_path = os.environ.get('EC2_INI_PATH', ec2_default_ini_path)
         config.read(ec2_ini_path)
 
+        # Explicit credentials?
+        self.aws_access_key_id = None
+        self.aws_secret_access_key = None
+        if config.has_option('ec2', 'aws_access_key_id'):
+            self.aws_access_key_id = config.get('ec2', 'aws_access_key_id')
+        if config.has_option('ec2', 'aws_secret_access_key'):
+            self.aws_secret_access_key = config.get('ec2', 'aws_secret_access_key')
+
         # is eucalyptus?
         self.eucalyptus_host = None
         self.eucalyptus = False
@@ -266,10 +274,12 @@ class Ec2Inventory(object):
 
         try:
             if self.eucalyptus:
-                conn = boto.connect_euca(host=self.eucalyptus_host)
+                conn = boto.connect_euca(host=self.eucalyptus_host, aws_access_key_id=self.aws_access_key_id,
+                                         aws_secret_access_key=self.aws_secret_access_key)
                 conn.APIVersion = '2010-08-31'
             else:
-                conn = ec2.connect_to_region(region)
+                conn = ec2.connect_to_region(region, aws_access_key_id=self.aws_access_key_id,
+                                             aws_secret_access_key=self.aws_secret_access_key)
 
             # connect_to_region will fail "silently" by returning None if the region name is wrong or not supported
             if conn is None:
@@ -292,7 +302,8 @@ class Ec2Inventory(object):
         region '''
 
         try:
-            conn = rds.connect_to_region(region)
+            conn = rds.connect_to_region(region, aws_access_key_id=self.aws_access_key_id,
+                                         aws_secret_access_key=self.aws_secret_access_key)
             if conn:
                 instances = conn.get_all_dbinstances()
                 for instance in instances:
@@ -306,10 +317,12 @@ class Ec2Inventory(object):
     def get_instance(self, region, instance_id):
         ''' Gets details about a specific instance '''
         if self.eucalyptus:
-            conn = boto.connect_euca(self.eucalyptus_host)
+            conn = boto.connect_euca(self.eucalyptus_host, aws_access_key_id=self.aws_access_key_id,
+                                     aws_secret_access_key=self.aws_secret_access_key)
             conn.APIVersion = '2010-08-31'
         else:
-            conn = ec2.connect_to_region(region)
+            conn = ec2.connect_to_region(region, aws_access_key_id=self.aws_access_key_id,
+                                         aws_secret_access_key=self.aws_secret_access_key)
 
         # connect_to_region will fail "silently" by returning None if the region name is wrong or not supported
         if conn is None:
@@ -444,7 +457,8 @@ class Ec2Inventory(object):
         ''' Get and store the map of resource records to domain names that
         point to them. '''
 
-        r53_conn = route53.Route53Connection()
+        r53_conn = route53.Route53Connection(aws_access_key_id=self.aws_access_key_id,
+                                             aws_secret_access_key=self.aws_secret_access_key)
         all_zones = r53_conn.get_zones()
 
         route53_zones = [ zone for zone in all_zones if zone.name[:-1]
@@ -579,6 +593,11 @@ class Ec2Inventory(object):
 
     def write_to_cache(self, data, filename):
         ''' Writes data in JSON format to a file '''
+
+        # Create the directory if it doesn't exist
+        directory = os.path.dirname(filename)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
 
         json_data = self.json_format_dict(data, True)
         cache = open(filename, 'w')
