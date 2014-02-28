@@ -1,7 +1,7 @@
 Ansible Changes By Release
 ==========================
 
-## 1.5 "Love Walks In" - Release pending!
+## 1.5 "Love Walks In" - February 28, 2014
 
 Major features/changes:
 
