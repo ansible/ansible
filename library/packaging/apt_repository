@@ -366,7 +366,13 @@ def main():
     )
 
     if not HAVE_PYTHON_APT:
-        module.fail_json(msg='Could not import python modules: apt_pkg. Please install python-apt package.')
+        try:
+            module.run_command('apt-get update && apt-get install python-apt -y -q')
+            global apt, apt_pkg
+            import apt
+            import apt_pkg
+        except:
+            module.fail_json(msg='Could not import python modules: apt, apt_pkg. Please install python-apt package.')
 
     if not HAVE_PYCURL:
         module.fail_json(msg='Could not import python modules: pycurl. Please install python-pycurl package.')
