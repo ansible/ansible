@@ -52,7 +52,7 @@ options:
     required: false
     default: null
     aliases: []
-  name:
+  id:
     description:
       - volume id if you wish to attach an existing volume (requires instance)
     required: false
