@@ -19,6 +19,7 @@ Major features/changes:
 * all ec2 modules that work with Eucalyptus also now support a 'validate_certs' option, which can be set to 'off' for installations using self-signed certs.
 * Start of new integration test infrastructure (WIP, more details TBD)
 * if repoquery is unavailble, the yum module will automatically attempt to install yum-utils
+* ansible-vault: a framework for encrypting your playbook ad vars files 
 
 New modules:
 
