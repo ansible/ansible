@@ -976,7 +976,12 @@ class Runner(object):
         data = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
         data2 = utils.last_non_blank_line(data['stdout'])
         try:
-            return data2.split()[0]
+            if data2 == '':
+                # this may happen if the connection to the remote server
+                # failed, so just return "INVALIDMD5SUM" to avoid errors
+                return "INVALIDMD5SUM"
+            else:
+                return data2.split()[0]
         except IndexError:
             sys.stderr.write("warning: md5sum command failed unusually, please report this to the list so it can be fixed\n")
             sys.stderr.write("command: %s\n" % md5s)
