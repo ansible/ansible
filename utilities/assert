@@ -29,11 +29,16 @@ options:
   that:
     description:
       - "A string expression of the same form that can be passed to the 'when' statement"
+      - "Alternatively, a list of string expressions"
     required: true
 author: Michael DeHaan
 '''
 
 EXAMPLES = '''
-- assert: ansible_os_family != "RedHat"
-- assert: "'foo' in some_command_result.stdout"
+- assert: { that: "ansible_os_family != 'RedHat'" }
+
+- assert: 
+    that: 
+      - "'foo' in some_command_result.stdout" 
+      - "number_of_the_counting == 3"
 '''
