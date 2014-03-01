@@ -90,6 +90,8 @@ options:
     aliases: []
 
 requirements: [ "libcloud" ]
+notes:
+  - Either I(name) or I(instance_names) is required.
 author: Eric Johnson <erjohnso@google.com>
 '''
 
