@@ -15,7 +15,7 @@ Other notable changes:
 
 * info pending
 
-## 1.5 "Love Walks In" - Feb 28, 2012
+## 1.5 "Love Walks In" - Feb 28, 2014
 
 Major features/changes:
 
