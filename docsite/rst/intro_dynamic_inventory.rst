@@ -197,6 +197,7 @@ In addition to Cobbler and EC2, inventory scripts are also available for::
 
    BSD Jails
    Digital Ocean
+   Google Compute Engine
    Linode
    OpenShift
    OpenStack Nova
