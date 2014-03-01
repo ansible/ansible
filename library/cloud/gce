@@ -374,6 +374,8 @@ def main():
         gce = get_driver(Provider.GCE)(*ARGS, datacenter=zone, **KWARGS)
         gce.connection.user_agent_append("%s/%s" % (
             USER_AGENT_PRODUCT, USER_AGENT_VERSION))
+    except (RuntimeError, ValueError), e:
+        module.fail_json(msg=str(e), changed=False)
     except Exception, e:
         module.fail_json(msg=unexpected_error_msg(e), changed=False)
 
