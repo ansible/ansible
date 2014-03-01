@@ -174,6 +174,10 @@ class GceInventory(object):
 
     def node_to_dict(self, inst):
         md = {}
+
+        if inst is None:
+            return {}
+
         if inst.extra['metadata'].has_key('items'):
             for entry in inst.extra['metadata']['items']:
                 md[entry['key']] = entry['value']
@@ -197,7 +201,10 @@ class GceInventory(object):
 
     def get_instance(self, instance_name):
         '''Gets details about a specific instance '''
-        return self.driver.ex_get_node(instance_name)
+        try:
+            return self.driver.ex_get_node(instance_name)
+        except Exception, e:
+            return None
 
     def group_instances(self):
         '''Group all instances'''
