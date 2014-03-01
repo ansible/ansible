@@ -22,7 +22,13 @@ import sys
 import os
 import stat
 
-import ansible.playbook
+# find own sources if PYTHONPATH is not set
+try:
+    import ansible.playbook
+except:
+    sys.path.append(os.path.abspath(os.path.realpath(__file__)+'/../../lib'))
+    import ansible.playbook
+
 import ansible.constants as C
 import ansible.utils.template
 from ansible import errors
