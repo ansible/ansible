@@ -30,7 +30,7 @@ options:
       - register or deregister the instance
     required: true
     choices: ['present', 'absent']
-  group:
+  name:
     description:
       - Unique name for group to be created or deleted
     required: true
@@ -75,7 +75,7 @@ options:
 
 EXAMPLES = '''
 - ec2_asg: >
-    group_name: special
+    name: special
     load_balancers: 'lb1,lb2'
     availability_zones: 'eu-west-1a,eu-west-1b'
     launch_config_name: 'lc-1'
