@@ -73,7 +73,7 @@ Version: 0.0.1
 '''
 
 USER_AGENT_PRODUCT="Ansible-gce_inventory_plugin"
-USER_AGENT_VERSION="v1beta15"
+USER_AGENT_VERSION="v1"
 
 import sys
 import os
