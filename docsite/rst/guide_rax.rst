@@ -160,7 +160,7 @@ You might want to use this even if you are spinning up Ansible via other tools, 
 The inventory plugin can be used to group resources by their meta data.  Utilizing meta data is highly 
 recommended in rax and can provide an easy way to sort between host groups and roles.
 
-If you don't want to use the ``rax.py`` dynamic inventory script, you could also still choose to manually manage your INI inventroy file,
+If you don't want to use the ``rax.py`` dynamic inventory script, you could also still choose to manually manage your INI inventory file,
 though this is less recommended.   
 
 In Ansible it is quite possible to use multiple dynamic inventory plugins along with INI file data.  Just put them in a common

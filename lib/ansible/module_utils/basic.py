@@ -111,6 +111,7 @@ FILE_COMMON_ARGUMENTS=dict(
     content = dict(),
     backup = dict(),
     force = dict(),
+    remote_src = dict(), # used by assemble
 )
 
 def get_platform():

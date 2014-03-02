@@ -135,6 +135,8 @@ class ActionModule(object):
             else:
                 private_key = inject.get('ansible_ssh_private_key_file', self.runner.private_key_file)
 
+            private_key = template.template(self.runner.basedir, private_key, inject, fail_on_undefined=True)
+
             if not private_key is None:
                 private_key = os.path.expanduser(private_key)
                 options['private_key'] = private_key
@@ -167,6 +169,9 @@ class ActionModule(object):
 
         module_items = ' '.join(['%s=%s' % (k, v) for (k,
                 v) in options.items()])
+
+        if self.runner.noop_on_check(inject):
+            module_items += " CHECKMODE=True"
 
         return self.runner._execute_module(conn, tmp, 'synchronize',
                 module_items, inject=inject)

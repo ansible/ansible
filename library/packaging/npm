@@ -54,6 +54,7 @@ options:
     description:
       - Install dependencies in production mode, excluding devDependencies
     required: false
+    choices: [ "yes", "no" ]
     default: no
   state:
     description:

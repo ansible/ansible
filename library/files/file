@@ -40,7 +40,7 @@ description:
 options:
   path:
     description:
-      - 'defines the file being managed, unless when used with C(state=link), and then sets the destination to create a symbolic link to using I(src). Aliases: I(dest), I(name)'
+      - 'path to the file being managed.  Aliases: I(dest), I(name)'
     required: true
     default: []
     aliases: ['dest', 'name'] 

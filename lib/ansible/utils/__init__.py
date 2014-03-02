@@ -43,6 +43,9 @@ import getpass
 import sys
 import textwrap
 
+#import vault
+from vault import VaultLib
+
 VERBOSITY=0
 
 # list of all deprecation messages to prevent duplicate display
@@ -372,7 +375,7 @@ It should be written as:
 """
         return msg
 
-    elif len(probline) and len(probline) >= column and probline[column] == ":" and probline.count(':') > 1:
+    elif len(probline) and len(probline) > 1 and len(probline) > column and probline[column] == ":" and probline.count(':') > 1:
         msg = msg + """
 This one looks easy to fix.  There seems to be an extra unquoted colon in the line 
 and this is confusing the parser. It was only expecting to find one free 
@@ -494,14 +497,22 @@ Should be written as:
     raise errors.AnsibleYAMLValidationFailed(msg)
 
 
-def parse_yaml_from_file(path):
+def parse_yaml_from_file(path, vault_password=None):
     ''' convert a yaml file to a data structure '''
 
+    data = None
+
     try:
-        data = file(path).read()
-        return parse_yaml(data)
+        data = open(path).read()
     except IOError:
-        raise errors.AnsibleError("file not found: %s" % path)
+        raise errors.AnsibleError("file could not read: %s" % path)
+
+    vault = VaultLib(password=vault_password)
+    if vault.is_encrypted(data):
+        data = vault.decrypt(data)
+
+    try:
+        return parse_yaml(data)
     except yaml.YAMLError, exc:
         process_yaml_error(exc, data, path)
 
@@ -691,8 +702,12 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
         help='use this file to authenticate the connection')
     parser.add_option('-K', '--ask-sudo-pass', default=False, dest='ask_sudo_pass', action='store_true',
         help='ask for sudo password')
-    parser.add_option('--ask-su-pass', default=False, dest='ask_su_pass',
-                      action='store_true', help='ask for su password')
+    parser.add_option('--ask-su-pass', default=False, dest='ask_su_pass', action='store_true', 
+        help='ask for su password')
+    parser.add_option('--ask-vault-pass', default=False, dest='ask_vault_pass', action='store_true', 
+        help='ask for vault password')
+    parser.add_option('--vault-password-file', default=None, dest='vault_password_file',
+        help="vault password file")
     parser.add_option('--list-hosts', dest='listhosts', action='store_true',
         help='outputs a list of matching hosts; does not execute anything else')
     parser.add_option('-M', '--module-path', dest='module_path',
@@ -751,10 +766,34 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
 
     return parser
 
-def ask_passwords(ask_pass=False, ask_sudo_pass=False, ask_su_pass=False):
+def ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=False, confirm_vault=False, confirm_new=False):
+
+    vault_pass = None
+    new_vault_pass = None
+
+    if ask_vault_pass:
+        vault_pass = getpass.getpass(prompt="Vault password: ")
+
+    if ask_vault_pass and confirm_vault:
+        vault_pass2 = getpass.getpass(prompt="Confirm Vault password: ")
+        if vault_pass != vault_pass2:
+            raise errors.AnsibleError("Passwords do not match")
+
+    if ask_new_vault_pass:
+        new_vault_pass = getpass.getpass(prompt="New Vault password: ")
+
+    if ask_new_vault_pass and confirm_new:
+        new_vault_pass2 = getpass.getpass(prompt="Confirm New Vault password: ")
+        if new_vault_pass != new_vault_pass2:
+            raise errors.AnsibleError("Passwords do not match")
+
+    return vault_pass, new_vault_pass
+
+def ask_passwords(ask_pass=False, ask_sudo_pass=False, ask_su_pass=False, ask_vault_pass=False):
     sshpass = None
     sudopass = None
     su_pass = None
+    vault_pass = None
     sudo_prompt = "sudo password: "
     su_prompt = "su password: "
 
@@ -770,7 +809,10 @@ def ask_passwords(ask_pass=False, ask_sudo_pass=False, ask_su_pass=False):
     if ask_su_pass:
         su_pass = getpass.getpass(prompt=su_prompt)
 
-    return (sshpass, sudopass, su_pass)
+    if ask_vault_pass:
+        vault_pass = getpass.getpass(prompt="Vault password: ")
+
+    return (sshpass, sudopass, su_pass, vault_pass)
 
 def do_encrypt(result, encrypt, salt_size=None, salt=None):
     if PASSLIB_AVAILABLE:

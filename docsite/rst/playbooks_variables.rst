@@ -136,6 +136,7 @@ Filters Often Used With Conditionals
 The following tasks are illustrative of how filters can be used with conditionals::
 
     tasks:
+
       - shell: /usr/bin/foo
         register: result
         ignore_errors: True
@@ -219,6 +220,10 @@ To get the last name of a file path, like 'foo.txt' out of '/etc/asdf/foo.txt'::
 To get the directory from a path::
 
     {{ path | dirname }}
+
+To expand a path containing a tilde (`~`) character (new in version 1.5)::
+
+    {{ path | expanduser }}
 
 To work with Base64 encoded strings::
 
@@ -687,13 +692,16 @@ the main playbook.
 You can do this by using an external variables file, or files, just like this::
 
     ---
+
     - hosts: all
       remote_user: root
       vars:
         favcolor: blue
       vars_files:
         - /vars/external_vars.yml
+
       tasks:
+
       - name: this is just a placeholder
         command: /bin/echo foo
 
@@ -727,8 +735,10 @@ This is useful, for, among other things, setting the hosts group or the user for
 Example::
 
     ---
-    - remote_user: '{{ user }}'
-      hosts: '{{ hosts }}'
+
+    - hosts: '{{ hosts }}'
+      remote_user: '{{ user }}'
+
       tasks:
          - ...
 
@@ -761,12 +771,15 @@ As an example, the name of the Apache package may be different between CentOS an
 but it is easily handled with a minimum of syntax in an Ansible Playbook::
 
     ---
+
     - hosts: all
       remote_user: root
       vars_files:
         - "vars/common.yml"
         - [ "vars/{{ ansible_os_family }}.yml", "vars/os_defaults.yml" ]
+
       tasks:
+
       - name: make sure apache is running
         service: name={{ apache }} state=running
 

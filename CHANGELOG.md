@@ -1,7 +1,21 @@
 Ansible Changes By Release
 ==========================
 
-## 1.5 "Love Walks In" - Release pending!
+## 1.6 "And the Cradle Will Rock" - Active Development
+
+Major features/changes:
+
+* The deprecated legacy variable templating system has been finally removed.  Use {{ foo }} always not $foo or ${foo}.
+
+New modules:
+
+* info pending
+
+Other notable changes:
+
+* info pending
+
+## 1.5 "Love Walks In" - Feb 28, 2014
 
 Major features/changes:
 
@@ -18,11 +32,14 @@ Major features/changes:
 * ec2 module now accepts 'exact_count' and 'count_tag' as a way to enforce a running number of nodes by tags.
 * all ec2 modules that work with Eucalyptus also now support a 'validate_certs' option, which can be set to 'off' for installations using self-signed certs.
 * Start of new integration test infrastructure (WIP, more details TBD)
+* if repoquery is unavailble, the yum module will automatically attempt to install yum-utils
+* ansible-vault: a framework for encrypting your playbooks and variable files 
 
 New modules:
 
 * cloud: ec2_elb_lb
 * cloud: ec2_key
+* cloud: ec2_snapshot
 * cloud: rax_dns
 * cloud: rax_dns_record
 * cloud: rax_files
@@ -34,7 +51,7 @@ New modules:
 * system: at
 * utilities: assert
 
-Misc:
+Other notable changes (many new module params & bugfixes may not not listed):
 
 * no_reboot is now defaulted to "no" in the ec2_ami module to ensure filesystem consistency in the resulting AMI.
 * sysctl module overhauled
@@ -56,7 +73,13 @@ Misc:
 * additional volumes can be created when creating new ec2 instances
 * user module can move a home directory
 * significant enhancement and cleanup of rackspace modules
+* ansible_ssh_private_key_file can be templated
+* docker module updated to support docker-py 0.3.0
 * various other bug fixes
+* md5 logic improved during sudo operation
+* support for ed25519 keys in authorized_key module
+* ability to set directory permissions during a recursive copy (directory_mode parameter)
+* update docker module, support for using docker python library 0.3.0
 
 ## 1.4.5 "Could This Be Magic" - February 12, 2014
 

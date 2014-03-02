@@ -138,7 +138,7 @@ same options can be passed directly to the ``copy`` module as well::
 
 The ``file`` module can also create directories, similar to ``mkdir -p``::
 
-    $ ansible webservers -m file -a "dest=/path/to/c mode=644 owner=mdehaan group=mdehaan state=directory"
+    $ ansible webservers -m file -a "dest=/path/to/c mode=755 owner=mdehaan group=mdehaan state=directory"
 
 As well as delete directories (recursively) and delete files::
 
