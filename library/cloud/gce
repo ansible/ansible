@@ -153,7 +153,7 @@ EXAMPLES = '''
 import sys
 
 USER_AGENT_PRODUCT="Ansible-gce"
-USER_AGENT_VERSION="v1beta15"
+USER_AGENT_VERSION="v1"
 
 try:
     from libcloud.compute.types import Provider
