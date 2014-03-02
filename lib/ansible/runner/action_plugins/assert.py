@@ -17,7 +17,7 @@
 
 import ansible
 
-from ansible import utils
+from ansible import utils, errors
 from ansible.runner.return_data import ReturnData
 
 class ActionModule(object):
