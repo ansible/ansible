@@ -196,7 +196,9 @@ class GceInventory(object):
             'gce_zone': inst.extra['zone'].name,
             'gce_tags': inst.extra['tags'],
             'gce_metadata': md,
-            'gce_network': net
+            'gce_network': net,
+            # Hosts don't have a public name, so we add an IP
+            'ansible_ssh_host': inst.public_ips[0]
         }
 
     def get_instance(self, instance_name):
