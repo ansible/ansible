@@ -28,7 +28,7 @@ short_description: Configure a .deb package
 description:
      - Configure a .deb package using debconf-set-selections. Or just query
      existing selections.
-version_added: "1.5"
+version_added: "1.6"
 notes:
     - This module requires the command line debconf tools.
     - A number of questions have to be answered (depending on the package).
