@@ -105,6 +105,8 @@ def _read_password(filename):
     f = open(filename, "rb")
     data = f.read()
     f.close
+    # get rid of newline chars
+    data = data.strip()
     return data
 
 def execute_create(args, options, parser):
