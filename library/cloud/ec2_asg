@@ -21,7 +21,7 @@ short_description: Create or delete AWS Autoscaling Groups
 description:
   - Can create or delete AWS Autoscaling Groups
   - Works with the ec2_lc module to manage Launch Configurations
-version_added: "1.0"
+version_added: "1.6"
 requirements: [ "boto" ]
 author: Gareth Rushgrove
 options:
