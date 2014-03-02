@@ -88,6 +88,9 @@ EXAMPLES = '''
         from_port: 10051
         to_port: 10051
         group_id: sg-12345678
+      - proto: all
+        # the containing group name may be specified here
+        group_name: example
       - proto: tcp
         from_port: 123
         to_port: 123
@@ -108,6 +111,7 @@ def lookup_security_group(groups, name, vpc_id):
     for curGroup in groups.values():
         if curGroup.name == name and curGroup.vpc_id == vpc_id:
             group = curGroup
+            break
 
     return group
 
