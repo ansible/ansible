@@ -28,7 +28,6 @@ def gce_connect(module):
     except (RuntimeError, ValueError), e:
         module.fail_json(msg=str(e), changed=False)
     except Exception, e:
-        print e
         module.fail_json(msg=unexpected_error_msg(e), changed=False)
 
     return gce
