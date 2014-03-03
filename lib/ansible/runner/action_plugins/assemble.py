@@ -57,7 +57,7 @@ class ActionModule(object):
         src = options.get('src', None)
         dest = options.get('dest', None)
         delimiter = options.get('delimiter', None)
-        remote_src = options.get('remote_src', True)
+        remote_src = utils.boolean(options.get('remote_src', 'yes'))
 
         if src is None or dest is None:
             result = dict(failed=True, msg="src and dest are required")
@@ -65,6 +65,11 @@ class ActionModule(object):
 
         if remote_src:
             return self.runner._execute_module(conn, tmp, 'assemble', module_args, inject=inject, complex_args=complex_args)
+        elif '_original_file' in inject:
+            src = utils.path_dwim_relative(inject['_original_file'], 'files', src, self.runner.basedir)
+        else:
+            # the source is local, so expand it here
+            src = os.path.expanduser(src)
 
         # Does all work assembling the file
         path = self._assemble_from_fragments(src, delimiter)

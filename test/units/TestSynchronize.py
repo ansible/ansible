@@ -17,6 +17,7 @@ class FakeRunner(object):
         self.sudo = None
         self.remote_user = None
         self.private_key_file = None
+        self.check = False
 
     def _execute_module(self, conn, tmp, module_name, args, inject=None):
         self.executed_conn = conn
@@ -24,6 +25,9 @@ class FakeRunner(object):
         self.executed_module_name = module_name
         self.executed_args = args
         self.executed_inject = inject
+
+    def noop_on_check(self, inject):
+        return self.check
 
 class FakeConn(object):
     def __init__(self):

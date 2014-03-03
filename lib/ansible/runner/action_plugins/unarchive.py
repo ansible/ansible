@@ -46,8 +46,8 @@ class ActionModule(object):
         if complex_args:
             options.update(complex_args)
         options.update(utils.parse_kv(module_args))
-        source  = options.get('src', None)
-        dest    = options.get('dest', None)
+        source  = os.path.expanduser(options.get('src', None))
+        dest    = os.path.expanduser(options.get('dest', None))
         copy    = utils.boolean(options.get('copy', 'yes'))
 
         if source is None or dest is None:
@@ -63,7 +63,7 @@ class ActionModule(object):
 
         remote_md5 = self.runner._remote_md5(conn, tmp, dest)
         if remote_md5 != '3':
-            result = dict(failed=True, msg="dest must be an existing dir")
+            result = dict(failed=True, msg="dest '%s' must be an existing dir" % dest)
             return ReturnData(conn=conn, result=result)
 
         if copy:

@@ -119,6 +119,7 @@ class Facts(object):
                     '/etc/release': 'Solaris',
                     '/etc/arch-release': 'Archlinux',
                     '/etc/SuSE-release': 'SuSE',
+                    '/etc/gentoo-release': 'Gentoo',
                     '/etc/os-release': 'Debian' }
     SELINUX_MODE_DICT = { 1: 'enforcing', 0: 'permissive', -1: 'disabled' }
 
@@ -136,6 +137,7 @@ class Facts(object):
                  { 'path' : '/sbin/apk',            'name' : 'apk' },
                  { 'path' : '/usr/sbin/pkg',        'name' : 'pkgng' },
                  { 'path' : '/usr/sbin/swlist',     'name' : 'SD-UX' },
+                 { 'path' : '/usr/bin/emerge',      'name' : 'portage' },
     ]
 
     def __init__(self):
@@ -244,7 +246,7 @@ class Facts(object):
             SLC = 'RedHat', Ascendos = 'RedHat', CloudLinux = 'RedHat', PSBM = 'RedHat',
             OracleLinux = 'RedHat', OVS = 'RedHat', OEL = 'RedHat', Amazon = 'RedHat',
             XenServer = 'RedHat', Ubuntu = 'Debian', Debian = 'Debian', SLES = 'Suse',
-            SLED = 'Suse', OpenSuSE = 'Suse', SuSE = 'Suse', Gentoo = 'Gentoo',
+            SLED = 'Suse', OpenSuSE = 'Suse', SuSE = 'Suse', Gentoo = 'Gentoo', Funtoo = 'Gentoo',
             Archlinux = 'Archlinux', Mandriva = 'Mandrake', Mandrake = 'Mandrake',
             Solaris = 'Solaris', Nexenta = 'Solaris', OmniOS = 'Solaris', OpenIndiana = 'Solaris',
             SmartOS = 'Solaris', AIX = 'AIX', Alpine = 'Alpine', MacOSX = 'Darwin',
@@ -1359,14 +1361,30 @@ class Darwin(Hardware):
                 sysctl[key] = value.strip()
         return sysctl
 
+    def get_system_profile(self):
+        rc, out, err = module.run_command(["/usr/sbin/system_profiler", "SPHardwareDataType"])
+        if rc != 0:
+            return dict()
+        system_profile = dict()
+        for line in out.splitlines():
+            if ': ' in line:
+                (key, value) = line.split(': ', 1)
+                system_profile[key.strip()] = ' '.join(value.strip().split())
+        return system_profile
+
     def get_mac_facts(self):
         self.facts['model'] = self.sysctl['hw.model']
         self.facts['osversion'] = self.sysctl['kern.osversion']
         self.facts['osrevision'] = self.sysctl['kern.osrevision']
 
     def get_cpu_facts(self):
-        self.facts['processor'] = self.sysctl['machdep.cpu.brand_string']
-        self.facts['processor_cores'] = self.sysctl['machdep.cpu.core_count']
+        if 'machdep.cpu.brand_string' in self.sysctl: # Intel
+            self.facts['processor'] = self.sysctl['machdep.cpu.brand_string']
+            self.facts['processor_cores'] = self.sysctl['machdep.cpu.core_count']
+        else: # PowerPC
+            system_profile = self.get_system_profile()
+            self.facts['processor'] = '%s @ %s' % (system_profile['Processor Name'], system_profile['Processor Speed'])
+            self.facts['processor_cores'] = self.sysctl['hw.physicalcpu']
 
     def get_memory_facts(self):
         self.facts['memtotal_mb'] = long(self.sysctl['hw.memsize']) / 1024 / 1024

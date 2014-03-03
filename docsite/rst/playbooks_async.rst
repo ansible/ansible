@@ -16,9 +16,12 @@ and how frequently you would like to poll for status.  The default
 poll value is 10 seconds if you do not specify a value for `poll`::
 
     ---
+
     - hosts: all
       remote_user: root
+
       tasks:
+
       - name: simulate long running op (15 sec), wait for up to 45, poll every 5
         command: /bin/sleep 15
         async: 45
@@ -33,9 +36,12 @@ Alternatively, if you do not need to wait on the task to complete, you may
 "fire and forget" by specifying a poll value of 0::
 
     ---
+
     - hosts: all
       remote_user: root
+
       tasks:
+
       - name: simulate long running op, allow to run for 45, fire and forget
         command: /bin/sleep 15
         async: 45

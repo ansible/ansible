@@ -232,7 +232,7 @@ EXAMPLES = '''
 # Basic provisioning example
 - local_action:
     module: ec2
-    keypair: mykey
+    key_name: mykey
     instance_type: c1.medium
     image: emi-40603AD1
     wait: yes
@@ -242,7 +242,7 @@ EXAMPLES = '''
 # Advanced example with tagging and CloudWatch
 - local_action:
     module: ec2
-    keypair: mykey
+    key_name: mykey
     group: databases
     instance_type: m1.large
     image: ami-6e649707
@@ -256,7 +256,7 @@ EXAMPLES = '''
 # Single instance with additional IOPS volume from snapshot
 local_action:
     module: ec2
-    keypair: mykey
+    key_name: mykey
     group: webserver
     instance_type: m1.large
     image: ami-6e649707
@@ -273,7 +273,7 @@ local_action:
 # Multiple groups example
 local_action:
     module: ec2
-    keypair: mykey
+    key_name: mykey
     group: ['databases', 'internal-services', 'sshable', 'and-so-forth']
     instance_type: m1.large
     image: ami-6e649707
@@ -287,7 +287,7 @@ local_action:
 # Multiple instances with additional volume from snapshot
 local_action:
     module: ec2
-    keypair: mykey
+    key_name: mykey
     group: webserver
     instance_type: m1.large
     image: ami-6e649707
@@ -303,7 +303,7 @@ local_action:
 # VPC example
 - local_action:
     module: ec2
-    keypair: mykey
+    key_name: mykey
     group_id: sg-1dc53f72
     instance_type: m1.small
     image: ami-6e649707
@@ -319,14 +319,14 @@ local_action:
   hosts: localhost
   gather_facts: False
   vars:
-    keypair: my_keypair
+    key_name: my_keypair
     instance_type: m1.small
     security_group: my_securitygroup
     image: my_ami_id
     region: us-east-1
   tasks:
     - name: Launch instance
-      local_action: ec2 keypair={{ keypair }} group={{ security_group }} instance_type={{ instance_type }} image={{ image }} wait=true region={{ region }}
+      local_action: ec2 key_name={{ keypair }} group={{ security_group }} instance_type={{ instance_type }} image={{ image }} wait=true region={{ region }}
       register: ec2
     - name: Add new instance to host group
       local_action: add_host hostname={{ item.public_ip }} groupname=launched
@@ -403,7 +403,7 @@ local_action:
 
 - local_action:
     module: ec2
-    keypair: mykey
+    key_name: mykey
     instance_type: c1.medium
     image: emi-40603AD1
     wait: yes
@@ -419,7 +419,7 @@ local_action:
 
 - local_action:
     module: ec2
-    keypair: mykey
+    key_name: mykey
     instance_type: c1.medium
     image: emi-40603AD1
     wait: yes
@@ -549,6 +549,7 @@ def get_instance_info(inst):
                      'image_id': inst.image_id,
                      'key_name': inst.key_name,
                      'placement': inst.placement,
+                     'region': inst.placement[:-1],
                      'kernel': inst.kernel,
                      'ramdisk': inst.ramdisk,
                      'launch_time': inst.launch_time,
@@ -1053,6 +1054,7 @@ def main():
     ec2 = ec2_connect(module)
 
     tagged_instances = [] 
+
     if module.params.get('state') == 'absent':
         instance_ids = module.params.get('instance_ids')
         if not isinstance(instance_ids, list):

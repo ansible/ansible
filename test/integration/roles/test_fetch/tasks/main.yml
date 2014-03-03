@@ -16,11 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- name: set the output location
-  set_fact: output_file={{ output_dir }}/motd
+- name: create a file that we can use to fetch
+  copy: content="test" dest={{ output_dir }}/orig
 
 - name: fetch the motd
-  fetch: src=/etc/motd dest={{ output_file }}
+  fetch: src={{ output_dir }}/orig dest={{ output_dir }}/fetched
   register: fetched
 
 - debug: var=fetched
@@ -30,7 +30,7 @@
 # fetch module.
 
 - name: diff what we fetched with the original file
-  shell: diff /etc/motd {{ output_dir }}/motd/127.0.0.1/etc/motd
+  shell: diff {{ output_dir }}/orig {{ output_dir }}/fetched/127.0.0.1{{ output_dir | expanduser }}/orig
   register: diff
 
 - name: check the diff to make sure they are the same

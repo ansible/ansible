@@ -142,7 +142,7 @@ def rax_facts(module, address, name, server_id):
 
     search_opts = {}
     if name:
-        search_opts = dict(name=name)
+        search_opts = dict(name='^%s$' % name)
         try:
             servers = cs.servers.list(search_opts=search_opts)
         except Exception, e:
