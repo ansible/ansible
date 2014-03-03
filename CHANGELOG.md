@@ -35,6 +35,7 @@ Major features/changes:
 * Start of new integration test infrastructure (WIP, more details TBD)
 * if repoquery is unavailble, the yum module will automatically attempt to install yum-utils
 * ansible-vault: a framework for encrypting your playbooks and variable files 
+* added support for privilege escalation via 'su' into bin/ansible and bin/ansible-playbook and associated keywords 'su', 'su_user', 'su_pass' for tasks/plays
 
 New modules:
 
