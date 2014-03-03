@@ -190,7 +190,7 @@ def user_mod(cursor, user, host, password, password_hash, new_priv, append_privs
     grant_option = False
 
     # Handle passwords.
-    if password is not None:
+    if password is not None or password_hash is not None:
         cursor.execute("SELECT password FROM user WHERE user = %s AND host = %s", (user,host))
         current_pass_hash = cursor.fetchone()
 
@@ -202,8 +202,8 @@ def user_mod(cursor, user, host, password, password_hash, new_priv, append_privs
                 changed = True
         elif password_hash:
             if is_hash(password_hash):
-                if current_pass_hash[0] != password:
-                    cursor.execute("SET PASSWORD FOR %s@%s = %s", (user, host, password))
+                if current_pass_hash[0] != password_hash:
+                    cursor.execute("SET PASSWORD FOR %s@%s = %s", (user, host, password_hash))
                     changed = True
             else:
                 module.fail_json(msg="password_hash was specified however it does not appear to be a valid hash expecting: *SHA1(SHA1(your_password))")
