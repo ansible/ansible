@@ -43,7 +43,7 @@ Easy enough, let's move on.
 Variables Defined in Inventory
 ``````````````````````````````
 
-We've actually already covered a lot about variables in another section, so so far this shouldn't be terribly new, but
+We've actually already covered a lot about variables in another section, so far this shouldn't be terribly new, but
 a bit of a refresher.
 
 Often you'll want to set variables based on what groups a machine is in.  For instance, maybe machines in Boston
