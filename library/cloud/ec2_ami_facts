@@ -20,7 +20,7 @@ module: ec2_ami_facts
 version_added: "1.5"
 short_description: Return a list of AMI images, possibly filtered by attributes or tags.
 description:
-     - Return a list of defined AMI images, possibly filtered by attributes or tags. This module has a dependency on python-boto >= 2.5
+     - Return a list of defined AMI images, possibly filtered by attributes or tags. 
 options:
   ec2_url:
     description:
@@ -66,7 +66,7 @@ options:
     aliases: []
   sorts:
     description:
-      - Sort returned AMIs by the given parameters. Sorts can be performed by id, name, description, location, state, or a tag. If the sort directive starts with '-' the sort will be performed in descending order. Tag sorts should be specified as 'tag:tagName'.
+      - Sort returned AMIs by the given parameters. Sorts can be performed by id, name, description, state, or a tag. If the sort directive starts with '-' the sort will be performed in descending order. Tag sorts should be specified as 'tag:tagName'.
     required: false
     default: null
     aliases: []
@@ -96,6 +96,15 @@ EXAMPLES = '''
     aws_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
   register: ami_facts
 
+Returns a list of dictionaries, one for each AMI that matches the given search parameters:
+{
+    "id": AMI AWS id, such as ami-1234abcd
+    "name": The AMI name given when the AMI was created
+    "description": The AMI description given when the AMI was created or modified
+    "region": The region in which the AMI is located
+    "state": The image's current state: available, pending, or failed
+    "tags": A dictionary of the tags attached to the image
+}
 '''
 import sys
 import time
@@ -113,7 +122,6 @@ SORT_FIELDS = (
     "id",
     "name",
     "description",
-    "location",
     "state",
 )
 
@@ -155,7 +163,6 @@ def main():
             "id": i.id,
             "name": i.name,
             "description": i.description,
-            "location": i.location,
             "region": i.region.name,
             "state": i.state,
             "tags": i.tags,
