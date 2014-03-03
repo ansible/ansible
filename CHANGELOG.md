@@ -10,6 +10,7 @@ Major features/changes:
 New Modules:
 
 * packaging: cpanm
+* system: debconf
 
 Other notable changes:
 
