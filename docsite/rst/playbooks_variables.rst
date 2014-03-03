@@ -101,7 +101,7 @@ Inside a template you automatically have access to all of the variables that are
 it's more than that -- you can also read variables about other hosts.  We'll show how to do that in a bit.
 
 .. note:: ansible allows Jinja2 loops and conditionals in templates, but in playbooks, we do not use them.  Ansible
-   templates are pure machine-parseable YAML.  This is an rather important feature as it means it is possible to code-generate
+   templates are pure machine-parseable YAML.  This is a rather important feature as it means it is possible to code-generate
    pieces of files, or to have other ecosystem tools read Ansible files.  Not everyone will need this but it can unlock
    possibilities.
 
