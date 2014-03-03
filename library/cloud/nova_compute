@@ -197,7 +197,8 @@ def _get_server_state(module, nova):
             # with names that partially match the server name, so we have to
             # strictly filter here
             servers = [x for x in servers if x.name == module.params['name']]
-            server = servers[0] if servers else None
+            if servers:
+                server = servers[0]
     except Exception, e:
         module.fail_json(msg = "Error in getting the server list: %s" % e.message)
     if server and module.params['state'] == 'present':
