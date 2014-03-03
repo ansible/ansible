@@ -237,7 +237,7 @@ class Play(object):
                                     if "tags" in included_dep_vars:
                                         included_dep_vars["tags"] = list(set(included_dep_vars["tags"] + passed_vars["tags"]))
                                     else:
-                                        included_dep_vars["tags"] = passed_vars["tags"].copy()
+                                        included_dep_vars["tags"] = passed_vars["tags"][:]
 
                         dep_vars = utils.combine_vars(passed_vars, dep_vars)
                         dep_vars = utils.combine_vars(role_vars, dep_vars)
