@@ -105,6 +105,8 @@ EXAMPLES = '''
 - s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=put
 # PUT/upload with metadata
 - s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=put metadata='Content-Encoding=gzip'
+# PUT/upload with multiple metadata
+- s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=put metadata='Content-Encoding=gzip,Cache-Control=no-cache'
 # PUT/upload and do not overwrite remote file (trust local)
 - s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=put force=false
 # Download an object as a string to use else where in your playbook
