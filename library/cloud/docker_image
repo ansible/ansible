@@ -152,6 +152,14 @@ class DockerImageManager:
 
         return image_id
 
+    def pull(self):
+        stream = self.client.pull(repository=self.name, tag=self.tag, stream=True)
+        for res in stream:
+            pass
+        res = json.loads(res)
+        self.changed = True
+        return (res["id"], res["status"])
+
     def has_changed(self):
         return self.changed
 
@@ -199,27 +207,33 @@ def main():
         failed = False
         image_id = None
         msg = ''
-        do_build = False
+        action = None
 
-        # build image if not exists
+        # build or pull image if not exists
         if state == "present":
             images = manager.get_images()
             if len(images) == 0:
-                do_build = True
+                if manager.path:
+                    action = 'build'
+                else:
+                    action = 'pull'
         # build image
         elif state == "build":
-            do_build = True
+            action = 'build'
         # remove image or images
         elif state == "absent":
             manager.remove_images()
 
-        if do_build:
-            image_id = manager.build()
+        if action:
+            if action == 'build':
+                image_id = manager.build()
+            else
+                image_id = manager.pull()
             if image_id:
-                msg = "Image builded: %s" % image_id
+                msg = "%s: New Image: %s" % (actiom, image_id)
             else:
                 failed = True
-                msg = "Error: %s\nLog:%s" % (manager.error_msg, manager.get_log())
+                msg = "Error: %s: %s\nLog:%s" % (action, manager.error_msg, manager.get_log())
 
         module.exit_json(failed=failed, changed=manager.has_changed(), msg=msg, image_id=image_id)
 
