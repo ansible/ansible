@@ -157,7 +157,17 @@ class ElbManager:
         to report the instance in-service"""
         for lb in self.lbs:
             if wait:
-                initial_state = self._get_instance_health(lb)
+                tries = 1
+                while True:
+                    initial_state = self._get_instance_health(lb)
+                    if initial_state:
+                        break
+                    time.sleep(1)
+                    tries += 1
+                    # FIXME: this should be configurable, but since it didn't
+                    #        wait at all before this is at least better
+                    if tries > 10:
+                        self.module.fail_json(msg='failed to find the initial state of the load balancer')
 
             if enable_availability_zone:
                 self._enable_availailability_zone(lb)
