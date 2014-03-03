@@ -227,6 +227,12 @@ class Inventory(object):
         given a pattern like foo[0:5], where foo matches hosts, return the first 6 hosts
         """ 
 
+        # If there are no hosts to select from, just return the
+        # empty set. This prevents trying to do selections on an empty set.
+        # issue#6258
+        if not hosts:
+            return hosts
+
         (loose_pattern, limits) = self._enumeration_info(pat)
         if not limits:
             return hosts
