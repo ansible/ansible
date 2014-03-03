@@ -7,9 +7,9 @@ Major features/changes:
 
 * The deprecated legacy variable templating system has been finally removed.  Use {{ foo }} always not $foo or ${foo}.
 
-New modules:
+New Modules:
 
-* info pending
+* packaging: cpanm
 
 Other notable changes:
 
