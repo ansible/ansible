@@ -128,6 +128,13 @@ class DockerImageManager:
         self.changed = True
         return res
 
+    def pull(self):
+        stream = self.client.pull(repository=self.name, tag=self.tag, stream=True)
+        for res in stream:
+            pass
+        res = json.loads(res)
+        self.changed = True
+        return (res["id"], res["status"])
 
     def has_changed(self):
         return self.changed
@@ -175,7 +182,10 @@ def main():
         if state == "present":
             images = manager.get_images()
             if len(images) == 0:
-                image_id, msg = manager.build()
+                if manager.path:
+                    image_id, msg = manager.build()
+                else:
+                    image_id, msg = manager.pull()
                 if image_id is None:
                     failed = True
 
