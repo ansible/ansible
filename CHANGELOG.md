@@ -79,7 +79,6 @@ Other notable changes (many new module params & bugfixes may not not listed):
 * md5 logic improved during sudo operation
 * support for ed25519 keys in authorized_key module
 * ability to set directory permissions during a recursive copy (directory_mode parameter)
-* update docker module, support for using docker python library 0.3.0
 
 ## 1.4.5 "Could This Be Magic" - February 12, 2014
 
