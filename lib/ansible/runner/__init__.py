@@ -1075,9 +1075,17 @@ class Runner(object):
             job_queue.put(host)
         result_queue = manager.Queue()
 
+        try:
+            fileno = sys.stdin.fileno()
+        except ValueError:
+            fileno = None
+
         workers = []
         for i in range(self.forks):
-            new_stdin = os.fdopen(os.dup(sys.stdin.fileno()))
+            if fileno is not None:
+                new_stdin = os.fdopen(os.dup(fileno))
+            else:
+                new_stdin = None
             prc = multiprocessing.Process(target=_executor_hook,
                 args=(job_queue, result_queue, new_stdin))
             prc.start()
