@@ -1564,13 +1564,13 @@ class LinuxNetwork(Network):
                         iface = words[-1]
                         if iface != device:
                             interfaces[iface] = {}
-                        if not secondary and "ipv4_secondaries" not in interfaces[iface]:
-                            interfaces[iface]["ipv4_secondaries"] = []
                         if not secondary or "ipv4" not in interfaces[iface]:
                             interfaces[iface]['ipv4'] = {'address': address,
                                                          'netmask': netmask,
                                                          'network': network}
                         else:
+                            if "ipv4_secondaries" not in interfaces[iface]:
+                                interfaces[iface]["ipv4_secondaries"] = []
                             interfaces[iface]["ipv4_secondaries"].append({
                                 'address': address,
                                 'netmask': netmask,
@@ -1579,6 +1579,8 @@ class LinuxNetwork(Network):
 
                         # add this secondary IP to the main device
                         if secondary:
+                            if "ipv4_secondaries" not in interfaces[device]:
+                                interfaces[device]["ipv4_secondaries"] = []
                             interfaces[device]["ipv4_secondaries"].append({
                                 'address': address,
                                 'netmask': netmask,
