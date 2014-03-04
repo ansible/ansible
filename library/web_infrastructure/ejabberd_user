@@ -23,7 +23,7 @@ version_added: "1.5"
 author: Peter Sprygada
 short_description: Manages users for ejabberd servers
 requirements:
-    - ejabberd
+    - ejabberd with mod_admin_extra
 description:
     - This module provides user management for ejabberd servers
 options:
@@ -54,6 +54,7 @@ options:
 notes:
     - Password parameter is required for state == present only
     - Passwords must be stored in clear text for this release
+    - The ejabberd configuration file must include mod_admin_extra as a module.
 '''
 EXAMPLES = '''
 Example playbook entries using the ejabberd_user module to manage users state.
