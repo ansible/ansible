@@ -238,9 +238,9 @@ def main():
                               service_type='compute')
     try:
         nova.authenticate()
-    except exc.Unauthorized, e:
+    except exceptions.Unauthorized, e:
         module.fail_json(msg = "Invalid OpenStack Nova credentials.: %s" % e.message)
-    except exc.AuthorizationFailure, e:
+    except exceptions.AuthorizationFailure, e:
         module.fail_json(msg = "Unable to authorize user: %s" % e.message)
 
     if module.params['state'] == 'present':
