@@ -283,17 +283,15 @@ def main():
 
     elif state in ['link','hard']:
 
-        if os.path.isabs(src):
-            abs_src = src
-        else:
-            module.fail_json(msg="absolute paths are required")
+        if state == 'hard' and not os.path.isabs(src):
+            module.fail_json(msg="absolute paths are required for hard links")
 
         # This if statement was added to describe the following situation:
         # - if src doesn't exist and state == hardlink
         # - if src doesn't exist and state == symlink and force flag was not setup
         # i.e. we always want a source for hardlink, but for symlink it's
         # optional
-        if not os.path.exists(abs_src):
+        if not os.path.exists(src):
             if state == 'hard' or not force:
                 module.fail_json(path=path, src=src, msg='src file does not exist')
 
@@ -313,6 +311,8 @@ def main():
                 module.fail_json(dest=path, src=src, msg='Cannot link, file exists at destination')
             changed = True
         elif prev_state == 'directory':
+            if state == 'hard':
+                module.fail_json(dest=path, src=src, msg='Cannot hard link to directory')
             if not force:
                 module.fail_json(dest=path, src=src, msg='Cannot link, directory exists at destination')
             changed = True
