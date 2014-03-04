@@ -154,11 +154,19 @@ class DockerImageManager:
 
     def pull(self):
         stream = self.client.pull(repository=self.name, tag=self.tag, stream=True)
-        for res in stream:
-            pass
-        res = json.loads(res)
+        for chunk in stream:
+            chunk_json = json.loads(chunk)
+
+            if 'error' in chunk_json:
+                self.error_msg = chunk_json['error']
+                return None
+
+            if 'status' in chunk_json:
+                output = chunk_json['status']
+                self.log.append(output)
+
         self.changed = True
-        return (res["id"], res["status"])
+        return chunk_json['id']
 
     def has_changed(self):
         return self.changed
@@ -227,13 +235,13 @@ def main():
         if action:
             if action == 'build':
                 image_id = manager.build()
-            else
+            else:
                 image_id = manager.pull()
             if image_id:
-                msg = "%s: New Image: %s" % (actiom, image_id)
+                msg = "%s: New Image: %s" % (action, image_id)
             else:
                 failed = True
-                msg = "Error: %s: %s\nLog:%s" % (action, manager.error_msg, manager.get_log())
+                msg = "Error: %s\nLog:%s" % (manager.error_msg, manager.get_log())
 
         module.exit_json(failed=failed, changed=manager.has_changed(), msg=msg, image_id=image_id)
 
