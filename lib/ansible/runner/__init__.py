@@ -633,13 +633,13 @@ class Runner(object):
             all_failed = False
             results = []
             for x in items:
-                # use a fresh inject for each item                
+                # use a fresh inject for each item
                 this_inject = inject.copy()
                 this_inject['item'] = x
 
                 # TODO: this idiom should be replaced with an up-conversion to a Jinja2 template evaluation
                 if isinstance(self.complex_args, basestring):
-                    complex_args = template.template(self.basedir, self.complex_args, inject, convert_bare=True)
+                    complex_args = template.template(self.basedir, self.complex_args, this_inject, convert_bare=True)
                     complex_args = utils.safe_eval(complex_args)
                     if type(complex_args) != dict:
                         raise errors.AnsibleError("args must be a dictionary, received %s" % complex_args)
