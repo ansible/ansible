@@ -79,7 +79,10 @@ class InventoryDirectory(object):
                         # note: depth numbers on duplicates may be bogus
                         for k, v in host.vars.iteritems():
                             self.hosts[host.name].set_variable(k, v)
-                    self.groups[name].add_host(self.hosts[host.name])
+                    # host can already exist from other source (same name,
+                    # different object):
+                    if host.name not in [h.name for h in self.groups[name].hosts]:
+                        self.groups[name].add_host(self.hosts[host.name])
 
             # This needs to be a second loop to ensure all the parent groups exist
             for name, group in parser.groups.iteritems():
