@@ -83,8 +83,8 @@ class InventoryDirectory(object):
 
             # This needs to be a second loop to ensure all the parent groups exist
             for name, group in parser.groups.iteritems():
-                for ancestor in group.get_ancestors():
-                    self.groups[ancestor.name].add_child_group(self.groups[name])
+                for parent in group.parent_groups:
+                    self.groups[parent.name].add_child_group(self.groups[name])
 
     def get_host_variables(self, host):
         """ Gets additional host variables from all inventories """
