@@ -288,12 +288,6 @@ def prefetch_headers(module, url):
 
 def main():
 
-    # does this really happen on non-ancient python?
-    if not HAS_URLLIB2:
-        module.fail_json(msg="urllib2 is not installed")
-    if not HAS_URLPARSE:
-        module.fail_json(msg="urlparse is not installed")
-
     module = AnsibleModule(
         # not checking because of daisy chain to file module
         argument_spec = dict(
@@ -305,6 +299,12 @@ def main():
         ),
         add_file_common_args=True
     )
+
+    # does this really happen on non-ancient python?
+    if not HAS_URLLIB2:
+        module.fail_json(msg="urllib2 is not installed")
+    if not HAS_URLPARSE:
+        module.fail_json(msg="urlparse is not installed")
 
     url  = module.params['url']
     dest = os.path.expanduser(module.params['dest'])
