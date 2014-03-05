@@ -71,7 +71,7 @@ class InventoryDirectory(object):
                     # note: depth numbers on duplicates may be bogus
                     for k, v in group.get_variables().iteritems():
                         self.groups[name].set_variable(k, v)
-                for host in group.get_hosts():
+                for host in group.hosts:
                     if host.name not in self.hosts:
                         self.hosts[host.name] = host
                     else:
