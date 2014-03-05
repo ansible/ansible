@@ -285,8 +285,10 @@ def main():
         module.fail_json(msg="The sha256sum parameter requires hashlib, which is available in Python 2.5 and higher")
 
     if not dest_is_dir and os.path.exists(dest):
-        if not force:
-            module.exit_json(msg="file already exists", dest=dest, url=url, changed=False)
+        if not force and (sha256sum == '' or sha256sum == module.sha256(dest)):
+            module.exit_json(msg="file already exists", dest=dest, url=url, sha256sum=sha256sum, changed=False)
+        else:
+            force=True
 
         # If the file already exists, prepare the last modified time for the
         # request.
