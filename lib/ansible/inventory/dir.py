@@ -68,7 +68,6 @@ class InventoryDirectory(object):
                     self.groups[name] = group
                 else:
                     # group is already there, copy variables
-                    # note: depth numbers on duplicates may be bogus
                     for k, v in group.get_variables().iteritems():
                         self.groups[name].set_variable(k, v)
                 for host in group.hosts:
