@@ -56,7 +56,7 @@ options:
     required: false
     default: null
     aliases: []
-  vpc_id_tags:
+  resource_tags:
     description:
       - A list of tags uniquely identifying a VPC in the form of: {Tag1: Value1, Tag2: Value2, ...}. This list works in conjunction with CIDR (cidr_block) and is gnored when VPC id (vpc_id) is specified.
     required: false
@@ -133,7 +133,7 @@ EXAMPLES = '''
         module: ec2_vpc
         state: present
         cidr_block: 172.23.0.0/16
-        vpc_id_tags: { "Environment":"Development" }
+        resource_tags: { "Environment":"Development" }
         region: us-west-2
 # Full creation example with subnets and optional availability zones.
 # The absence or presense of subnets deletes or creates them respectively.
@@ -141,7 +141,7 @@ EXAMPLES = '''
         module: ec2_vpc
         state: present
         cidr_block: 172.22.0.0/16
-        vpc_id_tags: { "Environment":"Development" }
+        resource_tags: { "Environment":"Development" }
         subnets: 
           - cidr: 172.22.1.0/24
             az: us-west-2c
@@ -219,7 +219,7 @@ def find_vpc(module, vpc_conn, vpc_id=None, cidr=None):
 
     found_vpcs = []
 
-    vpc_id_tags = module.params.get('vpc_id_tags')
+    resource_tags = module.params.get('resource_tags')
 
     # Check for existing VPC by cidr_block or id
     if vpc_id is not None:
@@ -233,7 +233,7 @@ def find_vpc(module, vpc_conn, vpc_id=None, cidr=None):
             vpc_tags = dict((t.name, t.value) for t in vpc_conn.get_all_tags(filters={'resource-id': vpc.id}))
 
             # If the supplied list of ID Tags match a subset of the VPC Tags, we found our VPC
-            if set(vpc_id_tags.items()).issubset(set(vpc_tags.items())):
+            if set(resource_tags.items()).issubset(set(vpc_tags.items())):
                 found_vpcs.append(vpc)
 
     found_vpc = None
@@ -531,7 +531,7 @@ def main():
             dns_hostnames = dict(choices=BOOLEANS, default=True),
             subnets = dict(type='list'),
             vpc_id = dict(),
-            vpc_id_tags = dict(type='dict'),
+            resource_tags = dict(type='dict'),
             internet_gateway = dict(choices=BOOLEANS, default=False),
             route_tables = dict(type='list'),
             state = dict(choices=['present', 'absent'], default='present'),
