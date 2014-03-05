@@ -1071,3 +1071,37 @@ def random_password(length=20, chars=C.DEFAULT_PASSWORD_CHARS):
             password.append(new_char)
 
     return ''.join(password)
+
+
+def split_unquoted_hash(line):
+    '''
+     Carve off comments from a line which are not contained in quotes and a part of an assignment.
+    '''
+
+    # We would really like to have this using a regex to make it less code. For instance:
+    # line = re.split('(?<!=["|\'].*)#(?!.*?["|\']).*', line)[0]
+    # this has the problem that it comes back with a "sre_constants.error: look-behind requires fixed-width pattern"
+
+    if "#" in line:
+        split_line = line.split("#")
+        instances = len(split_line) - 1
+        if instances > 0:
+            marker = 0
+            while marker < instances:
+                if ("=\"" in split_line[marker] and "\"" in split_line[marker + 1]) or (
+                        "='" in split_line[marker] and "'" in split_line[marker + 1]):
+                    marker += 1
+                else:
+                    if marker == 0:
+                        line = split_line[marker]
+                    else:
+                        # We have multiple fragments that we need to combine back together.
+                        # rekram is us reversing that work we did with marker.
+                        rekram = 0
+                        new_line = split_line[rekram]
+                        while marker > rekram:
+                            rekram += 1
+                            new_line = new_line + "#" + split_line[rekram]
+                        line = new_line
+                    break
+        return line
