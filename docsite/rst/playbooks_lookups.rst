@@ -3,7 +3,7 @@ Using Lookups
 
 Lookup plugins allow fetching data to Ansible from external sources.  They can be used to lookup values from
 files located on controling machine or from external datastores, such as Redis. Values are evaluated on
-control machine and accessible through usuall Jinja2 syntax.
+control machine and accessible through usual Jinja2 syntax.
 
 .. note:: This is considered an advanced feature, and many users will probably not rely on these features.  
 
