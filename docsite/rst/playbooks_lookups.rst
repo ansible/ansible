@@ -1,9 +1,9 @@
 Using Lookups
 =============
 
-Lookup plugins access data sources on Ansible control machine.  This can include the filesystem
-but also external datastores.  These values are then made available using the standard templating system
-in Ansible, and are typically used to load variables or templates with information from those systems.
+Lookup plugins allow fetching data to Ansible from external sources.  They can be used to lookup values from
+files located on controling machine or from external datastores, such as Redis. Values are evaluated on
+control machine and accessible through usualy Jinja2 syntax.
 
 .. note:: This is considered an advanced feature, and many users will probably not rely on these features.  
 
