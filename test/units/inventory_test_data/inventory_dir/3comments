@@ -1,5 +1,8 @@
+[titan]
+cronus var_a="a#b" var_b="b#c" var_c="c#d" # Is this overkill?
+
 [major-god] # group with inline comments
-zeus var_a="1#2" # host with inline comments and "#" in the var string
+zeus var_a="2#3" # host with inline comments and "#" in the var string
 # A comment
 thor
 
