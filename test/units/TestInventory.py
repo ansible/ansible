@@ -433,8 +433,8 @@ class TestInventory(unittest.TestCase):
         assert host_vars == expected_vars
 
     def test_dir_inventory_multiple_groups(self):
-         inventory = self.dir_inventory()
-         group_greek = inventory.get_hosts('greek')
-         actual_host_names = [host.name for host in group_greek];
-         print "greek : %s " % (actual_host_names)
-         assert actual_host_names == ['zeus','morpheus'] 
+        inventory = self.dir_inventory()
+        group_greek = inventory.get_hosts('greek')
+        actual_host_names = [host.name for host in group_greek]
+        print "greek : %s " % actual_host_names
+        assert actual_host_names == ['zeus', 'morpheus']
