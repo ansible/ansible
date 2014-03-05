@@ -242,12 +242,46 @@ def extract_filename_from_headers(headers):
 
     return res
 
+def get_dest_for_request(url, resp_headers, dest):
+    dest_is_dir = os.path.isdir(dest)
+
+    if not dest_is_dir:
+        return dest
+    else:
+        fn = extract_filename_from_headers(resp_headers)
+
+        if fn == None:
+            fn = url_filename(url)
+
+        fn = os.path.join(dest, fn)
+
+        return fn
+
 def clean_sha256sum(sha256sum):
     if sha256sum != '':
         # Remove any non-alphanumeric characters, including the infamous
         # Unicode zero-width space
         return re.sub(r'\W+', '', sha256sum)
     return ''
+
+
+class HeadRequest(urllib2.Request):
+    def get_method(self):
+        return "HEAD"
+
+
+def prefetch_headers(module, url):
+    try:
+        r = urllib2.urlopen(HeadRequest(url))
+
+        return r
+    except urllib2.HTTPError, e:
+        # Must not fail_json() here so caller can handle HTTP 304 unmodified
+        module.fail_json(msg="Request failed: %s" % str(e), status_code=e.code, url=url)
+    except urllib2.URLError, e:
+        code = getattr(e, 'code', -1)
+        module.fail_json(msg="Request failed: %s" % str(e), status_code=code)
+
 
 # ==============================================================
 # main
@@ -284,31 +318,32 @@ def main():
     if sha256sum != '' and not HAS_HASHLIB:
         module.fail_json(msg="The sha256sum parameter requires hashlib, which is available in Python 2.5 and higher")
 
-    if not dest_is_dir and os.path.exists(dest):
-        if not force and (sha256sum == '' or sha256sum == module.sha256(dest)):
-            module.exit_json(msg="file already exists", dest=dest, url=url, sha256sum=sha256sum, changed=False)
-        else:
-            force=True
+    if not dest_is_dir:
+        if os.path.exists(dest):
+            if not force and (sha256sum == '' or sha256sum == module.sha256(dest)):
+                module.exit_json(msg="file already exists", dest=dest, url=url, sha256sum=sha256sum, changed=False)
+            else:
+                force=True
 
-        # If the file already exists, prepare the last modified time for the
-        # request.
-        mtime = os.path.getmtime(dest)
-        last_mod_time = datetime.datetime.utcfromtimestamp(mtime)
+            # If the file already exists, prepare the last modified time for the
+            # request.
+            mtime = os.path.getmtime(dest)
+            last_mod_time = datetime.datetime.utcfromtimestamp(mtime)
+    else:
+        # if we have a sha256sum, we can short circuit if the destination exists and it's sha256sum matches
+        if sha256sum != '':
+            # prefetch the headers and check the calculated file against the given sha256sum
+            head = prefetch_headers(module, url)
+            pre_dest = get_dest_for_request(head.geturl(), head.info(), dest)
+            if os.path.exists(pre_dest) and sha256sum == module.sha256(pre_dest):
+                module.exit_json(msg="file already exists", dest=dest, url=url, sha256sum=sha256sum, changed=False)
 
     # download to tmpsrc
     tmpsrc, info = url_get(module, url, dest, use_proxy, last_mod_time, force)
 
     # Now the request has completed, we can finally generate the final
     # destination file name from the info dict.
-
-    if dest_is_dir:
-        filename = extract_filename_from_headers(info)
-        if not filename:
-            # Fall back to extracting the filename from the URL.
-            # Pluck the URL from the info, since a redirect could have changed
-            # it.
-            filename = url_filename(info['url'])
-        dest = os.path.join(dest, filename)
+    dest = get_dest_for_request(info['url'], info, dest)
 
     md5sum_src   = None
     md5sum_dest  = None
