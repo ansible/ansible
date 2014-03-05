@@ -45,6 +45,7 @@ class InventoryParser(object):
 
         self._parse_base_groups()
         self._parse_group_children()
+        self._add_allgroup_children()
         self._parse_group_variables()
         return self.groups
 
@@ -69,6 +70,13 @@ class InventoryParser(object):
     # gamma sudo=True user=root
     # delta asdf=jkl favcolor=red
 
+    def _add_allgroup_children(self):
+
+        for group in self.groups.values():
+            if group.depth == 0 and group.name != 'all':
+                self.groups['all'].add_child_group(group)
+
+
     def _parse_base_groups(self):
         # FIXME: refactor
 
@@ -87,11 +95,9 @@ class InventoryParser(object):
                     active_group_name = active_group_name.rsplit(":", 1)[0]
                     if active_group_name not in self.groups:
                         new_group = self.groups[active_group_name] = Group(name=active_group_name)
-                        all.add_child_group(new_group)
                     active_group_name = None
                 elif active_group_name not in self.groups:
                     new_group = self.groups[active_group_name] = Group(name=active_group_name)
-                    all.add_child_group(new_group)
             elif line.startswith(";") or line == '':
                 pass
             elif active_group_name:
