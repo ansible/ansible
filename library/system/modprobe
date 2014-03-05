@@ -37,6 +37,7 @@ options:
     params:
         required: false
         default: ""
+        version_added: "1.6"
         description:
             - Modules parameters.
 '''
