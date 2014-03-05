@@ -39,6 +39,13 @@ options:
         default: null
         choices: []
         aliases: []
+    requester_id:
+        description:
+            - ID of user making the request. Only needed when using a token and creating a maintenance_window.
+        required: true
+        default: null
+        choices: []
+        aliases: []
     service:
         description:
             - PagerDuty service ID.
@@ -51,6 +58,13 @@ options:
             - Length of maintenance window in hours.
         required: false
         default: 1
+        choices: []
+        aliases: []
+    minutes:
+        description:
+            - Maintenance window in minutes (this is added to the hours).
+        required: false
+        default: 0
         choices: []
         aliases: []
     desc:
@@ -90,34 +104,42 @@ import datetime
 import urllib2
 import base64
 
+def create_req(url, data, name, user, passwd, token):
+    req = urllib2.Request(url, data)
+    if token:
+        req.add_header("Authorization", "Token token=%s" % token)
+    else:
+        auth = base64.encodestring('%s:%s' % (user, passwd)).replace('\n', '')
+        req.add_header("Authorization", "Basic %s" % auth)
 
-def ongoing(name, user, passwd):
+    return req
 
+def ongoing(name, user, passwd, token):
     url = "https://" + name + ".pagerduty.com/api/v1/maintenance_windows/ongoing"
-    auth = base64.encodestring('%s:%s' % (user, passwd)).replace('\n', '')
-
-    req = urllib2.Request(url)
-    req.add_header("Authorization", "Basic %s" % auth)
+    req = create_req(url, None, name, user, passwd, token)
     res = urllib2.urlopen(req)
     out = res.read()
 
     return False, out
 
 
-def create(name, user, passwd, service, hours, desc):
+def create(name, user, passwd, token, requester_id, service, hours, minutes, desc):
 
     now = datetime.datetime.utcnow()
-    later = now + datetime.timedelta(hours=int(hours))
+    later = now + datetime.timedelta(hours=int(hours), minutes=int(minutes))
     start = now.strftime("%Y-%m-%dT%H:%M:%SZ")
     end = later.strftime("%Y-%m-%dT%H:%M:%SZ")
 
     url = "https://" + name + ".pagerduty.com/api/v1/maintenance_windows"
-    auth = base64.encodestring('%s:%s' % (user, passwd)).replace('\n', '')
-    data = json.dumps({'maintenance_window': {'start_time': start, 'end_time': end, 'description': desc, 'service_ids': [service]}})
+    request_data = {'maintenance_window': {'start_time': start, 'end_time': end, 'description': desc, 'service_ids': [service]}}
+    if requester_id:
+        request_data['requester_id'] = requester_id
 
-    req = urllib2.Request(url, data)
-    req.add_header("Authorization", "Basic %s" % auth)
+    data = json.dumps(request_data)
+
+    req = create_req(url, data, name, user, passwd, token)
     req.add_header('Content-Type', 'application/json')
+
     res = urllib2.urlopen(req)
     out = res.read()
 
@@ -130,10 +152,13 @@ def main():
         argument_spec=dict(
         state=dict(required=True, choices=['running', 'started', 'ongoing']),
         name=dict(required=True),
-        user=dict(required=True),
-        passwd=dict(required=True),
+        user=dict(required=False),
+        passwd=dict(required=False),
+        token=dict(required=False),
         service=dict(required=False),
+        requester_id=dict(required=False),
         hours=dict(default='1', required=False),
+        minutes=dict(default='0', required=False),
         desc=dict(default='Created by Ansible', required=False)
         )
     )
@@ -142,17 +167,24 @@ def main():
     name = module.params['name']
     user = module.params['user']
     passwd = module.params['passwd']
+    token = module.params['token']
     service = module.params['service']
     hours = module.params['hours']
+    minutes = module.params['minutes']
+    token = module.params['token']
     desc = module.params['desc']
+    requester_id =  module.params['requester_id']
+
+    if not token and not (user or passwd):
+        module.fail_json(msg="neither user and passwd nor token specified")
 
     if state == "running" or state == "started":
         if not service:
             module.fail_json(msg="service not specified")
-        (rc, out) = create(name, user, passwd, service, hours, desc)
+        (rc, out) = create(name, user, passwd, token, requester_id, service, hours, minutes, desc)
 
     if state == "ongoing":
-        (rc, out) = ongoing(name, user, passwd)
+        (rc, out) = ongoing(name, user, passwd, token)
 
     if rc != 0:
         module.fail_json(msg="failed", result=out)
