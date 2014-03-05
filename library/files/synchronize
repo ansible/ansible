@@ -49,6 +49,12 @@ options:
     choices: [ 'yes', 'no' ]
     default: 'yes'
     required: false
+  checksum:
+    description:
+      - Skip based on checksum, not mod-time & size; Pay attention that "archive" option is enable by default: "checksum" may not work as you would like.
+    choices: [ 'yes', 'no' ]
+    default: 'no'
+    required: false
   existing_only:
     description:
       - Skip creating new files on receiver.
@@ -148,6 +154,9 @@ synchronize: src=some/relative/path dest=/some/absolute/path archive=no
 # Synchronization with --archive options enabled except for --recursive
 synchronize: src=some/relative/path dest=/some/absolute/path recursive=no
 
+# Synchronization with --archive options enabled except for --times, with --checksum option enabled
+synchronize: src=some/relative/path dest=/some/absolute/path checksum=yes times=no
+
 # Synchronization without --archive options enabled except use --links
 synchronize: src=some/relative/path dest=/some/absolute/path archive=no links=yes
 
@@ -186,6 +195,7 @@ def main():
             private_key = dict(default=None),
             rsync_path = dict(default=None),
             archive = dict(default='yes', type='bool'),
+            checksum = dict(default='no', type='bool'),
             existing_only = dict(default='no', type='bool'),
             dirs  = dict(default='no', type='bool'),
             recursive = dict(type='bool'),
@@ -210,6 +220,7 @@ def main():
     rsync = module.params.get('local_rsync_path', 'rsync')
     rsync_timeout = module.params.get('rsync_timeout', 'rsync_timeout')
     archive = module.params['archive']
+    checksum = module.params['checksum']
     existing_only = module.params['existing_only']
     dirs = module.params['dirs']
     # the default of these params depends on the value of archive
@@ -228,6 +239,8 @@ def main():
         cmd = cmd + ' --delete-after'
     if existing_only:
         cmd = cmd + ' --existing'
+    if checksum:
+        cmd = cmd + ' --checksum'
     if archive:
         cmd = cmd + ' --archive'
         if recursive is False:
