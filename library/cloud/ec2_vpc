@@ -58,7 +58,7 @@ options:
     aliases: []
   resource_tags:
     description:
-      - A list of tags uniquely identifying a VPC in the form of: {Tag1: Value1, Tag2: Value2, ...}. This list works in conjunction with CIDR (cidr_block) and is gnored when VPC id (vpc_id) is specified.
+      - A dictionary array of resource tags of the form: { tag1: value1, tag2: value2 }.  Tags in this list are used in conjunction with CIDR block to uniquely identify a VPC in lieu of vpc_id. Therefore, if CIDR/Tag combination does not exits, a new VPC will be created.  VPC tags not on this list will be ignored.
     required: false
     default: null
     aliases: []
