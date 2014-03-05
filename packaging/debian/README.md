@@ -13,7 +13,7 @@ The debian package file will be placed in the `../` directory. This can then be 
 
 Note that `dpkg -i` does not resolve dependencies.
 
-To install the Ansbiel DEB package and resolve redepdencies:
+To install the Ansible DEB package and resolve redepdencies:
 
     sudo dpkg -i <package-file>
     sudo apt-get -fy install
