@@ -86,6 +86,13 @@ options:
         description:
             - Whether the account should exist.  When C(absent), removes
               the user account.
+    passchangeonfirstlogin:
+        required: false
+        default: "no"
+        choices: ["yes", "no"]
+        description:
+            - Marks password as expired and ask for user to change it at next
+              login
     createhome:
         required: false
         default: "yes"
@@ -236,6 +243,7 @@ class User(object):
         self.home       = module.params['home']
         self.shell      = module.params['shell']
         self.password   = module.params['password']
+        self.passchangeonfirstlogin = module.params['passchangeonfirstlogin']
         self.force      = module.params['force']
         self.remove     = module.params['remove']
         self.createhome = module.params['createhome']
@@ -345,6 +353,15 @@ class User(object):
 
         return False
 
+
+    def force_passwd_change(self):
+        # set user password to change at first login        
+
+        cmd = [self.module.get_bin_path('chage', True)]
+        cmd.append('-d')
+        cmd.append('0')
+        cmd.append(self.name)
+        return self.execute_command(cmd)
 
 
     def modify_user_usermod(self):
@@ -1461,6 +1478,7 @@ def main():
             # following options are specific to useradd
             createhome=dict(default='yes', type='bool'),
             system=dict(default='no', type='bool'),
+            passchangeonfirstlogin=dict(default='no', type='bool'),
             # following options are specific to usermod
             move_home=dict(default='no', type='bool'),
             append=dict(default='no', type='bool'),
@@ -1506,6 +1524,8 @@ def main():
             (rc, out, err) = user.create_user()
             result['system'] = user.system
             result['createhome'] = user.createhome
+            if user.passchangeonfirstlogin:
+                print user.force_passwd_change()
         else:
             # modify user (note: this function is check mode aware)
             (rc, out, err) = user.modify_user()
