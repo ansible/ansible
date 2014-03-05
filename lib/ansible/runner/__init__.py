@@ -243,7 +243,7 @@ class Runner(object):
         """
         if complex_args is None:
             return module_args
-        if type(complex_args) != dict:
+        if not isinstance(complex_args, dict):
             raise errors.AnsibleError("complex arguments are not a dictionary: %s" % complex_args)
         for (k,v) in complex_args.iteritems():
             if isinstance(v, basestring):
