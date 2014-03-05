@@ -300,7 +300,21 @@ def create_vpc(module, vpc_conn):
             module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
 
     # Done with base VPC, now change to attributes and features.
-    
+
+    # Add resource tags
+    vpc_spec_tags = module.params.get('resource_tags')
+    vpc_tags = dict((t.name, t.value) for t in vpc_conn.get_all_tags(filters={'resource-id': vpc.id}))
+
+    if not set(vpc_spec_tags.items()).issubset(set(vpc_tags.items())):
+        new_tags = {}
+
+        for (key, value) in set(vpc_spec_tags.items()): 
+            if (key, value) not in set(vpc_tags.items()):
+                new_tags[key] = value
+      
+        if new_tags:
+            vpc_conn.create_tags(vpc.id, new_tags)
+
 
     # boto doesn't appear to have a way to determine the existing
     # value of the dns attributes, so we just set them.
