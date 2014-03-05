@@ -242,6 +242,13 @@ def extract_filename_from_headers(headers):
 
     return res
 
+def clean_sha256sum(sha256sum):
+    if sha256sum != '':
+        # Remove any non-alphanumeric characters, including the infamous
+        # Unicode zero-width space
+        return re.sub(r'\W+', '', sha256sum)
+    return ''
+
 # ==============================================================
 # main
 
@@ -268,11 +275,14 @@ def main():
     url  = module.params['url']
     dest = os.path.expanduser(module.params['dest'])
     force = module.params['force']
-    sha256sum = module.params['sha256sum']
+    sha256sum = clean_sha256sum(module.params['sha256sum'])
     use_proxy = module.params['use_proxy']
 
     dest_is_dir = os.path.isdir(dest)
     last_mod_time = None
+
+    if sha256sum != '' and not HAS_HASHLIB:
+        module.fail_json(msg="The sha256sum parameter requires hashlib, which is available in Python 2.5 and higher")
 
     if not dest_is_dir and os.path.exists(dest):
         if not force:
@@ -338,17 +348,9 @@ def main():
     # Check the digest of the destination file and ensure that it matches the
     # sha256sum parameter if it is present
     if sha256sum != '':
-        # Remove any non-alphanumeric characters, including the infamous
-        # Unicode zero-width space
-        stripped_sha256sum = re.sub(r'\W+', '', sha256sum)
+        destination_checksum = module.sha256(dest)
 
-        if not HAS_HASHLIB:
-            os.remove(dest)
-            module.fail_json(msg="The sha256sum parameter requires hashlib, which is available in Python 2.5 and higher")
-        else:
-            destination_checksum = module.sha256(dest)
-
-        if stripped_sha256sum != destination_checksum:
+        if sha256sum != destination_checksum:
             os.remove(dest)
             module.fail_json(msg="The SHA-256 checksum for %s did not match %s; it was %s." % (dest, sha256sum, destination_checksum))
 
