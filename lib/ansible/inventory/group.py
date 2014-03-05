@@ -41,7 +41,12 @@ class Group(object):
         if not group in self.child_groups:
             self.child_groups.append(group)
             group.depth = max([self.depth+1, group.depth])
-            group.parent_groups.append(self)
+
+            # now add self to child's parent_groups list, but only if there
+            # isn't already a group with the same name
+            if not self.name in [g.name for g in group.parent_groups]:
+                group.parent_groups.append(self)
+
             self.clear_hosts_cache()
 
     def add_host(self, host):
