@@ -124,12 +124,6 @@ except ImportError:
 # ==============================================================
 # url handling
 
-def url_filename(url):
-    fn = os.path.basename(urlparse.urlsplit(url)[2])
-    if fn == '':
-        return 'index.html'
-    return fn
-
 def url_do_get(module, url, dest, use_proxy, last_mod_time, force):
     """
     Get url and return request and info
@@ -222,6 +216,12 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force):
     f.close()
     req.close()
     return tempname, info
+
+def url_filename(url):
+    fn = os.path.basename(urlparse.urlsplit(url)[2])
+    if fn == '':
+        return 'index.html'
+    return fn
 
 def extract_filename_from_headers(headers):
     """
