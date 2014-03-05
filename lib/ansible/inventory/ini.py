@@ -23,6 +23,7 @@ from ansible.inventory.group import Group
 from ansible.inventory.expand_hosts import detect_range
 from ansible.inventory.expand_hosts import expand_hostname_range
 from ansible import errors
+import ansible.utils as utils
 import shlex
 import re
 import ast
@@ -68,27 +69,7 @@ class InventoryParser(object):
 
             # Split off any comments that are not contained in a variable.
             if "#" in line:
-                split_line = line.split("#")
-                instances = len(split_line) - 1
-                if instances > 0:
-                    marker = 0
-                    while marker < instances:
-                        if ("=\"" in split_line[marker] and "\"" in split_line[marker + 1]) or (
-                                "='" in split_line[marker] and "'" in split_line[marker + 1]):
-                            marker += 1
-                        else:
-                            if marker == 0:
-                                line = split_line[marker]
-                            else:
-                                # We have multiple fragments that we need to combine back together.
-                                # rekram is us reversing that work we did with marker.
-                                rekram = 0
-                                new_line = split_line[rekram]
-                                while marker > rekram:
-                                    rekram += 1
-                                    new_line = new_line + "#" + split_line[rekram]
-                                line = new_line
-                            break
+                line = utils.split_unquoted_hash(line)
 
             # Clean up the end of the line.
             line = line.strip()
