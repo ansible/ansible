@@ -6,6 +6,7 @@ Ansible Changes By Release
 Major features/changes:
 
 * The deprecated legacy variable templating system has been finally removed.  Use {{ foo }} always not $foo or ${foo}.
+* Role dependencies are now tracked across multiple plays, making common roles easier to include in dependencies without any special variable tricks.
 
 New Modules:
 
