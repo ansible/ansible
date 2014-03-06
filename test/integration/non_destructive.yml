@@ -9,7 +9,7 @@
     vars_var: 123
 
   gather_facts: True
-  roles: 
+  roles:
     - { role: test_ping, tags: test_ping }
     - { role: test_copy, tags: test_copy }
     - { role: test_stat, tags: test_stat }
@@ -36,4 +36,3 @@
     - { role: test_command_shell, tags: test_command_shell }
     - { role: test_failed_when, tags: test_failed_when }
     - { role: test_script, tags: test_script }
-    - { role: test_user, tags: test_user }
