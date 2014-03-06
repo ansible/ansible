@@ -300,8 +300,11 @@ def connect(module, login_user, login_password, config_file):
         default_file = config_file
     else:
         default_file = '~/.my.cnf'
-        
+    
     if default_file is not None and os.path.exists(default_file):
+        if not os.path.exists(default_file):
+            raise IOError("config_file %s does not exist" % default_file)
+            
         if module.params["login_unix_socket"]:
             db_connection = MySQLdb.connect(host=module.params["login_host"], unix_socket=module.params["login_unix_socket"], db="mysql", read_default_file=default_file)
         else:
@@ -367,7 +370,7 @@ def main():
         if not cursor:
             cursor = connect(module, login_user, login_password, config_file)
     except Exception, e:
-        module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or ~/.my.cnf has the credentials. Error: %s" % e)
+        module.fail_json(msg="unable to connect to database: %s" % e)
 
     if state == "present":
         if user_exists(cursor, user, host):
