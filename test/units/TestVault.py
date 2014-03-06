@@ -43,7 +43,6 @@ class TestVaultLib(TestCase):
         sensitive_data = "ansible"
         sensitive_hex = hexlify(sensitive_data)
         data = v._add_headers_and_hexify_encrypted_data(sensitive_data)
-        open("/tmp/awx.log", "a").write("data: %s\n" % data)
         lines = data.split('\n')
         assert len(lines) > 1, "failed to properly add header"
         header = lines[0]
