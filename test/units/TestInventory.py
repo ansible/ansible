@@ -417,15 +417,17 @@ class TestInventory(unittest.TestCase):
         auth = inventory.get_variables('neptun')['auth']
         assert auth == 'YWRtaW46YWRtaW4='
 
-    # test disabled as needs to be updated to model desired behavior
-    #
-    #def test_dir_inventory(self):
-    #    inventory = self.dir_inventory()
-    #    vars = inventory.get_variables('zeus')
-    #
-    #   print "VARS=%s" % vars
-    #
-    #    assert vars == {'inventory_hostname': 'zeus',
-    #                    'inventory_hostname_short': 'zeus',
-    #                    'group_names': ['greek', 'major-god', 'ungrouped'],
-    #                    'var_a': '1#2'}
+    def test_dir_inventory(self):
+        inventory = self.dir_inventory()
+
+        host_vars = inventory.get_variables('zeus')
+
+        expected_vars = {'inventory_hostname': 'zeus',
+                         'inventory_hostname_short': 'zeus',
+                         'group_names': ['greek', 'major-god', 'ungrouped'],
+                         'var_a': '3#4'}
+
+        print "HOST     VARS=%s" % host_vars
+        print "EXPECTED VARS=%s" % expected_vars
+
+        assert host_vars == expected_vars

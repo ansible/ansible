@@ -123,12 +123,22 @@ class InventoryParser(object):
                                 (k,v) = t.split("=", 1)
                             except ValueError, e:
                                 raise errors.AnsibleError("Invalid ini entry: %s - %s" % (t, str(e)))
-                            try:
-                                host.set_variable(k,ast.literal_eval(v))
-                            except:
-                                # most likely a string that literal_eval
-                                # doesn't like, so just set it
-                                host.set_variable(k,v)
+
+                            # If there is a hash in the value don't pass it through to ast at ast will split at the hash.
+                            if "#" in v:
+                                host.set_variable(k, v)
+                            else:
+                                try:
+                                    host.set_variable(k,ast.literal_eval(v))
+                                # Using explicit exceptions.
+                                # Likely a string that literal_eval does not like. We wil then just set it.
+                                except ValueError:
+                                    # For some reason this was thought to be malformed.
+                                    host.set_variable(k, v)
+                                except SyntaxError:
+                                    # Is this a hash with an equals at the end?
+                                    host.set_variable(k, v)
+
                     self.groups[active_group_name].add_host(host)
 
     # [southeast:children]
