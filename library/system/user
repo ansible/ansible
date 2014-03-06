@@ -689,6 +689,10 @@ class FreeBsdUser(User):
             cmd.append('-L')
             cmd.append(self.login_class)
 
+        if self.state == 'locked':
+            cmd.append('-e')
+            cmd.append('1970-01-01')
+
         # system cannot be handled currently - should we error if its requested?
         # create the user
         (rc, out, err) = self.execute_command(cmd)
@@ -773,6 +777,10 @@ class FreeBsdUser(User):
                     new_groups = groups | set(current_groups)
                 cmd.append(','.join(new_groups))
 
+        if self.state == 'locked':
+            cmd.append('-e')
+            cmd.append('1970-01-01')
+
         # modify the user if cmd will do anything
         if cmd_len != len(cmd):
             (rc, out, err) = self.execute_command(cmd)
@@ -848,6 +856,10 @@ class OpenBSDUser(User):
         if self.login_class is not None:
             cmd.append('-L')
             cmd.append(self.login_class)
+
+        if self.state == 'locked':
+            cmd.append('-e')
+            cmd.append('1')
 
         if self.password is not None:
             cmd.append('-p')
@@ -943,6 +955,10 @@ class OpenBSDUser(User):
                 cmd.append('-L')
                 cmd.append(self.login_class)
 
+        if self.state == 'locked':
+            cmd.append('-e')
+            cmd.append('1')
+
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
             cmd.append('-p')
             cmd.append(self.password)
@@ -1015,6 +1031,10 @@ class NetBSDUser(User):
         if self.login_class is not None:
             cmd.append('-L')
             cmd.append(self.login_class)
+
+        if self.state == 'locked':
+            cmd.append('-e')
+            cmd.append('1')
 
         if self.password is not None:
             cmd.append('-p')
@@ -1098,6 +1118,10 @@ class NetBSDUser(User):
             cmd.append('-L')
             cmd.append(self.login_class)
 
+        if self.state == 'locked':
+            cmd.append('-e')
+            cmd.append('1')
+
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
             cmd.append('-p')
             cmd.append(self.password)
@@ -1174,6 +1198,10 @@ class SunOS(User):
 
         if self.createhome:
             cmd.append('-m')
+
+        if self.state == 'locked':
+            cmd.append('-e')
+            cmd.append('1/1/70')
 
         cmd.append(self.name)
 
@@ -1257,6 +1285,10 @@ class SunOS(User):
         if self.shell is not None and info[6] != self.shell:
             cmd.append('-s')
             cmd.append(self.shell)
+
+        if self.state == 'locked':
+            cmd.append('-e')
+            cmd.append('1/1/70')
 
         if self.module.check_mode:
             return (0, '', '')
@@ -1346,6 +1378,10 @@ class AIX(User):
         if self.createhome:
             cmd.append('-m')
 
+        if self.state == 'locked':
+            cmd.append('-e')
+            cmd.append('0101000070')
+
         cmd.append(self.name)
         (rc, out, err) = self.execute_command(cmd)
 
@@ -1415,6 +1451,9 @@ class AIX(User):
             cmd.append('-s')
             cmd.append(self.shell)
 
+        if self.state == 'locked':
+            cmd.append('-e')
+            cmd.append('0101000070')
 
         # skip if no changes to be made
         if len(cmd) == 1:
