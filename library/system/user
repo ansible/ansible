@@ -85,7 +85,8 @@ options:
         choices: [ present, absent, locked ]
         description:
             - Whether the account should exist, and whether it is locked.
-              When C(absent), removes the user account. Only implemented for linux.
+              When C(absent), removes the user account.
+              Locked state is only implemented for Linux.
     createhome:
         required: false
         default: "yes"
