@@ -597,7 +597,8 @@ def main():
     except psycopg2.Error, e:
         conn.rollback()
         # psycopg2 errors come in connection encoding, reencode
-        msg = e.message.decode(conn.encoding).encode(errors='replace')
+        msg = e.message.decode(conn.encoding).encode(sys.getdefaultencoding(),
+                                                     'replace')
         module.fail_json(msg=msg)
 
     if module.check_mode:
