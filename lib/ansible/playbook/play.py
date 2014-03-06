@@ -235,7 +235,7 @@ class Play(object):
                                 included_dep_vars = included_role_dep[2]
                                 if included_dep_name == dep:
                                     if "tags" in included_dep_vars:
-                                        included_dep_vars["tags"] = list(set(included_dep_vars["tags"] + passed_vars["tags"]))
+                                        included_dep_vars["tags"] = list(set(included_dep_vars["tags"]).union(set(passed_vars["tags"])))
                                     else:
                                         included_dep_vars["tags"] = passed_vars["tags"][:]
 
