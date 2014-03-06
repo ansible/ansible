@@ -17,5 +17,5 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 - include: 'yum.yml'
-  when: ansible_distribution in ('RHEL', 'CentOS', 'ScientificLinux', 'Fedora')
+  when: ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux', 'Fedora']
 
