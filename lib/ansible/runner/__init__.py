@@ -415,7 +415,7 @@ class Runner(object):
 
         environment_string = self._compute_environment_string(inject)
 
-        if tmp.find("tmp") != -1 and (self.sudo or self.su) and (self.sudo_user != 'root' or self.su_user != 'root'):
+        if tmp.find("tmp") != -1 and (self.sudo and self.sudo_user != 'root') or (self.su and self.su_user != 'root'):
             # deal with possible umask issues once sudo'ed to other user
             cmd_chmod = "chmod a+r %s" % remote_module_path
             self._low_level_exec_command(conn, cmd_chmod, tmp, sudoable=False)
@@ -444,7 +444,7 @@ class Runner(object):
             else:
                 argsfile = self._transfer_str(conn, tmp, 'arguments', args)
 
-            if (self.sudo or self.su) and (self.sudo_user != 'root' or self.su_user != 'root'):
+            if (self.sudo and self.sudo_user != 'root') or (self.su and self.su_user != 'root'):
                 # deal with possible umask issues once sudo'ed to other user
                 cmd_args_chmod = "chmod a+r %s" % argsfile
                 self._low_level_exec_command(conn, cmd_args_chmod, tmp, sudoable=False)
@@ -486,7 +486,7 @@ class Runner(object):
             res = self._low_level_exec_command(conn, cmd, tmp, sudoable=sudoable, in_data=in_data)
 
         if tmp.find("tmp") != -1 and not C.DEFAULT_KEEP_REMOTE_FILES and not persist_files and delete_remote_tmp:
-            if (self.sudo or self.su) and (self.sudo_user != 'root' or self.su_user != 'root'):
+            if (self.sudo and self.sudo_user != 'root') or (self.su and self.su_user != 'root'):
             # not sudoing to root, so maybe can't delete files as that other user
             # have to clean up temp files as original user in a second step
                 cmd2 = "rm -rf %s >/dev/null 2>&1" % tmp
@@ -986,11 +986,11 @@ class Runner(object):
 
         basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
         basetmp = os.path.join(C.DEFAULT_REMOTE_TMP, basefile)
-        if (self.sudo or self.su) and (self.sudo_user != 'root' or self.su_user != 'root') and basetmp.startswith('$HOME'):
+        if (self.sudo and self.sudo_user != 'root') or (self.su and self.su_user != 'root') and basetmp.startswith('$HOME'):
             basetmp = os.path.join('/tmp', basefile)
 
         cmd = 'mkdir -p %s' % basetmp
-        if self.remote_user != 'root' or ((self.sudo or self.su) and (self.sudo_user != 'root' or self.su_user != 'root')):
+        if self.remote_user != 'root' or ((self.sudo and self.sudo_user != 'root') or (self.su and self.su_user != 'root')):
             cmd += ' && chmod a+rx %s' % basetmp
         cmd += ' && echo %s' % basetmp
 
