@@ -93,7 +93,7 @@ options:
         description:
             - Unless set to C(no), a home directory will be made for the user
               when the account is created or if the home directory does not
-              exist. 
+              exist.
     move_home:
         required: false
         default: "no"
@@ -146,7 +146,7 @@ options:
         default: rsa
         version_added: "0.9"
         description:
-            - Optionally specify the type of SSH key to generate. 
+            - Optionally specify the type of SSH key to generate.
               Available SSH key types will depend on implementation
               present on target host.
     ssh_key_file:
@@ -291,8 +291,8 @@ class User(object):
             cmd.append(self.group)
         elif self.group_exists(self.name):
             # use the -N option (no user group) if a group already
-            # exists with the same name as the user to prevent 
-            # errors from useradd trying to create a group when 
+            # exists with the same name as the user to prevent
+            # errors from useradd trying to create a group when
             # USERGROUPS_ENAB is set in /etc/login.defs.
             cmd.append('-N')
 
@@ -523,7 +523,7 @@ class User(object):
         if not os.path.exists(info[5]):
             return (1, '', 'User %s home directory does not exist' % self.name)
         ssh_key_file = self.get_ssh_key_path()
-        ssh_dir = os.path.dirname(ssh_key_file) 
+        ssh_dir = os.path.dirname(ssh_key_file)
         if not os.path.exists(ssh_dir):
             try:
                 os.mkdir(ssh_dir, 0700)
@@ -612,7 +612,6 @@ class User(object):
                     os.chown(os.path.join(root, f), uid, gid)
         except OSError, e:
             self.module.exit_json(failed=True, msg="%s" % e)
-           
 
 # ===========================================
 
@@ -705,7 +704,7 @@ class FreeBsdUser(User):
                 self.module.get_bin_path('chpass', True),
                 '-p',
                 self.password,
-                self.name 
+                self.name
             ]
             return self.execute_command(cmd)
 
@@ -716,7 +715,7 @@ class FreeBsdUser(User):
             self.module.get_bin_path('pw', True),
             'usermod',
             '-n',
-            self.name 
+            self.name
         ]
         cmd_len = len(cmd)
         info = self.user_info()
@@ -795,7 +794,7 @@ class FreeBsdUser(User):
                 self.module.get_bin_path('chpass', True),
                 '-p',
                 self.password,
-                self.name 
+                self.name
             ]
             return self.execute_command(cmd)
 
@@ -1142,7 +1141,7 @@ class SunOS(User):
     """
     This is a SunOS User manipulation class - The main difference between
     this class and the generic user class is that Solaris-type distros
-    don't support the concept of a "system" account and we need to 
+    don't support the concept of a "system" account and we need to
     edit the /etc/shadow file manually to set a password. (Ugh)
 
     This overrides the following methods from the generic class:-
@@ -1212,7 +1211,7 @@ class SunOS(User):
             if rc is not None and rc != 0:
                 self.module.fail_json(name=self.name, msg=err, rc=rc)
 
-            # we have to set the password by editing the /etc/shadow file 
+            # we have to set the password by editing the /etc/shadow file
             if self.password is not None:
                 try:
                     lines = []
@@ -1302,7 +1301,7 @@ class SunOS(User):
             else:
                 (rc, out, err) = (None, '', '')
 
-            # we have to set the password by editing the /etc/shadow file 
+            # we have to set the password by editing the /etc/shadow file
             if self.update_password == 'always' and self.password is not None and info[1] != self.password:
                 try:
                     lines = []
