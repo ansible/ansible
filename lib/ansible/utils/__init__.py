@@ -1071,3 +1071,12 @@ def random_password(length=20, chars=C.DEFAULT_PASSWORD_CHARS):
             password.append(new_char)
 
     return ''.join(password)
+
+def before_comment(msg):
+    ''' what's the part of a string before a comment? '''
+    msg = msg.replace("\#","**NOT_A_COMMENT**")
+    msg = msg.split("#")[0]
+    msg = msg.replace("**NOT_A_COMMENT**","#")
+    return msg
+
+

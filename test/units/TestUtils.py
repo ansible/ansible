@@ -16,6 +16,29 @@ sys.setdefaultencoding("utf8")
 
 class TestUtils(unittest.TestCase):
 
+    def test_before_comment(self):
+        ''' see if we can detect the part of a string before a comment.  Used by INI parser in inventory '''
+ 
+        input    = "before # comment"
+        expected = "before "
+        actual   = ansible.utils.before_comment(input)
+        assert expected == actual
+
+        input    = "before \# not a comment"
+        expected = "before # not a comment"
+        actual  =  ansible.utils.before_comment(input)
+        assert expected == actual
+
+        input = ""
+        expected = ""
+        actual = ansible.utils.before_comment(input)
+        assert expected == actual
+
+        input = "#"
+        expected = ""
+        actual = ansible.utils.before_comment(input)
+        assert expected == actual 
+
     #####################################
     ### check_conditional tests
 

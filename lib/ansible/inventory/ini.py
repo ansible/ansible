@@ -23,6 +23,7 @@ from ansible.inventory.group import Group
 from ansible.inventory.expand_hosts import detect_range
 from ansible.inventory.expand_hosts import expand_hostname_range
 from ansible import errors
+from ansible import utils
 import shlex
 import re
 import ast
@@ -65,7 +66,7 @@ class InventoryParser(object):
         active_group_name = 'ungrouped'
 
         for line in self.lines:
-            line = line.split("#")[0].strip()
+            line = utils.before_comment(line).strip()
             if line.startswith("[") and line.endswith("]"):
                 active_group_name = line.replace("[","").replace("]","")
                 if line.find(":vars") != -1 or line.find(":children") != -1:
