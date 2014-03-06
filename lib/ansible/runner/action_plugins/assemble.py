@@ -39,7 +39,13 @@ class ActionModule(object):
         for f in sorted(os.listdir(src_path)):
             fragment = "%s/%s" % (src_path, f)
             if delimit_me and delimiter:
+                # en-escape things like new-lines
+                delimiter = delimiter.decode('unicode-escape')
                 tmp.write(delimiter)
+                # always make sure there's a newline after the
+                # delimiter, so lines don't run together
+                if delimiter[-1] != '\n':
+                    tmp.write('\n')
             if os.path.isfile(fragment):
                 tmp.write(file(fragment).read())
             delimit_me = True
