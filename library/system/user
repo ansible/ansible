@@ -86,13 +86,28 @@ options:
         description:
             - Whether the account should exist.  When C(absent), removes
               the user account.
-    passchangeonfirstlogin:
+    pass_change_on_first_login:
         required: false
         default: "no"
         choices: ["yes", "no"]
         description:
             - Marks password as expired and ask for user to change it at next
               login
+    chage_max:
+        required: false
+        default: 9999
+        description:
+            - Set the maximum number of days during which a password is valid.
+    chage_min:
+        required: false
+        default: 0
+        description:
+            - Set the minimum number of days between password changes.
+    chage_warn:
+        required: false
+        default: 7
+        description:
+            - Set the number of days of warning before a password change is required.
     createhome:
         required: false
         default: "yes"
@@ -243,7 +258,10 @@ class User(object):
         self.home       = module.params['home']
         self.shell      = module.params['shell']
         self.password   = module.params['password']
-        self.passchangeonfirstlogin = module.params['passchangeonfirstlogin']
+        self.chage_max	= module.params['chage_max']
+        self.chage_min	= module.params['chage_min']
+        self.chage_warn = module.params['chage_warn']
+        self.passchangeonfirstlogin = module.params['pass_change_on_first_login']
         self.force      = module.params['force']
         self.remove     = module.params['remove']
         self.createhome = module.params['createhome']
@@ -363,6 +381,17 @@ class User(object):
         cmd.append(self.name)
         return self.execute_command(cmd)
 
+
+    def modify_chage(self):
+        cmd = [self.module.get_bin_path('chage', True)]
+        cmd.append('-m')
+        cmd.append(str(self.chage_min))
+        cmd.append('-M')
+        cmd.append(str(self.chage_max))
+        cmd.append('-W')
+        cmd.append(str(self.chage_warn))
+        cmd.append(self.name)
+        return self.execute_command(cmd)
 
     def modify_user_usermod(self):
         cmd = [self.module.get_bin_path('usermod', True)]
@@ -1471,6 +1500,9 @@ def main():
             home=dict(default=None, type='str'),
             shell=dict(default=None, type='str'),
             password=dict(default=None, type='str'),
+            chage_max=dict(default=9999, type='int'),
+            chage_min=dict(default=0, type='int'),
+            chage_warn=dict(default=7, type='int'),
             login_class=dict(default=None, type='str'),
             # following options are specific to userdel
             force=dict(default='no', type='bool'),
@@ -1478,7 +1510,7 @@ def main():
             # following options are specific to useradd
             createhome=dict(default='yes', type='bool'),
             system=dict(default='no', type='bool'),
-            passchangeonfirstlogin=dict(default='no', type='bool'),
+            pass_change_on_first_login=dict(default='no', type='bool'),
             # following options are specific to usermod
             move_home=dict(default='no', type='bool'),
             append=dict(default='no', type='bool'),
@@ -1525,7 +1557,9 @@ def main():
             result['system'] = user.system
             result['createhome'] = user.createhome
             if user.passchangeonfirstlogin:
-                print user.force_passwd_change()
+               (rc, out, err) = user.force_passwd_change()
+               if rc is not None and rc != 0:
+                   module.fail_json(name=user.name, msg=err, rc=rc)
         else:
             # modify user (note: this function is check mode aware)
             (rc, out, err) = user.modify_user()
@@ -1558,6 +1592,12 @@ def main():
         result['uid'] = info[2]
         if user.groups is not None:
             result['groups'] = user.groups
+        
+        (rc, out, err) = user.modify_chage()
+        if rc is not None and rc != 0:
+           module.fail_json(name=user.name, msg=err, rc=rc)
+        if rc == 0:
+           result['changed'] = True
 
         # deal with ssh key
         if user.sshkeygen:
