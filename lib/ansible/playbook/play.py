@@ -49,7 +49,7 @@ class Play(object):
 
     # *************************************************
 
-    def __init__(self, playbook, ds, basedir, vault_password=None):
+    def __init__(self, playbook, ds, basedir, included_roles=[], vault_password=None):
         ''' constructor loads from a play datastructure '''
 
         for x in ds.keys():
@@ -81,7 +81,7 @@ class Play(object):
         self._update_vars_files_for_host(None)
 
         # now we load the roles into the datastructure
-        self.included_roles = []
+        self.included_roles = included_roles
         ds = self._load_roles(self.roles, ds)
         
         # and finally re-process the vars files as they may have
@@ -226,6 +226,20 @@ class Play(object):
                             meta_data = utils.parse_yaml_from_file(meta, vault_password=self.vault_password)
                             if meta_data:
                                 allow_dupes = utils.boolean(meta_data.get('allow_duplicates',''))
+
+                        # if any tags were specified as role/dep variables, merge
+                        # them into the passed_vars so they're passed on to any 
+                        # further dependencies too, and so we only have one place
+                        # (passed_vars) to look for tags going forward
+                        def __merge_tags(var_obj):
+                            old_tags = passed_vars.get('tags', [])
+                            new_tags = var_obj.get('tags', [])
+                            if isinstance(new_tags, basestring):
+                                new_tags = [new_tags, ]
+                            return list(set(old_tags + new_tags))
+
+                        passed_vars['tags'] = __merge_tags(role_vars)
+                        passed_vars['tags'] = __merge_tags(dep_vars)
 
                         # if tags are set from this role, merge them
                         # into the tags list for the dependent role
