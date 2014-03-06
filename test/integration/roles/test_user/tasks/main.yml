@@ -18,10 +18,26 @@
 - name: create user account
   user: name={{ non_root_test_user }} state=present
   register: create_user
-  failed_when: not create_user|changed # let's not mess with existing users
+  # let's not mess with the user if it already exists
+  failed_when: not create_user|changed
 
 - name: assert that user exists
   command: "grep {{ non_root_test_user }} /etc/passwd"
+
+- name: set password
+  user: name={{ non_root_test_user }} password=test_pass
+
+- name: lock account
+  user: name={{ non_root_test_user }} state=locked
+
+- name: assert that account is expired
+  shell: "chage -l {{ non_root_test_user }} | grep '^Account expires.*1970'"
+
+- name: assert that passwd is locked
+  command: "passwd -S {{ non_root_test_user }}"
+  register: passwd
+  failed_when: passwd.stdout.split()[1] != "L"
+  when: no # locking the password shouldn't be necessary after account expiry
 
 - name: delete user account
   user: name={{ non_root_test_user }} state=absent
@@ -30,3 +46,15 @@
   command: "grep {{ non_root_test_user }} /etc/passwd"
   register: test_absence
   failed_when: test_absence.rc == 0
+
+- name: create and lock account
+  user: name={{ non_root_test_user }} state=locked
+
+- name: confirm that lock is idempotent
+  user: name={{ non_root_test_user }} state=locked
+
+- name: assert that account is expired
+  shell: "chage -l {{ non_root_test_user }} | grep '^Account expires.*1970'"
+
+- name: delete user account
+  user: name={{ non_root_test_user }} state=absent
