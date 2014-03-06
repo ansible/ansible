@@ -393,6 +393,7 @@ class User(object):
         cmd.append(self.name)
         return self.execute_command(cmd)
 
+
     def modify_user_usermod(self):
         cmd = [self.module.get_bin_path('usermod', True)]
         info = self.user_info()
