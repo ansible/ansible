@@ -391,7 +391,13 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
         final_path = None
         if 'user' in data and data.get('user') != getpass.getuser():
             vv("the target user doesn't match this user, we'll move the file into place via sudo")
-            (fd,out_path) = tempfile.mkstemp(prefix='ansible.', dir=os.path.expanduser('~/.ansible/tmp/'))
+            tmp_path = os.path.expanduser('~/.ansible/tmp/')
+            if not os.path.exists(tmp_path):
+                try:
+                    os.makedirs(tmp_path, 0700)
+                except:
+                    return dict(failed=True, msg='could not create a temporary directory at %s' % tmp_path)
+            (fd,out_path) = tempfile.mkstemp(prefix='ansible.', dir=tmp_path)
             out_fd = os.fdopen(fd, 'w', 0)
             final_path = data['out_path']
         else:
