@@ -236,7 +236,7 @@ class Play(object):
                             new_tags = var_obj.get('tags', [])
                             if isinstance(new_tags, basestring):
                                 new_tags = [new_tags, ]
-                            return list(set(old_tags + new_tags))
+                            return list(set(old_tags).union(set(new_tags)))
 
                         passed_vars['tags'] = __merge_tags(role_vars)
                         passed_vars['tags'] = __merge_tags(dep_vars)
@@ -249,7 +249,7 @@ class Play(object):
                                 included_dep_vars = included_role_dep[2]
                                 if included_dep_name == dep:
                                     if "tags" in included_dep_vars:
-                                        included_dep_vars["tags"] = list(set(included_dep_vars["tags"] + passed_vars["tags"]))
+                                        included_dep_vars["tags"] = list(set(included_dep_vars["tags"]).union(set(passed_vars["tags"])))
                                     else:
                                         included_dep_vars["tags"] = passed_vars["tags"][:]
 
