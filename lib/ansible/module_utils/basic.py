@@ -46,6 +46,7 @@ BOOLEANS = BOOLEANS_TRUE + BOOLEANS_FALSE
 
 import os
 import re
+import pipes
 import shlex
 import subprocess
 import sys
@@ -1017,6 +1018,30 @@ class AnsibleModule(object):
         if path_prefix:
             env['PATH']="%s:%s" % (path_prefix, env['PATH'])
 
+        # create a printable version of the command for use
+        # in reporting later, which strips out things like
+        # passwords from the args list
+        if isinstance(args, list):
+            clean_args = " ".join(pipes.quote(arg) for arg in args)
+        else:
+            clean_args = args
+
+        # all clean strings should return two match groups, 
+        # where the first is the CLI argument and the second 
+        # is the password/key/phrase that will be hidden
+        clean_re_strings = [
+            # this removes things like --password, --pass, --pass-wd, etc.
+            # optionally followed by an '=' or a space. The password can 
+            # be quoted or not too, though it does not care about quotes
+            # that are not balanced
+            # source: http://blog.stevenlevithan.com/archives/match-quoted-string
+            r'([-]{0,2}pass[-]?(?:word|wd)?[=\s]?)((?:["\'])?(?:[^\s])*(?:\1)?)',
+            # TODO: add more regex checks here
+        ]
+        for re_str in clean_re_strings:
+            r = re.compile(re_str)
+            clean_args = r.sub(r'\1********', clean_args)
+
         if data:
             st_in = subprocess.PIPE
         try:
@@ -1044,12 +1069,12 @@ class AnsibleModule(object):
             out, err = cmd.communicate(input=data)
             rc = cmd.returncode
         except (OSError, IOError), e:
-            self.fail_json(rc=e.errno, msg=str(e), cmd=args)
+            self.fail_json(rc=e.errno, msg=str(e), cmd=clean_args)
         except:
-            self.fail_json(rc=257, msg=traceback.format_exc(), cmd=args)
+            self.fail_json(rc=257, msg=traceback.format_exc(), cmd=clean_args)
         if rc != 0 and check_rc:
             msg = err.rstrip()
-            self.fail_json(cmd=args, rc=rc, stdout=out, stderr=err, msg=msg)
+            self.fail_json(cmd=clean_args, rc=rc, stdout=out, stderr=err, msg=msg)
         return (rc, out, err)
 
     def pretty_bytes(self,size):
