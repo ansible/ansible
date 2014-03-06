@@ -39,6 +39,15 @@ options:
         default: null
         choices: []
         aliases: []
+    token:
+        description:
+            - A pagerduty token, generated on the pagerduty site. Can be used instead of
+              user/passwd combination.
+        required: true
+        default: null
+        choices: []
+        aliases: []
+        version_added: '1.6'
     requester_id:
         description:
             - ID of user making the request. Only needed when using a token and creating a maintenance_window.
@@ -46,6 +55,7 @@ options:
         default: null
         choices: []
         aliases: []
+        version_added: '1.6'
     service:
         description:
             - PagerDuty service ID.
@@ -67,6 +77,7 @@ options:
         default: 0
         choices: []
         aliases: []
+        version_added: '1.6'
     desc:
         description:
             - Short description of maintenance window.
@@ -79,15 +90,27 @@ notes:
 '''
 
 EXAMPLES='''
-# List ongoing maintenance windows.
+# List ongoing maintenance windows using a user/passwd
 - pagerduty: name=companyabc user=example@example.com passwd=password123 state=ongoing
 
-# Create a 1 hour maintenance window for service FOO123.
+# List ongoing maintenance windows using a token
+- pagerduty: name=companyabc token=xxxxxxxxxxxxxx state=ongoing
+
+# Create a 1 hour maintenance window for service FOO123, using a user/passwd
 - pagerduty: name=companyabc
              user=example@example.com
              passwd=password123
              state=running
              service=FOO123
+
+# Create a 5 minute maintenance window for service FOO123, using a token
+- pagerduty: name=companyabc
+             token=xxxxxxxxxxxxxx
+             hours=0
+             minutes=5
+             state=running
+             service=FOO123
+
 
 # Create a 4 hour maintenance window for service FOO123 with the description "deployment".
 - pagerduty: name=companyabc
