@@ -415,7 +415,7 @@ class Runner(object):
 
         environment_string = self._compute_environment_string(inject)
 
-        if tmp.find("tmp") != -1 and (self.sudo and self.sudo_user != 'root') or (self.su and self.su_user != 'root'):
+        if tmp.find("tmp") != -1 and ((self.sudo and self.sudo_user != 'root') or (self.su and self.su_user != 'root')):
             # deal with possible umask issues once sudo'ed to other user
             cmd_chmod = "chmod a+r %s" % remote_module_path
             self._low_level_exec_command(conn, cmd_chmod, tmp, sudoable=False)
