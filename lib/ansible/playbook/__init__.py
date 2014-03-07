@@ -240,19 +240,12 @@ class PlayBook(object):
         plays = []
         matched_tags_all = set()
         unmatched_tags_all = set()
-        included_roles = []
 
         # loop through all patterns and run them
         self.callbacks.on_start()
         for (play_ds, play_basedir) in zip(self.playbook, self.play_basedirs):
-            play = Play(self, play_ds, play_basedir, included_roles=included_roles, vault_password=self.vault_password)
+            play = Play(self, play_ds, play_basedir, vault_password=self.vault_password)
             assert play is not None
-
-            # add any new roles brought in by this play to the 
-            # global list of roles we're tracking
-            for role in play.included_roles:
-                if role not in included_roles:
-                    included_roles.append(role)
 
             matched_tags, unmatched_tags = play.compare_tags(self.only_tags)
             matched_tags_all = matched_tags_all | matched_tags

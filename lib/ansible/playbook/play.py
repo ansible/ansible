@@ -49,7 +49,7 @@ class Play(object):
 
     # *************************************************
 
-    def __init__(self, playbook, ds, basedir, included_roles=[], vault_password=None):
+    def __init__(self, playbook, ds, basedir, vault_password=None):
         ''' constructor loads from a play datastructure '''
 
         for x in ds.keys():
@@ -81,7 +81,7 @@ class Play(object):
         self._update_vars_files_for_host(None)
 
         # now we load the roles into the datastructure
-        self.included_roles = included_roles
+        self.included_roles = []
         ds = self._load_roles(self.roles, ds)
         
         # and finally re-process the vars files as they may have
