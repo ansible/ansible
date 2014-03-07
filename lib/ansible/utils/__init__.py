@@ -42,6 +42,7 @@ import traceback
 import getpass
 import sys
 import textwrap
+import json
 
 #import vault
 from vault import VaultLib
@@ -351,7 +352,16 @@ def smush_ds(data):
         return data
 
 def parse_yaml(data):
-    ''' convert a yaml string to a data structure '''
+    ''' convert a yaml string to a data structure.  Also supports JSON, ssssssh!!!'''
+
+    data = data.lstrip()
+    if data.startswith("{") or data.startswith("["):
+        # since the line starts with { or [ we can infer this is a JSON document.
+        loaded = json.loads(data)
+    else:
+        # else this is pretty sure to be a YAML document
+        loaded = yaml.safe_load(data)
+
     return smush_ds(yaml.safe_load(data))
 
 def process_common_errors(msg, probline, column):

@@ -7,6 +7,7 @@ Major features/changes:
 
 * The deprecated legacy variable templating system has been finally removed.  Use {{ foo }} always not $foo or ${foo}.
 * Role dependencies are now tracked across multiple plays, making common roles easier to include in dependencies without any special variable tricks.
+* Any data file can also be JSON.  Use sparingly -- with great power comes great responsibility.  Starting file with "{" or "[" denotes JSON.
 
 New Modules:
 
