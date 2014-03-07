@@ -179,17 +179,7 @@ Notice how we interchanged the bracket syntax for dots -- that can be done anywh
 How do I copy files recursively onto a target host?
 +++++++++++++++++++++++++++++++++++++++++++++++++++
 
-The "copy" module doesn't handle recursive copies of directories. A common solution to do this is to use a local action to call 'rsync' to recursively copy files to the managed servers.
-
-Here is an example::
-
-    ---
-    # ...
-      tasks:
-      - name: recursively copy files from management server to target
-        local_action: command rsync -a /path/to/files $inventory_hostname:/path/to/target/
-
-Note that you'll need passphrase-less SSH or ssh-agent set up to let rsync copy without prompting for a passphrase or password.
+If src is a directory, it is copied recursively. See  :doc:`module_copy`
 
 .. _shell_env:
 
