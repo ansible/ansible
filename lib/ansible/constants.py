@@ -93,8 +93,8 @@ else:
     DIST_MODULE_PATH = '/usr/share/ansible/'
 
 # check all of these extensions when looking for yaml files for things like
-# group variables
-YAML_FILENAME_EXTENSIONS = [ "", ".yml", ".yaml" ]
+# group variables -- really anything we can load
+YAML_FILENAME_EXTENSIONS = [ "", ".yml", ".yaml", ".json" ]
 
 # sections in config file
 DEFAULTS='defaults'
