@@ -351,13 +351,19 @@ def smush_ds(data):
     else:
         return data
 
-def parse_yaml(data):
+def parse_yaml(data, path_hint=None):
     ''' convert a yaml string to a data structure.  Also supports JSON, ssssssh!!!'''
 
     data = data.lstrip()
     if data.startswith("{") or data.startswith("["):
         # since the line starts with { or [ we can infer this is a JSON document.
-        loaded = json.loads(data)
+        try:
+            loaded = json.loads(data)
+        except ValueError, ve:
+            if path_hint:
+                raise errors.AnsibleError(path_hint + ": " + str(ve))
+            else:
+                raise errors.AnsibleError(str(ve))
     else:
         # else this is pretty sure to be a YAML document
         loaded = yaml.safe_load(data)
@@ -522,7 +528,7 @@ def parse_yaml_from_file(path, vault_password=None):
         data = vault.decrypt(data)
 
     try:
-        return parse_yaml(data)
+        return parse_yaml(data, path_hint=path)
     except yaml.YAMLError, exc:
         process_yaml_error(exc, data, path)
 
