@@ -448,6 +448,7 @@ class Play(object):
                  os.path.join(basepath, 'main'),
                  os.path.join(basepath, 'main.yml'),
                  os.path.join(basepath, 'main.yaml'),
+                 os.path.join(basepath, 'main.json'),
                 )
         if sum([os.path.isfile(x) for x in mains]) > 1:
             raise errors.AnsibleError("found multiple main files at %s, only one allowed" % (basepath))
