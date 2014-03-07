@@ -110,7 +110,7 @@ EXAMPLES = '''
 - name: remove the Apache package
   yum: name=httpd state=removed
 
-- name: install the latest version of Apche from the testing repo
+- name: install the latest version of Apache from the testing repo
   yum: name=httpd enablerepo=testing state=installed
 
 - name: upgrade all packages
@@ -463,6 +463,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
     res['msg'] = ''
     res['rc'] = 0
     res['changed'] = False
+
     downgrade = False
 
     for spec in items:
@@ -540,7 +541,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
                 continue
 
             # downgrade - the yum install command will only install or upgrade to a spec version, it will
-            # not install an older version of an RPM even if specifed by the install spec. So we need to 
+            # not install an older version of an RPM even if specified by the install spec. So we need to
             # determine if this is a downgrade, and then use the yum downgrade command to install the RPM.
             pkg_name = splitFilename(spec)[0]
             pkgs = is_installed(module, repoq, pkg_name, conf_file, en_repos=en_repos, dis_repos=dis_repos, is_pkg=True)
