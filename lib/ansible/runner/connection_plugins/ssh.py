@@ -57,13 +57,14 @@ class Connection(object):
         vvv("ESTABLISH CONNECTION FOR USER: %s" % self.user, host=self.host)
 
         self.common_args = []
+
         extra_args = C.ANSIBLE_SSH_ARGS
         if extra_args is not None:
             self.common_args += shlex.split(extra_args)
-        else:
-            self.common_args += ["-o", "ControlMaster=auto",
-                                 "-o", "ControlPersist=60s",
-                                 "-o", "ControlPath=%s" % (C.ANSIBLE_SSH_CONTROL_PATH % dict(directory=self.cp_dir))]
+
+        self.common_args += ["-o", "ControlMaster=auto",
+                             "-o", "ControlPersist=60s",
+                             "-o", "ControlPath=%s" % (C.ANSIBLE_SSH_CONTROL_PATH % dict(directory=self.cp_dir))]
 
         cp_in_use = False
         cp_path_set = False
