@@ -545,7 +545,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
             # determine if this is a downgrade, and then use the yum downgrade command to install the RPM.
             split_pkg_name = splitFilename(spec)
             # if the Name and Version match a version was not provided and this is not a downgrade.
-            if split_pkg_name[0] == split_pkg_name[1]:
+            if split_pkg_name[0] != split_pkg_name[1]:
                 pkg_name = split_pkg_name[0]
                 pkgs = is_installed(module, repoq, pkg_name, conf_file, en_repos=en_repos, dis_repos=dis_repos, is_pkg=True)
                 if pkgs:
