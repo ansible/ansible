@@ -355,6 +355,7 @@ def parse_yaml(data, path_hint=None):
     ''' convert a yaml string to a data structure.  Also supports JSON, ssssssh!!!'''
 
     data = data.lstrip()
+    loaded = None
     if data.startswith("{") or data.startswith("["):
         # since the line starts with { or [ we can infer this is a JSON document.
         try:
@@ -368,7 +369,7 @@ def parse_yaml(data, path_hint=None):
         # else this is pretty sure to be a YAML document
         loaded = yaml.safe_load(data)
 
-    return smush_ds(yaml.safe_load(data))
+    return smush_ds(loaded)
 
 def process_common_errors(msg, probline, column):
     replaced = probline.replace(" ","")
