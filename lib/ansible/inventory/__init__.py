@@ -208,12 +208,14 @@ class Inventory(object):
         """
 
         # The regex used to match on the range, which can be [x] or [x-y].
-        pattern_re = re.compile("^(.*)\[([0-9]+)(?:(?:-)([0-9]+))?\](.*)$")
+        pattern_re = re.compile("^(.*)\[([-]?[0-9]+)(?:(?:-)([0-9]+))?\](.*)$")
         m = pattern_re.match(pattern)
         if m:
             (target, first, last, rest) = m.groups()
             first = int(first)
             if last:
+                if first < 0:
+                    raise errors.AnsibleError("invalid range: negative indices cannot be used as the first item in a range")
                 last = int(last)
             else:
                 last = first
@@ -245,10 +247,13 @@ class Inventory(object):
             right = 0
         left=int(left)
         right=int(right)
-        if left != right:
-            return hosts[left:right]
-        else:
-            return [ hosts[left] ]
+        try:
+            if left != right:
+                return hosts[left:right]
+            else:
+                return [ hosts[left] ]
+        except IndexError:
+            raise errors.AnsibleError("no hosts matching the pattern '%s' were found" % pat)
 
     def _create_implicit_localhost(self, pattern):
         new_host = Host(pattern)
