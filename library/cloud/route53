@@ -220,11 +220,16 @@ def main():
     found_record = False
     sets = conn.get_all_rrsets(zones[zone_in])
     for rset in sets:
-        if rset.type == type_in and rset.name == record_in:
+        # Due to a bug in either AWS or Boto, "special" characters are returned as octals, preventing round
+        # tripping of things like * and @.
+        decoded_name = rset.name.replace(r'\052', '*')
+        decoded_name = rset.name.replace(r'\100', '@')
+
+        if rset.type == type_in and decoded_name == record_in:
             found_record = True
             record['zone'] = zone_in
             record['type'] = rset.type
-            record['record'] = rset.name
+            record['record'] = decoded_name
             record['ttl'] = rset.ttl
             record['value'] = ','.join(sorted(rset.resource_records))
             record['values'] = sorted(rset.resource_records)
