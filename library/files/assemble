@@ -59,7 +59,7 @@ options:
     default: "no"
   delimiter:
     description:
-      - A delimiter to seperate the file contents.
+      - A delimiter to separate the file contents.
     version_added: "1.4"
     required: false
     default: null
