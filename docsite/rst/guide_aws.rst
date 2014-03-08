@@ -129,7 +129,7 @@ it will be automatically discoverable via a dynamic group like so::
        - ping
 
 Using this philosophy can be a great way to manage groups dynamically, without
-having to maintain seperate inventory.  
+having to maintain separate inventory.
 
 .. _aws_pull:
 
