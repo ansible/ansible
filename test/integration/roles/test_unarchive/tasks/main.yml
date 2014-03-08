@@ -64,6 +64,33 @@
 - name: remove our tar.gz unarchive destination
   file: path={{output_dir}}/test-unarchive-tar-gz state=absent
 
+- name: create our tar.gz unarchive destination for creates
+  file: path={{output_dir}}/test-unarchive-tar-gz state=directory
+
+- name: unarchive a tar.gz file with creates set
+  unarchive: src={{output_dir}}/test-unarchive.tar.gz dest={{output_dir | expanduser}}/test-unarchive-tar-gz copy=no creates={{output_dir}}/test-unarchive-tar-gz/foo-unarchive.txt
+  register: unarchive02b
+
+- name: verify that the file was marked as changed
+  assert:
+    that:
+      - "unarchive02b.changed == true"
+
+- name: verify that the file was unarchived
+  file: path={{output_dir}}/test-unarchive-tar-gz/foo-unarchive.txt state=file
+
+- name: unarchive a tar.gz file with creates over an existing file
+  unarchive: src={{output_dir}}/test-unarchive.tar.gz dest={{output_dir | expanduser}}/test-unarchive-tar-gz copy=no creates={{output_dir}}/test-unarchive-tar-gz/foo-unarchive.txt
+  register: unarchive02c
+
+- name: verify that the file was not marked as changed
+  assert:
+    that:
+      - "unarchive02c.changed == false"
+
+- name: remove our tar.gz unarchive destination
+  file: path={{output_dir}}/test-unarchive-tar-gz state=absent
+
 - name: create our zip unarchive destination
   file: path={{output_dir}}/test-unarchive-zip state=directory
 
