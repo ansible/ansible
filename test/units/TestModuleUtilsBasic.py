@@ -50,8 +50,13 @@ class TestModuleUtilsBasic(unittest.TestCase):
         exec(module_data, d, d)
         self.module = d['get_module']()
 
+        # module_utils/basic.py screws with CWD, let's save it and reset
+        self.cwd = os.getcwd()
+
     def tearDown(self):
         self.cleanup_temp_file(self.tmp_fd, self.tmp_path)
+        # Reset CWD back to what it was before basic.py changed it
+        os.chdir(self.cwd)
 
     #################################################################################
     # run_command() tests
@@ -147,7 +152,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
             (rc, out, err) = self.module.run_command('pwd', cwd=tmp_path)
             self.assertEqual(rc, 0)
             self.assertTrue(os.path.exists(tmp_path))
-            self.assertEqual(out.strip(), tmp_path)
+            self.assertEqual(out.strip(), os.path.realpath(tmp_path))
         except:
             raise
         finally:
