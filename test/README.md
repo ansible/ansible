@@ -16,7 +16,7 @@ integration
 
 Integration test layer, constructed using playbooks.
 
-Some tests may require cloud credentials, others will not, and destructive tests are seperated from non-destructive so a subset
+Some tests may require cloud credentials, others will not, and destructive tests are separated from non-destructive so a subset
 can be run on development machines.
 
 learn more
