@@ -193,6 +193,14 @@ class DockerImageManager:
                 self.error_msg = chunk_json['error']
                 return None
             else:
+                # The stream from client.pull() is SUPER noisy.
+                #
+                # Rather than returning hundreds of lines where, for many, the
+                # only change from the previous line is a slight difference in
+                # an ASCII progress bar, we just keep a log of each line where
+                # either the id or status changed from the previous line. This
+                # should give the user a good idea of what's going on without
+                # overwhelming them with unnecessary information.
                 id = chunk_json['id']
                 status = chunk_json['status']
                 if status != last_status or id != last_id:
