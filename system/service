@@ -410,11 +410,13 @@ class LinuxService(Service):
             # adjust the service name to account for template service unit files
             index = name.find('@')
             if index != -1:
-                name = name[:index+1]
+                template_name = name[:index+1]
+            else:
+                template_name = name
 
             self.__systemd_unit = None
             for line in out.splitlines():
-                if line.startswith(name):
+                if line.startswith(template_name):
                     self.__systemd_unit = name
                     return True
             return False
