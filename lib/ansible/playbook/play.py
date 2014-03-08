@@ -227,6 +227,13 @@ class Play(object):
                             if meta_data:
                                 allow_dupes = utils.boolean(meta_data.get('allow_duplicates',''))
 
+                        if "tags" in passed_vars:
+                            if not self._is_valid_tag(passed_vars["tags"]):
+                                # one of the tags specified for this role was in the
+                                # skip list, or we're limiting the tags and it didn't 
+                                # match one, so we just skip it completely
+                                continue
+
                         # if any tags were specified as role/dep variables, merge
                         # them into the passed_vars so they're passed on to any 
                         # further dependencies too, and so we only have one place
@@ -267,13 +274,6 @@ class Play(object):
                             dep_defaults_data = utils.parse_yaml_from_file(defaults, vault_password=self.vault_password)
                         if 'role' in dep_vars:
                             del dep_vars['role']
-
-                        if "tags" in passed_vars:
-                            if not self._is_valid_tag(passed_vars["tags"]):
-                                # one of the tags specified for this role was in the
-                                # skip list, or we're limiting the tags and it didn't 
-                                # match one, so we just skip it completely
-                                continue
 
                         if not allow_dupes:
                             if dep in self.included_roles:
