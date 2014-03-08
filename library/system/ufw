@@ -57,6 +57,10 @@ options:
       - Toggles logging. Logged packets use the LOG_KERN syslog facility.
     choices: ['on', 'off', 'low', 'medium', 'high', 'full']
     required: false
+  insert:
+    description:
+      - Insert the corresponding rule as rule number NUM
+    required: false
   rule:
     description:
       - Add firewall rule
@@ -162,6 +166,7 @@ def main():
             logging   = dict(default=None,  choises=['on', 'off', 'low', 'medium', 'high', 'full']),
             direction = dict(default=None,  choises=['in', 'incoming', 'out', 'outgoing']),
             delete    = dict(default=False, choices=BOOLEANS),
+            insert    = dict(default=None),
             rule      = dict(default=None,  choices=['allow', 'deny', 'reject', 'limit']),
             interface = dict(default=None,  aliases=['if']),
             log       = dict(default=False, choices=BOOLEANS),
@@ -223,6 +228,7 @@ def main():
             #     [from ADDRESS [port PORT]] [to ADDRESS [port PORT]] \
             #     [proto protocol] [app application]
             cmd.append([module.boolean(params['delete']), 'delete'])
+            cmd.append([params['insert'], "insert %s" % params['insert']])
             cmd.append([value])
             cmd.append([module.boolean(params['log']), 'log'])
 
