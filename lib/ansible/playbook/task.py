@@ -85,7 +85,7 @@ class Task(object):
             elif x.startswith("with_"):
 
                 if isinstance(ds[x], basestring) and ds[x].lstrip().startswith("{{"):
-                    utils.warning("It is unneccessary to use '{{' in loops, leave variables in loop expressions bare.")
+                    utils.warning("It is unnecessary to use '{{' in loops, leave variables in loop expressions bare.")
 
                 plugin_name = x.replace("with_","")
                 if plugin_name in utils.plugins.lookup_loader:
@@ -97,7 +97,7 @@ class Task(object):
 
             elif x in [ 'changed_when', 'failed_when', 'when']:
                 if isinstance(ds[x], basestring) and ds[x].lstrip().startswith("{{"):
-                    utils.warning("It is unneccessary to use '{{' in conditionals, leave variables in loop expressions bare.")
+                    utils.warning("It is unnecessary to use '{{' in conditionals, leave variables in loop expressions bare.")
             elif x.startswith("when_"):
                 utils.deprecated("The 'when_' conditional has been removed. Switch to using the regular unified 'when' statements as described on docs.ansible.com.","1.5", removed=True)
 
