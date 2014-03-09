@@ -117,7 +117,7 @@ class Facts(object):
                     '/etc/system-release': 'OtherLinux',
                     '/etc/alpine-release': 'Alpine',
                     '/etc/release': 'Solaris',
-                    '/etc/arch-release': 'Archlinux',
+                    '/etc/arch-release': 'Arch',
                     '/etc/SuSE-release': 'SuSE',
                     '/etc/os-release': 'Debian' }
     SELINUX_MODE_DICT = { 1: 'enforcing', 0: 'permissive', -1: 'disabled' }
