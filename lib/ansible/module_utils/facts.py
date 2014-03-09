@@ -86,19 +86,20 @@ class Facts(object):
                  { 'path' : '/usr/bin/emerge',      'name' : 'portage' },
     ]
 
-    def __init__(self):
+    def __init__(self, run_all=True):
         self.facts = {}
-        self.get_platform_facts()
-        self.get_distribution_facts()
-        self.get_cmdline()
-        self.get_public_ssh_host_keys()
-        self.get_selinux_facts()
-        self.get_pkg_mgr_facts()
-        self.get_lsb_facts()
-        self.get_date_time_facts()
-        self.get_user_facts()
-        self.get_local_facts()
-        self.get_env_facts()
+        if run_all:
+            self.get_platform_facts()
+            self.get_distribution_facts()
+            self.get_cmdline()
+            self.get_public_ssh_host_keys()
+            self.get_selinux_facts()
+            self.get_pkg_mgr_facts()
+            self.get_lsb_facts()
+            self.get_date_time_facts()
+            self.get_user_facts()
+            self.get_local_facts()
+            self.get_env_facts()
 
     def populate(self):
         return self.facts
@@ -468,8 +469,8 @@ class Hardware(Facts):
                 subclass = sc
         return super(cls, subclass).__new__(subclass, *arguments, **keyword)
 
-    def __init__(self):
-        Facts.__init__(self)
+    def __init__(self, **kwargs):
+        Facts.__init__(self, **kwargs)
 
     def populate(self):
         return self.facts
@@ -491,8 +492,8 @@ class LinuxHardware(Hardware):
     platform = 'Linux'
     MEMORY_FACTS = ['MemTotal', 'SwapTotal', 'MemFree', 'SwapFree']
 
-    def __init__(self):
-        Hardware.__init__(self)
+    def __init__(self, **kwargs):
+        Hardware.__init__(self, **kwargs)
 
     def populate(self):
         self.get_cpu_facts()
@@ -754,8 +755,8 @@ class SunOSHardware(Hardware):
     """
     platform = 'SunOS'
 
-    def __init__(self):
-        Hardware.__init__(self)
+    def __init__(self, **kwargs):
+        Hardware.__init__(self, **kwargs)
 
     def populate(self):
         self.get_cpu_facts()
@@ -836,8 +837,8 @@ class OpenBSDHardware(Hardware):
     platform = 'OpenBSD'
     DMESG_BOOT = '/var/run/dmesg.boot'
 
-    def __init__(self):
-        Hardware.__init__(self)
+    def __init__(self, **kwargs):
+        Hardware.__init__(self, **kwargs)
 
     def populate(self):
         self.sysctl = self.get_sysctl()
@@ -912,8 +913,8 @@ class FreeBSDHardware(Hardware):
     platform = 'FreeBSD'
     DMESG_BOOT = '/var/run/dmesg.boot'
 
-    def __init__(self):
-        Hardware.__init__(self)
+    def __init__(self, **kwargs):
+        Hardware.__init__(self, **kwargs)
 
     def populate(self):
         self.get_cpu_facts()
@@ -1036,7 +1037,7 @@ class NetBSDHardware(Hardware):
     platform = 'NetBSD'
     MEMORY_FACTS = ['MemTotal', 'SwapTotal', 'MemFree', 'SwapFree']
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         Hardware.__init__(self)
 
     def populate(self):
@@ -1109,8 +1110,8 @@ class AIX(Hardware):
     """
     platform = 'AIX'
 
-    def __init__(self):
-        Hardware.__init__(self)
+    def __init__(self, **kwargs):
+        Hardware.__init__(self, **kwargs)
 
     def populate(self):
         self.get_cpu_facts()
@@ -1190,8 +1191,8 @@ class HPUX(Hardware):
 
     platform = 'HP-UX'
 
-    def __init__(self):
-        Hardware.__init__(self)
+    def __init__(self, **kwargs):
+        Hardware.__init__(self, **kwargs)
 
     def populate(self):
         self.get_cpu_facts()
@@ -1286,8 +1287,8 @@ class Darwin(Hardware):
     """
     platform = 'Darwin'
 
-    def __init__(self):
-        Hardware.__init__(self)
+    def __init__(self, **kwargs):
+        Hardware.__init__(self, **kwargs)
 
     def populate(self):
         self.sysctl = self.get_sysctl()
@@ -1362,8 +1363,8 @@ class Network(Facts):
                 subclass = sc
         return super(cls, subclass).__new__(subclass, *arguments, **keyword)
 
-    def __init__(self):
-        Facts.__init__(self)
+    def __init__(self, **kwargs):
+        Facts.__init__(self, **kwargs)
 
     def populate(self):
         return self.facts
@@ -1378,8 +1379,8 @@ class LinuxNetwork(Network):
     """
     platform = 'Linux'
 
-    def __init__(self):
-        Network.__init__(self)
+    def __init__(self, **kwargs):
+        Network.__init__(self, **kwargs)
 
     def populate(self):
         ip_path = module.get_bin_path('ip')
@@ -1595,8 +1596,8 @@ class GenericBsdIfconfigNetwork(Network):
     """
     platform = 'Generic_BSD_Ifconfig'
 
-    def __init__(self):
-        Network.__init__(self)
+    def __init__(self, **kwargs):
+        Network.__init__(self, **kwargs)
 
     def populate(self):
 
@@ -1996,8 +1997,8 @@ class Virtual(Facts):
                 subclass = sc
         return super(cls, subclass).__new__(subclass, *arguments, **keyword)
 
-    def __init__(self):
-        Facts.__init__(self)
+    def __init__(self, **kwargs):
+        Facts.__init__(self, **kwargs)
 
     def populate(self):
         return self.facts
@@ -2010,8 +2011,8 @@ class LinuxVirtual(Virtual):
     """
     platform = 'Linux'
 
-    def __init__(self):
-        Virtual.__init__(self)
+    def __init__(self, **kwargs):
+        Virtual.__init__(self, **kwargs)
 
     def populate(self):
         self.get_virtual_facts()
@@ -2139,8 +2140,8 @@ class HPUXVirtual(Virtual):
     """
     platform = 'HP-UX'
 
-    def __init__(self):
-        Virtual.__init__(self)
+    def __init__(self, **kwargs):
+        Virtual.__init__(self, **kwargs)
 
     def populate(self):
         self.get_virtual_facts()
@@ -2179,8 +2180,8 @@ class SunOSVirtual(Virtual):
     """
     platform = 'SunOS'
 
-    def __init__(self):
-        Virtual.__init__(self)
+    def __init__(self, **kwargs):
+        Virtual.__init__(self, **kwargs)
 
     def populate(self):
         self.get_virtual_facts()
