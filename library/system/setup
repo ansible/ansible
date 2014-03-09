@@ -117,7 +117,7 @@ class Facts(object):
                     '/etc/system-release': 'OtherLinux',
                     '/etc/alpine-release': 'Alpine',
                     '/etc/release': 'Solaris',
-                    '/etc/arch-release': 'Archlinux',
+                    '/etc/arch-release': 'Arch',
                     '/etc/SuSE-release': 'SuSE',
                     '/etc/gentoo-release': 'Gentoo',
                     '/etc/os-release': 'Debian' }
