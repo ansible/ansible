@@ -82,7 +82,7 @@ def main():
         ),
         supports_check_mode = True,
     )
-    data = run_setup(module)
+    data = run_fact_setup(module)
     module.exit_json(**data)
 
 # import module snippets

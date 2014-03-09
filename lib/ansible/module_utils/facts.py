@@ -2239,7 +2239,7 @@ def ansible_facts():
 
 # ===========================================
 
-def run_setup(module):
+def run_fact_setup(module):
 
     setup_options = {}
     facts = ansible_facts()
