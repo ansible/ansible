@@ -5,7 +5,7 @@ Linode external inventory script
 =================================
 
 Generates inventory that Ansible can understand by making API request to
-AWS Linode using the Chube library.
+Linode using the Chube library.
 
 NOTE: This script assumes Ansible is being executed where Chube is already
 installed and has a valid config at ~/.chube. If not, run:
