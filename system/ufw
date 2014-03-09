@@ -203,8 +203,9 @@ def main():
     # Ensure ufw is available
     ufw_bin = module.get_bin_path('ufw', True)
 
-    # Save the pre state in order to recognize changes reliably
+    # Save the pre state and rules in order to recognize changes
     (_, pre_state, _) = module.run_command(ufw_bin + ' status verbose')
+    (_, pre_rules, _) = module.run_command("grep '^### tuple' /lib/ufw/user*.rules")
 
     # Execute commands
     for (command, value) in commands.iteritems():
@@ -244,7 +245,8 @@ def main():
 
     # Get the new state
     (_, post_state, _) = module.run_command(ufw_bin + ' status verbose')
-    changed = pre_state != post_state
+    (_, post_rules, _) = module.run_command("grep '^### tuple' /lib/ufw/user*.rules")
+    changed = (pre_state != post_state) or (pre_rules != post_rules)
 
     return module.exit_json(changed=changed, commands=cmds, msg=post_state.rstrip())
 
