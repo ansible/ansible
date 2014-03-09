@@ -102,21 +102,30 @@ def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None):
     tmpfd, temp_path = tempfile.mkstemp()
     tmp = os.fdopen(tmpfd,'w')
     delimit_me = False
+
     for f in sorted(os.listdir(src_path)):
         if compiled_regexp and not compiled_regexp.search(f):
             continue
         fragment = "%s/%s" % (src_path, f)
-        if delimit_me and delimiter:
-            # un-escape anything like newlines
-            delimiter = delimiter.decode('unicode-escape')
-            tmp.write(delimiter)
-            # always make sure there's a newline after the 
-            # delimiter, so lines don't run together
-            if delimiter[-1] != '\n':
-                tmp.write('\n')
+
+        # delimiters should only appear between fragments
+        if delimit_me:
+            # always put a newline between fragments
+            tmp.write('\n')
+
+            if delimiter:
+                # un-escape anything like newlines
+                delimiter = delimiter.decode('unicode-escape')
+                tmp.write(delimiter)
+                # always make sure there's a newline after the
+                # delimiter, so lines don't run together
+                if delimiter[-1] != '\n':
+                    tmp.write('\n')
+
         if os.path.isfile(fragment):
             tmp.write(file(fragment).read())
         delimit_me = True
+
     tmp.close()
     return temp_path
 
