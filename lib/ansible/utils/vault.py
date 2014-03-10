@@ -30,7 +30,11 @@ from binascii import hexlify
 from binascii import unhexlify
 from ansible import constants as C
 
-from Crypto.Hash import SHA256, HMAC
+try:
+    from Crypto.Hash import SHA256, HMAC
+    HAS_HASH = True
+except ImportError:
+    HAS_HASH = False
 
 # Counter import fails for 2.0.1, requires >= 2.6.1 from pip
 try:
