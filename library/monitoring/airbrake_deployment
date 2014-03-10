@@ -51,7 +51,7 @@ options:
     description:
       - Optional URL to submit the notification to. Use to send notifications to Airbrake-compliant tools like Errbit.
     required: false
-    default: https://airbrake.io/deploys
+    default: "https://airbrake.io/deploys"
   validate_certs:
     description:
       - If C(no), SSL certificates for the target url will not be validated. This should only be used
@@ -84,7 +84,7 @@ def main():
             user=dict(required=False),
             repo=dict(required=False),
             revision=dict(required=False),
-            url=dict(required=False, default='https://api.airbrake.io/deploys.txt')
+            url=dict(required=False, default='https://api.airbrake.io/deploys.txt'),
             validate_certs=dict(default='yes', type='bool'),
         ),
         supports_check_mode=True
