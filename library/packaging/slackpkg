@@ -29,7 +29,7 @@ short_description: Package manager for Slackware >= 12.2
 description:
     - Manage binary packages for Slackware using 'slackpkg' which
       is available in versions after 12.2.
-version_added: "1.0"
+version_added: "1.6"
 options:
     name:
         description:
