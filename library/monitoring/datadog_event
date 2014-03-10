@@ -67,7 +67,6 @@ datadog_event: title="Testing from ansible" text="Test!"
 '''
 
 import socket
-from urllib2 import urlopen, Request, URLError
 
 def main():
     module = AnsibleModule(
@@ -97,8 +96,7 @@ def main():
     post_event(module)
 
 def post_event(module):
-    uri = "https://app.datadoghq.com/api/v1/events?api_key=" + \
-          module.params['api_key']
+    uri = "https://app.datadoghq.com/api/v1/events?api_key=%s" % module.params['api_key']
 
     body = dict(
         title=module.params['title'],
@@ -117,22 +115,20 @@ def post_event(module):
 
     json_body = module.jsonify(body)
     headers = {"Content-Type": "application/json"}
-    request = Request(uri, json_body, headers, unverifiable=True)
 
-    try:
-        response = urlopen(request)
+    (response, info) = fetch_url(module, uri, data=json_body, headers=headers)
+    if info['status'] == 200:
         response_body = response.read()
         response_json = module.from_json(response_body)
         if response_json['status'] == 'ok':
             module.exit_json(changed=True)
         else:
             module.fail_json(msg=response)
-
-    except URLError, e:
-        module.fail_json(msg="URL error: %s." % e)
-    except socket.error, e:
-        module.fail_json(msg="Socket error: %s to %s" % (e, uri))
+    else:
+        module.fail_json(**info)
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
+
 main()
