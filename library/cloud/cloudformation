@@ -250,7 +250,7 @@ def main():
             operation = 'CREATE'
         except Exception, err:
             error_msg = boto_exception(err)
-            if 'AlreadyExistsException' in error_msg:
+            if 'AlreadyExistsException' in error_msg or 'already exists' in error_msg:
                 update = True
             else:
                 module.fail_json(msg=error_msg)
