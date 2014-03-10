@@ -41,7 +41,6 @@ EXAMPLES = '''
   when: ansible_ec2_instance_type == "t1.micro"
 '''
    
-import urllib2
 import socket
 import re
 
@@ -62,7 +61,8 @@ class Ec2Metadata(object):
                    'us-west-1',
                    'us-west-2')
 
-    def __init__(self, ec2_metadata_uri=None, ec2_sshdata_uri=None, ec2_userdata_uri=None):
+    def __init__(self, module, ec2_metadata_uri=None, ec2_sshdata_uri=None, ec2_userdata_uri=None):
+        self.module   = module
         self.uri_meta = ec2_metadata_uri or self.ec2_metadata_uri
         self.uri_user = ec2_userdata_uri or self.ec2_userdata_uri
         self.uri_ssh  =  ec2_sshdata_uri or self.ec2_sshdata_uri
@@ -70,12 +70,9 @@ class Ec2Metadata(object):
         self._prefix   = 'ansible_ec2_%s'
 
     def _fetch(self, url):
-        try:
-            return urllib2.urlopen(url).read()
-        except urllib2.HTTPError:
-            return
-        except urllib2.URLError:
-            return
+        self.module.fail_json(msg="url is %s" % url)
+        (response, info) = fetch_url(self.module, url, force=True)
+        return response.read()
 
     def _mangle_fields(self, fields, uri, filter_patterns=['public-keys-0']):
         new_fields = {}
@@ -150,17 +147,20 @@ class Ec2Metadata(object):
         return data
 
 def main():
-
-    ec2_facts = Ec2Metadata().run()
-    ec2_facts_result = dict(changed=False, ansible_facts=ec2_facts)
+    argument_spec = url_argument_spec()
 
     module = AnsibleModule(
-        argument_spec = dict(),
+        argument_spec = argument_spec,
         supports_check_mode = True,
     )
+
+    ec2_facts = Ec2Metadata(module).run()
+    ec2_facts_result = dict(changed=False, ansible_facts=ec2_facts)
+
     module.exit_json(**ec2_facts_result)
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
 
 main()
