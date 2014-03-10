@@ -399,6 +399,7 @@ class Runner(object):
         (
         module_style,
         shebang,
+        binary_module,
         module_data
         ) = self._configure_module(conn, module_name, args, inject, complex_args)
 
@@ -408,7 +409,13 @@ class Runner(object):
 
         remote_module_path = os.path.join(tmp, module_name)
 
-        if (module_style != 'new'
+        if binary_module:
+            conn.put_file(module_data, remote_module_path)
+
+            cmd_chmod = "chmod a+x %s" % remote_module_path
+            self._low_level_exec_command(conn, cmd_chmod, tmp, sudoable=False)
+
+        elif (module_style != 'new'
            or async_jid is not None
            or not conn.has_pipelining
            or not C.ANSIBLE_SSH_PIPELINING
@@ -466,10 +473,12 @@ class Runner(object):
                 cmd = " ".join([str(x) for x in [remote_module_path, async_jid, async_limit, async_module]])
 
         if not shebang:
-            raise errors.AnsibleError("module is missing interpreter line")
-
-
-        cmd = " ".join([environment_string.strip(), shebang.replace("#!","").strip(), cmd])
+            if binary_module:
+                cmd = " ".join([environment_string.strip(), cmd])
+            else:
+                raise errors.AnsibleError("module is missing interpreter line")
+        else:
+            cmd = " ".join([environment_string.strip(), shebang.replace("#!","").strip(), cmd])
         cmd = cmd.strip()
 
         if "tmp" in tmp and not C.DEFAULT_KEEP_REMOTE_FILES and not persist_files and delete_remote_tmp:
@@ -1067,6 +1076,7 @@ class Runner(object):
         (
         module_style,
         module_shebang,
+        binary_module,
         module_data
         ) = self._configure_module(conn, module_name, module_args, inject, complex_args)
         module_remote_path = os.path.join(tmp, module_name)
@@ -1091,7 +1101,11 @@ class Runner(object):
             module_path, complex_args, module_args, inject
         )
 
-        return (module_style, module_shebang, module_data)
+        if module_data[0:4] == b'\x7fELF':
+            return (module_style, module_shebang, True, module_path)
+
+        else:
+            return (module_style, module_shebang, False, module_data)
 
 
     # *****************************************************
