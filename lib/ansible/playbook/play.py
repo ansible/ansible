@@ -579,6 +579,7 @@ class Play(object):
 
         for x in results:
             if self.tags is not None:
+                self.tags = list(set(self.tags).union(set(x.tags)))
                 x.tags.extend(self.tags)
 
         return results
@@ -686,11 +687,15 @@ class Play(object):
         unmatched_tags: tags that were found within the current play but do not match
                         any provided by the user '''
 
-        # gather all the tags in all the tasks into one list
+        # gather all the tags in all the tasks and handlers into one list
+        # FIXME: isn't this in self.tags already?
+
         all_tags = []
         for task in self._tasks:
             if not task.meta:
                 all_tags.extend(task.tags)
+        for handler in self._handlers:
+            all_tags.extend(handler.tags)
 
         # compare the lists of tags using sets and return the matched and unmatched
         all_tags_set = set(all_tags)
