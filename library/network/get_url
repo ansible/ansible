@@ -24,6 +24,7 @@ import shutil
 import datetime
 import re
 import tempfile
+import os
 
 DOCUMENTATION = '''
 ---
@@ -260,7 +261,8 @@ def main():
             dest = dict(required=True),
             force = dict(default='no', aliases=['thirsty'], type='bool'),
             sha256sum = dict(default=''),
-            use_proxy = dict(default='yes', type='bool')
+            use_proxy = dict(default='yes', type='bool'),
+            check_size = dict(default='no', type='bool')
         ),
         add_file_common_args=True
     )
@@ -270,15 +272,24 @@ def main():
     force = module.params['force']
     sha256sum = module.params['sha256sum']
     use_proxy = module.params['use_proxy']
+    check_size = module.params['check_size']
 
     dest_is_dir = os.path.isdir(dest)
     last_mod_time = None
 
     if not dest_is_dir and os.path.exists(dest):
         if not force:
+            if check_size is True:
+                #Check the size of the file on disk against the HTTP content length attribute of the remote file
+                remote_file = urllib2.urlopen(url)
+                remote_size = remote_file.headers['content-length']
+                local_size = os.path.getsize(dest)
+                if remote_size == local_size:
+                    module.exit_json(msg="file already exists", dest=dest, url=url, changed=False)
+        else:
             module.exit_json(msg="file already exists", dest=dest, url=url, changed=False)
-
-        # If the file already exists, prepare the last modified time for the
+        
+    # If the file already exists, prepare the last modified time for the
         # request.
         mtime = os.path.getmtime(dest)
         last_mod_time = datetime.datetime.utcfromtimestamp(mtime)
