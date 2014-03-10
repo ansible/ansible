@@ -207,7 +207,9 @@ class Service(object):
                 os._exit(0)
 
             # Start the command
-            p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, preexec_fn=lambda: os.close(pipe[1]))
+            if isinstance(cmd, basestring):
+                cmd = shlex.split(cmd)
+            p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, preexec_fn=lambda: os.close(pipe[1]))
             stdout = ""
             stderr = ""
             fds = [p.stdout, p.stderr]
