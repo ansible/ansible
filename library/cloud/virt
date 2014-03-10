@@ -113,13 +113,14 @@ class VMNotFound(Exception):
 
 class LibvirtConnection(object):
 
-    def __init__(self, uri):
+    def __init__(self, uri, module):
 
-        cmd = subprocess.Popen("uname -r", shell=True, stdout=subprocess.PIPE,
-                                close_fds=True)
-        output = cmd.communicate()[0]
+        self.module = module
 
-        if output.find("xen") != -1:
+        cmd = "uname -r"
+        rc, stdout, stderr = self.module.run_command(cmd)
+
+        if stdout.find("xen") != -1:
             conn = libvirt.open(None)
         else:
             conn = libvirt.open(uri)
@@ -221,11 +222,12 @@ class LibvirtConnection(object):
 
 class Virt(object):
 
-    def __init__(self, uri):
+    def __init__(self, uri, module):
+        self.module = module
         self.uri = uri
 
     def __get_conn(self):
-        self.conn = LibvirtConnection(self.uri)
+        self.conn = LibvirtConnection(self.uri, self.module)
         return self.conn
 
     def get_vm(self, vmid):
@@ -399,7 +401,7 @@ def core(module):
     uri        = module.params.get('uri', None)
     xml        = module.params.get('xml', None)
 
-    v = Virt(uri)
+    v = Virt(uri, module)
     res = {}
 
     if state and command=='list_vms':
