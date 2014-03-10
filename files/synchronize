@@ -304,8 +304,11 @@ def main():
         return module.fail_json(msg=err, rc=rc, cmd=cmdstr)
     else:
         changed = changed_marker in out
-        return module.exit_json(changed=changed, msg=out.replace(changed_marker,''),
-                                rc=rc, cmd=cmdstr)
+        out_clean=out.replace(changed_marker,'')
+        out_lines=out_clean.split('\n')
+        while '' in out_lines: out_lines.remove('')
+        return module.exit_json(changed=changed, msg=out_clean,
+                                rc=rc, cmd=cmdstr, stdout_lines=out_lines)
 
 # import module snippets
 from ansible.module_utils.basic import *
