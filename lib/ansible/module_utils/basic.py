@@ -59,6 +59,7 @@ import grp
 import pwd
 import platform
 import errno
+import tempfile
 
 try:
     import json
@@ -113,6 +114,7 @@ FILE_COMMON_ARGUMENTS=dict(
     force = dict(),
     remote_src = dict(), # used by assemble
 )
+
 
 def get_platform():
     ''' what's the platform?  example: Linux is a platform. '''
@@ -188,7 +190,7 @@ class AnsibleModule(object):
         os.environ['LANG'] = MODULE_LANG
         (self.params, self.args) = self._load_params()
 
-        self._legal_inputs = [ 'CHECKMODE', 'NO_LOG' ]
+        self._legal_inputs = ['CHECKMODE', 'NO_LOG']
         
         self.aliases = self._handle_aliases()
 
@@ -571,8 +573,9 @@ class AnsibleModule(object):
 
     def _check_invalid_arguments(self):
         for (k,v) in self.params.iteritems():
-            if k in ('CHECKMODE', 'NO_LOG'):
-                continue
+            # these should be in legal inputs already
+            #if k in ('CHECKMODE', 'NO_LOG'):
+            #    continue
             if k not in self._legal_inputs:
                 self.fail_json(msg="unsupported parameter for module: %s" % k)
 
@@ -1067,5 +1070,4 @@ class AnsibleModule(object):
             if size >= limit:
                 break
         return '%.2f %s' % (float(size)/ limit, suffix)
-
 
