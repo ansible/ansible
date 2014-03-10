@@ -106,30 +106,12 @@ EXAMPLES = '''
 
 IMPORT_ERROR = None
 try:
-    import urllib
-    import urllib2
     import json
     from time import strftime, gmtime
     import hashlib
     import hmac
 except ImportError, e:
     IMPORT_ERROR = str(e)
-
-
-class RequestWithMethod(urllib2.Request):
-
-    """Workaround for using DELETE/PUT/etc with urllib2"""
-
-    def __init__(self, url, method, data=None, headers={}):
-        self._method = method
-        urllib2.Request.__init__(self, url, data, headers)
-
-    def get_method(self):
-        if self._method:
-            return self._method
-        else:
-            return urllib2.Request.get_method(self)
-
 
 class DME2:
 
@@ -169,16 +151,10 @@ class DME2:
         url = self.baseurl + resource
         if data and not isinstance(data, basestring):
             data = urllib.urlencode(data)
-        request = RequestWithMethod(url, method, data, self._headers())
 
-        try:
-            response = urllib2.urlopen(request)
-        except urllib2.HTTPError, e:
-            self.module.fail_json(
-                msg="%s returned %s, with body: %s" % (url, e.code, e.read()))
-        except Exception, e:
-            self.module.fail_json(
-                msg="Failed contacting: %s : Exception %s" % (url, e.message()))
+        response, info = fetch_url(self.module, url, data=data, method=method)
+        if info['status'] not in (200, 201, 204):
+            self.module.fail_json(msg="%s returned %s, with body: %s" % (url, info['status'], info['msg']))
 
         try:
             return json.load(response)
@@ -338,4 +314,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
+
 main()

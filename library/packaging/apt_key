@@ -64,6 +64,14 @@ options:
         default: present
         description:
             - used to specify if key is being added or revoked
+    validate_certs:
+        description:
+            - If C(no), SSL certificates for the target url will not be validated. This should only be used
+              on personally controlled sites using self-signed certificates.
+        required: false
+        default: 'yes'
+        choices: ['yes', 'no']
+
 '''
 
 EXAMPLES = '''
@@ -88,7 +96,6 @@ EXAMPLES = '''
 
 
 # FIXME: standardize into module_common
-from urllib2 import urlopen, URLError
 from traceback import format_exc
 from re import compile as re_compile
 # FIXME: standardize into module_common
@@ -133,11 +140,8 @@ def download_key(module, url):
     if url is None:
         module.fail_json(msg="needed a URL but was not specified")
     try:
-        connection = urlopen(url)
-        if connection is None:
-            module.fail_json("error connecting to download key from url")
-        data = connection.read()
-        return data
+        rsp, info = fetch_url(module, url, validate_certs=module.params['validate_certs'])
+        return rsp.read()
     except Exception:
         module.fail_json(msg="error getting key id from url", traceback=format_exc())
 
@@ -175,7 +179,8 @@ def main():
             file=dict(required=False),
             key=dict(required=False),
             keyring=dict(required=False),
-            state=dict(required=False, choices=['present', 'absent'], default='present')
+            state=dict(required=False, choices=['present', 'absent'], default='present'),
+            validate_certs=dict(default='yes', type='bool'),
         ),
         supports_check_mode=True
     )
@@ -240,4 +245,5 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
 main()
