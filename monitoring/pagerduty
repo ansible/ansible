@@ -87,24 +87,23 @@ EXAMPLES='''
 
 import json
 import datetime
-import urllib2
 import base64
 
 
-def ongoing(name, user, passwd):
+def ongoing(module, name, user, passwd):
 
     url = "https://" + name + ".pagerduty.com/api/v1/maintenance_windows/ongoing"
     auth = base64.encodestring('%s:%s' % (user, passwd)).replace('\n', '')
+    headers = {"Authorization": "Basic %s" % auth}
 
-    req = urllib2.Request(url)
-    req.add_header("Authorization", "Basic %s" % auth)
-    res = urllib2.urlopen(req)
-    out = res.read()
+    response, info = fetch_url(module, url, headers=headers)
+    if info['status'] != 200:
+        module.fail_json(msg="failed to lookup the ongoing window: %s" % info['msg'])
 
-    return False, out
+    return False, response.read()
 
 
-def create(name, user, passwd, service, hours, desc):
+def create(module, name, user, passwd, service, hours, desc):
 
     now = datetime.datetime.utcnow()
     later = now + datetime.timedelta(hours=int(hours))
@@ -113,15 +112,17 @@ def create(name, user, passwd, service, hours, desc):
 
     url = "https://" + name + ".pagerduty.com/api/v1/maintenance_windows"
     auth = base64.encodestring('%s:%s' % (user, passwd)).replace('\n', '')
+    headers = {
+        'Authorization': 'Basic %s' % auth,
+        'Content-Type' : 'application/json',
+    }
     data = json.dumps({'maintenance_window': {'start_time': start, 'end_time': end, 'description': desc, 'service_ids': [service]}})
 
-    req = urllib2.Request(url, data)
-    req.add_header("Authorization", "Basic %s" % auth)
-    req.add_header('Content-Type', 'application/json')
-    res = urllib2.urlopen(req)
-    out = res.read()
+    response, info = fetch_url(module, url, data=data, headers=headers, method='POST')
+    if info['status'] != 200:
+        module.fail_json(msg="failed to create the window: %s" % info['msg'])
 
-    return False, out
+    return False, response.read()
 
 
 def main():
@@ -149,10 +150,10 @@ def main():
     if state == "running" or state == "started":
         if not service:
             module.fail_json(msg="service not specified")
-        (rc, out) = create(name, user, passwd, service, hours, desc)
+        (rc, out) = create(module, name, user, passwd, service, hours, desc)
 
     if state == "ongoing":
-        (rc, out) = ongoing(name, user, passwd)
+        (rc, out) = ongoing(module, name, user, passwd)
 
     if rc != 0:
         module.fail_json(msg="failed", result=out)
@@ -161,4 +162,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
+
 main()
