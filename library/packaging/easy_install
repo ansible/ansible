@@ -151,8 +151,8 @@ def main():
             command = '%s %s' % (virtualenv, env)
             if site_packages:
                 command += ' --system-site-packages'
-            os.chdir(tempfile.gettempdir())
-            rc_venv, out_venv, err_venv = module.run_command(command)
+            cwd = tempfile.gettempdir()
+            rc_venv, out_venv, err_venv = module.run_command(command, cwd=cwd)
 
             rc += rc_venv
             out += out_venv

@@ -16,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import subprocess
-
 DOCUMENTATION = '''
 ---
 module: synchronize
@@ -272,6 +270,13 @@ def main():
         cmd = cmd + " --rsync-path '%s'" %(rsync_path)
     changed_marker = '<<CHANGED>>'
     cmd = cmd + " --out-format='" + changed_marker + "%i %n%L'"
+
+    # expand the paths
+    if '@' not in source:
+        source = os.path.expanduser(source) 
+    if '@' not in dest:
+        dest = os.path.expanduser(dest) 
+
     cmd = ' '.join([cmd, source, dest])
     cmdstr = cmd
     (rc, out, err) = module.run_command(cmd)

@@ -990,12 +990,13 @@ class AnsibleModule(object):
             # rename might not preserve context
             self.set_context_if_different(dest, context, False)
 
-    def run_command(self, args, check_rc=False, close_fds=False, executable=None, data=None, binary_data=False, path_prefix=None):
+    def run_command(self, args, check_rc=False, close_fds=False, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None, use_unsafe_shell=False):
         '''
         Execute a command, returns rc, stdout, and stderr.
         args is the command to run
         If args is a list, the command will be run with shell=False.
-        Otherwise, the command will be run with shell=True when args is a string.
+        If args is a string and use_unsafe_shell=False it will split args to a list and run with shell=False
+        If args is a string and use_unsafe_shell=True it run with shell=True.
         Other arguments:
         - check_rc (boolean)  Whether to call fail_json in case of
                               non zero RC.  Default is False.
@@ -1004,13 +1005,18 @@ class AnsibleModule(object):
         - executable (string) See documentation for subprocess.Popen().
                               Default is None.
         '''
+
+        shell = False
         if isinstance(args, list):
-            shell = False
-        elif isinstance(args, basestring):
+            pass
+        elif isinstance(args, basestring) and use_unsafe_shell:
             shell = True
+        elif isinstance(args, basestring):
+            args = shlex.split(args)
         else:
             msg = "Argument 'args' to run_command must be list or string"
             self.fail_json(rc=257, cmd=args, msg=msg)
+
         rc = 0
         msg = None
         st_in = None
@@ -1022,25 +1028,25 @@ class AnsibleModule(object):
 
         if data:
             st_in = subprocess.PIPE
+
+        kwargs = dict(
+            executable=executable,
+            shell=shell,
+            close_fds=close_fds,
+            stdin= st_in,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE 
+        )
+
+        if path_prefix:
+            kwargs['env'] = env
+        if cwd:
+            kwargs['cwd'] = cwd
+
+
         try:
-            if path_prefix is not None:
-                cmd = subprocess.Popen(args,
-                                       executable=executable,
-                                       shell=shell,
-                                       close_fds=close_fds,
-                                       stdin=st_in,
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE,
-                                       env=env)
-            else:
-                cmd = subprocess.Popen(args,
-                                       executable=executable,
-                                       shell=shell,
-                                       close_fds=close_fds,
-                                       stdin=st_in,
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE)
-            
+            cmd = subprocess.Popen(args, **kwargs)
+
             if data:
                 if not binary_data:
                     data += '\\n'
