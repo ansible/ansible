@@ -32,7 +32,7 @@ class LookupModule(object):
 
         ret = []
         for term in terms:
-            p = subprocess.Popen(term, cwd=self.basedir, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+            p = subprocess.Popen(term, cwd=self.basedir, shell=False, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
             (stdout, stderr) = p.communicate()
             if p.returncode == 0:
                 ret.append(stdout.decode("utf-8").rstrip())
