@@ -53,7 +53,7 @@ try:
 except ImportError:
     HAS_AES = False    
 
-CRYPTO_UPGRADE = "ansible-vault requires a newer version of pycrypto than the one installed on your platform. You may fix this with OS-specific commands such as: rpm -e --nodeps python-crypto; pip install pycrypto"
+CRYPTO_UPGRADE = "ansible-vault requires a newer version of pycrypto than the one installed on your platform. You may fix this with OS-specific commands such as: yum install python-devel; rpm -e --nodeps python-crypto; pip install pycrypto"
 
 HEADER='$ANSIBLE_VAULT'
 CIPHER_WHITELIST=['AES', 'AES256']
