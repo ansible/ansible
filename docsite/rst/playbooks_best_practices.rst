@@ -223,8 +223,8 @@ What about just the first 10, and then the next 10?::
 
 And of course just basic ad-hoc stuff is also possible.::
 
-    ansible -i production -m ping
-    ansible -i production -m command -a '/sbin/reboot' --limit boston 
+    ansible boston -i production -m ping
+    ansible boston -i production -m command -a '/sbin/reboot'
 
 And there are some useful commands to know (at least in 1.1 and higher)::
 
