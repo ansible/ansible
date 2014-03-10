@@ -473,7 +473,27 @@ class LinuxService(Service):
         if location.get('initctl', None):
             self.svc_initctl = location['initctl']
 
+    def get_systemd_service_status(self):
+        (rc, out, err) = self.execute_command("%s show %s" % (self.enable_cmd, self.__systemd_unit))
+        d = dict(line.split('=', 1) for line in out.splitlines())
+        if d['ActiveState'] == 'active':
+            # run-once services (for which a single successful exit indicates
+            # that they are running as designed) should not be restarted here.
+            # Thus, we are not checking d['SubState'].
+            self.running = True
+            self.crashed = False
+        elif d['ActiveState'] == 'failed':
+            self.running = False
+            self.crashed = True
+        else:
+            self.running = False
+            self.crashed = False
+        return self.running
+
     def get_service_status(self):
+        if self.svc_cmd and self.svc_cmd.endswith('systemctl'):
+            return self.get_systemd_service_status()
+
         self.action = "status"
         rc, status_stdout, status_stderr = self.service_control()
 
