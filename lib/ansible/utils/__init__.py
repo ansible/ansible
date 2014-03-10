@@ -354,9 +354,9 @@ def smush_ds(data):
 def parse_yaml(data, path_hint=None):
     ''' convert a yaml string to a data structure.  Also supports JSON, ssssssh!!!'''
 
-    data = data.lstrip()
+    stripped_data = data.lstrip()
     loaded = None
-    if data.startswith("{") or data.startswith("["):
+    if stripped_data.startswith("{") or stripped_data.startswith("["):
         # since the line starts with { or [ we can infer this is a JSON document.
         try:
             loaded = json.loads(data)
