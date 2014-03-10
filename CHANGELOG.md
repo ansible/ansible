@@ -1,6 +1,13 @@
 Ansible Changes By Release
 ==========================
 
+## 1.5.1 "Love Walks In" - March 10, 2014
+
+- Force command action to not be executed by the shell unless specifically enabled.
+- Validate SSL certs accessed through urllib*.
+- Implement new default cipher class AES256 in ansible-vault.
+- Misc bug fixes.
+
 ## 1.5 "Love Walks In" - February 28, 2014
 
 Major features/changes:
