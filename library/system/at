@@ -75,6 +75,8 @@ EXAMPLES = '''
 
 import os
 import tempfile
+
+
 def add_job(module, result, at_cmd, count, units, command, script_file):
     at_command = "%s now + %s %s -f %s" % (at_cmd, count, units, script_file)
     rc, out, err = module.run_command(at_command, check_rc=True)
@@ -82,8 +84,9 @@ def add_job(module, result, at_cmd, count, units, command, script_file):
         os.unlink(script_file)
     result['changed'] = True
 
+
 def delete_job(module, result, at_cmd, command, script_file):
-    for matching_job in matching_jobs(module, at_cmd, script_file):
+    for matching_job in get_matching_jobs(module, at_cmd, script_file):
         at_command = "%s -d %s" % (at_cmd, matching_job)
         rc, out, err = module.run_command(at_command, check_rc=True)
         result['changed'] = True
@@ -91,13 +94,14 @@ def delete_job(module, result, at_cmd, command, script_file):
         os.unlink(script_file)
     module.exit_json(**result)
 
-def matching_jobs(module, at_cmd, script_file):
+
+def get_matching_jobs(module, at_cmd, script_file):
     matching_jobs = []
 
     atq_cmd = module.get_bin_path('atq', True)
 
     # Get list of job numbers for the user.
-    atq_command = "%s" % (atq_cmd)
+    atq_command = "%s" % atq_cmd
     rc, out, err = module.run_command(atq_command, check_rc=True)
     current_jobs = out.splitlines()
     if len(current_jobs) == 0:
@@ -118,6 +122,7 @@ def matching_jobs(module, at_cmd, script_file):
     # Return the list.
     return matching_jobs
 
+
 def create_tempfile(command):
     filed, script_file = tempfile.mkstemp(prefix='at')
     fileh = os.fdopen(filed, 'w')
@@ -125,7 +130,6 @@ def create_tempfile(command):
     fileh.close()
     return script_file
 
-#================================================
 
 def main():
 
@@ -149,9 +153,9 @@ def main():
                         default=False,
                         type='bool')
         ),
-        mutually_exclusive = [['command', 'script_file']],
-        required_one_of = [['command', 'script_file']],
-        supports_check_mode = False
+        mutually_exclusive=[['command', 'script_file']],
+        required_one_of=[['command', 'script_file']],
+        supports_check_mode=False
     )
 
     at_cmd = module.get_bin_path('at', True)
@@ -163,12 +167,10 @@ def main():
     state          = module.params['state']
     unique         = module.params['unique']
 
-    if ((state == 'present') and (not count or not units)):
+    if (state == 'present') and (not count or not units):
         module.fail_json(msg="present state requires count and units")
 
-    result = {}
-    result['state'] = state
-    result['changed'] = False
+    result = {'state': state, 'changed': False}
 
     # If command transform it into a script_file
     if command:
@@ -180,7 +182,7 @@ def main():
 
     # if unique if existing return unchanged
     if unique:
-        if len(matching_jobs(module, at_cmd, script_file)) != 0:
+        if len(get_matching_jobs(module, at_cmd, script_file)) != 0:
             if command:
                 os.unlink(script_file)
             module.exit_json(**result)
