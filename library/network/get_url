@@ -124,12 +124,6 @@ except ImportError:
 # ==============================================================
 # url handling
 
-def url_filename(url):
-    fn = os.path.basename(urlparse.urlsplit(url)[2])
-    if fn == '':
-        return 'index.html'
-    return fn
-
 def url_do_get(module, url, dest, use_proxy, last_mod_time, force):
     """
     Get url and return request and info
@@ -223,6 +217,12 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force):
     req.close()
     return tempname, info
 
+def url_filename(url):
+    fn = os.path.basename(urlparse.urlsplit(url)[2])
+    if fn == '':
+        return 'index.html'
+    return fn
+
 def extract_filename_from_headers(headers):
     """
     Extracts a filename from the given dict of HTTP headers.
@@ -242,16 +242,51 @@ def extract_filename_from_headers(headers):
 
     return res
 
+def get_dest_for_request(url, resp_headers, dest):
+    dest_is_dir = os.path.isdir(dest)
+
+    if not dest_is_dir:
+        return dest
+    else:
+        fn = extract_filename_from_headers(resp_headers)
+
+        if fn == None:
+            fn = url_filename(url)
+
+        fn = os.path.join(dest, fn)
+
+        return fn
+
+def clean_sha256sum(sha256sum):
+    if sha256sum != '':
+        # Remove any non-alphanumeric characters, including the infamous
+        # Unicode zero-width space
+        return re.sub(r'\W+', '', sha256sum)
+    return ''
+
+
+class HeadRequest(urllib2.Request):
+    def get_method(self):
+        return "HEAD"
+
+
+def prefetch_headers(module, url):
+    try:
+        r = urllib2.urlopen(HeadRequest(url))
+
+        return r
+    except urllib2.HTTPError, e:
+        # Must not fail_json() here so caller can handle HTTP 304 unmodified
+        module.fail_json(msg="Request failed: %s" % str(e), status_code=e.code, url=url)
+    except urllib2.URLError, e:
+        code = getattr(e, 'code', -1)
+        module.fail_json(msg="Request failed: %s" % str(e), status_code=code)
+
+
 # ==============================================================
 # main
 
 def main():
-
-    # does this really happen on non-ancient python?
-    if not HAS_URLLIB2:
-        module.fail_json(msg="urllib2 is not installed")
-    if not HAS_URLPARSE:
-        module.fail_json(msg="urlparse is not installed")
 
     module = AnsibleModule(
         # not checking because of daisy chain to file module
@@ -265,38 +300,50 @@ def main():
         add_file_common_args=True
     )
 
+    # does this really happen on non-ancient python?
+    if not HAS_URLLIB2:
+        module.fail_json(msg="urllib2 is not installed")
+    if not HAS_URLPARSE:
+        module.fail_json(msg="urlparse is not installed")
+
     url  = module.params['url']
     dest = os.path.expanduser(module.params['dest'])
     force = module.params['force']
-    sha256sum = module.params['sha256sum']
+    sha256sum = clean_sha256sum(module.params['sha256sum'])
     use_proxy = module.params['use_proxy']
 
     dest_is_dir = os.path.isdir(dest)
     last_mod_time = None
 
-    if not dest_is_dir and os.path.exists(dest):
-        if not force:
-            module.exit_json(msg="file already exists", dest=dest, url=url, changed=False)
+    if sha256sum != '' and not HAS_HASHLIB:
+        module.fail_json(msg="The sha256sum parameter requires hashlib, which is available in Python 2.5 and higher")
 
-        # If the file already exists, prepare the last modified time for the
-        # request.
-        mtime = os.path.getmtime(dest)
-        last_mod_time = datetime.datetime.utcfromtimestamp(mtime)
+    if not dest_is_dir:
+        if os.path.exists(dest):
+            if not force and (sha256sum == '' or sha256sum == module.sha256(dest)):
+                module.exit_json(msg="file already exists", dest=dest, url=url, sha256sum=sha256sum, changed=False)
+            else:
+                force=True
+
+            # If the file already exists, prepare the last modified time for the
+            # request.
+            mtime = os.path.getmtime(dest)
+            last_mod_time = datetime.datetime.utcfromtimestamp(mtime)
+    else:
+        # if we have a sha256sum, we can short circuit if the destination exists and it's sha256sum matches
+        if sha256sum != '':
+            # prefetch the headers and check the calculated file against the given sha256sum
+            head = prefetch_headers(module, url)
+            pre_dest = get_dest_for_request(head.geturl(), head.info(), dest)
+            if os.path.exists(pre_dest) and sha256sum == module.sha256(pre_dest):
+                module.exit_json(msg="file already exists", dest=dest, url=url, sha256sum=sha256sum, changed=False)
 
     # download to tmpsrc
     tmpsrc, info = url_get(module, url, dest, use_proxy, last_mod_time, force)
 
     # Now the request has completed, we can finally generate the final
     # destination file name from the info dict.
-
-    if dest_is_dir:
-        filename = extract_filename_from_headers(info)
-        if not filename:
-            # Fall back to extracting the filename from the URL.
-            # Pluck the URL from the info, since a redirect could have changed
-            # it.
-            filename = url_filename(info['url'])
-        dest = os.path.join(dest, filename)
+    dest = get_dest_for_request(info['url'], info, dest)
 
     md5sum_src   = None
     md5sum_dest  = None
@@ -338,17 +385,9 @@ def main():
     # Check the digest of the destination file and ensure that it matches the
     # sha256sum parameter if it is present
     if sha256sum != '':
-        # Remove any non-alphanumeric characters, including the infamous
-        # Unicode zero-width space
-        stripped_sha256sum = re.sub(r'\W+', '', sha256sum)
+        destination_checksum = module.sha256(dest)
 
-        if not HAS_HASHLIB:
-            os.remove(dest)
-            module.fail_json(msg="The sha256sum parameter requires hashlib, which is available in Python 2.5 and higher")
-        else:
-            destination_checksum = module.sha256(dest)
-
-        if stripped_sha256sum != destination_checksum:
+        if sha256sum != destination_checksum:
             os.remove(dest)
             module.fail_json(msg="The SHA-256 checksum for %s did not match %s; it was %s." % (dest, sha256sum, destination_checksum))
 
