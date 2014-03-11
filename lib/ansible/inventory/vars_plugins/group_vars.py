@@ -123,7 +123,8 @@ def _load_vars_from_folder(folder_path, results):
     # filesystem lists them.
     names.sort() 
 
-    paths = [os.path.join(folder_path, name) for name in names]
+    # do not parse hidden files or dirs, e.g. .svn/
+    paths = [os.path.join(folder_path, name) for name in names if not name.startswith('.')]
     for path in paths:
         _found, results = _load_vars_from_path(path, results)
     return results
