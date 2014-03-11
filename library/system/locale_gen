@@ -11,7 +11,7 @@ module: locale
 short_description: Creates of removes locales.
 description:
      - Manages locales by editing /etc/locale.gen and invoking locale-gen.
-version_added: "1.5"
+version_added: "1.6"
 options:
     name:
         description:
