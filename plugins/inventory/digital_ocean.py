@@ -162,6 +162,7 @@ class DigitalOceanInventory(object):
         # Define defaults
         self.cache_path = '.'
         self.cache_max_age = 0
+        self.host_key = 'ip_address'
 
         # Read settings, environment variables, and CLI arguments
         self.read_settings()
@@ -241,6 +242,10 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
         if config.has_option('digital_ocean', 'cache_max_age'):
             self.cache_max_age = config.getint('digital_ocean', 'cache_max_age')
 
+        # Hostname handling
+        if config.has_option('digital_ocean', 'host_key'):
+            self.host_key = config.get('digital_ocean', 'host_key')
+
 
     def read_environment(self):
         ''' Reads the settings from environment variables '''
@@ -310,10 +315,10 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
         self.index['size_to_name']    = self.build_index(self.data['sizes'], 'id', 'name')
         self.index['image_to_name']   = self.build_index(self.data['images'], 'id', 'name')
         self.index['image_to_distro'] = self.build_index(self.data['images'], 'id', 'distribution')
-        self.index['host_to_droplet'] = self.build_index(self.data['droplets'], 'ip_address', 'id', False)
+        self.index['host_to_droplet'] = self.build_index(self.data['droplets'], self.host_key, 'id', False)
 
+        self.check_duplicate_hosts()
         self.build_inventory()
-
         self.write_to_cache()
 
 
@@ -321,7 +326,8 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
         ''' Use dopy to get droplet information from DigitalOcean and save data in cache files '''
         manager  = DoManager(self.client_id, self.api_key)
         self.data['droplets'] = self.sanitize_list(manager.all_active_droplets())
-        self.index['host_to_droplet'] = self.build_index(self.data['droplets'], 'ip_address', 'id', False)
+        self.index['host_to_droplet'] = self.build_index(self.data['droplets'], self.host_key, 'id', False)
+        self.check_duplicate_hosts()
         self.build_inventory()
         self.write_to_cache()
 
@@ -335,16 +341,31 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
         return dest_dict
 
 
+    def check_duplicate_hosts(self):
+        '''Ensure hostnames are unique'''
+        hosts = [droplet[self.host_key] for droplet in self.data['droplets']]
+        seen = set()
+        duplicate = set()
+        for host in hosts:
+            if host in seen:
+                duplicate.add(host)
+            seen.add(host)
+        if duplicate:
+            print 'Duplicate hostname(s): %s' % ', '.join(sorted(duplicate))
+            sys.exit(-1)
+
+
     def build_inventory(self):
         '''Build Ansible inventory of droplets'''
         self.inventory = {}
 
         # add all droplets by id and name
         for droplet in self.data['droplets']:
-            dest = droplet['ip_address']
+            dest = droplet[self.host_key]
 
             self.inventory[droplet['id']] = [dest]
-            self.push(self.inventory, droplet['name'], dest)
+            if self.host_key != 'name':
+                self.push(self.inventory, droplet['name'], dest)
             self.push(self.inventory, 'region_'+droplet['region_id'], dest)
             self.push(self.inventory, 'image_' +droplet['image_id'], dest)
             self.push(self.inventory, 'size_'  +droplet['size_id'], dest)
@@ -382,7 +403,7 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
         droplet = None
         if self.cache_refreshed:
             for drop in self.data['droplets']:
-                if drop['ip_address'] == host:
+                if drop[self.host_key] == host:
                     droplet = self.sanitize_dict(drop)
                     break
         else:
@@ -390,7 +411,7 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
             manager = DoManager(self.client_id, self.api_key)
             droplet_id = self.index['host_to_droplet'][host]
             droplet = self.sanitize_dict(manager.show_droplet(droplet_id))
-       
+
         if not droplet:
             return {}
 
@@ -399,7 +420,7 @@ or environment variables (DO_CLIENT_ID and DO_API_KEY)'''
         for k, v in droplet.items():
             info['do_'+k] = v
 
-        # Generate user-friendly variables (i.e. not the ID's) 
+        # Generate user-friendly variables (i.e. not the ID's)
         if droplet.has_key('region_id'):
             info['do_region'] = self.index['region_to_name'].get(droplet['region_id'])
         if droplet.has_key('size_id'):
