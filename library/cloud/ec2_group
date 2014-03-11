@@ -99,6 +99,12 @@ EXAMPLES = '''
       - proto: all
         # the containing group name may be specified here
         group_name: example
+      - proto: tcp
+        from_port: 0
+        to_port: 65535
+        cidr_ip: 0.0.0.0/0
+        # egress means that the rule will be assigned to outbound traffic
+        egress: yes
 '''
 
 try:
@@ -191,12 +197,17 @@ def main():
     if group:
         groupRules = {}
         addRulesToLookup(group.rules, 'in', groupRules)
+        addRulesToLookup(group.rules_egress, 'out', groupRules)
 
         # Now, go through all provided rules and ensure they are there.
+        egressRulesExist = False
         if rules:
             for rule in rules:
                 group_id = None
                 group_name = None
+                egress = 'egress' in rule and rule['egress']
+                if egress:
+                    egressRulesExist = True
                 ip = None
                 if 'group_id' in rule and 'cidr_ip' in rule:
                     module.fail_json(msg="Specify group_id OR cidr_ip, not both")
@@ -214,6 +225,8 @@ def main():
                         group_id = group.id
                         groups[group_id] = group
                         groups[group_name] = group
+                    else:
+                        module.fail_json(msg="Group name '%s' doesn't exist" % group_name)
                 elif 'cidr_ip' in rule:
                     ip = rule['cidr_ip']
 
@@ -223,7 +236,8 @@ def main():
                     rule['to_port'] = None
 
                 # If rule already exists, don't later delete it
-                ruleId = "%s-%s-%s-%s-%s-%s" % ('in', rule['proto'], rule['from_port'], rule['to_port'], group_id, ip)
+                prefix = 'in' if not egress else 'out'
+                ruleId = "%s-%s-%s-%s-%s-%s" % (prefix, rule['proto'], rule['from_port'], rule['to_port'], group_id, ip)
                 if ruleId in groupRules:
                     del groupRules[ruleId]
                 # Otherwise, add new rule
@@ -233,17 +247,30 @@ def main():
                         grantGroup = groups[group_id]
 
                     if not module.check_mode:
-                        group.authorize(rule['proto'], rule['from_port'], rule['to_port'], ip, grantGroup)
+                        if egress:
+                            ec2.authorize_security_group_egress(group.id, rule['proto'], rule['from_port'], rule['to_port'], group_id, ip)
+                        else:
+                            group.authorize(rule['proto'], rule['from_port'], rule['to_port'], ip, grantGroup)
                     changed = True
 
+            # If there is any egress rules, the default rule needs to be removed first. The default rule will not appear on the rules_egress
+            # list of the group as it is not returned when creating a new group. This is one sulotion to the problem, another could be getting
+            # the group again but I think that this is better because it's faster.
+            if egressRulesExist:
+                ec2.revoke_security_group_egress(group.id, -1, None, None, None, "0.0.0.0/0")
+
         # Finally, remove anything left in the groupRules -- these will be defunct rules
-        for rule in groupRules.itervalues():
+        for (ruleKey, rule) in groupRules.iteritems():
             for grant in rule.grants:
                 grantGroup = None
                 if grant.group_id:
                     grantGroup = groups[grant.group_id]
                 if not module.check_mode:
-                    group.revoke(rule.ip_protocol, rule.from_port, rule.to_port, grant.cidr_ip, grantGroup)
+                    egress = ruleKey.startswith('out-')
+                    if egress and egressRulesExist:
+                        ec2.revoke_security_group_egress(group.id, rule.ip_protocol, rule.from_port, rule.to_port, grant.group_id, grant.cidr_ip)
+                    elif not egress:
+                        group.revoke(rule.ip_protocol, rule.from_port, rule.to_port, grant.cidr_ip, grantGroup)
                 changed = True
 
     if group:
