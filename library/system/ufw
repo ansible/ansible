@@ -26,7 +26,7 @@ module: ufw
 short_description: Manage firewall with UFW
 description:
     - Manage firewall with UFW.
-version_added: 1.5
+version_added: 1.6
 author: Aleksey Ovcharenko, Jarno Keskikangas
 notes:
     - See C(man ufw) for more examples.
@@ -169,7 +169,7 @@ def main():
             insert    = dict(default=None),
             rule      = dict(default=None,  choices=['allow', 'deny', 'reject', 'limit']),
             interface = dict(default=None,  aliases=['if']),
-            log       = dict(default=False, choices=BOOLEANS),
+            log       = dict(default=False, type='bool'),
             from_ip   = dict(default='any', aliases=['src', 'from']),
             from_port = dict(default=None),
             to_ip     = dict(default='any', aliases=['dest', 'to']),
@@ -250,7 +250,7 @@ def main():
 
     return module.exit_json(changed=changed, commands=cmds, msg=post_state.rstrip())
 
-# include magic from lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 
 main()
