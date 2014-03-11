@@ -62,6 +62,7 @@ options:
     required: false
     default: null
     aliases: []
+    version_added: "1.6"
   internet_gateway:
     description:
       - Toggle whether there should be an Internet gateway attached to the VPC
