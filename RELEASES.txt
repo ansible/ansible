@@ -1,7 +1,8 @@
 Ansible Releases at a Glance
 ============================
 
-1.6    "The Cradle Will Rock" - NEXT 
+1.6    "The Cradle Will Rock" - NEXT
+1.5.2  "Love Walks In" -------- 03-11-2014
 1.5.1  "Love Walks In" -------- 03-10-2014
 1.5    "Love Walks In" -------- 02-28-2014
 1.4.5  "Could This Be Magic?" - 02-12-2014

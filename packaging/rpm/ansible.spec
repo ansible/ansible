@@ -5,7 +5,7 @@
 %endif
 
 Name:      %{name}
-Version:   1.5.1
+Version:   1.5.2
 Release:   1%{?dist}
 Url:       http://www.ansible.com
 Summary:   SSH-based application deployment, configuration management, and IT orchestration platform
@@ -101,6 +101,9 @@ rm -rf %{buildroot}
 
 
 %changelog
+
+* Fri Mar 11 2014 Michael DeHaan <michael@ansible.com> - 1.5.2
+- Release 1.5.2
 
 * Fri Mar 10 2014 Michael DeHaan <michael@ansible.com> - 1.5.1
 - Release 1.5.1

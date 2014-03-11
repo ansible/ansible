@@ -1,6 +1,10 @@
 Ansible Changes By Release
 ==========================
 
+## 1.5.2 "Love Walks In" - March 11, 2014
+
+- Fix module errors in airbrake and apt from previous release
+
 ## 1.5.1 "Love Walks In" - March 10, 2014
 
 - Force command action to not be executed by the shell unless specifically enabled.
