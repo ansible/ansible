@@ -74,18 +74,18 @@ import os
 import re
 import sys
 
-def query_package(module, pkgin_path, name):
+def query_package(module, pkgng_path, name):
 
-    rc, out, err = module.run_command("%s info -g -e %s" % (pkgin_path, name))
+    rc, out, err = module.run_command("%s info -g -e %s" % (pkgng_path, name))
 
     if rc == 0:
         return True
 
     return False
 
-def pkgng_older_than(module, pkgin_path, compare_version):
+def pkgng_older_than(module, pkgng_path, compare_version):
 
-    rc, out, err = module.run_command("%s -v" % pkgin_path)
+    rc, out, err = module.run_command("%s -v" % pkgng_path)
     version = map(lambda x: int(x), re.split(r'[\._]', out))
 
     i = 0
@@ -100,19 +100,19 @@ def pkgng_older_than(module, pkgin_path, compare_version):
     return not new_pkgng
 
 
-def remove_packages(module, pkgin_path, packages):
+def remove_packages(module, pkgng_path, packages):
     
     remove_c = 0
     # Using a for loop incase of error, we can report the package that failed
     for package in packages:
         # Query the package first, to see if we even need to remove
-        if not query_package(module, pkgin_path, package):
+        if not query_package(module, pkgng_path, package):
             continue
 
         if not module.check_mode:
-            rc, out, err = module.run_command("%s delete -y %s" % (pkgin_path, package))
+            rc, out, err = module.run_command("%s delete -y %s" % (pkgng_path, package))
 
-        if not module.check_mode and query_package(module, pkgin_path, package):
+        if not module.check_mode and query_package(module, pkgng_path, package):
             module.fail_json(msg="failed to remove %s: %s" % (package, out))
     
         remove_c += 1
@@ -124,36 +124,36 @@ def remove_packages(module, pkgin_path, packages):
     module.exit_json(changed=False, msg="package(s) already absent")
 
 
-def install_packages(module, pkgin_path, packages, cached, pkgsite):
+def install_packages(module, pkgng_path, packages, cached, pkgsite):
 
     install_c = 0
 
     # as of pkg-1.1.4, PACKAGESITE is deprecated in favor of repository definitions
     # in /usr/local/etc/pkg/repos
-    old_pkgng = pkgng_older_than(module, pkgin_path, [1, 1, 4])
+    old_pkgng = pkgng_older_than(module, pkgng_path, [1, 1, 4])
 
     if old_pkgng and (pkgsite != ""):
         pkgsite = "PACKAGESITE=%s" % (pkgsite)
 
     if not module.check_mode and cached == "no":
         if old_pkgng:
-            rc, out, err = module.run_command("%s %s update" % (pkgsite, pkgin_path))
+            rc, out, err = module.run_command("%s %s update" % (pkgsite, pkgng_path))
         else:
-            rc, out, err = module.run_command("%s update" % (pkgin_path))
+            rc, out, err = module.run_command("%s update" % (pkgng_path))
         if rc != 0:
             module.fail_json(msg="Could not update catalogue")
 
     for package in packages:
-        if query_package(module, pkgin_path, package):
+        if query_package(module, pkgng_path, package):
             continue
 
         if not module.check_mode:
             if old_pkgng:
-                rc, out, err = module.run_command("%s %s install -g -U -y %s" % (pkgsite, pkgin_path, package))
+                rc, out, err = module.run_command("%s %s install -g -U -y %s" % (pkgsite, pkgng_path, package))
             else:
-                rc, out, err = module.run_command("%s install -r %s -g -U -y %s" % (pkgin_path, pkgsite, package))
+                rc, out, err = module.run_command("%s install -r %s -g -U -y %s" % (pkgng_path, pkgsite, package))
 
-        if not module.check_mode and not query_package(module, pkgin_path, package):
+        if not module.check_mode and not query_package(module, pkgng_path, package):
             module.fail_json(msg="failed to install %s: %s" % (package, out), stderr=err)
 
         install_c += 1
@@ -173,17 +173,17 @@ def main():
                 pkgsite         = dict(default="", required=False)),
             supports_check_mode = True)
 
-    pkgin_path = module.get_bin_path('pkg', True)
+    pkgng_path = module.get_bin_path('pkg', True)
 
     p = module.params
 
     pkgs = p["name"].split(",")
 
     if p["state"] == "present":
-        install_packages(module, pkgin_path, pkgs, p["cached"], p["pkgsite"])
+        install_packages(module, pkgng_path, pkgs, p["cached"], p["pkgsite"])
 
     elif p["state"] == "absent":
-        remove_packages(module, pkgin_path, pkgs)
+        remove_packages(module, pkgng_path, pkgs)
 
 # import module snippets
 from ansible.module_utils.basic import *
