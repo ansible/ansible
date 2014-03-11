@@ -33,7 +33,7 @@ except ImportError:
 DOCUMENTATION = '''
 ---
 module: security_group
-version_added: "1.5"
+version_added: "1.6"
 short_description: Maintain nova security groups.
 description:
   - Manage nova security groups using the python-novaclient library.
@@ -336,6 +336,8 @@ def main():
 
     module.exit_json(changed=changed, group_id=group_id)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+
+# import module snippets
+from ansible.module_utils.basic import *
+
 main()
