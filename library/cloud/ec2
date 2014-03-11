@@ -816,7 +816,7 @@ def create_instances(module, ec2, override_count=None):
 
             res = ec2.run_instances(**params)
         except boto.exception.BotoServerError, e:
-            module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+            module.fail_json(msg = "Instance creation failed => %s: %s" % (e.error_code, e.error_message))
 
         instids = [ i.id for i in res.instances ]
         while True:
@@ -834,7 +834,7 @@ def create_instances(module, ec2, override_count=None):
             try:
                 ec2.create_tags(instids, instance_tags)
             except boto.exception.EC2ResponseError, e:
-                module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+                module.fail_json(msg = "Instance tagging failed => %s: %s" % (e.error_code, e.error_message))
 
         # wait here until the instances are up
         this_res = []
