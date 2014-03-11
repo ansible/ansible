@@ -48,8 +48,11 @@ options:
         default: no
     pkgsite:
         description:
-            - specify packagesite to use for downloading packages, if
-              not specified, use settings from /usr/local/etc/pkg.conf
+            - for pkgng versions before 1.1.4, specify packagesite to use
+              for downloading packages, if not specified, use settings from
+              /usr/local/etc/pkg.conf
+              for newer pkgng versions, specify a the name of a repository
+              configured in /usr/local/etc/pkg/repos
         required: false
 author: bleader
 notes:
@@ -68,6 +71,7 @@ EXAMPLES = '''
 import json
 import shlex
 import os
+import re
 import sys
 
 def query_package(module, pkgin_path, name):
@@ -78,6 +82,22 @@ def query_package(module, pkgin_path, name):
         return True
 
     return False
+
+def pkgng_older_than(module, pkgin_path, compare_version):
+
+    rc, out, err = module.run_command("%s -v" % pkgin_path)
+    version = map(lambda x: int(x), re.split(r'[\._]', out))
+
+    i = 0
+    new_pkgng = True
+    while compare_version[i] == version[i]:
+        i += 1
+        if i == min(len(compare_version), len(version)):
+            break
+    else:
+        if compare_version[i] > version[i]:
+            new_pkgng = False
+    return not new_pkgng
 
 
 def remove_packages(module, pkgin_path, packages):
@@ -108,11 +128,18 @@ def install_packages(module, pkgin_path, packages, cached, pkgsite):
 
     install_c = 0
 
-    if pkgsite != "":
-        pkgsite="PACKAGESITE=%s" % (pkgsite)
+    # as of pkg-1.1.4, PACKAGESITE is deprecated in favor of repository definitions
+    # in /usr/local/etc/pkg/repos
+    old_pkgng = pkgng_older_than(module, pkgin_path, [1, 1, 4])
+
+    if old_pkgng and (pkgsite != ""):
+        pkgsite = "PACKAGESITE=%s" % (pkgsite)
 
     if not module.check_mode and cached == "no":
-        rc, out, err = module.run_command("%s %s update" % (pkgsite, pkgin_path))
+        if old_pkgng:
+            rc, out, err = module.run_command("%s %s update" % (pkgsite, pkgin_path))
+        else:
+            rc, out, err = module.run_command("%s update" % (pkgin_path))
         if rc != 0:
             module.fail_json(msg="Could not update catalogue")
 
@@ -121,7 +148,10 @@ def install_packages(module, pkgin_path, packages, cached, pkgsite):
             continue
 
         if not module.check_mode:
-            rc, out, err = module.run_command("%s %s install -g -U -y %s" % (pkgsite, pkgin_path, package))
+            if old_pkgng:
+                rc, out, err = module.run_command("%s %s install -g -U -y %s" % (pkgsite, pkgin_path, package))
+            else:
+                rc, out, err = module.run_command("%s install -r %s -g -U -y %s" % (pkgin_path, pkgsite, package))
 
         if not module.check_mode and not query_package(module, pkgin_path, package):
             module.fail_json(msg="failed to install %s: %s" % (package, out), stderr=err)
