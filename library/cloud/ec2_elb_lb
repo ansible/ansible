@@ -56,6 +56,7 @@ options:
       - A list of security groups to apply to the elb
     require: false
     default: None
+    version_added: "1.6"
   health_check:
     description:
       - An associative array of health check configuration settigs (see example)
