@@ -55,8 +55,8 @@ options:
   unique:
     description:
      - If a matching job is present a new job will not be added.
-     required: false
-     default: false
+    required: false
+    default: false
 requirements:
  - at
 author: Richard Isaacson
