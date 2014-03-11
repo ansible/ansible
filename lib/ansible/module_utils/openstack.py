@@ -134,7 +134,6 @@ def get_nova_client(module):
 
     user = kwargs.pop("username")
     password = kwargs.pop("password")
-    tenant_id = kwargs.pop("tenant_name", None) or kwargs.pop("tenant_id")
 
     if module.params.get('endpoint_type'):
         kwargs['endpoint_type'] = module.params['endpoint_type']
@@ -145,7 +144,7 @@ def get_nova_client(module):
     except ImportError:
         module.fail_json(msg="novaclient is required for this feature")
 
-    nova = novaclient.v1_1.client.Client(user, password, tenant_id, **kwargs)
+    nova = novaclient.v1_1.client.Client(user, password, **kwargs)
     try:
         nova.authenticate()
     except novaclient.exceptions.Unauthorized, e:
@@ -154,17 +153,6 @@ def get_nova_client(module):
         module.fail_json(msg="Unable to authorize user: %s" % e.message)
 
     return nova
-
-
-def get_glance_client(module):
-    try:
-        import glanceclient.v1.client
-    except ImportError:
-        module.fail_json(msg="glanceclient is required for this feature")
-
-    token, endpoint = get_token_and_endpoint(module, 'image')
-
-    return glanceclient.v1.client.Client(endpoint, token=token)
 
 
 def get_server(module, name=None, id=None, required=True, detailed=False,
@@ -193,6 +181,101 @@ def get_server(module, name=None, id=None, required=True, detailed=False,
         module.fail_json(msg="Ambigious servername")
 
     return servers[0]
+
+
+def get_cinder_client(module):
+    kwargs = os_auth_info(module)
+
+    user = kwargs.pop("username")
+    password = kwargs.pop("password")
+    tenant_id = kwargs.pop("tenant_name", None) or kwargs.pop("tenant_id")
+
+    if module.params.get('endpoint_type'):
+        kwargs['endpoint_type'] = module.params['endpoint_type']
+
+    try:
+        import cinderclient.v2
+        import cinderclient.exceptions
+    except ImportError:
+        module.fail_json(msg="cinderclient is required for this feature")
+
+    cinder = cinderclient.v2.Client(user, password, tenant_id, **kwargs)
+    try:
+        cinder.authenticate()
+    except cinderclient.exceptions.Unauthorized, e:
+        module.fail_json(msg="Invalid OpenStack Cinder credentials: %s" % e.message)
+    except cinderclient.exceptions.AuthorizationFailure, e:
+        module.fail_json(msg="Unable to authorize user: %s" % e.message)
+
+    return cinder
+
+
+def get_volume(module, name=None, id=None, required=True, cinder=None):
+    if not cinder:
+        cinder = get_cinder_client(module)
+
+    import cinderclient.exceptions
+
+    try:
+        if name:
+            volumes = cinder.volumes.list(search_opts={'name': name})
+        elif id:
+            try:
+                volumes = [cinder.volumes.get(id)]
+            except cinderclient.exceptions.NotFound:
+                volumes = []
+
+        else:
+            module.fail_json(msg="No name? no id?")    
+    except Exception, e:
+        module.fail_json(msg="Error in getting instance: %s " % e.message)
+
+    if not volumes:
+        if required:
+            module.fail_json(msg="Volume not found")
+
+        return None
+
+    if len(volumes) > 1:
+        module.fail_json(msg="Ambigious volume name", name=name, id=id)
+
+    return volumes[0]
+
+
+def get_snapshot(module, name=None, id=None, required=True, cinder=None):
+    if not cinder:
+        cinder = get_cinder_client(module)
+
+    try:
+        if name:
+            snapshots = cinder.volume_snapshots.list(
+                search_opts={'name': name})
+        else:
+            snapshots = cinder.volume_snapshots.list(search_opts={'id': id})
+    except Exception, e:
+        module.fail_json(msg="Error in getting instance: %s " % e.message)
+
+    if not snapshots:
+        if required:
+            module.fail_json(msg="Snapshot not found")
+
+        return None
+
+    if len(snapshots) > 1:
+        module.fail_json(msg="Ambigious snapshot name", name=name)
+
+    return snapshots[0]
+
+
+def get_glance_client(module):
+    try:
+        import glanceclient.v1.client
+    except ImportError:
+        module.fail_json(msg="glanceclient is required for this feature")
+
+    token, endpoint = get_token_and_endpoint(module, 'image')
+
+    return glanceclient.v1.client.Client(endpoint, token=token)
 
 
 def get_glance_image(module, name, required=True, glance=None):
