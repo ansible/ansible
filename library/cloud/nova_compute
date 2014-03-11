@@ -199,7 +199,7 @@ def create_server(module, nova, image_id):
         if "net-name" in nic:
             if "net-id" in nic:
                 module.fail_json(msg="net-id and net-name are mutually exclusive")
-            nic['net-id'] = get_network_id(module, nic.pop('net-name'))
+            nic['net-id'] = get_network(module, nic.pop('net-name'))['id']
 
     bootkwargs = {
         'nics': nics,
