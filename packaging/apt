@@ -138,7 +138,11 @@ import datetime
 import fnmatch
 
 # APT related constants
-APT_ENVVARS = "DEBIAN_FRONTEND=noninteractive DEBIAN_PRIORITY=critical"
+APT_ENV_VARS = dict(
+  DEBIAN_FRONTEND = 'noninteractive',
+  DEBIAN_PRIORITY = 'critical'
+)
+
 DPKG_OPTIONS = 'force-confdef,force-confold'
 APT_GET_ZERO = "0 upgraded, 0 newly installed"
 APTITUDE_ZERO = "0 packages upgraded, 0 newly installed"
@@ -260,7 +264,10 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         else:
             check_arg = ''
 
-        cmd = "%s %s -y %s %s %s install %s" % (APT_ENVVARS, APT_GET_CMD, dpkg_options, force_yes, check_arg, packages)
+        for (k,v) in APT_ENV_VARS.iteritems():
+            os.environ[k] = v
+
+        cmd = "%s -y %s %s %s install %s" % (APT_GET_CMD, dpkg_options, force_yes, check_arg, packages)
 
         if default_release:
             cmd += " -t '%s'" % (default_release,)
@@ -292,7 +299,11 @@ def remove(m, pkgspec, cache, purge=False,
             purge = '--purge'
         else:
             purge = ''
-        cmd = "%s %s -q -y %s %s remove %s" % (APT_ENVVARS, APT_GET_CMD, dpkg_options, purge, packages)
+
+        for (k,v) in APT_ENV_VARS.iteritems():
+            os.environ[k] = v
+
+        cmd = "%s -q -y %s %s remove %s" % (APT_GET_CMD, dpkg_options, purge, packages)
 
         if m.check_mode:
             m.exit_json(changed=True)
