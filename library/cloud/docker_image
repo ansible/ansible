@@ -31,7 +31,7 @@ description:
 options:
   path:
     description:
-       - Path to directory with Dockerfile, if building from source
+       - Path to directory with Dockerfile, if building from source. (Omit if pulling from repository.)
     required: false
     default: null
     aliases: []
@@ -43,13 +43,13 @@ options:
     aliases: []
   tag:
     description:
-       - Image tag to apply/pull
+       - Image tag to pull from repository or apply when building
     required: false
     default: ""
     aliases: []
   nocache:
     description:
-      - Do not use cache with building
+      - Do not use cache (when building)
     required: false
     default: false
     aliases: []
@@ -61,10 +61,10 @@ options:
     aliases: []
   state:
     description:
-      - Set the state of the image ("force" will always re-pull/re-build image)
+      - Set the state of the image ("force"/"build" will attempt to pull or build the image even if it already exists on the host)
     required: false
     default: present
-    choices: [ "present", "absent", "force" ]
+    choices: [ "present", "absent", "build", "force" ]
     aliases: []
   timeout:
     description:
@@ -78,12 +78,14 @@ options:
     required: false
     default: null
     aliases: []
+    version_added: "1.6"
   password:
     description:
       - Registry password (if pulling from a private registry)
     required: false
     default: null
     aliases: []
+    version_added: "1.6"
 requirements: [ "docker-py" ]
 '''
 
@@ -246,12 +248,18 @@ def main():
             name            = dict(required=True),
             tag             = dict(required=False, default=""),
             nocache         = dict(default=False, type='bool'),
-            state           = dict(default='present', choices=['absent', 'present', 'force']),
+            state           = dict(default='present', choices=['absent', 'present', 'build', 'force']),
             docker_url      = dict(default='unix://var/run/docker.sock'),
             timeout         = dict(default=600, type='int'),
             username        = dict(required=False, default=None),
             password        = dict(required=False, default=None),
-        )
+        ),
+        mutually_exclusive = [
+            ['path', 'username'],
+            ['path', 'password'],
+            ['nocache', 'username'],
+            ['nocache', 'password']
+        ]
     )
     ACTION_BUILD = 1
     ACTION_PULL = 2
@@ -264,7 +272,7 @@ def main():
         # build image if not exists
         if state == "present":
             images = manager.get_images()
-            if len(images) == 0 or state == "force":
+            if len(images) == 0 or state in ['force', 'build']:
                 if path:
                     action = ACTION_BUILD
                 else:
