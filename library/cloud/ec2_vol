@@ -52,12 +52,14 @@ options:
     required: false
     default: null
     aliases: []
+    version_added: "1.6"
   id:
     description:
       - volume id if you wish to attach an existing volume (requires instance)
     required: false
     default: null
     aliases: []
+    version_added: "1.6"
   volume_size:
     description:
       - size of volume (in GB) to create.
@@ -158,9 +160,10 @@ EXAMPLES = '''
     with_items: ec2.instances
     register: ec2_vol
 
-# Idempotent playbook example combined with single instance launch
-# Volume must exist in the same zone; will not do anything if it is
-# already attached.
+# Example: Launch an instance and then add a volue if not already present
+#   * Nothing will happen if the volume is already attached.
+#   * Volume must exist in the same zone.
+
 - local_action: 
     module: ec2 
     keypair: "{{ keypair }}"
