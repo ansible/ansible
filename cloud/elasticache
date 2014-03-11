@@ -63,6 +63,7 @@ options:
       - A list of vpc security group names to associate with this cache cluster. Only use if inside a vpc
     required: false
     default: ['default']
+    version_added: "1.6"
   cache_security_groups:
     description:
       - A list of cache security group names to associate with this cache cluster
