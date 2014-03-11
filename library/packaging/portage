@@ -25,8 +25,7 @@ module: portage
 short_description: Package manager for Gentoo
 description:
   - Manages Gentoo packages
-
-version_added: "1.4"
+version_added: "1.6"
 
 options:
   package:
@@ -382,8 +381,7 @@ def main():
     elif p['state'] in portage_absent_states:
         unmerge_packages(module, packages)
 
-
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 
 main()
