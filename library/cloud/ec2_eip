@@ -75,11 +75,12 @@ options:
     default: null
     aliases: []
     version_added: "1.6"
-  reuse:
+  reuse_existing_ip_allowed:
     description:
       - Reuse an EIP that is not associated to an instance (when available), instead of allocating a new one.
     required: false
     default: false
+    version_added: "1.6"
 
 requirements: [ "boto" ]
 author: Lorin Hochstein <lorin@nimbisservices.com>
@@ -194,13 +195,13 @@ def ip_is_associated_with_instance(ec2, public_ip, instance_id, module):
         return False
 
 
-def allocate_address(ec2, domain, module, reuse):
+def allocate_address(ec2, domain, module, reuse_existing_ip_allowed):
     """ Allocate a new elastic IP address (when needed) and return it """
     # If we're in check mode, nothing else to do
     if module.check_mode:
         module.exit_json(change=True)
 
-    if reuse:
+    if reuse_existing_ip_allowed:
       if domain:
         domain_filter = { 'domain' : domain }
       else:
@@ -258,7 +259,7 @@ def main():
             state = dict(required=False, default='present',
                          choices=['present', 'absent']),
             in_vpc = dict(required=False, choices=BOOLEANS, default=False),
-            reuse = dict(required=False, choices=BOOLEANS, default=False),
+            reuse_existing_ip_allowed = dict(required=False, type='bool', default=False),
         )
     )
 
@@ -277,19 +278,19 @@ def main():
     state = module.params.get('state')
     in_vpc = module.params.get('in_vpc')
     domain  = "vpc" if in_vpc else None
-    reuse = module.params.get('reuse');
+    reuse_existing_ip_allowed = module.params.get('reuse_existing_ip_allowed');
 
     if state == 'present':
         if public_ip is None:
             if instance_id is None:
-                address = allocate_address(ec2, domain, module, reuse)
+                address = allocate_address(ec2, domain, module, reuse_existing_ip_allowed)
                 module.exit_json(changed=True, public_ip=address.public_ip)
             else:
                 # Determine if the instance is inside a VPC or not
                 instance = find_instance(ec2, instance_id, module)
                 if instance.vpc_id != None:
                     domain = "vpc"
-                address = allocate_address(ec2, domain, module, reuse)
+                address = allocate_address(ec2, domain, module, reuse_existing_ip_allowed)
         else:
             address = find_address(ec2, public_ip, module)
         associate_ip_and_instance(ec2, address, instance_id, module)
