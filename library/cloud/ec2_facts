@@ -70,7 +70,6 @@ class Ec2Metadata(object):
         self._prefix   = 'ansible_ec2_%s'
 
     def _fetch(self, url):
-        self.module.fail_json(msg="url is %s" % url)
         (response, info) = fetch_url(self.module, url, force=True)
         return response.read()
 
