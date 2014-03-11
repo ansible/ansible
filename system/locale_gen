@@ -7,7 +7,7 @@ from subprocess import Popen, PIPE, call
 
 DOCUMENTATION = '''
 ---
-module: locale
+module: locale_gen
 short_description: Creates of removes locales.
 description:
      - Manages locales by editing /etc/locale.gen and invoking locale-gen.
@@ -29,7 +29,7 @@ options:
 
 EXAMPLES = '''
 # Ensure a locale exists.
-- locale: name=de_CH.UTF-8 state=present
+- locale_gen: name=de_CH.UTF-8 state=present
 '''
 
 # ===========================================
