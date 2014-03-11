@@ -258,7 +258,7 @@ def main():
             public_ip = dict(required=False, aliases= ['ip']),
             state = dict(required=False, default='present',
                          choices=['present', 'absent']),
-            in_vpc = dict(required=False, choices=BOOLEANS, default=False),
+            in_vpc = dict(required=False, type='bool', default=False),
             reuse_existing_ip_allowed = dict(required=False, type='bool', default=False),
         )
     )
