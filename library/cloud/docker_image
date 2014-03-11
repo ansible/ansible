@@ -72,6 +72,14 @@ options:
     required: false
     default: 600
     aliases: []
+  source:
+    description:
+      - The source of the image that should exist
+    required: false
+    default: "local"
+    choices: [ "local", "repository" ]
+    aliases: []
+    version_added: "1.6"
   username:
     description:
       - Registry username (if pulling from a private registry)
@@ -120,7 +128,7 @@ Ensure the coreos/etcd has been pulled from the public Docker registry
   sudo: yes
   tasks
   - name: Ensure coreos/etcd image exists
-    docker_image: name=coreos/etcd
+    docker_image: source=repository name=coreos/etcd
 
 '''
 
@@ -251,6 +259,7 @@ def main():
             state           = dict(default='present', choices=['absent', 'present', 'build', 'force']),
             docker_url      = dict(default='unix://var/run/docker.sock'),
             timeout         = dict(default=600, type='int'),
+            source          = dict(default='local', choices=['local', 'repository'])
             username        = dict(required=False, default=None),
             password        = dict(required=False, default=None),
         ),
@@ -267,13 +276,13 @@ def main():
     try:
         manager = DockerImageManager(module)
         state = module.params.get('state')
-        path = module.params.get('path')
+        source = module.params.get('source')
 
         # build image if not exists
         if state == "present":
             images = manager.get_images()
             if len(images) == 0 or state in ['force', 'build']:
-                if path:
+                if source == 'local':
                     action = ACTION_BUILD
                 else:
                     action = ACTION_PULL
