@@ -310,6 +310,13 @@ different locations::
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
+.. _module_lang:
+
+module_lang
+===========
+
+This is to set the default language to communicate between the module and the system. By default, the value is 'C'.
+
 .. _module_name:
 
 module_name
