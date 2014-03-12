@@ -89,7 +89,7 @@ def get_rubygems_path(module):
         return module.get_bin_path('gem', True)
 
 def get_rubygems_version(module):
-    cmd = [get_rubygems_path(module), '--version']
+    cmd = [ get_rubygems_path(module), '--version' ]
     (rc, out, err) = module.run_command(cmd, check_rc=True)
 
     match = re.match(r'^(\d+)\.(\d+)\.(\d+)', out)
