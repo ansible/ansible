@@ -36,7 +36,7 @@ Occasionally you'll encounter a device that doesn't do SFTP. This is rare, but i
 When speaking with remote machines, Ansible will by default assume you are using SSH keys -- which we encourage -- but passwords are fine too.  To enable password auth, supply the option ``--ask-pass`` where needed.  If using sudo features and when sudo requires a password, also supply ``--ask-sudo-pass`` as appropriate.
 
 While it may be common sense, it is worth sharing: Any management system benefits from being run near the machines being managed. If running in a cloud, consider running Ansible from a machine inside that cloud.  It will work better than on the open
-intranet in most cases.
+internet in most cases.
 
 As an advanced topic, Ansible doesn't just have to connect remotely over SSH.  The transports are pluggable, and there are options for managing things locally, as well as managing chroot, lxc, and jail containers.  A mode called 'ansible-pull' can also invert the system and have systems 'phone home' via scheduled git checkouts to pull configuration directives from a central repository.
 

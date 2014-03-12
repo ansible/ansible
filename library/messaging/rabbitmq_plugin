@@ -21,7 +21,7 @@
 DOCUMENTATION = '''
 ---
 module: rabbitmq_plugin
-short_description: Adds or removes users to RabbitMQ
+short_description: Adds or removes plugins to RabbitMQ
 description:
   - Enables or disables RabbitMQ plugins
 version_added: "1.1"

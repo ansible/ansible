@@ -576,7 +576,7 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                     names = [name] * count
             else:
                 search_opts = {
-                    'name': name,
+                    'name': '^%s$' % name,
                     'image': image,
                     'flavor': flavor
                 }
@@ -612,7 +612,7 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                     module.fail_json(msg='%s is required for the "rax" '
                                          'module' % arg)
             search_opts = {
-                'name': name,
+                'name': '^%s$' % name,
                 'image': image,
                 'flavor': flavor
             }
@@ -645,7 +645,7 @@ def main():
             auto_increment=dict(choices=BOOLEANS, default=True, type='bool'),
             count=dict(default=1, type='int'),
             count_offset=dict(default=1, type='int'),
-            disk_config=dict(default='auto', choices=['auto', 'manual']),
+            disk_config=dict(choices=['auto', 'manual']),
             exact_count=dict(choices=BOOLEANS, default=False, type='bool'),
             files=dict(type='dict', default={}),
             flavor=dict(),
@@ -678,7 +678,9 @@ def main():
     auto_increment = module.params.get('auto_increment')
     count = module.params.get('count')
     count_offset = module.params.get('count_offset')
-    disk_config = module.params.get('disk_config').upper()
+    disk_config = module.params.get('disk_config')
+    if disk_config:
+        disk_config = disk_config.upper()
     exact_count = module.params.get('exact_count', False)
     files = module.params.get('files')
     flavor = module.params.get('flavor')

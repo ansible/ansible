@@ -6,7 +6,7 @@ Hi!  Thanks for interest in contributing to Ansible.
 Here are some guidelines for contributing code.  The purpose of this document are to establish what we're looking for in code contributions, and to make sure
 new contributions know some of the conventions that we've been using.
 
-We don't think much of this should be too strange to readers familar with contributing to Python projects, though it helps if we all get on the same page.
+We don't think much of this should be too strange to readers familiar with contributing to Python projects, though it helps if we all get on the same page.
 
 Language
 ========
@@ -28,11 +28,11 @@ PEP8 and basic style checks
 Testing
 =======
 
-  * Much of ansible's testing needs are in integration, not unit tests.  We're working on releasing wide array of integration tests that use modules in a live environment.
-  * That being said, there are unit tests
-  * Code written must absolutely pass unit tests (i.e. "make tests")
+  * Much of ansible's testing needs are in integration, not unit tests.  Add module tests there.
+  * That being said, there are unit tests too!
+  * Code written must absolutely pass tests (i.e. "make tests")
   * You should anticipate any error paths in your code and test down those error paths.
-  * Additions to unit tests for core code is welcome, but modules tend to be more integration-testey, so it's not always possible to add them (examples: ec2, etc).
+  * Additions to tests for core code is welcome, but not always possible.  Be sure things are at least well tested manually in that case.
 
 Whitespace
 ==========
@@ -44,7 +44,7 @@ Shebang Lines
 =============
  
   * /usr/bin/scripts should start with '/usr/bin/env python'
-  * module code should still use '/usr/bin/python' as this is replaced automatically by 'ansible_python_interpeter', see the FAQ in the docs for more info.
+  * module code should still use '/usr/bin/python' as this is replaced automatically by 'ansible_python_interpreter', see the FAQ in the docs for more info.
 
 Comments
 ========
@@ -58,7 +58,7 @@ Comments
 Classes
 =======
 
-  * With the exception of module code (where inline is better), it is deseriable to see classes in their own files.
+  * With the exception of module code (where inline is better), it is desirable to see classes in their own files.
   * Classes should generally not cause side effects as soon as they are instantiated, move meaningful behavior to methods rather than constructors.
  
 Functions and Methods
@@ -262,7 +262,7 @@ To test if something is a string, consider that it may be unicode.
     if type(x) == str:
 
     # yes
-    if isintance(x, basestr):
+    if isinstance(x, basestring):
 
 Cleverness
 ==========
@@ -288,7 +288,7 @@ All code in Ansible core must support a minimum version of Python 2.6.
 
 Module code must support a minimum of Python 2.4, with occasional exception for modules that require code that themselves require 2.6 and later.
 
-A quick reminder is that list comprehensions in Python 2.4 are not as fully fleshed out, there are not 'dict' comprehensions, and there is no 'with' statement.
+A quick reminder is that list comprehensions in Python 2.4 are not as fully fleshed out, there are no 'dict' comprehensions, and there is no 'with' statement.
 But otherwise it's pretty much all the same.
 
 The End

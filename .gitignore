@@ -38,3 +38,9 @@ debian/
 # Vim swap files
 *.swp
 *.swo
+credentials.yml
+# test output
+.coverage
+results.xml
+coverage.xml
+/test/units/cover-html

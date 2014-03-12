@@ -5,17 +5,24 @@ The Ansible Configuration File
 
 .. highlight:: bash
 
-Certain things in Ansible are adjustable in a configuration file.  In general, the stock configuration is probably
-right for most users, but that doesn't mean you might not want to change them.
+Certain settings in Ansible are adjustable via a configuration file.  The stock configuration should be sufficient
+for most users, but there may be reasons you would want to change them.
 
-The mechanism for doing this is the "ansible.cfg" file, which is looked for in the following locations::
+Changes can be made and used in a configuration file which will be processed in the following order::
 
-    * /etc/ansible/ansible.cfg
-    * ~/.ansible.cfg
+    * ANSIBLE_CONFIG (an environment variable)
     * ansible.cfg (in the current directory)
+    * .ansible.cfg (in the home directory)
+    * /etc/ansible/ansible.cfg
 
-If multiple file locations matching the above exist, the last location on the above list is used.  Settings in files
-are not merged together.
+Prior to 1.5 the order was::
+
+    * ansible.cfg (in the current directory)
+    * ANSIBLE_CONFIG (an environment variable)
+    * .ansible.cfg (in the home directory)
+    * /etc/ansible/ansible.cfg
+
+Ansible will process the above list and use the first file found. Settings in files are not merged together.
 
 .. _getting_the_latest_configuration:
 
@@ -82,6 +89,8 @@ The default configuration shows who modified a file and when::
     ansible_managed = Ansible managed: {file} modified on %Y-%m-%d %H:%M:%S by {uid} on {host}
 
 This is useful to tell users that a file has been placed by Ansible and manual changes are likely to be overwritten.
+
+Note that if using this feature, and there is a date in the string, the template will be reported changed each time as the date is updated.
 
 .. _ask_pass:
 
@@ -300,6 +309,13 @@ different locations::
    lookup_plugins = /usr/share/ansible_plugins/lookup_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
+
+.. _module_lang:
+
+module_lang
+===========
+
+This is to set the default language to communicate between the module and the system. By default, the value is 'C'.
 
 .. _module_name:
 
@@ -552,12 +568,31 @@ cause scp to be used to transfer remote files instead::
 There's really no reason to change this unless problems are encountered, and then there's also no real drawback
 to managing the switch.  Most environments support SFTP by default and this doesn't usually need to be changed.
 
+
+.. _pipelining:
+
+pipelining
+==========
+
+Enabling pipelining reduces the number of SSH operations required to
+execute a module on the remote server, by executing many ansible modules without actual file transfer. 
+This can result in a very significant performance improvement when enabled, however when using "sudo:" operations you must
+first disable 'requiretty' in /etc/sudoers on all managed hosts.
+
+By default, this option is disabled to preserve compatibility with
+sudoers configurations that have requiretty (the default on many distros), but is highly
+recommended if you can enable it, eliminating the need for :doc:`playbooks_acceleration`::
+
+    pipelining=False
+
 .. _accelerate_settings:
 
 Accelerate Mode Settings
 ------------------------
 
-Under the [accelerate] header, the following settings are tunable for :doc:`playbooks_acceleration`
+Under the [accelerate] header, the following settings are tunable for :doc:`playbooks_acceleration`.  Acceleration is 
+a useful performance feature to use if you cannot enable :ref:`pipelining` in your environment, but is probably
+not needed if you can.
 
 .. _accelerate_port:
 

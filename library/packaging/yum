@@ -3,6 +3,7 @@
 
 # (c) 2012, Red Hat, Inc
 # Written by Seth Vidal <skvidal at fedoraproject.org>
+# (c) 2014, Epic Games, Inc.
 #
 # This file is part of Ansible
 #
@@ -28,6 +29,7 @@ import yum
 try:
     from yum.misc import find_unfinished_transactions, find_ts_remaining
     from rpmUtils.miscutils import splitFilename
+    from rpmUtils.miscutils import compareEVR
     transaction_helpers = True
 except:
     transaction_helpers = False
@@ -38,7 +40,7 @@ module: yum
 version_added: historical
 short_description: Manages packages with the I(yum) package manager
 description:
-     - Installs, upgrade, removes, and lists packages and groups with the I(yum) package manager.
+     - Installs, upgrades, downgrades, removes and lists packages and groups with the I(yum) package manager.
 options:
   name:
     description:
@@ -94,6 +96,7 @@ options:
     default: "no"
     choices: ["yes", "no"]
     aliases: []
+
 notes: []
 # informational: requirements for nodes
 requirements: [ yum, rpm ]
@@ -107,7 +110,7 @@ EXAMPLES = '''
 - name: remove the Apache package
   yum: name=httpd state=removed
 
-- name: install the latest version of Apche from the testing repo
+- name: install the latest version of Apache from the testing repo
   yum: name=httpd enablerepo=testing state=installed
 
 - name: upgrade all packages
@@ -153,6 +156,17 @@ def yum_base(conf_file=None, cachedir=False):
             my.conf.cache = 0 
 
     return my
+
+def install_yum_utils(module):
+
+    if not module.check_mode:    
+        yum_path = module.get_bin_path('yum')
+        if yum_path:
+            rc, so, se = module.run_command('%s -y install yum-utils' % yum_path) 
+            if rc == 0:
+                this_path = module.get_bin_path('repoquery')
+                global repoquery
+                repoquery = this_path
 
 def po_to_nevra(po):
 
@@ -223,13 +237,13 @@ def is_available(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=[], dis_
 
     else:
         myrepoq = list(repoq)
+                 
+        for repoid in dis_repos:
+            r_cmd = ['--disablerepo', repoid]
+            myrepoq.extend(r_cmd)
 
         for repoid in en_repos:
             r_cmd = ['--enablerepo', repoid]
-            myrepoq.extend(r_cmd)
-    
-        for repoid in dis_repos:
-            r_cmd = ['--disablerepo', repoid]
             myrepoq.extend(r_cmd)
 
         cmd = myrepoq + ["--qf", qf, pkgspec]
@@ -273,14 +287,13 @@ def is_update(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=[], dis_rep
 
     else:
         myrepoq = list(repoq)
-        for repoid in en_repos:
-            r_cmd = ['--enablerepo', repoid]
-            myrepoq.extend(r_cmd)
-    
         for repoid in dis_repos:
             r_cmd = ['--disablerepo', repoid]
             myrepoq.extend(r_cmd)
 
+        for repoid in en_repos:
+            r_cmd = ['--enablerepo', repoid]
+            myrepoq.extend(r_cmd)
 
         cmd = myrepoq + ["--pkgnarrow=updates", "--qf", qf, pkgspec]
         rc,out,err = module.run_command(cmd)
@@ -319,12 +332,12 @@ def what_provides(module, repoq, req_spec, conf_file,  qf=def_qf, en_repos=[], d
 
     else:
         myrepoq = list(repoq)
-        for repoid in en_repos:
-            r_cmd = ['--enablerepo', repoid]
-            myrepoq.extend(r_cmd)
-    
         for repoid in dis_repos:
             r_cmd = ['--disablerepo', repoid]
+            myrepoq.extend(r_cmd)
+
+        for repoid in en_repos:
+            r_cmd = ['--enablerepo', repoid]
             myrepoq.extend(r_cmd)
 
         cmd = myrepoq + ["--qf", qf, "--whatprovides", req_spec]
@@ -451,6 +464,8 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
     res['rc'] = 0
     res['changed'] = False
 
+    downgrade = False
+
     for spec in items:
         pkg = None
 
@@ -524,12 +539,33 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
                     
             if found:
                 continue
+
+            # downgrade - the yum install command will only install or upgrade to a spec version, it will
+            # not install an older version of an RPM even if specified by the install spec. So we need to
+            # determine if this is a downgrade, and then use the yum downgrade command to install the RPM.
+            split_pkg_name = splitFilename(spec)
+            # if the Name and Version match a version was not provided and this is not a downgrade.
+            if split_pkg_name[0] != split_pkg_name[1]:
+                pkg_name = split_pkg_name[0]
+                pkgs = is_installed(module, repoq, pkg_name, conf_file, en_repos=en_repos, dis_repos=dis_repos, is_pkg=True)
+                if pkgs:
+                    (cur_name, cur_ver, cur_rel, cur_epoch, cur_arch) = splitFilename(pkgs[0])
+                    (new_name, new_ver, new_rel, new_epoch, new_arch) = splitFilename(spec)
+
+                    compare = compareEVR((cur_epoch, cur_ver, cur_rel), (new_epoch, new_ver, new_rel))
+                    if compare > 0:
+                        downgrade = True
+
             # if not - then pass in the spec as what to install
             # we could get here if nothing provides it but that's not
             # the error we're catching here
             pkg = spec
 
-        cmd = yum_basecmd + ['install', pkg]
+        operation = 'install'
+        if downgrade:
+            operation = 'downgrade'
+
+        cmd = yum_basecmd + [operation, pkg]
 
         if module.check_mode:
             module.exit_json(changed=True)
@@ -723,13 +759,13 @@ def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo,
         dis_repos = disablerepo.split(',')
     if enablerepo:
         en_repos = enablerepo.split(',')
+           
+    for repoid in dis_repos:
+        r_cmd = ['--disablerepo=%s' % repoid]
+        yum_basecmd.extend(r_cmd)
 
     for repoid in en_repos:
-        r_cmd = ['--enablerepo', repoid]
-        yum_basecmd.extend(r_cmd)
-        
-    for repoid in dis_repos:
-        r_cmd = ['--disablerepo', repoid]
+        r_cmd = ['--enablerepo=%s' % repoid]
         yum_basecmd.extend(r_cmd)
 
     if state in ['installed', 'present', 'latest']:
@@ -790,13 +826,18 @@ def main():
             list=dict(),
             conf_file=dict(default=None),
             disable_gpg_check=dict(required=False, default="no", type='bool'),
+            # this should not be needed, but exists as a failsafe
+            install_repoquery=dict(required=False, default="yes", type='bool'),
         ),
         required_one_of = [['name','list']],
         mutually_exclusive = [['name','list']],
         supports_check_mode = True
     )
 
+    # this should not be needed, but exists as a failsafe
     params = module.params
+    if params['install_repoquery'] and not repoquery and not module.check_mode:
+        install_yum_utils(module)
 
     if params['list']:
         if not repoquery:

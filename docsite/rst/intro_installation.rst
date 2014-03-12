@@ -55,7 +55,7 @@ This includes Red Hat, Debian, CentOS, OS X, any of the BSDs, and so on.
 Managed Node Requirements
 `````````````````````````
 
-On the managed nodes, you only need Python 2.4 or later, but if you are are running less than Python 2.5 on the remotes, you will also need:
+On the managed nodes, you only need Python 2.4 or later, but if you are running less than Python 2.5 on the remotes, you will also need:
 
 * ``python-simplejson`` 
 
@@ -177,7 +177,7 @@ Once configured,
 
 .. code-block:: bash
 
-    $ sudo add-apt-repository ppa:rquillo/ansible
+    $ sudo apt-add-repository ppa:rquillo/ansible
     $ sudo apt-get update
     $ sudo apt-get install ansible
 
@@ -188,6 +188,21 @@ Debian/Ubuntu packages can also be built from the source checkout, run:
     $ make deb
 
 You may also wish to run from source to get the latest, which is covered above.
+
+.. _from_pkg:
+
+Latest Releases Via pkg (FreeBSD)
++++++++++++++++++++++++++++++++++
+
+.. code-block:: bash
+
+    $ sudo pkg install ansible
+
+You may also wish to install from ports, run:
+
+.. code-block:: bash
+
+    $ sudo make -C /usr/ports/sysutils/ansible install
 
 .. _from_pip:
 

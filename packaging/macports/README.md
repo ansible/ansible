@@ -1,6 +1,6 @@
 This portfile installs ansible from the git repository, it will install the
 latest and greatest version of ansible. This portfile does not install the
-required dependancies to run in fireball mode.
+required dependencies to run in accelerated mode.
 
 ## Installing the stable version of ansible via macports
 

@@ -81,7 +81,7 @@ What is the best way to make content reusable/redistributable?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 If you have not done so already, read all about "Roles" in the playbooks documentation.  This helps you make playbook content
-self contained, and works will with things like git submodules for sharing content with others.
+self contained, and works well with things like git submodules for sharing content with others.
 
 If some of these plugin types look strange to you, see the API documentation for more details about ways Ansible can be extended.
 
@@ -234,7 +234,7 @@ Once the library is ready, SHA512 password values can then be generated as follo
 Can I get training on Ansible or find commercial support?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Yes!  See `our Guru offering <http://www.ansible.com/ansible-guru>_` for online support, and support is also included with :doc:`tower`. You can also read our `service page <http://www.ansible.com/ansible-services>`_ and email `info@ansible.com <mailto:info@ansible.com>`_ for further details.
+Yes!  See `our Guru offering <http://www.ansible.com/ansible-guru>`_ for online support, and support is also included with :doc:`tower`. You can also read our `service page <http://www.ansible.com/ansible-services>`_ and email `info@ansible.com <mailto:info@ansible.com>`_ for further details.
 
 .. _web_interface:
 
@@ -249,7 +249,14 @@ and easy to use. See :doc:`tower`.
 How do I submit a change to the documentation?
 ++++++++++++++++++++++++++++++++++++++++++++++
 
-Great question!  Documentation for Ansible is kept in the main project git repository, and complete instructions for contributing can be found in the docs README `viewable on GitHub <https://github.com/ansible/ansible/tree/devel/docsite/latest#readme>`_.  Thanks!
+Great question!  Documentation for Ansible is kept in the main project git repository, and complete instructions for contributing can be found in the docs README `viewable on GitHub <https://github.com/ansible/ansible/blob/devel/docsite/README.md>`_.  Thanks!
+
+.. _keep_secret_data:
+
+How do I keep secret data in my playbook?
++++++++++++++++++++++++++++++++++++++++++
+
+If you would like to keep secret data in your Ansible content and still share it publically or keep things in source control, see :doc:`playbooks_vault`.
 
 .. _i_dont_see_my_question:
 

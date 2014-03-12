@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 # (c) 2013, James Martin <jmartin@basho.com>, Drew Kerrigan <dkerrigan@basho.com>
@@ -138,24 +138,13 @@ def main():
     while True:
         if time.time() > timeout:
             module.fail_json(msg='Timeout, could not fetch Riak stats.')
-        try:
-            if sys.version_info<(2,6,0):
-                stats_raw = urllib2.urlopen(
-                    'http://%s/stats' % (http_conn), None).read()
-            else:
-                stats_raw = urllib2.urlopen(
-                    'http://%s/stats' % (http_conn), None, 5).read()
+        (response, info) = fetch_url(module, 'http://%s/stats' % (http_conn), force=True, timeout=5)
+        if info['status'] == 200:
+            stats_raw = response.read()
             break
-        except urllib2.HTTPError, e:
-            time.sleep(5)
-        except urllib2.URLError, e:
-            time.sleep(5)
-        except socket.timeout:
-            time.sleep(5)
-        except Exception, e:
-            module.fail_json(msg='Could not fetch Riak stats: %s' % e)
+        time.sleep(5)
 
-# here we attempt to load those stats,
+    # here we attempt to load those stats,
     try:
         stats = json.loads(stats_raw)
     except:
@@ -164,8 +153,9 @@ def main():
     node_name = stats['nodename']
     nodes = stats['ring_members']
     ring_size = stats['ring_creation_size']
-    version = stats['riak_core_version']
-
+    rc, out, err = module.run_command([riak_bin, 'version'] )
+    version = out.strip()
+    
     result = dict(node_name=node_name,
               nodes=nodes,
               ring_size=ring_size,

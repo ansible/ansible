@@ -5,7 +5,7 @@ Linode external inventory script
 =================================
 
 Generates inventory that Ansible can understand by making API request to
-AWS Linode using the Chube library.
+Linode using the Chube library.
 
 NOTE: This script assumes Ansible is being executed where Chube is already
 installed and has a valid config at ~/.chube. If not, run:
@@ -132,7 +132,7 @@ class LinodeInventory(object):
                 if os.path.isfile(self.cache_path_index):
                     return True
         return False
- 
+
     def read_settings(self):
         """Reads the settings from the .ini file."""
         config = ConfigParser.SafeConfigParser()
@@ -204,7 +204,7 @@ class LinodeInventory(object):
         dest = node.label
 
         # Add to index
-        self.index[dest] = [node.api_id]
+        self.index[dest] = node.api_id
 
         # Inventory: Group by node ID (always a group of 1)
         self.inventory[node.api_id] = [dest]

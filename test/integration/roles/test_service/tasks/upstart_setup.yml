@@ -1,0 +1,12 @@
+- name: install the upstart init file
+  copy: src=ansible.upstart dest=/etc/init/ansible_test.conf mode=0644
+  register: install_upstart_result
+
+- name: assert that the upstart init file was installed
+  assert:
+    that:
+    - "install_upstart_result.dest == '/etc/init/ansible_test.conf'"
+    - "install_upstart_result.state == 'file'"
+    - "install_upstart_result.mode == '0644'"
+    - "install_upstart_result.md5sum == 'ab3900ea4de8423add764c12aeb90c01'"
+

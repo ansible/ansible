@@ -281,7 +281,7 @@ class Ec2Inventory(object):
                 for instance in reservation.instances:
                     self.add_instance(instance, region)
         
-        except boto.exception.BotoServerError as e:
+        except boto.exception.BotoServerError, e:
             if  not self.eucalyptus:
                 print "Looks like AWS is down again:"
             print e
@@ -297,7 +297,7 @@ class Ec2Inventory(object):
                 instances = conn.get_all_dbinstances()
                 for instance in instances:
                     self.add_rds_instance(instance, region)
-        except boto.exception.BotoServerError as e:
+        except boto.exception.BotoServerError, e:
             if not e.reason == "Forbidden":
                 print "Looks like AWS RDS is down: "
                 print e
@@ -510,6 +510,8 @@ class Ec2Inventory(object):
                 instance_vars[key] = ''
             elif key == 'ec2_region':
                 instance_vars[key] = value.name
+            elif key == 'ec2__placement':
+                instance_vars['ec2_placement'] = value.zone
             elif key == 'ec2_tags':
                 for k, v in value.iteritems():
                     key = self.to_safe('ec2_tag_' + k)

@@ -28,10 +28,8 @@ from ansible.runner.return_data import ReturnData
 import sys
 reload(sys)
 sys.setdefaultencoding("utf8")
-#import base64
-#import stat
-#import tempfile
 import pipes
+
 
 class ActionModule(object):
 
@@ -48,32 +46,38 @@ class ActionModule(object):
         if complex_args:
             options.update(complex_args)
         options.update(utils.parse_kv(module_args))
-        source  = options.get('src', None)
-        dest    = options.get('dest', None)
+        source  = os.path.expanduser(options.get('src', None))
+        dest    = os.path.expanduser(options.get('dest', None))
+        copy    = utils.boolean(options.get('copy', 'yes'))
 
         if source is None or dest is None:
-            result=dict(failed=True, msg="src (or content) and dest are required")
+            result = dict(failed=True, msg="src (or content) and dest are required")
             return ReturnData(conn=conn, result=result)
 
         source = template.template(self.runner.basedir, source, inject)
-        if '_original_file' in inject:
-            source = utils.path_dwim_relative(inject['_original_file'], 'files', source, self.runner.basedir)
-        else:
-            source = utils.path_dwim(self.runner.basedir, source)
+        if copy:
+            if '_original_file' in inject:
+                source = utils.path_dwim_relative(inject['_original_file'], 'files', source, self.runner.basedir)
+            else:
+                source = utils.path_dwim(self.runner.basedir, source)
 
         remote_md5 = self.runner._remote_md5(conn, tmp, dest)
         if remote_md5 != '3':
-            result = dict(failed=True, msg="dest must be an existing dir")
+            result = dict(failed=True, msg="dest '%s' must be an existing dir" % dest)
             return ReturnData(conn=conn, result=result)
 
-        # transfer the file to a remote tmp location
-        tmp_src = tmp + 'source'
-        conn.put_file(source, tmp_src)
+        if copy:
+            # transfer the file to a remote tmp location
+            tmp_src = tmp + 'source'
+            conn.put_file(source, tmp_src)
 
         # handle diff mode client side
         # handle check mode client side
         # fix file permissions when the copy is done as a different user
-        if self.runner.sudo and self.runner.sudo_user != 'root':
-            self.runner._low_level_exec_command(conn, "chmod a+r %s" % tmp_src, tmp)
-        module_args = "%s src=%s original_basename=%s" % (module_args, pipes.quote(tmp_src), pipes.quote(os.path.basename(source)))
+        if copy:
+            if self.runner.sudo and self.runner.sudo_user != 'root':
+                self.runner._low_level_exec_command(conn, "chmod a+r %s" % tmp_src, tmp)
+            module_args = "%s src=%s original_basename=%s" % (module_args, pipes.quote(tmp_src), pipes.quote(os.path.basename(source)))
+        else:
+            module_args = "%s original_basename=%s" % (module_args, pipes.quote(os.path.basename(source)))
         return self.runner._execute_module(conn, tmp, 'unarchive', module_args, inject=inject, complex_args=complex_args)
