@@ -91,8 +91,10 @@ def add_host_key(module, fqdn, key_type="rsa"):
     if not os.path.exists(os.path.expanduser("~/.ssh/")):
         module.fail_json(msg="%s does not exist" % os.path.expanduser("~/.ssh/"))
 
-    this_cmd = "%s -t %s %s >> ~/.ssh/known_hosts" % (keyscan_cmd, key_type, fqdn)
+    this_cmd = "%s -t %s %s" % (keyscan_cmd, key_type, fqdn)
+
     rc, out, err = module.run_command(this_cmd)
+    module.append_to_file("~/.ssh/known_hosts", out)
 
     return rc, out, err
 

@@ -1089,6 +1089,12 @@ class AnsibleModule(object):
             self.fail_json(cmd=clean_args, rc=rc, stdout=out, stderr=err, msg=msg)
         return (rc, out, err)
 
+    def append_to_file(self, filename, str):
+        filename = os.path.expandvars(os.path.expanduser(filename))
+        fh = open(filename, 'a')
+        fh.write(str)
+        fh.close()
+
     def pretty_bytes(self,size):
         ranges = (
                 (1<<70L, 'ZB'),
