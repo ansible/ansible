@@ -105,7 +105,7 @@ except ImportError:
 
 
 def ring_check(module, riak_admin_bin):
-    cmd = '%s ringready 2> /dev/null' % riak_admin_bin
+    cmd = '%s ringready' % riak_admin_bin
     rc, out, err = module.run_command(cmd)
     if rc == 0 and 'TRUE All nodes agree on the ring' in out:
         return True
@@ -221,7 +221,7 @@ def main():
     if wait_for_handoffs:
         timeout = time.time() + wait_for_handoffs
         while True:
-            cmd = '%s transfers 2> /dev/null' % riak_admin_bin
+            cmd = '%s transfers' % riak_admin_bin
             rc, out, err = module.run_command(cmd)
             if 'No transfers active' in out:
                 result['handoffs'] = 'No transfers active.'
