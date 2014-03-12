@@ -249,7 +249,7 @@ def is_walrus(s3_url):
         return False
 
 def main():
-    argument_spec = ec2_argument_keys_spec()
+    argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
             bucket         = dict(required=True),
             object         = dict(),
