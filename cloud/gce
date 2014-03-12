@@ -351,7 +351,7 @@ def main():
             metadata = dict(),
             name = dict(),
             network = dict(default='default'),
-            persistent_boot_disk = dict(type='bool', choices=BOOLEANS, default=False),
+            persistent_boot_disk = dict(type='bool', default=False),
             state = dict(choices=['active', 'present', 'absent', 'deleted'],
                     default='present'),
             tags = dict(type='list'),
