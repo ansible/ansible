@@ -204,6 +204,33 @@ def create_server(module, nova, image_id, flavor_id):
     if not module.params['key_name']:
         del bootkwargs['key_name']
 
+    if module.params['volumes']:
+        bdm = bootkwargs['block_device_mapping'] = {}
+        device_names = iter("sda%s" % s for s in "abcdefghijklmnopqrstuvwxyz")
+        for volume in module.params['volumes']:
+            if 'name' in volume:
+                if 'id' in volume:
+                    module.fail_json(msg="id and name are mutially exclusive "
+                                         "in volumes", name=name, id=id)
+
+                if volume.get('type') == 'snap':
+                    volume['id'] = get_snapshot(module, name=volume['name']).id
+                else:
+                    volume['id'] = get_volume(module, name=volume['name']).id
+            elif 'id' not in volume:
+                module.fail_json(msg="id or name are required for volumes "
+                                     "in volumes", name=name, id=id)
+
+
+            mapping = "%s:%s:%s:%s" % (volume['id'],
+                                       volume.get('type', 'volume'),
+                                       volume.get('size', ''),
+                                       volume.get('delete_on_termination'))
+
+            device_name = volume.get('device_name') or next(device_names)
+
+            bdm[device_name] = mapping
+
     try:
         server = nova.servers.create(*bootargs, **bootkwargs)
     except Exception, e:
@@ -273,6 +300,7 @@ def main():
         security_groups=dict(default='default'),
         nics=dict(default=None),
         meta=dict(default=None),
+        volumes=dict(default=None),
         wait=dict(default='yes', type='bool'),
         wait_for=dict(default=180),
         state=dict(default='present', choices=['absent', 'present'])
@@ -295,7 +323,7 @@ def main():
         image_id = module.params['image_id']
     elif module.params['image_name']:
         image_id = get_glance_image(module, module.params['image_name']).id
-    elif state != 'absent':
+    elif module.param['state'] != 'absent':
         module.fail_json(msg="Parameter 'image_id' or 'image_name' is "
                              "required if state == 'present'")
 
