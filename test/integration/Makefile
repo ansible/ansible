@@ -15,14 +15,27 @@ test_hash:
 
 cloud: amazon rackspace
 
+cloud_cleanup: amazon_cleanup rackspace_cleanup
+
+amazon_cleanup:
+	python cleanup_ec2.py -y
+
+rackspace_cleanup:
+	@echo "FIXME - cleanup_rax.py not yet implemented"
+	@#python cleanup_rax.py -y
+
 credentials.yml:
 	@echo "No credentials.yml file found.  A file named 'credentials.yml' is needed to provide credentials needed to run cloud tests."
 	@exit 1
 
 amazon: credentials.yml
-	ansible-playbook amazon.yml -i inventory -e @integration_config.yml -e @credentials.yml -v $(TEST_FLAGS)
-	@# FIXME - Cleanup won't run if the previous tests fail
-	python cleanup_ec2.py -y
+	ansible-playbook amazon.yml -i inventory -e @integration_config.yml -e @credentials.yml -v $(TEST_FLAGS) ; \
+    RC=$$? ; \
+    make amazon_cleanup ; \
+    exit $$RC;
 
 rackspace: credentials.yml
-	ansible-playbook rackspace.yml -i inventory -e @integration_config.yml -e @credentials.yml -v $(TEST_FLAGS)
+	ansible-playbook rackspace.yml -i inventory -e @integration_config.yml -e @credentials.yml -v $(TEST_FLAGS) ; \
+    RC=$$? ; \
+    make rackspace_cleanup ; \
+    exit $$RC;
