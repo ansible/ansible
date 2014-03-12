@@ -71,7 +71,11 @@ class Ec2Metadata(object):
 
     def _fetch(self, url):
         (response, info) = fetch_url(self.module, url, force=True)
-        return response.read()
+        if response:
+            data = response.read()
+        else:
+            data = None
+        return data
 
     def _mangle_fields(self, fields, uri, filter_patterns=['public-keys-0']):
         new_fields = {}
