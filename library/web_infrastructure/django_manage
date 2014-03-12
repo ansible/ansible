@@ -203,13 +203,13 @@ def main():
             apps        = dict(default=None, required=False),
             cache_table = dict(default=None, required=False),
             database    = dict(default=None, required=False),
-            failfast    = dict(default='no', required=False, choices=BOOLEANS, aliases=['fail_fast']),
+            failfast    = dict(default='no', required=False, type='bool', aliases=['fail_fast']),
             fixtures    = dict(default=None, required=False),
             liveserver  = dict(default=None, required=False, aliases=['live_server']),
             testrunner  = dict(default=None, required=False, aliases=['test_runner']),
-            skip        = dict(default=None, required=False, choices=BOOLEANS),
-            merge       = dict(default=None, required=False, choices=BOOLEANS),
-            link        = dict(default=None, required=False, choices=BOOLEANS),
+            skip        = dict(default=None, required=False, type='bool'),
+            merge       = dict(default=None, required=False, type='bool'),
+            link        = dict(default=None, required=False, type='bool'),
         ),
     )
 
