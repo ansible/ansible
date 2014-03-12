@@ -77,11 +77,10 @@ class SSLValidationHandler(urllib2.BaseHandler):
     http://techknack.net/python-urllib2-handlers/
     '''
 
-    def __init__(self, module, hostname, port, ca_cert=None):
+    def __init__(self, module, hostname, port):
         self.module = module
         self.hostname = hostname
         self.port = port
-        self.ca_cert = ca_cert
 
     def get_ca_certs(self):
         # tries to find a valid CA cert in one of the
@@ -91,11 +90,6 @@ class SSLValidationHandler(urllib2.BaseHandler):
         paths_checked = []
         platform = get_platform()
         distribution = get_distribution()
-
-        if self.ca_cert:
-            # the user provided a custom CA cert (ie. one they
-            # uploaded themselves), so add it to the list first
-            ca_certs.append(self.ca_cert)
 
         # build a list of paths to check for .crt/.pem files
         # based on the platform type
