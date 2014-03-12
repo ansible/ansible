@@ -46,6 +46,14 @@ options:
     required: false
     default: 'yes'
     choices: [ "yes", "no" ]
+  validate_certs:
+    description:
+      - If C(no), SSL certificates will not be validated. This should only be used
+        on personally controlled sites using self-signed certificates.
+    required: false
+    default: 'yes'
+    choices: ['yes', 'no']
+    version_added: 1.5.1
 
 # informational: requirements for nodes
 requirements: [ urllib, urllib2 ]
@@ -104,6 +112,7 @@ def main():
                                                   "purple", "gray", "random"]),
             msg_format=dict(default="text", choices=["text", "html"]),
             notify=dict(default=True, type='bool'),
+            validate_certs = dict(default='yes', type='bool'),
         ),
         supports_check_mode=True
     )

@@ -73,6 +73,15 @@ options:
     choices: [ 'present', 'absent' ]
     default: null
     
+  validate_certs:
+    description:
+      - If C(no), SSL certificates will not be validated. This should only be used
+        on personally controlled sites using self-signed certificates.
+    required: false
+    default: 'yes'
+    choices: ['yes', 'no']
+    version_added: 1.5.1
+
 notes:
   - The DNS Made Easy service requires that machines interacting with the API have the proper time and timezone set. Be sure you are within a few seconds of actual time by using NTP. 
   - This module returns record(s) in the "result" element when 'state' is set to 'present'. This value can be be registered and used in your playbooks.
@@ -239,6 +248,7 @@ def main():
                              'A', 'AAAA', 'CNAME', 'HTTPRED', 'MX', 'NS', 'PTR', 'SRV', 'TXT']),
             record_value=dict(required=False),
             record_ttl=dict(required=False, default=1800, type='int'),
+            validate_certs = dict(default='yes', type='bool'),
         ),
         required_together=(
             ['record_value', 'record_ttl', 'record_type']
