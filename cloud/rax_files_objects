@@ -572,8 +572,8 @@ def main():
             method=dict(default='get', choices=['put', 'get', 'delete']),
             type=dict(default='file', choices=['file', 'meta']),
             meta=dict(type='dict', default=dict()),
-            clear_meta=dict(choices=BOOLEANS, default=False, type='bool'),
-            structure=dict(choices=BOOLEANS, default=True, type='bool'),
+            clear_meta=dict(default=False, type='bool'),
+            structure=dict(default=True, type='bool'),
             expires=dict(type='int'),
         )
     )
