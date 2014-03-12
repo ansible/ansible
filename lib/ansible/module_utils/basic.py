@@ -1018,6 +1018,9 @@ class AnsibleModule(object):
             msg = "Argument 'args' to run_command must be list or string"
             self.fail_json(rc=257, cmd=args, msg=msg)
 
+        # expand things like $HOME and ~
+        args = [ os.path.expandvars(os.path.expanduser(x)) for x in args ]
+
         rc = 0
         msg = None
         st_in = None
