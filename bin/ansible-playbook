@@ -229,7 +229,7 @@ def main(args):
                         if (set(task.tags).intersection(pb.only_tags) and not
                             set(task.tags).intersection(pb.skip_tags)):
                             if getattr(task, 'name', None) is not None:
-                                tags = set(task.tags)
+                                tags = sorted(set(task.tags))
                                 tags.remove('all')
                                 # meta tasks have no names
                                 if len(tags) is not 0:
