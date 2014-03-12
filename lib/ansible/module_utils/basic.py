@@ -1074,8 +1074,10 @@ class AnsibleModule(object):
 
 
         try:
-            if cwd:
+            # make sure we're in the right working directory
+            if cwd and os.path.isdir(cwd):
                 os.chdir(cwd)
+
             cmd = subprocess.Popen(args, **kwargs)
 
             if data:
