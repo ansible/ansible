@@ -115,7 +115,7 @@ def main():
 
     # Send the data to airbrake
     data = urllib.urlencode(params)
-    response, info = fetch_url(module, url, data=data, validate_certs=module.params['validate_certs'])
+    response, info = fetch_url(module, url, data=data)
     if info['status'] == 200:
         module.exit_json(changed=True)
     else:
