@@ -1018,7 +1018,8 @@ class AnsibleModule(object):
             self.fail_json(rc=257, cmd=args, msg=msg)
 
         # expand things like $HOME and ~
-        args = [ os.path.expandvars(os.path.expanduser(x)) for x in args ]
+        if not shell:
+            args = [ os.path.expandvars(os.path.expanduser(x)) for x in args ]
 
         rc = 0
         msg = None
