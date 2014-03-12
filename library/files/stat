@@ -132,8 +132,9 @@ def main():
     if S_ISLNK(mode):
         d['lnk_source'] = os.path.realpath(path)
 
-    if S_ISREG(mode) and get_md5:
-        d['md5']        = module.md5(path)
+    if S_ISREG(mode) and get_md5 and os.access(path,os.R_OK):
+        d['md5']       = module.md5(path)
+
 
     try:
         pw = pwd.getpwuid(st.st_uid)
