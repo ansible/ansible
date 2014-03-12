@@ -140,7 +140,7 @@ def download_key(module, url):
     if url is None:
         module.fail_json(msg="needed a URL but was not specified")
     try:
-        rsp, info = fetch_url(module, url, validate_certs=module.params['validate_certs'])
+        rsp, info = fetch_url(module, url)
         return rsp.read()
     except Exception:
         module.fail_json(msg="error getting key id from url", traceback=format_exc())
