@@ -360,14 +360,15 @@ class Homebrew(object):
             self.message = 'Invalid package: {0}.'.format(self.current_package)
             raise HomebrewException(self.message)
 
-        rc, out, err = self.module.run_command(
-            "{brew_path} list -m1 | grep -q '^{package}$'".format(
-                brew_path=self.brew_path,
-                package=self.current_package,
-            )
-        )
+        cmd = [
+            "{brew_path}".format(brew_path=self.brew_path),
+            "list",
+            "-m1",
+        ]
+        rc, out, err = self.module.run_command(cmd)
+        packages = [package for package in out.split('\n') if package]
 
-        if rc == 0:
+        if rc == 0 and self.current_package in packages:
             return True
         else:
             return False
