@@ -135,7 +135,7 @@ def db_dump(module, host, user, password, db_name, target, port, socket=None):
         cmd = cmd + ' | bzip2 > ' + target
     else:
         cmd += " > %s" % target
-    rc, stdout, stderr = module.run_command(cmd)
+    rc, stdout, stderr = module.run_command(cmd, use_unsafe_shell=True)
     return rc, stdout, stderr
 
 def db_import(module, host, user, password, db_name, target, port, socket=None):
@@ -152,7 +152,7 @@ def db_import(module, host, user, password, db_name, target, port, socket=None):
         cmd = 'bunzip2 < ' + target + ' | ' + cmd
     else:
         cmd += " < %s" % target
-    rc, stdout, stderr = module.run_command(cmd)
+    rc, stdout, stderr = module.run_command(cmd, use_unsafe_shell=True)
     return rc, stdout, stderr
 
 def db_create(cursor, db, encoding, collation):

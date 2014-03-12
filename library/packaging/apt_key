@@ -131,7 +131,7 @@ def all_keys(module, keyring):
     return results
 
 def key_present(module, key_id):
-    (rc, out, err) = module.run_command("apt-key list | 2>&1 grep -i -q %s" % key_id)
+    (rc, out, err) = module.run_command("apt-key list | 2>&1 grep -i -q %s" % key_id, use_unsafe_shell=True)
     return rc == 0
 
 def download_key(module, url):

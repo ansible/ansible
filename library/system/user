@@ -257,12 +257,12 @@ class User(object):
         # select whether we dump additional debug info through syslog
         self.syslogging = False
 
-    def execute_command(self, cmd):
+    def execute_command(self, cmd, use_unsafe_shell=False):
         if self.syslogging:
             syslog.openlog('ansible-%s' % os.path.basename(__file__))
             syslog.syslog(syslog.LOG_NOTICE, 'Command %s' % '|'.join(cmd))
 
-        return self.module.run_command(cmd)
+        return self.module.run_command(cmd, use_unsafe_shell)
 
     def remove_user_userdel(self):
         cmd = [self.module.get_bin_path('userdel', True)]
@@ -1348,7 +1348,7 @@ class AIX(User):
             cmd.append(self.module.get_bin_path('chpasswd', True))
             cmd.append('-e')
             cmd.append('-c')
-            self.execute_command(' '.join(cmd))
+            self.execute_command(' '.join(cmd), use_unsafe_shell=True)
 
         return (rc, out, err)
 
