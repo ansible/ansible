@@ -123,7 +123,7 @@ class RpmKey:
     def fetch_key(self, url, maxbytes=MAXBYTES):
         """Downloads a key from url, returns a valid path to a gpg key"""
         try:
-            rsp, info = fetch_url(self.module, url, validate_certs=self.module.params['validate_certs'])
+            rsp, info = fetch_url(self.module, url)
             key = rsp.read(maxbytes)
             if not is_pubkey(key):
                 self.module.fail_json(msg="Not a public key: %s" % url)

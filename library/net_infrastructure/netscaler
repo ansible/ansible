@@ -122,7 +122,7 @@ class netscaler(object):
             'Content-Type' : 'application/x-www-form-urlencoded',
         }
 
-        response, info = fetch_url(self.module, request_url, data=data_json, validate_certs=self.module.params['validate_certs'])
+        response, info = fetch_url(self.module, request_url, data=data_json)
 
         return json.load(response.read())
 
