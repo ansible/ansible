@@ -78,7 +78,7 @@ def package_latest(module, name, site):
         cmd += [ '-t', site ]
     cmd.append(name)
     cmd += [ '| tail -1 | grep -v SAME' ]
-    rc, out, err = module.run_command(' '.join(cmd))
+    rc, out, err = module.run_command(' '.join(cmd), use_unsafe_shell=True)
     if rc == 1:
         return True
     else:

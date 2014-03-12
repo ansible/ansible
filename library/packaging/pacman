@@ -101,7 +101,7 @@ def query_package(module, name, state="installed"):
 
 def update_package_db(module):
     cmd = "pacman -Syy > /dev/null"
-    rc, stdout, stderr = module.run_command(cmd, check_rc=False)
+    rc, stdout, stderr = module.run_command(cmd, check_rc=False, use_unsafe_shell=True)
 
     if rc != 0:
         module.fail_json(msg="could not update package db")
@@ -121,7 +121,7 @@ def remove_packages(module, packages):
             continue
 
         cmd = "pacman -%s %s --noconfirm > /dev/null" % (args, package)
-        rc, stdout, stderr = module.run_command(cmd, check_rc=False)
+        rc, stdout, stderr = module.run_command(cmd, check_rc=False, use_unsafe_shell=True)
 
         if rc != 0:
             module.fail_json(msg="failed to remove %s" % (package))
@@ -149,7 +149,7 @@ def install_packages(module, packages, package_files):
             params = '-S %s' % package
 
         cmd = "pacman %s --noconfirm > /dev/null" % (params)
-        rc, stdout, stderr = module.run_command(cmd, check_rc=False)
+        rc, stdout, stderr = module.run_command(cmd, check_rc=False, use_unsafe_shell=True)
 
         if rc != 0:
             module.fail_json(msg="failed to install %s" % (package))

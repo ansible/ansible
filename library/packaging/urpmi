@@ -105,7 +105,7 @@ def query_package_provides(module, name):
     # rpm -q returns 0 if the package is installed,
     # 1 if it is not installed
     cmd = "rpm -q --provides %s >/dev/null" % (name)
-    rc, stdout, stderr = module.run_command(cmd, check_rc=False)
+    rc, stdout, stderr = module.run_command(cmd, check_rc=False, use_unsafe_shell=True)
     return rc == 0
 
 
@@ -126,7 +126,7 @@ def remove_packages(module, packages):
             continue
 
         cmd = "%s --auto %s > /dev/null" % (URPME_PATH, package)
-        rc, stdout, stderr = module.run_command(cmd, check_rc=False)
+        rc, stdout, stderr = module.run_command(cmd, check_rc=False, use_unsafe_shell=True)
 
         if rc != 0:
             module.fail_json(msg="failed to remove %s" % (package))
@@ -160,7 +160,7 @@ def install_packages(module, pkgspec, force=True, no_suggests=True):
 
         cmd = ("%s --auto %s --quiet %s %s > /dev/null" % (URPMI_PATH, force_yes, no_suggests_yes, packages))
 
-        rc, out, err = module.run_command(cmd)
+        rc, out, err = module.run_command(cmd, use_unsafe_shell=True)
 
         installed = True
         for packages in pkgspec:

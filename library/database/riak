@@ -106,7 +106,7 @@ except ImportError:
 
 def ring_check(module, riak_admin_bin):
     cmd = '%s ringready 2> /dev/null' % riak_admin_bin
-    rc, out, err = module.run_command(cmd)
+    rc, out, err = module.run_command(cmd, use_unsafe_shell = True)
     if rc == 0 and 'TRUE All nodes agree on the ring' in out:
         return True
     else:

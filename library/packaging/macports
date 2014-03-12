@@ -68,7 +68,7 @@ def query_package(module, port_path, name, state="present"):
 
     if state == "present":
 
-        rc, out, err = module.run_command("%s installed | grep -q ^.*%s" % (port_path, name))
+        rc, out, err = module.run_command("%s installed | grep -q ^.*%s" % (port_path, name), use_unsafe_shell=True)
         if rc == 0:
             return True
 
@@ -76,7 +76,7 @@ def query_package(module, port_path, name, state="present"):
 
     elif state == "active":
 
-        rc, out, err = module.run_command("%s installed %s | grep -q active" % (port_path, name))
+        rc, out, err = module.run_command("%s installed %s | grep -q active" % (port_path, name), use_unsafe_shell=True)
         if rc == 0:
             return True
 
