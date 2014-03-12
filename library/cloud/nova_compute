@@ -18,13 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-try:
-    from novaclient.v1_1 import client as nova_client
-    from novaclient import exceptions
-    import time
-    import traceback
-except ImportError:
-    print("failed=True msg='novaclient is required for this module'")
+import time
 
 DOCUMENTATION = '''
 ---
@@ -182,10 +176,8 @@ def rebuild_server(module, nova, server, image_id):
     module.exit_json(changed=True, **state)
 
 
-def create_server(module, nova, image_id):
-    bootargs = [module.params['name'],
-                image_id,
-                module.params['flavor_id']]
+def create_server(module, nova, image_id, flavor_id):
+    bootargs = [module.params['name'], image_id, flavor_id]
 
     security_groups = module.params['security_groups']
     security_groups = (security_groups.split(',')
@@ -195,11 +187,12 @@ def create_server(module, nova, image_id):
     nics = module.params['nics']
     nics = nics.split(',') if isinstance(nics, basestring) else nics
 
-    for nic in nics:
-        if "net-name" in nic:
-            if "net-id" in nic:
-                module.fail_json(msg="net-id and net-name are mutually exclusive")
-            nic['net-id'] = get_network(module, nic.pop('net-name'))['id']
+    if nics:
+        for nic in nics:
+            if "net-name" in nic:
+                if "net-id" in nic:
+                    module.fail_json(msg="net-id and net-name are mutually exclusive")
+                nic['net-id'] = get_network(module, nic.pop('net-name'))['id']
 
     bootkwargs = {
         'nics': nics,
@@ -275,6 +268,7 @@ def main():
         image_id=dict(default=None),
         image_name=dict(default=None),
         flavor_id=dict(default=1),
+        flavor_name=dict(default=None),
         key_name=dict(default=None),
         security_groups=dict(default='default'),
         nics=dict(default=None),
@@ -288,7 +282,8 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
         mutually_exclusive=os_mutually_exclusive() + [
-            ['image_id', 'image_name']
+            ['image_id', 'image_name'],
+            ['flavor_id', 'flavor_name'],
         ]
     )
 
@@ -304,6 +299,11 @@ def main():
         module.fail_json(msg="Parameter 'image_id' or 'image_name' is "
                              "required if state == 'present'")
 
+    if module.params['flavor_name']:
+        flavor_id = get_flavor(module, module.params['flavor_name']).id
+    else:
+        flavor_id = module.params['flavor_id']
+
     if module.params['state'] == 'present':
         if server:
             state = get_server_state(module, nova, server)
@@ -311,7 +311,7 @@ def main():
         elif module.check_mode:
             module.exit_json(changed=True, **state)
         else:
-            server = create_server(module, nova, image_id)
+            server = create_server(module, nova, image_id, flavor_id)
             state = get_server_state(module, nova, server)
             module.exit_json(changed=True, **state)
 
@@ -323,7 +323,7 @@ def main():
         else:
             delete_server(module, nova)
             module.exit_json(changed=True)
-            
+
     elif module.params['state'] == 'rebuilt':
         if module.check_mode:
             module.exit_json(changed=True)

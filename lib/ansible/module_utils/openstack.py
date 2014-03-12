@@ -134,17 +134,18 @@ def get_nova_client(module):
 
     user = kwargs.pop("username")
     password = kwargs.pop("password")
+    tenant = kwargs.pop("tenant_id")
 
     if module.params.get('endpoint_type'):
         kwargs['endpoint_type'] = module.params['endpoint_type']
 
     try:
-        import novaclient.v1_1.client
+        import novaclient.v1_1
         import novaclient.exceptions
     except ImportError:
         module.fail_json(msg="novaclient is required for this feature")
 
-    nova = novaclient.v1_1.client.Client(user, password, **kwargs)
+    nova = novaclient.v1_1.Client(user, password, tenant, **kwargs)
     try:
         nova.authenticate()
     except novaclient.exceptions.Unauthorized, e:
@@ -153,6 +154,26 @@ def get_nova_client(module):
         module.fail_json(msg="Unable to authorize user: %s" % e.message)
 
     return nova
+
+
+def get_flavor(module, name=None, id=None, required=True, detailed=False,
+               nova=None):
+    if not nova:
+        nova = get_nova_client(module)
+
+    import novaclient.exceptions
+
+    try:
+        if name:
+            return nova.flavors.find(name=name)
+        else:
+            return nova.flavors.find(id=id)
+    except novaclient.exceptions.NotFound:
+        if required:
+            module.fail_json(msg="Server flavor not found")
+        return None
+    except Exception, e:
+        module.fail_json(msg="Error in getting flavor: %s " % e.message)
 
 
 def get_server(module, name=None, id=None, required=True, detailed=False,
