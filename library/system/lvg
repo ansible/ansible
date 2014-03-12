@@ -162,13 +162,13 @@ def main():
                 ### create PV
                 pvcreate_cmd = module.get_bin_path('pvcreate', True)
                 for current_dev in dev_list:
-                    rc,_,err = module.run_command("%s %s"%(pvcreate_cmd,current_dev))
+                    rc,_,err = module.run_command("%s %s" % (pvcreate_cmd,current_dev))
                     if rc == 0:
                         changed = True
                     else:
-                        module.fail_json(msg="Creating physical volume '%s' failed"%current_dev, rc=rc, err=err)
+                        module.fail_json(msg="Creating physical volume '%s' failed" % current_dev, rc=rc, err=err)
                 vgcreate_cmd = module.get_bin_path('vgcreate')
-                rc,_,err = module.run_command("%s -s %s %s %s"%(vgcreate_cmd, pesize, vg, dev_string))
+                rc,_,err = module.run_command("%s -s %s %s %s" % (vgcreate_cmd, pesize, vg, dev_string))
                 if rc == 0:
                     changed = True
                 else:
@@ -210,7 +210,7 @@ def main():
                             module.fail_json(msg="Creating physical volume '%s' failed"%current_dev, rc=rc, err=err)
                     ### add PV to our VG
                     vgextend_cmd = module.get_bin_path('vgextend', True)
-                    rc,_,err = module.run_command("%s %s %s"%(vgextend_cmd, vg, devs_to_add_string))
+                    rc,_,err = module.run_command("%s %s %s" % (vgextend_cmd, vg, devs_to_add_string))
                     if rc == 0:
                         changed = True
                     else:
