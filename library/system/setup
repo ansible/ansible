@@ -260,7 +260,7 @@ class Facts(object):
             self.facts['distribution_release'] = data[1]
         elif self.facts['system'] == 'HP-UX':
             self.facts['distribution'] = 'HP-UX'
-            rc, out, err = module.run_command("/usr/sbin/swlist |egrep 'HPUX.*OE.*[AB].[0-9]+\.[0-9]+'")
+            rc, out, err = module.run_command("/usr/sbin/swlist |egrep 'HPUX.*OE.*[AB].[0-9]+\.[0-9]+'", use_unsafe_shell=True)
             data = re.search('HPUX.*OE.*([AB].[0-9]+\.[0-9]+)\.([0-9]+).*', out)
             if data:
                 self.facts['distribution_version'] = data.groups()[0]
@@ -1254,31 +1254,31 @@ class HPUX(Hardware):
 
     def get_cpu_facts(self):
         if self.facts['architecture'] == '9000/800':
-            rc, out, err = module.run_command("ioscan -FkCprocessor|wc -l")
+            rc, out, err = module.run_command("ioscan -FkCprocessor | wc -l", use_unsafe_shell=True)
             self.facts['processor_count'] = int(out.strip())
         #Working with machinfo mess
         elif self.facts['architecture'] == 'ia64':
             if self.facts['distribution_version'] == "B.11.23":
-                rc, out, err = module.run_command("/usr/contrib/bin/machinfo |grep 'Number of CPUs'")
+                rc, out, err = module.run_command("/usr/contrib/bin/machinfo | grep 'Number of CPUs'", use_unsafe_shell=True)
                 self.facts['processor_count'] = int(out.strip().split('=')[1])
-                rc, out, err = module.run_command("/usr/contrib/bin/machinfo |grep 'processor family'")
+                rc, out, err = module.run_command("/usr/contrib/bin/machinfo | grep 'processor family'", use_unsafe_shell=True)
                 self.facts['processor'] = re.search('.*(Intel.*)', out).groups()[0].strip()
-                rc, out, err = module.run_command("ioscan -FkCprocessor|wc -l")
+                rc, out, err = module.run_command("ioscan -FkCprocessor | wc -l", use_unsafe_shell=True)
                 self.facts['processor_cores'] = int(out.strip())
             if self.facts['distribution_version'] == "B.11.31":
                 #if machinfo return cores strings release B.11.31 > 1204
-                rc, out, err = module.run_command("/usr/contrib/bin/machinfo |grep core|wc -l")
+                rc, out, err = module.run_command("/usr/contrib/bin/machinfo | grep core | wc -l", use_unsafe_shell=True)
                 if out.strip()== '0':
-                    rc, out, err = module.run_command("/usr/contrib/bin/machinfo |grep Intel")
+                    rc, out, err = module.run_command("/usr/contrib/bin/machinfo | grep Intel", use_unsafe_shell=True)
                     self.facts['processor_count'] = int(out.strip().split(" ")[0])
                     #If hyperthreading is active divide cores by 2
-                    rc, out, err = module.run_command("/usr/sbin/psrset |grep LCPU")
+                    rc, out, err = module.run_command("/usr/sbin/psrset | grep LCPU", use_unsafe_shell=True)
                     data = re.sub(' +',' ',out).strip().split(' ')
                     if len(data) == 1:
                         hyperthreading = 'OFF'
                     else:
                         hyperthreading = data[1]
-                    rc, out, err = module.run_command("/usr/contrib/bin/machinfo |grep logical")
+                    rc, out, err = module.run_command("/usr/contrib/bin/machinfo | grep logical", use_unsafe_shell=True)
                     data = out.strip().split(" ")
                     if hyperthreading == 'ON':
                         self.facts['processor_cores'] = int(data[0])/2
@@ -1287,19 +1287,19 @@ class HPUX(Hardware):
                             self.facts['processor_cores'] = self.facts['processor_count']
                         else:
                             self.facts['processor_cores'] = int(data[0])
-                    rc, out, err = module.run_command("/usr/contrib/bin/machinfo |grep Intel |cut -d' ' -f4-")
+                    rc, out, err = module.run_command("/usr/contrib/bin/machinfo | grep Intel |cut -d' ' -f4-", use_unsafe_shell=True)
                     self.facts['processor'] = out.strip()
                 else:
-                    rc, out, err = module.run_command("/usr/contrib/bin/machinfo |egrep 'socket[s]?$' | tail -1")
+                    rc, out, err = module.run_command("/usr/contrib/bin/machinfo | egrep 'socket[s]?$' | tail -1", use_unsafe_shell=True)
                     self.facts['processor_count'] = int(out.strip().split(" ")[0])
-                    rc, out, err = module.run_command("/usr/contrib/bin/machinfo |grep -e '[0-9] core' |tail -1")
+                    rc, out, err = module.run_command("/usr/contrib/bin/machinfo | grep -e '[0-9] core' | tail -1", use_unsafe_shell=True)
                     self.facts['processor_cores'] = int(out.strip().split(" ")[0])
-                    rc, out, err = module.run_command("/usr/contrib/bin/machinfo |grep Intel")
+                    rc, out, err = module.run_command("/usr/contrib/bin/machinfo | grep Intel", use_unsafe_shell=True)
                     self.facts['processor'] = out.strip()
 
     def get_memory_facts(self):
         pagesize = 4096
-        rc, out, err = module.run_command("/usr/bin/vmstat|tail -1")
+        rc, out, err = module.run_command("/usr/bin/vmstat | tail -1", use_unsafe_shell=True)
         data = int(re.sub(' +',' ',out).split(' ')[5].strip())
         self.facts['memfree_mb'] = pagesize * data / 1024 / 1024
         if self.facts['architecture'] == '9000/800':
@@ -1307,12 +1307,12 @@ class HPUX(Hardware):
             data = re.search('.*Physical: ([0-9]*) Kbytes.*',out).groups()[0].strip()
             self.facts['memtotal_mb'] = int(data) / 1024
         else:
-            rc, out, err = module.run_command("/usr/contrib/bin/machinfo |grep Memory")
+            rc, out, err = module.run_command("/usr/contrib/bin/machinfo | grep Memory", use_unsafe_shell=True)
             data = re.search('Memory[\ :=]*([0-9]*).*MB.*',out).groups()[0].strip()
             self.facts['memtotal_mb'] = int(data)
         rc, out, err = module.run_command("/usr/sbin/swapinfo -m -d -f -q")
         self.facts['swaptotal_mb'] = int(out.strip())
-        rc, out, err = module.run_command("/usr/sbin/swapinfo -m -d -f |egrep '^dev|^fs'")
+        rc, out, err = module.run_command("/usr/sbin/swapinfo -m -d -f | egrep '^dev|^fs'", use_unsafe_shell=True)
         swap = 0
         for line in out.strip().split('\n'):
             swap += int(re.sub(' +',' ',line).split(' ')[3].strip())
@@ -1322,7 +1322,7 @@ class HPUX(Hardware):
         rc, out, err = module.run_command("model")
         self.facts['model'] = out.strip()
         if self.facts['architecture'] == 'ia64':
-            rc, out, err = module.run_command("/usr/contrib/bin/machinfo |grep -i 'Firmware revision' |grep -v BMC")
+            rc, out, err = module.run_command("/usr/contrib/bin/machinfo |grep -i 'Firmware revision' | grep -v BMC", use_unsafe_shell=True)
             self.facts['firmware_version'] = out.split(':')[1].strip()
 
 
