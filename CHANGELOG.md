@@ -11,12 +11,24 @@ Major features/changes:
 New Modules:
 
 * packaging: cpanm
+* packaging: portage
 * system: debconf
+* system: ufw
+* system: locale_gen
+* cloud: digital_ocean_domain
+* cloud: digital_ocean_sshkey 
+* cloud: nova_group (security groups)
+* cloud: nova_fip (floating IPs)
+* cloud: rax_identity
+* cloud: ec2_asg (configure autoscaling groups)
 
 Other notable changes:
 
-* info pending
-
+* libvirt module now supports destroyed and paused as states
+* s3 module can specify metadata
+* security token additions to ec2 modules
+* misc bugfixes and other parameters
+  
 ## 1.5.1 "Love Walks In" - March 10, 2014
 
 - Force command action to not be executed by the shell unless specifically enabled.
