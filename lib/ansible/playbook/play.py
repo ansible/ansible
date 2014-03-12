@@ -579,7 +579,6 @@ class Play(object):
 
         for x in results:
             if self.tags is not None:
-                self.tags = list(set(self.tags).union(set(x.tags)))
                 x.tags.extend(self.tags)
 
         return results
