@@ -26,6 +26,9 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import hmac
+HASHED_KEY_MAGIC = "|1|"
+
 def add_git_host_key(module, url, accept_hostkey=True):
 
     """ idempotently add a git url hostkey """
@@ -58,28 +61,56 @@ def get_fqdn(repo_url):
 
     return result
 
-
 def check_hostkey(module, fqdn):
+   return not not_in_host_file(module, fqdn)
 
-    """ use ssh-keygen to check if key is known """
+# this is a variant of code found in connection_plugins/paramiko.py and we should modify
+# the paramiko code to import and use this.
 
-    result = False
-    keygen_cmd = module.get_bin_path('ssh-keygen', True)
-    this_cmd = keygen_cmd + " -H -F " + fqdn
-    rc, out, err = module.run_command(this_cmd)
+def not_in_host_file(self, host):
 
-    if rc == 0 and out != "":
-            result = True
+
+    if 'USER' in os.environ:
+        user_host_file = os.path.expandvars("~${USER}/.ssh/known_hosts")
     else:
-        # Check the main system location
-        this_cmd = keygen_cmd + " -H -f /etc/ssh/ssh_known_hosts -F " + fqdn
-        rc, out, err = module.run_command(this_cmd)
+        user_host_file = "~/.ssh/known_hosts"
+    user_host_file = os.path.expanduser(user_host_file)
 
-        if rc == 0:
-            if out != "":
-                result = True
+    host_file_list = []
+    host_file_list.append(user_host_file)
+    host_file_list.append("/etc/ssh/ssh_known_hosts")
+    host_file_list.append("/etc/ssh/ssh_known_hosts2")
 
-    return result
+    hfiles_not_found = 0
+    for hf in host_file_list:
+        if not os.path.exists(hf):
+            hfiles_not_found += 1
+            continue
+        host_fh = open(hf)
+        data = host_fh.read()
+        host_fh.close()
+        for line in data.split("\n"):
+            if line is None or line.find(" ") == -1:
+                continue
+            tokens = line.split()
+            if tokens[0].find(HASHED_KEY_MAGIC) == 0:
+                # this is a hashed known host entry
+                try:
+                    (kn_salt,kn_host) = tokens[0][len(HASHED_KEY_MAGIC):].split("|",2)
+                    hash = hmac.new(kn_salt.decode('base64'), digestmod=sha1)
+                    hash.update(host)
+                    if hash.digest() == kn_host.decode('base64'):
+                        return False
+                except:
+                    # invalid hashed host key, skip it
+                    continue
+            else:
+                # standard host file entry
+                if host in tokens[0]:
+                    return False
+
+    return True
+
 
 def add_host_key(module, fqdn, key_type="rsa"):
 
