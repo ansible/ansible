@@ -443,9 +443,9 @@ def main():
             priv=dict(default=None),
             db=dict(default=''),
             port=dict(default='5432'),
-            fail_on_user=dict(type='bool', choices=BOOLEANS, default='yes'),
+            fail_on_user=dict(type='bool', default='yes'),
             role_attr_flags=dict(default=''),
-            encrypted=dict(type='bool', choices=BOOLEANS, default='no'),
+            encrypted=dict(type='bool', default='no'),
             expires=dict(default=None)
         ),
         supports_check_mode = True
