@@ -2297,7 +2297,7 @@ def ansible_facts(module):
     facts = {}
     facts.update(Facts().populate())
     facts.update(Hardware().populate())
-    facts.update(Network(module).populate())
+    facts.update(Network().populate())
     facts.update(Virtual().populate())
     return facts
 
