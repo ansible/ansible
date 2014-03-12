@@ -75,7 +75,7 @@ def list(module, hookurl, oauthkey, repo, user):
     headers = {
         'Authorization': 'Basic %s' % auth,
     }
-    response, info = fetch_url(module, url, headers=headers, validate_certs=module.params['validate_certs'])
+    response, info = fetch_url(module, url, headers=headers)
     if info['status'] != 200:
         return False, ''
     else:
@@ -120,7 +120,7 @@ def create(module, hookurl, oauthkey, repo, user):
     headers = {
         'Authorization': 'Basic %s' % auth,
     }
-    response, info = fetch_url(module, url, data=data, headers=headers, validate_certs=module.params['validate_certs'])
+    response, info = fetch_url(module, url, data=data, headers=headers)
     if info['status'] != 200:
         return 0, '[]'
     else:
@@ -132,7 +132,7 @@ def delete(module, hookurl, oauthkey, repo, user, hookid):
     headers = {
         'Authorization': 'Basic %s' % auth,
     }
-    response, info = fetch_url(module, url, data=data, headers=headers, method='DELETE', validate_certs=module.params['validate_certs'])
+    response, info = fetch_url(module, url, data=data, headers=headers, method='DELETE')
     return response.read()
 
 def main():
