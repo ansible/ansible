@@ -1044,7 +1044,7 @@ class AnsibleModule(object):
 
         if path_prefix:
             kwargs['env'] = env
-        if cwd:
+        if cwd and os.path.isdir(cwd):
             kwargs['cwd'] = cwd
 
 
