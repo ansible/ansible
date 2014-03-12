@@ -155,7 +155,7 @@ def url_argument_spec():
 
 
 def fetch_url(module, url, data=None, headers=None, method=None, 
-              use_proxy=False, validate_certs=True, force=False, last_mod_time=None, timeout=10):
+              use_proxy=False, force=False, last_mod_time=None, timeout=10):
     '''
     Fetches a file from an HTTP/FTP server using urllib2
     '''
@@ -170,6 +170,9 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     r = None
     handlers = []
     info = dict(url=url)
+
+    # Get validate_certs from the module params
+    validate_certs = module.params.get('validate_certs', True)
 
     parsed = urlparse.urlparse(url)
     if parsed[0] == 'https':

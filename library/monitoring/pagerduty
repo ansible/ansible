@@ -60,6 +60,15 @@ options:
         default: Created by Ansible
         choices: []
         aliases: []
+    validate_certs:
+        description:
+            - If C(no), SSL certificates will not be validated. This should only be used
+              on personally controlled sites using self-signed certificates.
+        required: false
+        default: 'yes'
+        choices: ['yes', 'no']
+        version_added: 1.5.1
+
 notes:
     - This module does not yet have support to end maintenance windows.
 '''
@@ -135,7 +144,8 @@ def main():
         passwd=dict(required=True),
         service=dict(required=False),
         hours=dict(default='1', required=False),
-        desc=dict(default='Created by Ansible', required=False)
+        desc=dict(default='Created by Ansible', required=False),
+        validate_certs = dict(default='yes', type='bool'),
         )
     )
 
