@@ -83,53 +83,64 @@ class SSLValidationHandler(urllib2.BaseHandler):
         self.port = port
         self.ca_cert = ca_cert
 
-    def get_ca_cert(self):
+    def get_ca_certs(self):
         # tries to find a valid CA cert in one of the
         # standard locations for the current distribution
 
-        if self.ca_cert and os.path.exists(self.ca_cert):
-            # the user provided a custom CA cert (ie. one they
-            # uploaded themselves), so use it
-            return self.ca_cert
-
-        ca_cert = None
+        ca_certs = []
+        paths_checked = []
         platform = get_platform()
         distribution = get_distribution()
-        if platform == 'Linux':
-            if distribution in ('Fedora',):
-                ca_cert = '/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem'
-            elif distribution in ('RHEL','CentOS','ScientificLinux'):
-                ca_cert = '/etc/pki/tls/certs/ca-bundle.crt'
-            elif distribution in ('Ubuntu','Debian'):
-                ca_cert = '/usr/share/ca-certificates/cacert.org/cacert.org.crt'
-        elif platform == 'FreeBSD':
-            ca_cert = '/usr/local/share/certs/ca-root.crt'
-        elif platform == 'OpenBSD':
-            ca_cert = '/etc/ssl/cert.pem'
-        elif platform == 'NetBSD':
-            ca_cert = '/etc/openssl/certs/ca-cert.pem'
-        elif platform == 'SunOS':
-            # FIXME?
-            pass
-        elif platform == 'AIX':
-            # FIXME?
-            pass
 
-        if ca_cert and os.path.exists(ca_cert):
-            return ca_cert
-        elif os.path.exists('/etc/ansible/ca-cert.pem'):
-            # fall back to a user-deployed cert in a standard
-            # location if the OS platform one is not available
-            return '/etc/ansible/ca-cert.pem'
-        else:
-            # CA cert isn't available, no validation
-            return None
+        if self.ca_cert:
+            # the user provided a custom CA cert (ie. one they
+            # uploaded themselves), so add it to the list first
+            ca_certs.append(self.ca_cert)
+
+        # build a list of paths to check for .crt/.pem files
+        # based on the platform type
+        paths_checked.append('/etc/ssl/certs')
+        if platform == 'Linux':
+            paths_checked.append('/etc/pki/ca-trust/extracted/pem')
+            paths_checked.append('/etc/pki/tls/certs')
+            paths_checked.append('/usr/share/ca-certificates/cacert.org')
+        elif platform == 'FreeBSD':
+            paths_checked.append('/usr/local/share/certs')
+        elif platform == 'OpenBSD':
+            paths_checked.append('/etc/ssl')
+        elif platform == 'NetBSD':
+            ca_certs.append('/etc/openssl/certs')
+
+        # fall back to a user-deployed cert in a standard
+        # location if the OS platform one is not available
+        paths_checked.append('/etc/ansible')
+
+        for path in paths_checked:
+            if os.path.exists(path) and os.path.isdir(path):
+                dir_contents = os.listdir(path)
+                for f in dir_contents:
+                    full_path = os.path.join(path, f)
+                    if os.path.isfile(full_path) and os.path.splitext(f)[1] in ('.crt','.pem'):
+                        ca_certs.append(full_path)
+
+        return (ca_certs, paths_checked)
 
     def http_request(self, req):
-        try:
-            server_cert = ssl.get_server_certificate((self.hostname, self.port), ca_certs=self.get_ca_cert())
-        except ssl.SSLError:
-            self.module.fail_json(msg='failed to validate the SSL certificate for %s:%s. You can use validate_certs=no, however this is unsafe and not recommended' % (self.hostname, self.port))
+        ca_certs, paths_checked = self.get_ca_certs()
+        if len(ca_certs) > 0:
+            for ca_cert in ca_certs:
+                try:
+                    server_cert = ssl.get_server_certificate((self.hostname, self.port), ca_certs=ca_cert)
+                    return req
+                except ssl.SSLError:
+                    # try the next one
+                    pass
+            # fail if we tried all of the certs but none worked
+            self.module.fail_json(msg='Failed to validate the SSL certificate for %s:%s. ' % (self.hostname, self.port) + \
+                                      'Use validate_certs=no or make sure your managed systems have a valid CA certificate installed. ' + \
+                                      'Paths checked for this platform: %s' % ", ".join(paths_checked))
+        # if no CA certs were found, we just fall through
+        # to here and return the request with no SSL validation
         return req
 
     https_request = http_request
