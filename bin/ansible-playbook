@@ -230,7 +230,7 @@ def main(args):
                             set(task.tags).intersection(pb.skip_tags)):
                             if getattr(task, 'name', None) is not None:
                                 # meta tasks have no names
-                                print '    %s' % task.name
+                                print '    %s (tags: %s)' % (task.name, ", ".join(set(task.tags)))
                 print ''
             continue
 
