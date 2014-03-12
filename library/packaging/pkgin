@@ -58,13 +58,13 @@ import json
 import shlex
 import os
 import sys
-
+import pipes
 
 def query_package(module, pkgin_path, name, state="present"):
 
     if state == "present":
 
-        rc, out, err = module.run_command("%s -y list | grep ^%s" % (pkgin_path, name))
+        rc, out, err = module.run_command("%s -y list | grep ^%s" % (pipes.quote(pkgin_path), pipes.quote(name)), use_unsafe_shell=True)
 
         if rc == 0:
             # At least one package with a package name that starts with ``name``
