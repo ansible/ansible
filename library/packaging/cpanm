@@ -75,9 +75,9 @@ def _is_package_installed(module, name, locallib, cpanm):
         os.environ["PERL5LIB"] = "%s/lib/perl5" % locallib
     cmd = "%s perl -M%s -e '1'" % (cmd, name)
     res, stdout, stderr = module.run_command(cmd, check_rc=False)
-    if res == 0 
+    if res == 0:
        return True
-    else 
+    else: 
        return False
 
 def _build_cmd_line(name, from_path, notest, locallib, mirror, cpanm):
