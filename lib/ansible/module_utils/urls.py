@@ -50,6 +50,7 @@ try:
 except:
     HAS_SSL=False
 
+import tempfile
 
 class RequestWithMethod(urllib2.Request):
     '''
@@ -109,32 +110,42 @@ class SSLValidationHandler(urllib2.BaseHandler):
         # location if the OS platform one is not available
         paths_checked.append('/etc/ansible')
 
+        tmp_fd, tmp_path = tempfile.mkstemp()
+
+        # for all of the paths, find any  .crt or .pem files
+        # and compile them into single temp file for use
+        # in the ssl check to speed up the test
         for path in paths_checked:
             if os.path.exists(path) and os.path.isdir(path):
                 dir_contents = os.listdir(path)
                 for f in dir_contents:
                     full_path = os.path.join(path, f)
                     if os.path.isfile(full_path) and os.path.splitext(f)[1] in ('.crt','.pem'):
-                        ca_certs.append(full_path)
+                        try:
+                            cert_file = open(full_path, 'r')
+                            os.write(tmp_fd, cert_file.read())
+                            cert_file.close()
+                        except:
+                            pass
 
-        return (ca_certs, paths_checked)
+        return (tmp_path, paths_checked)
 
     def http_request(self, req):
-        ca_certs, paths_checked = self.get_ca_certs()
-        if len(ca_certs) > 0:
-            for ca_cert in ca_certs:
-                try:
-                    server_cert = ssl.get_server_certificate((self.hostname, self.port), ca_certs=ca_cert)
-                    return req
-                except ssl.SSLError:
-                    # try the next one
-                    pass
+        tmp_ca_cert_path, paths_checked = self.get_ca_certs()
+        try:
+            server_cert = ssl.get_server_certificate((self.hostname, self.port), ca_certs=tmp_ca_cert_path)
+        except ssl.SSLError:
             # fail if we tried all of the certs but none worked
             self.module.fail_json(msg='Failed to validate the SSL certificate for %s:%s. ' % (self.hostname, self.port) + \
                                       'Use validate_certs=no or make sure your managed systems have a valid CA certificate installed. ' + \
                                       'Paths checked for this platform: %s' % ", ".join(paths_checked))
-        # if no CA certs were found, we just fall through
-        # to here and return the request with no SSL validation
+        try:
+            # cleanup the temp file created, don't worry
+            # if it fails for some reason
+            os.remove(tmp_ca_cert_path)
+        except:
+            pass
+
         return req
 
     https_request = http_request
