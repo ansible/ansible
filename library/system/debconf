@@ -109,7 +109,7 @@ def set_selection(module, pkg, question, vtype, value, unseen):
     if unseen:
         cmd.append('-u')
 
-    return module.run_command(' '.join(cmd))
+    return module.run_command(' '.join(cmd), use_unsafe_shell=True)
 
 def main():
 
