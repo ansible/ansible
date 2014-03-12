@@ -54,6 +54,14 @@ options:
         description: ["An arbitrary string to use for aggregation."]
         required: false
         default: null
+    validate_certs:
+        description:
+            - If C(no), SSL certificates will not be validated. This should only be used
+              on personally controlled sites using self-signed certificates.
+        required: false
+        default: 'yes'
+        choices: ['yes', 'no']
+        version_added: 1.5.1
 '''
 
 EXAMPLES = '''
@@ -89,7 +97,8 @@ def main():
                 choices=['nagios', 'hudson', 'jenkins', 'user', 'my apps',
                          'feed', 'chef', 'puppet', 'git', 'bitbucket', 'fabric',
                          'capistrano']
-            )
+            ),
+            validate_certs = dict(default='yes', type='bool'),
         )
     )
 
