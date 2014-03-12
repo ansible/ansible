@@ -140,7 +140,7 @@ def main():
 
     if question is not None:
         if vtype is None or value is None:
-            module.fail_json(msg="when supliying a question you must supply a valide vtype and value")
+            module.fail_json(msg="when supplying a question you must supply a valid vtype and value")
 
         if not question in prev or prev[question] != value:
             changed = True
