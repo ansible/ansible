@@ -15,12 +15,14 @@ def delete_aws_resources(get_func, attr, opts):
     for item in get_func():
         val = getattr(item, attr)
         if re.search(opts.match_re, val):
-            prompt_and_delete("Delete object with %s=%s? [y/n]: " % (attr, val), opts.assumeyes)
+            prompt_and_delete(item, "Delete object with %s=%s? [y/n]: " % (attr, val), opts.assumeyes)
 
-def prompt_and_delete(prompt, assumeyes):
-    while not assumeyes:
-        assumeyes = raw_input(prompt)
-    obj.delete()
+def prompt_and_delete(item, prompt, assumeyes):
+    if not assumeyes:
+        assumeyes = raw_input(prompt).lower() == 'y'
+    assert hasattr(item, 'delete'), "Class <%s> has no delete attribute" % item.__class__
+    if assumeyes:
+        item.delete()
 
 def parse_args():
     # Load details from credentials.yml
