@@ -100,7 +100,7 @@ def query_package(module, name, state="installed"):
 
 
 def update_package_db(module):
-    cmd = "pacman -Syy > /dev/null"
+    cmd = "pacman -Syy"
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
     if rc != 0:
@@ -120,7 +120,7 @@ def remove_packages(module, packages):
         if not query_package(module, package):
             continue
 
-        cmd = "pacman -%s %s --noconfirm > /dev/null" % (args, package)
+        cmd = "pacman -%s %s --noconfirm" % (args, package)
         rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
         if rc != 0:
@@ -148,7 +148,7 @@ def install_packages(module, packages, package_files):
         else:
             params = '-S %s' % package
 
-        cmd = "pacman %s --noconfirm > /dev/null" % (params)
+        cmd = "pacman %s --noconfirm" % (params)
         rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
         if rc != 0:
