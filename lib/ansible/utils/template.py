@@ -316,8 +316,6 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
         except Exception, e:
             if 'recursion' in str(e):
                 raise errors.AnsibleError("recursive loop detected in template string: %s" % data)
-            elif isinstance(e, TemplateSyntaxError):
-                raise errors.AnsibleError("there was an error in the template: %s" % data)
             else:
                 return data
 
