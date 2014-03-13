@@ -237,6 +237,7 @@ def container(cf, module, container_, state, meta_, clear_meta, ttl, public, pri
             except Exception, e:
                 module.fail_json(msg=e.message)
             else:
+                EXIT_DICT['changed'] = True
                 EXIT_DICT['created'] = True
         else:
             module.fail_json(msg=e.message)
@@ -312,8 +313,7 @@ def container(cf, module, container_, state, meta_, clear_meta, ttl, public, pri
     
     _locals = locals().keys()
     
-    if ('cont_created' in _locals
-            or 'cont_deleted' in _locals
+    if ('cont_deleted' in _locals
             or 'meta_set' in _locals
             or 'cont_public' in _locals
             or 'cont_private' in _locals
