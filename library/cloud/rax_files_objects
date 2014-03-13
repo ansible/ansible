@@ -83,6 +83,11 @@ options:
         flat directory
     choices: ["yes", "no"]
     default: "yes"
+  state:
+    description:
+      - Indicate desired state of the resource
+    choices: ['present', 'absent']
+    default: present
   type:
     description:
       - Type of object to do work on
