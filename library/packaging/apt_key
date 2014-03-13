@@ -199,7 +199,7 @@ def main():
             if key_id.startswith('0x'):
                 key_id = key_id[2:]
         except ValueError:
-            module.fail_json("Invalid key_id")
+            module.fail_json(msg="Invalid key_id", id=key_id)
 
     # FIXME: I think we have a common facility for this, if not, want
     check_missing_binaries(module)
