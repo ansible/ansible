@@ -110,9 +110,9 @@ class TestModuleUtilsBasic(unittest.TestCase):
             md5sum = utils_md5(tmp_path)
             self.assertEqual(md5sum, '5ceaa7ed396ccb8e959c02753cb4bd18')
         except:
-            self.cleanup_temp_file(tmp_fd, tmp_path)
             raise
-        self.cleanup_temp_file(tmp_fd, tmp_path)
+        finally:
+            self.cleanup_temp_file(tmp_fd, tmp_path)
 
     # test run_command with a double shell redirect out (append) (with both use_unsafe_shell=True|False)
     def test_run_command_string_unsafe_with_double_redirect_out(self):
@@ -124,9 +124,9 @@ class TestModuleUtilsBasic(unittest.TestCase):
             md5sum = utils_md5(tmp_path)
             self.assertEqual(md5sum, '5ceaa7ed396ccb8e959c02753cb4bd18')
         except:
-            self.cleanup_temp_file(tmp_fd, tmp_path)
             raise
-        self.cleanup_temp_file(tmp_fd, tmp_path)
+        finally:
+            self.cleanup_temp_file(tmp_fd, tmp_path)
 
     # test run_command with data
     def test_run_command_string_with_data(self):
@@ -149,8 +149,8 @@ class TestModuleUtilsBasic(unittest.TestCase):
             self.assertTrue(os.path.exists(tmp_path))
             self.assertEqual(out.strip(), tmp_path)
         except:
-            self.cleanup_temp_dir(tmp_path)
             raise
-        self.cleanup_temp_dir(tmp_path)
+        finally:
+            self.cleanup_temp_dir(tmp_path)
 
 
