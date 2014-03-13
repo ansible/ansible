@@ -1096,6 +1096,7 @@ class AnsibleModule(object):
             self.fail_json(rc=e.errno, msg=str(e), cmd=clean_args)
         except:
             self.fail_json(rc=257, msg=traceback.format_exc(), cmd=clean_args)
+
         if rc != 0 and check_rc:
             msg = err.rstrip()
             self.fail_json(cmd=clean_args, rc=rc, stdout=out, stderr=err, msg=msg)
