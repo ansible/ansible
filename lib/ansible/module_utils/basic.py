@@ -1009,7 +1009,9 @@ class AnsibleModule(object):
 
         shell = False
         if isinstance(args, list):
-            pass
+            if use_unsafe_shell:
+                args = " ".join([pipes.quote(x) for x in args])
+                shell = True
         elif isinstance(args, basestring) and use_unsafe_shell:
             shell = True
         elif isinstance(args, basestring):
