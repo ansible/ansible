@@ -129,7 +129,7 @@ class DME2:
 
         self.api = apikey
         self.secret = secret
-        self.baseurl = 'http://api.dnsmadeeasy.com/V2.0/'
+        self.baseurl = 'https://api.dnsmadeeasy.com/V2.0/'
         self.domain = str(domain)
         self.domain_map = None      # ["domain_name"] => ID
         self.record_map = None      # ["record_name"] => ID
@@ -161,14 +161,14 @@ class DME2:
         if data and not isinstance(data, basestring):
             data = urllib.urlencode(data)
 
-        response, info = fetch_url(self.module, url, data=data, method=method)
+        response, info = fetch_url(self.module, url, data=data, method=method, headers=self._headers())
         if info['status'] not in (200, 201, 204):
             self.module.fail_json(msg="%s returned %s, with body: %s" % (url, info['status'], info['msg']))
 
         try:
             return json.load(response)
         except Exception, e:
-            return False
+            return {}
 
     def getDomain(self, domain_id):
         if not self.domain_map:
@@ -268,7 +268,7 @@ def main():
         domain_records = DME.getRecords()
         if not domain_records:
             module.fail_json(
-                msg="The %s domain name is not accessible with this api_key; try using its ID if known." % domain)
+                msg="The requested domain name is not accessible with this api_key; try using its ID if known.")
         module.exit_json(changed=False, result=domain_records)
 
     # Fetch existing record + Build new one
