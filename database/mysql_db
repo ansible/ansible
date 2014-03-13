@@ -128,7 +128,7 @@ def db_dump(module, host, user, password, db_name, target, port, socket=None):
     if socket is not None:
         cmd += " --socket=%s" % pipes.quote(socket)
     else:
-        cmd += " --host=%s --port=%s" % (pipes.quote(host), pipes(port))
+        cmd += " --host=%s --port=%s" % (pipes.quote(host), pipes.quote(port))
     cmd += " %s" % pipes.quote(db_name)
     if os.path.splitext(target)[-1] == '.gz':
         cmd = cmd + ' | gzip > ' + pipes.quote(target)
