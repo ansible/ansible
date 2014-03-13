@@ -97,7 +97,7 @@ def main(args):
 
     inventory = ansible.inventory.Inventory(options.inventory)
     inventory.subset(options.subset)
-    if len(inventory.list_hosts()) == 0:
+    if len(inventory.list_hosts('all:localhost:127.0.0.1')) == 0:
         raise errors.AnsibleError("provided hosts list is empty")
 
     sshpass = None
