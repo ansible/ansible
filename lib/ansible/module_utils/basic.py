@@ -1074,12 +1074,17 @@ class AnsibleModule(object):
         if cwd and os.path.isdir(cwd):
             kwargs['cwd'] = cwd
 
+        # store the pwd
+        prev_dir = os.getcwd()
+
+        # make sure we're in the right working directory
+        if cwd and os.path.isdir(cwd):
+            try:
+                os.chdir(cwd)
+            except (OSError, IOError), e:
+                self.fail_json(rc=e.errno, msg="Could not open %s , %s" % (cwd, str(e)))
 
         try:
-            # make sure we're in the right working directory
-            if cwd and os.path.isdir(cwd):
-                os.chdir(cwd)
-
             cmd = subprocess.Popen(args, **kwargs)
 
             if data:
@@ -1094,6 +1099,10 @@ class AnsibleModule(object):
         if rc != 0 and check_rc:
             msg = err.rstrip()
             self.fail_json(cmd=clean_args, rc=rc, stdout=out, stderr=err, msg=msg)
+
+        # reset the pwd
+        os.chdir(prev_dir)
+
         return (rc, out, err)
 
     def append_to_file(self, filename, str):
