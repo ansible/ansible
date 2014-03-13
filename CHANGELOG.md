@@ -1,6 +1,11 @@
 Ansible Changes By Release
 ==========================
 
+## 1.5.3 "Love Walks In" - March 13, 2014
+
+- Fix validate_certs and run_command errors from previous release
+- Fixes to the git module related to host key checking
+
 ## 1.5.2 "Love Walks In" - March 11, 2014
 
 - Fix module errors in airbrake and apt from previous release
