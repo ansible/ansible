@@ -1,0 +1,60 @@
+# test code for the user module
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: create user account
+  user: name={{ non_root_test_user }} state=present
+  register: create_user
+  # let's not mess with the user if it already exists
+  failed_when: not create_user|changed
+
+- name: assert that user exists
+  command: "grep {{ non_root_test_user }} /etc/passwd"
+
+- name: set password
+  user: name={{ non_root_test_user }} password=test_pass
+
+- name: lock account
+  user: name={{ non_root_test_user }} state=locked
+
+- name: assert that account is expired
+  shell: "chage -l {{ non_root_test_user }} | grep '^Account expires.*1970'"
+
+- name: assert that passwd is locked
+  command: "passwd -S {{ non_root_test_user }}"
+  register: passwd
+  failed_when: passwd.stdout.split()[1] != "L"
+  when: no # locking the password shouldn't be necessary after account expiry
+
+- name: delete user account
+  user: name={{ non_root_test_user }} state=absent
+
+- name: assert that user does not exist
+  command: "grep {{ non_root_test_user }} /etc/passwd"
+  register: test_absence
+  failed_when: test_absence.rc == 0
+
+- name: create and lock account
+  user: name={{ non_root_test_user }} state=locked
+
+- name: confirm that lock is idempotent
+  user: name={{ non_root_test_user }} state=locked
+
+- name: assert that account is expired
+  shell: "chage -l {{ non_root_test_user }} | grep '^Account expires.*1970'"
+
+- name: delete user account
+  user: name={{ non_root_test_user }} state=absent
