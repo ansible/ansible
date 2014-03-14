@@ -6,7 +6,7 @@ Hi!  Thanks for interest in contributing to Ansible.
 Here are some guidelines for contributing code.  The purpose of this document are to establish what we're looking for in code contributions, and to make sure
 new contributions know some of the conventions that we've been using.
 
-We don't think much of this should be too strange to readers familar with contributing to Python projects, though it helps if we all get on the same page.
+We don't think much of this should be too strange to readers familiar with contributing to Python projects, though it helps if we all get on the same page.
 
 Language
 ========
@@ -28,11 +28,11 @@ PEP8 and basic style checks
 Testing
 =======
 
-  * Much of ansible's testing needs are in integration, not unit tests.  We're working on releasing wide array of integration tests that use modules in a live environment.
-  * That being said, there are unit tests
-  * Code written must absolutely pass unit tests (i.e. "make tests")
+  * Much of ansible's testing needs are in integration, not unit tests.  Add module tests there.
+  * That being said, there are unit tests too!
+  * Code written must absolutely pass tests (i.e. "make tests")
   * You should anticipate any error paths in your code and test down those error paths.
-  * Additions to unit tests for core code is welcome, but modules tend to be more integration-testey, so it's not always possible to add them (examples: ec2, etc).
+  * Additions to tests for core code is welcome, but not always possible.  Be sure things are at least well tested manually in that case.
 
 Whitespace
 ==========
@@ -44,7 +44,7 @@ Shebang Lines
 =============
  
   * /usr/bin/scripts should start with '/usr/bin/env python'
-  * module code should still use '/usr/bin/python' as this is replaced automatically by 'ansible_python_interpeter', see the FAQ in the docs for more info.
+  * module code should still use '/usr/bin/python' as this is replaced automatically by 'ansible_python_interpreter', see the FAQ in the docs for more info.
 
 Comments
 ========
@@ -58,7 +58,7 @@ Comments
 Classes
 =======
 
-  * With the exception of module code (where inline is better), it is deseriable to see classes in their own files.
+  * With the exception of module code (where inline is better), it is desirable to see classes in their own files.
   * Classes should generally not cause side effects as soon as they are instantiated, move meaningful behavior to methods rather than constructors.
  
 Functions and Methods
@@ -66,8 +66,10 @@ Functions and Methods
 
   * In general, functions should not be 'too long' and should describe a meaningful amount of work
   * When code gets too nested, that's usually the sign the loop body could benefit from being a function
+  * Parts of our existing code are not the best examples of this at times. 
   * Functions should have names that describe what they do, along with docstrings
   * Functions should be named with_underscores
+  * "Don't repeat yourself" is generally a good philosophy
 
 Variables
 =========
@@ -75,6 +77,15 @@ Variables
   * Use descriptive variable names instead of variables like 'x', unless x is a obvious loop index
   * Ansible python code uses identifiers like 'ClassesLikeThis and variables_like_this
   * Module parameters should also use_underscores and not runtogether
+
+Module Security
+===============
+
+  * Modules must take steps to avoid passing user input from the shell and always check return codes
+  * always use module.run_command instead of subprocess or Popen or os.system -- this is mandatory
+  * if you use need the shell you must pass use_unsafe_shell=True to module.run_command
+  * if you do not need the shell, avoid using the shell
+  * any variables that can come from the user input with use_unsafe_shell=True must be wrapped by pipes.quote(x)
 
 Misc Preferences
 ================
@@ -149,16 +160,19 @@ All contributions to the core repo should preserve original licenses and new con
 Module Documentation
 ====================
 
-All module pull requests must include a DOCUMENTATION docstring (YAML format, see other modules for examples) as well as an EXAMPLES docstring, which
-is free form.  
+All module pull requests must include a DOCUMENTATION docstring (YAML format, 
+see other modules for examples) as well as an EXAMPLES docstring, which is free form.  
 
-When adding new modules, any new parameter must have a "version_added" attribute.  When submitting a new module, the module should have a "version_added"
-attribute in the pull request as well, set to the current development version.
+When adding new modules, any new parameter must have a "version_added" attribute.  
+When submitting a new module, the module should have a "version_added" attribute in the 
+pull request as well, set to the current development version.
 
 Be sure to check grammar and spelling.
 
-It's frequently the case that modules get submitted with YAML that isn't valid, so you can run "make webdocs" from the checkout to preview your module's documentation.
-If it fails to build, take a look at your DOCUMENTATION string or you might have a Python syntax error in there too.
+It's frequently the case that modules get submitted with YAML that isn't valid, 
+so you can run "make webdocs" from the checkout to preview your module's documentation. 
+If it fails to build, take a look at your DOCUMENTATION string 
+or you might have a Python syntax error in there too.
 
 Python Imports
 ==============
@@ -262,7 +276,7 @@ To test if something is a string, consider that it may be unicode.
     if type(x) == str:
 
     # yes
-    if isintance(x, basestr):
+    if isinstance(x, basestring):
 
 Cleverness
 ==========
@@ -288,7 +302,7 @@ All code in Ansible core must support a minimum version of Python 2.6.
 
 Module code must support a minimum of Python 2.4, with occasional exception for modules that require code that themselves require 2.6 and later.
 
-A quick reminder is that list comprehensions in Python 2.4 are not as fully fleshed out, there are not 'dict' comprehensions, and there is no 'with' statement.
+A quick reminder is that list comprehensions in Python 2.4 are not as fully fleshed out, there are no 'dict' comprehensions, and there is no 'with' statement.
 But otherwise it's pretty much all the same.
 
 The End

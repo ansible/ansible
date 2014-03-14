@@ -1,0 +1,3 @@
+tres: 'three'
+hash_test:
+  group_vars_local: "this is in group_vars/local"

@@ -42,15 +42,18 @@ A task include file simply contains a flat list of tasks, like so::
 
     ---
     # possibly saved as tasks/foo.yml
+
     - name: placeholder foo
       command: /bin/foo
+
     - name: placeholder bar
       command: /bin/bar
 
 Include directives look like this, and can be mixed in with regular tasks in a playbook::
 
    tasks:
-    - include: tasks/foo.yml
+
+     - include: tasks/foo.yml
 
 You can also pass variables into includes.  We call this a 'parameterized include'.
 
@@ -120,7 +123,9 @@ For example::
     - name: this is a play at the top level of a file
       hosts: all
       remote_user: root
+
       tasks:
+
       - name: say hi
         tags: foo
         shell: echo "hi..."
@@ -193,6 +198,7 @@ This designates the following behaviors, for each role 'x':
 - Any copy tasks can reference files in roles/x/files/ without having to path them relatively or absolutely
 - Any script tasks can reference scripts in roles/x/files/ without having to path them relatively or absolutely
 - Any template tasks can reference files in roles/x/templates/ without having to path them relatively or absolutely
+- Any include tasks can reference files in roles/x/tasks/ without having to path them relatively or absolutely
    
 In Ansible 1.4 and later you can configure a roles_path to search for roles.  Use this to check all of your common roles out to one location, and share
 them easily between multiple playbook projects.  See :doc:`intro_configuration` for details about how to set this up in ansible.cfg.
@@ -210,6 +216,7 @@ the roles are evaluated first.
 Also, should you wish to parameterize roles, by adding variables, you can do so, like this::
 
     ---
+
     - hosts: webservers
       roles:
         - common
@@ -219,6 +226,7 @@ Also, should you wish to parameterize roles, by adding variables, you can do so,
 While it's probably not something you should do often, you can also conditionally apply roles like so::
 
     ---
+
     - hosts: webservers
       roles:
         - { role: some_role, when: "ansible_os_family == 'RedHat'" }
@@ -229,6 +237,7 @@ the documentation.
 Finally, you may wish to assign tags to the roles you specify. You can do so inline:::
 
     ---
+
     - hosts: webservers
       roles:
         - { role: foo, tags: ["bar", "baz"] }
@@ -239,13 +248,18 @@ If the play still has a 'tasks' section, those tasks are executed after roles ar
 If you want to define certain tasks to happen before AND after roles are applied, you can do this::
 
     ---
+
     - hosts: webservers
+
       pre_tasks:
         - shell: echo 'hello'
+
       roles:
         - { role: some_role }
+
       tasks:
         - shell: echo 'still busy'
+
       post_tasks:
         - shell: echo 'goodbye'
 

@@ -510,6 +510,8 @@ class Ec2Inventory(object):
                 instance_vars[key] = ''
             elif key == 'ec2_region':
                 instance_vars[key] = value.name
+            elif key == 'ec2__placement':
+                instance_vars['ec2_placement'] = value.zone
             elif key == 'ec2_tags':
                 for k, v in value.iteritems():
                     key = self.to_safe('ec2_tag_' + k)

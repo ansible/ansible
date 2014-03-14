@@ -75,16 +75,16 @@ class Bzr(object):
         self.version = version
         self.bzr_path = bzr_path
 
-    def _command(self, args_list, **kwargs):
-        (rc, out, err) = self.module.run_command(
-            [self.bzr_path] + args_list, **kwargs)
+    def _command(self, args_list, cwd=None, **kwargs):
+        (rc, out, err) = self.module.run_command([self.bzr_path] + args_list, cwd=cwd, **kwargs)
         return (rc, out, err)
 
     def get_version(self):
         '''samples the version of the bzr branch'''
-        os.chdir(self.dest)
+
         cmd = "%s revno" % self.bzr_path
-        revno = os.popen(cmd).read().strip()
+        rc, stdout, stderr = self.module.run_command(cmd, cwd=self.dest)
+        revno = stdout.strip()
         return revno
 
     def clone(self):
@@ -94,17 +94,18 @@ class Bzr(object):
             os.makedirs(dest_dirname)
         except:
             pass
-        os.chdir(dest_dirname)
         if self.version.lower() != 'head':
             args_list = ["branch", "-r", self.version, self.parent, self.dest]
         else:
             args_list = ["branch", self.parent, self.dest]
-        return self._command(args_list, check_rc=True)
+        return self._command(args_list, check_rc=True, cwd=dest_dirname)
 
     def has_local_mods(self):
-        os.chdir(self.dest)
+
         cmd = "%s status -S" % self.bzr_path
-        lines = os.popen(cmd).read().splitlines()
+        rc, stdout, stderr = self.module.run_command(cmd, cwd=self.dest)
+        lines = stdout.splitlines()
+
         lines = filter(lambda c: not re.search('^\\?\\?.*$', c), lines)
         return len(lines) > 0
 
@@ -114,30 +115,27 @@ class Bzr(object):
         Discards any changes to tracked files in the working
         tree since that commit.
         '''
-        os.chdir(self.dest)
         if not force and self.has_local_mods():
             self.module.fail_json(msg="Local modifications exist in branch (force=no).")
-        return self._command(["revert"], check_rc=True)
+        return self._command(["revert"], check_rc=True, cwd=self.dest)
 
     def fetch(self):
         '''updates branch from remote sources'''
-        os.chdir(self.dest)
         if self.version.lower() != 'head':
-            (rc, out, err) = self._command(["pull", "-r", self.version])
+            (rc, out, err) = self._command(["pull", "-r", self.version], cwd=self.dest)
         else:
-            (rc, out, err) = self._command(["pull"])
+            (rc, out, err) = self._command(["pull"], cwd=self.dest)
         if rc != 0:
             self.module.fail_json(msg="Failed to pull")
         return (rc, out, err)
 
     def switch_version(self):
         '''once pulled, switch to a particular revno or revid'''
-        os.chdir(self.dest)
         if self.version.lower() != 'head':
             args_list = ["revert", "-r", self.version]
         else:
             args_list = ["revert"]
-        return self._command(args_list, check_rc=True)
+        return self._command(args_list, check_rc=True, cwd=self.dest)
 
 # ===========================================
 

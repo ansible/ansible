@@ -35,8 +35,9 @@ options:
 
     state:
         description:
-            - state of the package (installed or absent).
+            - desired state of the package.
         required: false
+        choices: [ "installed", "absent" ] 
 
     update_cache:
         description:
@@ -89,7 +90,8 @@ def query_package(module, name, state="installed"):
     # pacman -Q returns 0 if the package is installed,
     # 1 if it is not installed
     if state == "installed":
-        rc = os.system("pacman -Q %s" % (name))
+        cmd = "pacman -Q %s" % (name)
+        rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
         if rc == 0:
             return True
@@ -98,7 +100,8 @@ def query_package(module, name, state="installed"):
 
 
 def update_package_db(module):
-    rc = os.system("pacman -Syy > /dev/null")
+    cmd = "pacman -Syy"
+    rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
     if rc != 0:
         module.fail_json(msg="could not update package db")
@@ -117,7 +120,8 @@ def remove_packages(module, packages):
         if not query_package(module, package):
             continue
 
-        rc = os.system("pacman -%s %s --noconfirm > /dev/null" % (args, package))
+        cmd = "pacman -%s %s --noconfirm" % (args, package)
+        rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
         if rc != 0:
             module.fail_json(msg="failed to remove %s" % (package))
@@ -144,7 +148,8 @@ def install_packages(module, packages, package_files):
         else:
             params = '-S %s' % package
 
-        rc = os.system("pacman %s --noconfirm > /dev/null" % (params))
+        cmd = "pacman %s --noconfirm" % (params)
+        rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
         if rc != 0:
             module.fail_json(msg="failed to install %s" % (package))

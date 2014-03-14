@@ -42,6 +42,10 @@ import traceback
 import getpass
 import sys
 import textwrap
+import json
+
+#import vault
+from vault import VaultLib
 
 VERBOSITY=0
 
@@ -87,19 +91,29 @@ def key_for_hostname(hostname):
     if not KEYCZAR_AVAILABLE:
         raise errors.AnsibleError("python-keyczar must be installed on the control machine to use accelerated modes")
 
-    key_path = os.path.expanduser("~/.fireball.keys")
+    key_path = os.path.expanduser(C.ACCELERATE_KEYS_DIR)
     if not os.path.exists(key_path):
-        os.makedirs(key_path)
-    key_path = os.path.expanduser("~/.fireball.keys/%s" % hostname)
+        os.makedirs(key_path, mode=0700)
+        os.chmod(key_path, int(C.ACCELERATE_KEYS_DIR_PERMS, 8))
+    elif not os.path.isdir(key_path):
+        raise errors.AnsibleError('ACCELERATE_KEYS_DIR is not a directory.')
+
+    if stat.S_IMODE(os.stat(key_path).st_mode) != int(C.ACCELERATE_KEYS_DIR_PERMS, 8):
+        raise errors.AnsibleError('Incorrect permissions on ACCELERATE_KEYS_DIR (%s)' % (C.ACCELERATE_KEYS_DIR,))
+
+    key_path = os.path.join(key_path, hostname)
 
     # use new AES keys every 2 hours, which means fireball must not allow running for longer either
     if not os.path.exists(key_path) or (time.time() - os.path.getmtime(key_path) > 60*60*2):
         key = AesKey.Generate()
-        fh = open(key_path, "w")
+        fd = os.open(key_path, os.O_WRONLY | os.O_CREAT, int(C.ACCELERATE_KEYS_FILE_PERMS, 8))
+        fh = os.fdopen(fd, 'w')
         fh.write(str(key))
         fh.close()
         return key
     else:
+        if stat.S_IMODE(os.stat(key_path).st_mode) != int(C.ACCELERATE_KEYS_FILE_PERMS, 8):
+            raise errors.AnsibleError('Incorrect permissions on ACCELERATE_KEYS_FILE (%s)' % (key_path,))
         fh = open(key_path)
         key = AesKey.Read(fh.read())
         fh.close()
@@ -337,9 +351,25 @@ def smush_ds(data):
     else:
         return data
 
-def parse_yaml(data):
-    ''' convert a yaml string to a data structure '''
-    return smush_ds(yaml.safe_load(data))
+def parse_yaml(data, path_hint=None):
+    ''' convert a yaml string to a data structure.  Also supports JSON, ssssssh!!!'''
+
+    stripped_data = data.lstrip()
+    loaded = None
+    if stripped_data.startswith("{") or stripped_data.startswith("["):
+        # since the line starts with { or [ we can infer this is a JSON document.
+        try:
+            loaded = json.loads(data)
+        except ValueError, ve:
+            if path_hint:
+                raise errors.AnsibleError(path_hint + ": " + str(ve))
+            else:
+                raise errors.AnsibleError(str(ve))
+    else:
+        # else this is pretty sure to be a YAML document
+        loaded = yaml.safe_load(data)
+
+    return smush_ds(loaded)
 
 def process_common_errors(msg, probline, column):
     replaced = probline.replace(" ","")
@@ -362,7 +392,7 @@ It should be written as:
 """
         return msg
 
-    elif len(probline) and len(probline) >= column and probline[column] == ":" and probline.count(':') > 1:
+    elif len(probline) and len(probline) > 1 and len(probline) > column and probline[column] == ":" and probline.count(':') > 1:
         msg = msg + """
 This one looks easy to fix.  There seems to be an extra unquoted colon in the line 
 and this is confusing the parser. It was only expecting to find one free 
@@ -484,14 +514,22 @@ Should be written as:
     raise errors.AnsibleYAMLValidationFailed(msg)
 
 
-def parse_yaml_from_file(path):
+def parse_yaml_from_file(path, vault_password=None):
     ''' convert a yaml file to a data structure '''
 
+    data = None
+
     try:
-        data = file(path).read()
-        return parse_yaml(data)
+        data = open(path).read()
     except IOError:
-        raise errors.AnsibleError("file not found: %s" % path)
+        raise errors.AnsibleError("file could not read: %s" % path)
+
+    vault = VaultLib(password=vault_password)
+    if vault.is_encrypted(data):
+        data = vault.decrypt(data)
+
+    try:
+        return parse_yaml(data, path_hint=path)
     except yaml.YAMLError, exc:
         process_yaml_error(exc, data, path)
 
@@ -613,6 +651,40 @@ def getch():
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
     return ch
 
+def sanitize_output(str):
+    ''' strips private info out of a string '''
+
+    private_keys = ['password', 'login_password']
+
+    filter_re = [
+        # filter out things like user:pass@foo/whatever
+        # and http://username:pass@wherever/foo
+        re.compile('^(?P<before>.*:)(?P<password>.*)(?P<after>\@.*)$'),
+    ]
+
+    parts = str.split()
+    output = ''
+    for part in parts:
+        try:
+            (k,v) = part.split('=', 1)
+            if k in private_keys:
+                output += " %s=VALUE_HIDDEN" % k
+            else:
+                found = False
+                for filter in filter_re:
+                    m = filter.match(v)
+                    if m:
+                        d = m.groupdict()
+                        output += " %s=%s" % (k, d['before'] + "********" + d['after'])
+                        found = True
+                        break
+                if not found:
+                    output += " %s" % part
+        except:
+            output += " %s" % part
+
+    return output.strip()
+
 ####################################################################
 # option handling code for /usr/bin/ansible and ansible-playbook
 # below this line
@@ -647,8 +719,12 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
         help='use this file to authenticate the connection')
     parser.add_option('-K', '--ask-sudo-pass', default=False, dest='ask_sudo_pass', action='store_true',
         help='ask for sudo password')
-    parser.add_option('--ask-su-pass', default=False, dest='ask_su_pass',
-                      action='store_true', help='ask for su password')
+    parser.add_option('--ask-su-pass', default=False, dest='ask_su_pass', action='store_true', 
+        help='ask for su password')
+    parser.add_option('--ask-vault-pass', default=False, dest='ask_vault_pass', action='store_true', 
+        help='ask for vault password')
+    parser.add_option('--vault-password-file', default=None, dest='vault_password_file',
+        help="vault password file")
     parser.add_option('--list-hosts', dest='listhosts', action='store_true',
         help='outputs a list of matching hosts; does not execute anything else')
     parser.add_option('-M', '--module-path', dest='module_path',
@@ -707,10 +783,34 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
 
     return parser
 
-def ask_passwords(ask_pass=False, ask_sudo_pass=False, ask_su_pass=False):
+def ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=False, confirm_vault=False, confirm_new=False):
+
+    vault_pass = None
+    new_vault_pass = None
+
+    if ask_vault_pass:
+        vault_pass = getpass.getpass(prompt="Vault password: ")
+
+    if ask_vault_pass and confirm_vault:
+        vault_pass2 = getpass.getpass(prompt="Confirm Vault password: ")
+        if vault_pass != vault_pass2:
+            raise errors.AnsibleError("Passwords do not match")
+
+    if ask_new_vault_pass:
+        new_vault_pass = getpass.getpass(prompt="New Vault password: ")
+
+    if ask_new_vault_pass and confirm_new:
+        new_vault_pass2 = getpass.getpass(prompt="Confirm New Vault password: ")
+        if new_vault_pass != new_vault_pass2:
+            raise errors.AnsibleError("Passwords do not match")
+
+    return vault_pass, new_vault_pass
+
+def ask_passwords(ask_pass=False, ask_sudo_pass=False, ask_su_pass=False, ask_vault_pass=False):
     sshpass = None
     sudopass = None
     su_pass = None
+    vault_pass = None
     sudo_prompt = "sudo password: "
     su_prompt = "su password: "
 
@@ -726,7 +826,10 @@ def ask_passwords(ask_pass=False, ask_sudo_pass=False, ask_su_pass=False):
     if ask_su_pass:
         su_pass = getpass.getpass(prompt=su_prompt)
 
-    return (sshpass, sudopass, su_pass)
+    if ask_vault_pass:
+        vault_pass = getpass.getpass(prompt="Vault password: ")
+
+    return (sshpass, sudopass, su_pass, vault_pass)
 
 def do_encrypt(result, encrypt, salt_size=None, salt=None):
     if PASSLIB_AVAILABLE:
@@ -985,3 +1088,12 @@ def random_password(length=20, chars=C.DEFAULT_PASSWORD_CHARS):
             password.append(new_char)
 
     return ''.join(password)
+
+def before_comment(msg):
+    ''' what's the part of a string before a comment? '''
+    msg = msg.replace("\#","**NOT_A_COMMENT**")
+    msg = msg.split("#")[0]
+    msg = msg.replace("**NOT_A_COMMENT**","#")
+    return msg
+
+

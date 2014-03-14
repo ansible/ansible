@@ -29,7 +29,6 @@ import socket
 import struct
 import datetime
 import getpass
-import subprocess
 import ConfigParser
 import StringIO
 
@@ -119,6 +118,7 @@ class Facts(object):
                     '/etc/release': 'Solaris',
                     '/etc/arch-release': 'Archlinux',
                     '/etc/SuSE-release': 'SuSE',
+                    '/etc/gentoo-release': 'Gentoo',
                     '/etc/os-release': 'Debian' }
     SELINUX_MODE_DICT = { 1: 'enforcing', 0: 'permissive', -1: 'disabled' }
 
@@ -136,6 +136,7 @@ class Facts(object):
                  { 'path' : '/sbin/apk',            'name' : 'apk' },
                  { 'path' : '/usr/sbin/pkg',        'name' : 'pkgng' },
                  { 'path' : '/usr/sbin/swlist',     'name' : 'SD-UX' },
+                 { 'path' : '/usr/bin/emerge',      'name' : 'portage' },
     ]
 
     def __init__(self):
@@ -244,7 +245,7 @@ class Facts(object):
             SLC = 'RedHat', Ascendos = 'RedHat', CloudLinux = 'RedHat', PSBM = 'RedHat',
             OracleLinux = 'RedHat', OVS = 'RedHat', OEL = 'RedHat', Amazon = 'RedHat',
             XenServer = 'RedHat', Ubuntu = 'Debian', Debian = 'Debian', SLES = 'Suse',
-            SLED = 'Suse', OpenSuSE = 'Suse', SuSE = 'Suse', Gentoo = 'Gentoo',
+            SLED = 'Suse', OpenSuSE = 'Suse', SuSE = 'Suse', Gentoo = 'Gentoo', Funtoo = 'Gentoo',
             Archlinux = 'Archlinux', Mandriva = 'Mandrake', Mandrake = 'Mandrake',
             Solaris = 'Solaris', Nexenta = 'Solaris', OmniOS = 'Solaris', OpenIndiana = 'Solaris',
             SmartOS = 'Solaris', AIX = 'AIX', Alpine = 'Alpine', MacOSX = 'Darwin',
@@ -259,7 +260,7 @@ class Facts(object):
             self.facts['distribution_release'] = data[1]
         elif self.facts['system'] == 'HP-UX':
             self.facts['distribution'] = 'HP-UX'
-            rc, out, err = module.run_command("/usr/sbin/swlist |egrep 'HPUX.*OE.*[AB].[0-9]+\.[0-9]+'")
+            rc, out, err = module.run_command("/usr/sbin/swlist |egrep 'HPUX.*OE.*[AB].[0-9]+\.[0-9]+'", use_unsafe_shell=True)
             data = re.search('HPUX.*OE.*([AB].[0-9]+\.[0-9]+)\.([0-9]+).*', out)
             if data:
                 self.facts['distribution_version'] = data.groups()[0]
@@ -1253,31 +1254,31 @@ class HPUX(Hardware):
 
     def get_cpu_facts(self):
         if self.facts['architecture'] == '9000/800':
-            rc, out, err = module.run_command("ioscan -FkCprocessor|wc -l")
+            rc, out, err = module.run_command("ioscan -FkCprocessor | wc -l", use_unsafe_shell=True)
             self.facts['processor_count'] = int(out.strip())
         #Working with machinfo mess
         elif self.facts['architecture'] == 'ia64':
             if self.facts['distribution_version'] == "B.11.23":
-                rc, out, err = module.run_command("/usr/contrib/bin/machinfo |grep 'Number of CPUs'")
+                rc, out, err = module.run_command("/usr/contrib/bin/machinfo | grep 'Number of CPUs'", use_unsafe_shell=True)
                 self.facts['processor_count'] = int(out.strip().split('=')[1])
-                rc, out, err = module.run_command("/usr/contrib/bin/machinfo |grep 'processor family'")
+                rc, out, err = module.run_command("/usr/contrib/bin/machinfo | grep 'processor family'", use_unsafe_shell=True)
                 self.facts['processor'] = re.search('.*(Intel.*)', out).groups()[0].strip()
-                rc, out, err = module.run_command("ioscan -FkCprocessor|wc -l")
+                rc, out, err = module.run_command("ioscan -FkCprocessor | wc -l", use_unsafe_shell=True)
                 self.facts['processor_cores'] = int(out.strip())
             if self.facts['distribution_version'] == "B.11.31":
                 #if machinfo return cores strings release B.11.31 > 1204
-                rc, out, err = module.run_command("/usr/contrib/bin/machinfo |grep core|wc -l")
+                rc, out, err = module.run_command("/usr/contrib/bin/machinfo | grep core | wc -l", use_unsafe_shell=True)
                 if out.strip()== '0':
-                    rc, out, err = module.run_command("/usr/contrib/bin/machinfo |grep Intel")
+                    rc, out, err = module.run_command("/usr/contrib/bin/machinfo | grep Intel", use_unsafe_shell=True)
                     self.facts['processor_count'] = int(out.strip().split(" ")[0])
                     #If hyperthreading is active divide cores by 2
-                    rc, out, err = module.run_command("/usr/sbin/psrset |grep LCPU")
+                    rc, out, err = module.run_command("/usr/sbin/psrset | grep LCPU", use_unsafe_shell=True)
                     data = re.sub(' +',' ',out).strip().split(' ')
                     if len(data) == 1:
                         hyperthreading = 'OFF'
                     else:
                         hyperthreading = data[1]
-                    rc, out, err = module.run_command("/usr/contrib/bin/machinfo |grep logical")
+                    rc, out, err = module.run_command("/usr/contrib/bin/machinfo | grep logical", use_unsafe_shell=True)
                     data = out.strip().split(" ")
                     if hyperthreading == 'ON':
                         self.facts['processor_cores'] = int(data[0])/2
@@ -1286,19 +1287,19 @@ class HPUX(Hardware):
                             self.facts['processor_cores'] = self.facts['processor_count']
                         else:
                             self.facts['processor_cores'] = int(data[0])
-                    rc, out, err = module.run_command("/usr/contrib/bin/machinfo |grep Intel |cut -d' ' -f4-")
+                    rc, out, err = module.run_command("/usr/contrib/bin/machinfo | grep Intel |cut -d' ' -f4-", use_unsafe_shell=True)
                     self.facts['processor'] = out.strip()
                 else:
-                    rc, out, err = module.run_command("/usr/contrib/bin/machinfo |egrep 'socket[s]?$' | tail -1")
+                    rc, out, err = module.run_command("/usr/contrib/bin/machinfo | egrep 'socket[s]?$' | tail -1", use_unsafe_shell=True)
                     self.facts['processor_count'] = int(out.strip().split(" ")[0])
-                    rc, out, err = module.run_command("/usr/contrib/bin/machinfo |grep -e '[0-9] core' |tail -1")
+                    rc, out, err = module.run_command("/usr/contrib/bin/machinfo | grep -e '[0-9] core' | tail -1", use_unsafe_shell=True)
                     self.facts['processor_cores'] = int(out.strip().split(" ")[0])
-                    rc, out, err = module.run_command("/usr/contrib/bin/machinfo |grep Intel")
+                    rc, out, err = module.run_command("/usr/contrib/bin/machinfo | grep Intel", use_unsafe_shell=True)
                     self.facts['processor'] = out.strip()
 
     def get_memory_facts(self):
         pagesize = 4096
-        rc, out, err = module.run_command("/usr/bin/vmstat|tail -1")
+        rc, out, err = module.run_command("/usr/bin/vmstat | tail -1", use_unsafe_shell=True)
         data = int(re.sub(' +',' ',out).split(' ')[5].strip())
         self.facts['memfree_mb'] = pagesize * data / 1024 / 1024
         if self.facts['architecture'] == '9000/800':
@@ -1306,12 +1307,12 @@ class HPUX(Hardware):
             data = re.search('.*Physical: ([0-9]*) Kbytes.*',out).groups()[0].strip()
             self.facts['memtotal_mb'] = int(data) / 1024
         else:
-            rc, out, err = module.run_command("/usr/contrib/bin/machinfo |grep Memory")
+            rc, out, err = module.run_command("/usr/contrib/bin/machinfo | grep Memory", use_unsafe_shell=True)
             data = re.search('Memory[\ :=]*([0-9]*).*MB.*',out).groups()[0].strip()
             self.facts['memtotal_mb'] = int(data)
         rc, out, err = module.run_command("/usr/sbin/swapinfo -m -d -f -q")
         self.facts['swaptotal_mb'] = int(out.strip())
-        rc, out, err = module.run_command("/usr/sbin/swapinfo -m -d -f |egrep '^dev|^fs'")
+        rc, out, err = module.run_command("/usr/sbin/swapinfo -m -d -f | egrep '^dev|^fs'", use_unsafe_shell=True)
         swap = 0
         for line in out.strip().split('\n'):
             swap += int(re.sub(' +',' ',line).split(' ')[3].strip())
@@ -1321,7 +1322,7 @@ class HPUX(Hardware):
         rc, out, err = module.run_command("model")
         self.facts['model'] = out.strip()
         if self.facts['architecture'] == 'ia64':
-            rc, out, err = module.run_command("/usr/contrib/bin/machinfo |grep -i 'Firmware revision' |grep -v BMC")
+            rc, out, err = module.run_command("/usr/contrib/bin/machinfo |grep -i 'Firmware revision' | grep -v BMC", use_unsafe_shell=True)
             self.facts['firmware_version'] = out.split(':')[1].strip()
 
 
@@ -1359,14 +1360,30 @@ class Darwin(Hardware):
                 sysctl[key] = value.strip()
         return sysctl
 
+    def get_system_profile(self):
+        rc, out, err = module.run_command(["/usr/sbin/system_profiler", "SPHardwareDataType"])
+        if rc != 0:
+            return dict()
+        system_profile = dict()
+        for line in out.splitlines():
+            if ': ' in line:
+                (key, value) = line.split(': ', 1)
+                system_profile[key.strip()] = ' '.join(value.strip().split())
+        return system_profile
+
     def get_mac_facts(self):
         self.facts['model'] = self.sysctl['hw.model']
         self.facts['osversion'] = self.sysctl['kern.osversion']
         self.facts['osrevision'] = self.sysctl['kern.osrevision']
 
     def get_cpu_facts(self):
-        self.facts['processor'] = self.sysctl['machdep.cpu.brand_string']
-        self.facts['processor_cores'] = self.sysctl['machdep.cpu.core_count']
+        if 'machdep.cpu.brand_string' in self.sysctl: # Intel
+            self.facts['processor'] = self.sysctl['machdep.cpu.brand_string']
+            self.facts['processor_cores'] = self.sysctl['machdep.cpu.core_count']
+        else: # PowerPC
+            system_profile = self.get_system_profile()
+            self.facts['processor'] = '%s @ %s' % (system_profile['Processor Name'], system_profile['Processor Speed'])
+            self.facts['processor_cores'] = self.sysctl['hw.physicalcpu']
 
     def get_memory_facts(self):
         self.facts['memtotal_mb'] = long(self.sysctl['hw.memsize']) / 1024 / 1024
@@ -1398,7 +1415,8 @@ class Network(Facts):
                 subclass = sc
         return super(cls, subclass).__new__(subclass, *arguments, **keyword)
 
-    def __init__(self):
+    def __init__(self, module):
+        self.module = module
         Facts.__init__(self)
 
     def populate(self):
@@ -1414,11 +1432,11 @@ class LinuxNetwork(Network):
     """
     platform = 'Linux'
 
-    def __init__(self):
-        Network.__init__(self)
+    def __init__(self, module):
+        Network.__init__(self, module)
 
     def populate(self):
-        ip_path = module.get_bin_path('ip')
+        ip_path = self.module.get_bin_path('ip')
         if ip_path is None:
             return self.facts
         default_ipv4, default_ipv6 = self.get_default_interfaces(ip_path)
@@ -1546,13 +1564,13 @@ class LinuxNetwork(Network):
                         iface = words[-1]
                         if iface != device:
                             interfaces[iface] = {}
-                        if not secondary and "ipv4_secondaries" not in interfaces[iface]:
-                            interfaces[iface]["ipv4_secondaries"] = []
                         if not secondary or "ipv4" not in interfaces[iface]:
                             interfaces[iface]['ipv4'] = {'address': address,
                                                          'netmask': netmask,
                                                          'network': network}
                         else:
+                            if "ipv4_secondaries" not in interfaces[iface]:
+                                interfaces[iface]["ipv4_secondaries"] = []
                             interfaces[iface]["ipv4_secondaries"].append({
                                 'address': address,
                                 'netmask': netmask,
@@ -1561,6 +1579,8 @@ class LinuxNetwork(Network):
 
                         # add this secondary IP to the main device
                         if secondary:
+                            if "ipv4_secondaries" not in interfaces[device]:
+                                interfaces[device]["ipv4_secondaries"] = []
                             interfaces[device]["ipv4_secondaries"].append({
                                 'address': address,
                                 'netmask': netmask,
@@ -1598,12 +1618,15 @@ class LinuxNetwork(Network):
                             ips['all_ipv6_addresses'].append(address)
 
             ip_path = module.get_bin_path("ip")
-            primary_data = subprocess.Popen(
-                [ip_path, 'addr', 'show', 'primary', device],
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
-            secondary_data = subprocess.Popen(
-                [ip_path, 'addr', 'show', 'secondary', device],
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
+
+            args = [ip_path, 'addr', 'show', 'primary', device]
+            rc, stdout, stderr = self.module.run_command(args)
+            primary_data = stdout
+
+            args = [ip_path, 'addr', 'show', 'secondary', device]
+            rc, stdout, stderr = self.module.run_command(args)
+            secondary_data = stdout
+
             parse_ip_output(primary_data)
             parse_ip_output(secondary_data, secondary=True)
 
@@ -1629,8 +1652,8 @@ class GenericBsdIfconfigNetwork(Network):
     """
     platform = 'Generic_BSD_Ifconfig'
 
-    def __init__(self):
-        Network.__init__(self)
+    def __init__(self, module):
+        Network.__init__(self, module)
 
     def populate(self):
 
@@ -2165,6 +2188,13 @@ class LinuxVirtual(Virtual):
                 self.facts['virtualization_role'] = 'host'
                 return
 
+        # If none of the above matches, return 'NA' for virtualization_type
+        # and virtualization_role. This allows for proper grouping.
+        self.facts['virtualization_type'] = 'NA'
+        self.facts['virtualization_role'] = 'NA'
+        return
+
+
 class HPUXVirtual(Virtual):
     """
     This is a HP-UX specific subclass of Virtual. It defines
@@ -2263,11 +2293,11 @@ def get_file_content(path, default=None):
             data = default
     return data
 
-def ansible_facts():
+def ansible_facts(module):
     facts = {}
     facts.update(Facts().populate())
     facts.update(Hardware().populate())
-    facts.update(Network().populate())
+    facts.update(Network(module).populate())
     facts.update(Virtual().populate())
     return facts
 
@@ -2276,7 +2306,7 @@ def ansible_facts():
 def run_setup(module):
 
     setup_options = {}
-    facts = ansible_facts()
+    facts = ansible_facts(module)
 
     for (k, v) in facts.items():
         setup_options["ansible_%s" % k.replace('-', '_')] = v

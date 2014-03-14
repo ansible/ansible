@@ -43,7 +43,7 @@ Easy enough, let's move on.
 Variables Defined in Inventory
 ``````````````````````````````
 
-We've actually already covered a lot about variables in another section, so so far this shouldn't be terribly new, but
+We've actually already covered a lot about variables in another section, so far this shouldn't be terribly new, but
 a bit of a refresher.
 
 Often you'll want to set variables based on what groups a machine is in.  For instance, maybe machines in Boston
@@ -101,7 +101,7 @@ Inside a template you automatically have access to all of the variables that are
 it's more than that -- you can also read variables about other hosts.  We'll show how to do that in a bit.
 
 .. note:: ansible allows Jinja2 loops and conditionals in templates, but in playbooks, we do not use them.  Ansible
-   templates are pure machine-parseable YAML.  This is an rather important feature as it means it is possible to code-generate
+   playbooks are pure machine-parseable YAML.  This is a rather important feature as it means it is possible to code-generate
    pieces of files, or to have other ecosystem tools read Ansible files.  Not everyone will need this but it can unlock
    possibilities.
 
@@ -113,9 +113,9 @@ Jinja2 Filters
 .. note:: These are infrequently utilized features.  Use them if they fit a use case you have, but this is optional knowledge.
 
 Filters in Jinja2 are a way of transforming template expressions from one kind of data into another.  Jinja2
-ships with many of these as documented on the official Jinja2 template documentation.
+ships with many of these. See `builtin filters`_ in the official Jinja2 template documentation.
 
-In addition to these, Ansible supplies many more.  
+In addition to those, Ansible supplies many more.
 
 .. _filters_for_formatting_data:
 
@@ -136,6 +136,7 @@ Filters Often Used With Conditionals
 The following tasks are illustrative of how filters can be used with conditionals::
 
     tasks:
+
       - shell: /usr/bin/foo
         register: result
         ignore_errors: True
@@ -166,6 +167,19 @@ This allows an explicit check with this feature off::
 
 The variable value will be used as is, but the template evaluation will raise an error if it is undefined.
 
+
+.. _defaulting_undefined_variables:
+
+Defaulting Undefined Variables
+------------------------------
+
+Jinja2 provides a useful 'default' filter, that is often a better approach to failing if a variable is not defined.
+
+    {{ some_variable | default(5) }}
+
+In the above example, if the variable 'some_variable' is not defined, the value used will be 5, rather than an error
+being raised.
+
 .. _set_theory_filters:
 
 Set Theory Filters
@@ -176,7 +190,7 @@ All these functions return a unique set from sets or lists.
 
 To get a unique set from a list::
 
-    {{ list1 |unique }}
+    {{ list1 | unique }}
 
 To get a union of two lists::
 
@@ -184,15 +198,15 @@ To get a union of two lists::
 
 To get the intersection of 2 lists (unique list of all items in both)::
 
-    {{ list1 |intersect(list2)}}
+    {{ list1 | intersect(list2) }}
 
 To get the difference of 2 lists (items in 1 that don't exist in 2)::
 
-    {{ list1 |difference(list2)}}
+    {{ list1 | difference(list2) }}
 
 To get the symmetric difference of 2 lists (items exclusive to each list)::
 
-    {{ list1 |symmetric_difference(list2)}}
+    {{ list1 | symmetric_difference(list2) }}
 
 .. _other_useful_filters:
 
@@ -206,6 +220,10 @@ To get the last name of a file path, like 'foo.txt' out of '/etc/asdf/foo.txt'::
 To get the directory from a path::
 
     {{ path | dirname }}
+
+To expand a path containing a tilde (`~`) character (new in version 1.5)::
+
+    {{ path | expanduser }}
 
 To work with Base64 encoded strings::
 
@@ -654,6 +672,8 @@ be useful for when you don't want to rely on the discovered hostname `ansible_ho
 reasons.  If you have a long FQDN, *inventory_hostname_short* also contains the part up to the first
 period, without the rest of the domain.
 
+*play_hosts* is available as a list of hostnames that are in scope for the current play. This may be useful for filling out templates with multiple hostnames or for injecting the list into the rules for a load balancer.
+
 Don't worry about any of this unless you think you need it.  You'll know when you do.
 
 Also available, *inventory_dir* is the pathname of the directory holding Ansible's inventory host file, *inventory_file* is the pathname and the filename pointing to the Ansible's inventory host file.
@@ -672,13 +692,16 @@ the main playbook.
 You can do this by using an external variables file, or files, just like this::
 
     ---
+
     - hosts: all
       remote_user: root
       vars:
         favcolor: blue
       vars_files:
         - /vars/external_vars.yml
+
       tasks:
+
       - name: this is just a placeholder
         command: /bin/echo foo
 
@@ -712,8 +735,10 @@ This is useful, for, among other things, setting the hosts group or the user for
 Example::
 
     ---
-    - remote_user: '{{ user }}'
-      hosts: '{{ hosts }}'
+
+    - hosts: '{{ hosts }}'
+      remote_user: '{{ user }}'
+
       tasks:
          - ...
 
@@ -746,12 +771,15 @@ As an example, the name of the Apache package may be different between CentOS an
 but it is easily handled with a minimum of syntax in an Ansible Playbook::
 
     ---
+
     - hosts: all
       remote_user: root
       vars_files:
         - "vars/common.yml"
         - [ "vars/{{ ansible_os_family }}.yml", "vars/os_defaults.yml" ]
+
       tasks:
+
       - name: make sure apache is running
         service: name={{ apache }} state=running
 
@@ -910,8 +938,11 @@ So, that's precedence, explained in a more direct way.  Don't worry about preced
 variable that is a default, or a "live" variable you definitely want to use.  Inventory lies in precedence right in the middle, and
 if you want to forcibly override something, use -e.
 
-If you found that a little hard to understand, take a look at the "ansible-examples" repo on our github for a bit more about
+If you found that a little hard to understand, take a look at the `ansible-examples`_ repo on our github for a bit more about
 how all of these things can work together.
+
+.. _ansible-examples: https://github.com/ansible/ansible-examples
+.. _builtin filters: http://jinja.pocoo.org/docs/templates/#builtin-filters
 
 .. seealso::
 

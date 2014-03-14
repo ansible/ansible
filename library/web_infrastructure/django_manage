@@ -203,13 +203,13 @@ def main():
             apps        = dict(default=None, required=False),
             cache_table = dict(default=None, required=False),
             database    = dict(default=None, required=False),
-            failfast    = dict(default='no', required=False, choices=BOOLEANS, aliases=['fail_fast']),
+            failfast    = dict(default='no', required=False, type='bool', aliases=['fail_fast']),
             fixtures    = dict(default=None, required=False),
             liveserver  = dict(default=None, required=False, aliases=['live_server']),
             testrunner  = dict(default=None, required=False, aliases=['test_runner']),
-            skip        = dict(default=None, required=False, choices=BOOLEANS),
-            merge       = dict(default=None, required=False, choices=BOOLEANS),
-            link        = dict(default=None, required=False, choices=BOOLEANS),
+            skip        = dict(default=None, required=False, type='bool'),
+            merge       = dict(default=None, required=False, type='bool'),
+            link        = dict(default=None, required=False, type='bool'),
         ),
     )
 
@@ -232,7 +232,6 @@ def main():
 
     _ensure_virtualenv(module)
 
-    os.chdir(app_path)
     cmd = "python manage.py %s" % (command, )
 
     if command in noinput_commands:
@@ -251,7 +250,7 @@ def main():
         if module.params[param]:
             cmd = '%s %s' % (cmd, module.params[param])
 
-    rc, out, err = module.run_command(cmd)
+    rc, out, err = module.run_command(cmd, cwd=app_path)
     if rc != 0:
         if command == 'createcachetable' and 'table' in err and 'already exists' in err:
             out = 'Already exists.'

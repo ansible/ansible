@@ -24,7 +24,6 @@ along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import json
 import datetime
-import urllib2
 import base64
 import os
 
@@ -59,6 +58,14 @@ options:
         description:
             - Organizations boundary API KEY
         required: true
+    validate_certs:
+        description:
+            - If C(no), SSL certificates will not be validated. This should only be used
+              on personally controlled sites using self-signed certificates.
+        required: false
+        default: 'yes'
+        choices: ['yes', 'no']
+        version_added: 1.5.1
 
 notes:
     - This module does not yet support boundary tags.
@@ -73,12 +80,6 @@ EXAMPLES='''
   boundary_meter: apiid=AAAAAA api_key=BBBBBB state=absent name={{ inventory_hostname }}"
 
 '''
-
-try:
-    import urllib2
-    HAS_URLLIB2 = True
-except ImportError:
-    HAS_URLLIB2 = False
 
 api_host = "api.boundary.com"
 config_directory = "/etc/bprobe"
@@ -101,7 +102,7 @@ def build_url(name, apiid, action, meter_id=None, cert_type=None):
     elif action == "delete":
         return  "https://%s/%s/meters/%s" % (api_host, apiid, meter_id)
 
-def http_request(name, apiid, apikey, action, meter_id=None, cert_type=None):
+def http_request(module, name, apiid, apikey, action, data=None, meter_id=None, cert_type=None):
     
     if meter_id is None:
         url = build_url(name, apiid, action)
@@ -111,11 +112,11 @@ def http_request(name, apiid, apikey, action, meter_id=None, cert_type=None):
         else:
             url = build_url(name, apiid, action, meter_id, cert_type)
 
-    auth = auth_encode(apikey)
-    request = urllib2.Request(url)
-    request.add_header("Authorization", "Basic %s" % (auth)) 
-    request.add_header("Content-Type", "application/json")
-    return request
+    headers = dict()
+    headers["Authorization"] = "Basic %s" % auth_encode(apikey)
+    headers["Content-Type"] = "application/json"
+
+    return fetch_url(module, url, data=data, headers=headers)
 
 def create_meter(module, name, apiid, apikey):
 
@@ -126,14 +127,10 @@ def create_meter(module, name, apiid, apikey):
         module.exit_json(status="Meter " + name + " already exists",changed=False)
     else:
         # If it doesn't exist, create it
-        request = http_request(name, apiid, apikey, action="create")
-        # A create request seems to need a json body with the name of the meter in it
         body = '{"name":"' + name + '"}'
-        request.add_data(body)
+        response, info = http_request(module, name, apiid, apikey, data=body, action="create")
 
-        try: 
-            result = urllib2.urlopen(request)
-        except urllib2.URLError, e:
+        if info['status'] != 200:
             module.fail_json(msg="Failed to connect to api host to create meter")
 
         # If the config directory doesn't exist, create it
@@ -160,15 +157,13 @@ def create_meter(module, name, apiid, apikey):
 
 def search_meter(module, name, apiid, apikey):
 
-    request = http_request(name, apiid, apikey, action="search")
+    response, info = http_request(module, name, apiid, apikey, action="search")
 
-    try: 
-        result = urllib2.urlopen(request)
-    except urllib2.URLError, e:
+    if info['status'] != 200:
         module.fail_json("Failed to connect to api host to search for meter")
 
     # Return meters
-    return json.loads(result.read())
+    return json.loads(response.read())
 
 def get_meter_id(module, name, apiid, apikey):
     # In order to delete the meter we need its id
@@ -186,16 +181,9 @@ def delete_meter(module, name, apiid, apikey):
     if meter_id is None:
         return 1, "Meter does not exist, so can't delete it"
     else:
-        action = "delete"
-        request = http_request(name, apiid, apikey, action, meter_id)
-        # See http://stackoverflow.com/questions/4511598/how-to-make-http-delete-method-using-urllib2
-        # urllib2 only does GET or POST I believe, but here we need delete
-        request.get_method = lambda: 'DELETE'
-
-        try: 
-            result = urllib2.urlopen(request)
-        except urllib2.URLError, e:
-            module.fail_json("Failed to connect to api host to delete meter")
+        response, info = http_request(module, name, apiid, apikey, action, meter_id)
+        if info['status'] != 200:
+            module.fail_json("Failed to delete meter")
 
         # Each new meter gets a new key.pem and ca.pem file, so they should be deleted
         types = ['cert', 'key']
@@ -214,17 +202,14 @@ def download_request(module, name, apiid, apikey, cert_type):
 
     if meter_id is not None:
         action = "certificates"
-        request = http_request(name, apiid, apikey, action, meter_id, cert_type)
- 
-        try:
-            result = urllib2.urlopen(request)
-        except urllib2.URLError, e:
+        response, info = http_request(module, name, apiid, apikey, action, meter_id, cert_type)
+        if info['status'] != 200:
             module.fail_json("Failed to connect to api host to download certificate")
 
         if result:
             try:
                 cert_file_path = '%s/%s.pem' % (config_directory,cert_type)
-                body = result.read()
+                body = response.read()
                 cert_file = open(cert_file_path, 'w')
                 cert_file.write(body)
                 cert_file.close
@@ -238,15 +223,13 @@ def download_request(module, name, apiid, apikey, cert_type):
 
 def main():
 
-    if not HAS_URLLIB2:
-        module.fail_json(msg="urllib2 is not installed")
-
     module = AnsibleModule(
         argument_spec=dict(
         state=dict(required=True, choices=['present', 'absent']),
         name=dict(required=False),
         apikey=dict(required=True),
         apiid=dict(required=True),
+        validate_certs = dict(default='yes', type='bool'),
         )
     )
 
@@ -268,5 +251,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
 main()
 
