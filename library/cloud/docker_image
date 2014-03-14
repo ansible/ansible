@@ -259,7 +259,7 @@ def main():
             state           = dict(default='present', choices=['absent', 'present', 'build', 'force']),
             docker_url      = dict(default='unix://var/run/docker.sock'),
             timeout         = dict(default=600, type='int'),
-            source          = dict(default='local', choices=['local', 'repository'])
+            source          = dict(default='local', choices=['local', 'repository']),
             username        = dict(required=False, default=None),
             password        = dict(required=False, default=None),
         ),
