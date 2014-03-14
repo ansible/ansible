@@ -6,7 +6,7 @@ from glob import glob
 
 sys.path.insert(0, os.path.abspath('lib'))
 from ansible import __version__, __author__
-from distutils.core import setup
+from setuptools import setup
 
 # find library modules
 from ansible.constants import DEFAULT_MODULE_PATH
