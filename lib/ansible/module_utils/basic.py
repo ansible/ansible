@@ -464,12 +464,6 @@ class AnsibleModule(object):
                 changed = True
         return changed
 
-    def set_directory_attributes_if_different(self, file_args, changed):
-        return set_fs_attributes_if_different(self, file_args, changed)
-
-    def set_file_attributes_if_different(self, file_args, changed):
-        return set_fs_attributes_if_different(self, file_args, changed)
-
     def set_fs_attributes_if_different(self, file_args, changed):
         # set modes owners and context as needed
         changed = self.set_context_if_different(
@@ -485,6 +479,12 @@ class AnsibleModule(object):
             file_args['path'], file_args['mode'], changed
         )
         return changed
+
+    def set_directory_attributes_if_different(self, file_args, changed):
+        return self.set_fs_attributes_if_different(file_args, changed)
+
+    def set_file_attributes_if_different(self, file_args, changed):
+        return self.set_fs_attributes_if_different(file_args, changed)
 
     def add_path_info(self, kwargs):
         '''

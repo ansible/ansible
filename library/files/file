@@ -293,6 +293,7 @@ def main():
 
         if changed and not module.check_mode:
             if prev_state != 'absent':
+                #TODO: try to replace with symlink atomically (tmp sym namei by side + rname)
                 try:
                     os.unlink(path)
                 except OSError, e:
