@@ -26,8 +26,8 @@ class Task(object):
     __slots__ = [
         'name', 'meta', 'action', 'when', 'async_seconds', 'async_poll_interval',
         'notify', 'module_name', 'module_args', 'module_vars', 'default_vars',
-        'play', 'notified_by', 'tags', 'register', 'role_name',
-        'delegate_to', 'first_available_file', 'ignore_errors',
+        'play', 'notified_by', 'tags', 'register', 'register_as_list', 'register_as_dict', 'extra',
+        'role_name', 'delegate_to', 'first_available_file', 'ignore_errors',
         'local_action', 'transport', 'sudo', 'remote_user', 'sudo_user', 'sudo_pass',
         'items_lookup_plugin', 'items_lookup_terms', 'environment', 'args',
         'any_errors_fatal', 'changed_when', 'failed_when', 'always_run', 'delay', 'retries', 'until',
@@ -37,7 +37,8 @@ class Task(object):
     # to prevent typos and such
     VALID_KEYS = [
          'name', 'meta', 'action', 'when', 'async', 'poll', 'notify',
-         'first_available_file', 'include', 'tags', 'register', 'ignore_errors',
+         'first_available_file', 'include', 'tags', 'ignore_errors',
+         'register_as_list', 'register_as_dict', 'register',
          'delegate_to', 'local_action', 'transport', 'remote_user', 'sudo', 'sudo_user',
          'sudo_pass', 'when', 'connection', 'environment', 'args',
          'any_errors_fatal', 'changed_when', 'failed_when', 'always_run', 'delay', 'retries', 'until',
@@ -117,13 +118,23 @@ class Task(object):
         self.name         = ds.get('name', None)
         self.tags         = [ 'all' ]
         self.register     = ds.get('register', None)
+        self.register_as_list = utils.boolean(ds.get('register_as_list', None))
+        self.register_as_dict = ds.get('register_as_dict', None)
         self.sudo         = utils.boolean(ds.get('sudo', play.sudo))
         self.su           = utils.boolean(ds.get('su', play.su))
         self.environment  = ds.get('environment', {})
         self.role_name    = role_name
         self.no_log       = utils.boolean(ds.get('no_log', "false"))
 
-        #Code to allow do until feature in a Task 
+        if 'register_as_list' in ds or 'register_as_dict' in ds:
+            # register is required
+            if not ds.get('register'):
+                raise errors.AnsibleError("register keyword is mandatory when using register_as_list/register_as_dict feature")
+
+        if self.register_as_list and self.register_as_dict:
+            raise errors.AnsibleError("register_as_list, and register_as_dict are mutually incompatible in a single task")
+
+        #Code to allow do until feature in a Task
         if 'until' in ds:
             if not ds.get('register'):
                 raise errors.AnsibleError("register keyword is mandatory when using do until feature")
@@ -213,7 +224,7 @@ class Task(object):
 
         self.items_lookup_plugin = ds.get('items_lookup_plugin', None)
         self.items_lookup_terms  = ds.get('items_lookup_terms', None)
-     
+
 
         self.ignore_errors = ds.get('ignore_errors', False)
         self.any_errors_fatal = ds.get('any_errors_fatal', play.any_errors_fatal)
@@ -263,6 +274,8 @@ class Task(object):
         # make some task attributes accessible to Runner code
         self.module_vars['ignore_errors'] = self.ignore_errors
         self.module_vars['register'] = self.register
+        self.module_vars['register_as_list'] = self.register_as_list
+        self.module_vars['register_as_dict'] = self.register_as_dict
         self.module_vars['changed_when'] = self.changed_when
         self.module_vars['failed_when'] = self.failed_when
         self.module_vars['always_run'] = self.always_run
