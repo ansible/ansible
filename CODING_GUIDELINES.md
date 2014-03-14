@@ -86,6 +86,7 @@ Module Security
   * if you use need the shell you must pass use_unsafe_shell=True to module.run_command
   * if you do not need the shell, avoid using the shell
   * any variables that can come from the user input with use_unsafe_shell=True must be wrapped by pipes.quote(x)
+  * downloads of https:// resource urls must import module_utils.urls and use the fetch_url method
 
 Misc Preferences
 ================
