@@ -497,8 +497,8 @@ class AnsibleModule(object):
             file_args['path'], file_args['group'], changed
         )
         changed = self.set_mode_if_different(
-            file_args['path'], file_args['mode'], changed, \
-                    exec_read=self.params['implied_direxec'])
+            file_args['path'], file_args['mode'], changed, 
+            exec_read=self.params['implied_direxec']
         )
         return changed
 
