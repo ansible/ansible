@@ -153,7 +153,7 @@ HAS_PYTHON_APT = True
 try:
     import apt
     import apt_pkg
-except:
+except ImportError:
     HAS_PYTHON_APT = False
 
 def package_split(pkgspec):
