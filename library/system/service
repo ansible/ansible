@@ -685,8 +685,9 @@ class LinuxService(Service):
         elif self.enable_cmd.endswith("systemctl"):
             check_rc = True
             is_netctl = self.__systemd_unit.startswith('netctl@') and self.__locations.get('netctl')
+            name = self.name[len('netctl@'):] if is_netctl else self.__systemd_unit
             enable_cmd = self.__locations['netctl'] if is_netctl else self.enable_cmd
-            args = (enable_cmd, enable_disable, self.name[len('netctl@'):])
+            args = (enable_cmd, enable_disable, name)
         else:
             args = (self.enable_cmd, self.name, on_off)
 
