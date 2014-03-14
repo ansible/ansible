@@ -384,9 +384,11 @@ class LinuxService(Service):
     def get_service_tools(self):
 
         paths = [ '/sbin', '/usr/sbin', '/bin', '/usr/bin' ]
-        binaries = [ 'service', 'chkconfig', 'update-rc.d', 'rc-service', 'rc-update', 'initctl', 'systemctl', 'start', 'stop', 'restart' ]
+        binaries = [ 'service', 'chkconfig', 'update-rc.d', 'rc-service', 'rc-update', 'initctl', 'netctl', 'systemctl', 'start', 'stop', 'restart' ]
         initpaths = [ '/etc/init.d' ]
         location = dict()
+
+        self.__locations = location
 
         for binary in binaries:
             location[binary] = None
@@ -535,6 +537,8 @@ class LinuxService(Service):
 
     def service_enable(self):
 
+        check_rc = False # to avoid breaking backends that we can't test
+
         if self.enable_cmd is None:
             self.module.fail_json(msg='service name not recognized')
 
@@ -679,7 +683,10 @@ class LinuxService(Service):
         if self.enable_cmd.endswith("rc-update"):
             args = (self.enable_cmd, add_delete, self.name + " " + self.runlevel)
         elif self.enable_cmd.endswith("systemctl"):
-            args = (self.enable_cmd, enable_disable, self.__systemd_unit)
+            check_rc = True
+            is_netctl = self.__systemd_unit.startswith('netctl@') and self.__locations.get('netctl')
+            enable_cmd = self.__locations['netctl'] if is_netctl else self.enable_cmd
+            args = (enable_cmd, enable_disable, self.name[len('netctl@'):])
         else:
             args = (self.enable_cmd, self.name, on_off)
 
@@ -688,7 +695,7 @@ class LinuxService(Service):
         if self.module.check_mode and self.changed:
             self.module.exit_json(changed=True)
 
-        return self.execute_command("%s %s %s" % args)
+        return self.execute_command(args, check_rc=check_rc)
 
 
     def service_control(self):
