@@ -25,7 +25,7 @@ module: zabbix_maintenance
 short_description: Create Zabbix maintenance windows
 description:
     - This module will let you create Zabbix maintenance windows.
-version_added: "1.5"
+version_added: "1.6"
 author: Alexander Bulimov
 requirements:
     - zabbix-api python module
@@ -36,38 +36,39 @@ options:
         required: true
         default: null
         choices: [ "present", "absent" ]
-    server:
+    server_url:
         description:
-            - Url of Zabbix server, with schema (http or https).
+            - Url of Zabbix server, with protocol (http or https).
+              C(url) is an alias for C(server_url).
         required: true
         default: null
         aliases: [ "url" ]
-    user:
+    login_user:
         description:
             - Zabbix user name.
         required: true
         default: null
-    passwd:
+    login_password:
         description:
             - Zabbix user password.
         required: true
         default: null
-    hosts:
+    host_names:
         description:
             - Hosts to manage maintenance window for. Separate multiple hosts with commas.
-              C(host) is an alias for C(hosts).
-              B(Required) option when C(state) is I(present) and no C(groups) specified.
+              C(host_name) is an alias for C(host_names).
+              B(Required) option when C(state) is I(present) and no C(host_groups) specified.
         required: false
         default: null
-        aliases: [ "host" ]
-    groups:
+        aliases: [ "host_name" ]
+    host_groups:
         description:
             - Host groups to manage maintenance window for. Separate multiple groups with commas.
-              C(group) is an alias for C(groups).
-              B(Required) option when C(state) is I(present) and no C(hosts) specified.
+              C(host_group) is an alias for C(host_groups).
+              B(Required) option when C(state) is I(present) and no C(host_names) specified.
         required: false
         default: null
-        aliases: [ "group" ]
+        aliases: [ "host_group" ]
     minutes:
         description:
             - Length of maintenance window in minutes.
@@ -102,39 +103,39 @@ EXAMPLES = '''
 # Create maintenance window named "Update of www1"
 # for host www1.example.com for 90 minutes
 - zabbix_maintenance: name="Update of www1" 
-                      host=www1.example.com
+                      host_name=www1.example.com
                       state=present
                       minutes=90
-                      server=https://monitoring.example.com
-                      user=ansible
-                      passwd=pAsSwOrD
+                      server_url=https://monitoring.example.com
+                      login_user=ansible
+                      login_password=pAsSwOrD
 
 # Create maintenance window named "Mass update"
 # for host www1.example.com and host groups Office and Dev
 - zabbix_maintenance: name="Update of www1"
-                      host=www1.example.com
-                      group=Office,Dev
+                      host_name=www1.example.com
+                      host_groups=Office,Dev
                       state=present
-                      server=https://monitoring.example.com
-                      user=ansible
-                      passwd=pAsSwOrD
+                      server_url=https://monitoring.example.com
+                      login_user=ansible
+                      login_password=pAsSwOrD
 
 # Create maintenance window named "update"
-# for host www1.example.com and without data collection.
+# for hosts www1.example.com and db1.example.com and without data collection.
 - zabbix_maintenance: name=update
-                      host=www1.example.com
+                      host_names=www1.example.com,db1.example.com
                       state=present
                       collect_data=false
-                      server=https://monitoring.example.com
-                      user=ansible
-                      passwd=pAsSwOrD
+                      server_url=https://monitoring.example.com
+                      login_user=ansible
+                      login_password=pAsSwOrD
 
 # Remove maintenance window named "Test1"
 - zabbix_maintenance: name=Test1
                       state=absent
-                      server=https://monitoring.example.com
-                      user=ansible
-                      passwd=pAsSwOrD
+                      server_url=https://monitoring.example.com
+                      login_user=ansible
+                      login_password=pAsSwOrD
 '''
 
 import datetime, time
@@ -205,9 +206,9 @@ def check_maintenance(zbx, name):
         return 1, None, str(e)
     return 0, result, None
 
-def get_group_ids(zbx, group_names):
+def get_group_ids(zbx, host_groups):
     group_ids = []
-    for group in group_names:
+    for group in host_groups:
         try:
             result = zbx.hostgroup.get(
                 {
@@ -256,12 +257,12 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             state=dict(required=True, default=None, choices=['present', 'absent']),
-            server=dict(required=True, default=None, aliases=['url']),
-            hosts=dict(type='list', required=False, default=None, aliases=['host']),
+            server_url=dict(required=True, default=None, aliases=['url']),
+            host_names=dict(type='list', required=False, default=None, aliases=['host_name']),
             minutes=dict(type='int', required=False, default=10),
-            groups=dict(type='list', required=False, default=None, aliases=['group']),
-            user=dict(required=True, default=None),
-            passwd=dict(required=True, default=None),
+            host_groups=dict(type='list', required=False, default=None, aliases=['host_group']),
+            login_user=dict(required=True, default=None),
+            login_password=dict(required=True, default=None),
             name=dict(required=True, default=None),
             desc=dict(required=False, default="Created by Ansible"),
             collect_data=dict(type='bool', required=False, default=True),
@@ -272,15 +273,15 @@ def main():
     if not HAS_ZABBIX_API:
         module.fail_json(msg="Missing requried zabbix-api module (check docs or install with: pip install zabbix-api)")
 
-    hosts = module.params['hosts']
-    groups = module.params['groups']
+    host_names = module.params['host_names']
+    host_groups = module.params['host_groups']
     state = module.params['state']
-    user = module.params['user']
-    passwd = module.params['passwd']
+    login_user = module.params['login_user']
+    login_password = module.params['login_password']
     minutes = module.params['minutes']
     name = module.params['name']
     desc = module.params['desc']
-    server = module.params['server']
+    server_url = module.params['server_url']
     collect_data = module.params['collect_data']
     if collect_data:
         maintenance_type = 0
@@ -289,8 +290,8 @@ def main():
 
 
     try:
-        zbx = ZabbixAPI(server)
-        zbx.login(user, passwd)
+        zbx = ZabbixAPI(server_url)
+        zbx.login(login_user, login_password)
     except BaseException as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s"%e)
 
@@ -302,15 +303,15 @@ def main():
         start_time = time.mktime(now.timetuple())
         period = 60 * int(minutes) #N * 60 seconds
 
-        if groups:
-            (rc, group_ids, error) = get_group_ids(zbx, groups)
+        if host_groups:
+            (rc, group_ids, error) = get_group_ids(zbx, host_groups)
             if rc != 0:
                 module.fail_json(msg="Failed to get group_ids: %s"%error)
         else:
             group_ids = []
 
-        if hosts:
-            (rc, host_ids, error) = get_host_ids(zbx, hosts)
+        if host_names:
+            (rc, host_ids, error) = get_host_ids(zbx, host_names)
             if rc != 0:
                 module.fail_json(msg="Failed to get host_ids: %s"%error)
         else:
@@ -321,8 +322,8 @@ def main():
             module.fail_json(msg="Failed to check maintenance %s existance: %s"%(name, error))
 
         if not exists:
-            if not hosts and not groups:
-                module.fail_json(msg="At least one host or host group must be defined for each created maintenance.")
+            if not host_names and not host_groups:
+                module.fail_json(msg="At least one host_name or host_group must be defined for each created maintenance.")
 
             if module.check_mode:
                 changed = True
