@@ -168,14 +168,14 @@ class Service(object):
     # ===========================================
     # Generic methods that should be used on all platforms.
 
-    def execute_command(self, cmd, daemonize=False):
+    def execute_command(self, cmd, daemonize=False, **kwargs):
         if self.syslogging:
             syslog.openlog('ansible-%s' % os.path.basename(__file__))
             syslog.syslog(syslog.LOG_NOTICE, 'Command %s, daemonize %r' % (cmd, daemonize))
 
         # Most things don't need to be daemonized
         if not daemonize:
-            return self.module.run_command(cmd)
+            return self.module.run_command(cmd, **kwargs)
 
         # This is complex because daemonization is hard for people.
         # What we do is daemonize a part of this module, the daemon runs the
