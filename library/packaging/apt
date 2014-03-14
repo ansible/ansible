@@ -411,7 +411,9 @@ def main():
         if p['upgrade']:
             upgrade(module, p['upgrade'], force_yes, dpkg_options)
 
-        packages = p['package'].split(',')
+        packages = p['package']
+        if hasattr(packages, 'split'):
+            packages = packages.split(',')
         latest = p['state'] == 'latest'
         for package in packages:
             if package.count('=') > 1:
