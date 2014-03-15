@@ -1,0 +1,247 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+"""
+Ansible module to configure .deb packages.
+(c) 2014, Mark Stillwell <marklee@fortawesome.org>
+
+This file is part of Ansible
+
+Ansible is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Ansible is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+DOCUMENTATION = '''
+---
+module: ldap
+short_description: look up, add, update, or delete an ldap entry
+description:
+     - use this module to look up, add, update, or delete an ldap entry
+version_added: "1.6"
+notes:
+    - This module requires the command line ldap utilities.
+options:
+  name:
+   ldap_uri:
+      - uri for ldap server
+    required: false
+    default: null
+    aliases: []
+  bind_dn:
+    description:
+      - dn to use to bind to ldap server
+    required: false
+    default: null
+    aliases: []
+  bind_password:
+    description:
+      - password to use to bind
+    required: false
+    default: null
+    aliases: []
+  entry_dn:
+    description:
+      - entry distinguished name
+    required: true
+    default: null
+    aliases: []
+  attrs:
+    description:
+      - list of dictionaries giving key-value pairs to assign
+    required: false
+    default: []
+    aliases: []
+  state:
+    description:
+      - desired state of ldap entry
+    required: false
+    default: 'present'
+    choices: [ 'present', 'absent' ]
+    aliases: []
+author: Mark Stillwell
+
+'''
+
+EXAMPLES = '''
+      ldap:
+        bind_dn: cn=admin,dc=example,dc=net
+        bind_password: adminpass
+        entry_dn: cn=user,ou=People,dc=example,dc=net
+        attrs:
+          - objectClass: top
+          - objectClass: person
+          - objectClass: inetOrgPerson
+          - objectClass: posixAccount
+          - objectClass: shadowAccount
+          - uid: user
+          - sn: surname
+          - cn: canonical name
+          - uidNumber: 1000001
+          - gidNumber: 1000001
+          - homeDirectory: /home/user
+          - loginShell: /bin/bash
+        state: present
+'''
+
+def _get_entry(module, cmdparams, entry_dn):
+    ''' get entry from ldap and return a dictionary '''
+
+    cmd = [module.get_bin_path('ldapsearch', True)] + cmdparams
+    cmd += ["-LLL", "-b", entry_dn]
+
+    rc, out, err = module.run_command(' '.join(cmd))
+
+    # not found
+    if rc == 32:
+        return None
+
+    if rc != 0:
+        module.fail_json(msg=err)
+
+    return [tuple(x.strip() for x in line.split(':', 1)) 
+            for line in out.splitlines() if line.strip() != ""]
+
+
+def _add_entry(module, cmdparams, curr):
+    ''' add an entry to ldap '''
+    import pipes
+
+    data = "\n".join("%s: %s" % (k, v) for k, v in curr)
+
+    cmd = ["echo", pipes.quote(data), "|", 
+           module.get_bin_path('ldapadd', True)] + cmdparams
+
+    return module.run_command(' '.join(cmd), use_unsafe_shell=True)
+
+def _modify_entry(module, cmdparams, prev, curr):
+    ''' update an entry in ldap '''
+    import pipes
+
+    data = "%s: %s\nchangetype: modify\n" % (prev[0])
+
+    pkset = set(k for k, v in prev[1:])
+
+    cdict = dict()
+    for k, v in curr[1:]:
+        cdict.setdefault(k, []).append(v)
+
+    changes = []
+
+    # delete keys that are no longer in curr
+    for k in pkset - set(cdict):
+        changes.append("delete: %s" % (k))
+
+    # just replace all curr values (seems easiest)
+    for k, vl in cdict.items():
+        change = "replace: %s" % (k)
+        for v in vl:
+            change += "\n%s: %s" % (k, v)
+        changes.append(change)
+
+    data += "\n-\n".join(changes)
+
+    cmd = ["echo", pipes.quote(data), "|", 
+            module.get_bin_path('ldapmodify', True)] + cmdparams
+
+    return module.run_command(' '.join(cmd), use_unsafe_shell=True)
+
+
+def _delete_entry(module, cmdparams, entry_dn):
+    ''' delete an entry in ldap and return empty '''
+    cmd = [module.get_bin_path('ldapdelete', True)] + cmdparams
+    cmd += [entry_dn]
+
+    return module.run_command(' '.join(cmd))
+
+
+def main():
+    ''' main function '''
+
+    module = AnsibleModule(
+        argument_spec = dict(
+           ldap_uri = dict(type='str'),
+           bind_dn = dict(type='str'),
+           bind_password = dict(type='str'),
+           entry_dn = dict(required=True, type='str'),
+           attrs = dict(default=None),
+           state = dict(required=False, type='str', default='present',
+                        choices=['present', 'absent'])
+        ),
+        supports_check_mode=True,
+    )
+
+    ldap_uri = module.params['ldap_uri']
+    bind_dn  = module.params['bind_dn']
+    bind_password = module.params['bind_password']
+
+    cmdparams = []
+
+    if ldap_uri is not None:
+
+        if ldap_uri == "ldapi:///" and bind_password is None:
+            cmdparams += [ '-Q', '-Y', 'EXTERNAL' ]
+
+        cmdparams += ["-H", ldap_uri]
+
+    if bind_dn is not None:
+        cmdparams += ["-D", bind_dn]
+
+    if bind_password is not None:
+        cmdparams += ["-w", bind_password]
+
+    entry_dn = module.params['entry_dn']
+    attrs = module.params['attrs']
+    state = module.params['state']
+
+    prev = _get_entry(module, cmdparams, entry_dn)
+    prev_str = ""
+    if prev is not None:
+        prev_str = str(sorted(prev))
+
+    curr = None
+    curr_str = ""
+    if state != 'absent' and attrs is not None:
+        curr = [('dn', entry_dn)] + [tuple(map(str, d.items()[0])) 
+                                     for d in attrs]
+        curr_str = str(sorted(curr))
+
+    changed = False
+    msg = ''
+
+    if prev_str != curr_str:
+
+        changed = True
+
+        if not module.check_mode:
+            rc = None
+            if state == 'present':
+                if prev is None:
+                    rc, msg, e = _add_entry(module, cmdparams, curr)
+                else:
+                    rc, msg, e = _modify_entry(module, cmdparams, prev, curr)
+            else:
+                    rc, msg, e = _delete_entry(module, cmdparams, entry_dn)
+
+            if rc:
+                module.fail_json(msg=e)
+        
+        curr = _get_entry(module, cmdparams, entry_dn)
+
+        module.exit_json(changed=changed, msg=msg, current=curr, previous=prev)
+
+    module.exit_json(changed=changed, msg=msg, current=prev)
+
+# import module snippets
+from ansible.module_utils.basic import *
+
+main()
