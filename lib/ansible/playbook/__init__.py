@@ -481,7 +481,7 @@ class PlayBook(object):
             host_list = [h for h in host_list if h not in self.SETUP_CACHE or 'module_setup' not in self.SETUP_CACHE[h]]
             if len(host_list) == 0:
                 return {}
-        elif play.gather_facts is False or (play.gather_facts is None and C.DEFAULT_GATHERING == 'never'):
+        elif play.gather_facts is False or (play.gather_facts is None and C.DEFAULT_GATHERING == 'explicit'):
             return {}
 
         self.callbacks.on_setup()
