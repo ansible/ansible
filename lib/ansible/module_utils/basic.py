@@ -464,7 +464,7 @@ class AnsibleModule(object):
                 changed = True
         return changed
 
-    def set_file_attributes_if_different(self, file_args, changed):
+    def set_fs_attributes_if_different(self, file_args, changed):
         # set modes owners and context as needed
         changed = self.set_context_if_different(
             file_args['path'], file_args['secontext'], changed
@@ -481,19 +481,10 @@ class AnsibleModule(object):
         return changed
 
     def set_directory_attributes_if_different(self, file_args, changed):
-        changed = self.set_context_if_different(
-            file_args['path'], file_args['secontext'], changed
-        )
-        changed = self.set_owner_if_different(
-            file_args['path'], file_args['owner'], changed
-        )
-        changed = self.set_group_if_different(
-            file_args['path'], file_args['group'], changed
-        )
-        changed = self.set_mode_if_different(
-            file_args['path'], file_args['mode'], changed
-        )
-        return changed
+        return self.set_fs_attributes_if_different(file_args, changed)
+
+    def set_file_attributes_if_different(self, file_args, changed):
+        return self.set_fs_attributes_if_different(file_args, changed)
 
     def add_path_info(self, kwargs):
         '''
@@ -963,7 +954,7 @@ class AnsibleModule(object):
                 context = self.selinux_default_context(dest)
 
         try:
-            # Optimistically try a rename, solves some corner cases and can avoid useless work.
+            # Optimistically try a rename, solves some corner cases and can avoid useless work, throws exception if not atomic.
             os.rename(src, dest)
         except (IOError,OSError), e:
             # only try workarounds for errno 18 (cross device), 1 (not permited) and 13 (permission denied)
