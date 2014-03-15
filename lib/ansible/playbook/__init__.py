@@ -479,10 +479,14 @@ class PlayBook(object):
     def _do_setup_step(self, play):
         ''' get facts from the remote system '''
 
-        if play.gather_facts is False:
-            return {}
-
         host_list = self._trim_unavailable_hosts(play._play_hosts)
+
+        if play.gather_facts is None and C.DEFAULT_GATHERING == 'smart':
+            host_list = [h for h in host_list if h not in self.SETUP_CACHE or 'module_setup' not in self.SETUP_CACHE[h]]
+            if len(host_list) == 0:
+                return {}
+        elif play.gather_facts is False or (play.gather_facts is None and C.DEFAULT_GATHERING == 'never'):
+            return {}
 
         self.callbacks.on_setup()
         self.inventory.restrict_to(host_list)
