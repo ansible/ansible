@@ -160,6 +160,7 @@ def main():
     diff_peek = params['diff_peek']
     src = params['src']
 
+    # modify source as we later reload and pass, specially relevant when used by other modules.
     params['path'] = path = os.path.expanduser(params['path'])
 
     # short-circuit for diff_peek
@@ -175,8 +176,8 @@ def main():
             pass
         module.exit_json(path=path, changed=False, appears_binary=appears_binary)
 
+    # Find out current state
     prev_state = 'absent'
-
     if os.path.lexists(path):
         if os.path.islink(path):
             prev_state = 'link'
@@ -188,15 +189,20 @@ def main():
             # could be many other things, but defaulting to file
             prev_state = 'file'
 
-    #TODO: shouldn't this be 'file' as docs say?
+    # state should default to file, but since that creates many conflicts,
+    # default to 'current' when it exists.
     if state is None:
-        state = prev_state
+        if prev_state != 'absent':
+            state = prev_state
+        else:
+            state = 'file'
 
     # source is both the source of a symlink or an informational passing of the src for a template module
     # or copy module, even if this module never uses it, it is needed to key off some things
     if src is not None:
         src = os.path.expanduser(src)
-        #TODO: not sure what goes on here
+
+        # original_basename is used by other modules that depend on file.
         if os.path.isdir(path) and state not in ["link", "absent", "directory"]:
             if params['original_basename']:
                 basename = params['original_basename']
@@ -207,12 +213,10 @@ def main():
         if state in ['link','hard']:
             module.fail_json(msg='src and dest are required for creating links')
 
-    #TODO: find out why here,params are set before and after, why not at top or bottom of rest of args processing?
     file_args = module.load_file_common_arguments(params)
-
     changed = False
-    recurse = params['recurse']
 
+    recurse = params['recurse']
     if recurse and state != 'directory':
         module.fail_json(path=path, msg="recurse option requires state to be 'directory'")
 
@@ -235,7 +239,7 @@ def main():
 
     elif state == 'file':
         if state != prev_state:
-            #TODO: does this even make sense?
+            # file is not absent and any other state is a conflict
             module.fail_json(path=path, msg='file (%s) is %s, cannot continue' % (path, prev_state))
 
         changed = module.set_fs_attributes_if_different(file_args, changed)
@@ -288,16 +292,21 @@ def main():
             if not force:
                 module.fail_json(dest=path, src=src, msg='Cannot link, %s exists at destination' % prev_state)
         else:
-            #TODO: kill kittens
             module.fail_json(dest=path, src=src, msg='unexpected position reached')
 
         if changed and not module.check_mode:
             if prev_state != 'absent':
-                #TODO: try to replace with symlink atomically (tmp sym namei by side + rname)
+                # try to replace atomically
+                tmppath = ".%s.%s.%s.tmp" % (path,os.getpid(),time.time())
                 try:
-                    os.unlink(path)
+                    if state == 'hard':
+                        os.link(src,tmppath)
+                    else:
+                        os.symlink(src, tmppath)
+                    os.rename(tmppath, path)
                 except OSError, e:
-                    module.fail_json(path=path, msg='Error while removing existing target: %s' % str(e))
+                    os.unlink(tmppath)
+                    module.fail_json(path=path, msg='Error while replacing: %s' % str(e))
             try:
                 if state == 'hard':
                     os.link(src,path)
@@ -329,7 +338,6 @@ def main():
 
         module.exit_json(dest=path, changed=True)
 
-    #TODO: send last commiter hate mail for triggering this
     module.fail_json(path=path, msg='unexpected position reached')
 
 # import module snippets
