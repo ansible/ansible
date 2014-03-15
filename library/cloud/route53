@@ -157,19 +157,18 @@ def commit(changes):
             time.sleep(500)
 
 def main():
-    module = AnsibleModule(
-        argument_spec = dict(
+    argument_spec = ec2_argument_spec()
+    argument_spec.update(dict(
             command         = dict(choices=['get', 'create', 'delete'], required=True),
             zone            = dict(required=True),
             record          = dict(required=True),
             ttl             = dict(required=False, default=3600),
             type            = dict(choices=['A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'NS'], required=True),
             value           = dict(required=False), 
-            ec2_secret_key  = dict(aliases=['aws_secret_key', 'secret_key'], no_log=True, required=False),
-            ec2_access_key  = dict(aliases=['aws_access_key', 'access_key'], required=False),
             overwrite       = dict(required=False, type='bool')
         )
     )
+    module = AnsibleModule(argument_spec=argument_spec)
 
     command_in            = module.params.get('command')
     zone_in               = module.params.get('zone')
@@ -221,11 +220,16 @@ def main():
     found_record = False
     sets = conn.get_all_rrsets(zones[zone_in])
     for rset in sets:
-        if rset.type == type_in and rset.name == record_in:
+        # Due to a bug in either AWS or Boto, "special" characters are returned as octals, preventing round
+        # tripping of things like * and @.
+        decoded_name = rset.name.replace(r'\052', '*')
+        decoded_name = rset.name.replace(r'\100', '@')
+
+        if rset.type == type_in and decoded_name == record_in:
             found_record = True
             record['zone'] = zone_in
             record['type'] = rset.type
-            record['record'] = rset.name
+            record['record'] = decoded_name
             record['ttl'] = rset.ttl
             record['value'] = ','.join(sorted(rset.resource_records))
             record['values'] = sorted(rset.resource_records)

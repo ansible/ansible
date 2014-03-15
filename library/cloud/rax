@@ -576,7 +576,7 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                     names = [name] * count
             else:
                 search_opts = {
-                    'name': name,
+                    'name': '^%s$' % name,
                     'image': image,
                     'flavor': flavor
                 }
@@ -612,7 +612,7 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                     module.fail_json(msg='%s is required for the "rax" '
                                          'module' % arg)
             search_opts = {
-                'name': name,
+                'name': '^%s$' % name,
                 'image': image,
                 'flavor': flavor
             }
@@ -642,11 +642,11 @@ def main():
     argument_spec = rax_argument_spec()
     argument_spec.update(
         dict(
-            auto_increment=dict(choices=BOOLEANS, default=True, type='bool'),
+            auto_increment=dict(default=True, type='bool'),
             count=dict(default=1, type='int'),
             count_offset=dict(default=1, type='int'),
             disk_config=dict(choices=['auto', 'manual']),
-            exact_count=dict(choices=BOOLEANS, default=False, type='bool'),
+            exact_count=dict(default=False, type='bool'),
             files=dict(type='dict', default={}),
             flavor=dict(),
             group=dict(),
@@ -658,7 +658,7 @@ def main():
             networks=dict(type='list', default=['public', 'private']),
             service=dict(),
             state=dict(default='present', choices=['present', 'absent']),
-            wait=dict(choices=BOOLEANS, default=False, type='bool'),
+            wait=dict(default=False, type='bool'),
             wait_timeout=dict(default=300),
         )
     )

@@ -170,6 +170,14 @@ class ActionModule(object):
         module_items = ' '.join(['%s=%s' % (k, v) for (k,
                 v) in options.items()])
 
-        return self.runner._execute_module(conn, tmp, 'synchronize',
-                module_items, inject=inject)
+        if self.runner.noop_on_check(inject):
+            module_items += " CHECKMODE=True"
+
+        # run the module and store the result
+        result = self.runner._execute_module(conn, tmp, 'synchronize', module_items, inject=inject)
+
+        # reset the sudo property                 
+        self.runner.sudo = self.original_sudo
+
+        return result
 

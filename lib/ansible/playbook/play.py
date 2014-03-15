@@ -227,6 +227,27 @@ class Play(object):
                             if meta_data:
                                 allow_dupes = utils.boolean(meta_data.get('allow_duplicates',''))
 
+                        if "tags" in passed_vars:
+                            if not self._is_valid_tag(passed_vars["tags"]):
+                                # one of the tags specified for this role was in the
+                                # skip list, or we're limiting the tags and it didn't 
+                                # match one, so we just skip it completely
+                                continue
+
+                        # if any tags were specified as role/dep variables, merge
+                        # them into the passed_vars so they're passed on to any 
+                        # further dependencies too, and so we only have one place
+                        # (passed_vars) to look for tags going forward
+                        def __merge_tags(var_obj):
+                            old_tags = passed_vars.get('tags', [])
+                            new_tags = var_obj.get('tags', [])
+                            if isinstance(new_tags, basestring):
+                                new_tags = [new_tags, ]
+                            return list(set(old_tags).union(set(new_tags)))
+
+                        passed_vars['tags'] = __merge_tags(role_vars)
+                        passed_vars['tags'] = __merge_tags(dep_vars)
+
                         # if tags are set from this role, merge them
                         # into the tags list for the dependent role
                         if "tags" in passed_vars:
@@ -235,9 +256,9 @@ class Play(object):
                                 included_dep_vars = included_role_dep[2]
                                 if included_dep_name == dep:
                                     if "tags" in included_dep_vars:
-                                        included_dep_vars["tags"] = list(set(included_dep_vars["tags"] + passed_vars["tags"]))
+                                        included_dep_vars["tags"] = list(set(included_dep_vars["tags"]).union(set(passed_vars["tags"])))
                                     else:
-                                        included_dep_vars["tags"] = passed_vars["tags"].copy()
+                                        included_dep_vars["tags"] = passed_vars["tags"][:]
 
                         dep_vars = utils.combine_vars(passed_vars, dep_vars)
                         dep_vars = utils.combine_vars(role_vars, dep_vars)
@@ -253,13 +274,6 @@ class Play(object):
                             dep_defaults_data = utils.parse_yaml_from_file(defaults, vault_password=self.vault_password)
                         if 'role' in dep_vars:
                             del dep_vars['role']
-
-                        if "tags" in passed_vars:
-                            if not self._is_valid_tag(passed_vars["tags"]):
-                                # one of the tags specified for this role was in the
-                                # skip list, or we're limiting the tags and it didn't 
-                                # match one, so we just skip it completely
-                                continue
 
                         if not allow_dupes:
                             if dep in self.included_roles:
@@ -278,7 +292,7 @@ class Play(object):
                                     if type(passed_vars['when']) is str:
                                         tmpcond.append(passed_vars['when'])
                                     elif type(passed_vars['when']) is list:
-                                        tmpcond.join(passed_vars['when'])
+                                        tmpcond += passed_vars['when']
 
                                     if type(dep_vars['when']) is str:
                                         tmpcond.append(dep_vars['when'])
@@ -434,6 +448,7 @@ class Play(object):
                  os.path.join(basepath, 'main'),
                  os.path.join(basepath, 'main.yml'),
                  os.path.join(basepath, 'main.yaml'),
+                 os.path.join(basepath, 'main.json'),
                 )
         if sum([os.path.isfile(x) for x in mains]) > 1:
             raise errors.AnsibleError("found multiple main files at %s, only one allowed" % (basepath))
@@ -671,11 +686,15 @@ class Play(object):
         unmatched_tags: tags that were found within the current play but do not match
                         any provided by the user '''
 
-        # gather all the tags in all the tasks into one list
+        # gather all the tags in all the tasks and handlers into one list
+        # FIXME: isn't this in self.tags already?
+
         all_tags = []
         for task in self._tasks:
             if not task.meta:
                 all_tags.extend(task.tags)
+        for handler in self._handlers:
+            all_tags.extend(handler.tags)
 
         # compare the lists of tags using sets and return the matched and unmatched
         all_tags_set = set(all_tags)

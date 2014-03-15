@@ -75,11 +75,6 @@ def _executor_hook(job_queue, result_queue, new_stdin):
             host = job_queue.get(block=False)
             return_data = multiprocessing_runner._executor(host, new_stdin)
             result_queue.put(return_data)
-
-            if 'LEGACY_TEMPLATE_WARNING' in return_data.flags:
-                # pass data back up across the multiprocessing fork boundary
-                template.Flags.LEGACY_TEMPLATE_WARNING = True
-
         except Queue.Empty:
             pass
         except:
@@ -193,7 +188,6 @@ class Runner(object):
         self.accelerate_port  = accelerate_port
         self.accelerate_ipv6  = accelerate_ipv6
         self.callbacks.runner = self
-        self.original_transport = self.transport
         self.su               = su
         self.su_user_var      = su_user
         self.su_user          = None
@@ -211,6 +205,9 @@ class Runner(object):
             else:
                 self.transport = "ssh" 
 
+        # save the original transport, in case it gets
+        # changed later via options like accelerate
+        self.original_transport = self.transport
 
         # misc housekeeping
         if subset and self.inventory._subset is None:
@@ -246,7 +243,7 @@ class Runner(object):
         """
         if complex_args is None:
             return module_args
-        if type(complex_args) != dict:
+        if not isinstance(complex_args, dict):
             raise errors.AnsibleError("complex arguments are not a dictionary: %s" % complex_args)
         for (k,v) in complex_args.iteritems():
             if isinstance(v, basestring):
@@ -306,7 +303,7 @@ class Runner(object):
 
         delegate = {}
 
-        # allow ansible_ssh_host to be templated
+        # allow delegated host to be templated
         delegate['host'] = template.template(self.basedir, host, 
                                 remote_inject, fail_on_undefined=True)
 
@@ -324,14 +321,17 @@ class Runner(object):
         this_host = delegate['host']
 
         # get the vars for the delegate by it's name        
-        if this_host in delegate['inject']['hostvars']:
+        try:
             this_info = delegate['inject']['hostvars'][this_host]
-        else:
+        except:
             # make sure the inject is empty for non-inventory hosts
             this_info = {}
 
         # get the real ssh_address for the delegate        
-        delegate['ssh_host'] = this_info.get('ansible_ssh_host', delegate['host'])
+        # and allow ansible_ssh_host to be templated
+        delegate['ssh_host'] = template.template(self.basedir,
+                            this_info.get('ansible_ssh_host', this_host),
+                            this_info, fail_on_undefined=True)
 
         delegate['port'] = this_info.get('ansible_ssh_port', port)
 
@@ -415,7 +415,7 @@ class Runner(object):
 
         environment_string = self._compute_environment_string(inject)
 
-        if tmp.find("tmp") != -1 and (self.sudo or self.su) and (self.sudo_user != 'root' or self.su_user != 'root'):
+        if tmp.find("tmp") != -1 and ((self.sudo and self.sudo_user != 'root') or (self.su and self.su_user != 'root')):
             # deal with possible umask issues once sudo'ed to other user
             cmd_chmod = "chmod a+r %s" % remote_module_path
             self._low_level_exec_command(conn, cmd_chmod, tmp, sudoable=False)
@@ -444,7 +444,7 @@ class Runner(object):
             else:
                 argsfile = self._transfer_str(conn, tmp, 'arguments', args)
 
-            if (self.sudo or self.su) and (self.sudo_user != 'root' or self.su_user != 'root'):
+            if (self.sudo and self.sudo_user != 'root') or (self.su and self.su_user != 'root'):
                 # deal with possible umask issues once sudo'ed to other user
                 cmd_args_chmod = "chmod a+r %s" % argsfile
                 self._low_level_exec_command(conn, cmd_args_chmod, tmp, sudoable=False)
@@ -486,7 +486,7 @@ class Runner(object):
             res = self._low_level_exec_command(conn, cmd, tmp, sudoable=sudoable, in_data=in_data)
 
         if tmp.find("tmp") != -1 and not C.DEFAULT_KEEP_REMOTE_FILES and not persist_files and delete_remote_tmp:
-            if (self.sudo or self.su) and (self.sudo_user != 'root' or self.su_user != 'root'):
+            if (self.sudo and self.sudo_user != 'root') or (self.su and self.su_user != 'root'):
             # not sudoing to root, so maybe can't delete files as that other user
             # have to clean up temp files as original user in a second step
                 cmd2 = "rm -rf %s >/dev/null 2>&1" % tmp
@@ -502,15 +502,6 @@ class Runner(object):
     def _executor(self, host, new_stdin):
         ''' handler for multiprocessing library '''
 
-        def get_flags():
-            # flags are a way of passing arbitrary event information
-            # back up the chain, since multiprocessing forks and doesn't
-            # allow state exchange
-            flags = []
-            if template.Flags.LEGACY_TEMPLATE_WARNING:
-                flags.append('LEGACY_TEMPLATE_WARNING')
-            return flags
-
         try:
             fileno = sys.stdin.fileno()
         except ValueError:
@@ -525,7 +516,6 @@ class Runner(object):
             exec_rc = self._executor_internal(host, new_stdin)
             if type(exec_rc) != ReturnData:
                 raise Exception("unexpected return type: %s" % type(exec_rc))
-            exec_rc.flags = get_flags()
             # redundant, right?
             if not exec_rc.comm_ok:
                 self.callbacks.on_unreachable(host, exec_rc.result)
@@ -533,11 +523,11 @@ class Runner(object):
         except errors.AnsibleError, ae:
             msg = str(ae)
             self.callbacks.on_unreachable(host, msg)
-            return ReturnData(host=host, comm_ok=False, result=dict(failed=True, msg=msg), flags=get_flags())
+            return ReturnData(host=host, comm_ok=False, result=dict(failed=True, msg=msg))
         except Exception:
             msg = traceback.format_exc()
             self.callbacks.on_unreachable(host, msg)
-            return ReturnData(host=host, comm_ok=False, result=dict(failed=True, msg=msg), flags=get_flags())
+            return ReturnData(host=host, comm_ok=False, result=dict(failed=True, msg=msg))
 
     # *****************************************************
 
@@ -546,7 +536,7 @@ class Runner(object):
 
         host_variables = self.inventory.get_variables(host, vault_password=self.vault_pass)
         host_connection = host_variables.get('ansible_connection', self.transport)
-        if host_connection in [ 'paramiko', 'paramiko_alt', 'ssh', 'ssh_old', 'accelerate' ]:
+        if host_connection in [ 'paramiko', 'ssh', 'accelerate' ]:
             port = host_variables.get('ansible_ssh_port', self.remote_port)
             if port is None:
                 port = C.DEFAULT_REMOTE_PORT
@@ -628,13 +618,13 @@ class Runner(object):
             all_failed = False
             results = []
             for x in items:
-                # use a fresh inject for each item                
+                # use a fresh inject for each item
                 this_inject = inject.copy()
                 this_inject['item'] = x
 
                 # TODO: this idiom should be replaced with an up-conversion to a Jinja2 template evaluation
                 if isinstance(self.complex_args, basestring):
-                    complex_args = template.template(self.basedir, self.complex_args, inject, convert_bare=True)
+                    complex_args = template.template(self.basedir, self.complex_args, this_inject, convert_bare=True)
                     complex_args = utils.safe_eval(complex_args)
                     if type(complex_args) != dict:
                         raise errors.AnsibleError("args must be a dictionary, received %s" % complex_args)
@@ -721,9 +711,17 @@ class Runner(object):
         actual_transport = inject.get('ansible_connection', self.transport)
         actual_private_key_file = inject.get('ansible_ssh_private_key_file', self.private_key_file)
         actual_private_key_file = template.template(self.basedir, actual_private_key_file, inject, fail_on_undefined=True)
+        self.sudo = utils.boolean(inject.get('ansible_sudo', self.sudo))
+        self.sudo_user = inject.get('ansible_sudo_user', self.sudo_user)
         self.sudo_pass = inject.get('ansible_sudo_pass', self.sudo_pass)
         self.su = inject.get('ansible_su', self.su)
         self.su_pass = inject.get('ansible_su_pass', self.su_pass)
+
+        # select default root user in case self.sudo requested
+        # but no user specified; happens e.g. in host vars when
+        # just ansible_sudo=True is specified
+        if self.sudo and self.sudo_user is None:
+            self.sudo_user = 'root'
 
         if actual_private_key_file is not None:
             actual_private_key_file = os.path.expanduser(actual_private_key_file)
@@ -740,7 +738,7 @@ class Runner(object):
             if not self.accelerate_port:
                 self.accelerate_port = C.ACCELERATE_PORT
 
-        if actual_transport in [ 'paramiko', 'paramiko_alt', 'ssh', 'ssh_old', 'accelerate' ]:
+        if actual_transport in [ 'paramiko', 'ssh', 'accelerate' ]:
             actual_port = inject.get('ansible_ssh_port', port)
 
         # the delegated host may have different SSH port configured, etc
@@ -974,7 +972,12 @@ class Runner(object):
         data = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
         data2 = utils.last_non_blank_line(data['stdout'])
         try:
-            return data2.split()[0]
+            if data2 == '':
+                # this may happen if the connection to the remote server
+                # failed, so just return "INVALIDMD5SUM" to avoid errors
+                return "INVALIDMD5SUM"
+            else:
+                return data2.split()[0]
         except IndexError:
             sys.stderr.write("warning: md5sum command failed unusually, please report this to the list so it can be fixed\n")
             sys.stderr.write("command: %s\n" % md5s)
@@ -991,11 +994,11 @@ class Runner(object):
 
         basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
         basetmp = os.path.join(C.DEFAULT_REMOTE_TMP, basefile)
-        if (self.sudo or self.su) and (self.sudo_user != 'root' or self.su != 'root') and basetmp.startswith('$HOME'):
+        if (self.sudo and self.sudo_user != 'root') or (self.su and self.su_user != 'root') and basetmp.startswith('$HOME'):
             basetmp = os.path.join('/tmp', basefile)
 
         cmd = 'mkdir -p %s' % basetmp
-        if self.remote_user != 'root' or ((self.sudo or self.su) and (self.sudo_user != 'root' or self.su != 'root')):
+        if self.remote_user != 'root' or ((self.sudo and self.sudo_user != 'root') or (self.su and self.su_user != 'root')):
             cmd += ' && chmod a+rx %s' % basetmp
         cmd += ' && echo %s' % basetmp
 
@@ -1005,7 +1008,7 @@ class Runner(object):
         if result['rc'] != 0:
             if result['rc'] == 5:
                 output = 'Authentication failure.'
-            elif result['rc'] == 255 and self.transport in ['ssh', 'ssh_old']:
+            elif result['rc'] == 255 and self.transport in ['ssh']:
                 if utils.VERBOSITY > 3:
                     output = 'SSH encountered an unknown error. The output was:\n%s' % (result['stdout']+result['stderr'])
                 else:
@@ -1080,9 +1083,17 @@ class Runner(object):
             job_queue.put(host)
         result_queue = manager.Queue()
 
+        try:
+            fileno = sys.stdin.fileno()
+        except ValueError:
+            fileno = None
+
         workers = []
         for i in range(self.forks):
-            new_stdin = os.fdopen(os.dup(sys.stdin.fileno()))
+            if fileno is not None:
+                new_stdin = os.fdopen(os.dup(fileno))
+            else:
+                new_stdin = None
             prc = multiprocessing.Process(target=_executor_hook,
                 args=(job_queue, result_queue, new_stdin))
             prc.start()

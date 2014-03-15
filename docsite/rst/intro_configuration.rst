@@ -8,7 +8,7 @@ The Ansible Configuration File
 Certain settings in Ansible are adjustable via a configuration file.  The stock configuration should be sufficient
 for most users, but there may be reasons you would want to change them.
 
-Changes can be made and used in a configuration file which will be processed processed in the following order::
+Changes can be made and used in a configuration file which will be processed in the following order::
 
     * ANSIBLE_CONFIG (an environment variable)
     * ansible.cfg (in the current directory)
@@ -310,6 +310,13 @@ different locations::
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
+.. _module_lang:
+
+module_lang
+===========
+
+This is to set the default language to communicate between the module and the system. By default, the value is 'C'.
+
 .. _module_name:
 
 module_name
@@ -584,7 +591,7 @@ Accelerate Mode Settings
 ------------------------
 
 Under the [accelerate] header, the following settings are tunable for :doc:`playbooks_acceleration`.  Acceleration is 
-a useful performance feature to use if you cannot enable :ref:`ssh_pipelining` in your environment, but is probably
+a useful performance feature to use if you cannot enable :ref:`pipelining` in your environment, but is probably
 not needed if you can.
 
 .. _accelerate_port:

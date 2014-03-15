@@ -236,6 +236,7 @@ def parsekey(module, raw_key):
     '''
 
     VALID_SSH2_KEY_TYPES = [
+        'ssh-ed25519',
         'ecdsa-sha2-nistp256',
         'ecdsa-sha2-nistp384',
         'ecdsa-sha2-nistp521', 

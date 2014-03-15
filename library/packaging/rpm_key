@@ -42,6 +42,14 @@ options:
       choices: [present, absent]
       description:
           - Wheather the key will be imported or removed from the rpm db.
+    validate_certs:
+      description:
+          - If C(no) and the C(key) is a url starting with https, SSL certificates will not be validated. This should only be used
+            on personally controlled sites using self-signed certificates.
+      required: false
+      default: 'yes'
+      choices: ['yes', 'no']
+
 '''
 
 EXAMPLES = '''
@@ -57,7 +65,6 @@ EXAMPLES = '''
 import syslog
 import os.path
 import re
-import urllib2
 import tempfile
 
 # Attempt to download at most 8192 bytes.
@@ -116,8 +123,8 @@ class RpmKey:
     def fetch_key(self, url, maxbytes=MAXBYTES):
         """Downloads a key from url, returns a valid path to a gpg key"""
         try:
-            fd = urllib2.urlopen(url)
-            key = fd.read(maxbytes)
+            rsp, info = fetch_url(self.module, url)
+            key = rsp.read(maxbytes)
             if not is_pubkey(key):
                 self.module.fail_json(msg="Not a public key: %s" % url)
             tmpfd, tmpname = tempfile.mkstemp()
@@ -187,7 +194,8 @@ def main():
     module = AnsibleModule(
             argument_spec = dict(
                 state=dict(default='present', choices=['present', 'absent'], type='str'),
-                key=dict(required=True, type='str')
+                key=dict(required=True, type='str'),
+                validate_certs=dict(default='yes', type='bool'),
                 ),
             supports_check_mode=True
             )
@@ -198,4 +206,5 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
 main()

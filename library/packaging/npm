@@ -54,6 +54,7 @@ options:
     description:
       - Install dependencies in production mode, excluding devDependencies
     required: false
+    choices: [ "yes", "no" ]
     default: no
   state:
     description:
@@ -124,10 +125,11 @@ class Npm(object):
                 cmd.append(self.name_version)
 
             #If path is specified, cd into that path and run the command.
+            cwd = None
             if self.path:
-                os.chdir(self.path)
+                cwd = self.path
 
-            rc, out, err = self.module.run_command(cmd, check_rc=check_rc)
+            rc, out, err = self.module.run_command(cmd, check_rc=check_rc, cwd=cwd)
             return out
         return ''
 

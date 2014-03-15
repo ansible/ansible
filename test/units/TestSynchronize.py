@@ -17,6 +17,7 @@ class FakeRunner(object):
         self.sudo = None
         self.remote_user = None
         self.private_key_file = None
+        self.check = False
 
     def _execute_module(self, conn, tmp, module_name, args, inject=None):
         self.executed_conn = conn
@@ -24,6 +25,9 @@ class FakeRunner(object):
         self.executed_module_name = module_name
         self.executed_args = args
         self.executed_inject = inject
+
+    def noop_on_check(self, inject):
+        return self.check
 
 class FakeConn(object):
     def __init__(self):
@@ -57,7 +61,35 @@ class TestSynchronize(unittest.TestCase):
 
         assert runner.executed_inject['delegate_to'] == "127.0.0.1", "was not delegated to 127.0.0.1"
         assert runner.executed_args == "dest=root@el6.lab.net:/tmp/bar src=/tmp/foo", "wrong args used"
-        assert runner.sudo == False, "sudo not set to false"
+        assert runner.sudo == None, "sudo was not reset to None" 
+
+    def test_synchronize_action_sudo(self):
+
+        """ verify the synchronize action plugin unsets and then sets sudo """ 
+
+        runner = FakeRunner()
+        runner.sudo = True
+        runner.remote_user = "root"
+        runner.transport = "ssh"
+        conn = FakeConn()
+        inject = {
+                    'inventory_hostname': "el6.lab.net",
+                    'inventory_hostname_short': "el6",
+                    'ansible_connection': None,
+                    'ansible_ssh_user': 'root',
+                    'delegate_to': None,
+                    'playbook_dir': '.',
+                 }
+
+        x = Synchronize(runner)
+        x.setup("synchronize", inject)
+        x.run(conn, "/tmp", "synchronize", "src=/tmp/foo dest=/tmp/bar", inject)
+
+        assert runner.executed_inject['delegate_to'] == "127.0.0.1", "was not delegated to 127.0.0.1"
+        assert runner.executed_args == 'dest=root@el6.lab.net:/tmp/bar src=/tmp/foo rsync_path="sudo rsync"', \
+                                        "wrong args used: %s" % runner.executed_args
+        assert runner.sudo == True, "sudo was not reset to True" 
+
 
     def test_synchronize_action_local(self):
 

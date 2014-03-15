@@ -109,6 +109,20 @@ options:
     choices: ["yes", "no"]
     aliases: []
     version_added: "1.5"
+  profile:
+    description:
+      - uses a boto profile. Only works with boto >= 2.24.0
+    required: false
+    default: null
+    aliases: []
+    version_added: "1.6"
+  security_token:
+    description:
+      - security token to authenticate against AWS
+    required: false
+    default: null
+    aliases: []
+    version_added: "1.6"
 
 requirements: [ "boto" ]
 author: Evan Duffield <eduffield@iacquire.com>
@@ -199,17 +213,17 @@ def create_image(module, ec2):
     # Wait until the image is recognized. EC2 API has eventual consistency,
     # such that a successful CreateImage API call doesn't guarantee the success
     # of subsequent DescribeImages API call using the new image id returned.
-    for i in range(30):
+    for i in range(wait_timeout):
         try:
             img = ec2.get_image(image_id)
             break
         except boto.exception.EC2ResponseError, e:
-            if e.error_code == 'InvalidAMIID.NotFound':
+            if 'InvalidAMIID.NotFound' in e.error_code and wait:
                 time.sleep(1)
             else:
-                raise
+                module.fail_json(msg="Error while trying to find the new image. Using wait=yes and/or a longer wait_timeout may help.")
     else:
-        module.fail_json(msg = "timed out waiting for image to be recognized")
+        module.fail_json(msg="timed out waiting for image to be recognized")
 
     # wait here until the image is created
     wait_timeout = time.time() + wait_timeout
@@ -221,7 +235,6 @@ def create_image(module, ec2):
         module.fail_json(msg = "timed out waiting for image to be created")
 
     module.exit_json(msg="AMI creation operation complete", image_id=image_id, state=img.state, changed=True)
-    sys.exit(0)
 
 
 def deregister_image(module, ec2):

@@ -65,6 +65,20 @@ options:
     choices: ["yes", "no"]
     aliases: []
     version_added: "1.5"
+  profile:
+    description:
+      - uses a boto profile. Only works with boto >= 2.24.0
+    required: false
+    default: null
+    aliases: []
+    version_added: "1.6"
+  security_token:
+    description:
+      - security token to authenticate against AWS
+    required: false
+    default: null
+    aliases: []
+    version_added: "1.6"
 
 requirements: [ "boto" ]
 '''
@@ -146,7 +160,7 @@ def main():
         groups[curGroup.id] = curGroup
         groups[curGroup.name] = curGroup
 
-        if curGroup.name == name and curGroup.vpc_id == vpc_id:
+        if curGroup.name == name and (vpc_id is None or curGroup.vpc_id == vpc_id):
             group = curGroup
 
     # Ensure requested group is absent

@@ -43,7 +43,7 @@ Helping with Documentation
 Ansible documentation is a community project too!  If you would like to help with the 
 documentation, whether correcting a typo or improving a section, or maybe even 
 documenting a new feature, submit a github pull request to  the code that
-lives in the “docsite/latest/rst” subdirectory of the project.   Docs are in restructured text
+lives in the “docsite/rst” subdirectory of the project.   Docs are in restructured text
 format.  If you aren’t comfortable with restructured text, you can also open a ticket on 
 github about any errors you spot or sections you would like to see added. For more information
 on creating pull requests, please refer to the

@@ -25,3 +25,5 @@ groups_tree_var=3000
 grandparent_var=2000
 overridden_in_parent=2000
 
+[amazon:children]
+local

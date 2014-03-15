@@ -352,7 +352,10 @@ def get_add_ppa_signing_key_callback(module):
     def _run_command(command):
         module.run_command(command, check_rc=True)
 
-    return _run_command if not module.check_mode else None
+    if module.check_mode:
+        return None
+    else:
+        return _run_command
 
 
 def main():

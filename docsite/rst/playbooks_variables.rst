@@ -43,7 +43,7 @@ Easy enough, let's move on.
 Variables Defined in Inventory
 ``````````````````````````````
 
-We've actually already covered a lot about variables in another section, so so far this shouldn't be terribly new, but
+We've actually already covered a lot about variables in another section, so far this shouldn't be terribly new, but
 a bit of a refresher.
 
 Often you'll want to set variables based on what groups a machine is in.  For instance, maybe machines in Boston
@@ -101,7 +101,7 @@ Inside a template you automatically have access to all of the variables that are
 it's more than that -- you can also read variables about other hosts.  We'll show how to do that in a bit.
 
 .. note:: ansible allows Jinja2 loops and conditionals in templates, but in playbooks, we do not use them.  Ansible
-   templates are pure machine-parseable YAML.  This is an rather important feature as it means it is possible to code-generate
+   playbooks are pure machine-parseable YAML.  This is a rather important feature as it means it is possible to code-generate
    pieces of files, or to have other ecosystem tools read Ansible files.  Not everyone will need this but it can unlock
    possibilities.
 
@@ -136,6 +136,7 @@ Filters Often Used With Conditionals
 The following tasks are illustrative of how filters can be used with conditionals::
 
     tasks:
+
       - shell: /usr/bin/foo
         register: result
         ignore_errors: True
@@ -691,13 +692,16 @@ the main playbook.
 You can do this by using an external variables file, or files, just like this::
 
     ---
+
     - hosts: all
       remote_user: root
       vars:
         favcolor: blue
       vars_files:
         - /vars/external_vars.yml
+
       tasks:
+
       - name: this is just a placeholder
         command: /bin/echo foo
 
@@ -731,8 +735,10 @@ This is useful, for, among other things, setting the hosts group or the user for
 Example::
 
     ---
-    - remote_user: '{{ user }}'
-      hosts: '{{ hosts }}'
+
+    - hosts: '{{ hosts }}'
+      remote_user: '{{ user }}'
+
       tasks:
          - ...
 
@@ -765,12 +771,15 @@ As an example, the name of the Apache package may be different between CentOS an
 but it is easily handled with a minimum of syntax in an Ansible Playbook::
 
     ---
+
     - hosts: all
       remote_user: root
       vars_files:
         - "vars/common.yml"
         - [ "vars/{{ ansible_os_family }}.yml", "vars/os_defaults.yml" ]
+
       tasks:
+
       - name: make sure apache is running
         service: name={{ apache }} state=running
 

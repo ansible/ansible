@@ -46,6 +46,7 @@ import datetime
 import socket
 from ansible import utils
 from ansible.utils import cmd_functions
+from ansible import errors
 
 DEFAULT_REPO_TYPE = 'git'
 DEFAULT_PLAYBOOK = 'local.yml'
@@ -123,6 +124,8 @@ def main(args):
                       default=DEFAULT_REPO_TYPE,
                       help='Module name used to check out repository.  '
                       'Default is %s.' % DEFAULT_REPO_TYPE)
+    parser.add_option('--vault-password-file', dest='vault_password_file',
+                    help="vault password file")
     options, args = parser.parse_args(args)
 
     hostname = socket.getfqdn()
@@ -178,6 +181,8 @@ def main(args):
         return 1
 
     cmd = 'ansible-playbook %s %s' % (base_opts, playbook)
+    if options.vault_password_file:
+        cmd += " --vault-password-file=%s" % options.vault_password_file
     if options.inventory:
         cmd += ' -i "%s"' % options.inventory
     os.chdir(options.dest)

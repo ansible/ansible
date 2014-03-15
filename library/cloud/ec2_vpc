@@ -26,6 +26,12 @@ options:
     description:
       - "The cidr block representing the VPC, e.g. 10.0.0.0/16"
     required: false, unless state=present
+  instance_tenancy:
+    description:
+      - "The supported tenancy options for instances launched into the VPC."
+    required: false
+    default: "default"
+    choices: [ "default", "dedicated" ]
   dns_support:
     description:
       - toggles the "Enable DNS resolution" flag
@@ -201,6 +207,7 @@ def create_vpc(module, vpc_conn):
     
     id = module.params.get('id')
     cidr_block = module.params.get('cidr_block')
+    instance_tenancy = module.params.get('instance_tenancy')
     dns_support = module.params.get('dns_support')
     dns_hostnames = module.params.get('dns_hostnames')
     subnets = module.params.get('subnets')
@@ -227,7 +234,7 @@ def create_vpc(module, vpc_conn):
     else:
         changed = True
         try:
-            vpc = vpc_conn.create_vpc(cidr_block)
+            vpc = vpc_conn.create_vpc(cidr_block, instance_tenancy)
             # wait here until the vpc is available
             pending = True
             wait_timeout = time.time() + wait_timeout
@@ -480,22 +487,24 @@ def terminate_vpc(module, vpc_conn, vpc_id=None, cidr=None):
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec = dict(
+    argument_spec = ec2_argument_spec()
+    argument_spec.update(dict(
             cidr_block = dict(),
-            wait = dict(choices=BOOLEANS, default=False),
+            instance_tenancy = dict(choices=['default', 'dedicated'], default='default'),
+            wait = dict(type='bool', default=False),
             wait_timeout = dict(default=300),
-            dns_support = dict(choices=BOOLEANS, default=True),
-            dns_hostnames = dict(choices=BOOLEANS, default=True),
+            dns_support = dict(type='bool', default=True),
+            dns_hostnames = dict(type='bool', default=True),
             subnets = dict(type='list'),
             vpc_id = dict(),
-            internet_gateway = dict(choices=BOOLEANS, default=False),
+            internet_gateway = dict(type='bool', default=False),
             route_tables = dict(type='list'),
-            region = dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS),
             state = dict(choices=['present', 'absent'], default='present'),
-            ec2_secret_key = dict(aliases=['aws_secret_key', 'secret_key'], no_log=True),
-            ec2_access_key = dict(aliases=['aws_access_key', 'access_key']),
         )
+    )
+
+    module = AnsibleModule(
+        argument_spec=argument_spec,
     )
 
     state = module.params.get('state')

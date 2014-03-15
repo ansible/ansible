@@ -64,6 +64,31 @@ As with the case of 'with_items' above, you can use previously defined variables
         - users
         - [ 'clientdb', 'employeedb', 'providerdb' ]
 
+.. _looping_over_hashes:
+
+Looping over Hashes
+```````````````````
+
+.. versionadded:: 1.5
+
+Suppose you have the following variable::
+
+    ---
+    users:
+      alice:
+        name: Alice Appleworth
+        telephone: 123-456-7890
+      bob:
+        name: Bob Bananarama
+        telephone: 987-654-3210
+
+And you want to print every user's name and phone number.  You can loop through the elements of a hash using ``with_dict`` like this::
+
+    tasks:
+      - name: Print phone records
+        debug: msg="User {{ item.key }} is {{ item.value.name }} ({{ item.value.telephone }})"
+        with_dict: users
+
 .. _looping_over_fileglobs:
 
 Looping over Fileglobs

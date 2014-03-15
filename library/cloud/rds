@@ -60,7 +60,7 @@ options:
     required: false
     default: null
     aliases: []
-    choices: [ 'db.t1.micro', 'db.m1.small', 'db.m1.medium', 'db.m1.large', 'db.m1.xlarge', 'db.m2.xlarge', 'db.m2.2xlarge', 'db.m2.4xlarge' ]
+    choices: [ 'db.t1.micro', 'db.m1.small', 'db.m1.medium', 'db.m1.large', 'db.m1.xlarge', 'db.m2.xlarge', 'db.m2.2xlarge', 'db.m2.4xlarge', 'db.m3.medium', 'db.m3.large', 'db.m3.xlarge', 'db.m3.2xlarge', 'db.cr1.8xlarge' ]
   username:
     description:
       - Master database username. Used only when command=create.
@@ -283,14 +283,14 @@ def get_current_resource(conn, resource, command):
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec = dict(
+    argument_spec = ec2_argument_spec()
+    argument_spec.update(dict(
             command           = dict(choices=['create', 'replicate', 'delete', 'facts', 'modify', 'promote', 'snapshot', 'restore'], required=True),
             instance_name     = dict(required=True),
             source_instance   = dict(required=False),
             db_engine         = dict(choices=['MySQL', 'oracle-se1', 'oracle-se', 'oracle-ee', 'sqlserver-ee', 'sqlserver-se', 'sqlserver-ex', 'sqlserver-web', 'postgres'], required=False),
             size              = dict(required=False), 
-            instance_type     = dict(aliases=['type'], choices=['db.t1.micro', 'db.m1.small', 'db.m1.medium', 'db.m1.large', 'db.m1.xlarge', 'db.m2.xlarge', 'db.m2.2xlarge', 'db.m2.4xlarge'], required=False),
+            instance_type     = dict(aliases=['type'], choices=['db.t1.micro', 'db.m1.small', 'db.m1.medium', 'db.m1.large', 'db.m1.xlarge', 'db.m2.xlarge', 'db.m2.2xlarge', 'db.m2.4xlarge', 'db.m3.medium', 'db.m3.large', 'db.m3.xlarge', 'db.m3.2xlarge', 'db.cr1.8xlarge'], required=False),
             username          = dict(required=False),
             password          = dict(no_log=True, required=False),
             db_name           = dict(required=False),
@@ -307,17 +307,18 @@ def main():
             maint_window      = dict(required=False),
             backup_window     = dict(required=False),
             backup_retention  = dict(required=False), 
-            region            = dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS, required=False),
             zone              = dict(aliases=['aws_zone', 'ec2_zone'], required=False),
             subnet            = dict(required=False),
-            aws_secret_key    = dict(aliases=['ec2_secret_key', 'secret_key'], no_log=True, required=False),
-            aws_access_key    = dict(aliases=['ec2_access_key', 'access_key'], required=False),
             wait              = dict(type='bool', default=False),
             wait_timeout      = dict(default=300),
             snapshot          = dict(required=False),
             apply_immediately = dict(type='bool', default=False),
             new_instance_name = dict(required=False),
         )
+    )
+
+    module = AnsibleModule(
+        argument_spec=argument_spec,
     )
 
     command            = module.params.get('command')

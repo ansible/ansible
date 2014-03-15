@@ -93,8 +93,8 @@ else:
     DIST_MODULE_PATH = '/usr/share/ansible/'
 
 # check all of these extensions when looking for yaml files for things like
-# group variables
-YAML_FILENAME_EXTENSIONS = [ "", ".yml", ".yaml" ]
+# group variables -- really anything we can load
+YAML_FILENAME_EXTENSIONS = [ "", ".yml", ".yaml", ".json" ]
 
 # sections in config file
 DEFAULTS='defaults'
@@ -127,7 +127,6 @@ DEFAULT_SUDO              = get_config(p, DEFAULTS, 'sudo', 'ANSIBLE_SUDO', Fals
 DEFAULT_SUDO_EXE          = get_config(p, DEFAULTS, 'sudo_exe', 'ANSIBLE_SUDO_EXE', 'sudo')
 DEFAULT_SUDO_FLAGS        = get_config(p, DEFAULTS, 'sudo_flags', 'ANSIBLE_SUDO_FLAGS', '-H')
 DEFAULT_HASH_BEHAVIOUR    = get_config(p, DEFAULTS, 'hash_behaviour', 'ANSIBLE_HASH_BEHAVIOUR', 'replace')
-DEFAULT_LEGACY_PLAYBOOK_VARIABLES = get_config(p, DEFAULTS, 'legacy_playbook_variables', 'ANSIBLE_LEGACY_PLAYBOOK_VARIABLES', True, boolean=True)
 DEFAULT_JINJA2_EXTENSIONS = get_config(p, DEFAULTS, 'jinja2_extensions', 'ANSIBLE_JINJA2_EXTENSIONS', None)
 DEFAULT_EXECUTABLE        = get_config(p, DEFAULTS, 'executable', 'ANSIBLE_EXECUTABLE', '/bin/sh')
 DEFAULT_SU_EXE = get_config(p, DEFAULTS, 'su_exe', 'ANSIBLE_SU_EXE', 'su')
@@ -144,6 +143,10 @@ DEFAULT_VARS_PLUGIN_PATH       = get_config(p, DEFAULTS, 'vars_plugins',       '
 DEFAULT_FILTER_PLUGIN_PATH     = get_config(p, DEFAULTS, 'filter_plugins',     'ANSIBLE_FILTER_PLUGINS', '/usr/share/ansible_plugins/filter_plugins')
 DEFAULT_LOG_PATH               = shell_expand_path(get_config(p, DEFAULTS, 'log_path',           'ANSIBLE_LOG_PATH', ''))
 
+# URL Arguments for generic module urllib2 use
+DEFAULT_HTTP_USER_AGENT        = get_config(p, DEFAULTS, 'http_user_agent',    'ANSIBLE_HTTP_USER_AGENT', 'ansible-agent')
+DEFAULT_CA_FILE_PATH           = shell_expand_path(get_config(p, DEFAULTS, 'ca_file_path',       'ANSIBLE_CA_FILE_PATH', ''))
+
 ANSIBLE_NOCOLOR                = get_config(p, DEFAULTS, 'nocolor', 'ANSIBLE_NOCOLOR', None, boolean=True)
 ANSIBLE_NOCOWS                 = get_config(p, DEFAULTS, 'nocows', 'ANSIBLE_NOCOWS', None, boolean=True)
 DISPLAY_SKIPPED_HOSTS          = get_config(p, DEFAULTS, 'display_skipped_hosts', 'DISPLAY_SKIPPED_HOSTS', True, boolean=True)
@@ -156,6 +159,7 @@ ANSIBLE_SSH_ARGS               = get_config(p, 'ssh_connection', 'ssh_args', 'AN
 ANSIBLE_SSH_CONTROL_PATH       = get_config(p, 'ssh_connection', 'control_path', 'ANSIBLE_SSH_CONTROL_PATH', "%(directory)s/ansible-ssh-%%h-%%p-%%r")
 ANSIBLE_SSH_PIPELINING         = get_config(p, 'ssh_connection', 'pipelining', 'ANSIBLE_SSH_PIPELINING', False, boolean=True)
 PARAMIKO_RECORD_HOST_KEYS      = get_config(p, 'paramiko_connection', 'record_host_keys', 'ANSIBLE_PARAMIKO_RECORD_HOST_KEYS', True, boolean=True)
+# obsolete -- will be formally removed in 1.6
 ZEROMQ_PORT                    = get_config(p, 'fireball_connection', 'zeromq_port', 'ANSIBLE_ZEROMQ_PORT', 5099, integer=True)
 ACCELERATE_PORT                = get_config(p, 'accelerate', 'accelerate_port', 'ACCELERATE_PORT', 5099, integer=True)
 ACCELERATE_TIMEOUT             = get_config(p, 'accelerate', 'accelerate_timeout', 'ACCELERATE_TIMEOUT', 30, integer=True)
