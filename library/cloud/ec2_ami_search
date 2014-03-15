@@ -67,7 +67,7 @@ author: Lorin Hochstein
 '''
 
 EXAMPLES = '''
-- name: Lauch an Ubuntu 12.04 (Precise Pangolin) EC2 instance
+- name: Launch an Ubuntu 12.04 (Precise Pangolin) EC2 instance
   hosts: 127.0.0.1
   connection: local
   tasks:
