@@ -17,7 +17,7 @@ description:
        the template's machine, C(template_uid) the owner, C(template_path) the
        absolute path of the template, C(template_fullpath) is the absolute path of the 
        template, and C(template_run_date) is the date that the template was rendered. Note that including
-       a string that uses a date in the template will resort in the template being marked 'changed'
+       a string that uses a date in the template will result in the template being marked 'changed'
        each time."
 options:
   src:
