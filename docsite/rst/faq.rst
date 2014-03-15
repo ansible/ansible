@@ -140,16 +140,16 @@ Then you can use the facts inside your template, like this::
 
 .. _programatic_access_to_a_variable:
 
-How do I access a variable name programatically?
-++++++++++++++++++++++++++++++++++++++++++++++++
+How do I access a variable name programmatically?
++++++++++++++++++++++++++++++++++++++++++++++++++
 
 An example may come up where we need to get the ipv4 address of an arbitrary interface, where the interface to be used may be supplied
 via a role parameter or other input.  Variable names can be built by adding strings together, like so::
 
     {{ hostvars[inventory_hostname]['ansible_' + which_interface]['ipv4']['address'] }}
 
-The trick about going through hostvars is neccessary because it's a dictionary of the entire namespace of variables.  'inventory_hostname'
-is a magic variable that indiciates the current host you are looping over in the host loop.
+The trick about going through hostvars is necessary because it's a dictionary of the entire namespace of variables.  'inventory_hostname'
+is a magic variable that indicates the current host you are looping over in the host loop.
 
 .. _first_host_in_a_group:
 
