@@ -216,7 +216,6 @@ class Rhsm(RegistrationBase):
             if password:
                 args.extend(['--password', password])
 
-        # Do the needful...
         rc, stderr, stdout = self.module.run_command(args, check_rc=True)
 
     def unsubscribe(self):

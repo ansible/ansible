@@ -84,6 +84,8 @@ debconf: name='oracle-java7-installer' question='shared/accepted-oracle-license-
 debconf: name='tzdata'
 '''
 
+import pipes
+
 def get_selections(module, pkg):
     cmd = [module.get_bin_path('debconf-show', True), pkg]
     rc, out, err = module.run_command(' '.join(cmd))

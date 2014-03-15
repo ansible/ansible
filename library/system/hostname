@@ -286,7 +286,7 @@ class FedoraStrategy(GenericStrategy):
 
     def get_permanent_hostname(self):
         cmd = 'hostnamectl status | awk \'/^ *Static hostname:/{printf("%s", $3)}\''
-        rc, out, err = self.module.run_command(cmd)
+        rc, out, err = self.module.run_command(cmd, use_unsafe_shell=True)
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
                 (rc, out, err))

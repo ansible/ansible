@@ -45,12 +45,13 @@ options:
               branch name, or a tag name.
     accept_hostkey:
         required: false
-        default: false
+        default: "no"
+        choices: [ "yes", "no" ]
         version_added: "1.5"
         description:
-            - Add the hostkey for the repo url if not already added.
-              If ssh_args contains "-o StrictHostKeyChecking=no", this
-              parameter is ignored.
+            - if C(yes), adds the hostkey for the repo url if not already 
+              added. If ssh_args contains "-o StrictHostKeyChecking=no", 
+              this parameter is ignored.
     ssh_opts:
         required: false
         default: None

@@ -370,7 +370,7 @@ package is installed.  Try it!
 To see what hosts would be affected by a playbook before you run it, you
 can do this::
 
-    ansible-playbook playbook.yml --list-hosts.
+    ansible-playbook playbook.yml --list-hosts
 
 .. seealso::
 

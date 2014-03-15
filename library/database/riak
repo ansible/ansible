@@ -105,7 +105,7 @@ except ImportError:
 
 
 def ring_check(module, riak_admin_bin):
-    cmd = '%s ringready 2> /dev/null' % riak_admin_bin
+    cmd = '%s ringready' % riak_admin_bin
     rc, out, err = module.run_command(cmd)
     if rc == 0 and 'TRUE All nodes agree on the ring' in out:
         return True
@@ -124,9 +124,8 @@ def main():
         wait_for_handoffs=dict(default=False, type='int'),
         wait_for_ring=dict(default=False, type='int'),
         wait_for_service=dict(
-            required=False, default=None, choices=['kv'])
-        ),
-        validate_certs = dict(default='yes', type='bool'),
+            required=False, default=None, choices=['kv']),
+        validate_certs = dict(default='yes', type='bool'))
     )
 
 
@@ -137,6 +136,7 @@ def main():
     wait_for_handoffs = module.params.get('wait_for_handoffs')
     wait_for_ring = module.params.get('wait_for_ring')
     wait_for_service = module.params.get('wait_for_service')
+    validate_certs =  module.params.get('validate_certs')
 
 
     #make sure riak commands are on the path
@@ -221,7 +221,7 @@ def main():
     if wait_for_handoffs:
         timeout = time.time() + wait_for_handoffs
         while True:
-            cmd = '%s transfers 2> /dev/null' % riak_admin_bin
+            cmd = '%s transfers' % riak_admin_bin
             rc, out, err = module.run_command(cmd)
             if 'No transfers active' in out:
                 result['handoffs'] = 'No transfers active.'
@@ -231,7 +231,7 @@ def main():
                 module.fail_json(msg='Timeout waiting for handoffs.')
 
     if wait_for_service:
-        cmd = '%s wait_for_service riak_%s %s' % ( riak_admin_bin, wait_for_service, node_name)
+        cmd = [riak_admin_bin, 'wait_for_service', 'riak_%s' % wait_for_service, node_name ]
         rc, out, err = module.run_command(cmd)
         result['service'] = out
 
@@ -250,5 +250,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
 
 main()

@@ -15,12 +15,15 @@ def delete_aws_resources(get_func, attr, opts):
     for item in get_func():
         val = getattr(item, attr)
         if re.search(opts.match_re, val):
-            prompt_and_delete("Delete object with %s=%s? [y/n]: " % (attr, val), opts.assumeyes)
+            prompt_and_delete(item, "Delete matching %s? [y/n]: " % (item,), opts.assumeyes)
 
-def prompt_and_delete(prompt, assumeyes):
-    while not assumeyes:
-        assumeyes = raw_input(prompt)
-    obj.delete()
+def prompt_and_delete(item, prompt, assumeyes):
+    if not assumeyes:
+        assumeyes = raw_input(prompt).lower() == 'y'
+    assert hasattr(item, 'delete'), "Class <%s> has no delete attribute" % item.__class__
+    if assumeyes:
+        item.delete()
+        print ("Deleted %s" % item)
 
 def parse_args():
     # Load details from credentials.yml
@@ -72,8 +75,11 @@ if __name__ == '__main__':
     aws = boto.connect_ec2(aws_access_key_id=opts.ec2_access_key,
             aws_secret_access_key=opts.ec2_secret_key)
 
-    # Delete matching keys
-    delete_aws_resources(aws.get_all_key_pairs, 'name', opts)
+    try:
+        # Delete matching keys
+        delete_aws_resources(aws.get_all_key_pairs, 'name', opts)
 
-    # Delete matching groups
-    delete_aws_resources(aws.get_all_security_groups, 'name', opts)
+        # Delete matching groups
+        delete_aws_resources(aws.get_all_security_groups, 'name', opts)
+    except KeyboardInterrupt, e:
+        print "\nExiting on user command."

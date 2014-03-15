@@ -159,7 +159,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             name = dict(required=True, type='str'),
-            load_balancers = dict(required=True, type='list'),
+            load_balancers = dict(required=False, type='list'),
             availability_zones = dict(required=True, type='list'),
             launch_config_name = dict(required=True, type='str'),
             min_size = dict(required=True, type='int'),

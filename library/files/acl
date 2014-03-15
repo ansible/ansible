@@ -115,6 +115,9 @@ def split_entry(entry):
         print "wtf?? %s => %s" % (entry,a)
         raise e
 
+    if d:
+        d = True
+
     if t.startswith("u"):
         t = "user"
     elif t.startswith("g"):
@@ -248,7 +251,6 @@ def main():
                         if not old_permissions == permissions:
                             changed = True
                         break
-                break
         if not matched:
             changed=True
 

@@ -17,7 +17,6 @@ New Modules:
 * system: locale_gen
 * cloud: digital_ocean_domain
 * cloud: digital_ocean_sshkey 
-* cloud: nova_group (security groups)
 * cloud: nova_fip (floating IPs)
 * cloud: rax_identity
 * cloud: ec2_asg (configure autoscaling groups)
@@ -29,6 +28,15 @@ Other notable changes:
 * security token additions to ec2 modules
 * misc bugfixes and other parameters
   
+## 1.5.3 "Love Walks In" - March 13, 2014
+
+- Fix validate_certs and run_command errors from previous release
+- Fixes to the git module related to host key checking
+
+## 1.5.2 "Love Walks In" - March 11, 2014
+
+- Fix module errors in airbrake and apt from previous release
+
 ## 1.5.1 "Love Walks In" - March 10, 2014
 
 - Force command action to not be executed by the shell unless specifically enabled.

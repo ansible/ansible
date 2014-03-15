@@ -76,8 +76,7 @@ class Bzr(object):
         self.bzr_path = bzr_path
 
     def _command(self, args_list, cwd=None, **kwargs):
-        (rc, out, err) = self.module.run_command(
-            [self.bzr_path] + args_list, cwd=cwd, **kwargs)
+        (rc, out, err) = self.module.run_command([self.bzr_path] + args_list, cwd=cwd, **kwargs)
         return (rc, out, err)
 
     def get_version(self):

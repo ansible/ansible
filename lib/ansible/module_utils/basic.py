@@ -1009,7 +1009,9 @@ class AnsibleModule(object):
 
         shell = False
         if isinstance(args, list):
-            pass
+            if use_unsafe_shell:
+                args = " ".join([pipes.quote(x) for x in args])
+                shell = True
         elif isinstance(args, basestring) and use_unsafe_shell:
             shell = True
         elif isinstance(args, basestring):
@@ -1069,29 +1071,39 @@ class AnsibleModule(object):
 
         if path_prefix:
             kwargs['env'] = env
-        if cwd:
+        if cwd and os.path.isdir(cwd):
             kwargs['cwd'] = cwd
 
+        # store the pwd
+        prev_dir = os.getcwd()
+
+        # make sure we're in the right working directory
+        if cwd and os.path.isdir(cwd):
+            try:
+                os.chdir(cwd)
+            except (OSError, IOError), e:
+                self.fail_json(rc=e.errno, msg="Could not open %s , %s" % (cwd, str(e)))
 
         try:
-            # make sure we're in the right working directory
-            if cwd and os.path.isdir(cwd):
-                os.chdir(cwd)
-
             cmd = subprocess.Popen(args, **kwargs)
 
             if data:
                 if not binary_data:
-                    data += '\\n'
+                    data += '\n'
             out, err = cmd.communicate(input=data)
             rc = cmd.returncode
         except (OSError, IOError), e:
             self.fail_json(rc=e.errno, msg=str(e), cmd=clean_args)
         except:
             self.fail_json(rc=257, msg=traceback.format_exc(), cmd=clean_args)
+
         if rc != 0 and check_rc:
             msg = err.rstrip()
             self.fail_json(cmd=clean_args, rc=rc, stdout=out, stderr=err, msg=msg)
+
+        # reset the pwd
+        os.chdir(prev_dir)
+
         return (rc, out, err)
 
     def append_to_file(self, filename, str):
