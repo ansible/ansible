@@ -954,7 +954,7 @@ class AnsibleModule(object):
                 context = self.selinux_default_context(dest)
 
         try:
-            # Optimistically try a rename, solves some corner cases and can avoid useless work.
+            # Optimistically try a rename, solves some corner cases and can avoid useless work, throws exception if not atomic.
             os.rename(src, dest)
         except (IOError,OSError), e:
             # only try workarounds for errno 18 (cross device), 1 (not permited) and 13 (permission denied)
