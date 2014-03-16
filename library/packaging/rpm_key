@@ -138,7 +138,9 @@ class RpmKey:
     def normalize_keyid(self, keyid):
         """Ensure a keyid doesn't have a leading 0x, has leading or trailing whitespace, and make sure is lowercase"""
         ret = keyid.strip().lower()
-        if ret.startswith(('0x', '0X')):
+        if ret.startswith('0x'):
+            return ret[2:]
+        elif ret.startswith('0X'):
             return ret[2:]
         else:
             return ret
@@ -148,9 +150,9 @@ class RpmKey:
         stdout, stderr = self.execute_command([gpg, '--no-tty', '--batch', '--with-colons', '--fixed-list-mode', '--list-packets', keyfile])
         for line in stdout.splitlines():
             line = line.strip()
-            if line.startswith('keyid:'):
+            if line.startswith(':signature packet:'):
                 # We want just the last 8 characters of the keyid
-                keyid = line.split(':')[1].strip()[8:]
+                keyid = line.split()[-1].strip()[8:]
                 return keyid
         self.json_fail(msg="Unexpected gpg output")
 
