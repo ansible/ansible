@@ -161,7 +161,13 @@ def start_slave(cursor):
 
 def changemaster(cursor, chm):
     SQLPARAM = ",".join(chm)
-    cursor.execute("CHANGE MASTER TO " + SQLPARAM)
+    with warnings.catch_warnings(record=True):
+        # If master_password is set but SSL parameters are not,
+        # MySQL 5.6 throws a security warning.  If you are using
+        # an SSH tunnel or VPN rather than MySQL SSL, you can 
+        # ignore this warning
+        warnings.filterwarnings('default', category = MySQLdb.Warning)
+        cursor.execute("CHANGE MASTER TO " + SQLPARAM)
 
 
 def strip_quotes(s):
