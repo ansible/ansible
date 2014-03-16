@@ -20,6 +20,7 @@ New Modules:
 * system: debconf
 * system: ufw
 * system: locale_gen
+* system: alternatives
 * net_infrastructure: bigip_facts
 * cloud: digital_ocean_domain
 * cloud: digital_ocean_sshkey 
