@@ -10,8 +10,10 @@ Major features/changes:
 
 New Modules:
 
-* packaging: cpanm
+* packaging: cpanm (Perl)
 * packaging: portage
+* packaging: composer (PHP)
+* notification: nexmo (SMS)
 * system: debconf
 * system: ufw
 * system: locale_gen
@@ -22,11 +24,13 @@ New Modules:
 
 Other notable changes:
 
+* example callback plugin added for hipchat
 * libvirt module now supports destroyed and paused as states
 * s3 module can specify metadata
 * security token additions to ec2 modules
+* setup module code moved into module_utils/, facts now accessible by other modules  
 * misc bugfixes and other parameters
-  
+
 ## 1.5.3 "Love Walks In" - March 13, 2014
 
 - Fix validate_certs and run_command errors from previous release
