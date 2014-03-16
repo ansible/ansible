@@ -33,9 +33,11 @@ description:
        are not immediately available after their init scripts return - 
        which is true of certain Java application servers. It is also 
        useful when starting guests with the M(virt) module and
-       needing to pause until they are ready. This module can 
+       needing to pause until they are ready. 
+     - This module can also be used to wait for a regex match a string to be present in a file.
+     - In 1.6 and later, this module can 
        also be used to wait for a file to be available or absent on the 
-       filesystem or with a regex match a string to be present in a file.
+       filesystem.
 version_added: "0.7"
 options:
   host:
