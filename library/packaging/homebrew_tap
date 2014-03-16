@@ -1,0 +1,110 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2013, Mark McConachie <mark@markmcconachie.com>
+
+# This module is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: homebrew_tap
+short_description: Add and remove Homebrew Taps
+description:
+    - Add or remove an APT repositories in Ubuntu and Debian.
+options:
+    name:
+        required: true
+        default: none
+        description:
+            - The name of the Homebrew tap.
+    state:
+        required: false
+        choices: [ "absent", "present" ]
+        default: "present"
+        description:
+            - The required state of the package.
+author: Mark McConachie
+'''
+
+EXAMPLES = '''
+- homebrew_tap: name=brew/foo state=present
+- homebrew_tap: name=brew/foo state=absent
+'''
+
+
+def query_tap(module, brew_path, name):
+    rc, out, err = module.run_command("%s tap | grep -q '^%s$'"
+                                      % (brew_path, name))
+    if rc == 0:
+        return True
+
+    return False
+
+
+def update_homebrew(module, brew_path):
+    rc, out, err = module.run_command("%s update" % brew_path)
+    if rc != 0:
+        module.fail_json(msg="could not update homebrew")
+
+
+def remove_tap(module, brew_path, tap_name):
+    if not query_tap(module, brew_path, tap_name):
+        module.exit_json(changed=False, msg="tap already removed")
+    else:
+        cmd = [brew_path, 'untap', tap_name]
+        rc, out, err = module.run_command(cmd)
+        if query_tap(module, brew_path, tap_name):
+            module.fail_json(msg="failed to remove tap %s: %s"
+                             % (tap_name, out.strip()))
+        else:
+            module.exit_json(changed=True, msg="tap removed")
+
+
+def add_tap(module, brew_path, tap_name):
+    if query_tap(module, brew_path, tap_name):
+        module.exit_json(changed=False, msg="tap already added")
+    else:
+        cmd = [brew_path, 'tap', tap_name]
+        rc, out, err = module.run_command(cmd)
+        if query_tap(module, brew_path, tap_name):
+            module.exit_json(changed=True, msg="tap added")
+        else:
+            module.fail_json(msg="failed to add tap %s: %s"
+                             % (tap_name, out.strip()))
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            name=dict(aliases=["pkg"], required=True),
+            state=dict(default="present",
+                       choices=["present", "installed", "absent", "removed"]),
+        ),
+        supports_check_mode=True
+    )
+
+    brew_path = module.get_bin_path('brew', True, ['/usr/local/bin'])
+    p = module.params
+    tap_name = p["name"]
+
+    if p["state"] in ["present", "installed"]:
+        add_tap(module, brew_path, tap_name)
+
+    elif p["state"] in ["absent", "removed"]:
+        remove_tap(module, brew_path, tap_name)
+
+
+from ansible.module_utils.basic import *
+
+main()
