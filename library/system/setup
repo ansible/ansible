@@ -2305,8 +2305,8 @@ def ansible_facts(module):
 
 def run_setup(module):
 
-    setup_options = {}
-    facts = ansible_facts(module)
+    setup_options = dict(module_setup=True)
+    facts = ansible_facts()
 
     for (k, v) in facts.items():
         setup_options["ansible_%s" % k.replace('-', '_')] = v
