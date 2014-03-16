@@ -871,7 +871,7 @@ def filter_leading_non_json_lines(buf):
     filtered_lines = StringIO.StringIO()
     stop_filtering = False
     for line in buf.splitlines():
-        if stop_filtering or "=" in line or line.startswith('{') or line.startswith('['):
+        if stop_filtering or line.startswith('=') or line.startswith('{') or line.startswith('['):
             stop_filtering = True
             filtered_lines.write(line + '\n')
     return filtered_lines.getvalue()
