@@ -60,7 +60,7 @@ options:
     aliases: []
   instance_id:
     description:
-    - instance that has a the required volume to snapshot mounted
+    - instance that has the required volume to snapshot mounted
     required: false
     default: null
     aliases: []
