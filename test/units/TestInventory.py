@@ -236,9 +236,10 @@ class TestInventory(unittest.TestCase):
         print vars
 
         expected = dict(
-            a='1', b='2', c='3', d='10002', e='10003', f='10004 != 10005',
+            a=1, b=2, c=3, d=10002, e=10003, f='10004 != 10005',
             g='  g  ', h='  h  ', i="'  i  \"", j='"  j',
-            rga='1', rgb='2', rgc='3',
+            k=[ 'k1', 'k2' ],
+            rga=1, rgb=2, rgc=3,
             inventory_hostname='rtp_a', inventory_hostname_short='rtp_a',
             group_names=[ 'eastcoast', 'nc', 'redundantgroup', 'redundantgroup2', 'redundantgroup3', 'rtp', 'us' ]
         )
