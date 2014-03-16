@@ -14,6 +14,7 @@ New Modules:
 * packaging: portage
 * packaging: composer (PHP)
 * packaging: homebrew_tap (OS X)
+* packaging: homebrew_cask (OS X) 
 * notification: nexmo (SMS)
 * system: debconf
 * system: ufw
