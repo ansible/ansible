@@ -160,33 +160,37 @@ EXAMPLES = """
         issue={{issue.meta.key}} operation=transition status="Done"
 """
 
-import urllib2
 import json
 import base64
 
 def request(url, user, passwd, data=None, method=None):
     if data:
-        req = urllib2.Request(url, json.dumps(data))
-    else:
-        req = urllib2.Request(url)
+        data = json.dumps(data)
 
-    if method:
-        req.get_method = lambda: method
-
+    # NOTE: fetch_url uses a password manager, which follows the
+    # standard request-then-challenge basic-auth semantics. However as
+    # JIRA allows some unauthorised operations it doesn't necessarily
+    # send the challenge, so the request occurs as the anonymous user,
+    # resulting in unexpected results. To work around this we manually
+    # inject the basic-auth header up-front to ensure that JIRA treats
+    # the requests as authorized for this user.
     auth = base64.encodestring('%s:%s' % (user, passwd)).replace('\n', '')
-    req.add_header("Authorization", "Basic %s" % auth)
-    req.add_header('Content-Type', 'application/json')
+    response, info = fetch_url(module, url, data=data, method=method, 
+                               headers={'Content-Type':'application/json',
+                                        'Authorization':"Basic %s" % auth})
 
-    res = urllib2.urlopen(req)
-    body = res.read()
+    if info['status'] not in (200, 204):
+        module.fail_json(msg=info['msg'])
+
+    body = response.read()
+
     if body:
         return json.loads(body)
     else:
         return {}
 
-
 def post(url, user, passwd, data):
-    return request(url, user, passwd, data=data)
+    return request(url, user, passwd, data=data, method='POST')
 
 def put(url, user, passwd, data):
     return request(url, user, passwd, data=data, method='PUT')
@@ -279,6 +283,7 @@ OP_REQUIRED = dict(create=['project', 'issuetype', 'summary', 'description'],
 
 def main():
 
+    global module
     module = AnsibleModule(
         argument_spec=dict(
             uri=dict(required=True),
@@ -323,15 +328,12 @@ def main():
     # Dispatch
     try:
         
-        # Lookup the corresponding operation for this operation. This
-        # is safe as the AnsibleModule should remove any unknown operations.
+        # Lookup the corresponding method for this operation. This is
+        # safe as the AnsibleModule should remove any unknown operations.
         thismod = sys.modules[__name__]
         method = getattr(thismod, op)
 
         ret = method(restbase, user, passwd, module.params)
-
-    except urllib2.HTTPError as e:
-        return module.fail_json(msg=e.msg)
 
     except Exception as e:
         return module.fail_json(msg=e.message)
@@ -341,4 +343,5 @@ def main():
 
 
 from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
 main()
