@@ -130,7 +130,7 @@ def send_msg(channel, msg, server='localhost', port='6667',
             break
         elif time.time() - start > timeout:
             raise Exception('Timeout waiting for IRC server welcome response')
-        time.sleep(0.5)
+        sleep(0.5)
 
     irc.send('JOIN %s\r\n' % channel)
     join = ''
@@ -141,13 +141,13 @@ def send_msg(channel, msg, server='localhost', port='6667',
             break
         elif time.time() - start > timeout:
             raise Exception('Timeout waiting for IRC JOIN response')
-        time.sleep(0.5)
+        sleep(0.5)
 
     irc.send('PRIVMSG %s :%s\r\n' % (channel, message))
-    time.sleep(1)
+    sleep(1)
     irc.send('PART %s\r\n' % channel)
     irc.send('QUIT\r\n')
-    time.sleep(1)
+    sleep(1)
     irc.close()
 
 # ===========================================
