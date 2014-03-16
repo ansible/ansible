@@ -768,15 +768,24 @@ class FreeBsdService(Service):
 
     platform = 'FreeBSD'
     distribution = None
+    use_service = True
 
     def get_service_tools(self):
-        self.svc_cmd = self.module.get_bin_path('service', True)
+        self.svc_cmd = self.module.get_bin_path('service')
 
         if not self.svc_cmd:
-            self.module.fail_json(msg='unable to find service binary')
+            self.use_service = False
+            self.svc_cmd = self.module.get_bin_path('/usr/local/etc/rc.d/%s' % self.name)
+            if not self.svc_cmd:
+                self.svc_cmd = self.module.get_bin_path('/etc/rc.d/%s' % self.name)
+                if not self.svc_cmd:
+                    self.module.fail_json(msg='unable to find service binary or rc.d script for %s' % self.name)
 
     def get_service_status(self):
-        rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, 'onestatus', self.arguments))
+        if self.use_service:
+            rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, 'onestatus', self.arguments))
+        else:
+            rc, stdout, stderr = self.execute_command("%s %s %s" % (self.svc_cmd, 'onestatus', self.arguments))
         if rc == 1:
             self.running = False
         elif rc == 0:
@@ -793,7 +802,10 @@ class FreeBsdService(Service):
             if os.path.isfile(rcfile):
                 self.rcconf_file = rcfile
 
-        rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, 'rcvar', self.arguments))
+        if self.use_service:
+            rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, 'rcvar', self.arguments))
+        else:
+            rc, stdout, stderr = self.execute_command("%s %s %s" % (self.svc_cmd, 'rcvar', self.arguments))
         cmd = "%s %s %s %s" % (self.svc_cmd, self.name, 'rcvar', self.arguments)
         rcvars = shlex.split(stdout, comments=True)
 
@@ -824,7 +836,10 @@ class FreeBsdService(Service):
         if self.action is "reload":
             self.action = "onereload"
 
-        return self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, self.action, self.arguments))
+        if self.use_service:
+            return self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, self.action, self.arguments))
+        else:
+            return self.execute_command("%s %s %s" % (self.svc_cmd, self.action, self.arguments))
 
 # ===========================================
 # Subclass: OpenBSD

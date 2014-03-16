@@ -1008,13 +1008,13 @@ class FreeBSDHardware(Hardware):
         # Device          1M-blocks     Used    Avail Capacity
         # /dev/ada0p3        314368        0   314368     0%
         #
-        rc, out, err = module.run_command("/usr/sbin/swapinfo -m")
+        rc, out, err = module.run_command("/usr/sbin/swapinfo -k")
         lines = out.split('\n')
         if len(lines[-1]) == 0:
             lines.pop()
         data = lines[-1].split()
-        self.facts['swaptotal_mb'] = data[1]
-        self.facts['swapfree_mb'] = data[3]
+        self.facts['swaptotal_mb'] = int(data[1]) / 1024
+        self.facts['swapfree_mb'] = int(data[3]) / 1024
 
     def get_mount_facts(self):
         self.facts['mounts'] = []
