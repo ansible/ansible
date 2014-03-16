@@ -20,7 +20,7 @@
 
 DOCUMENTATION = '''
 ---
-version_added: "1.5"
+version_added: "1.6"
 module: text
 short_description: Sends a text message to a mobile phone through Twilio.
 description:

@@ -16,6 +16,7 @@ New Modules:
 * packaging: homebrew_tap (OS X)
 * packaging: homebrew_cask (OS X) 
 * notification: nexmo (SMS)
+* notification: twilio (SMS)
 * system: debconf
 * system: ufw
 * system: locale_gen
