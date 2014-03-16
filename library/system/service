@@ -579,7 +579,7 @@ class LinuxService(Service):
                 self.execute_command("%s --add %s" % (self.enable_cmd, self.name))
                 (rc, out, err) = self.execute_command("%s --list %s" % (self.enable_cmd, self.name))
             if not self.name in out:
-                self.module.fail_json(msg="unknown service name")
+                self.module.fail_json(msg="service %s does not support chkconfig" % self.name)
             state = out.split()[-1]
             if self.enable and ( "3:on" in out and "5:on" in out ):
                 return
