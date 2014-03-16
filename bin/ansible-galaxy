@@ -3,6 +3,7 @@
 ########################################################################
 #
 # (C) 2013, James Cammarata <jcammarata@ansible.com>
+# (C) 2013, Patrick Heeney <patrickheeney@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -37,6 +38,7 @@ from collections import defaultdict
 from distutils.version import LooseVersion
 from jinja2 import Environment
 from optparse import OptionParser
+from ansible.utils import cmd_functions
 
 import ansible.constants as C
 
@@ -499,6 +501,317 @@ def install_role(role_name, role_version, role_filename, options):
         print "%s was installed successfully" % role_name
         return meta_file_data
 
+
+#-------------------------------------------------------------------------------------
+# GIT functions
+#-------------------------------------------------------------------------------------
+
+def git_clone(git_path, repo, dest, remote, depth, version):
+    ''' makes a new git repo if it does not already exist '''
+    dest_dirname = os.path.dirname(dest)
+    try:
+        os.makedirs(dest_dirname)
+    except:
+        pass
+
+    cmd = [ git_path, 'clone' ]
+    cmd.extend([ '--origin', remote, '--recursive' ])
+    
+    #if is_remote_branch(git_path, dest, repo, version) \
+    #or is_remote_tag(git_path, dest, repo, version):
+    #    cmd.extend([ '--branch', version ])
+    
+    if depth:
+        cmd.extend([ '--depth', str(depth) ])
+
+    cmd.extend([ repo, dest ])
+
+    rc, out, err = cmd_functions.run_cmd(' '.join(cmd), live=True)
+
+    return (rc, out, err)
+
+def git_fetch(git_path, repo, dest, remote, version):
+    ''' updates repo from remote sources '''
+    cmd = "%s fetch %s" % (git_path, remote)
+    rc, out1, err1 = cmd_functions.run_cmd(cmd, live=True)
+    if rc != 0:
+        print >>sys.stderr, "Failed to download remote objects and refs"
+
+    cmd = "%s fetch --tags %s" % (git_path, remote)
+    rc, out2, err2 = cmd_functions.run_cmd(cmd, live=True)
+    if rc != 0:
+        print >>sys.stderr, "Failed to download remote objects and refs"
+
+    (rc, out3, err3) = git_submodule_update(git_path, dest)
+
+    return (rc, out1 + out2 + out3, err1 + err2 + err3)
+
+
+def git_submodule_update(git_path, dest):
+    ''' init and update any submodules '''
+    # skip submodule commands if .gitmodules is not present
+    if not os.path.exists(os.path.join(dest, '.gitmodules')):
+        return (0, '', '')
+
+    cmd = [ git_path, 'submodule', 'sync' ]
+    rc, out, err = cmd_functions.run_cmd(' '.join(cmd), live=True)
+
+    cmd = [ git_path, 'submodule', 'update', '--init', '--recursive' ]
+    rc, out, err = cmd_functions.run_cmd(' '.join(cmd), live=True)
+    if rc != 0:
+        print >>sys.stderr, "Failed to init/update submodules"
+
+    return (rc, out, err)
+
+def git_has_local_mods(git_path, dest, bare):
+    ''' check git status to see if we have any local changes '''
+    cmd = "%s status -s" % (git_path)
+    rc, out, err = cmd_functions.run_cmd(' '.join(cmd), live=True)
+
+    lines = out.splitlines()
+
+    return len(lines) > 0
+
+def git_reset(git_path, dest):
+    '''
+    Resets the index and working tree to HEAD.
+    Discards any changes to tracked files in working
+    tree since that commit.
+    '''
+    cmd = "%s reset --hard HEAD" % (git_path,)
+    rc, out, err = cmd_functions.run_cmd(' '.join(cmd), live=True)
+
+    return (rc, out, err)
+
+def git_switch_version(git_path, dest, remote, version):
+    ''' once pulled, switch to a particular SHA, tag, or branch '''
+    cmd = ''
+    if version != 'HEAD':
+        if git_is_remote_branch(git_path, dest, remote, version):
+            if not git_is_local_branch(git_path, dest, version):
+                cmd = "%s checkout --track -b %s %s/%s" % (git_path, version, remote, version)
+            else:
+                rc, out, err = cmd_functions.run_cmd("%s checkout --force %s" % (git_path, version), live=True)
+                if rc != 0:
+                    print >>sys.stderr, "Failed to checkout branch %s" % version
+                    return False
+                cmd = "%s reset --hard %s/%s" % (git_path, remote, version)
+        else:
+            cmd = "%s checkout --force %s" % (git_path, version)
+    else:
+        branch = git_get_head_branch(git_path, dest, remote)
+
+        rc, out, err = cmd_functions.run_cmd("%s checkout --force %s" % (git_path, branch), live=True)
+        if rc != 0:
+            print >>sys.stderr, "Failed to checkout branch %s" % version
+            return False
+
+        cmd = "%s reset --hard %s" % (git_path, remote)
+
+    rc, out, err = cmd_functions.run_cmd(' '.join(cmd), live=True)
+    if rc != 0:
+        if version != 'HEAD':
+            print >>sys.stderr, "Failed to checkout %s" % version
+            return False
+        else:
+            print >>sys.stderr, "Failed to checkout branch %s" % branch
+            return False
+
+    (rc, out2, err2) = git_submodule_update(git_path, dest)
+
+    return (rc, out1 + out2, err1 + err2)
+
+def git_is_remote_branch(git_path, module, dest, remote, version):
+    cmd = '%s ls-remote %s -h refs/heads/%s' % (git_path, remote, version)
+    (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=dest)
+    if version in out:
+        return True
+    else:
+        return False
+
+def git_is_local_branch(git_path, module, dest, branch):
+    branches = get_branches(git_path, module, dest)
+    lbranch = '%s' % branch
+    if lbranch in branches:
+        return True
+    elif '* %s' % branch in branches:
+        return True
+    else:
+        return False
+
+def git_is_not_a_branch(git_path, module, dest):
+    branches = get_branches(git_path, module, dest)
+    for b in branches:
+        if b.startswith('* ') and 'no branch' in b:
+            return True
+    return False
+
+
+def git_get_head_branch(git_path, dest, remote, bare=False):
+    '''
+    Determine what branch HEAD is associated with.  This is partly
+    taken from lib/ansible/utils/__init__.py.  It finds the correct
+    path to .git/HEAD and reads from that file the branch that HEAD is
+    associated with.  In the case of a detached HEAD, this will look
+    up the branch in .git/refs/remotes/<remote>/HEAD.
+    '''
+    if bare:
+        repo_path = dest
+    else:
+        repo_path = os.path.join(dest, '.git')
+    # Check if the .git is a file. If it is a file, it means that we are in a submodule structure.
+    if os.path.isfile(repo_path):
+        try:
+            gitdir = yaml.safe_load(open(repo_path)).get('gitdir')
+            # There is a posibility the .git file to have an absolute path.
+            if os.path.isabs(gitdir):
+                repo_path = gitdir
+            else:
+                repo_path = os.path.join(repo_path.split('.git')[0], gitdir)
+        except (IOError, AttributeError):
+            return ''
+    # Read .git/HEAD for the name of the branch.
+    # If we're in a detached HEAD state, look up the branch associated with
+    # the remote HEAD in .git/refs/remotes/<remote>/HEAD
+    f = open(os.path.join(repo_path, "HEAD"))
+    if git_is_not_a_branch(git_path, dest):
+        f.close()
+        f = open(os.path.join(repo_path, 'refs', 'remotes', remote, 'HEAD'))
+    branch = f.readline().split('/')[-1].rstrip("\n")
+    f.close()
+    return branch
+
+
+#-------------------------------------------------------------------------------------
+# Galaxyfile functions
+#-------------------------------------------------------------------------------------
+
+def extract_cli_roles(lines):
+    """
+    Extracts comma deliminated roles in the following format
+    galaxy_author/galaxy_file,galaxy_version
+    """
+    # loop through the original comma deliminated list, 
+    # and convert them into the galaxyfile format
+    roles = []
+    while len(lines) > 0:
+        role_src = dict()
+        role_name = lines.pop(0).strip()
+        role_version = None
+
+        if role_name == "" or role_name.startswith("#"):
+            continue
+        elif role_name.find(',') != -1:
+            role_name,role_version = role_name.split(',',1)
+            role_name = role_name.strip()
+            role_version = role_version.strip()
+
+        if os.path.isfile(role_name):
+            role_src["source"] = "file"
+            role_src["name"] = os.path.basename(role_name).replace('.tar.gz','')
+            role_src["path"] = role_name
+        else:
+            role_src["source"] = "galaxy"
+            role_src["name"] = role_name
+            role_src["version"] = role_version
+
+        roles.append(role_src)
+
+    return roles
+
+def get_galaxyfile_info(role_path):
+    """
+    Returns the YAML data contained galaxyfile.
+    """
+    try:
+        if os.path.isfile(role_path):
+            f = open(role_path, 'r')
+            info_data = yaml.safe_load(f)
+            f.close()
+            return info_data
+        else:
+            return None
+    except:
+        return None    
+
+def extract_galaxyfile_roles(path, vars={}):
+    '''
+    Get a list of galaxyfile roles
+    '''
+    data  = get_galaxyfile_info(path)
+    roles = []
+
+    if type(data) != list:
+        print >>sys.stderr, "parse error: galaxyfile must be formatted as a YAML list, got %s" % type(data)
+        return 0
+
+    for role in data:
+        if type(role) != dict:
+            print >>sys.stderr, "parse error: each role in a galaxyfile must be a YAML dictionary (hash), recieved: %s" % role
+            return 0
+
+        roles.append(role)
+
+    return roles
+
+def install_git_role(role_name, git_path, repo, dest, remote, depth, version, options):
+    
+    if dest:
+        # we have a destination
+        role_path = dest
+    if not dest:
+        # we strip off the top-level directory for all of the files contained within
+        # the tar file here, since the default is 'github_repo-target', and change it 
+        # to the specified role's name
+        role_path = os.path.join(get_opt(options, 'roles_path', '/etc/ansible/roles'), role_name)
+        role_path = os.path.expanduser(role_path)
+
+    try:
+        # does this role directory exist?
+        if os.path.exists(role_path):
+            if not os.path.isdir(role_path):
+                print "Error: the specified roles path exists and is not a directory."
+                return False
+            elif not get_opt(options, "force", False):
+                print "Error: the specified role %s appears to already exist. Use --force to replace it." % role_name
+                return False
+            else:
+                # using --force, remove the old path
+                if not remove_role(role_name, options):
+                    print "Error: %s doesn't appear to contain a role." % role_path
+                    print "Please remove this directory manually if you really want to put the role here."
+                    return False
+        else:
+            os.makedirs(role_path)
+
+        gitconfig = os.path.join(role_path, '.git', 'config')
+        if not os.path.exists(gitconfig):
+            # if we do not have a .git/config file, git clone the repository
+            git_clone(git_path, repo, role_path, remote, depth, version)
+        else:
+            # otherwise we need to update the codebase
+            local_mods = git_has_local_mods(git_path, role_path)
+            if local_mods:
+                if not force:
+                    print "Local modifications exist in repository (force=no)"
+                    return False
+                else:
+                    git_reset(git_path, role_path)
+
+            git_fetch(git_path, repo, role_path, remote, version)
+
+        # switch to version specified regardless of whether
+        # we cloned or pulled
+        if version:
+            git_switch_version(git_path, role_path, remote, version)
+
+        # write out the install info file for later use
+        #write_galaxy_install_info(role_name, role_version, options)
+    except OSError, e:
+        print "Error: you do not have permission to modify files in %s" % role_path
+        return False
+
+
 #-------------------------------------------------------------------------------------
 # Action functions
 #-------------------------------------------------------------------------------------
@@ -636,42 +949,31 @@ def execute_install(args, options, parser):
         print "The API server (%s) is not responding, please try again later." % api_server
         sys.exit(1)
 
-    roles_done = []
-    if role_file:
+    if role_file and role_file.endswith("yml"):
+        # get roles from a yaml file
+        roles_left = extract_galaxyfile_roles(role_file)
+    elif role_file:
         # roles listed in a file, one per line
         # so we'll go through and grab them all
         f = open(role_file, 'r')
-        roles_left = f.readlines()
+        roles_left = extract_cli_roles(f.readlines())
         f.close()
     else:
         # roles were specified directly, so we'll just go out grab them
         # (and their dependencies, unless the user doesn't want us to).
-        roles_left = args
+        roles_left = extract_cli_roles(args)
 
+    # loop through all the roles we collected
     while len(roles_left) > 0:
-        # query the galaxy API for the role data
-        role_name = roles_left.pop(0).strip()
-        role_version = None
+        # get the role from the list
+        role = roles_left.pop(0)
+        role_source = role.get("source", "galaxy")
 
-        if role_name == "" or role_name.startswith("#"):
-            continue
-        elif role_name.find(',') != -1:
-            role_name,role_version = role_name.split(',',1)
-            role_name = role_name.strip()
-            role_version = role_version.strip()
+        # run the galaxy role 
+        if role_source == "galaxy":
+            role_name = role.get("name", None)
+            role_version = role.get("version", None)
 
-        if os.path.isfile(role_name):
-            # installing a local tar.gz
-            tar_file = role_name
-            role_name = os.path.basename(role_name).replace('.tar.gz','')
-            if tarfile.is_tarfile(tar_file):
-                print " - installing %s as %s" % (tar_file, role_name)
-                if not install_role(role_name, role_version, tar_file, options):
-                    exit_without_ignore(options)
-            else:
-                print "%s (%s) was NOT installed successfully." % (role_name,tar_file)
-                exit_without_ignore(options)
-        else:
             # installing remotely
             role_data = api_lookup_role_by_name(api_server, role_name)
             if not role_data:
@@ -718,6 +1020,45 @@ def execute_install(args, options, parser):
                     os.unlink(tmp_file)
                 print "%s was NOT installed successfully." % role_name
                 exit_without_ignore(options)
+        elif role_source == "git":
+            role_name = role.get("name", None)
+            role_repo = role.get("repo", None)
+            role_dest = role.get("dest", None)
+            role_remote = role.get("remote", "origin")
+            role_depth = role.get("depth", None)
+            role_version = role.get("version", None)
+            role_git_path  = role.get("executable", get_bin_path('git'))
+
+            if role_name == None or role_repo == None or role_git_path == None:
+                continue
+
+            if role_name == "" or role_repo == "":
+                continue
+
+            print " - installing %s as %s" % (role_repo, role_name)
+
+            if not install_git_role(role_name, role_git_path, role_repo, role_dest, role_remote, role_depth, role_version, options):
+                exit_without_ignore(options)
+
+        elif role_source == "file":
+            role_name = role.get("name", None)
+            role_path = role.get("path", None)
+
+            tar_file = role_path
+            if not os.path.exists(tar_file):
+                print "%s (%s) was NOT found." % (role_name, tar_file)
+                exit_without_ignore(options)
+            elif tarfile.is_tarfile(tar_file):
+                print " - installing %s as %s" % (tar_file, role_name)
+                if not install_role(role_name, role_version, tar_file, options):
+                    exit_without_ignore(options)
+            else:
+                print "%s (%s) was NOT installed successfully." % (role_name, tar_file)
+                exit_without_ignore(options)
+
+        else:
+            print "Role could not be detected due to type %s." % role_source
+            exit_without_ignore(options)
     sys.exit(0)
 
 def execute_remove(args, options, parser):
@@ -809,6 +1150,9 @@ def main():
     #except KeyError, e:
     #    print "Error: %s is not a valid action. Valid actions are: %s" % (action, ", ".join(VALID_ACTIONS))
     #    sys.exit(1)
+
+# import module snippets
+from ansible.module_utils.basic import *
 
 if __name__ == "__main__":
     main()
