@@ -145,6 +145,11 @@ def main(args):
             # Arguments as Key-value
             extra_vars = utils.combine_vars(extra_vars, utils.parse_kv(extra_vars_opt))
 
+    if 'sudopass' in extra_vars:
+        sudopass = extra_vars['sudopass']
+    elif sudopass:
+        extra_vars['sudopass'] = sudopass
+
     only_tags = options.tags.split(",")
     skip_tags = options.skip_tags
     if options.skip_tags is not None:
