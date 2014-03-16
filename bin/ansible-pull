@@ -117,6 +117,8 @@ def main(args):
                       'Defaults to behavior of repository module.')
     parser.add_option('-i', '--inventory-file', dest='inventory',
                       help="location of the inventory host file")
+    parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
+                      help="set additional variables as key=value or YAML/JSON", default=[])
     parser.add_option('-v', '--verbose', default=False, action="callback",
                       callback=increment_debug,
                       help='Pass -vvvv to ansible-playbook')
@@ -185,6 +187,8 @@ def main(args):
         cmd += " --vault-password-file=%s" % options.vault_password_file
     if options.inventory:
         cmd += ' -i "%s"' % options.inventory
+    for ev in options.extra_vars:
+        cmd += ' -e "%s"' % ev
     os.chdir(options.dest)
 
     # RUN THE PLAYBOOK COMMAND
