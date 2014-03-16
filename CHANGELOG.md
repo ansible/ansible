@@ -27,6 +27,7 @@ New Modules:
 Other notable changes:
 
 * example callback plugin added for hipchat
+* added example inventory plugin for doing really trivial inventory from SSH config files
 * libvirt module now supports destroyed and paused as states
 * s3 module can specify metadata
 * security token additions to ec2 modules
