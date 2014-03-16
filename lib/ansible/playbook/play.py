@@ -517,7 +517,11 @@ class Play(object):
                 include_vars = {}
                 for k in x:
                     if k.startswith("with_"):
-                        utils.deprecated("include + with_items is a removed deprecated feature", "1.5", removed=True)
+                        if original_file:
+                            offender = " (in %s)" % original_file
+                        else:
+                            offender = ""
+                        utils.deprecated("include + with_items is a removed deprecated feature" + offender, "1.5", removed=True)
                     elif k.startswith("when_"):
                         utils.deprecated("\"when_<criteria>:\" is a removed deprecated feature, use the simplified 'when:' conditional directly", None, removed=True)
                     elif k == 'when':
