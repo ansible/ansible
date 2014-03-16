@@ -28,9 +28,10 @@ short_description: Add and remove APT repositores
 description:
     - Add or remove an APT repositories in Ubuntu and Debian.
 notes:
-    - This module works on Debian and Ubuntu and requires C(python-apt) and C(python-pycurl) packages.
+    - This module works on Debian and Ubuntu and requires C(python-apt).
     - This module supports Debian Squeeze (version 6) as well as its successors.
     - This module treats Debian and Ubuntu distributions separately. So PPA could be installed only on Ubuntu machines.
+      Adding PPA repositories requires C(python-pycurl).
 options:
     repo:
         required: true
@@ -298,6 +299,8 @@ class UbuntuSourcesList(SourcesList):
 
     def _get_ppa_info(self, owner_name, ppa_name):
         # we can not use urllib2 here as it does not do cert verification
+        if not HAVE_PYCURL:
+            module.fail_json(msg='Could not import python modules: pycurl. Please install python-pycurl package.')
         lp_api = self.LP_API % (owner_name, ppa_name)
         return self._get_ppa_info_curl(lp_api)
 
@@ -370,9 +373,6 @@ def main():
 
     if not HAVE_PYTHON_APT:
         module.fail_json(msg='Could not import python modules: apt_pkg. Please install python-apt package.')
-
-    if not HAVE_PYCURL:
-        module.fail_json(msg='Could not import python modules: pycurl. Please install python-pycurl package.')
 
     repo = module.params['repo']
     state = module.params['state']
