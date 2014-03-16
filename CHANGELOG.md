@@ -13,6 +13,7 @@ New Modules:
 * packaging: cpanm (Perl)
 * packaging: portage
 * packaging: composer (PHP)
+* packaging: homebrew_tap (OS X)
 * notification: nexmo (SMS)
 * system: debconf
 * system: ufw
