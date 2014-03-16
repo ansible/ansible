@@ -24,11 +24,11 @@ along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 DOCUMENTATION = '''
 ---
 module: alternatives
-short_description: Manages symbolic links
+short_description: Manages alternative programs for common commands
 description:
     - Manages symbolic links using the 'update-alternatives' tool provided on debian-like systems.
     - Useful when multiple programs are installed but provide similar functionality (e.g. different editors).
-version_added: "1.5"
+version_added: "1.6"
 options:
   name:
     description:
