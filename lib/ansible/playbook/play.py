@@ -134,6 +134,7 @@ class Play(object):
                                       '("su", "su_user") cannot be used together')
 
         load_vars = {}
+        load_vars['role_names'] = ds.get('role_names',[])
         load_vars['playbook_dir'] = self.basedir
         if self.playbook.inventory.basedir() is not None:
             load_vars['inventory_dir'] = self.playbook.inventory.basedir()
@@ -356,6 +357,7 @@ class Play(object):
         new_tasks.append(dict(meta='flush_handlers'))
 
         roles = self._build_role_dependencies(roles, [], self.vars)
+        role_names = []
 
         for (role,role_path,role_vars,default_vars) in roles:
             # special vars must be extracted from the dict to the included tasks
@@ -388,6 +390,7 @@ class Play(object):
             else:
                 role_name = role
 
+            role_names.append(role_name)
             if os.path.isfile(task):
                 nt = dict(include=pipes.quote(task), vars=role_vars, default_vars=default_vars, role_name=role_name)
                 for k in special_keys:
@@ -434,6 +437,7 @@ class Play(object):
         ds['tasks'] = new_tasks
         ds['handlers'] = new_handlers
         ds['vars_files'] = new_vars_files
+        ds['role_names'] = role_names
 
         self.default_vars = self._load_role_defaults(defaults_files)
 
