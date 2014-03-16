@@ -95,6 +95,26 @@ except ImportError:
 
 VALID_SOURCE_TYPES = ('deb', 'deb-src')
 
+def install_python_apt(module):
+
+    if not module.check_mode:
+        apt_get_path = module.get_bin_path('apt-get')
+        if apt_get_path:
+            rc, so, se = module.run_command('%s update && %s install python-apt -y -q' % (apt_get_path, apt_get_path))
+            if rc == 0:
+                global apt, apt_pkg
+                import apt
+                import apt_pkg
+
+def install_python_pycurl(module):
+
+    if not module.check_mode:
+        apt_get_path = module.get_bin_path('apt-get')
+        if apt_get_path:
+            rc, so, se = module.run_command('%s update && %s install python-pycurl -y -q' % (apt_get_path, apt_get_path))
+            if rc == 0:
+                global pycurl
+                import pycurl
 
 class CurlCallback:
     def __init__(self):
@@ -364,19 +384,24 @@ def main():
             repo=dict(required=True),
             state=dict(choices=['present', 'absent'], default='present'),
             update_cache = dict(aliases=['update-cache'], type='bool', default='yes'),
+            # this should not be needed, but exists as a failsafe
+            install_python_apt=dict(required=False, default="yes", type='bool'),
+            # this should not be needed, but exists as a failsafe
+            install_python_pycurl=dict(required=False, default="yes", type='bool'),
         ),
         supports_check_mode=True,
     )
 
-    if not HAVE_PYTHON_APT:
-        module.fail_json(msg='Could not import python modules: apt_pkg. Please install python-apt package.')
+    params = module.params
+    if params['install_python_apt'] and not HAVE_PYTHON_APT and not module.check_mode:
+        install_python_apt(module)
 
-    if not HAVE_PYCURL:
-        module.fail_json(msg='Could not import python modules: pycurl. Please install python-pycurl package.')
+    if params['install_python_pycurl'] and not HAVE_PYCURL and not module.check_mode:
+        install_python_pycurl(module)
 
-    repo = module.params['repo']
-    state = module.params['state']
-    update_cache = module.params['update_cache']
+    repo = params['repo']
+    state = params['state']
+    update_cache = params['update_cache']
     sourceslist = None
 
     if isinstance(distro, aptsources.distro.UbuntuDistribution):
