@@ -143,6 +143,8 @@ class Npm(object):
             for dep in data['dependencies']:
                 if 'missing' in data['dependencies'][dep] and data['dependencies'][dep]['missing']:
                     missing.append(dep)
+                elif 'invalid' in data['dependencies'][dep] and data['dependencies'][dep]['invalid']:
+                    missing.append(dep)
                 else:
                     installed.append(dep)
         #Named dependency not installed
