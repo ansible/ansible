@@ -48,6 +48,20 @@ class InventoryParser(object):
         self._parse_group_variables()
         return self.groups
 
+    @staticmethod
+    def _parse_value(v):
+        if "#" not in v:
+            try:
+                return ast.literal_eval(v)
+            # Using explicit exceptions.
+            # Likely a string that literal_eval does not like. We wil then just set it.
+            except ValueError:
+                # For some reason this was thought to be malformed.
+                pass
+            except SyntaxError:
+                # Is this a hash with an equals at the end?
+                pass
+        return v
 
     # [webservers]
     # alpha
@@ -123,22 +137,7 @@ class InventoryParser(object):
                                 (k,v) = t.split("=", 1)
                             except ValueError, e:
                                 raise errors.AnsibleError("Invalid ini entry: %s - %s" % (t, str(e)))
-
-                            # If there is a hash in the value don't pass it through to ast at ast will split at the hash.
-                            if "#" in v:
-                                host.set_variable(k, v)
-                            else:
-                                try:
-                                    host.set_variable(k,ast.literal_eval(v))
-                                # Using explicit exceptions.
-                                # Likely a string that literal_eval does not like. We wil then just set it.
-                                except ValueError:
-                                    # For some reason this was thought to be malformed.
-                                    host.set_variable(k, v)
-                                except SyntaxError:
-                                    # Is this a hash with an equals at the end?
-                                    host.set_variable(k, v)
-
+                            host.set_variable(k, self._parse_value(v))
                     self.groups[active_group_name].add_host(host)
 
     # [southeast:children]
@@ -193,12 +192,7 @@ class InventoryParser(object):
                     raise errors.AnsibleError("variables assigned to group must be in key=value form")
                 else:
                     (k, v) = [e.strip() for e in line.split("=", 1)]
-                    # When the value is a single-quoted or double-quoted string
-                    if re.match(r"^(['\"]).*\1$", v):
-                        # Unquote the string
-                        group.set_variable(k, re.sub(r"^['\"]|['\"]$", '', v))
-                    else:
-                        group.set_variable(k, v)
+                    group.set_variable(k, self._parse_value(v))
 
     def get_host_variables(self, host):
         return {}
