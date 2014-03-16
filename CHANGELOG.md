@@ -17,7 +17,6 @@ New Modules:
 * system: locale_gen
 * cloud: digital_ocean_domain
 * cloud: digital_ocean_sshkey 
-* cloud: nova_fip (floating IPs)
 * cloud: rax_identity
 * cloud: ec2_asg (configure autoscaling groups)
 
