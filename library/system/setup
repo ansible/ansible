@@ -20,6 +20,7 @@
 
 import os
 import array
+import collections
 import fcntl
 import fnmatch
 import glob
@@ -702,6 +703,41 @@ class LinuxHardware(Hardware):
                          'size_available': size_available,
                          })
 
+    def get_device_links(self, link_dir):
+        if not os.path.exists(link_dir):
+            return {}
+        try:
+            retval = collections.defaultdict(set)
+            for entry in os.listdir(link_dir):
+                try:
+                    target = os.path.basename(os.readlink(os.path.join(link_dir, entry)))
+                    retval[target].add(entry)
+                except OSError:
+                    continue
+            return dict((k, list(sorted(v))) for (k,v) in retval.iteritems())
+        except OSError:
+            return {}
+
+    def get_all_device_owners(self):
+        try:
+            retval = collections.defaultdict(set)
+            for path in glob.glob('/sys/block/*/slaves/*'):
+                elements = path.split('/')
+                device = elements[3]
+                target = elements[5]
+                retval[target].add(device)
+            return dict((k, list(sorted(v))) for (k,v) in retval.iteritems())
+        except OSError:
+            return {}
+
+    def get_all_device_links(self):
+        return {
+            'ids': self.get_device_links('/dev/disk/by-id'),
+            'uuids': self.get_device_links('/dev/disk/by-uuid'),
+            'labels': self.get_device_links('/dev/disk/by-label'),
+            'masters': self.get_all_device_owners(),
+        }
+
     def get_device_facts(self):
         self.facts['devices'] = {}
         lspci = module.get_bin_path('lspci')
@@ -715,6 +751,9 @@ class LinuxHardware(Hardware):
         except OSError:
             return
 
+        links = self.get_all_device_links()
+        self.facts['device_links'] = links
+
         for block in block_devs:
             virtual = 1
             sysfs_no_links = 0
@@ -726,17 +765,17 @@ class LinuxHardware(Hardware):
                     sysfs_no_links = 1
                 else:
                     continue
-            if "virtual" in path:
-                continue
             sysdir = os.path.join("/sys/block", path)
             if sysfs_no_links == 1:
                 for folder in os.listdir(sysdir):
                     if "device" in folder:
                         virtual = 0
                         break
-                if virtual:
-                    continue
             d = {}
+            d['virtual'] = virtual
+            d['links'] = {}
+            for (link_type, link_values) in links.iteritems():
+                d['links'][link_type] = link_values.get(block, [])
             diskname = os.path.basename(sysdir)
             for key in ['vendor', 'model']:
                 d[key] = get_file_content(sysdir + "/device/" + key)
@@ -753,6 +792,10 @@ class LinuxHardware(Hardware):
                     part = {}
                     partname = m.group(1)
                     part_sysdir = sysdir + "/" + partname
+
+                    part['links'] = {}
+                    for (link_type, link_values) in links.iteritems():
+                        part['links'][link_type] = link_values.get(partname, [])
 
                     part['start'] = get_file_content(part_sysdir + "/start",0)
                     part['sectors'] = get_file_content(part_sysdir + "/size",0)
