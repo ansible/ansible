@@ -163,6 +163,36 @@ def load_platform_subclass(cls, *args, **kwargs):
 
     return super(cls, subclass).__new__(subclass)
 
+def get_bin_path(arg, opt_dirs=[]):
+    '''
+    find system executable in PATH.
+    Optional arguments:
+       - opt_dirs:  optional list of directories to search in addition to PATH
+    if found return full path; otherwise return None
+    '''
+    sbin_paths = ['/sbin', '/usr/sbin', '/usr/local/sbin']
+    paths = []
+    for d in opt_dirs:
+        if d is not None and os.path.exists(d):
+            paths.append(d)
+    paths += os.environ.get('PATH', '').split(os.pathsep)
+    bin_path = None
+    # mangle PATH to include /sbin dirs
+    for p in sbin_paths:
+        if p not in paths and os.path.exists(p):
+            paths.append(p)
+    for d in paths:
+        path = os.path.join(d, arg)
+        if os.path.exists(path) and is_executable(path):
+            bin_path = path
+            break
+    return bin_path
+
+def is_executable(path):
+    '''is the given path executable?'''
+    return (stat.S_IXUSR & os.stat(path)[stat.ST_MODE]
+            or stat.S_IXGRP & os.stat(path)[stat.ST_MODE]
+            or stat.S_IXOTH & os.stat(path)[stat.ST_MODE])
 
 class AnsibleModule(object):
 
@@ -832,22 +862,7 @@ class AnsibleModule(object):
            - opt_dirs:  optional list of directories to search in addition to PATH
         if found return full path; otherwise return None
         '''
-        sbin_paths = ['/sbin', '/usr/sbin', '/usr/local/sbin']
-        paths = []
-        for d in opt_dirs:
-            if d is not None and os.path.exists(d):
-                paths.append(d)
-        paths += os.environ.get('PATH', '').split(os.pathsep)
-        bin_path = None
-        # mangle PATH to include /sbin dirs
-        for p in sbin_paths:
-            if p not in paths and os.path.exists(p):
-                paths.append(p)
-        for d in paths:
-            path = os.path.join(d, arg)
-            if os.path.exists(path) and self.is_executable(path):
-                bin_path = path
-                break
+        bin_path = get_bin_path(arg, opt_dirs)
         if required and bin_path is None:
             self.fail_json(msg='Failed to find required executable %s' % arg)
         return bin_path
@@ -894,9 +909,7 @@ class AnsibleModule(object):
 
     def is_executable(self, path):
         '''is the given path executable?'''
-        return (stat.S_IXUSR & os.stat(path)[stat.ST_MODE]
-                or stat.S_IXGRP & os.stat(path)[stat.ST_MODE]
-                or stat.S_IXOTH & os.stat(path)[stat.ST_MODE])
+        return is_executable(path)
 
     def digest_from_file(self, filename, digest_method):
         ''' Return hex digest of local file for a given digest_method, or None if file is not present. '''
