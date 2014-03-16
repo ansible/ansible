@@ -384,8 +384,6 @@ class Inventory(object):
         """ return a list of hostnames for a pattern """
 
         result = [ h.name for h in self.get_hosts(pattern) ]
-        if len(result) == 0 and pattern in ["localhost", "127.0.0.1"]:
-            result = [pattern]
         return result
 
     def list_groups(self):
