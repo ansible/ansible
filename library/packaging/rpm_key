@@ -170,7 +170,7 @@ class RpmKey:
         return stdout, stderr
 
     def is_key_imported(self, keyid):
-        stdout, stderr = self.execute_command([self.rpm, '-q', 'gpg-pubkey'])
+        stdout, stderr = self.execute_command([self.rpm, '-qa', 'gpg-pubkey'])
         for line in stdout.splitlines():
             line = line.strip()
             if not line:
