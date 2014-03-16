@@ -368,9 +368,9 @@ class Inventory(object):
         vars_results = [ plugin.run(host, vault_password=vault_password) for plugin in self._vars_plugins ] 
         for updated in vars_results:
             if updated is not None:
-                vars.update(updated)
+                vars = utils.combine_vars(vars, updated)
 
-        vars.update(host.get_variables())
+        vars = utils.combine_vars(vars, host.get_variables())
         if self.parser is not None:
             vars = utils.combine_vars(vars, self.parser.get_host_variables(host))
         return vars
