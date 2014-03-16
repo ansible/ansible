@@ -24,7 +24,7 @@ DOCUMENTATION = '''
 module: composer
 author: Dimitrios Tydeas Mengidis
 short_description: Dependency Manager for PHP
-version_added: "1.4"
+version_added: "1.6"
 description:
     - Composer is a tool for dependency management in PHP. It allows you to declare the dependent libraries your project needs and it will install them in your project for you
 options:
