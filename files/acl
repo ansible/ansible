@@ -221,7 +221,7 @@ def main():
             module.fail_json(msg="%s requires either etype and permissions or just entry be set" % state)
 
     if entry:
-        if etype  or entity  or permissions:
+        if etype or entity or permissions:
             module.fail_json(msg="entry and another incompatible field (entity, etype or permissions) are also set")
         if entry.count(":") not in [2,3]:
             module.fail_json(msg="Invalid entry: '%s', it requires 3 or 4 sections divided by ':'" % entry)
