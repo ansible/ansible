@@ -310,7 +310,13 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
             if os.path.exists(filesdir):
                 basedir = filesdir
 
-        data = data.decode('utf-8')
+        # 6227
+        if isinstance(data, unicode):
+            try:
+                data = data.decode('utf-8')
+            except UnicodeEncodeError, e:
+                pass
+
         try:
             t = environment.from_string(data)
         except Exception, e:
