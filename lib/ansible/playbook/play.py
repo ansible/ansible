@@ -228,23 +228,27 @@ class Play(object):
                             if meta_data:
                                 allow_dupes = utils.boolean(meta_data.get('allow_duplicates',''))
 
-                        if "tags" in passed_vars:
-                            if not self._is_valid_tag(passed_vars["tags"]):
-                                # one of the tags specified for this role was in the
-                                # skip list, or we're limiting the tags and it didn't 
-                                # match one, so we just skip it completely
-                                continue
-
                         # if any tags were specified as role/dep variables, merge
                         # them into the passed_vars so they're passed on to any 
                         # further dependencies too, and so we only have one place
                         # (passed_vars) to look for tags going forward
                         def __merge_tags(var_obj):
                             old_tags = passed_vars.get('tags', [])
-                            new_tags = var_obj.get('tags', [])
-                            if isinstance(new_tags, basestring):
-                                new_tags = [new_tags, ]
+                            if isinstance(var_obj, dict):
+                                new_tags = var_obj.get('tags', [])
+                                if isinstance(new_tags, basestring):
+                                    new_tags = [new_tags, ]
+                            else:
+                                new_tags = []
                             return list(set(old_tags).union(set(new_tags)))
+
+                        if "tags" in passed_vars:
+                            dep_tags = __merge_tags(dep)
+                            if not self._is_valid_tag(dep_tags):
+                                # one of the tags specified for this role was in the
+                                # skip list, or we're limiting the tags and it didn't
+                                # match one, so we just skip it completely
+                                continue
 
                         passed_vars['tags'] = __merge_tags(role_vars)
                         passed_vars['tags'] = __merge_tags(dep_vars)
