@@ -51,10 +51,11 @@ options:
     required: false
   checksum:
     description:
-      - Skip based on checksum, not mod-time & size; Pay attention that "archive" option is enable by default: "checksum" may not work as you would like.
+      - Skip based on checksum, not mod-time & size; Pay attention that "archive" option is enable by default: "checksum" option will not disable it.
     choices: [ 'yes', 'no' ]
     default: 'no'
     required: false
+    version_added: "1.6"
   existing_only:
     description:
       - Skip creating new files on receiver.
