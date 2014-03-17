@@ -313,7 +313,7 @@ def main():
         volumes=dict(default=None),
         wait=dict(default='yes', type='bool'),
         wait_for=dict(default=180),
-        user_data= dict(default=None)
+        user_data=dict(default=None),
         state=dict(default='present', choices=['absent', 'present'])
     ))
 
