@@ -123,8 +123,7 @@ options:
     default: "no"
     choices: [ "yes", "no" ]
     description:
-      - 'force the creation of the symlinks in two cases: the source file does 
-        not exist (but will appear later); the destination exists and is a file (so, we need to unlink the
+      - 'force the creation of the symlinks when the destination exists and is a file (so, we need to unlink the
         "path" file and create symlink to the "src" file in place of it).'
 notes:
     - See also M(copy), M(template), M(assemble)
@@ -135,6 +134,10 @@ author: Michael DeHaan
 EXAMPLES = '''
 - file: path=/etc/foo.conf owner=foo group=foo mode=0644
 - file: src=/file/to/link/to dest=/path/to/symlink owner=foo group=foo state=link
+- file: path=/tmp/{{ item.path }} dest={{ item.dest }} state=link
+  with_items:
+    - { path: 'x', dest: 'y' }
+    - { path: 'z', dest: 'k' }
 '''
 
 def main():
@@ -159,6 +162,7 @@ def main():
     params = module.params
     state  = params['state']
     force = params['force']
+
     params['path'] = path = os.path.expanduser(params['path'])
 
     # short-circuit for diff_peek
@@ -289,7 +293,7 @@ def main():
             else:
                 module.fail_json(msg="absolute paths are required")
 
-            if not os.path.exists(abs_src) and not force:
+            if not os.path.exists(abs_src):
                 module.fail_json(path=path, src=src, msg='src file does not exist')
 
         if prev_state == 'absent':
