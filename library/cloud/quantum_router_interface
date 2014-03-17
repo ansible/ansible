@@ -172,8 +172,8 @@ def main():
 
     # If this interface is present, the router has a port on that network and
     # subnet.
-    present = get_port_id(module, subnet['network_id'], router['id'], 
-                          subnet['id'], neutron=neutron)
+    present = get_port(module, subnet['network_id'], router['id'],
+                       subnet['id'], required=False, neutron=neutron)
 
     if module.params['state'] == 'present':
         if not subnet:

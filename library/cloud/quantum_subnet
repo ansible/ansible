@@ -209,7 +209,8 @@ def main():
     else:
         network_id = module.params['network_id']
 
-    subnet = get_subnet(module, module.params['name'], neutron=neutron)
+    subnet = get_subnet(module, module.params['name'], required=False,
+                        neutron=neutron)
 
     if module.params['state'] == 'present':
         if subnet:

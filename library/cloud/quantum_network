@@ -202,8 +202,8 @@ def main():
 
     neutron = get_neutron_client(module)
 
-    network = get_network(module, name=module.params['name'],
-                          tenant_id=tenant_id, neutron=neutron)
+    network = get_network(module, name=module.params['name'], 
+                          tenant_id=tenant_id, neutron=neutron, required=False)
 
     if module.params['state'] == 'present':
         if network:
