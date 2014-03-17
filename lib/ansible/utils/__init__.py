@@ -1023,7 +1023,7 @@ def listify_lookup_plugin_terms(terms, basedir, inject):
             # not sure why the "/" is in above code :)
             try:
                 new_terms = template.template(basedir, "{{ %s }}" % terms, inject)
-                if isinstance(new_terms, basestring) and "{{" in new_terms.find:
+                if isinstance(new_terms, basestring) and new_terms.find("{{") != -1:
                     pass
                 else:
                     terms = new_terms
