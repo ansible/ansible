@@ -46,6 +46,7 @@ BOOLEANS = BOOLEANS_TRUE + BOOLEANS_FALSE
 
 import os
 import re
+import pipes
 import shlex
 import subprocess
 import sys
@@ -59,6 +60,7 @@ import grp
 import pwd
 import platform
 import errno
+import tempfile
 
 try:
     import json
@@ -113,6 +115,7 @@ FILE_COMMON_ARGUMENTS=dict(
     force = dict(),
     remote_src = dict(), # used by assemble
 )
+
 
 def get_platform():
     ''' what's the platform?  example: Linux is a platform. '''
@@ -188,7 +191,7 @@ class AnsibleModule(object):
         os.environ['LANG'] = MODULE_LANG
         (self.params, self.args) = self._load_params()
 
-        self._legal_inputs = [ 'CHECKMODE', 'NO_LOG' ]
+        self._legal_inputs = ['CHECKMODE', 'NO_LOG']
         
         self.aliases = self._handle_aliases()
 
@@ -571,8 +574,9 @@ class AnsibleModule(object):
 
     def _check_invalid_arguments(self):
         for (k,v) in self.params.iteritems():
-            if k in ('CHECKMODE', 'NO_LOG'):
-                continue
+            # these should be in legal inputs already
+            #if k in ('CHECKMODE', 'NO_LOG'):
+            #    continue
             if k not in self._legal_inputs:
                 self.fail_json(msg="unsupported parameter for module: %s" % k)
 
@@ -987,12 +991,13 @@ class AnsibleModule(object):
             # rename might not preserve context
             self.set_context_if_different(dest, context, False)
 
-    def run_command(self, args, check_rc=False, close_fds=False, executable=None, data=None, binary_data=False, path_prefix=None):
+    def run_command(self, args, check_rc=False, close_fds=False, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None, use_unsafe_shell=False):
         '''
         Execute a command, returns rc, stdout, and stderr.
         args is the command to run
         If args is a list, the command will be run with shell=False.
-        Otherwise, the command will be run with shell=True when args is a string.
+        If args is a string and use_unsafe_shell=False it will split args to a list and run with shell=False
+        If args is a string and use_unsafe_shell=True it run with shell=True.
         Other arguments:
         - check_rc (boolean)  Whether to call fail_json in case of
                               non zero RC.  Default is False.
@@ -1001,13 +1006,24 @@ class AnsibleModule(object):
         - executable (string) See documentation for subprocess.Popen().
                               Default is None.
         '''
+
+        shell = False
         if isinstance(args, list):
-            shell = False
-        elif isinstance(args, basestring):
+            if use_unsafe_shell:
+                args = " ".join([pipes.quote(x) for x in args])
+                shell = True
+        elif isinstance(args, basestring) and use_unsafe_shell:
             shell = True
+        elif isinstance(args, basestring):
+            args = shlex.split(args)
         else:
             msg = "Argument 'args' to run_command must be list or string"
             self.fail_json(rc=257, cmd=args, msg=msg)
+
+        # expand things like $HOME and ~
+        if not shell:
+            args = [ os.path.expandvars(os.path.expanduser(x)) for x in args ]
+
         rc = 0
         msg = None
         st_in = None
@@ -1017,40 +1033,84 @@ class AnsibleModule(object):
         if path_prefix:
             env['PATH']="%s:%s" % (path_prefix, env['PATH'])
 
+        # create a printable version of the command for use
+        # in reporting later, which strips out things like
+        # passwords from the args list
+        if isinstance(args, list):
+            clean_args = " ".join(pipes.quote(arg) for arg in args)
+        else:
+            clean_args = args
+
+        # all clean strings should return two match groups, 
+        # where the first is the CLI argument and the second 
+        # is the password/key/phrase that will be hidden
+        clean_re_strings = [
+            # this removes things like --password, --pass, --pass-wd, etc.
+            # optionally followed by an '=' or a space. The password can 
+            # be quoted or not too, though it does not care about quotes
+            # that are not balanced
+            # source: http://blog.stevenlevithan.com/archives/match-quoted-string
+            r'([-]{0,2}pass[-]?(?:word|wd)?[=\s]?)((?:["\'])?(?:[^\s])*(?:\1)?)',
+            # TODO: add more regex checks here
+        ]
+        for re_str in clean_re_strings:
+            r = re.compile(re_str)
+            clean_args = r.sub(r'\1********', clean_args)
+
         if data:
             st_in = subprocess.PIPE
+
+        kwargs = dict(
+            executable=executable,
+            shell=shell,
+            close_fds=close_fds,
+            stdin= st_in,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE 
+        )
+
+        if path_prefix:
+            kwargs['env'] = env
+        if cwd and os.path.isdir(cwd):
+            kwargs['cwd'] = cwd
+
+        # store the pwd
+        prev_dir = os.getcwd()
+
+        # make sure we're in the right working directory
+        if cwd and os.path.isdir(cwd):
+            try:
+                os.chdir(cwd)
+            except (OSError, IOError), e:
+                self.fail_json(rc=e.errno, msg="Could not open %s , %s" % (cwd, str(e)))
+
         try:
-            if path_prefix is not None:
-                cmd = subprocess.Popen(args,
-                                       executable=executable,
-                                       shell=shell,
-                                       close_fds=close_fds,
-                                       stdin=st_in,
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE,
-                                       env=env)
-            else:
-                cmd = subprocess.Popen(args,
-                                       executable=executable,
-                                       shell=shell,
-                                       close_fds=close_fds,
-                                       stdin=st_in,
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE)
-            
+            cmd = subprocess.Popen(args, **kwargs)
+
             if data:
                 if not binary_data:
-                    data += '\\n'
+                    data += '\n'
             out, err = cmd.communicate(input=data)
             rc = cmd.returncode
         except (OSError, IOError), e:
-            self.fail_json(rc=e.errno, msg=str(e), cmd=args)
+            self.fail_json(rc=e.errno, msg=str(e), cmd=clean_args)
         except:
-            self.fail_json(rc=257, msg=traceback.format_exc(), cmd=args)
+            self.fail_json(rc=257, msg=traceback.format_exc(), cmd=clean_args)
+
         if rc != 0 and check_rc:
             msg = err.rstrip()
-            self.fail_json(cmd=args, rc=rc, stdout=out, stderr=err, msg=msg)
+            self.fail_json(cmd=clean_args, rc=rc, stdout=out, stderr=err, msg=msg)
+
+        # reset the pwd
+        os.chdir(prev_dir)
+
         return (rc, out, err)
+
+    def append_to_file(self, filename, str):
+        filename = os.path.expandvars(os.path.expanduser(filename))
+        fh = open(filename, 'a')
+        fh.write(str)
+        fh.close()
 
     def pretty_bytes(self,size):
         ranges = (
@@ -1067,5 +1127,4 @@ class AnsibleModule(object):
             if size >= limit:
                 break
         return '%.2f %s' % (float(size)/ limit, suffix)
-
 

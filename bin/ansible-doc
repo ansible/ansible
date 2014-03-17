@@ -98,7 +98,7 @@ def get_man_text(doc):
     if 'option_keys' in doc and len(doc['option_keys']) > 0:
         text.append("Options (= is mandatory):\n")
 
-    for o in doc['option_keys']:
+    for o in sorted(doc['option_keys']):
         opt = doc['options'][o]
 
         if opt.get('required', False):
@@ -146,10 +146,15 @@ def get_snippet_text(doc):
     text.append("- name: %s" % (desc))
     text.append("  action: %s" % (doc['module']))
 
-    for o in doc['options']:
+    for o in sorted(doc['options'].keys()):
         opt = doc['options'][o]
         desc = tty_ify("".join(opt['description']))
-        s = o + "="
+
+        if opt.get('required', False):
+            s = o + "="
+        else:
+            s = o
+
         text.append("      %-20s   # %s" % (s, desc))
     text.append('')
 

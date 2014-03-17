@@ -68,9 +68,9 @@ class Connection(object):
         cp_in_use = False
         cp_path_set = False
         for arg in self.common_args:
-            if arg.find("ControlPersist") != -1:
+            if "ControlPersist" in arg:
                 cp_in_use = True
-            if arg.find("ControlPath") != -1:
+            if "ControlPath" in arg:
                 cp_path_set = True
 
         if cp_in_use and not cp_path_set:
@@ -118,35 +118,46 @@ class Connection(object):
 
     def not_in_host_file(self, host):
         if 'USER' in os.environ:
-            host_file = os.path.expandvars("~${USER}/.ssh/known_hosts")
+            user_host_file = os.path.expandvars("~${USER}/.ssh/known_hosts")
         else:
-            host_file = "~/.ssh/known_hosts"
-        host_file = os.path.expanduser(host_file)
-        if not os.path.exists(host_file):
-            print "previous known host file not found"
-            return True
-        host_fh = open(host_file)
-        data = host_fh.read()
-        host_fh.close()
-        for line in data.split("\n"):
-            if line is None or line.find(" ") == -1:
+            user_host_file = "~/.ssh/known_hosts"
+        user_host_file = os.path.expanduser(user_host_file)
+        
+        host_file_list = []
+        host_file_list.append(user_host_file)
+        host_file_list.append("/etc/ssh/ssh_known_hosts")
+        host_file_list.append("/etc/ssh/ssh_known_hosts2")
+        
+        hfiles_not_found = 0
+        for hf in host_file_list:
+            if not os.path.exists(hf):
+                hfiles_not_found += 1
                 continue
-            tokens = line.split()
-            if tokens[0].find(self.HASHED_KEY_MAGIC) == 0:
-                # this is a hashed known host entry
-                try:
-                    (kn_salt,kn_host) = tokens[0][len(self.HASHED_KEY_MAGIC):].split("|",2)
-                    hash = hmac.new(kn_salt.decode('base64'), digestmod=sha1)
-                    hash.update(host)
-                    if hash.digest() == kn_host.decode('base64'):
-                        return False
-                except:
-                    # invalid hashed host key, skip it
+            host_fh = open(hf)
+            data = host_fh.read()
+            host_fh.close()
+            for line in data.split("\n"):
+                if line is None or " " not in line:
                     continue
-            else:
-                # standard host file entry
-                if host in tokens[0]:
-                    return False
+                tokens = line.split()
+                if tokens[0].find(self.HASHED_KEY_MAGIC) == 0:
+                    # this is a hashed known host entry
+                    try:
+                        (kn_salt,kn_host) = tokens[0][len(self.HASHED_KEY_MAGIC):].split("|",2)
+                        hash = hmac.new(kn_salt.decode('base64'), digestmod=sha1)
+                        hash.update(host)
+                        if hash.digest() == kn_host.decode('base64'):
+                            return False
+                    except:
+                        # invalid hashed host key, skip it
+                        continue
+                else:
+                    # standard host file entry
+                    if host in tokens[0]:
+                        return False
+
+        if (hfiles_not_found == len(host_file_list)):
+            print "previous known host file not found"
         return True
 
     def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable='/bin/sh', in_data=None, su_user=None, su=False):
@@ -313,7 +324,8 @@ class Connection(object):
             # the host to known hosts is not intermingled with multiprocess output.
             fcntl.lockf(self.runner.output_lockfile, fcntl.LOCK_UN)
             fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_UN)
-        controlpersisterror = stderr.find('Bad configuration option: ControlPersist') != -1 or stderr.find('unknown configuration option: ControlPersist') != -1
+        controlpersisterror = 'Bad configuration option: ControlPersist' in stderr or \
+                              'unknown configuration option: ControlPersist' in stderr
 
         if C.HOST_KEY_CHECKING:
             if ssh_cmd[0] == "sshpass" and p.returncode == 6:

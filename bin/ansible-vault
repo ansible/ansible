@@ -52,7 +52,7 @@ def build_option_parser(action):
         sys.exit()
 
     # options for all actions
-    #parser.add_option('-c', '--cipher', dest='cipher', default="AES", help="cipher to use")
+    #parser.add_option('-c', '--cipher', dest='cipher', default="AES256", help="cipher to use")
     parser.add_option('--debug', dest='debug', action="store_true", help="debug")
     parser.add_option('--vault-password-file', dest='password_file',
                     help="vault password file")
@@ -119,7 +119,7 @@ def execute_create(args, options, parser):
     else:
         password = _read_password(options.password_file)
 
-    cipher = 'AES'
+    cipher = 'AES256'
     if hasattr(options, 'cipher'):
         cipher = options.cipher
 
@@ -133,7 +133,7 @@ def execute_decrypt(args, options, parser):
     else:
         password = _read_password(options.password_file)
 
-    cipher = 'AES'
+    cipher = 'AES256'
     if hasattr(options, 'cipher'):
         cipher = options.cipher
 
@@ -169,7 +169,7 @@ def execute_encrypt(args, options, parser):
     else:
         password = _read_password(options.password_file)
 
-    cipher = 'AES'
+    cipher = 'AES256'
     if hasattr(options, 'cipher'):
         cipher = options.cipher
 

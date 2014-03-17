@@ -161,7 +161,7 @@ class DockerImageManager:
         for i in images:
             # Docker-py version >= 0.3 (Docker API >= 1.8)
             if 'RepoTags' in i:
-                repotag = '%s:%s' % (getattr(self, 'name', ''), getattr(self, 'tags', 'latest'))
+                repotag = '%s:%s' % (getattr(self, 'name', ''), getattr(self, 'tag', 'latest'))
                 if not self.name or repotag in i['RepoTags']:
                     filtered_images.append(i)
             # Docker-py version < 0.3 (Docker API < 1.8)

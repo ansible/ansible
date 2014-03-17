@@ -91,7 +91,8 @@ def query_package(module, name):
 
     # rpm -q returns 0 if the package is installed,
     # 1 if it is not installed
-    rc = os.system("rpm -q %s" % (name))
+    cmd = "rpm -q %s" % (name)
+    rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     if rc == 0:
         return True
     else:
@@ -103,13 +104,14 @@ def query_package_provides(module, name):
 
     # rpm -q returns 0 if the package is installed,
     # 1 if it is not installed
-    rc = os.system("rpm -q --provides %s >/dev/null" % (name))
+    cmd = "rpm -q --provides %s" % (name)
+    rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     return rc == 0
 
 
 def update_package_db(module):
-    rc = os.system("urpmi.update -a -q")
-
+    cmd = "urpmi.update -a -q"
+    rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     if rc != 0:
         module.fail_json(msg="could not update package db")
          
@@ -123,7 +125,8 @@ def remove_packages(module, packages):
         if not query_package(module, package):
             continue
 
-        rc = os.system("%s --auto %s > /dev/null" % (URPME_PATH, package))
+        cmd = "%s --auto %s" % (URPME_PATH, package)
+        rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
         if rc != 0:
             module.fail_json(msg="failed to remove %s" % (package))
@@ -155,7 +158,7 @@ def install_packages(module, pkgspec, force=True, no_suggests=True):
         else:
             force_yes = ''
 
-        cmd = ("%s --auto %s --quiet %s %s > /dev/null" % (URPMI_PATH, force_yes, no_suggests_yes, packages))
+        cmd = ("%s --auto %s --quiet %s %s" % (URPMI_PATH, force_yes, no_suggests_yes, packages))
 
         rc, out, err = module.run_command(cmd)
 

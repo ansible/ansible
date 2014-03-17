@@ -54,6 +54,12 @@ class ActionModule(object):
         raw     = utils.boolean(options.get('raw', 'no'))
         force   = utils.boolean(options.get('force', 'yes'))
 
+        # content with newlines is going to be escaped to safely load in yaml
+        # now we need to unescape it so that the newlines are evaluated properly
+        # when writing the file to disk
+        if content:
+            content = content.decode('unicode-escape')
+
         if (source is None and content is None and not 'first_available_file' in inject) or dest is None:
             result=dict(failed=True, msg="src (or content) and dest are required")
             return ReturnData(conn=conn, result=result)
@@ -325,7 +331,7 @@ class ActionModule(object):
         src = open(source)
         src_contents = src.read(8192)
         st = os.stat(source)
-        if src_contents.find("\x00") != -1:
+        if "\x00" in src_contents:
             diff['src_binary'] = 1
         elif st[stat.ST_SIZE] > utils.MAX_FILE_SIZE_FOR_DIFF:
             diff['src_larger'] = utils.MAX_FILE_SIZE_FOR_DIFF

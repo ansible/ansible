@@ -177,7 +177,7 @@ Once configured,
 
 .. code-block:: bash
 
-    $ sudo add-apt-repository ppa:rquillo/ansible
+    $ sudo apt-add-repository ppa:rquillo/ansible
     $ sudo apt-get update
     $ sudo apt-get install ansible
 

@@ -350,9 +350,8 @@ def main():
         if ins_bef is None and ins_aft is None:
             ins_aft = 'EOF'
 
-        # Replace the newline character with an actual newline. Don't replace
-		# escaped \\n, hence sub and not str.replace.
-        line = re.sub(r'\n', os.linesep, params['line'])
+        # Replace the newline character with an actual newline.
+        line = params['line'].decode('string_escape')
 
         present(module, dest, params['regexp'], line,
                 ins_aft, ins_bef, create, backup, backrefs)

@@ -6,16 +6,55 @@ Ansible Changes By Release
 Major features/changes:
 
 * The deprecated legacy variable templating system has been finally removed.  Use {{ foo }} always not $foo or ${foo}.
+* Any data file can also be JSON.  Use sparingly -- with great power comes great responsibility.  Starting file with "{" or "[" denotes JSON.
 
-New modules:
+New Modules:
 
-* info pending
+* packaging: cpanm (Perl)
+* packaging: portage
+* packaging: composer (PHP)
+* packaging: homebrew_tap (OS X)
+* packaging: homebrew_cask (OS X) 
+* notification: nexmo (SMS)
+* notification: twilio (SMS)
+* system: debconf
+* system: ufw
+* system: locale_gen
+* system: alternatives
+* net_infrastructure: bigip_facts
+* cloud: digital_ocean_domain
+* cloud: digital_ocean_sshkey 
+* cloud: rax_identity
+* cloud: ec2_asg (configure autoscaling groups)
 
 Other notable changes:
 
-* info pending
+* example callback plugin added for hipchat
+* added example inventory plugin for vcenter/vsphere
+* added example inventory plugin for doing really trivial inventory from SSH config files
+* libvirt module now supports destroyed and paused as states
+* s3 module can specify metadata
+* security token additions to ec2 modules
+* setup module code moved into module_utils/, facts now accessible by other modules  
+* misc bugfixes and other parameters
 
-## 1.5 "Love Walks In" - Feb 28, 2014
+## 1.5.3 "Love Walks In" - March 13, 2014
+
+- Fix validate_certs and run_command errors from previous release
+- Fixes to the git module related to host key checking
+
+## 1.5.2 "Love Walks In" - March 11, 2014
+
+- Fix module errors in airbrake and apt from previous release
+
+## 1.5.1 "Love Walks In" - March 10, 2014
+
+- Force command action to not be executed by the shell unless specifically enabled.
+- Validate SSL certs accessed through urllib*.
+- Implement new default cipher class AES256 in ansible-vault.
+- Misc bug fixes.
+
+## 1.5 "Love Walks In" - February 28, 2014
 
 Major features/changes:
 
@@ -34,6 +73,7 @@ Major features/changes:
 * Start of new integration test infrastructure (WIP, more details TBD)
 * if repoquery is unavailble, the yum module will automatically attempt to install yum-utils
 * ansible-vault: a framework for encrypting your playbooks and variable files 
+* added support for privilege escalation via 'su' into bin/ansible and bin/ansible-playbook and associated keywords 'su', 'su_user', 'su_pass' for tasks/plays
 
 New modules:
 

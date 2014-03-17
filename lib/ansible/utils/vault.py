@@ -30,6 +30,26 @@ from binascii import hexlify
 from binascii import unhexlify
 from ansible import constants as C
 
+try:
+    from Crypto.Hash import SHA256, HMAC
+    HAS_HASH = True
+except ImportError:
+    HAS_HASH = False
+
+# Counter import fails for 2.0.1, requires >= 2.6.1 from pip
+try:
+    from Crypto.Util import Counter
+    HAS_COUNTER = True
+except ImportError:
+    HAS_COUNTER = False
+
+# KDF import fails for 2.0.1, requires >= 2.6.1 from pip
+try:
+    from Crypto.Protocol.KDF import PBKDF2
+    HAS_PBKDF2 = True
+except ImportError:
+    HAS_PBKDF2 = False
+
 # AES IMPORTS
 try:
     from Crypto.Cipher import AES as AES
@@ -37,15 +57,17 @@ try:
 except ImportError:
     HAS_AES = False    
 
+CRYPTO_UPGRADE = "ansible-vault requires a newer version of pycrypto than the one installed on your platform. You may fix this with OS-specific commands such as: yum install python-devel; rpm -e --nodeps python-crypto; pip install pycrypto"
+
 HEADER='$ANSIBLE_VAULT'
-CIPHER_WHITELIST=['AES']
+CIPHER_WHITELIST=['AES', 'AES256']
 
 class VaultLib(object):
 
     def __init__(self, password):
         self.password = password
         self.cipher_name = None
-        self.version = '1.0'
+        self.version = '1.1'
 
     def is_encrypted(self, data): 
         if data.startswith(HEADER):
@@ -59,7 +81,8 @@ class VaultLib(object):
             raise errors.AnsibleError("data is already encrypted")
 
         if not self.cipher_name:
-            raise errors.AnsibleError("the cipher must be set before encrypting data")
+            self.cipher_name = "AES256"
+            #raise errors.AnsibleError("the cipher must be set before encrypting data")
 
         if 'Vault' + self.cipher_name in globals() and self.cipher_name in CIPHER_WHITELIST: 
             cipher = globals()['Vault' + self.cipher_name]
@@ -67,13 +90,17 @@ class VaultLib(object):
         else:
             raise errors.AnsibleError("%s cipher could not be found" % self.cipher_name)
 
+        """
         # combine sha + data
         this_sha = sha256(data).hexdigest()
         tmp_data = this_sha + "\n" + data
+        """
+
         # encrypt sha + data
-        tmp_data = this_cipher.encrypt(tmp_data, self.password)
+        enc_data = this_cipher.encrypt(data, self.password)
+
         # add header 
-        tmp_data = self._add_headers_and_hexify_encrypted_data(tmp_data)
+        tmp_data = self._add_header(enc_data)
         return tmp_data
 
     def decrypt(self, data):
@@ -83,8 +110,9 @@ class VaultLib(object):
         if not self.is_encrypted(data):
             raise errors.AnsibleError("data is not encrypted")
 
-        # clean out header, hex and sha
-        data = self._split_headers_and_get_unhexified_data(data)
+        # clean out header
+        data = self._split_header(data)
+
 
         # create the cipher object
         if 'Vault' + self.cipher_name in globals() and self.cipher_name in CIPHER_WHITELIST: 
@@ -96,33 +124,26 @@ class VaultLib(object):
         # try to unencrypt data
         data = this_cipher.decrypt(data, self.password)
 
-        # split out sha and verify decryption
-        split_data = data.split("\n")
-        this_sha = split_data[0]
-        this_data = '\n'.join(split_data[1:])
-        test_sha = sha256(this_data).hexdigest()
-        if this_sha != test_sha:
-            raise errors.AnsibleError("Decryption failed")
+        return data            
 
-        return this_data            
+    def _add_header(self, data):     
+        # combine header and encrypted data in 80 char columns
 
-    def _add_headers_and_hexify_encrypted_data(self, data):     
-        # combine header and hexlified encrypted data in 80 char columns
-
-        tmpdata = hexlify(data)
-        tmpdata = [tmpdata[i:i+80] for i in range(0, len(tmpdata), 80)]
+        #tmpdata = hexlify(data)
+        tmpdata = [data[i:i+80] for i in range(0, len(data), 80)]
 
         if not self.cipher_name:
             raise errors.AnsibleError("the cipher must be set before adding a header")
 
         dirty_data = HEADER + ";" + str(self.version) + ";" + self.cipher_name + "\n"
+
         for l in tmpdata:
             dirty_data += l + '\n'
 
         return dirty_data
 
 
-    def _split_headers_and_get_unhexified_data(self, data):        
+    def _split_header(self, data):        
         # used by decrypt
 
         tmpdata = data.split('\n')
@@ -130,13 +151,21 @@ class VaultLib(object):
 
         self.version = str(tmpheader[1].strip())
         self.cipher_name = str(tmpheader[2].strip())
-        clean_data = ''.join(tmpdata[1:])
+        clean_data = '\n'.join(tmpdata[1:])
 
+        """
         # strip out newline, join, unhex        
         clean_data = [ x.strip() for x in clean_data ]
         clean_data = unhexlify(''.join(clean_data))
+        """
 
         return clean_data
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *err):
+        pass
 
 class VaultEditor(object):
     # uses helper methods for write_file(self, filename, data) 
@@ -153,6 +182,9 @@ class VaultEditor(object):
     def create_file(self):
         """ create a new encrypted file """
 
+        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2 or not HAS_HASH:
+            raise errors.AnsibleError(CRYPTO_UPGRADE)
+
         if os.path.isfile(self.filename):
             raise errors.AnsibleError("%s exists, please use 'edit' instead" % self.filename)
 
@@ -166,6 +198,10 @@ class VaultEditor(object):
         self.write_data(enc_data, self.filename)
 
     def decrypt_file(self):
+
+        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2 or not HAS_HASH:
+            raise errors.AnsibleError(CRYPTO_UPGRADE)
+
         if not os.path.isfile(self.filename):
             raise errors.AnsibleError("%s does not exist" % self.filename)
         
@@ -179,6 +215,9 @@ class VaultEditor(object):
 
     def edit_file(self):
 
+        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2 or not HAS_HASH:
+            raise errors.AnsibleError(CRYPTO_UPGRADE)
+
         # decrypt to tmpfile
         tmpdata = self.read_data(self.filename)
         this_vault = VaultLib(self.password)
@@ -191,9 +230,11 @@ class VaultEditor(object):
         call([EDITOR, tmp_path])
         new_data = self.read_data(tmp_path)
 
-        # create new vault and set cipher to old
+        # create new vault
         new_vault = VaultLib(self.password)
-        new_vault.cipher_name = this_vault.cipher_name
+
+        # we want the cipher to default to AES256
+        #new_vault.cipher_name = this_vault.cipher_name
 
         # encrypt new data a write out to tmp
         enc_data = new_vault.encrypt(new_data)
@@ -203,6 +244,10 @@ class VaultEditor(object):
         self.shuffle_files(tmp_path, self.filename)
 
     def encrypt_file(self):
+
+        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2 or not HAS_HASH:
+            raise errors.AnsibleError(CRYPTO_UPGRADE)
+
         if not os.path.isfile(self.filename):
             raise errors.AnsibleError("%s does not exist" % self.filename)
         
@@ -216,14 +261,20 @@ class VaultEditor(object):
             raise errors.AnsibleError("%s is already encrypted" % self.filename)
 
     def rekey_file(self, new_password):
+
+        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2 or not HAS_HASH:
+            raise errors.AnsibleError(CRYPTO_UPGRADE)
+
         # decrypt 
         tmpdata = self.read_data(self.filename)
         this_vault = VaultLib(self.password)
         dec_data = this_vault.decrypt(tmpdata)
 
-        # create new vault, set cipher to old and password to new
+        # create new vault
         new_vault = VaultLib(new_password)
-        new_vault.cipher_name = this_vault.cipher_name
+
+        # we want to force cipher to the default
+        #new_vault.cipher_name = this_vault.cipher_name
 
         # re-encrypt data and re-write file
         enc_data = new_vault.encrypt(dec_data)
@@ -254,11 +305,14 @@ class VaultEditor(object):
 
 class VaultAES(object):
 
+    # this version has been obsoleted by the VaultAES256 class
+    # which uses encrypt-then-mac (fixing order) and also improving the KDF used
+    # code remains for upgrade purposes only
     # http://stackoverflow.com/a/16761459
 
     def __init__(self):
         if not HAS_AES:
-            raise errors.AnsibleError("pycrypto is not installed. Fix this with your package manager, for instance, yum-install python-crypto OR (apt equivalent)")
+            raise errors.AnsibleError(CRYPTO_UPGRADE)
 
     def aes_derive_key_and_iv(self, password, salt, key_length, iv_length):
 
@@ -278,7 +332,12 @@ class VaultAES(object):
 
         """ Read plaintext data from in_file and write encrypted to out_file """
 
-        in_file = BytesIO(data)
+
+        # combine sha + data
+        this_sha = sha256(data).hexdigest()
+        tmp_data = this_sha + "\n" + data
+
+        in_file = BytesIO(tmp_data)
         in_file.seek(0)
         out_file = BytesIO()
 
@@ -301,13 +360,20 @@ class VaultAES(object):
             out_file.write(cipher.encrypt(chunk))
 
         out_file.seek(0)
-        return out_file.read()
+        enc_data = out_file.read()
+        tmp_data = hexlify(enc_data)
 
+        return tmp_data
+
+ 
     def decrypt(self, data, password, key_length=32):
 
         """ Read encrypted data from in_file and write decrypted to out_file """
 
         # http://stackoverflow.com/a/14989032
+
+        data = ''.join(data.split('\n'))
+        data = unhexlify(data)
 
         in_file = BytesIO(data)
         in_file.seek(0)
@@ -330,6 +396,128 @@ class VaultAES(object):
 
         # reset the stream pointer to the beginning
         out_file.seek(0)
-        return out_file.read()
+        new_data = out_file.read()
 
-       
+        # split out sha and verify decryption
+        split_data = new_data.split("\n")
+        this_sha = split_data[0]
+        this_data = '\n'.join(split_data[1:])
+        test_sha = sha256(this_data).hexdigest()
+
+        if this_sha != test_sha:
+            raise errors.AnsibleError("Decryption failed")
+
+        #return out_file.read()
+        return this_data
+
+
+class VaultAES256(object):
+
+    """
+    Vault implementation using AES-CTR with an HMAC-SHA256 authentication code. 
+    Keys are derived using PBKDF2
+    """
+
+    # http://www.daemonology.net/blog/2009-06-11-cryptographic-right-answers.html
+
+    def __init__(self):
+
+        if not HAS_PBKDF2 or not HAS_COUNTER or not HAS_HASH:
+            raise errors.AnsibleError(CRYPTO_UPGRADE)
+
+    def gen_key_initctr(self, password, salt):
+        # 16 for AES 128, 32 for AES256
+        keylength = 32
+
+        # match the size used for counter.new to avoid extra work
+        ivlength = 16 
+
+        hash_function = SHA256
+
+        # make two keys and one iv
+        pbkdf2_prf = lambda p, s: HMAC.new(p, s, hash_function).digest()
+
+
+        derivedkey = PBKDF2(password, salt, dkLen=(2 * keylength) + ivlength, 
+                            count=10000, prf=pbkdf2_prf)
+
+        #import epdb; epdb.st()
+        key1 = derivedkey[:keylength]
+        key2 = derivedkey[keylength:(keylength * 2)]
+        iv = derivedkey[(keylength * 2):(keylength * 2) + ivlength]
+
+        return key1, key2, hexlify(iv)
+
+
+    def encrypt(self, data, password):
+
+        salt = os.urandom(32)
+        key1, key2, iv = self.gen_key_initctr(password, salt)
+
+        # PKCS#7 PAD DATA http://tools.ietf.org/html/rfc5652#section-6.3
+        bs = AES.block_size
+        padding_length = (bs - len(data) % bs) or bs
+        data += padding_length * chr(padding_length)
+
+        # COUNTER.new PARAMETERS
+        # 1) nbits (integer) - Length of the counter, in bits.
+        # 2) initial_value (integer) - initial value of the counter. "iv" from gen_key_initctr
+
+        ctr = Counter.new(128, initial_value=long(iv, 16))
+
+        # AES.new PARAMETERS
+        # 1) AES key, must be either 16, 24, or 32 bytes long -- "key" from gen_key_initctr
+        # 2) MODE_CTR, is the recommended mode
+        # 3) counter=<CounterObject>
+
+        cipher = AES.new(key1, AES.MODE_CTR, counter=ctr)
+
+        # ENCRYPT PADDED DATA
+        cryptedData = cipher.encrypt(data)                
+
+        # COMBINE SALT, DIGEST AND DATA
+        hmac = HMAC.new(key2, cryptedData, SHA256)
+        message = "%s\n%s\n%s" % ( hexlify(salt), hmac.hexdigest(), hexlify(cryptedData) )
+        message = hexlify(message)
+        return message
+
+    def decrypt(self, data, password):
+
+        # SPLIT SALT, DIGEST, AND DATA
+        data = ''.join(data.split("\n"))
+        data = unhexlify(data)
+        salt, cryptedHmac, cryptedData = data.split("\n", 2)
+        salt = unhexlify(salt)
+        cryptedData = unhexlify(cryptedData)
+
+        key1, key2, iv = self.gen_key_initctr(password, salt)
+
+        # EXIT EARLY IF DIGEST DOESN'T MATCH 
+        hmacDecrypt = HMAC.new(key2, cryptedData, SHA256)
+        if not self.is_equal(cryptedHmac, hmacDecrypt.hexdigest()):
+            return None
+
+        # SET THE COUNTER AND THE CIPHER
+        ctr = Counter.new(128, initial_value=long(iv, 16))
+        cipher = AES.new(key1, AES.MODE_CTR, counter=ctr)
+
+        # DECRYPT PADDED DATA
+        decryptedData = cipher.decrypt(cryptedData)
+
+        # UNPAD DATA
+        padding_length = ord(decryptedData[-1])
+        decryptedData = decryptedData[:-padding_length]
+
+        return decryptedData
+
+    def is_equal(self, a, b):
+        # http://codahale.com/a-lesson-in-timing-attacks/
+        if len(a) != len(b):
+            return False
+        
+        result = 0
+        for x, y in zip(a, b):
+            result |= ord(x) ^ ord(y)
+        return result == 0     
+
+

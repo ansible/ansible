@@ -43,7 +43,7 @@ Easy enough, let's move on.
 Variables Defined in Inventory
 ``````````````````````````````
 
-We've actually already covered a lot about variables in another section, so so far this shouldn't be terribly new, but
+We've actually already covered a lot about variables in another section, so far this shouldn't be terribly new, but
 a bit of a refresher.
 
 Often you'll want to set variables based on what groups a machine is in.  For instance, maybe machines in Boston
@@ -101,7 +101,7 @@ Inside a template you automatically have access to all of the variables that are
 it's more than that -- you can also read variables about other hosts.  We'll show how to do that in a bit.
 
 .. note:: ansible allows Jinja2 loops and conditionals in templates, but in playbooks, we do not use them.  Ansible
-   templates are pure machine-parseable YAML.  This is an rather important feature as it means it is possible to code-generate
+   playbooks are pure machine-parseable YAML.  This is a rather important feature as it means it is possible to code-generate
    pieces of files, or to have other ecosystem tools read Ansible files.  Not everyone will need this but it can unlock
    possibilities.
 

@@ -212,6 +212,11 @@ class TestInventory(unittest.TestCase):
         inventory.subset('greek[0-2];norse[0]')
         self.assertEqual(sorted(inventory.list_hosts()),  sorted(['zeus','hera','thor']))
 
+    def test_subet_range_empty_group(self):
+        inventory = self.simple_inventory()
+        inventory.subset('missing[0]')
+        self.assertEqual(sorted(inventory.list_hosts()), sorted([]))
+
     def test_subset_filename(self):
         inventory = self.simple_inventory()
         inventory.subset('@' + os.path.join(self.test_dir, 'restrict_pattern'))
@@ -412,15 +417,24 @@ class TestInventory(unittest.TestCase):
         auth = inventory.get_variables('neptun')['auth']
         assert auth == 'YWRtaW46YWRtaW4='
 
-    # test disabled as needs to be updated to model desired behavior
-    #
-    #def test_dir_inventory(self):
-    #    inventory = self.dir_inventory()
-    #    vars = inventory.get_variables('zeus')
-    #
-    #   print "VARS=%s" % vars
-    #
-    #    assert vars == {'inventory_hostname': 'zeus',
-    #                    'inventory_hostname_short': 'zeus',
-    #                    'group_names': ['greek', 'major-god', 'ungrouped'],
-    #                    'var_a': '1#2'}
+    def test_dir_inventory(self):
+        inventory = self.dir_inventory()
+
+        host_vars = inventory.get_variables('zeus')
+
+        expected_vars = {'inventory_hostname': 'zeus',
+                         'inventory_hostname_short': 'zeus',
+                         'group_names': ['greek', 'major-god', 'ungrouped'],
+                         'var_a': '3#4'}
+
+        print "HOST     VARS=%s" % host_vars
+        print "EXPECTED VARS=%s" % expected_vars
+
+        assert host_vars == expected_vars
+
+    def test_dir_inventory_multiple_groups(self):
+        inventory = self.dir_inventory()
+        group_greek = inventory.get_hosts('greek')
+        actual_host_names = [host.name for host in group_greek]
+        print "greek : %s " % actual_host_names
+        assert actual_host_names == ['zeus', 'morpheus']

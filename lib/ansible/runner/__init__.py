@@ -243,7 +243,7 @@ class Runner(object):
         """
         if complex_args is None:
             return module_args
-        if type(complex_args) != dict:
+        if not isinstance(complex_args, dict):
             raise errors.AnsibleError("complex arguments are not a dictionary: %s" % complex_args)
         for (k,v) in complex_args.iteritems():
             if isinstance(v, basestring):
@@ -303,7 +303,7 @@ class Runner(object):
 
         delegate = {}
 
-        # allow ansible_ssh_host to be templated
+        # allow delegated host to be templated
         delegate['host'] = template.template(self.basedir, host, 
                                 remote_inject, fail_on_undefined=True)
 
@@ -328,7 +328,10 @@ class Runner(object):
             this_info = {}
 
         # get the real ssh_address for the delegate        
-        delegate['ssh_host'] = this_info.get('ansible_ssh_host', delegate['host'])
+        # and allow ansible_ssh_host to be templated
+        delegate['ssh_host'] = template.template(self.basedir,
+                            this_info.get('ansible_ssh_host', this_host),
+                            this_info, fail_on_undefined=True)
 
         delegate['port'] = this_info.get('ansible_ssh_port', port)
 
@@ -412,7 +415,7 @@ class Runner(object):
 
         environment_string = self._compute_environment_string(inject)
 
-        if tmp.find("tmp") != -1 and (self.sudo or self.su) and (self.sudo_user != 'root' or self.su_user != 'root'):
+        if "tmp" in tmp and ((self.sudo and self.sudo_user != 'root') or (self.su and self.su_user != 'root')):
             # deal with possible umask issues once sudo'ed to other user
             cmd_chmod = "chmod a+r %s" % remote_module_path
             self._low_level_exec_command(conn, cmd_chmod, tmp, sudoable=False)
@@ -441,7 +444,7 @@ class Runner(object):
             else:
                 argsfile = self._transfer_str(conn, tmp, 'arguments', args)
 
-            if (self.sudo or self.su) and (self.sudo_user != 'root' or self.su_user != 'root'):
+            if (self.sudo and self.sudo_user != 'root') or (self.su and self.su_user != 'root'):
                 # deal with possible umask issues once sudo'ed to other user
                 cmd_args_chmod = "chmod a+r %s" % argsfile
                 self._low_level_exec_command(conn, cmd_args_chmod, tmp, sudoable=False)
@@ -466,7 +469,7 @@ class Runner(object):
         cmd = " ".join([environment_string.strip(), shebang.replace("#!","").strip(), cmd])
         cmd = cmd.strip()
 
-        if tmp.find("tmp") != -1 and not C.DEFAULT_KEEP_REMOTE_FILES and not persist_files and delete_remote_tmp:
+        if "tmp" in tmp and not C.DEFAULT_KEEP_REMOTE_FILES and not persist_files and delete_remote_tmp:
             if not self.sudo or self.su or self.sudo_user == 'root' or self.su_user == 'root':
                 # not sudoing or sudoing to root, so can cleanup files in the same step
                 cmd = cmd + "; rm -rf %s >/dev/null 2>&1" % tmp
@@ -482,8 +485,8 @@ class Runner(object):
         else:
             res = self._low_level_exec_command(conn, cmd, tmp, sudoable=sudoable, in_data=in_data)
 
-        if tmp.find("tmp") != -1 and not C.DEFAULT_KEEP_REMOTE_FILES and not persist_files and delete_remote_tmp:
-            if (self.sudo or self.su) and (self.sudo_user != 'root' or self.su_user != 'root'):
+        if "tmp" in tmp and not C.DEFAULT_KEEP_REMOTE_FILES and not persist_files and delete_remote_tmp:
+            if (self.sudo and self.sudo_user != 'root') or (self.su and self.su_user != 'root'):
             # not sudoing to root, so maybe can't delete files as that other user
             # have to clean up temp files as original user in a second step
                 cmd2 = "rm -rf %s >/dev/null 2>&1" % tmp
@@ -615,13 +618,13 @@ class Runner(object):
             all_failed = False
             results = []
             for x in items:
-                # use a fresh inject for each item                
+                # use a fresh inject for each item
                 this_inject = inject.copy()
                 this_inject['item'] = x
 
                 # TODO: this idiom should be replaced with an up-conversion to a Jinja2 template evaluation
                 if isinstance(self.complex_args, basestring):
-                    complex_args = template.template(self.basedir, self.complex_args, inject, convert_bare=True)
+                    complex_args = template.template(self.basedir, self.complex_args, this_inject, convert_bare=True)
                     complex_args = utils.safe_eval(complex_args)
                     if type(complex_args) != dict:
                         raise errors.AnsibleError("args must be a dictionary, received %s" % complex_args)
@@ -708,9 +711,17 @@ class Runner(object):
         actual_transport = inject.get('ansible_connection', self.transport)
         actual_private_key_file = inject.get('ansible_ssh_private_key_file', self.private_key_file)
         actual_private_key_file = template.template(self.basedir, actual_private_key_file, inject, fail_on_undefined=True)
+        self.sudo = utils.boolean(inject.get('ansible_sudo', self.sudo))
+        self.sudo_user = inject.get('ansible_sudo_user', self.sudo_user)
         self.sudo_pass = inject.get('ansible_sudo_pass', self.sudo_pass)
         self.su = inject.get('ansible_su', self.su)
         self.su_pass = inject.get('ansible_su_pass', self.su_pass)
+
+        # select default root user in case self.sudo requested
+        # but no user specified; happens e.g. in host vars when
+        # just ansible_sudo=True is specified
+        if self.sudo and self.sudo_user is None:
+            self.sudo_user = 'root'
 
         if actual_private_key_file is not None:
             actual_private_key_file = os.path.expanduser(actual_private_key_file)
@@ -747,6 +758,7 @@ class Runner(object):
         # user/pass may still contain variables at this stage
         actual_user = template.template(self.basedir, actual_user, inject)
         actual_pass = template.template(self.basedir, actual_pass, inject)
+        self.sudo_pass = template.template(self.basedir, self.sudo_pass, inject)
 
         # make actual_user available as __magic__ ansible_ssh_user variable
         inject['ansible_ssh_user'] = actual_user
@@ -872,7 +884,7 @@ class Runner(object):
         return False
 
     def _late_needs_tmp_path(self, conn, tmp, module_style):
-        if tmp.find("tmp") != -1:
+        if "tmp" in tmp:
             # tmp has already been created
             return False
         if not conn.has_pipelining or not C.ANSIBLE_SSH_PIPELINING or C.DEFAULT_KEEP_REMOTE_FILES or self.su:
@@ -983,11 +995,11 @@ class Runner(object):
 
         basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
         basetmp = os.path.join(C.DEFAULT_REMOTE_TMP, basefile)
-        if (self.sudo or self.su) and (self.sudo_user != 'root' or self.su != 'root') and basetmp.startswith('$HOME'):
+        if (self.sudo and self.sudo_user != 'root') or (self.su and self.su_user != 'root') and basetmp.startswith('$HOME'):
             basetmp = os.path.join('/tmp', basefile)
 
         cmd = 'mkdir -p %s' % basetmp
-        if self.remote_user != 'root' or ((self.sudo or self.su) and (self.sudo_user != 'root' or self.su != 'root')):
+        if self.remote_user != 'root' or ((self.sudo and self.sudo_user != 'root') or (self.su and self.su_user != 'root')):
             cmd += ' && chmod a+rx %s' % basetmp
         cmd += ' && echo %s' % basetmp
 
@@ -1072,9 +1084,17 @@ class Runner(object):
             job_queue.put(host)
         result_queue = manager.Queue()
 
+        try:
+            fileno = sys.stdin.fileno()
+        except ValueError:
+            fileno = None
+
         workers = []
         for i in range(self.forks):
-            new_stdin = os.fdopen(os.dup(sys.stdin.fileno()))
+            if fileno is not None:
+                new_stdin = os.fdopen(os.dup(fileno))
+            else:
+                new_stdin = None
             prc = multiprocessing.Process(target=_executor_hook,
                 args=(job_queue, result_queue, new_stdin))
             prc.start()

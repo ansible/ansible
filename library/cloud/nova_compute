@@ -119,6 +119,12 @@ options:
         - The amount of time the module should wait for the VM to get into active state
      required: false
      default: 180
+   user_data:
+     description:
+        - Opaque blob of data which is made available to the instance
+     required: false
+     default: None
+     version_added: "1.6"
 requirements: ["novaclient"]
 '''
 
@@ -199,6 +205,7 @@ def create_server(module, nova, image_id, flavor_id):
         'meta': module.params['meta'],
         'key_name': module.params['key_name'],
         'security_groups': security_groups,
+        'userdata': module.params['user_data'],
     }
 
     if not module.params['key_name']:
@@ -280,7 +287,13 @@ def get_server(module, nova):
     try:
         servers = nova.servers.list(True, {'name': module.params['name']})
         if servers:
-            return [x for x in servers if x.name == module.params['name']][0]
+            # the {'name': module.params['name']} will also return servers
+            # with names that partially match the server name, so we have to
+            # strictly filter here
+            servers = [x for x in servers if x.name == module.params['name']]
+            if servers:
+                server = servers[0]
+
     except Exception, e:
         module.fail_json(msg="Error in getting the server list: %s" % e.message)
 
@@ -300,6 +313,7 @@ def main():
         volumes=dict(default=None),
         wait=dict(default='yes', type='bool'),
         wait_for=dict(default=180),
+        user_data= dict(default=None)
         state=dict(default='present', choices=['absent', 'present'])
     ))
 

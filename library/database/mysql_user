@@ -259,7 +259,7 @@ def privileges_unpack(priv):
     output = {}
     for item in priv.split('/'):
         pieces = item.split(':')
-        if pieces[0].find('.') != -1:
+        if '.' in pieces[0]:
             pieces[0] = pieces[0].split('.')
             for idx, piece in enumerate(pieces):
                 if pieces[0][idx] != "*":

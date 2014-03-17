@@ -42,6 +42,7 @@ import traceback
 import getpass
 import sys
 import textwrap
+import json
 
 #import vault
 from vault import VaultLib
@@ -192,7 +193,7 @@ def check_conditional(conditional, basedir, inject, fail_on_undefined=False):
 
     conditional = conditional.replace("jinja2_compare ","")
     # allow variable names
-    if conditional in inject and str(inject[conditional]).find('-') == -1:
+    if conditional in inject and '-' not in str(inject[conditional]):
         conditional = inject[conditional]
     conditional = template.template(basedir, conditional, inject, fail_on_undefined=fail_on_undefined)
     original = str(conditional).replace("jinja2_compare ","")
@@ -205,9 +206,9 @@ def check_conditional(conditional, basedir, inject, fail_on_undefined=False):
         # variable was undefined. If we happened to be 
         # looking for an undefined variable, return True,
         # otherwise fail
-        if conditional.find("is undefined") != -1:
+        if "is undefined" in conditional:
             return True
-        elif conditional.find("is defined") != -1:
+        elif "is defined" in conditional:
             return False
         else:
             raise errors.AnsibleError("error while evaluating conditional: %s" % original)
@@ -330,9 +331,9 @@ def parse_json(raw_data):
 
 def smush_braces(data):
     ''' smush Jinaj2 braces so unresolved templates like {{ foo }} don't get parsed weird by key=value code '''
-    while data.find('{{ ') != -1:
+    while '{{ ' in data:
         data = data.replace('{{ ', '{{')
-    while data.find(' }}') != -1:
+    while ' }}' in data:
         data = data.replace(' }}', '}}')
     return data
 
@@ -350,14 +351,30 @@ def smush_ds(data):
     else:
         return data
 
-def parse_yaml(data):
-    ''' convert a yaml string to a data structure '''
-    return smush_ds(yaml.safe_load(data))
+def parse_yaml(data, path_hint=None):
+    ''' convert a yaml string to a data structure.  Also supports JSON, ssssssh!!!'''
+
+    stripped_data = data.lstrip()
+    loaded = None
+    if stripped_data.startswith("{") or stripped_data.startswith("["):
+        # since the line starts with { or [ we can infer this is a JSON document.
+        try:
+            loaded = json.loads(data)
+        except ValueError, ve:
+            if path_hint:
+                raise errors.AnsibleError(path_hint + ": " + str(ve))
+            else:
+                raise errors.AnsibleError(str(ve))
+    else:
+        # else this is pretty sure to be a YAML document
+        loaded = yaml.safe_load(data)
+
+    return smush_ds(loaded)
 
 def process_common_errors(msg, probline, column):
     replaced = probline.replace(" ","")
 
-    if replaced.find(":{{") != -1 and replaced.find("}}") != -1:
+    if ":{{" in replaced and "}}" in replaced:
         msg = msg + """
 This one looks easy to fix.  YAML thought it was looking for the start of a 
 hash/dictionary and was confused to see a second "{".  Most likely this was
@@ -512,7 +529,7 @@ def parse_yaml_from_file(path, vault_password=None):
         data = vault.decrypt(data)
 
     try:
-        return parse_yaml(data)
+        return parse_yaml(data, path_hint=path)
     except yaml.YAMLError, exc:
         process_yaml_error(exc, data, path)
 
@@ -525,7 +542,7 @@ def parse_kv(args):
         vargs = [x.decode('utf-8') for x in shlex.split(args, posix=True)]
         #vargs = shlex.split(str(args), posix=True)
         for x in vargs:
-            if x.find("=") != -1:
+            if "=" in x:
                 k, v = x.split("=",1)
                 options[k]=v
     return options
@@ -1006,7 +1023,7 @@ def listify_lookup_plugin_terms(terms, basedir, inject):
             # not sure why the "/" is in above code :)
             try:
                 new_terms = template.template(basedir, "{{ %s }}" % terms, inject)
-                if isinstance(new_terms, basestring) and new_terms.find("{{") != -1:
+                if isinstance(new_terms, basestring) and "{{" in new_terms.find:
                     pass
                 else:
                     terms = new_terms
@@ -1071,3 +1088,13 @@ def random_password(length=20, chars=C.DEFAULT_PASSWORD_CHARS):
             password.append(new_char)
 
     return ''.join(password)
+
+def before_comment(msg):
+    ''' what's the part of a string before a comment? '''
+    msg = msg.replace("\#","**NOT_A_COMMENT**")
+    msg = msg.split("#")[0]
+    msg = msg.replace("**NOT_A_COMMENT**","#")
+    return msg
+
+
+

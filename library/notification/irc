@@ -39,7 +39,7 @@ options:
     default: 6667
   nick:
     description:
-      - Nickname
+      - Nickname. May be shortened, depending on server's NICKLEN setting.
     required: false
     default: ansible
   msg:
@@ -122,11 +122,15 @@ def send_msg(channel, msg, server='localhost', port='6667',
     start = time.time()
     while 1:
         motd += irc.recv(1024)
-        if re.search('^:\S+ 00[1-4] %s :' % nick, motd, flags=re.M):
+        # The server might send back a shorter nick than we specified (due to NICKLEN),
+        #  so grab that and use it from now on (assuming we find the 00[1-4] response).
+        match = re.search('^:\S+ 00[1-4] (?P<nick>\S+) :', motd, flags=re.M)
+        if match:
+            nick = match.group('nick')
             break
         elif time.time() - start > timeout:
             raise Exception('Timeout waiting for IRC server welcome response')
-        time.sleep(0.5)
+        sleep(0.5)
 
     irc.send('JOIN %s\r\n' % channel)
     join = ''
@@ -137,13 +141,13 @@ def send_msg(channel, msg, server='localhost', port='6667',
             break
         elif time.time() - start > timeout:
             raise Exception('Timeout waiting for IRC JOIN response')
-        time.sleep(0.5)
+        sleep(0.5)
 
     irc.send('PRIVMSG %s :%s\r\n' % (channel, message))
-    time.sleep(1)
+    sleep(1)
     irc.send('PART %s\r\n' % channel)
     irc.send('QUIT\r\n')
-    time.sleep(1)
+    sleep(1)
     irc.close()
 
 # ===========================================

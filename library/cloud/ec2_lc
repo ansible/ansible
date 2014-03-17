@@ -1,0 +1,159 @@
+#!/usr/bin/python
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = """
+---
+module: ec2_lc
+short_description: Create or delete AWS Autoscaling Launch Configurations
+description:
+  - Can create or delete AwS Autoscaling Configurations
+  - Works with the ec2_asg module to manage Autoscaling Groups
+version_added: "1.6"
+requirements: [ "boto" ]
+author: Gareth Rushgrove
+options:
+  state:
+    description:
+      - register or deregister the instance
+    required: true
+    choices: ['present', 'absent']
+  name:
+    description:
+      - Unique name for configuration
+    required: true
+  image_id:
+    description:
+      - The AMI unique identifier to be used for the group
+    required: true
+  key_name:
+    description:
+      - The SSH key name to be used for access to managed instances
+    required: true
+  security_groups:
+    description:
+      - A list of security groups into which instances should be found
+    required: true
+  aws_secret_key:
+    description:
+      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used.
+    required: false
+    default: None
+    aliases: ['ec2_secret_key', 'secret_key' ]
+  aws_access_key:
+    description:
+      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
+    required: false
+    default: None
+    aliases: ['ec2_access_key', 'access_key' ]
+  region:
+    description:
+      - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
+    required: false
+    aliases: ['aws_region', 'ec2_region']
+"""
+
+EXAMPLES = '''
+- ec2_lc:
+    name: special
+    image_id: ami-XXX
+    key_name: default
+    security_groups: 'group,group2'
+
+'''
+
+import sys
+import time
+
+from ansible.module_utils.basic import *
+from ansible.module_utils.ec2 import *
+
+try:
+    import boto.ec2.autoscale
+    from boto.ec2.autoscale import LaunchConfiguration
+    from boto.exception import BotoServerError
+except ImportError:
+    print "failed=True msg='boto required for this module'"
+    sys.exit(1)
+
+AWS_REGIONS = ['ap-northeast-1',
+               'ap-southeast-1',
+               'ap-southeast-2',
+               'eu-west-1',
+               'sa-east-1',
+               'us-east-1',
+               'us-west-1',
+               'us-west-2']
+
+
+def create_launch_config(connection, module):
+    name = module.params.get('name')
+    image_id = module.params.get('image_id')
+    key_name = module.params.get('key_name')
+    security_groups = module.params['security_groups']
+
+    lc = LaunchConfiguration(
+        name=name,
+        image_id=image_id,
+        key_name=key_name,
+        security_groups=security_groups)
+
+    try:
+        connection.create_launch_configuration(lc)
+        module.exit_json(changed=True)
+    except BotoServerError, e:
+        module.exit_json(changed=False, msg=str(e))
+
+
+def delete_launch_config(connection, module):
+    name = module.params.get('name')
+    launch_configs = connection.get_all_launch_configurations(name=[name])
+    if launch_configs:
+        launch_configs[0].delete()
+        module.exit_json(changed=True)
+    else:
+        module.exit_json(changed=False)
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            name = dict(required=True, type='str'),
+            image_id = dict(required=True, type='str'),
+            key_name = dict(required=True, type='str'),
+            security_groups = dict(required=True, type='list'),
+            state = dict(default='present', choices=['present', 'absent']),
+            region = dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS),
+            ec2_url = dict(),
+            ec2_secret_key = dict(aliases=['aws_secret_key', 'secret_key'], no_log=True),
+            ec2_access_key = dict(aliases=['aws_access_key', 'access_key']),
+        )
+    )
+
+    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
+
+    try:
+        connection = boto.ec2.autoscale.connect_to_region(region, aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key)
+    except boto.exception.NoAuthHandlerFound, e:
+        module.fail_json(msg = str(e))
+
+    state = module.params.get('state')
+
+    if state == 'present':
+        create_launch_config(connection, module)
+    elif state == 'absent':
+        delete_launch_config(connection, module)
+
+main()

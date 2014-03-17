@@ -36,7 +36,7 @@ options:
         since these refer only to VM states. After starting a guest, it may not
         be immediately accessible.
     required: false
-    choices: [ "running", "shutdown" ]
+    choices: [ "running", "shutdown", "destroyed", "paused" ]
     default: "no"
   command:
     description:
@@ -113,13 +113,14 @@ class VMNotFound(Exception):
 
 class LibvirtConnection(object):
 
-    def __init__(self, uri):
+    def __init__(self, uri, module):
 
-        cmd = subprocess.Popen("uname -r", shell=True, stdout=subprocess.PIPE,
-                                close_fds=True)
-        output = cmd.communicate()[0]
+        self.module = module
 
-        if output.find("xen") != -1:
+        cmd = "uname -r"
+        rc, stdout, stderr = self.module.run_command(cmd)
+
+        if "xen" in stdout:
             conn = libvirt.open(None)
         else:
             conn = libvirt.open(uri)
@@ -221,11 +222,12 @@ class LibvirtConnection(object):
 
 class Virt(object):
 
-    def __init__(self, uri):
+    def __init__(self, uri, module):
+        self.module = module
         self.uri = uri
 
     def __get_conn(self):
-        self.conn = LibvirtConnection(self.uri)
+        self.conn = LibvirtConnection(self.uri, self.module)
         return self.conn
 
     def get_vm(self, vmid):
@@ -399,7 +401,7 @@ def core(module):
     uri        = module.params.get('uri', None)
     xml        = module.params.get('xml', None)
 
-    v = Virt(uri)
+    v = Virt(uri, module)
     res = {}
 
     if state and command=='list_vms':
@@ -414,13 +416,24 @@ def core(module):
 
         res['changed'] = False
         if state == 'running':
-            if v.status(guest) is not 'running':
+            if v.status(guest) is 'paused':
+                res['changed'] = True
+                res['msg'] = v.unpause(guest)
+            elif v.status(guest) is not 'running':
                 res['changed'] = True
                 res['msg'] = v.start(guest)
         elif state == 'shutdown':
             if v.status(guest) is not 'shutdown':
                 res['changed'] = True
                 res['msg'] = v.shutdown(guest)
+        elif state == 'destroyed':
+            if v.status(guest) is not 'shutdown':
+                res['changed'] = True
+                res['msg'] = v.destroy(guest)
+        elif state == 'paused':
+            if v.status(guest) is 'running':
+                res['changed'] = True
+                res['msg'] = v.pause(guest)
         else:
             module.fail_json(msg="unexpected state")
 
@@ -459,7 +472,7 @@ def main():
 
     module = AnsibleModule(argument_spec=dict(
         name = dict(aliases=['guest']),
-        state = dict(choices=['running', 'shutdown']),
+        state = dict(choices=['running', 'shutdown', 'destroyed', 'paused']),
         command = dict(choices=ALL_COMMANDS),
         uri = dict(default='qemu:///system'),
         xml = dict(),

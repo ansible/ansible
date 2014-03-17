@@ -206,12 +206,14 @@ def main(args):
                 playnum += 1
                 play = ansible.playbook.Play(pb, play_ds, play_basedir)
                 label = play.name
+                hosts = pb.inventory.list_hosts(play.hosts)
                 if options.listhosts:
-                    hosts = pb.inventory.list_hosts(play.hosts)
                     print '  play #%d (%s): host count=%d' % (playnum, label, len(hosts))
                     for host in hosts:
                         print '    %s' % host
                 if options.listtasks:
+                    if options.subset and not hosts:
+                        continue
                     matched_tags, unmatched_tags = play.compare_tags(pb.only_tags)
 
                     # Remove skipped tasks

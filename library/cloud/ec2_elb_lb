@@ -51,6 +51,12 @@ options:
       - Purge existing availability zones on ELB that are not found in zones
     required: false
     default: false
+  security_group_ids:
+    description:
+      - A list of security groups to apply to the elb
+    require: false
+    default: None
+    version_added: "1.6"
   health_check:
     description:
       - An associative array of health check configuration settigs (see example)
@@ -183,7 +189,7 @@ class ElbManager(object):
     """Handles ELB creation and destruction"""
 
     def __init__(self, module, name, listeners=None, purge_listeners=None,
-                 zones=None, purge_zones=None, health_check=None,
+                 zones=None, purge_zones=None, security_group_ids=None, health_check=None,
                  aws_access_key=None, aws_secret_key=None, region=None):
         self.module = module
         self.name = name
@@ -191,6 +197,7 @@ class ElbManager(object):
         self.purge_listeners = purge_listeners
         self.zones = zones
         self.purge_zones = purge_zones
+        self.security_group_ids = security_group_ids
         self.health_check = health_check
 
         self.aws_access_key = aws_access_key
@@ -209,6 +216,7 @@ class ElbManager(object):
             self._create_elb()
         else:
             self._set_zones()
+            self._set_security_groups()
             self._set_elb_listeners()
         self._set_health_check()
 
@@ -228,6 +236,7 @@ class ElbManager(object):
                 'name': self.elb.name,
                 'dns_name': self.elb.dns_name,
                 'zones': self.elb.availability_zones,
+                'security_group_ids': self.elb.security_groups,
                 'status': self.status
             }
 
@@ -281,6 +290,7 @@ class ElbManager(object):
         listeners = [self._listener_as_tuple(l) for l in self.listeners]
         self.elb = self.elb_conn.create_load_balancer(name=self.name,
                                                       zones=self.zones,
+                                                      security_groups=self.security_group_ids,
                                                       complex_listeners=listeners)
         if self.elb:
             self.changed = True
@@ -405,6 +415,11 @@ class ElbManager(object):
         if zones_to_disable:
             self._disable_zones(zones_to_disable)
 
+    def _set_security_groups(self):
+        if self.security_group_ids != None and set(self.elb.security_groups) != set(self.security_group_ids):
+            self.elb_conn.apply_security_groups_to_lb(self.name, self.security_group_ids)
+            self.Changed = True
+
     def _set_health_check(self):
         """Set health check values on ELB as needed"""
         if self.health_check:
@@ -457,6 +472,7 @@ def main():
             zones={'default': None, 'required': False, 'type': 'list'},
             purge_zones={'default': False, 'required': False,
                          'choices': BOOLEANS, 'type': 'bool'},
+            security_group_ids={'default': None, 'required': False, 'type': 'list'},
             health_check={'default': None, 'required': False, 'type': 'dict'},
         )
     )
@@ -475,6 +491,7 @@ def main():
     purge_listeners = module.params['purge_listeners']
     zones = module.params['zones']
     purge_zones = module.params['purge_zones']
+    security_group_ids = module.params['security_group_ids']
     health_check = module.params['health_check']
 
     if state == 'present' and not listeners:
@@ -484,7 +501,7 @@ def main():
         module.fail_json(msg="At least one availability zone is required for ELB creation")
 
     elb_man = ElbManager(module, name, listeners, purge_listeners, zones,
-                         purge_zones, health_check, aws_access_key,
+                         purge_zones, security_group_ids, health_check, aws_access_key,
                          aws_secret_key, region=region)
 
     if state == 'present':

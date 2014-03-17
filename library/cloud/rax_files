@@ -59,6 +59,11 @@ options:
     description:
       - Region to create an instance in
     default: DFW
+  state:
+    description:
+      - Indicate desired state of the resource
+    choices: ['present', 'absent']
+    default: present
   ttl:
     description:
       - In seconds, set a container-wide TTL for all objects cached on CDN edge nodes.
@@ -337,11 +342,11 @@ def main():
             container=dict(),
             state=dict(choices=['present', 'absent', 'list'], default='present'),
             meta=dict(type='dict', default=dict()),
-            clear_meta=dict(choices=BOOLEANS, default=False, type='bool'),
+            clear_meta=dict(default=False, type='bool'),
             type=dict(choices=['container', 'meta'], default='container'),
             ttl=dict(type='int'),
-            public=dict(choices=BOOLEANS, default=False, type='bool'),
-            private=dict(choices=BOOLEANS, default=False, type='bool'),
+            public=dict(default=False, type='bool'),
+            private=dict(default=False, type='bool'),
             web_index=dict(),
             web_error=dict()
         )

@@ -20,7 +20,7 @@ DOCUMENTATION = '''
 module: digital_ocean
 short_description: Create/delete a droplet/SSH_key in DigitalOcean
 description:
-     - Create/delete a droplet in DigitalOcean and optionally waits for it to be 'running', or deploy an SSH key.
+     - Create/delete a droplet in DigitalOcean and optionally wait for it to be 'running', or deploy an SSH key.
 version_added: "1.3"
 options:
   command:
@@ -35,10 +35,10 @@ options:
     choices: ['present', 'active', 'absent', 'deleted']
   client_id:
      description:
-     - Digital Ocean manager id.
+     - DigitalOcean manager id.
   api_key:
     description:
-     - Digital Ocean api key.
+     - DigitalOcean api key.
   id:
     description:
      - Numeric, the droplet id you want to operate on.
@@ -47,32 +47,38 @@ options:
      - String, this is the name of the droplet - must be formatted by hostname rules, or the name of a SSH key.
   unique_name:
     description:
-     - Bool, require unique hostnames.  By default, digital ocean allows multiple hosts with the same name.  Setting this to "yes" allows only one host per name.  Useful for idempotence.
+     - Bool, require unique hostnames.  By default, DigitalOcean allows multiple hosts with the same name.  Setting this to "yes" allows only one host per name.  Useful for idempotence.
     version_added: "1.4"
     default: "no"
     choices: [ "yes", "no" ]
   size_id:
     description:
-     - Numeric, this is the id of the size you would like the droplet created at.
+     - Numeric, this is the id of the size you would like the droplet created with.
   image_id:
     description:
      - Numeric, this is the id of the image you would like the droplet created with.
   region_id:
     description:
-     - "Numeric, this is the id of the region you would like your server"
+     - "Numeric, this is the id of the region you would like your server to be created in."
   ssh_key_ids:
     description:
-     - Optional, comma separated list of ssh_key_ids that you would like to be added to the server
+     - Optional, comma separated list of ssh_key_ids that you would like to be added to the server.
   virtio:
     description:
-     - "Bool, turn on virtio driver in droplet for improved network and storage I/O"
+     - "Bool, turn on virtio driver in droplet for improved network and storage I/O."
     version_added: "1.4"
     default: "yes"
     choices: [ "yes", "no" ]
   private_networking:
     description:
-     - "Bool, add an additional, private network interface to droplet for inter-droplet communication"
+     - "Bool, add an additional, private network interface to droplet for inter-droplet communication."
     version_added: "1.4"
+    default: "no"
+    choices: [ "yes", "no" ]
+  backups_enabled:
+    description:
+     - Optional, Boolean, enables backups for your droplet.
+    version_added: "1.6"
     default: "no"
     choices: [ "yes", "no" ]
   wait:
@@ -164,11 +170,11 @@ try:
     import dopy
     from dopy.manager import DoError, DoManager
 except ImportError, e:
-    print "failed=True msg='dopy >= 0.2.2 required for this module'"
+    print "failed=True msg='dopy >= 0.2.3 required for this module'"
     sys.exit(1)
 
-if dopy.__version__ < '0.2.2':
-    print "failed=True msg='dopy >= 0.2.2 required for this module'"
+if dopy.__version__ < '0.2.3':
+    print "failed=True msg='dopy >= 0.2.3 required for this module'"
     sys.exit(1)
 
 class TimeoutError(DoError):
@@ -229,8 +235,8 @@ class Droplet(JsonfyMixIn):
         cls.manager = DoManager(client_id, api_key)
 
     @classmethod
-    def add(cls, name, size_id, image_id, region_id, ssh_key_ids=None, virtio=True, private_networking=False):
-        json = cls.manager.new_droplet(name, size_id, image_id, region_id, ssh_key_ids, virtio, private_networking)
+    def add(cls, name, size_id, image_id, region_id, ssh_key_ids=None, virtio=True, private_networking=False, backups_enabled=False):
+        json = cls.manager.new_droplet(name, size_id, image_id, region_id, ssh_key_ids, virtio, private_networking, backups_enabled)
         droplet = cls(json)
         return droplet
 
@@ -333,7 +339,8 @@ def core(module):
                     region_id=getkeyordie('region_id'),
                     ssh_key_ids=module.params['ssh_key_ids'],
                     virtio=module.params['virtio'],
-                    private_networking=module.params['private_networking']
+                    private_networking=module.params['private_networking'],
+                    backups_enabled=module.params['backups_enabled'],
                 )
 
             if droplet.is_powered_on():
@@ -348,7 +355,7 @@ def core(module):
 
         elif state in ('absent', 'deleted'):
             # First, try to find a droplet by id.
-            droplet = Droplet.find(id=getkeyordie('id'))
+            droplet = Droplet.find(module.params['id'])
 
             # If we couldn't find the droplet and the user is allowing unique
             # hostnames, then check to see if a droplet with the specified
@@ -392,8 +399,9 @@ def main():
             image_id = dict(type='int'),
             region_id = dict(type='int'),
             ssh_key_ids = dict(default=''),
-            virtio = dict(type='bool', choices=BOOLEANS, default='yes'),
-            private_networking = dict(type='bool', choices=BOOLEANS, default='no'),
+            virtio = dict(type='bool', default='yes'),
+            private_networking = dict(type='bool', default='no'),
+            backups_enabled = dict(type='bool', default='no'),
             id = dict(aliases=['droplet_id'], type='int'),
             unique_name = dict(type='bool', default='no'),
             wait = dict(type='bool', default=True),

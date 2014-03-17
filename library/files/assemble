@@ -59,7 +59,7 @@ options:
     default: "no"
   delimiter:
     description:
-      - A delimiter to seperate the file contents.
+      - A delimiter to separate the file contents.
     version_added: "1.4"
     required: false
     default: null
@@ -107,6 +107,8 @@ def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None):
             continue
         fragment = "%s/%s" % (src_path, f)
         if delimit_me and delimiter:
+            # un-escape anything like newlines
+            delimiter = delimiter.decode('unicode-escape')
             tmp.write(delimiter)
             # always make sure there's a newline after the 
             # delimiter, so lines don't run together
