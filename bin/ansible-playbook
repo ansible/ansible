@@ -97,11 +97,6 @@ def main(args):
     if (options.ask_vault_pass and options.vault_password_file):
             parser.error("--ask-vault-pass and --vault-password-file are mutually exclusive")
 
-    inventory = ansible.inventory.Inventory(options.inventory)
-    inventory.subset(options.subset)
-    if len(inventory.list_hosts()) == 0:
-        raise errors.AnsibleError("provided hosts list is empty")
-
     sshpass = None
     sudopass = None
     su_pass = None
@@ -154,6 +149,11 @@ def main(args):
             raise errors.AnsibleError("the playbook: %s could not be found" % playbook)
         if not (os.path.isfile(playbook) or stat.S_ISFIFO(os.stat(playbook).st_mode)):
             raise errors.AnsibleError("the playbook: %s does not appear to be a file" % playbook)
+
+    inventory = ansible.inventory.Inventory(options.inventory, vault_password=vault_pass)
+    inventory.subset(options.subset)
+    if len(inventory.list_hosts()) == 0:
+        raise errors.AnsibleError("provided hosts list is empty")
 
     # run all playbooks specified on the command line
     for playbook in args:
