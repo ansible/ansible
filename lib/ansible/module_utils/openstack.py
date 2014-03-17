@@ -28,6 +28,7 @@ def os_argument_spec():
         login_password=dict(required=False),
         login_tenant_name=dict(required=False, default="admin"),
         login_tenant_id=dict(required=False),
+        ca_cert=dict(required=False),
         token=dict(required=False),
         region_name=dict(default=None),
         endpoint_type=dict(default="publicURL"),
@@ -79,6 +80,11 @@ def os_auth_info(module):
 
     result['insecure'] = module.params['insecure']
 
+    if module.params.get('ca_cert'):
+        result['ca_cert'] = module.params['cacert']
+    elif os.environ.get('OS_CACERT'):
+        result['ca_cert'] = os.environ['OS_CACERT']
+
     return result
 
 
@@ -116,7 +122,7 @@ def get_tenant_id(module, tenant_name, keystone=None):
             return tenant.id
 
 
-def get_token_and_endpoint(module, service_type, endpoint_type=None):
+def get_auth_data(module, service_type, endpoint_type=None):
     keystone = get_keystone_client(module)
 
     kwargs = {"service_type": service_type}
@@ -126,7 +132,15 @@ def get_token_and_endpoint(module, service_type, endpoint_type=None):
     elif module.params.get('endpoint_type'):
         kwargs["endpoint_type"] = module.params['endpoint_type']
 
-    return keystone.auth_token, keystone.service_catalog.url_for(**kwargs)
+    result = os_auth_info(module)
+
+    result["endpoint"] = keystone.service_catalog.url_for(**kwargs)
+    result["token"] = keystone.auth_token
+    
+    if 'ca_cert' in kwargs:
+        result['ca_cert'] = kwargs['ca_cert']
+
+    return result
 
 
 def get_nova_client(module):
@@ -135,6 +149,7 @@ def get_nova_client(module):
     user = kwargs.pop("username")
     password = kwargs.pop("password")
     tenant = kwargs.pop("tenant_id")
+    cacert = kwargs.pop("ca_cert")
 
     if module.params.get('endpoint_type'):
         kwargs['endpoint_type'] = module.params['endpoint_type']
@@ -145,7 +160,8 @@ def get_nova_client(module):
     except ImportError:
         module.fail_json(msg="novaclient is required for this feature")
 
-    nova = novaclient.v1_1.Client(user, password, tenant, **kwargs)
+    nova = novaclient.v1_1.Client(user, password, tenant, cacert=cacert,
+                                  **kwargs)
     try:
         nova.authenticate()
     except novaclient.exceptions.Unauthorized, e:
@@ -294,9 +310,11 @@ def get_glance_client(module):
     except ImportError:
         module.fail_json(msg="glanceclient is required for this feature")
 
-    token, endpoint = get_token_and_endpoint(module, 'image')
+    kwargs = get_auth_data(module, 'image')
 
-    return glanceclient.v1.client.Client(endpoint, token=token)
+    return glanceclient.v1.client.Client(kwargs['endpoint'],
+                                         token=kwargs['token'],
+                                         ca_cert=kwargs.get('ca_cert'))
 
 
 def get_glance_image(module, name, required=True, glance=None):
@@ -324,12 +342,16 @@ def get_neutron_client(module):
         import sys
         module.fail_json(msg="quantumclient or neutronclient are required")
 
-    token, endpoint = get_token_and_endpoint(module, 'network')
+    kwargs = get_auth_data(module, 'network')
 
     try:
-        neutron = nclient.Client('2.0', token=token, endpoint_url=endpoint)
+        neutron = nclient.Client('2.0',
+                                 token=kwargs['token'],
+                                 endpoint_url=kwargs['endpoint'],
+                                 ca_cert=kwargs.get('ca_cert'))
     except Exception, e:
         module.fail_json(msg="Error in connecting to neutron: %s " % e.message)
+
     return neutron
 
 
@@ -412,7 +434,8 @@ def get_router(module, name=None, id=None, tenant_id=None, required=True,
 
     if not routers['routers']:
         if required:
-            module.fail_json(msg="Router not found")
+            module.fail_json(msg="Router not found", name=name, id=id)
+
         return None
 
     if len(routers['routers']) > 1:
@@ -420,12 +443,6 @@ def get_router(module, name=None, id=None, tenant_id=None, required=True,
                              "disambiguate")
 
     return routers['routers'][0]
-
-
-def get_port_id(module, network_id, device_id, subnet_id=None, neutron=None):
-    port = get_port(module, network_id, device_id, subnet_id, neutron)
-
-    return port['id'] if port else None
 
 
 def get_port(module, network_id, device_id, subnet_id=None, neutron=None,
