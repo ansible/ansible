@@ -58,7 +58,7 @@ EXAMPLES = '''
 
 # Register as user (joe_user) with password (somepass) against a satellite
 # server specified by (server_url).
-- rhn_register:
+- rhn_register: >
     state=present
     username=joe_user
     password=somepass
