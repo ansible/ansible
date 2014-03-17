@@ -612,7 +612,6 @@ class Runner(object):
             if self.background > 0:
                 raise errors.AnsibleError("lookup plugins (with_*) cannot be used with async tasks")
 
-            aggregrate = {}
             all_comm_ok = True
             all_changed = False
             all_failed = False
