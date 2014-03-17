@@ -143,28 +143,33 @@ class VarsModule(object):
         """ constructor """
 
         self.inventory = inventory
+        self.inventory_basedir = inventory.basedir()
+        # There's no playbook initialized yet:
+        self.pb_basedir = None
 
-    def run(self, host, vault_password=None):
 
-        """ main body of the plugin, does actual loading """
+    def get_host_vars(self, host, vault_password=None):
+        return self._get_vars(host=host, group=None, vault_password=vault_password)
 
-        inventory = self.inventory
-        basedir = inventory.playbook_basedir()
-        if basedir is not None: 
-            basedir = os.path.abspath(basedir)
-        self.pb_basedir = basedir
 
-        # sort groups by depth so deepest groups can override the less deep ones
-        groupz = sorted(inventory.groups_for_host(host.name), key=lambda g: g.depth)
-        groups = [ g.name for g in groupz ]
-        inventory_basedir = inventory.basedir()
+    def get_group_vars(self, group, vault_password=None):
+        return self._get_vars(host=None, group=group, vault_password=vault_password)
+
+
+    def _get_vars(self, host=None, group=None, vault_password=None):
+        """ main body of the plugin, does actual loading"""
+
+        if self.pb_basedir is None:
+            pb_basedir = self.inventory.playbook_basedir()
+            if pb_basedir is not None:
+                pb_basedir = os.path.abspath(pb_basedir)
+                self.pb_basedir = pb_basedir
 
         results = {}
         scan_pass = 0
 
         # look in both the inventory base directory and the playbook base directory
-        for basedir in [ inventory_basedir, self.pb_basedir ]:
-
+        for basedir in [self.inventory_basedir, self.pb_basedir ]:
 
             # this can happen from particular API usages, particularly if not run
             # from /usr/bin/ansible-playbook
@@ -178,17 +183,18 @@ class VarsModule(object):
                 continue
 
             # save work of second scan if the directories are the same
-            if inventory_basedir == self.pb_basedir and scan_pass != 1:
+            if self.inventory_basedir == self.pb_basedir and scan_pass != 1:
                 continue
 
-            # load vars in dir/group_vars/name_of_group
-            for group in groups:
-                base_path = os.path.join(basedir, "group_vars/%s" % group)
+            if group and host is None:
+                # load vars in dir/group_vars/name_of_group
+                base_path = os.path.join(basedir, "group_vars/%s" % group.name)
                 results = _load_vars(base_path, results, vault_password=vault_password)
 
-            # same for hostvars in dir/host_vars/name_of_host
-            base_path = os.path.join(basedir, "host_vars/%s" % host.name)
-            results = _load_vars(base_path, results, vault_password=vault_password)
+            elif host and group is None:
+                # same for hostvars in dir/host_vars/name_of_host
+                base_path = os.path.join(basedir, "host_vars/%s" % host.name)
+                results = _load_vars(base_path, results, vault_password=vault_password)
 
         # all done, results is a dictionary of variables for this particular host.
         return results

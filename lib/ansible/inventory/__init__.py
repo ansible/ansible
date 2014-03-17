@@ -39,13 +39,14 @@ class Inventory(object):
 
     __slots__ = [ 'host_list', 'groups', '_restriction', '_also_restriction', '_subset', 
                   'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache', '_groups_list',
-                  '_pattern_cache', '_vars_plugins', '_playbook_basedir']
+                  '_pattern_cache', '_vault_password', '_vars_plugins', '_playbook_basedir']
 
-    def __init__(self, host_list=C.DEFAULT_HOST_LIST):
+    def __init__(self, host_list=C.DEFAULT_HOST_LIST, vault_password=None):
 
         # the host file file, or script path, or list of hosts
         # if a list, inventory data will NOT be loaded
         self.host_list = host_list
+        self._vault_password=vault_password
 
         # caching to avoid repeated calculations, particularly with
         # external inventory scripts.
@@ -139,6 +140,14 @@ class Inventory(object):
             raise errors.AnsibleError("Unable to find an inventory file, specify one with -i ?")
 
         self._vars_plugins = [ x for x in utils.plugins.vars_loader.all(self) ]
+
+        # get group vars from vars plugins
+        for group in self.groups:
+            group.vars = utils.combine_vars(group.vars, self.get_group_variables(group.name, self._vault_password))
+
+        # get host vars from vars plugins
+        for host in self.get_hosts():
+            host.vars = utils.combine_vars(host.vars, self.get_variables(host.name, self._vault_password))
 
 
     def _match(self, str, pattern_str):
@@ -370,16 +379,25 @@ class Inventory(object):
                 return group
         return None
 
-    def get_group_variables(self, groupname):
+    def get_group_variables(self, groupname, vault_password=None):
         if groupname not in self._vars_per_group:
-            self._vars_per_group[groupname] = self._get_group_variables(groupname)
+            self._vars_per_group[groupname] = self._get_group_variables(groupname, vault_password=vault_password)
         return self._vars_per_group[groupname]
 
-    def _get_group_variables(self, groupname):
+    def _get_group_variables(self, groupname, vault_password=None):
+
         group = self.get_group(groupname)
         if group is None:
             raise Exception("group not found: %s" % groupname)
-        return group.get_variables()
+
+        vars = {}
+        vars_results = [ plugin.get_group_vars(group, vault_password=vault_password) for plugin in self._vars_plugins if hasattr(plugin, 'get_group_vars')]
+        for updated in vars_results:
+            if updated is not None:
+                vars.update(updated)
+
+        vars.update(group.get_variables())
+        return vars
 
     def get_variables(self, hostname, vault_password=None):
         if hostname not in self._vars_per_host:
@@ -393,14 +411,27 @@ class Inventory(object):
             raise errors.AnsibleError("host not found: %s" % hostname)
 
         vars = {}
-        vars_results = [ plugin.run(host, vault_password=vault_password) for plugin in self._vars_plugins ] 
+
+        # plugin.get_host_vars retrieves just vars for specific host
+        vars_results = [ plugin.get_host_vars(host, vault_password=vault_password) for plugin in self._vars_plugins if hasattr(plugin, 'get_host_vars')]
+        for updated in vars_results:
+            if updated is not None:
+                vars = utils.combine_vars(vars, updated)
+
+        # plugin.run retrieves all vars (also from groups) for host
+        vars_results = [ plugin.run(host, vault_password=vault_password) for plugin in self._vars_plugins if hasattr(plugin, 'run')]
         for updated in vars_results:
             if updated is not None:
                 vars = utils.combine_vars(vars, updated)
 
         vars = utils.combine_vars(vars, host.get_variables())
+
+        # still need to check InventoryParser per host vars
+        # which actually means InventoryScript per host,
+        # which is not performant
         if self.parser is not None:
             vars = utils.combine_vars(vars, self.parser.get_host_variables(host))
+
         return vars
 
     def add_group(self, group):
