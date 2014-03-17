@@ -204,7 +204,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
             ssl_handler = SSLValidationHandler(module, hostname, port)
             handlers.append(ssl_handler)
 
-    if '@' in parsed[1]:
+    if parsed[0] != 'ftp' and '@' in parsed[1]:
         credentials, netloc = parsed[1].split('@', 1)
         if ':' in credentials:
             username, password = credentials.split(':', 1)
