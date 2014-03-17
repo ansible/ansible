@@ -539,8 +539,14 @@ def parse_kv(args):
     if args is not None:
         # attempting to split a unicode here does bad things
         args = args.encode('utf-8')
-        vargs = [x.decode('utf-8') for x in shlex.split(args, posix=True)]
-        #vargs = shlex.split(str(args), posix=True)
+        try:
+            vargs = shlex.split(args, posix=True)
+        except ValueError, ve:
+            if 'no closing quotation' in str(ve).lower():
+                raise errors.AnsibleError("error parsing argument string, try quoting the entire line.")
+            else:
+                raise
+        vargs = [x.decode('utf-8') for x in vargs]
         for x in vargs:
             if "=" in x:
                 k, v = x.split("=",1)

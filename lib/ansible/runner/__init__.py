@@ -28,7 +28,6 @@ import collections
 import socket
 import base64
 import sys
-import shlex
 import pipes
 import jinja2
 import subprocess

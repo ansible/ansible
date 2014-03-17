@@ -58,12 +58,14 @@ class ActionModule(object):
         options  = {}
         if complex_args:
             options.update(complex_args)
+
         options.update(utils.parse_kv(module_args))
 
         src = options.get('src', None)
         dest = options.get('dest', None)
         delimiter = options.get('delimiter', None)
         remote_src = utils.boolean(options.get('remote_src', 'yes'))
+
 
         if src is None or dest is None:
             result = dict(failed=True, msg="src and dest are required")
