@@ -218,11 +218,11 @@ def create_server(module, nova, image_id, flavor_id):
                 else:
                     volume['id'] = get_volume(module, name=volume['name']).id
             elif 'id' not in volume:
-                module.fail_json(msg="id or name are required for volumes "
-                                     "in volumes", name=name, id=id)
+                module.fail_json(msg="id, name or size are required for " 
+                                     "volumes in volumes", name=name, id=id)
 
 
-            mapping = "%s:%s:%s:%s" % (volume['id'],
+            mapping = "%s:%s:%s:%s" % (volume.get('id', ''),
                                        volume.get('type', 'volume'),
                                        volume.get('size', ''),
                                        volume.get('delete_on_termination'))
@@ -234,10 +234,7 @@ def create_server(module, nova, image_id, flavor_id):
     try:
         server = nova.servers.create(*bootargs, **bootkwargs)
     except Exception, e:
-        module.fail_json(msg="Error in creating instance: %s " % e.message,
-                         bootargs=bootargs, bootkwargs=bootkwargs,
-                         tb=traceback.format_exc()
-                         )
+        module.fail_json(msg="Error in creating instance: %s " % e.message)
 
     return server
 
