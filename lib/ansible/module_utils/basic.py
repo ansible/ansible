@@ -109,6 +109,7 @@ FILE_COMMON_ARGUMENTS=dict(
     serole = dict(),
     selevel = dict(),
     setype = dict(),
+    implied_direxec = dict(default='true', choices=BOOLEANS),
     # not taken by the file module, but other modules call file so it must ignore them.
     content = dict(),
     backup = dict(),
@@ -423,7 +424,7 @@ class AnsibleModule(object):
             changed = True
         return changed
 
-    def set_mode_if_different(self, path, mode, changed):
+    def set_mode_if_different(self, path, mode, changed, exec_read=False):
         path = os.path.expanduser(path)
         if mode is None:
             return changed
@@ -436,6 +437,11 @@ class AnsibleModule(object):
 
         st = os.lstat(path)
         prev_mode = stat.S_IMODE(st[stat.ST_MODE])
+
+        if exec_read:
+            read_perms = mode & 00444
+            exec_perms = read_perms >> 2
+            mode = mode | exec_perms
 
         if prev_mode != mode:
             if self.check_mode:
@@ -491,7 +497,8 @@ class AnsibleModule(object):
             file_args['path'], file_args['group'], changed
         )
         changed = self.set_mode_if_different(
-            file_args['path'], file_args['mode'], changed
+            file_args['path'], file_args['mode'], changed, 
+            exec_read=self.boolean(self.params['implied_direxec'])
         )
         return changed
 
