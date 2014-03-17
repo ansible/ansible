@@ -31,7 +31,6 @@ notes:
     - This module works on Debian and Ubuntu and requires C(python-apt).
     - This module supports Debian Squeeze (version 6) as well as its successors.
     - This module treats Debian and Ubuntu distributions separately. So PPA could be installed only on Ubuntu machines.
-      Adding PPA repositories requires C(python-pycurl).
 options:
     repo:
         required: true
@@ -52,7 +51,7 @@ options:
         choices: [ "yes", "no" ]
 author: Alexander Saltanov
 version_added: "0.7"
-requirements: [ python-apt, python-pycurl ]
+requirements: [ python-apt ]
 '''
 
 EXAMPLES = '''
@@ -71,10 +70,6 @@ apt_repository: repo='ppa:nginx/stable'
 '''
 
 import glob
-try:
-  import json
-except ImportError:
-  import simplejson as json
 import os
 import re
 import tempfile
@@ -88,21 +83,8 @@ try:
 except ImportError:
     HAVE_PYTHON_APT = False
 
-try:
-    import pycurl
-    HAVE_PYCURL = True
-except ImportError:
-    HAVE_PYCURL = False
 
 VALID_SOURCE_TYPES = ('deb', 'deb-src')
-
-
-class CurlCallback:
-    def __init__(self):
-        self.contents = ''
-
-    def body_callback(self, buf):
-        self.contents = self.contents + buf
 
 
 class InvalidSource(Exception):
@@ -291,31 +273,19 @@ class SourcesList(object):
 
 class UbuntuSourcesList(SourcesList):
 
-    LP_API = 'https://launchpad.net/api/1.0/~%s/+archive/%s' 
+    LP_API = 'https://launchpad.net/api/1.0/~%s/+archive/%s'
 
-    def __init__(self, add_ppa_signing_keys_callback=None):
+    def __init__(self, module, add_ppa_signing_keys_callback=None):
+        self.module = module
         self.add_ppa_signing_keys_callback = add_ppa_signing_keys_callback
         super(UbuntuSourcesList, self).__init__()
 
     def _get_ppa_info(self, owner_name, ppa_name):
-        # we can not use urllib2 here as it does not do cert verification
-        if not HAVE_PYCURL:
-            module.fail_json(msg='Could not import python modules: pycurl. Please install python-pycurl package.')
         lp_api = self.LP_API % (owner_name, ppa_name)
-        return self._get_ppa_info_curl(lp_api)
 
-    def _get_ppa_info_curl(self, lp_api):
-        callback = CurlCallback()
-        curl = pycurl.Curl()
-        curl.setopt(pycurl.SSL_VERIFYPEER, 1)
-        curl.setopt(pycurl.SSL_VERIFYHOST, 2)
-        curl.setopt(pycurl.WRITEFUNCTION, callback.body_callback)
-        curl.setopt(pycurl.URL, str(lp_api))
-        curl.setopt(pycurl.HTTPHEADER, ["Accept: application/json"])
-        curl.perform()
-        curl.close()
-        lp_page = callback.contents
-        return json.loads(lp_page)
+        headers = dict(Accept='application/json')
+        response, info = fetch_url(self.module, lp_api, headers=headers)
+        return json.load(response)
 
     def _expand_ppa(self, path):
         ppa = path.split(':')[1]
@@ -380,7 +350,8 @@ def main():
     sourceslist = None
 
     if isinstance(distro, aptsources.distro.UbuntuDistribution):
-        sourceslist = UbuntuSourcesList(add_ppa_signing_keys_callback=get_add_ppa_signing_key_callback(module))
+        sourceslist = UbuntuSourcesList(module,
+                                        add_ppa_signing_keys_callback=get_add_ppa_signing_key_callback(module))
     elif isinstance(distro, aptsources.distro.DebianDistribution) or \
             isinstance(distro, aptsources.distro.Distribution):
         sourceslist = SourcesList()
@@ -413,5 +384,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
 
 main()
