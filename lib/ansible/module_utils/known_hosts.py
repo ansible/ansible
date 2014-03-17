@@ -119,13 +119,21 @@ def add_host_key(module, fqdn, key_type="rsa"):
     result = False
     keyscan_cmd = module.get_bin_path('ssh-keyscan', True)
 
-    if not os.path.exists(os.path.expanduser("~/.ssh/")):
-        module.fail_json(msg="%s does not exist" % os.path.expanduser("~/.ssh/"))
+    if 'USER' in os.environ:
+        user_ssh_dir = os.path.expandvars("~${USER}/.ssh/")
+        user_host_file = os.path.expandvars("~${USER}/.ssh/known_hosts")
+    else:
+        user_ssh_dir = "~/.ssh/"
+        user_host_file = "~/.ssh/known_hosts"
+    user_ssh_dir = os.path.expanduser(user_ssh_dir)
+
+    if not os.path.exists(user_ssh_dir):
+        module.fail_json(msg="%s does not exist" % user_ssh_dir)
 
     this_cmd = "%s -t %s %s" % (keyscan_cmd, key_type, fqdn)
 
     rc, out, err = module.run_command(this_cmd)
-    module.append_to_file("~/.ssh/known_hosts", out)
+    module.append_to_file(user_host_file, out)
 
     return rc, out, err
 
