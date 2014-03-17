@@ -132,6 +132,8 @@ def main(args):
                       'Default is %s.' % DEFAULT_REPO_TYPE)
     parser.add_option('--vault-password-file', dest='vault_password_file',
                     help="vault password file")
+    parser.add_option('-K', '--ask-sudo-pass', default=False, dest='ask_sudo_pass', action='store_true',
+                      help='ask for sudo password')
     options, args = parser.parse_args(args)
 
     hostname = socket.getfqdn()
@@ -204,6 +206,8 @@ def main(args):
         cmd += ' -i "%s"' % options.inventory
     for ev in options.extra_vars:
         cmd += ' -e "%s"' % ev
+    if options.ask_sudo_pass:
+        cmd += ' -K'
     os.chdir(options.dest)
 
     # RUN THE PLAYBOOK COMMAND
