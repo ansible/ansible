@@ -329,11 +329,15 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
             return dict(failed=True, msg='internal error: cmd is required')
         if 'tmp_path' not in data:
             return dict(failed=True, msg='internal error: tmp_path is required')
-        if 'executable' not in data:
-            return dict(failed=True, msg='internal error: executable is required')
 
         vvvv("executing: %s" % data['cmd'])
-        rc, stdout, stderr = self.server.module.run_command(data['cmd'], executable=data['executable'], close_fds=True)
+
+        use_unsafe_shell = False
+        executable = data.get('executable')
+        if executable:
+            use_unsafe_shell = True
+
+        rc, stdout, stderr = self.server.module.run_command(data['cmd'], executable=executable, use_unsafe_shell=use_unsafe_shell)
         if stdout is None:
             stdout = ''
         if stderr is None:
