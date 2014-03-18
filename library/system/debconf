@@ -96,18 +96,19 @@ def get_selections(module, pkg):
     selections = {}
 
     for line in out.splitlines():
-        (key, value) = line.split(':')
+        (key, value) = line.split(':', 1)
         selections[ key.strip('*').strip() ] = value.strip()
 
     return selections
 
 
 def set_selection(module, pkg, question, vtype, value, unseen):
+    import pipes
 
     data = ' '.join([ question, vtype, value ])
 
     setsel = module.get_bin_path('debconf-set-selections', True)
-    cmd = ["echo '%s %s' |" % (pipes.quote(pkg), pipes.quote(data)), setsel]
+    cmd = ["echo",  pipes.quote(pkg), pipes.quote(data), "|", setsel]
     if unseen:
         cmd.append('-u')
 
@@ -142,7 +143,7 @@ def main():
 
     if question is not None:
         if vtype is None or value is None:
-            module.fail_json(msg="when supliying a question you must supply a valide vtype and value")
+            module.fail_json(msg="when supplying a question you must supply a valid vtype and value")
 
         if not question in prev or prev[question] != value:
             changed = True
