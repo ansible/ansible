@@ -662,8 +662,19 @@ class TestUtils(unittest.TestCase):
             before='fooo',
             after='foo'
         )
+
         standard_expected = """--- before: foo
 +++ after: bar
 @@ -1 +1 @@
 -fooo+foo"""
-        self.assertEqual(ansible.utils.get_diff(standard), standard_expected)
+
+        # workaround py26 and py27 difflib differences        
+        standard_expected = """-fooo+foo"""
+        diff = ansible.utils.get_diff(standard)
+        diff = diff.split('\n')
+        del diff[0]
+        del diff[0]
+        del diff[0]
+        diff = '\n'.join(diff)
+        self.assertEqual(diff, unicode(standard_expected))
+
