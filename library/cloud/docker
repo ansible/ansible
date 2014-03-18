@@ -345,7 +345,7 @@ class DockerManager:
         if self.module.params.get('volumes'):
             self.binds = {}
             self.volumes = {}
-            vols = self.parse_list_from_param('volumes')
+            vols = self.module.params.get('volumes')
             for vol in vols:
                 parts = vol.split(":")
                 # host mount (e.g. /mnt:/tmp, bind mounts host's /tmp to /mnt in the container)
@@ -359,46 +359,30 @@ class DockerManager:
         self.lxc_conf = None
         if self.module.params.get('lxc_conf'):
             self.lxc_conf = []
-            options = self.parse_list_from_param('lxc_conf')
+            options = self.module.params.get('lxc_conf')
             for option in options:
                 parts = option.split(':')
                 self.lxc_conf.append({"Key": parts[0], "Value": parts[1]})
 
         self.exposed_ports = None
         if self.module.params.get('expose'):
-            expose = self.parse_list_from_param('expose')
-            self.exposed_ports = self.get_exposed_ports(expose)
+            self.exposed_ports = self.get_exposed_ports(self.module.params.get('expose'))
 
         self.port_bindings = None
         if self.module.params.get('ports'):
-            ports = self.parse_list_from_param('ports')
-            self.port_bindings = self.get_port_bindings(ports)
+            self.port_bindings = self.get_port_bindings(self.module.params.get('ports'))
 
         self.links = None
         if self.module.params.get('links'):
-            links = self.parse_list_from_param('links')
-            self.links = dict(map(lambda x: x.split(':'), links))
+            self.links = dict(map(lambda x: x.split(':'), self.module.params.get('links')))
 
         self.env = None
         if self.module.params.get('env'):
-            env = self.parse_list_from_param('env')
-            self.env = dict(map(lambda x: x.split("="), env))
+            self.env = dict(map(lambda x: x.split("="), self.module.params.get('env')))
 
         # connect to docker server
         docker_url = urlparse(module.params.get('docker_url'))
         self.client = docker.Client(base_url=docker_url.geturl())
-
-
-    def parse_list_from_param(self, param_name, delimiter=','):
-        """
-        Get a list from a module parameter, whether it's specified as a delimiter-separated string or is already in list form.
-        """
-        param_list = self.module.params.get(param_name)
-        if not isinstance(param_list, list):
-            # if param_list is a number, like 3333, this will fail, so we coerce to a str first
-            param_list = str(param_list).split(delimiter)
-        # whitespace in between commas will cause problems if we don't strip each param
-        return [param.strip() for param in param_list]
 
 
     def get_exposed_ports(self, expose_list):
@@ -425,7 +409,9 @@ class DockerManager:
         """
         binds = {}
         for port in ports:
-            parts = port.split(':')
+            # ports could potentially be an array like [80, 443], so we make sure they're strings
+            # before splitting
+            parts = str(port).split(':')
             container_port = parts[-1]
             if '/' not in container_port:
                 container_port = int(parts[-1])
@@ -634,12 +620,12 @@ def main():
             count           = dict(default=1),
             image           = dict(required=True),
             command         = dict(required=False, default=None),
-            expose          = dict(required=False, default=None),
-            ports           = dict(required=False, default=None),
+            expose          = dict(required=False, default=None, type='list'),
+            ports           = dict(required=False, default=None, type='list'),
             publish_all_ports = dict(default=False, type='bool'),
-            volumes         = dict(default=None),
+            volumes         = dict(default=None, type='list'),
             volumes_from    = dict(default=None),
-            links           = dict(default=None),
+            links           = dict(default=None, type='list'),
             memory_limit    = dict(default=0),
             memory_swap     = dict(default=0),
             docker_url      = dict(default='unix://var/run/docker.sock'),
@@ -647,16 +633,16 @@ def main():
             password        = dict(),
             email           = dict(),
             hostname        = dict(default=None),
-            env             = dict(),
+            env             = dict(type='list'),
             dns             = dict(),
             detach          = dict(default=True, type='bool'),
             state           = dict(default='present', choices=['absent', 'present', 'stopped', 'killed', 'restarted']),
             debug           = dict(default=False, type='bool'),
             privileged      = dict(default=False, type='bool'),
-            lxc_conf        = dict(default=None),
-            name            = dict(default=None),
             stdin_open      = dict(default=False, type='bool'),
             tty             = dict(default=False, type='bool'),
+            lxc_conf        = dict(default=None, type='list'),
+            name            = dict(default=None)
         )
     )
 
