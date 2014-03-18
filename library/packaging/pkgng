@@ -142,9 +142,11 @@ def install_packages(module, pkgng_path, packages, cached, pkgsite):
     # as of pkg-1.1.4, PACKAGESITE is deprecated in favor of repository definitions
     # in /usr/local/etc/pkg/repos
     old_pkgng = pkgng_older_than(module, pkgng_path, [1, 1, 4])
-
-    if old_pkgng and (pkgsite != ""):
-        pkgsite = "PACKAGESITE=%s" % (pkgsite)
+    if pkgsite != "":
+        if old_pkgng:
+            pkgsite = "PACKAGESITE=%s" % (pkgsite)
+        else:
+            pkgsite = "-r %s" % (pkgsite)
 
     if not module.check_mode and cached == "no":
         if old_pkgng:
@@ -162,7 +164,7 @@ def install_packages(module, pkgng_path, packages, cached, pkgsite):
             if old_pkgng:
                 rc, out, err = module.run_command("%s %s install -g -U -y %s" % (pkgsite, pkgng_path, package))
             else:
-                rc, out, err = module.run_command("%s install -r %s -g -U -y %s" % (pkgng_path, pkgsite, package))
+                rc, out, err = module.run_command("%s install %s -g -U -y %s" % (pkgng_path, pkgsite, package))
 
         if not module.check_mode and not query_package(module, pkgng_path, package):
             module.fail_json(msg="failed to install %s: %s" % (package, out), stderr=err)
