@@ -182,9 +182,8 @@ class Facts(object):
                 self.facts['userspace_architecture'] = 'i386'
         else:
             self.facts['architecture'] = self.facts['machine']
-        if self.facts['system'] == 'Linux':
-            self.get_distribution_facts()
-        elif self.facts['system'] == 'AIX':
+
+        if self.facts['system'] == 'AIX':
             rc, out, err = module.run_command("/usr/sbin/bootinfo -p")
             data = out.split('\n')
             self.facts['architecture'] = data[0]
