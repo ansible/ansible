@@ -286,7 +286,7 @@ EXAMPLES = '''
        db: postgres
     monitoring: yes
 
-# Single instance with additional IOPS volume from snapshot
+# Single instance with additional IOPS volume from snapshot and volume delete on termination
 local_action:
     module: ec2
     key_name: mykey
@@ -301,6 +301,7 @@ local_action:
       device_type: io1
       iops: 1000
       volume_size: 100
+      delete_on_termination: true
     monitoring: yes
 
 # Multiple groups example
