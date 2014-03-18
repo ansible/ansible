@@ -1,0 +1,135 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+DOCUMENTATION = '''
+---
+module: slack
+version_added: 1.4
+short_description: Sends a notification to a slack channel
+description:
+     - The M(slack) module sends text to a slack channel. See
+       https://slack.com/services/new/incoming-webhook to setup the notification
+       on the server side.
+options:
+  domain:
+    description:
+      - Name of the domain of the slack account. Ex: "example.slack.com"
+    required: true
+  token:
+    description:
+      - Token to identify the notification. The token has to be created here:
+        https://slack.com/services/new/incoming-webhook
+    required: true
+  text:
+    description:
+      - Content of the message being sent
+    required: true
+  channel:
+    description:
+      - Name of the channel to send the message to. Ex: "#general"
+        If not set, the message goes to the default channel selected during the
+        setup of the webhook.
+    required: false
+  username:
+    description:
+      - Name of the "user" that sends the message.
+    required: false
+  icon_emoji:
+    description:
+      - Gives the user an icon represented by an emoji. Ex: ":ghost:"
+    required: false
+  icon_url:
+    description:
+      - Gives the user an icon represented by the content of the URL. The URL
+        should point to an image. Ex: "https://slack.com/img/icons/app-57.png"
+    required: false
+  attachments:
+    description:
+      - Allows to build more richly-formatted messages.
+    required: false
+author: Jonas Pfenniger <zimbatm@zimbatm.com>
+'''
+
+EXAMPLES = '''
+# Simple example
+- slack: >
+    domain=example.slack.com
+    token=xsKhh7TZyXSWX9VHBvCWZDZg
+    text=deploying my-app
+
+# Example with attachments
+- slack: domain=example.slack.com token=xsKhh7TZyXSWX9VHBvCWZDZg
+  args:
+    text: deploying
+    attachments:
+    - fallback: my-app on {{ ansible_hostname }}
+      color: good
+      fields:
+      - title: app
+        value: my-app
+        short: true
+      - title: host
+        value: "{{ ansible_hostname }}"
+        short: true
+'''
+
+import json
+import urllib
+
+BASE_URL = 'https://%s/services/hooks/incoming-webhook?token=%s'
+
+# ==============================================================
+# do_notify_slack
+
+def do_notify_slack(module, domain, token, text, extra):
+    my_url = BASE_URL % (domain, token)
+
+    payload = dict(text=text)
+    payload.update(extra)
+
+    my_data = dict(payload=json.dumps(payload))
+
+    return urllib.urlopen(my_url, urllib.urlencode(my_data)).read()
+
+def slice_dict(d, *keys):
+    d2={}
+    for k in keys:
+        v = d.get(k)
+        if v:
+            d2[k] = v
+    return d2
+
+# ==============================================================
+# main
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            domain = dict(type='str', required=True),
+            token = dict(type='str', required=True),
+            text = dict(type='str', required=True),
+            channel = dict(type='str', required=False),
+            username = dict(type='str', required=False),
+            icon_url = dict(type='str', required=False),
+            icon_emoji = dict(type='str', required=False),
+            attachments = dict(type='list', required=False),
+        )
+    )
+
+    domain = module.params['domain']
+    token = module.params['token']
+    text = module.params['text']
+
+    extra = slice_dict(module.params, 'channel', 'username', 'icon_emoji',
+            'icon_url', 'attachments')
+
+    ret = do_notify_slack(module, domain, token, text, extra)
+
+    if ret.strip().lower() != "ok":
+        module.fail_json(msg=ret)
+    else:
+        module.exit_json(msg="OK", extra=extra)
+
+# import module snippets
+from ansible.module_utils.basic import *
+main()
