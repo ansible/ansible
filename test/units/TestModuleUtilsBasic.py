@@ -95,9 +95,9 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
     # test run_command with a command pipe (with both use_unsafe_shell=True|False)
     def test_run_command_string_unsafe_with_pipe(self):
-        (rc, out, err) = self.module.run_command('echo -n "foo bar" | cat', use_unsafe_shell=True)
+        (rc, out, err) = self.module.run_command('echo "foo bar" | cat', use_unsafe_shell=True)
         self.assertEqual(rc, 0)
-        self.assertEqual(out, 'foo bar')
+        self.assertEqual(out, 'foo bar\n')
 
     # test run_command with a shell redirect in (with both use_unsafe_shell=True|False)
     def test_run_command_string_unsafe_with_redirect_in(self):
