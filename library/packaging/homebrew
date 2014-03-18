@@ -756,8 +756,10 @@ def main():
         path = ['/usr/local/bin']
 
     state = p['state']
-    if state in ('present', 'installed', 'head'):
+    if state in ('present', 'installed'):
         state = 'installed'
+    if state in ('head'):
+        state = 'head'
     if state in ('latest', 'upgraded'):
         state = 'upgraded'
     if state == 'linked':
