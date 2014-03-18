@@ -997,9 +997,8 @@ class AnsibleModule(object):
         - executable (string) See documentation for subprocess.Popen().
                               Default is None.
         '''
-
         shell = False
-        if isinstance(args, list):
+        if isinstance(args, list) or isinstance(args, tuple):
             if use_unsafe_shell:
                 args = " ".join([pipes.quote(x) for x in args])
                 shell = True
