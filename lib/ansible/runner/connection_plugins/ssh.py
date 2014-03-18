@@ -157,7 +157,7 @@ class Connection(object):
                         return False
 
         if (hfiles_not_found == len(host_file_list)):
-            print "previous known host file not found"
+            vvv("EXEC previous known host file not found for %s" % host)
         return True
 
     def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable='/bin/sh', in_data=None, su_user=None, su=False):
