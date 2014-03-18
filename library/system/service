@@ -477,7 +477,34 @@ class LinuxService(Service):
         if location.get('initctl', None):
             self.svc_initctl = location['initctl']
 
+    def get_systemd_status_dict(self):
+        (rc, out, err) = self.execute_command("%s show %s" % (self.enable_cmd, self.__systemd_unit,))
+        if rc != 0:
+            self.module.fail_json('failure %d running systemctl show for %r: %s' % (self.__systemd_unit, rc, err))
+        return dict(line.split('=', 1) for line in out.splitlines())
+
+    def get_systemd_service_status(self):
+        d = self.get_systemd_status_dict()
+        if d.get('ActiveState') == 'active':
+            # run-once services (for which a single successful exit indicates
+            # that they are running as designed) should not be restarted here.
+            # Thus, we are not checking d['SubState'].
+            self.running = True
+            self.crashed = False
+        elif d.get('ActiveState') == 'failed':
+            self.running = False
+            self.crashed = True
+        elif d.get('ActiveState') is None:
+            self.module.fail_json(msg='No ActiveState value in systemctl show output for %r' % (self.__systemd_unit,))
+        else:
+            self.running = False
+            self.crashed = False
+        return self.running
+
     def get_service_status(self):
+        if self.svc_cmd and self.svc_cmd.endswith('systemctl'):
+            return self.get_systemd_service_status()
+
         self.action = "status"
         rc, status_stdout, status_stderr = self.service_control()
 
@@ -589,9 +616,7 @@ class LinuxService(Service):
                 return
 
         if self.enable_cmd.endswith("systemctl"):
-            (rc, out, err) = self.execute_command("%s show %s" % (self.enable_cmd, self.__systemd_unit))
-
-            d = dict(line.split('=', 1) for line in out.splitlines())
+            d = self.get_systemd_status_dict()
             if "UnitFileState" in d:
                 if self.enable and d["UnitFileState"] == "enabled":
                     return
