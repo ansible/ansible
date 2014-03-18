@@ -234,6 +234,8 @@ class Play(object):
                         # (dep_vars) to look for tags going forward
                         def __merge_tags(var_obj):
                             old_tags = dep_vars.get('tags', [])
+                            if isinstance(old_tags, basestring):
+                                old_tags = [old_tags, ]
                             if isinstance(var_obj, dict):
                                 new_tags = var_obj.get('tags', [])
                                 if isinstance(new_tags, basestring):
