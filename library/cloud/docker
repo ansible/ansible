@@ -381,8 +381,10 @@ class DockerManager:
         """
         param_list = self.module.params.get(param_name)
         if not isinstance(param_list, list):
-            param_list = param_list.split(delimiter)
-        return param_list
+            # if param_list is a number, like 3333, this will fail, so we coerce to a str first
+            param_list = str(param_list).split(delimiter)
+        # whitespace in between commas will cause problems if we don't strip each param
+        return [param.strip() for param in param_list]
 
 
     def get_exposed_ports(self, expose_list):
