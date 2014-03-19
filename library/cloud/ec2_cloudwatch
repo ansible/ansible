@@ -135,12 +135,6 @@ options:
     default: null
     aliases: []
     version_added: "1.6"
-  region:
-    description:
-      - the EC2 region to use
-    required: false
-    default: null
-    aliases: [ ec2_region ]
 
 requirements: [ "boto" ]
 author: Bernat Rafales <bernat@rafales-mulet.com>
