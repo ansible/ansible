@@ -432,10 +432,23 @@ class PlayBook(object):
                 self.SETUP_CACHE[host].update(facts)
             # extra vars need to always trump - so update  again following the facts
             self.SETUP_CACHE[host].update(self.extra_vars)
+
+            if task.register_as_list:
+                if task.register not in self.SETUP_CACHE[host]:
+                    self.SETUP_CACHE[host][task.register] = []
+            elif task.register_as_dict:
+                if task.register not in self.SETUP_CACHE[host]:
+                    self.SETUP_CACHE[host][task.register] = {}
+
             if task.register:
                 if 'stdout' in result and 'stdout_lines' not in result:
                     result['stdout_lines'] = result['stdout'].splitlines()
-                self.SETUP_CACHE[host][task.register] = result
+                if task.register_as_list:
+                    self.SETUP_CACHE[host][task.register].append(result)
+                elif task.register_as_dict:
+                    self.SETUP_CACHE[host][task.register][task.register_as_dict] = result
+                elif task.register:
+                    self.SETUP_CACHE[host][task.register] = result
 
         # also have to register some failed, but ignored, tasks
         if task.ignore_errors and task.register:
@@ -443,7 +456,12 @@ class PlayBook(object):
             for host, result in failed.iteritems():
                 if 'stdout' in result and 'stdout_lines' not in result:
                     result['stdout_lines'] = result['stdout'].splitlines()
-                self.SETUP_CACHE[host][task.register] = result
+                if task.register_as_list:
+                    self.SETUP_CACHE[host][task.register].append(result)
+                elif task.register_as_dict:
+                    self.SETUP_CACHE[host][task.register][task.register_as_dict] = result
+                elif task.register:
+                    self.SETUP_CACHE[host][task.register] = result
 
         # flag which notify handlers need to be run
         if len(task.notify) > 0:
@@ -681,4 +699,3 @@ class PlayBook(object):
             self.inventory.lift_also_restriction()
 
         return True
-
