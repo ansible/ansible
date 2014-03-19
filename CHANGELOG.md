@@ -23,6 +23,7 @@ New Modules:
 * system: ufw
 * system: locale_gen
 * system: alternatives
+* system: capabilities
 * net_infrastructure: bigip_facts
 * cloud: digital_ocean_domain
 * cloud: digital_ocean_sshkey 
