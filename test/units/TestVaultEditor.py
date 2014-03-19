@@ -75,6 +75,32 @@ class TestVaultEditor(TestCase):
         assert error_hit == False, "error decrypting 1.0 file"            
         assert fdata.strip() == "foo", "incorrect decryption of 1.0 file: %s" % fdata.strip() 
 
+    def test_decrypt_1_0_newline(self):
+        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
+            raise SkipTest
+        dirpath = tempfile.mkdtemp()
+        filename = os.path.join(dirpath, "foo-ansible-1.0-ansible-newline-ansible.yml")
+        shutil.rmtree(dirpath)
+        shutil.copytree("vault_test_data", dirpath)
+        ve = VaultEditor(None, "ansible\nansible\n", filename)
+
+        # make sure the password functions for the cipher
+        error_hit = False
+        try:        
+            ve.decrypt_file()
+        except errors.AnsibleError, e:
+            error_hit = True
+
+        # verify decrypted content
+        f = open(filename, "rb")
+        fdata = f.read()
+        f.close()
+
+        shutil.rmtree(dirpath)
+        assert error_hit == False, "error decrypting 1.0 file with newline in password"            
+        #assert fdata.strip() == "foo", "incorrect decryption of 1.0 file: %s" % fdata.strip() 
+
+
     def test_decrypt_1_1(self):
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
             raise SkipTest

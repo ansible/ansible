@@ -133,9 +133,6 @@ class Cli(object):
             except (OSError, IOError), e:
                 raise errors.AnsibleError("Could not read %s: %s" % (this_path, e))
 
-            # get rid of newline chars        
-            tmp_vault_pass = tmp_vault_pass.strip()
-
             if not options.ask_vault_pass:
                 vault_pass = tmp_vault_pass
 
