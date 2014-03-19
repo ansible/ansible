@@ -36,6 +36,7 @@ class CallbackModule(object):
         HIPCHAT_TOKEN (required): HipChat API token
         HIPCHAT_ROOM  (optional): HipChat room to post in. Default: ansible
         HIPCHAT_FROM  (optional): Name to post as. Default: ansible
+        HIPCHAT_NOTIFY (optional): Add notify flag to important messages ("true" or "false"). Default: true
 
     Requires:
         prettytable
@@ -52,6 +53,7 @@ class CallbackModule(object):
         self.token = os.getenv('HIPCHAT_TOKEN')
         self.room = os.getenv('HIPCHAT_ROOM', 'ansible')
         self.from_name = os.getenv('HIPCHAT_FROM', 'ansible')
+        self.allow_notify = (os.getenv('HIPCHAT_NOTIFY') != 'false')
 
         if self.token is None:
             self.disabled = True
@@ -71,7 +73,7 @@ class CallbackModule(object):
         params['message'] = msg
         params['message_format'] = msg_format
         params['color'] = color
-        params['notify'] = int(notify)
+        params['notify'] = int(self.allow_notify and notify)
 
         url = ('%s?auth_token=%s' % (self.msg_uri, self.token))
         try:
