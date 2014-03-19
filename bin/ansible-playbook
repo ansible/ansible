@@ -158,9 +158,6 @@ def main(args):
     # run all playbooks specified on the command line
     for playbook in args:
 
-        # let inventory know which playbooks are using so it can know the basedirs
-        inventory.set_playbook_basedir(os.path.dirname(playbook))
-
         stats = callbacks.AggregateStats()
         playbook_cb = callbacks.PlaybookCallbacks(verbose=utils.VERBOSITY)
         if options.step:
