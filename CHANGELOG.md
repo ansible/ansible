@@ -28,6 +28,8 @@ New Modules:
 * cloud: digital_ocean_sshkey 
 * cloud: rax_identity
 * cloud: ec2_asg (configure autoscaling groups)
+* cloud: ec2_scaling_policy
+* cloud: ec2_metricalarm
 
 Other notable changes:
 

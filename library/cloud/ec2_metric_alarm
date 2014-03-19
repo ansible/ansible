@@ -17,7 +17,7 @@
 DOCUMENTATION = """
 
 ---
-module: ec2_metricalarm
+module: ec2_metric_alarm
 short_description: Create/update or delete AWS Cloudwatch 'metric alarms'
 description:
  - Can create or delete AWS metric alarms
@@ -99,7 +99,7 @@ options:
 
 EXAMPLES = '''
   - name: create alarm
-    ec2_metricalarm:
+    ec2_metric_alarm:
       state: present
       region: ap-southeast-2
       name: "cpu-low"
