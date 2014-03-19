@@ -4,7 +4,7 @@
 DOCUMENTATION = '''
 ---
 module: typetalk
-version_added: "1.5"
+version_added: "1.6"
 short_description: Send a message to typetalk
 description:
   - Send a message to typetalk using typetalk API ( http://developers.typetalk.in/ )
