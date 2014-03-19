@@ -139,8 +139,8 @@ import fnmatch
 
 # APT related constants
 APT_ENV_VARS = dict(
-  DEBIAN_FRONTEND = 'noninteractive',
-  DEBIAN_PRIORITY = 'critical'
+    DEBIAN_FRONTEND='noninteractive',
+    DEBIAN_PRIORITY='critical'
 )
 
 DPKG_OPTIONS = 'force-confdef,force-confold'
@@ -156,12 +156,14 @@ try:
 except ImportError:
     HAS_PYTHON_APT = False
 
+
 def package_split(pkgspec):
     parts = pkgspec.split('=')
     if len(parts) > 1:
         return parts[0], parts[1]
     else:
         return parts[0], None
+
 
 def package_status(m, pkgname, version, cache, state):
     try:
@@ -170,7 +172,7 @@ def package_status(m, pkgname, version, cache, state):
         # state fields not directly acccesible from the
         # higher-level apt.package.Package object.
         pkg = cache[pkgname]
-        ll_pkg = cache._cache[pkgname] # the low-level package object
+        ll_pkg = cache._cache[pkgname]  # the low-level package object
     except KeyError:
         if state == 'install':
             if cache.get_providing_packages(pkgname):
@@ -183,13 +185,15 @@ def package_status(m, pkgname, version, cache, state):
     except UnicodeDecodeError:
         has_files = True
     except AttributeError:
-        has_files = False  # older python-apt cannot be used to determine non-purged
+        # older python-apt cannot be used to determine non-purged
+        has_files = False
 
     try:
-        package_is_installed = ll_pkg.current_state == apt_pkg.CURSTATE_INSTALLED 
-    except AttributeError: # python-apt 0.7.X has very weak low-level object
+        package_is_installed = ll_pkg.current_state == apt_pkg.CURSTATE_INSTALLED
+    except AttributeError:  # python-apt 0.7.X has very weak low-level object
         try:
-            # might not be necessary as python-apt post-0.7.X should have current_state property
+            # might not be necessary as python-apt post-0.7.X should have
+            # current_state property
             package_is_installed = pkg.is_installed
         except AttributeError:
             # assume older version of python-apt is installed
@@ -209,6 +213,7 @@ def package_status(m, pkgname, version, cache, state):
             package_is_upgradable = pkg.isUpgradable
         return package_is_installed, package_is_upgradable, has_files
 
+
 def expand_dpkg_options(dpkg_options_compressed):
     options_list = dpkg_options_compressed.split(',')
     dpkg_options = ""
@@ -217,13 +222,15 @@ def expand_dpkg_options(dpkg_options_compressed):
                        % (dpkg_options, dpkg_option)
     return dpkg_options.strip()
 
+
 def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
     new_pkgspec = []
     for pkgname_or_fnmatch_pattern in pkgspec:
         # note that any of these chars is not allowed in a (debian) pkgname
         if [c for c in pkgname_or_fnmatch_pattern if c in "*?[]!"]:
             if "=" in pkgname_or_fnmatch_pattern:
-                m.fail_json(msg="pkgname wildcard and version can not be mixed")
+                m.fail_json(
+                    msg="pkgname wildcard and version can not be mixed")
             # handle multiarch pkgnames, the idea is that "apt*" should
             # only select native packages. But "apt*:i386" should still work
             if not ":" in pkgname_or_fnmatch_pattern:
@@ -235,12 +242,14 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
                     [pkg.name for pkg in cache], pkgname_or_fnmatch_pattern)
 
             if len(matches) == 0:
-                m.fail_json(msg="No package(s) matching '%s' available" % str(pkgname_or_fnmatch_pattern))
+                m.fail_json(msg="No package(s) matching '%s' available" %
+                            str(pkgname_or_fnmatch_pattern))
             else:
                 new_pkgspec.extend(matches)
         else:
             new_pkgspec.append(pkgname_or_fnmatch_pattern)
     return new_pkgspec
+
 
 def install(m, pkgspec, cache, upgrade=False, default_release=None,
             install_recommends=True, force=False,
@@ -249,7 +258,8 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
     pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache)
     for package in pkgspec:
         name, version = package_split(package)
-        installed, upgradable, has_files = package_status(m, name, version, cache, state='install')
+        installed, upgradable, has_files = package_status(
+            m, name, version, cache, state='install')
         if not installed or (upgrade and upgradable):
             packages += "'%s' " % package
 
@@ -264,10 +274,11 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         else:
             check_arg = ''
 
-        for (k,v) in APT_ENV_VARS.iteritems():
+        for (k, v) in APT_ENV_VARS.iteritems():
             os.environ[k] = v
 
-        cmd = "%s -y %s %s %s install %s" % (APT_GET_CMD, dpkg_options, force_yes, check_arg, packages)
+        cmd = "%s -y %s %s %s install %s" % (APT_GET_CMD,
+                                             dpkg_options, force_yes, check_arg, packages)
 
         if default_release:
             cmd += " -t '%s'" % (default_release,)
@@ -276,11 +287,13 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
 
         rc, out, err = m.run_command(cmd)
         if rc:
-            m.fail_json(msg="'apt-get install %s' failed: %s" % (packages, err), stdout=out, stderr=err)
+            m.fail_json(msg="'apt-get install %s' failed: %s" %
+                        (packages, err), stdout=out, stderr=err)
         else:
             m.exit_json(changed=True, stdout=out, stderr=err)
     else:
         m.exit_json(changed=False)
+
 
 def remove(m, pkgspec, cache, purge=False,
            dpkg_options=expand_dpkg_options(DPKG_OPTIONS)):
@@ -288,7 +301,8 @@ def remove(m, pkgspec, cache, purge=False,
     pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache)
     for package in pkgspec:
         name, version = package_split(package)
-        installed, upgradable, has_files = package_status(m, name, version, cache, state='remove')
+        installed, upgradable, has_files = package_status(
+            m, name, version, cache, state='remove')
         if installed or (has_files and purge):
             packages += "'%s' " % package
 
@@ -300,18 +314,21 @@ def remove(m, pkgspec, cache, purge=False,
         else:
             purge = ''
 
-        for (k,v) in APT_ENV_VARS.iteritems():
+        for (k, v) in APT_ENV_VARS.iteritems():
             os.environ[k] = v
 
-        cmd = "%s -q -y %s %s remove %s" % (APT_GET_CMD, dpkg_options, purge, packages)
+        cmd = "%s -q -y %s %s remove %s" % (APT_GET_CMD,
+                                            dpkg_options, purge, packages)
 
         if m.check_mode:
             m.exit_json(changed=True)
 
         rc, out, err = m.run_command(cmd)
         if rc:
-            m.fail_json(msg="'apt-get remove %s' failed: %s" % (packages, err), stdout=out, stderr=err)
+            m.fail_json(msg="'apt-get remove %s' failed: %s" %
+                        (packages, err), stdout=out, stderr=err)
         m.exit_json(changed=True, stdout=out, stderr=err)
+
 
 def upgrade(m, mode="yes", force=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS)):
@@ -344,45 +361,52 @@ def upgrade(m, mode="yes", force=False,
 
     apt_cmd_path = m.get_bin_path(apt_cmd, required=True)
 
-    for (k,v) in APT_ENV_VARS.iteritems():
+    for (k, v) in APT_ENV_VARS.iteritems():
         os.environ[k] = v
 
     cmd = '%s -y %s %s %s %s' % (apt_cmd_path, dpkg_options,
-                                    force_yes, check_arg, upgrade_command)
+                                 force_yes, check_arg, upgrade_command)
     rc, out, err = m.run_command(cmd)
     if rc:
-        m.fail_json(msg="'%s %s' failed: %s" % (apt_cmd, upgrade_command, err), stdout=out)
+        m.fail_json(msg="'%s %s' failed: %s" %
+                    (apt_cmd, upgrade_command, err), stdout=out)
     if (apt_cmd == APT_GET_CMD and APT_GET_ZERO in out) or (apt_cmd == APTITUDE_CMD and APTITUDE_ZERO in out):
         m.exit_json(changed=False, msg=out, stdout=out, stderr=err)
     m.exit_json(changed=True, msg=out, stdout=out, stderr=err)
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            state = dict(default='installed', choices=['installed', 'latest', 'removed', 'absent', 'present']),
-            update_cache = dict(default=False, aliases=['update-cache'], type='bool'),
-            cache_valid_time = dict(type='int'),
-            purge = dict(default=False, type='bool'),
-            package = dict(default=None, aliases=['pkg', 'name']),
-            default_release = dict(default=None, aliases=['default-release']),
-            install_recommends = dict(default='yes', aliases=['install-recommends'], type='bool'),
-            force = dict(default='no', type='bool'),
-            upgrade = dict(choices=['yes', 'safe', 'full', 'dist']),
-            dpkg_options = dict(default=DPKG_OPTIONS)
+        argument_spec=dict(
+            state=dict(default='installed', choices=[
+                       'installed', 'latest', 'removed', 'absent', 'present']),
+            update_cache=dict(
+                default=False, aliases=['update-cache'], type='bool'),
+            cache_valid_time=dict(type='int'),
+            purge=dict(default=False, type='bool'),
+            package=dict(default=None, aliases=['pkg', 'name']),
+            default_release=dict(default=None, aliases=['default-release']),
+            install_recommends=dict(
+                default='yes', aliases=['install-recommends'], type='bool'),
+            force=dict(default='no', type='bool'),
+            upgrade=dict(choices=['yes', 'safe', 'full', 'dist']),
+            dpkg_options=dict(default=DPKG_OPTIONS)
         ),
-        mutually_exclusive = [['package', 'upgrade']],
-        required_one_of = [['package', 'upgrade', 'update_cache']],
-        supports_check_mode = True
+        mutually_exclusive=[['package', 'upgrade']],
+        required_one_of=[['package', 'upgrade', 'update_cache']],
+        supports_check_mode=True
     )
 
     if not HAS_PYTHON_APT:
         try:
-            module.run_command('apt-get update && apt-get install python-apt -y -q', use_unsafe_shell=True)
+            module.run_command(
+                'apt-get update && apt-get install python-apt -y -q', use_unsafe_shell=True)
             global apt, apt_pkg
             import apt
             import apt_pkg
         except:
-            module.fail_json(msg="Could not import python modules: apt, apt_pkg. Please install python-apt package.")
+            module.fail_json(
+                msg="Could not import python modules: apt, apt_pkg. Please install python-apt package.")
 
     global APTITUDE_CMD
     APTITUDE_CMD = module.get_bin_path("aptitude", False)
@@ -390,8 +414,9 @@ def main():
     APT_GET_CMD = module.get_bin_path("apt-get")
 
     p = module.params
-    if not APTITUDE_CMD and p.get('upgrade', None) in [ 'full', 'safe', 'yes' ]:
-        module.fail_json(msg="Could not find aptitude. Please ensure it is installed.")
+    if not APTITUDE_CMD and p.get('upgrade', None) in ['full', 'safe', 'yes']:
+        module.fail_json(
+            msg="Could not find aptitude. Please ensure it is installed.")
 
     install_recommends = p['install_recommends']
     dpkg_options = expand_dpkg_options(p['dpkg_options'])
@@ -430,7 +455,8 @@ def main():
                     mtimestamp = datetime.datetime.fromtimestamp(mtime)
                     if mtimestamp + tdelta >= datetime.datetime.now():
                         # dont update the cache
-                        # the old cache is less than cache_valid_time seconds old - so still valid
+                        # the old cache is less than cache_valid_time seconds
+                        # old - so still valid
                         cache_valid = True
 
             if cache_valid is not True:
@@ -450,18 +476,19 @@ def main():
             if package.count('=') > 1:
                 module.fail_json(msg="invalid package spec: %s" % package)
             if latest and '=' in package:
-                module.fail_json(msg='version number inconsistent with state=latest: %s' % package)
+                module.fail_json(
+                    msg='version number inconsistent with state=latest: %s' % package)
 
         if p['state'] == 'latest':
             install(module, packages, cache, upgrade=True,
                     default_release=p['default_release'],
                     install_recommends=install_recommends,
                     force=force_yes, dpkg_options=dpkg_options)
-        elif p['state'] in [ 'installed', 'present' ]:
+        elif p['state'] in ['installed', 'present']:
             install(module, packages, cache, default_release=p['default_release'],
-                      install_recommends=install_recommends,force=force_yes,
-                      dpkg_options=dpkg_options)
-        elif p['state'] in [ 'removed', 'absent' ]:
+                    install_recommends=install_recommends, force=force_yes,
+                    dpkg_options=dpkg_options)
+        elif p['state'] in ['removed', 'absent']:
             remove(module, packages, cache, p['purge'], dpkg_options)
 
     except apt.cache.LockFailedException:

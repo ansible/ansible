@@ -126,7 +126,9 @@ except ImportError:
     print "failed=True msg='boto required for this module'"
     sys.exit(1)
 
+
 class ElbManager:
+
     """Handles EC2 instance ELB registration and de-registration"""
 
     def __init__(self, module, instance_id=None, ec2_elbs=None,
@@ -152,7 +154,8 @@ class ElbManager:
                 return
 
             if wait:
-                self._await_elb_instance_state(lb, 'OutOfService', initial_state, timeout)
+                self._await_elb_instance_state(
+                    lb, 'OutOfService', initial_state, timeout)
             else:
                 # We cannot assume no change was made if we don't wait
                 # to find out
@@ -173,7 +176,8 @@ class ElbManager:
                     # FIXME: this should be configurable, but since it didn't
                     #        wait at all before this is at least better
                     if tries > 10:
-                        self.module.fail_json(msg='failed to find the initial state of the load balancer')
+                        self.module.fail_json(
+                            msg='failed to find the initial state of the load balancer')
 
             if enable_availability_zone:
                 self._enable_availailability_zone(lb)
@@ -181,7 +185,8 @@ class ElbManager:
             lb.register_instances([self.instance_id])
 
             if wait:
-                self._await_elb_instance_state(lb, 'InService', initial_state, timeout)
+                self._await_elb_instance_state(
+                    lb, 'InService', initial_state, timeout)
             else:
                 # We cannot assume no change was made if we don't wait
                 # to find out
@@ -193,7 +198,7 @@ class ElbManager:
         found = False
         for lb in self.lbs:
             if lb.name == lbtest:
-                found=True
+                found = True
                 break
         return found
 
@@ -232,7 +237,8 @@ class ElbManager:
                     self.changed = True
                 break
             elif self._is_instance_state_pending(instance_state):
-                # If it's pending, we'll skip further checks andd continue waiting
+                # If it's pending, we'll skip further checks andd continue
+                # waiting
                 pass
             elif (awaited_state == 'InService'
                   and instance_state.reason_code == "Instance"
@@ -281,9 +287,10 @@ class ElbManager:
                   are attached to self.instance_id"""
 
         try:
-            endpoint="elasticloadbalancing.%s.amazonaws.com" % self.region
+            endpoint = "elasticloadbalancing.%s.amazonaws.com" % self.region
             connect_region = RegionInfo(name=self.region, endpoint=endpoint)
-            elb = boto.ec2.elb.ELBConnection(self.aws_access_key, self.aws_secret_key, region=connect_region)
+            elb = boto.ec2.elb.ELBConnection(
+                self.aws_access_key, self.aws_secret_key, region=connect_region)
         except boto.exception.NoAuthHandlerFound, e:
             self.module.fail_json(msg=str(e))
 
@@ -304,7 +311,8 @@ class ElbManager:
         try:
             endpoint = "ec2.%s.amazonaws.com" % self.region
             connect_region = RegionInfo(name=self.region, endpoint=endpoint)
-            ec2_conn = boto.ec2.EC2Connection(self.aws_access_key, self.aws_secret_key, region=connect_region)
+            ec2_conn = boto.ec2.EC2Connection(
+                self.aws_access_key, self.aws_secret_key, region=connect_region)
         except boto.exception.NoAuthHandlerFound, e:
             self.module.fail_json(msg=str(e))
         return ec2_conn.get_only_instances(instance_ids=[self.instance_id])[0]
@@ -313,14 +321,16 @@ class ElbManager:
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            state={'required': True,
-                    'choices': ['present', 'absent']},
-            instance_id={'required': True},
-            ec2_elbs={'default': None, 'required': False, 'type':'list'},
-            enable_availability_zone={'default': True, 'required': False, 'choices': BOOLEANS, 'type': 'bool'},
-            wait={'required': False, 'choices': BOOLEANS, 'default': True, 'type': 'bool'},
-            wait_timeout={'requred': False, 'default': 0, 'type': 'int'}
-        )
+        state={'required': True,
+               'choices': ['present', 'absent']},
+        instance_id={'required': True},
+        ec2_elbs={'default': None, 'required': False, 'type': 'list'},
+        enable_availability_zone={
+            'default': True, 'required': False, 'choices': BOOLEANS, 'type': 'bool'},
+        wait={'required': False, 'choices': BOOLEANS,
+              'default': True, 'type': 'bool'},
+        wait_timeout={'requred': False, 'default': 0, 'type': 'int'}
+    )
     )
 
     module = AnsibleModule(
@@ -347,7 +357,7 @@ def main():
     if ec2_elbs is not None:
         for elb in ec2_elbs:
             if not elb_man.exists(elb):
-                msg="ELB %s does not exist" % elb
+                msg = "ELB %s does not exist" % elb
                 module.fail_json(msg=msg)
 
     if module.params['state'] == 'present':
@@ -356,7 +366,8 @@ def main():
         elb_man.deregister(wait, timeout)
 
     ansible_facts = {'ec2_elbs': [lb.name for lb in elb_man.lbs]}
-    ec2_facts_result = dict(changed=elb_man.changed, ansible_facts=ansible_facts)
+    ec2_facts_result = dict(
+        changed=elb_man.changed, ansible_facts=ansible_facts)
 
     module.exit_json(**ec2_facts_result)
 

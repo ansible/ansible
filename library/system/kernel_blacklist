@@ -57,6 +57,7 @@ EXAMPLES = '''
 
 
 class Blacklist(object):
+
     def __init__(self, module, filename):
         if not os.path.exists(filename):
             open(filename, 'a').close()

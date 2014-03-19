@@ -69,6 +69,7 @@ EXAMPLES = '''
 - local_action: github_hooks action=cleanall user={{ gituser }} oauthkey={{ oauthkey }} repo={{ repo }}
 '''
 
+
 def list(module, hookurl, oauthkey, repo, user):
     url = "%s/hooks" % repo
     auth = base64.encodestring('%s:%s' % (user, oauthkey)).replace('\n', '')
@@ -81,6 +82,7 @@ def list(module, hookurl, oauthkey, repo, user):
     else:
         return False, response.read()
 
+
 def clean504(module, hookurl, oauthkey, repo, user):
     current_hooks = list(hookurl, oauthkey, repo, user)[1]
     decoded = json.loads(current_hooks)
@@ -90,8 +92,9 @@ def clean504(module, hookurl, oauthkey, repo, user):
             # print "Last response was an ERROR for hook:"
             # print hook['id']
             delete(module, hookurl, oauthkey, repo, user, hook['id'])
-            
+
     return 0, current_hooks
+
 
 def cleanall(module, hookurl, oauthkey, repo, user):
     current_hooks = list(hookurl, oauthkey, repo, user)[1]
@@ -102,8 +105,9 @@ def cleanall(module, hookurl, oauthkey, repo, user):
             # print "Last response was an ERROR for hook:"
             # print hook['id']
             delete(module, hookurl, oauthkey, repo, user, hook['id'])
-            
+
     return 0, current_hooks
+
 
 def create(module, hookurl, oauthkey, repo, user):
     url = "%s/hooks" % repo
@@ -113,8 +117,8 @@ def create(module, hookurl, oauthkey, repo, user):
         "config": {
             "url": "%s" % hookurl,
             "content_type": "json"
-            }
         }
+    }
     data = json.dumps(values)
     auth = base64.encodestring('%s:%s' % (user, oauthkey)).replace('\n', '')
     headers = {
@@ -126,24 +130,27 @@ def create(module, hookurl, oauthkey, repo, user):
     else:
         return 0, response.read()
 
+
 def delete(module, hookurl, oauthkey, repo, user, hookid):
     url = "%s/hooks/%s" % (repo, hookid)
     auth = base64.encodestring('%s:%s' % (user, oauthkey)).replace('\n', '')
     headers = {
         'Authorization': 'Basic %s' % auth,
     }
-    response, info = fetch_url(module, url, data=data, headers=headers, method='DELETE')
+    response, info = fetch_url(
+        module, url, data=data, headers=headers, method='DELETE')
     return response.read()
+
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-        action=dict(required=True),
-        hookurl=dict(required=False),
-        oauthkey=dict(required=True),
-        repo=dict(required=True),
-        user=dict(required=True),
-        validate_certs=dict(default='yes', type='bool'),
+            action=dict(required=True),
+            hookurl=dict(required=False),
+            oauthkey=dict(required=True),
+            repo=dict(required=True),
+            user=dict(required=True),
+            validate_certs=dict(default='yes', type='bool'),
         )
     )
 

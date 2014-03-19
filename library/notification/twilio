@@ -75,7 +75,8 @@ EXAMPLES = '''
 # text module support methods
 #
 try:
-    import urllib, urllib2
+    import urllib
+    import urllib2
 except ImportError:
     module.fail_json(msg="urllib and urllib2 are required")
 
@@ -87,11 +88,11 @@ def post_text(module, account_sid, auth_token, msg, from_number, to_number):
         % (account_sid,)
     AGENT = "Ansible/1.5"
 
-    data = {'From':from_number, 'To':to_number, 'Body':msg}
+    data = {'From': from_number, 'To': to_number, 'Body': msg}
     encoded_data = urllib.urlencode(data)
     request = urllib2.Request(URI)
-    base64string = base64.encodestring('%s:%s' % \
-        (account_sid, auth_token)).replace('\n', '')
+    base64string = base64.encodestring('%s:%s' %
+                                       (account_sid, auth_token)).replace('\n', '')
     request.add_header('User-Agent', AGENT)
     request.add_header('Content-type', 'application/x-www-form-urlencoded')
     request.add_header('Accept', 'application/ansible')
@@ -115,7 +116,7 @@ def main():
         ),
         supports_check_mode=True
     )
-  
+
     account_sid = module.params['account_sid']
     auth_token = module.params['auth_token']
     msg = module.params['msg']
@@ -123,12 +124,12 @@ def main():
     to_number = module.params['to_number']
 
     try:
-        response = post_text(module, account_sid, auth_token, msg, 
-            from_number, to_number)
+        response = post_text(module, account_sid, auth_token, msg,
+                             from_number, to_number)
     except Exception, e:
         module.fail_json(msg="unable to send text message to %s" % to_number)
 
-    module.exit_json(msg=msg, changed=False) 
+    module.exit_json(msg=msg, changed=False)
 
 # import module snippets
 from ansible.module_utils.basic import *

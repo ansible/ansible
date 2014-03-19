@@ -48,6 +48,7 @@ except ImportError:
 
 
 class LibcloudInventory(object):
+
     def __init__(self):
         ''' Main execution path '''
 
@@ -81,7 +82,6 @@ class LibcloudInventory(object):
 
         print data_to_print
 
-
     def is_cache_valid(self):
         ''' Determines if the cache files have expired, or if it is still valid '''
 
@@ -94,30 +94,32 @@ class LibcloudInventory(object):
 
         return False
 
-
     def read_settings(self):
         ''' Reads the settings from the libcloud.ini file '''
 
         config = ConfigParser.SafeConfigParser()
-        libcloud_default_ini_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'libcloud.ini')
-        libcloud_ini_path = os.environ.get('LIBCLOUD_INI_PATH', libcloud_default_ini_path)
+        libcloud_default_ini_path = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), 'libcloud.ini')
+        libcloud_ini_path = os.environ.get(
+            'LIBCLOUD_INI_PATH', libcloud_default_ini_path)
         config.read(libcloud_ini_path)
 
         if not config.has_section('driver'):
-            raise ValueError('libcloud.ini file must contain a [driver] section')
+            raise ValueError(
+                'libcloud.ini file must contain a [driver] section')
 
         if config.has_option('driver', 'provider'):
-            self.provider = config.get('driver','provider')
+            self.provider = config.get('driver', 'provider')
         else:
             raise ValueError('libcloud.ini does not have a provider defined')
 
         if config.has_option('driver', 'key'):
-            self.key = config.get('driver','key')
+            self.key = config.get('driver', 'key')
         else:
             raise ValueError('libcloud.ini does not have a key defined')
 
         if config.has_option('driver', 'secret'):
-            self.secret = config.get('driver','secret')
+            self.secret = config.get('driver', 'secret')
         else:
             raise ValueError('libcloud.ini does not have a secret defined')
 
@@ -132,7 +134,7 @@ class LibcloudInventory(object):
         if config.has_option('driver', 'path'):
             self.path = config.get('driver', 'path')
         if config.has_option('driver', 'api_version'):
-            self.api_version = config.get('driver', 'api_version')    
+            self.api_version = config.get('driver', 'api_version')
 
         Driver = get_driver(getattr(Provider, self.provider))
 
@@ -144,22 +146,21 @@ class LibcloudInventory(object):
         self.cache_path_cache = cache_path + "/ansible-libcloud.cache"
         self.cache_path_index = cache_path + "/ansible-libcloud.index"
         self.cache_max_age = config.getint('cache', 'cache_max_age')
-        
 
     def parse_cli_args(self):
         '''
         Command line argument processing
         '''
 
-        parser = argparse.ArgumentParser(description='Produce an Ansible Inventory file based on libcloud supported providers')
+        parser = argparse.ArgumentParser(
+            description='Produce an Ansible Inventory file based on libcloud supported providers')
         parser.add_argument('--list', action='store_true', default=True,
-                           help='List instances (default: True)')
+                            help='List instances (default: True)')
         parser.add_argument('--host', action='store',
-                           help='Get all the variables about a specific instance')
+                            help='Get all the variables about a specific instance')
         parser.add_argument('--refresh-cache', action='store_true', default=False,
-                           help='Force refresh of cache by making API requests to libcloud supported providers (default: False - use cache files)')
+                            help='Force refresh of cache by making API requests to libcloud supported providers (default: False - use cache files)')
         self.args = parser.parse_args()
-
 
     def do_api_calls_update_cache(self):
         ''' 
@@ -171,7 +172,6 @@ class LibcloudInventory(object):
         self.write_to_cache(self.inventory, self.cache_path_cache)
         self.write_to_cache(self.index, self.cache_path_index)
 
-
     def get_nodes(self):
         '''
         Gets the list of all nodes
@@ -180,14 +180,12 @@ class LibcloudInventory(object):
         for node in self.conn.list_nodes():
             self.add_node(node)
 
-
     def get_node(self, node_id):
         '''
         Gets details about a specific node
         '''
 
         return [node for node in self.conn.list_nodes() if node.id == node_id][0]
-
 
     def add_node(self, node):
         '''
@@ -223,11 +221,13 @@ class LibcloudInventory(object):
         '''
         # Inventory: Group by key pair
         if node.extra['keyname']:
-            self.push(self.inventory, self.to_safe('key_' + node.extra['keyname']), dest)
-            
+            self.push(self.inventory, self.to_safe(
+                'key_' + node.extra['keyname']), dest)
+
         # Inventory: Group by security group, quick thing to handle single sg
         if node.extra['securitygroup']:
-            self.push(self.inventory, self.to_safe('sg_' + node.extra['securitygroup'][0]), dest)
+            self.push(self.inventory, self.to_safe(
+                'sg_' + node.extra['securitygroup'][0]), dest)
 
     def get_host_info(self):
         '''
@@ -273,16 +273,16 @@ class LibcloudInventory(object):
                     group_ids.append(group.id)
                     group_names.append(group.name)
                 instance_vars["ec2_security_group_ids"] = ','.join(group_ids)
-                instance_vars["ec2_security_group_names"] = ','.join(group_names)
+                instance_vars["ec2_security_group_names"] = ','.join(
+                    group_names)
             else:
                 pass
                 # TODO Product codes if someone finds them useful
-                #print key
-                #print type(value)
-                #print value
+                # print key
+                # print type(value)
+                # print value
 
         return self.json_format_dict(instance_vars, True)
-
 
     def push(self, my_dict, key, element):
         '''
@@ -291,10 +291,9 @@ class LibcloudInventory(object):
         '''
 
         if key in my_dict:
-            my_dict[key].append(element);
+            my_dict[key].append(element)
         else:
             my_dict[key] = [element]
-
 
     def get_inventory_from_cache(self):
         '''
@@ -306,7 +305,6 @@ class LibcloudInventory(object):
         json_inventory = cache.read()
         return json_inventory
 
-
     def load_index_from_cache(self):
         '''
         Reads the index from the cache file sets self.index
@@ -315,7 +313,6 @@ class LibcloudInventory(object):
         cache = open(self.cache_path_index, 'r')
         json_index = cache.read()
         self.index = json.loads(json_index)
-
 
     def write_to_cache(self, data, filename):
         '''
@@ -327,7 +324,6 @@ class LibcloudInventory(object):
         cache.write(json_data)
         cache.close()
 
-
     def to_safe(self, word):
         '''
         Converts 'bad' characters in a string to underscores so they can be
@@ -335,7 +331,6 @@ class LibcloudInventory(object):
         '''
 
         return re.sub("[^A-Za-z0-9\-]", "_", word)
-
 
     def json_format_dict(self, data, pretty=False):
         '''
@@ -348,8 +343,9 @@ class LibcloudInventory(object):
         else:
             return json.dumps(data)
 
+
 def main():
     LibcloudInventory()
 
 if __name__ == '__main__':
-	main()
+    main()

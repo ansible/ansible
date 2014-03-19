@@ -23,7 +23,7 @@ import ansible.utils.template as template
 from ansible import errors
 from ansible.runner.return_data import ReturnData
 
-## fixes https://github.com/ansible/ansible/issues/3518
+# fixes https://github.com/ansible/ansible/issues/3518
 # http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
 import sys
 reload(sys)
@@ -46,24 +46,27 @@ class ActionModule(object):
         if complex_args:
             options.update(complex_args)
         options.update(utils.parse_kv(module_args))
-        source  = os.path.expanduser(options.get('src', None))
-        dest    = os.path.expanduser(options.get('dest', None))
-        copy    = utils.boolean(options.get('copy', 'yes'))
+        source = os.path.expanduser(options.get('src', None))
+        dest = os.path.expanduser(options.get('dest', None))
+        copy = utils.boolean(options.get('copy', 'yes'))
 
         if source is None or dest is None:
-            result = dict(failed=True, msg="src (or content) and dest are required")
+            result = dict(
+                failed=True, msg="src (or content) and dest are required")
             return ReturnData(conn=conn, result=result)
 
         source = template.template(self.runner.basedir, source, inject)
         if copy:
             if '_original_file' in inject:
-                source = utils.path_dwim_relative(inject['_original_file'], 'files', source, self.runner.basedir)
+                source = utils.path_dwim_relative(
+                    inject['_original_file'], 'files', source, self.runner.basedir)
             else:
                 source = utils.path_dwim(self.runner.basedir, source)
 
         remote_md5 = self.runner._remote_md5(conn, tmp, dest)
         if remote_md5 != '3':
-            result = dict(failed=True, msg="dest '%s' must be an existing dir" % dest)
+            result = dict(
+                failed=True, msg="dest '%s' must be an existing dir" % dest)
             return ReturnData(conn=conn, result=result)
 
         if copy:
@@ -76,8 +79,11 @@ class ActionModule(object):
         # fix file permissions when the copy is done as a different user
         if copy:
             if self.runner.sudo and self.runner.sudo_user != 'root':
-                self.runner._low_level_exec_command(conn, "chmod a+r %s" % tmp_src, tmp)
-            module_args = "%s src=%s original_basename=%s" % (module_args, pipes.quote(tmp_src), pipes.quote(os.path.basename(source)))
+                self.runner._low_level_exec_command(
+                    conn, "chmod a+r %s" % tmp_src, tmp)
+            module_args = "%s src=%s original_basename=%s" % (
+                module_args, pipes.quote(tmp_src), pipes.quote(os.path.basename(source)))
         else:
-            module_args = "%s original_basename=%s" % (module_args, pipes.quote(os.path.basename(source)))
+            module_args = "%s original_basename=%s" % (
+                module_args, pipes.quote(os.path.basename(source)))
         return self.runner._execute_module(conn, tmp, 'unarchive', module_args, inject=inject, complex_args=complex_args)

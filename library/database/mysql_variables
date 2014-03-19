@@ -186,7 +186,7 @@ def load_mycnf():
 
 def main():
     module = AnsibleModule(
-            argument_spec = dict(
+        argument_spec=dict(
             login_user=dict(default=None),
             login_password=dict(default=None),
             login_host=dict(default="localhost"),
@@ -220,15 +220,19 @@ def main():
             login_user = mycnf_creds["user"]
             login_password = mycnf_creds["passwd"]
     elif login_password is None or login_user is None:
-        module.fail_json(msg="when supplying login arguments, both login_user and login_password must be provided")
+        module.fail_json(
+            msg="when supplying login arguments, both login_user and login_password must be provided")
     try:
         if module.params["login_unix_socket"]:
-            db_connection = MySQLdb.connect(host=module.params["login_host"], unix_socket=module.params["login_unix_socket"], user=login_user, passwd=login_password, db="mysql")
+            db_connection = MySQLdb.connect(host=module.params["login_host"], unix_socket=module.params[
+                                            "login_unix_socket"], user=login_user, passwd=login_password, db="mysql")
         else:
-            db_connection = MySQLdb.connect(host=module.params["login_host"], user=login_user, passwd=login_password, db="mysql")
+            db_connection = MySQLdb.connect(
+                host=module.params["login_host"], user=login_user, passwd=login_password, db="mysql")
         cursor = db_connection.cursor()
     except Exception, e:
-        module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or ~/.my.cnf has the credentials")
+        module.fail_json(
+            msg="unable to connect to database, check login_user and login_password are correct or ~/.my.cnf has the credentials")
     if mysqlvar is None:
         module.fail_json(msg="Cannot run without variable to operate with")
     mysqlvar_val = getvariable(cursor, mysqlvar)
@@ -241,10 +245,12 @@ def main():
         value_wanted = typedvalue(value)
         value_actual = typedvalue(mysqlvar_val[0][1])
         if value_wanted == value_actual:
-            module.exit_json(msg="Variable already set to requested value", changed=False)
+            module.exit_json(
+                msg="Variable already set to requested value", changed=False)
         result = setvariable(cursor, mysqlvar, value_wanted)
         if result is True:
-            module.exit_json(msg="Variable change succeeded prev_value=%s" % value_actual, changed=True)
+            module.exit_json(
+                msg="Variable change succeeded prev_value=%s" % value_actual, changed=True)
         else:
             module.fail_json(msg=result, changed=False)
 

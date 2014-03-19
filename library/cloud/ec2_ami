@@ -129,8 +129,9 @@ author: Evan Duffield <eduffield@iacquire.com>
 '''
 
 # Thank you to iAcquire for sponsoring development of this module.
-# 
-# See http://alestic.com/2011/06/ec2-ami-security for more information about ensuring the security of your AMI.
+#
+# See http://alestic.com/2011/06/ec2-ami-security for more information
+# about ensuring the security of your AMI.
 
 EXAMPLES = '''
 # Basic AMI Creation
@@ -185,6 +186,7 @@ except ImportError:
     print "failed=True msg='boto required for this module'"
     sys.exit(1)
 
+
 def create_image(module, ec2):
     """
     Creates new AMI
@@ -208,7 +210,7 @@ def create_image(module, ec2):
 
         image_id = ec2.create_image(**params)
     except boto.exception.BotoServerError, e:
-        module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+        module.fail_json(msg="%s: %s" % (e.error_code, e.error_message))
 
     # Wait until the image is recognized. EC2 API has eventual consistency,
     # such that a successful CreateImage API call doesn't guarantee the success
@@ -221,7 +223,8 @@ def create_image(module, ec2):
             if 'InvalidAMIID.NotFound' in e.error_code and wait:
                 time.sleep(1)
             else:
-                module.fail_json(msg="Error while trying to find the new image. Using wait=yes and/or a longer wait_timeout may help.")
+                module.fail_json(
+                    msg="Error while trying to find the new image. Using wait=yes and/or a longer wait_timeout may help.")
     else:
         module.fail_json(msg="timed out waiting for image to be recognized")
 
@@ -232,9 +235,10 @@ def create_image(module, ec2):
         time.sleep(3)
     if wait and wait_timeout <= time.time():
         # waiting took too long
-        module.fail_json(msg = "timed out waiting for image to be created")
+        module.fail_json(msg="timed out waiting for image to be created")
 
-    module.exit_json(msg="AMI creation operation complete", image_id=image_id, state=img.state, changed=True)
+    module.exit_json(msg="AMI creation operation complete",
+                     image_id=image_id, state=img.state, changed=True)
 
 
 def deregister_image(module, ec2):
@@ -249,7 +253,8 @@ def deregister_image(module, ec2):
 
     img = ec2.get_image(image_id)
     if img == None:
-        module.fail_json(msg = "Image %s does not exist" % image_id, changed=False)
+        module.fail_json(msg="Image %s does not exist" %
+                         image_id, changed=False)
 
     try:
         params = {'image_id': image_id,
@@ -257,7 +262,7 @@ def deregister_image(module, ec2):
 
         res = ec2.deregister_image(**params)
     except boto.exception.BotoServerError, e:
-        module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+        module.fail_json(msg="%s: %s" % (e.error_code, e.error_message))
 
     # wait here until the image is gone
     img = ec2.get_image(image_id)
@@ -267,24 +272,27 @@ def deregister_image(module, ec2):
         time.sleep(3)
     if wait and wait_timeout <= time.time():
         # waiting took too long
-        module.fail_json(msg = "timed out waiting for image to be reregistered/deleted")
+        module.fail_json(
+            msg="timed out waiting for image to be reregistered/deleted")
 
-    module.exit_json(msg="AMI deregister/delete operation complete", changed=True)
+    module.exit_json(
+        msg="AMI deregister/delete operation complete", changed=True)
     sys.exit(0)
+
 
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            instance_id = dict(),
-            image_id = dict(),
-            delete_snapshot = dict(),
-            name = dict(),
-            wait = dict(type="bool", default=False),
-            wait_timeout = dict(default=900),
-            description = dict(default=""),
-            no_reboot = dict(default=False, type="bool"),
-            state = dict(default='present'),
-        )
+        instance_id=dict(),
+        image_id=dict(),
+        delete_snapshot=dict(),
+        name=dict(),
+        wait=dict(type="bool", default=False),
+        wait_timeout=dict(default=900),
+        description=dict(default=""),
+        no_reboot=dict(default=False, type="bool"),
+        state=dict(default='present'),
+    )
     )
     module = AnsibleModule(argument_spec=argument_spec)
 
@@ -292,14 +300,16 @@ def main():
 
     if module.params.get('state') == 'absent':
         if not module.params.get('image_id'):
-            module.fail_json(msg='image_id needs to be an ami image to registered/delete')
+            module.fail_json(
+                msg='image_id needs to be an ami image to registered/delete')
 
         deregister_image(module, ec2)
 
     elif module.params.get('state') == 'present':
         # Changed is always set to true when provisioning new AMI
         if not module.params.get('instance_id'):
-            module.fail_json(msg='instance_id parameter is required for new image')
+            module.fail_json(
+                msg='instance_id parameter is required for new image')
         if not module.params.get('name'):
             module.fail_json(msg='name parameter is required for new image')
         create_image(module, ec2)
@@ -310,4 +320,3 @@ from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
 
 main()
-

@@ -34,6 +34,7 @@ try:
 except ImportError:
     HAS_AES = False
 
+
 class TestVaultLib(TestCase):
 
     def test_methods_exist(self):
@@ -42,13 +43,14 @@ class TestVaultLib(TestCase):
                  'encrypt',
                  'decrypt',
                  '_add_header',
-                 '_split_header',]
-        for slot in slots:         
+                 '_split_header', ]
+        for slot in slots:
             assert hasattr(v, slot), "VaultLib is missing the %s method" % slot
 
     def test_is_encrypted(self):
         v = VaultLib(None)
-        assert not v.is_encrypted("foobar"), "encryption check on plaintext failed"
+        assert not v.is_encrypted(
+            "foobar"), "encryption check on plaintext failed"
         data = "$ANSIBLE_VAULT;9.9;TEST\n%s" % hexlify("ansible")
         assert v.is_encrypted(data), "encryption check on headered text failed"
 
@@ -62,15 +64,16 @@ class TestVaultLib(TestCase):
         header = lines[0]
         assert header.endswith(';TEST'), "header does end with cipher name"
         header_parts = header.split(';')
-        assert len(header_parts) == 3, "header has the wrong number of parts"        
-        assert header_parts[0] == '$ANSIBLE_VAULT', "header does not start with $ANSIBLE_VAULT"
+        assert len(header_parts) == 3, "header has the wrong number of parts"
+        assert header_parts[
+            0] == '$ANSIBLE_VAULT', "header does not start with $ANSIBLE_VAULT"
         assert header_parts[1] == v.version, "header version is incorrect"
         assert header_parts[2] == 'TEST', "header does end with cipher name"
 
     def test_split_header(self):
         v = VaultLib('ansible')
-        data = "$ANSIBLE_VAULT;9.9;TEST\nansible" 
-        rdata = v._split_header(data)        
+        data = "$ANSIBLE_VAULT;9.9;TEST\nansible"
+        rdata = v._split_header(data)
         lines = rdata.split('\n')
         assert lines[0] == "ansible"
         assert v.cipher_name == 'TEST', "cipher name was not set"
@@ -84,7 +87,7 @@ class TestVaultLib(TestCase):
         enc_data = v.encrypt("foobar")
         dec_data = v.decrypt(enc_data)
         assert enc_data != "foobar", "encryption failed"
-        assert dec_data == "foobar", "decryption failed"           
+        assert dec_data == "foobar", "decryption failed"
 
     def test_encrypt_decrypt_aes256(self):
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
@@ -94,7 +97,7 @@ class TestVaultLib(TestCase):
         enc_data = v.encrypt("foobar")
         dec_data = v.decrypt(enc_data)
         assert enc_data != "foobar", "encryption failed"
-        assert dec_data == "foobar", "decryption failed"           
+        assert dec_data == "foobar", "decryption failed"
 
     def test_encrypt_encrypted(self):
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
@@ -107,7 +110,7 @@ class TestVaultLib(TestCase):
             enc_data = v.encrypt(data)
         except errors.AnsibleError, e:
             error_hit = True
-        assert error_hit, "No error was thrown when trying to encrypt data with a header"    
+        assert error_hit, "No error was thrown when trying to encrypt data with a header"
 
     def test_decrypt_decrypted(self):
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
@@ -119,7 +122,7 @@ class TestVaultLib(TestCase):
             dec_data = v.decrypt(data)
         except errors.AnsibleError, e:
             error_hit = True
-        assert error_hit, "No error was thrown when trying to decrypt data without a header"    
+        assert error_hit, "No error was thrown when trying to decrypt data without a header"
 
     def test_cipher_not_set(self):
         # not setting the cipher should default to AES256
@@ -132,5 +135,5 @@ class TestVaultLib(TestCase):
             enc_data = v.encrypt(data)
         except errors.AnsibleError, e:
             error_hit = True
-        assert not error_hit, "An error was thrown when trying to encrypt data without the cipher set"    
-        assert v.cipher_name == "AES256", "cipher name is not set to AES256: %s" % v.cipher_name               
+        assert not error_hit, "An error was thrown when trying to encrypt data without the cipher set"
+        assert v.cipher_name == "AES256", "cipher name is not set to AES256: %s" % v.cipher_name

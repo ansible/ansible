@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#    
+#
 # Copyright (C) 2013, Arista Networks <netdevops@aristanetworks.com>
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -86,39 +86,41 @@ names (ie Ethernet, not Et1)
 import syslog
 import json
 
+
 class AristaLag(object):
+
     """ This is the base class managing port-channel (lag) interfaces 
         resources in Arista EOS network devices.  This class provides an 
         implementation for creating, updating and deleting port-channel 
         interfaces.
-        
+
         Note: The netdev extension for EOS must be installed in order of this
         module to work properly.
-        
+
         The following commands are implemented in this module:
             * netdev lag list
             * netdev lag show
             * netdev lag edit
             * netdev lag delete
-        
+
     """
-    
+
     attributes = ['links', 'minimum_links', 'lacp']
-    
+
     def __init__(self, module):
-        self.module         = module
-        self.interface_id   = module.params['interface_id']
-        self.state          = module.params['state']
-        self.links          = module.params['links']
-        self.minimum_links  = module.params['minimum_links']
-        self.lacp           = module.params['lacp']
-        self.logging        = module.params['logging']
-                    
+        self.module = module
+        self.interface_id = module.params['interface_id']
+        self.state = module.params['state']
+        self.links = module.params['links']
+        self.minimum_links = module.params['minimum_links']
+        self.lacp = module.params['lacp']
+        self.logging = module.params['logging']
+
     @property
     def changed(self):
         """ The changed property provides a boolean response if the currently
             loaded resouces has changed from the resource running in EOS.
-            
+
             Returns True if the object is not in sync 
             Returns False if the object is in sync.
         """
@@ -135,41 +137,40 @@ class AristaLag(object):
     def run_command(self, cmd):
         """ Calls the Ansible module run_command method. This method will 
             directly return the results of the run_command method
-        """      
+        """
         self.log("Command: %s" % cmd)
         return self.module.run_command(cmd.split())
 
-        
     def get(self):
         """ This method will return a dictionary with the attributes of the
             lag interface resource specified in interface_id.  The lag
             interface resource has the following stucture:
-            
+
               {
                 "interface_id": <interface_id>,
                 "links": <array of member interfaces>,
                 "minimum_links": <minimum_links>,
                 "lacp": [active* | passive | off]
               }
-            
+
             If the lag interface specified by interface_id does not
             exist in the system, this method will return None.
         """
         cmd = "netdev lag show %s" % self.interface_id
         (rc, out, err) = self.run_command(cmd)
         obj = json.loads(out)
-        if obj.get('status') != 200: 
+        if obj.get('status') != 200:
             return None
         return obj['result']
-        
+
     def create(self):
         """ Creates a lag interface resource in the current running 
             configuration.  If the lag interface already exists, the 
             function will return successfully.  
-            
+
             This function implements the following commands:
                 * netdev lag create {interface_id} [attributes]
-            
+
             Returns the lag interface resource if the create method was 
             successful
             Returns an error message if there as a problem creating the lag
@@ -180,10 +181,10 @@ class AristaLag(object):
             if getattr(self, attrib):
                 attribs.append("--%s" % attrib)
                 attribs.append(getattr(self, attrib))
-        
+
             cmd = "netdev lag create %s " % self.interface_id
             cmd += " ".join(attribs)
-            
+
             (rc, out, err) = self.run_command(cmd)
             resp = json.loads(out)
             if resp.get('status') != 201:
@@ -193,26 +194,26 @@ class AristaLag(object):
             else:
                 out = self.get()
         return (rc, out, err)
-        
-    def update(self):    
+
+    def update(self):
         """ Updates an existing lag resource in the current running 
             configuration.   If the lag resource does not exist, this method
             will return an error.
-            
+
             This method implements the following commands:
                 * netdev lag edit {interface_id} [attributes]
-            
+
             Returns an updated lag interafce resoure if the update method 
             was successful
         """
-        attribs = list()        
+        attribs = list()
         for attrib in self.updates():
             attribs.append("--%s" % attrib)
             attribs.append(getattr(self, attrib))
-        
+
             cmd = "netdev lag edit %s " % self.interface_id
             cmd += " ".join(attribs)
-        
+
             (rc, out, err) = self.run_command(cmd)
             resp = json.loads(out)
             if resp.get('status') != 200:
@@ -222,29 +223,29 @@ class AristaLag(object):
             else:
                 out = resp['result']
             return (rc, out, err)
- 
+
         return (2, None, "No attributes have been modified")
-        
+
     def delete(self):
         """ Deletes an existing lag interface resource from the current 
             running configuration.  A nonexistent lag interface will 
             return successful for this operation.
-            
+
             This method implements the following commands:
                 * netdev lag delete {interface_id}
-            
+
             Returns nothing if the delete was successful
             Returns error message if there was a problem deleting the resource 
         """
         cmd = "netdev lag delete %s" % self.interface_id
         (rc, out, err) = self.run_command(cmd)
         resp = json.loads(out)
-        if resp.get('status') != 200: 
+        if resp.get('status') != 200:
             rc = resp['status']
             err = resp['message']
             out = None
         return (rc, out, err)
-        
+
     def updates(self):
         """ This method will check the current lag interface resource in the
             running configuration and return a list of attributes that are
@@ -268,42 +269,44 @@ class AristaLag(object):
         (rc, out, err) = self.run_command("netdev lag list")
         collection = json.loads(out)
         return self.interface_id in collection.get('result')
-        
+
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             interface_id=dict(default=None, type='str'),
-            state=dict(default='present', choices=['present', 'absent'], type='str'),
+            state=dict(
+                default='present', choices=['present', 'absent'], type='str'),
             links=dict(default=None, type='str'),
-            lacp=dict(default=None, choices=['active', 'passive', 'off'], type='str'),
+            lacp=dict(
+                default=None, choices=['active', 'passive', 'off'], type='str'),
             minimum_links=dict(default=None, type='int'),
             logging=dict(default=False, type='bool')
         ),
-        supports_check_mode = True
+        supports_check_mode=True
     )
-    
+
     obj = AristaLag(module)
-    
+
     rc = None
     result = dict()
 
     if obj.state == 'absent':
         if obj.exists():
-            if module.check_mode: 
+            if module.check_mode:
                 module.exit_json(changed=True)
             (rc, out, err) = obj.delete()
-            if rc !=0: 
-                module.fail_json(msg=err, rc=rc)                
+            if rc != 0:
+                module.fail_json(msg=err, rc=rc)
 
     elif obj.state == 'present':
         if not obj.exists():
-            if module.check_mode: 
+            if module.check_mode:
                 module.exit_json(changed=True)
             (rc, out, err) = obj.create()
             result['results'] = out
         else:
-            if module.check_mode: 
+            if module.check_mode:
                 module.exit_json(changed=obj.changed)
             (rc, out, err) = obj.update()
             result['results'] = out

@@ -95,15 +95,16 @@ def write_fstab(lines, dest):
     fs_w.flush()
     fs_w.close()
 
+
 def set_mount(**kwargs):
     """ set/change a mount point location in fstab """
 
     # kwargs: name, src, fstype, opts, dump, passno, state, fstab=/etc/fstab
     args = dict(
-        opts   = 'defaults',
-        dump   = '0',
-        passno = '0',
-        fstab  = '/etc/fstab'
+        opts='defaults',
+        dump='0',
+        passno='0',
+        fstab='/etc/fstab'
     )
     args.update(kwargs)
 
@@ -126,7 +127,8 @@ def set_mount(**kwargs):
             continue
 
         ld = {}
-        ld['src'], ld['name'], ld['fstype'], ld['opts'], ld['dump'], ld['passno']  = line.split()
+        ld['src'], ld['name'], ld['fstype'], ld[
+            'opts'], ld['dump'], ld['passno'] = line.split()
 
         if ld['name'] != args['name']:
             to_write.append(line)
@@ -134,7 +136,7 @@ def set_mount(**kwargs):
 
         # it exists - now see if what we have is different
         exists = True
-        for t in ('src', 'fstype','opts', 'dump', 'passno'):
+        for t in ('src', 'fstype', 'opts', 'dump', 'passno'):
             if ld[t] != args[t]:
                 changed = True
                 ld[t] = args[t]
@@ -159,10 +161,10 @@ def unset_mount(**kwargs):
 
     # kwargs: name, src, fstype, opts, dump, passno, state, fstab=/etc/fstab
     args = dict(
-        opts   = 'default',
-        dump   = '0',
-        passno = '0',
-        fstab  = '/etc/fstab'
+        opts='default',
+        dump='0',
+        passno='0',
+        fstab='/etc/fstab'
     )
     args.update(kwargs)
 
@@ -182,7 +184,8 @@ def unset_mount(**kwargs):
             continue
 
         ld = {}
-        ld['src'], ld['name'], ld['fstype'], ld['opts'], ld['dump'], ld['passno']  = line.split()
+        ld['src'], ld['name'], ld['fstype'], ld[
+            'opts'], ld['dump'], ld['passno'] = line.split()
 
         if ld['name'] != args['name']:
             to_write.append(line)
@@ -203,15 +206,16 @@ def mount(module, **kwargs):
 
     name = kwargs['name']
     if os.path.ismount(name):
-        cmd = [ mount_bin , '-o', 'remount', name ]
+        cmd = [mount_bin, '-o', 'remount', name]
     else:
-        cmd = [ mount_bin, name ]
+        cmd = [mount_bin, name]
 
     rc, out, err = module.run_command(cmd)
     if rc == 0:
         return 0, ''
     else:
-        return rc, out+err
+        return rc, out + err
+
 
 def umount(module, **kwargs):
     """ unmount a path """
@@ -224,23 +228,24 @@ def umount(module, **kwargs):
     if rc == 0:
         return 0, ''
     else:
-        return rc, out+err
+        return rc, out + err
+
 
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            state  = dict(required=True, choices=['present', 'absent', 'mounted', 'unmounted']),
-            name   = dict(required=True),
-            opts   = dict(default=None),
-            passno = dict(default=None),
-            dump   = dict(default=None),
-            src    = dict(required=True),
-            fstype = dict(required=True),
-            fstab  = dict(default=None)
+        argument_spec=dict(
+            state=dict(
+                required=True, choices=['present', 'absent', 'mounted', 'unmounted']),
+            name=dict(required=True),
+            opts=dict(default=None),
+            passno=dict(default=None),
+            dump=dict(default=None),
+            src=dict(required=True),
+            fstype=dict(required=True),
+            fstab=dict(default=None)
         )
     )
-
 
     changed = False
     rc = 0
@@ -263,17 +268,19 @@ def main():
     # absent == remove from fstab and unmounted
     # unmounted == do not change fstab state, but unmount
     # present == add to fstab, do not change mount state
-    # mounted == add to fstab if not there and make sure it is mounted, if it has changed in fstab then remount it
+    # mounted == add to fstab if not there and make sure it is mounted, if it
+    # has changed in fstab then remount it
 
     state = module.params['state']
-    name  = module.params['name']
+    name = module.params['name']
     if state == 'absent':
         name, changed = unset_mount(**args)
         if changed:
             if os.path.ismount(name):
-                res,msg  = umount(module, **args)
+                res, msg = umount(module, **args)
                 if res:
-                    module.fail_json(msg="Error unmounting %s: %s" % (name, msg))
+                    module.fail_json(
+                        msg="Error unmounting %s: %s" % (name, msg))
 
             if os.path.exists(name):
                 try:
@@ -285,7 +292,7 @@ def main():
 
     if state == 'unmounted':
         if os.path.ismount(name):
-            res,msg  = umount(module, **args)
+            res, msg = umount(module, **args)
             if res:
                 module.fail_json(msg="Error unmounting %s: %s" % (name, msg))
             changed = True
@@ -299,19 +306,19 @@ def main():
                 try:
                     os.makedirs(name)
                 except (OSError, IOError), e:
-                    module.fail_json(msg="Error making dir %s: %s" % (name, str(e)))
+                    module.fail_json(
+                        msg="Error making dir %s: %s" % (name, str(e)))
 
             res = 0
             if os.path.ismount(name):
                 if changed:
-                    res,msg = mount(module, **args)
+                    res, msg = mount(module, **args)
             else:
                 changed = True
-                res,msg = mount(module, **args)
+                res, msg = mount(module, **args)
 
             if res:
                 module.fail_json(msg="Error mounting %s: %s" % (name, msg))
-
 
         module.exit_json(changed=changed, **args)
 

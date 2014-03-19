@@ -63,21 +63,26 @@ import os
 import shutil
 import time
 
+
 def is_deployed(deploy_path, deployment):
-    return os.path.exists(os.path.join(deploy_path, "%s.deployed"%(deployment)))
+    return os.path.exists(os.path.join(deploy_path, "%s.deployed" % (deployment)))
+
 
 def is_undeployed(deploy_path, deployment):
-    return os.path.exists(os.path.join(deploy_path, "%s.undeployed"%(deployment)))
+    return os.path.exists(os.path.join(deploy_path, "%s.undeployed" % (deployment)))
+
 
 def is_failed(deploy_path, deployment):
-    return os.path.exists(os.path.join(deploy_path, "%s.failed"%(deployment)))
+    return os.path.exists(os.path.join(deploy_path, "%s.failed" % (deployment)))
+
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             src=dict(),
             deployment=dict(required=True),
-            deploy_path=dict(default='/var/lib/jbossas/standalone/deployments'),
+            deploy_path=dict(
+                default='/var/lib/jbossas/standalone/deployments'),
             state=dict(choices=['absent', 'present'], default='present'),
         ),
     )
@@ -99,37 +104,37 @@ def main():
 
     if state == 'present' and not deployed:
         if not os.path.exists(src):
-            module.fail_json(msg='Source file %s does not exist.'%(src))
+            module.fail_json(msg='Source file %s does not exist.' % (src))
         if is_failed(deploy_path, deployment):
-            ### Clean up old failed deployment
-            os.remove(os.path.join(deploy_path, "%s.failed"%(deployment)))
+            # Clean up old failed deployment
+            os.remove(os.path.join(deploy_path, "%s.failed" % (deployment)))
 
         shutil.copyfile(src, os.path.join(deploy_path, deployment))
         while not deployed:
             deployed = is_deployed(deploy_path, deployment)
             if is_failed(deploy_path, deployment):
-                module.fail_json(msg='Deploying %s failed.'%(deployment))
+                module.fail_json(msg='Deploying %s failed.' % (deployment))
             time.sleep(1)
         changed = True
 
     if state == 'present' and deployed:
         if module.md5(src) != module.md5(os.path.join(deploy_path, deployment)):
-            os.remove(os.path.join(deploy_path, "%s.deployed"%(deployment)))
+            os.remove(os.path.join(deploy_path, "%s.deployed" % (deployment)))
             shutil.copyfile(src, os.path.join(deploy_path, deployment))
             deployed = False
             while not deployed:
                 deployed = is_deployed(deploy_path, deployment)
                 if is_failed(deploy_path, deployment):
-                    module.fail_json(msg='Deploying %s failed.'%(deployment))
+                    module.fail_json(msg='Deploying %s failed.' % (deployment))
                 time.sleep(1)
             changed = True
 
     if state == 'absent' and deployed:
-        os.remove(os.path.join(deploy_path, "%s.deployed"%(deployment)))
+        os.remove(os.path.join(deploy_path, "%s.deployed" % (deployment)))
         while deployed:
             deployed = not is_undeployed(deploy_path, deployment)
             if is_failed(deploy_path, deployment):
-                module.fail_json(msg='Undeploying %s failed.'%(deployment))
+                module.fail_json(msg='Undeploying %s failed.' % (deployment))
             time.sleep(1)
         changed = True
 

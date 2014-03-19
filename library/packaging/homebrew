@@ -83,6 +83,7 @@ def _create_regex_group(s):
 
 
 class Homebrew(object):
+
     '''A class to manage Homebrew packages.'''
 
     # class regexes ------------------------------------------------ {{{
@@ -106,9 +107,9 @@ class Homebrew(object):
         -                   # dashes
     '''
 
-    INVALID_PATH_REGEX        = _create_regex_group(VALID_PATH_CHARS)
-    INVALID_BREW_PATH_REGEX   = _create_regex_group(VALID_BREW_PATH_CHARS)
-    INVALID_PACKAGE_REGEX     = _create_regex_group(VALID_PACKAGE_CHARS)
+    INVALID_PATH_REGEX = _create_regex_group(VALID_PATH_CHARS)
+    INVALID_BREW_PATH_REGEX = _create_regex_group(VALID_BREW_PATH_CHARS)
+    INVALID_PACKAGE_REGEX = _create_regex_group(VALID_PACKAGE_CHARS)
     # /class regexes ----------------------------------------------- }}}
 
     # class validations -------------------------------------------- {{{
@@ -488,7 +489,8 @@ class Homebrew(object):
         if self._current_package_is_installed():
             self.changed_count += 1
             self.changed = True
-            self.message = 'Package installed: {0}'.format(self.current_package)
+            self.message = 'Package installed: {0}'.format(
+                self.current_package)
             return True
         else:
             self.failed = True
@@ -606,7 +608,8 @@ class Homebrew(object):
         if not self._current_package_is_installed():
             self.changed_count += 1
             self.changed = True
-            self.message = 'Package uninstalled: {0}'.format(self.current_package)
+            self.message = 'Package uninstalled: {0}'.format(
+                self.current_package)
             return True
         else:
             self.failed = True
@@ -630,7 +633,8 @@ class Homebrew(object):
 
         if not self._current_package_is_installed():
             self.failed = True
-            self.message = 'Package not installed: {0}.'.format(self.current_package)
+            self.message = 'Package not installed: {0}.'.format(
+                self.current_package)
             raise HomebrewException(self.message)
 
         if self.module.check_mode:
@@ -656,7 +660,8 @@ class Homebrew(object):
             return True
         else:
             self.failed = True
-            self.message = 'Package could not be linked: {0}.'.format(self.current_package)
+            self.message = 'Package could not be linked: {0}.'.format(
+                self.current_package)
             raise HomebrewException(self.message)
 
     def _link_packages(self):
@@ -676,7 +681,8 @@ class Homebrew(object):
 
         if not self._current_package_is_installed():
             self.failed = True
-            self.message = 'Package not installed: {0}.'.format(self.current_package)
+            self.message = 'Package not installed: {0}.'.format(
+                self.current_package)
             raise HomebrewException(self.message)
 
         if self.module.check_mode:
@@ -702,7 +708,8 @@ class Homebrew(object):
             return True
         else:
             self.failed = True
-            self.message = 'Package could not be unlinked: {0}.'.format(self.current_package)
+            self.message = 'Package could not be unlinked: {0}.'.format(
+                self.current_package)
             raise HomebrewException(self.message)
 
     def _unlink_packages(self):

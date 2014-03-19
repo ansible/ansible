@@ -22,10 +22,10 @@
 # func and that wish to play with ansible, this permit to move gradually to ansible
 # without having to redo completely the setup of the network.
 
-HAVE_FUNC=False
+HAVE_FUNC = False
 try:
     import func.overlord.client as fc
-    HAVE_FUNC=True
+    HAVE_FUNC = True
 except ImportError:
     pass
 
@@ -37,6 +37,7 @@ import shutil
 
 
 class Connection(object):
+
     ''' Func-based connections '''
 
     def __init__(self, runner, host, port, *args, **kwargs):
@@ -58,10 +59,12 @@ class Connection(object):
         ''' run a command on the remote minion '''
 
         if su or su_user:
-            raise errors.AnsibleError("Internal Error: this module does not support running commands via su")
+            raise errors.AnsibleError(
+                "Internal Error: this module does not support running commands via su")
 
         if in_data:
-            raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
+            raise errors.AnsibleError(
+                "Internal Error: this module does not support optimized module pipelining")
 
         vvv("EXEC %s" % (cmd), host=self.host)
         p = self.client.command.run(cmd)[self.host]

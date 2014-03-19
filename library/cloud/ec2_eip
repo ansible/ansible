@@ -141,12 +141,14 @@ def associate_ip_and_instance(ec2, address, instance_id, module):
 
     try:
         if address.domain == "vpc":
-            res = ec2.associate_address(instance_id, allocation_id=address.allocation_id)
+            res = ec2.associate_address(
+                instance_id, allocation_id=address.allocation_id)
         else:
-            res = ec2.associate_address(instance_id, public_ip=address.public_ip)
+            res = ec2.associate_address(
+                instance_id, public_ip=address.public_ip)
     except boto.exception.EC2ResponseError, e:
         module.fail_json(msg=str(e))
-    
+
     if res:
         module.exit_json(changed=True, public_ip=address.public_ip)
     else:
@@ -163,7 +165,8 @@ def disassociate_ip_and_instance(ec2, address, instance_id, module):
 
     try:
         if address.domain == "vpc":
-            res = ec2.disassociate_address(association_id=address.association_id)
+            res = ec2.disassociate_address(
+                association_id=address.association_id)
         else:
             res = ec2.disassociate_address(public_ip=address.public_ip)
     except boto.exception.EC2ResponseError, e:
@@ -177,12 +180,12 @@ def disassociate_ip_and_instance(ec2, address, instance_id, module):
 
 def find_address(ec2, public_ip, module):
     """ Find an existing Elastic IP address """
-    
+
     try:
         addresses = ec2.get_all_addresses([public_ip])
     except boto.exception.EC2ResponseError, e:
         module.fail_json(msg=str(e.message))
-        
+
     return addresses[0]
 
 
@@ -202,33 +205,34 @@ def allocate_address(ec2, domain, module, reuse_existing_ip_allowed):
         module.exit_json(change=True)
 
     if reuse_existing_ip_allowed:
-      if domain:
-        domain_filter = { 'domain' : domain }
-      else:
-        domain_filter = { 'domain' : 'standard' }
-      all_addresses = ec2.get_all_addresses(filters=domain_filter)
+        if domain:
+            domain_filter = {'domain': domain}
+        else:
+            domain_filter = {'domain': 'standard'}
+        all_addresses = ec2.get_all_addresses(filters=domain_filter)
 
-      unassociated_addresses = filter(lambda a: a.instance_id is None, all_addresses)
-      if unassociated_addresses:
-        address = unassociated_addresses[0];
-      else:
-        address = ec2.allocate_address(domain=domain)
+        unassociated_addresses = filter(
+            lambda a: a.instance_id is None, all_addresses)
+        if unassociated_addresses:
+            address = unassociated_addresses[0]
+        else:
+            address = ec2.allocate_address(domain=domain)
     else:
-      address = ec2.allocate_address(domain=domain)
+        address = ec2.allocate_address(domain=domain)
 
     return address
 
 
 def release_address(ec2, public_ip, module):
     """ Release a previously allocated elastic IP address """
-    
+
     address = find_address(ec2, public_ip, module)
-    
+
     # If we're in check mode, nothing else to do
     if module.check_mode:
         module.exit_json(change=True)
-    
-    res = address.release()    
+
+    res = address.release()
     if res:
         module.exit_json(changed=True)
     else:
@@ -237,30 +241,31 @@ def release_address(ec2, public_ip, module):
 
 def find_instance(ec2, instance_id, module):
     """ Attempt to find the EC2 instance and return it """
-    
+
     try:
         reservations = ec2.get_all_reservations(instance_ids=[instance_id])
     except boto.exception.EC2ResponseError, e:
         module.fail_json(msg=str(e))
-    
+
     if len(reservations) == 1:
         instances = reservations[0].instances
         if len(instances) == 1:
             return instances[0]
-    
+
     module.fail_json(msg="could not find instance" + instance_id)
-    
+
 
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            instance_id = dict(required=False),
-            public_ip = dict(required=False, aliases= ['ip']),
-            state = dict(required=False, default='present',
-                         choices=['present', 'absent']),
-            in_vpc = dict(required=False, type='bool', default=False),
-            reuse_existing_ip_allowed = dict(required=False, type='bool', default=False),
-        )
+        instance_id=dict(required=False),
+        public_ip=dict(required=False, aliases=['ip']),
+        state=dict(required=False, default='present',
+                   choices=['present', 'absent']),
+        in_vpc=dict(required=False, type='bool', default=False),
+        reuse_existing_ip_allowed=dict(
+            required=False, type='bool', default=False),
+    )
     )
 
     module = AnsibleModule(
@@ -277,20 +282,22 @@ def main():
     public_ip = module.params.get('public_ip')
     state = module.params.get('state')
     in_vpc = module.params.get('in_vpc')
-    domain  = "vpc" if in_vpc else None
-    reuse_existing_ip_allowed = module.params.get('reuse_existing_ip_allowed');
+    domain = "vpc" if in_vpc else None
+    reuse_existing_ip_allowed = module.params.get('reuse_existing_ip_allowed')
 
     if state == 'present':
         if public_ip is None:
             if instance_id is None:
-                address = allocate_address(ec2, domain, module, reuse_existing_ip_allowed)
+                address = allocate_address(
+                    ec2, domain, module, reuse_existing_ip_allowed)
                 module.exit_json(changed=True, public_ip=address.public_ip)
             else:
                 # Determine if the instance is inside a VPC or not
                 instance = find_instance(ec2, instance_id, module)
                 if instance.vpc_id != None:
                     domain = "vpc"
-                address = allocate_address(ec2, domain, module, reuse_existing_ip_allowed)
+                address = allocate_address(
+                    ec2, domain, module, reuse_existing_ip_allowed)
         else:
             address = find_address(ec2, public_ip, module)
         associate_ip_and_instance(ec2, address, instance_id, module)
@@ -300,7 +307,6 @@ def main():
         else:
             address = find_address(ec2, public_ip, module)
             disassociate_ip_and_instance(ec2, address, instance_id, module)
-
 
 
 # import module snippets

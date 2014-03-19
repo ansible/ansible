@@ -86,6 +86,7 @@ debconf: name='tzdata'
 
 import pipes
 
+
 def get_selections(module, pkg):
     cmd = [module.get_bin_path('debconf-show', True), pkg]
     rc, out, err = module.run_command(' '.join(cmd))
@@ -97,14 +98,14 @@ def get_selections(module, pkg):
 
     for line in out.splitlines():
         (key, value) = line.split(':')
-        selections[ key.strip('*').strip() ] = value.strip()
+        selections[key.strip('*').strip()] = value.strip()
 
     return selections
 
 
 def set_selection(module, pkg, question, vtype, value, unseen):
 
-    data = ' '.join([ question, vtype, value ])
+    data = ' '.join([question, vtype, value])
 
     setsel = module.get_bin_path('debconf-set-selections', True)
     cmd = ["echo '%s %s' |" % (pipes.quote(pkg), pipes.quote(data)), setsel]
@@ -113,26 +114,30 @@ def set_selection(module, pkg, question, vtype, value, unseen):
 
     return module.run_command(' '.join(cmd), use_unsafe_shell=True)
 
+
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-           name = dict(required=True, aliases=['pkg'], type='str'),
-           question = dict(required=False, aliases=['setting', 'selection'], type='str'),
-           vtype = dict(required=False, type='str', choices=['string', 'boolean', 'select',  'multiselect', 'note', 'text', 'password', 'title']),
-           value= dict(required=False, type='str'),
-           unseen = dict(required=False, type='bool'),
+        argument_spec=dict(
+            name=dict(required=True, aliases=['pkg'], type='str'),
+            question=dict(
+                required=False, aliases=['setting', 'selection'], type='str'),
+            vtype=dict(required=False, type='str', choices=[
+                       'string', 'boolean', 'select',  'multiselect', 'note', 'text', 'password', 'title']),
+            value=dict(required=False, type='str'),
+            unseen=dict(required=False, type='bool'),
         ),
-        required_together = ( ['question','vtype', 'value'],),
+        required_together=(['question', 'vtype', 'value'],),
         supports_check_mode=True,
     )
 
-    #TODO: enable passing array of optionas and/or debconf file from get-selections dump
-    pkg      = module.params["name"]
+    # TODO: enable passing array of optionas and/or debconf file from
+    # get-selections dump
+    pkg = module.params["name"]
     question = module.params["question"]
-    vtype     = module.params["vtype"]
-    value    = module.params["value"]
-    unseen   = module.params["unseen"]
+    vtype = module.params["vtype"]
+    value = module.params["value"]
+    unseen = module.params["unseen"]
 
     prev = get_selections(module, pkg)
     diff = ''
@@ -142,18 +147,20 @@ def main():
 
     if question is not None:
         if vtype is None or value is None:
-            module.fail_json(msg="when supliying a question you must supply a valide vtype and value")
+            module.fail_json(
+                msg="when supliying a question you must supply a valide vtype and value")
 
         if not question in prev or prev[question] != value:
             changed = True
 
     if changed:
         if not module.check_mode:
-            rc, msg, e = set_selection(module, pkg, question, vtype, value, unseen)
+            rc, msg, e = set_selection(
+                module, pkg, question, vtype, value, unseen)
             if rc:
                 module.fail_json(msg=e)
 
-        curr = { question: value }
+        curr = {question: value}
         if question in prev:
             prev = {question: prev[question]}
         else:

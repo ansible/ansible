@@ -91,14 +91,17 @@ load_chube_config()
 # Imports for ansible
 import ConfigParser
 
+
 class LinodeInventory(object):
+
     def __init__(self):
         """Main execution path."""
         # Inventory grouped by display group
         self.inventory = {}
         # Index of label to Linode ID
         self.index = {}
-        # Local cache of Datacenter objects populated by populate_datacenter_cache()
+        # Local cache of Datacenter objects populated by
+        # populate_datacenter_cache()
         self._datacenter_cache = None
 
         # Read settings and parse CLI arguments
@@ -136,7 +139,8 @@ class LinodeInventory(object):
     def read_settings(self):
         """Reads the settings from the .ini file."""
         config = ConfigParser.SafeConfigParser()
-        config.read(os.path.dirname(os.path.realpath(__file__)) + '/linode.ini')
+        config.read(
+            os.path.dirname(os.path.realpath(__file__)) + '/linode.ini')
 
         # Cache related
         cache_path = config.get('linode', 'cache_path')
@@ -146,13 +150,14 @@ class LinodeInventory(object):
 
     def parse_cli_args(self):
         """Command line argument processing"""
-        parser = argparse.ArgumentParser(description='Produce an Ansible Inventory file based on Linode')
+        parser = argparse.ArgumentParser(
+            description='Produce an Ansible Inventory file based on Linode')
         parser.add_argument('--list', action='store_true', default=True,
-                           help='List nodes (default: True)')
+                            help='List nodes (default: True)')
         parser.add_argument('--host', action='store',
-                           help='Get all the variables about a specific node')
+                            help='Get all the variables about a specific node')
         parser.add_argument('--refresh-cache', action='store_true', default=False,
-                           help='Force refresh of cache by making API requests to Linode (default: False - use cache files)')
+                            help='Force refresh of cache by making API requests to Linode (default: False - use cache files)')
         self.args = parser.parse_args()
 
     def do_api_calls_update_cache(self):
@@ -260,15 +265,17 @@ class LinodeInventory(object):
             node_vars[direct_attr] = getattr(node, direct_attr)
 
         node_vars["datacenter_city"] = self.get_datacenter_city(node)
-        node_vars["public_ip"] = [addr.address for addr in node.ipaddresses if addr.is_public][0]
-        node_vars["private_ip"] = [addr.address for addr in node.ipaddresses if not addr.is_public][0]
+        node_vars["public_ip"] = [
+            addr.address for addr in node.ipaddresses if addr.is_public][0]
+        node_vars["private_ip"] = [
+            addr.address for addr in node.ipaddresses if not addr.is_public][0]
 
         return self.json_format_dict(node_vars, True)
 
     def push(self, my_dict, key, element):
         """Pushed an element onto an array that may not have been defined in the dict."""
         if key in my_dict:
-            my_dict[key].append(element);
+            my_dict[key].append(element)
         else:
             my_dict[key] = [element]
 

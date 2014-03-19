@@ -26,7 +26,9 @@ from ansible import utils
 from ansible import errors
 import sys
 
+
 class InventoryScript(object):
+
     ''' Host inventory parser for ansible using external inventory scripts. '''
 
     def __init__(self, filename=C.DEFAULT_HOST_LIST):
@@ -35,11 +37,13 @@ class InventoryScript(object):
         # path information but happen to be in the current working
         # directory when '.' is not in PATH.
         self.filename = os.path.abspath(filename)
-        cmd = [ self.filename, "--list" ]
+        cmd = [self.filename, "--list"]
         try:
-            sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            sp = subprocess.Popen(
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except OSError, e:
-            raise errors.AnsibleError("problem running %s (%s)" % (' '.join(cmd), e))
+            raise errors.AnsibleError(
+                "problem running %s (%s)" % (' '.join(cmd), e))
         (stdout, stderr) = sp.communicate()
         self.data = stdout
         # see comment about _meta below
@@ -49,18 +53,18 @@ class InventoryScript(object):
     def _parse(self, err):
 
         all_hosts = {}
-        self.raw  = utils.parse_json(self.data)
-        all       = Group('all')
-        groups    = dict(all=all)
-        group     = None
-
+        self.raw = utils.parse_json(self.data)
+        all = Group('all')
+        groups = dict(all=all)
+        group = None
 
         if 'failed' in self.raw:
             sys.stderr.write(err + "\n")
-            raise errors.AnsibleError("failed to parse executable inventory script results: %s" % self.raw)
+            raise errors.AnsibleError(
+                "failed to parse executable inventory script results: %s" % self.raw)
 
         for (group_name, data) in self.raw.items():
- 
+
             # in Ansible 1.3 and later, a "_meta" subelement may contain
             # a variable "hostvars" which contains a hash for each host
             # if this "hostvars" exists at all then do not call --host for each
@@ -80,7 +84,7 @@ class InventoryScript(object):
 
             if not isinstance(data, dict):
                 data = {'hosts': data}
-            elif not any(k in data for k in ('hosts','vars')):
+            elif not any(k in data for k in ('hosts', 'vars')):
                 data = {'hosts': [group_name], 'vars': data}
 
             if 'hosts' in data:
@@ -116,11 +120,12 @@ class InventoryScript(object):
             got = self.host_vars_from_top.get(host.name, {})
             return got
 
-
         cmd = [self.filename, "--host", host.name]
         try:
-            sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            sp = subprocess.Popen(
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except OSError, e:
-            raise errors.AnsibleError("problem running %s (%s)" % (' '.join(cmd), e))
+            raise errors.AnsibleError(
+                "problem running %s (%s)" % (' '.join(cmd), e))
         (out, err) = sp.communicate()
         return utils.parse_json(out)

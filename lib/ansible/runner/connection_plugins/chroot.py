@@ -25,7 +25,9 @@ from ansible import errors
 from ansible import utils
 from ansible.callbacks import vvv
 
+
 class Connection(object):
+
     ''' Local chroot based connections '''
 
     def __init__(self, runner, host, port, *args, **kwargs):
@@ -33,7 +35,8 @@ class Connection(object):
         self.has_pipelining = False
 
         if os.geteuid() != 0:
-            raise errors.AnsibleError("chroot connection requires running as root")
+            raise errors.AnsibleError(
+                "chroot connection requires running as root")
 
         # we're running as root on the local system so do some
         # trivial checks for ensuring 'host' is actually a chroot'able dir
@@ -42,7 +45,8 @@ class Connection(object):
 
         chrootsh = os.path.join(self.chroot, 'bin/sh')
         if not utils.is_executable(chrootsh):
-            raise errors.AnsibleError("%s does not look like a chrootable dir (/bin/sh missing)" % self.chroot)
+            raise errors.AnsibleError(
+                "%s does not look like a chrootable dir (/bin/sh missing)" % self.chroot)
 
         self.chroot_cmd = distutils.spawn.find_executable('chroot')
         if not self.chroot_cmd:
@@ -64,10 +68,12 @@ class Connection(object):
         ''' run a command on the chroot '''
 
         if su or su_user:
-            raise errors.AnsibleError("Internal Error: this module does not support running commands via su")
+            raise errors.AnsibleError(
+                "Internal Error: this module does not support running commands via su")
 
         if in_data:
-            raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
+            raise errors.AnsibleError(
+                "Internal Error: this module does not support optimized module pipelining")
 
         # We enter chroot as root so sudo stuff can be ignored
 
@@ -95,15 +101,18 @@ class Connection(object):
 
         vvv("PUT %s TO %s" % (in_path, out_path), host=self.chroot)
         if not os.path.exists(in_path):
-            raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
+            raise errors.AnsibleFileNotFound(
+                "file or module does not exist: %s" % in_path)
         try:
             shutil.copyfile(in_path, out_path)
         except shutil.Error:
             traceback.print_exc()
-            raise errors.AnsibleError("failed to copy: %s and %s are the same" % (in_path, out_path))
+            raise errors.AnsibleError(
+                "failed to copy: %s and %s are the same" % (in_path, out_path))
         except IOError:
             traceback.print_exc()
-            raise errors.AnsibleError("failed to transfer file to %s" % out_path)
+            raise errors.AnsibleError(
+                "failed to transfer file to %s" % out_path)
 
     def fetch_file(self, in_path, out_path):
         ''' fetch a file from chroot to local '''
@@ -115,15 +124,18 @@ class Connection(object):
 
         vvv("FETCH %s TO %s" % (in_path, out_path), host=self.chroot)
         if not os.path.exists(in_path):
-            raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
+            raise errors.AnsibleFileNotFound(
+                "file or module does not exist: %s" % in_path)
         try:
             shutil.copyfile(in_path, out_path)
         except shutil.Error:
             traceback.print_exc()
-            raise errors.AnsibleError("failed to copy: %s and %s are the same" % (in_path, out_path))
+            raise errors.AnsibleError(
+                "failed to copy: %s and %s are the same" % (in_path, out_path))
         except IOError:
             traceback.print_exc()
-            raise errors.AnsibleError("failed to transfer file to %s" % out_path)
+            raise errors.AnsibleError(
+                "failed to transfer file to %s" % out_path)
 
     def close(self):
         ''' terminate the connection; nothing to do here '''

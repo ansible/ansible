@@ -102,10 +102,11 @@ EXAMPLES = '''
 
 '''
 
+
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             host=dict(default='127.0.0.1'),
             timeout=dict(default=300),
             connect_timeout=dict(default=5),
@@ -113,7 +114,8 @@ def main():
             port=dict(default=None),
             path=dict(default=None),
             search_regex=dict(default=None),
-            state=dict(default='started', choices=['started', 'stopped', 'present', 'absent']),
+            state=dict(
+                default='started', choices=['started', 'stopped', 'present', 'absent']),
         ),
     )
 
@@ -130,19 +132,21 @@ def main():
     state = params['state']
     path = params['path']
     search_regex = params['search_regex']
-    
+
     if port and path:
-        module.fail_json(msg="port and path parameter can not both be passed to wait_for")
+        module.fail_json(
+            msg="port and path parameter can not both be passed to wait_for")
     if path and state == 'stopped':
-        module.fail_json(msg="state=stopped should only be used for checking a port in the wait_for module")
-        
+        module.fail_json(
+            msg="state=stopped should only be used for checking a port in the wait_for module")
+
     start = datetime.datetime.now()
 
     if delay:
         time.sleep(delay)
 
-    if state in [ 'stopped', 'absent' ]:
-        ### first wait for the stop condition
+    if state in ['stopped', 'absent']:
+        # first wait for the stop condition
         end = start + datetime.timedelta(seconds=timeout)
 
         while datetime.datetime.now() < end:
@@ -158,7 +162,7 @@ def main():
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.settimeout(connect_timeout)
                 try:
-                    s.connect( (host, port) )
+                    s.connect((host, port))
                     s.shutdown(socket.SHUT_RDWR)
                     s.close()
                     time.sleep(1)
@@ -167,12 +171,14 @@ def main():
         else:
             elapsed = datetime.datetime.now() - start
             if port:
-                module.fail_json(msg="Timeout when waiting for %s:%s to stop." % (host, port), elapsed=elapsed.seconds)
+                module.fail_json(msg="Timeout when waiting for %s:%s to stop." % (
+                    host, port), elapsed=elapsed.seconds)
             elif path:
-                module.fail_json(msg="Timeout when waiting for %s to be absent." % (path), elapsed=elapsed.seconds)
+                module.fail_json(msg="Timeout when waiting for %s to be absent." % (
+                    path), elapsed=elapsed.seconds)
 
     elif state in ['started', 'present']:
-        ### wait for start condition
+        # wait for start condition
         end = start + datetime.timedelta(seconds=timeout)
         while datetime.datetime.now() < end:
             if path:
@@ -195,7 +201,7 @@ def main():
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.settimeout(connect_timeout)
                 try:
-                    s.connect( (host, port) )
+                    s.connect((host, port))
                     s.shutdown(socket.SHUT_RDWR)
                     s.close()
                     break
@@ -205,16 +211,19 @@ def main():
         else:
             elapsed = datetime.datetime.now() - start
             if port:
-                module.fail_json(msg="Timeout when waiting for %s:%s" % (host, port), elapsed=elapsed.seconds)
+                module.fail_json(
+                    msg="Timeout when waiting for %s:%s" % (host, port), elapsed=elapsed.seconds)
             elif path:
                 if search_regex:
-                    module.fail_json(msg="Timeout when waiting for search string %s in %s" % (search_regex, path), elapsed=elapsed.seconds)
+                    module.fail_json(msg="Timeout when waiting for search string %s in %s" % (
+                        search_regex, path), elapsed=elapsed.seconds)
                 else:
-                    module.fail_json(msg="Timeout when waiting for file %s" % (path), elapsed=elapsed.seconds)
-
+                    module.fail_json(
+                        msg="Timeout when waiting for file %s" % (path), elapsed=elapsed.seconds)
 
     elapsed = datetime.datetime.now() - start
-    module.exit_json(state=state, port=port, search_regex=search_regex, path=path, elapsed=elapsed.seconds)
+    module.exit_json(
+        state=state, port=port, search_regex=search_regex, path=path, elapsed=elapsed.seconds)
 
 # import module snippets
 from ansible.module_utils.basic import *

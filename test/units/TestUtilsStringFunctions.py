@@ -21,13 +21,16 @@ from ansible import __version__
 
 import sys
 reload(sys)
-sys.setdefaultencoding("utf8") 
+sys.setdefaultencoding("utf8")
+
 
 class TestUtilsStringFunctions(unittest.TestCase):
+
     def test_isprintable(self):
         self.assertFalse(string_functions.isprintable(chr(7)))
         self.assertTrue(string_functions.isprintable('hello'))
 
     def test_count_newlines_from_end(self):
-        self.assertEqual(string_functions.count_newlines_from_end('foo\n\n\n\n'), 4)
+        self.assertEqual(
+            string_functions.count_newlines_from_end('foo\n\n\n\n'), 4)
         self.assertEqual(string_functions.count_newlines_from_end('\nfoo'), 0)

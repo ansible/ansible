@@ -121,11 +121,11 @@ try:
     from libcloud.compute.types import Provider
     from libcloud.compute.providers import get_driver
     from libcloud.common.google import GoogleBaseError, QuotaExceededError, \
-            ResourceExistsError, ResourceNotFoundError
+        ResourceExistsError, ResourceNotFoundError
     _ = Provider.GCE
 except ImportError:
-    print("failed=True " + \
-            "msg='libcloud with GCE support required for this module.'")
+    print("failed=True " +
+          "msg='libcloud with GCE support required for this module.'")
     sys.exit(1)
 
 
@@ -150,17 +150,17 @@ def format_allowed(allowed):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            allowed = dict(),
-            ipv4_range = dict(),
-            fwname = dict(),
-            name = dict(),
-            src_range = dict(),
-            src_tags = dict(type='list'),
-            state = dict(default='present'),
-            service_account_email = dict(),
-            pem_file = dict(),
-            project_id = dict(),
+        argument_spec=dict(
+            allowed=dict(),
+            ipv4_range=dict(),
+            fwname=dict(),
+            name=dict(),
+            src_range=dict(),
+            src_tags=dict(type='list'),
+            state=dict(default='present'),
+            service_account_email=dict(),
+            pem_file=dict(),
+            project_id=dict(),
         )
     )
 
@@ -192,7 +192,7 @@ def main():
         if name and not network:
             if not ipv4_range:
                 module.fail_json(msg="Missing required 'ipv4_range' parameter",
-                    changed=False)
+                                 changed=False)
 
             try:
                 network = gce.ex_create_network(name, ipv4_range)
@@ -207,7 +207,7 @@ def main():
             if not allowed and not src_range and not src_tags:
                 if changed and network:
                     module.fail_json(
-                        msg="Network created, but missing required " + \
+                        msg="Network created, but missing required " +
                         "firewall rule parameter(s)", changed=True)
                 module.fail_json(
                     msg="Missing required firewall rule parameter(s)",
@@ -217,7 +217,7 @@ def main():
 
             try:
                 gce.ex_create_firewall(fwname, allowed_list, network=name,
-                        source_ranges=src_range, source_tags=src_tags)
+                                       source_ranges=src_range, source_tags=src_tags)
                 changed = True
             except ResourceExistsError:
                 pass

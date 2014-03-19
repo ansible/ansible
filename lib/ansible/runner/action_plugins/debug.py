@@ -21,7 +21,9 @@ from ansible import utils
 from ansible.utils import template
 from ansible.runner.return_data import ReturnData
 
+
 class ActionModule(object):
+
     ''' Print statements during execution '''
 
     TRANSFERS_FILES = False
@@ -35,8 +37,9 @@ class ActionModule(object):
         if complex_args:
             args.update(complex_args)
 
-        # attempt to prevent confusing messages when the variable didn't interpolate
-        module_args = module_args.replace("{{ ","{{").replace(" }}","}}")
+        # attempt to prevent confusing messages when the variable didn't
+        # interpolate
+        module_args = module_args.replace("{{ ", "{{").replace(" }}", "}}")
 
         kv = utils.parse_kv(module_args)
         args.update(kv)
@@ -51,7 +54,8 @@ class ActionModule(object):
             else:
                 result = dict(msg=args['msg'])
         elif 'var' in args:
-            results = template.template(self.basedir, "{{ %s }}" % args['var'], inject)
+            results = template.template(
+                self.basedir, "{{ %s }}" % args['var'], inject)
             result[args['var']] = results
 
         # force flag to make debug output module always verbose

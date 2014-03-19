@@ -72,8 +72,8 @@ Author: Eric Johnson <erjohnso@google.com>
 Version: 0.0.1
 '''
 
-USER_AGENT_PRODUCT="Ansible-gce_inventory_plugin"
-USER_AGENT_VERSION="v1"
+USER_AGENT_PRODUCT = "Ansible-gce_inventory_plugin"
+USER_AGENT_VERSION = "v1"
 
 import sys
 import os
@@ -95,6 +95,7 @@ except:
 
 
 class GceInventory(object):
+
     def __init__(self):
         # Read settings and parse CLI arguments
         self.parse_cli_args()
@@ -103,13 +104,12 @@ class GceInventory(object):
         # Just display data for specific host
         if self.args.host:
             print self.json_format_dict(self.node_to_dict(
-                    self.get_instance(self.args.host)))
+                self.get_instance(self.args.host)))
             sys.exit(0)
 
         # Otherwise, assume user wants all instances grouped
         print self.json_format_dict(self.group_instances())
         sys.exit(0)
-
 
     def get_gce_driver(self):
         '''Determine GCE authorization settings and return libcloud driver.'''
@@ -149,28 +149,26 @@ class GceInventory(object):
                 pass
         if not secrets_found:
             args = (
-                config.get('gce','gce_service_account_email_address'),
-                config.get('gce','gce_service_account_pem_file_path')
+                config.get('gce', 'gce_service_account_email_address'),
+                config.get('gce', 'gce_service_account_pem_file_path')
             )
-            kwargs = {'project': config.get('gce','gce_project_id')}
+            kwargs = {'project': config.get('gce', 'gce_project_id')}
 
         gce = get_driver(Provider.GCE)(*args, **kwargs)
         gce.connection.user_agent_append("%s/%s" % (
-                USER_AGENT_PRODUCT, USER_AGENT_VERSION))
+            USER_AGENT_PRODUCT, USER_AGENT_VERSION))
         return gce
-
 
     def parse_cli_args(self):
         ''' Command line argument processing '''
 
         parser = argparse.ArgumentParser(
-                description='Produce an Ansible Inventory file based on GCE')
+            description='Produce an Ansible Inventory file based on GCE')
         parser.add_argument('--list', action='store_true', default=True,
-                           help='List instances (default: True)')
+                            help='List instances (default: True)')
         parser.add_argument('--host', action='store',
-                           help='Get all information about an instance')
+                            help='Get all information about an instance')
         self.args = parser.parse_args()
-
 
     def node_to_dict(self, inst):
         md = {}
@@ -215,32 +213,44 @@ class GceInventory(object):
             name = node.name
 
             zone = node.extra['zone'].name
-            if groups.has_key(zone): groups[zone].append(name)
-            else: groups[zone] = [name]
+            if groups.has_key(zone):
+                groups[zone].append(name)
+            else:
+                groups[zone] = [name]
 
             tags = node.extra['tags']
             for t in tags:
                 tag = 'tag_%s' % t
-                if groups.has_key(tag): groups[tag].append(name)
-                else: groups[tag] = [name]
+                if groups.has_key(tag):
+                    groups[tag].append(name)
+                else:
+                    groups[tag] = [name]
 
             net = node.extra['networkInterfaces'][0]['network'].split('/')[-1]
             net = 'network_%s' % net
-            if groups.has_key(net): groups[net].append(name)
-            else: groups[net] = [name]
+            if groups.has_key(net):
+                groups[net].append(name)
+            else:
+                groups[net] = [name]
 
             machine_type = node.size
-            if groups.has_key(machine_type): groups[machine_type].append(name)
-            else: groups[machine_type] = [name]
+            if groups.has_key(machine_type):
+                groups[machine_type].append(name)
+            else:
+                groups[machine_type] = [name]
 
             image = node.image and node.image or 'persistent_disk'
-            if groups.has_key(image): groups[image].append(name)
-            else: groups[image] = [name]
+            if groups.has_key(image):
+                groups[image].append(name)
+            else:
+                groups[image] = [name]
 
             status = node.extra['status']
             stat = 'status_%s' % status.lower()
-            if groups.has_key(stat): groups[stat].append(name)
-            else: groups[stat] = [name]
+            if groups.has_key(stat):
+                groups[stat].append(name)
+            else:
+                groups[stat] = [name]
         return groups
 
     def json_format_dict(self, data, pretty=False):

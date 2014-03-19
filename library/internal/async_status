@@ -49,15 +49,16 @@ author: Michael DeHaan
 import datetime
 import traceback
 
+
 def main():
 
     module = AnsibleModule(argument_spec=dict(
         jid=dict(required=True),
-        mode=dict(default='status', choices=['status','cleanup']),
+        mode=dict(default='status', choices=['status', 'cleanup']),
     ))
 
     mode = module.params['mode']
-    jid  = module.params['jid']
+    jid = module.params['jid']
 
     # setup logging directory
     logdir = os.path.expanduser("~/.ansible_async")
@@ -80,10 +81,11 @@ def main():
     except Exception, e:
         if data == '':
             # file not written yet?  That means it is running
-            module.exit_json(results_file=log_path, ansible_job_id=jid, started=1)
+            module.exit_json(
+                results_file=log_path, ansible_job_id=jid, started=1)
         else:
             module.fail_json(ansible_job_id=jid, results_file=log_path,
-                msg="Could not parse job output: %s" % data)
+                             msg="Could not parse job output: %s" % data)
 
     if not 'started' in data:
         data['finished'] = 1

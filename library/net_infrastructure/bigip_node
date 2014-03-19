@@ -150,9 +150,11 @@ else:
 # bigip_node module specific
 #
 
+
 def bigip_api(bigip, user, password):
     api = bigsuds.BIGIP(hostname=bigip, username=user, password=password)
     return api
+
 
 def node_exists(api, address):
     # hack to determine if node exists
@@ -168,9 +170,11 @@ def node_exists(api, address):
             raise
     return result
 
+
 def create_node_address(api, address, name):
     try:
-        api.LocalLB.NodeAddressV2.create(nodes=[name], addresses=[address], limits=[0])
+        api.LocalLB.NodeAddressV2.create(
+            nodes=[name], addresses=[address], limits=[0])
         result = True
         desc = ""
     except bigsuds.OperationFailed, e:
@@ -182,8 +186,10 @@ def create_node_address(api, address, name):
             raise
     return (result, desc)
 
+
 def get_node_address(api, name):
     return api.LocalLB.NodeAddressV2.get_address(nodes=[name])[0]
+
 
 def delete_node_address(api, address):
     try:
@@ -199,24 +205,28 @@ def delete_node_address(api, address):
             raise
     return (result, desc)
 
+
 def set_node_description(api, name, description):
     api.LocalLB.NodeAddressV2.set_description(nodes=[name],
-                                                  descriptions=[description])
+                                              descriptions=[description])
+
 
 def get_node_description(api, name):
     return api.LocalLB.NodeAddressV2.get_description(nodes=[name])[0]
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            server = dict(type='str', required=True),
-            user = dict(type='str', required=True),
-            password = dict(type='str', required=True),
-            state = dict(type='str', default='present', choices=['present', 'absent']),
-            partition = dict(type='str', default='Common'),
-            name = dict(type='str', required=True),
-            host = dict(type='str', aliases=['address', 'ip']),
-            description = dict(type='str')
+        argument_spec=dict(
+            server=dict(type='str', required=True),
+            user=dict(type='str', required=True),
+            password=dict(type='str', required=True),
+            state=dict(
+                type='str', default='present', choices=['present', 'absent']),
+            partition=dict(type='str', default='Common'),
+            name=dict(type='str', required=True),
+            host=dict(type='str', aliases=['address', 'ip']),
+            description=dict(type='str')
         ),
         supports_check_mode=True
     )
@@ -256,10 +266,11 @@ def main():
         elif state == 'present':
             if not node_exists(api, address):
                 if host is None:
-                    module.fail_json(msg="host parameter required when " \
+                    module.fail_json(msg="host parameter required when "
                                          "state=present and node does not exist")
                 if not module.check_mode:
-                    created, desc = create_node_address(api, address=host, name=address)
+                    created, desc = create_node_address(
+                        api, address=host, name=address)
                     if not created:
                         module.fail_json(msg="unable to create: %s" % desc)
                     else:
@@ -274,8 +285,8 @@ def main():
                 # node exists -- potentially modify attributes
                 if host is not None:
                     if get_node_address(api, address) != host:
-                        module.fail_json(msg="Changing the node address is " \
-                                             "not supported by the API; " \
+                        module.fail_json(msg="Changing the node address is "
+                                             "not supported by the API; "
                                              "delete and recreate the node.")
                 if description is not None:
                     if get_node_description(api, address) != description:
@@ -291,4 +302,3 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 main()
-

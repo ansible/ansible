@@ -50,10 +50,11 @@ ansible host -m slurp -a 'src=/tmp/xx'
 
 import base64
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            src = dict(required=True, aliases=['path']),
+        argument_spec=dict(
+            src=dict(required=True, aliases=['path']),
         ),
         supports_check_mode=True
     )
@@ -72,4 +73,3 @@ def main():
 from ansible.module_utils.basic import *
 
 main()
-

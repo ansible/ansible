@@ -56,9 +56,10 @@ EXAMPLES = '''
 - filesystem: fstype=ext4 dev=/dev/sdb1 opts="-cc"
 '''
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             fstype=dict(required=True, aliases=['type']),
             dev=dict(required=True, aliases=['device']),
             opts=dict(),
@@ -75,20 +76,21 @@ def main():
     changed = False
 
     if not os.path.exists(dev):
-        module.fail_json(msg="Device %s not found."%dev)
+        module.fail_json(msg="Device %s not found." % dev)
 
     cmd = module.get_bin_path('blkid', required=True)
 
-    rc,raw_fs,err = module.run_command("%s -c /dev/null -o value -s TYPE %s" % (cmd, dev))
+    rc, raw_fs, err = module.run_command(
+        "%s -c /dev/null -o value -s TYPE %s" % (cmd, dev))
     fs = raw_fs.strip()
-
 
     if fs == fstype:
         module.exit_json(changed=False)
     elif fs and not force:
-        module.fail_json(msg="'%s' is already used as %s, use force=yes to overwrite"%(dev,fs), rc=rc, err=err)
+        module.fail_json(msg="'%s' is already used as %s, use force=yes to overwrite" % (
+            dev, fs), rc=rc, err=err)
 
-    ### create fs
+    # create fs
 
     if module.check_mode:
         changed = True
@@ -99,11 +101,12 @@ def main():
             cmd = "%s -t %s '%s'" % (mkfs, fstype, dev)
         else:
             cmd = "%s -t %s %s '%s'" % (mkfs, fstype, opts, dev)
-        rc,_,err = module.run_command(cmd)
+        rc, _, err = module.run_command(cmd)
         if rc == 0:
             changed = True
         else:
-            module.fail_json(msg="Creating filesystem %s on device '%s' failed"%(fstype,dev), rc=rc, err=err)
+            module.fail_json(msg="Creating filesystem %s on device '%s' failed" % (
+                fstype, dev), rc=rc, err=err)
 
     module.exit_json(changed=changed)
 

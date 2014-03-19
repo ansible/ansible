@@ -28,6 +28,7 @@
 
 import os
 
+
 def rax_argument_spec():
     return dict(
         api_key=dict(type='str', aliases=['password'], no_log=True),

@@ -21,21 +21,22 @@ from ansible import __version__
 
 import sys
 reload(sys)
-sys.setdefaultencoding("utf8") 
+sys.setdefaultencoding("utf8")
+
 
 class TestUtils(unittest.TestCase):
 
     def test_before_comment(self):
         ''' see if we can detect the part of a string before a comment.  Used by INI parser in inventory '''
- 
-        input    = "before # comment"
+
+        input = "before # comment"
         expected = "before "
-        actual   = ansible.utils.before_comment(input)
+        actual = ansible.utils.before_comment(input)
         self.assertEqual(expected, actual)
 
-        input    = "before \# not a comment"
+        input = "before \# not a comment"
         expected = "before # not a comment"
-        actual  =  ansible.utils.before_comment(input)
+        actual = ansible.utils.before_comment(input)
         self.assertEqual(expected, actual)
 
         input = ""
@@ -49,7 +50,7 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(expected, actual)
 
     #####################################
-    ### check_conditional tests
+    # check_conditional tests
 
     def test_check_conditional_jinja2_literals(self):
         # see http://jinja.pocoo.org/docs/templates/#literals
@@ -94,7 +95,6 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(ansible.utils.check_conditional(
             '""', '/', {}), False)
 
-
     def test_check_conditional_jinja2_variable_literals(self):
         # see http://jinja.pocoo.org/docs/templates/#literals
 
@@ -132,7 +132,6 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(ansible.utils.check_conditional(
             'var', '/', {'var': False}), False)
 
-
     def test_check_conditional_jinja2_expression(self):
         self.assertEqual(ansible.utils.check_conditional(
             '1 == 1', '/', {}), True)
@@ -140,7 +139,6 @@ class TestUtils(unittest.TestCase):
             'bar == 42', '/', {'bar': 42}), True)
         self.assertEqual(ansible.utils.check_conditional(
             'bar != 42', '/', {'bar': 42}), False)
-
 
     def test_check_conditional_jinja2_expression_in_variable(self):
         self.assertEqual(ansible.utils.check_conditional(
@@ -156,26 +154,24 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(ansible.utils.check_conditional(
             u'var == "\u00df"', '/', {'var': u'\u00df'}), True)
 
-
     #####################################
-    ### key-value parsing
-
+    # key-value parsing
     def test_parse_kv_basic(self):
         self.assertEqual(ansible.utils.parse_kv('a=simple b="with space" c="this=that"'),
-                {'a': 'simple', 'b': 'with space', 'c': 'this=that'})
-
+                         {'a': 'simple', 'b': 'with space', 'c': 'this=that'})
 
     def test_jsonify(self):
         self.assertEqual(ansible.utils.jsonify(None), '{}')
         self.assertEqual(ansible.utils.jsonify(dict(foo='bar', baz=['qux'])),
-               '{"baz": ["qux"], "foo": "bar"}')
+                         '{"baz": ["qux"], "foo": "bar"}')
         expected = '''{
     "baz": [
         "qux"
     ], 
     "foo": "bar"
 }'''
-        self.assertEqual(ansible.utils.jsonify(dict(foo='bar', baz=['qux']), format=True), expected)
+        self.assertEqual(
+            ansible.utils.jsonify(dict(foo='bar', baz=['qux']), format=True), expected)
 
     def test_is_failed(self):
         self.assertEqual(ansible.utils.is_failed(dict(rc=0)), False)
@@ -195,26 +191,29 @@ class TestUtils(unittest.TestCase):
 
     def test_path_dwim(self):
         self.assertEqual(ansible.utils.path_dwim(None, __file__),
-               __file__)
+                         __file__)
         self.assertEqual(ansible.utils.path_dwim(None, '~'),
-               os.path.expanduser('~'))
+                         os.path.expanduser('~'))
         self.assertEqual(ansible.utils.path_dwim(None, 'TestUtils.py'),
-               __file__.rstrip('c'))
+                         __file__.rstrip('c'))
 
     def test_path_dwim_relative(self):
         self.assertEqual(ansible.utils.path_dwim_relative(__file__, 'units', 'TestUtils.py',
                                                           os.path.dirname(os.path.dirname(__file__))),
-               __file__.rstrip('c'))
+                         __file__.rstrip('c'))
 
     def test_json_loads(self):
-        self.assertEqual(ansible.utils.json_loads('{"foo": "bar"}'), dict(foo='bar'))
+        self.assertEqual(
+            ansible.utils.json_loads('{"foo": "bar"}'), dict(foo='bar'))
 
     def test_parse_json(self):
         # leading junk
-        self.assertEqual(ansible.utils.parse_json('ansible\n{"foo": "bar"}'), dict(foo="bar"))
+        self.assertEqual(
+            ansible.utils.parse_json('ansible\n{"foo": "bar"}'), dict(foo="bar"))
 
         # "baby" json
-        self.assertEqual(ansible.utils.parse_json('foo=bar baz=qux'), dict(foo='bar', baz='qux'))
+        self.assertEqual(
+            ansible.utils.parse_json('foo=bar baz=qux'), dict(foo='bar', baz='qux'))
 
         # No closing quotation
         try:
@@ -230,19 +229,25 @@ class TestUtils(unittest.TestCase):
         except ansible.errors.AnsibleError:
             pass
         else:
-            raise AssertionError('Incorrect exception, expected ansible.errors.AnsibleError')
+            raise AssertionError(
+                'Incorrect exception, expected ansible.errors.AnsibleError')
 
         # boolean changed/failed
-        self.assertEqual(ansible.utils.parse_json('changed=true'), dict(changed=True))
-        self.assertEqual(ansible.utils.parse_json('changed=false'), dict(changed=False))
-        self.assertEqual(ansible.utils.parse_json('failed=true'), dict(failed=True))
-        self.assertEqual(ansible.utils.parse_json('failed=false'), dict(failed=False))
+        self.assertEqual(
+            ansible.utils.parse_json('changed=true'), dict(changed=True))
+        self.assertEqual(
+            ansible.utils.parse_json('changed=false'), dict(changed=False))
+        self.assertEqual(
+            ansible.utils.parse_json('failed=true'), dict(failed=True))
+        self.assertEqual(
+            ansible.utils.parse_json('failed=false'), dict(failed=False))
 
         # rc
         self.assertEqual(ansible.utils.parse_json('rc=0'), dict(rc=0))
 
         # Just a string
-        self.assertEqual(ansible.utils.parse_json('foo'), dict(failed=True, parsed=False, msg='foo'))
+        self.assertEqual(
+            ansible.utils.parse_json('foo'), dict(failed=True, parsed=False, msg='foo'))
 
     def test_smush_braces(self):
         self.assertEqual(ansible.utils.smush_braces('{{ foo}}'), '{{foo}}')
@@ -251,20 +256,24 @@ class TestUtils(unittest.TestCase):
 
     def test_smush_ds(self):
         # list
-        self.assertEqual(ansible.utils.smush_ds(['foo={{ foo }}']), ['foo={{foo}}'])
+        self.assertEqual(
+            ansible.utils.smush_ds(['foo={{ foo }}']), ['foo={{foo}}'])
 
         # dict
-        self.assertEqual(ansible.utils.smush_ds(dict(foo='{{ foo }}')), dict(foo='{{foo}}'))
+        self.assertEqual(
+            ansible.utils.smush_ds(dict(foo='{{ foo }}')), dict(foo='{{foo}}'))
 
         # string
-        self.assertEqual(ansible.utils.smush_ds('foo={{ foo }}'), 'foo={{foo}}')
+        self.assertEqual(
+            ansible.utils.smush_ds('foo={{ foo }}'), 'foo={{foo}}')
 
         # int
         self.assertEqual(ansible.utils.smush_ds(0), 0)
 
     def test_parse_yaml(self):
-        #json
-        self.assertEqual(ansible.utils.parse_yaml('{"foo": "bar"}'), dict(foo='bar'))
+        # json
+        self.assertEqual(
+            ansible.utils.parse_yaml('{"foo": "bar"}'), dict(foo='bar'))
 
         # broken json
         try:
@@ -283,28 +292,34 @@ class TestUtils(unittest.TestCase):
             raise AssertionError
 
         # yaml with front-matter
-        self.assertEqual(ansible.utils.parse_yaml("---\nfoo: bar"), dict(foo='bar'))
+        self.assertEqual(
+            ansible.utils.parse_yaml("---\nfoo: bar"), dict(foo='bar'))
         # yaml no front-matter
         self.assertEqual(ansible.utils.parse_yaml('foo: bar'), dict(foo='bar'))
         # yaml indented first line (See #6348)
-        self.assertEqual(ansible.utils.parse_yaml(' - foo: bar\n   baz: qux'), [dict(foo='bar', baz='qux')])
+        self.assertEqual(ansible.utils.parse_yaml(
+            ' - foo: bar\n   baz: qux'), [dict(foo='bar', baz='qux')])
 
     def test_process_common_errors(self):
         # no quote
-        self.assertTrue('YAML thought it' in ansible.utils.process_common_errors('', 'foo: {{bar}}', 6))
+        self.assertTrue(
+            'YAML thought it' in ansible.utils.process_common_errors('', 'foo: {{bar}}', 6))
 
         # extra colon
-        self.assertTrue('an extra unquoted colon' in ansible.utils.process_common_errors('', 'foo: bar:', 8))
+        self.assertTrue(
+            'an extra unquoted colon' in ansible.utils.process_common_errors('', 'foo: bar:', 8))
 
         # match
-        self.assertTrue('same kind of quote' in ansible.utils.process_common_errors('', 'foo: "{{bar}}"baz', 6))
-        self.assertTrue('same kind of quote' in ansible.utils.process_common_errors('', "foo: '{{bar}}'baz", 6))
+        self.assertTrue('same kind of quote' in ansible.utils.process_common_errors(
+            '', 'foo: "{{bar}}"baz', 6))
+        self.assertTrue('same kind of quote' in ansible.utils.process_common_errors(
+            '', "foo: '{{bar}}'baz", 6))
 
         # unbalanced
         # The first test fails and is commented out for now, logic is wrong and the test fails
         #self.assertTrue('We could be wrong' in ansible.utils.process_common_errors('', 'foo: "bad" "wolf"', 6))
-        self.assertTrue('We could be wrong' in ansible.utils.process_common_errors('', "foo: 'bad' 'wolf'", 6))
-
+        self.assertTrue('We could be wrong' in ansible.utils.process_common_errors(
+            '', "foo: 'bad' 'wolf'", 6))
 
     def test_process_yaml_error(self):
         data = 'foo: bar\n baz: qux'
@@ -316,7 +331,8 @@ class TestUtils(unittest.TestCase):
             except ansible.errors.AnsibleYAMLValidationFailed, e:
                 self.assertTrue('Syntax Error while loading' in e.msg)
             else:
-                raise AssertionError('Incorrect exception, expected AnsibleYAMLValidationFailed')
+                raise AssertionError(
+                    'Incorrect exception, expected AnsibleYAMLValidationFailed')
 
         data = 'foo: bar\n baz: {{qux}}'
         try:
@@ -327,7 +343,8 @@ class TestUtils(unittest.TestCase):
             except ansible.errors.AnsibleYAMLValidationFailed, e:
                 self.assertTrue('Syntax Error while loading' in e.msg)
             else:
-                raise AssertionError('Incorrect exception, expected AnsibleYAMLValidationFailed')
+                raise AssertionError(
+                    'Incorrect exception, expected AnsibleYAMLValidationFailed')
 
         data = '\xFF'
         try:
@@ -338,7 +355,8 @@ class TestUtils(unittest.TestCase):
             except ansible.errors.AnsibleYAMLValidationFailed, e:
                 self.assertTrue('Check over' in e.msg)
             else:
-                raise AssertionError('Incorrect exception, expected AnsibleYAMLValidationFailed')
+                raise AssertionError(
+                    'Incorrect exception, expected AnsibleYAMLValidationFailed')
 
         data = '\xFF'
         try:
@@ -349,7 +367,8 @@ class TestUtils(unittest.TestCase):
             except ansible.errors.AnsibleYAMLValidationFailed, e:
                 self.assertTrue('Could not parse YAML.' in e.msg)
             else:
-                raise AssertionError('Incorrect exception, expected AnsibleYAMLValidationFailed')
+                raise AssertionError(
+                    'Incorrect exception, expected AnsibleYAMLValidationFailed')
 
     def test_parse_yaml_from_file(self):
         test = os.path.join(os.path.dirname(__file__), 'inventory_test_data',
@@ -366,25 +385,29 @@ class TestUtils(unittest.TestCase):
         else:
             raise AssertionError('Incorrect exception, expected AnsibleError')
 
-        self.assertEqual(ansible.utils.parse_yaml_from_file(test), yaml.safe_load(open(test)))
+        self.assertEqual(
+            ansible.utils.parse_yaml_from_file(test), yaml.safe_load(open(test)))
 
-        self.assertEqual(ansible.utils.parse_yaml_from_file(encrypted, 'ansible'), dict(foo='bar'))
+        self.assertEqual(
+            ansible.utils.parse_yaml_from_file(encrypted, 'ansible'), dict(foo='bar'))
 
         try:
             ansible.utils.parse_yaml_from_file(broken)
         except ansible.errors.AnsibleYAMLValidationFailed, e:
             self.assertTrue('Syntax Error while loading' in e.msg)
         else:
-            raise AssertionError('Incorrect exception, expected AnsibleYAMLValidationFailed')
+            raise AssertionError(
+                'Incorrect exception, expected AnsibleYAMLValidationFailed')
 
     def test_merge_hash(self):
         self.assertEqual(ansible.utils.merge_hash(dict(foo='bar', baz='qux'), dict(foo='baz')),
-               dict(foo='baz', baz='qux'))
+                         dict(foo='baz', baz='qux'))
         self.assertEqual(ansible.utils.merge_hash(dict(foo=dict(bar='baz')), dict(foo=dict(bar='qux'))),
-               dict(foo=dict(bar='qux')))
+                         dict(foo=dict(bar='qux')))
 
     def test_md5s(self):
-        self.assertEqual(ansible.utils.md5s('ansible'), '640c8a5376aa12fa15cf02130ce239a6')
+        self.assertEqual(
+            ansible.utils.md5s('ansible'), '640c8a5376aa12fa15cf02130ce239a6')
         # Need a test that causes UnicodeEncodeError See 4221
 
     def test_md5(self):
@@ -395,7 +418,8 @@ class TestUtils(unittest.TestCase):
 
     def test_default(self):
         self.assertEqual(ansible.utils.default(None, lambda: {}), {})
-        self.assertEqual(ansible.utils.default(dict(foo='bar'), lambda: {}), dict(foo='bar'))
+        self.assertEqual(
+            ansible.utils.default(dict(foo='bar'), lambda: {}), dict(foo='bar'))
 
     def test__gitinfo(self):
         # this fails if not run from git clone
@@ -415,7 +439,8 @@ class TestUtils(unittest.TestCase):
         pass
 
     def test_sanitize_output(self):
-        self.assertEqual(ansible.utils.sanitize_output('password=foo'), 'password=VALUE_HIDDEN')
+        self.assertEqual(
+            ansible.utils.sanitize_output('password=foo'), 'password=VALUE_HIDDEN')
         self.assertEqual(ansible.utils.sanitize_output('foo=user:pass@foo/whatever'),
                          'foo=user:********@foo/whatever')
         self.assertEqual(ansible.utils.sanitize_output('foo=http://username:pass@wherever/foo'),
@@ -430,14 +455,16 @@ class TestUtils(unittest.TestCase):
 
     def test_base_parser(self):
         output = ansible.utils.base_parser(output_opts=True)
-        self.assertTrue(output.has_option('--one-line') and output.has_option('--tree'))
+        self.assertTrue(
+            output.has_option('--one-line') and output.has_option('--tree'))
 
         runas = ansible.utils.base_parser(runas_opts=True)
         for opt in ['--sudo', '--sudo-user', '--user', '--su', '--su-user']:
             self.assertTrue(runas.has_option(opt))
 
         async = ansible.utils.base_parser(async_opts=True)
-        self.assertTrue(async.has_option('--poll') and async.has_option('--background'))
+        self.assertTrue(
+            async.has_option('--poll') and async.has_option('--background'))
 
         connect = ansible.utils.base_parser(connect_opts=True)
         self.assertTrue(connect.has_option('--connection'))
@@ -462,7 +489,6 @@ class TestUtils(unittest.TestCase):
 
         hash = ansible.utils.do_encrypt('ansible', 'md5_crypt', salt_size=4)
         self.assertTrue(passlib.hash.md5_crypt.verify('ansible', hash))
-
 
         try:
             ansible.utils.do_encrypt('ansible', 'ansible')
@@ -504,8 +530,10 @@ class TestUtils(unittest.TestCase):
         self.assertTrue(isinstance(cmd, tuple))
         self.assertEqual(len(cmd), 3)
         self.assertTrue('-u root' in cmd[0])
-        self.assertTrue('-p "[sudo via ansible, key=' in cmd[0] and cmd[1].startswith('[sudo via ansible, key'))
-        self.assertTrue('echo SUDO-SUCCESS-' in cmd[0] and cmd[2].startswith('SUDO-SUCCESS-'))
+        self.assertTrue('-p "[sudo via ansible, key=' in cmd[0]
+                        and cmd[1].startswith('[sudo via ansible, key'))
+        self.assertTrue(
+            'echo SUDO-SUCCESS-' in cmd[0] and cmd[2].startswith('SUDO-SUCCESS-'))
         self.assertTrue('sudo -k' in cmd[0])
 
     def test_make_su_cmd(self):
@@ -514,7 +542,8 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(len(cmd), 3)
         self.assertTrue(' root /bin/sh' in cmd[0])
         self.assertTrue(cmd[1] == 'assword: ')
-        self.assertTrue('echo SUDO-SUCCESS-' in cmd[0] and cmd[2].startswith('SUDO-SUCCESS-'))
+        self.assertTrue(
+            'echo SUDO-SUCCESS-' in cmd[0] and cmd[2].startswith('SUDO-SUCCESS-'))
 
     def test_to_unicode(self):
         uni = ansible.utils.to_unicode(u'ansible')
@@ -530,32 +559,42 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(utf8, u'ansible')
 
     def test_is_list_of_strings(self):
-        self.assertEqual(ansible.utils.is_list_of_strings(['foo', 'bar', u'baz']), True)
-        self.assertEqual(ansible.utils.is_list_of_strings(['foo', 'bar', True]), False)
-        self.assertEqual(ansible.utils.is_list_of_strings(['one', 2, 'three']), False)
+        self.assertEqual(
+            ansible.utils.is_list_of_strings(['foo', 'bar', u'baz']), True)
+        self.assertEqual(
+            ansible.utils.is_list_of_strings(['foo', 'bar', True]), False)
+        self.assertEqual(
+            ansible.utils.is_list_of_strings(['one', 2, 'three']), False)
 
     def test_safe_eval(self):
         # Not basestring
         self.assertEqual(ansible.utils.safe_eval(len), len)
         self.assertEqual(ansible.utils.safe_eval(1), 1)
-        self.assertEqual(ansible.utils.safe_eval(len, include_exceptions=True), (len, None))
-        self.assertEqual(ansible.utils.safe_eval(1, include_exceptions=True), (1, None))
+        self.assertEqual(
+            ansible.utils.safe_eval(len, include_exceptions=True), (len, None))
+        self.assertEqual(
+            ansible.utils.safe_eval(1, include_exceptions=True), (1, None))
 
         # module
         self.assertEqual(ansible.utils.safe_eval('foo.bar('), 'foo.bar(')
-        self.assertEqual(ansible.utils.safe_eval('foo.bar(', include_exceptions=True), ('foo.bar(', None))
+        self.assertEqual(ansible.utils.safe_eval(
+            'foo.bar(', include_exceptions=True), ('foo.bar(', None))
 
         # import
         self.assertEqual(ansible.utils.safe_eval('import foo'), 'import foo')
-        self.assertEqual(ansible.utils.safe_eval('import foo', include_exceptions=True), ('import foo', None))
+        self.assertEqual(ansible.utils.safe_eval(
+            'import foo', include_exceptions=True), ('import foo', None))
 
         # valid simple eval
         self.assertEqual(ansible.utils.safe_eval('True'), True)
-        self.assertEqual(ansible.utils.safe_eval('True', include_exceptions=True), (True, None))
+        self.assertEqual(
+            ansible.utils.safe_eval('True', include_exceptions=True), (True, None))
 
         # valid eval with lookup
-        self.assertEqual(ansible.utils.safe_eval('foo + bar', dict(foo=1, bar=2)), 3)
-        self.assertEqual(ansible.utils.safe_eval('foo + bar', dict(foo=1, bar=2), include_exceptions=True), (3, None))
+        self.assertEqual(
+            ansible.utils.safe_eval('foo + bar', dict(foo=1, bar=2)), 3)
+        self.assertEqual(ansible.utils.safe_eval(
+            'foo + bar', dict(foo=1, bar=2), include_exceptions=True), (3, None))
 
         # invalid eval
         self.assertEqual(ansible.utils.safe_eval('foo'), 'foo')
@@ -646,7 +685,8 @@ class TestUtils(unittest.TestCase):
 
     def test_unfrackpath(self):
         os.environ['TEST_ROOT'] = os.path.dirname(os.path.dirname(__file__))
-        self.assertEqual(ansible.utils.unfrackpath('$TEST_ROOT/units/../units/TestUtils.py'), __file__.rstrip('c'))
+        self.assertEqual(ansible.utils.unfrackpath(
+            '$TEST_ROOT/units/../units/TestUtils.py'), __file__.rstrip('c'))
 
     def test_is_executable(self):
         self.assertEqual(ansible.utils.is_executable(__file__), 0)
@@ -668,7 +708,7 @@ class TestUtils(unittest.TestCase):
 @@ -1 +1 @@
 -fooo+foo"""
 
-        # workaround py26 and py27 difflib differences        
+        # workaround py26 and py27 difflib differences
         standard_expected = """-fooo+foo"""
         diff = ansible.utils.get_diff(standard)
         diff = diff.split('\n')
@@ -677,4 +717,3 @@ class TestUtils(unittest.TestCase):
         del diff[0]
         diff = '\n'.join(diff)
         self.assertEqual(diff, unicode(standard_expected))
-

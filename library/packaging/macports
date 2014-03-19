@@ -55,6 +55,7 @@ EXAMPLES = '''
 
 import pipes
 
+
 def update_package_db(module, port_path):
     """ Updates packages list. """
 
@@ -69,7 +70,8 @@ def query_package(module, port_path, name, state="present"):
 
     if state == "present":
 
-        rc, out, err = module.run_command("%s installed | grep -q ^.*%s" % (pipes.quote(port_path), pipes.quote(name)), use_unsafe_shell=True)
+        rc, out, err = module.run_command(
+            "%s installed | grep -q ^.*%s" % (pipes.quote(port_path), pipes.quote(name)), use_unsafe_shell=True)
         if rc == 0:
             return True
 
@@ -77,7 +79,8 @@ def query_package(module, port_path, name, state="present"):
 
     elif state == "active":
 
-        rc, out, err = module.run_command("%s installed %s | grep -q active" % (pipes.quote(port_path), pipes.quote(name)), use_unsafe_shell=True)
+        rc, out, err = module.run_command(
+            "%s installed %s | grep -q active" % (pipes.quote(port_path), pipes.quote(name)), use_unsafe_shell=True)
 
         if rc == 0:
             return True
@@ -95,7 +98,8 @@ def remove_packages(module, port_path, packages):
         if not query_package(module, port_path, package):
             continue
 
-        rc, out, err = module.run_command("%s uninstall %s" % (port_path, package))
+        rc, out, err = module.run_command(
+            "%s uninstall %s" % (port_path, package))
 
         if query_package(module, port_path, package):
             module.fail_json(msg="failed to remove %s: %s" % (package, out))
@@ -118,7 +122,8 @@ def install_packages(module, port_path, packages):
         if query_package(module, port_path, package):
             continue
 
-        rc, out, err = module.run_command("%s install %s" % (port_path, package))
+        rc, out, err = module.run_command(
+            "%s install %s" % (port_path, package))
 
         if not query_package(module, port_path, package):
             module.fail_json(msg="failed to install %s: %s" % (package, out))
@@ -126,7 +131,8 @@ def install_packages(module, port_path, packages):
         install_c += 1
 
     if install_c > 0:
-        module.exit_json(changed=True, msg="installed %s package(s)" % (install_c))
+        module.exit_json(
+            changed=True, msg="installed %s package(s)" % (install_c))
 
     module.exit_json(changed=False, msg="package(s) already present")
 
@@ -138,12 +144,14 @@ def activate_packages(module, port_path, packages):
 
     for package in packages:
         if not query_package(module, port_path, package):
-            module.fail_json(msg="failed to activate %s, package(s) not present" % (package))
+            module.fail_json(
+                msg="failed to activate %s, package(s) not present" % (package))
 
         if query_package(module, port_path, package, state="active"):
             continue
 
-        rc, out, err = module.run_command("%s activate %s" % (port_path, package))
+        rc, out, err = module.run_command(
+            "%s activate %s" % (port_path, package))
 
         if not query_package(module, port_path, package, state="active"):
             module.fail_json(msg="failed to activate %s: %s" % (package, out))
@@ -151,7 +159,8 @@ def activate_packages(module, port_path, packages):
         activate_c += 1
 
     if activate_c > 0:
-        module.exit_json(changed=True, msg="activated %s package(s)" % (activate_c))
+        module.exit_json(
+            changed=True, msg="activated %s package(s)" % (activate_c))
 
     module.exit_json(changed=False, msg="package(s) already active")
 
@@ -163,30 +172,36 @@ def deactivate_packages(module, port_path, packages):
 
     for package in packages:
         if not query_package(module, port_path, package):
-            module.fail_json(msg="failed to activate %s, package(s) not present" % (package))
+            module.fail_json(
+                msg="failed to activate %s, package(s) not present" % (package))
 
         if not query_package(module, port_path, package, state="active"):
             continue
 
-        rc, out, err = module.run_command("%s deactivate %s" % (port_path, package))
+        rc, out, err = module.run_command(
+            "%s deactivate %s" % (port_path, package))
 
         if query_package(module, port_path, package, state="active"):
-            module.fail_json(msg="failed to deactivated %s: %s" % (package, out))
+            module.fail_json(
+                msg="failed to deactivated %s: %s" % (package, out))
 
         deactivated_c += 1
 
     if deactivated_c > 0:
-        module.exit_json(changed=True, msg="deactivated %s package(s)" % (deactivated_c))
+        module.exit_json(
+            changed=True, msg="deactivated %s package(s)" % (deactivated_c))
 
     module.exit_json(changed=False, msg="package(s) already inactive")
 
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(aliases=["pkg"], required=True),
-            state = dict(default="present", choices=["present", "installed", "absent", "removed", "active", "inactive"]),
-            update_cache = dict(default="no", aliases=["update-cache"], type='bool')
+        argument_spec=dict(
+            name=dict(aliases=["pkg"], required=True),
+            state=dict(default="present", choices=[
+                       "present", "installed", "absent", "removed", "active", "inactive"]),
+            update_cache=dict(
+                default="no", aliases=["update-cache"], type='bool')
         )
     )
 

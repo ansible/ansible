@@ -20,7 +20,9 @@ import ansible
 from ansible import utils, errors
 from ansible.runner.return_data import ReturnData
 
+
 class ActionModule(object):
+
     ''' Fail with custom message '''
 
     TRANSFERS_FILES = False
@@ -47,10 +49,11 @@ class ActionModule(object):
             raise errors.AnsibleError('conditional required in "that" string')
 
         if not isinstance(args['that'], list):
-            args['that'] = [ args['that'] ]
+            args['that'] = [args['that']]
 
         for that in args['that']:
-            result = utils.check_conditional(that, self.runner.basedir, inject, fail_on_undefined=True)
+            result = utils.check_conditional(
+                that, self.runner.basedir, inject, fail_on_undefined=True)
             if not result:
                 return ReturnData(conn=conn, result=dict(failed=True, assertion=that, evaluated_to=result))
 

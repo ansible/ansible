@@ -196,12 +196,13 @@ import platform
 
 try:
     import spwd
-    HAVE_SPWD=True
+    HAVE_SPWD = True
 except:
-    HAVE_SPWD=False
+    HAVE_SPWD = False
 
 
 class User(object):
+
     """
     This is a generic User manipulation class that is subclassed
     based on platform.
@@ -225,27 +226,27 @@ class User(object):
         return load_platform_subclass(User, args, kwargs)
 
     def __init__(self, module):
-        self.module     = module
-        self.state      = module.params['state']
-        self.name       = module.params['name']
-        self.uid        = module.params['uid']
-        self.non_unique  = module.params['non_unique']
-        self.group      = module.params['group']
-        self.groups     = module.params['groups']
-        self.comment    = module.params['comment']
-        self.home       = module.params['home']
-        self.shell      = module.params['shell']
-        self.password   = module.params['password']
-        self.force      = module.params['force']
-        self.remove     = module.params['remove']
+        self.module = module
+        self.state = module.params['state']
+        self.name = module.params['name']
+        self.uid = module.params['uid']
+        self.non_unique = module.params['non_unique']
+        self.group = module.params['group']
+        self.groups = module.params['groups']
+        self.comment = module.params['comment']
+        self.home = module.params['home']
+        self.shell = module.params['shell']
+        self.password = module.params['password']
+        self.force = module.params['force']
+        self.remove = module.params['remove']
         self.createhome = module.params['createhome']
-        self.move_home  = module.params['move_home']
-        self.system     = module.params['system']
+        self.move_home = module.params['move_home']
+        self.system = module.params['system']
         self.login_class = module.params['login_class']
-        self.append     = module.params['append']
-        self.sshkeygen  = module.params['generate_ssh_key']
-        self.ssh_bits   = module.params['ssh_key_bits']
-        self.ssh_type   = module.params['ssh_key_type']
+        self.append = module.params['append']
+        self.sshkeygen = module.params['generate_ssh_key']
+        self.ssh_bits = module.params['ssh_key_bits']
+        self.ssh_type = module.params['ssh_key_type']
         self.ssh_comment = module.params['ssh_key_comment']
         self.ssh_passphrase = module.params['ssh_key_passphrase']
         self.update_password = module.params['update_password']
@@ -286,13 +287,14 @@ class User(object):
 
         if self.group is not None:
             if not self.group_exists(self.group):
-                self.module.fail_json(msg="Group %s does not exist" % self.group)
+                self.module.fail_json(
+                    msg="Group %s does not exist" % self.group)
             cmd.append('-g')
             cmd.append(self.group)
         elif self.group_exists(self.name):
             # use the -N option (no user group) if a group already
-            # exists with the same name as the user to prevent 
-            # errors from useradd trying to create a group when 
+            # exists with the same name as the user to prevent
+            # errors from useradd trying to create a group when
             # USERGROUPS_ENAB is set in /etc/login.defs.
             cmd.append('-N')
 
@@ -328,7 +330,6 @@ class User(object):
         cmd.append(self.name)
         return self.execute_command(cmd)
 
-
     def _check_usermod_append(self):
         # check if this version of usermod can append groups
 
@@ -345,8 +346,6 @@ class User(object):
 
         return False
 
-
-
     def modify_user_usermod(self):
         cmd = [self.module.get_bin_path('usermod', True)]
         info = self.user_info()
@@ -361,7 +360,8 @@ class User(object):
 
         if self.group is not None:
             if not self.group_exists(self.group):
-                self.module.fail_json(msg="Group %s does not exist" % self.group)
+                self.module.fail_json(
+                    msg="Group %s does not exist" % self.group)
             ginfo = self.group_info(self.group)
             if info[3] != ginfo[2]:
                 cmd.append('-g')
@@ -398,7 +398,6 @@ class User(object):
                     cmd.append('-G')
                     cmd.append(','.join(groups))
 
-
         if self.comment is not None and info[4] != self.comment:
             cmd.append('-c')
             cmd.append(self.comment)
@@ -426,7 +425,7 @@ class User(object):
         cmd.append(self.name)
         return self.execute_command(cmd)
 
-    def group_exists(self,group):
+    def group_exists(self, group):
         try:
             if group.isdigit():
                 if grp.getgrgid(group):
@@ -437,7 +436,7 @@ class User(object):
         except KeyError:
             return False
 
-    def group_info(self,group):
+    def group_info(self, group):
         if not self.group_exists(group):
             return False
         if group.isdigit():
@@ -515,7 +514,7 @@ class User(object):
         if not os.path.exists(info[5]):
             return (1, '', 'User %s home directory does not exist' % self.name)
         ssh_key_file = self.get_ssh_key_path()
-        ssh_dir = os.path.dirname(ssh_key_file) 
+        ssh_dir = os.path.dirname(ssh_key_file)
         if not os.path.exists(ssh_dir):
             try:
                 os.mkdir(ssh_dir, 0700)
@@ -551,7 +550,7 @@ class User(object):
         ssh_key_file = self.get_ssh_key_path()
         if not os.path.exists(ssh_key_file):
             return (1, 'SSH Key file %s does not exist' % ssh_key_file, '')
-        cmd = [ self.module.get_bin_path('ssh-keygen', True) ]
+        cmd = [self.module.get_bin_path('ssh-keygen', True)]
         cmd.append('-l')
         cmd.append('-f')
         cmd.append(ssh_key_file)
@@ -604,11 +603,12 @@ class User(object):
                     os.chown(os.path.join(root, f), uid, gid)
         except OSError, e:
             self.module.exit_json(failed=True, msg="%s" % e)
-           
+
 
 # ===========================================
 
 class FreeBsdUser(User):
+
     """
     This is a FreeBSD User manipulation class - it uses the pw command
     to manipulate the user database, followed by the chpass command
@@ -661,7 +661,8 @@ class FreeBsdUser(User):
 
         if self.group is not None:
             if not self.group_exists(self.group):
-                self.module.fail_json(msg="Group %s does not exist" % self.group)
+                self.module.fail_json(
+                    msg="Group %s does not exist" % self.group)
             cmd.append('-g')
             cmd.append(self.group)
 
@@ -693,7 +694,7 @@ class FreeBsdUser(User):
                 self.module.get_bin_path('chpass', True),
                 '-p',
                 self.password,
-                self.name 
+                self.name
             ]
             return self.execute_command(cmd)
 
@@ -704,7 +705,7 @@ class FreeBsdUser(User):
             self.module.get_bin_path('pw', True),
             'usermod',
             '-n',
-            self.name 
+            self.name
         ]
         cmd_len = len(cmd)
         info = self.user_info()
@@ -728,7 +729,8 @@ class FreeBsdUser(User):
 
         if self.group is not None:
             if not self.group_exists(self.group):
-                self.module.fail_json(msg="Group %s does not exist" % self.group)
+                self.module.fail_json(
+                    msg="Group %s does not exist" % self.group)
             ginfo = self.group_info(self.group)
             if info[3] != ginfo[2]:
                 cmd.append('-g')
@@ -779,7 +781,7 @@ class FreeBsdUser(User):
                 self.module.get_bin_path('chpass', True),
                 '-p',
                 self.password,
-                self.name 
+                self.name
             ]
             return self.execute_command(cmd)
 
@@ -787,7 +789,9 @@ class FreeBsdUser(User):
 
 # ===========================================
 
+
 class OpenBSDUser(User):
+
     """
     This is a OpenBSD User manipulation class.
     Main differences are that OpenBSD:-
@@ -816,7 +820,8 @@ class OpenBSDUser(User):
 
         if self.group is not None:
             if not self.group_exists(self.group):
-                self.module.fail_json(msg="Group %s does not exist" % self.group)
+                self.module.fail_json(
+                    msg="Group %s does not exist" % self.group)
             cmd.append('-g')
             cmd.append(self.group)
 
@@ -871,7 +876,8 @@ class OpenBSDUser(User):
 
         if self.group is not None:
             if not self.group_exists(self.group):
-                self.module.fail_json(msg="Group %s does not exist" % self.group)
+                self.module.fail_json(
+                    msg="Group %s does not exist" % self.group)
             ginfo = self.group_info(self.group)
             if info[3] != ginfo[2]:
                 cmd.append('-g')
@@ -921,7 +927,8 @@ class OpenBSDUser(User):
         if self.login_class is not None:
             # find current login class
             user_login_class = None
-            userinfo_cmd = [self.module.get_bin_path('userinfo', True), self.name]
+            userinfo_cmd = [
+                self.module.get_bin_path('userinfo', True), self.name]
             (rc, out, err) = self.execute_command(userinfo_cmd)
 
             for line in out.splitlines():
@@ -952,6 +959,7 @@ class OpenBSDUser(User):
 # ===========================================
 
 class NetBSDUser(User):
+
     """
     This is a NetBSD User manipulation class.
     Main differences are that NetBSD:-
@@ -981,14 +989,16 @@ class NetBSDUser(User):
 
         if self.group is not None:
             if not self.group_exists(self.group):
-                self.module.fail_json(msg="Group %s does not exist" % self.group)
+                self.module.fail_json(
+                    msg="Group %s does not exist" % self.group)
             cmd.append('-g')
             cmd.append(self.group)
 
         if self.groups is not None:
             groups = self.get_groups_set()
             if len(groups) > 16:
-                self.module.fail_json(msg="Too many groups (%d) NetBSD allows for 16 max." % len(groups))
+                self.module.fail_json(
+                    msg="Too many groups (%d) NetBSD allows for 16 max." % len(groups))
             cmd.append('-G')
             cmd.append(','.join(groups))
 
@@ -1038,7 +1048,8 @@ class NetBSDUser(User):
 
         if self.group is not None:
             if not self.group_exists(self.group):
-                self.module.fail_json(msg="Group %s does not exist" % self.group)
+                self.module.fail_json(
+                    msg="Group %s does not exist" % self.group)
             ginfo = self.group_info(self.group)
             if info[3] != ginfo[2]:
                 cmd.append('-g')
@@ -1068,7 +1079,8 @@ class NetBSDUser(User):
 
             if groups_need_mod:
                 if len(groups) > 16:
-                    self.module.fail_json(msg="Too many groups (%d) NetBSD allows for 16 max." % len(groups))
+                    self.module.fail_json(
+                        msg="Too many groups (%d) NetBSD allows for 16 max." % len(groups))
                 cmd.append('-G')
                 cmd.append(','.join(groups))
 
@@ -1107,6 +1119,7 @@ class NetBSDUser(User):
 # ===========================================
 
 class SunOS(User):
+
     """
     This is a SunOS User manipulation class - The main difference between
     this class and the generic user class is that Solaris-type distros
@@ -1143,7 +1156,8 @@ class SunOS(User):
 
         if self.group is not None:
             if not self.group_exists(self.group):
-                self.module.fail_json(msg="Group %s does not exist" % self.group)
+                self.module.fail_json(
+                    msg="Group %s does not exist" % self.group)
             cmd.append('-g')
             cmd.append(self.group)
 
@@ -1176,7 +1190,7 @@ class SunOS(User):
             if rc is not None and rc != 0:
                 self.module.fail_json(name=self.name, msg=err, rc=rc)
 
-            # we have to set the password by editing the /etc/shadow file 
+            # we have to set the password by editing the /etc/shadow file
             if self.password is not None:
                 try:
                     lines = []
@@ -1190,7 +1204,8 @@ class SunOS(User):
                         lines.append('%s\n' % line)
                     open(self.SHADOWFILE, 'w+').writelines(lines)
                 except Exception, err:
-                    self.module.fail_json(msg="failed to update users password: %s" % str(err))
+                    self.module.fail_json(
+                        msg="failed to update users password: %s" % str(err))
 
             return (rc, out, err)
 
@@ -1208,7 +1223,8 @@ class SunOS(User):
 
         if self.group is not None:
             if not self.group_exists(self.group):
-                self.module.fail_json(msg="Group %s does not exist" % self.group)
+                self.module.fail_json(
+                    msg="Group %s does not exist" % self.group)
             ginfo = self.group_info(self.group)
             if info[3] != ginfo[2]:
                 cmd.append('-g')
@@ -1237,8 +1253,8 @@ class SunOS(User):
                 cmd.append(','.join(new_groups))
 
         if self.comment is not None and info[4] != self.comment:
-                cmd.append('-c')
-                cmd.append(self.comment)
+            cmd.append('-c')
+            cmd.append(self.comment)
 
         if self.home is not None and info[5] != self.home:
             if self.move_home:
@@ -1262,7 +1278,7 @@ class SunOS(User):
             else:
                 (rc, out, err) = (None, '', '')
 
-            # we have to set the password by editing the /etc/shadow file 
+            # we have to set the password by editing the /etc/shadow file
             if self.update_password == 'always' and self.password is not None and info[1] != self.password:
                 try:
                     lines = []
@@ -1277,13 +1293,16 @@ class SunOS(User):
                     open(self.SHADOWFILE, 'w+').writelines(lines)
                     rc = 0
                 except Exception, err:
-                    self.module.fail_json(msg="failed to update users password: %s" % str(err))
+                    self.module.fail_json(
+                        msg="failed to update users password: %s" % str(err))
 
             return (rc, out, err)
 
 # ===========================================
 
+
 class AIX(User):
+
     """
     This is a AIX User manipulation class.
 
@@ -1314,7 +1333,8 @@ class AIX(User):
 
         if self.group is not None:
             if not self.group_exists(self.group):
-                self.module.fail_json(msg="Group %s does not exist" % self.group)
+                self.module.fail_json(
+                    msg="Group %s does not exist" % self.group)
             cmd.append('-g')
             cmd.append(self.group)
 
@@ -1344,7 +1364,7 @@ class AIX(User):
         # set password with chpasswd
         if self.password is not None:
             cmd = []
-            cmd.append('echo "'+self.name+':'+self.password+'" |')
+            cmd.append('echo "' + self.name + ':' + self.password + '" |')
             cmd.append(self.module.get_bin_path('chpasswd', True))
             cmd.append('-e')
             cmd.append('-c')
@@ -1362,7 +1382,8 @@ class AIX(User):
 
         if self.group is not None:
             if not self.group_exists(self.group):
-                self.module.fail_json(msg="Group %s does not exist" % self.group)
+                self.module.fail_json(
+                    msg="Group %s does not exist" % self.group)
             ginfo = self.group_info(self.group)
             if info[3] != ginfo[2]:
                 cmd.append('-g')
@@ -1394,8 +1415,8 @@ class AIX(User):
                 cmd.append(','.join(groups))
 
         if self.comment is not None and info[4] != self.comment:
-                cmd.append('-c')
-                cmd.append(self.comment)
+            cmd.append('-c')
+            cmd.append(self.comment)
 
         if self.home is not None and info[5] != self.home:
             if self.move_home:
@@ -1406,7 +1427,6 @@ class AIX(User):
         if self.shell is not None and info[6] != self.shell:
             cmd.append('-s')
             cmd.append(self.shell)
-
 
         # skip if no changes to be made
         if len(cmd) == 1:
@@ -1420,7 +1440,7 @@ class AIX(User):
         # set password with chpasswd
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
             cmd = []
-            cmd.append('echo "'+self.name+':'+self.password+'" |')
+            cmd.append('echo "' + self.name + ':' + self.password + '" |')
             cmd.append(self.module.get_bin_path('chpasswd', True))
             cmd.append('-e')
             cmd.append('-c')
@@ -1429,22 +1449,24 @@ class AIX(User):
             (rc2, out2, err2) = (None, '', '')
 
         if rc != None:
-            return (rc, out+out2, err+err2)
+            return (rc, out + out2, err + err2)
         else:
-            return (rc2, out+out2, err+err2)
+            return (rc2, out + out2, err + err2)
 
 # ===========================================
 
+
 def main():
     ssh_defaults = {
-            'bits': '2048',
-            'type': 'rsa',
-            'passphrase': None,
-            'comment': 'ansible-generated'
+        'bits': '2048',
+        'type': 'rsa',
+        'passphrase': None,
+        'comment': 'ansible-generated'
     }
     module = AnsibleModule(
-        argument_spec = dict(
-            state=dict(default='present', choices=['present', 'absent'], type='str'),
+        argument_spec=dict(
+            state=dict(
+                default='present', choices=['present', 'absent'], type='str'),
             name=dict(required=True, aliases=['user'], type='str'),
             uid=dict(default=None, type='str'),
             non_unique=dict(default='no', type='bool'),
@@ -1471,7 +1493,8 @@ def main():
             ssh_key_file=dict(default=None, type='str'),
             ssh_key_comment=dict(default=ssh_defaults['comment'], type='str'),
             ssh_key_passphrase=dict(default=None, type='str'),
-            update_password=dict(default='always',choices=['always','on_create'],type='str')
+            update_password=dict(
+                default='always', choices=['always', 'on_create'], type='str')
         ),
         supports_check_mode=True
     )
@@ -1480,9 +1503,11 @@ def main():
 
     if user.syslogging:
         syslog.openlog('ansible-%s' % os.path.basename(__file__))
-        syslog.syslog(syslog.LOG_NOTICE, 'User instantiated - platform %s' % user.platform)
+        syslog.syslog(
+            syslog.LOG_NOTICE, 'User instantiated - platform %s' % user.platform)
         if user.distribution:
-            syslog.syslog(syslog.LOG_NOTICE, 'User instantiated - distribution %s' % user.distribution)
+            syslog.syslog(
+                syslog.LOG_NOTICE, 'User instantiated - distribution %s' % user.distribution)
 
     rc = None
     out = ''

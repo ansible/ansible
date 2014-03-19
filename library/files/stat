@@ -67,14 +67,15 @@ import sys
 from stat import *
 import pwd
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            path = dict(required=True),
-            follow = dict(default='no', type='bool'),
-            get_md5 = dict(default='yes', type='bool')
+        argument_spec=dict(
+            path=dict(required=True),
+            follow=dict(default='no', type='bool'),
+            get_md5=dict(default='yes', type='bool')
         ),
-        supports_check_mode = True
+        supports_check_mode=True
     )
 
     path = module.params.get('path')
@@ -89,60 +90,58 @@ def main():
             st = os.lstat(path)
     except OSError, e:
         if e.errno == errno.ENOENT:
-            d = { 'exists' : False }
+            d = {'exists': False}
             module.exit_json(changed=False, stat=d)
 
-        module.fail_json(msg = e.strerror)
+        module.fail_json(msg=e.strerror)
 
     mode = st.st_mode
 
     # back to ansible
     d = {
-        'exists'   : True,
-        'mode'    : "%04o" % S_IMODE(mode),
-        'isdir'    : S_ISDIR(mode),
-        'ischr'    : S_ISCHR(mode),
-        'isblk'    : S_ISBLK(mode),
-        'isreg'    : S_ISREG(mode),
-        'isfifo'   : S_ISFIFO(mode),
-        'islnk'    : S_ISLNK(mode),
-        'issock'   : S_ISSOCK(mode),
-        'uid'      : st.st_uid,
-        'gid'      : st.st_gid,
-        'size'     : st.st_size,
-        'inode'    : st.st_ino,
-        'dev'      : st.st_dev,
-        'nlink'    : st.st_nlink,
-        'atime'    : st.st_atime,
-        'mtime'    : st.st_mtime,
-        'ctime'    : st.st_ctime,
-        'wusr'     : bool(mode & stat.S_IWUSR),
-        'rusr'     : bool(mode & stat.S_IRUSR),
-        'xusr'     : bool(mode & stat.S_IXUSR),
-        'wgrp'     : bool(mode & stat.S_IWGRP),
-        'rgrp'     : bool(mode & stat.S_IRGRP),
-        'xgrp'     : bool(mode & stat.S_IXGRP),
-        'woth'     : bool(mode & stat.S_IWOTH),
-        'roth'     : bool(mode & stat.S_IROTH),
-        'xoth'     : bool(mode & stat.S_IXOTH),
-        'isuid'    : bool(mode & stat.S_ISUID),
-        'isgid'    : bool(mode & stat.S_ISGID),
-        }
+        'exists': True,
+        'mode': "%04o" % S_IMODE(mode),
+        'isdir': S_ISDIR(mode),
+        'ischr': S_ISCHR(mode),
+        'isblk': S_ISBLK(mode),
+        'isreg': S_ISREG(mode),
+        'isfifo': S_ISFIFO(mode),
+        'islnk': S_ISLNK(mode),
+        'issock': S_ISSOCK(mode),
+        'uid': st.st_uid,
+        'gid': st.st_gid,
+        'size': st.st_size,
+        'inode': st.st_ino,
+        'dev': st.st_dev,
+        'nlink': st.st_nlink,
+        'atime': st.st_atime,
+        'mtime': st.st_mtime,
+        'ctime': st.st_ctime,
+        'wusr': bool(mode & stat.S_IWUSR),
+        'rusr': bool(mode & stat.S_IRUSR),
+        'xusr': bool(mode & stat.S_IXUSR),
+        'wgrp': bool(mode & stat.S_IWGRP),
+        'rgrp': bool(mode & stat.S_IRGRP),
+        'xgrp': bool(mode & stat.S_IXGRP),
+        'woth': bool(mode & stat.S_IWOTH),
+        'roth': bool(mode & stat.S_IROTH),
+        'xoth': bool(mode & stat.S_IXOTH),
+        'isuid': bool(mode & stat.S_ISUID),
+        'isgid': bool(mode & stat.S_ISGID),
+    }
 
     if S_ISLNK(mode):
         d['lnk_source'] = os.path.realpath(path)
 
-    if S_ISREG(mode) and get_md5 and os.access(path,os.R_OK):
-        d['md5']       = module.md5(path)
-
+    if S_ISREG(mode) and get_md5 and os.access(path, os.R_OK):
+        d['md5'] = module.md5(path)
 
     try:
         pw = pwd.getpwuid(st.st_uid)
 
-        d['pw_name']   = pw.pw_name
+        d['pw_name'] = pw.pw_name
     except:
         pass
-
 
     module.exit_json(changed=False, stat=d)
 

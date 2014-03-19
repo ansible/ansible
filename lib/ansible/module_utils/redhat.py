@@ -6,6 +6,7 @@ import shlex
 
 
 class RegistrationBase(object):
+
     def __init__(self, module, username=None, password=None):
         self.module = module
         self.username = username
@@ -47,6 +48,7 @@ class RegistrationBase(object):
 
 
 class Rhsm(RegistrationBase):
+
     def __init__(self, module, username=None, password=None):
         RegistrationBase.__init__(self, module, username, password)
         self.config = self._read_config()
@@ -72,7 +74,8 @@ class Rhsm(RegistrationBase):
             else:
                 return default
 
-        cp.get_option = types.MethodType(get_option_default, cp, ConfigParser.ConfigParser)
+        cp.get_option = types.MethodType(
+            get_option_default, cp, ConfigParser.ConfigParser)
 
         return cp
 
@@ -97,10 +100,10 @@ class Rhsm(RegistrationBase):
         # Pass supplied **kwargs as parameters to subscription-manager.  Ignore
         # non-configuration parameters and replace '_' with '.'.  For example,
         # 'server_hostname' becomes '--system.hostname'.
-        for k,v in kwargs.items():
+        for k, v in kwargs.items():
             if re.search(r'^(system|rhsm)_', k):
-                args.append('--%s=%s' % (k.replace('_','.'), v))
-        
+                args.append('--%s=%s' % (k.replace('_', '.'), v))
+
         self.module.run_command(args, check_rc=True)
 
     @property
@@ -114,7 +117,7 @@ class Rhsm(RegistrationBase):
         # Quick version...
         if False:
             return os.path.isfile('/etc/pki/consumer/cert.pem') and \
-                   os.path.isfile('/etc/pki/consumer/key.pem')
+                os.path.isfile('/etc/pki/consumer/key.pem')
 
         args = ['subscription-manager', 'identity']
         rc, stdout, stderr = self.module.run_command(args, check_rc=False)
@@ -179,13 +182,14 @@ class Rhsm(RegistrationBase):
 
 
 class RhsmPool(object):
+
     '''
         Convenience class for housing subscription information
     '''
 
     def __init__(self, module, **kwargs):
         self.module = module
-        for k,v in kwargs.items():
+        for k, v in kwargs.items():
             setattr(self, k, v)
 
     def __str__(self):
@@ -201,9 +205,11 @@ class RhsmPool(object):
 
 
 class RhsmPools(object):
+
     """
         This class is used for manipulating pools subscriptions with RHSM
     """
+
     def __init__(self, module):
         self.module = module
         self.products = self._load_product_list()
@@ -227,17 +233,18 @@ class RhsmPools(object):
                 continue
             # If a colon ':' is found, parse
             elif ':' in line:
-                (key, value) = line.split(':',1)
+                (key, value) = line.split(':', 1)
                 key = key.strip().replace(" ", "")  # To unify
                 value = value.strip()
                 if key in ['ProductName', 'SubscriptionName']:
                     # Remember the name for later processing
-                    products.append(RhsmPool(self.module, _name=value, key=value))
+                    products.append(
+                        RhsmPool(self.module, _name=value, key=value))
                 elif products:
                     # Associate value with most recently recorded product
                     products[-1].__setattr__(key, value)
                 # FIXME - log some warning?
-                #else:
+                # else:
                     # warnings.warn("Unhandled subscription key/value: %s/%s" % (key,value))
         return products
 
@@ -249,4 +256,3 @@ class RhsmPools(object):
         for product in self.products:
             if r.search(product._name):
                 yield product
-

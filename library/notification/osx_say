@@ -44,10 +44,13 @@ EXAMPLES = '''
 - local_action: osx_say msg="{{inventory_hostname}} is all done" voice=Zarvox
 '''
 
-DEFAULT_VOICE='Trinoids'
+DEFAULT_VOICE = 'Trinoids'
+
 
 def say(module, msg, voice):
-    module.run_command(["/usr/bin/say", msg, "--voice=%s" % (voice)], check_rc=True)
+    module.run_command(
+        ["/usr/bin/say", msg, "--voice=%s" % (voice)], check_rc=True)
+
 
 def main():
 
@@ -62,12 +65,12 @@ def main():
     if not os.path.exists("/usr/bin/say"):
         module.fail_json(msg="/usr/bin/say is not installed")
 
-    msg   = module.params['msg']
+    msg = module.params['msg']
     voice = module.params['voice']
 
     say(module, msg, voice)
 
-    module.exit_json(msg=msg, changed=False) 
+    module.exit_json(msg=msg, changed=False)
 
 # import module snippets
 from ansible.module_utils.basic import *

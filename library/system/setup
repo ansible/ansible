@@ -95,7 +95,7 @@ def run_setup(module):
         except:
             facter = False
         if facter:
-            for (k,v) in facter_ds.items():
+            for (k, v) in facter_ds.items():
                 setup_options["facter_%s" % k] = v
 
     # ditto for ohai
@@ -107,13 +107,13 @@ def run_setup(module):
         except:
             ohai = False
         if ohai:
-            for (k,v) in ohai_ds.items():
+            for (k, v) in ohai_ds.items():
                 k2 = "ohai_%s" % k.replace('-', '_')
                 setup_options[k2] = v
 
-    setup_result = { 'ansible_facts': {} }
+    setup_result = {'ansible_facts': {}}
 
-    for (k,v) in setup_options.items():
+    for (k, v) in setup_options.items():
         if module.params['filter'] == '*' or fnmatch.fnmatch(k, module.params['filter']):
             setup_result['ansible_facts'][k] = v
 
@@ -122,14 +122,15 @@ def run_setup(module):
 
     return setup_result
 
+
 def main():
     global module
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             filter=dict(default="*", required=False),
             fact_path=dict(default='/etc/ansible/facts.d', required=False),
         ),
-        supports_check_mode = True,
+        supports_check_mode=True,
     )
     data = run_setup(module)
     module.exit_json(**data)

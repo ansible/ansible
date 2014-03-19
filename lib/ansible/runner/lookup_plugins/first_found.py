@@ -35,7 +35,7 @@
 # EXAMPLES
 #  - name: copy first existing file found to /some/file
 #    action: copy src=$item dest=/some/file
-#    with_first_found: 
+#    with_first_found:
 #     - files: foo ${inventory_hostname} bar
 #       paths: /tmp/production /tmp/staging
 
@@ -46,10 +46,10 @@
 # /tmp/staging/foo
 #              ${inventory_hostname}
 #              bar
-                  
+
 #  - name: copy first existing file found to /some/file
 #    action: copy src=$item dest=/some/file
-#    with_first_found: 
+#    with_first_found:
 #     - files: /some/place/foo ${inventory_hostname} /some/place/else
 
 #  that will look for files in this order:
@@ -63,10 +63,11 @@
 #    with_first_found:
 #     - files: generic
 #       paths: tasks/staging tasks/production
-# this will include the tasks in the file generic where it is found first (staging or production)
+# this will include the tasks in the file generic where it is found first
+# (staging or production)
 
 # example simple file lists
-#tasks:
+# tasks:
 #- name: first found file
 #  action: copy src=$item dest=/etc/file.cfg
 #  with_first_found:
@@ -101,7 +102,7 @@
 #      - templates
 
 # the above will return an empty list if the files cannot be found at all
-# if skip is unspecificed or if it is set to false then it will return a list 
+# if skip is unspecificed or if it is set to false then it will return a list
 # error which can be caught bye ignore_errors: true for that action.
 
 # finally - if you want you can use it, in place to replace first_available_file:
@@ -120,6 +121,7 @@
 
 from ansible import utils, errors
 import os
+
 
 class LookupModule(object):
 
@@ -144,7 +146,7 @@ class LookupModule(object):
                 if isinstance(term, dict):
                     files = term.get('files', [])
                     paths = term.get('paths', [])
-                    skip  = utils.boolean(term.get('skip', False))
+                    skip = utils.boolean(term.get('skip', False))
 
                     filelist = files
                     if isinstance(files, basestring):
@@ -178,10 +180,8 @@ class LookupModule(object):
             if os.path.exists(path):
                 return [path]
 
-
         if not result:
             if skip:
                 return []
             else:
                 return [None]
-

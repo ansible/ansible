@@ -26,7 +26,9 @@ from ansible.inventory.script import InventoryScript
 from ansible import utils
 from ansible import errors
 
+
 class InventoryDirectory(object):
+
     ''' Host inventory parser for ansible using a directory of inventories. '''
 
     def __init__(self, filename=C.DEFAULT_HOST_LIST):
@@ -36,9 +38,9 @@ class InventoryDirectory(object):
         self.parsers = []
         self.hosts = {}
         self.groups = {}
- 
+
         for i in self.names:
-            
+
             if i.endswith("~") or i.endswith(".orig") or i.endswith(".bak"):
                 continue
             if i.endswith(".ini"):
@@ -62,7 +64,8 @@ class InventoryDirectory(object):
             else:
                 parser = InventoryParser(filename=fullpath)
             self.parsers.append(parser)
-            # This takes a lot of code because we can't directly use any of the objects, as they have to blend
+            # This takes a lot of code because we can't directly use any of the
+            # objects, as they have to blend
             for name, group in parser.groups.iteritems():
                 if name not in self.groups:
                     self.groups[name] = group
@@ -81,10 +84,12 @@ class InventoryDirectory(object):
                             self.hosts[host.name].set_variable(k, v)
                     self.groups[name].add_host(self.hosts[host.name])
 
-            # This needs to be a second loop to ensure all the parent groups exist
+            # This needs to be a second loop to ensure all the parent groups
+            # exist
             for name, group in parser.groups.iteritems():
                 for ancestor in group.get_ancestors():
-                    self.groups[ancestor.name].add_child_group(self.groups[name])
+                    self.groups[ancestor.name].add_child_group(
+                        self.groups[name])
 
     def get_host_variables(self, host):
         """ Gets additional host variables from all inventories """
@@ -92,4 +97,3 @@ class InventoryDirectory(object):
         for i in self.parsers:
             vars.update(i.get_host_variables(host))
         return vars
-

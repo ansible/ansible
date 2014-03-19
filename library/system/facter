@@ -40,9 +40,10 @@ EXAMPLES = '''
 ansible www.example.net -m facter
 '''
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict()
+        argument_spec=dict()
     )
 
     cmd = ["/usr/bin/env", "facter", "--json"]
@@ -53,4 +54,3 @@ def main():
 from ansible.module_utils.basic import *
 
 main()
-

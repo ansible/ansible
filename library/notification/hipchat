@@ -93,7 +93,8 @@ def send_msg(module, token, room, msg_from, msg, msg_format='text',
     if info['status'] == 200:
         return response.read()
     else:
-        module.fail_json(msg="failed to send message, return status=%s" % str(info['status']))
+        module.fail_json(
+            msg="failed to send message, return status=%s" % str(info['status']))
 
 
 # ===========================================
@@ -112,7 +113,7 @@ def main():
                                                   "purple", "gray", "random"]),
             msg_format=dict(default="text", choices=["text", "html"]),
             notify=dict(default=True, type='bool'),
-            validate_certs = dict(default='yes', type='bool'),
+            validate_certs=dict(default='yes', type='bool'),
         ),
         supports_check_mode=True
     )

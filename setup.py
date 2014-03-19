@@ -17,10 +17,11 @@ if '/usr/share/ansible' in module_paths:
     install_path = '/usr/share/ansible'
 else:
     install_path = module_paths[0]
-dirs=os.listdir("./library/")
+dirs = os.listdir("./library/")
 data_files = []
 for i in dirs:
-    data_files.append((os.path.join(install_path, i), glob('./library/' + i + '/*')))
+    data_files.append(
+        (os.path.join(install_path, i), glob('./library/' + i + '/*')))
 
 setup(name='ansible',
       version=__version__,
@@ -30,28 +31,28 @@ setup(name='ansible',
       url='http://ansible.com/',
       license='GPLv3',
       install_requires=['paramiko', 'jinja2', "PyYAML"],
-      package_dir={ 'ansible': 'lib/ansible' },
+      package_dir={'ansible': 'lib/ansible'},
       packages=[
-         'ansible',
-         'ansible.utils',
-         'ansible.inventory',
-         'ansible.inventory.vars_plugins',
-         'ansible.playbook',
-         'ansible.runner',
-         'ansible.runner.action_plugins',
-         'ansible.runner.lookup_plugins',
-         'ansible.runner.connection_plugins',
-         'ansible.runner.filter_plugins',
-         'ansible.callback_plugins',
-         'ansible.module_utils'
+          'ansible',
+          'ansible.utils',
+          'ansible.inventory',
+          'ansible.inventory.vars_plugins',
+          'ansible.playbook',
+          'ansible.runner',
+          'ansible.runner.action_plugins',
+          'ansible.runner.lookup_plugins',
+          'ansible.runner.connection_plugins',
+          'ansible.runner.filter_plugins',
+          'ansible.callback_plugins',
+          'ansible.module_utils'
       ],
       scripts=[
-         'bin/ansible',
-         'bin/ansible-playbook',
-         'bin/ansible-pull',
-         'bin/ansible-doc',
-         'bin/ansible-galaxy',
-         'bin/ansible-vault',
+          'bin/ansible',
+          'bin/ansible-playbook',
+          'bin/ansible-pull',
+          'bin/ansible-doc',
+          'bin/ansible-galaxy',
+          'bin/ansible-vault',
       ],
       data_files=data_files
-)
+      )

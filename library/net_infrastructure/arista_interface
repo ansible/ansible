@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#    
+#
 # Copyright (C) 2013, Arista Networks <netdevops@aristanetworks.com>
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -88,44 +88,47 @@ names (ie Ethernet, not Et1)
 import syslog
 import json
 
+
 class AristaInterface(object):
+
     """ This is the base class for managing physcial Ethernet interface 
         resources in EOS network devices.  This class acts as a wrapper around 
         the netdev extension in EOS.  You must have the netdev extension 
         installed in order for this module to work properly.   
-        
+
         The following commands are implemented in this module:
             * netdev interface list
             * netdev interface show
             * netdev interface edit
             * netdev interface delete
-            
+
         This module only allows for the management of physical Ethernet 
         interfaces.  
     """
-    
-    attributes = ['interface_id', 'admin', 'description', 'mtu', 'speed', 'duplex']
-    
+
+    attributes = [
+        'interface_id', 'admin', 'description', 'mtu', 'speed', 'duplex']
+
     def __init__(self, module):
-        self.module         = module
-        self.interface_id   = module.params['interface_id']
-        self.admin          = module.params['admin']
-        self.description    = module.params['description']
-        self.mtu            = module.params['mtu']
-        self.speed          = module.params['speed']
-        self.duplex         = module.params['duplex']
-        self.logging        = module.params['logging']
-        
+        self.module = module
+        self.interface_id = module.params['interface_id']
+        self.admin = module.params['admin']
+        self.description = module.params['description']
+        self.mtu = module.params['mtu']
+        self.speed = module.params['speed']
+        self.duplex = module.params['duplex']
+        self.logging = module.params['logging']
+
     @property
     def changed(self):
         """ The changed property provides a boolean response if the currently
             loaded resouces has changed from the resource running in EOS.
-            
+
             Returns True if the object is not in sync 
             Returns False if the object is in sync.
         """
         return len(self.updates()) > 0
-        
+
     def log(self, entry):
         """ This method is responsible for sending log messages to the local
             syslog.
@@ -133,20 +136,20 @@ class AristaInterface(object):
         if self.logging:
             syslog.openlog('ansible-%s' % os.path.basename(__file__))
             syslog.syslog(syslog.LOG_NOTICE, entry)
-                    
+
     def run_command(self, cmd):
         """ Calls the Ansible module run_command method. This method will 
             directly return the results of the run_command method
-        """        
+        """
         self.log(cmd)
         return self.module.run_command(cmd.split())
-        
+
     def get(self):
         """ This method will return a dictionary with the attributes of the
             physical ethernet interface resource specified in interface_id.  
             The physcial ethernet interface resource has the following 
             stucture:
-            
+
               {
                 "interface_id": <interface_id>,
                 "description": <description>,
@@ -155,37 +158,37 @@ class AristaInterface(object):
                 "speed": [auto | 100m | 1g | 10g]
                 "duplex": [auto | half | full]
               }
-            
+
             If the physical ethernet interface specified by interface_id does 
             not exist in the system, this method will return None.
         """
         cmd = "netdev interface show %s" % self.interface_id
         (rc, out, err) = self.run_command(cmd)
         obj = json.loads(out)
-        if obj.get('status') != 200: 
+        if obj.get('status') != 200:
             return None
         return obj['result']
-        
+
     def update(self):
         """ Updates an existing physical ethernet resource in the current 
             running configuration.   If the physical ethernet resource does 
             not exist, this method will return an error.
-            
+
             This method implements the following commands:
                 * netdev interface edit {interface_id} [attributes]
-            
+
             Returns an updated physical ethernet interafce resoure if the 
             update method was successful
         """
-        attribs = list()        
+        attribs = list()
         for attrib in self.updates():
             attribs.append("--%s" % attrib)
             attribs.append(str(getattr(self, attrib)))
-        
+
         if attribs:
             cmd = "netdev interface edit %s " % self.interface_id
             cmd += " ".join(attribs)
-        
+
             (rc, out, err) = self.run_command(cmd)
             resp = json.loads(out)
             if resp.get('status') != 200:
@@ -195,9 +198,9 @@ class AristaInterface(object):
             else:
                 out = resp['result']
             return (rc, out, err)
- 
+
         return (0, None, "No attributes have been modified")
-        
+
     def updates(self):
         """ This method will check the current phy resource in the running
             configuration and return a list of attribute that are not in sync
@@ -214,12 +217,11 @@ class AristaInterface(object):
 
         self.log("updates: %s" % updates)
         return updates
-        
-        
+
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             interface_id=dict(default=None, type='str'),
             admin=dict(default=None, choices=['up', 'down'], type='str'),
             description=dict(default=None, type='str'),
@@ -228,17 +230,17 @@ def main():
             duplex=dict(default=None, choices=['auto', 'half', 'full']),
             logging=dict(default=False, type='bool')
         ),
-        supports_check_mode = True
+        supports_check_mode=True
     )
-    
+
     obj = AristaInterface(module)
-    
+
     rc = None
     result = dict()
-    
+
     if module.check_mode:
         module.exit_json(changed=obj.changed)
-    
+
     else:
         if obj.changed:
             (rc, out, err) = obj.update()
@@ -250,9 +252,9 @@ def main():
         result['changed'] = False
     else:
         result['changed'] = True
-            
+
     module.exit_json(**result)
-    
+
 
 # import module snippets
 from ansible.module_utils.basic import *

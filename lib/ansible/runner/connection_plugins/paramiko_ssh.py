@@ -38,25 +38,28 @@ from ansible.callbacks import vvv
 from ansible import errors
 from ansible import utils
 from ansible import constants as C
-            
-AUTHENTICITY_MSG="""
+
+AUTHENTICITY_MSG = """
 paramiko: The authenticity of host '%s' can't be established. 
 The %s key fingerprint is %s. 
 Are you sure you want to continue connecting (yes/no)?
 """
 
-# prevent paramiko warning noise -- see http://stackoverflow.com/questions/3920502/
-HAVE_PARAMIKO=False
+# prevent paramiko warning noise -- see
+# http://stackoverflow.com/questions/3920502/
+HAVE_PARAMIKO = False
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     try:
         import paramiko
-        HAVE_PARAMIKO=True
+        HAVE_PARAMIKO = True
         logging.getLogger("paramiko").setLevel(logging.WARNING)
     except ImportError:
         pass
 
+
 class MyAddPolicy(object):
+
     """
     Based on AutoAddPolicy in paramiko so we can determine when keys are added
     and also prompt for input.
@@ -65,7 +68,7 @@ class MyAddPolicy(object):
     local L{HostKeys} object, and saving it.  This is used by L{SSHClient}.
     """
 
-    def __init__(self, runner): 
+    def __init__(self, runner):
         self.runner = runner
 
     def missing_host_key(self, client, hostname, key):
@@ -79,20 +82,19 @@ class MyAddPolicy(object):
             sys.stdin = self.runner._new_stdin
             fingerprint = hexlify(key.get_fingerprint())
             ktype = key.get_name()
-            
+
             # clear out any premature input on sys.stdin
             tcflush(sys.stdin, TCIFLUSH)
 
             inp = raw_input(AUTHENTICITY_MSG % (hostname, ktype, fingerprint))
             sys.stdin = old_stdin
-            if inp not in ['yes','y','']:
+            if inp not in ['yes', 'y', '']:
                 fcntl.flock(self.runner.output_lockfile, fcntl.LOCK_UN)
                 fcntl.flock(self.runner.process_lockfile, fcntl.LOCK_UN)
                 raise errors.AnsibleError("host connection rejected by user")
 
             fcntl.lockf(self.runner.output_lockfile, fcntl.LOCK_UN)
             fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_UN)
-
 
         key._added_by_ansible_this_time = True
 
@@ -101,14 +103,17 @@ class MyAddPolicy(object):
 
         # host keys are actually saved in close() function below
         # in order to control ordering.
-        
 
-# keep connection objects on a per host basis to avoid repeated attempts to reconnect
+
+# keep connection objects on a per host basis to avoid repeated attempts
+# to reconnect
 
 SSH_CONNECTION_CACHE = {}
 SFTP_CONNECTION_CACHE = {}
 
+
 class Connection(object):
+
     ''' SSH based connections with Paramiko '''
 
     def __init__(self, runner, host, port, user, password, private_key_file, *args, **kwargs):
@@ -131,7 +136,8 @@ class Connection(object):
         if cache_key in SSH_CONNECTION_CACHE:
             self.ssh = SSH_CONNECTION_CACHE[cache_key]
         else:
-            self.ssh = SSH_CONNECTION_CACHE[cache_key] = self._connect_uncached()
+            self.ssh = SSH_CONNECTION_CACHE[
+                cache_key] = self._connect_uncached()
         return self
 
     def _connect_uncached(self):
@@ -140,10 +146,11 @@ class Connection(object):
         if not HAVE_PARAMIKO:
             raise errors.AnsibleError("paramiko is not installed")
 
-        vvv("ESTABLISH CONNECTION FOR USER: %s on PORT %s TO %s" % (self.user, self.port, self.host), host=self.host)
+        vvv("ESTABLISH CONNECTION FOR USER: %s on PORT %s TO %s" %
+            (self.user, self.port, self.host), host=self.host)
 
         ssh = paramiko.SSHClient()
-     
+
         self.keyfile = os.path.expanduser("~/.ssh/known_hosts")
 
         if C.HOST_KEY_CHECKING:
@@ -161,12 +168,13 @@ class Connection(object):
             else:
                 key_filename = None
             ssh.connect(self.host, username=self.user, allow_agent=allow_agent, look_for_keys=True,
-                key_filename=key_filename, password=self.password,
-                timeout=self.runner.timeout, port=self.port)
+                        key_filename=key_filename, password=self.password,
+                        timeout=self.runner.timeout, port=self.port)
         except Exception, e:
             msg = str(e)
             if "PID check failed" in msg:
-                raise errors.AnsibleError("paramiko version issue, please upgrade paramiko on the machine running ansible")
+                raise errors.AnsibleError(
+                    "paramiko version issue, please upgrade paramiko on the machine running ansible")
             elif "Private key file is encrypted" in msg:
                 msg = 'ssh %s@%s:%s : %s\nTo connect as a different user, use -u <username>.' % (
                     self.user, self.host, self.port, msg)
@@ -180,7 +188,8 @@ class Connection(object):
         ''' run a command on the remote host '''
 
         if in_data:
-            raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
+            raise errors.AnsibleError(
+                "Internal Error: this module does not support optimized module pipelining")
 
         bufsize = 4096
         try:
@@ -207,9 +216,11 @@ class Connection(object):
                              width=int(os.getenv('COLUMNS', 0)),
                              height=int(os.getenv('LINES', 0)))
             if self.runner.sudo or sudoable:
-                shcmd, prompt, success_key = utils.make_sudo_cmd(sudo_user, executable, cmd)
+                shcmd, prompt, success_key = utils.make_sudo_cmd(
+                    sudo_user, executable, cmd)
             elif self.runner.su or su:
-                shcmd, prompt, success_key = utils.make_su_cmd(su_user, executable, cmd)
+                shcmd, prompt, success_key = utils.make_su_cmd(
+                    su_user, executable, cmd)
             vvv("EXEC %s" % shcmd, host=self.host)
             sudo_output = ''
             try:
@@ -223,7 +234,7 @@ class Connection(object):
                                     'user %s does not exist' % sudo_user)
                             else:
                                 raise errors.AnsibleError('ssh connection ' +
-                                    'closed waiting for password prompt')
+                                                          'closed waiting for password prompt')
                         sudo_output += chunk
                     if success_key not in sudo_output:
                         if sudoable:
@@ -231,7 +242,8 @@ class Connection(object):
                         elif su:
                             chan.sendall(self.runner.su_pass + '\n')
             except socket.timeout:
-                raise errors.AnsibleError('ssh timed out waiting for sudo.\n' + sudo_output)
+                raise errors.AnsibleError(
+                    'ssh timed out waiting for sudo.\n' + sudo_output)
 
         stdout = ''.join(chan.makefile('rb', bufsize))
         stderr = ''.join(chan.makefile_stderr('rb', bufsize))
@@ -241,22 +253,26 @@ class Connection(object):
         ''' transfer a file from local to remote '''
         vvv("PUT %s TO %s" % (in_path, out_path), host=self.host)
         if not os.path.exists(in_path):
-            raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
+            raise errors.AnsibleFileNotFound(
+                "file or module does not exist: %s" % in_path)
         try:
             self.sftp = self.ssh.open_sftp()
         except Exception, e:
-            raise errors.AnsibleError("failed to open a SFTP connection (%s)" % e)
+            raise errors.AnsibleError(
+                "failed to open a SFTP connection (%s)" % e)
         try:
             self.sftp.put(in_path, out_path)
         except IOError:
-            raise errors.AnsibleError("failed to transfer file to %s" % out_path)
+            raise errors.AnsibleError(
+                "failed to transfer file to %s" % out_path)
 
     def _connect_sftp(self):
         cache_key = "%s__%s__" % (self.host, self.user)
         if cache_key in SFTP_CONNECTION_CACHE:
             return SFTP_CONNECTION_CACHE[cache_key]
         else:
-            result = SFTP_CONNECTION_CACHE[cache_key] = self.connect().ssh.open_sftp()
+            result = SFTP_CONNECTION_CACHE[
+                cache_key] = self.connect().ssh.open_sftp()
             return result
 
     def fetch_file(self, in_path, out_path):
@@ -265,17 +281,20 @@ class Connection(object):
         try:
             self.sftp = self._connect_sftp()
         except Exception, e:
-            raise errors.AnsibleError("failed to open a SFTP connection (%s)", e)
+            raise errors.AnsibleError(
+                "failed to open a SFTP connection (%s)", e)
         try:
             self.sftp.get(in_path, out_path)
         except IOError:
-            raise errors.AnsibleError("failed to transfer file from %s" % in_path)
+            raise errors.AnsibleError(
+                "failed to transfer file from %s" % in_path)
 
     def _any_keys_added(self):
-        added_any = False        
+        added_any = False
         for hostname, keys in self.ssh._host_keys.iteritems():
             for keytype, key in keys.iteritems():
-                added_this_time = getattr(key, '_added_by_ansible_this_time', False)
+                added_this_time = getattr(
+                    key, '_added_by_ansible_this_time', False)
                 if added_this_time:
                     return True
         return False
@@ -297,14 +316,18 @@ class Connection(object):
         for hostname, keys in self.ssh._host_keys.iteritems():
             for keytype, key in keys.iteritems():
                 # was f.write
-                added_this_time = getattr(key, '_added_by_ansible_this_time', False)
+                added_this_time = getattr(
+                    key, '_added_by_ansible_this_time', False)
                 if not added_this_time:
-                    f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
+                    f.write("%s %s %s\n" %
+                            (hostname, keytype, key.get_base64()))
         for hostname, keys in self.ssh._host_keys.iteritems():
             for keytype, key in keys.iteritems():
-                added_this_time = getattr(key, '_added_by_ansible_this_time', False)
+                added_this_time = getattr(
+                    key, '_added_by_ansible_this_time', False)
                 if added_this_time:
-                    f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
+                    f.write("%s %s %s\n" %
+                            (hostname, keytype, key.get_base64()))
         f.close()
 
     def close(self):
@@ -318,7 +341,7 @@ class Connection(object):
         if C.PARAMIKO_RECORD_HOST_KEYS and self._any_keys_added():
 
             # add any new SSH host keys -- warning -- this could be slow
-            lockfile = self.keyfile.replace("known_hosts",".known_hosts.lock") 
+            lockfile = self.keyfile.replace("known_hosts", ".known_hosts.lock")
             dirname = os.path.dirname(self.keyfile)
             if not os.path.exists(dirname):
                 os.makedirs(dirname)
@@ -338,4 +361,3 @@ class Connection(object):
             fcntl.lockf(KEY_LOCK, fcntl.LOCK_UN)
 
         self.ssh.close()
-        

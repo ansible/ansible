@@ -36,29 +36,33 @@ MODULEDIR = C.DEFAULT_MODULE_PATH
 BLACKLIST_EXTS = ('.swp', '.bak', '~', '.rpm')
 
 _ITALIC = re.compile(r"I\(([^)]+)\)")
-_BOLD   = re.compile(r"B\(([^)]+)\)")
+_BOLD = re.compile(r"B\(([^)]+)\)")
 _MODULE = re.compile(r"M\(([^)]+)\)")
-_URL    = re.compile(r"U\(([^)]+)\)")
-_CONST  = re.compile(r"C\(([^)]+)\)")
-PAGER   = 'less'
-LESS_OPTS = 'FRSX' # -F (quit-if-one-screen) -R (allow raw ansi control chars)
+_URL = re.compile(r"U\(([^)]+)\)")
+_CONST = re.compile(r"C\(([^)]+)\)")
+PAGER = 'less'
+LESS_OPTS = 'FRSX'  # -F (quit-if-one-screen) -R (allow raw ansi control chars)
                    # -S (chop long lines) -X (disable termcap init and de-init)
+
 
 def pager_print(text):
     ''' just print text '''
     print text
+
 
 def pager_pipe(text, cmd):
     ''' pipe text through a pager '''
     if 'LESS' not in os.environ:
         os.environ['LESS'] = LESS_OPTS
     try:
-        cmd = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=sys.stdout)
+        cmd = subprocess.Popen(
+            cmd, shell=True, stdin=subprocess.PIPE, stdout=sys.stdout)
         cmd.communicate(input=text)
     except IOError:
         pass
     except KeyboardInterrupt:
         pass
+
 
 def pager(text):
     ''' find reasonable way to display text '''
@@ -75,6 +79,7 @@ def pager(text):
     else:
         pager_print(text)
 
+
 def tty_ify(text):
 
     t = _ITALIC.sub("`" + r"\1" + "'", text)    # I(word) => `word'
@@ -85,16 +90,18 @@ def tty_ify(text):
 
     return t
 
+
 def get_man_text(doc):
 
-    opt_indent="        "
+    opt_indent = "        "
     text = []
     text.append("> %s\n" % doc['module'].upper())
 
     desc = "".join(doc['description'])
 
-    text.append("%s\n" % textwrap.fill(tty_ify(desc), initial_indent="  ", subsequent_indent="  "))
-    
+    text.append("%s\n" % textwrap.fill(
+        tty_ify(desc), initial_indent="  ", subsequent_indent="  "))
+
     if 'option_keys' in doc and len(doc['option_keys']) > 0:
         text.append("Options (= is mandatory):\n")
 
@@ -114,18 +121,17 @@ def get_man_text(doc):
             choices = ", ".join(str(i) for i in opt['choices'])
             desc = desc + " (Choices: " + choices + ")"
         text.append("%s\n" % textwrap.fill(tty_ify(desc), initial_indent=opt_indent,
-                             subsequent_indent=opt_indent))
+                                           subsequent_indent=opt_indent))
 
     if 'notes' in doc and len(doc['notes']) > 0:
         notes = "".join(doc['notes'])
         text.append("Notes:%s\n" % textwrap.fill(tty_ify(notes), initial_indent="  ",
-                            subsequent_indent=opt_indent))
-
+                                                 subsequent_indent=opt_indent))
 
     if 'requirements' in doc and doc['requirements'] is not None and len(doc['requirements']) > 0:
         req = ", ".join(doc['requirements'])
         text.append("Requirements:%s\n" % textwrap.fill(tty_ify(req), initial_indent="  ",
-                            subsequent_indent=opt_indent))
+                                                        subsequent_indent=opt_indent))
 
     if 'examples' in doc and len(doc['examples']) > 0:
         text.append("Example%s:\n" % ('' if len(doc['examples']) < 2 else 's'))
@@ -160,6 +166,7 @@ def get_snippet_text(doc):
 
     return "\n".join(text)
 
+
 def get_module_list_text(module_list):
     text = []
     for module in sorted(set(module_list)):
@@ -182,9 +189,11 @@ def get_module_list_text(module_list):
             text.append("%-20s %-60.60s" % (module, desc))
         except:
             traceback.print_exc()
-            sys.stderr.write("ERROR: module %s has a documentation error formatting or is missing documentation\n" % module)
+            sys.stderr.write(
+                "ERROR: module %s has a documentation error formatting or is missing documentation\n" % module)
             pass
     return "\n".join(text)
+
 
 def main():
 
@@ -195,20 +204,20 @@ def main():
     )
 
     p.add_option("-M", "--module-path",
-            action="store",
-            dest="module_path",
-            default=MODULEDIR,
-            help="Ansible modules/ directory")
+                 action="store",
+                 dest="module_path",
+                 default=MODULEDIR,
+                 help="Ansible modules/ directory")
     p.add_option("-l", "--list",
-            action="store_true",
-            default=False,
-            dest='list_dir',
-            help='List available modules')
+                 action="store_true",
+                 default=False,
+                 dest='list_dir',
+                 help='List available modules')
     p.add_option("-s", "--snippet",
-            action="store_true",
-            default=False,
-            dest='show_snippet',
-            help='Show playbook snippet for specified module(s)')
+                 action="store_true",
+                 default=False,
+                 dest='show_snippet',
+                 help='Show playbook snippet for specified module(s)')
     p.add_option('-v', action='version', help='Show version number and exit')
 
     (options, args) = p.parse_args()
@@ -234,7 +243,7 @@ def main():
 
     if len(args) == 0:
         p.print_help()
-   
+
     def print_paths(finder):
         ''' Returns a string suitable for printing of the search path '''
 
@@ -244,14 +253,14 @@ def main():
             if i not in ret:
                 ret.append(i)
         return os.pathsep.join(ret)
- 
+
     text = ''
     for module in args:
 
         filename = utils.plugins.module_finder.find_plugin(module)
         if filename is None:
             sys.stderr.write("module %s not found in %s\n" % (module,
-                    print_paths(utils.plugins.module_finder)))
+                                                              print_paths(utils.plugins.module_finder)))
             continue
 
         if any(filename.endswith(x) for x in BLACKLIST_EXTS):
@@ -261,21 +270,22 @@ def main():
             doc, plainexamples = module_docs.get_docstring(filename)
         except:
             traceback.print_exc()
-            sys.stderr.write("ERROR: module %s has a documentation error formatting or is missing documentation\n" % module)
+            sys.stderr.write(
+                "ERROR: module %s has a documentation error formatting or is missing documentation\n" % module)
             continue
 
         if doc is not None:
 
             all_keys = []
-            for (k,v) in doc['options'].iteritems():
+            for (k, v) in doc['options'].iteritems():
                 all_keys.append(k)
             all_keys = sorted(all_keys)
             doc['option_keys'] = all_keys
 
-            doc['filename']         = filename
-            doc['docuri']           = doc['module'].replace('_', '-')
-            doc['now_date']         = datetime.date.today().strftime('%Y-%m-%d')
-            doc['plainexamples']    = plainexamples
+            doc['filename'] = filename
+            doc['docuri'] = doc['module'].replace('_', '-')
+            doc['now_date'] = datetime.date.today().strftime('%Y-%m-%d')
+            doc['plainexamples'] = plainexamples
 
             if options.show_snippet:
                 text += get_snippet_text(doc)
@@ -284,7 +294,8 @@ def main():
         else:
             # this typically means we couldn't even parse the docstring, not just that the YAML is busted,
             # probably a quoting issue.
-            sys.stderr.write("ERROR: module %s missing documentation (or could not parse documentation)\n" % module)
+            sys.stderr.write(
+                "ERROR: module %s missing documentation (or could not parse documentation)\n" % module)
     pager(text)
 
 if __name__ == '__main__':

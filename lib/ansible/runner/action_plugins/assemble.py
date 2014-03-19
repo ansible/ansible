@@ -24,6 +24,7 @@ import tempfile
 from ansible import utils
 from ansible.runner.return_data import ReturnData
 
+
 class ActionModule(object):
 
     TRANSFERS_FILES = True
@@ -34,7 +35,7 @@ class ActionModule(object):
     def _assemble_from_fragments(self, src_path, delimiter=None):
         ''' assemble a file from a directory of fragments '''
         tmpfd, temp_path = tempfile.mkstemp()
-        tmp = os.fdopen(tmpfd,'w')
+        tmp = os.fdopen(tmpfd, 'w')
         delimit_me = False
         for f in sorted(os.listdir(src_path)):
             fragment = "%s/%s" % (src_path, f)
@@ -55,7 +56,7 @@ class ActionModule(object):
     def run(self, conn, tmp, module_name, module_args, inject, complex_args=None, **kwargs):
 
         # load up options
-        options  = {}
+        options = {}
         if complex_args:
             options.update(complex_args)
 
@@ -66,7 +67,6 @@ class ActionModule(object):
         delimiter = options.get('delimiter', None)
         remote_src = utils.boolean(options.get('remote_src', 'yes'))
 
-
         if src is None or dest is None:
             result = dict(failed=True, msg="src and dest are required")
             return ReturnData(conn=conn, comm_ok=False, result=result)
@@ -74,7 +74,8 @@ class ActionModule(object):
         if remote_src:
             return self.runner._execute_module(conn, tmp, 'assemble', module_args, inject=inject, complex_args=complex_args)
         elif '_original_file' in inject:
-            src = utils.path_dwim_relative(inject['_original_file'], 'files', src, self.runner.basedir)
+            src = utils.path_dwim_relative(
+                inject['_original_file'], 'files', src, self.runner.basedir)
         else:
             # the source is local, so expand it here
             src = os.path.expanduser(src)
@@ -88,28 +89,34 @@ class ActionModule(object):
         if pathmd5 != remote_md5:
             resultant = file(path).read()
             if self.runner.diff:
-                dest_result = self.runner._execute_module(conn, tmp, 'slurp', "path=%s" % dest, inject=inject, persist_files=True)
+                dest_result = self.runner._execute_module(
+                    conn, tmp, 'slurp', "path=%s" % dest, inject=inject, persist_files=True)
                 if 'content' in dest_result.result:
                     dest_contents = dest_result.result['content']
                     if dest_result.result['encoding'] == 'base64':
                         dest_contents = base64.b64decode(dest_contents)
                     else:
-                        raise Exception("unknown encoding, failed: %s" % dest_result.result)
+                        raise Exception(
+                            "unknown encoding, failed: %s" % dest_result.result)
             xfered = self.runner._transfer_str(conn, tmp, 'src', resultant)
 
             # fix file permissions when the copy is done as a different user
             if self.runner.sudo and self.runner.sudo_user != 'root':
-                self.runner._low_level_exec_command(conn, "chmod a+r %s" % xfered, tmp)
+                self.runner._low_level_exec_command(
+                    conn, "chmod a+r %s" % xfered, tmp)
 
             # run the copy module
-            module_args = "%s src=%s dest=%s original_basename=%s" % (module_args, pipes.quote(xfered), pipes.quote(dest), pipes.quote(os.path.basename(src)))
+            module_args = "%s src=%s dest=%s original_basename=%s" % (
+                module_args, pipes.quote(xfered), pipes.quote(dest), pipes.quote(os.path.basename(src)))
 
             if self.runner.noop_on_check(inject):
                 return ReturnData(conn=conn, comm_ok=True, result=dict(changed=True), diff=dict(before_header=dest, after_header=src, after=resultant))
             else:
-                res = self.runner._execute_module(conn, tmp, 'copy', module_args, inject=inject)
+                res = self.runner._execute_module(
+                    conn, tmp, 'copy', module_args, inject=inject)
                 res.diff = dict(after=resultant)
                 return res
         else:
-            module_args = "%s src=%s dest=%s original_basename=%s" % (module_args, pipes.quote(xfered), pipes.quote(dest), pipes.quote(os.path.basename(src)))
+            module_args = "%s src=%s dest=%s original_basename=%s" % (
+                module_args, pipes.quote(xfered), pipes.quote(dest), pipes.quote(os.path.basename(src)))
             return self.runner._execute_module(conn, tmp, 'file', module_args, inject=inject)

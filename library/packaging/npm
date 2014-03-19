@@ -102,7 +102,9 @@ try:
 except ImportError:
     import simplejson as json
 
+
 class Npm(object):
+
     def __init__(self, module, **kwargs):
         self.module = module
         self.glbl = kwargs['glbl']
@@ -136,12 +138,13 @@ class Npm(object):
                 cmd.append('--registry')
                 cmd.append(self.registry)
 
-            #If path is specified, cd into that path and run the command.
+            # If path is specified, cd into that path and run the command.
             cwd = None
             if self.path:
                 cwd = self.path
 
-            rc, out, err = self.module.run_command(cmd, check_rc=check_rc, cwd=cwd)
+            rc, out, err = self.module.run_command(
+                cmd, check_rc=check_rc, cwd=cwd)
             return out
         return ''
 
@@ -159,7 +162,7 @@ class Npm(object):
                     missing.append(dep)
                 else:
                     installed.append(dep)
-        #Named dependency not installed
+        # Named dependency not installed
         else:
             missing.append(self.name)
 
@@ -215,9 +218,10 @@ def main():
     if not path and not glbl:
         module.fail_json(msg='path must be specified when not using global')
     if state == 'absent' and not name:
-        module.fail_json(msg='uninstalling a package is only available for named packages')
+        module.fail_json(
+            msg='uninstalling a package is only available for named packages')
 
-    npm = Npm(module, name=name, path=path, version=version, glbl=glbl, production=production, \
+    npm = Npm(module, name=name, path=path, version=version, glbl=glbl, production=production,
               executable=executable, registry=registry)
 
     changed = False
@@ -232,7 +236,7 @@ def main():
         if len(missing) or len(outdated):
             changed = True
             npm.install()
-    else: #absent
+    else:  # absent
         installed, missing = npm.list()
         if name in installed:
             changed = True

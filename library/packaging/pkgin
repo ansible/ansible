@@ -60,11 +60,13 @@ import os
 import sys
 import pipes
 
+
 def query_package(module, pkgin_path, name, state="present"):
 
     if state == "present":
 
-        rc, out, err = module.run_command("%s -y list | grep ^%s" % (pipes.quote(pkgin_path), pipes.quote(name)), use_unsafe_shell=True)
+        rc, out, err = module.run_command(
+            "%s -y list | grep ^%s" % (pipes.quote(pkgin_path), pipes.quote(name)), use_unsafe_shell=True)
 
         if rc == 0:
             # At least one package with a package name that starts with ``name``
@@ -80,7 +82,8 @@ def query_package(module, pkgin_path, name, state="present"):
             # and bot ``gcc47`` and ``gcc47-libs`` being installed:
             #
             #   gcc47-libs-4.7.2nb4   The GNU Compiler Collection (GCC) support shared libraries.
-            #   gcc47-4.7.2nb3       The GNU Compiler Collection (GCC) - 4.7 Release Series
+            # gcc47-4.7.2nb3       The GNU Compiler Collection (GCC) - 4.7
+            # Release Series
 
             # Loop over lines in ``out``
             for line in out.split('\n'):
@@ -91,7 +94,8 @@ def query_package(module, pkgin_path, name, state="present"):
 
                 # Strip version
                 # (results in sth like 'gcc47-libs')
-                pkgname_without_version = '-'.join(pkgname_with_version.split('-')[:-1])
+                pkgname_without_version = '-'.join(
+                    pkgname_with_version.split('-')[:-1])
 
                 if name == pkgname_without_version:
                     return True
@@ -108,7 +112,8 @@ def remove_packages(module, pkgin_path, packages):
         if not query_package(module, pkgin_path, package):
             continue
 
-        rc, out, err = module.run_command("%s -y remove %s" % (pkgin_path, package))
+        rc, out, err = module.run_command(
+            "%s -y remove %s" % (pkgin_path, package))
 
         if query_package(module, pkgin_path, package):
             module.fail_json(msg="failed to remove %s: %s" % (package, out))
@@ -130,7 +135,8 @@ def install_packages(module, pkgin_path, packages):
         if query_package(module, pkgin_path, package):
             continue
 
-        rc, out, err = module.run_command("%s -y install %s" % (pkgin_path, package))
+        rc, out, err = module.run_command(
+            "%s -y install %s" % (pkgin_path, package))
 
         if not query_package(module, pkgin_path, package):
             module.fail_json(msg="failed to install %s: %s" % (package, out))
@@ -138,17 +144,17 @@ def install_packages(module, pkgin_path, packages):
         install_c += 1
 
     if install_c > 0:
-        module.exit_json(changed=True, msg="present %s package(s)" % (install_c))
+        module.exit_json(
+            changed=True, msg="present %s package(s)" % (install_c))
 
     module.exit_json(changed=False, msg="package(s) already present")
 
 
-
 def main():
     module = AnsibleModule(
-            argument_spec    = dict(
-                state        = dict(default="present", choices=["present","absent"]),
-                name         = dict(aliases=["pkg"], required=True)))
+        argument_spec=dict(
+            state=dict(default="present", choices=["present", "absent"]),
+            name=dict(aliases=["pkg"], required=True)))
 
     pkgin_path = module.get_bin_path('pkgin', True, ['/opt/local/bin'])
 

@@ -28,6 +28,7 @@ from ansible import module_common
 from ansible.runner.return_data import ReturnData
 from ansible.callbacks import vv, vvv
 
+
 class ActionModule(object):
 
     def __init__(self, runner):
@@ -39,7 +40,7 @@ class ActionModule(object):
         module_args = self.runner._complex_args_hack(complex_args, module_args)
 
         if self.runner.noop_on_check(inject):
-            if module_name in [ 'shell', 'command' ]:
+            if module_name in ['shell', 'command']:
                 return ReturnData(conn=conn, comm_ok=True, result=dict(skipped=True, msg='check mode not supported for %s' % module_name))
             # else let the module parsing code decide, though this will only be allowed for AnsibleModuleCommon using
             # python modules for now
@@ -55,5 +56,3 @@ class ActionModule(object):
 
         vv("REMOTE_MODULE %s %s" % (module_name, module_args), host=conn.host)
         return self.runner._execute_module(conn, tmp, module_name, module_args, inject=inject, complex_args=complex_args)
-
-

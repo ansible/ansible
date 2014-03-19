@@ -18,23 +18,23 @@ output of "spacewalk-report system-groups-systems|inventory".
 
 Tested with Ansible 1.1
 """
-# 
+#
 # Author:: Jon Miller <jonEbird@gmail.com>
 # Copyright:: Copyright (c) 2013, Jon Miller
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 2 of the License, or (at
 # your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 
 import sys
 import os
@@ -47,10 +47,10 @@ try:
 except:
     import simplejson as json
 
-base_dir  = os.path.dirname(os.path.realpath(__file__))
+base_dir = os.path.dirname(os.path.realpath(__file__))
 SW_REPORT = '/usr/bin/spacewalk-report'
 CACHE_DIR = os.path.join(base_dir, ".spacewalk_reports")
-CACHE_AGE = 300 # 5min
+CACHE_AGE = 300  # 5min
 
 # Sanity check
 if not os.path.exists(SW_REPORT):
@@ -64,6 +64,7 @@ if not os.path.exists(CACHE_DIR):
 
 # Helper functions
 #------------------------------
+
 
 def spacewalk_report(name):
     """Yield a dictionary form of each CSV output produced by the specified
@@ -121,7 +122,7 @@ if options.list:
         for group, systems in groups.iteritems():
             print '[%s]\n%s\n' % (group, '\n'.join(systems))
     else:
-        print json.dumps(dict([ (k, list(s)) for k, s in groups.iteritems() ]))
+        print json.dumps(dict([(k, list(s)) for k, s in groups.iteritems()]))
 
     sys.exit(0)
 
@@ -141,7 +142,7 @@ elif options.host:
         print >> sys.stderr, 'Problem executing the command "%s inventory": %s' % \
             (SW_REPORT, str(e))
         sys.exit(2)
-    
+
     if options.human:
         print 'Host: %s' % options.host
         for k, v in host_details.iteritems():

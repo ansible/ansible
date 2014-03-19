@@ -113,6 +113,7 @@ except ImportError, e:
     print "failed=True msg='failed to import python module: %s'" % e
     sys.exit(1)
 
+
 class DockerImageManager:
 
     def __init__(self, module):
@@ -122,7 +123,8 @@ class DockerImageManager:
         self.tag = self.module.params.get('tag')
         self.nocache = self.module.params.get('nocache')
         docker_url = urlparse(module.params.get('docker_url'))
-        self.client = docker.Client(base_url=docker_url.geturl(), timeout=module.params.get('timeout'))
+        self.client = docker.Client(
+            base_url=docker_url.geturl(), timeout=module.params.get('timeout'))
         self.changed = False
         self.log = []
         self.error_msg = None
@@ -131,7 +133,8 @@ class DockerImageManager:
         return "".join(self.log) if as_string else self.log
 
     def build(self):
-        stream = self.client.build(self.path, tag=':'.join([self.name, self.tag]), nocache=self.nocache, rm=True, stream=True)
+        stream = self.client.build(self.path, tag=':'.join(
+            [self.name, self.tag]), nocache=self.nocache, rm=True, stream=True)
         success_search = r'Successfully built ([0-9a-f]+)'
         image_id = None
         self.changed = True
@@ -161,7 +164,8 @@ class DockerImageManager:
         for i in images:
             # Docker-py version >= 0.3 (Docker API >= 1.8)
             if 'RepoTags' in i:
-                repotag = '%s:%s' % (getattr(self, 'name', ''), getattr(self, 'tag', 'latest'))
+                repotag = '%s:%s' % (
+                    getattr(self, 'name', ''), getattr(self, 'tag', 'latest'))
                 if not self.name or repotag in i['RepoTags']:
                     filtered_images.append(i)
             # Docker-py version < 0.3 (Docker API < 1.8)
@@ -182,14 +186,15 @@ class DockerImageManager:
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            path            = dict(required=False, default=None),
-            name            = dict(required=True),
-            tag             = dict(required=False, default=""),
-            nocache         = dict(default=False, type='bool'),
-            state           = dict(default='present', choices=['absent', 'present', 'build']),
-            docker_url      = dict(default='unix://var/run/docker.sock'),
-            timeout         = dict(default=600, type='int'),
+        argument_spec=dict(
+            path=dict(required=False, default=None),
+            name=dict(required=True),
+            tag=dict(required=False, default=""),
+            nocache=dict(default=False, type='bool'),
+            state=dict(
+                default='present', choices=['absent', 'present', 'build']),
+            docker_url=dict(default='unix://var/run/docker.sock'),
+            timeout=dict(default=600, type='int'),
         )
     )
 
@@ -219,16 +224,20 @@ def main():
                 msg = "Image builded: %s" % image_id
             else:
                 failed = True
-                msg = "Error: %s\nLog:%s" % (manager.error_msg, manager.get_log())
+                msg = "Error: %s\nLog:%s" % (
+                    manager.error_msg, manager.get_log())
 
-        module.exit_json(failed=failed, changed=manager.has_changed(), msg=msg, image_id=image_id)
+        module.exit_json(
+            failed=failed, changed=manager.has_changed(), msg=msg, image_id=image_id)
 
     except docker.client.APIError as e:
-        module.exit_json(failed=True, changed=manager.has_changed(), msg="Docker API error: " + e.explanation)
+        module.exit_json(
+            failed=True, changed=manager.has_changed(), msg="Docker API error: " + e.explanation)
 
     except RequestException as e:
-        module.exit_json(failed=True, changed=manager.has_changed(), msg=repr(e))
-        
+        module.exit_json(
+            failed=True, changed=manager.has_changed(), msg=repr(e))
+
 # import module snippets
 from ansible.module_utils.basic import *
 

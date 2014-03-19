@@ -83,6 +83,7 @@ EXAMPLES = '''
 - command: /usr/bin/make_database.sh arg1 arg2 creates=/path/to/database
 '''
 
+
 def main():
 
     # the command module is the one ansible module that does not take key=value args
@@ -92,9 +93,9 @@ def main():
     shell = module.params['shell']
     chdir = module.params['chdir']
     executable = module.params['executable']
-    args  = module.params['args']
-    creates  = module.params['creates']
-    removes  = module.params['removes']
+    args = module.params['args']
+    creates = module.params['creates']
+    removes = module.params['removes']
 
     if args.strip() == '':
         module.fail_json(rc=256, msg="no command given")
@@ -136,7 +137,8 @@ def main():
         args = shlex.split(args)
     startd = datetime.datetime.now()
 
-    rc, out, err = module.run_command(args, executable=executable, use_unsafe_shell=shell)
+    rc, out, err = module.run_command(
+        args, executable=executable, use_unsafe_shell=shell)
 
     endd = datetime.datetime.now()
     delta = endd - startd
@@ -147,14 +149,14 @@ def main():
         err = ''
 
     module.exit_json(
-        cmd     = args,
-        stdout  = out.rstrip("\r\n"),
-        stderr  = err.rstrip("\r\n"),
-        rc      = rc,
-        start   = str(startd),
-        end     = str(endd),
-        delta   = str(delta),
-        changed = True
+        cmd=args,
+        stdout=out.rstrip("\r\n"),
+        stderr=err.rstrip("\r\n"),
+        rc=rc,
+        start=str(startd),
+        end=str(endd),
+        delta=str(delta),
+        changed=True
     )
 
 # import module snippets
@@ -162,6 +164,7 @@ from ansible.module_utils.basic import *
 
 # only the command module should ever need to do this
 # everything else should be simple key=value
+
 
 class CommandModule(AnsibleModule):
 
@@ -184,7 +187,8 @@ class CommandModule(AnsibleModule):
             args = args.replace("#USE_SHELL", "")
             params['shell'] = True
 
-        r = re.compile(r'(^|\s)(creates|removes|chdir|executable|NO_LOG)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)')
+        r = re.compile(
+            r'(^|\s)(creates|removes|chdir|executable|NO_LOG)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)')
         for m in r.finditer(args):
             v = m.group(4).replace("\\", "")
             if m.group(2) == "creates":
@@ -195,13 +199,15 @@ class CommandModule(AnsibleModule):
                 v = os.path.expanduser(v)
                 v = os.path.abspath(v)
                 if not (os.path.exists(v) and os.path.isdir(v)):
-                    self.fail_json(rc=258, msg="cannot change to directory '%s': path does not exist" % v)
+                    self.fail_json(
+                        rc=258, msg="cannot change to directory '%s': path does not exist" % v)
                 params['chdir'] = v
             elif m.group(2) == "executable":
                 v = os.path.expanduser(v)
                 v = os.path.abspath(v)
                 if not (os.path.exists(v)):
-                    self.fail_json(rc=258, msg="cannot use executable '%s': file does not exist" % v)
+                    self.fail_json(
+                        rc=258, msg="cannot use executable '%s': file does not exist" % v)
                 params['executable'] = v
             elif m.group(2) == "NO_LOG":
                 params['NO_LOG'] = self.boolean(v)

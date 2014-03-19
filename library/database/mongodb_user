@@ -113,6 +113,7 @@ else:
 # MongoDB module specific support methods.
 #
 
+
 def user_add(module, client, db_name, user, password, roles):
     try:
         db = client[db_name]
@@ -122,11 +123,13 @@ def user_add(module, client, db_name, user, password, roles):
             try:
                 db.add_user(user, password, None, roles=roles)
             except:
-                module.fail_json(msg='"problem adding user; you must be on mongodb 2.4+ and pymongo 2.5+ to use the roles param"')
+                module.fail_json(
+                    msg='"problem adding user; you must be on mongodb 2.4+ and pymongo 2.5+ to use the roles param"')
     except OperationFailure:
         return False
 
     return True
+
 
 def user_remove(client, db_name, user):
     try:
@@ -137,6 +140,7 @@ def user_remove(client, db_name, user):
 
     return True
 
+
 def load_mongocnf():
     config = ConfigParser.RawConfigParser()
     mongocnf = os.path.expanduser('~/.mongodb.cnf')
@@ -146,8 +150,8 @@ def load_mongocnf():
     try:
         config.readfp(open(mongocnf))
         creds = dict(
-          user=config.get('client', 'user'),
-          password=config.get('client', 'pass')
+            user=config.get('client', 'user'),
+            password=config.get('client', 'pass')
         )
     except (ConfigParser.NoOptionError, IOError):
         return False
@@ -158,9 +162,10 @@ def load_mongocnf():
 # Module execution.
 #
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             login_user=dict(default=None),
             login_password=dict(default=None),
             login_host=dict(default='localhost'),
@@ -189,7 +194,8 @@ def main():
     try:
         client = MongoClient(login_host, int(login_port))
     except ConnectionFailure, e:
-        module.fail_json(msg='unable to connect to database, check login_host and login_port are correct')
+        module.fail_json(
+            msg='unable to connect to database, check login_host and login_port are correct')
 
     # try to authenticate as a target user to check if it already exists
     try:
@@ -206,19 +212,23 @@ def main():
             login_user = mongocnf_creds['user']
             login_password = mongocnf_creds['password']
     elif login_password is None and login_user is not None:
-        module.fail_json(msg='when supplying login arguments, both login_user and login_password must be provided')
+        module.fail_json(
+            msg='when supplying login arguments, both login_user and login_password must be provided')
 
     if login_user is not None and login_password is not None:
         client.admin.authenticate(login_user, login_password)
 
     if state == 'present':
         if password is None:
-            module.fail_json(msg='password parameter required when adding a user')
+            module.fail_json(
+                msg='password parameter required when adding a user')
         if user_add(module, client, db_name, user, password, roles) is not True:
-            module.fail_json(msg='Unable to add or update user, check login_user and login_password are correct and that this user has access to the admin collection')
+            module.fail_json(
+                msg='Unable to add or update user, check login_user and login_password are correct and that this user has access to the admin collection')
     elif state == 'absent':
         if user_remove(client, db_name, user) is not True:
-            module.fail_json(msg='Unable to remove user, check login_user and login_password are correct and that this user has access to the admin collection')
+            module.fail_json(
+                msg='Unable to remove user, check login_user and login_password are correct and that this user has access to the admin collection')
 
     module.exit_json(changed=True, user=user)
 

@@ -31,6 +31,7 @@ REPLACER_ARGS = "\"<<INCLUDE_ANSIBLE_MODULE_ARGS>>\""
 REPLACER_LANG = "\"<<INCLUDE_ANSIBLE_MODULE_LANG>>\""
 REPLACER_COMPLEX = "\"<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>\""
 
+
 class ModuleReplacer(object):
 
     """
@@ -57,19 +58,20 @@ class ModuleReplacer(object):
     be other snippets.
     """
 
-    # ******************************************************************************
+    # ************************************************************************
 
     def __init__(self, strip_comments=False):
         this_file = inspect.getfile(inspect.currentframe())
-        self.snippet_path = os.path.join(os.path.dirname(this_file), 'module_utils')
-        self.strip_comments = strip_comments # TODO: implement
+        self.snippet_path = os.path.join(
+            os.path.dirname(this_file), 'module_utils')
+        self.strip_comments = strip_comments  # TODO: implement
 
-    # ******************************************************************************
-
+    # ************************************************************************
 
     def slurp(self, path):
         if not os.path.exists(path):
-            raise errors.AnsibleError("imported module support code does not exist at %s" % path)
+            raise errors.AnsibleError(
+                "imported module support code does not exist at %s" % path)
         fd = open(path)
         data = fd.read()
         fd.close()
@@ -88,7 +90,7 @@ class ModuleReplacer(object):
             module_style = 'new'
         elif 'WANT_JSON' in module_data:
             module_style = 'non_native_want_json'
-      
+
         output = StringIO()
         lines = module_data.split('\n')
         snippet_names = []
@@ -96,20 +98,23 @@ class ModuleReplacer(object):
         for line in lines:
 
             if REPLACER in line:
-                output.write(self.slurp(os.path.join(self.snippet_path, "basic.py")))
+                output.write(
+                    self.slurp(os.path.join(self.snippet_path, "basic.py")))
                 snippet_names.append('basic')
             elif line.startswith('from ansible.module_utils.'):
-                tokens=line.split(".")
+                tokens = line.split(".")
                 import_error = False
                 if len(tokens) != 3:
                     import_error = True
                 if " import *" not in line:
                     import_error = True
                 if import_error:
-                    raise errors.AnsibleError("error importing module in %s, expecting format like 'from ansible.module_utils.basic import *'" % module_path)
+                    raise errors.AnsibleError(
+                        "error importing module in %s, expecting format like 'from ansible.module_utils.basic import *'" % module_path)
                 snippet_name = tokens[2].split()[0]
                 snippet_names.append(snippet_name)
-                output.write(self.slurp(os.path.join(self.snippet_path, snippet_name + ".py")))
+                output.write(
+                    self.slurp(os.path.join(self.snippet_path, snippet_name + ".py")))
 
             else:
                 if self.strip_comments and line.startswith("#") or line == '':
@@ -118,11 +123,12 @@ class ModuleReplacer(object):
                 output.write("\n")
 
         if len(snippet_names) > 0 and not 'basic' in snippet_names:
-            raise errors.AnsibleError("missing required import in %s: from ansible.module_utils.basic import *" % module_path) 
+            raise errors.AnsibleError(
+                "missing required import in %s: from ansible.module_utils.basic import *" % module_path)
 
         return (output.getvalue(), module_style)
 
-    # ******************************************************************************
+    # ************************************************************************
 
     def modify_module(self, module_path, complex_args, module_args, inject):
 
@@ -131,11 +137,13 @@ class ModuleReplacer(object):
             # read in the module source
             module_data = f.read()
 
-            (module_data, module_style) = self._find_snippet_imports(module_data, module_path)
+            (module_data, module_style) = self._find_snippet_imports(
+                module_data, module_path)
 
             complex_args_json = utils.jsonify(complex_args)
             # We force conversion of module_args to str because module_common calls shlex.split,
-            # a standard library function that incorrectly handles Unicode input before Python 2.7.3.
+            # a standard library function that incorrectly handles Unicode
+            # input before Python 2.7.3.
             try:
                 encoded_args = repr(module_args.encode('utf-8'))
             except UnicodeDecodeError:
@@ -143,17 +151,19 @@ class ModuleReplacer(object):
             encoded_lang = repr(C.DEFAULT_MODULE_LANG)
             encoded_complex = repr(complex_args_json)
 
-            # these strings should be part of the 'basic' snippet which is required to be included
+            # these strings should be part of the 'basic' snippet which is
+            # required to be included
             module_data = module_data.replace(REPLACER_ARGS, encoded_args)
             module_data = module_data.replace(REPLACER_LANG, encoded_lang)
-            module_data = module_data.replace(REPLACER_COMPLEX, encoded_complex)
+            module_data = module_data.replace(
+                REPLACER_COMPLEX, encoded_complex)
 
             if module_style == 'new':
                 facility = C.DEFAULT_SYSLOG_FACILITY
                 if 'ansible_syslog_facility' in inject:
                     facility = inject['ansible_syslog_facility']
-                module_data = module_data.replace('syslog.LOG_USER', "syslog.%s" % facility)
-
+                module_data = module_data.replace(
+                    'syslog.LOG_USER', "syslog.%s" % facility)
 
             lines = module_data.split("\n")
             shebang = None
@@ -161,11 +171,12 @@ class ModuleReplacer(object):
                 shebang = lines[0].strip()
                 args = shlex.split(str(shebang[2:]))
                 interpreter = args[0]
-                interpreter_config = 'ansible_%s_interpreter' % os.path.basename(interpreter)
+                interpreter_config = 'ansible_%s_interpreter' % os.path.basename(
+                    interpreter)
 
                 if interpreter_config in inject:
-                    lines[0] = shebang = "#!%s %s" % (inject[interpreter_config], " ".join(args[1:]))
+                    lines[0] = shebang = "#!%s %s" % (
+                        inject[interpreter_config], " ".join(args[1:]))
                     module_data = "\n".join(lines)
 
             return (module_data, module_style, shebang)
-

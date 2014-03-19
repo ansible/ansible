@@ -114,26 +114,33 @@ import tempfile
 import re
 import shlex
 
+
 class keydict(dict):
 
     """ a dictionary that maintains the order of keys as they are added """
-    
+
     # http://stackoverflow.com/questions/2328235/pythonextend-the-dict-class
 
     def __init__(self, *args, **kw):
-        super(keydict,self).__init__(*args, **kw)
-        self.itemlist = super(keydict,self).keys()
+        super(keydict, self).__init__(*args, **kw)
+        self.itemlist = super(keydict, self).keys()
+
     def __setitem__(self, key, value):
         self.itemlist.append(key)
-        super(keydict,self).__setitem__(key, value)        
+        super(keydict, self).__setitem__(key, value)
+
     def __iter__(self):
         return iter(self.itemlist)
+
     def keys(self):
         return self.itemlist
+
     def values(self):
         return [self[key] for key in self]
+
     def itervalues(self):
-        return (self[key] for key in self)    
+        return (self[key] for key in self)
+
 
 def keyfile(module, user, write=False, path=None, manage_dir=True):
     """
@@ -152,12 +159,12 @@ def keyfile(module, user, write=False, path=None, manage_dir=True):
     except KeyError, e:
         module.fail_json(msg="Failed to lookup user %s: %s" % (user, str(e)))
     if path is None:
-        homedir    = user_entry.pw_dir
-        sshdir     = os.path.join(homedir, ".ssh")
-        keysfile   = os.path.join(sshdir, "authorized_keys")
+        homedir = user_entry.pw_dir
+        sshdir = os.path.join(homedir, ".ssh")
+        keysfile = os.path.join(sshdir, "authorized_keys")
     else:
-        sshdir     = os.path.dirname(path)
-        keysfile   = path
+        sshdir = os.path.dirname(path)
+        keysfile = path
 
     if not write:
         return keysfile
@@ -178,7 +185,8 @@ def keyfile(module, user, write=False, path=None, manage_dir=True):
         if not os.path.exists(basedir):
             os.makedirs(basedir)
         try:
-            f = open(keysfile, "w") #touches file so we can set ownership and perms
+            # touches file so we can set ownership and perms
+            f = open(keysfile, "w")
         finally:
             f.close()
         if module.selinux_enabled():
@@ -192,19 +200,20 @@ def keyfile(module, user, write=False, path=None, manage_dir=True):
 
     return keysfile
 
+
 def parseoptions(module, options):
     ''' 
     reads a string containing ssh-key options 
     and returns a dictionary of those options
     '''
-    options_dict = keydict() #ordered dict
+    options_dict = keydict()  # ordered dict
     if options:
         token_exp = [
             # matches separator
             (r',+', False),
             # matches option with value, e.g. from="x,y"
             (r'([a-z0-9-]+)="((?:[^"\\]|\\.)*)"', True),
-            # matches single option, e.g. no-agent-forwarding 
+            # matches single option, e.g. no-agent-forwarding
             (r'[a-z0-9-]+', True)
         ]
 
@@ -229,6 +238,7 @@ def parseoptions(module, options):
 
     return options_dict
 
+
 def parsekey(module, raw_key):
     '''
     parses a key, which may or may not contain a list
@@ -239,14 +249,14 @@ def parsekey(module, raw_key):
         'ssh-ed25519',
         'ecdsa-sha2-nistp256',
         'ecdsa-sha2-nistp384',
-        'ecdsa-sha2-nistp521', 
+        'ecdsa-sha2-nistp521',
         'ssh-dss',
         'ssh-rsa',
     ]
 
-    options    = None   # connection options
-    key        = None   # encrypted key string
-    key_type   = None   # type of ssh key
+    options = None   # connection options
+    key = None   # encrypted key string
+    key_type = None   # type of ssh key
     type_index = None   # index of keytype in key string|list
 
     # remove comment yaml escapes
@@ -255,7 +265,7 @@ def parsekey(module, raw_key):
     # split key safely
     lex = shlex.shlex(raw_key)
     lex.quotes = ["'", '"']
-    lex.commenters = '' #keep comment hashes
+    lex.commenters = ''  # keep comment hashes
     lex.whitespace_split = True
     key_parts = list(lex)
 
@@ -283,6 +293,7 @@ def parsekey(module, raw_key):
 
     return (key, key_type, options, comment)
 
+
 def readkeys(module, filename):
 
     if not os.path.isfile(filename):
@@ -302,49 +313,53 @@ def readkeys(module, filename):
     f.close()
     return keys
 
+
 def writekeys(module, filename, keys):
 
     fd, tmp_path = tempfile.mkstemp('', 'tmp', os.path.dirname(filename))
-    f = open(tmp_path,"w")
+    f = open(tmp_path, "w")
     try:
         for index, key in keys.items():
             try:
-                (keyhash,type,options,comment) = key
+                (keyhash, type, options, comment) = key
                 option_str = ""
                 if options:
                     option_strings = []
                     for option_key in options.keys():
                         if options[option_key]:
-                            option_strings.append("%s=\"%s\"" % (option_key, options[option_key]))
+                            option_strings.append(
+                                "%s=\"%s\"" % (option_key, options[option_key]))
                         else:
                             option_strings.append("%s" % option_key)
 
                     option_str = ",".join(option_strings)
                     option_str += " "
-                key_line = "%s%s %s %s\n" % (option_str, type, keyhash, comment)
+                key_line = "%s%s %s %s\n" % (
+                    option_str, type, keyhash, comment)
             except:
                 key_line = key
             f.writelines(key_line)
     except IOError, e:
-        module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, str(e)))
+        module.fail_json(msg="Failed to write to file %s: %s" %
+                         (tmp_path, str(e)))
     f.close()
     module.atomic_move(tmp_path, filename)
+
 
 def enforce_state(module, params):
     """
     Add or remove key.
     """
 
-    user        = params["user"]
-    key         = params["key"]
-    path        = params.get("path", None)
-    manage_dir  = params.get("manage_dir", True)
-    state       = params.get("state", "present")
+    user = params["user"]
+    key = params["key"]
+    path = params.get("path", None)
+    manage_dir = params.get("manage_dir", True)
+    state = params.get("state", "present")
     key_options = params.get("key_options", None)
 
     # extract indivial keys into an array, skipping blank lines and comments
     key = [s for s in key.splitlines() if s and not s.startswith('#')]
-
 
     # check current state -- just get the filename, don't create file
     do_write = False
@@ -356,7 +371,8 @@ def enforce_state(module, params):
         parsed_new_key = parsekey(module, new_key)
         if key_options is not None:
             parsed_options = parseoptions(module, key_options)
-            parsed_new_key = (parsed_new_key[0], parsed_new_key[1], parsed_options, parsed_new_key[3])
+            parsed_new_key = (
+                parsed_new_key[0], parsed_new_key[1], parsed_options, parsed_new_key[3])
 
         if not parsed_new_key:
             module.fail_json(msg="invalid key specified: %s" % new_key)
@@ -377,9 +393,8 @@ def enforce_state(module, params):
             else:
                 matched = True
 
-
         # handle idempotent state=present
-        if state=="present":
+        if state == "present":
             if len(non_matching_keys) > 0:
                 for non_matching_key in non_matching_keys:
                     if non_matching_key[0] in existing_keys:
@@ -390,29 +405,31 @@ def enforce_state(module, params):
                 existing_keys[parsed_new_key[0]] = parsed_new_key
                 do_write = True
 
-        elif state=="absent":
+        elif state == "absent":
             if not matched:
                 continue
             del existing_keys[parsed_new_key[0]]
             do_write = True
 
     if do_write:
-        writekeys(module, keyfile(module, user, do_write, path, manage_dir), existing_keys)
+        writekeys(
+            module, keyfile(module, user, do_write, path, manage_dir), existing_keys)
         params['changed'] = True
 
     return params
 
+
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-           user        = dict(required=True, type='str'),
-           key         = dict(required=True, type='str'),
-           path        = dict(required=False, type='str'),
-           manage_dir  = dict(required=False, type='bool', default=True),
-           state       = dict(default='present', choices=['absent','present']),
-           key_options = dict(required=False, type='str'),
-           unique      = dict(default=False, type='bool'),
+        argument_spec=dict(
+            user=dict(required=True, type='str'),
+            key=dict(required=True, type='str'),
+            path=dict(required=False, type='str'),
+            manage_dir=dict(required=False, type='bool', default=True),
+            state=dict(default='present', choices=['absent', 'present']),
+            key_options=dict(required=False, type='str'),
+            unique=dict(default=False, type='bool'),
         )
     )
 

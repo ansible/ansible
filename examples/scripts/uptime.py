@@ -12,8 +12,8 @@ results = ansible.runner.Runner(
 ).run()
 
 if results is None:
-   print "No hosts found"
-   sys.exit(1)
+    print "No hosts found"
+    sys.exit(1)
 
 print "UP ***********"
 for (hostname, result) in results['contacted'].items():
@@ -28,4 +28,3 @@ for (hostname, result) in results['contacted'].items():
 print "DOWN *********"
 for (hostname, result) in results['dark'].items():
     print "%s >>> %s" % (hostname, result)
-

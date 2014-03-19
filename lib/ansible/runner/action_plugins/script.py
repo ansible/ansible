@@ -44,7 +44,8 @@ class ActionModule(object):
         # From library/command keep in sync
         creates = None
         removes = None
-        r = re.compile(r'(^|\s)(creates|removes)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)')
+        r = re.compile(
+            r'(^|\s)(creates|removes)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)')
         for m in r.finditer(module_args):
             v = m.group(4).replace("\\", "")
             if m.group(2) == "creates":
@@ -99,7 +100,8 @@ class ActionModule(object):
         args = " ".join(tokens[1:])
         source = template.template(self.runner.basedir, source, inject)
         if '_original_file' in inject:
-            source = utils.path_dwim_relative(inject['_original_file'], 'files', source, self.runner.basedir)
+            source = utils.path_dwim_relative(
+                inject['_original_file'], 'files', source, self.runner.basedir)
         else:
             source = utils.path_dwim(self.runner.basedir, source)
 
@@ -112,13 +114,15 @@ class ActionModule(object):
         conn.put_file(source, tmp_src)
 
         sudoable = True
-        # set file permissions, more permisive when the copy is done as a different user
+        # set file permissions, more permisive when the copy is done as a
+        # different user
         if self.runner.sudo and self.runner.sudo_user != 'root':
             cmd_args_chmod = "chmod a+rx %s" % tmp_src
             sudoable = False
         else:
             cmd_args_chmod = "chmod +rx %s" % tmp_src
-        self.runner._low_level_exec_command(conn, cmd_args_chmod, tmp, sudoable=sudoable)
+        self.runner._low_level_exec_command(
+            conn, cmd_args_chmod, tmp, sudoable=sudoable)
 
         # add preparation steps to one ssh roundtrip executing the script
         env_string = self.runner._compute_environment_string(inject)
@@ -129,7 +133,8 @@ class ActionModule(object):
 
         # clean up after
         if "tmp" in tmp and not C.DEFAULT_KEEP_REMOTE_FILES:
-            self.runner._low_level_exec_command(conn, 'rm -rf %s >/dev/null 2>&1' % tmp, tmp)
+            self.runner._low_level_exec_command(
+                conn, 'rm -rf %s >/dev/null 2>&1' % tmp, tmp)
 
         result.result['changed'] = True
 

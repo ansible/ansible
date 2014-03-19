@@ -21,6 +21,7 @@ import ansible.utils as utils
 import ansible.errors as errors
 import ansible.inventory as inventory
 
+
 def flatten(terms):
     ret = []
     for term in terms:
@@ -30,6 +31,7 @@ def flatten(terms):
             ret.append(term)
     return ret
 
+
 class LookupModule(object):
 
     def __init__(self, basedir=None, **kwargs):
@@ -37,12 +39,13 @@ class LookupModule(object):
         if 'runner' in kwargs:
             self.host_list = kwargs['runner'].inventory.host_list
         else:
-            raise errors.AnsibleError("inventory_hostnames must be used as a loop. Example: \"with_inventory_hostnames: \'all\'\"")
+            raise errors.AnsibleError(
+                "inventory_hostnames must be used as a loop. Example: \"with_inventory_hostnames: \'all\'\"")
 
     def run(self, terms, inject=None, **kwargs):
-        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
+        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
 
         if not isinstance(terms, list):
-            raise errors.AnsibleError("with_inventory_hostnames expects a list")
+            raise errors.AnsibleError(
+                "with_inventory_hostnames expects a list")
         return flatten(inventory.Inventory(self.host_list).list_hosts(terms))
-

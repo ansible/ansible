@@ -126,9 +126,12 @@ except ImportError:
     print "failed=True msg='boto required for this module'"
     sys.exit(1)
 
-# returns a tuple: (whether or not a parameter was changed, the remaining parameters that weren't found in this parameter group)
+# returns a tuple: (whether or not a parameter was changed, the remaining
+# parameters that weren't found in this parameter group)
+
 
 class NotModifiableError(StandardError):
+
     def __init__(self, error_message, *args):
         super(NotModifiableError, self).__init__(error_message, *args)
         self.error_message = error_message
@@ -147,6 +150,7 @@ INT_MODIFIERS = {
 }
 
 TRUE_VALUES = ('on', 'true', 'yes', '1',)
+
 
 def set_parameter(param, value, immediate):
     """
@@ -177,6 +181,7 @@ def set_parameter(param, value, immediate):
     param.value = converted_value
     param.apply(immediate)
 
+
 def modify_group(group, params, immediate=False):
     """ Set all of the params in a group to the provided new params. Raises NotModifiableError if any of the
         params to be changed are read only.
@@ -192,10 +197,11 @@ def modify_group(group, params, immediate=False):
 
             if param.value != new_value:
                 if not param.is_modifiable:
-                    raise NotModifiableError('Parameter %s is not modifiable.' % key)
+                    raise NotModifiableError(
+                        'Parameter %s is not modifiable.' % key)
 
                 changed[key] = {'old': param.value, 'new': new_value}
-                
+
                 set_parameter(param, new_value, immediate)
 
                 del new_params[key]
@@ -206,42 +212,46 @@ def modify_group(group, params, immediate=False):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            state             = dict(required=True,  choices=['present', 'absent']),
-            name              = dict(required=True),
-            engine            = dict(required=False, choices=VALID_ENGINES),
-            description       = dict(required=False),
-            params            = dict(required=False, aliases=['parameters'], type='dict'),
-            immediate         = dict(required=False, type='bool'),
-        )
+        state=dict(required=True,  choices=['present', 'absent']),
+        name=dict(required=True),
+        engine=dict(required=False, choices=VALID_ENGINES),
+        description=dict(required=False),
+        params=dict(required=False, aliases=['parameters'], type='dict'),
+        immediate=dict(required=False, type='bool'),
+    )
     )
     module = AnsibleModule(argument_spec=argument_spec)
 
-    state                   = module.params.get('state')
-    group_name              = module.params.get('name').lower()
-    group_engine            = module.params.get('engine')
-    group_description       = module.params.get('description')
-    group_params            = module.params.get('params') or {}
-    immediate               = module.params.get('immediate') or False
+    state = module.params.get('state')
+    group_name = module.params.get('name').lower()
+    group_engine = module.params.get('engine')
+    group_description = module.params.get('description')
+    group_params = module.params.get('params') or {}
+    immediate = module.params.get('immediate') or False
 
     if state == 'present':
         for required in ['name', 'description', 'engine', 'params']:
             if not module.params.get(required):
-                module.fail_json(msg = str("Parameter %s required for state='present'" % required))
+                module.fail_json(
+                    msg=str("Parameter %s required for state='present'" % required))
     else:
         for not_allowed in ['description', 'engine', 'params']:
             if module.params.get(not_allowed):
-                module.fail_json(msg = str("Parameter %s not allowed for state='absent'" % not_allowed))
+                module.fail_json(
+                    msg=str("Parameter %s not allowed for state='absent'" % not_allowed))
 
     # Retrieve any AWS settings from the environment.
     ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
 
     if not region:
-        module.fail_json(msg = str("region not specified and unable to determine region from EC2_REGION."))
+        module.fail_json(
+            msg=str("region not specified and unable to determine region from EC2_REGION."))
 
     try:
-        conn = boto.rds.connect_to_region(region, aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key)
+        conn = boto.rds.connect_to_region(
+            region, aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key)
     except boto.exception.BotoServerError, e:
-        module.fail_json(msg = e.error_message)
+        module.fail_json(msg=e.error_message)
 
     group_was_added = False
 
@@ -249,13 +259,14 @@ def main():
         changed = False
 
         try:
-            all_groups = conn.get_all_dbparameter_groups(group_name, max_records=100)
+            all_groups = conn.get_all_dbparameter_groups(
+                group_name, max_records=100)
             exists = len(all_groups) > 0
         except BotoServerError, e:
             if e.error_code != 'DBParameterGroupNotFound':
-                module.fail_json(msg = e.error_message)
+                module.fail_json(msg=e.error_message)
             exists = False
-        
+
         if state == 'absent':
             if exists:
                 conn.delete_parameter_group(group_name)
@@ -263,26 +274,28 @@ def main():
         else:
             changed = {}
             if not exists:
-                new_group = conn.create_parameter_group(group_name, engine=group_engine, description=group_description)
+                new_group = conn.create_parameter_group(
+                    group_name, engine=group_engine, description=group_description)
                 group_was_added = True
 
             # If a "Marker" is present, this group has more attributes remaining to check. Get the next batch, but only
             # if there are parameters left to set.
             marker = None
             while len(group_params):
-                next_group = conn.get_all_dbparameters(group_name, marker=marker)
+                next_group = conn.get_all_dbparameters(
+                    group_name, marker=marker)
 
-                changed_params, group_params = modify_group(next_group, group_params, immediate)
+                changed_params, group_params = modify_group(
+                    next_group, group_params, immediate)
                 changed.update(changed_params)
 
                 if hasattr(next_group, 'Marker'):
                     marker = next_group.Marker
                 else:
                     break
-                
 
     except BotoServerError, e:
-        module.fail_json(msg = e.error_message)
+        module.fail_json(msg=e.error_message)
 
     except NotModifiableError, e:
         msg = e.error_message

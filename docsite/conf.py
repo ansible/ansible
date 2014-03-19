@@ -23,13 +23,13 @@ import os
 # If your extensions are in another directory, add it here. If the directory
 # is relative to the documentation root, use os.path.abspath to make it
 # absolute, like shown here.
-#sys.path.append(os.path.abspath('some/directory'))
+# sys.path.append(os.path.abspath('some/directory'))
 #
 sys.path.insert(0, os.path.join('ansible', 'lib'))
 sys.path.append(os.path.abspath('_themes'))
 
-VERSION='0.01'
-AUTHOR='Ansible, Inc'
+VERSION = '0.01'
+AUTHOR = 'Ansible, Inc'
 
 
 # General configuration
@@ -186,8 +186,8 @@ htmlhelp_basename = 'Poseidodoc'
 # (source start file, target name, title, author, document class
 # [howto/manual]).
 latex_documents = [
-  ('index', 'ansible.tex', 'Ansible 1.2 Documentation',
-   AUTHOR, 'manual'),
+    ('index', 'ansible.tex', 'Ansible 1.2 Documentation',
+     AUTHOR, 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

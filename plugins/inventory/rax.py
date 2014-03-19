@@ -110,7 +110,8 @@ def host(regions, hostname):
         cs = pyrax.connect_to_cloudservers(region=region)
         for server in cs.servers.list():
             if server.name == hostname:
-                keys = [key for key in vars(server) if key not in ('manager', '_info')]
+                keys = [
+                    key for key in vars(server) if key not in ('manager', '_info')]
                 for key in keys:
                     # Extract value
                     value = getattr(server, key)
@@ -148,7 +149,8 @@ def _list(regions):
                 groups[group].append(server.name)
 
             # Add host metadata
-            keys = [key for key in vars(server) if key not in ('manager', '_info')]
+            keys = [
+                key for key in vars(server) if key not in ('manager', '_info')]
             for key in keys:
                 # Extract value
                 value = getattr(server, key)
@@ -172,7 +174,7 @@ def parse_args():
                                                  'inventory module')
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--list', action='store_true',
-                        help='List active servers')
+                       help='List active servers')
     group.add_argument('--host', help='List details about the specific host')
     return parser.parse_args()
 
@@ -184,7 +186,8 @@ def setup():
     try:
         creds_file = os.environ['RAX_CREDS_FILE']
     except KeyError, e:
-        # But if that fails, use the default location of ~/.rackspace_cloud_credentials
+        # But if that fails, use the default location of
+        # ~/.rackspace_cloud_credentials
         if os.path.isfile(default_creds_file):
             creds_file = default_creds_file
         else:

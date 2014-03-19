@@ -123,7 +123,8 @@ def send_msg(channel, msg, server='localhost', port='6667',
     while 1:
         motd += irc.recv(1024)
         # The server might send back a shorter nick than we specified (due to NICKLEN),
-        #  so grab that and use it from now on (assuming we find the 00[1-4] response).
+        # so grab that and use it from now on (assuming we find the 00[1-4]
+        # response).
         match = re.search('^:\S+ 00[1-4] (?P<nick>\S+) :', motd, flags=re.M)
         if match:
             nick = match.group('nick')

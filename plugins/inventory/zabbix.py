@@ -30,7 +30,8 @@ Configuration is read from `zabbix.ini`.
 Tested with Zabbix Server 2.0.6.
 """
 
-import os, sys
+import os
+import sys
 import json
 import argparse
 import ConfigParser
@@ -46,16 +47,18 @@ try:
 except:
     import simplejson as json
 
+
 class ZabbixInventory(object):
 
     def read_settings(self):
         config = ConfigParser.SafeConfigParser()
-        config.read(os.path.dirname(os.path.realpath(__file__)) + '/zabbix.ini')
+        config.read(
+            os.path.dirname(os.path.realpath(__file__)) + '/zabbix.ini')
         # server
         if config.has_option('zabbix', 'server'):
             self.zabbix_server = config.get('zabbix', 'server')
 
-        # login   
+        # login
         if config.has_option('zabbix', 'username'):
             self.zabbix_username = config.get('zabbix', 'username')
         if config.has_option('zabbix', 'password'):
@@ -77,14 +80,15 @@ class ZabbixInventory(object):
         return data
 
     def get_list(self, api):
-        hostsData = api.host.get({'output': 'extend', 'selectGroups': 'extend'})
+        hostsData = api.host.get(
+            {'output': 'extend', 'selectGroups': 'extend'})
 
         data = {}
         data[self.defaultgroup] = self.hoststub()
 
         for host in hostsData:
             hostname = host['name']
-            data[self.defaultgroup]['hosts'].append(hostname)   
+            data[self.defaultgroup]['hosts'].append(hostname)
 
             for group in host['groups']:
                 groupname = group['name']
@@ -109,7 +113,8 @@ class ZabbixInventory(object):
         if self.zabbix_server and self.zabbix_username:
             try:
                 api = ZabbixAPI(server=self.zabbix_server)
-                api.login(user=self.zabbix_username, password=self.zabbix_password)
+                api.login(
+                    user=self.zabbix_username, password=self.zabbix_password)
             except BaseException, e:
                 print >> sys.stderr, "Error: Could not login to Zabbix server. Check your zabbix.ini."
                 sys.exit(1)

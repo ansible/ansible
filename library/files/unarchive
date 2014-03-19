@@ -76,7 +76,7 @@ import os
 
 # class to handle .zip files
 class ZipFile(object):
-    
+
     def __init__(self, src, dest, module):
         self.src = src
         self.dest = dest
@@ -100,7 +100,7 @@ class ZipFile(object):
 
 # class to handle gzipped tar files
 class TgzFile(object):
-    
+
     def __init__(self, src, dest, module):
         self.src = src
         self.dest = dest
@@ -110,7 +110,8 @@ class TgzFile(object):
     def is_unarchived(self):
         dirof = os.path.dirname(self.dest)
         destbase = os.path.basename(self.dest)
-        cmd = 'tar -v -C "%s" --diff -%sf "%s"' % (self.dest, self.zipflag, self.src)
+        cmd = 'tar -v -C "%s" --diff -%sf "%s"' % (self.dest,
+                                                   self.zipflag, self.src)
         rc, out, err = self.module.run_command(cmd)
         unarchived = (rc == 0)
         return dict(unarchived=unarchived, rc=rc, out=out, err=err, cmd=cmd)
@@ -131,6 +132,7 @@ class TgzFile(object):
 
 # class to handle tar files that aren't compressed
 class TarFile(TgzFile):
+
     def __init__(self, src, dest, module):
         self.src = src
         self.dest = dest
@@ -140,6 +142,7 @@ class TarFile(TgzFile):
 
 # class to handle bzip2 compressed tar files
 class TarBzip(TgzFile):
+
     def __init__(self, src, dest, module):
         self.src = src
         self.dest = dest
@@ -149,6 +152,7 @@ class TarBzip(TgzFile):
 
 # class to handle xz compressed tar files
 class TarXz(TgzFile):
+
     def __init__(self, src, dest, module):
         self.src = src
         self.dest = dest
@@ -169,19 +173,20 @@ def pick_handler(src, dest, module):
 def main():
     module = AnsibleModule(
         # not checking because of daisy chain to file module
-        argument_spec = dict(
-            src               = dict(required=True),
-            original_basename = dict(required=False), # used to handle 'dest is a directory' via template, a slight hack
-            dest              = dict(required=True),
-            copy              = dict(default=True, type='bool'),
-            creates           = dict(required=False),
+        argument_spec=dict(
+            src=dict(required=True),
+            # used to handle 'dest is a directory' via template, a slight hack
+            original_basename=dict(required=False),
+            dest=dict(required=True),
+            copy=dict(default=True, type='bool'),
+            creates=dict(required=False),
         ),
         add_file_common_args=True,
     )
 
-    src    = os.path.expanduser(module.params['src'])
-    dest   = os.path.expanduser(module.params['dest'])
-    copy   = module.params['copy']
+    src = os.path.expanduser(module.params['src'])
+    dest = os.path.expanduser(module.params['dest'])
+    copy = module.params['copy']
     creates = module.params['creates']
 
     # did tar file arrive?
@@ -209,9 +214,11 @@ def main():
 
     # is dest OK to receive tar file?
     if not os.path.exists(os.path.dirname(dest)):
-        module.fail_json(msg="Destination directory '%s' does not exist" % (os.path.dirname(dest)))
+        module.fail_json(
+            msg="Destination directory '%s' does not exist" % (os.path.dirname(dest)))
     if not os.access(os.path.dirname(dest), os.W_OK):
-        module.fail_json(msg="Destination '%s' not writable" % (os.path.dirname(dest)))
+        module.fail_json(msg="Destination '%s' not writable" %
+                         (os.path.dirname(dest)))
 
     handler = pick_handler(src, dest, module)
 

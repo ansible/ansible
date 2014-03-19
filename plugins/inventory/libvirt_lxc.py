@@ -17,14 +17,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from subprocess import Popen,PIPE
+from subprocess import Popen, PIPE
 import sys
 import json
 
 result = {}
 result['all'] = {}
 
-pipe = Popen(['virsh', '-q', '-c', 'lxc:///', 'list', '--name', '--all'], stdout=PIPE, universal_newlines=True)
+pipe = Popen(['virsh', '-q', '-c', 'lxc:///', 'list', '--name', '--all'],
+             stdout=PIPE, universal_newlines=True)
 result['all']['hosts'] = [x[:-1] for x in pipe.stdout.readlines()]
 result['all']['vars'] = {}
 result['all']['vars']['ansible_connection'] = 'lxc'

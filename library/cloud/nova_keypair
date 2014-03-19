@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#coding: utf-8 -*-
+# coding: utf-8 -*-
 
 # (c) 2013, Benno Joy <benno@ansible.com>
 # (c) 2013, John Dewey <john@dewey.ws>
@@ -86,17 +86,18 @@ EXAMPLES = '''
                 login_tenant_name=admin name=ansible_key
 '''
 
+
 def main():
     module = AnsibleModule(
-        argument_spec                   = dict(
-        login_username                  = dict(default='admin'),
-        login_password                  = dict(required=True),
-        login_tenant_name               = dict(required='True'),
-        auth_url                        = dict(default='http://127.0.0.1:35357/v2.0/'),
-        region_name                     = dict(default=None),
-        name                            = dict(required=True),
-        public_key                      = dict(default=None),
-        state                           = dict(default='present', choices=['absent', 'present'])
+        argument_spec=dict(
+            login_username=dict(default='admin'),
+            login_password=dict(required=True),
+            login_tenant_name=dict(required='True'),
+            auth_url=dict(default='http://127.0.0.1:35357/v2.0/'),
+            region_name=dict(default=None),
+            name=dict(required=True),
+            public_key=dict(default=None),
+            state=dict(default='present', choices=['absent', 'present'])
         ),
     )
 
@@ -108,32 +109,35 @@ def main():
     try:
         nova.authenticate()
     except exc.Unauthorized, e:
-        module.fail_json(msg = "Invalid OpenStack Nova credentials.: %s" % e.message)
+        module.fail_json(
+            msg="Invalid OpenStack Nova credentials.: %s" % e.message)
     except exc.AuthorizationFailure, e:
-        module.fail_json(msg = "Unable to authorize user: %s" % e.message)
+        module.fail_json(msg="Unable to authorize user: %s" % e.message)
 
     if module.params['state'] == 'present':
         for key in nova.keypairs.list():
             if key.name == module.params['name']:
-                module.exit_json(changed = False, result = "Key present")
+                module.exit_json(changed=False, result="Key present")
         try:
-            key = nova.keypairs.create(module.params['name'], module.params['public_key'])
+            key = nova.keypairs.create(
+                module.params['name'], module.params['public_key'])
         except Exception, e:
-            module.exit_json(msg = "Error in creating the keypair: %s" % e.message)
+            module.exit_json(
+                msg="Error in creating the keypair: %s" % e.message)
         if not module.params['public_key']:
-            module.exit_json(changed = True, key = key.private_key)
-        module.exit_json(changed = True, key = None)
+            module.exit_json(changed=True, key=key.private_key)
+        module.exit_json(changed=True, key=None)
     if module.params['state'] == 'absent':
         for key in nova.keypairs.list():
             if key.name == module.params['name']:
                 try:
                     nova.keypairs.delete(module.params['name'])
                 except Exception, e:
-                    module.fail_json(msg = "The keypair deletion has failed: %s" % e.message)
-                module.exit_json( changed = True, result = "deleted")
-        module.exit_json(changed = False, result = "not present")
+                    module.fail_json(
+                        msg="The keypair deletion has failed: %s" % e.message)
+                module.exit_json(changed=True, result="deleted")
+        module.exit_json(changed=False, result="not present")
 
 # this is magic, see lib/ansible/module.params['common.py
 from ansible.module_utils.basic import *
 main()
-

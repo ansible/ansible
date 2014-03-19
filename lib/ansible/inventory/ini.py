@@ -28,7 +28,9 @@ import shlex
 import re
 import ast
 
+
 class InventoryParser(object):
+
     """
     Host inventory for ansible.
     """
@@ -54,7 +56,8 @@ class InventoryParser(object):
             try:
                 return ast.literal_eval(v)
             # Using explicit exceptions.
-            # Likely a string that literal_eval does not like. We wil then just set it.
+            # Likely a string that literal_eval does not like. We wil then just
+            # set it.
             except ValueError:
                 # For some reason this was thought to be malformed.
                 pass
@@ -82,15 +85,17 @@ class InventoryParser(object):
         for line in self.lines:
             line = utils.before_comment(line).strip()
             if line.startswith("[") and line.endswith("]"):
-                active_group_name = line.replace("[","").replace("]","")
+                active_group_name = line.replace("[", "").replace("]", "")
                 if ":vars" in line or ":children" in line:
                     active_group_name = active_group_name.rsplit(":", 1)[0]
                     if active_group_name not in self.groups:
-                        new_group = self.groups[active_group_name] = Group(name=active_group_name)
+                        new_group = self.groups[active_group_name] = Group(
+                            name=active_group_name)
                         all.add_child_group(new_group)
                     active_group_name = None
                 elif active_group_name not in self.groups:
-                    new_group = self.groups[active_group_name] = Group(name=active_group_name)
+                    new_group = self.groups[active_group_name] = Group(
+                        name=active_group_name)
                     all.add_child_group(new_group)
             elif line.startswith(";") or line == '':
                 pass
@@ -110,11 +115,11 @@ class InventoryParser(object):
                     if hostname.count(".") == 1:
                         (hostname, port) = hostname.rsplit(".", 1)
                 elif ("[" in hostname and
-                    "]" in hostname and
-                    ":" in hostname and
-                    (hostname.rindex("]") < hostname.rindex(":")) or
-                    ("]" not in hostname and ":" in hostname)):
-                        (hostname, port) = hostname.rsplit(":", 1)
+                      "]" in hostname and
+                        ":" in hostname and
+                        (hostname.rindex("]") < hostname.rindex(":")) or
+                        ("]" not in hostname and ":" in hostname)):
+                    (hostname, port) = hostname.rsplit(":", 1)
 
                 hostnames = []
                 if detect_range(hostname):
@@ -134,9 +139,10 @@ class InventoryParser(object):
                             if t.startswith('#'):
                                 break
                             try:
-                                (k,v) = t.split("=", 1)
+                                (k, v) = t.split("=", 1)
                             except ValueError, e:
-                                raise errors.AnsibleError("Invalid ini entry: %s - %s" % (t, str(e)))
+                                raise errors.AnsibleError(
+                                    "Invalid ini entry: %s - %s" % (t, str(e)))
                             host.set_variable(k, self._parse_value(v))
                     self.groups[active_group_name].add_host(host)
 
@@ -152,7 +158,7 @@ class InventoryParser(object):
             if line is None or line == '':
                 continue
             if line.startswith("[") and ":children]" in line:
-                line = line.replace("[","").replace(":children]","")
+                line = line.replace("[", "").replace(":children]", "")
                 group = self.groups.get(line, None)
                 if group is None:
                     group = self.groups[line] = Group(name=line)
@@ -163,24 +169,24 @@ class InventoryParser(object):
             elif group:
                 kid_group = self.groups.get(line, None)
                 if kid_group is None:
-                    raise errors.AnsibleError("child group is not defined: (%s)" % line)
+                    raise errors.AnsibleError(
+                        "child group is not defined: (%s)" % line)
                 else:
                     group.add_child_group(kid_group)
-
 
     # [webservers:vars]
     # http_port=1234
     # maxRequestsPerChild=200
-
     def _parse_group_variables(self):
         group = None
         for line in self.lines:
             line = line.strip()
             if line.startswith("[") and ":vars]" in line:
-                line = line.replace("[","").replace(":vars]","")
+                line = line.replace("[", "").replace(":vars]", "")
                 group = self.groups.get(line, None)
                 if group is None:
-                    raise errors.AnsibleError("can't add vars to undefined group: %s" % line)
+                    raise errors.AnsibleError(
+                        "can't add vars to undefined group: %s" % line)
             elif line.startswith("#") or line.startswith(";"):
                 pass
             elif line.startswith("["):
@@ -189,7 +195,8 @@ class InventoryParser(object):
                 pass
             elif group:
                 if "=" not in line:
-                    raise errors.AnsibleError("variables assigned to group must be in key=value form")
+                    raise errors.AnsibleError(
+                        "variables assigned to group must be in key=value form")
                 else:
                     (k, v) = [e.strip() for e in line.split("=", 1)]
                     group.set_variable(k, self._parse_value(v))

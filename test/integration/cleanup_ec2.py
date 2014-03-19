@@ -11,19 +11,24 @@ import boto
 import optparse
 import yaml
 
+
 def delete_aws_resources(get_func, attr, opts):
     for item in get_func():
         val = getattr(item, attr)
         if re.search(opts.match_re, val):
-            prompt_and_delete(item, "Delete matching %s? [y/n]: " % (item,), opts.assumeyes)
+            prompt_and_delete(
+                item, "Delete matching %s? [y/n]: " % (item,), opts.assumeyes)
+
 
 def prompt_and_delete(item, prompt, assumeyes):
     if not assumeyes:
         assumeyes = raw_input(prompt).lower() == 'y'
-    assert hasattr(item, 'delete'), "Class <%s> has no delete attribute" % item.__class__
+    assert hasattr(
+        item, 'delete'), "Class <%s> has no delete attribute" % item.__class__
     if assumeyes:
         item.delete()
         print ("Deleted %s" % item)
+
 
 def parse_args():
     # Load details from credentials.yml
@@ -38,27 +43,27 @@ def parse_args():
             default_aws_secret_key = credentials['ec2_secret_key']
 
     parser = optparse.OptionParser(usage="%s [options]" % (sys.argv[0],),
-                description=__doc__)
+                                   description=__doc__)
     parser.add_option("--access",
-        action="store", dest="ec2_access_key",
-        default=default_aws_access_key,
-        help="Amazon ec2 access id.  Can use EC2_ACCESS_KEY environment variable, or a values from credentials.yml.")
+                      action="store", dest="ec2_access_key",
+                      default=default_aws_access_key,
+                      help="Amazon ec2 access id.  Can use EC2_ACCESS_KEY environment variable, or a values from credentials.yml.")
     parser.add_option("--secret",
-        action="store", dest="ec2_secret_key",
-        default=default_aws_secret_key,
-        help="Amazon ec2 secret key.  Can use EC2_SECRET_KEY environment variable, or a values from credentials.yml.")
+                      action="store", dest="ec2_secret_key",
+                      default=default_aws_secret_key,
+                      help="Amazon ec2 secret key.  Can use EC2_SECRET_KEY environment variable, or a values from credentials.yml.")
     parser.add_option("--credentials", "-c",
-        action="store", dest="credential_file",
-        default="credentials.yml",
-        help="YAML file to read cloud credentials (default: %default)")
+                      action="store", dest="credential_file",
+                      default="credentials.yml",
+                      help="YAML file to read cloud credentials (default: %default)")
     parser.add_option("--yes", "-y",
-        action="store_true", dest="assumeyes",
-        default=False,
-        help="Don't prompt for confirmation")
+                      action="store_true", dest="assumeyes",
+                      default=False,
+                      help="Don't prompt for confirmation")
     parser.add_option("--match",
-        action="store", dest="match_re",
-        default="^ansible-testing-",
-        help="Regular expression used to find AWS resources (default: %default)")
+                      action="store", dest="match_re",
+                      default="^ansible-testing-",
+                      help="Regular expression used to find AWS resources (default: %default)")
 
     (opts, args) = parser.parse_args()
     for required in ['ec2_access_key', 'ec2_secret_key']:
@@ -73,7 +78,7 @@ if __name__ == '__main__':
 
     # Connect to AWS
     aws = boto.connect_ec2(aws_access_key_id=opts.ec2_access_key,
-            aws_secret_access_key=opts.ec2_secret_key)
+                           aws_secret_access_key=opts.ec2_secret_key)
 
     try:
         # Delete matching keys

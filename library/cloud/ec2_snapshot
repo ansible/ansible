@@ -102,7 +102,7 @@ EXAMPLES = '''
     instance_id: i-12345678
     device_name: /dev/sdb1
     description: snapshot of /data from DB123 taken 2013/11/28 12:18:32
-'''    
+'''
 
 import sys
 import time
@@ -113,17 +113,20 @@ except ImportError:
     print "failed=True msg='boto required for this module'"
     sys.exit(1)
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            volume_id = dict(),
-            description = dict(),
-            instance_id = dict(),
-            device_name = dict(),
-            region = dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS),
-            ec2_url = dict(),
-            ec2_secret_key = dict(aliases=['aws_secret_key', 'secret_key'], no_log=True),
-            ec2_access_key = dict(aliases=['aws_access_key', 'access_key']),
+        argument_spec=dict(
+            volume_id=dict(),
+            description=dict(),
+            instance_id=dict(),
+            device_name=dict(),
+            region=dict(
+                aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS),
+            ec2_url=dict(),
+            ec2_secret_key=dict(
+                aliases=['aws_secret_key', 'secret_key'], no_log=True),
+            ec2_access_key=dict(aliases=['aws_access_key', 'access_key']),
         )
     )
 
@@ -133,7 +136,8 @@ def main():
     device_name = module.params.get('device_name')
 
     if not volume_id and not instance_id or volume_id and instance_id:
-        module.fail_json('One and only one of volume_id or instance_id must be specified')
+        module.fail_json(
+            'One and only one of volume_id or instance_id must be specified')
     if instance_id and not device_name or device_name and not instance_id:
         module.fail_json('Instance ID and device name must both be specified')
 
@@ -141,17 +145,19 @@ def main():
 
     if instance_id:
         try:
-            volumes = ec2.get_all_volumes(filters={'attachment.instance-id': instance_id, 'attachment.device': device_name})
+            volumes = ec2.get_all_volumes(
+                filters={'attachment.instance-id': instance_id, 'attachment.device': device_name})
             if not volumes:
-                module.fail_json(msg="Could not find volume with name %s attached to instance %s" % (device_name, instance_id))
+                module.fail_json(msg="Could not find volume with name %s attached to instance %s" % (
+                    device_name, instance_id))
             volume_id = volumes[0].id
         except boto.exception.BotoServerError, e:
-            module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+            module.fail_json(msg="%s: %s" % (e.error_code, e.error_message))
 
     try:
         snapshot = ec2.create_snapshot(volume_id, description=description)
     except boto.exception.BotoServerError, e:
-        module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+        module.fail_json(msg="%s: %s" % (e.error_code, e.error_message))
 
     module.exit_json(changed=True, snapshot_id=snapshot.id)
 

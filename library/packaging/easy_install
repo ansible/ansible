@@ -89,6 +89,7 @@ EXAMPLES = '''
 - easy_install: name=bottle virtualenv=/webapps/myapp/venv
 '''
 
+
 def _is_package_installed(module, name, easy_install):
     cmd = '%s --dry-run %s' % (easy_install, name)
     rc, status_stdout, status_stderr = module.run_command(cmd)

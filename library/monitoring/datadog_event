@@ -76,6 +76,7 @@ datadog_event: title="Testing from ansible" text="Test!"
 
 import socket
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -98,14 +99,16 @@ def main():
                          'feed', 'chef', 'puppet', 'git', 'bitbucket', 'fabric',
                          'capistrano']
             ),
-            validate_certs = dict(default='yes', type='bool'),
+            validate_certs=dict(default='yes', type='bool'),
         )
     )
 
     post_event(module)
 
+
 def post_event(module):
-    uri = "https://app.datadoghq.com/api/v1/events?api_key=%s" % module.params['api_key']
+    uri = "https://app.datadoghq.com/api/v1/events?api_key=%s" % module.params[
+        'api_key']
 
     body = dict(
         title=module.params['title'],

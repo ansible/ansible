@@ -28,7 +28,7 @@ class CallbackModule(object):
     """
 
     def __init__(self):
-        #if foo:
+        # if foo:
         #    self.disabled = True
         pass
 
@@ -94,4 +94,3 @@ class CallbackModule(object):
 
     def playbook_on_stats(self, stats):
         pass
-

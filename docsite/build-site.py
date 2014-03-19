@@ -32,6 +32,7 @@ import os
 
 
 class SphinxBuilder(object):
+
     """
     Creates HTML documentation using Sphinx.
     """
@@ -58,14 +59,14 @@ class SphinxBuilder(object):
 
             # Create the builder
             app = Sphinx(srcdir,
-                              confdir,
-                              outdir,
-                              doctreedir,
-                              buildername,
-                              {},
-                              sys.stdout,
-                              sys.stderr,
-                              freshenv)
+                         confdir,
+                         outdir,
+                         doctreedir,
+                         buildername,
+                         {},
+                         sys.stdout,
+                         sys.stderr,
+                         freshenv)
 
             app.builder.build_all()
 

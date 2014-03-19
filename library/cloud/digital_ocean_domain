@@ -83,14 +83,19 @@ except ImportError as e:
     print "failed=True msg='dopy required for this module'"
     sys.exit(1)
 
+
 class TimeoutError(DoError):
+
     def __init__(self, msg, id):
         super(TimeoutError, self).__init__(msg)
         self.id = id
 
+
 class JsonfyMixIn(object):
+
     def to_json(self):
         return self.__dict__
+
 
 class DomainRecord(JsonfyMixIn):
     manager = None
@@ -99,7 +104,7 @@ class DomainRecord(JsonfyMixIn):
         self.__dict__.update(json)
     update_attr = __init__
 
-    def update(self, data = None, record_type = None):
+    def update(self, data=None, record_type=None):
         json = self.manager.edit_domain_record(self.domain_id,
                                                self.id,
                                                record_type if record_type is not None else self.record_type,
@@ -110,6 +115,7 @@ class DomainRecord(JsonfyMixIn):
     def destroy(self):
         json = self.manager.destroy_domain_record(self.domain_id, self.id)
         return json
+
 
 class Domain(JsonfyMixIn):
     manager = None
@@ -145,7 +151,7 @@ class Domain(JsonfyMixIn):
             return False
 
         domains = Domain.list_all()
-        
+
         if id is not None:
             for domain in domains:
                 if domain.id == id:
@@ -157,6 +163,7 @@ class Domain(JsonfyMixIn):
                     return domain
 
         return False
+
 
 def core(module):
     def getkeyordie(k):
@@ -181,7 +188,7 @@ def core(module):
 
         if not domain:
             domain = Domain.find(name=getkeyordie("name"))
-            
+
         if not domain:
             domain = Domain.add(getkeyordie("name"),
                                 getkeyordie("ip"))
@@ -195,7 +202,8 @@ def core(module):
 
             if not at_record.data == getkeyordie("ip"):
                 record.update(data=getkeyordie("ip"), record_type='A')
-                module.exit_json(changed=True, domain=Domain.find(id=record.domain_id).to_json())
+                module.exit_json(
+                    changed=True, domain=Domain.find(id=record.domain_id).to_json())
 
         module.exit_json(changed=False, domain=domain.to_json())
 
@@ -203,10 +211,10 @@ def core(module):
         domain = None
         if "id" in module.params:
             domain = Domain.find(id=module.params["id"])
-                
+
         if not domain and "name" in module.params:
             domain = Domain.find(name=module.params["name"])
-                
+
         if not domain:
             module.exit_json(changed=False, msg="Domain not found.")
 
@@ -216,15 +224,16 @@ def core(module):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            state = dict(choices=['active', 'present', 'absent', 'deleted'], default='present'),
-            client_id = dict(aliases=['CLIENT_ID'], no_log=True),
-            api_key = dict(aliases=['API_KEY'], no_log=True),
-            name = dict(type='str'),
-            id = dict(aliases=['droplet_id'], type='int'),
-            ip = dict(type='str'),
+        argument_spec=dict(
+            state=dict(
+                choices=['active', 'present', 'absent', 'deleted'], default='present'),
+            client_id=dict(aliases=['CLIENT_ID'], no_log=True),
+            api_key=dict(aliases=['API_KEY'], no_log=True),
+            name=dict(type='str'),
+            id=dict(aliases=['droplet_id'], type='int'),
+            ip=dict(type='str'),
         ),
-        required_one_of = (
+        required_one_of=(
             ['id', 'name'],
         ),
     )

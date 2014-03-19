@@ -73,7 +73,6 @@ except:
     HAS_PINGDOM = False
 
 
-
 def pause(checkid, uid, passwd, key):
 
     c = pingdom.PingdomConnection(uid, passwd, key)
@@ -81,7 +80,7 @@ def pause(checkid, uid, passwd, key):
     check = c.get_check(checkid)
     name = check.name
     result = check.status
-    #if result != "paused":             # api output buggy - accept raw exception for now
+    # if result != "paused":             # api output buggy - accept raw exception for now
     #    return (True, name, result)
     return (False, name, result)
 
@@ -93,7 +92,7 @@ def unpause(checkid, uid, passwd, key):
     check = c.get_check(checkid)
     name = check.name
     result = check.status
-    #if result != "up":                 # api output buggy - accept raw exception for now
+    # if result != "up":                 # api output buggy - accept raw exception for now
     #    return (True, name, result)
     return (False, name, result)
 
@@ -102,11 +101,12 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-        state=dict(required=True, choices=['running', 'paused', 'started', 'stopped']),
-        checkid=dict(required=True),
-        uid=dict(required=True),
-        passwd=dict(required=True),
-        key=dict(required=True)
+            state=dict(
+                required=True, choices=['running', 'paused', 'started', 'stopped']),
+            checkid=dict(required=True),
+            uid=dict(required=True),
+            passwd=dict(required=True),
+            key=dict(required=True)
         )
     )
 

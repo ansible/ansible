@@ -68,6 +68,7 @@ import re
 
 
 class Bzr(object):
+
     def __init__(self, module, parent, dest, version, bzr_path):
         self.module = module
         self.parent = parent
@@ -76,7 +77,8 @@ class Bzr(object):
         self.bzr_path = bzr_path
 
     def _command(self, args_list, cwd=None, **kwargs):
-        (rc, out, err) = self.module.run_command([self.bzr_path] + args_list, cwd=cwd, **kwargs)
+        (rc, out, err) = self.module.run_command(
+            [self.bzr_path] + args_list, cwd=cwd, **kwargs)
         return (rc, out, err)
 
     def get_version(self):
@@ -116,13 +118,15 @@ class Bzr(object):
         tree since that commit.
         '''
         if not force and self.has_local_mods():
-            self.module.fail_json(msg="Local modifications exist in branch (force=no).")
+            self.module.fail_json(
+                msg="Local modifications exist in branch (force=no).")
         return self._command(["revert"], check_rc=True, cwd=self.dest)
 
     def fetch(self):
         '''updates branch from remote sources'''
         if self.version.lower() != 'head':
-            (rc, out, err) = self._command(["pull", "-r", self.version], cwd=self.dest)
+            (rc, out, err) = self._command(
+                ["pull", "-r", self.version], cwd=self.dest)
         else:
             (rc, out, err) = self._command(["pull"], cwd=self.dest)
         if rc != 0:
@@ -139,9 +143,10 @@ class Bzr(object):
 
 # ===========================================
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             dest=dict(required=True),
             name=dict(required=True, aliases=['parent']),
             version=dict(default='head'),
@@ -150,10 +155,10 @@ def main():
         )
     )
 
-    dest    = os.path.abspath(os.path.expanduser(module.params['dest']))
-    parent  = module.params['name']
+    dest = os.path.abspath(os.path.expanduser(module.params['dest']))
+    parent = module.params['name']
     version = module.params['version']
-    force   = module.params['force']
+    force = module.params['force']
     bzr_path = module.params['executable'] or module.get_bin_path('bzr', True)
 
     bzrconfig = os.path.join(dest, '.bzr', 'branch', 'branch.conf')

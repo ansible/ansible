@@ -73,7 +73,7 @@ notes:
     - This module does not yet have support to end maintenance windows.
 '''
 
-EXAMPLES='''
+EXAMPLES = '''
 # List ongoing maintenance windows.
 - pagerduty: name=companyabc user=example@example.com passwd=password123 state=ongoing
 
@@ -101,13 +101,15 @@ import base64
 
 def ongoing(module, name, user, passwd):
 
-    url = "https://" + name + ".pagerduty.com/api/v1/maintenance_windows/ongoing"
+    url = "https://" + name + \
+        ".pagerduty.com/api/v1/maintenance_windows/ongoing"
     auth = base64.encodestring('%s:%s' % (user, passwd)).replace('\n', '')
     headers = {"Authorization": "Basic %s" % auth}
 
     response, info = fetch_url(module, url, headers=headers)
     if info['status'] != 200:
-        module.fail_json(msg="failed to lookup the ongoing window: %s" % info['msg'])
+        module.fail_json(
+            msg="failed to lookup the ongoing window: %s" % info['msg'])
 
     return False, response.read()
 
@@ -123,11 +125,13 @@ def create(module, name, user, passwd, service, hours, desc):
     auth = base64.encodestring('%s:%s' % (user, passwd)).replace('\n', '')
     headers = {
         'Authorization': 'Basic %s' % auth,
-        'Content-Type' : 'application/json',
+        'Content-Type': 'application/json',
     }
-    data = json.dumps({'maintenance_window': {'start_time': start, 'end_time': end, 'description': desc, 'service_ids': [service]}})
+    data = json.dumps({'maintenance_window': {
+                      'start_time': start, 'end_time': end, 'description': desc, 'service_ids': [service]}})
 
-    response, info = fetch_url(module, url, data=data, headers=headers, method='POST')
+    response, info = fetch_url(
+        module, url, data=data, headers=headers, method='POST')
     if info['status'] != 200:
         module.fail_json(msg="failed to create the window: %s" % info['msg'])
 
@@ -138,14 +142,15 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-        state=dict(required=True, choices=['running', 'started', 'ongoing']),
-        name=dict(required=True),
-        user=dict(required=True),
-        passwd=dict(required=True),
-        service=dict(required=False),
-        hours=dict(default='1', required=False),
-        desc=dict(default='Created by Ansible', required=False),
-        validate_certs = dict(default='yes', type='bool'),
+            state=dict(
+                required=True, choices=['running', 'started', 'ongoing']),
+            name=dict(required=True),
+            user=dict(required=True),
+            passwd=dict(required=True),
+            service=dict(required=False),
+            hours=dict(default='1', required=False),
+            desc=dict(default='Created by Ansible', required=False),
+            validate_certs=dict(default='yes', type='bool'),
         )
     )
 

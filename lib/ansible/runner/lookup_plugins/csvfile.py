@@ -20,6 +20,7 @@ import os
 import codecs
 import csv
 
+
 class LookupModule(object):
 
     def __init__(self, basedir=None, **kwargs):
@@ -44,7 +45,7 @@ class LookupModule(object):
         terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
 
         if isinstance(terms, basestring):
-            terms = [ terms ]
+            terms = [terms]
 
         ret = []
         for term in terms:
@@ -52,10 +53,10 @@ class LookupModule(object):
             key = params[0]
 
             paramvals = {
-                'file' : 'ansible.csv',
-                'default' : None,
-                'delimiter' : "TAB",
-                'col' : "1",          # column to return
+                'file': 'ansible.csv',
+                'default': None,
+                'delimiter': "TAB",
+                'col': "1",          # column to return
             }
 
             # parameters specified?
@@ -72,7 +73,8 @@ class LookupModule(object):
 
             path = utils.path_dwim(self.basedir, paramvals['file'])
 
-            var = self.read_csv(path, key, paramvals['delimiter'], paramvals['default'], paramvals['col'])
+            var = self.read_csv(
+                path, key, paramvals['delimiter'], paramvals['default'], paramvals['col'])
             if var is not None:
                 if type(var) is list:
                     for v in var:

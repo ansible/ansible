@@ -24,10 +24,12 @@ from ansible.utils import parse_kv
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 
+
 class ActionModule(object):
+
     ''' Create inventory hosts and groups in the memory inventory'''
 
-    ### We need to be able to modify the inventory
+    # We need to be able to modify the inventory
     BYPASS_HOST_LOOP = True
     TRANSFERS_FILES = False
 
@@ -55,7 +57,7 @@ class ActionModule(object):
         if ":" in new_name:
             new_name, new_port = new_name.split(":")
             args['ansible_ssh_port'] = new_port
-        
+
         # redefine inventory and get group "all"
         inventory = self.runner.inventory
         allgroup = inventory.get_group('all')
@@ -71,11 +73,11 @@ class ActionModule(object):
 
         # Add any variables to the new_host
         for k in args.keys():
-            if not k in [ 'name', 'hostname', 'groupname', 'groups' ]:
-                new_host.set_variable(k, args[k]) 
-                
-        
-        groupnames = args.get('groupname', args.get('groups', args.get('group', ''))) 
+            if not k in ['name', 'hostname', 'groupname', 'groups']:
+                new_host.set_variable(k, args[k])
+
+        groupnames = args.get(
+            'groupname', args.get('groups', args.get('group', '')))
         # add it to the group if that was specified
         if groupnames != '':
             for group_name in groupnames.split(","):
@@ -90,18 +92,16 @@ class ActionModule(object):
                 if inventory._groups_list is not None:
                     if group_name in inventory._groups_list:
                         if new_host.name not in inventory._groups_list[group_name]:
-                            inventory._groups_list[group_name].append(new_host.name)
+                            inventory._groups_list[
+                                group_name].append(new_host.name)
 
                 vv("added host to group via add_host module: %s" % group_name)
             result['new_groups'] = groupnames.split(",")
-            
+
         result['new_host'] = new_name
 
         # clear pattern caching completely since it's unpredictable what
         # patterns may have referenced the group
         inventory.clear_pattern_cache()
-        
+
         return ReturnData(conn=conn, comm_ok=True, result=result)
-
-
-
