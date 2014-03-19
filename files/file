@@ -203,7 +203,7 @@ def main():
         src = os.path.expanduser(src)
 
         # original_basename is used by other modules that depend on file.
-        if os.path.isdir(path) and state not in ["link", "absent", "directory"]:
+        if os.path.isdir(path) and state not in ["link", "absent"]:
             if params['original_basename']:
                 basename = params['original_basename']
             else:
