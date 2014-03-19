@@ -810,6 +810,10 @@ def ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=False, confirm_
         if new_vault_pass != new_vault_pass2:
             raise errors.AnsibleError("Passwords do not match")
 
+    # enforce no newline chars at the end of passwords
+    vault_pass = vault_pass.strip()
+    new_vault_pass = new_vault_pass.strip()
+
     return vault_pass, new_vault_pass
 
 def ask_passwords(ask_pass=False, ask_sudo_pass=False, ask_su_pass=False, ask_vault_pass=False):
