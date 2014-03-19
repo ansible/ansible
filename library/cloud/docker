@@ -169,6 +169,20 @@ options:
     default: null
     aliases: []
     version_added: "1.5"
+  stdin_open:
+    description:
+      - Keep stdin open
+    required: false
+    default: false
+    aliases: []
+    version_added: "1.6"
+  tty:
+    description:
+      - Allocate a pseudo-tty
+    required: false
+    default: false
+    aliases: []
+    version_added: "1.6"
 author: Cove Schneider, Joshua Conner, Pavel Antonov
 requirements: [ "docker-py >= 0.3.0" ]
 '''
@@ -529,6 +543,8 @@ class DockerManager:
                   'hostname':     self.module.params.get('hostname'),
                   'detach':       self.module.params.get('detach'),
                   'name':         self.module.params.get('name'),
+                  'stdin_open':   self.module.params.get('stdin_open'),
+                  'tty':          self.module.params.get('tty'),
                   }
 
         def do_create(count, params):
@@ -636,7 +652,9 @@ def main():
             debug           = dict(default=False, type='bool'),
             privileged      = dict(default=False, type='bool'),
             lxc_conf        = dict(default=None),
-            name            = dict(default=None)
+            name            = dict(default=None),
+            stdin_open      = dict(default=False, type='bool'),
+            tty             = dict(default=False, type='bool'),
         )
     )
 
