@@ -211,6 +211,16 @@ is very very conservative::
 
    forks=5
 
+.. _gathering:
+
+gathering
+=========
+
+New in 1.6, the 'gathering' setting controls the default policy of facts gathering (variables discovered about remote systems).
+
+The value 'implicit' is the default, meaning facts will be gathered per play unless 'gather_facts: False' is set in the play.  The value 'explicit' is the inverse, facts will not be gathered unless directly requested in the play.
+
+The value 'smart' means each new host that has no facts discovered will be scanned, but if the same host is addressed in multiple plays it will not be contacted again in the playbook run.  This option can be useful for those wishing to save fact gathering time.
 
 hash_behaviour
 ==============
