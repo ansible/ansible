@@ -137,3 +137,25 @@ class TestFilters(unittest.TestCase):
         #out = open(dest).read()
         #self.assertEqual(DEST, out)
 
+    def test_version_compare(self):
+        self.assertTrue(ansible.runner.filter_plugins.core.version_compare(0, 1.1, 'lt'))
+        self.assertTrue(ansible.runner.filter_plugins.core.version_compare(1.1, 1.2, '<'))
+
+        self.assertTrue(ansible.runner.filter_plugins.core.version_compare(1.2, 1.2, '=='))
+        self.assertTrue(ansible.runner.filter_plugins.core.version_compare(1.2, 1.2, '='))
+        self.assertTrue(ansible.runner.filter_plugins.core.version_compare(1.2, 1.2, 'eq'))
+
+
+        self.assertTrue(ansible.runner.filter_plugins.core.version_compare(1.3, 1.2, 'gt'))
+        self.assertTrue(ansible.runner.filter_plugins.core.version_compare(1.3, 1.2, '>'))
+
+        self.assertTrue(ansible.runner.filter_plugins.core.version_compare(1.3, 1.2, 'ne'))
+        self.assertTrue(ansible.runner.filter_plugins.core.version_compare(1.3, 1.2, '!='))
+        self.assertTrue(ansible.runner.filter_plugins.core.version_compare(1.3, 1.2, '<>'))
+
+        self.assertTrue(ansible.runner.filter_plugins.core.version_compare(1.1, 1.1, 'ge'))
+        self.assertTrue(ansible.runner.filter_plugins.core.version_compare(1.2, 1.1, '>='))
+
+        self.assertTrue(ansible.runner.filter_plugins.core.version_compare(1.1, 1.1, 'le'))
+        self.assertTrue(ansible.runner.filter_plugins.core.version_compare(1.0, 1.1, '<='))
+
