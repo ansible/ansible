@@ -192,7 +192,7 @@ def main():
     os.remove(path)
 
     file_args = module.load_file_common_arguments(module.params)
-    changed = module.set_file_attributes_if_different(file_args, changed)
+    changed = module.set_fs_attributes_if_different(file_args, changed)
     # Mission complete
     module.exit_json(src=src, dest=dest, md5sum=pathmd5, changed=changed, msg="OK")
 
