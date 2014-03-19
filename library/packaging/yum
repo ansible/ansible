@@ -25,6 +25,8 @@
 import traceback
 import os
 import yum
+import re
+from distutils.version import LooseVersion
 
 try:
     from yum.misc import find_unfinished_transactions, find_ts_remaining
@@ -685,6 +687,14 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
                 basecmd = 'install'
 
             pkglist = what_provides(module, repoq, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos)
+            tmp_pkgs = sorted(pkglist,key=LooseVersion, reverse=True)
+            pkglist = []
+            last_pkg = False
+            for pkg in tmp_pkgs:
+                name = re.search('^([\w\.\+-]+)-.+-.+\..+$',pkg).group(1)
+                if name != last_pkg:
+                    last_pkg = name
+                    pkglist.append(pkg)
             if not pkglist:
                 res['msg'] += "No Package matching '%s' found available, installed or updated" % spec
                 module.fail_json(**res)
