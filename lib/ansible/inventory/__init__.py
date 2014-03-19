@@ -57,7 +57,8 @@ class Inventory(object):
         self._groups_list    = {} 
         self._pattern_cache  = {}
 
-        # to be set by calling set_playbook_basedir by ansible-playbook
+        self._inventory_basedir = inventory.basedir()
+        # to be set by calling set_playbook_basedir by playbook code
         self._playbook_basedir = None
 
         # the inventory object holds a list of groups
