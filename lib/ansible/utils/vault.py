@@ -19,6 +19,7 @@
 # installs ansible and sets it up to run on cron.
 
 import os
+import shlex
 import shutil
 import tempfile
 from io import BytesIO
@@ -189,8 +190,7 @@ class VaultEditor(object):
             raise errors.AnsibleError("%s exists, please use 'edit' instead" % self.filename)
 
         # drop the user into vim on file
-        EDITOR = os.environ.get('EDITOR','vim')
-        call([EDITOR, self.filename])
+        call(self._editor_shell_command(self.filename))
         tmpdata = self.read_data(self.filename)
         this_vault = VaultLib(self.password)
         this_vault.cipher_name = self.cipher_name
@@ -226,8 +226,7 @@ class VaultEditor(object):
         self.write_data(dec_data, tmp_path)
 
         # drop the user into vim on the tmp file
-        EDITOR = os.environ.get('EDITOR','vim')
-        call([EDITOR, tmp_path])
+        call(self._editor_shell_command(tmp_path))
         new_data = self.read_data(tmp_path)
 
         # create new vault
@@ -298,6 +297,13 @@ class VaultEditor(object):
         if os.path.isfile(dest):
             os.remove(dest)
         shutil.move(src, dest)
+
+    def _editor_shell_command(self, filename):
+        EDITOR = os.environ.get('EDITOR','vim')
+        editor = shlex.split(EDITOR)
+        editor.append(filename)
+
+        return editor
 
 ########################################
 #               CIPHERS                #
