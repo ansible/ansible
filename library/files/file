@@ -297,7 +297,7 @@ def main():
         if changed and not module.check_mode:
             if prev_state != 'absent':
                 # try to replace atomically
-                tmppath = ".%s.%s.%s.tmp" % (path,os.getpid(),time.time())
+                tmppath = '/'.join([os.path.dirname(path), ".%s.%s.tmp" % (os.getpid(),time.time())])
                 try:
                     if state == 'hard':
                         os.link(src,tmppath)
@@ -307,13 +307,14 @@ def main():
                 except OSError, e:
                     os.unlink(tmppath)
                     module.fail_json(path=path, msg='Error while replacing: %s' % str(e))
-            try:
-                if state == 'hard':
-                    os.link(src,path)
-                else:
-                    os.symlink(src, path)
-            except OSError, e:
-                module.fail_json(path=path, msg='Error while linking: %s' % str(e))
+            else:
+                try:
+                    if state == 'hard':
+                        os.link(src,path)
+                    else:
+                        os.symlink(src, path)
+                except OSError, e:
+                    module.fail_json(path=path, msg='Error while linking: %s' % str(e))
 
         changed = module.set_fs_attributes_if_different(file_args, changed)
         module.exit_json(dest=path, src=src, changed=changed)
