@@ -113,7 +113,6 @@ class VaultLib(object):
         # clean out header
         data = self._split_header(data)
 
-
         # create the cipher object
         if 'Vault' + self.cipher_name in globals() and self.cipher_name in CIPHER_WHITELIST: 
             cipher = globals()['Vault' + self.cipher_name]
@@ -123,6 +122,8 @@ class VaultLib(object):
 
         # try to unencrypt data
         data = this_cipher.decrypt(data, self.password)
+        if not data:
+            raise errors.AnsibleError("Decryption failed")
 
         return data            
 
@@ -209,7 +210,10 @@ class VaultEditor(object):
         this_vault = VaultLib(self.password)
         if this_vault.is_encrypted(tmpdata):
             dec_data = this_vault.decrypt(tmpdata)
-            self.write_data(dec_data, self.filename)
+            if not dec_data:
+                raise errors.AnsibleError("Decryption failed")
+            else:
+                self.write_data(dec_data, self.filename)
         else:
             raise errors.AnsibleError("%s is not encrypted" % self.filename)
 
