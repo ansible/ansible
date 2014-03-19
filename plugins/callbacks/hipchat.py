@@ -54,7 +54,6 @@ class CallbackModule(object):
         self.room = os.getenv('HIPCHAT_ROOM', 'ansible')
         self.from_name = os.getenv('HIPCHAT_FROM', 'ansible')
         self.allow_notify = (os.getenv('HIPCHAT_NOTIFY') != 'false')
-        print(self.allow_notify)
 
         if self.token is None:
             self.disabled = True
