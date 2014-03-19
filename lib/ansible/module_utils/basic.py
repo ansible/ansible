@@ -1142,3 +1142,5 @@ class AnsibleModule(object):
                 break
         return '%.2f %s' % (float(size)/ limit, suffix)
 
+def get_module_path():
+    return os.path.dirname(os.path.realpath(__file__))
