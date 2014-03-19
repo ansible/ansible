@@ -179,7 +179,7 @@ def main():
     changed = do_ini(module, dest, section, option, value, state, backup)
 
     file_args = module.load_file_common_arguments(module.params)
-    changed = module.set_file_attributes_if_different(file_args, changed)
+    changed = module.set_fs_attributes_if_different(file_args, changed)
 
     # Mission complete
     module.exit_json(dest=dest, changed=changed, msg="OK")
