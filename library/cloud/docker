@@ -309,8 +309,10 @@ def _human_to_bytes(number):
     print "failed=True msg='Could not convert %s to integer'" % (number)
     sys.exit(1)
 
+
 def _ansible_facts(container_list):
     return {"docker_containers": container_list}
+
 
 def _docker_id_quirk(inspect):
     # XXX: some quirk in docker
@@ -319,9 +321,11 @@ def _docker_id_quirk(inspect):
         del inspect['ID']
     return inspect
 
+
 class DockerManager:
 
-    counters = {'created':0, 'started':0, 'stopped':0, 'killed':0, 'removed':0, 'restarted':0, 'pull':0}
+    counters = {'created': 0, 'started': 0, 'stopped': 0,
+                'killed': 0, 'removed': 0, 'restarted': 0, 'pull': 0}
 
     def __init__(self, module):
         self.module = module
@@ -334,11 +338,13 @@ class DockerManager:
             vols = self.parse_list_from_param('volumes')
             for vol in vols:
                 parts = vol.split(":")
-                # host mount (e.g. /mnt:/tmp, bind mounts host's /tmp to /mnt in the container)
+                # host mount (e.g. /mnt:/tmp, bind mounts host's /tmp to /mnt
+                # in the container)
                 if len(parts) == 2:
                     self.volumes[parts[1]] = {}
                     self.binds[parts[0]] = parts[1]
-                # docker mount (e.g. /www, mounts a docker volume /www on the container at the same location)
+                # docker mount (e.g. /www, mounts a docker volume /www on the
+                # container at the same location)
                 else:
                     self.volumes[parts[0]] = {}
 
@@ -374,7 +380,6 @@ class DockerManager:
         docker_url = urlparse(module.params.get('docker_url'))
         self.client = docker.Client(base_url=docker_url.geturl())
 
-
     def parse_list_from_param(self, param_name, delimiter=','):
         """
         Get a list from a module parameter, whether it's specified as a delimiter-separated string or is already in list form.
@@ -383,7 +388,6 @@ class DockerManager:
         if not isinstance(param_list, list):
             param_list = param_list.split(delimiter)
         return param_list
-
 
     def get_exposed_ports(self, expose_list):
         """
@@ -401,7 +405,6 @@ class DockerManager:
             return exposed
         else:
             return None
-
 
     def get_port_bindings(self, ports):
         """
@@ -442,8 +445,6 @@ class DockerManager:
                 binds[container_port] = bind
 
         return binds
-
-
 
     def get_split_image_tag(self, image):
         if '/' in image:
@@ -493,7 +494,8 @@ class DockerManager:
         deployed = []
 
         # if we weren't given a tag with the image, we need to only compare on the image name, as that
-        # docker will give us back the full image name including a tag in the container list if one exists.
+        # docker will give us back the full image name including a tag in the
+        # container list if one exists.
         image, tag = self.get_split_image_tag(image)
 
         for i in containers:
@@ -502,7 +504,7 @@ class DockerManager:
 
             if (name and name in i['Names']) or \
                     (not name and running_image == image and (not tag or tag == running_tag) and
-                    (not command or running_command == command)):
+                     (not command or running_command == command)):
                 details = self.client.inspect_container(i['Id'])
                 details = _docker_id_quirk(details)
                 deployed.append(details)
@@ -591,7 +593,8 @@ def check_dependencies(module):
     helpful error message if it isn't.
     """
     if not HAS_DOCKER_PY:
-        module.fail_json(msg="`docker-py` doesn't seem to be installed, but is required for the Ansible Docker module.")
+        module.fail_json(
+            msg="`docker-py` doesn't seem to be installed, but is required for the Ansible Docker module.")
     else:
         HAS_NEW_ENOUGH_DOCKER_PY = False
         if hasattr(docker, '__version__'):
@@ -607,36 +610,38 @@ def check_dependencies(module):
                 HAS_NEW_ENOUGH_DOCKER_PY = True
 
         if not HAS_NEW_ENOUGH_DOCKER_PY:
-            module.fail_json(msg="The Ansible Docker module requires `docker-py` >= 0.3.0.")
+            module.fail_json(
+                msg="The Ansible Docker module requires `docker-py` >= 0.3.0.")
 
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            count           = dict(default=1),
-            image           = dict(required=True),
-            command         = dict(required=False, default=None),
-            expose          = dict(required=False, default=None),
-            ports           = dict(required=False, default=None),
-            publish_all_ports = dict(default=False, type='bool'),
-            volumes         = dict(default=None),
-            volumes_from    = dict(default=None),
-            links           = dict(default=None),
-            memory_limit    = dict(default=0),
-            memory_swap     = dict(default=0),
-            docker_url      = dict(default='unix://var/run/docker.sock'),
-            user            = dict(default=None),
-            password        = dict(),
-            email           = dict(),
-            hostname        = dict(default=None),
-            env             = dict(),
-            dns             = dict(),
-            detach          = dict(default=True, type='bool'),
-            state           = dict(default='present', choices=['absent', 'present', 'stopped', 'killed', 'restarted']),
-            debug           = dict(default=False, type='bool'),
-            privileged      = dict(default=False, type='bool'),
-            lxc_conf        = dict(default=None),
-            name            = dict(default=None)
+        argument_spec=dict(
+            count=dict(default=1),
+            image=dict(required=True),
+            command=dict(required=False, default=None),
+            expose=dict(required=False, default=None),
+            ports=dict(required=False, default=None),
+            publish_all_ports=dict(default=False, type='bool'),
+            volumes=dict(default=None),
+            volumes_from=dict(default=None),
+            links=dict(default=None),
+            memory_limit=dict(default=0),
+            memory_swap=dict(default=0),
+            docker_url=dict(default='unix://var/run/docker.sock'),
+            user=dict(default=None),
+            password=dict(),
+            email=dict(),
+            hostname=dict(default=None),
+            env=dict(),
+            dns=dict(),
+            detach=dict(default=True, type='bool'),
+            state=dict(default='present', choices=[
+                       'absent', 'present', 'stopped', 'killed', 'restarted']),
+            debug=dict(default=False, type='bool'),
+            privileged=dict(default=False, type='bool'),
+            lxc_conf=dict(default=None),
+            name=dict(default=None)
         )
     )
 
@@ -701,14 +706,17 @@ def main():
             facts = manager.get_inspect_containers(running_containers)
 
         msg = "%s container(s) running image %s with command %s" % \
-                (manager.get_summary_counters_msg(), module.params.get('image'), module.params.get('command'))
+            (manager.get_summary_counters_msg(), module.params.get(
+                'image'), module.params.get('command'))
         changed = manager.has_changed()
 
-        module.exit_json(failed=failed, changed=changed, msg=msg, ansible_facts=_ansible_facts(facts))
+        module.exit_json(
+            failed=failed, changed=changed, msg=msg, ansible_facts=_ansible_facts(facts))
 
     except docker.client.APIError, e:
         changed = manager.has_changed()
-        module.exit_json(failed=True, changed=changed, msg="Docker API error: " + e.explanation)
+        module.exit_json(
+            failed=True, changed=changed, msg="Docker API error: " + e.explanation)
 
     except RequestException, e:
         changed = manager.has_changed()

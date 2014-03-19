@@ -182,7 +182,8 @@ else:
 
 TEMPLATE_TYPE = DEFAULT_TEMPLATE_TYPE = 'TTYPE_TCP'
 TEMPLATE_TYPE_CHOICES = ['tcp', 'tcp_echo', 'tcp_half_open']
-DEFAULT_PARENT = DEFAULT_TEMPLATE_TYPE_CHOICE = DEFAULT_TEMPLATE_TYPE.replace('TTYPE_', '').lower()
+DEFAULT_PARENT = DEFAULT_TEMPLATE_TYPE_CHOICE = DEFAULT_TEMPLATE_TYPE.replace(
+    'TTYPE_', '').lower()
 
 
 # ===========================================
@@ -201,12 +202,15 @@ def check_monitor_exists(module, api, monitor, parent):
     # hack to determine if monitor exists
     result = False
     try:
-        ttype = api.LocalLB.Monitor.get_template_type(template_names=[monitor])[0]
-        parent2 = api.LocalLB.Monitor.get_parent_template(template_names=[monitor])[0]
+        ttype = api.LocalLB.Monitor.get_template_type(
+            template_names=[monitor])[0]
+        parent2 = api.LocalLB.Monitor.get_parent_template(
+            template_names=[monitor])[0]
         if ttype == TEMPLATE_TYPE and parent == parent2:
             result = True
         else:
-            module.fail_json(msg='Monitor already exists, but has a different type (%s) or parent(%s)' % (ttype, parent))
+            module.fail_json(
+                msg='Monitor already exists, but has a different type (%s) or parent(%s)' % (ttype, parent))
     except bigsuds.OperationFailed, e:
         if "was not found" in str(e):
             result = False
@@ -218,8 +222,9 @@ def check_monitor_exists(module, api, monitor, parent):
 
 def create_monitor(api, monitor, template_attributes):
 
-    try: 
-        api.LocalLB.Monitor.create_template(templates=[{'template_name': monitor, 'template_type': TEMPLATE_TYPE}], template_attributes=[template_attributes])
+    try:
+        api.LocalLB.Monitor.create_template(
+            templates=[{'template_name': monitor, 'template_type': TEMPLATE_TYPE}], template_attributes=[template_attributes])
     except bigsuds.OperationFailed, e:
         if "already exists" in str(e):
             return False
@@ -250,7 +255,8 @@ def check_string_property(api, monitor, str_property):
 
 def set_string_property(api, monitor, str_property):
 
-    api.LocalLB.Monitor.set_template_string_property(template_names=[monitor], values=[str_property])
+    api.LocalLB.Monitor.set_template_string_property(
+        template_names=[monitor], values=[str_property])
 
 
 def check_integer_property(api, monitor, int_property):
@@ -260,7 +266,8 @@ def check_integer_property(api, monitor, int_property):
 
 def set_integer_property(api, monitor, int_property):
 
-    api.LocalLB.Monitor.set_template_int_property(template_names=[monitor], values=[int_property])
+    api.LocalLB.Monitor.set_template_int_property(
+        template_names=[monitor], values=[int_property])
 
 
 def update_monitor_properties(api, module, monitor, template_string_properties, template_integer_properties):
@@ -288,7 +295,8 @@ def get_ipport(api, monitor):
 def set_ipport(api, monitor, ipport):
 
     try:
-        api.LocalLB.Monitor.set_template_destination(template_names=[monitor], destinations=[ipport])
+        api.LocalLB.Monitor.set_template_destination(
+            template_names=[monitor], destinations=[ipport])
         return True, ""
 
     except bigsuds.OperationFailed, e:
@@ -301,31 +309,33 @@ def set_ipport(api, monitor, ipport):
 # ===========================================
 # main loop
 #
-# writing a module for other monitor types should 
+# writing a module for other monitor types should
 # only need an updated main() (and monitor specific functions)
+
 
 def main():
 
     # begin monitor specific stuff
 
     module = AnsibleModule(
-        argument_spec = dict(
-            server    = dict(required=True),
-            user      = dict(required=True),
-            password  = dict(required=True),
-            partition = dict(default='Common'),
-            state     = dict(default='present', choices=['present', 'absent']),
-            name      = dict(required=True),
-            type      = dict(default=DEFAULT_TEMPLATE_TYPE_CHOICE, choices=TEMPLATE_TYPE_CHOICES),
-            parent    = dict(default=DEFAULT_PARENT),
-            parent_partition = dict(default='Common'),
-            send      = dict(required=False),
-            receive   = dict(required=False),
-            ip        = dict(required=False),
-            port      = dict(required=False, type='int'),
-            interval  = dict(required=False, type='int'),
-            timeout   = dict(required=False, type='int'),
-            time_until_up = dict(required=False, type='int', default=0)
+        argument_spec=dict(
+            server=dict(required=True),
+            user=dict(required=True),
+            password=dict(required=True),
+            partition=dict(default='Common'),
+            state=dict(default='present', choices=['present', 'absent']),
+            name=dict(required=True),
+            type=dict(
+                default=DEFAULT_TEMPLATE_TYPE_CHOICE, choices=TEMPLATE_TYPE_CHOICES),
+            parent=dict(default=DEFAULT_PARENT),
+            parent_partition=dict(default='Common'),
+            send=dict(required=False),
+            receive=dict(required=False),
+            ip=dict(required=False),
+            port=dict(required=False, type='int'),
+            interval=dict(required=False, type='int'),
+            timeout=dict(required=False, type='int'),
+            time_until_up=dict(required=False, type='int', default=0)
         ),
         supports_check_mode=True
     )
@@ -359,26 +369,25 @@ def main():
     api = bigip_api(server, user, password)
     monitor_exists = check_monitor_exists(module, api, monitor, parent)
 
-
     # ipport is a special setting
-    if monitor_exists: # make sure to not update current settings if not asked
+    if monitor_exists:  # make sure to not update current settings if not asked
         cur_ipport = get_ipport(api, monitor)
         if ip is None:
             ip = cur_ipport['ipport']['address']
         if port is None:
             port = cur_ipport['ipport']['port']
-    else: # use API defaults if not defined to create it
-        if interval is None:        
+    else:  # use API defaults if not defined to create it
+        if interval is None:
             interval = 5
-        if timeout is None:         
+        if timeout is None:
             timeout = 16
-        if ip is None:              
+        if ip is None:
             ip = '0.0.0.0'
-        if port is None:            
+        if port is None:
             port = 0
-        if send is None:            
+        if send is None:
             send = ''
-        if receive is None:         
+        if receive is None:
             receive = ''
 
     # define and set address type
@@ -412,7 +421,7 @@ def main():
         template_string_properties = []
 
     template_integer_properties = [{'type': 'ITYPE_INTERVAL',
-                                     'value': interval},
+                                    'value': interval},
                                    {'type': 'ITYPE_TIMEOUT',
                                     'value': timeout},
                                    {'type': 'ITYPE_TIME_UNTIL_UP',
@@ -423,42 +432,43 @@ def main():
     try:
         result = {'changed': False}  # default
 
-
         if state == 'absent':
             if monitor_exists:
                 if not module.check_mode:
-                    # possible race condition if same task 
+                    # possible race condition if same task
                     # on other node deleted it first
                     result['changed'] |= delete_monitor(api, monitor)
                 else:
                     result['changed'] |= True
 
-        else: # state present
-            ## check for monitor itself
-            if not monitor_exists: # create it
-                if not module.check_mode: 
+        else:  # state present
+            # check for monitor itself
+            if not monitor_exists:  # create it
+                if not module.check_mode:
                     # again, check changed status here b/c race conditions
                     # if other task already created it
-                    result['changed'] |= create_monitor(api, monitor, template_attributes)
-                else: 
+                    result['changed'] |= create_monitor(
+                        api, monitor, template_attributes)
+                else:
                     result['changed'] |= True
 
-            ## check for monitor parameters
+            # check for monitor parameters
             # whether it already existed, or was just created, now update
             # the update functions need to check for check mode but
-            # cannot update settings if it doesn't exist which happens in check mode
+            # cannot update settings if it doesn't exist which happens in check
+            # mode
             if monitor_exists and not module.check_mode:
                 result['changed'] |= update_monitor_properties(api, module, monitor,
                                                                template_string_properties,
                                                                template_integer_properties)
             # else assume nothing changed
 
-            # we just have to update the ipport if monitor already exists and it's different
+            # we just have to update the ipport if monitor already exists and
+            # it's different
             if monitor_exists and cur_ipport != ipport:
-                set_ipport(api, monitor, ipport)    
+                set_ipport(api, monitor, ipport)
                 result['changed'] |= True
-            #else: monitor doesn't exist (check mode) or ipport is already ok
-
+            # else: monitor doesn't exist (check mode) or ipport is already ok
 
     except Exception, e:
         module.fail_json(msg="received exception: %s" % e)
@@ -468,4 +478,3 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 main()
-

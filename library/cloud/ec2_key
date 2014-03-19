@@ -118,13 +118,14 @@ except ImportError:
     print "failed=True msg='boto required for this module'"
     sys.exit(1)
 
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            name=dict(required=True),
-            key_material=dict(required=False),
-            state = dict(default='present', choices=['present', 'absent']),
-        )
+        name=dict(required=True),
+        key_material=dict(required=False),
+        state=dict(default='present', choices=['present', 'absent']),
+    )
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -149,7 +150,8 @@ def main():
             try:
                 key.delete()
             except Exception, e:
-                module.fail_json(msg="Unable to delete key pair '%s' - %s" % (key, e))
+                module.fail_json(
+                    msg="Unable to delete key pair '%s' - %s" % (key, e))
             else:
                 key = None
                 changed = True

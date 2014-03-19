@@ -28,6 +28,7 @@ from ansible import errors
 from ansible import module_common
 from ansible.runner.return_data import ReturnData
 
+
 class ActionModule(object):
 
     def __init__(self, runner):
@@ -68,10 +69,12 @@ class ActionModule(object):
                 # if dest does not start with "/", we'll assume a relative path
                 dest = utils.path_dwim(self.runner.basedir, dest)
         else:
-            # files are saved in dest dir, with a subdir for each host, then the filename
-            dest = "%s/%s/%s" % (utils.path_dwim(self.runner.basedir, dest), conn.host, source)
+            # files are saved in dest dir, with a subdir for each host, then
+            # the filename
+            dest = "%s/%s/%s" % (utils.path_dwim(self.runner.basedir, dest),
+                                 conn.host, source)
 
-        dest = os.path.expanduser(dest.replace("//","/"))
+        dest = os.path.expanduser(dest.replace("//", "/"))
 
         # calculate md5 sum for the remote file
         remote_md5 = self.runner._remote_md5(conn, tmp, source)
@@ -79,7 +82,8 @@ class ActionModule(object):
         # use slurp if sudo and permissions are lacking
         remote_data = None
         if remote_md5 in ('1', '2') or self.runner.sudo:
-            slurpres = self.runner._execute_module(conn, tmp, 'slurp', 'src=%s' % source, inject=inject)
+            slurpres = self.runner._execute_module(
+                conn, tmp, 'slurp', 'src=%s' % source, inject=inject)
             if slurpres.is_successful():
                 if slurpres.result['encoding'] == 'base64':
                     remote_data = base64.b64decode(slurpres.result['content'])
@@ -89,16 +93,20 @@ class ActionModule(object):
         # these don't fail because you may want to transfer a log file that possibly MAY exist
         # but keep going to fetch other log files
         if remote_md5 == '0':
-            result = dict(msg="unable to calculate the md5 sum of the remote file", file=source, changed=False)
+            result = dict(
+                msg="unable to calculate the md5 sum of the remote file", file=source, changed=False)
             return ReturnData(conn=conn, result=result)
         if remote_md5 == '1':
             if fail_on_missing:
-                result = dict(failed=True, msg="the remote file does not exist", file=source)
+                result = dict(
+                    failed=True, msg="the remote file does not exist", file=source)
             else:
-                result = dict(msg="the remote file does not exist, not transferring, ignored", file=source, changed=False)
+                result = dict(
+                    msg="the remote file does not exist, not transferring, ignored", file=source, changed=False)
             return ReturnData(conn=conn, result=result)
         if remote_md5 == '2':
-            result = dict(msg="no read permission on remote file, not transferring, ignored", file=source, changed=False)
+            result = dict(
+                msg="no read permission on remote file, not transferring, ignored", file=source, changed=False)
             return ReturnData(conn=conn, result=result)
 
         # calculate md5 sum for the local file
@@ -118,11 +126,13 @@ class ActionModule(object):
                 f.close()
             new_md5 = utils.md5(dest)
             if validate_md5 and new_md5 != remote_md5:
-                result = dict(failed=True, md5sum=new_md5, msg="md5 mismatch", file=source, dest=dest, remote_md5sum=remote_md5)
+                result = dict(failed=True, md5sum=new_md5, msg="md5 mismatch",
+                              file=source, dest=dest, remote_md5sum=remote_md5)
                 return ReturnData(conn=conn, result=result)
-            result = dict(changed=True, md5sum=new_md5, dest=dest, remote_md5sum=remote_md5)
+            result = dict(
+                changed=True, md5sum=new_md5, dest=dest, remote_md5sum=remote_md5)
             return ReturnData(conn=conn, result=result)
         else:
-            result = dict(changed=False, md5sum=local_md5, file=source, dest=dest)
+            result = dict(
+                changed=False, md5sum=local_md5, file=source, dest=dest)
             return ReturnData(conn=conn, result=result)
-

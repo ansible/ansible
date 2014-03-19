@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#coding: utf-8 -*-
+# coding: utf-8 -*-
 
 # (c) 2013, Benno Joy <benno@ansible.com>
 #
@@ -23,7 +23,8 @@ try:
         from quantumclient.quantum import client
     from keystoneclient.v2_0 import client as ksclient
 except ImportError:
-    print("failed=True msg='quantumclient (or neutronclient) and keystone client are required'")
+    print(
+        "failed=True msg='quantumclient (or neutronclient) and keystone client are required'")
 
 DOCUMENTATION = '''
 ---
@@ -93,14 +94,16 @@ EXAMPLES = '''
 _os_keystone = None
 _os_tenant_id = None
 
+
 def _get_ksclient(module, kwargs):
     try:
         kclient = ksclient.Client(username=kwargs.get('login_username'),
-                                 password=kwargs.get('login_password'),
-                                 tenant_name=kwargs.get('login_tenant_name'),
-                                 auth_url=kwargs.get('auth_url'))
+                                  password=kwargs.get('login_password'),
+                                  tenant_name=kwargs.get('login_tenant_name'),
+                                  auth_url=kwargs.get('auth_url'))
     except Exception, e:
-        module.fail_json(msg = "Error authenticating to the keystone: %s " % e.message)
+        module.fail_json(
+            msg="Error authenticating to the keystone: %s " % e.message)
     global _os_keystone
     _os_keystone = kclient
     return kclient
@@ -108,24 +111,27 @@ def _get_ksclient(module, kwargs):
 
 def _get_endpoint(module, ksclient):
     try:
-        endpoint = ksclient.service_catalog.url_for(service_type='network', endpoint_type='publicURL')
+        endpoint = ksclient.service_catalog.url_for(
+            service_type='network', endpoint_type='publicURL')
     except Exception, e:
-        module.fail_json(msg = "Error getting network endpoint: %s" % e.message)
+        module.fail_json(msg="Error getting network endpoint: %s" % e.message)
     return endpoint
+
 
 def _get_neutron_client(module, kwargs):
     _ksclient = _get_ksclient(module, kwargs)
     token = _ksclient.auth_token
     endpoint = _get_endpoint(module, _ksclient)
     kwargs = {
-            'token': token,
-            'endpoint_url': endpoint
+        'token': token,
+        'endpoint_url': endpoint
     }
     try:
         neutron = client.Client('2.0', **kwargs)
     except Exception, e:
-        module.fail_json(msg = "Error in connecting to neutron: %s " % e.message)
+        module.fail_json(msg="Error in connecting to neutron: %s " % e.message)
     return neutron
+
 
 def _set_tenant_id(module):
     global _os_tenant_id
@@ -139,33 +145,37 @@ def _set_tenant_id(module):
             _os_tenant_id = tenant.id
             break
     if not _os_tenant_id:
-            module.fail_json(msg = "The tenant id cannot be found, please check the paramters")
+        module.fail_json(
+            msg="The tenant id cannot be found, please check the paramters")
 
 
 def _get_router_id(module, neutron):
     kwargs = {
-            'name': module.params['name'],
-            'tenant_id': _os_tenant_id,
+        'name': module.params['name'],
+        'tenant_id': _os_tenant_id,
     }
     try:
         routers = neutron.list_routers(**kwargs)
     except Exception, e:
-        module.fail_json(msg = "Error in getting the router list: %s " % e.message)
+        module.fail_json(
+            msg="Error in getting the router list: %s " % e.message)
     if not routers['routers']:
         return None
     return routers['routers'][0]['id']
 
+
 def _create_router(module, neutron):
     router = {
-            'name': module.params['name'],
-            'tenant_id': _os_tenant_id,
-            'admin_state_up': module.params['admin_state_up'],
+        'name': module.params['name'],
+        'tenant_id': _os_tenant_id,
+        'admin_state_up': module.params['admin_state_up'],
     }
     try:
         new_router = neutron.create_router(dict(router=router))
     except Exception, e:
-        module.fail_json( msg = "Error in creating router: %s" % e.message)
+        module.fail_json(msg="Error in creating router: %s" % e.message)
     return new_router['router']['id']
+
 
 def _delete_router(module, neutron, router_id):
     try:
@@ -174,18 +184,19 @@ def _delete_router(module, neutron, router_id):
         module.fail_json("Error in deleting the router")
     return True
 
+
 def main():
     module = AnsibleModule(
-        argument_spec                   = dict(
-        login_username                  = dict(default='admin'),
-        login_password                  = dict(required=True),
-        login_tenant_name               = dict(required='True'),
-        auth_url                        = dict(default='http://127.0.0.1:35357/v2.0/'),
-        region_name                     = dict(default=None),
-        name                            = dict(required=True),
-        tenant_name                     = dict(default=None),
-        state                           = dict(default='present', choices=['absent', 'present']),
-        admin_state_up                  = dict(type='bool', default=True),
+        argument_spec=dict(
+            login_username=dict(default='admin'),
+            login_password=dict(required=True),
+            login_tenant_name=dict(required='True'),
+            auth_url=dict(default='http://127.0.0.1:35357/v2.0/'),
+            region_name=dict(default=None),
+            name=dict(required=True),
+            tenant_name=dict(default=None),
+            state=dict(default='present', choices=['absent', 'present']),
+            admin_state_up=dict(type='bool', default=True),
         ),
     )
 
@@ -198,7 +209,7 @@ def main():
             router_id = _create_router(module, neutron)
             module.exit_json(changed=True, result="Created", id=router_id)
         else:
-            module.exit_json(changed=False, result="success" , id=router_id)
+            module.exit_json(changed=False, result="success", id=router_id)
 
     else:
         router_id = _get_router_id(module, neutron)
@@ -211,4 +222,3 @@ def main():
 # this is magic, see lib/ansible/module.params['common.py
 from ansible.module_utils.basic import *
 main()
-

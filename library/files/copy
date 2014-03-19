@@ -113,7 +113,7 @@ def split_pre_existing_dir(dirname):
     if not os.path.exists(head):
         (pre_existing_dir, new_directory_list) = split_pre_existing_dir(head)
     else:
-        return (head, [ tail ])
+        return (head, [tail])
     new_directory_list.insert(0, tail)
     return (pre_existing_dir, new_directory_list)
 
@@ -126,8 +126,10 @@ def adjust_recursive_directory_permissions(pre_existing_dir, new_directory_list,
     if len(new_directory_list) > 0:
         working_dir = os.path.join(pre_existing_dir, new_directory_list.pop(0))
         directory_args['path'] = working_dir
-        changed = module.set_directory_attributes_if_different(directory_args, changed)
-        changed = adjust_recursive_directory_permissions(working_dir, new_directory_list, module, directory_args, changed)
+        changed = module.set_directory_attributes_if_different(
+            directory_args, changed)
+        changed = adjust_recursive_directory_permissions(
+            working_dir, new_directory_list, module, directory_args, changed)
     return changed
 
 
@@ -135,25 +137,26 @@ def main():
 
     module = AnsibleModule(
         # not checking because of daisy chain to file module
-        argument_spec = dict(
-            src               = dict(required=False),
-            original_basename = dict(required=False), # used to handle 'dest is a directory' via template, a slight hack
-            content           = dict(required=False, no_log=True),
-            dest              = dict(required=True),
-            backup            = dict(default=False, type='bool'),
-            force             = dict(default=True, aliases=['thirsty'], type='bool'),
-            validate          = dict(required=False, type='str'),
-            directory_mode    = dict(required=False)
+        argument_spec=dict(
+            src=dict(required=False),
+            # used to handle 'dest is a directory' via template, a slight hack
+            original_basename=dict(required=False),
+            content=dict(required=False, no_log=True),
+            dest=dict(required=True),
+            backup=dict(default=False, type='bool'),
+            force=dict(default=True, aliases=['thirsty'], type='bool'),
+            validate=dict(required=False, type='str'),
+            directory_mode=dict(required=False)
         ),
         add_file_common_args=True,
     )
 
-    src    = os.path.expanduser(module.params['src'])
-    dest   = os.path.expanduser(module.params['dest'])
+    src = os.path.expanduser(module.params['src'])
+    dest = os.path.expanduser(module.params['dest'])
     backup = module.params['backup']
-    force  = module.params['force']
-    original_basename = module.params.get('original_basename',None)
-    validate = module.params.get('validate',None)
+    force = module.params['force']
+    original_basename = module.params.get('original_basename', None)
+    validate = module.params.get('validate', None)
 
     if not os.path.exists(src):
         module.fail_json(msg="Source %s failed to transfer" % (src))
@@ -170,7 +173,8 @@ def main():
         dest = os.path.join(dest, original_basename)
         dirname = os.path.dirname(dest)
         if not os.path.exists(dirname):
-            (pre_existing_dir, new_directory_list) = split_pre_existing_dir(dirname)
+            (pre_existing_dir, new_directory_list) = split_pre_existing_dir(
+                dirname)
             os.makedirs(dirname)
             directory_args = module.load_file_common_arguments(module.params)
             directory_mode = module.params["directory_mode"]
@@ -178,11 +182,13 @@ def main():
                 directory_args['mode'] = directory_mode
             else:
                 directory_args['mode'] = None
-            adjust_recursive_directory_permissions(pre_existing_dir, new_directory_list, module, directory_args, changed)
+            adjust_recursive_directory_permissions(
+                pre_existing_dir, new_directory_list, module, directory_args, changed)
 
     if os.path.exists(dest):
         if not force:
-            module.exit_json(msg="file already exists", src=src, dest=dest, changed=False)
+            module.exit_json(
+                msg="file already exists", src=src, dest=dest, changed=False)
         if (os.path.isdir(dest)):
             basename = os.path.basename(src)
             if original_basename:
@@ -192,9 +198,11 @@ def main():
             md5sum_dest = module.md5(dest)
     else:
         if not os.path.exists(os.path.dirname(dest)):
-            module.fail_json(msg="Destination directory %s does not exist" % (os.path.dirname(dest)))
+            module.fail_json(
+                msg="Destination directory %s does not exist" % (os.path.dirname(dest)))
     if not os.access(os.path.dirname(dest), os.W_OK):
-        module.fail_json(msg="Destination %s not writable" % (os.path.dirname(dest)))
+        module.fail_json(msg="Destination %s not writable" %
+                         (os.path.dirname(dest)))
 
     backup_file = None
     if md5sum_src != md5sum_dest or os.path.islink(dest):
@@ -207,9 +215,10 @@ def main():
                 os.unlink(dest)
                 open(dest, 'w').close()
             if validate:
-                (rc,out,err) = module.run_command(validate % src)
+                (rc, out, err) = module.run_command(validate % src)
                 if rc != 0:
-                    module.fail_json(msg="failed to validate: rc:%s error:%s" % (rc,err))
+                    module.fail_json(
+                        msg="failed to validate: rc:%s error:%s" % (rc, err))
             module.atomic_move(src, dest)
         except IOError:
             module.fail_json(msg="failed to copy: %s to %s" % (src, dest))
@@ -218,14 +227,15 @@ def main():
         changed = False
 
     res_args = dict(
-        dest = dest, src = src, md5sum = md5sum_src, changed = changed
+        dest=dest, src=src, md5sum=md5sum_src, changed=changed
     )
     if backup_file:
         res_args['backup_file'] = backup_file
 
     module.params['dest'] = dest
     file_args = module.load_file_common_arguments(module.params)
-    res_args['changed'] = module.set_file_attributes_if_different(file_args, res_args['changed'])
+    res_args['changed'] = module.set_file_attributes_if_different(
+        file_args, res_args['changed'])
 
     module.exit_json(**res_args)
 

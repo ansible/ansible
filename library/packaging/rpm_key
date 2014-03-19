@@ -71,17 +71,20 @@ import tempfile
 # Should be more than enough for all keys
 MAXBYTES = 8192
 
+
 def is_pubkey(string):
     """Verifies if string is a pubkey"""
     pgp_regex = ".*?(-----BEGIN PGP PUBLIC KEY BLOCK-----.*?-----END PGP PUBLIC KEY BLOCK-----).*"
     return re.match(pgp_regex, string, re.DOTALL)
+
 
 class RpmKey:
 
     def __init__(self, module):
         self.syslogging = False
         # If the key is a url, we need to check if it's present to be idempotent,
-        # to do that, we need to check the keyid, which we can get from the armor.
+        # to do that, we need to check the keyid, which we can get from the
+        # armor.
         keyfile = None
         should_cleanup_keyfile = False
         self.module = module
@@ -107,7 +110,8 @@ class RpmKey:
                 module.exit_json(changed=False)
             else:
                 if not keyfile:
-                    self.module.fail_json(msg="When importing a key, a valid file must be given")
+                    self.module.fail_json(
+                        msg="When importing a key, a valid file must be given")
                 self.import_key(keyfile, dryrun=module.check_mode)
                 if should_cleanup_keyfile:
                     self.module.cleanup(keyfile)
@@ -118,7 +122,6 @@ class RpmKey:
                 module.exit_json(changed=True)
             else:
                 module.exit_json(changed=False)
-
 
     def fetch_key(self, url, maxbytes=MAXBYTES):
         """Downloads a key from url, returns a valid path to a gpg key"""
@@ -147,7 +150,8 @@ class RpmKey:
 
     def getkeyid(self, keyfile):
         gpg = self.module.get_bin_path('gpg', True)
-        stdout, stderr = self.execute_command([gpg, '--no-tty', '--batch', '--with-colons', '--fixed-list-mode', '--list-packets', keyfile])
+        stdout, stderr = self.execute_command(
+            [gpg, '--no-tty', '--batch', '--with-colons', '--fixed-list-mode', '--list-packets', keyfile])
         for line in stdout.splitlines():
             line = line.strip()
             if line.startswith(':signature packet:'):
@@ -177,7 +181,8 @@ class RpmKey:
                 continue
             match = re.match('gpg-pubkey-([0-9a-f]+)-([0-9a-f]+)', line)
             if not match:
-                self.module.fail_json(msg="rpm returned unexpected output [%s]" % line)
+                self.module.fail_json(
+                    msg="rpm returned unexpected output [%s]" % line)
             else:
                 if keyid == match.group(1):
                     return True
@@ -189,21 +194,22 @@ class RpmKey:
 
     def drop_key(self, key, dryrun=False):
         if not dryrun:
-            self.execute_command([self.rpm, '--erase', '--allmatches', "gpg-pubkey-%s" % key])
+            self.execute_command(
+                [self.rpm, '--erase', '--allmatches', "gpg-pubkey-%s" % key])
 
 
 def main():
     module = AnsibleModule(
-            argument_spec = dict(
-                state=dict(default='present', choices=['present', 'absent'], type='str'),
-                key=dict(required=True, type='str'),
-                validate_certs=dict(default='yes', type='bool'),
-                ),
-            supports_check_mode=True
-            )
+        argument_spec=dict(
+            state=dict(
+                default='present', choices=['present', 'absent'], type='str'),
+            key=dict(required=True, type='str'),
+            validate_certs=dict(default='yes', type='bool'),
+        ),
+        supports_check_mode=True
+    )
 
     RpmKey(module)
-
 
 
 # import module snippets

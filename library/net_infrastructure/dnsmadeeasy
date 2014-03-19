@@ -122,6 +122,7 @@ try:
 except ImportError, e:
     IMPORT_ERROR = str(e)
 
+
 class DME2:
 
     def __init__(self, apikey, secret, domain, module):
@@ -161,9 +162,11 @@ class DME2:
         if data and not isinstance(data, basestring):
             data = urllib.urlencode(data)
 
-        response, info = fetch_url(self.module, url, data=data, method=method, headers=self._headers())
+        response, info = fetch_url(
+            self.module, url, data=data, method=method, headers=self._headers())
         if info['status'] not in (200, 201, 204):
-            self.module.fail_json(msg="%s returned %s, with body: %s" % (url, info['status'], info['msg']))
+            self.module.fail_json(
+                msg="%s returned %s, with body: %s" % (url, info['status'], info['msg']))
 
         try:
             return json.load(response)
@@ -248,7 +251,7 @@ def main():
                              'A', 'AAAA', 'CNAME', 'HTTPRED', 'MX', 'NS', 'PTR', 'SRV', 'TXT']),
             record_value=dict(required=False),
             record_ttl=dict(required=False, default=1800, type='int'),
-            validate_certs = dict(default='yes', type='bool'),
+            validate_certs=dict(default='yes', type='bool'),
         ),
         required_together=(
             ['record_value', 'record_ttl', 'record_type']

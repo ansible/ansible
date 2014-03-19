@@ -18,26 +18,26 @@
 import sys
 import constants
 
-ANSIBLE_COLOR=True
+ANSIBLE_COLOR = True
 if constants.ANSIBLE_NOCOLOR:
-    ANSIBLE_COLOR=False
+    ANSIBLE_COLOR = False
 elif not hasattr(sys.stdout, 'isatty') or not sys.stdout.isatty():
-    ANSIBLE_COLOR=False
+    ANSIBLE_COLOR = False
 else:
     try:
         import curses
         curses.setupterm()
         if curses.tigetnum('colors') < 0:
-            ANSIBLE_COLOR=False
+            ANSIBLE_COLOR = False
     except ImportError:
         # curses library was not found
         pass
     except curses.error:
         # curses returns an error (e.g. could not find terminal)
-        ANSIBLE_COLOR=False
+        ANSIBLE_COLOR = False
 
 if constants.ANSIBLE_FORCE_COLOR:
-        ANSIBLE_COLOR=True
+    ANSIBLE_COLOR = True
 
 # --- begin "pretty"
 #
@@ -62,13 +62,13 @@ codeCodes = {
     'normal':    '0'
 }
 
+
 def stringc(text, color):
     """String in color."""
 
     if ANSIBLE_COLOR:
-        return "\033["+codeCodes[color]+"m"+text+"\033[0m"
+        return "\033[" + codeCodes[color] + "m" + text + "\033[0m"
     else:
         return text
 
 # --- end "pretty"
-

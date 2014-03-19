@@ -57,6 +57,8 @@ parser.add_option('--host', default=None, dest="host",
 #
 
 # get all the ssh configs for all boxes in an array of dictionaries.
+
+
 def get_ssh_config():
     configs = []
 
@@ -68,7 +70,9 @@ def get_ssh_config():
 
     return configs
 
-#list all the running boxes
+# list all the running boxes
+
+
 def list_running_boxes():
     output = subprocess.check_output(["vagrant", "status"]).split('\n')
 
@@ -79,14 +83,16 @@ def list_running_boxes():
         if matcher:
             boxes.append(matcher.group(1))
 
-
     return boxes
 
-#get the ssh config for a single box
+# get the ssh config for a single box
+
+
 def get_a_ssh_config(box_name):
     """Gives back a map of all the machine's ssh configurations"""
 
-    output = subprocess.check_output(["vagrant", "ssh-config", box_name]).split('\n')
+    output = subprocess.check_output(
+        ["vagrant", "ssh-config", box_name]).split('\n')
 
     config = {}
     for line in output:
@@ -101,7 +107,7 @@ def get_a_ssh_config(box_name):
 #------------------------------
 if options.list:
     ssh_config = get_ssh_config()
-    hosts = { 'vagrant': []}
+    hosts = {'vagrant': []}
 
     for data in ssh_config:
         hosts['vagrant'].append(data['HostName'])
@@ -117,7 +123,7 @@ elif options.host:
 
     details = filter(lambda x: (x['HostName'] == options.host), ssh_config)
     if len(details) > 0:
-        #pass through the port, in case it's non standard.
+        # pass through the port, in case it's non standard.
         result = details[0]
         result['ansible_ssh_port'] = result['Port']
 

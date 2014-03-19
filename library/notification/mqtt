@@ -108,19 +108,20 @@ except ImportError:
 # Main
 #
 
+
 def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            server = dict(default = 'localhost'),
-            port = dict(default = 1883),
-            topic = dict(required = True),
-            payload = dict(required = True),
-            client_id = dict(default = None),
-            qos = dict(default="0", choices=["0", "1", "2"]),
-            retain = dict(default=False, type='bool'),
-            username = dict(default = None),
-            password = dict(default = None),
+            server=dict(default='localhost'),
+            port=dict(default=1883),
+            topic=dict(required=True),
+            payload=dict(required=True),
+            client_id=dict(default=None),
+            qos=dict(default="0", choices=["0", "1", "2"]),
+            retain=dict(default=False, type='bool'),
+            username=dict(default=None),
+            password=dict(default=None),
         ),
         supports_check_mode=True
     )
@@ -128,15 +129,15 @@ def main():
     if not HAS_PAHOMQTT:
         module.fail_json(msg="Paho MQTT is not installed")
 
-    server     = module.params.get("server", 'localhost')
-    port       = module.params.get("port", 1883)
-    topic      = module.params.get("topic")
-    payload    = module.params.get("payload")
-    client_id  = module.params.get("client_id", '')
-    qos        = int(module.params.get("qos", 0))
-    retain     = module.params.get("retain")
-    username   = module.params.get("username", None)
-    password   = module.params.get("password", None)
+    server = module.params.get("server", 'localhost')
+    port = module.params.get("port", 1883)
+    topic = module.params.get("topic")
+    payload = module.params.get("payload")
+    client_id = module.params.get("client_id", '')
+    qos = int(module.params.get("qos", 0))
+    retain = module.params.get("retain")
+    username = module.params.get("username", None)
+    password = module.params.get("password", None)
 
     if client_id is None:
         client_id = "%s_%s" % (socket.getfqdn(), os.getpid())
@@ -144,18 +145,18 @@ def main():
     if payload and payload == 'None':
         payload = None
 
-    auth=None
+    auth = None
     if username is not None:
-        auth = { 'username' : username, 'password' : password }
+        auth = {'username': username, 'password': password}
 
     try:
         rc = mqtt.single(topic, payload,
-                    qos=qos,
-                    retain=retain,
-                    client_id=client_id,
-                    hostname=server,
-                    port=port,
-                    auth=auth)
+                         qos=qos,
+                         retain=retain,
+                         client_id=client_id,
+                         hostname=server,
+                         port=port,
+                         auth=auth)
     except Exception, e:
         module.fail_json(msg="unable to publish to MQTT broker %s" % (e))
 

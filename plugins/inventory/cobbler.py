@@ -129,7 +129,8 @@ class CobblerInventory(object):
         """ Reads the settings from the cobbler.ini file """
 
         config = ConfigParser.SafeConfigParser()
-        config.read(os.path.dirname(os.path.realpath(__file__)) + '/cobbler.ini')
+        config.read(
+            os.path.dirname(os.path.realpath(__file__)) + '/cobbler.ini')
 
         self.cobbler_host = config.get('cobbler', 'host')
 
@@ -142,9 +143,12 @@ class CobblerInventory(object):
     def parse_cli_args(self):
         """ Command line argument processing """
 
-        parser = argparse.ArgumentParser(description='Produce an Ansible Inventory file based on Cobbler')
-        parser.add_argument('--list', action='store_true', default=True, help='List instances (default: True)')
-        parser.add_argument('--host', action='store', help='Get all the variables about a specific instance')
+        parser = argparse.ArgumentParser(
+            description='Produce an Ansible Inventory file based on Cobbler')
+        parser.add_argument(
+            '--list', action='store_true', default=True, help='List instances (default: True)')
+        parser.add_argument(
+            '--host', action='store', help='Get all the variables about a specific instance')
         parser.add_argument('--refresh-cache', action='store_true', default=False,
                             help='Force refresh of cache by making API requests to cobbler (default: False - use cache files)')
         self.args = parser.parse_args()
@@ -189,7 +193,8 @@ class CobblerInventory(object):
                     self.inventory[cls] = []
                 self.inventory[cls].append(dns_name)
 
-            # Since we already have all of the data for the host, update the host details as well
+            # Since we already have all of the data for the host, update the
+            # host details as well
 
             # The old way was ksmeta only -- provide backwards compatibility
 

@@ -38,7 +38,7 @@ class LookupModule(object):
 
     def run(self, terms, inject=None, **kwargs):
 
-        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
+        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
 
         ret = []
 
@@ -50,7 +50,7 @@ class LookupModule(object):
             paramvals = {
                 'length': LookupModule.LENGTH,
                 'encrypt': None,
-                'chars': ['ascii_letters','digits',".,:-_"],
+                'chars': ['ascii_letters', 'digits', ".,:-_"],
             }
 
             # get non-default parameters if specified
@@ -61,17 +61,17 @@ class LookupModule(object):
                     if name == 'length':
                         paramvals[name] = int(value)
                     elif name == 'chars':
-                        use_chars=[]
-                        if ",," in value: 
+                        use_chars = []
+                        if ",," in value:
                             use_chars.append(',')
-                        use_chars.extend(value.replace(',,',',').split(','))
+                        use_chars.extend(value.replace(',,', ',').split(','))
                         paramvals['chars'] = use_chars
                     else:
                         paramvals[name] = value
             except (ValueError, AssertionError), e:
                 raise errors.AnsibleError(e)
 
-            length  = paramvals['length']
+            length = paramvals['length']
             encrypt = paramvals['encrypt']
             use_chars = paramvals['chars']
 
@@ -82,7 +82,8 @@ class LookupModule(object):
                 if not os.path.isdir(pathdir):
                     os.makedirs(pathdir)
 
-                chars = "".join([getattr(string,c,c) for c in use_chars]).replace('"','').replace("'",'')
+                chars = "".join([getattr(string, c, c) for c in use_chars]).replace(
+                    '"', '').replace("'", '')
                 password = ''.join(random.choice(chars) for _ in range(length))
 
                 if encrypt is not None:
@@ -98,7 +99,7 @@ class LookupModule(object):
 
                 if sep >= 0:
                     password = content[:sep]
-                    salt = content[sep+1:].split('=')[1]
+                    salt = content[sep + 1:].split('=')[1]
                 else:
                     password = content
                     salt = None
@@ -120,4 +121,3 @@ class LookupModule(object):
             ret.append(password)
 
         return ret
-

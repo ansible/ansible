@@ -185,9 +185,11 @@ else:
 # bigip_pool_member module specific support methods.
 #
 
+
 def bigip_api(bigip, user, password):
     api = bigsuds.BIGIP(hostname=bigip, username=user, password=password)
     return api
+
 
 def pool_exists(api, pool):
     # hack to determine if pool exists
@@ -202,6 +204,7 @@ def pool_exists(api, pool):
             # genuine exception
             raise
     return result
+
 
 def member_exists(api, pool, address, port):
     # hack to determine if member exists
@@ -219,6 +222,7 @@ def member_exists(api, pool, address, port):
             raise
     return result
 
+
 def delete_node_address(api, address):
     result = False
     try:
@@ -232,65 +236,85 @@ def delete_node_address(api, address):
             raise
     return result
 
+
 def remove_pool_member(api, pool, address, port):
     members = [{'address': address, 'port': port}]
     api.LocalLB.Pool.remove_member_v2(pool_names=[pool], members=[members])
+
 
 def add_pool_member(api, pool, address, port):
     members = [{'address': address, 'port': port}]
     api.LocalLB.Pool.add_member_v2(pool_names=[pool], members=[members])
 
+
 def get_connection_limit(api, pool, address, port):
     members = [{'address': address, 'port': port}]
-    result = api.LocalLB.Pool.get_member_connection_limit(pool_names=[pool], members=[members])[0][0]
+    result = api.LocalLB.Pool.get_member_connection_limit(
+        pool_names=[pool], members=[members])[0][0]
     return result
+
 
 def set_connection_limit(api, pool, address, port, limit):
     members = [{'address': address, 'port': port}]
-    api.LocalLB.Pool.set_member_connection_limit(pool_names=[pool], members=[members], limits=[[limit]])
+    api.LocalLB.Pool.set_member_connection_limit(
+        pool_names=[pool], members=[members], limits=[[limit]])
+
 
 def get_description(api, pool, address, port):
     members = [{'address': address, 'port': port}]
-    result = api.LocalLB.Pool.get_member_description(pool_names=[pool], members=[members])[0][0]
+    result = api.LocalLB.Pool.get_member_description(
+        pool_names=[pool], members=[members])[0][0]
     return result
+
 
 def set_description(api, pool, address, port, description):
     members = [{'address': address, 'port': port}]
-    api.LocalLB.Pool.set_member_description(pool_names=[pool], members=[members], descriptions=[[description]])
+    api.LocalLB.Pool.set_member_description(
+        pool_names=[pool], members=[members], descriptions=[[description]])
+
 
 def get_rate_limit(api, pool, address, port):
     members = [{'address': address, 'port': port}]
-    result = api.LocalLB.Pool.get_member_rate_limit(pool_names=[pool], members=[members])[0][0]
+    result = api.LocalLB.Pool.get_member_rate_limit(
+        pool_names=[pool], members=[members])[0][0]
     return result
+
 
 def set_rate_limit(api, pool, address, port, limit):
     members = [{'address': address, 'port': port}]
-    api.LocalLB.Pool.set_member_rate_limit(pool_names=[pool], members=[members], limits=[[limit]])
+    api.LocalLB.Pool.set_member_rate_limit(
+        pool_names=[pool], members=[members], limits=[[limit]])
+
 
 def get_ratio(api, pool, address, port):
     members = [{'address': address, 'port': port}]
-    result = api.LocalLB.Pool.get_member_ratio(pool_names=[pool], members=[members])[0][0]
+    result = api.LocalLB.Pool.get_member_ratio(
+        pool_names=[pool], members=[members])[0][0]
     return result
+
 
 def set_ratio(api, pool, address, port, ratio):
     members = [{'address': address, 'port': port}]
-    api.LocalLB.Pool.set_member_ratio(pool_names=[pool], members=[members], ratios=[[ratio]])
+    api.LocalLB.Pool.set_member_ratio(
+        pool_names=[pool], members=[members], ratios=[[ratio]])
+
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            server = dict(type='str', required=True),
-            user = dict(type='str', required=True),
-            password = dict(type='str', required=True),
-            state = dict(type='str', default='present', choices=['present', 'absent']),
-            pool = dict(type='str', required=True),
-            partition = dict(type='str', default='Common'),
-            host = dict(type='str', required=True, aliases=['address', 'name']),
-            port = dict(type='int', required=True),
-            connection_limit = dict(type='int'),
-            description = dict(type='str'),
-            rate_limit = dict(type='int'),
-            ratio = dict(type='int')
+        argument_spec=dict(
+            server=dict(type='str', required=True),
+            user=dict(type='str', required=True),
+            password=dict(type='str', required=True),
+            state=dict(
+                type='str', default='present', choices=['present', 'absent']),
+            pool=dict(type='str', required=True),
+            partition=dict(type='str', default='Common'),
+            host=dict(type='str', required=True, aliases=['address', 'name']),
+            port=dict(type='int', required=True),
+            connection_limit=dict(type='int'),
+            description=dict(type='str'),
+            rate_limit=dict(type='int'),
+            ratio=dict(type='int')
         ),
         supports_check_mode=True
     )
@@ -340,7 +364,8 @@ def main():
                 if not module.check_mode:
                     add_pool_member(api, pool, address, port)
                     if connection_limit is not None:
-                        set_connection_limit(api, pool, address, port, connection_limit)
+                        set_connection_limit(
+                            api, pool, address, port, connection_limit)
                     if description is not None:
                         set_description(api, pool, address, port, description)
                     if rate_limit is not None:
@@ -352,7 +377,8 @@ def main():
                 # pool member exists -- potentially modify attributes
                 if connection_limit is not None and connection_limit != get_connection_limit(api, pool, address, port):
                     if not module.check_mode:
-                        set_connection_limit(api, pool, address, port, connection_limit)
+                        set_connection_limit(
+                            api, pool, address, port, connection_limit)
                     result = {'changed': True}
                 if description is not None and description != get_description(api, pool, address, port):
                     if not module.check_mode:
@@ -375,4 +401,3 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 main()
-

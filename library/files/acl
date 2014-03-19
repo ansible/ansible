@@ -102,6 +102,7 @@ EXAMPLES = '''
   register: acl_info
 '''
 
+
 def split_entry(entry):
     ''' splits entry and ensures normalized return'''
 
@@ -110,9 +111,9 @@ def split_entry(entry):
     if len(a) == 3:
         a.append(False)
     try:
-        p,e,t,d = a
+        p, e, t, d = a
     except ValueError, e:
-        print "wtf?? %s => %s" % (entry,a)
+        print "wtf?? %s => %s" % (entry, a)
         raise e
 
     if d:
@@ -129,7 +130,7 @@ def split_entry(entry):
     else:
         t = None
 
-    perms = ['-','-','-']
+    perms = ['-', '-', '-']
     for char in p:
         if char == 'r':
             perms[0] = 'r'
@@ -139,11 +140,12 @@ def split_entry(entry):
             perms[2] = 'x'
     p = ''.join(perms)
 
-    return [d,t,e,p]
+    return [d, t, e, p]
 
-def get_acls(module,path,follow):
 
-    cmd = [ module.get_bin_path('getfacl', True) ]
+def get_acls(module, path, follow):
+
+    cmd = [module.get_bin_path('getfacl', True)]
     if not follow:
         cmd.append('-h')
     # prevents absolute path warnings and removes headers
@@ -151,11 +153,12 @@ def get_acls(module,path,follow):
     cmd.append('--absolute-names')
     cmd.append(path)
 
-    return _run_acl(module,cmd)
+    return _run_acl(module, cmd)
 
-def set_acl(module,path,entry,follow,default):
 
-    cmd = [ module.get_bin_path('setfacl', True) ]
+def set_acl(module, path, entry, follow, default):
+
+    cmd = [module.get_bin_path('setfacl', True)]
     if not follow:
         cmd.append('-h')
     if default:
@@ -163,11 +166,12 @@ def set_acl(module,path,entry,follow,default):
     cmd.append('-m "%s"' % entry)
     cmd.append(path)
 
-    return _run_acl(module,cmd)
+    return _run_acl(module, cmd)
 
-def rm_acl(module,path,entry,follow,default):
 
-    cmd = [ module.get_bin_path('setfacl', True) ]
+def rm_acl(module, path, entry, follow, default):
+
+    cmd = [module.get_bin_path('setfacl', True)]
     if not follow:
         cmd.append('-h')
     if default:
@@ -176,9 +180,10 @@ def rm_acl(module,path,entry,follow,default):
     cmd.append('-x "%s"' % entry)
     cmd.append(path)
 
-    return _run_acl(module,cmd,False)
+    return _run_acl(module, cmd, False)
 
-def _run_acl(module,cmd,check_rc=True):
+
+def _run_acl(module, cmd, check_rc=True):
 
     try:
         (rc, out, err) = module.run_command(' '.join(cmd), check_rc=check_rc)
@@ -187,19 +192,22 @@ def _run_acl(module,cmd,check_rc=True):
 
     # trim last line as it is always empty
     ret = out.splitlines()
-    return ret[0:len(ret)-1]
+    return ret[0:len(ret) - 1]
+
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True,aliases=['path'], type='str'),
-            entry = dict(required=False, etype='str'),
-            entity = dict(required=False, type='str', default=''),
-            etype = dict(required=False, choices=['other', 'user', 'group', 'mask'], type='str'),
-            permissions = dict(required=False, type='str'),
-            state = dict(required=False, default='query', choices=[ 'query', 'present', 'absent' ], type='str'),
-            follow = dict(required=False, type='bool', default=True),
-            default= dict(required=False, type='bool', default=False),
+        argument_spec=dict(
+            name=dict(required=True, aliases=['path'], type='str'),
+            entry=dict(required=False, etype='str'),
+            entity=dict(required=False, type='str', default=''),
+            etype=dict(
+                required=False, choices=['other', 'user', 'group', 'mask'], type='str'),
+            permissions=dict(required=False, type='str'),
+            state=dict(required=False, default='query', choices=[
+                       'query', 'present', 'absent'], type='str'),
+            follow=dict(required=False, type='bool', default=True),
+            default=dict(required=False, type='bool', default=False),
         ),
         supports_check_mode=True,
     )
@@ -216,28 +224,32 @@ def main():
     if not os.path.exists(path):
         module.fail_json(msg="path not found or not accessible!")
 
-    if state in ['present','absent']:
-        if  not entry and not etype:
-            module.fail_json(msg="%s requires either etype and permissions or just entry be set" % state)
+    if state in ['present', 'absent']:
+        if not entry and not etype:
+            module.fail_json(
+                msg="%s requires either etype and permissions or just entry be set" % state)
 
     if entry:
         if etype or entity or permissions:
-            module.fail_json(msg="entry and another incompatible field (entity, etype or permissions) are also set")
-        if entry.count(":") not in [2,3]:
-            module.fail_json(msg="Invalid entry: '%s', it requires 3 or 4 sections divided by ':'" % entry)
+            module.fail_json(
+                msg="entry and another incompatible field (entity, etype or permissions) are also set")
+        if entry.count(":") not in [2, 3]:
+            module.fail_json(
+                msg="Invalid entry: '%s', it requires 3 or 4 sections divided by ':'" % entry)
 
         default, etype, entity, permissions = split_entry(entry)
 
-    changed=False
+    changed = False
     msg = ""
-    currentacls = get_acls(module,path,follow)
+    currentacls = get_acls(module, path, follow)
 
     if (state == 'present'):
         matched = False
         for oldentry in currentacls:
             if oldentry.count(":") == 0:
                 continue
-            old_default, old_type, old_entity, old_permissions = split_entry(oldentry)
+            old_default, old_type, old_entity, old_permissions = split_entry(
+                oldentry)
             if old_default == default:
                 if old_type == etype:
                     if etype in ['user', 'group']:
@@ -252,34 +264,37 @@ def main():
                             changed = True
                         break
         if not matched:
-            changed=True
+            changed = True
 
         if changed and not module.check_mode:
-            set_acl(module,path,':'.join([etype, str(entity), permissions]),follow,default)
-        msg="%s is present" % ':'.join([etype, str(entity), permissions])
+            set_acl(module, path, ':'.join(
+                [etype, str(entity), permissions]), follow, default)
+        msg = "%s is present" % ':'.join([etype, str(entity), permissions])
 
     elif state == 'absent':
         for oldentry in currentacls:
             if oldentry.count(":") == 0:
                 continue
-            old_default, old_type, old_entity, old_permissions = split_entry(oldentry)
+            old_default, old_type, old_entity, old_permissions = split_entry(
+                oldentry)
             if old_default == default:
                 if old_type == etype:
                     if etype in ['user', 'group']:
                         if old_entity == entity:
-                            changed=True
+                            changed = True
                             break
                     else:
-                        changed=True
+                        changed = True
                         break
         if changed and not module.check_mode:
-            rm_acl(module,path,':'.join([etype, entity, '---']),follow,default)
-        msg="%s is absent" % ':'.join([etype, entity, '---'])
+            rm_acl(module, path, ':'.join(
+                [etype, entity, '---']), follow, default)
+        msg = "%s is absent" % ':'.join([etype, entity, '---'])
     else:
-        msg="current acl"
+        msg = "current acl"
 
     if changed:
-        currentacls = get_acls(module,path,follow)
+        currentacls = get_acls(module, path, follow)
 
     module.exit_json(changed=changed, msg=msg, acl=currentacls)
 

@@ -25,13 +25,16 @@ import subprocess
 from ansible import errors
 from ansible.callbacks import vvv
 
+
 class Connection(object):
+
     ''' Local chroot based connections '''
 
     def _search_executable(self, executable):
         cmd = distutils.spawn.find_executable(executable)
         if not cmd:
-            raise errors.AnsibleError("%s command not found in PATH") % executable
+            raise errors.AnsibleError(
+                "%s command not found in PATH") % executable
         return cmd
 
     def list_jails(self):
@@ -54,8 +57,6 @@ class Connection(object):
         # remove \n
         return stdout[:-1]
 
- 
-        
     def __init__(self, runner, host, port, *args, **kwargs):
         self.jail = host
         self.runner = runner
@@ -63,14 +64,14 @@ class Connection(object):
         self.has_pipelining = False
 
         if os.geteuid() != 0:
-            raise errors.AnsibleError("jail connection requires running as root")
+            raise errors.AnsibleError(
+                "jail connection requires running as root")
 
         self.jls_cmd = self._search_executable('jls')
         self.jexec_cmd = self._search_executable('jexec')
-        
+
         if not self.jail in self.list_jails():
             raise errors.AnsibleError("incorrect jail name %s" % self.jail)
-
 
         self.host = host
         # port is unused, since this is local
@@ -95,10 +96,12 @@ class Connection(object):
         ''' run a command on the chroot '''
 
         if su or su_user:
-            raise errors.AnsibleError("Internal Error: this module does not support running commands via su")
+            raise errors.AnsibleError(
+                "Internal Error: this module does not support running commands via su")
 
         if in_data:
-            raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
+            raise errors.AnsibleError(
+                "Internal Error: this module does not support optimized module pipelining")
 
         # We enter chroot as root so sudo stuff can be ignored
         local_cmd = self._generate_cmd(executable, cmd)
@@ -120,15 +123,18 @@ class Connection(object):
 
     def _copy_file(self, in_path, out_path):
         if not os.path.exists(in_path):
-            raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
+            raise errors.AnsibleFileNotFound(
+                "file or module does not exist: %s" % in_path)
         try:
             shutil.copyfile(in_path, out_path)
         except shutil.Error:
             traceback.print_exc()
-            raise errors.AnsibleError("failed to copy: %s and %s are the same" % (in_path, out_path))
+            raise errors.AnsibleError(
+                "failed to copy: %s and %s are the same" % (in_path, out_path))
         except IOError:
             traceback.print_exc()
-            raise errors.AnsibleError("failed to transfer file to %s" % out_path)
+            raise errors.AnsibleError(
+                "failed to transfer file to %s" % out_path)
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to chroot '''

@@ -35,6 +35,7 @@ SHORTCUT = re_compile(
 
 
 class LookupModule(object):
+
     """
     sequence lookup module
 
@@ -97,7 +98,7 @@ class LookupModule(object):
             except ValueError:
                 raise AnsibleError(
                     "can't parse arg %s=%r as integer"
-                        % (arg, arg_raw)
+                    % (arg, arg_raw)
                 )
             if 'format' in args:
                 self.format = args.pop("format")
@@ -176,7 +177,7 @@ class LookupModule(object):
         terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
 
         if isinstance(terms, basestring):
-            terms = [ terms ]
+            terms = [terms]
 
         for term in terms:
             try:

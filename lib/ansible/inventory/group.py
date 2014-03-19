@@ -15,10 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+
 class Group(object):
+
     ''' a group of ansible hosts '''
 
-    __slots__ = [ 'name', 'hosts', 'vars', 'child_groups', 'parent_groups', 'depth', '_hosts_cache' ]
+    __slots__ = ['name', 'hosts', 'vars', 'child_groups',
+                 'parent_groups', 'depth', '_hosts_cache']
 
     def __init__(self, name=None):
 
@@ -40,7 +43,7 @@ class Group(object):
         # don't add if it's already there
         if not group in self.child_groups:
             self.child_groups.append(group)
-            group.depth = max([self.depth+1, group.depth])
+            group.depth = max([self.depth + 1, group.depth])
             group.parent_groups.append(self)
             self.clear_hosts_cache()
 
@@ -97,4 +100,3 @@ class Group(object):
     def get_ancestors(self):
 
         return self._get_ancestors().values()
-

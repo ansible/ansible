@@ -83,6 +83,7 @@ EXAMPLES = '''
 - hg: repo=https://bitbucket.org/user/repo1 dest=/home/user/repo1 revision=stable purge=yes
 '''
 
+
 class Hg(object):
 
     def __init__(self, module, dest, repo, revision, hg_path):
@@ -97,7 +98,8 @@ class Hg(object):
         return (rc, out, err)
 
     def _list_untracked(self):
-        args = ['purge', '--config', 'extensions.purge=', '-R', self.dest, '--print']
+        args = ['purge', '--config', 'extensions.purge=',
+                '-R', self.dest, '--print']
         return self._command(args)
 
     def get_revision(self):
@@ -110,7 +112,8 @@ class Hg(object):
 
         Read the full description via hg id --help
         """
-        (rc, out, err) = self._command(['id', '-b', '-i', '-t', '-R', self.dest])
+        (rc, out, err) = self._command(
+            ['id', '-b', '-i', '-t', '-R', self.dest])
         if rc != 0:
             self.module.fail_json(msg=err)
         else:
@@ -180,15 +183,16 @@ class Hg(object):
 
 # ===========================================
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            repo = dict(required=True, aliases=['name']),
-            dest = dict(required=True),
-            revision = dict(default="default", aliases=['version']),
-            force = dict(default='yes', type='bool'),
-            purge = dict(default='no', type='bool'),
-            executable = dict(default=None),
+        argument_spec=dict(
+            repo=dict(required=True, aliases=['name']),
+            dest=dict(required=True),
+            revision=dict(default="default", aliases=['version']),
+            force=dict(default='yes', type='bool'),
+            purge=dict(default='no', type='bool'),
+            executable=dict(default=None),
         ),
     )
     repo = module.params['repo']
@@ -231,7 +235,8 @@ def main():
     after = hg.get_revision()
     if before != after or cleaned:
         changed = True
-    module.exit_json(before=before, after=after, changed=changed, cleaned=cleaned)
+    module.exit_json(
+        before=before, after=after, changed=changed, cleaned=cleaned)
 
 # import module snippets
 from ansible.module_utils.basic import *

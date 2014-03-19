@@ -47,13 +47,13 @@ import json
 #import vault
 from vault import VaultLib
 
-VERBOSITY=0
+VERBOSITY = 0
 
 # list of all deprecation messages to prevent duplicate display
 deprecations = {}
 warns = {}
 
-MAX_FILE_SIZE_FOR_DIFF=1*1024*1024
+MAX_FILE_SIZE_FOR_DIFF = 1 * 1024 * 1024
 
 try:
     import json
@@ -72,11 +72,11 @@ try:
 except:
     pass
 
-KEYCZAR_AVAILABLE=False
+KEYCZAR_AVAILABLE = False
 try:
     import keyczar.errors as key_errors
     from keyczar.keys import AesKey
-    KEYCZAR_AVAILABLE=True
+    KEYCZAR_AVAILABLE = True
 except ImportError:
     pass
 
@@ -84,12 +84,14 @@ except ImportError:
 # Abstractions around keyczar
 ###############################################################
 
+
 def key_for_hostname(hostname):
     # fireball mode is an implementation of ansible firing up zeromq via SSH
     # to use no persistent daemons or key management
 
     if not KEYCZAR_AVAILABLE:
-        raise errors.AnsibleError("python-keyczar must be installed on the control machine to use accelerated modes")
+        raise errors.AnsibleError(
+            "python-keyczar must be installed on the control machine to use accelerated modes")
 
     key_path = os.path.expanduser(C.ACCELERATE_KEYS_DIR)
     if not os.path.exists(key_path):
@@ -99,28 +101,34 @@ def key_for_hostname(hostname):
         raise errors.AnsibleError('ACCELERATE_KEYS_DIR is not a directory.')
 
     if stat.S_IMODE(os.stat(key_path).st_mode) != int(C.ACCELERATE_KEYS_DIR_PERMS, 8):
-        raise errors.AnsibleError('Incorrect permissions on ACCELERATE_KEYS_DIR (%s)' % (C.ACCELERATE_KEYS_DIR,))
+        raise errors.AnsibleError(
+            'Incorrect permissions on ACCELERATE_KEYS_DIR (%s)' % (C.ACCELERATE_KEYS_DIR,))
 
     key_path = os.path.join(key_path, hostname)
 
-    # use new AES keys every 2 hours, which means fireball must not allow running for longer either
-    if not os.path.exists(key_path) or (time.time() - os.path.getmtime(key_path) > 60*60*2):
+    # use new AES keys every 2 hours, which means fireball must not allow
+    # running for longer either
+    if not os.path.exists(key_path) or (time.time() - os.path.getmtime(key_path) > 60 * 60 * 2):
         key = AesKey.Generate()
-        fd = os.open(key_path, os.O_WRONLY | os.O_CREAT, int(C.ACCELERATE_KEYS_FILE_PERMS, 8))
+        fd = os.open(key_path, os.O_WRONLY | os.O_CREAT, int(
+            C.ACCELERATE_KEYS_FILE_PERMS, 8))
         fh = os.fdopen(fd, 'w')
         fh.write(str(key))
         fh.close()
         return key
     else:
         if stat.S_IMODE(os.stat(key_path).st_mode) != int(C.ACCELERATE_KEYS_FILE_PERMS, 8):
-            raise errors.AnsibleError('Incorrect permissions on ACCELERATE_KEYS_FILE (%s)' % (key_path,))
+            raise errors.AnsibleError(
+                'Incorrect permissions on ACCELERATE_KEYS_FILE (%s)' % (key_path,))
         fh = open(key_path)
         key = AesKey.Read(fh.read())
         fh.close()
         return key
 
+
 def encrypt(key, msg):
     return key.Encrypt(msg)
+
 
 def decrypt(key, msg):
     try:
@@ -132,16 +140,19 @@ def decrypt(key, msg):
 # UTILITY FUNCTIONS FOR COMMAND LINE TOOLS
 ###############################################################
 
+
 def err(msg):
     ''' print an error message to stderr '''
 
     print >> sys.stderr, msg
+
 
 def exit(msg, rc=1):
     ''' quit with an error to stdout and a failure code '''
 
     err(msg)
     sys.exit(rc)
+
 
 def jsonify(result, format=False):
     ''' format JSON output (uncompressed or uncompressed) '''
@@ -157,6 +168,7 @@ def jsonify(result, format=False):
     else:
         return json.dumps(result2, sort_keys=True)
 
+
 def write_tree_file(tree, hostname, buf):
     ''' write something into treedir/hostname '''
 
@@ -167,15 +179,18 @@ def write_tree_file(tree, hostname, buf):
     fd.write(buf)
     fd.close()
 
+
 def is_failed(result):
     ''' is a given JSON result a failed result? '''
 
-    return ((result.get('rc', 0) != 0) or (result.get('failed', False) in [ True, 'True', 'true']))
+    return ((result.get('rc', 0) != 0) or (result.get('failed', False) in [True, 'True', 'true']))
+
 
 def is_changed(result):
     ''' is a given JSON result a changed result? '''
 
-    return (result.get('changed', False) in [ True, 'True', 'true'])
+    return (result.get('changed', False) in [True, 'True', 'true'])
+
 
 def check_conditional(conditional, basedir, inject, fail_on_undefined=False):
 
@@ -191,19 +206,20 @@ def check_conditional(conditional, basedir, inject, fail_on_undefined=False):
     if not isinstance(conditional, basestring):
         return conditional
 
-    conditional = conditional.replace("jinja2_compare ","")
+    conditional = conditional.replace("jinja2_compare ", "")
     # allow variable names
     if conditional in inject and '-' not in str(inject[conditional]):
         conditional = inject[conditional]
-    conditional = template.template(basedir, conditional, inject, fail_on_undefined=fail_on_undefined)
-    original = str(conditional).replace("jinja2_compare ","")
+    conditional = template.template(
+        basedir, conditional, inject, fail_on_undefined=fail_on_undefined)
+    original = str(conditional).replace("jinja2_compare ", "")
     # a Jinja2 evaluation that results in something Python can eval!
     presented = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional
     conditional = template.template(basedir, presented, inject)
     val = conditional.strip()
     if val == presented:
-        # the templating failed, meaning most likely a 
-        # variable was undefined. If we happened to be 
+        # the templating failed, meaning most likely a
+        # variable was undefined. If we happened to be
         # looking for an undefined variable, return True,
         # otherwise fail
         if "is undefined" in conditional:
@@ -211,19 +227,23 @@ def check_conditional(conditional, basedir, inject, fail_on_undefined=False):
         elif "is defined" in conditional:
             return False
         else:
-            raise errors.AnsibleError("error while evaluating conditional: %s" % original)
+            raise errors.AnsibleError(
+                "error while evaluating conditional: %s" % original)
     elif val == "True":
         return True
     elif val == "False":
         return False
     else:
-        raise errors.AnsibleError("unable to evaluate conditional: %s" % original)
+        raise errors.AnsibleError(
+            "unable to evaluate conditional: %s" % original)
+
 
 def is_executable(path):
     '''is the given path executable?'''
     return (stat.S_IXUSR & os.stat(path)[stat.ST_MODE]
             or stat.S_IXGRP & os.stat(path)[stat.ST_MODE]
             or stat.S_IXOTH & os.stat(path)[stat.ST_MODE])
+
 
 def unfrackpath(path):
     ''' 
@@ -234,7 +254,8 @@ def unfrackpath(path):
     '''
     return os.path.normpath(os.path.realpath(os.path.expandvars(os.path.expanduser(path))))
 
-def prepare_writeable_dir(tree,mode=0777):
+
+def prepare_writeable_dir(tree, mode=0777):
     ''' make sure a directory exists and is writeable '''
 
     # modify the mode to ensure the owner at least
@@ -254,6 +275,7 @@ def prepare_writeable_dir(tree,mode=0777):
         raise errors.AnsibleError("Cannot write to path %s" % tree)
     return tree
 
+
 def path_dwim(basedir, given):
     '''
     make relative paths work like folks expect.
@@ -267,6 +289,7 @@ def path_dwim(basedir, given):
         if basedir is None:
             basedir = "."
         return os.path.abspath(os.path.join(basedir, given))
+
 
 def path_dwim_relative(original, dirname, source, playbook_base, check=True):
     ''' find one file in a directory one level up in a dir named dirname relative to current '''
@@ -285,13 +308,16 @@ def path_dwim_relative(original, dirname, source, playbook_base, check=True):
     if os.path.exists(obvious_local_path):
         return obvious_local_path
     if check:
-        raise errors.AnsibleError("input file not found at %s or %s" % (source2, obvious_local_path))
-    return source2 # which does not exist
+        raise errors.AnsibleError(
+            "input file not found at %s or %s" % (source2, obvious_local_path))
+    return source2  # which does not exist
+
 
 def json_loads(data):
     ''' parse a JSON string and return a data structure '''
 
     return json.loads(data)
+
 
 def parse_json(raw_data):
     ''' this version for module return data only '''
@@ -310,24 +336,25 @@ def parse_json(raw_data):
         try:
             tokens = shlex.split(data)
         except:
-            print "failed to parse json: "+ data
+            print "failed to parse json: " + data
             raise
 
         for t in tokens:
             if t.find("=") == -1:
                 raise errors.AnsibleError("failed to parse: %s" % orig_data)
-            (key,value) = t.split("=", 1)
+            (key, value) = t.split("=", 1)
             if key == 'changed' or 'failed':
-                if value.lower() in [ 'true', '1' ]:
+                if value.lower() in ['true', '1']:
                     value = True
-                elif value.lower() in [ 'false', '0' ]:
+                elif value.lower() in ['false', '0']:
                     value = False
             if key == 'rc':
                 value = int(value)
             results[key] = value
         if len(results.keys()) == 0:
-            return { "failed" : True, "parsed" : False, "msg" : orig_data }
+            return {"failed": True, "parsed": False, "msg": orig_data}
         return results
+
 
 def smush_braces(data):
     ''' smush Jinaj2 braces so unresolved templates like {{ foo }} don't get parsed weird by key=value code '''
@@ -337,13 +364,14 @@ def smush_braces(data):
         data = data.replace(' }}', '}}')
     return data
 
+
 def smush_ds(data):
     # things like key={{ foo }} are not handled by shlex.split well, so preprocess any YAML we load
     # so we do not have to call smush elsewhere
     if type(data) == list:
-        return [ smush_ds(x) for x in data ]
+        return [smush_ds(x) for x in data]
     elif type(data) == dict:
-        for (k,v) in data.items():
+        for (k, v) in data.items():
             data[k] = smush_ds(v)
         return data
     elif isinstance(data, basestring):
@@ -351,13 +379,15 @@ def smush_ds(data):
     else:
         return data
 
+
 def parse_yaml(data, path_hint=None):
     ''' convert a yaml string to a data structure.  Also supports JSON, ssssssh!!!'''
 
     stripped_data = data.lstrip()
     loaded = None
     if stripped_data.startswith("{") or stripped_data.startswith("["):
-        # since the line starts with { or [ we can infer this is a JSON document.
+        # since the line starts with { or [ we can infer this is a JSON
+        # document.
         try:
             loaded = json.loads(data)
         except ValueError, ve:
@@ -371,8 +401,9 @@ def parse_yaml(data, path_hint=None):
 
     return smush_ds(loaded)
 
+
 def process_common_errors(msg, probline, column):
-    replaced = probline.replace(" ","")
+    replaced = probline.replace(" ", "")
 
     if ":{{" in replaced and "}}" in replaced:
         msg = msg + """
@@ -424,7 +455,7 @@ Or:
                 match = True
             elif middle.startswith('"') and not middle.endswith('"'):
                 match = True
-            if len(middle) > 0 and middle[0] in [ '"', "'" ] and middle[-1] in [ '"', "'" ] and probline.count("'") > 2 or probline.count("'") > 2:
+            if len(middle) > 0 and middle[0] in ['"', "'"] and middle[-1] in ['"', "'"] and probline.count("'") > 2 or probline.count("'") > 2:
                 unbalanced = True
             if match:
                 msg = msg + """
@@ -463,11 +494,12 @@ Could be written as:
 
     return msg
 
+
 def process_yaml_error(exc, data, path=None):
     if hasattr(exc, 'problem_mark'):
         mark = exc.problem_mark
-        if mark.line -1 >= 0:
-            before_probline = data.split("\n")[mark.line-1]
+        if mark.line - 1 >= 0:
+            before_probline = data.split("\n")[mark.line - 1]
         else:
             before_probline = ''
         probline = data.split("\n")[mark.line]
@@ -533,6 +565,7 @@ def parse_yaml_from_file(path, vault_password=None):
     except yaml.YAMLError, exc:
         process_yaml_error(exc, data, path)
 
+
 def parse_kv(args):
     ''' convert a string of key/value items to a dict '''
     options = {}
@@ -543,15 +576,17 @@ def parse_kv(args):
             vargs = shlex.split(args, posix=True)
         except ValueError, ve:
             if 'no closing quotation' in str(ve).lower():
-                raise errors.AnsibleError("error parsing argument string, try quoting the entire line.")
+                raise errors.AnsibleError(
+                    "error parsing argument string, try quoting the entire line.")
             else:
                 raise
         vargs = [x.decode('utf-8') for x in vargs]
         for x in vargs:
             if "=" in x:
-                k, v = x.split("=",1)
-                options[k]=v
+                k, v = x.split("=", 1)
+                options[k] = v
     return options
+
 
 def merge_hash(a, b):
     ''' recursively merges hash b into a
@@ -572,6 +607,7 @@ def merge_hash(a, b):
 
     return result
 
+
 def md5s(data):
     ''' Return MD5 hex digest of data. '''
 
@@ -581,6 +617,7 @@ def md5s(data):
     except UnicodeEncodeError:
         digest.update(data.encode('utf-8'))
     return digest.hexdigest()
+
 
 def md5(filename):
     ''' Return MD5 hex digest of local file, or None if file is not present. '''
@@ -597,19 +634,23 @@ def md5(filename):
     infile.close()
     return digest.hexdigest()
 
+
 def default(value, function):
     ''' syntactic sugar around lazy evaluation of defaults '''
     if value is None:
         return function()
     return value
 
+
 def _gitinfo():
     ''' returns a string containing git branch, commit id and commit date '''
     result = None
-    repo_path = os.path.join(os.path.dirname(__file__), '..', '..', '..', '.git')
+    repo_path = os.path.join(
+        os.path.dirname(__file__), '..', '..', '..', '.git')
 
     if os.path.exists(repo_path):
-        # Check if the .git is a file. If it is a file, it means that we are in a submodule structure.
+        # Check if the .git is a file. If it is a file, it means that we are in
+        # a submodule structure.
         if os.path.isfile(repo_path):
             try:
                 gitdir = yaml.safe_load(open(repo_path)).get('gitdir')
@@ -617,7 +658,8 @@ def _gitinfo():
                 if os.path.isabs(gitdir):
                     repo_path = gitdir
                 else:
-                    repo_path = os.path.join(repo_path.split('.git')[0], gitdir)
+                    repo_path = os.path.join(
+                        repo_path.split('.git')[0], gitdir)
             except (IOError, AttributeError):
                 return ''
         f = open(os.path.join(repo_path, "HEAD"))
@@ -634,10 +676,11 @@ def _gitinfo():
             else:
                 offset = time.altzone
             result = "({0} {1}) last updated {2} (GMT {3:+04d})".format(branch, commit,
-                time.strftime("%Y/%m/%d %H:%M:%S", date), offset / -36)
+                                                                        time.strftime("%Y/%m/%d %H:%M:%S", date), offset / -36)
     else:
         result = ''
     return result
+
 
 def version(prog):
     result = "{0} {1}".format(prog, __version__)
@@ -645,6 +688,7 @@ def version(prog):
     if gitinfo:
         result = result + " {0}".format(gitinfo)
     return result
+
 
 def getch():
     ''' read in a single character '''
@@ -656,6 +700,7 @@ def getch():
     finally:
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
     return ch
+
 
 def sanitize_output(str):
     ''' strips private info out of a string '''
@@ -672,7 +717,7 @@ def sanitize_output(str):
     output = ''
     for part in parts:
         try:
-            (k,v) = part.split('=', 1)
+            (k, v) = part.split('=', 1)
             if k in private_keys:
                 output += " %s=VALUE_HIDDEN" % k
             else:
@@ -681,7 +726,8 @@ def sanitize_output(str):
                     m = filter.match(v)
                     if m:
                         d = m.groupdict()
-                        output += " %s=%s" % (k, d['before'] + "********" + d['after'])
+                        output += " %s=%s" % (k,
+                                              d['before'] + "********" + d['after'])
                         found = True
                         break
                 if not found:
@@ -695,69 +741,73 @@ def sanitize_output(str):
 # option handling code for /usr/bin/ansible and ansible-playbook
 # below this line
 
+
 class SortedOptParser(optparse.OptionParser):
+
     '''Optparser which sorts the options by opt before outputting --help'''
 
     def format_help(self, formatter=None):
         self.option_list.sort(key=operator.methodcaller('get_opt_string'))
         return optparse.OptionParser.format_help(self, formatter=None)
 
+
 def increment_debug(option, opt, value, parser):
     global VERBOSITY
     VERBOSITY += 1
 
+
 def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
-    async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, diff_opts=False):
+                async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, diff_opts=False):
     ''' create an options parser for any ansible script '''
 
     parser = SortedOptParser(usage, version=version("%prog"))
-    parser.add_option('-v','--verbose', default=False, action="callback",
-        callback=increment_debug, help="verbose mode (-vvv for more, -vvvv to enable connection debugging)")
+    parser.add_option('-v', '--verbose', default=False, action="callback",
+                      callback=increment_debug, help="verbose mode (-vvv for more, -vvvv to enable connection debugging)")
 
-    parser.add_option('-f','--forks', dest='forks', default=constants.DEFAULT_FORKS, type='int',
-        help="specify number of parallel processes to use (default=%s)" % constants.DEFAULT_FORKS)
+    parser.add_option('-f', '--forks', dest='forks', default=constants.DEFAULT_FORKS, type='int',
+                      help="specify number of parallel processes to use (default=%s)" % constants.DEFAULT_FORKS)
     parser.add_option('-i', '--inventory-file', dest='inventory',
-        help="specify inventory host file (default=%s)" % constants.DEFAULT_HOST_LIST,
-        default=constants.DEFAULT_HOST_LIST)
+                      help="specify inventory host file (default=%s)" % constants.DEFAULT_HOST_LIST,
+                      default=constants.DEFAULT_HOST_LIST)
     parser.add_option('-k', '--ask-pass', default=False, dest='ask_pass', action='store_true',
-        help='ask for SSH password')
+                      help='ask for SSH password')
     parser.add_option('--private-key', default=C.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
-        help='use this file to authenticate the connection')
+                      help='use this file to authenticate the connection')
     parser.add_option('-K', '--ask-sudo-pass', default=False, dest='ask_sudo_pass', action='store_true',
-        help='ask for sudo password')
-    parser.add_option('--ask-su-pass', default=False, dest='ask_su_pass', action='store_true', 
-        help='ask for su password')
-    parser.add_option('--ask-vault-pass', default=False, dest='ask_vault_pass', action='store_true', 
-        help='ask for vault password')
+                      help='ask for sudo password')
+    parser.add_option('--ask-su-pass', default=False, dest='ask_su_pass', action='store_true',
+                      help='ask for su password')
+    parser.add_option('--ask-vault-pass', default=False, dest='ask_vault_pass', action='store_true',
+                      help='ask for vault password')
     parser.add_option('--vault-password-file', default=None, dest='vault_password_file',
-        help="vault password file")
+                      help="vault password file")
     parser.add_option('--list-hosts', dest='listhosts', action='store_true',
-        help='outputs a list of matching hosts; does not execute anything else')
+                      help='outputs a list of matching hosts; does not execute anything else')
     parser.add_option('-M', '--module-path', dest='module_path',
-        help="specify path(s) to module library (default=%s)" % constants.DEFAULT_MODULE_PATH,
-        default=None)
+                      help="specify path(s) to module library (default=%s)" % constants.DEFAULT_MODULE_PATH,
+                      default=None)
 
     if subset_opts:
         parser.add_option('-l', '--limit', default=constants.DEFAULT_SUBSET, dest='subset',
-            help='further limit selected hosts to an additional pattern')
+                          help='further limit selected hosts to an additional pattern')
 
     parser.add_option('-T', '--timeout', default=constants.DEFAULT_TIMEOUT, type='int',
-        dest='timeout',
-        help="override the SSH timeout in seconds (default=%s)" % constants.DEFAULT_TIMEOUT)
+                      dest='timeout',
+                      help="override the SSH timeout in seconds (default=%s)" % constants.DEFAULT_TIMEOUT)
 
     if output_opts:
         parser.add_option('-o', '--one-line', dest='one_line', action='store_true',
-            help='condense output')
+                          help='condense output')
         parser.add_option('-t', '--tree', dest='tree', default=None,
-            help='log output to this directory')
+                          help='log output to this directory')
 
     if runas_opts:
         parser.add_option("-s", "--sudo", default=constants.DEFAULT_SUDO, action="store_true",
-            dest='sudo', help="run operations with sudo (nopasswd)")
+                          dest='sudo', help="run operations with sudo (nopasswd)")
         parser.add_option('-U', '--sudo-user', dest='sudo_user', default=None,
                           help='desired sudo user (default=root)')  # Can't default to root because we need to detect when this option was given
         parser.add_option('-u', '--user', default=constants.DEFAULT_REMOTE_USER,
-            dest='remote_user', help='connect as this user (default=%s)' % constants.DEFAULT_REMOTE_USER)
+                          dest='remote_user', help='connect as this user (default=%s)' % constants.DEFAULT_REMOTE_USER)
 
         parser.add_option('-S', '--su', default=constants.DEFAULT_SU,
                           action='store_true', help='run operations with su')
@@ -771,23 +821,23 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
 
     if async_opts:
         parser.add_option('-P', '--poll', default=constants.DEFAULT_POLL_INTERVAL, type='int',
-            dest='poll_interval',
-            help="set the poll interval if using -B (default=%s)" % constants.DEFAULT_POLL_INTERVAL)
+                          dest='poll_interval',
+                          help="set the poll interval if using -B (default=%s)" % constants.DEFAULT_POLL_INTERVAL)
         parser.add_option('-B', '--background', dest='seconds', type='int', default=0,
-            help='run asynchronously, failing after X seconds (default=N/A)')
+                          help='run asynchronously, failing after X seconds (default=N/A)')
 
     if check_opts:
         parser.add_option("-C", "--check", default=False, dest='check', action='store_true',
-            help="don't make any changes; instead, try to predict some of the changes that may occur"
-        )
+                          help="don't make any changes; instead, try to predict some of the changes that may occur"
+                          )
 
     if diff_opts:
         parser.add_option("-D", "--diff", default=False, dest='diff', action='store_true',
-            help="when changing (small) files and templates, show the differences in those files; works great with --check"
-        )
-
+                          help="when changing (small) files and templates, show the differences in those files; works great with --check"
+                          )
 
     return parser
+
 
 def ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=False, confirm_vault=False, confirm_new=False):
 
@@ -806,11 +856,13 @@ def ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=False, confirm_
         new_vault_pass = getpass.getpass(prompt="New Vault password: ")
 
     if ask_new_vault_pass and confirm_new:
-        new_vault_pass2 = getpass.getpass(prompt="Confirm New Vault password: ")
+        new_vault_pass2 = getpass.getpass(
+            prompt="Confirm New Vault password: ")
         if new_vault_pass != new_vault_pass2:
             raise errors.AnsibleError("Passwords do not match")
 
     return vault_pass, new_vault_pass
+
 
 def ask_passwords(ask_pass=False, ask_sudo_pass=False, ask_su_pass=False, ask_vault_pass=False):
     sshpass = None
@@ -837,12 +889,14 @@ def ask_passwords(ask_pass=False, ask_sudo_pass=False, ask_su_pass=False, ask_va
 
     return (sshpass, sudopass, su_pass, vault_pass)
 
+
 def do_encrypt(result, encrypt, salt_size=None, salt=None):
     if PASSLIB_AVAILABLE:
         try:
             crypt = getattr(passlib.hash, encrypt)
         except:
-            raise errors.AnsibleError("passlib does not support '%s' algorithm" % encrypt)
+            raise errors.AnsibleError(
+                "passlib does not support '%s' algorithm" % encrypt)
 
         if salt_size:
             result = crypt.encrypt(result, salt_size=salt_size)
@@ -851,9 +905,11 @@ def do_encrypt(result, encrypt, salt_size=None, salt=None):
         else:
             result = crypt.encrypt(result)
     else:
-        raise errors.AnsibleError("passlib must be installed to encrypt vars_prompt values")
+        raise errors.AnsibleError(
+            "passlib must be installed to encrypt vars_prompt values")
 
     return result
+
 
 def last_non_blank_line(buf):
 
@@ -864,6 +920,7 @@ def last_non_blank_line(buf):
             return line
     # shouldn't occur unless there's no output
     return ""
+
 
 def filter_leading_non_json_lines(buf):
     '''
@@ -882,12 +939,14 @@ def filter_leading_non_json_lines(buf):
             filtered_lines.write(line + '\n')
     return filtered_lines.getvalue()
 
+
 def boolean(value):
     val = str(value)
-    if val.lower() in [ "true", "t", "y", "1", "yes" ]:
+    if val.lower() in ["true", "t", "y", "1", "yes"]:
         return True
     else:
         return False
+
 
 def make_sudo_cmd(sudo_user, executable, cmd):
     """
@@ -900,7 +959,8 @@ def make_sudo_cmd(sudo_user, executable, cmd):
     # and pass the quoted string to the user's shell.  We loop reading
     # output until we see the randomly-generated sudo prompt set with
     # the -p option.
-    randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
+    randbits = ''.join(chr(random.randint(ord('a'), ord('z')))
+                       for x in xrange(32))
     prompt = '[sudo via ansible, key=%s] password: ' % randbits
     success_key = 'SUDO-SUCCESS-%s' % randbits
     sudocmd = '%s -k && %s %s -S -p "%s" -u %s %s -c %s' % (
@@ -914,7 +974,8 @@ def make_su_cmd(su_user, executable, cmd):
     Helper function for connection plugins to create direct su commands
     """
     # TODO: work on this function
-    randbits = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
+    randbits = ''.join(chr(random.randint(ord('a'), ord('z')))
+                       for x in xrange(32))
     prompt = 'assword: '
     success_key = 'SUDO-SUCCESS-%s' % randbits
     sudocmd = '%s %s %s %s -c %s' % (
@@ -925,10 +986,12 @@ def make_su_cmd(su_user, executable, cmd):
 
 _TO_UNICODE_TYPES = (unicode, type(None))
 
+
 def to_unicode(value):
     if isinstance(value, _TO_UNICODE_TYPES):
         return value
     return value.decode("utf-8")
+
 
 def get_diff(diff):
     # called by --diff usage in playbook and runner via callbacks
@@ -939,13 +1002,16 @@ def get_diff(diff):
             warnings.simplefilter('ignore')
             ret = []
             if 'dst_binary' in diff:
-                ret.append("diff skipped: destination file appears to be binary\n")
+                ret.append(
+                    "diff skipped: destination file appears to be binary\n")
             if 'src_binary' in diff:
                 ret.append("diff skipped: source file appears to be binary\n")
             if 'dst_larger' in diff:
-                ret.append("diff skipped: destination file size is greater than %d\n" % diff['dst_larger'])
+                ret.append(
+                    "diff skipped: destination file size is greater than %d\n" % diff['dst_larger'])
             if 'src_larger' in diff:
-                ret.append("diff skipped: source file size is greater than %d\n" % diff['src_larger'])
+                ret.append(
+                    "diff skipped: source file size is greater than %d\n" % diff['src_larger'])
             if 'before' in diff and 'after' in diff:
                 if 'before_header' in diff:
                     before_header = "before: %s" % diff['before_header']
@@ -955,18 +1021,21 @@ def get_diff(diff):
                     after_header = "after: %s" % diff['after_header']
                 else:
                     after_header = 'after'
-                differ = difflib.unified_diff(to_unicode(diff['before']).splitlines(True), to_unicode(diff['after']).splitlines(True), before_header, after_header, '', '', 10)
+                differ = difflib.unified_diff(to_unicode(diff['before']).splitlines(True), to_unicode(
+                    diff['after']).splitlines(True), before_header, after_header, '', '', 10)
                 for line in list(differ):
                     ret.append(line)
             return u"".join(ret)
     except UnicodeDecodeError:
         return ">> the files are different, but the diff library cannot compare unicode strings"
 
+
 def is_list_of_strings(items):
     for x in items:
         if not isinstance(x, basestring):
             return False
     return True
+
 
 def safe_eval(str, locals=None, include_exceptions=False):
     '''
@@ -1028,7 +1097,8 @@ def listify_lookup_plugin_terms(terms, basedir, inject):
             # if not already a list, get ready to evaluate with Jinja2
             # not sure why the "/" is in above code :)
             try:
-                new_terms = template.template(basedir, "{{ %s }}" % terms, inject)
+                new_terms = template.template(
+                    basedir, "{{ %s }}" % terms, inject)
                 if isinstance(new_terms, basestring) and new_terms.find("{{") != -1:
                     pass
                 else:
@@ -1043,9 +1113,10 @@ def listify_lookup_plugin_terms(terms, basedir, inject):
             return safe_eval(terms)
 
         if isinstance(terms, basestring):
-            terms = [ terms ]
+            terms = [terms]
 
     return terms
+
 
 def deprecated(msg, version, removed=False):
     ''' used to print out a deprecation message.'''
@@ -1055,12 +1126,16 @@ def deprecated(msg, version, removed=False):
 
     if not removed:
         if version:
-            new_msg = "\n[DEPRECATION WARNING]: %s. This feature will be removed in version %s." % (msg, version)
+            new_msg = "\n[DEPRECATION WARNING]: %s. This feature will be removed in version %s." % (
+                msg, version)
         else:
-            new_msg = "\n[DEPRECATION WARNING]: %s. This feature will be removed in a future release." % (msg)
-        new_msg = new_msg + " Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.\n\n"
+            new_msg = "\n[DEPRECATION WARNING]: %s. This feature will be removed in a future release." % (
+                msg)
+        new_msg = new_msg + \
+            " Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.\n\n"
     else:
-        raise errors.AnsibleError("[DEPRECATED]: %s.  Please update your playbooks." % msg)
+        raise errors.AnsibleError(
+            "[DEPRECATED]: %s.  Please update your playbooks." % msg)
 
     wrapped = textwrap.wrap(new_msg, 79)
     new_msg = "\n".join(wrapped) + "\n"
@@ -1068,6 +1143,7 @@ def deprecated(msg, version, removed=False):
     if new_msg not in deprecations:
         display(new_msg, color='purple', stderr=True)
         deprecations[new_msg] = 1
+
 
 def warning(msg):
     new_msg = "\n[WARNING]: %s" % msg
@@ -1077,12 +1153,14 @@ def warning(msg):
         display(new_msg, color='bright purple', stderr=True)
         warns[new_msg] = 1
 
+
 def combine_vars(a, b):
 
     if C.DEFAULT_HASH_BEHAVIOUR == "merge":
         return merge_hash(a, b)
     else:
         return dict(a.items() + b.items())
+
 
 def random_password(length=20, chars=C.DEFAULT_PASSWORD_CHARS):
     '''Return a random password string of length containing only chars.'''
@@ -1095,12 +1173,10 @@ def random_password(length=20, chars=C.DEFAULT_PASSWORD_CHARS):
 
     return ''.join(password)
 
+
 def before_comment(msg):
     ''' what's the part of a string before a comment? '''
-    msg = msg.replace("\#","**NOT_A_COMMENT**")
+    msg = msg.replace("\#", "**NOT_A_COMMENT**")
     msg = msg.split("#")[0]
-    msg = msg.replace("**NOT_A_COMMENT**","#")
+    msg = msg.replace("**NOT_A_COMMENT**", "#")
     return msg
-
-
-

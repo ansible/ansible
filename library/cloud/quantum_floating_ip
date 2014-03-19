@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#coding: utf-8 -*-
+# coding: utf-8 -*-
 
 # (c) 2013, Benno Joy <benno@ansible.com>
 #
@@ -25,7 +25,8 @@ try:
     from keystoneclient.v2_0 import client as ksclient
     import time
 except ImportError:
-    print("failed=True msg='novaclient,keystoneclient and quantumclient (or neutronclient) are required'")
+    print(
+        "failed=True msg='novaclient,keystoneclient and quantumclient (or neutronclient) are required'")
 
 DOCUMENTATION = '''
 ---
@@ -90,14 +91,16 @@ EXAMPLES = '''
                        instance_name=vm1 internal_network_name=internal_network
 '''
 
+
 def _get_ksclient(module, kwargs):
     try:
         kclient = ksclient.Client(username=kwargs.get('login_username'),
-                                 password=kwargs.get('login_password'),
-                                 tenant_name=kwargs.get('login_tenant_name'),
-                                 auth_url=kwargs.get('auth_url'))
+                                  password=kwargs.get('login_password'),
+                                  tenant_name=kwargs.get('login_tenant_name'),
+                                  auth_url=kwargs.get('auth_url'))
     except Exception, e:
-        module.fail_json(msg = "Error authenticating to the keystone: %s " % e.message)
+        module.fail_json(
+            msg="Error authenticating to the keystone: %s " % e.message)
     global _os_keystone
     _os_keystone = kclient
     return kclient
@@ -105,24 +108,27 @@ def _get_ksclient(module, kwargs):
 
 def _get_endpoint(module, ksclient):
     try:
-        endpoint = ksclient.service_catalog.url_for(service_type='network', endpoint_type='publicURL')
+        endpoint = ksclient.service_catalog.url_for(
+            service_type='network', endpoint_type='publicURL')
     except Exception, e:
-        module.fail_json(msg = "Error getting network endpoint: %s" % e.message)
+        module.fail_json(msg="Error getting network endpoint: %s" % e.message)
     return endpoint
+
 
 def _get_neutron_client(module, kwargs):
     _ksclient = _get_ksclient(module, kwargs)
     token = _ksclient.auth_token
     endpoint = _get_endpoint(module, _ksclient)
     kwargs = {
-            'token': token,
-            'endpoint_url': endpoint
+        'token': token,
+        'endpoint_url': endpoint
     }
     try:
         neutron = client.Client('2.0', **kwargs)
     except Exception, e:
-        module.fail_json(msg = "Error in connecting to neutron: %s " % e.message)
+        module.fail_json(msg="Error in connecting to neutron: %s " % e.message)
     return neutron
+
 
 def _get_server_state(module, nova):
     server_info = None
@@ -133,12 +139,15 @@ def _get_server_state(module, nova):
                 info = server._info
                 if info['name'] == module.params['instance_name']:
                     if info['status'] != 'ACTIVE' and module.params['state'] == 'present':
-                        module.fail_json( msg="The VM is available but not Active. state:" + info['status'])
+                        module.fail_json(
+                            msg="The VM is available but not Active. state:" + info['status'])
                     server_info = info
                     break
     except Exception, e:
-        module.fail_json(msg = "Error in getting the server list: %s" % e.message)
+        module.fail_json(
+            msg="Error in getting the server list: %s" % e.message)
     return server_info, server
+
 
 def _get_port_info(neutron, module, instance_id, internal_network_name=None):
     if internal_network_name:
@@ -148,14 +157,15 @@ def _get_port_info(neutron, module, instance_id, internal_network_name=None):
         networks = neutron.list_networks(**kwargs)
         subnet_id = networks['networks'][0]['subnets'][0]
     kwargs = {
-            'device_id': instance_id,
+        'device_id': instance_id,
     }
     try:
         ports = neutron.list_ports(**kwargs)
     except Exception, e:
-        module.fail_json( msg = "Error in listing ports: %s" % e.message)
+        module.fail_json(msg="Error in listing ports: %s" % e.message)
     if subnet_id:
-        port = next(port for port in ports['ports'] if port['fixed_ips'][0]['subnet_id'] == subnet_id)
+        port = next(port for port in ports['ports'] if port[
+                    'fixed_ips'][0]['subnet_id'] == subnet_id)
         port_id = port['id']
         fixed_ip_address = port['fixed_ips'][0]['ip_address']
     else:
@@ -165,28 +175,34 @@ def _get_port_info(neutron, module, instance_id, internal_network_name=None):
         return None, None
     return fixed_ip_address, port_id
 
+
 def _get_floating_ip(module, neutron, fixed_ip_address):
     kwargs = {
-            'fixed_ip_address': fixed_ip_address
+        'fixed_ip_address': fixed_ip_address
     }
     try:
         ips = neutron.list_floatingips(**kwargs)
     except Exception, e:
-        module.fail_json(msg = "error in fetching the floatingips's %s" % e.message)
+        module.fail_json(
+            msg="error in fetching the floatingips's %s" % e.message)
     if not ips['floatingips']:
         return None, None
     return ips['floatingips'][0]['id'], ips['floatingips'][0]['floating_ip_address']
 
+
 def _create_floating_ip(neutron, module, port_id, net_id):
     kwargs = {
-            'port_id': port_id,
-            'floating_network_id': net_id
+        'port_id': port_id,
+        'floating_network_id': net_id
     }
     try:
         result = neutron.create_floatingip({'floatingip': kwargs})
     except Exception, e:
-        module.fail_json(msg="There was an error in updating the floating ip address: %s" % e.message)
-    module.exit_json(changed=True, result=result, public_ip=result['floatingip']['floating_ip_address'])
+        module.fail_json(
+            msg="There was an error in updating the floating ip address: %s" % e.message)
+    module.exit_json(changed=True, result=result, public_ip=result[
+                     'floatingip']['floating_ip_address'])
+
 
 def _get_net_id(neutron, module):
     kwargs = {
@@ -200,36 +216,39 @@ def _get_net_id(neutron, module):
         return None
     return networks['networks'][0]['id']
 
+
 def _update_floating_ip(neutron, module, port_id, floating_ip_id):
     kwargs = {
         'port_id': port_id
     }
     try:
-        result = neutron.update_floatingip(floating_ip_id, {'floatingip': kwargs})
+        result = neutron.update_floatingip(
+            floating_ip_id, {'floatingip': kwargs})
     except Exception, e:
-        module.fail_json(msg="There was an error in updating the floating ip address: %s" % e.message)
+        module.fail_json(
+            msg="There was an error in updating the floating ip address: %s" % e.message)
     module.exit_json(changed=True, result=result)
 
 
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            login_username                  = dict(default='admin'),
-            login_password                  = dict(required=True),
-            login_tenant_name               = dict(required='True'),
-            auth_url                        = dict(default='http://127.0.0.1:35357/v2.0/'),
-            region_name                     = dict(default=None),
-            network_name                    = dict(required=True),
-            instance_name                   = dict(required=True),
-            state                           = dict(default='present', choices=['absent', 'present']),
-            internal_network_name           = dict(default=None),
+        argument_spec=dict(
+            login_username=dict(default='admin'),
+            login_password=dict(required=True),
+            login_tenant_name=dict(required='True'),
+            auth_url=dict(default='http://127.0.0.1:35357/v2.0/'),
+            region_name=dict(default=None),
+            network_name=dict(required=True),
+            instance_name=dict(required=True),
+            state=dict(default='present', choices=['absent', 'present']),
+            internal_network_name=dict(default=None),
         ),
     )
 
     try:
         nova = nova_client.Client(module.params['login_username'], module.params['login_password'],
-            module.params['login_tenant_name'], module.params['auth_url'], service_type='compute')
+                                  module.params['login_tenant_name'], module.params['auth_url'], service_type='compute')
         neutron = _get_neutron_client(module, module.params)
     except Exception, e:
         module.fail_json(msg="Error in authenticating to nova: %s" % e.message)
@@ -238,18 +257,21 @@ def main():
     if not server_info:
         module.fail_json(msg="The instance name provided cannot be found")
 
-    fixed_ip, port_id = _get_port_info(neutron, module, server_info['id'], module.params['internal_network_name'])
+    fixed_ip, port_id = _get_port_info(
+        neutron, module, server_info['id'], module.params['internal_network_name'])
     if not port_id:
-        module.fail_json(msg="Cannot find a port for this instance, maybe fixed ip is not assigned")
+        module.fail_json(
+            msg="Cannot find a port for this instance, maybe fixed ip is not assigned")
 
     floating_id, floating_ip = _get_floating_ip(module, neutron, fixed_ip)
 
     if module.params['state'] == 'present':
         if floating_ip:
-            module.exit_json(changed = False, public_ip=floating_ip)
+            module.exit_json(changed=False, public_ip=floating_ip)
         net_id = _get_net_id(neutron, module)
         if not net_id:
-            module.fail_json(msg = "cannot find the network specified, please check")
+            module.fail_json(
+                msg="cannot find the network specified, please check")
         _create_floating_ip(neutron, module, port_id, net_id)
 
     if module.params['state'] == 'absent':
@@ -260,4 +282,3 @@ def main():
 # this is magic, see lib/ansible/module.params['common.py
 from ansible.module_utils.basic import *
 main()
-

@@ -23,20 +23,18 @@ def check_list_of_one_list(term):
     # make sure term is not a list of one (list of one..) item
     # return the final non list item if so
 
-    if isinstance(term,list) and len(term) == 1:
+    if isinstance(term, list) and len(term) == 1:
         term = term[0]
-        if isinstance(term,list):
+        if isinstance(term, list):
             term = check_list_of_one_list(term)
 
     return term
-
 
 
 class LookupModule(object):
 
     def __init__(self, basedir=None, **kwargs):
         self.basedir = basedir
-
 
     def flatten(self, terms, inject):
 
@@ -50,20 +48,20 @@ class LookupModule(object):
 
             if isinstance(term, basestring):
                 # convert a variable to a list
-                term2 = utils.listify_lookup_plugin_terms(term, self.basedir, inject)
+                term2 = utils.listify_lookup_plugin_terms(
+                    term, self.basedir, inject)
                 # but avoid converting a plain string to a list of one string
-                if term2 != [ term ]:
+                if term2 != [term]:
                     term = term2
 
             if isinstance(term, list):
                 # if it's a list, check recursively for items that are a list
                 term = self.flatten(term, inject)
                 ret.extend(term)
-            else:   
+            else:
                 ret.append(term)
 
         return ret
-
 
     def run(self, terms, inject=None, **kwargs):
 
@@ -75,4 +73,3 @@ class LookupModule(object):
 
         ret = self.flatten(terms, inject)
         return ret
-

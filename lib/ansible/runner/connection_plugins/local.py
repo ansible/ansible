@@ -26,14 +26,16 @@ from ansible import errors
 from ansible import utils
 from ansible.callbacks import vvv
 
+
 class Connection(object):
+
     ''' Local based connections '''
 
     def __init__(self, runner, host, port, *args, **kwargs):
         self.runner = runner
         self.host = host
         # port is unused, since this is local
-        self.port = port 
+        self.port = port
         self.has_pipelining = False
 
     def connect(self, port=None):
@@ -44,12 +46,15 @@ class Connection(object):
     def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable='/bin/sh', in_data=None, su=None, su_user=None):
         ''' run a command on the local host '''
 
-        # su requires to be run from a terminal, and therefore isn't supported here (yet?)
+        # su requires to be run from a terminal, and therefore isn't supported
+        # here (yet?)
         if su or su_user:
-            raise errors.AnsibleError("Internal Error: this module does not support running commands via su")
+            raise errors.AnsibleError(
+                "Internal Error: this module does not support running commands via su")
 
         if in_data:
-            raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
+            raise errors.AnsibleError(
+                "Internal Error: this module does not support optimized module pipelining")
 
         if not self.runner.sudo or not sudoable:
             if executable:
@@ -57,7 +62,8 @@ class Connection(object):
             else:
                 local_cmd = cmd
         else:
-            local_cmd, prompt, success_key = utils.make_sudo_cmd(sudo_user, executable, cmd)
+            local_cmd, prompt, success_key = utils.make_sudo_cmd(
+                sudo_user, executable, cmd)
 
         vvv("EXEC %s" % (local_cmd), host=self.host)
         p = subprocess.Popen(local_cmd, shell=isinstance(local_cmd, basestring),
@@ -80,15 +86,19 @@ class Connection(object):
                     chunk = p.stderr.read()
                 else:
                     stdout, stderr = p.communicate()
-                    raise errors.AnsibleError('timeout waiting for sudo password prompt:\n' + sudo_output)
+                    raise errors.AnsibleError(
+                        'timeout waiting for sudo password prompt:\n' + sudo_output)
                 if not chunk:
                     stdout, stderr = p.communicate()
-                    raise errors.AnsibleError('sudo output closed while waiting for password prompt:\n' + sudo_output)
+                    raise errors.AnsibleError(
+                        'sudo output closed while waiting for password prompt:\n' + sudo_output)
                 sudo_output += chunk
             if success_key not in sudo_output:
                 p.stdin.write(self.runner.sudo_pass + '\n')
-            fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
-            fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) & ~os.O_NONBLOCK)
+            fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(
+                p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
+            fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(
+                p.stderr, fcntl.F_GETFL) & ~os.O_NONBLOCK)
 
         stdout, stderr = p.communicate()
         return (p.returncode, '', stdout, stderr)
@@ -98,15 +108,18 @@ class Connection(object):
 
         vvv("PUT %s TO %s" % (in_path, out_path), host=self.host)
         if not os.path.exists(in_path):
-            raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
+            raise errors.AnsibleFileNotFound(
+                "file or module does not exist: %s" % in_path)
         try:
             shutil.copyfile(in_path, out_path)
         except shutil.Error:
             traceback.print_exc()
-            raise errors.AnsibleError("failed to copy: %s and %s are the same" % (in_path, out_path))
+            raise errors.AnsibleError(
+                "failed to copy: %s and %s are the same" % (in_path, out_path))
         except IOError:
             traceback.print_exc()
-            raise errors.AnsibleError("failed to transfer file to %s" % out_path)
+            raise errors.AnsibleError(
+                "failed to transfer file to %s" % out_path)
 
     def fetch_file(self, in_path, out_path):
         vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host)

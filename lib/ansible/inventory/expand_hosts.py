@@ -34,7 +34,8 @@ import string
 
 from ansible import errors
 
-def detect_range(line = None):
+
+def detect_range(line=None):
     '''
     A helper function that checks a given host line to see if it contains
     a range pattern descibed in the docstring above.
@@ -46,7 +47,8 @@ def detect_range(line = None):
     else:
         return False
 
-def expand_hostname_range(line = None):
+
+def expand_hostname_range(line=None):
     '''
     A helper function that expands a given line that contains a pattern
     specified in top docstring, and returns a list that consists of the
@@ -74,7 +76,8 @@ def expand_hostname_range(line = None):
         #   so range can be [01:10:2] -> 01 03 05 07 09
         # FIXME: make this work for alphabetic sequences too.
 
-        (head, nrange, tail) = line.replace('[','|',1).replace(']','|',1).split('|')
+        (head, nrange, tail) = line.replace(
+            '[', '|', 1).replace(']', '|', 1).split('|')
         bounds = nrange.split(":")
         if len(bounds) != 2 and len(bounds) != 3:
             raise errors.AnsibleError("host range incorrectly specified")
@@ -89,9 +92,10 @@ def expand_hostname_range(line = None):
         if not end:
             raise errors.AnsibleError("host range end value missing")
         if beg[0] == '0' and len(beg) > 1:
-            rlen = len(beg) # range length formatting hint
+            rlen = len(beg)  # range length formatting hint
             if rlen != len(end):
-                raise errors.AnsibleError("host range format incorrectly specified!")
+                raise errors.AnsibleError(
+                    "host range format incorrectly specified!")
             fill = lambda _: str(_).zfill(rlen)  # range sequence
         else:
             fill = str
@@ -100,16 +104,17 @@ def expand_hostname_range(line = None):
             i_beg = string.ascii_letters.index(beg)
             i_end = string.ascii_letters.index(end)
             if i_beg > i_end:
-                raise errors.AnsibleError("host range format incorrectly specified!")
-            seq = string.ascii_letters[i_beg:i_end+1]
+                raise errors.AnsibleError(
+                    "host range format incorrectly specified!")
+            seq = string.ascii_letters[i_beg:i_end + 1]
         except ValueError:  # not a alpha range
-            seq = range(int(beg), int(end)+1, int(step))
+            seq = range(int(beg), int(end) + 1, int(step))
 
         for rseq in seq:
             hname = ''.join((head, fill(rseq), tail))
 
             if detect_range(hname):
-                all_hosts.extend( expand_hostname_range( hname ) )
+                all_hosts.extend(expand_hostname_range(hname))
             else:
                 all_hosts.append(hname)
 

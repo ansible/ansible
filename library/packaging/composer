@@ -91,34 +91,42 @@ EXAMPLES = '''
 import os
 import re
 
+
 def parse_out(string):
     return re.sub("\s+", " ", string).strip()
+
 
 def has_changed(string):
     return (re.match("Nothing to install or update", string) != None)
 
+
 def composer_install(module, options):
-    php_path      = module.get_bin_path("php", True, ["/usr/local/bin"])
+    php_path = module.get_bin_path("php", True, ["/usr/local/bin"])
     composer_path = module.get_bin_path("composer", True, ["/usr/local/bin"])
-    cmd           = "%s %s install %s" % (php_path, composer_path, " ".join(options))
+    cmd = "%s %s install %s" % (php_path, composer_path, " ".join(options))
 
     return module.run_command(cmd)
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            working_dir         = dict(aliases=["working-dir"], required=True),
-            prefer_source       = dict(default="no", type="bool", aliases=["prefer-source"]),
-            prefer_dist         = dict(default="no", type="bool", aliases=["prefer-dist"]),
-            no_dev              = dict(default="yes", type="bool", aliases=["no-dev"]),
-            no_scripts          = dict(default="no", type="bool", aliases=["no-scripts"]),
-            no_plugins          = dict(default="no", type="bool", aliases=["no-plugins"]),
-            optimize_autoloader = dict(default="yes", type="bool", aliases=["optimize-autoloader"]),
+        argument_spec=dict(
+            working_dir=dict(aliases=["working-dir"], required=True),
+            prefer_source=dict(
+                default="no", type="bool", aliases=["prefer-source"]),
+            prefer_dist=dict(
+                default="no", type="bool", aliases=["prefer-dist"]),
+            no_dev=dict(default="yes", type="bool", aliases=["no-dev"]),
+            no_scripts=dict(default="no", type="bool", aliases=["no-scripts"]),
+            no_plugins=dict(default="no", type="bool", aliases=["no-plugins"]),
+            optimize_autoloader=dict(
+                default="yes", type="bool", aliases=["optimize-autoloader"]),
         ),
         supports_check_mode=True
     )
 
-    module.params["working_dir"] = os.path.abspath(module.params["working_dir"])
+    module.params["working_dir"] = os.path.abspath(
+        module.params["working_dir"])
 
     options = set([])
     # Default options
@@ -131,7 +139,7 @@ def main():
 
     # Prepare options
     for i in module.params:
-        opt = "--%s" % i.replace("_","-")
+        opt = "--%s" % i.replace("_", "-")
         p = module.params[i]
         if isinstance(p, (bool)) and p:
             options.add(opt)

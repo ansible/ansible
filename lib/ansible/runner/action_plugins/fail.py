@@ -20,7 +20,9 @@ import ansible
 from ansible import utils
 from ansible.runner.return_data import ReturnData
 
+
 class ActionModule(object):
+
     ''' Fail with custom message '''
 
     TRANSFERS_FILES = False

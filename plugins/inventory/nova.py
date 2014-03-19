@@ -144,6 +144,7 @@ except:
 # executed with no parameters, return the list of
 # all groups and hosts
 
+
 def nova_load_config_file():
     p = ConfigParser.SafeConfigParser()
     path1 = os.getcwd() + "/nova.ini"
@@ -163,13 +164,13 @@ def nova_load_config_file():
 config = nova_load_config_file()
 
 client = nova_client.Client(
-    version     = config.get('openstack', 'version'),
-    username    = config.get('openstack', 'username'),
-    api_key     = config.get('openstack', 'api_key'),
-    auth_url    = config.get('openstack', 'auth_url'),
-    region_name = config.get('openstack', 'region_name'),
-    project_id  = config.get('openstack', 'project_id'),
-    auth_system = config.get('openstack', 'auth_system')
+    version=config.get('openstack', 'version'),
+    username=config.get('openstack', 'username'),
+    api_key=config.get('openstack', 'api_key'),
+    auth_url=config.get('openstack', 'auth_url'),
+    region_name=config.get('openstack', 'region_name'),
+    project_id=config.get('openstack', 'project_id'),
+    auth_system=config.get('openstack', 'auth_system')
 )
 
 if len(sys.argv) == 2 and (sys.argv[1] == '--list'):
@@ -177,26 +178,29 @@ if len(sys.argv) == 2 and (sys.argv[1] == '--list'):
 
     # Cycle on servers
     for f in client.servers.list():
-	private = [ x['addr'] for x in getattr(f, 'addresses').itervalues().next() if x['OS-EXT-IPS:type'] == 'fixed']
-	public  = [ x['addr'] for x in getattr(f, 'addresses').itervalues().next() if x['OS-EXT-IPS:type'] == 'floating']
-	    
-	# Define group (or set to empty string)
-        group = f.metadata['group'] if f.metadata.has_key('group') else 'undefined'
+        private = [x['addr'] for x in getattr(
+            f, 'addresses').itervalues().next() if x['OS-EXT-IPS:type'] == 'fixed']
+        public = [x['addr'] for x in getattr(
+            f, 'addresses').itervalues().next() if x['OS-EXT-IPS:type'] == 'floating']
+
+        # Define group (or set to empty string)
+        group = f.metadata['group'] if f.metadata.has_key(
+            'group') else 'undefined'
 
         # Create group if not exist
         if group not in groups:
             groups[group] = []
 
         # Append group to list
-	if f.accessIPv4:
-        	groups[group].append(f.accessIPv4)
-		continue
-	if public:
-        	groups[group].append(''.join(public))
-		continue
-	if private:
-        	groups[group].append(''.join(private))
-		continue
+        if f.accessIPv4:
+            groups[group].append(f.accessIPv4)
+            continue
+        if public:
+            groups[group].append(''.join(public))
+            continue
+        if private:
+            groups[group].append(''.join(private))
+            continue
 
     # Return server list
     print json.dumps(groups)
@@ -210,21 +214,23 @@ elif len(sys.argv) == 3 and (sys.argv[1] == '--host'):
     results = {}
     ips = []
     for instance in client.servers.list():
-	private = [ x['addr'] for x in getattr(instance, 'addresses').itervalues().next() if x['OS-EXT-IPS:type'] == 'fixed']
-	public =  [ x['addr'] for x in getattr(instance, 'addresses').itervalues().next() if x['OS-EXT-IPS:type'] == 'floating']
-        ips.append( instance.accessIPv4)
-	ips.append(''.join(private))
-	ips.append(''.join(public))
-	if sys.argv[2] in ips:
+        private = [x['addr'] for x in getattr(
+            instance, 'addresses').itervalues().next() if x['OS-EXT-IPS:type'] == 'fixed']
+        public = [x['addr'] for x in getattr(
+            instance, 'addresses').itervalues().next() if x['OS-EXT-IPS:type'] == 'floating']
+        ips.append(instance.accessIPv4)
+        ips.append(''.join(private))
+        ips.append(''.join(public))
+        if sys.argv[2] in ips:
             for key in vars(instance):
-                # Extract value
+            # Extract value
                 value = getattr(instance, key)
 
                 # Generate sanitized key
                 key = 'os_' + re.sub("[^A-Za-z0-9\-]", "_", key).lower()
 
                 # Att value to instance result (exclude manager class)
-                #TODO: maybe use value.__class__ or similar inside of key_name
+                # TODO: maybe use value.__class__ or similar inside of key_name
                 if key != 'os_manager':
                     results[key] = value
 

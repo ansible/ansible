@@ -75,6 +75,7 @@ EXAMPLES = '''
 # Module execution.
 #
 
+
 def main():
 
     module = AnsibleModule(
@@ -84,7 +85,8 @@ def main():
             user=dict(required=False),
             repo=dict(required=False),
             revision=dict(required=False),
-            url=dict(required=False, default='https://api.airbrake.io/deploys.txt'),
+            url=dict(
+                required=False, default='https://api.airbrake.io/deploys.txt'),
             validate_certs=dict(default='yes', type='bool'),
         ),
         supports_check_mode=True
@@ -119,11 +121,11 @@ def main():
     if info['status'] == 200:
         module.exit_json(changed=True)
     else:
-        module.fail_json(msg="HTTP result code: %d connecting to %s" % (info['status'], url))
+        module.fail_json(
+            msg="HTTP result code: %d connecting to %s" % (info['status'], url))
 
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
 
 main()
-

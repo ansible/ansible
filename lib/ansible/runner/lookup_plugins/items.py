@@ -19,6 +19,7 @@ from ansible.utils import safe_eval
 import ansible.utils as utils
 import ansible.errors as errors
 
+
 def flatten(terms):
     ret = []
     for term in terms:
@@ -28,17 +29,16 @@ def flatten(terms):
             ret.append(term)
     return ret
 
+
 class LookupModule(object):
 
     def __init__(self, basedir=None, **kwargs):
         self.basedir = basedir
 
     def run(self, terms, inject=None, **kwargs):
-        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
+        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
 
-        if not isinstance(terms, list) and not isinstance(terms,set):
+        if not isinstance(terms, list) and not isinstance(terms, set):
             raise errors.AnsibleError("with_items expects a list or a set")
 
         return flatten(terms)
-
-

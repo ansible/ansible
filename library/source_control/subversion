@@ -82,6 +82,7 @@ import tempfile
 
 
 class Subversion(object):
+
     def __init__(
             self, module, dest, repo, revision, username, password, svn_path):
         self.module = module
@@ -176,7 +177,8 @@ def main():
     svn_path = module.params['executable'] or module.get_bin_path('svn', True)
 
     os.environ['LANG'] = 'C'
-    svn = Subversion(module, dest, repo, revision, username, password, svn_path)
+    svn = Subversion(
+        module, dest, repo, revision, username, password, svn_path)
 
     if not os.path.exists(dest):
         before = None
@@ -198,10 +200,12 @@ def main():
             if force:
                 svn.revert()
             else:
-                module.fail_json(msg="ERROR: modified files exist in the repository.")
+                module.fail_json(
+                    msg="ERROR: modified files exist in the repository.")
         svn.update()
     else:
-        module.fail_json(msg="ERROR: %s folder already exists, but its not a subversion repository." % (dest, ))
+        module.fail_json(
+            msg="ERROR: %s folder already exists, but its not a subversion repository." % (dest, ))
 
     after = svn.get_revision()
     changed = before != after or local_mods

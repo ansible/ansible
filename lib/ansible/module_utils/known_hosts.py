@@ -29,8 +29,8 @@
 import hmac
 HASHED_KEY_MAGIC = "|1|"
 
-def add_git_host_key(module, url, accept_hostkey=True):
 
+def add_git_host_key(module, url, accept_hostkey=True):
     """ idempotently add a git url hostkey """
 
     fqdn = get_fqdn(module.params['repo'])
@@ -41,12 +41,14 @@ def add_git_host_key(module, url, accept_hostkey=True):
             if accept_hostkey:
                 rc, out, err = add_host_key(module, fqdn)
                 if rc != 0:
-                    module.fail_json(msg="failed to add %s hostkey: %s" % (fqdn, out + err))
+                    module.fail_json(
+                        msg="failed to add %s hostkey: %s" % (fqdn, out + err))
             else:
-                module.fail_json(msg="%s has an unknown hostkey. Set accept_hostkey to True or manually add the hostkey prior to running the git module" % fqdn)                    
+                module.fail_json(
+                    msg="%s has an unknown hostkey. Set accept_hostkey to True or manually add the hostkey prior to running the git module" % fqdn)
+
 
 def get_fqdn(repo_url):
-
     """ chop the hostname out of a giturl """
 
     result = None
@@ -61,14 +63,15 @@ def get_fqdn(repo_url):
 
     return result
 
+
 def check_hostkey(module, fqdn):
-   return not not_in_host_file(module, fqdn)
+    return not not_in_host_file(module, fqdn)
 
 # this is a variant of code found in connection_plugins/paramiko.py and we should modify
 # the paramiko code to import and use this.
 
-def not_in_host_file(self, host):
 
+def not_in_host_file(self, host):
 
     if 'USER' in os.environ:
         user_host_file = os.path.expandvars("~${USER}/.ssh/known_hosts")
@@ -96,7 +99,8 @@ def not_in_host_file(self, host):
             if tokens[0].find(HASHED_KEY_MAGIC) == 0:
                 # this is a hashed known host entry
                 try:
-                    (kn_salt,kn_host) = tokens[0][len(HASHED_KEY_MAGIC):].split("|",2)
+                    (kn_salt, kn_host) = tokens[0][
+                        len(HASHED_KEY_MAGIC):].split("|", 2)
                     hash = hmac.new(kn_salt.decode('base64'), digestmod=sha1)
                     hash.update(host)
                     if hash.digest() == kn_host.decode('base64'):
@@ -113,7 +117,6 @@ def not_in_host_file(self, host):
 
 
 def add_host_key(module, fqdn, key_type="rsa"):
-
     """ use ssh-keyscan to add the hostkey """
 
     result = False
@@ -136,4 +139,3 @@ def add_host_key(module, fqdn, key_type="rsa"):
     module.append_to_file(user_host_file, out)
 
     return rc, out, err
-

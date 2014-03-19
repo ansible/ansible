@@ -146,7 +146,7 @@ def which_cmdfile():
         '/etc/icinga/icinga.cfg',
         # icinga installed from source (default location)
         '/usr/local/icinga/etc/icinga.cfg',
-        ]
+    ]
 
     for path in locations:
         if os.path.exists(path):
@@ -169,7 +169,7 @@ def main():
         'silence_nagios',
         'unsilence_nagios',
         'command',
-        ]
+    ]
 
     module = AnsibleModule(
         argument_spec=dict(
@@ -180,8 +180,8 @@ def main():
             cmdfile=dict(default=which_cmdfile()),
             services=dict(default=None, aliases=['service']),
             command=dict(required=False, default=None),
-            )
         )
+    )
 
     action = module.params['action']
     host = module.params['host']
@@ -189,7 +189,7 @@ def main():
     services = module.params['services']
     cmdfile = module.params['cmdfile']
     command = module.params['command']
-    
+
     ##################################################################
     # Required args per action:
     # downtime = (minutes, service, host)
@@ -240,6 +240,7 @@ def main():
 
 ######################################################################
 class Nagios(object):
+
     """
     Perform common tasks in Nagios related to downtime and
     notifications.
@@ -356,7 +357,7 @@ class Nagios(object):
         notif_str = "[%s] %s" % (entry_time, cmd)
         if host is not None:
             notif_str += ";%s" % host
-            
+
             if svc is not None:
                 notif_str += ";%s" % svc
 
@@ -744,7 +745,7 @@ class Nagios(object):
         cmd = [
             "DISABLE_HOST_SVC_NOTIFICATIONS",
             "DISABLE_HOST_NOTIFICATIONS"
-            ]
+        ]
         nagios_return = True
         return_str_list = []
         for c in cmd:
@@ -772,7 +773,7 @@ class Nagios(object):
         cmd = [
             "ENABLE_HOST_SVC_NOTIFICATIONS",
             "ENABLE_HOST_NOTIFICATIONS"
-            ]
+        ]
         nagios_return = True
         return_str_list = []
         for c in cmd:
@@ -784,42 +785,42 @@ class Nagios(object):
             return return_str_list
         else:
             return "Fail: could not write to the command file"
-    
+
     def silence_nagios(self):
         """
         This command is used to disable notifications for all hosts and services
         in nagios.
-        
+
         This is a 'SHUT UP, NAGIOS' command
         """
         cmd = 'DISABLE_NOTIFICATIONS'
         self._write_command(self._fmt_notif_str(cmd))
-    
+
     def unsilence_nagios(self):
         """
         This command is used to enable notifications for all hosts and services
         in nagios.
-        
+
         This is a 'OK, NAGIOS, GO'' command
         """
         cmd = 'ENABLE_NOTIFICATIONS'
         self._write_command(self._fmt_notif_str(cmd))
-        
+
     def nagios_cmd(self, cmd):
         """
         This sends an arbitrary command to nagios
-        
+
         It prepends the submitted time and appends a \n
-        
+
         You just have to provide the properly formatted command
         """
-        
+
         pre = '[%s]' % int(time.time())
-        
+
         post = '\n'
         cmdstr = '%s %s %s' % (pre, cmd, post)
         self._write_command(cmdstr)
-        
+
     def act(self):
         """
         Figure out what you want to do from ansible, and then do the
@@ -859,16 +860,16 @@ class Nagios(object):
                                                services=self.services)
         elif self.action == 'silence_nagios':
             self.silence_nagios()
-            
+
         elif self.action == 'unsilence_nagios':
             self.unsilence_nagios()
-            
+
         elif self.action == 'command':
             self.nagios_cmd(self.command)
-            
+
         # wtf?
         else:
-            self.module.fail_json(msg="unknown action specified: '%s'" % \
+            self.module.fail_json(msg="unknown action specified: '%s'" %
                                       self.action)
 
         self.module.exit_json(nagios_commands=self.command_results,

@@ -61,6 +61,7 @@ def _create_regex_group(s):
 
 
 class HomebrewCask(object):
+
     '''A class to manage Homebrew casks.'''
 
     # class regexes ------------------------------------------------ {{{
@@ -84,9 +85,9 @@ class HomebrewCask(object):
         -                   # dashes
     '''
 
-    INVALID_PATH_REGEX        = _create_regex_group(VALID_PATH_CHARS)
-    INVALID_BREW_PATH_REGEX   = _create_regex_group(VALID_BREW_PATH_CHARS)
-    INVALID_CASK_REGEX        = _create_regex_group(VALID_CASK_CHARS)
+    INVALID_PATH_REGEX = _create_regex_group(VALID_PATH_CHARS)
+    INVALID_BREW_PATH_REGEX = _create_regex_group(VALID_BREW_PATH_CHARS)
+    INVALID_CASK_REGEX = _create_regex_group(VALID_CASK_CHARS)
     # /class regexes ----------------------------------------------- }}}
 
     # class validations -------------------------------------------- {{{
@@ -294,7 +295,8 @@ class HomebrewCask(object):
             self.brew_path = None
             self.failed = True
             self.message = 'Unable to locate homebrew executable.'
-            raise HomebrewCaskException('Unable to locate homebrew executable.')
+            raise HomebrewCaskException(
+                'Unable to locate homebrew executable.')
 
         return self.brew_path
 
@@ -330,7 +332,8 @@ class HomebrewCask(object):
         if 'nothing to list' in err:
             return False
         elif rc == 0:
-            casks = [cask_.strip() for cask_ in out.split('\n') if cask_.strip()]
+            casks = [cask_.strip()
+                     for cask_ in out.split('\n') if cask_.strip()]
             return self.current_cask in casks
         else:
             self.failed = True

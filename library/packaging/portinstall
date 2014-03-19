@@ -63,6 +63,7 @@ import shlex
 import os
 import sys
 
+
 def query_package(module, name):
 
     pkg_info_path = module.get_bin_path('pkg_info', False)
@@ -71,7 +72,8 @@ def query_package(module, name):
     if pkg_info_path:
         pkgng = False
         pkg_glob_path = module.get_bin_path('pkg_glob', True)
-        rc, out, err = module.run_command("%s -e `pkg_glob %s`" % (pkg_info_path, pipes.quote(name)), use_unsafe_shell=True)
+        rc, out, err = module.run_command(
+            "%s -e `pkg_glob %s`" % (pkg_info_path, pipes.quote(name)), use_unsafe_shell=True)
     else:
         pkgng = True
         pkg_info_path = module.get_bin_path('pkg', True)
@@ -87,9 +89,11 @@ def query_package(module, name):
         name_without_digits = re.sub('[0-9]', '', name)
         if name != name_without_digits:
             if pkgng:
-                rc, out, err = module.run_command("%s %s" % (pkg_info_path, name_without_digits))
+                rc, out, err = module.run_command(
+                    "%s %s" % (pkg_info_path, name_without_digits))
             else:
-                rc, out, err = module.run_command("%s %s" % (pkg_info_path, name_without_digits))
+                rc, out, err = module.run_command(
+                    "%s %s" % (pkg_info_path, name_without_digits))
 
         found = rc == 0
 
@@ -105,7 +109,8 @@ def matching_packages(module, name):
     if occurrences == 0:
         name_without_digits = re.sub('[0-9]', '', name)
         if name != name_without_digits:
-            rc, out, err = module.run_command("%s %s | wc" % (ports_glob_path, name_without_digits))
+            rc, out, err = module.run_command(
+                "%s %s | wc" % (ports_glob_path, name_without_digits))
             parts = out.split()
             occurrences = int(parts[0])
     return occurrences
@@ -128,13 +133,16 @@ def remove_packages(module, packages):
         if not query_package(module, package):
             continue
 
-        rc, out, err = module.run_command("%s `%s %s`" % (pkg_delete_path, pkg_glob_path, pipes.quote(package)), use_unsafe_shell=True)
+        rc, out, err = module.run_command("%s `%s %s`" % (
+            pkg_delete_path, pkg_glob_path, pipes.quote(package)), use_unsafe_shell=True)
 
         if query_package(module, package):
             name_without_digits = re.sub('[0-9]', '', package)
-            rc, out, err = module.run_command("%s `%s %s`" % (pkg_delete_path, pkg_glob_path, pipes.quote(name_without_digits)),use_unsafe_shell=True)
+            rc, out, err = module.run_command("%s `%s %s`" % (
+                pkg_delete_path, pkg_glob_path, pipes.quote(name_without_digits)), use_unsafe_shell=True)
             if query_package(module, package):
-                module.fail_json(msg="failed to remove %s: %s" % (package, out))
+                module.fail_json(
+                    msg="failed to remove %s: %s" % (package, out))
 
         remove_c += 1
 
@@ -158,9 +166,9 @@ def install_packages(module, packages, use_packages):
         portinstall_path = module.get_bin_path('portinstall', True)
 
     if use_packages == "yes":
-        portinstall_params="--use-packages"
+        portinstall_params = "--use-packages"
     else:
-        portinstall_params=""
+        portinstall_params = ""
 
     for package in packages:
         if query_package(module, package):
@@ -169,28 +177,32 @@ def install_packages(module, packages, use_packages):
         # TODO: check how many match
         matches = matching_packages(module, package)
         if matches == 1:
-            rc, out, err = module.run_command("%s --batch %s %s" % (portinstall_path, portinstall_params, package))
+            rc, out, err = module.run_command(
+                "%s --batch %s %s" % (portinstall_path, portinstall_params, package))
             if not query_package(module, package):
-                module.fail_json(msg="failed to install %s: %s" % (package, out))
+                module.fail_json(
+                    msg="failed to install %s: %s" % (package, out))
         elif matches == 0:
             module.fail_json(msg="no matches for package %s" % (package))
         else:
-            module.fail_json(msg="%s matches found for package name %s" % (matches, package))
+            module.fail_json(
+                msg="%s matches found for package name %s" % (matches, package))
 
         install_c += 1
 
     if install_c > 0:
-        module.exit_json(changed=True, msg="present %s package(s)" % (install_c))
+        module.exit_json(
+            changed=True, msg="present %s package(s)" % (install_c))
 
     module.exit_json(changed=False, msg="package(s) already present")
 
 
 def main():
     module = AnsibleModule(
-            argument_spec    = dict(
-                state        = dict(default="present", choices=["present","absent"]),
-                name         = dict(aliases=["pkg"], required=True),
-                use_packages = dict(type='bool', default='yes')))
+        argument_spec=dict(
+            state=dict(default="present", choices=["present", "absent"]),
+            name=dict(aliases=["pkg"], required=True),
+            use_packages=dict(type='bool', default='yes')))
 
     p = module.params
 

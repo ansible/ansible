@@ -129,25 +129,28 @@ def delete_launch_config(connection, module):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True, type='str'),
-            image_id = dict(required=True, type='str'),
-            key_name = dict(required=True, type='str'),
-            security_groups = dict(required=True, type='list'),
-            state = dict(default='present', choices=['present', 'absent']),
-            region = dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS),
-            ec2_url = dict(),
-            ec2_secret_key = dict(aliases=['aws_secret_key', 'secret_key'], no_log=True),
-            ec2_access_key = dict(aliases=['aws_access_key', 'access_key']),
+        argument_spec=dict(
+            name=dict(required=True, type='str'),
+            image_id=dict(required=True, type='str'),
+            key_name=dict(required=True, type='str'),
+            security_groups=dict(required=True, type='list'),
+            state=dict(default='present', choices=['present', 'absent']),
+            region=dict(
+                aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS),
+            ec2_url=dict(),
+            ec2_secret_key=dict(
+                aliases=['aws_secret_key', 'secret_key'], no_log=True),
+            ec2_access_key=dict(aliases=['aws_access_key', 'access_key']),
         )
     )
 
     ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
 
     try:
-        connection = boto.ec2.autoscale.connect_to_region(region, aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key)
+        connection = boto.ec2.autoscale.connect_to_region(
+            region, aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key)
     except boto.exception.NoAuthHandlerFound, e:
-        module.fail_json(msg = str(e))
+        module.fail_json(msg=str(e))
 
     state = module.params.get('state')
 

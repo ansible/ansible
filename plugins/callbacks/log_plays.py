@@ -25,11 +25,12 @@ import json
 # file.  This callback is an example of per hosts logging for those
 # that want it.
 
-TIME_FORMAT="%b %d %Y %H:%M:%S"
-MSG_FORMAT="%(now)s - %(category)s - %(data)s\n\n"
+TIME_FORMAT = "%b %d %Y %H:%M:%S"
+MSG_FORMAT = "%(now)s - %(category)s - %(data)s\n\n"
 
 if not os.path.exists("/var/log/ansible/hosts"):
     os.makedirs("/var/log/ansible/hosts")
+
 
 def log(host, category, data):
     if type(data) == dict:
@@ -49,7 +50,9 @@ def log(host, category, data):
     fd.write(MSG_FORMAT % dict(now=now, category=category, data=data))
     fd.close()
 
+
 class CallbackModule(object):
+
     """
     logs playbook results, per host, in /var/log/ansible/hosts
     """
@@ -116,4 +119,3 @@ class CallbackModule(object):
 
     def playbook_on_stats(self, stats):
         pass
-

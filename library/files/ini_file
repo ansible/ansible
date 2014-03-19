@@ -91,6 +91,7 @@ import ConfigParser
 # ==============================================================
 # do_ini
 
+
 def do_ini(module, filename, section=None, option=None, value=None, state='present', backup=False):
 
     changed = False
@@ -101,7 +102,6 @@ def do_ini(module, filename, section=None, option=None, value=None, state='prese
         cp.readfp(f)
     except IOError:
         pass
-
 
     if state == 'absent':
         if option is None and value is None:
@@ -153,18 +153,19 @@ def do_ini(module, filename, section=None, option=None, value=None, state='prese
 # ==============================================================
 # main
 
+
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            dest = dict(required=True),
-            section = dict(required=True),
-            option = dict(required=False),
-            value = dict(required=False),
-            backup = dict(default='no', type='bool'),
-            state = dict(default='present', choices=['present', 'absent'])
+        argument_spec=dict(
+            dest=dict(required=True),
+            section=dict(required=True),
+            option=dict(required=False),
+            value=dict(required=False),
+            backup=dict(default='no', type='bool'),
+            state=dict(default='present', choices=['present', 'absent'])
         ),
-        add_file_common_args = True
+        add_file_common_args=True
     )
 
     info = dict()

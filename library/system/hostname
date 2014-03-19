@@ -39,7 +39,9 @@ EXAMPLES = '''
 - hostname: name=web01
 '''
 
+
 class UnimplementedStrategy(object):
+
     def __init__(self, module):
         self.module = module
 
@@ -65,7 +67,9 @@ class UnimplementedStrategy(object):
         self.module.fail_json(
             msg='hostname module cannot be used on platform %s' % msg_platform)
 
+
 class Hostname(object):
+
     """
     This is a generic Hostname manipulation class that is subclassed
     based on platform.
@@ -83,8 +87,8 @@ class Hostname(object):
         return load_platform_subclass(Hostname, args, kwargs)
 
     def __init__(self, module):
-        self.module   = module
-        self.name     = module.params['name']
+        self.module = module
+        self.name = module.params['name']
         self.strategy = self.strategy_class(module)
 
     def get_current_hostname(self):
@@ -99,7 +103,9 @@ class Hostname(object):
     def set_permanent_hostname(self, name):
         self.strategy.set_permanent_hostname(name)
 
+
 class GenericStrategy(object):
+
     """
     This is a generic Hostname manipulation strategy class.
 
@@ -109,6 +115,7 @@ class GenericStrategy(object):
       - set_current_hostname(name)
       - set_permanent_hostname(name)
     """
+
     def __init__(self, module):
         self.module = module
 
@@ -119,7 +126,7 @@ class GenericStrategy(object):
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
-                (rc, out, err))
+                                  (rc, out, err))
         return out.strip()
 
     def set_current_hostname(self, name):
@@ -127,7 +134,7 @@ class GenericStrategy(object):
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
-                (rc, out, err))
+                                  (rc, out, err))
 
     def get_permanent_hostname(self):
         return None
@@ -137,7 +144,9 @@ class GenericStrategy(object):
 
 # ===========================================
 
+
 class DebianStrategy(GenericStrategy):
+
     """
     This is a Debian family Hostname manipulation strategy class - it edits
     the /etc/hostname file.
@@ -150,8 +159,8 @@ class DebianStrategy(GenericStrategy):
             try:
                 open(self.HOSTNAME_FILE, "a").write("")
             except IOError, err:
-                self.module.fail_json(msg="failed to write file: %s" % 
-                    str(err))
+                self.module.fail_json(msg="failed to write file: %s" %
+                                      str(err))
         try:
             f = open(self.HOSTNAME_FILE)
             try:
@@ -160,7 +169,7 @@ class DebianStrategy(GenericStrategy):
                 f.close()
         except Exception, err:
             self.module.fail_json(msg="failed to read hostname: %s" %
-                str(err))
+                                  str(err))
 
     def set_permanent_hostname(self, name):
         try:
@@ -171,12 +180,14 @@ class DebianStrategy(GenericStrategy):
                 f.close()
         except Exception, err:
             self.module.fail_json(msg="failed to update hostname: %s" %
-                str(err))
+                                  str(err))
+
 
 class DebianHostname(Hostname):
     platform = 'Linux'
     distribution = 'Debian'
     strategy_class = DebianStrategy
+
 
 class UbuntuHostname(Hostname):
     platform = 'Linux'
@@ -185,7 +196,9 @@ class UbuntuHostname(Hostname):
 
 # ===========================================
 
+
 class RedHatStrategy(GenericStrategy):
+
     """
     This is a Redhat Hostname strategy class - it edits the
     /etc/sysconfig/network file.
@@ -204,7 +217,7 @@ class RedHatStrategy(GenericStrategy):
                 f.close()
         except Exception, err:
             self.module.fail_json(msg="failed to read hostname: %s" %
-                str(err))
+                                  str(err))
 
     def set_permanent_hostname(self, name):
         try:
@@ -229,41 +242,49 @@ class RedHatStrategy(GenericStrategy):
                 f.close()
         except Exception, err:
             self.module.fail_json(msg="failed to update hostname: %s" %
-                str(err))
+                                  str(err))
+
 
 class RedHat5Hostname(Hostname):
     platform = 'Linux'
     distribution = 'Redhat'
     strategy_class = RedHatStrategy
 
+
 class RedHatServerHostname(Hostname):
     platform = 'Linux'
     distribution = 'Red hat enterprise linux server'
     strategy_class = RedHatStrategy
+
 
 class RedHatWorkstationHostname(Hostname):
     platform = 'Linux'
     distribution = 'Red hat enterprise linux workstation'
     strategy_class = RedHatStrategy
 
+
 class CentOSHostname(Hostname):
     platform = 'Linux'
     distribution = 'Centos'
     strategy_class = RedHatStrategy
+
 
 class AmazonLinuxHostname(Hostname):
     platform = 'Linux'
     distribution = 'Amazon'
     strategy_class = RedHatStrategy
 
+
 class ScientificLinuxHostname(Hostname):
     platform = 'Linux'
     distribution = 'Scientific'
     strategy_class = RedHatStrategy
-    
+
 # ===========================================
 
+
 class FedoraStrategy(GenericStrategy):
+
     """
     This is a Fedora family Hostname manipulation strategy class - it uses
     the hostnamectl command.
@@ -274,7 +295,7 @@ class FedoraStrategy(GenericStrategy):
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
-                (rc, out, err))
+                                  (rc, out, err))
         return out.strip()
 
     def set_current_hostname(self, name):
@@ -282,14 +303,14 @@ class FedoraStrategy(GenericStrategy):
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
-                (rc, out, err))
+                                  (rc, out, err))
 
     def get_permanent_hostname(self):
         cmd = 'hostnamectl --static status'
         rc, out, err = self.module.run_command(cmd, use_unsafe_shell=True)
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
-                (rc, out, err))
+                                  (rc, out, err))
         return out
 
     def set_permanent_hostname(self, name):
@@ -297,22 +318,25 @@ class FedoraStrategy(GenericStrategy):
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
-                (rc, out, err))
+                                  (rc, out, err))
         cmd = ['hostnamectl', '--static', 'set-hostname', name]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
-                (rc, out, err))
+                                  (rc, out, err))
+
 
 class FedoraHostname(Hostname):
     platform = 'Linux'
     distribution = 'Fedora'
     strategy_class = FedoraStrategy
 
+
 class OpenSUSEHostname(Hostname):
     platform = 'Linux'
     distribution = 'Opensuse '
     strategy_class = FedoraStrategy
+
 
 class ArchHostname(Hostname):
     platform = 'Linux'
@@ -321,9 +345,10 @@ class ArchHostname(Hostname):
 
 # ===========================================
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             name=dict(required=True, type='str')
         )
     )

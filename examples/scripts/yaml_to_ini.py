@@ -24,13 +24,15 @@ import os
 import yaml
 import sys
 
+
 class InventoryParserYaml(object):
+
     ''' Host inventory parser for ansible '''
 
     def __init__(self, filename=C.DEFAULT_HOST_LIST):
 
         sys.stderr.write("WARNING: YAML inventory files are deprecated in 0.6 and will be removed in 0.7, to migrate" +
-            " download and run https://github.com/ansible/ansible/blob/devel/examples/scripts/yaml_to_ini.py\n")
+                         " download and run https://github.com/ansible/ansible/blob/devel/examples/scripts/yaml_to_ini.py\n")
 
         fh = open(filename)
         data = fh.read()
@@ -67,44 +69,45 @@ class InventoryParserYaml(object):
             if type(item) == dict and 'group' in item:
                 group = Group(item['group'])
 
-                for subresult in item.get('hosts',[]):
+                for subresult in item.get('hosts', []):
 
-                    if type(subresult) in [ str, unicode ]:
+                    if type(subresult) in [str, unicode]:
                         host = self._make_host(subresult)
                         group.add_host(host)
                         grouped_hosts.append(host)
                     elif type(subresult) == dict:
                         host = self._make_host(subresult['host'])
-                        vars = subresult.get('vars',{})
+                        vars = subresult.get('vars', {})
                         if type(vars) == list:
                             for subitem in vars:
-                                for (k,v) in subitem.items():
-                                    host.set_variable(k,v)
+                                for (k, v) in subitem.items():
+                                    host.set_variable(k, v)
                         elif type(vars) == dict:
-                            for (k,v) in subresult.get('vars',{}).items():
-                                host.set_variable(k,v)
+                            for (k, v) in subresult.get('vars', {}).items():
+                                host.set_variable(k, v)
                         else:
-                            raise errors.AnsibleError("unexpected type for variable")
+                            raise errors.AnsibleError(
+                                "unexpected type for variable")
                         group.add_host(host)
                         grouped_hosts.append(host)
 
-                vars = item.get('vars',{})
+                vars = item.get('vars', {})
                 if type(vars) == dict:
-                    for (k,v) in item.get('vars',{}).items():
-                        group.set_variable(k,v)
+                    for (k, v) in item.get('vars', {}).items():
+                        group.set_variable(k, v)
                 elif type(vars) == list:
                     for subitem in vars:
                         if type(subitem) != dict:
                             raise errors.AnsibleError("expected a dictionary")
-                        for (k,v) in subitem.items():
-                            group.set_variable(k,v)
+                        for (k, v) in subitem.items():
+                            group.set_variable(k, v)
 
                 self.groups[group.name] = group
                 all.add_child_group(group)
 
         # add host definitions
         for item in yaml:
-            if type(item) in [ str, unicode ]:
+            if type(item) in [str, unicode]:
                 host = self._make_host(item)
                 if host not in grouped_hosts:
                     ungrouped.add_host(host)
@@ -113,17 +116,17 @@ class InventoryParserYaml(object):
                 host = self._make_host(item['host'])
 
                 vars = item.get('vars', {})
-                if type(vars)==list:
+                if type(vars) == list:
                     varlist, vars = vars, {}
                     for subitem in varlist:
                         vars.update(subitem)
-                for (k,v) in vars.items():
-                    host.set_variable(k,v)
+                for (k, v) in vars.items():
+                    host.set_variable(k, v)
 
                 groups = item.get('groups', {})
-                if type(groups) in [ str, unicode ]:
-                    groups = [ groups ]
-                if type(groups)==list:
+                if type(groups) in [str, unicode]:
+                    groups = [groups]
+                if type(groups) == list:
                     for subitem in groups:
                         if subitem in self.groups:
                             group = self.groups[subitem]
@@ -138,7 +141,8 @@ class InventoryParserYaml(object):
                     ungrouped.add_host(host)
 
         # make sure ungrouped.hosts is the complement of grouped_hosts
-        ungrouped_hosts = [host for host in ungrouped.hosts if host not in grouped_hosts]
+        ungrouped_hosts = [
+            host for host in ungrouped.hosts if host not in grouped_hosts]
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
@@ -151,7 +155,7 @@ if __name__ == "__main__":
     yamlp = InventoryParserYaml(filename=sys.argv[1])
     dirname = os.path.dirname(original)
 
-    group_names = [ g.name for g in yamlp.groups.values() ]
+    group_names = [g.name for g in yamlp.groups.values()]
 
     for group_name in sorted(group_names):
 
@@ -187,11 +191,9 @@ if __name__ == "__main__":
         hostfh.write(yaml.dump(host_record.get_variables()))
         hostfh.close()
 
-
     # also need to keep a hash of variables per each host
     # and variables per each group
     # and write those to disk
-
     newfilepath = os.path.join(dirname, "hosts.new")
     fdh = open(newfilepath, 'w')
     fdh.write(result)

@@ -35,30 +35,33 @@ from jinja2 import Environment, FileSystemLoader
 import ansible.utils
 import ansible.utils.module_docs as module_docs
 
-#####################################################################################
+##########################################################################
 # constants and paths
 
 # if a module is added in a version of Ansible older than this, don't print the version added information
-# in the module documentation because everyone is assumed to be running something newer than this already.
+# in the module documentation because everyone is assumed to be running
+# something newer than this already.
 TO_OLD_TO_BE_NOTABLE = 1.0
 
 # Get parent directory of the directory this script lives in
-MODULEDIR=os.path.abspath(os.path.join(
+MODULEDIR = os.path.abspath(os.path.join(
     os.path.dirname(os.path.realpath(__file__)), os.pardir, 'library'
 ))
 
 # The name of the DOCUMENTATION template
-EXAMPLE_YAML=os.path.abspath(os.path.join(
-    os.path.dirname(os.path.realpath(__file__)), os.pardir, 'examples', 'DOCUMENTATION.yml'
+EXAMPLE_YAML = os.path.abspath(os.path.join(
+    os.path.dirname(
+        os.path.realpath(__file__)), os.pardir, 'examples', 'DOCUMENTATION.yml'
 ))
 
 _ITALIC = re.compile(r"I\(([^)]+)\)")
-_BOLD   = re.compile(r"B\(([^)]+)\)")
+_BOLD = re.compile(r"B\(([^)]+)\)")
 _MODULE = re.compile(r"M\(([^)]+)\)")
-_URL    = re.compile(r"U\(([^)]+)\)")
-_CONST  = re.compile(r"C\(([^)]+)\)")
+_URL = re.compile(r"U\(([^)]+)\)")
+_CONST = re.compile(r"C\(([^)]+)\)")
 
-#####################################################################################
+##########################################################################
+
 
 def rst_ify(text):
     ''' convert symbols like I(this is in italics) to valid restructured text '''
@@ -71,7 +74,8 @@ def rst_ify(text):
 
     return t
 
-#####################################################################################
+##########################################################################
+
 
 def html_ify(text):
     ''' convert symbols like I(this is in italics) to valid HTML '''
@@ -86,21 +90,23 @@ def html_ify(text):
     return t
 
 
-#####################################################################################
+##########################################################################
 
 def rst_fmt(text, fmt):
     ''' helper for Jinja2 to do format strings '''
 
     return fmt % (text)
 
-#####################################################################################
+##########################################################################
+
 
 def rst_xline(width, char="="):
     ''' return a restructured text line of a given length '''
 
     return char * width
 
-#####################################################################################
+##########################################################################
+
 
 def write_data(text, options, outputname, module):
     ''' dumps module output to a file or the screen, as requested '''
@@ -112,7 +118,8 @@ def write_data(text, options, outputname, module):
     else:
         print text
 
-#####################################################################################
+##########################################################################
+
 
 def list_modules(module_dir):
     ''' returns a hash of categories, each category being a hash of module names to file paths '''
@@ -132,7 +139,8 @@ def list_modules(module_dir):
                 categories['all'][module] = f
     return categories
 
-#####################################################################################
+##########################################################################
+
 
 def generate_parser():
     ''' generate an optparse parser '''
@@ -143,25 +151,33 @@ def generate_parser():
         description='Generate module documentation from metadata',
     )
 
-    p.add_option("-A", "--ansible-version", action="store", dest="ansible_version", default="unknown", help="Ansible version number")
-    p.add_option("-M", "--module-dir", action="store", dest="module_dir", default=MODULEDIR, help="Ansible library path")
-    p.add_option("-T", "--template-dir", action="store", dest="template_dir", default="hacking/templates", help="directory containing Jinja2 templates")
-    p.add_option("-t", "--type", action='store', dest='type', choices=['rst'], default='rst', help="Document type")
-    p.add_option("-v", "--verbose", action='store_true', default=False, help="Verbose")
-    p.add_option("-o", "--output-dir", action="store", dest="output_dir", default=None, help="Output directory for module files")
-    p.add_option("-I", "--includes-file", action="store", dest="includes_file", default=None, help="Create a file containing list of processed modules")
+    p.add_option("-A", "--ansible-version", action="store",
+                 dest="ansible_version", default="unknown", help="Ansible version number")
+    p.add_option("-M", "--module-dir", action="store",
+                 dest="module_dir", default=MODULEDIR, help="Ansible library path")
+    p.add_option("-T", "--template-dir", action="store", dest="template_dir",
+                 default="hacking/templates", help="directory containing Jinja2 templates")
+    p.add_option("-t", "--type", action='store', dest='type',
+                 choices=['rst'], default='rst', help="Document type")
+    p.add_option(
+        "-v", "--verbose", action='store_true', default=False, help="Verbose")
+    p.add_option("-o", "--output-dir", action="store", dest="output_dir",
+                 default=None, help="Output directory for module files")
+    p.add_option("-I", "--includes-file", action="store", dest="includes_file",
+                 default=None, help="Create a file containing list of processed modules")
     p.add_option('-V', action='version', help='Show version number and exit')
     return p
 
-#####################################################################################
+##########################################################################
+
 
 def jinja2_environment(template_dir, typ):
 
     env = Environment(loader=FileSystemLoader(template_dir),
-        variable_start_string="@{",
-        variable_end_string="}@",
-        trim_blocks=True,
-    )
+                      variable_start_string="@{",
+                      variable_end_string="}@",
+                      trim_blocks=True,
+                      )
     env.globals['xline'] = rst_xline
 
     if typ == 'rst':
@@ -176,7 +192,8 @@ def jinja2_environment(template_dir, typ):
 
     return env, template, outputname
 
-#####################################################################################
+##########################################################################
+
 
 def process_module(module, options, env, template, outputname, module_map):
 
@@ -188,12 +205,16 @@ def process_module(module, options, env, template, outputname, module_map):
     if "." in os.path.basename(fname):
         return
 
-    # use ansible core library to parse out doc metadata YAML and plaintext examples
-    doc, examples = ansible.utils.module_docs.get_docstring(fname, verbose=options.verbose)
+    # use ansible core library to parse out doc metadata YAML and plaintext
+    # examples
+    doc, examples = ansible.utils.module_docs.get_docstring(
+        fname, verbose=options.verbose)
 
-    # crash if module is missing documentation and not explicitly hidden from docs index
+    # crash if module is missing documentation and not explicitly hidden from
+    # docs index
     if doc is None and module not in ansible.utils.module_docs.BLACKLIST_MODULES:
-        sys.stderr.write("*** ERROR: CORE MODULE MISSING DOCUMENTATION: %s, %s ***\n" % (fname, module))
+        sys.stderr.write(
+            "*** ERROR: CORE MODULE MISSING DOCUMENTATION: %s, %s ***\n" % (fname, module))
         sys.exit(1)
     if doc is None:
         return "SKIPPED"
@@ -201,7 +222,8 @@ def process_module(module, options, env, template, outputname, module_map):
     all_keys = []
 
     if not 'version_added' in doc:
-        sys.stderr.write("*** ERROR: missing version_added in: %s ***\n" % module)
+        sys.stderr.write(
+            "*** ERROR: missing version_added in: %s ***\n" % module)
         sys.exit(1)
 
     added = 0
@@ -218,35 +240,37 @@ def process_module(module, options, env, template, outputname, module_map):
         if added and added_float < TO_OLD_TO_BE_NOTABLE:
             del doc['version_added']
 
-    for (k,v) in doc['options'].iteritems():
+    for (k, v) in doc['options'].iteritems():
         all_keys.append(k)
     all_keys = sorted(all_keys)
     doc['option_keys'] = all_keys
 
-    doc['filename']         = fname
-    doc['docuri']           = doc['module'].replace('_', '-')
-    doc['now_date']         = datetime.date.today().strftime('%Y-%m-%d')
-    doc['ansible_version']  = options.ansible_version
-    doc['plainexamples']    = examples  #plain text
+    doc['filename'] = fname
+    doc['docuri'] = doc['module'].replace('_', '-')
+    doc['now_date'] = datetime.date.today().strftime('%Y-%m-%d')
+    doc['ansible_version'] = options.ansible_version
+    doc['plainexamples'] = examples  # plain text
 
     # here is where we build the table of contents...
 
     text = template.render(doc)
     write_data(text, options, outputname, module)
 
-#####################################################################################
+##########################################################################
+
 
 def process_category(category, categories, options, env, template, outputname):
 
     module_map = categories[category]
 
-    category_file_path = os.path.join(options.output_dir, "list_of_%s_modules.rst" % category)
+    category_file_path = os.path.join(
+        options.output_dir, "list_of_%s_modules.rst" % category)
     category_file = open(category_file_path, "w")
     print "*** recording category %s in %s ***" % (category, category_file_path)
 
     # TODO: start a new category file
 
-    category = category.replace("_"," ")
+    category = category.replace("_", " ")
     category = category.title()
 
     modules = module_map.keys()
@@ -265,16 +289,17 @@ def process_category(category, categories, options, env, template, outputname):
 """ % (category_header, underscores))
 
     for module in modules:
-        result = process_module(module, options, env, template, outputname, module_map)
+        result = process_module(
+            module, options, env, template, outputname, module_map)
         if result != "SKIPPED":
             category_file.write("   %s_module\n" % module)
-
 
     category_file.close()
 
     # TODO: end a new category file
 
-#####################################################################################
+##########################################################################
+
 
 def validate_options(options):
     ''' validate option parser options '''
@@ -289,7 +314,8 @@ def validate_options(options):
         print "--template-dir must be specified"
         sys.exit(1)
 
-#####################################################################################
+##########################################################################
+
 
 def main():
 
@@ -298,14 +324,16 @@ def main():
     (options, args) = p.parse_args()
     validate_options(options)
 
-    env, template, outputname = jinja2_environment(options.template_dir, options.type)
+    env, template, outputname = jinja2_environment(
+        options.template_dir, options.type)
 
     categories = list_modules(options.module_dir)
     last_category = None
     category_names = categories.keys()
     category_names.sort()
 
-    category_list_path = os.path.join(options.output_dir, "modules_by_category.rst")
+    category_list_path = os.path.join(
+        options.output_dir, "modules_by_category.rst")
     category_list_file = open(category_list_path, "w")
     category_list_file.write("Module Index\n")
     category_list_file.write("============\n")
@@ -315,7 +343,8 @@ def main():
 
     for category in category_names:
         category_list_file.write("   list_of_%s_modules\n" % category)
-        process_category(category, categories, options, env, template, outputname)
+        process_category(
+            category, categories, options, env, template, outputname)
 
     category_list_file.close()
 

@@ -21,6 +21,7 @@ from ansible import utils
 from ansible import errors
 from ansible.runner.return_data import ReturnData
 
+
 class ActionModule(object):
 
     TRANSFERS_FILES = False
@@ -38,17 +39,20 @@ class ActionModule(object):
         source = template.template(self.runner.basedir, source, inject)
 
         if '_original_file' in inject:
-            source = utils.path_dwim_relative(inject['_original_file'], 'vars', source, self.runner.basedir)
+            source = utils.path_dwim_relative(
+                inject['_original_file'], 'vars', source, self.runner.basedir)
         else:
             source = utils.path_dwim(self.runner.basedir, source)
 
         if os.path.exists(source):
-            data = utils.parse_yaml_from_file(source, vault_password=self.runner.vault_pass)
+            data = utils.parse_yaml_from_file(
+                source, vault_password=self.runner.vault_pass)
             if type(data) != dict:
-                raise errors.AnsibleError("%s must be stored as a dictionary/hash" % source)
+                raise errors.AnsibleError(
+                    "%s must be stored as a dictionary/hash" % source)
             result = dict(ansible_facts=data)
             return ReturnData(conn=conn, comm_ok=True, result=result)
         else:
-            result = dict(failed=True, msg="Source file not found.", file=source)
+            result = dict(
+                failed=True, msg="Source file not found.", file=source)
             return ReturnData(conn=conn, comm_ok=True, result=result)
-

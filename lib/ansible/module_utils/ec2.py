@@ -45,7 +45,8 @@ AWS_REGIONS = ['ap-northeast-1',
 def aws_common_argument_spec():
     return dict(
         ec2_url=dict(),
-        aws_secret_key=dict(aliases=['ec2_secret_key', 'secret_key'], no_log=True),
+        aws_secret_key=dict(
+            aliases=['ec2_secret_key', 'secret_key'], no_log=True),
         aws_access_key=dict(aliases=['ec2_access_key', 'access_key']),
         validate_certs=dict(default=True, type='bool'),
         security_token=dict(no_log=True),
@@ -58,7 +59,8 @@ def ec2_argument_spec():
     spec = aws_common_argument_spec()
     spec.update(
         dict(
-            region=dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS),
+            region=dict(
+                aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS),
         )
     )
     return spec
@@ -155,7 +157,8 @@ def boto_fix_security_token_in_profile(conn, profile_name):
     ''' monkey patch for boto issue boto/boto#2100 '''
     profile = 'profile ' + profile_name
     if boto.config.has_option(profile, 'aws_security_token'):
-        conn.provider.set_security_token(boto.config.get(profile, 'aws_security_token'))
+        conn.provider.set_security_token(
+            boto.config.get(profile, 'aws_security_token'))
     return conn
 
 
@@ -167,7 +170,6 @@ def connect_to_aws(aws_module, region, **params):
 
 
 def ec2_connect(module):
-
     """ Return an ec2 connection"""
 
     region, ec2_url, boto_params = get_aws_connection_info(module)

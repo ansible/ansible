@@ -163,6 +163,7 @@ EXAMPLES = """
 import json
 import base64
 
+
 def request(url, user, passwd, data=None, method=None):
     if data:
         data = json.dumps(data)
@@ -175,9 +176,9 @@ def request(url, user, passwd, data=None, method=None):
     # inject the basic-auth header up-front to ensure that JIRA treats
     # the requests as authorized for this user.
     auth = base64.encodestring('%s:%s' % (user, passwd)).replace('\n', '')
-    response, info = fetch_url(module, url, data=data, method=method, 
-                               headers={'Content-Type':'application/json',
-                                        'Authorization':"Basic %s" % auth})
+    response, info = fetch_url(module, url, data=data, method=method,
+                               headers={'Content-Type': 'application/json',
+                                        'Authorization': "Basic %s" % auth})
 
     if info['status'] not in (200, 204):
         module.fail_json(msg=info['msg'])
@@ -189,11 +190,14 @@ def request(url, user, passwd, data=None, method=None):
     else:
         return {}
 
+
 def post(url, user, passwd, data):
     return request(url, user, passwd, data=data, method='POST')
 
+
 def put(url, user, passwd, data):
     return request(url, user, passwd, data=data, method='PUT')
+
 
 def get(url, user, passwd):
     return request(url, user, passwd)
@@ -201,10 +205,10 @@ def get(url, user, passwd):
 
 def create(restbase, user, passwd, params):
     createfields = {
-        'project': { 'key': params['project'] },
+        'project': {'key': params['project']},
         'summary': params['summary'],
         'description': params['description'],
-        'issuetype': { 'name': params['issuetype'] }}
+        'issuetype': {'name': params['issuetype']}}
 
     # Merge in any additional or overridden fields
     if params['fields']:
@@ -214,7 +218,7 @@ def create(restbase, user, passwd, params):
 
     url = restbase + '/issue/'
 
-    ret = post(url, user, passwd, data) 
+    ret = post(url, user, passwd, data)
 
     return ret
 
@@ -222,7 +226,7 @@ def create(restbase, user, passwd, params):
 def comment(restbase, user, passwd, params):
     data = {
         'body': params['comment']
-        }
+    }
 
     url = restbase + '/issue/' + params['issue'] + '/comment'
 
@@ -234,18 +238,18 @@ def comment(restbase, user, passwd, params):
 def edit(restbase, user, passwd, params):
     data = {
         'fields': params['fields']
-        }
+    }
 
-    url = restbase + '/issue/' + params['issue']    
+    url = restbase + '/issue/' + params['issue']
 
-    ret = put(url, user, passwd, data) 
+    ret = put(url, user, passwd, data)
 
     return ret
 
 
 def fetch(restbase, user, passwd, params):
     url = restbase + '/issue/' + params['issue']
-    ret = get(url, user, passwd) 
+    ret = get(url, user, passwd)
     return ret
 
 
@@ -266,8 +270,8 @@ def transition(restbase, user, passwd, params):
 
     # Perform it
     url = restbase + '/issue/' + params['issue'] + "/transitions"
-    data = { 'transition': { "id" : tid },
-             'fields': params['fields']}
+    data = {'transition': {"id": tid},
+            'fields': params['fields']}
 
     ret = post(url, user, passwd, data)
 
@@ -280,6 +284,7 @@ OP_REQUIRED = dict(create=['project', 'issuetype', 'summary', 'description'],
                    edit=[],
                    fetch=['issue'],
                    transition=['status'])
+
 
 def main():
 
@@ -312,22 +317,24 @@ def main():
         if not module.params[parm]:
             missing.append(parm)
     if missing:
-        module.fail_json(msg="Operation %s require the following missing parameters: %s" % (op, ",".join(missing)))
+        module.fail_json(msg="Operation %s require the following missing parameters: %s" % (
+            op, ",".join(missing)))
 
     # Handle rest of parameters
     uri = module.params['uri']
     user = module.params['username']
     passwd = module.params['password']
     if module.params['assignee']:
-        module.params['fields']['assignee'] = { 'name': module.params['assignee'] }
+        module.params['fields']['assignee'] = {
+            'name': module.params['assignee']}
 
     if not uri.endswith('/'):
-        uri = uri+'/'
+        uri = uri + '/'
     restbase = uri + 'rest/api/2'
 
     # Dispatch
     try:
-        
+
         # Lookup the corresponding method for this operation. This is
         # safe as the AnsibleModule should remove any unknown operations.
         thismod = sys.modules[__name__]
@@ -337,7 +344,6 @@ def main():
 
     except Exception as e:
         return module.fail_json(msg=e.message)
-
 
     module.exit_json(changed=True, meta=ret)
 

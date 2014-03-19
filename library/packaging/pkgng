@@ -4,7 +4,7 @@
 # (c) 2013, bleader
 # Written by bleader <bleader@ratonland.org>
 # Based on pkgin module written by Shaun Zinck <shaun.zinck at gmail.com>
-# that was based on pacman module written by Afterburn <http://github.com/afterburn> 
+# that was based on pacman module written by Afterburn <http://github.com/afterburn>
 #  that was based on apt module written by Matthew Williams <matthew@flowroute.com>
 #
 # This module is free software: you can redistribute it and/or modify
@@ -85,6 +85,7 @@ import os
 import re
 import sys
 
+
 def query_package(module, pkgng_path, name):
 
     rc, out, err = module.run_command("%s info -g -e %s" % (pkgng_path, name))
@@ -93,6 +94,7 @@ def query_package(module, pkgng_path, name):
         return True
 
     return False
+
 
 def pkgng_older_than(module, pkgng_path, compare_version):
 
@@ -112,7 +114,7 @@ def pkgng_older_than(module, pkgng_path, compare_version):
 
 
 def remove_packages(module, pkgng_path, packages):
-    
+
     remove_c = 0
     # Using a for loop incase of error, we can report the package that failed
     for package in packages:
@@ -121,11 +123,12 @@ def remove_packages(module, pkgng_path, packages):
             continue
 
         if not module.check_mode:
-            rc, out, err = module.run_command("%s delete -y %s" % (pkgng_path, package))
+            rc, out, err = module.run_command(
+                "%s delete -y %s" % (pkgng_path, package))
 
         if not module.check_mode and query_package(module, pkgng_path, package):
             module.fail_json(msg="failed to remove %s: %s" % (package, out))
-    
+
         remove_c += 1
 
     if remove_c > 0:
@@ -150,7 +153,8 @@ def install_packages(module, pkgng_path, packages, cached, pkgsite):
 
     if not module.check_mode and cached == "no":
         if old_pkgng:
-            rc, out, err = module.run_command("%s %s update" % (pkgsite, pkgng_path))
+            rc, out, err = module.run_command(
+                "%s %s update" % (pkgsite, pkgng_path))
         else:
             rc, out, err = module.run_command("%s update" % (pkgng_path))
         if rc != 0:
@@ -162,23 +166,29 @@ def install_packages(module, pkgng_path, packages, cached, pkgsite):
 
         if not module.check_mode:
             if old_pkgng:
-                rc, out, err = module.run_command("%s %s install -g -U -y %s" % (pkgsite, pkgng_path, package))
+                rc, out, err = module.run_command(
+                    "%s %s install -g -U -y %s" % (pkgsite, pkgng_path, package))
             else:
-                rc, out, err = module.run_command("%s install %s -g -U -y %s" % (pkgng_path, pkgsite, package))
+                rc, out, err = module.run_command(
+                    "%s install %s -g -U -y %s" % (pkgng_path, pkgsite, package))
 
         if not module.check_mode and not query_package(module, pkgng_path, package):
-            module.fail_json(msg="failed to install %s: %s" % (package, out), stderr=err)
+            module.fail_json(msg="failed to install %s: %s" %
+                             (package, out), stderr=err)
 
         install_c += 1
-    
+
     if install_c > 0:
         return (True, "added %s package(s)" % (install_c))
 
     return (False, "package(s) already present")
 
+
 def annotation_query(module, pkgng_path, package, tag):
-    rc, out, err = module.run_command("%s info -g -A %s" % (pkgng_path, package))
-    match = re.search(r'^\s*(?P<tag>%s)\s*:\s*(?P<value>\w+)' % tag, out, flags=re.MULTILINE)
+    rc, out, err = module.run_command(
+        "%s info -g -A %s" % (pkgng_path, package))
+    match = re.search(r'^\s*(?P<tag>%s)\s*:\s*(?P<value>\w+)' %
+                      tag, out, flags=re.MULTILINE)
     if match:
         return match.group('value')
     return False
@@ -189,10 +199,10 @@ def annotation_add(module, pkgng_path, package, tag, value):
     if not _value:
         # Annotation does not exist, add it.
         rc, out, err = module.run_command('%s annotate -y -A %s %s "%s"'
-            % (pkgng_path, package, tag, value))
+                                          % (pkgng_path, package, tag, value))
         if rc != 0:
             module.fail_json("could not annotate %s: %s"
-                % (package, out), stderr=err)
+                             % (package, out), stderr=err)
         return True
     elif _value != value:
         # Annotation exists, but value differs
@@ -204,41 +214,43 @@ def annotation_add(module, pkgng_path, package, tag, value):
         # Annotation exists, nothing to do
         return False
 
+
 def annotation_delete(module, pkgng_path, package, tag, value):
     _value = annotation_query(module, pkgng_path, package, tag)
     if _value:
         rc, out, err = module.run_command('%s annotate -y -D %s %s'
-            % (pkgng_path, package, tag))
+                                          % (pkgng_path, package, tag))
         if rc != 0:
             module.fail_json("could not delete annotation to %s: %s"
-                % (package, out), stderr=err)
+                             % (package, out), stderr=err)
         return True
     return False
+
 
 def annotation_modify(module, pkgng_path, package, tag, value):
     _value = annotation_query(module, pkgng_path, package, tag)
     if not value:
         # No such tag
         module.fail_json("could not change annotation to %s: tag %s does not exist"
-            % (package, tag))
+                         % (package, tag))
     elif _value == value:
         # No change in value
         return False
     else:
-        rc,out,err = module.run_command('%s annotate -y -M %s %s "%s"'
-            % (pkgng_path, package, tag, value))
+        rc, out, err = module.run_command('%s annotate -y -M %s %s "%s"'
+                                          % (pkgng_path, package, tag, value))
         if rc != 0:
             module.fail_json("could not change annotation annotation to %s: %s"
-                % (package, out), stderr=err)
+                             % (package, out), stderr=err)
         return True
 
 
 def annotate_packages(module, pkgng_path, packages, annotation):
     annotate_c = 0
     annotations = map(lambda _annotation:
-        re.match(r'(?P<operation>[\+-:])(?P<tag>\w+)(=(?P<value>\w+))?',
-            _annotation).groupdict(),
-        re.split(r',', annotation))
+                      re.match(r'(?P<operation>[\+-:])(?P<tag>\w+)(=(?P<value>\w+))?',
+                               _annotation).groupdict(),
+                      re.split(r',', annotation))
 
     operation = {
         '+': annotation_add,
@@ -248,23 +260,25 @@ def annotate_packages(module, pkgng_path, packages, annotation):
 
     for package in packages:
         for _annotation in annotations:
-            annotate_c += ( 1 if operation[_annotation['operation']](
+            annotate_c += (1 if operation[_annotation['operation']](
                 module, pkgng_path, package,
-                _annotation['tag'], _annotation['value']) else 0 )
+                _annotation['tag'], _annotation['value']) else 0)
 
     if annotate_c > 0:
         return (True, "added %s annotations." % annotate_c)
     return (False, "changed no annotations")
 
+
 def main():
     module = AnsibleModule(
-            argument_spec       = dict(
-                state           = dict(default="present", choices=["present","absent"], required=False),
-                name            = dict(aliases=["pkg"], required=True),
-                cached          = dict(default=False, type='bool'),
-                annotation      = dict(default="", required=False),
-                pkgsite         = dict(default="", required=False)),
-            supports_check_mode = True)
+        argument_spec=dict(
+            state=dict(
+                default="present", choices=["present", "absent"], required=False),
+            name=dict(aliases=["pkg"], required=True),
+            cached=dict(default=False, type='bool'),
+            annotation=dict(default="", required=False),
+            pkgsite=dict(default="", required=False)),
+        supports_check_mode=True)
 
     pkgng_path = module.get_bin_path('pkg', True)
 
@@ -276,7 +290,8 @@ def main():
     msgs = []
 
     if p["state"] == "present":
-        _changed, _msg = install_packages(module, pkgng_path, pkgs, p["cached"], p["pkgsite"])
+        _changed, _msg = install_packages(
+            module, pkgng_path, pkgs, p["cached"], p["pkgsite"])
         changed = changed or _changed
         msgs.append(_msg)
 
@@ -286,15 +301,15 @@ def main():
         msgs.append(_msg)
 
     if p["annotation"]:
-        _changed, _msg = annotate_packages(module, pkgng_path, pkgs, p["annotation"])
+        _changed, _msg = annotate_packages(
+            module, pkgng_path, pkgs, p["annotation"])
         changed = changed or _changed
         msgs.append(_msg)
 
     module.exit_json(changed=changed, msg=", ".join(msgs))
 
 
-
 # import module snippets
 from ansible.module_utils.basic import *
-    
-main()        
+
+main()

@@ -68,7 +68,9 @@ EXAMPLES = """
                       state=present
 """
 
+
 class RabbitMqParameter(object):
+
     def __init__(self, module, component, name, value, vhost, node):
         self.module = module
         self.component = component
@@ -100,13 +102,16 @@ class RabbitMqParameter(object):
         return False
 
     def set(self):
-        self._exec(['set_parameter', '-p', self.vhost, self.component, self.name, self.value])
+        self._exec(
+            ['set_parameter', '-p', self.vhost, self.component, self.name, self.value])
 
     def delete(self):
-        self._exec(['clear_parameter', '-p', self.vhost, self.component, self.name])
+        self._exec(
+            ['clear_parameter', '-p', self.vhost, self.component, self.name])
 
     def has_modifications(self):
         return self.value != self._value
+
 
 def main():
     arg_spec = dict(
@@ -129,7 +134,8 @@ def main():
     state = module.params['state']
     node = module.params['node']
 
-    rabbitmq_parameter = RabbitMqParameter(module, component, name, value, vhost, node)
+    rabbitmq_parameter = RabbitMqParameter(
+        module, component, name, value, vhost, node)
 
     changed = False
     if rabbitmq_parameter.get():
@@ -144,7 +150,8 @@ def main():
         rabbitmq_parameter.set()
         changed = True
 
-    module.exit_json(changed=changed, component=component, name=name, vhost=vhost, state=state)
+    module.exit_json(
+        changed=changed, component=component, name=name, vhost=vhost, state=state)
 
 # import module snippets
 from ansible.module_utils.basic import *

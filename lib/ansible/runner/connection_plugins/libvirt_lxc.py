@@ -23,13 +23,16 @@ import subprocess
 from ansible import errors
 from ansible.callbacks import vvv
 
+
 class Connection(object):
+
     ''' Local lxc based connections '''
 
     def _search_executable(self, executable):
         cmd = distutils.spawn.find_executable(executable)
         if not cmd:
-            raise errors.AnsibleError("%s command not found in PATH") % executable
+            raise errors.AnsibleError(
+                "%s command not found in PATH") % executable
         return cmd
 
     def _check_domain(self, domain):
@@ -37,7 +40,8 @@ class Connection(object):
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         p.communicate()
         if p.returncode:
-            raise errors.AnsibleError("%s is not a lxc defined in libvirt" % domain)
+            raise errors.AnsibleError(
+                "%s is not a lxc defined in libvirt" % domain)
 
     def __init__(self, runner, host, port, *args, **kwargs):
         self.lxc = host
@@ -60,9 +64,11 @@ class Connection(object):
 
     def _generate_cmd(self, executable, cmd):
         if executable:
-            local_cmd = [self.cmd, '-q', '-c', 'lxc:///', 'lxc-enter-namespace', self.lxc, '--', executable , '-c', cmd]
+            local_cmd = [self.cmd, '-q', '-c', 'lxc:///',
+                         'lxc-enter-namespace', self.lxc, '--', executable, '-c', cmd]
         else:
-            local_cmd = '%s -q -c lxc:/// lxc-enter-namespace %s -- %s' % (self.cmd, self.lxc, cmd)
+            local_cmd = '%s -q -c lxc:/// lxc-enter-namespace %s -- %s' % (
+                self.cmd, self.lxc, cmd)
         return local_cmd
 
     def exec_command(self, cmd, tmp_path, sudo_user, sudoable=False, executable='/bin/sh'):
@@ -91,30 +97,31 @@ class Connection(object):
 
         out_path = self._normalize_path(out_path, '/')
         vvv("PUT %s TO %s" % (in_path, out_path), host=self.lxc)
-        
-        local_cmd = [self.cmd, '-q', '-c', 'lxc:///', 'lxc-enter-namespace', self.lxc, '--', '/bin/tee', out_path]
+
+        local_cmd = [self.cmd, '-q', '-c', 'lxc:///',
+                     'lxc-enter-namespace', self.lxc, '--', '/bin/tee', out_path]
         vvv("EXEC %s" % (local_cmd), host=self.lxc)
 
         p = subprocess.Popen(local_cmd, cwd=self.runner.basedir,
                              stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
-        stdout, stderr = p.communicate(open(in_path,'rb').read())
- 
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = p.communicate(open(in_path, 'rb').read())
+
     def fetch_file(self, in_path, out_path):
         ''' fetch a file from lxc to local '''
 
         in_path = self._normalize_path(in_path, '/')
         vvv("FETCH %s TO %s" % (in_path, out_path), host=self.lxc)
 
-        local_cmd = [self.cmd, '-q', '-c', 'lxc:///', 'lxc-enter-namespace', self.lxc, '--', '/bin/cat', in_path]
+        local_cmd = [self.cmd, '-q', '-c', 'lxc:///',
+                     'lxc-enter-namespace', self.lxc, '--', '/bin/cat', in_path]
         vvv("EXEC %s" % (local_cmd), host=self.lxc)
 
         p = subprocess.Popen(local_cmd, cwd=self.runner.basedir,
                              stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
-        open(out_path,'wb').write(stdout)
-
+        open(out_path, 'wb').write(stdout)
 
     def close(self):
         ''' terminate the connection; nothing to do here '''

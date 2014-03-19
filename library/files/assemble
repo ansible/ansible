@@ -97,10 +97,11 @@ EXAMPLES = '''
 # ===========================================
 # Support method
 
+
 def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None):
     ''' assemble a file from a directory of fragments '''
     tmpfd, temp_path = tempfile.mkstemp()
-    tmp = os.fdopen(tmpfd,'w')
+    tmp = os.fdopen(tmpfd, 'w')
     delimit_me = False
     for f in sorted(os.listdir(src_path)):
         if compiled_regexp and not compiled_regexp.search(f):
@@ -110,7 +111,7 @@ def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None):
             # un-escape anything like newlines
             delimiter = delimiter.decode('unicode-escape')
             tmp.write(delimiter)
-            # always make sure there's a newline after the 
+            # always make sure there's a newline after the
             # delimiter, so lines don't run together
             if delimiter[-1] != '\n':
                 tmp.write('\n')
@@ -123,29 +124,30 @@ def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None):
 # ==============================================================
 # main
 
+
 def main():
 
     module = AnsibleModule(
         # not checking because of daisy chain to file module
-        argument_spec = dict(
-            src = dict(required=True),
-            delimiter = dict(required=False),
-            dest = dict(required=True),
+        argument_spec=dict(
+            src=dict(required=True),
+            delimiter=dict(required=False),
+            dest=dict(required=True),
             backup=dict(default=False, type='bool'),
             remote_src=dict(default=False, type='bool'),
-            regexp = dict(required=False),
+            regexp=dict(required=False),
         ),
         add_file_common_args=True
     )
 
-    changed   = False
-    pathmd5   = None
-    destmd5   = None
-    src       = os.path.expanduser(module.params['src'])
-    dest      = os.path.expanduser(module.params['dest'])
-    backup    = module.params['backup']
+    changed = False
+    pathmd5 = None
+    destmd5 = None
+    src = os.path.expanduser(module.params['src'])
+    dest = os.path.expanduser(module.params['dest'])
+    backup = module.params['backup']
     delimiter = module.params['delimiter']
-    regexp    = module.params['regexp']
+    regexp = module.params['regexp']
     compiled_regexp = None
 
     if not os.path.exists(src):
@@ -177,10 +179,10 @@ def main():
     file_args = module.load_file_common_arguments(module.params)
     changed = module.set_file_attributes_if_different(file_args, changed)
     # Mission complete
-    module.exit_json(src=src, dest=dest, md5sum=pathmd5, changed=changed, msg="OK")
+    module.exit_json(
+        src=src, dest=dest, md5sum=pathmd5, changed=changed, msg="OK")
 
 # import module snippets
 from ansible.module_utils.basic import *
 
 main()
-

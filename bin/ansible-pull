@@ -53,13 +53,15 @@ from ansible import errors
 DEFAULT_REPO_TYPE = 'git'
 DEFAULT_PLAYBOOK = 'local.yml'
 PLAYBOOK_ERRORS = {1: 'File does not exist',
-                    2: 'File is not readable'}
+                   2: 'File is not readable'}
 
-VERBOSITY=0
+VERBOSITY = 0
+
 
 def increment_debug(option, opt, value, parser):
     global VERBOSITY
     VERBOSITY += 1
+
 
 def try_playbook(path):
     if not os.path.exists(path):
@@ -112,7 +114,7 @@ def main(args):
                            'not be updated')
     parser.add_option('-d', '--directory', dest='dest', default=None,
                       help='directory to checkout repository to')
-    #parser.add_option('-l', '--live', default=True, action='store_live',
+    # parser.add_option('-l', '--live', default=True, action='store_live',
     #                  help='Print the ansible-playbook output while running')
     parser.add_option('-U', '--url', dest='url', default=None,
                       help='URL of the playbook repository')
@@ -131,7 +133,7 @@ def main(args):
                       help='Module name used to check out repository.  '
                       'Default is %s.' % DEFAULT_REPO_TYPE)
     parser.add_option('--vault-password-file', dest='vault_password_file',
-                    help="vault password file")
+                      help="vault password file")
     parser.add_option('-K', '--ask-sudo-pass', default=False, dest='ask_sudo_pass', action='store_true',
                       help='ask for sudo password')
     options, args = parser.parse_args(args)
@@ -139,7 +141,8 @@ def main(args):
     hostname = socket.getfqdn()
     if not options.dest:
         # use a hostname dependent directory, in case of $HOME on nfs
-        options.dest = utils.prepare_writeable_dir('~/.ansible/pull/%s' % hostname)
+        options.dest = utils.prepare_writeable_dir(
+            '~/.ansible/pull/%s' % hostname)
 
     options.dest = os.path.abspath(options.dest)
 
@@ -157,7 +160,7 @@ def main(args):
     if VERBOSITY == 0:
         base_opts = '-c local --limit "%s"' % limit_opts
     elif VERBOSITY > 0:
-        debug_level = ''.join([ "v" for x in range(0, VERBOSITY) ])
+        debug_level = ''.join(["v" for x in range(0, VERBOSITY)])
         base_opts = '-%s -c local --limit "%s"' % (debug_level, limit_opts)
 
     if options.checkout:
@@ -167,19 +170,18 @@ def main(args):
         sys.stderr.write("module '%s' not found.\n" % options.module_name)
         return 1
     cmd = 'ansible all -i "%s" %s -m %s -a "%s"' % (
-            inv_opts, base_opts, options.module_name, repo_opts
-            )
+        inv_opts, base_opts, options.module_name, repo_opts
+    )
 
     if options.sleep:
         try:
-            secs = random.randint(0,int(options.sleep));
+            secs = random.randint(0, int(options.sleep))
         except ValueError:
             parser.error("%s is not a number." % options.sleep)
             return 1
 
         print >>sys.stderr, "Sleeping for %d seconds..." % secs
-        time.sleep(secs);
-
+        time.sleep(secs)
 
     # RUN THe CHECKOUT COMMAND
     rc, out, err = cmd_functions.run_cmd(cmd, live=True)
@@ -218,7 +220,8 @@ def main(args):
         try:
             shutil.rmtree(options.dest)
         except Exception, e:
-            print >>sys.stderr, "Failed to remove %s: %s" % (options.dest, str(e))
+            print >>sys.stderr, "Failed to remove %s: %s" % (
+                options.dest, str(e))
 
     return rc
 

@@ -19,7 +19,9 @@ import os
 import time
 import json
 
+
 class CallbackModule(object):
+
     """
     This is a very trivial example of how any callback function can get at play and task objects.
     play will be 'None' for runner invocations, and task will be None for 'setup' invocations.
@@ -28,4 +30,4 @@ class CallbackModule(object):
     def on_any(self, *args, **kwargs):
         play = getattr(self, 'play', None)
         task = getattr(self, 'task', None)
-        print "play = %s, task = %s, args = %s, kwargs = %s" % (play,task,args,kwargs)
+        print "play = %s, task = %s, args = %s, kwargs = %s" % (play, task, args, kwargs)

@@ -19,6 +19,7 @@ import os
 import glob
 from ansible import utils
 
+
 class LookupModule(object):
 
     def __init__(self, basedir=None, **kwargs):

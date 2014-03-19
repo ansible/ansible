@@ -20,6 +20,7 @@ from ansible.utils import safe_eval
 import ansible.errors as errors
 from itertools import izip_longest
 
+
 def flatten(terms):
     ret = []
     for term in terms:
@@ -31,7 +32,9 @@ def flatten(terms):
             ret.append(term)
     return ret
 
+
 class LookupModule(object):
+
     """
     Transpose a list of arrays:
     [1, 2, 3], [4, 5, 6] -> [1, 4], [2, 5], [3, 6]
@@ -45,20 +48,21 @@ class LookupModule(object):
     def __lookup_injects(self, terms, inject):
         results = []
         for x in terms:
-            intermediate = utils.listify_lookup_plugin_terms(x, self.basedir, inject)
+            intermediate = utils.listify_lookup_plugin_terms(
+                x, self.basedir, inject)
             results.append(intermediate)
         return results
 
     def run(self, terms, inject=None, **kwargs):
 
-        # this code is common with 'items.py' consider moving to utils if we need it again
+        # this code is common with 'items.py' consider moving to utils if we
+        # need it again
 
         terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
         terms = self.__lookup_injects(terms, inject)
 
         my_list = terms[:]
         if len(my_list) == 0:
-            raise errors.AnsibleError("with_together requires at least one element in each list")
+            raise errors.AnsibleError(
+                "with_together requires at least one element in each list")
         return [flatten(x) for x in izip_longest(*my_list, fillvalue=None)]
-
-

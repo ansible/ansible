@@ -29,6 +29,7 @@ except ImportError:
 
 
 class CallbackModule(object):
+
     """This is an example ansible callback plugin that sends status
     updates to a HipChat channel during playbook execution.
 

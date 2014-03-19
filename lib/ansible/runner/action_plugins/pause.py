@@ -27,6 +27,7 @@ import time
 
 
 class ActionModule(object):
+
     ''' pauses execution for a length or time, or until input is received '''
 
     PAUSE_TYPES = ['seconds', 'minutes', 'prompt', '']
@@ -58,7 +59,8 @@ class ActionModule(object):
         if complex_args:
             args.update(complex_args)
         # extra template call unneeded?
-        args.update(parse_kv(template.template(self.runner.basedir, module_args, inject)))
+        args.update(
+            parse_kv(template.template(self.runner.basedir, module_args, inject)))
 
         # Are 'minutes' or 'seconds' keys that exist in 'args'?
         if 'minutes' in args or 'seconds' in args:
@@ -73,7 +75,8 @@ class ActionModule(object):
                     self.seconds = int(args['seconds'])
                     self.duration_unit = 'seconds'
             except ValueError, e:
-                raise ae("non-integer value given for prompt duration:\n%s" % str(e))
+                raise ae(
+                    "non-integer value given for prompt duration:\n%s" % str(e))
         # Is 'prompt' a key in 'args'?
         elif 'prompt' in args:
             self.pause_type = 'prompt'
@@ -84,13 +87,13 @@ class ActionModule(object):
             self.prompt = "[%s]\nPress enter to continue:\n" % hosts
         # I have no idea what you're trying to do. But it's so wrong.
         else:
-            raise ae("invalid pause type given. must be one of: %s" % \
-                         ", ".join(self.PAUSE_TYPES))
+            raise ae("invalid pause type given. must be one of: %s" %
+                     ", ".join(self.PAUSE_TYPES))
 
-        vv("created 'pause' ActionModule: pause_type=%s, duration_unit=%s, calculated_seconds=%s, prompt=%s" % \
-                (self.pause_type, self.duration_unit, self.seconds, self.prompt))
+        vv("created 'pause' ActionModule: pause_type=%s, duration_unit=%s, calculated_seconds=%s, prompt=%s" %
+           (self.pause_type, self.duration_unit, self.seconds, self.prompt))
 
-        ########################################################################
+        #######################################################################
         # Begin the hard work!
         try:
             self._start()
@@ -136,4 +139,5 @@ class ActionModule(object):
         else:
             duration = round(duration, 2)
 
-        self.result['stdout'] = "Paused for %s %s" % (duration, self.duration_unit)
+        self.result['stdout'] = "Paused for %s %s" % (
+            duration, self.duration_unit)

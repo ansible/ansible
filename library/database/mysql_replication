@@ -225,12 +225,13 @@ def load_mycnf():
 
 def main():
     module = AnsibleModule(
-            argument_spec = dict(
+        argument_spec=dict(
             login_user=dict(default=None),
             login_password=dict(default=None),
             login_host=dict(default="localhost"),
             login_unix_socket=dict(default=None),
-            mode=dict(default="getslave", choices=["getmaster", "getslave", "changemaster", "stopslave", "startslave"]),
+            mode=dict(default="getslave", choices=[
+                      "getmaster", "getslave", "changemaster", "stopslave", "startslave"]),
             master_host=dict(default=None),
             master_user=dict(default=None),
             master_password=dict(default=None),
@@ -240,7 +241,7 @@ def main():
             master_log_pos=dict(default=None),
             relay_log_file=dict(default=None),
             relay_log_pos=dict(default=None),
-            master_ssl=dict(default=None, choices=[0,1]),
+            master_ssl=dict(default=None, choices=[0, 1]),
             master_ssl_ca=dict(default=None),
             master_ssl_capath=dict(default=None),
             master_ssl_cert=dict(default=None),
@@ -287,37 +288,42 @@ def main():
             login_user = mycnf_creds["user"]
             login_password = mycnf_creds["passwd"]
     elif login_password is None or login_user is None:
-        module.fail_json(msg="when supplying login arguments, both login_user and login_password must be provided")
+        module.fail_json(
+            msg="when supplying login arguments, both login_user and login_password must be provided")
 
     try:
         if module.params["login_unix_socket"]:
-            db_connection = MySQLdb.connect(host=module.params["login_host"], unix_socket=module.params["login_unix_socket"], user=login_user, passwd=login_password, db="mysql")
+            db_connection = MySQLdb.connect(host=module.params["login_host"], unix_socket=module.params[
+                                            "login_unix_socket"], user=login_user, passwd=login_password, db="mysql")
         else:
-            db_connection = MySQLdb.connect(host=module.params["login_host"], user=login_user, passwd=login_password, db="mysql")
+            db_connection = MySQLdb.connect(
+                host=module.params["login_host"], user=login_user, passwd=login_password, db="mysql")
     except Exception, e:
-        module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or ~/.my.cnf has the credentials")
+        module.fail_json(
+            msg="unable to connect to database, check login_user and login_password are correct or ~/.my.cnf has the credentials")
     try:
         cursor = db_connection.cursor(cursorclass=MySQLdb.cursors.DictCursor)
     except Exception, e:
-        module.fail_json(msg="Trouble getting DictCursor from db_connection: %s" % e)
+        module.fail_json(
+            msg="Trouble getting DictCursor from db_connection: %s" % e)
 
     if mode in "getmaster":
         masterstatus = get_master_status(cursor)
         try:
-            module.exit_json( **masterstatus )
+            module.exit_json(**masterstatus)
         except TypeError:
             module.fail_json(msg="Server is not configured as mysql master")
 
     elif mode in "getslave":
         slavestatus = get_slave_status(cursor)
         try:
-            module.exit_json( **slavestatus )
+            module.exit_json(**slavestatus)
         except TypeError:
             module.fail_json(msg="Server is not configured as mysql slave")
 
     elif mode in "changemaster":
         print "Change master"
-        chm=[]
+        chm = []
         if master_host:
             chm.append("MASTER_HOST='" + master_host + "'")
         if master_user:
@@ -348,14 +354,15 @@ def main():
             chm.append("MASTER_SSL_KEY='" + master_ssl_key + "'")
         if master_ssl_cipher:
             chm.append("MASTER_SSL_CIPTHER='" + master_ssl_cipher + "'")
-        changemaster(cursor,chm)
+        changemaster(cursor, chm)
         module.exit_json(changed=True)
     elif mode in "startslave":
         started = start_slave(cursor)
         if started is True:
             module.exit_json(msg="Slave started ", changed=True)
         else:
-            module.exit_json(msg="Slave already started (Or cannot be started)", changed=False)
+            module.exit_json(
+                msg="Slave already started (Or cannot be started)", changed=False)
     elif mode in "stopslave":
         stopped = stop_slave(cursor)
         if stopped is True:

@@ -73,14 +73,19 @@ except ImportError as e:
     print "failed=True msg='dopy required for this module'"
     sys.exit(1)
 
+
 class TimeoutError(DoError):
+
     def __init__(self, msg, id):
         super(TimeoutError, self).__init__(msg)
         self.id = id
 
+
 class JsonfyMixIn(object):
+
     def to_json(self):
         return self.__dict__
+
 
 class SSH(JsonfyMixIn):
     manager = None
@@ -117,6 +122,7 @@ class SSH(JsonfyMixIn):
         json = cls.manager.new_ssh_key(name, key_pub)
         return cls(json)
 
+
 def core(module):
     def getkeyordie(k):
         v = module.params[k]
@@ -146,21 +152,23 @@ def core(module):
     elif state in ('absent'):
         key = SSH.find(name)
         if not key:
-            module.exit_json(changed=False, msg='SSH key with the name of %s is not found.' % name)
+            module.exit_json(
+                changed=False, msg='SSH key with the name of %s is not found.' % name)
         key.destroy()
         module.exit_json(changed=True)
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            state = dict(choices=['present', 'absent'], default='present'),
-            client_id = dict(aliases=['CLIENT_ID'], no_log=True),
-            api_key = dict(aliases=['API_KEY'], no_log=True),
-            name = dict(type='str'),
-            id = dict(aliases=['droplet_id'], type='int'),
-            ssh_pub_key = dict(type='str'),
+        argument_spec=dict(
+            state=dict(choices=['present', 'absent'], default='present'),
+            client_id=dict(aliases=['CLIENT_ID'], no_log=True),
+            api_key=dict(aliases=['API_KEY'], no_log=True),
+            name=dict(type='str'),
+            id=dict(aliases=['droplet_id'], type='int'),
+            ssh_pub_key=dict(type='str'),
         ),
-        required_one_of = (
+        required_one_of=(
             ['id', 'name'],
         ),
     )

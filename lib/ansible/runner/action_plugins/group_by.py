@@ -23,10 +23,12 @@ from ansible.runner.return_data import ReturnData
 from ansible.utils import parse_kv, check_conditional
 import ansible.utils.template as template
 
+
 class ActionModule(object):
+
     ''' Create inventory groups based on variables '''
 
-    ### We need to be able to modify the inventory
+    # We need to be able to modify the inventory
     BYPASS_HOST_LOOP = True
     TRANSFERS_FILES = False
 
@@ -45,13 +47,13 @@ class ActionModule(object):
         if not 'key' in args:
             raise ae("'key' is a required argument.")
 
-        vv("created 'group_by' ActionModule: key=%s"%(args['key']))
+        vv("created 'group_by' ActionModule: key=%s" % (args['key']))
 
         inventory = self.runner.inventory
 
         result = {'changed': False}
 
-        ### find all groups
+        # find all groups
         groups = {}
 
         for host in self.runner.host_set:
@@ -60,7 +62,7 @@ class ActionModule(object):
             data.update(inject['hostvars'][host])
             conds = self.runner.conditional
             if type(conds) != list:
-                conds = [ conds ]
+                conds = [conds]
             next_host = False
             for cond in conds:
                 if not check_conditional(cond, self.runner.basedir, data, fail_on_undefined=self.runner.error_on_undefined_vars):
@@ -68,15 +70,16 @@ class ActionModule(object):
                     break
             if next_host:
                 continue
-            group_name = template.template(self.runner.basedir, args['key'], data)
-            group_name = group_name.replace(' ','-')
+            group_name = template.template(
+                self.runner.basedir, args['key'], data)
+            group_name = group_name.replace(' ', '-')
             if group_name not in groups:
                 groups[group_name] = []
             groups[group_name].append(host)
 
         result['groups'] = groups
 
-        ### add to inventory
+        # add to inventory
         for group, hosts in groups.items():
             inv_group = inventory.get_group(group)
             if not inv_group:

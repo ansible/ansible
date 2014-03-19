@@ -143,10 +143,11 @@ EXAMPLES = r"""
 - lineinfile: dest=/etc/sudoers state=present regexp='^%ADMIN ALL\=' line='%ADMIN ALL=(ALL) NOPASSWD:ALL' validate='visudo -cf %s'
 """
 
-def write_changes(module,lines,dest):
+
+def write_changes(module, lines, dest):
 
     tmpfd, tmpfile = tempfile.mkstemp()
-    f = os.fdopen(tmpfd,'wb')
+    f = os.fdopen(tmpfd, 'wb')
     f.writelines(lines)
     f.close()
 
@@ -157,9 +158,10 @@ def write_changes(module,lines,dest):
         valid = rc == 0
         if rc != 0:
             module.fail_json(msg='failed to validate: '
-                                 'rc:%s error:%s' % (rc,err))
+                                 'rc:%s error:%s' % (rc, err))
     if valid:
         module.atomic_move(tmpfile, dest)
+
 
 def check_file_attrs(module, changed, message):
 
@@ -179,7 +181,8 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
 
     if not os.path.exists(dest):
         if not create:
-            module.fail_json(rc=257, msg='Destination %s does not exist !' % dest)
+            module.fail_json(
+                rc=257, msg='Destination %s does not exist !' % dest)
         destpath = os.path.dirname(dest)
         if not os.path.exists(destpath):
             os.makedirs(destpath)
@@ -305,7 +308,8 @@ def absent(module, dest, regexp, line, backup):
         msg = "%s line(s) removed" % len(found)
 
     msg, changed = check_file_attrs(module, changed, msg)
-    module.exit_json(changed=changed, found=len(found), msg=msg, backup=backupdest)
+    module.exit_json(
+        changed=changed, found=len(found), msg=msg, backup=backupdest)
 
 
 def main():
@@ -333,7 +337,6 @@ def main():
     backrefs = module.params['backrefs']
     dest = os.path.expanduser(params['dest'])
 
-
     if os.path.isdir(dest):
         module.fail_json(rc=256, msg='Destination %s is a directory !' % dest)
 
@@ -357,9 +360,11 @@ def main():
                 ins_aft, ins_bef, create, backup, backrefs)
     else:
         if params['regexp'] is None and params.get('line', None) is None:
-            module.fail_json(msg='one of line= or regexp= is required with state=absent')
+            module.fail_json(
+                msg='one of line= or regexp= is required with state=absent')
 
-        absent(module, dest, params['regexp'], params.get('line', None), backup)
+        absent(module, dest, params['regexp'],
+               params.get('line', None), backup)
 
 # import module snippets
 from ansible.module_utils.basic import *

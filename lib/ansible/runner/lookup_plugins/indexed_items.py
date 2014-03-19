@@ -19,6 +19,7 @@ from ansible.utils import safe_eval
 import ansible.utils as utils
 import ansible.errors as errors
 
+
 def flatten(terms):
     ret = []
     for term in terms:
@@ -27,6 +28,7 @@ def flatten(terms):
         else:
             ret.append(term)
     return ret
+
 
 class LookupModule(object):
 
@@ -41,4 +43,3 @@ class LookupModule(object):
 
         items = flatten(terms)
         return zip(range(len(items)), items)
-

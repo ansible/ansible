@@ -3,7 +3,9 @@ Test bundled filters
 '''
 
 import os.path
-import unittest, tempfile, shutil
+import unittest
+import tempfile
+import shutil
 from ansible import playbook, inventory, callbacks
 import ansible.runner.filter_plugins.core
 
@@ -48,6 +50,7 @@ a:
 - 2
 - 3
 '''
+
 
 class TestFilters(unittest.TestCase):
 
@@ -116,16 +119,16 @@ class TestFilters(unittest.TestCase):
                                                       True)
         assert a == True
 
-    #def test_filters(self):
+    # def test_filters(self):
 
         # this test is pretty low level using a playbook, hence I am disabling it for now -- MPD.
-        #return
+        # return
 
         #src = self.temp('src.j2', SRC)
         #dest = self.temp('dest.txt')
         #book = self.temp('book', BOOK % (src, dest))
 
-        #playbook.PlayBook(
+        # playbook.PlayBook(
         #    playbook  = book,
         #    inventory = INVENTORY,
         #    transport = 'local',
@@ -136,4 +139,3 @@ class TestFilters(unittest.TestCase):
 
         #out = open(dest).read()
         #self.assertEqual(DEST, out)
-

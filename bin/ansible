@@ -30,7 +30,9 @@ from ansible import callbacks
 from ansible import inventory
 ########################################################
 
+
 class Cli(object):
+
     ''' code behind bin/ansible '''
 
     # ----------------------------------------------
@@ -45,22 +47,22 @@ class Cli(object):
         ''' create an options parser for bin/ansible '''
 
         parser = utils.base_parser(
-            constants=C, 
-            runas_opts=True, 
-            subset_opts=True, 
+            constants=C,
+            runas_opts=True,
+            subset_opts=True,
             async_opts=True,
-            output_opts=True, 
-            connect_opts=True, 
+            output_opts=True,
+            connect_opts=True,
             check_opts=True,
             diff_opts=False,
             usage='%prog <host-pattern> [options]'
         )
 
         parser.add_option('-a', '--args', dest='module_args',
-            help="module arguments", default=C.DEFAULT_MODULE_ARGS)
+                          help="module arguments", default=C.DEFAULT_MODULE_ARGS)
         parser.add_option('-m', '--module-name', dest='module_name',
-            help="module name to execute (default=%s)" % C.DEFAULT_MODULE_NAME,
-            default=C.DEFAULT_MODULE_NAME)
+                          help="module name to execute (default=%s)" % C.DEFAULT_MODULE_NAME,
+                          default=C.DEFAULT_MODULE_NAME)
 
         options, args = parser.parse_args()
         self.callbacks.options = options
@@ -77,7 +79,8 @@ class Cli(object):
                          "mutually exclusive")
 
         if (options.ask_vault_pass and options.vault_password_file):
-            parser.error("--ask-vault-pass and --vault-password-file are mutually exclusive")
+            parser.error(
+                "--ask-vault-pass and --vault-password-file are mutually exclusive")
 
         return (options, args)
 
@@ -121,19 +124,21 @@ class Cli(object):
         options.ask_su_pass = options.ask_su_pass or C.DEFAULT_ASK_SU_PASS
         options.ask_vault_pass = options.ask_vault_pass or C.DEFAULT_ASK_VAULT_PASS
 
-        (sshpass, sudopass, su_pass, vault_pass) = utils.ask_passwords(ask_pass=options.ask_pass, ask_sudo_pass=options.ask_sudo_pass, ask_su_pass=options.ask_su_pass, ask_vault_pass=options.ask_vault_pass)
+        (sshpass, sudopass, su_pass, vault_pass) = utils.ask_passwords(ask_pass=options.ask_pass,
+                                                                       ask_sudo_pass=options.ask_sudo_pass, ask_su_pass=options.ask_su_pass, ask_vault_pass=options.ask_vault_pass)
 
         # read vault_pass from a file
         if options.vault_password_file:
             this_path = os.path.expanduser(options.vault_password_file)
             try:
                 f = open(this_path, "rb")
-                tmp_vault_pass=f.read()
+                tmp_vault_pass = f.read()
                 f.close()
             except (OSError, IOError), e:
-                raise errors.AnsibleError("Could not read %s: %s" % (this_path, e))
+                raise errors.AnsibleError(
+                    "Could not read %s: %s" % (this_path, e))
 
-            # get rid of newline chars        
+            # get rid of newline chars
             tmp_vault_pass = tmp_vault_pass.strip()
 
             if not options.ask_vault_pass:
@@ -154,9 +159,9 @@ class Cli(object):
 
         if ((options.module_name == 'command' or options.module_name == 'shell')
                 and not options.module_args):
-            callbacks.display("No argument passed to %s module" % options.module_name, color='red', stderr=True)
+            callbacks.display("No argument passed to %s module" %
+                              options.module_name, color='red', stderr=True)
             sys.exit(1)
-
 
         if options.su_user or options.ask_su_pass:
             options.su = True
@@ -231,4 +236,3 @@ if __name__ == '__main__':
         # Generic handler for ansible specific errors
         callbacks.display("ERROR: %s" % str(e), stderr=True, color='red')
         sys.exit(1)
-

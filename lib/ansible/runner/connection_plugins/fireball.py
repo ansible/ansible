@@ -23,15 +23,17 @@ from ansible import utils
 from ansible import errors
 from ansible import constants
 
-HAVE_ZMQ=False
+HAVE_ZMQ = False
 
 try:
     import zmq
-    HAVE_ZMQ=True
+    HAVE_ZMQ = True
 except ImportError:
     pass
 
+
 class Connection(object):
+
     ''' ZeroMQ accelerated connection '''
 
     def __init__(self, runner, host, port, *args, **kwargs):
@@ -48,7 +50,7 @@ class Connection(object):
         self.context = None
         self.socket = None
 
-        if  port is None:
+        if port is None:
             self.port = constants.ZEROMQ_PORT
         else:
             self.port = port
@@ -58,13 +60,13 @@ class Connection(object):
 
         if not HAVE_ZMQ:
             raise errors.AnsibleError("zmq is not installed")
-        
+
         # this is rough/temporary and will likely be optimized later ...
         self.context = zmq.Context()
         socket = self.context.socket(zmq.REQ)
         addr = "tcp://%s:%s" % (self.host, self.port)
         socket.connect(addr)
-        self.socket = socket    
+        self.socket = socket
 
         return self
 
@@ -72,7 +74,8 @@ class Connection(object):
         ''' run a command on the remote host '''
 
         if in_data:
-            raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
+            raise errors.AnsibleError(
+                "Internal Error: this module does not support optimized module pipelining")
 
         vvv("EXEC COMMAND %s" % cmd)
 
@@ -92,20 +95,20 @@ class Connection(object):
         data = utils.jsonify(data)
         data = utils.encrypt(self.key, data)
         self.socket.send(data)
-        
+
         response = self.socket.recv()
         response = utils.decrypt(self.key, response)
         response = utils.parse_json(response)
 
-        return (response.get('rc',None), '', response.get('stdout',''), response.get('stderr',''))
+        return (response.get('rc', None), '', response.get('stdout', ''), response.get('stderr', ''))
 
     def put_file(self, in_path, out_path):
-
         ''' transfer a file from local to remote '''
         vvv("PUT %s TO %s" % (in_path, out_path), host=self.host)
 
         if not os.path.exists(in_path):
-            raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
+            raise errors.AnsibleFileNotFound(
+                "file or module does not exist: %s" % in_path)
         data = file(in_path).read()
         data = base64.b64encode(data)
 
@@ -134,7 +137,7 @@ class Connection(object):
         response = utils.decrypt(self.key, response)
         response = utils.parse_json(response)
         response = response['data']
-        response = base64.b64decode(response)        
+        response = base64.b64decode(response)
 
         fh = open(out_path, "w")
         fh.write(response)
@@ -148,4 +151,3 @@ class Connection(object):
             self.context.term()
         except:
             pass
-

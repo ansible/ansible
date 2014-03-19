@@ -170,16 +170,17 @@ def user_exists(cursor, user):
 def user_add(cursor, user, password, role_attr_flags,  encrypted, expires):
     """Create a new database user (role)."""
     query_password_data = dict()
-    query = 'CREATE USER "%(user)s"' % { "user": user}
+    query = 'CREATE USER "%(user)s"' % {"user": user}
     if password is not None:
-        query = query + " WITH %(crypt)s" % { "crypt": encrypted }
+        query = query + " WITH %(crypt)s" % {"crypt": encrypted}
         query = query + " PASSWORD %(password)s"
         query_password_data.update(password=password)
     if expires is not None:
-        query = query + " VALID UNTIL '%(expires)s'" % { "expires": expires }
+        query = query + " VALID UNTIL '%(expires)s'" % {"expires": expires}
     query = query + " " + role_attr_flags
     cursor.execute(query, query_password_data)
     return True
+
 
 def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expires):
     """Change user password and/or attributes. Return True if changed, False otherwise."""
@@ -189,7 +190,8 @@ def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expir
         if password is not None:
             module.fail_json(msg="cannot change the password for PUBLIC user")
         elif role_attr_flags != '':
-            module.fail_json(msg="cannot change the role_attr_flags for PUBLIC user")
+            module.fail_json(
+                msg="cannot change the role_attr_flags for PUBLIC user")
         else:
             return False
 
@@ -211,7 +213,7 @@ def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expir
         elif role_attr_flags:
             alter = alter + ' WITH ' + role_attr_flags
         if expires is not None:
-            alter = alter + " VALID UNTIL '%(expires)s'" % { "exipres": expires }
+            alter = alter + " VALID UNTIL '%(expires)s'" % {"exipres": expires}
 
         try:
             cursor.execute(alter, query_password_data)
@@ -236,6 +238,7 @@ def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expir
 
     return changed
 
+
 def user_delete(cursor, user):
     """Try to remove a user. Returns True if successful otherwise False"""
     cursor.execute("SAVEPOINT ansible_pgsql_user_delete")
@@ -249,10 +252,12 @@ def user_delete(cursor, user):
     cursor.execute("RELEASE SAVEPOINT ansible_pgsql_user_delete")
     return True
 
+
 def has_table_privilege(cursor, user, table, priv):
     query = 'SELECT has_table_privilege(%s, %s, %s)'
     cursor.execute(query, (user, table, priv))
     return cursor.fetchone()[0]
+
 
 def get_table_privileges(cursor, user, table):
     if '.' in table:
@@ -282,6 +287,7 @@ def quote_pg_identifier(identifier):
         quoted_tokens.append('"%s"' % (token, ))
     return ".".join(quoted_tokens)
 
+
 def grant_table_privilege(cursor, user, table, priv):
     prev_priv = get_table_privileges(cursor, user, table)
     query = 'GRANT %s ON TABLE %s TO %s' % (
@@ -289,6 +295,7 @@ def grant_table_privilege(cursor, user, table, priv):
     cursor.execute(query)
     curr_priv = get_table_privileges(cursor, user, table)
     return len(curr_priv) > len(prev_priv)
+
 
 def revoke_table_privilege(cursor, user, table, priv):
     prev_priv = get_table_privileges(cursor, user, table)
@@ -301,9 +308,9 @@ def revoke_table_privilege(cursor, user, table, priv):
 
 def get_database_privileges(cursor, user, db):
     priv_map = {
-        'C':'CREATE',
-        'T':'TEMPORARY',
-        'c':'CONNECT',
+        'C': 'CREATE',
+        'T': 'TEMPORARY',
+        'c': 'CONNECT',
     }
     query = 'SELECT datacl FROM pg_database WHERE datname = %s'
     cursor.execute(query, (db,))
@@ -318,10 +325,12 @@ def get_database_privileges(cursor, user, db):
         o.append(priv_map[v])
     return o
 
+
 def has_database_privilege(cursor, user, db, priv):
     query = 'SELECT has_database_privilege(%s, %s, %s)'
     cursor.execute(query, (user, db, priv))
     return cursor.fetchone()[0]
+
 
 def grant_database_privilege(cursor, user, db, priv):
     prev_priv = get_database_privileges(cursor, user, db)
@@ -333,6 +342,7 @@ def grant_database_privilege(cursor, user, db, priv):
     curr_priv = get_database_privileges(cursor, user, db)
     return len(curr_priv) > len(prev_priv)
 
+
 def revoke_database_privilege(cursor, user, db, priv):
     prev_priv = get_database_privileges(cursor, user, db)
     if user == "PUBLIC":
@@ -343,6 +353,7 @@ def revoke_database_privilege(cursor, user, db, priv):
     curr_priv = get_database_privileges(cursor, user, db)
     return len(curr_priv) < len(prev_priv)
 
+
 def revoke_privileges(cursor, user, privs):
     if privs is None:
         return False
@@ -350,15 +361,16 @@ def revoke_privileges(cursor, user, privs):
     changed = False
     for type_ in privs:
         revoke_func = {
-            'table':revoke_table_privilege,
-            'database':revoke_database_privilege
+            'table': revoke_table_privilege,
+            'database': revoke_database_privilege
         }[type_]
         for name, privileges in privs[type_].iteritems():
             for privilege in privileges:
                 changed = revoke_func(cursor, user, name, privilege)\
-                        or changed
+                    or changed
 
     return changed
+
 
 def grant_privileges(cursor, user, privs):
     if privs is None:
@@ -367,15 +379,16 @@ def grant_privileges(cursor, user, privs):
     changed = False
     for type_ in privs:
         grant_func = {
-            'table':grant_table_privilege,
-            'database':grant_database_privilege
+            'table': grant_table_privilege,
+            'database': grant_database_privilege
         }[type_]
         for name, privileges in privs[type_].iteritems():
             for privilege in privileges:
                 changed = grant_func(cursor, user, name, privilege)\
-                        or changed
+                    or changed
 
     return changed
+
 
 def parse_role_attrs(role_attr_flags):
     """
@@ -394,6 +407,7 @@ def parse_role_attrs(role_attr_flags):
     o_flags = " ".join(flag_set)
     return o_flags
 
+
 def parse_privs(privs, db):
     """
     Parse privilege string to determine permissions for database db.
@@ -410,8 +424,8 @@ def parse_privs(privs, db):
         return privs
 
     o_privs = {
-        'database':{},
-        'table':{}
+        'database': {},
+        'table': {}
     }
     for token in privs.split('/'):
         if ':' not in token:
@@ -431,6 +445,7 @@ def parse_privs(privs, db):
 # Module execution.
 #
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -448,7 +463,7 @@ def main():
             encrypted=dict(type='bool', default='no'),
             expires=dict(default=None)
         ),
-        supports_check_mode = True
+        supports_check_mode=True
     )
 
     user = module.params["user"]
@@ -474,14 +489,14 @@ def main():
     # check which values are empty and don't include in the **kw
     # dictionary
     params_map = {
-        "login_host":"host",
-        "login_user":"user",
-        "login_password":"password",
-        "port":"port",
-        "db":"database"
+        "login_host": "host",
+        "login_user": "user",
+        "login_password": "password",
+        "port": "port",
+        "db": "database"
     }
-    kw = dict( (params_map[k], v) for (k, v) in module.params.iteritems()
-              if k in params_map and v != "" )
+    kw = dict((params_map[k], v) for (k, v) in module.params.iteritems()
+              if k in params_map and v != "")
     try:
         db_connection = psycopg2.connect(**kw)
         cursor = db_connection.cursor()
@@ -494,13 +509,15 @@ def main():
 
     if state == "present":
         if user_exists(cursor, user):
-            changed = user_alter(cursor, module, user, password, role_attr_flags, encrypted, expires)
+            changed = user_alter(
+                cursor, module, user, password, role_attr_flags, encrypted, expires)
         else:
-            changed = user_add(cursor, user, password, role_attr_flags, encrypted, expires)
+            changed = user_add(
+                cursor, user, password, role_attr_flags, encrypted, expires)
         changed = grant_privileges(cursor, user, privs) or changed
     else:
         if user_exists(cursor, user):
-            if  module.check_mode:
+            if module.check_mode:
                 changed = True
                 kw['user_removed'] = True
             else:

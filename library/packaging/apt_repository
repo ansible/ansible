@@ -86,16 +86,19 @@ except ImportError:
 
 VALID_SOURCE_TYPES = ('deb', 'deb-src')
 
+
 def install_python_apt(module):
 
     if not module.check_mode:
         apt_get_path = module.get_bin_path('apt-get')
         if apt_get_path:
-            rc, so, se = module.run_command('%s update && %s install python-apt -y -q' % (apt_get_path, apt_get_path))
+            rc, so, se = module.run_command(
+                '%s update && %s install python-apt -y -q' % (apt_get_path, apt_get_path))
             if rc == 0:
                 global apt, apt_pkg
                 import apt
                 import apt_pkg
+
 
 class InvalidSource(Exception):
     pass
@@ -104,6 +107,7 @@ class InvalidSource(Exception):
 # Simple version of aptsources.sourceslist.SourcesList.
 # No advanced logic and no backups inside.
 class SourcesList(object):
+
     def __init__(self):
         self.files = {}  # group sources by file
         self.default_file = self._apt_cfg_file('Dir::Etc::sourcelist')
@@ -138,7 +142,8 @@ class SourcesList(object):
         line = re.sub('\[[^\]]+\]', '', line)
         line = re.sub('\w+://', '', line)
 
-        parts = [part for part in line.split() if part not in VALID_SOURCE_TYPES]
+        parts = [
+            part for part in line.split() if part not in VALID_SOURCE_TYPES]
         return '%s.list' % _cleanup_filename(' '.join(parts[:1]))
 
     def _parse(self, line, raise_if_invalid_or_disabled=False):
@@ -152,10 +157,11 @@ class SourcesList(object):
             enabled = False
             line = line[1:]
 
-        # Check for another "#" in the line and treat a part after it as a comment.
+        # Check for another "#" in the line and treat a part after it as a
+        # comment.
         i = line.find('#')
         if i > 0:
-            comment = line[i+1:].strip()
+            comment = line[i + 1:].strip()
             line = line[:i]
 
         # Split a source into substring to make sure that it is source spec.
@@ -224,7 +230,8 @@ class SourcesList(object):
                     try:
                         f.write(line)
                     except IOError, err:
-                        module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, unicode(err)))
+                        module.fail_json(
+                            msg="Failed to write to file %s: %s" % (tmp_path, unicode(err)))
                 module.atomic_move(tmp_path, filename)
             else:
                 del self.files[filename]
@@ -241,11 +248,13 @@ class SourcesList(object):
         '''
         valid, enabled_old, source_old, comment_old = self.files[file][n][1:]
         choice = lambda new, old: old if new is None else new
-        self.files[file][n] = (n, valid, choice(enabled, enabled_old), choice(source, source_old), choice(comment, comment_old))
+        self.files[file][n] = (n, valid, choice(enabled, enabled_old), choice(
+            source, source_old), choice(comment, comment_old))
 
     def _add_valid_source(self, source_new, comment_new, file):
         # We'll try to reuse disabled source if we have it.
-        # If we have more than one entry, we will enable them all - no advanced logic, remember.
+        # If we have more than one entry, we will enable them all - no advanced
+        # logic, remember.
         found = False
         for filename, n, enabled, source, comment in self:
             if source == source_new:
@@ -268,10 +277,12 @@ class SourcesList(object):
         source = self._parse(line, raise_if_invalid_or_disabled=True)[2]
 
         # Prefer separate files for new sources.
-        self._add_valid_source(source, comment, file=file or self._suggest_filename(source))
+        self._add_valid_source(
+            source, comment, file=file or self._suggest_filename(source))
 
     def _remove_valid_source(self, source):
-        # If we have more than one entry, we will remove them all (not comment, remove!)
+        # If we have more than one entry, we will remove them all (not comment,
+        # remove!)
         for filename, n, enabled, src, comment in self:
             if source == src and enabled:
                 self.files[filename].pop(n)
@@ -305,7 +316,8 @@ class UbuntuSourcesList(SourcesList):
         except IndexError:
             ppa_name = 'ppa'
 
-        line = 'deb http://ppa.launchpad.net/%s/%s/ubuntu %s main' % (ppa_owner, ppa_name, distro.codename)
+        line = 'deb http://ppa.launchpad.net/%s/%s/ubuntu %s main' % (
+            ppa_owner, ppa_name, distro.codename)
         return line, ppa_owner, ppa_name
 
     def add_source(self, line, comment='', file=None):
@@ -314,10 +326,12 @@ class UbuntuSourcesList(SourcesList):
 
             if self.add_ppa_signing_keys_callback is not None:
                 info = self._get_ppa_info(ppa_owner, ppa_name)
-                command = ['apt-key', 'adv', '--recv-keys', '--keyserver', 'hkp://keyserver.ubuntu.com:80', info['signing_key_fingerprint']]
+                command = ['apt-key', 'adv', '--recv-keys', '--keyserver',
+                           'hkp://keyserver.ubuntu.com:80', info['signing_key_fingerprint']]
                 self.add_ppa_signing_keys_callback(command)
 
-            file = file or self._suggest_filename('%s_%s' % (line, distro.codename))
+            file = file or self._suggest_filename(
+                '%s_%s' % (line, distro.codename))
         else:
             source = self._parse(line, raise_if_invalid_or_disabled=True)[2]
             file = file or self._suggest_filename(source)
@@ -346,9 +360,11 @@ def main():
         argument_spec=dict(
             repo=dict(required=True),
             state=dict(choices=['present', 'absent'], default='present'),
-            update_cache = dict(aliases=['update-cache'], type='bool', default='yes'),
+            update_cache=dict(
+                aliases=['update-cache'], type='bool', default='yes'),
             # this should not be needed, but exists as a failsafe
-            install_python_apt=dict(required=False, default="yes", type='bool'),
+            install_python_apt=dict(
+                required=False, default="yes", type='bool'),
         ),
         supports_check_mode=True,
     )
@@ -369,7 +385,8 @@ def main():
             isinstance(distro, aptsources.distro.Distribution):
         sourceslist = SourcesList()
     else:
-        module.fail_json(msg='Module apt_repository supports only Debian and Ubuntu.')
+        module.fail_json(
+            msg='Module apt_repository supports only Debian and Ubuntu.')
 
     sources_before = sourceslist.dump()
 

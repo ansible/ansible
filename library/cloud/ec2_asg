@@ -115,7 +115,8 @@ def create_autoscaling_group(connection, module):
     min_size = module.params.get('min_size')
     max_size = module.params.get('max_size')
 
-    launch_configs = connection.get_all_launch_configurations(name=[launch_config_name])
+    launch_configs = connection.get_all_launch_configurations(
+        name=[launch_config_name])
 
     ag = AutoScalingGroup(
         group_name=group_name,
@@ -157,18 +158,20 @@ def delete_autoscaling_group(connection, module):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True, type='str'),
-            load_balancers = dict(required=False, type='list'),
-            availability_zones = dict(required=True, type='list'),
-            launch_config_name = dict(required=True, type='str'),
-            min_size = dict(required=True, type='int'),
-            max_size = dict(required=True, type='int'),
-            state = dict(default='present', choices=['present', 'absent']),
-            region = dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS),
-            ec2_url = dict(),
-            ec2_secret_key = dict(aliases=['aws_secret_key', 'secret_key'], no_log=True),
-            ec2_access_key = dict(aliases=['aws_access_key', 'access_key']),
+        argument_spec=dict(
+            name=dict(required=True, type='str'),
+            load_balancers=dict(required=False, type='list'),
+            availability_zones=dict(required=True, type='list'),
+            launch_config_name=dict(required=True, type='str'),
+            min_size=dict(required=True, type='int'),
+            max_size=dict(required=True, type='int'),
+            state=dict(default='present', choices=['present', 'absent']),
+            region=dict(
+                aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS),
+            ec2_url=dict(),
+            ec2_secret_key=dict(
+                aliases=['aws_secret_key', 'secret_key'], no_log=True),
+            ec2_access_key=dict(aliases=['aws_access_key', 'access_key']),
         )
     )
 
@@ -177,9 +180,10 @@ def main():
     state = module.params.get('state')
 
     try:
-        connection = boto.ec2.autoscale.connect_to_region(region, aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key)
+        connection = boto.ec2.autoscale.connect_to_region(
+            region, aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key)
     except boto.exception.NoAuthHandlerFound, e:
-        module.fail_json(msg = str(e))
+        module.fail_json(msg=str(e))
 
     if state == 'present':
         create_autoscaling_group(connection, module)

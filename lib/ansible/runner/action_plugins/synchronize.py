@@ -22,6 +22,7 @@ from ansible import utils
 from ansible.runner.return_data import ReturnData
 import ansible.utils.template as template
 
+
 class ActionModule(object):
 
     def __init__(self, runner):
@@ -46,23 +47,24 @@ class ActionModule(object):
 
     def setup(self, module_name, inject):
         ''' Always default to localhost as delegate if None defined '''
-    
+
         # Store original transport and sudo values.
-        self.original_transport = inject.get('ansible_connection', self.runner.transport)
+        self.original_transport = inject.get(
+            'ansible_connection', self.runner.transport)
         self.original_sudo = self.runner.sudo
         self.transport_overridden = False
 
         if inject.get('delegate_to') is None:
             inject['delegate_to'] = '127.0.0.1'
-            # IF original transport is not local, override transport and disable sudo.
+            # IF original transport is not local, override transport and
+            # disable sudo.
             if self.original_transport != 'local':
                 inject['ansible_connection'] = 'local'
                 self.transport_overridden = True
                 self.runner.sudo = False
 
     def run(self, conn, tmp, module_name, module_args,
-        inject, complex_args=None, **kwargs):
-
+            inject, complex_args=None, **kwargs):
         ''' generates params and passes them on to the rsync module '''
 
         # load up options
@@ -84,10 +86,12 @@ class ActionModule(object):
 
         # from the perspective of the rsync call the delegate is the localhost
         src_host = '127.0.0.1'
-        dest_host = inject.get('ansible_ssh_host', inject['inventory_hostname'])
+        dest_host = inject.get(
+            'ansible_ssh_host', inject['inventory_hostname'])
 
         # allow ansible_ssh_host to be templated
-        dest_host = template.template(self.runner.basedir, dest_host, inject, fail_on_undefined=True)
+        dest_host = template.template(
+            self.runner.basedir, dest_host, inject, fail_on_undefined=True)
         dest_is_local = dest_host in ['127.0.0.1', 'localhost']
 
         # CHECK FOR NON-DEFAULT SSH PORT
@@ -112,7 +116,7 @@ class ActionModule(object):
                     # use a delegate host instead of localhost
                     use_delegate = True
 
-        # COMPARE DELEGATE, HOST AND TRANSPORT                             
+        # COMPARE DELEGATE, HOST AND TRANSPORT
         process_args = False
         if not dest_host is src_host and self.original_transport != 'local':
             # interpret and inject remote host info into src or dest
@@ -123,24 +127,28 @@ class ActionModule(object):
 
             user = None
             if use_delegate:
-                user = inject['hostvars'][conn.delegate].get('ansible_ssh_user')
+                user = inject['hostvars'][
+                    conn.delegate].get('ansible_ssh_user')
 
             if not use_delegate or not user:
                 user = inject.get('ansible_ssh_user',
-                                self.runner.remote_user)
+                                  self.runner.remote_user)
 
             if use_delegate:
                 # FIXME
-                private_key = inject.get('ansible_ssh_private_key_file', self.runner.private_key_file)
+                private_key = inject.get(
+                    'ansible_ssh_private_key_file', self.runner.private_key_file)
             else:
-                private_key = inject.get('ansible_ssh_private_key_file', self.runner.private_key_file)
+                private_key = inject.get(
+                    'ansible_ssh_private_key_file', self.runner.private_key_file)
 
-            private_key = template.template(self.runner.basedir, private_key, inject, fail_on_undefined=True)
+            private_key = template.template(
+                self.runner.basedir, private_key, inject, fail_on_undefined=True)
 
             if not private_key is None:
                 private_key = os.path.expanduser(private_key)
                 options['private_key'] = private_key
-                
+
             # use the mode to define src and dest's url
             if options.get('mode', 'push') == 'pull':
                 # src is a remote path: <user>@<host>, dest is a local path
@@ -159,7 +167,8 @@ class ActionModule(object):
         # Allow custom rsync path argument.
         rsync_path = options.get('rsync_path', None)
 
-        # If no rsync_path is set, sudo was originally set, and dest is remote then add 'sudo rsync' argument.
+        # If no rsync_path is set, sudo was originally set, and dest is remote
+        # then add 'sudo rsync' argument.
         if not rsync_path and self.transport_overridden and self.original_sudo and not dest_is_local:
             rsync_path = 'sudo rsync'
 
@@ -168,16 +177,16 @@ class ActionModule(object):
             options['rsync_path'] = '"' + rsync_path + '"'
 
         module_items = ' '.join(['%s=%s' % (k, v) for (k,
-                v) in options.items()])
+                                                       v) in options.items()])
 
         if self.runner.noop_on_check(inject):
             module_items += " CHECKMODE=True"
 
         # run the module and store the result
-        result = self.runner._execute_module(conn, tmp, 'synchronize', module_items, inject=inject)
+        result = self.runner._execute_module(
+            conn, tmp, 'synchronize', module_items, inject=inject)
 
-        # reset the sudo property                 
+        # reset the sudo property
         self.runner.sudo = self.original_sudo
 
         return result
-

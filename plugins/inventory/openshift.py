@@ -67,7 +67,8 @@ def get_config(env_var, config_var):
 
 
 def get_json_from_api(url):
-    req = urllib2.Request(url, None, {'Accept': 'application/json; version=1.5'})
+    req = urllib2.Request(
+        url, None, {'Accept': 'application/json; version=1.5'})
     response = urllib2.urlopen(req)
     return json.loads(response.read())['data']
 
@@ -85,7 +86,8 @@ def passwd_setup(top_level_url, username, password):
 
 username = get_config('ANSIBLE_OPENSHIFT_USERNAME', 'default_rhlogin')
 password = get_config('ANSIBLE_OPENSHIFT_PASSWORD', 'password')
-broker_url = 'https://%s/broker/rest/' % get_config('ANSIBLE_OPENSHIFT_BROKER', 'libra_server')
+broker_url = 'https://%s/broker/rest/' % get_config(
+    'ANSIBLE_OPENSHIFT_BROKER', 'libra_server')
 
 
 passwd_setup(broker_url, username, password)

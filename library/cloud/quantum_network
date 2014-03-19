@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#coding: utf-8 -*-
+# coding: utf-8 -*-
 
 # (c) 2013, Benno Joy <benno@ansible.com>
 #
@@ -23,7 +23,8 @@ try:
         from quantumclient.quantum import client
     from keystoneclient.v2_0 import client as ksclient
 except ImportError:
-    print("failed=True msg='quantumclient (or neutronclient) and keystone client are required'")
+    print(
+        "failed=True msg='quantumclient (or neutronclient) and keystone client are required'")
 
 DOCUMENTATION = '''
 ---
@@ -122,14 +123,16 @@ EXAMPLES = '''
 _os_keystone = None
 _os_tenant_id = None
 
+
 def _get_ksclient(module, kwargs):
     try:
         kclient = ksclient.Client(username=kwargs.get('login_username'),
-                                 password=kwargs.get('login_password'),
-                                 tenant_name=kwargs.get('login_tenant_name'),
-                                 auth_url=kwargs.get('auth_url'))
+                                  password=kwargs.get('login_password'),
+                                  tenant_name=kwargs.get('login_tenant_name'),
+                                  auth_url=kwargs.get('auth_url'))
     except Exception, e:
-        module.fail_json(msg = "Error authenticating to the keystone: %s" %e.message)
+        module.fail_json(
+            msg="Error authenticating to the keystone: %s" % e.message)
     global _os_keystone
     _os_keystone = kclient
     return kclient
@@ -137,24 +140,28 @@ def _get_ksclient(module, kwargs):
 
 def _get_endpoint(module, ksclient):
     try:
-        endpoint = ksclient.service_catalog.url_for(service_type='network', endpoint_type='publicURL')
+        endpoint = ksclient.service_catalog.url_for(
+            service_type='network', endpoint_type='publicURL')
     except Exception, e:
-        module.fail_json(msg = "Error getting network endpoint: %s " %e.message)
+        module.fail_json(msg="Error getting network endpoint: %s " % e.message)
     return endpoint
+
 
 def _get_neutron_client(module, kwargs):
     _ksclient = _get_ksclient(module, kwargs)
     token = _ksclient.auth_token
     endpoint = _get_endpoint(module, _ksclient)
     kwargs = {
-            'token': token,
-            'endpoint_url': endpoint
+        'token': token,
+        'endpoint_url': endpoint
     }
     try:
         neutron = client.Client('2.0', **kwargs)
     except Exception, e:
-        module.fail_json(msg = " Error in connecting to neutron: %s " %e.message)
+        module.fail_json(
+            msg=" Error in connecting to neutron: %s " % e.message)
     return neutron
+
 
 def _set_tenant_id(module):
     global _os_tenant_id
@@ -168,21 +175,24 @@ def _set_tenant_id(module):
             _os_tenant_id = tenant.id
             break
     if not _os_tenant_id:
-        module.fail_json(msg = "The tenant id cannot be found, please check the paramters")
+        module.fail_json(
+            msg="The tenant id cannot be found, please check the paramters")
 
 
 def _get_net_id(neutron, module):
     kwargs = {
-            'tenant_id': _os_tenant_id,
-            'name': module.params['name'],
+        'tenant_id': _os_tenant_id,
+        'name': module.params['name'],
     }
     try:
         networks = neutron.list_networks(**kwargs)
     except Exception, e:
-        module.fail_json(msg = "Error in listing neutron networks: %s" % e.message)
+        module.fail_json(
+            msg="Error in listing neutron networks: %s" % e.message)
     if not networks['networks']:
         return None
     return networks['networks'][0]['id']
+
 
 def _create_network(module, neutron):
 
@@ -215,47 +225,52 @@ def _create_network(module, neutron):
         network.pop('provider:segmentation_id', None)
 
     try:
-        net = neutron.create_network({'network':network})
+        net = neutron.create_network({'network': network})
     except Exception, e:
-        module.fail_json(msg = "Error in creating network: %s" % e.message)
+        module.fail_json(msg="Error in creating network: %s" % e.message)
     return net['network']['id']
+
 
 def _delete_network(module, net_id, neutron):
 
     try:
         id = neutron.delete_network(net_id)
     except Exception, e:
-        module.fail_json(msg = "Error in deleting the network: %s" % e.message)
+        module.fail_json(msg="Error in deleting the network: %s" % e.message)
     return True
+
 
 def main():
 
     module = AnsibleModule(
-        argument_spec                   = dict(
-            login_username                  = dict(default='admin'),
-            login_password                  = dict(required=True),
-            login_tenant_name               = dict(required='True'),
-            auth_url                        = dict(default='http://127.0.0.1:35357/v2.0/'),
-            region_name                     = dict(default=None),
-            name                            = dict(required=True),
-            tenant_name                     = dict(default=None),
-            provider_network_type           = dict(default=None, choices=['local', 'vlan', 'flat', 'gre']),
-            provider_physical_network       = dict(default=None),
-            provider_segmentation_id        = dict(default=None),
-            router_external                 = dict(default=False, type='bool'),
-            shared                          = dict(default=False, type='bool'),
-            admin_state_up                  = dict(default=True, type='bool'),
-            state                           = dict(default='present', choices=['absent', 'present'])
+        argument_spec=dict(
+            login_username=dict(default='admin'),
+            login_password=dict(required=True),
+            login_tenant_name=dict(required='True'),
+            auth_url=dict(default='http://127.0.0.1:35357/v2.0/'),
+            region_name=dict(default=None),
+            name=dict(required=True),
+            tenant_name=dict(default=None),
+            provider_network_type=dict(
+                default=None, choices=['local', 'vlan', 'flat', 'gre']),
+            provider_physical_network=dict(default=None),
+            provider_segmentation_id=dict(default=None),
+            router_external=dict(default=False, type='bool'),
+            shared=dict(default=False, type='bool'),
+            admin_state_up=dict(default=True, type='bool'),
+            state=dict(default='present', choices=['absent', 'present'])
         ),
     )
 
-    if module.params['provider_network_type'] in ['vlan' , 'flat']:
-            if not module.params['provider_physical_network']:
-                module.fail_json(msg = " for vlan and flat networks, variable provider_physical_network should be set.")
+    if module.params['provider_network_type'] in ['vlan', 'flat']:
+        if not module.params['provider_physical_network']:
+            module.fail_json(
+                msg=" for vlan and flat networks, variable provider_physical_network should be set.")
 
-    if module.params['provider_network_type']  in ['vlan', 'gre']:
-            if not module.params['provider_segmentation_id']:
-                module.fail_json(msg = " for vlan & gre networks, variable provider_segmentation_id should be set.")
+    if module.params['provider_network_type'] in ['vlan', 'gre']:
+        if not module.params['provider_segmentation_id']:
+            module.fail_json(
+                msg=" for vlan & gre networks, variable provider_segmentation_id should be set.")
 
     neutron = _get_neutron_client(module, module.params)
 
@@ -265,19 +280,18 @@ def main():
         network_id = _get_net_id(neutron, module)
         if not network_id:
             network_id = _create_network(module, neutron)
-            module.exit_json(changed = True, result = "Created", id = network_id)
+            module.exit_json(changed=True, result="Created", id=network_id)
         else:
-            module.exit_json(changed = False, result = "Success", id = network_id)
+            module.exit_json(changed=False, result="Success", id=network_id)
 
     if module.params['state'] == 'absent':
         network_id = _get_net_id(neutron, module)
         if not network_id:
-            module.exit_json(changed = False, result = "Success")
+            module.exit_json(changed=False, result="Success")
         else:
             _delete_network(module, network_id, neutron)
-            module.exit_json(changed = True, result = "Deleted")
+            module.exit_json(changed=True, result="Deleted")
 
 # this is magic, see lib/ansible/module.params['common.py
 from ansible.module_utils.basic import *
 main()
-

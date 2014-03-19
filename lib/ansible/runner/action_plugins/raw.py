@@ -22,6 +22,7 @@ from ansible import utils
 from ansible import errors
 from ansible.runner.return_data import ReturnData
 
+
 class ActionModule(object):
     TRANSFERS_FILES = False
 
@@ -36,18 +37,21 @@ class ActionModule(object):
 
         executable = ''
         # From library/command, keep in sync
-        r = re.compile(r'(^|\s)(executable)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)\s|$)')
+        r = re.compile(
+            r'(^|\s)(executable)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)\s|$)')
         for m in r.finditer(module_args):
             v = m.group(4).replace("\\", "")
             if m.group(2) == "executable":
                 executable = v
         module_args = r.sub("", module_args)
 
-        result = self.runner._low_level_exec_command(conn, module_args, tmp, sudoable=True, executable=executable)
+        result = self.runner._low_level_exec_command(
+            conn, module_args, tmp, sudoable=True, executable=executable)
         # for some modules (script, raw), the sudo success key
         # may leak into the stdout due to the way the sudo/su
         # command is constructed, so we filter that out here
-        if result.get('stdout','').startswith('SUDO-SUCCESS-'):
-            result['stdout'] = re.sub(r'^SUDO-SUCCESS.*(\r)?\n', '', result['stdout'])
+        if result.get('stdout', '').startswith('SUDO-SUCCESS-'):
+            result['stdout'] = re.sub(
+                r'^SUDO-SUCCESS.*(\r)?\n', '', result['stdout'])
 
         return ReturnData(conn=conn, result=result)

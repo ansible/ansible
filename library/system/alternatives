@@ -56,13 +56,14 @@ EXAMPLES = '''
 UPDATE_ALTERNATIVES = '/usr/sbin/update-alternatives'
 DEFAULT_LINK_PRIORITY = 50
 
+
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True),
-            path  = dict(required=True),
-            link = dict(required=False),
+        argument_spec=dict(
+            name=dict(required=True),
+            path=dict(required=True),
+            link=dict(required=False),
         )
     )
 
@@ -115,7 +116,8 @@ def main():
             # install the requested path if necessary
             if path not in all_alternatives:
                 module.run_command(
-                    [UPDATE_ALTERNATIVES, '--install', link, name, path, str(DEFAULT_LINK_PRIORITY)],
+                    [UPDATE_ALTERNATIVES, '--install', link,
+                        name, path, str(DEFAULT_LINK_PRIORITY)],
                     check_rc=True
                 )
 

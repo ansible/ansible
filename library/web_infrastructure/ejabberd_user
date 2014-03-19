@@ -69,11 +69,15 @@ Example playbook entries using the ejabberd_user module to manage users state.
 '''
 import syslog
 
+
 class EjabberdUserException(Exception):
+
     """ Base exeption for EjabberdUser class object """
     pass
 
+
 class EjabberdUser(object):
+
     """ This object represents a user resource for an ejabberd server.   The
     object manages user creation and deletion using ejabberdctl.  The following
     commands are currently supported:
@@ -164,16 +168,17 @@ class EjabberdUser(object):
             (rc, out, err) = (1, None, "required attribute(s) missing")
         return (rc, out, err)
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             host=dict(default=None, type='str'),
             username=dict(default=None, type='str'),
             password=dict(default=None, type='str'),
             state=dict(default='present', choices=['present', 'absent']),
             logging=dict(default=False, type='bool')
         ),
-        supports_check_mode = True
+        supports_check_mode=True
     )
 
     obj = EjabberdUser(module)

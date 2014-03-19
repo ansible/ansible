@@ -116,28 +116,28 @@ try:
     from libcloud.compute.types import Provider
     from libcloud.compute.providers import get_driver
     from libcloud.common.google import GoogleBaseError, QuotaExceededError, \
-            ResourceExistsError, ResourceNotFoundError, ResourceInUseError
+        ResourceExistsError, ResourceNotFoundError, ResourceInUseError
     _ = Provider.GCE
 except ImportError:
-    print("failed=True " + \
-        "msg='libcloud with GCE support is required for this module.'")
+    print("failed=True " +
+          "msg='libcloud with GCE support is required for this module.'")
     sys.exit(1)
 
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            detach_only = dict(choice=BOOLEANS),
-            instance_name = dict(),
-            mode = dict(default='READ_ONLY',
-                choices=['READ_WRITE', 'READ_ONLY']),
-            name = dict(required=True),
-            size_gb = dict(default=10),
-            state = dict(default='present'),
-            zone = dict(default='us-central1-b'),
-            service_account_email = dict(),
-            pem_file = dict(),
-            project_id = dict(),
+        argument_spec=dict(
+            detach_only=dict(choice=BOOLEANS),
+            instance_name=dict(),
+            mode=dict(default='READ_ONLY',
+                      choices=['READ_WRITE', 'READ_ONLY']),
+            name=dict(required=True),
+            size_gb=dict(default=10),
+            state=dict(default='present'),
+            zone=dict(default='us-central1-b'),
+            service_account_email=dict(),
+            pem_file=dict(),
+            project_id=dict(),
         )
     )
 
@@ -159,7 +159,7 @@ def main():
     disk = inst = None
     changed = is_attached = False
 
-    json_output = { 'name': name, 'zone': zone, 'state': state }
+    json_output = {'name': name, 'zone': zone, 'state': state}
     if detach_only:
         json_output['detach_only'] = True
         json_output['detached_from_instance'] = instance_name
@@ -194,15 +194,15 @@ def main():
             module.fail_json(msg="Must supply a size_gb", changed=False)
         try:
             size_gb = int(round(float(size_gb)))
-            if size_gb < 1: 
+            if size_gb < 1:
                 raise Exception
-        except:        
+        except:
             module.fail_json(msg="Must supply a size_gb larger than 1 GB",
-                    changed=False)
+                             changed=False)
 
         if instance_name and inst is None:
             module.fail_json(msg='Instance %s does not exist in zone %s' % (
-                    instance_name, zone), changed=False)
+                instance_name, zone), changed=False)
 
         if not disk:
             try:
@@ -211,7 +211,7 @@ def main():
                 pass
             except QuotaExceededError:
                 module.fail_json(msg='Requested disk size exceeds quota',
-                        changed=False)
+                                 changed=False)
             except Exception, e:
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
             json_output['size_gb'] = size_gb

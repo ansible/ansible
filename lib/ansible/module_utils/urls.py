@@ -46,13 +46,15 @@ except:
 
 try:
     import ssl
-    HAS_SSL=True
+    HAS_SSL = True
 except:
-    HAS_SSL=False
+    HAS_SSL = False
 
 import tempfile
 
+
 class RequestWithMethod(urllib2.Request):
+
     '''
     Workaround for using DELETE/PUT/etc with urllib2
     Originally contained in library/net_infrastructure/dnsmadeeasy
@@ -70,6 +72,7 @@ class RequestWithMethod(urllib2.Request):
 
 
 class SSLValidationHandler(urllib2.BaseHandler):
+
     '''
     A custom handler class for SSL validation.
 
@@ -120,7 +123,7 @@ class SSLValidationHandler(urllib2.BaseHandler):
                 dir_contents = os.listdir(path)
                 for f in dir_contents:
                     full_path = os.path.join(path, f)
-                    if os.path.isfile(full_path) and os.path.splitext(f)[1] in ('.crt','.pem'):
+                    if os.path.isfile(full_path) and os.path.splitext(f)[1] in ('.crt', '.pem'):
                         try:
                             cert_file = open(full_path, 'r')
                             os.write(tmp_fd, cert_file.read())
@@ -133,11 +136,12 @@ class SSLValidationHandler(urllib2.BaseHandler):
     def http_request(self, req):
         tmp_ca_cert_path, paths_checked = self.get_ca_certs()
         try:
-            server_cert = ssl.get_server_certificate((self.hostname, self.port), ca_certs=tmp_ca_cert_path)
+            server_cert = ssl.get_server_certificate(
+                (self.hostname, self.port), ca_certs=tmp_ca_cert_path)
         except ssl.SSLError:
             # fail if we tried all of the certs but none worked
-            self.module.fail_json(msg='Failed to validate the SSL certificate for %s:%s. ' % (self.hostname, self.port) + \
-                                      'Use validate_certs=no or make sure your managed systems have a valid CA certificate installed. ' + \
+            self.module.fail_json(msg='Failed to validate the SSL certificate for %s:%s. ' % (self.hostname, self.port) +
+                                      'Use validate_certs=no or make sure your managed systems have a valid CA certificate installed. ' +
                                       'Paths checked for this platform: %s' % ", ".join(paths_checked))
         try:
             # cleanup the temp file created, don't worry
@@ -157,15 +161,15 @@ def url_argument_spec():
     that will be requesting content via urllib/urllib2
     '''
     return dict(
-        url = dict(),
-        force = dict(default='no', aliases=['thirsty'], type='bool'),
-        http_agent = dict(default='ansible-httpget'),
-        use_proxy = dict(default='yes', type='bool'),
-        validate_certs = dict(default='yes', type='bool'),
+        url=dict(),
+        force=dict(default='no', aliases=['thirsty'], type='bool'),
+        http_agent=dict(default='ansible-httpget'),
+        use_proxy=dict(default='yes', type='bool'),
+        validate_certs=dict(default='yes', type='bool'),
     )
 
 
-def fetch_url(module, url, data=None, headers=None, method=None, 
+def fetch_url(module, url, data=None, headers=None, method=None,
               use_proxy=False, force=False, last_mod_time=None, timeout=10):
     '''
     Fetches a file from an HTTP/FTP server using urllib2
@@ -188,7 +192,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     parsed = urlparse.urlparse(url)
     if parsed[0] == 'https':
         if not HAS_SSL and validate_certs:
-            module.fail_json(msg='SSL validation is not available in your version of python. You can use validate_certs=no, however this is unsafe and not recommended')
+            module.fail_json(
+                msg='SSL validation is not available in your version of python. You can use validate_certs=no, however this is unsafe and not recommended')
         elif validate_certs:
             # do the cert validation
             netloc = parsed[1]
@@ -225,7 +230,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         # create the AuthHandler
         handlers.append(authhandler)
 
-        #reconstruct url without credentials
+        # reconstruct url without credentials
         url = urlparse.urlunparse(parsed)
 
     if not use_proxy:
@@ -236,17 +241,18 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     urllib2.install_opener(opener)
 
     if method:
-        if method.upper() not in ('OPTIONS','GET','HEAD','POST','PUT','DELETE','TRACE','CONNECT'):
-            module.fail_json(msg='invalid HTTP request method; %s' % method.upper())
+        if method.upper() not in ('OPTIONS', 'GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'TRACE', 'CONNECT'):
+            module.fail_json(
+                msg='invalid HTTP request method; %s' % method.upper())
         request = RequestWithMethod(url, method.upper(), data)
     else:
         request = urllib2.Request(url, data)
 
-    # add the custom agent header, to help prevent issues 
-    # with sites that block the default urllib agent string 
+    # add the custom agent header, to help prevent issues
+    # with sites that block the default urllib agent string
     request.add_header('User-agent', module.params.get('http_agent'))
 
-    # if we're ok with getting a 304, set the timestamp in the 
+    # if we're ok with getting a 304, set the timestamp in the
     # header, otherwise make sure we don't get a cached copy
     if last_mod_time and not force:
         tstamp = last_mod_time.strftime('%a, %d %b %Y %H:%M:%S +0000')
@@ -262,7 +268,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
             request.add_header(header, headers[header])
 
     try:
-        if sys.version_info < (2,6,0):
+        if sys.version_info < (2, 6, 0):
             # urlopen in python prior to 2.6.0 did not
             # have a timeout parameter
             r = urllib2.urlopen(request, None)
@@ -270,7 +276,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
             r = urllib2.urlopen(request, None, timeout)
         info.update(r.info())
         info['url'] = r.geturl()  # The URL goes in too, because of redirects.
-        info.update(dict(msg="OK (%s bytes)" % r.headers.get('Content-Length', 'unknown'), status=200))
+        info.update(dict(msg="OK (%s bytes)" %
+                    r.headers.get('Content-Length', 'unknown'), status=200))
     except urllib2.HTTPError, e:
         info.update(dict(msg=str(e), status=e.code))
     except urllib2.URLError, e:
@@ -278,4 +285,3 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         info.update(dict(msg="Request failed: %s" % str(e), status=code))
 
     return r, info
-

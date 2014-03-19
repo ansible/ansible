@@ -25,7 +25,8 @@
 # example:
 #    test-module -m ../library/command -a "/bin/sleep 3"
 #    test-module -m ../library/service -a "name=httpd ensure=restarted"
-#    test-module -m ../library/service -a "name=httpd ensure=restarted" --debugger /usr/bin/pdb
+# test-module -m ../library/service -a "name=httpd ensure=restarted"
+# --debugger /usr/bin/pdb
 
 import sys
 import base64
@@ -42,6 +43,7 @@ try:
 except ImportError:
     import simplejson as json
 
+
 def parse():
     """parse command line
 
@@ -51,20 +53,21 @@ def parse():
     parser.usage = "%prog -[options] (-h for help)"
 
     parser.add_option('-m', '--module-path', dest='module_path',
-        help="REQUIRED: full path of module source to execute")
+                      help="REQUIRED: full path of module source to execute")
     parser.add_option('-a', '--args', dest='module_args', default="",
-        help="module argument string")
-    parser.add_option('-D', '--debugger', dest='debugger', 
-        help="path to python debugger (e.g. /usr/bin/pdb)")
+                      help="module argument string")
+    parser.add_option('-D', '--debugger', dest='debugger',
+                      help="path to python debugger (e.g. /usr/bin/pdb)")
     parser.add_option('-I', '--interpreter', dest='interpreter',
-        help="path to interpeter to use for this module (e.g. ansible_python_interpreter=/usr/bin/python)",
-        metavar='INTERPRETER_TYPE=INTERPRETER_PATH')
+                      help="path to interpeter to use for this module (e.g. ansible_python_interpreter=/usr/bin/python)",
+                      metavar='INTERPRETER_TYPE=INTERPRETER_PATH')
     options, args = parser.parse_args()
     if not options.module_path:
         parser.print_help()
         sys.exit(1)
     else:
         return options, args
+
 
 def write_argsfile(argstring, json=False):
     """ Write args to a file for old-style module's use. """
@@ -77,12 +80,13 @@ def write_argsfile(argstring, json=False):
     argsfile.close()
     return argspath
 
+
 def boilerplate_module(modfile, args, interpreter):
     """ simulate what ansible does with new style modules """
 
     #module_fh = open(modfile)
     #module_data = module_fh.read()
-    #module_fh.close()
+    # module_fh.close()
 
     replacer = module_common.ModuleReplacer()
 
@@ -91,8 +95,9 @@ def boilerplate_module(modfile, args, interpreter):
     complex_args = {}
     if args.startswith("@"):
         # Argument is a YAML file (JSON is a subset of YAML)
-        complex_args = utils.combine_vars(complex_args, utils.parse_yaml_from_file(args[1:]))
-        args=''
+        complex_args = utils.combine_vars(
+            complex_args, utils.parse_yaml_from_file(args[1:]))
+        args = ''
 
     inject = {}
     if interpreter:
@@ -106,10 +111,10 @@ def boilerplate_module(modfile, args, interpreter):
             interpreter_type = '%s_interpreter' % interpreter_type
         inject[interpreter_type] = interpreter_path
     (module_data, module_style, shebang) = replacer.modify_module(
-        modfile, 
+        modfile,
         complex_args,
         args,
-        inject 
+        inject
     )
 
     modfile2_path = os.path.expanduser("~/.ansible_module_generated")
@@ -122,16 +127,18 @@ def boilerplate_module(modfile, args, interpreter):
 
     return (modfile2_path, module_style)
 
-def runtest( modfile, argspath):
+
+def runtest(modfile, argspath):
     """Test run a module, piping it's output for reporting."""
 
     os.system("chmod +x %s" % modfile)
 
     invoke = "%s" % (modfile)
-    if argspath is not None:     
+    if argspath is not None:
         invoke = "%s %s" % (modfile, argspath)
 
-    cmd = subprocess.Popen(invoke, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    cmd = subprocess.Popen(
+        invoke, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (out, err) = cmd.communicate()
 
     try:
@@ -149,7 +156,8 @@ def runtest( modfile, argspath):
 
     print "***********************************"
     print "PARSED OUTPUT"
-    print utils.jsonify(results,format=True)
+    print utils.jsonify(results, format=True)
+
 
 def rundebug(debugger, modfile, argspath):
     """Run interactively with console debugger."""
@@ -159,24 +167,26 @@ def rundebug(debugger, modfile, argspath):
     else:
         subprocess.call("%s %s" % (debugger, modfile), shell=True)
 
-def main(): 
+
+def main():
 
     options, args = parse()
-    (modfile, module_style) = boilerplate_module(options.module_path, options.module_args, options.interpreter)
+    (modfile, module_style) = boilerplate_module(
+        options.module_path, options.module_args, options.interpreter)
 
-    argspath=None
+    argspath = None
     if module_style != 'new':
         if module_style == 'non_native_want_json':
             argspath = write_argsfile(options.module_args, json=True)
         elif module_style == 'old':
             argspath = write_argsfile(options.module_args, json=False)
         else:
-            raise Exception("internal error, unexpected module style: %s" % module_style)
-    if options.debugger: 
+            raise Exception(
+                "internal error, unexpected module style: %s" % module_style)
+    if options.debugger:
         rundebug(options.debugger, modfile, argspath)
     else:
         runtest(modfile, argspath)
-        
+
 if __name__ == "__main__":
     main()
-

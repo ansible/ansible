@@ -177,14 +177,19 @@ if dopy.__version__ < '0.2.3':
     print "failed=True msg='dopy >= 0.2.3 required for this module'"
     sys.exit(1)
 
+
 class TimeoutError(DoError):
+
     def __init__(self, msg, id):
         super(TimeoutError, self).__init__(msg)
         self.id = id
 
+
 class JsonfyMixIn(object):
+
     def to_json(self):
         return self.__dict__
+
 
 class Droplet(JsonfyMixIn):
     manager = None
@@ -236,7 +241,8 @@ class Droplet(JsonfyMixIn):
 
     @classmethod
     def add(cls, name, size_id, image_id, region_id, ssh_key_ids=None, virtio=True, private_networking=False, backups_enabled=False):
-        json = cls.manager.new_droplet(name, size_id, image_id, region_id, ssh_key_ids, virtio, private_networking, backups_enabled)
+        json = cls.manager.new_droplet(
+            name, size_id, image_id, region_id, ssh_key_ids, virtio, private_networking, backups_enabled)
         droplet = cls(json)
         return droplet
 
@@ -263,6 +269,7 @@ class Droplet(JsonfyMixIn):
     def list_all(cls):
         json = cls.manager.all_active_droplets()
         return map(cls, json)
+
 
 class SSH(JsonfyMixIn):
     manager = None
@@ -298,6 +305,7 @@ class SSH(JsonfyMixIn):
     def add(cls, name, key_pub):
         json = cls.manager.new_ssh_key(name, key_pub)
         return cls(json)
+
 
 def core(module):
     def getkeyordie(k):
@@ -364,7 +372,8 @@ def core(module):
                 droplet = Droplet.find(name=getkeyordie('name'))
 
             if not droplet:
-                module.exit_json(changed=False, msg='The droplet is not found.')
+                module.exit_json(
+                    changed=False, msg='The droplet is not found.')
 
             event_json = droplet.destroy()
             module.exit_json(changed=True, event_id=event_json['event_id'])
@@ -382,33 +391,35 @@ def core(module):
         elif state in ('absent', 'deleted'):
             key = SSH.find(name)
             if not key:
-                module.exit_json(changed=False, msg='SSH key with the name of %s is not found.' % name)
+                module.exit_json(
+                    changed=False, msg='SSH key with the name of %s is not found.' % name)
             key.destroy()
             module.exit_json(changed=True)
 
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            command = dict(choices=['droplet', 'ssh'], default='droplet'),
-            state = dict(choices=['active', 'present', 'absent', 'deleted'], default='present'),
-            client_id = dict(aliases=['CLIENT_ID'], no_log=True),
-            api_key = dict(aliases=['API_KEY'], no_log=True),
-            name = dict(type='str'),
-            size_id = dict(type='int'),
-            image_id = dict(type='int'),
-            region_id = dict(type='int'),
-            ssh_key_ids = dict(default=''),
-            virtio = dict(type='bool', default='yes'),
-            private_networking = dict(type='bool', default='no'),
-            backups_enabled = dict(type='bool', default='no'),
-            id = dict(aliases=['droplet_id'], type='int'),
-            unique_name = dict(type='bool', default='no'),
-            wait = dict(type='bool', default=True),
-            wait_timeout = dict(default=300, type='int'),
-            ssh_pub_key = dict(type='str'),
+        argument_spec=dict(
+            command=dict(choices=['droplet', 'ssh'], default='droplet'),
+            state=dict(
+                choices=['active', 'present', 'absent', 'deleted'], default='present'),
+            client_id=dict(aliases=['CLIENT_ID'], no_log=True),
+            api_key=dict(aliases=['API_KEY'], no_log=True),
+            name=dict(type='str'),
+            size_id=dict(type='int'),
+            image_id=dict(type='int'),
+            region_id=dict(type='int'),
+            ssh_key_ids=dict(default=''),
+            virtio=dict(type='bool', default='yes'),
+            private_networking=dict(type='bool', default='no'),
+            backups_enabled=dict(type='bool', default='no'),
+            id=dict(aliases=['droplet_id'], type='int'),
+            unique_name=dict(type='bool', default='no'),
+            wait=dict(type='bool', default=True),
+            wait_timeout=dict(default=300, type='int'),
+            ssh_pub_key=dict(type='str'),
         ),
-        required_together = (
+        required_together=(
             ['size_id', 'image_id', 'region_id'],
         ),
         mutually_exclusive = (

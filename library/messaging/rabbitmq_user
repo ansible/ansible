@@ -101,7 +101,9 @@ EXAMPLES = '''
                  state=present
 '''
 
+
 class RabbitMqUser(object):
+
     def __init__(self, module, username, password, tags, vhost, configure_priv, write_priv, read_priv, node):
         self.module = module
         self.username = username
@@ -138,7 +140,7 @@ class RabbitMqUser(object):
             user, tags = user_tag.split('\t')
 
             if user == self.username:
-                for c in ['[',']',' ']:
+                for c in ['[', ']', ' ']:
                     tags = tags.replace(c, '')
 
                 if tags != '':
@@ -185,6 +187,7 @@ class RabbitMqUser(object):
     def has_permissions_modifications(self):
         return self._permissions != self.permissions
 
+
 def main():
     arg_spec = dict(
         user=dict(required=True, aliases=['username', 'name']),
@@ -214,7 +217,8 @@ def main():
     state = module.params['state']
     node = module.params['node']
 
-    rabbitmq_user = RabbitMqUser(module, username, password, tags, vhost, configure_priv, write_priv, read_priv, node)
+    rabbitmq_user = RabbitMqUser(
+        module, username, password, tags, vhost, configure_priv, write_priv, read_priv, node)
 
     changed = False
     if rabbitmq_user.get():

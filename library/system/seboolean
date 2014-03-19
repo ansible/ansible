@@ -55,15 +55,16 @@ EXAMPLES = '''
 
 try:
     import selinux
-    HAVE_SELINUX=True
+    HAVE_SELINUX = True
 except ImportError:
-    HAVE_SELINUX=False
+    HAVE_SELINUX = False
 
 try:
     import semanage
-    HAVE_SEMANAGE=True
+    HAVE_SEMANAGE = True
 except ImportError:
-    HAVE_SEMANAGE=False
+    HAVE_SEMANAGE = False
+
 
 def has_boolean_value(module, name):
     bools = []
@@ -76,12 +77,14 @@ def has_boolean_value(module, name):
     else:
         return False
 
+
 def get_boolean_value(module, name):
     state = 0
     try:
         state = selinux.security_get_boolean_active(name)
     except OSError, e:
-        module.fail_json(msg="Failed to determine current state for boolean %s" % name)
+        module.fail_json(
+            msg="Failed to determine current state for boolean %s" % name)
     if state == 1:
         return True
     else:
@@ -89,6 +92,8 @@ def get_boolean_value(module, name):
 
 # The following method implements what setsebool.c does to change
 # a boolean and make it persist after reboot..
+
+
 def semanage_boolean_value(module, name, state):
     rc = 0
     value = 0
@@ -100,12 +105,15 @@ def semanage_boolean_value(module, name, state):
     try:
         managed = semanage.semanage_is_managed(handle)
         if managed < 0:
-            module.fail_json(msg="Failed to determine whether policy is manage")
+            module.fail_json(
+                msg="Failed to determine whether policy is manage")
         if managed == 0:
             if os.getuid() == 0:
-                module.fail_json(msg="Cannot set persistent booleans without managed policy")
+                module.fail_json(
+                    msg="Cannot set persistent booleans without managed policy")
             else:
-                module.fail_json(msg="Cannot set persistent booleans; please try as root")
+                module.fail_json(
+                    msg="Cannot set persistent booleans; please try as root")
         if semanage.semanage_connect(handle) < 0:
             module.fail_json(msg="Failed to connect to semanage")
 
@@ -127,7 +135,8 @@ def semanage_boolean_value(module, name, state):
             module.fail_json(msg="Failed to modify boolean key with semanage")
 
         if semanage.semanage_bool_set_active(handle, boolkey, sebool) < 0:
-            module.fail_json(msg="Failed to set boolean key active with semanage")
+            module.fail_json(
+                msg="Failed to set boolean key active with semanage")
 
         semanage.semanage_bool_key_free(boolkey)
         semanage.semanage_bool_free(sebool)
@@ -139,8 +148,10 @@ def semanage_boolean_value(module, name, state):
         semanage.semanage_disconnect(handle)
         semanage.semanage_handle_destroy(handle)
     except Exception, e:
-        module.fail_json(msg="Failed to manage policy for boolean %s: %s" % (name, str(e)))
+        module.fail_json(
+            msg="Failed to manage policy for boolean %s: %s" % (name, str(e)))
     return True
+
 
 def set_boolean_value(module, name, state):
     rc = 0
@@ -156,9 +167,10 @@ def set_boolean_value(module, name, state):
     else:
         return False
 
+
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             name=dict(required=True),
             persistent=dict(default='no', type='bool'),
             state=dict(required=True, type='bool')
@@ -204,7 +216,8 @@ def main():
     try:
         selinux.security_commit_booleans()
     except:
-        module.fail_json(msg="Failed to commit pending boolean %s value" % name)
+        module.fail_json(
+            msg="Failed to commit pending boolean %s value" % name)
     module.exit_json(**result)
 
 # import module snippets

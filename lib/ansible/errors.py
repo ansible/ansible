@@ -15,7 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+
 class AnsibleError(Exception):
+
     ''' The base Ansible exception from which all others should subclass '''
 
     def __init__(self, msg):
@@ -24,17 +26,22 @@ class AnsibleError(Exception):
     def __str__(self):
         return self.msg
 
+
 class AnsibleFileNotFound(AnsibleError):
     pass
+
 
 class AnsibleConnectionFailed(AnsibleError):
     pass
 
+
 class AnsibleYAMLValidationFailed(AnsibleError):
     pass
 
+
 class AnsibleUndefinedVariable(AnsibleError):
     pass
+
 
 class AnsibleFilterError(AnsibleError):
     pass

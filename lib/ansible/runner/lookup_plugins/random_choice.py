@@ -25,8 +25,9 @@ from ansible import utils
 #        - debug: msg=$item
 #          with_random_choice:
 #             - one
-#             - two 
+#             - two
 #             - three
+
 
 class LookupModule(object):
 
@@ -35,7 +36,6 @@ class LookupModule(object):
 
     def run(self, terms, inject=None, **kwargs):
 
-        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
+        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
 
-        return [ random.choice(terms) ]
-
+        return [random.choice(terms)]

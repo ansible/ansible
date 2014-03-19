@@ -31,12 +31,14 @@ from ansible import utils
 from ansible.color import ANSIBLE_COLOR, stringc
 from ansible.callbacks import display
 
+
 def colorize(lead, num, color):
     """ Print 'lead' = 'num' in 'color' """
     if num != 0 and ANSIBLE_COLOR and color is not None:
         return "%s%s%-15s" % (stringc(lead, color), stringc("=", color), stringc(str(num), color))
     else:
         return "%s=%-4s" % (lead, str(num))
+
 
 def hostcolor(host, stats, color=True):
     if ANSIBLE_COLOR and color:
@@ -55,29 +57,29 @@ def main(args):
     # create parser for CLI options
     parser = utils.base_parser(
         constants=C,
-        usage = "%prog playbook.yml",
+        usage="%prog playbook.yml",
         connect_opts=True,
         runas_opts=True,
         subset_opts=True,
         check_opts=True,
         diff_opts=True
     )
-    #parser.add_option('--vault-password', dest="vault_password",
+    # parser.add_option('--vault-password', dest="vault_password",
     #    help="password for vault encrypted files")
     parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
-        help="set additional variables as key=value or YAML/JSON", default=[])
+                      help="set additional variables as key=value or YAML/JSON", default=[])
     parser.add_option('-t', '--tags', dest='tags', default='all',
-        help="only run plays and tasks tagged with these values")
+                      help="only run plays and tasks tagged with these values")
     parser.add_option('--skip-tags', dest='skip_tags',
-        help="only run plays and tasks whose tags do not match these values")
+                      help="only run plays and tasks whose tags do not match these values")
     parser.add_option('--syntax-check', dest='syntax', action='store_true',
-        help="perform a syntax check on the playbook, but do not execute it")
+                      help="perform a syntax check on the playbook, but do not execute it")
     parser.add_option('--list-tasks', dest='listtasks', action='store_true',
-        help="list all tasks that would be executed")
+                      help="list all tasks that would be executed")
     parser.add_option('--step', dest='step', action='store_true',
-        help="one-step-at-a-time: confirm each task before running")
+                      help="one-step-at-a-time: confirm each task before running")
     parser.add_option('--start-at-task', dest='start_at',
-        help="start the playbook at the task matching this name")
+                      help="start the playbook at the task matching this name")
 
     options, args = parser.parse_args(args)
 
@@ -87,13 +89,14 @@ def main(args):
 
     # su and sudo command line arguments need to be mutually exclusive
     if (options.su or options.su_user or options.ask_su_pass) and \
-                (options.sudo or options.sudo_user or options.ask_sudo_pass):
-            parser.error("Sudo arguments ('--sudo', '--sudo-user', and '--ask-sudo-pass') "
-                         "and su arguments ('-su', '--su-user', and '--ask-su-pass') are "
-                         "mutually exclusive")
+            (options.sudo or options.sudo_user or options.ask_sudo_pass):
+        parser.error("Sudo arguments ('--sudo', '--sudo-user', and '--ask-sudo-pass') "
+                     "and su arguments ('-su', '--su-user', and '--ask-su-pass') are "
+                     "mutually exclusive")
 
     if (options.ask_vault_pass and options.vault_password_file):
-            parser.error("--ask-vault-pass and --vault-password-file are mutually exclusive")
+        parser.error(
+            "--ask-vault-pass and --vault-password-file are mutually exclusive")
 
     inventory = ansible.inventory.Inventory(options.inventory)
     inventory.subset(options.subset)
@@ -114,7 +117,8 @@ def main(args):
         options.ask_sudo_pass = options.ask_sudo_pass or C.DEFAULT_ASK_SUDO_PASS
         options.ask_su_pass = options.ask_su_pass or C.DEFAULT_ASK_SU_PASS
         options.ask_vault_pass = options.ask_vault_pass or C.DEFAULT_ASK_VAULT_PASS
-        (sshpass, sudopass, su_pass, vault_pass) = utils.ask_passwords(ask_pass=options.ask_pass, ask_sudo_pass=options.ask_sudo_pass, ask_su_pass=options.ask_su_pass, ask_vault_pass=options.ask_vault_pass)
+        (sshpass, sudopass, su_pass, vault_pass) = utils.ask_passwords(ask_pass=options.ask_pass,
+                                                                       ask_sudo_pass=options.ask_sudo_pass, ask_su_pass=options.ask_su_pass, ask_vault_pass=options.ask_vault_pass)
         options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
         options.su_user = options.su_user or C.DEFAULT_SU_USER
 
@@ -122,10 +126,11 @@ def main(args):
             this_path = os.path.expanduser(options.vault_password_file)
             try:
                 f = open(this_path, "rb")
-                tmp_vault_pass=f.read()
+                tmp_vault_pass = f.read()
                 f.close()
             except (OSError, IOError), e:
-                raise errors.AnsibleError("Could not read %s: %s" % (this_path, e))
+                raise errors.AnsibleError(
+                    "Could not read %s: %s" % (this_path, e))
 
             # get rid of newline chars
             tmp_vault_pass = tmp_vault_pass.strip()
@@ -137,13 +142,16 @@ def main(args):
     for extra_vars_opt in options.extra_vars:
         if extra_vars_opt.startswith("@"):
             # Argument is a YAML file (JSON is a subset of YAML)
-            extra_vars = utils.combine_vars(extra_vars, utils.parse_yaml_from_file(extra_vars_opt[1:]))
+            extra_vars = utils.combine_vars(
+                extra_vars, utils.parse_yaml_from_file(extra_vars_opt[1:]))
         elif extra_vars_opt and extra_vars_opt[0] in '[{':
             # Arguments as YAML
-            extra_vars = utils.combine_vars(extra_vars, utils.parse_yaml(extra_vars_opt))
+            extra_vars = utils.combine_vars(
+                extra_vars, utils.parse_yaml(extra_vars_opt))
         else:
             # Arguments as Key-value
-            extra_vars = utils.combine_vars(extra_vars, utils.parse_kv(extra_vars_opt))
+            extra_vars = utils.combine_vars(
+                extra_vars, utils.parse_kv(extra_vars_opt))
 
     only_tags = options.tags.split(",")
     skip_tags = options.skip_tags
@@ -152,14 +160,17 @@ def main(args):
 
     for playbook in args:
         if not os.path.exists(playbook):
-            raise errors.AnsibleError("the playbook: %s could not be found" % playbook)
+            raise errors.AnsibleError(
+                "the playbook: %s could not be found" % playbook)
         if not (os.path.isfile(playbook) or stat.S_ISFIFO(os.stat(playbook).st_mode)):
-            raise errors.AnsibleError("the playbook: %s does not appear to be a file" % playbook)
+            raise errors.AnsibleError(
+                "the playbook: %s does not appear to be a file" % playbook)
 
     # run all playbooks specified on the command line
     for playbook in args:
 
-        # let inventory know which playbooks are using so it can know the basedirs
+        # let inventory know which playbooks are using so it can know the
+        # basedirs
         inventory.set_playbook_basedir(os.path.dirname(playbook))
 
         stats = callbacks.AggregateStats()
@@ -168,7 +179,8 @@ def main(args):
             playbook_cb.step = options.step
         if options.start_at:
             playbook_cb.start_at = options.start_at
-        runner_cb = callbacks.PlaybookRunnerCallbacks(stats, verbose=utils.VERBOSITY)
+        runner_cb = callbacks.PlaybookRunnerCallbacks(
+            stats, verbose=utils.VERBOSITY)
 
         pb = ansible.playbook.PlayBook(
             playbook=playbook,
@@ -214,7 +226,8 @@ def main(args):
                 if options.listtasks:
                     if options.subset and not hosts:
                         continue
-                    matched_tags, unmatched_tags = play.compare_tags(pb.only_tags)
+                    matched_tags, unmatched_tags = play.compare_tags(
+                        pb.only_tags)
 
                     # Remove skipped tasks
                     matched_tags = matched_tags - set(pb.skip_tags)
@@ -229,7 +242,7 @@ def main(args):
 
                     for task in play.tasks():
                         if (set(task.tags).intersection(pb.only_tags) and not
-                            set(task.tags).intersection(pb.skip_tags)):
+                                set(task.tags).intersection(pb.skip_tags)):
                             if getattr(task, 'name', None) is not None:
                                 # meta tasks have no names
                                 print '    %s' % task.name
@@ -264,7 +277,8 @@ def main(args):
             if len(retries) > 0:
                 filename = pb.generate_retry_inventory(retries)
                 if filename:
-                    display("           to retry, use: --limit @%s\n" % filename)
+                    display("           to retry, use: --limit @%s\n" %
+                            filename)
 
             for h in hosts:
                 t = pb.stats.summarize(h)
@@ -286,7 +300,6 @@ def main(args):
                     colorize('failed', t['failures'], None)),
                     log_only=True
                 )
-
 
             print ""
             if len(failed_hosts) > 0:
@@ -313,4 +326,3 @@ if __name__ == "__main__":
     except KeyboardInterrupt, ke:
         display("ERROR: interrupted", color='red', stderr=True)
         sys.exit(1)
-

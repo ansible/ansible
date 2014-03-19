@@ -18,6 +18,7 @@
 from ansible.utils import template
 import ansible.utils as utils
 
+
 class LookupModule(object):
 
     def __init__(self, basedir=None, **kwargs):
@@ -25,7 +26,7 @@ class LookupModule(object):
 
     def run(self, terms, inject=None, **kwargs):
 
-        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
+        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
 
         ret = []
         for term in terms:

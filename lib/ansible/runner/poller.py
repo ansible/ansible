@@ -20,13 +20,15 @@ import time
 
 from ansible import errors
 
+
 class AsyncPoller(object):
+
     """ Manage asynchronous jobs. """
 
     def __init__(self, results, runner):
         self.runner = runner
 
-        self.results = { 'contacted': {}, 'dark': {}}
+        self.results = {'contacted': {}, 'dark': {}}
         self.hosts_to_poll = []
         self.completed = False
 
@@ -46,8 +48,9 @@ class AsyncPoller(object):
 
         if not skipped:
             if jid is None:
-                raise errors.AnsibleError("unexpected error: unable to determine jid")
-            if len(self.hosts_to_poll)==0:
+                raise errors.AnsibleError(
+                    "unexpected error: unable to determine jid")
+            if len(self.hosts_to_poll) == 0:
                 raise errors.AnsibleError("unexpected error: no hosts to poll")
         self.jid = jid
 
@@ -66,9 +69,9 @@ class AsyncPoller(object):
         self.runner.inventory.lift_restriction()
 
         hosts = []
-        poll_results = { 'contacted': {}, 'dark': {}, 'polled': {}}
+        poll_results = {'contacted': {}, 'dark': {}, 'polled': {}}
         for (host, res) in results['contacted'].iteritems():
-            if res.get('started',False):
+            if res.get('started', False):
                 hosts.append(host)
                 poll_results['polled'][host] = res
             else:
@@ -84,7 +87,7 @@ class AsyncPoller(object):
             self.runner.callbacks.on_async_failed(host, res, self.jid)
 
         self.hosts_to_poll = hosts
-        if len(hosts)==0:
+        if len(hosts) == 0:
             self.completed = True
 
         return poll_results
@@ -103,7 +106,8 @@ class AsyncPoller(object):
 
             for (host, res) in poll_results['polled'].iteritems():
                 if res.get('started'):
-                    self.runner.callbacks.on_async_poll(host, res, self.jid, clock)
+                    self.runner.callbacks.on_async_poll(
+                        host, res, self.jid, clock)
 
             clock = clock - poll_interval
 

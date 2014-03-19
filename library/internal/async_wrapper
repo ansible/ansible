@@ -33,6 +33,7 @@ import signal
 import time
 import syslog
 
+
 def daemonize_self():
     # daemonizing code: http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/66012
     # logger.info("cobblerd started")
@@ -60,15 +61,15 @@ def daemonize_self():
         print >>sys.stderr, "fork #2 failed: %d (%s)" % (e.errno, e.strerror)
         sys.exit(1)
 
-    dev_null = file('/dev/null','rw')
+    dev_null = file('/dev/null', 'rw')
     os.dup2(dev_null.fileno(), sys.stdin.fileno())
     os.dup2(dev_null.fileno(), sys.stdout.fileno())
     os.dup2(dev_null.fileno(), sys.stderr.fileno())
 
 if len(sys.argv) < 3:
     print json.dumps({
-        "failed" : True,
-        "msg"    : "usage: async_wrapper <jid> <time_limit> <modulescript> <argsfile>.  Humans, do not call directly!"
+        "failed": True,
+        "msg": "usage: async_wrapper <jid> <time_limit> <modulescript> <argsfile>.  Humans, do not call directly!"
     })
     sys.exit(1)
 
@@ -90,14 +91,15 @@ if not os.path.exists(logdir):
         os.makedirs(logdir)
     except:
         print json.dumps({
-            "failed" : 1,
-            "msg" : "could not create: %s" % logdir
+            "failed": 1,
+            "msg": "could not create: %s" % logdir
         })
+
 
 def _run_command(wrapped_cmd, jid, log_path):
 
     logfile = open(log_path, "w")
-    logfile.write(json.dumps({ "started" : 1, "ansible_job_id" : jid }))
+    logfile.write(json.dumps({"started": 1, "ansible_job_id": jid}))
     logfile.close()
     logfile = open(log_path, "w")
     result = {}
@@ -106,7 +108,7 @@ def _run_command(wrapped_cmd, jid, log_path):
     try:
         cmd = shlex.split(wrapped_cmd)
         script = subprocess.Popen(cmd, shell=False,
-            stdin=None, stdout=logfile, stderr=logfile)
+                                  stdin=None, stdout=logfile, stderr=logfile)
         script.communicate()
         outdata = file(log_path).read()
         result = json.loads(outdata)
@@ -114,17 +116,17 @@ def _run_command(wrapped_cmd, jid, log_path):
     except (OSError, IOError), e:
         result = {
             "failed": 1,
-            "cmd" : wrapped_cmd,
+            "cmd": wrapped_cmd,
             "msg": str(e),
         }
         result['ansible_job_id'] = jid
         logfile.write(json.dumps(result))
     except:
         result = {
-            "failed" : 1,
-            "cmd" : wrapped_cmd,
-            "data" : outdata, # temporary debug only
-            "msg" : traceback.format_exc()
+            "failed": 1,
+            "cmd": wrapped_cmd,
+            "data": outdata,  # temporary debug only
+            "msg": traceback.format_exc()
         }
         result['ansible_job_id'] = jid
         logfile.write(json.dumps(result))
@@ -137,10 +139,12 @@ def _run_command(wrapped_cmd, jid, log_path):
 #import logging.handlers
 
 #logger = logging.getLogger("ansible_async")
-#logger.setLevel(logging.WARNING)
+# logger.setLevel(logging.WARNING)
 #logger.addHandler( logging.handlers.SysLogHandler("/dev/log") )
+
+
 def debug(msg):
-    #logger.warning(msg)
+    # logger.warning(msg)
     pass
 
 try:
@@ -154,7 +158,7 @@ try:
         # the argsfile at the very first start of their execution anyway
         time.sleep(1)
         debug("Return async_wrapper task started.")
-        print json.dumps({ "started" : 1, "ansible_job_id" : jid, "results_file" : log_path })
+        print json.dumps({"started": 1, "ansible_job_id": jid, "results_file": log_path})
         sys.stdout.flush()
         sys.exit(0)
     else:
@@ -174,27 +178,27 @@ try:
             # set the child process group id to kill all children
             os.setpgid(sub_pid, sub_pid)
 
-            debug("Start watching %s (%s)"%(sub_pid, remaining))
+            debug("Start watching %s (%s)" % (sub_pid, remaining))
             time.sleep(5)
             while os.waitpid(sub_pid, os.WNOHANG) == (0, 0):
-                debug("%s still running (%s)"%(sub_pid, remaining))
+                debug("%s still running (%s)" % (sub_pid, remaining))
                 time.sleep(5)
                 remaining = remaining - 5
                 if remaining <= 0:
-                    debug("Now killing %s"%(sub_pid))
+                    debug("Now killing %s" % (sub_pid))
                     os.killpg(sub_pid, signal.SIGKILL)
-                    debug("Sent kill to group %s"%sub_pid)
+                    debug("Sent kill to group %s" % sub_pid)
                     time.sleep(1)
                     sys.exit(0)
             debug("Done in kid B.")
             os._exit(0)
         else:
             # the child process runs the actual module
-            debug("Start module (%s)"%os.getpid())
+            debug("Start module (%s)" % os.getpid())
             _run_command(cmd, jid, log_path)
-            debug("Module complete (%s)"%os.getpid())
+            debug("Module complete (%s)" % os.getpid())
             sys.exit(0)
 
 except Exception, err:
-    debug("error: %s"%(err))
+    debug("error: %s" % (err))
     raise err

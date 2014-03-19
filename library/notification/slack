@@ -108,11 +108,12 @@ EXAMPLES = """
 
 SLACK_INCOMING_WEBHOOK = 'https://%s/services/hooks/incoming-webhook?token=%s'
 
+
 def build_payload_for_slack(module, text, channel, username, icon_url, icon_emoji, link_names, parse):
     payload = dict(text=text)
 
     if channel is not None:
-        payload['channel'] = channel if (channel[0] == '#') else '#'+channel
+        payload['channel'] = channel if (channel[0] == '#') else '#' + channel
     if username is not None:
         payload['username'] = username
     if icon_emoji is not None:
@@ -124,31 +125,36 @@ def build_payload_for_slack(module, text, channel, username, icon_url, icon_emoj
     if parse is not None:
         payload['parse'] = parse
 
-    payload="payload=" + module.jsonify(payload)
+    payload = "payload=" + module.jsonify(payload)
     return payload
+
 
 def do_notify_slack(module, domain, token, payload):
     slack_incoming_webhook = SLACK_INCOMING_WEBHOOK % (domain, token)
 
     response, info = fetch_url(module, slack_incoming_webhook, data=payload)
     if info['status'] != 200:
-        obscured_incoming_webhook = SLACK_INCOMING_WEBHOOK % (domain, '[obscured]')
-        module.fail_json(msg=" failed to send %s to %s: %s" % (payload, obscured_incoming_webhook, info['msg']))
+        obscured_incoming_webhook = SLACK_INCOMING_WEBHOOK % (
+            domain, '[obscured]')
+        module.fail_json(msg=" failed to send %s to %s: %s" %
+                         (payload, obscured_incoming_webhook, info['msg']))
+
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            domain      = dict(type='str', required=True),
-            token       = dict(type='str', required=True),
-            msg         = dict(type='str', required=True),
-            channel     = dict(type='str', default=None),
-            username    = dict(type='str', default='Ansible'),
-            icon_url    = dict(type='str', default='http://www.ansible.com/favicon.ico'),
-            icon_emoji  = dict(type='str', default=None),
-            link_names  = dict(type='int', default=1, choices=[0,1]),
-            parse       = dict(type='str', default=None, choices=['none', 'full']),
+        argument_spec=dict(
+            domain=dict(type='str', required=True),
+            token=dict(type='str', required=True),
+            msg=dict(type='str', required=True),
+            channel=dict(type='str', default=None),
+            username=dict(type='str', default='Ansible'),
+            icon_url=dict(
+                type='str', default='http://www.ansible.com/favicon.ico'),
+            icon_emoji=dict(type='str', default=None),
+            link_names=dict(type='int', default=1, choices=[0, 1]),
+            parse=dict(type='str', default=None, choices=['none', 'full']),
 
-            validate_certs = dict(default='yes', type='bool'),
+            validate_certs=dict(default='yes', type='bool'),
         )
     )
 
@@ -162,7 +168,8 @@ def main():
     link_names = module.params['link_names']
     parse = module.params['parse']
 
-    payload = build_payload_for_slack(module, text, channel, username, icon_url, icon_emoji, link_names, parse)
+    payload = build_payload_for_slack(
+        module, text, channel, username, icon_url, icon_emoji, link_names, parse)
     do_notify_slack(module, domain, token, payload)
 
     module.exit_json(msg="OK")

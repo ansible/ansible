@@ -3,27 +3,27 @@
 # Modules you write using this snippet, which is embedded dynamically by Ansible
 # still belong to the author of the module, and may assign their own license
 # to the complete work.
-# 
+#
 # Copyright (c), Michael DeHaan <michael.dehaan@gmail.com>, 2012-2013
 # All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without modification, 
+# Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
-#    * Redistributions of source code must retain the above copyright 
+#    * Redistributions of source code must retain the above copyright
 #      notice, this list of conditions and the following disclaimer.
-#    * Redistributions in binary form must reproduce the above copyright notice, 
-#      this list of conditions and the following disclaimer in the documentation 
+#    * Redistributions in binary form must reproduce the above copyright notice,
+#      this list of conditions and the following disclaimer in the documentation
 #      and/or other materials provided with the distribution.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
-# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
@@ -40,7 +40,7 @@ BOOLEANS = BOOLEANS_TRUE + BOOLEANS_FALSE
 # ansible modules can be written in any language.  To simplify
 # development of Python modules, the functions available here
 # can be inserted in any module source automatically by including
-# #<<INCLUDE_ANSIBLE_MODULE_COMMON>> on a blank line by itself inside
+# <<INCLUDE_ANSIBLE_MODULE_COMMON>> on a blank line by itself inside
 # of an ansible module. The source of this common code lives
 # in lib/ansible/module_common.py
 
@@ -71,20 +71,21 @@ except ImportError:
         sys.stderr.write('Error: ansible requires a json module, none found!')
         sys.exit(1)
     except SyntaxError:
-        sys.stderr.write('SyntaxError: probably due to json and python being for different versions')
+        sys.stderr.write(
+            'SyntaxError: probably due to json and python being for different versions')
         sys.exit(1)
 
-HAVE_SELINUX=False
+HAVE_SELINUX = False
 try:
     import selinux
-    HAVE_SELINUX=True
+    HAVE_SELINUX = True
 except ImportError:
     pass
 
-HAVE_HASHLIB=False
+HAVE_HASHLIB = False
 try:
     from hashlib import md5 as _md5
-    HAVE_HASHLIB=True
+    HAVE_HASHLIB = True
 except ImportError:
     from md5 import md5 as _md5
 
@@ -100,20 +101,21 @@ except ImportError:
     import syslog
     has_journal = False
 
-FILE_COMMON_ARGUMENTS=dict(
-    src = dict(),
-    mode = dict(),
-    owner = dict(),
-    group = dict(),
-    seuser = dict(),
-    serole = dict(),
-    selevel = dict(),
-    setype = dict(),
-    # not taken by the file module, but other modules call file so it must ignore them.
-    content = dict(),
-    backup = dict(),
-    force = dict(),
-    remote_src = dict(), # used by assemble
+FILE_COMMON_ARGUMENTS = dict(
+    src=dict(),
+    mode=dict(),
+    owner=dict(),
+    group=dict(),
+    seuser=dict(),
+    serole=dict(),
+    selevel=dict(),
+    setype=dict(),
+    # not taken by the file module, but other modules call file so it must
+    # ignore them.
+    content=dict(),
+    backup=dict(),
+    force=dict(),
+    remote_src=dict(),  # used by assemble
 )
 
 
@@ -121,13 +123,15 @@ def get_platform():
     ''' what's the platform?  example: Linux is a platform. '''
     return platform.system()
 
+
 def get_distribution():
     ''' return the distribution name '''
     if platform.system() == 'Linux':
         try:
             distribution = platform.linux_distribution()[0].capitalize()
             if not distribution and os.path.isfile('/etc/system-release'):
-                distribution = platform.linux_distribution(supported_dists=['system'])[0].capitalize()
+                distribution = platform.linux_distribution(
+                    supported_dists=['system'])[0].capitalize()
                 if 'Amazon' in distribution:
                     distribution = 'Amazon'
                 else:
@@ -138,6 +142,7 @@ def get_distribution():
     else:
         distribution = None
     return distribution
+
 
 def load_platform_subclass(cls, *args, **kwargs):
     '''
@@ -167,9 +172,8 @@ def load_platform_subclass(cls, *args, **kwargs):
 class AnsibleModule(object):
 
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
-        check_invalid_arguments=True, mutually_exclusive=None, required_together=None,
-        required_one_of=None, add_file_common_args=False, supports_check_mode=False):
-
+                 check_invalid_arguments=True, mutually_exclusive=None, required_together=None,
+                 required_one_of=None, add_file_common_args=False, supports_check_mode=False):
         '''
         common code for quickly building an ansible module in Python
         (although you can write modules in anything that can return JSON)
@@ -180,9 +184,9 @@ class AnsibleModule(object):
         self.supports_check_mode = supports_check_mode
         self.check_mode = False
         self.no_log = no_log
-        
+
         self.aliases = {}
-        
+
         if add_file_common_args:
             for k, v in FILE_COMMON_ARGUMENTS.iteritems():
                 if k not in self.argument_spec:
@@ -192,7 +196,7 @@ class AnsibleModule(object):
         (self.params, self.args) = self._load_params()
 
         self._legal_inputs = ['CHECKMODE', 'NO_LOG']
-        
+
         self.aliases = self._handle_aliases()
 
         if check_invalid_arguments:
@@ -200,7 +204,7 @@ class AnsibleModule(object):
         self._check_for_check_mode()
         self._check_for_no_log()
 
-        # check exclusive early 
+        # check exclusive early
         if not bypass_checks:
             self._check_mutually_exclusive(mutually_exclusive)
 
@@ -233,15 +237,15 @@ class AnsibleModule(object):
         else:
             path = os.path.expanduser(path)
 
-        mode   = params.get('mode', None)
-        owner  = params.get('owner', None)
-        group  = params.get('group', None)
+        mode = params.get('mode', None)
+        owner = params.get('owner', None)
+        group = params.get('group', None)
 
         # selinux related options
-        seuser    = params.get('seuser', None)
-        serole    = params.get('serole', None)
-        setype    = params.get('setype', None)
-        selevel   = params.get('selevel', None)
+        seuser = params.get('seuser', None)
+        serole = params.get('serole', None)
+        setype = params.get('setype', None)
+        selevel = params.get('selevel', None)
         secontext = [seuser, serole, setype]
 
         if self.selinux_mls_enabled():
@@ -258,13 +262,11 @@ class AnsibleModule(object):
             selevel=selevel, secontext=secontext,
         )
 
-
     # Detect whether using selinux that is MLS-aware.
     # While this means you can set the level/range with
     # selinux.lsetfilecon(), it may or may not mean that you
     # will get the selevel as part of the context returned
     # by selinux.lgetfilecon().
-
     def selinux_mls_enabled(self):
         if not HAVE_SELINUX:
             return False
@@ -277,9 +279,10 @@ class AnsibleModule(object):
         if not HAVE_SELINUX:
             seenabled = self.get_bin_path('selinuxenabled')
             if seenabled is not None:
-                (rc,out,err) = self.run_command(seenabled)
+                (rc, out, err) = self.run_command(seenabled)
                 if rc == 0:
-                    self.fail_json(msg="Aborting, target uses selinux but python bindings (libselinux-python) aren't installed!")
+                    self.fail_json(
+                        msg="Aborting, target uses selinux but python bindings (libselinux-python) aren't installed!")
             return False
         if selinux.is_selinux_enabled() == 1:
             return True
@@ -332,7 +335,8 @@ class AnsibleModule(object):
             if e.errno == errno.ENOENT:
                 self.fail_json(path=path, msg='path %s does not exist' % path)
             else:
-                self.fail_json(path=path, msg='failed to retrieve selinux context')
+                self.fail_json(
+                    path=path, msg='failed to retrieve selinux context')
         if ret[0] == -1:
             return context
         # Limit split to 4 because the selevel, the last in the list,
@@ -376,7 +380,8 @@ class AnsibleModule(object):
                 rc = selinux.lsetfilecon(self._to_filesystem_str(path),
                                          str(':'.join(new_context)))
             except OSError:
-                self.fail_json(path=path, msg='invalid selinux context', new_context=new_context, cur_context=cur_context, input_was=context)
+                self.fail_json(path=path, msg='invalid selinux context',
+                               new_context=new_context, cur_context=cur_context, input_was=context)
             if rc != 0:
                 self.fail_json(path=path, msg='set selinux context failed')
             changed = True
@@ -393,7 +398,8 @@ class AnsibleModule(object):
             try:
                 uid = pwd.getpwnam(owner).pw_uid
             except KeyError:
-                self.fail_json(path=path, msg='chown failed: failed to look up user %s' % owner)
+                self.fail_json(
+                    path=path, msg='chown failed: failed to look up user %s' % owner)
         if orig_uid != uid:
             if self.check_mode:
                 return True
@@ -415,7 +421,8 @@ class AnsibleModule(object):
             try:
                 gid = grp.getgrnam(group).gr_gid
             except KeyError:
-                self.fail_json(path=path, msg='chgrp failed: failed to look up group %s' % group)
+                self.fail_json(
+                    path=path, msg='chgrp failed: failed to look up group %s' % group)
         if orig_gid != gid:
             if self.check_mode:
                 return True
@@ -435,7 +442,8 @@ class AnsibleModule(object):
             if not isinstance(mode, int):
                 mode = int(mode, 8)
         except Exception, e:
-            self.fail_json(path=path, msg='mode needs to be something octalish', details=str(e))
+            self.fail_json(
+                path=path, msg='mode needs to be something octalish', details=str(e))
 
         st = os.lstat(path)
         prev_mode = stat.S_IMODE(st[stat.ST_MODE])
@@ -451,9 +459,11 @@ class AnsibleModule(object):
                 else:
                     os.chmod(path, mode)
             except OSError, e:
-                if os.path.islink(path) and e.errno == errno.EPERM:  # Can't set mode on symbolic links
+                # Can't set mode on symbolic links
+                if os.path.islink(path) and e.errno == errno.EPERM:
                     pass
-                elif e.errno == errno.ENOENT: # Can't set mode on broken symbolic links
+                # Can't set mode on broken symbolic links
+                elif e.errno == errno.ENOENT:
                     pass
                 else:
                     raise e
@@ -513,7 +523,7 @@ class AnsibleModule(object):
             kwargs['owner'] = user
             kwargs['group'] = group
             st = os.lstat(path)
-            kwargs['mode']  = oct(stat.S_IMODE(st[stat.ST_MODE]))
+            kwargs['mode'] = oct(stat.S_IMODE(st[stat.ST_MODE]))
             # secontext not yet supported
             if os.path.islink(path):
                 kwargs['state'] = 'link'
@@ -530,17 +540,17 @@ class AnsibleModule(object):
             kwargs['state'] = 'absent'
         return kwargs
 
-
     def _handle_aliases(self):
-        aliases_results = {} #alias:canon
-        for (k,v) in self.argument_spec.iteritems():
+        aliases_results = {}  # alias:canon
+        for (k, v) in self.argument_spec.iteritems():
             self._legal_inputs.append(k)
             aliases = v.get('aliases', None)
             default = v.get('default', None)
             required = v.get('required', False)
             if default is not None and required:
                 # not alias specific but this is a good place to check this
-                self.fail_json(msg="internal error: required and default are mutally exclusive for %s" % k)
+                self.fail_json(
+                    msg="internal error: required and default are mutally exclusive for %s" % k)
             if aliases is None:
                 continue
             if type(aliases) != list:
@@ -550,26 +560,27 @@ class AnsibleModule(object):
                 aliases_results[alias] = k
                 if alias in self.params:
                     self.params[k] = self.params[alias]
-        
+
         return aliases_results
 
     def _check_for_check_mode(self):
-        for (k,v) in self.params.iteritems():
+        for (k, v) in self.params.iteritems():
             if k == 'CHECKMODE':
                 if not self.supports_check_mode:
-                    self.exit_json(skipped=True, msg="remote module does not support check mode")
+                    self.exit_json(
+                        skipped=True, msg="remote module does not support check mode")
                 if self.supports_check_mode:
                     self.check_mode = True
 
     def _check_for_no_log(self):
-        for (k,v) in self.params.iteritems():
+        for (k, v) in self.params.iteritems():
             if k == 'NO_LOG':
                 self.no_log = self.boolean(v)
 
     def _check_invalid_arguments(self):
-        for (k,v) in self.params.iteritems():
+        for (k, v) in self.params.iteritems():
             # these should be in legal inputs already
-            #if k in ('CHECKMODE', 'NO_LOG'):
+            # if k in ('CHECKMODE', 'NO_LOG'):
             #    continue
             if k not in self._legal_inputs:
                 self.fail_json(msg="unsupported parameter for module: %s" % k)
@@ -587,7 +598,8 @@ class AnsibleModule(object):
         for check in spec:
             count = self._count_terms(check)
             if count > 1:
-                self.fail_json(msg="parameters are mutually exclusive: %s" % check)
+                self.fail_json(
+                    msg="parameters are mutually exclusive: %s" % check)
 
     def _check_required_one_of(self, spec):
         if spec is None:
@@ -595,42 +607,47 @@ class AnsibleModule(object):
         for check in spec:
             count = self._count_terms(check)
             if count == 0:
-                self.fail_json(msg="one of the following is required: %s" % ','.join(check))
+                self.fail_json(
+                    msg="one of the following is required: %s" % ','.join(check))
 
     def _check_required_together(self, spec):
         if spec is None:
             return
         for check in spec:
-            counts = [ self._count_terms([field]) for field in check ]
-            non_zero = [ c for c in counts if c > 0 ]
+            counts = [self._count_terms([field]) for field in check]
+            non_zero = [c for c in counts if c > 0]
             if len(non_zero) > 0:
                 if 0 in counts:
-                    self.fail_json(msg="parameters are required together: %s" % check)
+                    self.fail_json(
+                        msg="parameters are required together: %s" % check)
 
     def _check_required_arguments(self):
         ''' ensure all required arguments are present '''
         missing = []
-        for (k,v) in self.argument_spec.iteritems():
+        for (k, v) in self.argument_spec.iteritems():
             required = v.get('required', False)
             if required and k not in self.params:
                 missing.append(k)
         if len(missing) > 0:
-            self.fail_json(msg="missing required arguments: %s" % ",".join(missing))
+            self.fail_json(msg="missing required arguments: %s" %
+                           ",".join(missing))
 
     def _check_argument_values(self):
         ''' ensure all arguments have the requested values, and there are no stray arguments '''
-        for (k,v) in self.argument_spec.iteritems():
-            choices = v.get('choices',None)
+        for (k, v) in self.argument_spec.iteritems():
+            choices = v.get('choices', None)
             if choices is None:
                 continue
             if type(choices) == list:
                 if k in self.params:
                     if self.params[k] not in choices:
-                        choices_str=",".join([str(c) for c in choices])
-                        msg="value of %s must be one of: %s, got: %s" % (k, choices_str, self.params[k])
+                        choices_str = ",".join([str(c) for c in choices])
+                        msg = "value of %s must be one of: %s, got: %s" % (
+                            k, choices_str, self.params[k])
                         self.fail_json(msg=msg)
             else:
-                self.fail_json(msg="internal error: do not know how to interpret argument_spec")
+                self.fail_json(
+                    msg="internal error: do not know how to interpret argument_spec")
 
     def safe_eval(self, str, locals=None, include_exceptions=False):
 
@@ -664,7 +681,6 @@ class AnsibleModule(object):
                 return (str, e)
             return str
 
-
     def _check_argument_types(self):
         ''' ensure all arguments have the requested type '''
         for (k, v) in self.argument_spec.iteritems():
@@ -693,14 +709,18 @@ class AnsibleModule(object):
                             try:
                                 self.params[k] = json.loads(value)
                             except:
-                                (result, exc) = self.safe_eval(value, dict(), include_exceptions=True)
+                                (result, exc) = self.safe_eval(
+                                    value, dict(), include_exceptions=True)
                                 if exc is not None:
-                                    self.fail_json(msg="unable to evaluate dictionary for %s" % k)
+                                    self.fail_json(
+                                        msg="unable to evaluate dictionary for %s" % k)
                                 self.params[k] = result
                         elif '=' in value:
-                            self.params[k] = dict([x.split("=", 1) for x in value.split(",")])
+                            self.params[k] = dict(
+                                [x.split("=", 1) for x in value.split(",")])
                         else:
-                            self.fail_json(msg="dictionary requested, could not parse JSON or key=value")
+                            self.fail_json(
+                                msg="dictionary requested, could not parse JSON or key=value")
                     else:
                         is_invalid = True
             elif wanted == 'bool':
@@ -722,13 +742,15 @@ class AnsibleModule(object):
                     else:
                         is_invalid = True
             else:
-                self.fail_json(msg="implementation error: unknown type %s requested for %s" % (wanted, k))
+                self.fail_json(
+                    msg="implementation error: unknown type %s requested for %s" % (wanted, k))
 
             if is_invalid:
-                self.fail_json(msg="argument %s is of invalid type: %s, required: %s" % (k, type(value), wanted))
+                self.fail_json(
+                    msg="argument %s is of invalid type: %s, required: %s" % (k, type(value), wanted))
 
     def _set_defaults(self, pre=True):
-        for (k,v) in self.argument_spec.iteritems():
+        for (k, v) in self.argument_spec.iteritems():
             default = v.get('default', None)
             if pre == True:
                 # this prevents setting defaults on required items
@@ -742,13 +764,14 @@ class AnsibleModule(object):
     def _load_params(self):
         ''' read the input and return a dictionary and the arguments string '''
         args = MODULE_ARGS
-        items   = shlex.split(args)
+        items = shlex.split(args)
         params = {}
         for x in items:
             try:
-                (k, v) = x.split("=",1)
+                (k, v) = x.split("=", 1)
             except Exception, e:
-                self.fail_json(msg="this module requires key=value arguments (%s)" % (items))
+                self.fail_json(
+                    msg="this module requires key=value arguments (%s)" % (items))
             params[k] = v
         params2 = json.loads(MODULE_COMPLEX_ARGS)
         params2.update(params)
@@ -764,14 +787,14 @@ class AnsibleModule(object):
         filter_re = [
             # filter out things like user:pass@foo/whatever
             # and http://username:pass@wherever/foo
-            re.compile('^(?P<before>.*:)(?P<password>.*)(?P<after>\@.*)$'), 
+            re.compile('^(?P<before>.*:)(?P<password>.*)(?P<after>\@.*)$'),
         ]
 
         for param in self.params:
-            canon  = self.aliases.get(param, param)
+            canon = self.aliases.get(param, param)
             arg_opts = self.argument_spec.get(canon, {})
             no_log = arg_opts.get('no_log', False)
-                
+
             if no_log:
                 log_args[param] = 'NOT_LOGGING_PARAMETER'
             elif param in passwd_keys:
@@ -821,22 +844,22 @@ class AnsibleModule(object):
     def _set_cwd(self):
         try:
             cwd = os.getcwd()
-            if not os.access(cwd, os.F_OK|os.R_OK):
+            if not os.access(cwd, os.F_OK | os.R_OK):
                 raise
             return cwd
         except:
-            # we don't have access to the cwd, probably because of sudo. 
+            # we don't have access to the cwd, probably because of sudo.
             # Try and move to a neutral location to prevent errors
             for cwd in [os.path.expandvars('$HOME'), tempfile.gettempdir()]:
                 try:
-                    if os.access(cwd, os.F_OK|os.R_OK):
+                    if os.access(cwd, os.F_OK | os.R_OK):
                         os.chdir(cwd)
                         return cwd
                 except:
                     pass
-        # we won't error here, as it may *not* be a problem, 
+        # we won't error here, as it may *not* be a problem,
         # and we don't want to break modules unnecessarily
-        return None    
+        return None
 
     def get_bin_path(self, arg, required=False, opt_dirs=[]):
         '''
@@ -917,7 +940,8 @@ class AnsibleModule(object):
         if not os.path.exists(filename):
             return None
         if os.path.isdir(filename):
-            self.fail_json(msg="attempted to take checksum of directory: %s" % filename)
+            self.fail_json(
+                msg="attempted to take checksum of directory: %s" % filename)
         digest = digest_method
         blocksize = 64 * 1024
         infile = open(filename, 'rb')
@@ -935,7 +959,8 @@ class AnsibleModule(object):
     def sha256(self, filename):
         ''' Return SHA-256 hex digest of local file using digest_from_file(). '''
         if not HAVE_HASHLIB:
-            self.fail_json(msg="SHA-256 checksums require hashlib, which is available in Python 2.5 and higher")
+            self.fail_json(
+                msg="SHA-256 checksums require hashlib, which is available in Python 2.5 and higher")
         return self.digest_from_file(filename, _sha256())
 
     def backup_local(self, fn):
@@ -947,10 +972,11 @@ class AnsibleModule(object):
         try:
             shutil.copy2(fn, backupdest)
         except shutil.Error, e:
-            self.fail_json(msg='Could not make backup of %s to %s: %s' % (fn, backupdest, e))
+            self.fail_json(
+                msg='Could not make backup of %s to %s: %s' % (fn, backupdest, e))
         return backupdest
 
-    def cleanup(self,tmpfile):
+    def cleanup(self, tmpfile):
         if os.path.exists(tmpfile):
             try:
                 os.unlink(tmpfile)
@@ -977,18 +1003,22 @@ class AnsibleModule(object):
                 context = self.selinux_default_context(dest)
 
         try:
-            # Optimistically try a rename, solves some corner cases and can avoid useless work, throws exception if not atomic.
+            # Optimistically try a rename, solves some corner cases and can
+            # avoid useless work, throws exception if not atomic.
             os.rename(src, dest)
-        except (IOError,OSError), e:
-            # only try workarounds for errno 18 (cross device), 1 (not permited) and 13 (permission denied)
+        except (IOError, OSError), e:
+            # only try workarounds for errno 18 (cross device), 1 (not
+            # permited) and 13 (permission denied)
             if e.errno != errno.EPERM and e.errno != errno.EXDEV and e.errno != errno.EACCES:
-                self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
+                self.fail_json(
+                    msg='Could not replace file: %s to %s: %s' % (src, dest, e))
 
             dest_dir = os.path.dirname(dest)
             dest_file = os.path.basename(dest)
-            tmp_dest = "%s/.%s.%s.%s" % (dest_dir,dest_file,os.getpid(),time.time())
+            tmp_dest = "%s/.%s.%s.%s" % (dest_dir,
+                                         dest_file, os.getpid(), time.time())
 
-            try: # leaves tmp file behind when sudo and  not root
+            try:  # leaves tmp file behind when sudo and  not root
                 if os.getenv("SUDO_USER") and os.getuid() != 0:
                     # cleanup will happen by 'rm' of tempdir
                     shutil.copy(src, tmp_dest)
@@ -999,7 +1029,8 @@ class AnsibleModule(object):
                 os.rename(tmp_dest, dest)
             except (shutil.Error, OSError, IOError), e:
                 self.cleanup(tmp_dest)
-                self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
+                self.fail_json(
+                    msg='Could not replace file: %s to %s: %s' % (src, dest, e))
 
         if self.selinux_enabled():
             # rename might not preserve context
@@ -1036,16 +1067,16 @@ class AnsibleModule(object):
 
         # expand things like $HOME and ~
         if not shell:
-            args = [ os.path.expandvars(os.path.expanduser(x)) for x in args ]
+            args = [os.path.expandvars(os.path.expanduser(x)) for x in args]
 
         rc = 0
         msg = None
         st_in = None
 
         # Set a temporart env path if a prefix is passed
-        env=os.environ
+        env = os.environ
         if path_prefix:
-            env['PATH']="%s:%s" % (path_prefix, env['PATH'])
+            env['PATH'] = "%s:%s" % (path_prefix, env['PATH'])
 
         # create a printable version of the command for use
         # in reporting later, which strips out things like
@@ -1055,15 +1086,16 @@ class AnsibleModule(object):
         else:
             clean_args = args
 
-        # all clean strings should return two match groups, 
-        # where the first is the CLI argument and the second 
+        # all clean strings should return two match groups,
+        # where the first is the CLI argument and the second
         # is the password/key/phrase that will be hidden
         clean_re_strings = [
             # this removes things like --password, --pass, --pass-wd, etc.
-            # optionally followed by an '=' or a space. The password can 
+            # optionally followed by an '=' or a space. The password can
             # be quoted or not too, though it does not care about quotes
             # that are not balanced
-            # source: http://blog.stevenlevithan.com/archives/match-quoted-string
+            # source:
+            # http://blog.stevenlevithan.com/archives/match-quoted-string
             r'([-]{0,2}pass[-]?(?:word|wd)?[=\s]?)((?:["\'])?(?:[^\s])*(?:\1)?)',
             # TODO: add more regex checks here
         ]
@@ -1078,9 +1110,9 @@ class AnsibleModule(object):
             executable=executable,
             shell=shell,
             close_fds=close_fds,
-            stdin= st_in,
+            stdin=st_in,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE 
+            stderr=subprocess.PIPE
         )
 
         if path_prefix:
@@ -1096,7 +1128,8 @@ class AnsibleModule(object):
             try:
                 os.chdir(cwd)
             except (OSError, IOError), e:
-                self.fail_json(rc=e.errno, msg="Could not open %s , %s" % (cwd, str(e)))
+                self.fail_json(
+                    rc=e.errno, msg="Could not open %s , %s" % (cwd, str(e)))
 
         try:
             cmd = subprocess.Popen(args, **kwargs)
@@ -1113,7 +1146,8 @@ class AnsibleModule(object):
 
         if rc != 0 and check_rc:
             msg = err.rstrip()
-            self.fail_json(cmd=clean_args, rc=rc, stdout=out, stderr=err, msg=msg)
+            self.fail_json(
+                cmd=clean_args, rc=rc, stdout=out, stderr=err, msg=msg)
 
         # reset the pwd
         os.chdir(prev_dir)
@@ -1126,19 +1160,18 @@ class AnsibleModule(object):
         fh.write(str)
         fh.close()
 
-    def pretty_bytes(self,size):
+    def pretty_bytes(self, size):
         ranges = (
-                (1<<70L, 'ZB'),
-                (1<<60L, 'EB'),
-                (1<<50L, 'PB'),
-                (1<<40L, 'TB'),
-                (1<<30L, 'GB'),
-                (1<<20L, 'MB'),
-                (1<<10L, 'KB'),
-                (1, 'Bytes')
-            )
+            (1 << 70L, 'ZB'),
+            (1 << 60L, 'EB'),
+            (1 << 50L, 'PB'),
+            (1 << 40L, 'TB'),
+            (1 << 30L, 'GB'),
+            (1 << 20L, 'MB'),
+            (1 << 10L, 'KB'),
+            (1, 'Bytes')
+        )
         for limit, suffix in ranges:
             if size >= limit:
                 break
-        return '%.2f %s' % (float(size)/ limit, suffix)
-
+        return '%.2f %s' % (float(size) / limit, suffix)

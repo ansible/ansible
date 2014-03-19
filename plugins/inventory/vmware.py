@@ -33,11 +33,11 @@ def save_cache(cache_item, data, config):
     ''' saves item to cache '''
     dpath = config.get('defaults', 'cache_dir')
     try:
-        cache = open('/'.join([dpath,cache_item]), 'w')
+        cache = open('/'.join([dpath, cache_item]), 'w')
         cache.write(json.dumps(data))
         cache.close()
     except IOError, e:
-        pass # not really sure what to do here
+        pass  # not really sure what to do here
 
 
 def get_cache(cache_item, config):
@@ -45,13 +45,14 @@ def get_cache(cache_item, config):
     dpath = config.get('defaults', 'cache_dir')
     inv = {}
     try:
-        cache = open('/'.join([dpath,cache_item]), 'r')
+        cache = open('/'.join([dpath, cache_item]), 'r')
         inv = json.loads(cache.read())
         cache.close()
     except IOError, e:
-        pass # not really sure what to do here
+        pass  # not really sure what to do here
 
     return inv
+
 
 def cache_available(cache_item, config):
     ''' checks if we have a 'fresh' cache available for item requested '''
@@ -60,7 +61,7 @@ def cache_available(cache_item, config):
         dpath = config.get('defaults', 'cache_dir')
 
         try:
-            existing = os.stat( '/'.join([dpath,cache_item]))
+            existing = os.stat('/'.join([dpath, cache_item]))
         except:
             # cache doesn't exist or isn't accessible
             return False
@@ -73,21 +74,22 @@ def cache_available(cache_item, config):
 
     return False
 
+
 def get_host_info(host):
     ''' Get variables about a specific host '''
 
     hostinfo = {
-                'vmware_name' : host.name,
-                'vmware_tag' : host.tag,
-                'vmware_parent': host.parent.name,
-               }
+        'vmware_name': host.name,
+        'vmware_tag': host.tag,
+        'vmware_parent': host.parent.name,
+    }
     for k in host.capability.__dict__.keys():
         if k.startswith('_'):
-           continue
+            continue
         try:
             hostinfo['vmware_' + k] = str(host.capability[k])
         except:
-           continue
+            continue
 
     return hostinfo
 
@@ -96,9 +98,9 @@ def get_inventory(client, config):
     ''' Reads the inventory from cache or vmware api '''
 
     if cache_available('inventory', config):
-        inv = get_cache('inventory',config)
+        inv = get_cache('inventory', config)
     else:
-        inv= { 'all': {'hosts': []}, '_meta': { 'hostvars': {} } }
+        inv = {'all': {'hosts': []}, '_meta': {'hostvars': {}}}
         default_group = os.path.basename(sys.argv[0]).rstrip('.py')
 
         if config.has_option('defaults', 'guests_only'):
@@ -107,14 +109,14 @@ def get_inventory(client, config):
             guests_only = True
 
         if not guests_only:
-            if config.has_option('defaults','hw_group'):
-                hw_group = config.get('defaults','hw_group')
+            if config.has_option('defaults', 'hw_group'):
+                hw_group = config.get('defaults', 'hw_group')
             else:
                 hw_group = default_group + '_hw'
             inv[hw_group] = []
 
-        if config.has_option('defaults','vm_group'):
-            vm_group = config.get('defaults','vm_group')
+        if config.has_option('defaults', 'vm_group'):
+            vm_group = config.get('defaults', 'vm_group')
         else:
             vm_group = default_group + '_vm'
         inv[vm_group] = []
@@ -130,10 +132,11 @@ def get_inventory(client, config):
                     if taggroup in inv:
                         inv[taggroup].append(host.name)
                     else:
-                        inv[taggroup] = [ host.name ]
+                        inv[taggroup] = [host.name]
 
                 inv['_meta']['hostvars'][host.name] = get_host_info(host)
-                save_cache(vm.name, inv['_meta']['hostvars'][host.name], config)
+                save_cache(
+                    vm.name, inv['_meta']['hostvars'][host.name], config)
 
             for vm in host.vm:
                 inv['all']['hosts'].append(vm.name)
@@ -143,7 +146,7 @@ def get_inventory(client, config):
                     if taggroup in inv:
                         inv[taggroup].append(vm.name)
                     else:
-                        inv[taggroup] = [ vm.name ]
+                        inv[taggroup] = [vm.name]
 
                 inv['_meta']['hostvars'][vm.name] = get_host_info(host)
                 save_cache(vm.name, inv['_meta']['hostvars'][vm.name], config)
@@ -151,14 +154,15 @@ def get_inventory(client, config):
     save_cache('inventory', inv, config)
     return json.dumps(inv)
 
+
 def get_single_host(client, config, hostname):
 
     inv = {}
 
     if cache_available(hostname, config):
-        inv = get_cache(hostname,config)
+        inv = get_cache(hostname, config)
     else:
-        hosts = HostSystem.all(client) #TODO: figure out single host getter
+        hosts = HostSystem.all(client)  # TODO: figure out single host getter
         for host in hosts:
             if hostname == host.name:
                 inv = get_host_info(host)
@@ -167,7 +171,7 @@ def get_single_host(client, config, hostname):
                 if hostname == vm.name:
                     inv = get_host_info(host)
                     break
-        save_cache(hostname,inv,config)
+        save_cache(hostname, inv, config)
 
     return json.dumps(inv)
 
@@ -187,13 +191,13 @@ if __name__ == '__main__':
             break
 
     try:
-        client =  Client( config.get('auth','host'),
-                          config.get('auth','user'),
-                          config.get('auth','password'),
+        client = Client(config.get('auth', 'host'),
+                        config.get('auth', 'user'),
+                        config.get('auth', 'password'),
                         )
     except Exception, e:
         client = None
-        #print >> STDERR "Unable to login (only cache avilable): %s", str(e)
+        # print >> STDERR "Unable to login (only cache avilable): %s", str(e)
 
     # acitually do the work
     if hostname is None:

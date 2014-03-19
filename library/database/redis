@@ -145,7 +145,7 @@ def flush(client, db=None):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
+        argument_spec=dict(
             command=dict(default=None, choices=['slave', 'flush']),
             login_password=dict(default=None),
             login_host=dict(default='localhost'),
@@ -156,7 +156,7 @@ def main():
             db=dict(default=None),
             flush_mode=dict(default='all', choices=['all', 'db']),
         ),
-        supports_check_mode = True
+        supports_check_mode=True
     )
 
     if not redis_found:
@@ -177,15 +177,15 @@ def main():
             pass
         mode = module.params['slave_mode']
 
-        #Check if we ahve all the data
+        # Check if we ahve all the data
         if mode == "slave":  # Only need data if we want to be slave
             if not master_host:
                 module.fail_json(
-                            msg='In slave mode master host must be provided')
+                    msg='In slave mode master host must be provided')
 
             if not master_port:
                 module.fail_json(
-                            msg='In slave mode master port must be provided')
+                    msg='In slave mode master port must be provided')
 
         #Connect and check
         r = redis.StrictRedis(host=login_host,
@@ -196,15 +196,15 @@ def main():
         except Exception, e:
             module.fail_json(msg="unable to connect to database: %s" % e)
 
-        #Check if we are already in the mode that we want
+        # Check if we are already in the mode that we want
         info = r.info()
         if mode == "master" and info["role"] == "master":
             module.exit_json(changed=False, mode=mode)
 
         elif mode == "slave" and\
-             info["role"] == "slave" and\
-             info["master_host"] == master_host and\
-             info["master_port"] == master_port:
+                info["role"] == "slave" and\
+                info["master_host"] == master_host and\
+                info["master_port"] == master_port:
             status = {
                 'status': mode,
                 'master_host': master_host,
@@ -242,11 +242,11 @@ def main():
             db = 0
         mode = module.params['flush_mode']
 
-        #Check if we have all the data
+        # Check if we have all the data
         if mode == "db":
             if type(db) != int:
                 module.fail_json(
-                            msg="In db mode the db number must be provided")
+                    msg="In db mode the db number must be provided")
 
         #Connect and check
         r = redis.StrictRedis(host=login_host,
