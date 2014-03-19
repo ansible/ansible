@@ -143,7 +143,8 @@ import re
 import tempfile
 
 def write_ssh_wrapper():
-    fd, wrapper_path = tempfile.mkstemp()
+    module_dir = get_module_path()
+    fd, wrapper_path = tempfile.mkstemp(prefix=module_dir + '/')
     fh = os.fdopen(fd, 'w+b')
     template = """#!/bin/sh
 if [ -z "$GIT_SSH_OPTS" ]; then
