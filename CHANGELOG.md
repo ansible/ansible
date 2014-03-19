@@ -18,6 +18,7 @@ New Modules:
 * notification: nexmo (SMS)
 * notification: twilio (SMS)
 * notification: slack (Slack.com)
+* notification: typetalk (Typetalk.in)
 * system: debconf
 * system: ufw
 * system: locale_gen
