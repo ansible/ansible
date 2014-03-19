@@ -36,7 +36,7 @@ class CallbackModule(object):
         HIPCHAT_TOKEN (required): HipChat API token
         HIPCHAT_ROOM  (optional): HipChat room to post in. Default: ansible
         HIPCHAT_FROM  (optional): Name to post as. Default: ansible
-        HIPCHAT_NOTIFY (optional): Add notify flag to important messages ("true" or "false"). Default: false
+        HIPCHAT_NOTIFY (optional): Add notify flag to important messages ("true" or "false"). Default: true
 
     Requires:
         prettytable
@@ -53,7 +53,8 @@ class CallbackModule(object):
         self.token = os.getenv('HIPCHAT_TOKEN')
         self.room = os.getenv('HIPCHAT_ROOM', 'ansible')
         self.from_name = os.getenv('HIPCHAT_FROM', 'ansible')
-        self.allow_notify = (os.getenv('HIPCHAT_NOTIFY') == 'true')
+        self.allow_notify = (os.getenv('HIPCHAT_NOTIFY') != 'false')
+        print(self.allow_notify)
 
         if self.token is None:
             self.disabled = True
