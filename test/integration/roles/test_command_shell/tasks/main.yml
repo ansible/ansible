@@ -168,3 +168,25 @@
   assert:
     that:
       - "shell_result4.changed == False"
+
+# shell arguments
+
+- name: verify that test is absent
+  file: path={{output_dir_test}}/test_argument state=absent
+
+- name: echo to file to verify arguments are not passed
+  shell: "echo -e -n \"test\n\ttest2\" >> {{output_dir_test}}/test_argument creates={{output_dir_test}}/test_argument"
+  register: shell_result5
+
+- name: check content of new file
+  stat: path={{output_dir_test}}/test_argument
+  register: shell_result5_content
+
+- name: assert that file was created with the correct content by shell
+  assert:
+    that:
+      - "shell_result5.changed == True"
+      # md5 with arguments -e -n in file
+      - "shell_result5_content.md5 != '3deebb24bbffcff9e67cce730d03720b'"
+      # md5 without arguments
+      - "shell_result5_content.md5 == '33ebed900f7cdb5b387cb763bbd8486f'"
