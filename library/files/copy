@@ -126,7 +126,7 @@ def adjust_recursive_directory_permissions(pre_existing_dir, new_directory_list,
     if len(new_directory_list) > 0:
         working_dir = os.path.join(pre_existing_dir, new_directory_list.pop(0))
         directory_args['path'] = working_dir
-        changed = module.set_directory_attributes_if_different(directory_args, changed)
+        changed = module.set_fs_attributes_if_different(directory_args, changed)
         changed = adjust_recursive_directory_permissions(working_dir, new_directory_list, module, directory_args, changed)
     return changed
 
@@ -225,7 +225,7 @@ def main():
 
     module.params['dest'] = dest
     file_args = module.load_file_common_arguments(module.params)
-    res_args['changed'] = module.set_file_attributes_if_different(file_args, res_args['changed'])
+    res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'])
 
     module.exit_json(**res_args)
 

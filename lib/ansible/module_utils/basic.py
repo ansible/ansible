@@ -483,12 +483,6 @@ class AnsibleModule(object):
         )
         return changed
 
-    def set_directory_attributes_if_different(self, file_args, changed):
-        return self.set_fs_attributes_if_different(file_args, changed)
-
-    def set_file_attributes_if_different(self, file_args, changed):
-        return self.set_fs_attributes_if_different(file_args, changed)
-
     def add_path_info(self, kwargs):
         '''
         for results that are files, supplement the info about the file

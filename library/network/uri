@@ -409,7 +409,7 @@ def main():
             module.params['path'] = dest
             file_args = module.load_file_common_arguments(module.params)
             file_args['path'] = dest
-            changed = module.set_file_attributes_if_different(file_args, changed)
+            changed = module.set_fs_attributes_if_different(file_args, changed)
         resp['path'] = dest
     else:
         changed = False
