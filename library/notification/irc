@@ -51,8 +51,8 @@ options:
     description:
       - Text color for the message. Default is black.
     required: false
-    default: black
-    choices: [ "yellow", "red", "green", "blue", "black" ]
+    default: none
+    choices: [ "none", "yellow", "red", "green", "blue", "black" ]
   channel:
     description:
       - Channel name
@@ -94,7 +94,7 @@ from time import sleep
 
 
 def send_msg(channel, msg, server='localhost', port='6667',
-             nick="ansible", color='black', passwd=False, timeout=30):
+             nick="ansible", color='none', passwd=False, timeout=30):
     '''send message to IRC'''
 
     colornumbers = {
@@ -107,10 +107,11 @@ def send_msg(channel, msg, server='localhost', port='6667',
 
     try:
         colornumber = colornumbers[color]
+        colortext = "\x03" + colornumber
     except:
-        colornumber = "01"  # black
+        colortext = ""
 
-    message = "\x03" + colornumber + msg
+    message = colortext + msg
 
     irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     irc.connect((server, int(port)))
@@ -162,8 +163,8 @@ def main():
             port=dict(default=6667),
             nick=dict(default='ansible'),
             msg=dict(required=True),
-            color=dict(default="black", choices=["yellow", "red", "green",
-                                                 "blue", "black"]),
+            color=dict(default="none", choices=["yellow", "red", "green",
+                                                 "blue", "black", "none"]),
             channel=dict(required=True),
             passwd=dict(),
             timeout=dict(type='int', default=30)
