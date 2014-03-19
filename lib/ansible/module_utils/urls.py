@@ -137,8 +137,9 @@ class SSLValidationHandler(urllib2.BaseHandler):
 
         tmp_fd, tmp_path = tempfile.mkstemp()
 
-        # Write the dummy ca cert
-        os.write(tmp_fd, DUMMY_CA_CERT)
+        # Write the dummy ca cert if we are running on Mac OS X
+        if platform == 'Darwin':
+            os.write(tmp_fd, DUMMY_CA_CERT)
 
         # for all of the paths, find any  .crt or .pem files
         # and compile them into single temp file for use
