@@ -977,11 +977,16 @@ class AnsibleModule(object):
             try: # leaves tmp file behind when sudo and  not root
                 if os.getenv("SUDO_USER") and os.getuid() != 0:
                     # cleanup will happen by 'rm' of tempdir
-                    shutil.copy(src, tmp_dest)
+                    # copy2 will preserve some metadata
+                    shutil.copy2(src, tmp_dest)
                 else:
                     shutil.move(src, tmp_dest)
                 if self.selinux_enabled():
-                    self.set_context_if_different(tmp_dest, context, False)
+                    self.set_context_if_different(
+                        tmp_dest, context, False)
+                # Reset owners, they are not preserved by shutil.copy2(), which
+                # is what shutil.move() falls back to.
+                os.chown(tmp_dest, st.st_uid, st.st_gid)
                 os.rename(tmp_dest, dest)
             except (shutil.Error, OSError, IOError), e:
                 self.cleanup(tmp_dest)
