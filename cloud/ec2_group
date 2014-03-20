@@ -145,6 +145,7 @@ def get_target_from_rule(rule, name, groups):
     group_id = None
     group_name = None
     ip = None
+    target_group_created = False
     if 'group_id' in rule and 'cidr_ip' in rule:
         module.fail_json(msg="Specify group_id OR cidr_ip, not both")
     elif 'group_name' in rule and 'cidr_ip' in rule:
@@ -161,10 +162,19 @@ def get_target_from_rule(rule, name, groups):
             group_id = group.id
             groups[group_id] = group
             groups[group_name] = group
+        else:
+            if not rule.get('group_desc', '').strip():
+                module.fail_json(msg="group %s will be automatically created by rule %s and no description was provided" % (group_name, rule))
+            if not module.check_mode:
+                auto_group = ec2.create_security_group(group_name, rule['group_desc'], vpc_id=vpc_id)
+                group_id = auto_group.id
+                groups[group_id] = auto_group
+                groups[group_name] = auto_group
+            target_group_created = True
     elif 'cidr_ip' in rule:
         ip = rule['cidr_ip']
 
-    return group_id, ip
+    return group_id, ip, target_group_created
 
 
 def main():
@@ -252,7 +262,9 @@ def main():
         # Now, go through all provided rules and ensure they are there.
         if rules:
             for rule in rules:
-                group_id, ip = get_target_from_rule(rule, name, groups)
+                group_id, ip, target_group_created = get_target_from_rule(rule, name, groups)
+                if target_group_created:
+                    changed = True
 
                 if rule['proto'] == 'all':
                     rule['proto'] = -1
@@ -290,7 +302,9 @@ def main():
         # Now, go through all provided rules and ensure they are there.
         if rules_egress:
             for rule in rules_egress:
-                group_id, ip = get_target_from_rule(rule, name, groups)
+                group_id, ip, target_group_created = get_target_from_rule(rule, name, groups)
+                if target_group_created:
+                    changed = True
 
                 if rule['proto'] == 'all':
                     rule['proto'] = -1
