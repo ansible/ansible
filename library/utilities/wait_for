@@ -189,7 +189,6 @@ def main():
                         f.close()
                 except IOError:
                     time.sleep(1)
-                    pass
             elif port:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 s.settimeout(connect_timeout)
@@ -200,7 +199,6 @@ def main():
                     break
                 except:
                     time.sleep(1)
-                    pass
         else:
             elapsed = datetime.datetime.now() - start
             if port:
