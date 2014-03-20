@@ -533,7 +533,7 @@ class Runner(object):
     def _executor_internal(self, host, new_stdin):
         ''' executes any module one or more times '''
 
-        host_variables = self.inventory.get_variables(host, vault_password=self.vault_pass)
+        host_variables = self.inventory.get_variables(host, pattern=self.pattern, vault_password=self.vault_pass)
         host_connection = host_variables.get('ansible_connection', self.transport)
         if host_connection in [ 'paramiko', 'ssh', 'accelerate' ]:
             port = host_variables.get('ansible_ssh_port', self.remote_port)

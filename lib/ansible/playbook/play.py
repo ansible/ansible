@@ -751,7 +751,7 @@ class Play(object):
 
         if host is not None:
             inject = {}
-            inject.update(self.playbook.inventory.get_variables(host, vault_password=vault_password))
+            inject.update(self.playbook.inventory.get_variables(host, pattern=self.hosts, vault_password=vault_password))
             inject.update(self.playbook.SETUP_CACHE[host])
 
         for filename in self.vars_files:
