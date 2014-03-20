@@ -135,6 +135,7 @@ def main():
             description=dict(required=True),
             vpc_id=dict(),
             rules=dict(),
+            rules_egress=dict(),
             state = dict(default='present', choices=['present', 'absent']),
         )
     )
@@ -147,6 +148,7 @@ def main():
     description = module.params['description']
     vpc_id = module.params['vpc_id']
     rules = module.params['rules']
+    rules_egress = module.params['rules_egress']
     state = module.params.get('state')
 
     changed = False
@@ -203,6 +205,8 @@ def main():
 
     # create a lookup for all existing rules on the group
     if group:
+
+        # Manage ingress rules
         groupRules = {}
         addRulesToLookup(group.rules, 'in', groupRules)
 
@@ -258,6 +262,76 @@ def main():
                     grantGroup = groups[grant.group_id]
                 if not module.check_mode:
                     group.revoke(rule.ip_protocol, rule.from_port, rule.to_port, grant.cidr_ip, grantGroup)
+                changed = True
+
+        # Manage egress rules
+        groupRules = {}
+        addRulesToLookup(group.rules_egress, 'out', groupRules)
+
+        # Now, go through all provided rules and ensure they are there.
+        if rules_egress:
+            for rule in rules_egress:
+                group_id = None
+                group_name = None
+                ip = None
+                if 'group_id' in rule and 'cidr_ip' in rule:
+                    module.fail_json(msg="Specify group_id OR cidr_ip, not both")
+                elif 'group_name' in rule and 'cidr_ip' in rule:
+                    module.fail_json(msg="Specify group_name OR cidr_ip, not both")
+                elif 'group_id' in rule and 'group_name' in rule:
+                    module.fail_json(msg="Specify group_id OR group_name, not both")
+                elif 'group_id' in rule:
+                    group_id = rule['group_id']
+                elif 'group_name' in rule:
+                    group_name = rule['group_name']
+                    if group_name in groups:
+                        group_id = groups[group_name].id
+                    elif group_name == name:
+                        group_id = group.id
+                        groups[group_id] = group
+                        groups[group_name] = group
+                elif 'cidr_ip' in rule:
+                    ip = rule['cidr_ip']
+
+                if rule['proto'] == 'all':
+                    rule['proto'] = -1
+                    rule['from_port'] = None
+                    rule['to_port'] = None
+
+                # If rule already exists, don't later delete it
+                ruleId = "%s-%s-%s-%s-%s-%s" % ('out', rule['proto'], rule['from_port'], rule['to_port'], group_id, ip)
+                if ruleId in groupRules:
+                    del groupRules[ruleId]
+                # Otherwise, add new rule
+                else:
+                    grantGroup = None
+                    if group_id:
+                        grantGroup = groups[group_id].id
+
+                    if not module.check_mode:
+                        ec2.authorize_security_group_egress(
+                                group_id=group.id,
+                                ip_protocol=rule['proto'],
+                                from_port=rule['from_port'],
+                                to_port=rule['to_port'],
+                                src_group_id=grantGroup,
+                                cidr_ip=ip)
+                    changed = True
+
+        # Finally, remove anything left in the groupRules -- these will be defunct rules
+        for rule in groupRules.itervalues():
+            for grant in rule.grants:
+                grantGroup = None
+                if grant.group_id:
+                    grantGroup = groups[grant.group_id].id
+                if not module.check_mode:
+                    ec2.revoke_security_group_egress(
+                            group_id=group.id,
+                            ip_protocol=rule.ip_protocol,
+                            from_port=rule.from_port,
+                            to_port=rule.to_port,
+                            src_group_id=grantGroup,
+                            cidr_ip=grant.cidr_ip)
                 changed = True
 
     if group:
