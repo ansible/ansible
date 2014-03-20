@@ -425,7 +425,7 @@ class TestInventory(unittest.TestCase):
 
         expected_vars = {'inventory_hostname': 'zeus',
                          'inventory_hostname_short': 'zeus',
-                         'group_names': ['greek', 'major-god', 'ungrouped'],
+                         'group_names': ['greek', 'major-god'],
                          'var_a': '3#4'}
 
         print "HOST     VARS=%s" % host_vars
