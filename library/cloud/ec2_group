@@ -24,7 +24,11 @@ options:
     required: false
   rules:
     description:
-      - List of firewall rules to enforce in this group (see example).
+      - List of firewall inbound rules to enforce in this group (see example).
+    required: false
+  rules_egress:
+    description:
+      - List of firewall outbound rules to enforce in this group (see example).
     required: false
   region:
     description:
@@ -112,6 +116,11 @@ EXAMPLES = '''
         group_id: sg-12345678
       - proto: all
         # the containing group name may be specified here
+        group_name: example
+    rules_egress:
+      - proto: tcp
+        from_port: 80
+        to_port: 80
         group_name: example
 '''
 
