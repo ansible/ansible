@@ -170,7 +170,7 @@ options:
     default: null
     aliases: []
   assign_public_ip:
-    version_added: "1.4"
+    version_added: "1.5"
     description:
       - when provisioning within vpc, assign a public IP address. Boto library must be 2.13.0+
     required: false
