@@ -25,8 +25,6 @@
 import traceback
 import os
 import yum
-import re
-from distutils.version import LooseVersion
 
 try:
     from yum.misc import find_unfinished_transactions, find_ts_remaining
@@ -686,32 +684,18 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
             else:
                 basecmd = 'install'
 
-            pkglist = what_provides(module, repoq, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos)
-            tmp_pkgs = sorted(pkglist,key=LooseVersion, reverse=True)
             pkglist = []
-            last_pkg = False
-            for pkg in tmp_pkgs:
-                name = re.search('^([\w\.\+-]+)-.+-.+\..+$',pkg).group(1)
-                if name != last_pkg:
-                    last_pkg = name
-                    pkglist.append(pkg)
-            if not pkglist:
-                res['msg'] += "No Package matching '%s' found available, installed or updated" % spec
-                module.fail_json(**res)
-            
-            nothing_to_do = True
-            for this in pkglist:
-                if basecmd == 'install' and is_available(module, repoq, this, conf_file, en_repos=en_repos, dis_repos=dis_repos):
-                    nothing_to_do = False
-                    break
-                    
-                if basecmd == 'update' and is_update(module, repoq, this, conf_file, en_repos=en_repos, dis_repos=en_repos):
-                    nothing_to_do = False
-                    break
-                    
-            if nothing_to_do:
-                res['results'].append("All packages providing %s are up to date" % spec)
-                continue
+            if basecmd == 'install':
+                pkglist = is_available(module, repoq, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos)
+                if not pkglist:
+                    res['msg'] += "No Package matching '%s' found available, installed or updated" % spec
+                    module.fail_json(**res)
+
+            if basecmd == 'update':
+                pkglist = is_update(module, repoq, spec, conf_file, en_repos=en_repos, dis_repos=en_repos)
+                if not pkglist:
+                    res['results'].append("All packages providing %s are up to date" % spec)
+                    continue
 
             # if any of the packages are involved in a transaction, fail now
             # so that we don't hang on the yum operation later
