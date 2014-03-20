@@ -248,6 +248,12 @@ def main():
             '''no match found, create it'''
             if not module.check_mode:
                 group = ec2.create_security_group(name, description, vpc_id=vpc_id)
+
+                # When a group is created, an egress_rule ALLOW ALL
+                # to 0.0.0.0/0 is added automatically but it's not
+                # reflected in the object returned by the AWS API
+                # call. We re-read the group for getting an updated object
+                group = ec2.get_all_security_groups(group_ids=(group.id,))[0]
             changed = True
     else:
         module.fail_json(msg="Unsupported state requested: %s" % state)
