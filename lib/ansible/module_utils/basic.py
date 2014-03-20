@@ -55,6 +55,7 @@ import types
 import time
 import shutil
 import stat
+import tempfile
 import traceback
 import grp
 import pwd
@@ -972,24 +973,25 @@ class AnsibleModule(object):
 
             dest_dir = os.path.dirname(dest)
             dest_file = os.path.basename(dest)
-            tmp_dest = "%s/.%s.%s.%s" % (dest_dir,dest_file,os.getpid(),time.time())
+            tmp_dest = tempfile.NamedTemporaryFile(
+                prefix=".ansible_tmp", dir=dest_dir, suffix=dest_file)
 
             try: # leaves tmp file behind when sudo and  not root
                 if os.getenv("SUDO_USER") and os.getuid() != 0:
                     # cleanup will happen by 'rm' of tempdir
                     # copy2 will preserve some metadata
-                    shutil.copy2(src, tmp_dest)
+                    shutil.copy2(src, tmp_dest.name)
                 else:
-                    shutil.move(src, tmp_dest)
+                    shutil.move(src, tmp_dest.name)
                 if self.selinux_enabled():
                     self.set_context_if_different(
-                        tmp_dest, context, False)
+                        tmp_dest.name, context, False)
                 # Reset owners, they are not preserved by shutil.copy2(), which
                 # is what shutil.move() falls back to.
-                os.chown(tmp_dest, st.st_uid, st.st_gid)
-                os.rename(tmp_dest, dest)
+                os.chown(tmp_dest.name, st.st_uid, st.st_gid)
+                os.rename(tmp_dest.name, dest)
             except (shutil.Error, OSError, IOError), e:
-                self.cleanup(tmp_dest)
+                self.cleanup(tmp_dest.name)
                 self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
 
         if self.selinux_enabled():
