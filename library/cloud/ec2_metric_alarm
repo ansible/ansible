@@ -15,10 +15,8 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 DOCUMENTATION = """
-
----
 module: ec2_metric_alarm
-short_description: Create/update or delete AWS Cloudwatch 'metric alarms'
+short_description: "Create/update or delete AWS Cloudwatch 'metric alarms'"
 description:
  - Can create or delete AWS metric alarms
  - Metrics you wish to alarm on must already exist
@@ -93,8 +91,6 @@ options:
         description:
           - A list of the names of action(s) to take when the alarm is in the 'ok' status
         required: false
-
----
 """
 
 EXAMPLES = '''

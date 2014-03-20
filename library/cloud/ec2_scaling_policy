@@ -1,8 +1,7 @@
 #!/usr/bin/python
 
 DOCUMENTATION = """
----
-module:ec2_scaling_policy
+module: ec2_scaling_policy
 short_description: Create or delete AWS scaling policies for Autoscaling groups
 description:
   - Can create or delete scaling policies for autoscaling groups
