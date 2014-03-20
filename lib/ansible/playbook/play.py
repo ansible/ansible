@@ -777,6 +777,7 @@ class Play(object):
                             if self._has_vars_in(filename2) and not self._has_vars_in(filename3):
                                 # this filename has variables in it that were fact specific
                                 # so it needs to be loaded into the per host SETUP_CACHE
+                                data = utils.combine_vars(inject, data)
                                 self.playbook.SETUP_CACHE[host].update(data)
                                 self.playbook.callbacks.on_import_for_host(host, filename4)
                         elif not self._has_vars_in(filename4):
@@ -809,6 +810,7 @@ class Play(object):
                     if host is not None and self._has_vars_in(filename2) and not self._has_vars_in(filename3):
                         # running a host specific pass and has host specific variables
                         # load into setup cache
+                        new_vars = utils.combine_vars(inject, new_vars)
                         self.playbook.SETUP_CACHE[host] = utils.combine_vars(
                             self.playbook.SETUP_CACHE[host], new_vars)
                         self.playbook.callbacks.on_import_for_host(host, filename4)
