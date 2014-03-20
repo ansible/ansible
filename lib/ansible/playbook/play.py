@@ -142,6 +142,8 @@ class Play(object):
         self._tasks      = self._load_tasks(self._ds.get('tasks', []), load_vars)
         self._handlers   = self._load_tasks(self._ds.get('handlers', []), load_vars)
 
+        # apply any missing tags to role tasks
+        self._late_merge_role_tags()
 
         if self.sudo_user != 'root':
             self.sudo = True
@@ -709,6 +711,31 @@ class Play(object):
         unmatched_tags = all_tags_set - tags_set
 
         return matched_tags, unmatched_tags
+
+    # *************************************************
+
+    def _late_merge_role_tags(self):
+        # build a local dict of tags for roles
+        role_tags = {}
+        for task in self._ds['tasks']:
+            if 'role_name' in task:
+                this_role = task['role_name']
+
+                if this_role not in role_tags:
+                    role_tags[this_role] = []
+
+                if 'tags' in task['vars']:
+                    if isinstance(task['vars']['tags'], basestring):
+                        role_tags[task['role_name']] += shlex.split(task['vars']['tags'])
+                    else:
+                        role_tags[task['role_name']] += task['vars']['tags']
+
+        # apply each role's tags to it's tasks
+        for idx, val in enumerate(self._tasks):
+            if hasattr(val, 'role_name'):
+                this_role = val.role_name
+                if this_role in role_tags:
+                    self._tasks[idx].tags = sorted(set(self._tasks[idx].tags + role_tags[this_role]))
 
     # *************************************************
 
