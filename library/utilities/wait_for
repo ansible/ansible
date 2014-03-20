@@ -19,6 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import datetime
+import os.path
 import re
 import socket
 import time
@@ -175,19 +176,23 @@ def main():
         end = start + datetime.timedelta(seconds=timeout)
         while datetime.datetime.now() < end:
             if path:
-                try:
-                    f = open(path)
-                    try:
-                        if search_regex:
-                            if re.search(search_regex, f.read(), re.MULTILINE):
-                                break
-                            else:
-                                time.sleep(1)
-                        else:
-                            break
-                    finally:
-                        f.close()
-                except IOError:
+                if os.path.exists(path):
+                    if search_regex:
+                        try:
+                            f = open(path)
+                            try:
+                                if re.search(search_regex, f.read(),
+                                             re.MULTILINE):
+                                    break
+                                else:
+                                    time.sleep(1)
+                            finally:
+                                f.close()
+                        except IOError:
+                            module.fail_json(msg="Regex can't be searched because %s is not a regular file." % path)
+                    else:
+                        break
+                else:
                     time.sleep(1)
             elif port:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
