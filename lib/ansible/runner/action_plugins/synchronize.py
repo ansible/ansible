@@ -30,7 +30,10 @@ class ActionModule(object):
     def _process_origin(self, host, path, user):
 
         if not host in ['127.0.0.1', 'localhost']:
-            return '%s@%s:%s' % (user, host, path)
+            if user:
+                return '%s@%s:%s' % (user, host, path)
+            else:
+                return '%s:%s' % (host, path)
         else:
             return path
 
@@ -38,7 +41,10 @@ class ActionModule(object):
         transport = self.runner.transport
         return_data = None
         if not host in ['127.0.0.1', 'localhost'] or transport != "local":
-            return_data = '%s@%s:%s' % (user, host, path)
+            if user:
+                return_data = '%s@%s:%s' % (user, host, path)
+            else:
+                return_data = '%s:%s' % (host, path)
         else:
             return_data = path
 
@@ -122,13 +128,14 @@ class ActionModule(object):
         if process_args or use_delegate:
 
             user = None
-            if use_delegate:
-                user = inject['hostvars'][conn.delegate].get('ansible_ssh_user')
+            if utils.boolean(options.get('set_remote_user', 'yes')):
+                if use_delegate:
+                    user = inject['hostvars'][conn.delegate].get('ansible_ssh_user')
 
-            if not use_delegate or not user:
-                user = inject.get('ansible_ssh_user',
-                                self.runner.remote_user)
-
+                if not use_delegate or not user:
+                    user = inject.get('ansible_ssh_user',
+                                    self.runner.remote_user)
+                
             if use_delegate:
                 # FIXME
                 private_key = inject.get('ansible_ssh_private_key_file', self.runner.private_key_file)
