@@ -21,7 +21,6 @@
 import socket
 import datetime
 import time
-import sys
 import re
 
 DOCUMENTATION = '''
