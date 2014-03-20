@@ -128,6 +128,45 @@ def addRulesToLookup(rules, prefix, dict):
             dict["%s-%s-%s-%s-%s-%s" % (prefix, rule.ip_protocol, rule.from_port, rule.to_port,
                                         grant.group_id, grant.cidr_ip)] = rule
 
+
+def get_target_from_rule(rule, name, groups):
+    """
+    Returns tuple of (group_id, ip) after validating rule params.
+
+    rule: Dict describing a rule.
+    name: Name of the security group being managed.
+    groups: Dict of all available security groups.
+
+    AWS accepts an ip range or a security group as target of a rule. This
+    function validate the rule specification and return either a non-None
+    group_id or a non-None ip range.
+    """
+
+    group_id = None
+    group_name = None
+    ip = None
+    if 'group_id' in rule and 'cidr_ip' in rule:
+        module.fail_json(msg="Specify group_id OR cidr_ip, not both")
+    elif 'group_name' in rule and 'cidr_ip' in rule:
+        module.fail_json(msg="Specify group_name OR cidr_ip, not both")
+    elif 'group_id' in rule and 'group_name' in rule:
+        module.fail_json(msg="Specify group_id OR group_name, not both")
+    elif 'group_id' in rule:
+        group_id = rule['group_id']
+    elif 'group_name' in rule:
+        group_name = rule['group_name']
+        if group_name in groups:
+            group_id = groups[group_name].id
+        elif group_name == name:
+            group_id = group.id
+            groups[group_id] = group
+            groups[group_name] = group
+    elif 'cidr_ip' in rule:
+        ip = rule['cidr_ip']
+
+    return group_id, ip
+
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
@@ -213,27 +252,7 @@ def main():
         # Now, go through all provided rules and ensure they are there.
         if rules:
             for rule in rules:
-                group_id = None
-                group_name = None
-                ip = None
-                if 'group_id' in rule and 'cidr_ip' in rule:
-                    module.fail_json(msg="Specify group_id OR cidr_ip, not both")
-                elif 'group_name' in rule and 'cidr_ip' in rule:
-                    module.fail_json(msg="Specify group_name OR cidr_ip, not both")
-                elif 'group_id' in rule and 'group_name' in rule:
-                    module.fail_json(msg="Specify group_id OR group_name, not both")
-                elif 'group_id' in rule:
-                    group_id = rule['group_id']
-                elif 'group_name' in rule:
-                    group_name = rule['group_name']
-                    if group_name in groups:
-                        group_id = groups[group_name].id
-                    elif group_name == name:
-                        group_id = group.id
-                        groups[group_id] = group
-                        groups[group_name] = group
-                elif 'cidr_ip' in rule:
-                    ip = rule['cidr_ip']
+                group_id, ip = get_target_from_rule(rule, name, groups)
 
                 if rule['proto'] == 'all':
                     rule['proto'] = -1
@@ -271,27 +290,7 @@ def main():
         # Now, go through all provided rules and ensure they are there.
         if rules_egress:
             for rule in rules_egress:
-                group_id = None
-                group_name = None
-                ip = None
-                if 'group_id' in rule and 'cidr_ip' in rule:
-                    module.fail_json(msg="Specify group_id OR cidr_ip, not both")
-                elif 'group_name' in rule and 'cidr_ip' in rule:
-                    module.fail_json(msg="Specify group_name OR cidr_ip, not both")
-                elif 'group_id' in rule and 'group_name' in rule:
-                    module.fail_json(msg="Specify group_id OR group_name, not both")
-                elif 'group_id' in rule:
-                    group_id = rule['group_id']
-                elif 'group_name' in rule:
-                    group_name = rule['group_name']
-                    if group_name in groups:
-                        group_id = groups[group_name].id
-                    elif group_name == name:
-                        group_id = group.id
-                        groups[group_id] = group
-                        groups[group_name] = group
-                elif 'cidr_ip' in rule:
-                    ip = rule['cidr_ip']
+                group_id, ip = get_target_from_rule(rule, name, groups)
 
                 if rule['proto'] == 'all':
                     rule['proto'] = -1
