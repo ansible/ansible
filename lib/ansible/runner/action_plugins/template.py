@@ -123,7 +123,8 @@ class ActionModule(object):
                 return ReturnData(conn=conn, comm_ok=True, result=dict(changed=True), diff=dict(before_header=dest, after_header=source, before=dest_contents, after=resultant))
             else:
                 res = self.runner._execute_module(conn, tmp, 'copy', module_args, inject=inject, complex_args=complex_args)
-                res.diff = dict(before=dest_contents, after=resultant)
+                if res.result['changed']:
+                    res.diff = dict(before=dest_contents, after=resultant)
                 return res
         else:
             return self.runner._execute_module(conn, tmp, 'file', module_args, inject=inject, complex_args=complex_args)
