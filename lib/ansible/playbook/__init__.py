@@ -674,8 +674,14 @@ class PlayBook(object):
                     play.max_fail_pct = 0
 
                 # If threshold for max nodes failed is exceeded , bail out.
-                if (hosts_count - len(host_list)) > int((play.max_fail_pct)/100.0 * hosts_count):
-                    host_list = None
+                if play.serial > 0:
+                    # if serial is set, we need to shorten the size of host_count
+                    play_count = len(play._play_hosts)
+                    if (play_count - len(host_list)) > int((play.max_fail_pct)/100.0 * play_count):
+                        host_list = None
+                else:
+                    if (hosts_count - len(host_list)) > int((play.max_fail_pct)/100.0 * hosts_count):
+                        host_list = None
 
                 # if no hosts remain, drop out
                 if not host_list:
