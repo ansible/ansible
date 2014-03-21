@@ -88,6 +88,11 @@ options:
       - Options should be supplied as comma separated list
     required: false
     default: 'force-confdef,force-confold'
+  deb:
+     description:
+       - Path to a local .deb package file to install.
+     required: false
+     version_added: "1.5"
 requirements: [ python-apt, aptitude ]
 author: Matthew Williams
 notes:
@@ -125,6 +130,9 @@ EXAMPLES = '''
 
 # Pass options to dpkg on run
 - apt: upgrade=dist update_cache=yes dpkg_options='force-confold,force-confdef'
+
+# Install a .deb package
+- apt: deb=/tmp/mypackage.deb
 '''
 
 
@@ -152,6 +160,7 @@ APT_UPDATE_SUCCESS_STAMP_PATH = "/var/lib/apt/periodic/update-success-stamp"
 HAS_PYTHON_APT = True
 try:
     import apt
+    import apt.debfile
     import apt_pkg
 except ImportError:
     HAS_PYTHON_APT = False
@@ -186,7 +195,7 @@ def package_status(m, pkgname, version, cache, state):
         has_files = False  # older python-apt cannot be used to determine non-purged
 
     try:
-        package_is_installed = ll_pkg.current_state == apt_pkg.CURSTATE_INSTALLED 
+        package_is_installed = ll_pkg.current_state == apt_pkg.CURSTATE_INSTALLED
     except AttributeError: # python-apt 0.7.X has very weak low-level object
         try:
             # might not be necessary as python-apt post-0.7.X should have current_state property
@@ -276,11 +285,56 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
 
         rc, out, err = m.run_command(cmd)
         if rc:
-            m.fail_json(msg="'apt-get install %s' failed: %s" % (packages, err), stdout=out, stderr=err)
+            return (False, dict(msg="'apt-get install %s' failed: %s" % (packages, err), stdout=out, stderr=err))
         else:
-            m.exit_json(changed=True, stdout=out, stderr=err)
+            return (True, dict(changed=True, stdout=out, stderr=err))
     else:
+        return (True, dict(changed=False))
+
+def install_deb(m, debfile, cache, force, install_recommends, dpkg_options):
+    changed=False
+    pkg = apt.debfile.DebPackage(debfile)
+
+    # Check if it's already installed
+    if pkg.compare_to_version_in_cache() == pkg.VERSION_SAME:
         m.exit_json(changed=False)
+
+    # Check if package is installable
+    if not pkg.check():
+        m.fail_json(msg=pkg._failure_string)
+
+    (success, retvals) = install(m=m, pkgspec=pkg.missing_deps,
+                                 cache=cache,
+                                 install_recommends=install_recommends,
+                                 dpkg_options=expand_dpkg_options(dpkg_options))
+    if not success:
+        m.fail_json(**retvals)
+    changed = retvals['changed']
+
+
+    options = ' '.join(["--%s"% x for x in dpkg_options.split(",")])
+
+    if m.check_mode:
+        options += " --simulate"
+    if force:
+        options += " --force-yes"
+
+
+    cmd = "dpkg %s -i %s" % (options, debfile)
+    rc, out, err = m.run_command(cmd)
+
+    if "stdout" in retvals:
+        stdout = retvals["stdout"] + out
+    else:
+        stdout = out
+    if "stderr" in retvals:
+        stderr = retvals["stderr"] + err
+    else:
+        stderr = err
+    if rc == 0:
+        m.exit_json(changed=True, stdout=stdout, stderr=stderr)
+    else:
+        m.fail_json(msg="%s failed" % cmd, stdout=stdout, stderr=stderr)
 
 def remove(m, pkgspec, cache, purge=False,
            dpkg_options=expand_dpkg_options(DPKG_OPTIONS)):
@@ -364,14 +418,15 @@ def main():
             cache_valid_time = dict(type='int'),
             purge = dict(default=False, type='bool'),
             package = dict(default=None, aliases=['pkg', 'name']),
+            deb = dict(default=None),
             default_release = dict(default=None, aliases=['default-release']),
             install_recommends = dict(default='yes', aliases=['install-recommends'], type='bool'),
             force = dict(default='no', type='bool'),
             upgrade = dict(choices=['yes', 'safe', 'full', 'dist']),
             dpkg_options = dict(default=DPKG_OPTIONS)
         ),
-        mutually_exclusive = [['package', 'upgrade']],
-        required_one_of = [['package', 'upgrade', 'update_cache']],
+        mutually_exclusive = [['package', 'upgrade', 'deb']],
+        required_one_of = [['package', 'upgrade', 'update_cache', 'deb']],
         supports_check_mode = True
     )
 
@@ -436,13 +491,20 @@ def main():
             if cache_valid is not True:
                 cache.update()
                 cache.open(progress=None)
-            if not p['package'] and not p['upgrade']:
+            if not p['package'] and not p['upgrade'] and not p['deb']:
                 module.exit_json(changed=False)
 
         force_yes = p['force']
 
         if p['upgrade']:
             upgrade(module, p['upgrade'], force_yes, dpkg_options)
+
+        if p['deb']:
+            if p['state'] != "installed":
+                module.fail_json(msg="deb only supports state=installed")
+            install_deb(module, p['deb'], cache,
+                        install_recommends=install_recommends,
+                        force=force_yes, dpkg_options=p['dpkg_options'])
 
         packages = p['package'].split(',')
         latest = p['state'] == 'latest'
@@ -453,14 +515,24 @@ def main():
                 module.fail_json(msg='version number inconsistent with state=latest: %s' % package)
 
         if p['state'] == 'latest':
-            install(module, packages, cache, upgrade=True,
+            result = install(module, packages, cache, upgrade=True,
                     default_release=p['default_release'],
                     install_recommends=install_recommends,
                     force=force_yes, dpkg_options=dpkg_options)
+            (success, retvals) = result
+            if success:
+                module.exit_json(**retvals)
+            else:
+                module.fail_json(**retvals)
         elif p['state'] in [ 'installed', 'present' ]:
-            install(module, packages, cache, default_release=p['default_release'],
+            result = install(module, packages, cache, default_release=p['default_release'],
                       install_recommends=install_recommends,force=force_yes,
                       dpkg_options=dpkg_options)
+            (success, retvals) = result
+            if success:
+                module.exit_json(**retvals)
+            else:
+                module.fail_json(**retvals)
         elif p['state'] in [ 'removed', 'absent' ]:
             remove(module, packages, cache, p['purge'], dpkg_options)
 
