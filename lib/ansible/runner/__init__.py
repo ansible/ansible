@@ -357,27 +357,18 @@ class Runner(object):
 
         # inventory > playbook > original_host
 
-        actual_user = inject.get('ansible_ssh_user', self.remote_user)
-        thisuser = None
+        return_user = None
 
         if host in inject['hostvars']:
             if inject['hostvars'][host].get('ansible_ssh_user'):
                 # user for delegate host in inventory
-                thisuser = inject['hostvars'][host].get('ansible_ssh_user')
+                return_user = inject['hostvars'][host].get('ansible_ssh_user')
 
-        if thisuser is None and self.remote_user:
-            # user defined by play/runner
-            thisuser = self.remote_user
+        if return_user is None and self.remote_user:
+            # user defined by ansible_ssh_user or play/runner
+            return_user = inject.get('ansible_ssh_user', self.remote_user)
 
-        if thisuser is not None:
-            actual_user = thisuser
-        else:
-            # fallback to the inventory user of the play host
-            #actual_user = inject.get('ansible_ssh_user', actual_user)
-            actual_user = inject.get('ansible_ssh_user', self.remote_user)
-
-        return actual_user
-
+        return return_user
 
     # *****************************************************
 
