@@ -26,6 +26,11 @@ options:
     description:
       - List of firewall rules to enforce in this group (see example).
     required: true
+  rules_egress:
+    version_added: "1.8"
+    description:
+      - List of firewall egress rules to enforce in this group(see example).
+    required: false
   region:
     description:
       - the EC2 region to use
@@ -113,6 +118,18 @@ EXAMPLES = '''
       - proto: all
         # the containing group name may be specified here
         group_name: example
+    rules_egress:
+      - proto: tcp
+        from_port: 80
+        to_port: 80
+        cidr_ip: 0.0.0.0/0
+      - proto: tcp
+        from_port: 443
+        to_port: 443
+        cidr_ip: 0.0.0.0/0
+      - proto: all
+        # the containing group name may be specified here
+        group_name: example    
 '''
 
 try:
@@ -121,152 +138,182 @@ except ImportError:
     print "failed=True msg='boto required for this module'"
     sys.exit(1)
 
+from ansible.module_utils.basic import *
+from ansible.module_utils.ec2 import *
 
-def addRulesToLookup(rules, prefix, dict):
-    for rule in rules:
-        for grant in rule.grants:
-            dict["%s-%s-%s-%s-%s-%s" % (prefix, rule.ip_protocol, rule.from_port, rule.to_port,
-                                        grant.group_id, grant.cidr_ip)] = rule
+class Ec2Group:
+    def addRulesToLookup(self, rules, prefix, dict):
+        for rule in rules:
+            for grant in rule.grants:
+                ruleId = "%s-%s-%s-%s-%s-%s" % (prefix, rule.ip_protocol, rule.from_port, rule.to_port,
+                                            grant.group_id, grant.cidr_ip)
+                dict[ruleId] = rule
 
-def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
-            name=dict(required=True),
-            description=dict(required=True),
-            vpc_id=dict(),
-            rules=dict(),
-            state = dict(default='present', choices=['present', 'absent']),
-        )
-    )
-    module = AnsibleModule(
-        argument_spec=argument_spec,
-        supports_check_mode=True,
-    )
+    def checkRules(self, rules, groupRules, egress):
+        for rule in rules:
+            group_id = None
+            group_name = None
+            ip = None
+            if 'group_id' in rule and 'cidr_ip' in rule:
+                self.module.fail_json(msg="Specify group_id OR cidr_ip, not both")
+            elif 'group_name' in rule and 'cidr_ip' in rule:
+                self.module.fail_json(msg="Specify group_name OR cidr_ip, not both")
+            elif 'group_id' in rule and 'group_name' in rule:
+                self.module.fail_json(msg="Specify group_id OR group_name, not both")
+            elif 'group_id' in rule:
+                group_id = rule['group_id']
+            elif 'group_name' in rule:
+                group_name = rule['group_name']
+                if group_name in self.groups:
+                    group_id = self.groups[group_name].id
+                elif group_name == name:
+                    group_id = self.group.id
+                    groups[group_id] = self.group
+                    groups[group_name] = self.group
+            elif 'cidr_ip' in rule:
+                ip = rule['cidr_ip']
 
-    name = module.params['name']
-    description = module.params['description']
-    vpc_id = module.params['vpc_id']
-    rules = module.params['rules']
-    state = module.params.get('state')
-
-    changed = False
-
-    ec2 = ec2_connect(module)
-
-    # find the group if present
-    group = None
-    groups = {}
-    for curGroup in ec2.get_all_security_groups():
-        groups[curGroup.id] = curGroup
-        groups[curGroup.name] = curGroup
-
-        if curGroup.name == name and (vpc_id is None or curGroup.vpc_id == vpc_id):
-            group = curGroup
-
-    # Ensure requested group is absent
-    if state == 'absent':
-        if group:
-            '''found a match, delete it'''
-            try:
-                group.delete()
-            except Exception, e:
-                module.fail_json(msg="Unable to delete security group '%s' - %s" % (group, e))
+            if rule['proto'] == 'all':
+                rule['proto'] = -1
+                rule['from_port'] = None
+                rule['to_port'] = None
+            # If rule already exists, don't later delete it
+            ruleId = ""
+            if egress:
+                ruleId = "%s-%s-%s-%s-%s-%s" % ('out', rule['proto'], rule['from_port'], rule['to_port'], group_id, ip)
             else:
-                group = None
-                changed = True
-        else:
-            '''no match found, no changes required'''
-
-    # Ensure requested group is present
-    elif state == 'present':
-        if group:
-            '''existing group found'''
-            # check the group parameters are correct
-            group_in_use = False
-            rs = ec2.get_all_instances()
-            for r in rs:
-                for i in r.instances:
-                    group_in_use |= reduce(lambda x, y: x | (y.name == 'public-ssh'), i.groups, False)
-
-            if group.description != description:
-                if group_in_use:
-                    module.fail_json(msg="Group description does not match, but it is in use so cannot be changed.")
-
-        # if the group doesn't exist, create it now
-        else:
-            '''no match found, create it'''
-            if not module.check_mode:
-                group = ec2.create_security_group(name, description, vpc_id=vpc_id)
-            changed = True
-    else:
-        module.fail_json(msg="Unsupported state requested: %s" % state)
-
-    # create a lookup for all existing rules on the group
-    if group:
-        groupRules = {}
-        addRulesToLookup(group.rules, 'in', groupRules)
-
-        # Now, go through all provided rules and ensure they are there.
-        if rules:
-            for rule in rules:
-                group_id = None
-                group_name = None
-                ip = None
-                if 'group_id' in rule and 'cidr_ip' in rule:
-                    module.fail_json(msg="Specify group_id OR cidr_ip, not both")
-                elif 'group_name' in rule and 'cidr_ip' in rule:
-                    module.fail_json(msg="Specify group_name OR cidr_ip, not both")
-                elif 'group_id' in rule and 'group_name' in rule:
-                    module.fail_json(msg="Specify group_id OR group_name, not both")
-                elif 'group_id' in rule:
-                    group_id = rule['group_id']
-                elif 'group_name' in rule:
-                    group_name = rule['group_name']
-                    if group_name in groups:
-                        group_id = groups[group_name].id
-                    elif group_name == name:
-                        group_id = group.id
-                        groups[group_id] = group
-                        groups[group_name] = group
-                elif 'cidr_ip' in rule:
-                    ip = rule['cidr_ip']
-
-                if rule['proto'] == 'all':
-                    rule['proto'] = -1
-                    rule['from_port'] = None
-                    rule['to_port'] = None
-
-                # If rule already exists, don't later delete it
                 ruleId = "%s-%s-%s-%s-%s-%s" % ('in', rule['proto'], rule['from_port'], rule['to_port'], group_id, ip)
-                if ruleId in groupRules:
-                    del groupRules[ruleId]
-                # Otherwise, add new rule
-                else:
-                    grantGroup = None
-                    if group_id:
-                        grantGroup = groups[group_id]
+            if ruleId in groupRules:
+                del groupRules[ruleId]
+            # Otherwise, add new rule
+            else:
+                grantGroup = None
+                if group_id:
+                    grantGroup = self.groups[group_id]
 
-                    if not module.check_mode:
-                        group.authorize(rule['proto'], rule['from_port'], rule['to_port'], ip, grantGroup)
-                    changed = True
+                if not self.module.check_mode:
+                    if egress:
+                        if grantGroup:
+                            self.ec2.authorize_security_group_egress(group_id=self.group.id,ip_protocol=rule['proto'],from_port=rule['from_port'],to_port=rule['to_port'],src_group_id=grantGroup, dry_run=False)
+                        else:
+                            self.ec2.authorize_security_group_egress(group_id=self.group.id,ip_protocol=rule['proto'],from_port=rule['from_port'],to_port=rule['to_port'],cidr_ip=ip, dry_run=False)
+                    else:
+                        self.group.authorize(rule['proto'], rule['from_port'], rule['to_port'], ip, grantGroup)
+                self.changed = True
 
-        # Finally, remove anything left in the groupRules -- these will be defunct rules
+         # Finally, remove anything left in the groupRules -- these will be defunct rules
         for rule in groupRules.itervalues():
             for grant in rule.grants:
                 grantGroup = None
                 if grant.group_id:
-                    grantGroup = groups[grant.group_id]
-                if not module.check_mode:
-                    group.revoke(rule.ip_protocol, rule.from_port, rule.to_port, grant.cidr_ip, grantGroup)
-                changed = True
+                    grantGroup = self.groups[grant.group_id]
+                if not self.module.check_mode:
+                    if egress:
+                        if grantGroup:
+                            self.ec2.revoke_security_group_egress(group_id=self.group.id,ip_protocol=rule.ip_protocol,from_port=rule.from_port,to_port=rule.to_port,src_group_id=grantGroup)
+                        else:
+                            self.ec2.revoke_security_group_egress(group_id=self.group.id,ip_protocol=rule.ip_protocol,from_port=rule.from_port,to_port=rule.to_port,cidr_ip=grant.cidr_ip)
+                    else:
+                        self.group.revoke(rule.ip_protocol, rule.from_port, rule.to_port, grant.cidr_ip, grantGroup)
+                self.changed = True       
 
-    if group:
-        module.exit_json(changed=changed, group_id=group.id)
-    else:
-        module.exit_json(changed=changed, group_id=None)
+    def __init__(self):
+        argument_spec = ec2_argument_spec()
+        argument_spec.update(dict(
+                name=dict(required=True),
+                description=dict(required=True),
+                vpc_id=dict(),
+                rules=dict(),
+                rules_egress=dict(),
+                state = dict(default='present', choices=['present', 'absent']),
+            )
+        )
+        self.module = AnsibleModule(
+            argument_spec=argument_spec,
+            supports_check_mode=True,
+        )
 
-# import module snippets
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
+        name = self.module.params['name']
+        description = self.module.params['description']
+        vpc_id = self.module.params['vpc_id']
+        rules = self.module.params['rules']
+        state = self.module.params.get('state')
+        rulesEgress = self.module.params['rules_egress']
+        self.changed = False
+
+        self.ec2 = ec2_connect(self.module)
+
+        # find the group if present
+        self.group = None
+        self.groups = {}
+        for curGroup in self.ec2.get_all_security_groups():
+            self.groups[curGroup.id] = curGroup
+            self.groups[curGroup.name] = curGroup
+
+            if curGroup.name == name and (vpc_id is None or curGroup.vpc_id == vpc_id):
+                self.group = curGroup
+
+        # Ensure requested group is absent
+        if state == 'absent':
+            if self.group:
+                '''found a match, delete it'''
+                try:
+                    self.group.delete()
+                except Exception, e:
+                    self.module.fail_json(msg="Unable to delete security group '%s' - %s" % (group, e))
+                else:
+                    self.group = None
+                    self.changed = True
+            else:
+                '''no match found, no changes required'''
+
+        # Ensure requested group is present
+        elif state == 'present':
+            if self.group:
+                '''existing group found'''
+                # check the group parameters are correct
+                group_in_use = False
+                rs = self.ec2.get_all_instances()
+                for r in rs:
+                    for i in r.instances:
+                        group_in_use |= reduce(lambda x, y: x | (y.name == 'public-ssh'), i.groups, False)
+
+                if self.group.description != description:
+                    if group_in_use:
+                        self.module.fail_json(msg="Group description does not match, but it is in use so cannot be changed.")
+
+            # if the group doesn't exist, create it now
+            else:
+                '''no match found, create it'''
+                if not self.module.check_mode:
+                    self.group = self.ec2.create_security_group(name, description, vpc_id=vpc_id)
+                    for curGroup in self.ec2.get_all_security_groups():
+                        self.groups[curGroup.id] = curGroup
+                        self.groups[curGroup.name] = curGroup
+                        if curGroup.name == name and (vpc_id is None or curGroup.vpc_id == vpc_id):
+                            self.group = curGroup
+                self.changed = True
+        else:
+            self.module.fail_json(msg="Unsupported state requested: %s" % state)
+
+        # create a lookup for all existing rules on the group
+        if self.group:
+            groupRules = {}
+            groupRulesEgress = {}
+            self.addRulesToLookup(self.group.rules, 'in', groupRules)
+            self.addRulesToLookup(self.group.rules_egress, 'out', groupRulesEgress)
+            # Now, go through all provided rules and ensure they are there.
+            if rules:
+               self.checkRules(rules,groupRules,False)
+            if rulesEgress:
+               self.checkRules(rulesEgress,groupRulesEgress,True)
+        if self.group:
+            self.module.exit_json(changed=self.changed, group_id=self.group.id)
+        else:
+            self.module.exit_json(changed=self.changed, group_id=None)
+
+
+def main():
+    Ec2Group()
 
 main()
