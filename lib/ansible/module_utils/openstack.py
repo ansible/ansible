@@ -102,6 +102,9 @@ def get_keystone_client(module):
         # so that's an excelent alternative to auth_url
         kwargs['auth_url'] = module.params['endpoint']
 
+    if module.params['endpoint']:
+        kwargs['endpoint'] = module.params['endpoint']
+
     try:
         import keystoneclient.v2_0.client
     except ImportError:
