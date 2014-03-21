@@ -173,6 +173,10 @@ def package_status(m, pkgname, version, cache, state):
         ll_pkg = cache._cache[pkgname] # the low-level package object
     except KeyError:
         if state == 'install':
+            # Lets check pkgname is virtual package, if True - raise an error
+            if cache.is_virtual_package(pkgname):
+                m.fail_json(msg="Package '%s' is virtual and not available for install, please choose not virtual package" % pkgname)
+                return False, False, False
             if cache.get_providing_packages(pkgname):
                 return False, True, False
             m.fail_json(msg="No package matching '%s' is available" % pkgname)
