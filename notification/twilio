@@ -21,7 +21,7 @@
 DOCUMENTATION = '''
 ---
 version_added: "1.6"
-module: text
+module: twilio
 short_description: Sends a text message to a mobile phone through Twilio.
 description:
    - Sends a text message to a phone number through an the Twilio SMS service. 
