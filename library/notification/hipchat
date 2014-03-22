@@ -75,8 +75,10 @@ EXAMPLES = '''
 # HipChat module specific support methods.
 #
 
+MSG_URI = "https://api.hipchat.com/v1/rooms/message"
+
 def send_msg(module, token, room, msg_from, msg, msg_format='text',
-             color='yellow', notify=False, api='https://api.hipchat.com/v1/rooms/message'):
+             color='yellow', notify=False, api=MSG_URI):
     '''sending message to hipchat'''
 
     params = {}
@@ -118,7 +120,7 @@ def main():
             msg_format=dict(default="text", choices=["text", "html"]),
             notify=dict(default=True, type='bool'),
             validate_certs = dict(default='yes', type='bool'),
-            api = dict(default='https://api.hipchat.com/v1/rooms/message'),
+            api = dict(default=MSG_URI),
         ),
         supports_check_mode=True
     )
