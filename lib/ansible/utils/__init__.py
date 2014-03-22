@@ -47,6 +47,11 @@ import json
 #import vault
 from vault import VaultLib
 
+try:
+    import keyring
+except:
+    keyring = None
+
 VERBOSITY=0
 
 # list of all deprecation messages to prevent duplicate display
@@ -794,6 +799,15 @@ def ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=False, confirm_
     vault_pass = None
     new_vault_pass = None
 
+    if keyring:
+        ring_pass = keyring.get_password("Ansible", "default-vault")
+        if ring_pass:
+            if not ask_new_vault_pass:
+                return ring_pass, new_vault_pass
+            else:
+                # set the keyring pass back to None so that it is stored later
+                ring_pass = None
+
     if ask_vault_pass:
         vault_pass = getpass.getpass(prompt="Vault password: ")
 
@@ -815,6 +829,11 @@ def ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=False, confirm_
         vault_pass = vault_pass.strip()
     if new_vault_pass:
         new_vault_pass = new_vault_pass.strip()
+
+    if keyring and ring_pass is None:
+        # first time, or changed password - store in keyring
+        ring_pass = new_vault_pass or vault_pass
+        keyring.set_password("Ansible", "default-vault", ring_pass)
 
     return vault_pass, new_vault_pass
 
