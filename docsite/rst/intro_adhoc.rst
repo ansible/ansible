@@ -18,7 +18,7 @@ prior to learning the playbooks language -- ad-hoc commands can also be used
 to do quick things that you might not necessarily want to write a full playbook 
 for.  
 
-Generally speaking, the true power of Ansible lies in playbooks.
+Generally speaking, the true power of Ansible lays in playbooks.
 Why would you use ad-hoc tasks versus playbooks?
 
 For instance, if you wanted to power off all of your lab for Christmas vacation,
