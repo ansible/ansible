@@ -21,6 +21,7 @@
 import os
 import shutil
 import tempfile
+import shlex
 from io import BytesIO
 from subprocess import call
 from ansible import errors
@@ -191,7 +192,7 @@ class VaultEditor(object):
 
         # drop the user into vim on file
         EDITOR = os.environ.get('EDITOR','vim')
-        call([EDITOR, self.filename])
+        call(shlex.split(EDITOR) + [self.filename])
         tmpdata = self.read_data(self.filename)
         this_vault = VaultLib(self.password)
         this_vault.cipher_name = self.cipher_name
