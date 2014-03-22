@@ -803,10 +803,8 @@ def ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=False, confirm_
         ring_pass = keyring.get_password("Ansible", "default-vault")
         if ring_pass:
             if not ask_new_vault_pass:
+                print "Using password from keyring"
                 return ring_pass, new_vault_pass
-            else:
-                # set the keyring pass back to None so that it is stored later
-                ring_pass = None
 
     if ask_vault_pass:
         vault_pass = getpass.getpass(prompt="Vault password: ")
@@ -830,10 +828,18 @@ def ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=False, confirm_
     if new_vault_pass:
         new_vault_pass = new_vault_pass.strip()
 
-    if keyring and ring_pass is None:
+    if keyring:
+        store_in_keyring = False
+        if confirm_vault or confirm_new:
+            # ask if the password should be stored in the keyring
+            store_in_keyring = (raw_input("Store password in keyring [Y/n]: ").lower() or 'y') == 'y'
+        if ask_new_vault_pass and ring_pass:
+            # an existing keyring password is stored, confirm it is to be replaced
+            store_in_keyring = (raw_input("A password for Ansible Vaults exists in the keyring, replace? [Y/n]: ").lower() or 'y') == 'y'
         # first time, or changed password - store in keyring
-        ring_pass = new_vault_pass or vault_pass
-        keyring.set_password("Ansible", "default-vault", ring_pass)
+        if store_in_keyring:
+            ring_pass = new_vault_pass or vault_pass
+            keyring.set_password("Ansible", "default-vault", ring_pass)
 
     return vault_pass, new_vault_pass
 
