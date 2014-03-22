@@ -1186,6 +1186,7 @@ class SunOS(User):
                             lines.append(line)
                             continue
                         fields[1] = self.password
+                        fields[2] = str(int(time.time() / 86400))
                         line = ':'.join(fields)
                         lines.append('%s\n' % line)
                     open(self.SHADOWFILE, 'w+').writelines(lines)
@@ -1272,6 +1273,7 @@ class SunOS(User):
                             lines.append(line)
                             continue
                         fields[1] = self.password
+                        fields[2] = str(int(time.time() / 86400))	
                         line = ':'.join(fields)
                         lines.append('%s\n' % line)
                     open(self.SHADOWFILE, 'w+').writelines(lines)
