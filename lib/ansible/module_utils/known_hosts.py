@@ -27,6 +27,7 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import hmac
+from hashlib import sha1
 HASHED_KEY_MAGIC = "|1|"
 
 def add_git_host_key(module, url, accept_hostkey=True):
