@@ -251,7 +251,7 @@ def api_get_config(api_server):
     except:
         return None
 
-def api_lookup_role_by_name(api_server, role_name):
+def api_lookup_role_by_name(api_server, role_name, quiet=False):
     """
     Uses the Galaxy API to do a lookup on the role owner/name.
     """
@@ -262,9 +262,9 @@ def api_lookup_role_by_name(api_server, role_name):
         parts = role_name.split(".")
         user_name = ".".join(parts[0:-1])
         role_name = parts[-1]
-        print " downloading role '%s', owned by %s" % (role_name, user_name)
+        if not quiet:
+            print " downloading role '%s', owned by %s" % (role_name, user_name)
     except:
-        parser.print_help()
         print "Invalid role name (%s). You must specify username.rolename" % role_name
         sys.exit(1)
 
@@ -604,7 +604,33 @@ def execute_info(args, options, parser):
     from the galaxy API.
     """
 
-    pass
+    api_server = get_opt(options, 'api_server', 'galaxy.ansible.com')
+
+    for i, role_name in enumerate(args):
+        if get_role_metadata(role_name, options):
+            info       = get_galaxy_install_info(role_name, options)
+            role_data  = api_lookup_role_by_name(api_server, role_name, quiet=True)
+
+            if info and role_data:
+                print 'Role: %s' % role_name
+                print 'Minimum Ansible Version: %s' % role_data['min_ansible_version']
+                print 'Installed version: %s (on %s)' % (info['version'], info['install_date'])
+
+                role_versions = role_data['summary_fields']['versions']
+                if len(role_versions) > 0:
+                    loose_versions = [LooseVersion(v.get('name', None)) for v in role_versions]
+                    loose_versions.sort()
+                    galaxy_version = loose_versions[-1]
+
+                    print 'Last version: %s' % str(galaxy_version)
+
+                if i != len(args) - 1:
+                    print
+            else:
+                print 'failed to get info for role: %s' % role_name
+        else:
+            print '%s is not installed, skipping.' % role_name
+    sys.exit(0)
 
 def execute_install(args, options, parser):
     """
