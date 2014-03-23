@@ -96,7 +96,7 @@ def get_selections(module, pkg):
     selections = {}
 
     for line in out.splitlines():
-        (key, value) = line.split(':')
+        (key, value) = line.split(':', 1)
         selections[ key.strip('*').strip() ] = value.strip()
 
     return selections
