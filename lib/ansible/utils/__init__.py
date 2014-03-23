@@ -882,7 +882,7 @@ def make_sudo_cmd(sudo_user, executable, cmd):
     success_key = 'SUDO-SUCCESS-%s' % randbits
     sudocmd = '%s -k && %s %s -S -p "%s" -u %s %s -c %s' % (
         C.DEFAULT_SUDO_EXE, C.DEFAULT_SUDO_EXE, C.DEFAULT_SUDO_FLAGS,
-        prompt, sudo_user, executable or '$SHELL', pipes.quote('echo %s; %s' % (success_key, cmd)))
+        prompt, sudo_user, executable or '$SHELL', pipes.quote('echo %s; %s %s' % (success_key, C.DEFAULT_SUDO_PREEXEC, cmd)))
     return ('/bin/sh -c ' + pipes.quote(sudocmd), prompt, success_key)
 
 
