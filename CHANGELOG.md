@@ -8,6 +8,9 @@ Major features/changes:
 * The deprecated legacy variable templating system has been finally removed.  Use {{ foo }} always not $foo or ${foo}.
 * Any data file can also be JSON.  Use sparingly -- with great power comes great responsibility.  Starting file with "{" or "[" denotes JSON.
 * Added 'gathering' param for ansible.cfg to change the default gather_facts policy.
+* Accelerate improvements:
+  - multiple users can connect with different keys, when `accelerate_multi_key = yes` is specified in the ansible.cfg.
+  - daemon lifetime is now based on the time from the last activity, not the time from the daemon's launch.
 
 New Modules:
 
