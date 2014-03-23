@@ -695,4 +695,10 @@ class PlaybookCallbacks(object):
     def on_stats(self, stats):
         call_callback_module('playbook_on_stats', stats)
 
+    def on_batch_completed(self, completed_hosts, total_hosts):
+        if (completed_hosts != total_hosts and total_hosts > 0):
+            display(banner("STATUS"))
+            msg = "%d hosts processed of %d total (%.2f%%)" % (completed_hosts, total_hosts, (completed_hosts/float(total_hosts)) * 100)
+            display(msg, color='cyan')
+        call_callback_module('playbook_on_batch_completed', completed_hosts, total_hosts)
 
