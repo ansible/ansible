@@ -66,13 +66,14 @@ options:
     choices: [ "present", "absent", "dump", "import" ]
   all_databases:
     description:
-      - May only be provided if I(state) is C(dump) or C(import). (added in Ansible 1.6)
+      - May only be provided if I(state) is C(dump) or C(import).
       - Requires I(name) = a valid database name.
       - Uses --all-databases option for mysqldump.
       - When used for import, works similiar to mysql -u <username> -p <pasword> < target.sql
     required: no
     default: false
-    choices: [ "yes", "no", "true", "false", "0", "1" ]
+    choices: [ "yes", "no" ]
+    version_added: 1.6
   collation:
     description:
       - Collation mode
