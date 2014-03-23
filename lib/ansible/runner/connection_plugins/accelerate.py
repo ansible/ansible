@@ -85,7 +85,13 @@ class Connection(object):
             utils.AES_KEYS = self.runner.aes_keys
 
     def _execute_accelerate_module(self):
-        args = "password=%s port=%s minutes=%d debug=%d ipv6=%s" % (base64.b64encode(self.key.__str__()), str(self.accport), constants.ACCELERATE_TIMEOUT, int(utils.VERBOSITY), self.runner.accelerate_ipv6)
+        args = "password=%s port=%s minutes=%d debug=%d ipv6=%s" % (
+            base64.b64encode(self.key.__str__()), 
+            str(self.accport), 
+            constants.ACCELERATE_DAEMON_TIMEOUT, 
+            int(utils.VERBOSITY), 
+            self.runner.accelerate_ipv6,
+        )
         if constants.ACCELERATE_MULTI_KEY:
             args += " multi_key=yes"
         inject = dict(password=self.key)
