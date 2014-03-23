@@ -1125,7 +1125,7 @@ def main():
             spot_price = dict(),
             image = dict(),
             kernel = dict(),
-            count = dict(default='1'),
+            count = dict(type='int', default='1'),
             monitoring = dict(type='bool', default=False),
             ramdisk = dict(),
             wait = dict(type='bool', default=False),
