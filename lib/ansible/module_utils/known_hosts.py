@@ -87,9 +87,16 @@ def not_in_host_file(self, host):
         if not os.path.exists(hf):
             hfiles_not_found += 1
             continue
-        host_fh = open(hf)
-        data = host_fh.read()
-        host_fh.close()
+
+        try:
+            host_fh = open(hf)
+        except IOError, e:
+            hfiles_not_found += 1
+            continue
+        else:
+            data = host_fh.read()
+            host_fh.close()
+
         for line in data.split("\n"):
             if line is None or line.find(" ") == -1:
                 continue
