@@ -101,7 +101,7 @@ options:
     required: false
   status_code:
     description:
-      - A valid, numeric, HTTP status code that signifies success of the request.
+      - A valid, numeric, HTTP status code that signifies success of the request. Can also be comma separated list of status codes.
     required: false
     default: 200
   timeout:
@@ -315,7 +315,7 @@ def main():
             follow_redirects = dict(required=False, default='no', type='bool'),
             creates = dict(required=False, default=None),
             removes = dict(required=False, default=None),
-            status_code = dict(required=False, default=200, type='int'),
+            status_code = dict(required=False, default=[200], type='list'),
             timeout = dict(required=False, default=30, type='int'),
         ),
         check_invalid_arguments=False,
@@ -338,7 +338,7 @@ def main():
     follow_redirects = module.params['follow_redirects']
     creates = module.params['creates']
     removes = module.params['removes']
-    status_code = int(module.params['status_code'])
+    status_code = list(module.params['status_code'])
     socket_timeout = module.params['timeout']
 
     # Grab all the http headers. Need this hack since passing multi-values is currently a bit ugly. (e.g. headers='{"Content-Type":"application/json"}')
@@ -412,7 +412,11 @@ def main():
                 uresp['json'] = js
             except:
                 pass
-    if resp['status'] != status_code:
+
+    sys.stderr.write("status ----> %s \n" % resp['status'])
+    sys.stderr.write("status_code ----> %s \n" % status_code)
+
+    if str(resp['status']) not in status_code:
         module.fail_json(msg="Status code was not " + str(status_code), content=content, **uresp)
     elif return_content:
         module.exit_json(changed=changed, content=content, **uresp)
