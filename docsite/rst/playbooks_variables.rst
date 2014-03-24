@@ -608,6 +608,27 @@ While it's mentioned elsewhere in that document too, here's a quick syntax examp
 Registered variables are valid on the host the remainder of the playbook run, which is the same as the lifetime of "facts"
 in Ansible.  Effectively registered variables are just like facts.
 
+.. _create_a_fact_with_a_task:
+
+Create A Fact With A Task
+`````````````````````````
+
+Sometimes you need to create a fact based on the output from another task.  The ansible ``set_fact`` module allows you to do this. This can be useful with pre_tasks that execute before :doc:`playbooks_roles`.  This also lets you convert the the output of a register variable into something simpler.
+
+This small example demonstrates its use::
+
+   - hosts: web_servers
+   
+     tasks:
+     
+        - shell: /usr/bin/foo
+          register: foo_result
+          ignore_errors: True
+          
+        - set_fact: foo_fact={{foo_result.stdout}}
+        
+        - debug: msg="The stdout of /usr/bin/foo is {{foo_fact}}"
+
 .. _accessing_complex_variable_data:
 
 Accessing Complex Variable Data
