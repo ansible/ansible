@@ -38,7 +38,7 @@ import getpass
 import textwrap
 import json
 
-# from . import template
+from . import template
 from .plugins import *
 from .vault import VaultLib
 from .. import __version__, constants as C, errors
