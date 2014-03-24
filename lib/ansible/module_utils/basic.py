@@ -977,6 +977,8 @@ class AnsibleModule(object):
             if self.selinux_enabled():
                 context = self.selinux_default_context(dest)
 
+        creating = not os.path.exists(dest)
+
         try:
             # Optimistically try a rename, solves some corner cases and can avoid useless work, throws exception if not atomic.
             os.rename(src, dest)
@@ -1007,6 +1009,9 @@ class AnsibleModule(object):
             except (shutil.Error, OSError, IOError), e:
                 self.cleanup(tmp_dest.name)
                 self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
+
+        if creating and os.getenv("SUDO_USER"):
+            os.chown(dest, os.getuid(), os.getgid())
 
         if self.selinux_enabled():
             # rename might not preserve context
