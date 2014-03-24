@@ -412,10 +412,6 @@ def main():
                 uresp['json'] = js
             except:
                 pass
-
-    sys.stderr.write("status ----> %s \n" % resp['status'])
-    sys.stderr.write("status_code ----> %s \n" % status_code)
-
     if str(resp['status']) not in status_code:
         module.fail_json(msg="Status code was not " + str(status_code), content=content, **uresp)
     elif return_content:
