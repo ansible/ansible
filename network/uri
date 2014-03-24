@@ -338,7 +338,7 @@ def main():
     follow_redirects = module.params['follow_redirects']
     creates = module.params['creates']
     removes = module.params['removes']
-    status_code = list(module.params['status_code'])
+    status_code = [int(x) for x in list(module.params['status_code'])]
     socket_timeout = module.params['timeout']
 
     # Grab all the http headers. Need this hack since passing multi-values is currently a bit ugly. (e.g. headers='{"Content-Type":"application/json"}')
@@ -412,7 +412,7 @@ def main():
                 uresp['json'] = js
             except:
                 pass
-    if str(resp['status']) not in status_code:
+    if resp['status'] not in status_code:
         module.fail_json(msg="Status code was not " + str(status_code), content=content, **uresp)
     elif return_content:
         module.exit_json(changed=changed, content=content, **uresp)
