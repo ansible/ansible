@@ -78,6 +78,8 @@ def main(args):
         help="one-step-at-a-time: confirm each task before running")
     parser.add_option('--start-at-task', dest='start_at',
         help="start the playbook at the task matching this name")
+    parser.add_option('--force-handlers', dest='force_handlers', action='store_true',
+        help="run handlers even if a task fails")
 
     options, args = parser.parse_args(args)
 
@@ -191,7 +193,8 @@ def main(args):
             su=options.su,
             su_pass=su_pass,
             su_user=options.su_user,
-            vault_password=vault_pass
+            vault_password=vault_pass,
+            force_handlers=options.force_handlers
         )
 
         if options.listhosts or options.listtasks or options.syntax:
