@@ -1,0 +1,161 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2014, Yuta Adachi <ada-u@ada-u.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: elasticsearch_plugin
+author: Yuta Adachi
+version_added: "1.7"
+short_description: Manage elasticsearch plugins
+description:
+  - Manage elasticsearch plugins with elasticsearch built-in plugin manager.
+options:
+  name:
+    description:
+      - The name of elasticsearch plugin.
+      - We can see this with the "plugin --list" command.
+    required: true
+  package:
+    description:
+      - The repository of elasticsearch plugin to install.
+        You can use some formats. C(elasticsearch/plugin/version) for official elasticsearch plugins, 
+        C(groupId/artifactId/version) for community plugins, 
+        C(username/repository) for site plugins.
+    required: false
+  executable:
+    description:
+      - Path to elasticsearch plugin manager command. I(CentOS) and I(AmazonLinux) use defualt path.
+    default: "/usr/local/elasticsearch/bin/plugin"
+    required: false
+  timeout:
+    description:
+      - Timeout setting. C(30s), C(1m), C(1h)..., infinite by default.
+    default: "0"
+    required: false
+  state:
+    description:
+      - Indicates the desired package state.
+    required: false
+    default: "present"
+    choices: [ "present", "absent" ]
+'''
+
+EXAMPLES = '''
+# Install "elasticsearch-head" plugin.
+- elasticsearch_plugin: name=head package=mobz/elasticsearch-head state=present
+
+# Install "bigdesk" plugin on version 2.4.0 with specifying command path. 
+- elasticsearch_plugin: name=bigdesk package=lukas-vlcek/bigdesk/2.4.0 state=present executable=/usr/local/bin/plugin
+
+# Install "elasticsearch-head" plugin and set timout.
+- elasticsearch_plugin: name=head package=mobz/elasticsearch-head state=present timeout=1h
+
+# Uninstall "elasticsearch-head" plugin.
+- elasticsearch_plugin: name=head state=absent executable=/usr/local/bin/plugin
+'''
+
+import sys
+import tempfile
+import shutil
+import re
+
+class Plugin(object):
+
+	def __init__(self, module, **kwargs):
+		self.module = module
+		self.name = kwargs['name']
+		self.executable = kwargs['executable']
+		self.timeout = kwargs['timeout']
+
+		# extract provider, plugin, version from name
+		tokens = self.name.split('/')
+		self.provider = tokens[0]
+		self.plugin = tokens[1]
+
+		# check if the version is specified or not
+		if len(tokens) == 3:
+			self.version = tokens[2]
+		else:
+			self.version = ''
+
+
+	def _exec(self, args, run_in_check_mode=False, check_rc=True):
+		# timeout is set infinite by default
+		options = ['--timeout', self.timeout] if self.timeout else []
+		command = [self.executable] + args + options
+
+		rc, out, error = self.module.run_command(command, check_rc=check_rc)
+		return out
+
+
+	def _list(self):
+		output = self._exec(['--list']).splitlines()[1:]
+		plugins = list()
+
+		for line in output:
+			# strip white-spaces before plugin name
+			plugins.append(line.lstrip(' \t-'))
+
+		return plugins
+
+
+	def is_installed(self):
+		plugins = self._list()
+		return self.plugin.replace('elasticsearch-', '') in plugins
+
+
+	def install(self):
+		return self._exec(['--install', self.name, '-verbose'])
+
+
+	def remove(self):
+		return self._exec(['--remove', self.plugin, '-verbose'])
+
+
+def main():
+	module = AnsibleModule(
+		argument_spec=dict(
+			name=dict(required=True),
+			package=dict(default=None),
+			state=dict(default='present', choices=['present', 'absent', 'latest']),
+			timeout=dict(default=None),
+			executable=dict(default='/usr/local/elasticsearch/bin/plugin'),
+		),
+		supports_check_mode=True,
+	)
+
+	changed = False
+
+	state = module.params['state']
+	plugin = Plugin(module, name=module.params['name'], executable=module.params['executable'], timeout=module.params['timeout'])
+
+	if state == 'present':
+		if not plugin.is_installed():
+			plugin.install()
+			changed = True
+	elif state == 'absent':
+		if plugin.is_installed():
+			plugin.remove()
+			changed = True
+
+	module.exit_json(changed=changed)
+
+from ansible.module_utils.basic import *
+main()
