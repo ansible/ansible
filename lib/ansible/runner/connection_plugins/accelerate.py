@@ -15,23 +15,24 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import json
+from __future__ import absolute_import
+
 import os
 import base64
 import socket
 import struct
 import time
-from ansible.callbacks import vvv, vvvv
-from ansible.errors import AnsibleError, AnsibleFileNotFound
-from ansible.runner.connection_plugins.ssh import Connection as SSHConnection
-from ansible.runner.connection_plugins.paramiko_ssh import Connection as ParamikoConnection
-from ansible import utils
-from ansible import constants
+
+from .ssh import Connection as SSHConnection
+from .paramiko_ssh import Connection as ParamikoConnection
+from ... import constants, utils
+from ...callbacks import vvv, vvvv
+from ...errors import AnsibleError, AnsibleFileNotFound
 
 # the chunk size to read and send, assuming mtu 1500 and
 # leaving room for base64 (+33%) encoding and header (8 bytes)
 # ((1400-8)/4)*3) = 1044
-# which leaves room for the TCP/IP header. We set this to a 
+# which leaves room for the TCP/IP header. We set this to a
 # multiple of the value to speed up file reads.
 CHUNK_SIZE=1044*20
 
@@ -86,10 +87,10 @@ class Connection(object):
 
     def _execute_accelerate_module(self):
         args = "password=%s port=%s minutes=%d debug=%d ipv6=%s" % (
-            base64.b64encode(self.key.__str__()), 
-            str(self.accport), 
-            constants.ACCELERATE_DAEMON_TIMEOUT, 
-            int(utils.VERBOSITY), 
+            base64.b64encode(self.key.__str__()),
+            str(self.accport),
+            constants.ACCELERATE_DAEMON_TIMEOUT,
+            int(utils.VERBOSITY),
             self.runner.accelerate_ipv6,
         )
         if constants.ACCELERATE_MULTI_KEY:
@@ -131,7 +132,7 @@ class Connection(object):
 
                 self.conn.settimeout(constants.ACCELERATE_TIMEOUT)
                 if not self.validate_user():
-                    # the accelerated daemon was started with a 
+                    # the accelerated daemon was started with a
                     # different remote_user. The above command
                     # should have caused the accelerate daemon to
                     # shutdown, so we'll reconnect.
@@ -185,8 +186,8 @@ class Connection(object):
 
     def validate_user(self):
         '''
-        Checks the remote uid of the accelerated daemon vs. the 
-        one specified for this play and will cause the accel 
+        Checks the remote uid of the accelerated daemon vs. the
+        one specified for this play and will cause the accel
         daemon to exit if they don't match
         '''
 
@@ -250,11 +251,11 @@ class Connection(object):
         data = utils.encrypt(self.key, data)
         if self.send_data(data):
             raise AnsibleError("Failed to send command to %s" % self.host)
-        
+
         while True:
-            # we loop here while waiting for the response, because a 
+            # we loop here while waiting for the response, because a
             # long running command may cause us to receive keepalive packets
-            # ({"pong":"true"}) rather than the response we want. 
+            # ({"pong":"true"}) rather than the response we want.
             response = self.recv_data()
             if not response:
                 raise AnsibleError("Failed to get a response from %s" % self.host)
@@ -341,7 +342,7 @@ class Connection(object):
                 out = base64.b64decode(response['data'])
                 fh.write(out)
                 bytes += len(out)
-                # send an empty response back to signify we 
+                # send an empty response back to signify we
                 # received the last chunk without errors
                 data = utils.jsonify(dict())
                 data = utils.encrypt(self.key, data)

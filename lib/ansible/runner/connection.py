@@ -18,12 +18,10 @@
 
 ################################################
 
-from ansible import utils
-from ansible.errors import AnsibleError
-import ansible.constants as C
+from __future__ import absolute_import
 
-import os
-import os.path
+from .. import utils
+from ..errors import AnsibleError
 
 class Connection(object):
     ''' Handles abstract connections to remote hosts '''

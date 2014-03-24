@@ -15,9 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible.errors import AnsibleError
-import ansible.utils as utils
+from __future__ import absolute_import
+
 from re import compile as re_compile, IGNORECASE
+from ... import utils
+from ...errors import AnsibleError
 
 # shortcut format
 NUM = "(0?x?[0-9a-f]+)"

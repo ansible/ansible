@@ -26,6 +26,8 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import absolute_import
+
 try:
     import urllib
     HAS_URLLIB = True
@@ -194,7 +196,7 @@ def url_argument_spec():
     )
 
 
-def fetch_url(module, url, data=None, headers=None, method=None, 
+def fetch_url(module, url, data=None, headers=None, method=None,
               use_proxy=False, force=False, last_mod_time=None, timeout=10):
     '''
     Fetches a file from an HTTP/FTP server using urllib2
@@ -271,11 +273,11 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     else:
         request = urllib2.Request(url, data)
 
-    # add the custom agent header, to help prevent issues 
-    # with sites that block the default urllib agent string 
+    # add the custom agent header, to help prevent issues
+    # with sites that block the default urllib agent string
     request.add_header('User-agent', module.params.get('http_agent'))
 
-    # if we're ok with getting a 304, set the timestamp in the 
+    # if we're ok with getting a 304, set the timestamp in the
     # header, otherwise make sure we don't get a cached copy
     if last_mod_time and not force:
         tstamp = last_mod_time.strftime('%a, %d %b %Y %H:%M:%S +0000')

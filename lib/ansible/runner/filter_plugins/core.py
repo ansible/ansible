@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import
+
 import base64
 import json
 import os.path
@@ -23,8 +25,8 @@ import types
 import pipes
 import glob
 import re
-from ansible import errors
-from ansible.utils import md5s
+from ... import errors
+from ...utils import md5s
 
 def to_nice_yaml(*a, **kw):
     '''Make verbose, human readable yaml'''

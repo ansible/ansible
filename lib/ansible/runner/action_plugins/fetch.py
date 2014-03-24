@@ -15,18 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import
+
 import os
-import pwd
-import random
-import traceback
-import tempfile
 import base64
 
-import ansible.constants as C
-from ansible import utils
-from ansible import errors
-from ansible import module_common
-from ansible.runner.return_data import ReturnData
+from ..return_data import ReturnData
+from ... import utils
 
 class ActionModule(object):
 

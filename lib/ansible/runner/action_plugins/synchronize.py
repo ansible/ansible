@@ -16,11 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import
+
 import os.path
 
-from ansible import utils
-from ansible.runner.return_data import ReturnData
-import ansible.utils.template as template
+from ... import utils
+from ...utils import template
 
 class ActionModule(object):
 
@@ -52,7 +53,7 @@ class ActionModule(object):
 
     def setup(self, module_name, inject):
         ''' Always default to localhost as delegate if None defined '''
-    
+
         # Store original transport and sudo values.
         self.original_transport = inject.get('ansible_connection', self.runner.transport)
         self.original_sudo = self.runner.sudo
@@ -118,7 +119,7 @@ class ActionModule(object):
                     # use a delegate host instead of localhost
                     use_delegate = True
 
-        # COMPARE DELEGATE, HOST AND TRANSPORT                             
+        # COMPARE DELEGATE, HOST AND TRANSPORT
         process_args = False
         if not dest_host is src_host and self.original_transport != 'local':
             # interpret and inject remote host info into src or dest
@@ -135,7 +136,7 @@ class ActionModule(object):
                 if not use_delegate or not user:
                     user = inject.get('ansible_ssh_user',
                                     self.runner.remote_user)
-                
+
             if use_delegate:
                 # FIXME
                 private_key = inject.get('ansible_ssh_private_key_file', self.runner.private_key_file)
@@ -147,7 +148,7 @@ class ActionModule(object):
             if not private_key is None:
                 private_key = os.path.expanduser(private_key)
                 options['private_key'] = private_key
-                
+
             # use the mode to define src and dest's url
             if options.get('mode', 'push') == 'pull':
                 # src is a remote path: <user>@<host>, dest is a local path
@@ -183,7 +184,7 @@ class ActionModule(object):
         # run the module and store the result
         result = self.runner._execute_module(conn, tmp, 'synchronize', module_items, inject=inject)
 
-        # reset the sudo property                 
+        # reset the sudo property
         self.runner.sudo = self.original_sudo
 
         return result

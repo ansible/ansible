@@ -17,14 +17,14 @@
 
 #############################################
 
+from __future__ import absolute_import
+
 import os
 import subprocess
-import ansible.constants as C
-from ansible.inventory.host import Host
-from ansible.inventory.group import Group
-from ansible import utils
-from ansible import errors
 import sys
+from .group import Group
+from .host import Host
+from .. import constants as C, errors, utils
 
 class InventoryScript(object):
     ''' Host inventory parser for ansible using external inventory scripts. '''
@@ -60,7 +60,7 @@ class InventoryScript(object):
             raise errors.AnsibleError("failed to parse executable inventory script results: %s" % self.raw)
 
         for (group_name, data) in self.raw.items():
- 
+
             # in Ansible 1.3 and later, a "_meta" subelement may contain
             # a variable "hostvars" which contains a hash for each host
             # if this "hostvars" exists at all then do not call --host for each

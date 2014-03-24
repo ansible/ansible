@@ -15,24 +15,21 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import
+
 import os
 import re
 import codecs
 import jinja2
 from jinja2.runtime import StrictUndefined
 from jinja2.exceptions import TemplateSyntaxError
-import yaml
-import json
-from ansible import errors
-import ansible.constants as C
 import time
-import subprocess
 import datetime
 import pwd
 import ast
-import traceback
 
-from ansible.utils.string_functions import count_newlines_from_end
+from .string_functions import count_newlines_from_end
+from .. import constants as C, errors
 
 class Globals(object):
 
@@ -102,7 +99,7 @@ def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=Tr
             first_part = varname.split(".")[0].split("[")[0]
             if first_part in vars and '{{' not in varname and '$' not in varname:
                 varname = "{{%s}}" % varname
-    
+
         if isinstance(varname, basestring):
             if '{{' in varname or '{%' in varname:
                 varname = template_from_string(basedir, varname, vars, fail_on_undefined)
@@ -113,7 +110,7 @@ def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=Tr
                         varname = eval_results[0]
 
             return varname
-    
+
         elif isinstance(varname, (list, tuple)):
             return [template(basedir, v, vars, lookup_fatal, depth, expand_lists, fail_on_undefined=fail_on_undefined) for v in varname]
         elif isinstance(varname, dict):
@@ -275,7 +272,7 @@ def template_from_file(basedir, path, vars):
 
     # The low level calls above do not preserve the newline
     # characters at the end of the input data, so we use the
-    # calculate the difference in newlines and append them 
+    # calculate the difference in newlines and append them
     # to the resulting output for parity
     res_newlines  = count_newlines_from_end(res)
     data_newlines = count_newlines_from_end(data)

@@ -15,13 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible import utils
+from __future__ import absolute_import
+
 import os
 import urllib2
 try:
     import json
 except ImportError:
     import simplejson as json
+from ... import utils
 
 # this can be made configurable, not should not use ansible.cfg
 ANSIBLE_ETCD_URL = 'http://127.0.0.1:4001'

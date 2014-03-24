@@ -15,19 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import ansible.inventory
-import ansible.constants as C
-import ansible.runner
-from ansible.utils.template import template
-from ansible import utils
-from ansible import errors
-import ansible.callbacks
+from __future__ import absolute_import
+
 import os
 import shlex
 import collections
-from play import Play
 import StringIO
-import pipes
+from .play import Play
+from .. import callbacks, constants as C, errors, utils
+from ..inventory import Inventory
+from ..runner import Runner
+from ..utils.template import template
 
 SETUP_CACHE = collections.defaultdict(dict)
 
@@ -149,7 +147,7 @@ class PlayBook(object):
         self.runner_callbacks.playbook = self
 
         if inventory is None:
-            self.inventory    = ansible.inventory.Inventory(host_list)
+            self.inventory    = Inventory(host_list)
             self.inventory.subset(subset)
         else:
             self.inventory    = inventory
@@ -280,12 +278,12 @@ class PlayBook(object):
             raise errors.AnsibleError(msg % (unknown, unmatched))
 
         for play in plays:
-            ansible.callbacks.set_play(self.callbacks, play)
-            ansible.callbacks.set_play(self.runner_callbacks, play)
+            callbacks.set_play(self.callbacks, play)
+            callbacks.set_play(self.runner_callbacks, play)
             if not self._run_play(play):
                 break
-            ansible.callbacks.set_play(self.callbacks, None)
-            ansible.callbacks.set_play(self.runner_callbacks, None)
+            callbacks.set_play(self.callbacks, None)
+            callbacks.set_play(self.runner_callbacks, None)
 
         # summarize the results
         results = {}
@@ -324,7 +322,7 @@ class PlayBook(object):
         hosts = self._trim_unavailable_hosts(task.play._play_hosts)
         self.inventory.restrict_to(hosts)
 
-        runner = ansible.runner.Runner(
+        runner = Runner(
             pattern=task.play.hosts,
             inventory=self.inventory,
             module_name=task.module_name,
@@ -392,8 +390,8 @@ class PlayBook(object):
     def _run_task(self, play, task, is_handler):
         ''' run a single task in the playbook and recursively run any subtasks.  '''
 
-        ansible.callbacks.set_task(self.callbacks, task)
-        ansible.callbacks.set_task(self.runner_callbacks, task)
+        callbacks.set_task(self.callbacks, task)
+        callbacks.set_task(self.runner_callbacks, task)
 
         if task.role_name:
             name = '%s | %s' % (task.role_name, task.name)
@@ -456,8 +454,8 @@ class PlayBook(object):
                     for handler_name in task.notify:
                         self._flag_handler(play, template(play.basedir, handler_name, task.module_vars), host)
 
-        ansible.callbacks.set_task(self.callbacks, None)
-        ansible.callbacks.set_task(self.runner_callbacks, None)
+        callbacks.set_task(self.callbacks, None)
+        callbacks.set_task(self.runner_callbacks, None)
         return hosts_remaining
 
     # *****************************************************
@@ -495,11 +493,11 @@ class PlayBook(object):
         self.callbacks.on_setup()
         self.inventory.restrict_to(host_list)
 
-        ansible.callbacks.set_task(self.callbacks, None)
-        ansible.callbacks.set_task(self.runner_callbacks, None)
+        callbacks.set_task(self.callbacks, None)
+        callbacks.set_task(self.runner_callbacks, None)
 
         # push any variables down to the system
-        setup_results = ansible.runner.Runner(
+        setup_results = Runner(
             pattern=play.hosts,
             module_name='setup',
             module_args={},

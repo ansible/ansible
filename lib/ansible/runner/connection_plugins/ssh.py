@@ -16,11 +16,12 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import absolute_import
+
 import os
 import subprocess
 import shlex
 import pipes
-import random
 import select
 import fcntl
 import hmac
@@ -28,10 +29,9 @@ import pwd
 import gettext
 import pty
 from hashlib import sha1
-import ansible.constants as C
-from ansible.callbacks import vvv
-from ansible import errors
-from ansible import utils
+from ... import constants as C, errors, utils
+from ...callbacks import vvv
+
 
 class Connection(object):
     ''' ssh based connections '''
@@ -122,12 +122,12 @@ class Connection(object):
         else:
             user_host_file = "~/.ssh/known_hosts"
         user_host_file = os.path.expanduser(user_host_file)
-        
+
         host_file_list = []
         host_file_list.append(user_host_file)
         host_file_list.append("/etc/ssh/ssh_known_hosts")
         host_file_list.append("/etc/ssh/ssh_known_hosts2")
-        
+
         hfiles_not_found = 0
         for hf in host_file_list:
             if not os.path.exists(hf):
@@ -197,7 +197,7 @@ class Connection(object):
         not_in_host_file = self.not_in_host_file(self.host)
 
         if C.HOST_KEY_CHECKING and not_in_host_file:
-            # lock around the initial SSH connectivity so the user prompt about whether to add 
+            # lock around the initial SSH connectivity so the user prompt about whether to add
             # the host to known hosts is not intermingled with multiprocess output.
             fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_EX)
             fcntl.lockf(self.runner.output_lockfile, fcntl.LOCK_EX)
@@ -318,9 +318,9 @@ class Connection(object):
                 # if we loop and do the select it waits all the timeout
                 break
         stdin.close() # close stdin after we read from stdout (see also issue #848)
-        
+
         if C.HOST_KEY_CHECKING and not_in_host_file:
-            # lock around the initial SSH connectivity so the user prompt about whether to add 
+            # lock around the initial SSH connectivity so the user prompt about whether to add
             # the host to known hosts is not intermingled with multiprocess output.
             fcntl.lockf(self.runner.output_lockfile, fcntl.LOCK_UN)
             fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_UN)

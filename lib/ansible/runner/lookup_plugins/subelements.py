@@ -15,8 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import ansible.utils as utils
-import ansible.errors as errors
+from __future__ import absolute_import
+
+from ... import errors, utils
 
 
 class LookupModule(object):
@@ -44,7 +45,7 @@ class LookupModule(object):
             elementlist = []
             for key in terms[0].iterkeys():
                 elementlist.append(terms[0][key])
-        else: 
+        else:
             elementlist = terms[0]
         subelement = terms[1]
 
@@ -54,7 +55,7 @@ class LookupModule(object):
                 raise errors.AnsibleError("subelements lookup expects a dictionary, got '%s'" %item0)
             if item0.get('skipped',False) != False:
                 # this particular item is to be skipped
-                continue 
+                continue
             if not subelement in item0:
                 raise errors.AnsibleError("could not find '%s' key in iterated item '%s'" % (subelement, item0))
             if not isinstance(item0[subelement], list):

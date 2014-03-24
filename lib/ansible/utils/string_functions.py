@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 def isprintable(instring):
     #http://stackoverflow.com/a/3637294
     import string

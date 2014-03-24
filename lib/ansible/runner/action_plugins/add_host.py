@@ -15,14 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import ansible
+from __future__ import absolute_import
 
-from ansible.callbacks import vv
-from ansible.errors import AnsibleError as ae
-from ansible.runner.return_data import ReturnData
-from ansible.utils import parse_kv
-from ansible.inventory.host import Host
-from ansible.inventory.group import Group
+from ..return_data import ReturnData
+from ...callbacks import vv
+from ...errors import AnsibleError as ae
+from ...inventory.host import Host
+from ...inventory.group import Group
+from ...utils import parse_kv
 
 class ActionModule(object):
     ''' Create inventory hosts and groups in the memory inventory'''
@@ -55,7 +55,7 @@ class ActionModule(object):
         if ":" in new_name:
             new_name, new_port = new_name.split(":")
             args['ansible_ssh_port'] = new_port
-        
+
         # redefine inventory and get group "all"
         inventory = self.runner.inventory
         allgroup = inventory.get_group('all')
@@ -72,10 +72,10 @@ class ActionModule(object):
         # Add any variables to the new_host
         for k in args.keys():
             if not k in [ 'name', 'hostname', 'groupname', 'groups' ]:
-                new_host.set_variable(k, args[k]) 
-                
-        
-        groupnames = args.get('groupname', args.get('groups', args.get('group', ''))) 
+                new_host.set_variable(k, args[k])
+
+
+        groupnames = args.get('groupname', args.get('groups', args.get('group', '')))
         # add it to the group if that was specified
         if groupnames != '':
             for group_name in groupnames.split(","):
@@ -94,13 +94,13 @@ class ActionModule(object):
 
                 vv("added host to group via add_host module: %s" % group_name)
             result['new_groups'] = groupnames.split(",")
-            
+
         result['new_host'] = new_name
 
         # clear pattern caching completely since it's unpredictable what
         # patterns may have referenced the group
         inventory.clear_pattern_cache()
-        
+
         return ReturnData(conn=conn, comm_ok=True, result=result)
 
 

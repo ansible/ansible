@@ -15,8 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import
+
 import sys
-import constants
+from . import constants
 
 ANSIBLE_COLOR=True
 if constants.ANSIBLE_NOCOLOR:

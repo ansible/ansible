@@ -15,10 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import ansible.utils as utils
-from ansible.utils import safe_eval
-import ansible.errors as errors
+from __future__ import absolute_import
+
 from itertools import izip_longest
+from ... import errors, utils
+
 
 def flatten(terms):
     ret = []

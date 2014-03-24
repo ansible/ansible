@@ -15,11 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import
+
 import os
-from ansible.utils import template
-from ansible import utils
-from ansible import errors
-from ansible.runner.return_data import ReturnData
+from ..return_data import ReturnData
+from ... import errors, utils
+from ...utils import template
 
 class ActionModule(object):
 

@@ -16,10 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible.utils import safe_eval
-import ansible.utils as utils
-import ansible.errors as errors
-import ansible.inventory as inventory
+from __future__ import absolute_import
+
+from ... import errors, inventory, utils
 
 def flatten(terms):
     ret = []
@@ -40,7 +39,7 @@ class LookupModule(object):
             raise errors.AnsibleError("inventory_hostnames must be used as a loop. Example: \"with_inventory_hostnames: \'all\'\"")
 
     def run(self, terms, inject=None, **kwargs):
-        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
+        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
 
         if not isinstance(terms, list):
             raise errors.AnsibleError("with_inventory_hostnames expects a list")

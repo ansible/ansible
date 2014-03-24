@@ -17,13 +17,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import
+
 import distutils.spawn
 import traceback
 import os
 import shutil
 import subprocess
-from ansible import errors
-from ansible.callbacks import vvv
+from ... import errors
+from ...callbacks import vvv
 
 class Connection(object):
     ''' Local chroot based connections '''
@@ -54,8 +56,8 @@ class Connection(object):
         # remove \n
         return stdout[:-1]
 
- 
-        
+
+
     def __init__(self, runner, host, port, *args, **kwargs):
         self.jail = host
         self.runner = runner
@@ -67,7 +69,7 @@ class Connection(object):
 
         self.jls_cmd = self._search_executable('jls')
         self.jexec_cmd = self._search_executable('jexec')
-        
+
         if not self.jail in self.list_jails():
             raise errors.AnsibleError("incorrect jail name %s" % self.jail)
 

@@ -15,16 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import
+
 import traceback
 import os
-import pipes
 import shutil
 import subprocess
 import select
 import fcntl
-from ansible import errors
-from ansible import utils
-from ansible.callbacks import vvv
+from ... import errors, utils
+from ...callbacks import vvv
 
 class Connection(object):
     ''' Local based connections '''
@@ -33,7 +33,7 @@ class Connection(object):
         self.runner = runner
         self.host = host
         # port is unused, since this is local
-        self.port = port 
+        self.port = port
         self.has_pipelining = False
 
     def connect(self, port=None):

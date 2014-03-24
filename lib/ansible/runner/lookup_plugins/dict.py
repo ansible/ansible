@@ -15,9 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible.utils import safe_eval
-import ansible.utils as utils
-import ansible.errors as errors
+from __future__ import absolute_import
+
+from ... import errors, utils
 
 def flatten_hash_to_list(terms):
     ret = []

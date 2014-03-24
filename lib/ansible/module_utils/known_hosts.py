@@ -26,6 +26,8 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import absolute_import
+
 import hmac
 from hashlib import sha1
 HASHED_KEY_MAGIC = "|1|"
@@ -44,7 +46,7 @@ def add_git_host_key(module, url, accept_hostkey=True):
                 if rc != 0:
                     module.fail_json(msg="failed to add %s hostkey: %s" % (fqdn, out + err))
             else:
-                module.fail_json(msg="%s has an unknown hostkey. Set accept_hostkey to True or manually add the hostkey prior to running the git module" % fqdn)                    
+                module.fail_json(msg="%s has an unknown hostkey. Set accept_hostkey to True or manually add the hostkey prior to running the git module" % fqdn)
 
 def get_fqdn(repo_url):
 

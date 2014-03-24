@@ -17,8 +17,8 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import os
-import sys
+from __future__ import absolute_import
+
 import ast
 import yaml
 import traceback
