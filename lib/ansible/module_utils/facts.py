@@ -416,6 +416,7 @@ class Facts(object):
         now = datetime.datetime.now()
         self.facts['date_time']['year'] = now.strftime('%Y')
         self.facts['date_time']['month'] = now.strftime('%m')
+        self.facts['date_time']['weekday'] = now.strftime('%A')
         self.facts['date_time']['day'] = now.strftime('%d')
         self.facts['date_time']['hour'] = now.strftime('%H')
         self.facts['date_time']['minute'] = now.strftime('%M')
