@@ -167,7 +167,7 @@ class PlayBook(object):
 
         self.filename = playbook
         (self.playbook, self.play_basedirs) = self._load_playbook_from_file(playbook, vars)
-        ansible.callbacks.load_callback_plugins()
+        callbacks.load_callback_plugins()
 
     # *****************************************************
 
@@ -400,8 +400,8 @@ class PlayBook(object):
 
         self.callbacks.on_task_start(template(play.basedir, name, task.module_vars, lookup_fatal=False, filter_fatal=False), is_handler)
         if hasattr(self.callbacks, 'skip_task') and self.callbacks.skip_task:
-            ansible.callbacks.set_task(self.callbacks, None)
-            ansible.callbacks.set_task(self.runner_callbacks, None)
+            callbacks.set_task(self.callbacks, None)
+            callbacks.set_task(self.runner_callbacks, None)
             return True
 
         # template ignore_errors

@@ -38,6 +38,7 @@ from . import connection, poller
 from .return_data import ReturnData
 from .. import constants as C, errors, utils
 from ..callbacks import DefaultRunnerCallbacks, vv
+from ..inventory import Inventory
 from ..module_common import ModuleReplacer
 from ..utils import check_conditional, string_functions, template
 
@@ -153,7 +154,7 @@ class Runner(object):
         self.callbacks        = utils.default(callbacks, lambda: DefaultRunnerCallbacks())
         self.generated_jid    = str(random.randint(0, 999999999999))
         self.transport        = transport
-        self.inventory        = utils.default(inventory, lambda: ansible.inventory.Inventory(host_list))
+        self.inventory        = utils.default(inventory, lambda: Inventory(host_list))
 
         self.module_vars      = utils.default(module_vars, lambda: {})
         self.default_vars     = utils.default(default_vars, lambda: {})
