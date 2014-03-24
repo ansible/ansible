@@ -151,8 +151,10 @@ In both examples, the ``state`` argument you may have never encounter yet. In An
 Managing Packages
 `````````````````
 
-There are modules available for yum and apt.  Here are some examples
-with yum.
+A very common sysadmin task is managing packages: installing and uninstalling
+softwares. This is something very easy to do with Ansible, as there are modules
+available for, say, ``yum`` and ``apt``. Here are some examples with yum. See
+how the ``state`` argument is used to induce actions on the ``webservers`` host:
 
 Ensure a package is installed, but don't update it::
 
