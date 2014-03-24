@@ -30,7 +30,7 @@ options:
   name:
     description:
       - name of the database to add or remove
-    required: true
+    required: false
     default: null
     aliases: [ db ]
   login_user:
@@ -60,14 +60,13 @@ options:
     default: null
   state:
     description:
-      - The database state
+      - The database state (name required when state=present, or absent)
     required: false
     default: present
     choices: [ "present", "absent", "dump", "import" ]
   all_databases:
     description:
       - May only be provided if I(state) is C(dump) or C(import).
-      - Requires I(name) = a valid database name.
       - Uses --all-databases option for mysqldump.
       - When used for import, works similiar to mysql -u <username> -p <pasword> < target.sql
     required: no
@@ -108,9 +107,9 @@ EXAMPLES = '''
 - copy: src=dump.sql.bz2 dest=/tmp
 - mysql_db: name=my_db state=import target=/tmp/dump.sql.bz2
 # Dumps all databases to hostname.sql
-- mysql_db: name=bobdata state=dump all_databases=true target=/tmp/{{ inventory_hostname }}.sql
+- mysql_db: state=dump all_databases=true target=/tmp/{{ inventory_hostname }}.sql
 # Imports file.sql similiar to mysql -u <username> -p <password> < hostname.sql
-- mysql_db: name=bobdata state=import all_databases=true target=/tmp/{{ inventory_hostname }}.sql
+- mysql_db: state=import all_databases=true target=/tmp/{{ inventory_hostname }}.sql
 '''
 
 import ConfigParser
@@ -250,7 +249,7 @@ def main():
             login_host=dict(default="localhost"),
             login_port=dict(default="3306"),
             login_unix_socket=dict(default=None),
-            db=dict(required=True, aliases=['name']),
+            db=dict(required=False, aliases=['name']),
             encoding=dict(default=""),
             collation=dict(default=""),
             all_databases=dict(default="no", choices=BOOLEANS, type='bool'),
@@ -289,8 +288,16 @@ def main():
     if state in ['dump','import']:
         if target is None:
             module.fail_json(msg="with state=%s target is required" % (state))
-        connect_to_db = db
+        if all_databases:
+            connect_to_db = 'mysql'
+            db = 'mysql'
+	elif db is None:
+            module.fail_json(msg="with state=%s either name or all_databases is required" % (state))
+        else:
+            connect_to_db = db
     else:
+        if db is None:
+            module.fail_json(msg="name is required if state is not dump or import")
         connect_to_db = 'mysql'
     try:
         if module.params["login_unix_socket"]:
