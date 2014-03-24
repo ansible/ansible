@@ -81,8 +81,8 @@ options:
     default: null
     choices: []
     description:
-      - path of the file to link to (applies only to C(state=link)). Will accept absolute,
-        relative and nonexisting paths. Relative paths are not expanded.
+      - path of the file to link to (applies only to C(state= link or hard)). Will accept absolute,
+        relative and nonexisting (with C(force)) paths. Relative paths are not expanded.
   seuser:
     required: false
     default: null
@@ -266,8 +266,12 @@ def main():
 
     elif state in ['link','hard']:
 
-        if not os.path.exists(src) and not force:
-            module.fail_json(path=path, src=src, msg='src file does not exist')
+        absrc = src
+        if not os.path.isabs(absrc):
+            absrc = os.path.normpath('%s/%s' % (os.path.dirname(path), absrc))
+
+        if not os.path.exists(absrc) and not force:
+            module.fail_json(path=path, src=src, msg='src file does not exist, use "force=yes" if you really want to create the link: %s' % absrc)
 
         if state == 'hard':
             if not os.path.isabs(src):
@@ -297,7 +301,7 @@ def main():
         if changed and not module.check_mode:
             if prev_state != 'absent':
                 # try to replace atomically
-                tmppath = ".%s.%s.%s.tmp" % (path,os.getpid(),time.time())
+                tmppath = '/'.join([os.path.dirname(path), ".%s.%s.tmp" % (os.getpid(),time.time())])
                 try:
                     if state == 'hard':
                         os.link(src,tmppath)
@@ -307,13 +311,14 @@ def main():
                 except OSError, e:
                     os.unlink(tmppath)
                     module.fail_json(path=path, msg='Error while replacing: %s' % str(e))
-            try:
-                if state == 'hard':
-                    os.link(src,path)
-                else:
-                    os.symlink(src, path)
-            except OSError, e:
-                module.fail_json(path=path, msg='Error while linking: %s' % str(e))
+            else:
+                try:
+                    if state == 'hard':
+                        os.link(src,path)
+                    else:
+                        os.symlink(src, path)
+                except OSError, e:
+                    module.fail_json(path=path, msg='Error while linking: %s' % str(e))
 
         changed = module.set_fs_attributes_if_different(file_args, changed)
         module.exit_json(dest=path, src=src, changed=changed)
