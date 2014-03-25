@@ -849,16 +849,19 @@ class Runner(object):
 
             changed_when = self.module_vars.get('changed_when')
             failed_when = self.module_vars.get('failed_when')
-            if changed_when is not None or failed_when is not None:
+            if (changed_when is not None or failed_when is not None) and self.background == 0:
                 register = self.module_vars.get('register')
-                if  register is not None:
+                if register is not None:
                     if 'stdout' in data:
                         data['stdout_lines'] = data['stdout'].splitlines()
                     inject[register] = data
-                if changed_when is not None:
-                    data['changed'] = utils.check_conditional(changed_when, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars)
-                if failed_when is not None:
-                    data['failed_when_result'] = data['failed'] = utils.check_conditional(failed_when, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars)
+                # only run the final checks if the async_status has finished,
+                # or if we're not running an async_status check at all
+                if (module_name == 'async_status' and "finished" in data) or module_name != 'async_status':
+                    if changed_when is not None:
+                        data['changed'] = utils.check_conditional(changed_when, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars)
+                    if failed_when is not None:
+                        data['failed_when_result'] = data['failed'] = utils.check_conditional(failed_when, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars)
 
             if is_chained:
                 # no callbacks
