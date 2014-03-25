@@ -15,6 +15,7 @@ Major features/changes:
 
 New Modules:
 
+* files: replace
 * packaging: cpanm (Perl)
 * packaging: portage
 * packaging: composer (PHP)
