@@ -966,11 +966,12 @@ class AnsibleModule(object):
         it uses os.rename to ensure this as it is an atomic operation, rest of the function is
         to work around limitations, corner cases and ensure selinux context is saved if possible'''
         context = None
+        dest_stat = None
         if os.path.exists(dest):
             try:
-                st = os.stat(dest)
-                os.chmod(src, st.st_mode & 07777)
-                os.chown(src, st.st_uid, st.st_gid)
+                dest_stat = os.stat(dest)
+                os.chmod(src, dest_stat.st_mode & 07777)
+                os.chown(src, dest_stat.st_uid, dest_stat.st_gid)
             except OSError, e:
                 if e.errno != errno.EPERM:
                     raise
@@ -1005,9 +1006,8 @@ class AnsibleModule(object):
                 if self.selinux_enabled():
                     self.set_context_if_different(
                         tmp_dest.name, context, False)
-                # Reset owners, they are not preserved by shutil.copy2(), which
-                # is what shutil.move() falls back to.
-                os.chown(tmp_dest.name, st.st_uid, st.st_gid)
+                if dest_stat:
+                    os.chown(tmp_dest.name, dest_stat.st_uid, dest_stat.st_gid)
                 os.rename(tmp_dest.name, dest)
             except (shutil.Error, OSError, IOError), e:
                 self.cleanup(tmp_dest.name)
