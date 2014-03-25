@@ -85,11 +85,13 @@ options:
       - The username to authenticate.
     default: null
     required: false
+    version_added: "1.6"
   password:
     description:
       - Password to authenticate username.
     default: null
     required: false
+    version_added: "1.6"
   attach:
     description:
       - A space-separated list of pathnames of files to attach to the message.
