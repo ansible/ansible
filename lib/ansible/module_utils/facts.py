@@ -108,7 +108,7 @@ class Facts(object):
         self.facts['python_version'] = platform.python_version()
         self.facts['fqdn'] = socket.getfqdn()
         self.facts['hostname'] = platform.node().split('.')[0]
-        self.facts['full_hostname'] = platform.node()
+        self.facts['nodename'] = platform.node()
         self.facts['domain'] = '.'.join(self.facts['fqdn'].split('.')[1:])
         arch_bits = platform.architecture()[0]
         self.facts['userspace_bits'] = arch_bits.replace('bit', '')
