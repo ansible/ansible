@@ -611,8 +611,12 @@ class PlayBook(object):
 
             for task in play.tasks():
 
-                # skip handlers until play is finished
                 if task.meta is not None:
+                    # meta tasks can force handlers to run mid-play
+                    if task.meta == 'flush_handlers':
+                        self.run_handlers(play)
+
+                    # skip calling the handler till the play is finished
                     continue
 
                 # only run the task if the requested tags match
@@ -661,14 +665,20 @@ class PlayBook(object):
                         task_errors = True
                         break
                     else:
+                        self.callbacks.on_no_hosts_remaining()
                         return False
 
-        if task_errors and not self.force_handlers:
-            return False
-        else:
+            # lift restrictions after each play finishes
             self.inventory.lift_also_restriction()
-            if not self.run_handlers(play):
+
+            if task_errors and not self.force_handlers:
+                # if there were failed tasks and handler execution
+                # is not forced, quit the play with an error
                 return False
+            else:
+                # no errors, go ahead and execute all handlers
+                if not self.run_handlers(play):
+                    return False
 
         return True
 
@@ -679,38 +689,35 @@ class PlayBook(object):
         for task in play.tasks():
             if task.meta is not None:
 
-                # meta tasks are an internalism and are not valid for end-user playbook usage
-                # here a meta task is a placeholder that signals handlers should be run
+                fired_names = {}
+                for handler in play.handlers():
+                    if len(handler.notified_by) > 0:
+                        self.inventory.restrict_to(handler.notified_by)
 
-                if task.meta == 'flush_handlers':
-                    fired_names = {}
-                    for handler in play.handlers():
-                        if len(handler.notified_by) > 0:
-                            self.inventory.restrict_to(handler.notified_by)
+                        # Resolve the variables first
+                        handler_name = template(play.basedir, handler.name, handler.module_vars)
+                        if handler_name not in fired_names:
+                            self._run_task(play, handler, True)
+                        # prevent duplicate handler includes from running more than once
+                        fired_names[handler_name] = 1
 
-                            # Resolve the variables first
-                            handler_name = template(play.basedir, handler.name, handler.module_vars)
-                            if handler_name not in fired_names:
-                                self._run_task(play, handler, True)
-                            # prevent duplicate handler includes from running more than once
-                            fired_names[handler_name] = 1
+                        host_list = self._trim_unavailable_hosts(play._play_hosts)
+                        if handler.any_errors_fatal and len(host_list) < hosts_count:
+                            play.max_fail_pct = 0
+                        if (hosts_count - len(host_list)) > int((play.max_fail_pct)/100.0 * hosts_count):
+                            host_list = None
+                        if not host_list and not self.force_handlers:
+                            self.callbacks.on_no_hosts_remaining()
+                            return False
 
-                            host_list = self._trim_unavailable_hosts(play._play_hosts)
-                            if handler.any_errors_fatal and len(host_list) < hosts_count:
-                                play.max_fail_pct = 0
-                            if (hosts_count - len(host_list)) > int((play.max_fail_pct)/100.0 * hosts_count):
-                                host_list = None
-                            if not host_list and not self.force_handlers:
-                                self.callbacks.on_no_hosts_remaining()
-                                return False
+                        self.inventory.lift_restriction()
+                        new_list = handler.notified_by[:]
+                        for host in handler.notified_by:
+                            if host in on_hosts:
+                                while host in new_list:
+                                    new_list.remove(host)
+                        handler.notified_by = new_list
 
-                            self.inventory.lift_restriction()
-                            new_list = handler.notified_by[:]
-                            for host in handler.notified_by:
-                                if host in on_hosts:
-                                    while host in new_list:
-                                        new_list.remove(host)
-                            handler.notified_by = new_list
+                continue
 
-                    continue
         return True
