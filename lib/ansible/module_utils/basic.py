@@ -804,6 +804,12 @@ class AnsibleModule(object):
         else:
             msg = 'Invoked'
 
+        # 6655 - allow for accented characters
+        try:
+            msg = unicode(msg).encode('utf8')
+        except UnicodeDecodeError, e:
+            pass
+
         if (has_journal):
             journal_args = ["MESSAGE=%s %s" % (module, msg)]
             journal_args.append("MODULE=%s" % os.path.basename(__file__))
@@ -814,10 +820,10 @@ class AnsibleModule(object):
             except IOError, e:
                 # fall back to syslog since logging to journal failed
                 syslog.openlog(str(module), 0, syslog.LOG_USER)
-                syslog.syslog(syslog.LOG_NOTICE, unicode(msg).encode('utf8'))
+                syslog.syslog(syslog.LOG_NOTICE, msg) #1
         else:
             syslog.openlog(str(module), 0, syslog.LOG_USER)
-            syslog.syslog(syslog.LOG_NOTICE, unicode(msg).encode('utf8'))
+            syslog.syslog(syslog.LOG_NOTICE, msg) #2
 
     def _set_cwd(self):
         try:
