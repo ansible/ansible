@@ -601,6 +601,7 @@ class PlayBook(object):
                         play_hosts.append(all_hosts.pop())
                 serialized_batch.append(play_hosts)
 
+        task_errors = False
         for on_hosts in serialized_batch:
 
             # restrict the play to just the hosts we have in our on_hosts block that are
@@ -657,15 +658,17 @@ class PlayBook(object):
                 # if no hosts remain, drop out
                 if not host_list:
                     if self.force_handlers:
-                        if not self.run_handlers(play):
-                            return False
+                        task_errors == True
+                        break
                     else:
-                        self.callbacks.on_no_hosts_remaining()
-                    return False
-                else:
-                    self.inventory.lift_also_restriction()
-                    if not self.run_handlers(play):
                         return False
+
+        if task_errors and not self.force_handlers:
+            return False
+        else:
+            self.inventory.lift_also_restriction()
+            if not self.run_handlers(play):
+                return False
 
         return True
 
