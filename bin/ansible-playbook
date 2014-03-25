@@ -122,7 +122,7 @@ def main(args):
             this_path = os.path.expanduser(options.vault_password_file)
             try:
                 f = open(this_path, "rb")
-                tmp_vault_pass=f.read()
+                tmp_vault_pass=f.read().strip()
                 f.close()
             except (OSError, IOError), e:
                 raise errors.AnsibleError("Could not read %s: %s" % (this_path, e))
