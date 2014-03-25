@@ -354,22 +354,15 @@ class Inventory(object):
             raise Exception("group not found: %s" % groupname)
         return group.get_variables()
 
-    def get_variables(self, hostname, vault_password=None, pattern=None):
-        vars = {}
-
-        host_vars = self._get_variables(hostname, vault_password=vault_password)
-        pattern_vars = self._get_variables_from_pattern(pattern)
-
-        vars.update(host_vars)
-        vars.update(pattern_vars)
-
-        return vars
-
-    def _get_variables_from_pattern(self, pattern=None):
+    def _get_pattern_variables(self, pattern=None):
         if pattern in self._vars_per_pattern:
             return self._vars_per_pattern[pattern]
 
-        vars = {}
+        group = self.get_group('all')
+        if group:
+            vars = group.get_variables()
+        else:
+            vars = {}
 
         if not pattern:
             return vars
@@ -386,27 +379,43 @@ class Inventory(object):
 
         return vars
 
-    def _get_variables(self, hostname, vault_password=None):
+    def get_variables(self, hostname, pattern=None, vault_password=None):
 
-        if hostname in self._vars_per_host:
-            return self._vars_per_host[hostname]
+        hostkey = "%s:%s" % (hostname, pattern)
+        if hostkey in self._vars_per_host:
+            return self._vars_per_host[hostkey]
 
         host = self.get_host(hostname)
         if host is None:
             raise errors.AnsibleError("host not found: %s" % hostname)
 
         vars = {}
+
+        merged_vars  = host.get_variables()
+        pattern_vars = self._get_pattern_variables(pattern)
+        plugin_vars  = self._get_plugin_variables(host, vault_password=vault_password)
+        host_vars    = self._get_host_variables(host)
+
+        vars = utils.combine_vars(vars, merged_vars)
+        vars = utils.combine_vars(vars, pattern_vars)
+        vars = utils.combine_vars(vars, plugin_vars)
+        vars = utils.combine_vars(vars, host_vars)
+
+        self._vars_per_host[hostkey] = vars
+        return vars
+
+    def _get_plugin_variables(self, host, vault_password=None):
+        vars = {}
         vars_results = [ plugin.run(host, vault_password=vault_password) for plugin in self._vars_plugins ] 
         for updated in vars_results:
             if updated is not None:
                 vars = utils.combine_vars(vars, updated)
-
-        vars = utils.combine_vars(vars, host.get_variables())
-        if self.parser is not None:
-            vars = utils.combine_vars(vars, self.parser.get_host_variables(host))
-
-        self._vars_per_host[hostname] = vars
         return vars
+
+    def _get_host_variables(self, host):
+        if self.parser is not None:
+            return self.parser.get_host_variables(host)
+        return {}
 
     def add_group(self, group):
         self.groups.append(group)
