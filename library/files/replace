@@ -32,7 +32,7 @@ description:
   - This module will replace all instances of a pattern within a file.
   - It is up to the user to maintain idempotence by ensuring that the
     same pattern would never match any replacements made.
-version_added: "1.4"
+version_added: "1.6"
 options:
   dest:
     required: true
