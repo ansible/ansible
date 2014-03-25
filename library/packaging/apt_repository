@@ -45,7 +45,7 @@ options:
             - A source string state.
     update_cache:
         description:
-            - Run the equivalent of C(apt-get update) if has changed.
+            - Run the equivalent of C(apt-get update). If your state is present the cache is updated after adding the repository. If your state is absent the repository is removed and the cache is updated.
         required: false
         default: "yes"
         choices: [ "yes", "no" ]
