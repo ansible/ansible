@@ -37,9 +37,9 @@ class Inventory(object):
     Host inventory for ansible.
     """
 
-    __slots__ = [ 'host_list', 'groups', '_restriction', '_also_restriction', '_subset', 
-                  'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache', '_groups_list',
-                  '_pattern_cache', '_vars_plugins', '_playbook_basedir']
+    __slots__ = [ 'host_list', 'groups', '_restriction', '_also_restriction', '_subset', 'parser',
+                  '_vars_per_host', '_vars_per_group', '_vars_per_pattern', '_hosts_cache',
+                  '_groups_list', '_pattern_cache', '_vars_plugins', '_playbook_basedir']
 
     def __init__(self, host_list=C.DEFAULT_HOST_LIST):
 
@@ -50,11 +50,12 @@ class Inventory(object):
         # caching to avoid repeated calculations, particularly with
         # external inventory scripts.
 
-        self._vars_per_host  = {}
-        self._vars_per_group = {}
-        self._hosts_cache    = {}
-        self._groups_list    = {} 
-        self._pattern_cache  = {}
+        self._vars_per_host    = {}
+        self._vars_per_group   = {}
+        self._vars_per_pattern = {}
+        self._hosts_cache      = {}
+        self._groups_list      = {}
+        self._pattern_cache    = {}
 
         # to be set by calling set_playbook_basedir by ansible-playbook
         self._playbook_basedir = None
@@ -353,27 +354,68 @@ class Inventory(object):
             raise Exception("group not found: %s" % groupname)
         return group.get_variables()
 
-    def get_variables(self, hostname, vault_password=None):
-        if hostname not in self._vars_per_host:
-            self._vars_per_host[hostname] = self._get_variables(hostname, vault_password=vault_password)
-        return self._vars_per_host[hostname]
+    def _get_pattern_variables(self, pattern=None):
+        if pattern in self._vars_per_pattern:
+            return self._vars_per_pattern[pattern]
 
-    def _get_variables(self, hostname, vault_password=None):
+        group = self.get_group('all')
+        if group:
+            vars = group.get_variables()
+        else:
+            vars = {}
+
+        if not pattern:
+            return vars
+
+        patterns = pattern.replace(";",":").split(":")
+        patterns = filter(lambda x: not x.startswith("!"), patterns)
+        patterns = map(lambda x: x.replace("&", ""), patterns)
+
+        for group in map(lambda x: self.get_group(x), patterns):
+            if group:
+                vars.update(group.get_variables())
+
+        self._vars_per_pattern[pattern] = vars
+
+        return vars
+
+    def get_variables(self, hostname, pattern=None, vault_password=None):
+
+        hostkey = "%s:%s" % (hostname, pattern)
+        if hostkey in self._vars_per_host:
+            return self._vars_per_host[hostkey]
 
         host = self.get_host(hostname)
         if host is None:
             raise errors.AnsibleError("host not found: %s" % hostname)
 
         vars = {}
+
+        merged_vars  = host.get_variables()
+        pattern_vars = self._get_pattern_variables(pattern)
+        plugin_vars  = self._get_plugin_variables(host, vault_password=vault_password)
+        host_vars    = self._get_host_variables(host)
+
+        vars = utils.combine_vars(vars, merged_vars)
+        vars = utils.combine_vars(vars, pattern_vars)
+        vars = utils.combine_vars(vars, plugin_vars)
+        vars = utils.combine_vars(vars, host_vars)
+
+        self._vars_per_host[hostkey] = vars
+        return vars
+
+    def _get_plugin_variables(self, host, vault_password=None):
+        vars = {}
         vars_results = [ plugin.run(host, vault_password=vault_password) for plugin in self._vars_plugins ] 
         for updated in vars_results:
             if updated is not None:
                 vars = utils.combine_vars(vars, updated)
-
-        vars = utils.combine_vars(vars, host.get_variables())
-        if self.parser is not None:
-            vars = utils.combine_vars(vars, self.parser.get_host_variables(host))
         return vars
+
+    def _get_host_variables(self, host):
+        if self.parser is not None:
+            return self.parser.get_host_variables(host)
+        return {}
 
     def add_group(self, group):
         self.groups.append(group)
