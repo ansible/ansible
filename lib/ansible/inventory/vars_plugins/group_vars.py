@@ -15,13 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import
+
 import os
 import stat
 import errno
 
-from ansible import errors
-from ansible import utils
-import ansible.constants as C
+from ... import constants as C, errors, utils
 
 def _load_vars(basepath, results, vault_password=None):
     """
@@ -29,7 +29,7 @@ def _load_vars(basepath, results, vault_password=None):
     returning result.
     """
 
-    paths_to_check = [ "".join([basepath, ext]) 
+    paths_to_check = [ "".join([basepath, ext])
                        for ext in C.YAML_FILENAME_EXTENSIONS ]
 
     found_paths = []
@@ -67,7 +67,7 @@ def _load_vars_from_path(path, results, vault_password=None):
             return False, results
         # otherwise this is a condition we should report to the user
         raise errors.AnsibleError(
-            "%s is not accessible: %s." 
+            "%s is not accessible: %s."
             " Please check its permissions." % ( path, err.strerror))
 
     # symbolic link
@@ -116,12 +116,12 @@ def _load_vars_from_folder(folder_path, results, vault_password=None):
         names = os.listdir(folder_path)
     except os.error, err:
         raise errors.AnsibleError(
-            "This folder cannot be listed: %s: %s." 
+            "This folder cannot be listed: %s: %s."
              % ( folder_path, err.strerror))
-        
+
     # evaluate files in a stable order rather than whatever order the
     # filesystem lists them.
-    names.sort() 
+    names.sort()
 
     # do not parse hidden files or dirs, e.g. .svn/
     paths = [os.path.join(folder_path, name) for name in names if not name.startswith('.')]
@@ -129,7 +129,7 @@ def _load_vars_from_folder(folder_path, results, vault_password=None):
         _found, results = _load_vars_from_path(path, results, vault_password=vault_password)
     return results
 
-            
+
 class VarsModule(object):
 
     """
@@ -150,7 +150,7 @@ class VarsModule(object):
 
         inventory = self.inventory
         basedir = inventory.playbook_basedir()
-        if basedir is not None: 
+        if basedir is not None:
             basedir = os.path.abspath(basedir)
         self.pb_basedir = basedir
 

@@ -30,9 +30,12 @@ expanded into 001, 002 ...009, 010.
 Note that when beg is specified with left zero padding, then the length of
 end must be the same as that of beg, else a exception is raised.
 '''
+
+from __future__ import absolute_import
+
 import string
 
-from ansible import errors
+from .. import errors
 
 def detect_range(line = None):
     '''

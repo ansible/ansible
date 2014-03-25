@@ -35,7 +35,7 @@
 # EXAMPLES
 #  - name: copy first existing file found to /some/file
 #    action: copy src=$item dest=/some/file
-#    with_first_found: 
+#    with_first_found:
 #     - files: foo ${inventory_hostname} bar
 #       paths: /tmp/production /tmp/staging
 
@@ -46,10 +46,10 @@
 # /tmp/staging/foo
 #              ${inventory_hostname}
 #              bar
-                  
+
 #  - name: copy first existing file found to /some/file
 #    action: copy src=$item dest=/some/file
-#    with_first_found: 
+#    with_first_found:
 #     - files: /some/place/foo ${inventory_hostname} /some/place/else
 
 #  that will look for files in this order:
@@ -101,7 +101,7 @@
 #      - templates
 
 # the above will return an empty list if the files cannot be found at all
-# if skip is unspecificed or if it is set to false then it will return a list 
+# if skip is unspecificed or if it is set to false then it will return a list
 # error which can be caught bye ignore_errors: true for that action.
 
 # finally - if you want you can use it, in place to replace first_available_file:
@@ -117,9 +117,10 @@
 #     - ../files/baz
 #    ignore_errors: true
 
+from __future__ import absolute_import
 
-from ansible import utils, errors
 import os
+from ... import utils
 
 class LookupModule(object):
 

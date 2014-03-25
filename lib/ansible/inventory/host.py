@@ -15,8 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import ansible.constants as C
-from ansible import utils
+from __future__ import absolute_import
+
+from .. import constants as C, utils
 
 class Host(object):
     ''' a single ansible host '''

@@ -15,8 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import
+
 import random
-from ansible import utils
+from ... import utils
 
 # useful for introducing chaos ... or just somewhat reasonably fair selection
 # amongst available mirrors
@@ -25,7 +27,7 @@ from ansible import utils
 #        - debug: msg=$item
 #          with_random_choice:
 #             - one
-#             - two 
+#             - two
 #             - three
 
 class LookupModule(object):
@@ -35,7 +37,7 @@ class LookupModule(object):
 
     def run(self, terms, inject=None, **kwargs):
 
-        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
+        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
 
         return [ random.choice(terms) ]
 

@@ -15,13 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import ansible
+from __future__ import absolute_import
 
-from ansible.callbacks import vv
-from ansible.errors import AnsibleError as ae
-from ansible.runner.return_data import ReturnData
-from ansible.utils import parse_kv, check_conditional
-import ansible.utils.template as template
+from ..return_data import ReturnData
+from ...callbacks import vv
+from ...errors import AnsibleError as ae
+from ...inventory.host import Host
+from ...inventory.group import Group
+from ...utils import check_conditional, parse_kv, template
 
 class ActionModule(object):
     ''' Create inventory groups based on variables '''
@@ -80,14 +81,14 @@ class ActionModule(object):
         for group, hosts in groups.items():
             inv_group = inventory.get_group(group)
             if not inv_group:
-                inv_group = ansible.inventory.Group(name=group)
+                inv_group = Group(name=group)
                 inventory.add_group(inv_group)
             for host in hosts:
                 if host in self.runner.inventory._vars_per_host:
                     del self.runner.inventory._vars_per_host[host]
                 inv_host = inventory.get_host(host)
                 if not inv_host:
-                    inv_host = ansible.inventory.Host(name=host)
+                    inv_host = Host(name=host)
                 if inv_group not in inv_host.get_groups():
                     result['changed'] = True
                     inv_group.add_host(inv_host)

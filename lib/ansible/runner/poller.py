@@ -16,9 +16,11 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import absolute_import
+
 import time
 
-from ansible import errors
+from .. import errors
 
 class AsyncPoller(object):
     """ Manage asynchronous jobs. """

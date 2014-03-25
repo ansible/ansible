@@ -15,11 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible import errors
-from ansible import utils
+from __future__ import absolute_import
+
 import os
-import ansible.utils.template as template
-import sys
+from .. import errors, utils
+from ..utils import template
 
 class Task(object):
 
@@ -123,7 +123,7 @@ class Task(object):
         self.role_name    = role_name
         self.no_log       = utils.boolean(ds.get('no_log', "false"))
 
-        #Code to allow do until feature in a Task 
+        #Code to allow do until feature in a Task
         if 'until' in ds:
             if not ds.get('register'):
                 raise errors.AnsibleError("register keyword is mandatory when using do until feature")
@@ -217,7 +217,7 @@ class Task(object):
 
         self.items_lookup_plugin = ds.get('items_lookup_plugin', None)
         self.items_lookup_terms  = ds.get('items_lookup_terms', None)
-     
+
 
         self.ignore_errors = ds.get('ignore_errors', False)
         self.any_errors_fatal = ds.get('any_errors_fatal', play.any_errors_fatal)

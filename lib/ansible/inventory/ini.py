@@ -17,16 +17,14 @@
 
 #############################################
 
-import ansible.constants as C
-from ansible.inventory.host import Host
-from ansible.inventory.group import Group
-from ansible.inventory.expand_hosts import detect_range
-from ansible.inventory.expand_hosts import expand_hostname_range
-from ansible import errors
-from ansible import utils
-import shlex
-import re
+from __future__ import absolute_import
+
 import ast
+import shlex
+from .expand_hosts import detect_range, expand_hostname_range
+from .group import Group
+from .host import Host
+from .. import constants as C, errors, utils
 
 class InventoryParser(object):
     """

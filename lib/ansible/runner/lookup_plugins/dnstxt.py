@@ -15,8 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible import utils, errors
-import os
+from __future__ import absolute_import
+
 HAVE_DNS=False
 try:
     import dns.resolver
@@ -24,6 +24,7 @@ try:
     HAVE_DNS=True
 except ImportError:
     pass
+from ... import errors, utils
 
 # ==============================================================
 # DNSTXT: DNS TXT records
@@ -42,7 +43,7 @@ class LookupModule(object):
 
     def run(self, terms, inject=None, **kwargs):
 
-        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
+        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
 
         if isinstance(terms, basestring):
             terms = [ terms ]

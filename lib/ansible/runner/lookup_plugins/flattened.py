@@ -15,8 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import ansible.utils as utils
-import ansible.errors as errors
+from __future__ import absolute_import
+
+from ... import errors, utils
 
 
 def check_list_of_one_list(term):
@@ -59,7 +60,7 @@ class LookupModule(object):
                 # if it's a list, check recursively for items that are a list
                 term = self.flatten(term, inject)
                 ret.extend(term)
-            else:   
+            else:
                 ret.append(term)
 
         return ret

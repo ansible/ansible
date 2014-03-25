@@ -15,7 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import utils
+from __future__ import absolute_import
+
 import sys
 import getpass
 import os
@@ -24,8 +25,9 @@ import random
 import fnmatch
 import tempfile
 import fcntl
-import constants
-from ansible.color import stringc
+
+from . import constants, utils
+from .color import stringc
 
 import logging
 if constants.DEFAULT_LOG_PATH != '':
@@ -79,13 +81,13 @@ def log_lockfile():
     uid = os.getuid()
     path = os.path.join(tempdir, ".ansible-lock.%s" % uid)
     lockfile = open(path, 'w')
-    # use fcntl to set FD_CLOEXEC on the file descriptor, 
+    # use fcntl to set FD_CLOEXEC on the file descriptor,
     # so that we don't leak the file descriptor later
     lockfile_fd = lockfile.fileno()
     old_flags = fcntl.fcntl(lockfile_fd, fcntl.F_GETFD)
     fcntl.fcntl(lockfile_fd, fcntl.F_SETFD, old_flags | fcntl.FD_CLOEXEC)
     return lockfile
-    
+
 LOG_LOCK = log_lockfile()
 
 def log_flock(runner):

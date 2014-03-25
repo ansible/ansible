@@ -22,6 +22,8 @@
 # func and that wish to play with ansible, this permit to move gradually to ansible
 # without having to redo completely the setup of the network.
 
+from __future__ import absolute_import
+
 HAVE_FUNC=False
 try:
     import func.overlord.client as fc
@@ -30,11 +32,10 @@ except ImportError:
     pass
 
 import os
-from ansible.callbacks import vvv
-from ansible import errors
 import tempfile
 import shutil
-
+from ... import errors
+from ...callbacks import vvv
 
 class Connection(object):
     ''' Func-based connections '''

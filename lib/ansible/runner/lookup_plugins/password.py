@@ -17,12 +17,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible import utils, errors
+from __future__ import absolute_import
+
 import os
-import errno
 from string import ascii_letters, digits
 import string
 import random
+from ... import errors, utils
 
 
 class LookupModule(object):
@@ -38,7 +39,7 @@ class LookupModule(object):
 
     def run(self, terms, inject=None, **kwargs):
 
-        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject) 
+        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
 
         ret = []
 
@@ -62,7 +63,7 @@ class LookupModule(object):
                         paramvals[name] = int(value)
                     elif name == 'chars':
                         use_chars=[]
-                        if ",," in value: 
+                        if ",," in value:
                             use_chars.append(',')
                         use_chars.extend(value.replace(',,',',').split(','))
                         paramvals['chars'] = use_chars

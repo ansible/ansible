@@ -16,13 +16,14 @@
 #
 # You should have received a copy of the GNU General Public License
 
+from __future__ import absolute_import
+
 import os
 import os.path
 import pipes
-import shutil
 import tempfile
-from ansible import utils
-from ansible.runner.return_data import ReturnData
+from ..return_data import ReturnData
+from ... import utils
 
 class ActionModule(object):
 

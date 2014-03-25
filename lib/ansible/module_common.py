@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import
+
 # from python and deps
 from cStringIO import StringIO
 import inspect
@@ -22,9 +24,7 @@ import os
 import shlex
 
 # from Ansible
-from ansible import errors
-from ansible import utils
-from ansible import constants as C
+from . import constants as C, errors, utils
 
 REPLACER = "#<<INCLUDE_ANSIBLE_MODULE_COMMON>>"
 REPLACER_ARGS = "\"<<INCLUDE_ANSIBLE_MODULE_ARGS>>\""
@@ -38,18 +38,18 @@ class ModuleReplacer(object):
     transfer.  Rather than doing classical python imports, this allows for more
     efficient transfer in a no-bootstrapping scenario by not moving extra files
     over the wire, and also takes care of embedding arguments in the transferred
-    modules.  
+    modules.
 
     This version is done in such a way that local imports can still be
     used in the module code, so IDEs don't have to be aware of what is going on.
 
     Example:
 
-    from ansible.module_utils.basic import * 
+    from ansible.module_utils.basic import *
 
     will result in a template evaluation of
 
-    {{ include 'basic.py' }} 
+    {{ include 'basic.py' }}
 
     from the module_utils/ directory in the source tree.
 
@@ -88,7 +88,7 @@ class ModuleReplacer(object):
             module_style = 'new'
         elif 'WANT_JSON' in module_data:
             module_style = 'non_native_want_json'
-      
+
         output = StringIO()
         lines = module_data.split('\n')
         snippet_names = []
@@ -118,7 +118,7 @@ class ModuleReplacer(object):
                 output.write("\n")
 
         if len(snippet_names) > 0 and not 'basic' in snippet_names:
-            raise errors.AnsibleError("missing required import in %s: from ansible.module_utils.basic import *" % module_path) 
+            raise errors.AnsibleError("missing required import in %s: from ansible.module_utils.basic import *" % module_path)
 
         return (output.getvalue(), module_style)
 

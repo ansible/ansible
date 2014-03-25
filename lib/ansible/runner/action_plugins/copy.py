@@ -15,18 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
+from __future__ import absolute_import
 
-from ansible import utils
-import ansible.constants as C
-import ansible.utils.template as template
-from ansible import errors
-from ansible.runner.return_data import ReturnData
+import os
 import base64
 import json
 import stat
 import tempfile
 import pipes
+from ..return_data import ReturnData
+from ... import constants as C, utils
+from ...utils import template
 
 ## fixes https://github.com/ansible/ansible/issues/3518
 # http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
@@ -280,7 +279,7 @@ class ActionModule(object):
             or (not C.DEFAULT_KEEP_REMOTE_FILES and delete_remote_tmp and not module_executed):
             self.runner._remove_tmp_path(conn, tmp_path)
 
-        # the file module returns the file path as 'path', but 
+        # the file module returns the file path as 'path', but
         # the copy module uses 'dest', so add it if it's not there
         if 'path' in module_result and 'dest' not in module_result:
             module_result['dest'] = module_result['path']
@@ -350,7 +349,7 @@ class ActionModule(object):
         if content is not None:
             os.remove(content_tempfile)
 
-    
+
     def _result_key_merge(self, options, results):
         # add keys to file module results to mimic copy
         if 'path' in results.result and 'dest' not in results.result:

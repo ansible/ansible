@@ -15,13 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import
+
+import base64
 import os
 import pipes
-from ansible.utils import template
-from ansible import utils
-from ansible import errors
-from ansible.runner.return_data import ReturnData
-import base64
+from ..return_data import ReturnData
+from ... import errors, utils
+from ...utils import template
 
 class ActionModule(object):
 
@@ -72,7 +73,7 @@ class ActionModule(object):
                 return ReturnData(conn=conn, comm_ok=False, result=result)
         else:
             source = template.template(self.runner.basedir, source, inject)
-                
+
             if '_original_file' in inject:
                 source = utils.path_dwim_relative(inject['_original_file'], 'templates', source, self.runner.basedir)
             else:
@@ -109,7 +110,7 @@ class ActionModule(object):
                         dest_contents = base64.b64decode(dest_contents)
                     else:
                         raise Exception("unknown encoding, failed: %s" % dest_result.result)
- 
+
             xfered = self.runner._transfer_str(conn, tmp, 'source', resultant)
 
             # fix file permissions when the copy is done as a different user

@@ -17,11 +17,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import
+
 import distutils.spawn
 import os
 import subprocess
-from ansible import errors
-from ansible.callbacks import vvv
+from ... import errors
+from ...callbacks import vvv
 
 class Connection(object):
     ''' Local lxc based connections '''
@@ -91,15 +93,15 @@ class Connection(object):
 
         out_path = self._normalize_path(out_path, '/')
         vvv("PUT %s TO %s" % (in_path, out_path), host=self.lxc)
-        
+
         local_cmd = [self.cmd, '-q', '-c', 'lxc:///', 'lxc-enter-namespace', self.lxc, '--', '/bin/tee', out_path]
         vvv("EXEC %s" % (local_cmd), host=self.lxc)
 
         p = subprocess.Popen(local_cmd, cwd=self.runner.basedir,
                              stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = p.communicate(open(in_path,'rb').read())
- 
+
     def fetch_file(self, in_path, out_path):
         ''' fetch a file from lxc to local '''
 

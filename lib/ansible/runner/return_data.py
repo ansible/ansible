@@ -15,14 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible import utils
+from __future__ import absolute_import
+
+from .. import utils
 
 class ReturnData(object):
     ''' internal return class for runner execute methods, not part of public API signature '''
 
     __slots__ = [ 'result', 'comm_ok', 'host', 'diff' ]
 
-    def __init__(self, conn=None, host=None, result=None, 
+    def __init__(self, conn=None, host=None, result=None,
         comm_ok=True, diff=dict()):
 
         # which host is this ReturnData about?

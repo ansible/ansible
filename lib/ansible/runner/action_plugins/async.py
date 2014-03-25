@@ -15,7 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible.runner.return_data import ReturnData
+from __future__ import absolute_import
+
+from ..return_data import ReturnData
 
 class ActionModule(object):
 

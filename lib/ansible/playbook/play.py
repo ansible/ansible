@@ -17,15 +17,14 @@
 
 #############################################
 
-from ansible.utils.template import template
-from ansible import utils
-from ansible import errors
-from ansible.playbook.task import Task
-import ansible.constants as C
+from __future__ import absolute_import
+
+import os
 import pipes
 import shlex
-import os
-import sys
+from .task import Task
+from .. import constants as C, errors, utils
+from ..utils.template import template
 
 class Play(object):
 
@@ -83,7 +82,7 @@ class Play(object):
         # now we load the roles into the datastructure
         self.included_roles = []
         ds = self._load_roles(self.roles, ds)
-        
+
         # and finally re-process the vars files as they may have
         # been updated by the included roles
         self.vars_files = ds.get('vars_files', [])
@@ -156,7 +155,7 @@ class Play(object):
     def _get_role_path(self, role):
         """
         Returns the path on disk to the directory containing
-        the role directories like tasks, templates, etc. Also 
+        the role directories like tasks, templates, etc. Also
         returns any variables that were included with the role
         """
         orig_path = template(self.basedir,role,self.vars)
@@ -231,7 +230,7 @@ class Play(object):
                                 allow_dupes = utils.boolean(meta_data.get('allow_duplicates',''))
 
                         # if any tags were specified as role/dep variables, merge
-                        # them into the current dep_vars so they're passed on to any 
+                        # them into the current dep_vars so they're passed on to any
                         # further dependencies too, and so we only have one place
                         # (dep_vars) to look for tags going forward
                         def __merge_tags(var_obj):
@@ -309,7 +308,7 @@ class Play(object):
                         dep_stack.append([dep,dep_path,dep_vars,dep_defaults_data])
 
             # only add the current role when we're at the top level,
-            # otherwise we'll end up in a recursive loop 
+            # otherwise we'll end up in a recursive loop
             if level == 0:
                 self.included_roles.append(role)
                 dep_stack.append([role,role_path,role_vars,defaults_data])
@@ -491,7 +490,7 @@ class Play(object):
             if not isinstance(x, dict):
                 raise errors.AnsibleError("expecting dict; got: %s" % x)
 
-            # evaluate sudo vars for current and child tasks 
+            # evaluate sudo vars for current and child tasks
             included_sudo_vars = {}
             for k in ["sudo", "sudo_user"]:
                 if k in x:
@@ -541,7 +540,7 @@ class Play(object):
                 else:
                     default_vars = utils.combine_vars(self.default_vars, default_vars)
 
-                # append the vars defined with the include (from above) 
+                # append the vars defined with the include (from above)
                 # as well as the old-style 'vars' element. The old-style
                 # vars are given higher precedence here (just in case)
                 task_vars = utils.combine_vars(task_vars, include_vars)
@@ -595,8 +594,8 @@ class Play(object):
 
     def _is_valid_tag(self, tag_list):
         """
-        Check to see if the list of tags passed in is in the list of tags 
-        we only want (playbook.only_tags), or if it is not in the list of 
+        Check to see if the list of tags passed in is in the list of tags
+        we only want (playbook.only_tags), or if it is not in the list of
         tags we don't want (playbook.skip_tags).
         """
         matched_skip_tags = set(tag_list) & set(self.playbook.skip_tags)

@@ -15,10 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import ansible
+from __future__ import absolute_import
 
-from ansible import utils, errors
-from ansible.runner.return_data import ReturnData
+from ..return_data import ReturnData
+from ... import utils, errors
 
 class ActionModule(object):
     ''' Fail with custom message '''
