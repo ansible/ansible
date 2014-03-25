@@ -57,6 +57,13 @@ options:
     description:
       - Specifies the location of a response file to be used if package expects input on install. (added in Ansible 1.4)
     required: false
+  zone:
+    description:
+      - Whether to install the package only in the current zone, or install it into all zones.
+      - The installation into all zones works only if you are working with the global zone.
+    required: false
+    default: "all"
+    choices: ["current", "all"]
 '''
 
 EXAMPLES = '''
@@ -64,7 +71,7 @@ EXAMPLES = '''
 - svr4pkg: name=CSWcommon src=/tmp/cswpkgs.pkg state=present
 
 # Install a package directly from an http site
-- svr4pkg: name=CSWpkgutil src=http://get.opencsw.org/now state=present
+- svr4pkg: name=CSWpkgutil src=http://get.opencsw.org/now state=present zone=current
 
 # Install a package with a response file
 - svr4pkg: name=CSWggrep src=/tmp/third-party.pkg response_file=/tmp/ggrep.response state=present
@@ -116,9 +123,12 @@ def run_command(module, cmd):
     cmd[0] = module.get_bin_path(progname, True)
     return module.run_command(cmd)
 
-def package_install(module, name, src, proxy, response_file):
+def package_install(module, name, src, proxy, response_file, zone):
     adminfile = create_admin_file()
-    cmd = [ 'pkgadd', '-na', adminfile, '-d', src ]
+    cmd = [ 'pkgadd', '-n'] 
+    if zone == 'current':
+        cmd += [ '-G' ]
+    cmd += [ '-a', adminfile, '-d', src ]
     if proxy is not None:
         cmd += [ '-x', proxy ]
     if response_file is not None:
@@ -142,7 +152,8 @@ def main():
             state = dict(required = True, choices=['present', 'absent']),
             src = dict(default = None),
             proxy = dict(default = None),
-            response_file = dict(default = None)
+            response_file = dict(default = None),
+            zone = dict(required=False, default = 'all', choices=['current','all'])
         ),
         supports_check_mode=True
     )
@@ -151,6 +162,7 @@ def main():
     src = module.params['src']
     proxy = module.params['proxy']
     response_file = module.params['response_file']
+    zone = module.params['zone']
     rc = None
     out = ''
     err = ''
@@ -165,7 +177,7 @@ def main():
         if not package_installed(module, name):
             if module.check_mode:
                 module.exit_json(changed=True)
-            (rc, out, err) = package_install(module, name, src, proxy, response_file)
+            (rc, out, err) = package_install(module, name, src, proxy, response_file, zone)
             # Stdout is normally empty but for some packages can be
             # very long and is not often useful
             if len(out) > 75:
