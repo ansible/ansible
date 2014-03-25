@@ -186,6 +186,11 @@ EXAMPLES = '''
 
 # Create a 2048-bit SSH key for user jsmith
 - user: name=jsmith generate_ssh_key=yes ssh_key_bits=2048
+
+# Add jsmith to the www-data group
+- user: >
+    name=jsmith
+    groups="jsmith, www-data"
 '''
 
 import os
