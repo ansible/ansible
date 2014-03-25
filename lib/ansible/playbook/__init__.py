@@ -658,7 +658,7 @@ class PlayBook(object):
                 # if no hosts remain, drop out
                 if not host_list:
                     if self.force_handlers:
-                        task_errors == True
+                        task_errors = True
                         break
                     else:
                         return False
