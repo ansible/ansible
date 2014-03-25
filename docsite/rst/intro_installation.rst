@@ -8,8 +8,14 @@ Installation
 Getting Ansible
 ```````````````
 
-You may also wish to follow the `Github project <https://github.com/ansible/ansible>`_ if
-you have a github account.  This is also where we keep the issue tracker for sharing
+Installing Ansible is very straightforward. There will be two parts: the control machine, and the managed node(s).
+
+The control machine is the one where Ansible is to be installed. You can have actually more than one control machine for a given set of managed nodes. The managed node(s) only need to have a recent version of Python.
+
+Ansible is available in different ways, from source to pre-compiled packages. See below for relevant methods for your setup.
+
+You may also wish to follow the `GitHub project <https://github.com/ansible/ansible>`_ if
+you have a GitHub account.  This is also where we keep the issue tracker for sharing
 bugs and feature ideas.
 
 .. _what_will_be_installed:
@@ -19,7 +25,7 @@ Basics / What Will Be Installed
 
 Ansible by default manages machines over the SSH protocol.
 
-Once Ansible is installed, it will not add a database, and there will be no daemons to start or keep running.  You only need to install it on one machine (which could easily be a laptop) and it can manage an entire fleet of remote machines from that central point.  When Ansible manages remote machines, it does not leave software installed or running on them, so there's no real question about how to upgrade Ansible when moving to a new version.
+Once Ansible is installed, it will *not* add a database, and there will be *no daemons* to start or keep running.  You only need to install it on one control machine (which could easily be a laptop) and it can manage an entire fleet of remote machines from that central point.  When Ansible manages remote machines, it does *not* leave software installed or running on them, so there's no real question about how to upgrade Ansible when moving to a new version.
 
 .. _what_version:
 
@@ -27,7 +33,7 @@ What Version To Pick?
 `````````````````````
 
 Because it runs so easily from source and does not require any installation of software on remote
-machines, many users will actually track the development version.  
+machines, many users will actually track the development version from GitHub (see "Running from source" below).
 
 Ansible's release cycles are usually about two months long.  Due to this
 short release cycle, minor bugs will generally be fixed in the next release versus maintaining 
@@ -46,26 +52,29 @@ information about running from source.  It's not necessary to install the progra
 Control Machine Requirements
 ````````````````````````````
 
-Currently Ansible can be run from any machine with Python 2.6 installed (Windows isn't supported for the control machine).
+Currently, Ansible can be run from any machine with Python 2.6 installed.
 
 This includes Red Hat, Debian, CentOS, OS X, any of the BSDs, and so on.
+
+Windows is *not* supported for the control machine.
   
 .. _managed_node_requirements:
 
 Managed Node Requirements
 `````````````````````````
 
-On the managed nodes, you only need Python 2.4 or later, but if you are running less than Python 2.5 on the remotes, you will also need:
+On the managed nodes, you only need Python 2.4 or later.
+
+If you are running less than Python 2.5 on the remotes though, you will also need this dependency:
 
 * ``python-simplejson`` 
 
 .. note::
 
    Ansible's "raw" module (for executing commands in a quick and dirty
-   way) and the script module don't even need that.  So technically, you can use
-   Ansible to install python-simplejson using the raw module, which
-   then allows you to use everything else.  (That's jumping ahead
-   though.)
+   way) and the script module don't even need that.  So technically, you could use
+   Ansible to install python-simplejson using the "raw" module, which
+   then allows you to use everything else, but that would be jumping ahead.
 
 .. note::
 
@@ -119,7 +128,7 @@ Ansible also uses the following Python modules that need to be installed::
 
     $ sudo pip install paramiko PyYAML jinja2 httplib2
 
-Once running the env-setup script you'll be running from checkout and the default inventory file
+Once running the env-setup script, you'll be running from checkout, and the default inventory file
 will be /etc/ansible/hosts.  You can optionally specify an inventory file (see :doc:`intro_inventory`) 
 other than /etc/ansible/hosts:
 
