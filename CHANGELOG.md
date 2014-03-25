@@ -36,7 +36,7 @@ New Modules:
 * cloud: rax_identity
 * cloud: ec2_asg (configure autoscaling groups)
 * cloud: ec2_scaling_policy
-* cloud: ec2_metricalarm
+* cloud: ec2_metric_alarm
 
 Other notable changes:
 
