@@ -99,12 +99,40 @@ class Inventory(object):
                 self.host_list = os.path.join(self.host_list, "")
                 self.parser = InventoryDirectory(filename=host_list)
                 self.groups = self.parser.groups.values()
-            elif utils.is_executable(host_list):
-                self.parser = InventoryScript(filename=host_list)
-                self.groups = self.parser.groups.values()
             else:
-                self.parser = InventoryParser(filename=host_list)
-                self.groups = self.parser.groups.values()
+                # check to see if the specified file starts with a
+                # shebang (#!/), so if an error is raised by the parser
+                # class we can show a more apropos error
+                shebang_present = False
+                try:
+                    inv_file = open(host_list)
+                    first_line = inv_file.readlines()[0]
+                    inv_file.close()
+                    if first_line.find('#!') == 0:
+                        shebang_present = True
+                except:
+                    pass
+
+                if utils.is_executable(host_list):
+                    try:
+                        self.parser = InventoryScript(filename=host_list)
+                        self.groups = self.parser.groups.values()
+                    except:
+                        if not shebang_present:
+                            raise errors.AnsibleError("The file %s is marked as executable, but failed to execute correctly. " % host_list + \
+                                                      "If this is not supposed to be an executable script, correct this with `chmod -x %s`." % host_list)
+                        else:
+                            raise
+                else:
+                    try:
+                        self.parser = InventoryParser(filename=host_list)
+                        self.groups = self.parser.groups.values()
+                    except:
+                        if shebang_present:
+                            raise errors.AnsibleError("The file %s looks like it should be an executable inventory script, but is not marked executable. " % host_list + \
+                                                      "Perhaps you want to correct this with `chmod +x %s`?" % host_list)
+                        else:
+                            raise
 
             utils.plugins.vars_loader.add_directory(self.basedir(), with_subdir=True)
         else:
