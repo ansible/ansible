@@ -304,7 +304,7 @@ class PlayBook(object):
         # since these likely got killed by async_wrapper
         for host in poller.hosts_to_poll:
             reason = { 'failed' : 1, 'rc' : None, 'msg' : 'timed out' }
-            self.runner_callbacks.on_async_failed(host, reason, poller.jid)
+            self.runner_callbacks.on_async_failed(host, reason, poller.runner.setup_cache[host]['ansible_job_id'])
             results['contacted'][host] = reason
 
         return results
@@ -375,7 +375,7 @@ class PlayBook(object):
                 results = self._async_poll(poller, task.async_seconds, task.async_poll_interval)
             else:
                 for (host, res) in results.get('contacted', {}).iteritems():
-                    self.runner_callbacks.on_async_ok(host, res, poller.jid)
+                    self.runner_callbacks.on_async_ok(host, res, poller.runner.setup_cache[host]['ansible_job_id'])
 
         contacted = results.get('contacted',{})
         dark      = results.get('dark', {})

@@ -43,3 +43,17 @@
         - "'stdout_lines' in async_result"
         - "async_result.rc == 0"
 
+- name: test async without polling
+  command: sleep 5
+  async: 30
+  poll: 0
+  register: async_result
+
+- debug: var=async_result
+
+- name: validate async without polling returns
+  assert:
+    that:
+        - "'ansible_job_id' in async_result"
+        - "'started' in async_result"
+        - "'finished' not in async_result"
