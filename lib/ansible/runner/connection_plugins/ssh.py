@@ -138,7 +138,7 @@ class Connection(object):
             os.write(self.wfd, "%s\n" % self.password)
             os.close(self.wfd)
 
-    def _communicate(self, p, stdin, indata):
+    def _communicate(self, p, stdin, indata, su=False, sudoable=False, prompt=None):
         fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
         fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) & ~os.O_NONBLOCK)
         # We can't use p.communicate here because the ControlMaster may have stdout open as well
@@ -327,7 +327,7 @@ class Connection(object):
                 elif su:
                     stdin.write(self.runner.su_pass + '\n')
 
-        (returncode, stdout, stderr) = self._communicate(p, stdin, in_data)
+        (returncode, stdout, stderr) = self._communicate(p, stdin, in_data, su=su, sudoable=sudoable)
 
         if C.HOST_KEY_CHECKING and not_in_host_file:
             # lock around the initial SSH connectivity so the user prompt about whether to add 
