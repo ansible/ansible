@@ -124,6 +124,10 @@ options:
       - put user@ for the remote paths. If you have a custom ssh config to define the remote user for a host
         that does not match the inventory user, you should set this parameter to "no".
     default: yes
+  rsync_opts:
+    description:
+      - Specify additional rsync options by passing in an array. (added in Ansible 1.6)
+    default:
     required: false
 notes:
    - Inspect the verbose output to validate the destination user/host/path
@@ -173,6 +177,9 @@ synchronize: src=some/relative/path dest=/some/absolute/path rsync_path="sudo rs
 - var       # exclude any path whose last part is 'var'
 - /var      # exclude any path starting with 'var' starting at the source directory
 + /var/conf # include /var/conf even though it was previously excluded
+
+# Synchronize passing in extra rsync options
+synchronize: src=/tmp/helloworld dest=/var/www/helloword rsync_opts=--no-motd,--exclude=.git 
 '''
 
 
@@ -196,7 +203,8 @@ def main():
             owner = dict(type='bool'),
             group = dict(type='bool'),
             set_remote_user = dict(default='yes', type='bool'),
-            rsync_timeout = dict(type='int', default=10)
+            rsync_timeout = dict(type='int', default=10),
+            rsync_opts = dict(type='list')
         ),
         supports_check_mode = True
     )
@@ -220,6 +228,7 @@ def main():
     times = module.params['times']
     owner = module.params['owner']
     group = module.params['group']
+    rsync_opts = module.params['rsync_opts']
 
     cmd = '%s --delay-updates -FF --compress --timeout=%s' % (rsync, rsync_timeout)
     if module.check_mode:
@@ -275,6 +284,8 @@ def main():
 
     if rsync_path:
         cmd = cmd + " --rsync-path '%s'" %(rsync_path)
+    if rsync_opts:
+        cmd = cmd + " " +  " ".join(rsync_opts)
     changed_marker = '<<CHANGED>>'
     cmd = cmd + " --out-format='" + changed_marker + "%i %n%L'"
 
