@@ -639,4 +639,29 @@ This setting controls the timeout for the socket connect call, and should be kep
 
 Note, this value can be set to less than one second, however it is probably not a good idea to do so unless you're on a very fast and reliable LAN. If you're connecting to systems over the internet, it may be necessary to increase this timeout.
 
+.. _accelerate_daemon_timeout:
+
+accelerate_daemon_timeout
+=========================
+
+.. versionadded:: 1.6
+
+This setting controls the timeout for the accelerated daemon, as measured in minutes. The default daemon timeout is 30 minutes::
+
+    accelerate_daemon_timeout = 30
+
+Note, prior to 1.6, the timeout was hard-coded from the time of the daemon's launch. For version 1.6+, the timeout is now based on the last activity to the daemon and is configurable via this option.
+
+.. _accelerate_multi_key:
+
+accelerate_multi_key
+====================
+
+.. versionadded:: 1.6
+
+If enabled, this setting allows multiple private keys to be uploaded to the daemon. Any clients connecting to the daemon must also enable this option::
+
+    accelerate_multi_key = yes
+
+New clients first connect to the target node over SSH to upload the key, which is done via a local socket file, so they must have the same access as the user that launched the daemon originally.
 
