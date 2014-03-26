@@ -88,8 +88,14 @@ def lookup(name, *args, **kwargs):
     vars = kwargs.get('vars', None)
 
     if instance is not None:
-        ran = instance.run(*args, inject=vars, **kwargs)
-        return ",".join(ran)
+        # safely catch run failures per #5059
+        try:
+            ran = instance.run(*args, inject=vars, **kwargs)
+        except Exception, e:
+            ran = None
+        if ran:
+            ran = ",".join(ran)
+        return ran
     else:
         raise errors.AnsibleError("lookup plugin (%s) not found" % name)
 
