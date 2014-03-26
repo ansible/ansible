@@ -202,15 +202,18 @@ class Inventory(object):
         hosts = []
 
         for p in patterns:
-            that = self.__get_hosts(p)
-            if p.startswith("!"):
-                hosts = [ h for h in hosts if h not in that ]
-            elif p.startswith("&"):
-                hosts = [ h for h in hosts if h in that ]
+            # avoid resolving a pattern that is a plain host
+            if p in self._hosts_cache:
+                hosts.append(self.get_host(p))
             else:
-                to_append = [ h for h in that if h.name not in [ y.name for y in hosts ] ]
-                hosts.extend(to_append)
-        
+                that = self.__get_hosts(p)
+                if p.startswith("!"):
+                    hosts = [ h for h in hosts if h not in that ]
+                elif p.startswith("&"):
+                    hosts = [ h for h in hosts if h in that ]
+                else:
+                    to_append = [ h for h in that if h.name not in [ y.name for y in hosts ] ]
+                    hosts.extend(to_append)
         return hosts
 
     def __get_hosts(self, pattern):
