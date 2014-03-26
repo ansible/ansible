@@ -40,7 +40,7 @@ options:
     default: "no"
   validate:
     description:
-      - validation to run before copying into place
+      - The validation command to run before copying into place. The path to the file to validate is passed in via '%s' which must be present as in the visudo example below. (added in Ansible 1.2)
     required: false
     default: ""
     version_added: "1.2"
@@ -63,6 +63,6 @@ EXAMPLES = '''
 # Example from Ansible Playbooks
 - template: src=/mytemplates/foo.j2 dest=/etc/file.conf owner=bin group=wheel mode=0644
 
-# Copy a new "sudoers file into place, after passing validation with visudo
-- action: template src=/mine/sudoers dest=/etc/sudoers validate='visudo -cf %s'
+# Copy a new "sudoers" file into place, after passing validation with visudo
+- template: src=/mine/sudoers dest=/etc/sudoers validate='visudo -cf %s'
 '''
