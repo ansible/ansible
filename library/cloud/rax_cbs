@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -20,17 +20,48 @@ module: rax_cbs
 short_description: Manipulate Rackspace Cloud Block Storage Volumes
 description:
      - Manipulate Rackspace Cloud Block Storage Volumes
-version_added: "1.5"
+version_added: 1.6
 options:
   api_key:
     description:
-      - Rackspace API key (overrides C(credentials))
+      - Rackspace API key (overrides I(credentials))
+    aliases:
+      - password
+  auth_endpoint:
+    description:
+      - The URI of the authentication service
+    default: https://identity.api.rackspacecloud.com/v2.0/
   credentials:
     description:
-      - File to find the Rackspace credentials in (ignored if C(api_key) and
-        C(username) are provided)
+      - File to find the Rackspace credentials in (ignored if I(api_key) and
+        I(username) are provided)
     default: null
-    aliases: ['creds_file']
+    aliases:
+      - creds_file
+  env:
+    description:
+      - Environment as configured in ~/.pyrax.cfg,
+        see U(https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#pyrax-configuration)
+  identity_type:
+    description:
+      - Authentication machanism to use, such as rackspace or keystone
+    default: rackspace
+  region:
+    description:
+      - Region to create an instance in
+    default: DFW
+  tenant_id:
+    description:
+      - The tenant ID used for authentication
+  tenant_name:
+    description:
+      - The tenant name used for authentication
+  username:
+    description:
+      - Rackspace username (overrides I(credentials))
+  verify_ssl:
+    description:
+      - Whether or not to require SSL validation of API endpoints
   description:
     description:
       - Description to give the volume being created
@@ -44,10 +75,6 @@ options:
       - Name to give the volume being created
     default: null
     required: true
-  region:
-    description:
-      - Region to create the volume in
-    default: DFW
   size:
     description:
       - Size of the volume to create in Gigabytes
@@ -60,28 +87,32 @@ options:
   state:
     description:
       - Indicate desired state of the resource
-    choices: ['present', 'absent']
+    choices:
+      - present
+      - absent
     default: present
     required: true
   volume_type:
     description:
       - Type of the volume being created
-    choices: ['SATA', 'SSD']
+    choices:
+      - SATA
+      - SSD
     default: SATA
     required: true
-  username:
-    description:
-      - Rackspace username (overrides C(credentials))
   wait:
     description:
       - wait for the volume to be in state 'available' before returning
     default: "no"
-    choices: [ "yes", "no" ]
+    choices:
+      - "yes"
+      - "no"
   wait_timeout:
     description:
       - how long before wait gives up, in seconds
     default: 300
-requirements: [ "pyrax" ]
+requirements:
+  - pyrax
 author: Christopher H. Laco, Matt Martz
 notes:
   - The following environment variables can be used, C(RAX_USERNAME),
@@ -116,13 +147,14 @@ EXAMPLES = '''
 
 import sys
 
+from uuid import UUID
 from types import NoneType
 
 try:
     import pyrax
+    HAS_PYRAX = True
 except ImportError:
-    print("failed=True msg='pyrax required for this module'")
-    sys.exit(1)
+    HAS_PYRAX = False
 
 NON_CALLABLES = (basestring, bool, dict, int, list, NoneType)
 VOLUME_STATUS = ('available', 'attaching', 'creating', 'deleting', 'in-use',
@@ -133,29 +165,33 @@ def cloud_block_storage(module, state, name, description, meta, size,
                         snapshot_id, volume_type, wait, wait_timeout):
     for arg in (state, name, size, volume_type):
         if not arg:
-            module.fail_json(msg='%s is required for rax_clb' % arg)
+            module.fail_json(msg='%s is required for rax_cbs' % arg)
 
-    if int(size) < 100:
+    if size < 100:
         module.fail_json(msg='"size" must be greater than or equal to 100')
 
     changed = False
-    volumes = []
+    volume = None
     instance = {}
 
     cbs = pyrax.cloud_blockstorage
 
-    for volume in cbs.list():
-        if name != volume.name and name != volume.id:
-            continue
+    if cbs is None:
+        module.fail_json(msg='Failed to instantiate client. This '
+                             'typically indicates an invalid region or an '
+                             'incorrectly capitalized region name.')
 
-        volumes.append(volume)
-
-    if len(volumes) > 1:
-        module.fail_json(msg='Multiple Storage Volumes were matched by name, '
-                             'try using the Volume ID instead')
+    try:
+        UUID(name)
+        volume = cbs.get(name)
+    except ValueError:
+        try:
+            volume = cbs.find(name=name)
+        except Exception, e:
+            module.fail_json(msg='%s' % e)
 
     if state == 'present':
-        if not volumes:
+        if not volume:
             try:
                 volume = cbs.create(name, size=size, volume_type=volume_type,
                                     description=description,
@@ -164,8 +200,11 @@ def cloud_block_storage(module, state, name, description, meta, size,
                 changed = True
             except Exception, e:
                 module.fail_json(msg='%s' % e.message)
-        else:
-            volume = volumes[0]
+            else:
+                if wait:
+                    attempts = wait_timeout / 5
+                    pyrax.utils.wait_for_build(volume, interval=5,
+                                               attempts=attempts)
 
         volume.get()
         for key, value in vars(volume).iteritems():
@@ -186,8 +225,7 @@ def cloud_block_storage(module, state, name, description, meta, size,
             module.exit_json(**result)
 
     elif state == 'absent':
-        if volumes:
-            volume = volumes[0]
+        if volume:
             try:
                 volume.delete()
                 changed = True
@@ -203,12 +241,12 @@ def main():
         dict(
             description=dict(),
             meta=dict(type='dict', default={}),
-            name=dict(),
+            name=dict(required=True),
             size=dict(type='int', default=100),
             snapshot_id=dict(),
             state=dict(default='present', choices=['present', 'absent']),
             volume_type=dict(choices=['SSD', 'SATA'], default='SATA'),
-            wait=dict(type='bool'),
+            wait=dict(type='bool', default=False),
             wait_timeout=dict(type='int', default=300)
         )
     )
@@ -218,6 +256,9 @@ def main():
         required_together=rax_required_together()
     )
 
+    if not HAS_PYRAX:
+        module.fail_json(msg='pyrax is required for this module')
+
     description = module.params.get('description')
     meta = module.params.get('meta')
     name = module.params.get('name')
@@ -226,7 +267,7 @@ def main():
     state = module.params.get('state')
     volume_type = module.params.get('volume_type')
     wait = module.params.get('wait')
-    wait_timeout = int(module.params.get('wait_timeout'))
+    wait_timeout = module.params.get('wait_timeout')
 
     setup_rax_module(module, pyrax)
 
