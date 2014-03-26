@@ -60,8 +60,8 @@ EXAMPLES = '''
 # Specify the default flavour to avoid ambiguity errors
 - openbsd_pkg: name=vim-- state=present
 
-# Make sure all packages are upgraded
-- openbsd_pkg: upgrade=yes
+# Update all packages on the system
+- openbsd_pkg: name=* state=latest
 '''
 
 # Control if we write debug information to syslog.
@@ -336,15 +336,9 @@ def upgrade_packages(module):
 
     # Try to find any occurance of a package changing version like:
     # "bzip2-1.0.6->1.0.6p0: ok".
-    match = re.search("\W\w.+->.+: ok\W", stdout)
-    if match:
-        if module.check_mode:
-            module.exit_json(changed=True)
-
-        changed=True
-
-    else:
-        changed=False
+    changed = re.search("\W\w.+->.+: ok\W", stdout)
+    if module.check_mode:
+        module.exit_json(changed=changed)
 
     # It seems we can not trust the return value, so depend on the presence of
     # stderr to know if something failed.
@@ -363,16 +357,12 @@ def main():
         argument_spec = dict(
             name = dict(),
             state = dict(choices=['absent', 'installed', 'latest', 'present', 'removed']),
-            upgrade = dict(choices=['yes']),
         ),
-        mutually_exclusive = [['name', 'upgrade']],
-        required_one_of = [['name', 'upgrade']],
         supports_check_mode = True
     )
 
     name      = module.params['name']
     state     = module.params['state']
-    upgrade   = module.params['upgrade']
 
     rc = 0
     stdout = ''
@@ -380,29 +370,32 @@ def main():
     result = {}
     result['name'] = name
     result['state'] = state
-    result['upgrade'] = upgrade
 
     if name:
         if not state:
             module.fail_json(msg="missing required arguments: state")
 
-        # Parse package name and put results in the pkg_spec dictionary.
-        pkg_spec = {}
-        parse_package_name(name, pkg_spec, module)
+        if name == '*':
+            if state != 'latest':
+                module.fail_json(msg="the package name '*' is only valid when using state=latest")
+            else:
+                # Perform an upgrade of all installed packages.
+                (rc, stdout, stderr, changed) = upgrade_packages(module)
+        else:
+            # Parse package name and put results in the pkg_spec dictionary.
+            pkg_spec = {}
+            parse_package_name(name, pkg_spec, module)
 
-        # Get package state.
-        installed_state = get_package_state(name, pkg_spec, module)
+            # Get package state.
+            installed_state = get_package_state(name, pkg_spec, module)
 
-        # Perform requested action.
-        if state in ['installed', 'present']:
-            (rc, stdout, stderr, changed) = package_present(name, installed_state, pkg_spec, module)
-        elif state in ['absent', 'removed']:
-            (rc, stdout, stderr, changed) = package_absent(name, installed_state, module)
-        elif state == 'latest':
-            (rc, stdout, stderr, changed) = package_latest(name, installed_state, pkg_spec, module)
-    elif upgrade:
-        # Perform an upgrade of all installed packages.
-        (rc, stdout, stderr, changed) = upgrade_packages(module)
+            # Perform requested action.
+            if state in ['installed', 'present']:
+                (rc, stdout, stderr, changed) = package_present(name, installed_state, pkg_spec, module)
+            elif state in ['absent', 'removed']:
+                (rc, stdout, stderr, changed) = package_absent(name, installed_state, module)
+            elif state == 'latest':
+                (rc, stdout, stderr, changed) = package_latest(name, installed_state, pkg_spec, module)
     else:
         module.fail_json(msg="Something is broken, you should never end up here")
 
