@@ -368,7 +368,6 @@ class Play(object):
         # give each role a uuid
         for idx, val in enumerate(roles):
             this_uuid = str(uuid.uuid4())
-            roles[idx][0]['role_uuid'] = this_uuid
             roles[idx][-2]['role_uuid'] = this_uuid
 
         role_names = []
