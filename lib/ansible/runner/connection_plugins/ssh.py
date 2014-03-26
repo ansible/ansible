@@ -98,6 +98,28 @@ class Connection(object):
 
         return self
 
+    def _run(self, cmd, indata):
+        if indata:
+            # do not use pseudo-pty
+            p = subprocess.Popen(cmd, stdin=subprocess.PIPE,
+                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdin = p.stdin
+        else:
+            # try to use upseudo-pty
+            try:
+                # Make sure stdin is a proper (pseudo) pty to avoid: tcgetattr errors
+                master, slave = pty.openpty()
+                p = subprocess.Popen(cmd, stdin=slave,
+                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                stdin = os.fdopen(master, 'w', 0)
+                os.close(slave)
+            except:
+                p = subprocess.Popen(cmd, stdin=subprocess.PIPE,
+                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                stdin = p.stdin
+
+        return (p, stdin)
+
     def _password_cmd(self):
         if self.password:
             try:
@@ -115,6 +137,58 @@ class Connection(object):
             os.close(self.rfd)
             os.write(self.wfd, "%s\n" % self.password)
             os.close(self.wfd)
+
+    def _communicate(self, p, stdin, indata):
+        fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
+        fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) & ~os.O_NONBLOCK)
+        # We can't use p.communicate here because the ControlMaster may have stdout open as well
+        stdout = ''
+        stderr = ''
+        rpipes = [p.stdout, p.stderr]
+        if indata:
+            try:
+                stdin.write(indata)
+                stdin.close()
+            except:
+                raise errors.AnsibleError('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
+        while True:
+            rfd, wfd, efd = select.select(rpipes, [], rpipes, 1)
+
+            # fail early if the sudo/su password is wrong
+            if self.runner.sudo and sudoable and self.runner.sudo_pass:
+                incorrect_password = gettext.dgettext(
+                    "sudo", "Sorry, try again.")
+                if stdout.endswith("%s\r\n%s" % (incorrect_password, prompt)):
+                    raise errors.AnsibleError('Incorrect sudo password')
+
+            if self.runner.su and su and self.runner.sudo_pass:
+                incorrect_password = gettext.dgettext(
+                    "su", "Sorry")
+                if stdout.endswith("%s\r\n%s" % (incorrect_password, prompt)):
+                    raise errors.AnsibleError('Incorrect su password')
+
+            if p.stdout in rfd:
+                dat = os.read(p.stdout.fileno(), 9000)
+                stdout += dat
+                if dat == '':
+                    rpipes.remove(p.stdout)
+            if p.stderr in rfd:
+                dat = os.read(p.stderr.fileno(), 9000)
+                stderr += dat
+                if dat == '':
+                    rpipes.remove(p.stderr)
+            # only break out if we've emptied the pipes, or there is nothing to
+            # read from and the process has finished.
+            if (not rpipes or not rfd) and p.poll() is not None:
+                break
+            # Calling wait while there are still pipes to read can cause a lock
+            elif not rpipes and p.poll() == None:
+                p.wait()
+                # the process has finished and the pipes are empty,
+                # if we loop and do the select it waits all the timeout
+                break
+        stdin.close() # close stdin after we read from stdout (see also issue #848)
+        return (p.returncode, stdout, stderr)
 
     def not_in_host_file(self, host):
         if 'USER' in os.environ:
@@ -203,24 +277,7 @@ class Connection(object):
             fcntl.lockf(self.runner.output_lockfile, fcntl.LOCK_EX)
 
         # create process
-        if in_data:
-            # do not use pseudo-pty
-            p = subprocess.Popen(ssh_cmd, stdin=subprocess.PIPE,
-                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            stdin = p.stdin
-        else:
-            # try to use upseudo-pty
-            try:
-                # Make sure stdin is a proper (pseudo) pty to avoid: tcgetattr errors
-                master, slave = pty.openpty()
-                p = subprocess.Popen(ssh_cmd, stdin=slave,
-                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                stdin = os.fdopen(master, 'w', 0)
-                os.close(slave)
-            except:
-                p = subprocess.Popen(ssh_cmd, stdin=subprocess.PIPE,
-                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                stdin = p.stdin
+        (p, stdin) = self._run(ssh_cmd, in_data)
 
         self._send_password()
 
@@ -269,56 +326,9 @@ class Connection(object):
                     stdin.write(self.runner.sudo_pass + '\n')
                 elif su:
                     stdin.write(self.runner.su_pass + '\n')
-            fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
-            fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) & ~os.O_NONBLOCK)
-        # We can't use p.communicate here because the ControlMaster may have stdout open as well
-        stdout = ''
-        stderr = ''
-        rpipes = [p.stdout, p.stderr]
-        if in_data:
-            try:
-                stdin.write(in_data)
-                stdin.close()
-            except:
-                raise errors.AnsibleError('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
-        while True:
-            rfd, wfd, efd = select.select(rpipes, [], rpipes, 1)
 
-            # fail early if the sudo/su password is wrong
-            if self.runner.sudo and sudoable and self.runner.sudo_pass:
-                incorrect_password = gettext.dgettext(
-                    "sudo", "Sorry, try again.")
-                if stdout.endswith("%s\r\n%s" % (incorrect_password, prompt)):
-                    raise errors.AnsibleError('Incorrect sudo password')
+        (returncode, stdout, stderr) = self._communicate(p, stdin, in_data)
 
-            if self.runner.su and su and self.runner.sudo_pass:
-                incorrect_password = gettext.dgettext(
-                    "su", "Sorry")
-                if stdout.endswith("%s\r\n%s" % (incorrect_password, prompt)):
-                    raise errors.AnsibleError('Incorrect su password')
-
-            if p.stdout in rfd:
-                dat = os.read(p.stdout.fileno(), 9000)
-                stdout += dat
-                if dat == '':
-                    rpipes.remove(p.stdout)
-            if p.stderr in rfd:
-                dat = os.read(p.stderr.fileno(), 9000)
-                stderr += dat
-                if dat == '':
-                    rpipes.remove(p.stderr)
-            # only break out if we've emptied the pipes, or there is nothing to
-            # read from and the process has finished.
-            if (not rpipes or not rfd) and p.poll() is not None:
-                break
-            # Calling wait while there are still pipes to read can cause a lock
-            elif not rpipes and p.poll() == None:
-                p.wait()
-                # the process has finished and the pipes are empty,
-                # if we loop and do the select it waits all the timeout
-                break
-        stdin.close() # close stdin after we read from stdout (see also issue #848)
-        
         if C.HOST_KEY_CHECKING and not_in_host_file:
             # lock around the initial SSH connectivity so the user prompt about whether to add 
             # the host to known hosts is not intermingled with multiprocess output.
@@ -357,12 +367,13 @@ class Connection(object):
             cmd += ["sftp"] + self.common_args + [host]
             indata = "put %s %s\n" % (pipes.quote(in_path), pipes.quote(out_path))
 
-        p = subprocess.Popen(cmd, stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        self._send_password()
-        stdout, stderr = p.communicate(indata)
+        (p, stdin) = self._run(cmd, indata)
 
-        if p.returncode != 0:
+        self._send_password()
+
+        (returncode, stdout, stderr) = self._communicate(p, stdin, indata)
+
+        if returncode != 0:
             raise errors.AnsibleError("failed to transfer file to %s:\n%s\n%s" % (out_path, stdout, stderr))
 
     def fetch_file(self, in_path, out_path):
