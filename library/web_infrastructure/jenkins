@@ -1,0 +1,101 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2014, Sven Schliesing <s.schliesing@ndr.de>
+#
+# This file is part of Ansible.
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+DOCUMENTATION = """
+module: jenkins
+version_added: "1.6"
+short_description: trigger build in jenkins
+description:
+  - Trigger build in Jenkins
+
+options:
+  uri:
+    required: true
+    description:
+      - Base URI for Jenkins
+
+  token:
+    required: true
+    description:
+      - The token configured for this job
+
+  job:
+    required: true
+    description:
+      - The job to be triggered
+
+  user:
+    required: true
+    description:
+      - user for jenkins
+
+  password:
+    required: true
+    description:
+      - password for jenkins
+
+author: Sven Schliesing
+"""
+
+EXAMPLES = """
+- name: Trigger build of job "test"
+  jenkins: job="test" token="foo#23" user="foo" password="bar"
+"""
+
+import base64
+
+def main():
+
+    global module
+    module = AnsibleModule(
+        argument_spec=dict(
+            uri=dict(required=True),
+            token=dict(required=True),
+            job=dict(required=True),
+            user=dict(required=True),
+            password=dict(required=True),
+        ),
+    )
+    
+    uri = module.params['uri']
+    token = module.params['token']
+    job = module.params['job']
+    user = module.params['user']
+    password = module.params['password']
+    
+    if not uri.endswith('/'):
+        uri = uri + '/'
+    url = "%sjob/%s/build?token=%s " % (uri, job, token)
+
+    credentials = base64.encodestring('%s:%s' % (user, password))
+    credentials = credentials.replace('\n', '')
+    
+    response, info = fetch_url(module, url, method='GET', headers={'Authorization':"Basic %s" % credentials})
+
+    if info['status'] is 200:
+        module.exit_json(changed=True)
+    else:
+        module.fail_json(msg="Failed with status %d for url %s" % (info['status'], url))   
+
+
+from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
+main()
