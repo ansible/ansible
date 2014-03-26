@@ -154,6 +154,11 @@ options:
     description:
       - how long before wait gives up, in seconds
     default: 300
+  security_groups:
+    description:
+      - For OpenStack private clouds, the security groups to add your instance to.
+    default: []
+    version_added: 1.6
 requirements: [ "pyrax" ]
 author: Jesse Keating, Matt Martz
 notes:
@@ -246,7 +251,7 @@ def pyrax_object_to_dict(obj):
 
 
 def create(module, names, flavor, image, meta, key_name, files,
-           wait, wait_timeout, disk_config, group, nics):
+           wait, wait_timeout, disk_config, group, nics, security_groups):
 
     cs = pyrax.cloudservers
     changed = False
@@ -266,7 +271,8 @@ def create(module, names, flavor, image, meta, key_name, files,
                                              flavor=flavor, meta=meta,
                                              key_name=key_name,
                                              files=files, nics=nics,
-                                             disk_config=disk_config))
+                                             disk_config=disk_config,
+                                             security_groups=security_groups))
     except Exception, e:
         module.fail_json(msg='%s' % e.message)
     else:
@@ -405,7 +411,7 @@ def delete(module, instance_ids, wait, wait_timeout):
 def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                  wait, wait_timeout, disk_config, count, group,
                  instance_ids, exact_count, networks, count_offset,
-                 auto_increment):
+                 auto_increment, security_groups):
     cs = pyrax.cloudservers
     cnw = pyrax.cloud_networks
     servers = []
@@ -602,7 +608,7 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                 names = [name] * (count - len(servers))
 
         create(module, names, flavor, image, meta, key_name, files,
-               wait, wait_timeout, disk_config, group, nics)
+               wait, wait_timeout, disk_config, group, nics, security_groups)
 
     elif state == 'absent':
         if instance_ids is None:
@@ -656,6 +662,7 @@ def main():
             meta=dict(type='dict', default={}),
             name=dict(),
             networks=dict(type='list', default=['public', 'private']),
+            security_groups=dict(type='list', default=[]),
             service=dict(),
             state=dict(default='present', choices=['present', 'absent']),
             wait=dict(default=False, type='bool'),
@@ -692,6 +699,7 @@ def main():
     name = module.params.get('name')
     networks = module.params.get('networks')
     state = module.params.get('state')
+    security_groups = module.params.get('security_groups')
     wait = module.params.get('wait')
     wait_timeout = int(module.params.get('wait_timeout'))
 
@@ -700,7 +708,7 @@ def main():
     cloudservers(module, state, name, flavor, image, meta, key_name, files,
                  wait, wait_timeout, disk_config, count, group,
                  instance_ids, exact_count, networks, count_offset,
-                 auto_increment)
+                 auto_increment, security_groups)
 
 
 # import module snippets
