@@ -64,6 +64,7 @@ options:
     required: false
     default: "all"
     choices: ["current", "all"]
+    version_added: "1.6"
 '''
 
 EXAMPLES = '''
