@@ -222,6 +222,11 @@ class Ec2Inventory(object):
             self.route53_excluded_zones.extend(
                 config.get('ec2', 'route53_excluded_zones', '').split(','))
 
+        if config.has_option('ec2', 'vpcs'):
+            self.vpcs = config.get('ec2', 'vpcs')
+        else:
+            self.vpcs = [];
+
         # Cache related
         cache_dir = os.path.expanduser(config.get('ec2', 'cache_path'))
         if not os.path.exists(cache_dir):
