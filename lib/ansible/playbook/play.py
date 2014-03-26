@@ -26,6 +26,7 @@ import pipes
 import shlex
 import os
 import sys
+import uuid
 
 class Play(object):
 
@@ -363,6 +364,13 @@ class Play(object):
         new_tasks.append(dict(meta='flush_handlers'))
 
         roles = self._build_role_dependencies(roles, [], self.vars)
+
+        # give each role a uuid
+        for idx, val in enumerate(roles):
+            this_uuid = str(uuid.uuid4())
+            roles[idx][0]['role_uuid'] = this_uuid
+            roles[idx][-2]['role_uuid'] = this_uuid
+
         role_names = []
 
         for (role,role_path,role_vars,default_vars) in roles:
@@ -725,21 +733,21 @@ class Play(object):
         role_tags = {}
         for task in self._ds['tasks']:
             if 'role_name' in task:
-                this_role = task['role_name']
+                this_role = task['role_name'] + "-" + task['vars']['role_uuid']
 
                 if this_role not in role_tags:
                     role_tags[this_role] = []
 
                 if 'tags' in task['vars']:
                     if isinstance(task['vars']['tags'], basestring):
-                        role_tags[task['role_name']] += shlex.split(task['vars']['tags'])
+                        role_tags[this_role] += shlex.split(task['vars']['tags'])
                     else:
-                        role_tags[task['role_name']] += task['vars']['tags']
+                        role_tags[this_role] += task['vars']['tags']
 
         # apply each role's tags to it's tasks
         for idx, val in enumerate(self._tasks):
-            if hasattr(val, 'role_name'):
-                this_role = val.role_name
+            if getattr(val, 'role_name', None) is not None:
+                this_role = val.role_name + "-" + val.module_vars['role_uuid']
                 if this_role in role_tags:
                     self._tasks[idx].tags = sorted(set(self._tasks[idx].tags + role_tags[this_role]))
 
