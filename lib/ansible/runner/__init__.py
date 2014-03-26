@@ -291,7 +291,7 @@ class Runner(object):
             raise errors.AnsibleError("environment must be a dictionary, received %s" % enviro)
         result = ""
         for (k,v) in enviro.iteritems():
-            result = "%s=%s %s" % (k, pipes.quote(str(v)), result)
+            result = "%s=%s %s" % (k, pipes.quote(unicode(v)), result)
         return result
 
     # *****************************************************
