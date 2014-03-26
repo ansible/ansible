@@ -117,7 +117,6 @@ class Play(object):
         self.sudo             = ds.get('sudo', self.playbook.sudo)
         self.sudo_user        = ds.get('sudo_user', self.playbook.sudo_user)
         self.transport        = ds.get('connection', self.playbook.transport)
-        self.gather_facts     = ds.get('gather_facts', None)
         self.remote_port      = self.remote_port
         self.any_errors_fatal = utils.boolean(ds.get('any_errors_fatal', 'false'))
         self.accelerate       = utils.boolean(ds.get('accelerate', 'false'))
@@ -127,6 +126,13 @@ class Play(object):
         self.su               = ds.get('su', self.playbook.su)
         self.su_user          = ds.get('su_user', self.playbook.su_user)
         #self.vault_password   = vault_password
+
+        # gather_facts is not a simple boolean, as None means  that a 'smart'
+        # fact gathering mode will be used, so we need to be careful here as
+        # calling utils.boolean(None) returns False
+        self.gather_facts = ds.get('gather_facts', None)
+        if self.gather_facts:
+            self.gather_facts = utils.boolean(self.gather_facts)
 
         # Fail out if user specifies a sudo param with a su param in a given play
         if (ds.get('sudo') or ds.get('sudo_user')) and (ds.get('su') or ds.get('su_user')):
