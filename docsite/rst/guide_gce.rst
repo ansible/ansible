@@ -88,11 +88,11 @@ The best way to interact with your hosts is to use the gce inventory plugin, whi
 
 Note that when using the inventory script ``gce.py``, you also need to populate the ``gce.ini`` file that you can find in the plugins/inventory directory of the ansible checkout.
 
-To use the GCE dynamic inventory script, copy ``gce.py`` from ``plugings/inventory`` into your inventory directory and make it executable. You can specify credentials for ``gce.py`` using the ``GCE_INI_PATH`` environment variable -- the default is to look for gce.ini in the same directory as the inventory script.
+To use the GCE dynamic inventory script, copy ``gce.py`` from ``plugins/inventory`` into your inventory directory and make it executable. You can specify credentials for ``gce.py`` using the ``GCE_INI_PATH`` environment variable -- the default is to look for gce.ini in the same directory as the inventory script.
 
 Let's see if inventory is working:
 
-.. code-block: bash
+.. code-block:: bash
 
     $ ./gce.py --list
 
