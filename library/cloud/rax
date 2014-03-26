@@ -246,10 +246,14 @@ def pyrax_object_to_dict(obj):
 
 
 def create(module, names, flavor, image, meta, key_name, files,
-           wait, wait_timeout, disk_config, group, nics):
+           wait, wait_timeout, disk_config, group, nics, bypass_url,
+           scheduler_hints):
 
     cs = pyrax.cloudservers
     changed = False
+
+    if bypass_url:
+        cs.client.management_url = bypass_url
 
     # Handle the file contents
     for rpath in files.keys():
@@ -266,7 +270,8 @@ def create(module, names, flavor, image, meta, key_name, files,
                                              flavor=flavor, meta=meta,
                                              key_name=key_name,
                                              files=files, nics=nics,
-                                             disk_config=disk_config))
+                                             disk_config=disk_config,
+                                             scheduler_hints=scheduler_hints))
     except Exception, e:
         module.fail_json(msg='%s' % e.message)
     else:
@@ -329,12 +334,15 @@ def create(module, names, flavor, image, meta, key_name, files,
         module.exit_json(**results)
 
 
-def delete(module, instance_ids, wait, wait_timeout):
+def delete(module, instance_ids, wait, wait_timeout, bypass_url):
     cs = pyrax.cloudservers
 
     changed = False
     instances = {}
     servers = []
+
+    if bypass_url:
+        cs.client.management_url = bypass_url
 
     for instance_id in instance_ids:
         servers.append(cs.servers.get(instance_id))
@@ -405,10 +413,13 @@ def delete(module, instance_ids, wait, wait_timeout):
 def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                  wait, wait_timeout, disk_config, count, group,
                  instance_ids, exact_count, networks, count_offset,
-                 auto_increment):
+                 auto_increment, bypass_url, scheduler_hints):
     cs = pyrax.cloudservers
     cnw = pyrax.cloud_networks
     servers = []
+
+    if bypass_url:
+        cs.client.management_url = bypass_url
 
     # Add the group meta key
     if group and 'group' not in meta:
@@ -526,7 +537,8 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                     instance_ids = []
                     for server in servers:
                         instance_ids.append(server.id)
-                    delete(module, instance_ids, wait, wait_timeout)
+                    delete(module, instance_ids, wait, wait_timeout,
+                           bypass_url)
                 elif len(servers) < count:
                     if auto_increment:
                         names = []
@@ -602,7 +614,8 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                 names = [name] * (count - len(servers))
 
         create(module, names, flavor, image, meta, key_name, files,
-               wait, wait_timeout, disk_config, group, nics)
+               wait, wait_timeout, disk_config, group, nics, bypass_url,
+               scheduler_hints)
 
     elif state == 'absent':
         if instance_ids is None:
@@ -635,7 +648,7 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                                            'success': [], 'error': [],
                                            'timeout': []})
 
-        delete(module, instance_ids, wait, wait_timeout)
+        delete(module, instance_ids, wait, wait_timeout, bypass_url)
 
 
 def main():
@@ -660,6 +673,8 @@ def main():
             state=dict(default='present', choices=['present', 'absent']),
             wait=dict(default=False, type='bool'),
             wait_timeout=dict(default=300),
+            bypass_url=dict(default=None),
+            scheduler_hints=dict(type='dict', default={}),
         )
     )
 
@@ -694,13 +709,15 @@ def main():
     state = module.params.get('state')
     wait = module.params.get('wait')
     wait_timeout = int(module.params.get('wait_timeout'))
+    bypass_url = module.params.get('bypass_url')
+    scheduler_hints = module.params.get('scheduler_hints')
 
     setup_rax_module(module, pyrax)
 
     cloudservers(module, state, name, flavor, image, meta, key_name, files,
                  wait, wait_timeout, disk_config, count, group,
                  instance_ids, exact_count, networks, count_offset,
-                 auto_increment)
+                 auto_increment, bypass_url, scheduler_hints)
 
 
 # import module snippets
