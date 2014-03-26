@@ -58,7 +58,7 @@ options:
     version_added: "1.5"
   delete:
     description:
-      - Delete files that don't exist (after transfer, not before) in the C(src) path.
+      - Delete files that don't exist (after transfer, not before) in the C(src) path. This option requires C(recursive=yes).
     choices: [ 'yes', 'no' ]
     default: 'no'
     required: false
