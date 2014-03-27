@@ -98,7 +98,7 @@ def not_in_host_file(self, host):
             host_fh.close()
 
         for line in data.split("\n"):
-            if line is None or line.find(" ") == -1:
+            if line is None or " " not in line:
                 continue
             tokens = line.split()
             if tokens[0].find(HASHED_KEY_MAGIC) == 0:
