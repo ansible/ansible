@@ -250,7 +250,7 @@ that matches a given criteria, and some of the filenames are determined by varia
     - name: INTERFACES | Create Ansible header for /etc/network/interfaces
       template: src={{ item }} dest=/etc/foo.conf
       with_first_found:
-        - "{{ansible_virtualization_type}_foo.conf"
+        - "{{ansible_virtualization_type}}_foo.conf"
         - "default_foo.conf"
 
 This tool also has a long form version that allows for configurable search paths.  Here's an example::
