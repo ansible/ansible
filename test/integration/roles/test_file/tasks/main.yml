@@ -65,6 +65,18 @@
 - name: change ownership and group
   file: path={{output_dir}}/baz.txt owner=1234 group=1234
 
+- name: obtain file information from baz.txt
+  file: state=list path={{output_dir}}/baz.txt
+  register: file_list_result
+
+- name: verify file information about baz.txt
+  assert:
+    that:
+      - "file_list_result.uid == 1234"
+      - "file_list_result.gid == 1234"
+      - "file_list_result.mode == '0600'"
+      - "file_list_result.state == 'file'"
+
 - name: create soft link to file
   file: src={{output_file}} dest={{output_dir}}/soft.txt state=link
   register: file5_result
