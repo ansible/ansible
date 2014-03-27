@@ -46,18 +46,19 @@ options:
     aliases: ['dest', 'name'] 
   state:
     description:
-      - If C(directory), all immediate subdirectories will be created if they
+      - If C(directory), all intermediate subdirectories will be created if they
         do not exist. If C(file), the file will NOT be created if it does not
         exist, see the M(copy) or M(template) module if you want that behavior.
         If C(link), the symbolic link will be created or changed. Use C(hard)
         for hardlinks. If C(absent), directories will be recursively deleted,
         and files or symlinks will be unlinked. If C(touch) (new in 1.4), an empty file will 
-        be created if the c(path) does not exist, while an existing file or
+        be created if the C(path) does not exist, while an existing file or
         directory will receive updated file access and modification times (similar
-        to the way `touch` works from the command line).
+        to the way `touch` works from the command line). If C(list) (new in 1.6)
+        the attributes of the files will be returned.
     required: false
     default: file
-    choices: [ file, link, directory, hard, touch, absent ]
+    choices: [ file, link, directory, hard, touch, absent, list ]
   mode:
     required: false
     default: null
@@ -141,7 +142,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec = dict(
-            state = dict(choices=['file','directory','link','hard','touch','absent'], default=None),
+            state = dict(choices=['file','directory','link','hard','touch','absent','list'], default=None),
             path  = dict(aliases=['dest', 'name'], required=True),
             original_basename = dict(required=False), # Internal use only, for recursive ops
             recurse  = dict(default='no', type='bool'),
@@ -219,6 +220,9 @@ def main():
     recurse = params['recurse']
     if recurse and state != 'directory':
         module.fail_json(path=path, msg="recurse option requires state to be 'directory'")
+
+    if state == 'list':
+       module.exit_json(changed=False, path=path)
 
     if state == 'absent':
         if state != prev_state:
