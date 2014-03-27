@@ -355,8 +355,8 @@ def upgrade_packages(module):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            name = dict(),
-            state = dict(choices=['absent', 'installed', 'latest', 'present', 'removed']),
+            name = dict(required=True),
+            state = dict(required=True, choices=['absent', 'installed', 'latest', 'present', 'removed']),
         ),
         supports_check_mode = True
     )
@@ -371,33 +371,27 @@ def main():
     result['name'] = name
     result['state'] = state
 
-    if name:
-        if not state:
-            module.fail_json(msg="missing required arguments: state")
-
-        if name == '*':
-            if state != 'latest':
-                module.fail_json(msg="the package name '*' is only valid when using state=latest")
-            else:
-                # Perform an upgrade of all installed packages.
-                (rc, stdout, stderr, changed) = upgrade_packages(module)
+    if name == '*':
+        if state != 'latest':
+            module.fail_json(msg="the package name '*' is only valid when using state=latest")
         else:
-            # Parse package name and put results in the pkg_spec dictionary.
-            pkg_spec = {}
-            parse_package_name(name, pkg_spec, module)
-
-            # Get package state.
-            installed_state = get_package_state(name, pkg_spec, module)
-
-            # Perform requested action.
-            if state in ['installed', 'present']:
-                (rc, stdout, stderr, changed) = package_present(name, installed_state, pkg_spec, module)
-            elif state in ['absent', 'removed']:
-                (rc, stdout, stderr, changed) = package_absent(name, installed_state, module)
-            elif state == 'latest':
-                (rc, stdout, stderr, changed) = package_latest(name, installed_state, pkg_spec, module)
+            # Perform an upgrade of all installed packages.
+            (rc, stdout, stderr, changed) = upgrade_packages(module)
     else:
-        module.fail_json(msg="Something is broken, you should never end up here")
+        # Parse package name and put results in the pkg_spec dictionary.
+        pkg_spec = {}
+        parse_package_name(name, pkg_spec, module)
+
+        # Get package state.
+        installed_state = get_package_state(name, pkg_spec, module)
+
+        # Perform requested action.
+        if state in ['installed', 'present']:
+            (rc, stdout, stderr, changed) = package_present(name, installed_state, pkg_spec, module)
+        elif state in ['absent', 'removed']:
+            (rc, stdout, stderr, changed) = package_absent(name, installed_state, module)
+        elif state == 'latest':
+            (rc, stdout, stderr, changed) = package_latest(name, installed_state, pkg_spec, module)
 
     if rc != 0:
         if stderr:
