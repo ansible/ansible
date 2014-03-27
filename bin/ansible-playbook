@@ -233,7 +233,6 @@ def main(args):
                     print '  play #%d (%s):' % (playnum, label)
 
                     for task in play.tasks():
-                        print "tags: %s" % task.tags
                         if (set(task.tags).intersection(pb.only_tags) and not
                             set(task.tags).intersection(pb.skip_tags)):
                             if getattr(task, 'name', None) is not None:
