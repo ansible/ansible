@@ -222,6 +222,9 @@ class Ec2Inventory(object):
             self.route53_excluded_zones.extend(
                 config.get('ec2', 'route53_excluded_zones', '').split(','))
 
+        # RDS
+        self.rds_enabled = config.getboolean('ec2', 'rds')
+
         # Cache related
         cache_dir = os.path.expanduser(config.get('ec2', 'cache_path'))
         if not os.path.exists(cache_dir):
@@ -254,7 +257,8 @@ class Ec2Inventory(object):
 
         for region in self.regions:
             self.get_instances_by_region(region)
-            self.get_rds_instances_by_region(region)
+            if self.rds_enabled:
+                self.get_rds_instances_by_region(region)
 
         self.write_to_cache(self.inventory, self.cache_path_cache)
         self.write_to_cache(self.index, self.cache_path_index)
