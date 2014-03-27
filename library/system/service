@@ -1008,7 +1008,7 @@ class SunOSService(Service):
         #    enabled   true
         #    enabled   false
         for line in stdout.split("\n"):
-            if line.find("enabled") == 0:
+            if line.startswith("enabled"):
                 if "true" in line:
                     enabled = True
                 if "temporary" in line:

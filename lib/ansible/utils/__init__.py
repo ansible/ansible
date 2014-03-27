@@ -314,7 +314,7 @@ def parse_json(raw_data):
             raise
 
         for t in tokens:
-            if t.find("=") == -1:
+            if "=" not in t:
                 raise errors.AnsibleError("failed to parse: %s" % orig_data)
             (key,value) = t.split("=", 1)
             if key == 'changed' or 'failed':
@@ -1035,7 +1035,7 @@ def listify_lookup_plugin_terms(terms, basedir, inject):
             # not sure why the "/" is in above code :)
             try:
                 new_terms = template.template(basedir, "{{ %s }}" % terms, inject)
-                if isinstance(new_terms, basestring) and new_terms.find("{{") != -1:
+                if isinstance(new_terms, basestring) and "{{" in new_terms:
                     pass
                 else:
                     terms = new_terms

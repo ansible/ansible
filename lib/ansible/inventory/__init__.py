@@ -108,7 +108,7 @@ class Inventory(object):
                     inv_file = open(host_list)
                     first_line = inv_file.readlines()[0]
                     inv_file.close()
-                    if first_line.find('#!') == 0:
+                    if first_line.startswith('#!'):
                         shebang_present = True
                 except:
                     pass
