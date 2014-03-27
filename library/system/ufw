@@ -38,9 +38,9 @@ options:
       - C(enabled) reloads firewall and enables firewall on boot.
       - C(disabled) unloads firewall and disables firewall on boot.
       - C(reloaded) reloads firewall.
-      - C(reseted) disables and resets firewall to installation defaults.
+      - C(reset) disables and resets firewall to installation defaults.
     required: false
-    choices: ['enabled', 'disabled', 'reloaded', 'reseted']
+    choices: ['enabled', 'disabled', 'reloaded', 'reset']
   policy:
     description:
       - Change the default policy for incoming or outgoing traffic.
