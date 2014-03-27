@@ -27,7 +27,7 @@ short_description: Manage firewall with UFW
 description:
     - Manage firewall with UFW.
 version_added: 1.6
-author: Aleksey Ovcharenko, Jarno Keskikangas
+author: Aleksey Ovcharenko, Jarno Keskikangas, Ahti Kitsik
 notes:
     - See C(man ufw) for more examples.
 requirements:
@@ -35,12 +35,12 @@ requirements:
 options:
   state:
     description:
-      - C(enabled) reloads firewall and enables firewall on boot.
-      - C(disabled) unloads firewall and disables firewall on boot.
-      - C(reloaded) reloads firewall.
-      - C(reseted) disables and resets firewall to installation defaults.
+      - C(enable) reloads firewall and enables firewall on boot.
+      - C(disable) unloads firewall and disables firewall on boot.
+      - C(reload) reloads firewall.
+      - C(reset) disables and resets firewall to installation defaults.
     required: false
-    choices: ['enabled', 'disabled', 'reloaded', 'reseted']
+    choices: ['enable', 'disable', 'reload', 'reset']
   policy:
     description:
       - Change the default policy for incoming or outgoing traffic.
@@ -111,7 +111,10 @@ options:
 
 EXAMPLES = '''
 # Allow everything and enable UFW
-ufw: state=enable policy=allow logging=on
+ufw: state=enable policy=allow
+
+# Enable logging
+ufw: logging=on
 
 # Sometimes it is desirable to let the sender know when traffic is
 # being denied, rather than simply ignoring it. In these cases, use
@@ -161,7 +164,7 @@ from operator import itemgetter
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            state     = dict(default=None,  choices=['enabled', 'disabled', 'reloaded', 'reset']),
+            state     = dict(default=None,  choices=['enable', 'disable', 'reload', 'reset']),
             default   = dict(default=None,  aliases=['policy'], choices=['allow', 'deny', 'reject']),
             logging   = dict(default=None,  choises=['on', 'off', 'low', 'medium', 'high', 'full']),
             direction = dict(default=None,  choises=['in', 'incoming', 'out', 'outgoing']),
@@ -212,8 +215,8 @@ def main():
         cmd = [[ufw_bin], [module.check_mode, '--dry-run']]
 
         if command == 'state':
-            states = { 'enabled': 'enable',  'disabled': 'disable',
-                       'reloaded': 'reload', 'reset': 'reset' }
+            states = { 'enable': 'enable',  'disable': 'disable',
+                       'reload': 'reload', 'reset': 'reset' }
             execute(cmd + [['-f'], [states[value]]])
 
         elif command == 'logging':
