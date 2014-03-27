@@ -147,7 +147,7 @@ def keysum(module, s3, bucket, obj):
     key_check = bucket.get_key(obj)
     if key_check:
         md5_remote = key_check.etag[1:-1]
-        etag_multipart = md5_remote.find('-')!=-1 #Check for multipart, etag is not md5
+        etag_multipart = '-' in md5_remote # Check for multipart, etag is not md5
         if etag_multipart is True:
             module.fail_json(msg="Files uploaded with multipart of s3 are not supported with checksum, unable to compute checksum.")
     return md5_remote
