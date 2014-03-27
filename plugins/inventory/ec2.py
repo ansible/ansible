@@ -340,8 +340,14 @@ class Ec2Inventory(object):
             # Skip instances we cannot address (e.g. private VPC subnet)
             return
 
+        # If the instance has a *Name* tag, use that for the display name and put `dest` into ansible_ssh_host
+        ssh_host = None
+        if 'Name' in instance.tags:
+            ssh_host = dest
+            dest = instance.tags['Name']
+
         # Add to index
-        self.index[dest] = [region, instance.id]
+        self.index[dest] = [region, instance.id, ssh_host]
 
         # Inventory: Group by instance ID (always a group of 1)
         self.inventory[instance.id] = [dest]
@@ -383,7 +389,7 @@ class Ec2Inventory(object):
         # Global Tag: tag all EC2 instances
         self.push(self.inventory, 'ec2', dest)
 
-        self.inventory["_meta"]["hostvars"][dest] = self.get_host_info_dict_from_instance(instance)
+        self.inventory["_meta"]["hostvars"][dest] = self.get_host_info_dict_from_instance(instance, ssh_host)
 
 
     def add_rds_instance(self, instance, region):
@@ -406,7 +412,7 @@ class Ec2Inventory(object):
             return
 
         # Add to index
-        self.index[dest] = [region, instance.id]
+        self.index[dest] = [region, instance.id, None]
 
         # Inventory: Group by instance ID (always a group of 1)
         self.inventory[instance.id] = [dest]
@@ -488,8 +494,10 @@ class Ec2Inventory(object):
         return list(name_list)
 
 
-    def get_host_info_dict_from_instance(self, instance):
+    def get_host_info_dict_from_instance(self, instance, ssh_host=None):
         instance_vars = {}
+        if ssh_host is not None:
+            instance_vars['ansible_ssh_host'] = ssh_host
         for key in vars(instance):
             value = getattr(instance, key)
             key = self.to_safe('ec2_' + key)
@@ -547,10 +555,10 @@ class Ec2Inventory(object):
                 # host migh not exist anymore
                 return self.json_format_dict({}, True)
 
-        (region, instance_id) = self.index[self.args.host]
+        (region, instance_id, ssh_host) = self.index[self.args.host]
 
         instance = self.get_instance(region, instance_id)
-        return self.json_format_dict(self.get_host_info_dict_from_instance(instance), True)
+        return self.json_format_dict(self.get_host_info_dict_from_instance(instance, ssh_host), True)
 
     def push(self, my_dict, key, element):
         ''' Pushed an element onto an array that may not have been defined in
