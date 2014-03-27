@@ -207,11 +207,9 @@ def main(args):
                 play = ansible.playbook.Play(pb, play_ds, play_basedir)
                 label = play.name
                 hosts = pb.inventory.list_hosts(play.hosts)
-                if options.listhosts:
-                    print '  play #%d (%s): host count=%d' % (playnum, label, len(hosts))
-                    for host in hosts:
-                        print '    %s' % host
-                if options.listtasks:
+
+                # Filter all tasks by given tags
+                if pb.only_tags != 'all':
                     if options.subset and not hosts:
                         continue
                     matched_tags, unmatched_tags = play.compare_tags(pb.only_tags)
@@ -225,9 +223,17 @@ def main(args):
 
                     if unknown_tags:
                         continue
+
+                if options.listhosts:
+                    print '  play #%d (%s): host count=%d' % (playnum, label, len(hosts))
+                    for host in hosts:
+                        print '    %s' % host
+
+                if options.listtasks:
                     print '  play #%d (%s):' % (playnum, label)
 
                     for task in play.tasks():
+                        print "tags: %s" % task.tags
                         if (set(task.tags).intersection(pb.only_tags) and not
                             set(task.tags).intersection(pb.skip_tags)):
                             if getattr(task, 'name', None) is not None:
