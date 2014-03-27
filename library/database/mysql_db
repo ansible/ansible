@@ -100,6 +100,7 @@ EXAMPLES = '''
 '''
 
 import ConfigParser
+import getpass
 import os
 import pipes
 try:
@@ -214,10 +215,13 @@ def load_mycnf():
             passwd = config_get(config, 'client', 'pass')
         except (ConfigParser.NoOptionError):
             return False
+
+    # If .my.cnf doesn't specify a user, default to user login name
     try:
-        creds = dict(user=config_get(config, 'client', 'user'),passwd=passwd)
+        user = config_get(config, 'client', 'user')
     except (ConfigParser.NoOptionError):
-        return False
+        user = getpass.getuser()
+    creds = dict(user=user,passwd=passwd)
     return creds
 
 # ===========================================
