@@ -63,7 +63,8 @@ def get_config():
         for d in cfg._config:
             _copy = dict(d)
             del _copy['host']
-            ret_dict[d['host']] = _copy
+            for host in d['host']:
+                ret_dict[host] = _copy['config']
         return ret_dict
 
 
