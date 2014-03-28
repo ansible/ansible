@@ -26,6 +26,7 @@ New Modules:
 * notification: twilio (SMS)
 * notification: slack (Slack.com)
 * notification: typetalk (Typetalk.in)
+* notification: sns (Amazon)
 * system: debconf
 * system: ufw
 * system: locale_gen
