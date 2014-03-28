@@ -3,6 +3,7 @@
 
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # (c) 2012, Jayson Vantuyl <jayson@aggressive.ly>
+# (c) 2014, René Moser <mail@renemoser.net>
 #
 # This file is part of Ansible
 #
@@ -23,6 +24,7 @@ DOCUMENTATION = '''
 ---
 module: apt_key
 author: Jayson Vantuyl & others
+updates: [ 'René Moser' ]
 version_added: "1.0"
 short_description: Add or remove an apt key
 description:
@@ -58,6 +60,12 @@ options:
         default: none
         description:
             - url to retrieve key from.
+    keyserver:
+        required: false
+        default: pgp.mit.edu
+        description:
+            - keyserver to retrieve key from
+        version_added: "1.6"
     state:
         required: false
         choices: [ absent, present ]
@@ -71,7 +79,6 @@ options:
         required: false
         default: 'yes'
         choices: ['yes', 'no']
-
 '''
 
 EXAMPLES = '''
@@ -92,6 +99,12 @@ EXAMPLES = '''
 
 # Add an Apt signing key to a specific keyring file
 - apt_key: id=473041FA url=https://ftp-master.debian.org/keys/archive-key-6.0.asc keyring=/etc/apt/trusted.gpg.d/debian.gpg state=present
+
+# Add a key from the default keyserver
+- apt_key: id=473041FA
+
+# Add a key from a given keyserver
+- apt_key: id=473041FA keyserver=hkp://keyserver.ubuntu.com:80
 '''
 
 
@@ -135,8 +148,6 @@ def key_present(module, key_id):
     return rc == 0
 
 def download_key(module, url):
-    # FIXME: move get_url code to common, allow for in-memory D/L, support proxies
-    # and reuse here
     if url is None:
         module.fail_json(msg="needed a URL but was not specified")
     try:
@@ -145,6 +156,11 @@ def download_key(module, url):
     except Exception:
         module.fail_json(msg="error getting key id from url", traceback=format_exc())
 
+def import_key(module, key_id, keyserver):
+    if keyserver is None:
+        module.fail_json(msg="needed a keyserver but was not specified")
+    cmd = "apt-key adv --keyserver %s --recv %s" % (keyserver, key_id)
+    (rc, out, err) = module.run_command(cmd, check_rc=True)
 
 def add_key(module, keyfile, keyring, data=None):
     if data is not None:
@@ -181,6 +197,7 @@ def main():
             keyring=dict(required=False),
             state=dict(required=False, choices=['present', 'absent'], default='present'),
             validate_certs=dict(default='yes', type='bool'),
+            keyserver=dict(required=False, default='pgp.mit.edu'),
         ),
         supports_check_mode=True
     )
@@ -191,6 +208,7 @@ def main():
     filename        = module.params['file']
     keyring         = module.params['keyring']
     state           = module.params['state']
+    keyserver       = module.params['keyserver']
     changed         = False
 
     if key_id:
@@ -212,7 +230,10 @@ def main():
             module.exit_json(changed=False)
         else:
             if not filename and not data:
-                data = download_key(module, url)
+                if url:
+                    data = download_key(module, url)
+                else:
+                    import_key(module, key_id, keyserver)
             if key_id and key_id in keys:
                 module.exit_json(changed=False)
             else:
@@ -220,7 +241,7 @@ def main():
                     module.exit_json(changed=True)
                 if filename:
                     add_key(module, filename, keyring)
-                else:
+                elif data:
                     add_key(module, "-", keyring, data)
                 changed=False
                 keys2 = all_keys(module, keyring)
