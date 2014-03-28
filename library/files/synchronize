@@ -51,7 +51,7 @@ options:
     required: false
   checksum:
     description:
-      - Skip based on checksum, rather than mod-time & size; Note that that "archive" option is still enabled by default: the "checksum" option will not disable it.
+      - Skip based on checksum, rather than mod-time & size; Note that that "archive" option is still enabled by default - the "checksum" option will not disable it.
     choices: [ 'yes', 'no' ]
     default: 'no'
     required: false
