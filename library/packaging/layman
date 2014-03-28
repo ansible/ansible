@@ -26,7 +26,7 @@ DOCUMENTATION = '''
 ---
 module: layman
 author: Jakub Jirutka <jakub@jirutka.cz>
-version_added: "1.4.5"
+version_added: "1.6"
 short_description: Manage Gentoo overlays
 description:
   - Uses Layman to manage an additional repositories for the Portage package manager on Gentoo Linux.
