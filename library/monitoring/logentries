@@ -20,10 +20,10 @@ DOCUMENTATION = '''
 ---
 module: logentries
 author: Ivan Vanderbyl
-short_description: Log aggregation service
+short_description: Module for tracking logs via logentries.com 
 description:
     - Sends logs to LogEntries in realtime
-version_added: "1.0"
+version_added: "1.6"
 options:
     path:
         description:
@@ -36,7 +36,7 @@ options:
         required: false
         default: present
 notes:
-    - Requires the LogEntries agent which can be installed following the instructions at logentires.com
+    - Requires the LogEntries agent which can be installed following the instructions at logentries.com
 '''
 EXAMPLES = '''
 - logentries: path=/var/log/nginx/access.log state=present
@@ -124,7 +124,7 @@ def main():
     elif p["state"] in ["absent", "unfollowed"]:
         unfollow_log(module, le_path, logs)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
 
 main()
