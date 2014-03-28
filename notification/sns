@@ -149,6 +149,8 @@ def main():
     https = module.params['https']
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
+    if not region:
+        module.fail_json(msg="region must be specified")
     try:
         connection = connect_to_aws(boto.sns, region, **aws_connect_params)
     except boto.exception.NoAuthHandlerFound, e:
@@ -177,8 +179,11 @@ def main():
         dict_msg.update(https=https)
 
     json_msg = json.dumps(dict_msg)
-    connection.publish(topic=arn_topic, subject=subject,
-                       message_structure='json', message=json_msg)
+    try:
+        connection.publish(topic=arn_topic, subject=subject,
+                           message_structure='json', message=json_msg)
+    except boto.exception.BotoServerError, e:
+        module.fail_json(msg=str(e))
 
     module.exit_json(msg="OK")
 
