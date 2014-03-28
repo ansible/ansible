@@ -165,7 +165,7 @@ def main():
             default   = dict(default=None,  aliases=['policy'], choices=['allow', 'deny', 'reject']),
             logging   = dict(default=None,  choises=['on', 'off', 'low', 'medium', 'high', 'full']),
             direction = dict(default=None,  choises=['in', 'incoming', 'out', 'outgoing']),
-            delete    = dict(default=False, choices=BOOLEANS),
+            delete    = dict(default=False, type='bool'),
             insert    = dict(default=None),
             rule      = dict(default=None,  choices=['allow', 'deny', 'reject', 'limit']),
             interface = dict(default=None,  aliases=['if']),

@@ -467,11 +467,9 @@ def main():
             state={'required': True, 'choices': ['present', 'absent']},
             name={'required': True},
             listeners={'default': None, 'required': False, 'type': 'list'},
-            purge_listeners={'default': True, 'required': False,
-                             'choices': BOOLEANS, 'type': 'bool'},
+            purge_listeners={'default': True, 'required': False, 'type': 'bool'},
             zones={'default': None, 'required': False, 'type': 'list'},
-            purge_zones={'default': False, 'required': False,
-                         'choices': BOOLEANS, 'type': 'bool'},
+            purge_zones={'default': False, 'required': False, 'type': 'bool'},
             security_group_ids={'default': None, 'required': False, 'type': 'list'},
             health_check={'default': None, 'required': False, 'type': 'dict'},
         )
