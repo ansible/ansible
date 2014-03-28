@@ -111,6 +111,13 @@ options:
         description:
             - Path to git executable to use. If not supplied,
               the normal mechanism for resolving binary paths will be used.
+    umask:
+        required: false
+        default: null
+        version_added: "1.5"
+        description:
+            - The umask to set before doing any checkouts, or any other
+              repository maintenance.
     bare:
         required: false
         default: "no"
@@ -139,6 +146,7 @@ EXAMPLES = '''
 - git: repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout update=no
 '''
 
+import os
 import re
 import tempfile
 
@@ -428,6 +436,7 @@ def main():
             key_file=dict(default=None, required=False),
             ssh_opts=dict(default=None, required=False),
             executable=dict(default=None),
+            umask=dict(default=None),
             bare=dict(default='no', type='bool'),
         ),
         supports_check_mode=True
@@ -441,6 +450,7 @@ def main():
     depth     = module.params['depth']
     update    = module.params['update']
     bare      = module.params['bare']
+    umask     = module.params['umask']
     reference = module.params['reference']
     git_path  = module.params['executable'] or module.get_bin_path('git', True)
     
@@ -473,6 +483,9 @@ def main():
     # else pull and switch the version
     before = None
     local_mods = False
+    if umask:
+        os.umask(int(umask))
+
     if not os.path.exists(gitconfig):
         if module.check_mode:
             remote_head = get_remote_head(git_path, module, dest, version, repo, bare)
