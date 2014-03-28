@@ -24,6 +24,7 @@ New Modules:
 * packaging: apt_rpm
 * packaging: layman
 * monitoring: logentries
+* monitoring: rollbar_deployment
 * notification: nexmo (SMS)
 * notification: twilio (SMS)
 * notification: slack (Slack.com)
