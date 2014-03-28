@@ -489,8 +489,8 @@ def main():
             security_group_ids={'required': False, 'default': [],
                                    'type': 'list'},
             zone={'required': False, 'default': None},
-            wait={'required': False, 'choices': BOOLEANS, 'default': True},
-            hard_modify={'required': False, 'choices': BOOLEANS, 'default': False}
+            wait={'required': False, 'type' : 'bool', 'default': True},
+            hard_modify={'required': False, 'type': 'bool', 'default': False}
         )
     )
 

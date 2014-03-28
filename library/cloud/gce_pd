@@ -127,10 +127,9 @@ except ImportError:
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            detach_only = dict(choice=BOOLEANS),
+            detach_only = dict(type='bool'),
             instance_name = dict(),
-            mode = dict(default='READ_ONLY',
-                choices=['READ_WRITE', 'READ_ONLY']),
+            mode = dict(default='READ_ONLY', choices=['READ_WRITE', 'READ_ONLY']),
             name = dict(required=True),
             size_gb = dict(default=10),
             state = dict(default='present'),

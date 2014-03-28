@@ -165,7 +165,7 @@ def keyfile(module, user, write=False, path=None, manage_dir=True):
     uid = user_entry.pw_uid
     gid = user_entry.pw_gid
 
-    if manage_dir in BOOLEANS_TRUE:
+    if manage_dir:
         if not os.path.exists(sshdir):
             os.mkdir(sshdir, 0700)
             if module.selinux_enabled():

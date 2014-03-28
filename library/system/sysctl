@@ -185,9 +185,9 @@ class SysctlModule(object):
     def _parse_value(self, value):
         if value is None:
             return ''
-        elif value.lower() in BOOLEANS_TRUE:
+        elif value.lower():
             return '1'
-        elif value.lower() in BOOLEANS_FALSE:
+        elif not value.lower():
             return '0'
         else:
             return value.strip()
