@@ -27,8 +27,8 @@
 - name: set password
   user: name={{ non_root_test_user }} password=test_pass
 
-- name: lock account
-  user: name={{ non_root_test_user }} state=locked
+- name: expire account
+  user: name={{ non_root_test_user }} state=expired
 
 - name: assert that account is expired
   shell: "chage -l {{ non_root_test_user }} | grep '^Account expires.*1970'"
@@ -47,11 +47,11 @@
   register: test_absence
   failed_when: test_absence.rc == 0
 
-- name: create and lock account
-  user: name={{ non_root_test_user }} state=locked
+- name: create and expire account
+  user: name={{ non_root_test_user }} state=expired
 
-- name: confirm that lock is idempotent
-  user: name={{ non_root_test_user }} state=locked
+- name: confirm that expire is idempotent
+  user: name={{ non_root_test_user }} state=expired
 
 - name: assert that account is expired
   shell: "chage -l {{ non_root_test_user }} | grep '^Account expires.*1970'"
