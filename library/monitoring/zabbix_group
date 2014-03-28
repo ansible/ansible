@@ -20,28 +20,6 @@
 # This is a port of the ruby zabbix api found here:
 # http://trac.red-tux.net/browser/ruby/api/zbx_api.rb
 #
-# The ZabbixAPI and ZabbixAPIObjectClass were based on:
-# https://github.com/gescheit/scripts/blob/master/zabbix/zabbix_api.py
-#
-# LGPL 2.1   http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
-# Zabbix API Python Library.
-# Original Ruby Library is Copyright (C) 2009 Andrew Nelson nelsonab(at)red-tux(dot)net
-# Python Library is Copyright (C) 2009 Brett Lentz brett.lentz(at)gmail(dot)com
-#
-# This library is free software; you can redistribute it and/or
-# modify it under the terms of the GNU Lesser General Public
-# License as published by the Free Software Foundation; either
-# version 2.1 of the License, or (at your option) any later version.
-#
-# This library is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# Lesser General Public License for more details.
-#
-# You should have received a copy of the GNU Lesser General Public
-# License along with this library; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-#
 
 DOCUMENTATION = '''
 ---
@@ -49,27 +27,29 @@ module: zabbix_group
 short_description: Creates Zabbix host groups.
 description:
    - Creates Zabbix host groups if they don't already exist.
-version_added: "1.5"
+version_added: "1.6"
 author: Tony Minfei Ding
+requirements:
+    - zabbix-api python module
 options:
-    zabbix_server:
+    server_url:
         description:
-            - Zabbix server to connect to.
+            - Url of Zabbix server, with protocol (http or https).
+              C(url) is an alias for C(server_url).
         required: true
-    zabbix_login_user:
+        default: null
+        aliases: [ "url" ]
+    login_user:
         description:
-            - Zabbix user to login with.
+            - Zabbix user name.
         required: true
-    zabbix_login_password:
+        default: null
+    login_password:
         description:
             - Zabbix user password.
         required: true
-    zabbix_access_protocol:
-        description:
-            - Protocol to use when connecting to Zabbix.
-        required: false
-        default: "http"
-    zabbix_host_groups:
+        default: null
+    host_groups:
         description:
             - List of host groups to create.
         required: true
@@ -79,185 +59,30 @@ EXAMPLES = '''
 - name: Create host groups in zabbix
   local_action:
     module: zabbix_host
-    zabbix_server: monitor.example.com
-    zabbix_login_user: username
-    zabbix_login_password: password
-    zabbix_access_protocol: http
-    zabbix_host_groups: 
+    server_url: http://monitor.example.com
+    login_user: username
+    login_password: password
+    host_groups:
       - Example group1
       - Example group2
 '''
 
-import json
-import base64
-import urllib2
+
 import random
 import time
-import re
-
 from ansible.module_utils.basic import *
+try:
+    from zabbix_api import ZabbixAPI
+    from zabbix_api import Already_Exists
+    HAS_ZABBIX_API = True
+except ImportError:
+    HAS_ZABBIX_API = False
 
-class ZabbixAPI(object):
-    def __init__(self, module):
-        self._module = module
-        self._request_url = None
-        self._protocol = None
-        self._server_address = None
-        self._username = None
-        self._password = None
-        self._auth = None
-
-        # the suffix of request url
-        self._request_url_suffix = '/api_jsonrpc.php'
-
-        # http request headers
-        self._headers = {'Content-Type': 'application/json-rpc', 'User-Agent': 'python/zabbix'}
-
-        # timeout for http request more than 10 secs
-        self._timeout = 20
-
-    # using a string object instead of an identifier to identify the attribute, e.g. ZabbixAPI.host
-    def __getattr__(self, name):
-        if not self.__dict__.has_key(name):
-            self.__dict__[name] = ZabbixAPIObjectClass(self, name, self._module)
-        return self.__dict__[name]
-
-    # logging to zabbix
-    def do_login(self, server_address, username, password, protocol):
-        self._username = username
-        self._password = password
-        self._server_address = server_address
-        self._protocol = protocol
-        self._request_url = self._protocol + "://" + self._server_address + self._request_url_suffix
-
-        params = {'user': self._username, 'password': self._password}
-        login_request = {'jsonrpc': '2.0',
-                         'method': 'user.login',
-                         'params': params,
-                         'id': 1
-        }
-
-        try:
-            response = self.do_request(json.dumps(login_request))
-            parse_response = self.parse_response(response)
-        except Exception, e:
-            self._module.fail_json(msg=e)
-
-        self._auth = parse_response['result']
-        if not self.check_auth():
-            self._module.fail_json(msg="Login failed")
-
-    # do request to zabbix and get response
-    def do_request(self, json_string):
-        base64string = base64.encodestring('%s:%s' % (self._username, self._password)).replace('\n', '')
-        self._headers['Authorization'] = "Basic %s" % base64string
-        request = urllib2.Request(url=self._request_url, headers=self._headers)
-        request.add_data(json_string.encode('utf-8'))
-        opener = self.get_build_opener()
-        urllib2.install_opener(opener)
-        try:
-            response = opener.open(request, timeout=self._timeout)
-        except Exception, e:
-            self._module.fail_json(msg=e)
-        return response
-
-    # return build opener by different http protocol
-    def get_build_opener(self):
-        if self._protocol == "https":
-            https_handler = urllib2.HTTPSHandler()
-            opener = urllib2.build_opener(https_handler)
-        elif self._protocol == "http":
-            http_handler = urllib2.HTTPHandler()
-            opener = urllib2.build_opener(http_handler)
-        else:
-            self._module.fail_json(msg="Unknown protocol: %s" % self._protocol)
-        return opener
-
-    # check and parse http response
-    def parse_response(self, response):
-        if response.code != 200:
-            self._module.fail_json(msg="Error status code %s: %s" % (response.status, response.reason))
-
-        reads = response.read()
-        if not len(reads):
-            self._module.fail_json(msg="Response is empty.")
-        try:
-            # load string to json obj
-            response_obj = json.loads(reads.decode('utf-8'))
-        except ValueError, e:
-           self._module.fail_json(msg="Unable to decode response: %s" % reads)
-
-        if 'error' in response_obj:
-            error_code = response_obj['error']['code']
-            error_msg = response_obj['error']['message']
-            error_data = response_obj['error']['data']
-            if re.search(".*already\sexists.*", error_data, re.I):  # already exists
-                raise Already_Exists(error_data, response_obj['error']['code'])
-                # self._module.fail_json(msg="Get an error, error code: %s, error message: %s, error data: %s" % (error_code, error_msg, error_data))
-
-        return response_obj
-
-    # check login status
-    def check_auth(self):
-        if not self._auth or self._auth == '':
-            return False
-        return True
-
-    def get_requst_json(self, method, params):
-        request = {'jsonrpc': '2.0',
-                   'method': method,
-                   'params': params,
-                   'auth': self._auth,
-                   'id': 1
-        }
-        return json.dumps(request)
-
-class ZabbixAPIException(Exception):
-    """ generic zabbix api exception
-    code list:
-         -32602 - Invalid params (eg already exists)
-         -32500 - no permissions
-    """
-    pass
-
-class Already_Exists(ZabbixAPIException):
-    pass
-
-class ZabbixAPIObjectClass(ZabbixAPI):
-    def __init__(self, zabbix_api, attr_name, module):
-        super(ZabbixAPIObjectClass, self).__init__(module)
-        self._zabbix_api = zabbix_api
-        self._attr_name = attr_name
-
-    def __getattr__(self, name):
-        def method(*opts):
-            if opts.__len__():
-                return self.do_call(method="%s.%s" % (self._attr_name, name), param=opts[0])
-        return method
-
-    # do call zabbix api
-    def do_call(self, **args):
-        if self._zabbix_api.check_auth():
-            json_string = self._zabbix_api.get_requst_json(args['method'], args['param'])
-            response = self._zabbix_api.do_request(json_string)
-            parse_response = self._zabbix_api.parse_response(response)
-            return parse_response['result']
-        else:
-            self._module.fail_json(msg="User %s not logged into %s" % (self._username, self._server_address))
 
 class HostGroup(object):
-    def __init__(self, module):
+    def __init__(self, module, zbx):
         self._module = module
-        self._zapi = None
-
-    def login(self, zabbix_server, zabbix_login_user, zabbix_login_password, zabbix_access_protocol):
-        try:
-            if not self._zapi:
-                self._zapi = ZabbixAPI(self._module)
-                if not self._zapi.check_auth():
-                    self._zapi.do_login(zabbix_server, zabbix_login_user, zabbix_login_password, zabbix_access_protocol)
-        except Exception, e:
-            self._module.fail_json(msg="Login to Zabbix server %s failed: %s" % (zabbix_server, e))
+        self._zapi = zbx
 
     # create host group if not exists
     def create_host_group(self, group_names):
@@ -290,27 +115,35 @@ class HostGroup(object):
             group_ids.append(group_id)
         return group_ids
 
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            zabbix_server=dict(required=True),
-            zabbix_login_user=dict(required=True),
-            zabbix_login_password=dict(required=True),
-            zabbix_access_protocol=dict(required=False, default="http"),
-            zabbix_host_groups=dict(required=True)
-        )
+            server_url=dict(required=True, default=None, aliases=['url']),
+            login_user=dict(required=True),
+            login_password=dict(required=True),
+            host_groups=dict(required=True)
+        ),
+        supports_check_mode=True,
     )
 
-    zabbix_server = module.params['zabbix_server']
-    zabbix_login_user = module.params['zabbix_login_user']
-    zabbix_login_password = module.params['zabbix_login_password']
-    zabbix_access_protocol = module.params['zabbix_access_protocol']
-    zabbix_host_groups = module.params['zabbix_host_groups']
+    if not HAS_ZABBIX_API:
+        module.fail_json(msg="Missing requried zabbix-api module (check docs or install with: pip install zabbix-api)")
 
-    hostGroup = HostGroup(module)
+    server_url = module.params['server_url']
+    login_user = module.params['login_user']
+    login_password = module.params['login_password']
+    host_groups = module.params['host_groups']
+
+    zbx = None
     # login to zabbix
-    hostGroup.login(zabbix_server, zabbix_login_user, zabbix_login_password, zabbix_access_protocol)
-    group_add_list = hostGroup.create_host_group(zabbix_host_groups)
+    try:
+        zbx = ZabbixAPI(server_url)
+        zbx.login(login_user, login_password)
+    except Exception, e:
+        module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
+    hostGroup = HostGroup(module, zbx)
+    group_add_list = hostGroup.create_host_group(host_groups)
     if len(group_add_list) > 0:
         module.exit_json(changed=True, result="Successfully create host group(s): %s" % group_add_list)
     else:
@@ -319,4 +152,3 @@ def main():
 # include magic from lib/ansible/module_common.py
 # <<INCLUDE_ANSIBLE_MODULE_COMMON>>
 main()
-
