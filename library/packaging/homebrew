@@ -539,7 +539,7 @@ class Homebrew(object):
         cmd = [opt for opt in opts if opt]
         rc, out, err = self.module.run_command(cmd)
 
-        if not self._current_package_is_outdated():
+        if self._current_package_is_installed() and not self._current_package_is_outdated():
             self.changed_count += 1
             self.changed = True
             self.message = 'Package upgraded: {0}'.format(self.current_package)
