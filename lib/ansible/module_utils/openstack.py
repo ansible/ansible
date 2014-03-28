@@ -59,10 +59,10 @@ def os_auth_info(module):
     result["password"] = (module.params.get("login_password") or
                           os.environ.get("OS_PASSWORD"))
 
-    if module.params.get('tenant_name'):
-        result['tenant_name'] = module.params['tenant_name']
-    elif module.params.get('tenant_id'):
-        result['tenant_id'] = module.params['tenant_id']
+    if module.params.get('login_tenant_name'):
+        result['tenant_name'] = module.params['login_tenant_name']
+    elif module.params.get('login_tenant_id'):
+        result['tenant_id'] = module.params['login_tenant_id']
     elif os.environ.get("OS_TENANT_ID"):
         result["tenant_id"] = os.environ.get("OS_TENANT_ID")
     elif os.environ.get("OS_TENANT_NAME"):
@@ -101,9 +101,6 @@ def get_keystone_client(module):
         # Admins can also authenticate against the admin endpoint,
         # so that's an excelent alternative to auth_url
         kwargs['auth_url'] = module.params['endpoint']
-
-    if module.params['endpoint']:
-        kwargs['endpoint'] = module.params['endpoint']
 
     try:
         import keystoneclient.v2_0.client
@@ -195,7 +192,7 @@ def get_flavor(module, name=None, id=None, required=True, detailed=False,
         module.fail_json(msg="Error in getting flavor: %s " % e.message)
 
 
-def get_server(module, name=None, id=None, required=True, detailed=False,
+def get_server(module, name=None, id=None, required=True, detailed=True,
                nova=None):
     if not nova:
         nova = get_nova_client(module)
@@ -204,6 +201,10 @@ def get_server(module, name=None, id=None, required=True, detailed=False,
         if name:
             servers = nova.servers.list(search_opts={"name": name},
                                         detailed=detailed)
+            # the {'name': module.params['name']} will also return servers
+            # with names that partially match the server name, so we have to
+            # strictly filter here
+            servers = [x for x in servers if x.name == module.params['name']]
         else:
             servers = nova.servers.list(search_opts={"id": id},
                                         detailed=detailed)
@@ -329,7 +330,7 @@ def get_glance_image(module, name, required=True, glance=None):
             if image.name == name:
                 return image
     except Exception, e:
-        module.fail_json(msg="Error in fetching image list: %s" % e.message)
+        module.fail_json(msg="Error in fetching image list: %s" % str(e))
 
     if required:
         module.fail_json(msg="image not found")
@@ -378,8 +379,8 @@ def get_network(module, name=None, id=None, tenant_id=None, required=True,
 
     if not networks['networks']:
         if required:
-            module.fail_json(msg="Not found", network_name=name,
-                             tenant_id=tenant_id, kwargs=kwargs)
+            module.fail_json(msg="Network not found", network_name=name,
+                             network_id=id, tenant_id=tenant_id)
         return None
 
     if len(networks['networks']) > 1:
