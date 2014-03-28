@@ -122,7 +122,6 @@ def post_annotation(module):
     title = module.params['title']
 
     url = 'https://metrics-api.librato.com/v1/annotations/%s' % name
-    print(url)
     params = {}
     params['title'] = title
 
@@ -151,8 +150,6 @@ def post_annotation(module):
     module.exit_json(changed=True, annotation=response)
 
 def main():
-
-  default_timestamp = str(int(time.time()))
 
   module = AnsibleModule(
       argument_spec = dict(
