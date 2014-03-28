@@ -309,7 +309,8 @@ def main():
                         os.symlink(src, tmppath)
                     os.rename(tmppath, path)
                 except OSError, e:
-                    os.unlink(tmppath)
+                    if os.path.exists(tmppath):
+                        os.unlink(tmppath)
                     module.fail_json(path=path, msg='Error while replacing: %s' % str(e))
             else:
                 try:
