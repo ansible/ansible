@@ -467,12 +467,14 @@ def create_vpc(module, vpc_conn):
     created_vpc_id = vpc.id
     returned_subnets = []
     current_subnets = vpc_conn.get_all_subnets(filters={ 'vpc_id': vpc.id })
-    for sn in current_subnets:
-        returned_subnets.append({
-            'cidr': sn.cidr_block, 
-            'az': sn.availability_zone,
-            'id': sn.id,
-        })
+    for subnet in subnets:
+        for csn in current_subnets:
+            if csn.cidr_block == subnet['cidr']:
+                returned_subnets.append({
+                    'cidr': csn.cidr_block, 
+                    'az': csn.availability_zone,
+                    'id': csn.id,
+                })
 
 
     return (vpc_dict, created_vpc_id, returned_subnets, changed)
