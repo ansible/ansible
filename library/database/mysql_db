@@ -295,8 +295,8 @@ def main():
             else:
                 module.exit_json(changed=True, db=db, msg=stdout)
         elif state == "import":
-            rc, stdout, stderr = db_import(module, login_host, login_user, 
-                                        login_password, db, target, 
+            rc, stdout, stderr = db_import(module, login_host, login_user,
+                                        login_password, db, target,
                                         port=module.params['login_port'],
                                         socket=module.params['login_unix_socket'])
             if rc != 0:
@@ -306,6 +306,20 @@ def main():
     else:
         if state == "present":
             changed = db_create(cursor, db, encoding, collation)
+            if module.params['target']:
+                rc, stdout, stderr = db_import(module, login_host, login_user,
+                                               login_password, db, target,
+                                               port=module.params['login_port'],
+                                               socket=module.params['login_unix_socket'])
+                if rc != 0:
+                    # means we created a database but the import on the 
+                    # target failed, so we want to delete the empty database
+                    if changed:
+                        db_delete(cursor, db)
+
+                    module.fail_json(msg="%s" % stderr)
+                else:
+                    module.exit_json(changed=True, db=db, msg=stdout)
 
     module.exit_json(changed=changed, db=db)
 
