@@ -67,9 +67,9 @@ options:
     description:
       - Version of the gem to be installed/removed.
     required: false
-  prerelease:
+  pre_release:
     description:
-      - Allow installation of prerelease versions of the gem.
+      - Allow installation of pre-release versions of the gem.
     required: false
     default: "no"
     version_added: "1.6"
@@ -180,7 +180,7 @@ def install(module):
         cmd.append('--user-install')
     else:
         cmd.append('--no-user-install')
-    if module.params['prerelease']:
+    if module.params['pre_release']:
         cmd.append('--pre')
     cmd.append('--no-rdoc')
     cmd.append('--no-ri')
@@ -198,7 +198,7 @@ def main():
             repository           = dict(required=False, aliases=['source'], type='str'),
             state                = dict(required=False, default='present', choices=['present','absent','latest'], type='str'),
             user_install         = dict(required=False, default=True, type='bool'),
-            prerelease           = dict(required=False, default=False, type='bool'),
+            pre_release           = dict(required=False, default=False, type='bool'),
             version              = dict(required=False, type='str'),
         ),
         supports_check_mode = True,
