@@ -30,48 +30,50 @@ version_added: "0.7"
 options:
   name:
     description:
-      - The name of the supervisord program/group to manage. It will be taken as group name when it end with a colon I(:).
+      - The name of the supervisord program or group to manage.  
+      - The name will be taken as group name when it ends with a colon I(:)
+      - Group support is only available in Ansible version 1.6 or later.
     required: true
     default: null
   config:
     description:
-      - configuration file path, passed as -c to supervisorctl.
+      - The supervisor configuration file path
     required: false
     default: null
     version_added: "1.3"
   server_url:
     description:
-      - URL on which supervisord server is listening, passed as -s to supervisorctl.
+      - URL on which supervisord server is listening
     required: false
     default: null
     version_added: "1.3"
   username:
     description:
-      - username to use for authentication with server, passed as -u to supervisorctl.
+      - username to use for authentication
     required: false
     default: null
     version_added: "1.3"
   password:
     description:
-      - password to use for authentication with server, passed as -p to supervisorctl.
+      - password to use for authentication
     required: false
     default: null
     version_added: "1.3"
   state:
     description:
-      - The desired state of program/group. Affected programs' name will be returned in I(affected) field of the result.
+      - The desired state of program/group.
     required: true
     default: null
     choices: [ "present", "started", "stopped", "restarted" ]
   supervisorctl_path:
     description:
-      - Path to supervisorctl executable to use.
+      - path to supervisorctl executable
     required: false
     default: null
     version_added: "1.4"
 notes:
-  - When C(state) = I(present), will call C(supervisorctl reread) then call C(supervisorctl add) if the program/group is not exists.
-  - When C(state) = I(restarted), will call C(supervisorctl update) then call C(supervisorctl restart).
+  - When C(state) = I(present), the module will call C(supervisorctl reread) then C(supervisorctl add) if the program/group does not exist.
+  - When C(state) = I(restarted), the module will call C(supervisorctl update) then call C(supervisorctl restart).
 requirements: [ "supervisorctl" ]
 author: Matt Wright, Aaron Wang <inetfuture@gmail.com>
 '''
