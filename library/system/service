@@ -687,7 +687,8 @@ class LinuxService(Service):
 
                 return self.execute_command("%s %s enable" % (self.enable_cmd, self.name))
             else:
-                return self.execute_command("%s -f %s remove" % (self.enable_cmd, self.name))
+                return self.execute_command("%s %s disable" % (self.enable_cmd,
+                                                               self.name))
 
         # we change argument depending on real binary used:
         # - update-rc.d and systemctl wants enable/disable
@@ -1008,7 +1009,7 @@ class SunOSService(Service):
         #    enabled   true
         #    enabled   false
         for line in stdout.split("\n"):
-            if line.find("enabled") == 0:
+            if line.startswith("enabled"):
                 if "true" in line:
                     enabled = True
                 if "temporary" in line:

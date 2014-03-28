@@ -124,6 +124,9 @@ def main():
             ec2_url = dict(),
             ec2_secret_key = dict(aliases=['aws_secret_key', 'secret_key'], no_log=True),
             ec2_access_key = dict(aliases=['aws_access_key', 'access_key']),
+            wait = dict(type='bool', default='true'),
+            wait_timeout = dict(type='number', default=0),
+            snapshot_tags = dict(type='dict', default=dict()),
         )
     )
 
@@ -131,6 +134,9 @@ def main():
     description = module.params.get('description')
     instance_id = module.params.get('instance_id')
     device_name = module.params.get('device_name')
+    wait = module.params.get('wait')
+    wait_timeout = module.params.get('wait_timeout')
+    snapshot_tags = module.params.get('snapshot_tags')
 
     if not volume_id and not instance_id or volume_id and instance_id:
         module.fail_json('One and only one of volume_id or instance_id must be specified')
@@ -150,10 +156,22 @@ def main():
 
     try:
         snapshot = ec2.create_snapshot(volume_id, description=description)
+        time_waited = 0
+        if wait:
+            snapshot.update()
+            while snapshot.status != 'completed':
+                time.sleep(3)
+                snapshot.update()
+                time_waited += 3
+                if wait_timeout and time_waited > wait_timeout:
+                    module.fail_json('Timed out while creating snapshot.')
+        for k, v in snapshot_tags.items():
+            snapshot.add_tag(k, v)
     except boto.exception.BotoServerError, e:
         module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
 
-    module.exit_json(changed=True, snapshot_id=snapshot.id)
+    module.exit_json(changed=True, snapshot_id=snapshot.id, volume_id=snapshot.volume_id,
+            volume_size=snapshot.volume_size, tags=snapshot.tags.copy())
 
 # import module snippets
 from ansible.module_utils.basic import *

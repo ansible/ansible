@@ -34,6 +34,8 @@ New Modules:
 * cloud: digital_ocean_domain
 * cloud: digital_ocean_sshkey 
 * cloud: rax_identity
+* cloud: rax_cbs (cloud block storage)
+* cloud: rax_cbs_attachments
 * cloud: ec2_asg (configure autoscaling groups)
 * cloud: ec2_scaling_policy
 * cloud: ec2_metric_alarm
