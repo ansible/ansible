@@ -33,9 +33,9 @@ DOCUMENTATION = '''
 module: zypper
 author: Patrick Callahan
 version_added: "1.2"
-short_description: Manage packages on SuSE and openSuSE
+short_description: Manage packages on SUSE and openSUSE
 description:
-    - Manage packages on SuSE and openSuSE using the zypper and rpm tools.
+    - Manage packages on SUSE and openSUSE using the zypper and rpm tools.
 options:
     name:
         description:
@@ -59,6 +59,13 @@ options:
         default: "no"
         choices: [ "yes", "no" ]
         aliases: []
+    no_recommends:
+        description:
+          - Whether to install recommend packages.
+        required: false
+        default: "no"
+        choices: [ "yes", "no" ]
+        aliases: []
 
 notes: []
 # informational: requirements for nodes
@@ -72,6 +79,9 @@ EXAMPLES = '''
 
 # Remove the "nmap" package
 - zypper: name=nmap state=absent
+
+# Install "openstack-ceilometer" package without recommend packages
+- zypper: name=nmap no_recommends=yes state=present
 '''
 
 # Function used for getting the name of a currently installed package.
@@ -102,7 +112,7 @@ def get_package_state(m, name):
         return False
 
 # Function used to make sure a package is present.
-def package_present(m, name, installed_state, disable_gpg_check):
+def package_present(m, name, installed_state, disable_gpg_check, no_recommends):
     if installed_state is False:
         cmd = ['/usr/bin/zypper', '--non-interactive']
         # add global options before zypper command
@@ -110,6 +120,9 @@ def package_present(m, name, installed_state, disable_gpg_check):
             cmd.append('--no-gpg-check')
 
         cmd.extend(['install', '--auto-agree-with-licenses'])
+        if no_recommends:
+            cmd.append('--no-recommends')
+
         cmd.append(name)
         rc, stdout, stderr = m.run_command(cmd, check_rc=False)
 
@@ -126,10 +139,20 @@ def package_present(m, name, installed_state, disable_gpg_check):
     return (rc, stdout, stderr, changed)
 
 # Function used to make sure a package is the latest available version.
-def package_latest(m, name, installed_state, disable_gpg_check):
+def package_latest(m, name, installed_state, disable_gpg_check, no_recommends):
 
     if installed_state is True:
-        cmd = ['/usr/bin/zypper', '--non-interactive', 'update', '--auto-agree-with-licenses', name]
+        cmd = ['/usr/bin/zypper', '--non-interactive']
+        # add global options before zypper command
+        if disable_gpg_check:
+            cmd.append('--no-gpg-check')
+
+        cmd.extend(['update', '--auto-agree-with-licenses'])
+        if no_recommends:
+            cmd.append('--no-recommends')
+
+        cmd.append(name)
+
         pre_upgrade_name = ''
         post_upgrade_name = ''
 
@@ -149,7 +172,7 @@ def package_latest(m, name, installed_state, disable_gpg_check):
 
     else:
         # If package was not installed at all just make it present.
-        return package_present(m, name, installed_state, disable_gpg_check)
+        return package_present(m, name, installed_state, disable_gpg_check, no_recommends)
 
 # Function used to make sure a package is not installed.
 def package_absent(m, name, installed_state):
@@ -178,6 +201,8 @@ def main():
             name = dict(required=True, aliases=['pkg']),
             state = dict(required=False, default='present', choices=['absent', 'installed', 'latest', 'present', 'removed']),
             disable_gpg_check = dict(required=False, default='no', type='bool'),
+            no_recommends= dict(required=False, default='no', type='bool'),
+
         ),
         supports_check_mode = False
     )
@@ -188,6 +213,7 @@ def main():
     name  = params['name']
     state = params['state']
     disable_gpg_check = params['disable_gpg_check']
+    no_recommends = params['no_recommends']
 
     rc = 0
     stdout = ''
@@ -201,11 +227,11 @@ def main():
 
     # Perform requested action
     if state in ['installed', 'present']:
-        (rc, stdout, stderr, changed) = package_present(module, name, installed_state, disable_gpg_check)
+        (rc, stdout, stderr, changed) = package_present(module, name, installed_state, disable_gpg_check, no_recommends)
     elif state in ['absent', 'removed']:
         (rc, stdout, stderr, changed) = package_absent(module, name, installed_state)
     elif state == 'latest':
-        (rc, stdout, stderr, changed) = package_latest(module, name, installed_state, disable_gpg_check)
+        (rc, stdout, stderr, changed) = package_latest(module, name, installed_state, disable_gpg_check, no_recommends)
 
     if rc != 0:
         if stderr:
@@ -220,3 +246,4 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 main()
+
