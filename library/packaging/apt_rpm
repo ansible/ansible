@@ -21,8 +21,8 @@
 
 DOCUMENTATION = '''
 ---
-module: apt-rpm
-short_description: apt-rpm package manager
+module: apt_rpm
+short_description: apt_rpm package manager
 description:
   - Manages packages with I(apt-rpm). Both low-level (I(rpm)) and high-level (I(apt-get)) package manager binaries required.
 version_added: "1.5"
@@ -50,13 +50,13 @@ notes:  []
 
 EXAMPLES = '''
 # install package foo
-- apt-rpm: pkg=foo state=present
+- apt_rpm: pkg=foo state=present
 # remove package foo
-- apt-rpm: pkg=foo state=absent
+- apt_rpm: pkg=foo state=absent
 # description: remove packages foo and bar 
-- apt-rpm: pkg=foo,bar state=absent
+- apt_rpm: pkg=foo,bar state=absent
 # description: update the package database and install bar (bar will be the updated if a newer version exists) 
-- apt-rpm: name=bar state=present update_cache=yes     
+- apt_rpm: name=bar state=present update_cache=yes     
 '''
 
 
