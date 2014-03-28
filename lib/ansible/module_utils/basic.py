@@ -685,6 +685,8 @@ class AnsibleModule(object):
                 if not isinstance(value, list):
                     if isinstance(value, basestring):
                         self.params[k] = value.split(",")
+                    elif isinstance(value, int) or isinstance(value, float):
+                        self.params[k] = [ str(value) ]
                     else:
                         is_invalid = True
             elif wanted == 'dict':
