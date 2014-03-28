@@ -54,6 +54,13 @@ options:
     default: 'yes'
     choices: ['yes', 'no']
     version_added: 1.5.1
+  api:
+    description:
+      - API url if using a self-hosted hipchat server
+    required: false
+    default: 'https://api.hipchat.com/v1/rooms/message'
+    version_added: 1.6.0
+
 
 # informational: requirements for nodes
 requirements: [ urllib, urllib2 ]
@@ -68,11 +75,10 @@ EXAMPLES = '''
 # HipChat module specific support methods.
 #
 
-MSG_URI = "https://api.hipchat.com/v1/rooms/message?"
-
+MSG_URI = "https://api.hipchat.com/v1/rooms/message"
 
 def send_msg(module, token, room, msg_from, msg, msg_format='text',
-             color='yellow', notify=False):
+             color='yellow', notify=False, api=MSG_URI):
     '''sending message to hipchat'''
 
     params = {}
@@ -81,13 +87,14 @@ def send_msg(module, token, room, msg_from, msg, msg_format='text',
     params['message'] = msg
     params['message_format'] = msg_format
     params['color'] = color
+    params['api'] = api
 
     if notify:
         params['notify'] = 1
     else:
         params['notify'] = 0
 
-    url = MSG_URI + "auth_token=%s" % (token)
+    url = api + "?auth_token=%s" % (token)
     data = urllib.urlencode(params)
     response, info = fetch_url(module, url, data=data)
     if info['status'] == 200:
@@ -113,6 +120,7 @@ def main():
             msg_format=dict(default="text", choices=["text", "html"]),
             notify=dict(default=True, type='bool'),
             validate_certs = dict(default='yes', type='bool'),
+            api = dict(default=MSG_URI),
         ),
         supports_check_mode=True
     )
@@ -124,9 +132,10 @@ def main():
     color = module.params["color"]
     msg_format = module.params["msg_format"]
     notify = module.params["notify"]
+    api = module.params["api"]
 
     try:
-        send_msg(module, token, room, msg_from, msg, msg_format, color, notify)
+        send_msg(module, token, room, msg_from, msg, msg_format, color, notify, api)
     except Exception, e:
         module.fail_json(msg="unable to sent msg: %s" % e)
 
