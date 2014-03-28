@@ -22,6 +22,7 @@ New Modules:
 * packaging: homebrew_tap (OS X)
 * packaging: homebrew_cask (OS X) 
 * packaging: apt_rpm
+* monitoring: logentries
 * notification: nexmo (SMS)
 * notification: twilio (SMS)
 * notification: slack (Slack.com)
