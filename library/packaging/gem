@@ -34,8 +34,9 @@ options:
   state:
     description:
       - The desired state of the gem. C(latest) ensures that the latest version is installed.
-    required: true
+    required: false
     choices: [present, absent, latest]
+    default: present
   gem_source:
     description:
       - The path to a local gem used as installation source.
@@ -187,7 +188,7 @@ def main():
             include_dependencies = dict(required=False, default=True, type='bool'),
             name                 = dict(required=True, type='str'),
             repository           = dict(required=False, aliases=['source'], type='str'),
-            state                = dict(required=False, choices=['present','absent','latest'], type='str'),
+            state                = dict(required=False, default='present', choices=['present','absent','latest'], type='str'),
             user_install         = dict(required=False, default=True, type='bool'),
             version              = dict(required=False, type='str'),
         ),
