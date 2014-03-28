@@ -25,6 +25,7 @@ New Modules:
 * packaging: layman
 * monitoring: logentries
 * monitoring: rollbar_deployment
+* monitoring: librato_annotation
 * notification: nexmo (SMS)
 * notification: twilio (SMS)
 * notification: slack (Slack.com)
