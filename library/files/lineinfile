@@ -110,7 +110,8 @@ options:
   validate:
      required: false
      description:
-       - validation to run before copying into place
+       - validation to run before copying into place. The command is passed 
+         securely so shell features like expansion and pipes won't work.
      required: false
      default: None
      version_added: "1.4"
