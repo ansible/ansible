@@ -56,6 +56,13 @@ options:
     required: false
     default: null
     aliases: []
+  resource_tags:
+    description:
+      - A dictionary array of resource tags of the form: { tag1: value1, tag2: value2 }.  Tags in this list are used in conjunction with CIDR block to uniquely identify a VPC in lieu of vpc_id. Therefore, if CIDR/Tag combination does not exits, a new VPC will be created.  VPC tags not on this list will be ignored.
+    required: false
+    default: null
+    aliases: []
+    version_added: "1.6"
   internet_gateway:
     description:
       - Toggle whether there should be an Internet gateway attached to the VPC
@@ -127,6 +134,7 @@ EXAMPLES = '''
         module: ec2_vpc
         state: present
         cidr_block: 172.23.0.0/16
+        resource_tags: { "Environment":"Development" }
         region: us-west-2
 # Full creation example with subnets and optional availability zones.
 # The absence or presense of subnets deletes or creates them respectively.
@@ -134,6 +142,7 @@ EXAMPLES = '''
         module: ec2_vpc
         state: present
         cidr_block: 172.22.0.0/16
+        resource_tags: { "Environment":"Development" }
         subnets: 
           - cidr: 172.22.1.0/24
             az: us-west-2c
@@ -193,9 +202,54 @@ def get_vpc_info(vpc):
         'state': vpc.state,
     })
 
+def find_vpc(module, vpc_conn, vpc_id=None, cidr=None):
+    """
+    Finds a VPC that matches a specific id or cidr + tags
+
+    module : AnsibleModule object
+    vpc_conn: authenticated VPCConnection connection object
+
+    Returns:
+        A VPC object that matches either an ID or CIDR and one or more tag values
+    """
+    
+    if vpc_id == None and cidr == None:
+        module.fail_json(
+            msg='You must specify either a vpc id or a cidr block + list of unique tags, aborting'
+        )
+
+    found_vpcs = []
+
+    resource_tags = module.params.get('resource_tags')
+
+    # Check for existing VPC by cidr_block or id
+    if vpc_id is not None:
+        found_vpcs = vpc_conn.get_all_vpcs(None, {'vpc-id': vpc_id, 'state': 'available',})
+    
+    else:
+        previous_vpcs = vpc_conn.get_all_vpcs(None, {'cidr': cidr, 'state': 'available'})
+        
+        for vpc in previous_vpcs:
+            # Get all tags for each of the found VPCs
+            vpc_tags = dict((t.name, t.value) for t in vpc_conn.get_all_tags(filters={'resource-id': vpc.id}))
+
+            # If the supplied list of ID Tags match a subset of the VPC Tags, we found our VPC
+            if set(resource_tags.items()).issubset(set(vpc_tags.items())):
+                found_vpcs.append(vpc)
+
+    found_vpc = None
+
+    if len(found_vpcs) == 1:
+        found_vpc = found_vpcs[0]
+
+    if len(found_vpcs) > 1:
+        module.fail_json(msg='Found more than one vpc based on the supplied criteria, aborting')
+
+    return (found_vpc)
+
 def create_vpc(module, vpc_conn):
     """
-    Creates a new VPC
+    Creates a new or modifies an existing VPC.
 
     module : AnsibleModule object
     vpc_conn: authenticated VPCConnection connection object
@@ -217,20 +271,12 @@ def create_vpc(module, vpc_conn):
     wait_timeout = int(module.params.get('wait_timeout'))
     changed = False
 
-    # Check for existing VPC by cidr_block or id
-    if id != None:
-        filter_dict = {'vpc-id':id, 'state': 'available',}
-        previous_vpcs = vpc_conn.get_all_vpcs(None, filter_dict)
-    else:
-        filter_dict = {'cidr': cidr_block, 'state': 'available'}
-        previous_vpcs = vpc_conn.get_all_vpcs(None, filter_dict)
+    # Check for existing VPC by cidr_block + tags or id
+    previous_vpc = find_vpc(module, vpc_conn, id, cidr_block)
 
-    if len(previous_vpcs) > 1:
-        module.fail_json(msg='EC2 returned more than one VPC, aborting')
-
-    if len(previous_vpcs) == 1:
+    if previous_vpc is not None:
         changed = False
-        vpc = previous_vpcs[0]
+        vpc = previous_vpc
     else:
         changed = True
         try:
@@ -255,7 +301,21 @@ def create_vpc(module, vpc_conn):
             module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
 
     # Done with base VPC, now change to attributes and features.
-    
+
+    # Add resource tags
+    vpc_spec_tags = module.params.get('resource_tags')
+    vpc_tags = dict((t.name, t.value) for t in vpc_conn.get_all_tags(filters={'resource-id': vpc.id}))
+
+    if not set(vpc_spec_tags.items()).issubset(set(vpc_tags.items())):
+        new_tags = {}
+
+        for (key, value) in set(vpc_spec_tags.items()): 
+            if (key, value) not in set(vpc_tags.items()):
+                new_tags[key] = value
+      
+        if new_tags:
+            vpc_conn.create_tags(vpc.id, new_tags)
+
 
     # boto doesn't appear to have a way to determine the existing
     # value of the dns attributes, so we just set them.
@@ -269,6 +329,7 @@ def create_vpc(module, vpc_conn):
         module.fail_json(msg='subnets needs to be a list of cidr blocks')
     
     current_subnets = vpc_conn.get_all_subnets(filters={ 'vpc_id': vpc.id })
+    
     # First add all new subnets
     for subnet in subnets:
         add_subnet = True
@@ -281,6 +342,7 @@ def create_vpc(module, vpc_conn):
                 changed = True
             except EC2ResponseError, e:
                 module.fail_json(msg='Unable to create subnet {0}, error: {1}'.format(subnet['cidr'], e))
+    
     # Now delete all absent subnets
     for csubnet in current_subnets:
         delete_subnet = True
@@ -332,7 +394,7 @@ def create_vpc(module, vpc_conn):
     if not isinstance(route_tables, list):
         module.fail_json(msg='route tables need to be a list of dictionaries')
     
-    # Work through each route table and update/create to match dictionary array
+# Work through each route table and update/create to match dictionary array
     all_route_tables = []
     for rt in route_tables:
         try:
@@ -350,7 +412,7 @@ def create_vpc(module, vpc_conn):
 
             # Associate with subnets
             for sn in rt['subnets']:
-                rsn = vpc_conn.get_all_subnets(filters={'cidr': sn})
+                rsn = vpc_conn.get_all_subnets(filters={'cidr': sn, 'vpc_id': vpc.id })
                 if len(rsn) != 1:
                     module.fail_json(
                         msg='The subnet {0} to associate with route_table {1} ' \
@@ -360,7 +422,7 @@ def create_vpc(module, vpc_conn):
 
                 # Disassociate then associate since we don't have replace
                 old_rt = vpc_conn.get_all_route_tables(
-                    filters={'association.subnet_id': rsn.id}
+                    filters={'association.subnet_id': rsn.id, 'vpc_id': vpc.id}
                 )
                 if len(old_rt) == 1:
                     old_rt = old_rt[0]
@@ -434,23 +496,10 @@ def terminate_vpc(module, vpc_conn, vpc_id=None, cidr=None):
     vpc_dict = {}
     terminated_vpc_id = ''
     changed = False
-
-    if vpc_id == None and cidr == None:
-        module.fail_json(
-            msg='You must either specify a vpc id or a cidr '\
-            'block to terminate a VPC, aborting'
-        )
-    if vpc_id is not None:         
-        vpc_rs = vpc_conn.get_all_vpcs(vpc_id)
-    else:
-        vpc_rs = vpc_conn.get_all_vpcs(filters={'cidr': cidr})
-    if len(vpc_rs) > 1:
-        module.fail_json(
-            msg='EC2 returned more than one VPC for id {0} ' \
-            'or cidr {1}, aborting'.format(vpc_id,vidr)
-        )
-    if len(vpc_rs) == 1:
-        vpc = vpc_rs[0]
+    
+    vpc = find_vpc(module, vpc_conn, vpc_id, cidr)
+    
+    if vpc is not None:
         if vpc.state == 'available':
             terminated_vpc_id=vpc.id
             vpc_dict=get_vpc_info(vpc)
@@ -498,6 +547,7 @@ def main():
             subnets = dict(type='list'),
             vpc_id = dict(),
             internet_gateway = dict(type='bool', default=False),
+            resource_tags = dict(type='dict'),
             route_tables = dict(type='list'),
             state = dict(choices=['present', 'absent'], default='present'),
         )
@@ -527,11 +577,6 @@ def main():
     if module.params.get('state') == 'absent':
         vpc_id = module.params.get('vpc_id')
         cidr = module.params.get('cidr_block')
-        if vpc_id == None and cidr == None:
-            module.fail_json(
-                msg='You must either specify a vpc id or a cidr '\
-                'block to terminate a VPC, aborting'
-            )
         (changed, vpc_dict, new_vpc_id) = terminate_vpc(module, vpc_conn, vpc_id, cidr)
         subnets_changed = None
     elif module.params.get('state') == 'present':
