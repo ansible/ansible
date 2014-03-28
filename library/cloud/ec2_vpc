@@ -46,7 +46,7 @@ options:
     choices: [ "yes", "no" ]
   subnets:
     description:
-      - "A dictionary array of subnets to add of the form: { cidr: ..., az: ... }. Where az is the desired availability zone of the subnet, but it is not required. All VPC subnets not in this list will be removed."
+      - "A dictionary array of subnets to add of the form: { cidr: ..., az: ... , resource_tags: ... }. Where az is the desired availability zone of the subnet, but it is not required. Tags (i.e.: resource_tags) is also optional and use dictionary form: { "Environment":"Dev", "Tier":"Web", ...}. All VPC subnets not in this list will be removed."
     required: false
     default: null
     aliases: []
@@ -146,10 +146,13 @@ EXAMPLES = '''
         subnets: 
           - cidr: 172.22.1.0/24
             az: us-west-2c
+            resource_tags: { "Environment":"Dev", "Tier" : "Web" }
           - cidr: 172.22.2.0/24
             az: us-west-2b
+            resource_tags: { "Environment":"Dev", "Tier" : "App" }
           - cidr: 172.22.3.0/24
             az: us-west-2a
+            resource_tags: { "Environment":"Dev", "Tier" : "DB" }
         internet_gateway: True
         route_tables:
           - subnets: 
@@ -338,7 +341,18 @@ def create_vpc(module, vpc_conn):
                 add_subnet = False
         if add_subnet:
             try:
-                vpc_conn.create_subnet(vpc.id, subnet['cidr'], subnet.get('az', None))
+                new_subnet = vpc_conn.create_subnet(vpc.id, subnet['cidr'], subnet.get('az', None))
+                new_subnet_tags = subnet.get('resource_tags', None)
+                if new_subnet_tags:
+                    # Sometimes AWS takes its time to create a subnet and so using new subnets's id
+                    # to create tags results in exception.
+                    # boto doesn't seem to refresh 'state' of the newly created subnet, i.e.: it's always 'pending'
+                    # so i resorted to polling vpc_conn.get_all_subnets with the id of the newly added subnet
+                    while len(vpc_conn.get_all_subnets(filters={ 'subnet-id': new_subnet.id })) == 0:
+                        time.sleep(0.1)
+
+                    vpc_conn.create_tags(new_subnet.id, new_subnet_tags)
+
                 changed = True
             except EC2ResponseError, e:
                 module.fail_json(msg='Unable to create subnet {0}, error: {1}'.format(subnet['cidr'], e))
@@ -467,13 +481,14 @@ def create_vpc(module, vpc_conn):
     created_vpc_id = vpc.id
     returned_subnets = []
     current_subnets = vpc_conn.get_all_subnets(filters={ 'vpc_id': vpc.id })
+    
     for sn in current_subnets:
         returned_subnets.append({
+            'resource_tags': dict((t.name, t.value) for t in vpc_conn.get_all_tags(filters={'resource-id': sn.id})),
             'cidr': sn.cidr_block, 
             'az': sn.availability_zone,
             'id': sn.id,
         })
-
 
     return (vpc_dict, created_vpc_id, returned_subnets, changed)
 
