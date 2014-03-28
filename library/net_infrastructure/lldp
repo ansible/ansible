@@ -19,6 +19,7 @@ import subprocess
 DOCUMENTATION = '''
 ---
 module: lldp
+version_added: 1.6
 short_description: get details reported by lldp
 description:
   - Reads data out of lldpctl
@@ -76,8 +77,7 @@ def main():
     except TypeError:
         module.fail_json(msg="lldpctl command failed. is lldpd running?")    
    
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
-
+# import module snippets
+from ansible.module_utils.basic import *
 main()
 
