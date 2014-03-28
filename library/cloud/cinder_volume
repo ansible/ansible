@@ -26,61 +26,115 @@ short_description: Create/Delete volumes within OpenStack cinder
 description:
    - Create, Remove or expand volumes within cinder (openstack volume)
 options:
-   state:
-     description:
+
+    auth_url:
+        required: False
+        description:
+        - The (v2) authentication endpoint for keystone. If not set either the
+          keystone_endpoint or the OS_AUTH_URL environment variable is used.
+        default: http://127.0.0.1:5000/v2.0
+    login_username:
+        required: False
+        description:
+        - username to authenticate to keystone. If not set, the OS_USERNAME
+          variable is used (if present).
+        default: admin
+    login_user:
+        description:
+        - DEPRECATED. Alias for login_username, for backward compatibility.
+    login_password:
+        required: False
+        description:
+        - password to authenticate to keystone. If not set, the OS_PASSWORD
+          variable is used (if present).
+    login_tenant_name:
+        required: False
+        default: admin
+        description:
+        - The tenant name to authenticate to keystone. If not set, the
+          OS_TENANT_NAME variable is used (if present).
+    token:
+        required: False
+        - Token to use as authentication. If used, you also need to provide
+          an endpoint.
+    login_tenant_id:
+        required: False
+        description:
+        - The tenant id to authenticate to keystone. If not set, the
+          OS_TENANT_ID variable is used (if present).
+    ca_cert:
+        required: False
+        description:
+        - Path to the CA certificates to use to validate certificates.
+    insecure:
+        default: False
+        description:
+        - If set to True, SSL certificates will not be checked.
+    region_name:
+        default: None
+        description:
+        - The region to use when selecting an endpoint from the service catalog
+    endpoint_type:
+        default: publicURL
+        description:
+        - The endpoint type to use when selecting an endpoint from the service
+          catalog
+
+    state:
+        description:
         - Indicate desired state of the resource
-     choices: ['present', 'absent', 'expanded']
-     default: present
-   name:
-     description:
+        choices: ['present', 'absent', 'expanded']
+        default: present
+    name:
+        description:
         - Name that has to be given to the volume
-     required: true
-     default: None
-   size:
-     description:
+        required: true
+        default: None
+    size:
+        description:
         - Size of the volume to create (in gigabytes)
-     required: false
-     default: None
-   image_id:
-     description:
+        required: false
+        default: None
+    image_id:
+        description:
         - The id of the image to use as the source for the new volume.
-     required: false
-     default: None
-   image_name:
-     description:
+        required: false
+        default: None
+    image_name:
+        description:
         - The name of the image to use as the source for the new volume.
-     required: true
-     default: None
-   volume_id:
-     description:
+        required: true
+        default: None
+    volume_id:
+        description:
         - The id of the volume to use as the source for the new volume.
-     required: false
-     default: None
-   volume_name:
-     description:
+        required: false
+        default: None
+    volume_name:
+        description:
         - The name of the volume to use as the source for the new volume.
-     required: true
-     default: None
+        required: true
+        default: None
     snapshot_id:
-     description:
+        description:
         - The id of the snapshot to use as the source for the new volume.
-     required: false
-     default: None
-   snapshot_name:
-     description:
+        required: false
+        default: None
+    snapshot_name:
+        description:
         - The name of the snapshot to use as the source for the new volume.
-     required: true
-     default: None
-   wait:
-     description:
+        required: true
+        default: None
+    wait:
+        description:
         - If the module should wait for the VM to be created.
-     required: false
-     default: 'yes'
-   wait_for:
-     description:
+        required: false
+        default: 'yes'
+    wait_for:
+        description:
         - The amount of time the module should wait for the VM to get into active state
-     required: false
-     default: 180     
+        required: false
+        default: 180
 requirements: ["cinderclient"]
 '''
 
