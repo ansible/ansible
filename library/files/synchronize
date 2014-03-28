@@ -51,7 +51,7 @@ options:
     required: false
   checksum:
     description:
-      - Skip based on checksum, not mod-time & size; Pay attention that "archive" option is enable by default: "checksum" option will not disable it.
+      - Skip based on checksum, rather than mod-time & size; Note that that "archive" option is still enabled by default: the "checksum" option will not disable it.
     choices: [ 'yes', 'no' ]
     default: 'no'
     required: false
@@ -307,7 +307,8 @@ def main():
         changed = changed_marker in out
         out_clean=out.replace(changed_marker,'')
         out_lines=out_clean.split('\n')
-        while '' in out_lines: out_lines.remove('')
+        while '' in out_lines: 
+            out_lines.remove('')
         return module.exit_json(changed=changed, msg=out_clean,
                                 rc=rc, cmd=cmdstr, stdout_lines=out_lines)
 
