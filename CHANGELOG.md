@@ -37,6 +37,7 @@ New Modules:
 * system: capabilities
 * net_infrastructure: bigip_facts
 * net_infrastructure: dnssimple
+* web_infrastructure: apache2_module
 * cloud: digital_ocean_domain
 * cloud: digital_ocean_sshkey 
 * cloud: rax_identity
