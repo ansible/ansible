@@ -57,6 +57,12 @@ options:
     description:
       - Specifies the location of a response file to be used if package expects input on install. (added in Ansible 1.4)
     required: false
+  category:
+    description:
+      - Install/Remove category instead of a single package.
+    required: false
+    choices: ["true", "false"]
+    version_added: 1.6
 '''
 
 EXAMPLES = '''
@@ -71,15 +77,21 @@ EXAMPLES = '''
 
 # Ensure that a package is not installed.
 - svr4pkg: name=SUNWgnome-sound-recorder state=absent
+
+# Ensure that a category is not installed.
+- svr4pkg: name=FIREFOX state=absent category=true
+
 '''
 
 
 import os
 import tempfile
 
-def package_installed(module, name):
+def package_installed(module, name, category):
     cmd = [module.get_bin_path('pkginfo', True)]
     cmd.append('-q')
+    if category:
+        cmd.append('-c')
     cmd.append(name)
     rc, out, err = module.run_command(' '.join(cmd))
     if rc == 0:
@@ -116,13 +128,15 @@ def run_command(module, cmd):
     cmd[0] = module.get_bin_path(progname, True)
     return module.run_command(cmd)
 
-def package_install(module, name, src, proxy, response_file):
+def package_install(module, name, src, proxy, response_file, category):
     adminfile = create_admin_file()
     cmd = [ 'pkgadd', '-na', adminfile, '-d', src ]
     if proxy is not None:
         cmd += [ '-x', proxy ]
     if response_file is not None:
         cmd += [ '-r', response_file ]
+    if category:
+        cmd += [ '-Y' ]
     cmd.append(name)
     (rc, out, err) = run_command(module, cmd)
     os.unlink(adminfile)
@@ -130,7 +144,10 @@ def package_install(module, name, src, proxy, response_file):
 
 def package_uninstall(module, name, src):
     adminfile = create_admin_file()
-    cmd = [ 'pkgrm', '-na', adminfile, name]
+    if category:
+        cmd = [ 'pkgrm', '-n', '-a', adminfile, '-Y', name ]
+    else:
+        cmd = [ 'pkgrm', '-na', adminfile, name]
     (rc, out, err) = run_command(module, cmd)
     os.unlink(adminfile)
     return (rc, out, err)
@@ -142,7 +159,8 @@ def main():
             state = dict(required = True, choices=['present', 'absent']),
             src = dict(default = None),
             proxy = dict(default = None),
-            response_file = dict(default = None)
+            response_file = dict(default = None),
+            category = dict(default=False, type='bool')
         ),
         supports_check_mode=True
     )
@@ -151,6 +169,7 @@ def main():
     src = module.params['src']
     proxy = module.params['proxy']
     response_file = module.params['response_file']
+    category = module.params['category']
     rc = None
     out = ''
     err = ''
@@ -162,20 +181,20 @@ def main():
         if src is None:
             module.fail_json(name=name,
                              msg="src is required when state=present")
-        if not package_installed(module, name):
+        if not package_installed(module, name, category):
             if module.check_mode:
                 module.exit_json(changed=True)
-            (rc, out, err) = package_install(module, name, src, proxy, response_file)
+            (rc, out, err) = package_install(module, name, src, proxy, response_file, category)
             # Stdout is normally empty but for some packages can be
             # very long and is not often useful
             if len(out) > 75:
                 out = out[:75] + '...'
 
     elif state == 'absent':
-        if package_installed(module, name):
+        if package_installed(module, name, category):
             if module.check_mode:
                 module.exit_json(changed=True)
-            (rc, out, err) = package_uninstall(module, name, src)
+            (rc, out, err) = package_uninstall(module, name, src, category)
             out = out[:75]
 
     if rc is None:
