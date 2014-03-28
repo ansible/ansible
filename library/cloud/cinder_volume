@@ -102,8 +102,9 @@ def create_volume(module, name, size, cinder=None, snapshot_id=None,
     if not cinder:
         cinder = get_cinder_client(module)
 
-    volume = cinder.volumes.create(size, name=name, snapshot_id=snapshot_id,
-                                   imageRef=image_id, source_volid=volume_id)
+    volume = cinder.volumes.create(size, display_name=name,
+                                   snapshot_id=snapshot_id, imageRef=image_id,
+                                   source_volid=volume_id)
 
     if module.params['wait']:
         id = volume.id

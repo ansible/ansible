@@ -26,7 +26,7 @@ def os_argument_spec():
         login_user=dict(required=False),
         login_username=dict(required=False),
         login_password=dict(required=False),
-        login_tenant_name=dict(required=False, default="admin"),
+        login_tenant_name=dict(required=False),
         login_tenant_id=dict(required=False),
         ca_cert=dict(required=False),
         token=dict(required=False),
@@ -71,6 +71,8 @@ def os_auth_info(module):
         result["tenant_id"] = os.environ.get("OS_PROJECT_ID")
     elif os.environ.get("OS_PROJECT_NAME"):
         result["tenant_name"] = os.environ.get("OS_PROJECT_NAME")
+    else:
+        result["tenant_name"] = "admin"
 
     result["auth_url"] = (module.params.get("auth_url") or
                           os.environ.get("OS_AUTH_URL"))
@@ -136,7 +138,7 @@ def get_auth_data(module, service_type, endpoint_type=None):
 
     result["endpoint"] = keystone.service_catalog.url_for(**kwargs)
     result["token"] = keystone.auth_token
-    
+
     if 'ca_cert' in kwargs:
         result['ca_cert'] = kwargs['ca_cert']
 
@@ -204,7 +206,7 @@ def get_server(module, name=None, id=None, required=True, detailed=True,
             # the {'name': module.params['name']} will also return servers
             # with names that partially match the server name, so we have to
             # strictly filter here
-            servers = [x for x in servers if x.name == module.params['name']]
+            servers = [x for x in servers if x.name == name]
         else:
             servers = nova.servers.list(search_opts={"id": id},
                                         detailed=detailed)
@@ -229,22 +231,27 @@ def get_cinder_client(module):
 
     user = kwargs.pop("username")
     password = kwargs.pop("password")
-    tenant_id = kwargs.pop("tenant_name", None) or kwargs.pop("tenant_id")
+    tenant_id = kwargs.pop("tenant_id") or kwargs.pop("tenant_name")
+
+    if 'ca_cert' in kwargs:
+        kwargs['cacert'] = kwargs.pop('ca_cert')
 
     if module.params.get('endpoint_type'):
         kwargs['endpoint_type'] = module.params['endpoint_type']
 
     try:
-        import cinderclient.v2
+        import cinderclient.v1
         import cinderclient.exceptions
     except ImportError:
         module.fail_json(msg="cinderclient is required for this feature")
 
-    cinder = cinderclient.v2.Client(user, password, tenant_id, **kwargs)
+    cinder = cinderclient.v1.Client(user, password, tenant_id, **kwargs)
     try:
         cinder.authenticate()
     except cinderclient.exceptions.Unauthorized, e:
-        module.fail_json(msg="Invalid OpenStack Cinder credentials: %s" % e.message)
+        module.fail_json(
+            msg="Invalid OpenStack Cinder credentials: %s" % e.message,
+            k=kwargs, f=(user, password, tenant_id))
     except cinderclient.exceptions.AuthorizationFailure, e:
         module.fail_json(msg="Unable to authorize user: %s" % e.message)
 
@@ -260,6 +267,7 @@ def get_volume(module, name=None, id=None, required=True, cinder=None):
     try:
         if name:
             volumes = cinder.volumes.list(search_opts={'name': name})
+            volumes = [x for x in volumes if x.display_name == name]
         elif id:
             try:
                 volumes = [cinder.volumes.get(id)]
@@ -267,7 +275,7 @@ def get_volume(module, name=None, id=None, required=True, cinder=None):
                 volumes = []
 
         else:
-            module.fail_json(msg="No name? no id?")    
+            module.fail_json(msg="No name? no id?")
     except Exception, e:
         module.fail_json(msg="Error in getting instance: %s " % e.message)
 
@@ -278,7 +286,7 @@ def get_volume(module, name=None, id=None, required=True, cinder=None):
         return None
 
     if len(volumes) > 1:
-        module.fail_json(msg="Ambigious volume name", name=name, id=id)
+        module.fail_json(msg="Ambigious volume name", name=name, id=id,)
 
     return volumes[0]
 
