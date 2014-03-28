@@ -41,12 +41,12 @@ options:
     - The size of the physical extent in megabytes. Must be a power of 2.
     default: 4
     required: false
-  vgoptions:
+  vg_options:
     description:
     - Additional options to pass to C(vgcreate) when creating the volume group.
     default: null
     required: false
-    version_added: "1.5"
+    version_added: "1.6"
   state:
     choices: [ "present", "absent" ]
     default: present
@@ -105,7 +105,7 @@ def main():
             vg=dict(required=True),
             pvs=dict(type='list'),
             pesize=dict(type='int', default=4),
-            vgoptions=dict(),
+            vg_options=dict(),
             state=dict(choices=["absent", "present"], default='present'),
             force=dict(type='bool', default='no'),
         ),
@@ -116,7 +116,7 @@ def main():
     state = module.params['state']
     force = module.boolean(module.params['force'])
     pesize = module.params['pesize']
-    vgoptions = module.params.get('vgoptions', '').split()
+    vgoptions = module.params.get('vg_options', '').split()
 
     if module.params['pvs']:
         dev_string = ' '.join(module.params['pvs'])
