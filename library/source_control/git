@@ -119,6 +119,15 @@ options:
         description:
             - if C(yes), repository will be created as a bare repo, otherwise
               it will be a standard repo with a workspace.
+
+    recursive:
+        required: false
+        default: "yes"
+        choices: [ "yes", "no" ]
+        version_added: "1.6"
+        description:
+            - if C(no), repository will be cloned without the --recursive
+              option, skipping sub-modules.
 notes:
     - "If the task seems to be hanging, first verify remote host is in C(known_hosts).
       SSH will prompt user to authorize the first contact with a remote host.  To avoid this prompt, 
@@ -191,7 +200,8 @@ def get_version(module, git_path, dest, ref="HEAD"):
     sha = stdout.rstrip('\n')
     return sha
 
-def clone(git_path, module, repo, dest, remote, depth, version, bare, reference):
+def clone(git_path, module, repo, dest, remote, depth, version, bare,
+          reference, recursive):
     ''' makes a new git repo if it does not already exist '''
     dest_dirname = os.path.dirname(dest)
     try:
@@ -202,7 +212,9 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare, reference)
     if bare:
         cmd.append('--bare')
     else:
-        cmd.extend([ '--origin', remote, '--recursive' ])
+        cmd.extend([ '--origin', remote ])
+        if recursive:
+            cmd.extend([ '--recursive' ])
         if is_remote_branch(git_path, module, dest, repo, version) \
         or is_remote_tag(git_path, module, dest, repo, version):
             cmd.extend([ '--branch', version ])
@@ -429,6 +441,7 @@ def main():
             ssh_opts=dict(default=None, required=False),
             executable=dict(default=None),
             bare=dict(default='no', type='bool'),
+            recursive=dict(default='yes', type='bool'),
         ),
         supports_check_mode=True
     )
@@ -462,6 +475,8 @@ def main():
     else:            
         add_git_host_key(module, repo, accept_hostkey=module.params['accept_hostkey'])
 
+    recursive = module.params['recursive']
+
     if bare:
         gitconfig = os.path.join(dest, 'config')
     else:
@@ -477,7 +492,8 @@ def main():
         if module.check_mode:
             remote_head = get_remote_head(git_path, module, dest, version, repo, bare)
             module.exit_json(changed=True, before=before, after=remote_head)
-        clone(git_path, module, repo, dest, remote, depth, version, bare, reference)
+        clone(git_path, module, repo, dest, remote, depth, version, bare,
+              reference, recursive)
     elif not update:
         # Just return having found a repo already in the dest path
         # this does no checking that the repo is the actual repo
