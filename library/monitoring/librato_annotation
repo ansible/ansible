@@ -1,4 +1,24 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
+#
+# (C) Seth Edwards, 2014
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 
 import base64
 
@@ -18,64 +38,42 @@ options:
         description:
            - Librato account username
         required: true
-        default: null
-        aliases: []
     api_key:
         description:
            - Librato account api key
         required: true
-        default: null
-        aliases: []
     name:
         description:
             - The annotation stream name
             - If the annotation stream does not exist, it will be created automatically
         required: false
-        default: null
-        aliases: []
     title:
         description:
             - The title of an annotation is a string and may contain spaces
             - The title should be a short, high-level summary of the annotation e.g. v45 Deployment
         required: true
-        default: null
-        aliases: []
     source:
         description:
             - A string which describes the originating source of an annotation when that annotation is tracked across multiple members of a population
         required: false
-        default: null
-        aliases: []
     description:
         description:
             - The description contains extra meta-data about a particular annotation
             - The description should contain specifics on the individual annotation e.g. Deployed 9b562b2: shipped new feature foo!
         required: false
-        default: null
-        aliases: []
     start_time:
         description:
             - The unix timestamp indicating the the time at which the event referenced by this annotation started
         required: false
-        default: "the current time"
-        aliases: []
     end_time:
         description:
             - The unix timestamp indicating the the time at which the event referenced by this annotation ended
             - For events that have a duration, this is a useful way to annotate the duration of the event
         required: false
-        default: null
-        aliases: []
     links:
         description:
-            - Words go here
-            - that describe
-            - this option
-        required: true or false
-        default: a string or the word null
-        aliases: []
-
-
+            - See examples
+        required: true
 '''
 
 EXAMPLES = '''
