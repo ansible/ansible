@@ -148,7 +148,7 @@ options:
       - Set the state of the container
     required: false
     default: present
-    choices: [ "present", "stopped", "absent", "killed", "restarted" ]
+    choices: [ "present", "running", "stopped", "absent", "killed", "restarted" ]
     aliases: []
   privileged:
     description:
@@ -636,7 +636,7 @@ def main():
             env             = dict(type='list'),
             dns             = dict(),
             detach          = dict(default=True, type='bool'),
-            state           = dict(default='present', choices=['absent', 'present', 'stopped', 'killed', 'restarted']),
+            state           = dict(default='running', choices=['absent', 'present', 'running', 'stopped', 'killed', 'restarted']),
             debug           = dict(default=False, type='bool'),
             privileged      = dict(default=False, type='bool'),
             stdin_open      = dict(default=False, type='bool'),
@@ -668,25 +668,35 @@ def main():
         changed = False
 
         # start/stop containers
-        if state == "present":
-
-            # make sure a container with `name` is running
-            if name and "/" + name not in map(lambda x: x.get('Name'), running_containers):
+        if state in [ "running", "present" ]:
+            
+            # make sure a container with `name` exists, if not create and start it
+            if name and "/" + name not in map(lambda x: x.get('Name'), deployed_containers):
                 containers = manager.create_containers(1)
-                manager.start_containers(containers)
+                if state == "present": #otherwise it get (re)started later anyways.. 
+                  manager.start_containers(containers)
+                  running_containers = manager.get_running_containers()
+                deployed_containers = manager.get_deployed_containers()
 
-            # start more containers if we don't have enough
-            elif delta > 0:
-                containers = manager.create_containers(delta)
-                manager.start_containers(containers)
-
-            # stop containers if we have too many
-            elif delta < 0:
-                containers_to_stop = running_containers[0:abs(delta)]
-                containers = manager.stop_containers(containers_to_stop)
-                manager.remove_containers(containers_to_stop)
-
-            facts = manager.get_running_containers()
+            if state == "running":
+                # make sure a container with `name` is running
+                if name and "/" + name not in map(lambda x: x.get('Name'), running_containers):
+                    manager.start_containers(deployed_containers)
+    
+                # start more containers if we don't have enough
+                elif delta > 0:
+                    containers = manager.create_containers(delta)
+                    manager.start_containers(containers)
+    
+                # stop containers if we have too many
+                elif delta < 0:
+                    containers_to_stop = running_containers[0:abs(delta)]
+                    containers = manager.stop_containers(containers_to_stop)
+                    manager.remove_containers(containers_to_stop)
+    
+                facts = manager.get_running_containers()
+            else:
+                acts = manager.get_deployed_containers()
 
         # stop and remove containers
         elif state == "absent":
