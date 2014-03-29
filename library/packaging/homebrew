@@ -362,16 +362,18 @@ class Homebrew(object):
 
         cmd = [
             "{brew_path}".format(brew_path=self.brew_path),
-            "list",
-            "-m1",
+            "info",
+            self.current_package,
         ]
         rc, out, err = self.module.run_command(cmd)
-        packages = [package for package in out.split('\n') if package]
+        for line in out.split('\n'):
+            if (
+                re.search(r'Built from source', line)
+                or re.search(r'Poured from bottle', line)
+            ):
+                return True
 
-        if rc == 0 and self.current_package in packages:
-            return True
-        else:
-            return False
+        return False
 
     def _outdated_packages(self):
         rc, out, err = self.module.run_command([
@@ -537,7 +539,7 @@ class Homebrew(object):
         cmd = [opt for opt in opts if opt]
         rc, out, err = self.module.run_command(cmd)
 
-        if not self._current_package_is_outdated():
+        if self._current_package_is_installed() and not self._current_package_is_outdated():
             self.changed_count += 1
             self.changed = True
             self.message = 'Package upgraded: {0}'.format(self.current_package)
