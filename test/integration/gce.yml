@@ -2,4 +2,5 @@
   gather_facts: true
   roles:
     - { role: test_gce, tags: test_gce }
-    # TODO: tests for gce_net, gce_pd, etc.
+    - { role: test_gce_pd, tags: test_gce_pd }
+    # TODO: tests for gce_lb, gce_net, gc_storage
