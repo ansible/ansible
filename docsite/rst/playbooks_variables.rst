@@ -880,7 +880,7 @@ See :doc:`playbooks_roles` for more info about this::
 
     ---
     # file: roles/x/defaults/main.yml
-    # if not overriden in inventory or as a parameter, this is the value that will be used
+    # if not overridden in inventory or as a parameter, this is the value that will be used
     http_port: 80
 
 if you are writing a role and want to ensure the value in the role is absolutely used in that role, and is not going to be overridden

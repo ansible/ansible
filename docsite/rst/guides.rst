@@ -12,5 +12,5 @@ This section is new and evolving.  The idea here is explore particular use cases
    guide_vagrant
    guide_rolling_upgrade
 
-Pending topics may include: Docker, Jenkins, Google Compute Engine, Linode/Digital Ocean, Continous Deployment, and more.
+Pending topics may include: Docker, Jenkins, Google Compute Engine, Linode/Digital Ocean, Continuous Deployment, and more.
 
