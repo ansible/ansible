@@ -124,7 +124,7 @@ options:
         default: null
         version_added: "1.6"
         description:
-            - Which sub-modules will be updated. Empty string skips all.
+            - Select which sub-modules will be updated. 'none' to skip all.
               If this argument is not supplied all sub-modules will be
               updated. 
        
@@ -225,13 +225,12 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
     cmd.extend([ repo, dest ])
     module.run_command(cmd, check_rc=True, cwd=dest_dirname)
     cmd = [git_path, 'submodule', 'update', '--init', '--recursive']
-    if submodules is not None and submodules != "":
-        for s in submodules.split():
-            cmd.append(s)
-        module.run_command(cmd, check_rc=True, cwd=dest)
     if bare:
         if remote != 'origin':
             module.run_command([git_path, 'remote', 'add', remote, repo], check_rc=True, cwd=dest)
+    elif submodules is not None and submodules.lower() != 'none':
+        cmd.extend(submodules.split())
+        module.run_command(cmd, check_rc=True, cwd=dest)
   
 def has_local_mods(module, git_path, dest, bare):
     if bare:
@@ -387,16 +386,15 @@ def fetch(git_path, module, repo, dest, version, remote, bare, submodules):
     return (rc, out1 + out2 + out3, err1 + err2 + err3)
 
 def submodule_update(git_path, module, dest, submodules):
-    ''' init and update any submodules '''
+    ''' init and update submodules '''
     # skip submodule commands if .gitmodules is not present
-    if not os.path.exists(os.path.join(dest, '.gitmodules')) or submodules == "":
+    if not os.path.exists(os.path.join(dest, '.gitmodules')) or submodules == 'none':
         return (0, '', '')
     cmd = [ git_path, 'submodule', 'sync' ]
     (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=dest)
     cmd = [ git_path, 'submodule', 'update', '--init', '--recursive' ,'--remote']
-    if submodules is not None: 
-        for s in submodules.split(): # yep, we do not handle whitespaces in sub-modules
-            cmd.append(s)
+    if submodules is not None and submodules.lower() != 'none': 
+        cmd.extend(submodules.split())# yep, we do not handle whitespaces in sub-modules
     (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=dest)
     return (rc, out, err)
 
