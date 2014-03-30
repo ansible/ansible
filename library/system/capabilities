@@ -24,7 +24,7 @@ DOCUMENTATION = '''
 module: capabilities
 short_description: Manage Linux capabilities
 description:
-    - This module manipulates files' priviliges using the Linux capabilities(7) system.
+    - This module manipulates files privileges using the Linux capabilities(7) system.
 version_added: "1.6"
 options:
     path:
