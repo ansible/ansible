@@ -579,7 +579,7 @@ Autoscaling with Tower
 
 :doc:`tower` also contains a very nice feature for auto-scaling use cases.  
 In this mode, a simple curl script can call a defined URL and the server will "dial out" to the requester 
-and configure an instance that is spinning up.  This can be a great way to reconfigure ephmeral nodes.  
+and configure an instance that is spinning up.  This can be a great way to reconfigure ephemeral nodes.
 See the Tower documentation for more details.  
 
 A benefit of using the callback in Tower over pull mode is that job results are still centrally recorded 
