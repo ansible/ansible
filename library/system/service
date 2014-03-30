@@ -565,7 +565,7 @@ class LinuxService(Service):
     def service_enable(self):
 
         if self.enable_cmd is None:
-            self.module.fail_json(msg='service name not recognized')
+            self.module.fail_json(msg='unknown init system, cannot enable service')
 
         # FIXME: we use chkconfig or systemctl
         # to decide whether to run the command here but need something
