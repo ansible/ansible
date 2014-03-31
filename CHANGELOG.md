@@ -12,6 +12,7 @@ Major features/changes:
   - multiple users can connect with different keys, when `accelerate_multi_key = yes` is specified in the ansible.cfg.
   - daemon lifetime is now based on the time from the last activity, not the time from the daemon's launch.
 * ansible-playbook now accepts --force-handlers to run handlers even if tasks result in failures
+* apt module now accepts "deb" parameter to install local dpkg files
 
 New Modules:
 
