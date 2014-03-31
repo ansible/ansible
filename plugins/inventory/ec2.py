@@ -346,6 +346,9 @@ class Ec2Inventory(object):
         # Inventory: Group by instance ID (always a group of 1)
         self.inventory[instance.id] = [dest]
 
+        # Inventory: Group by AMI ID
+        self.push(self.inventory, instance.image_id, dest)
+
         # Inventory: Group by region
         self.push(self.inventory, region, dest)
 
