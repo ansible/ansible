@@ -528,7 +528,7 @@ def main():
                 module.exit_json(changed=False, before=before, after=remote_head)
         if module.check_mode:
             module.exit_json(changed=True, before=before, after=remote_head)
-        fetch(git_path, module, repo, dest, version, remote, bare)
+        fetch(git_path, module, repo, dest, version, remote, bare, submodules)
 
     # switch to version specified regardless of whether
     # we cloned or pulled
