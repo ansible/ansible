@@ -161,7 +161,7 @@ class Connection(object):
                 if stdout.endswith("%s\r\n%s" % (incorrect_password, prompt)):
                     raise errors.AnsibleError('Incorrect sudo password')
 
-            if self.runner.su and su and self.runner.sudo_pass:
+            if self.runner.su and su and self.runner.su_pass:
                 incorrect_password = gettext.dgettext(
                     "su", "Sorry")
                 if stdout.endswith("%s\r\n%s" % (incorrect_password, prompt)):
