@@ -507,10 +507,15 @@ class Runner(object):
             fileno = None
 
         try:
+            self._new_stdin = new_stdin
             if not new_stdin and fileno is not None:
-                self._new_stdin = os.fdopen(os.dup(fileno))
-            else:
-                self._new_stdin = new_stdin
+                try:
+                    self._new_stdin = os.fdopen(os.dup(fileno))
+                except:
+                    # couldn't dupe stdin, most likely because it's
+                    # not a valid file descriptor, so we just rely on
+                    # using the one that was passed in
+                    pass
 
             exec_rc = self._executor_internal(host, new_stdin)
             if type(exec_rc) != ReturnData:
@@ -1094,10 +1099,15 @@ class Runner(object):
 
         workers = []
         for i in range(self.forks):
+            new_stdin = None
             if fileno is not None:
-                new_stdin = os.fdopen(os.dup(fileno))
-            else:
-                new_stdin = None
+                try:
+                    new_stdin = os.fdopen(os.dup(fileno))
+                except:
+                    # couldn't dupe stdin, most likely because it's
+                    # not a valid file descriptor, so we just rely on
+                    # using the one that was passed in
+                    pass
             prc = multiprocessing.Process(target=_executor_hook,
                 args=(job_queue, result_queue, new_stdin))
             prc.start()
