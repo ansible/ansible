@@ -240,6 +240,14 @@ doesn't know it is a boolean value::
    - debug: msg=test
      when: some_string_value | bool
 
+To replace text in a string with regex, use the "regex_replace" filter::
+
+    # convert "ansible" to "able"    
+    {{ 'ansible' | regex_replace('^a.*i(.*)$', 'a\\1') }}         
+
+    # convert "foobar" to "bar"
+    {{ 'foobar' | regex_replace('^f.*o(.*)$', '\\1') }}
+
 A few useful filters are typically added with each new Ansible release.  The development documentation shows
 how to extend Ansible filters by writing your own as plugins, though in general, we encourage new ones
 to be added to core so everyone can make use of them.
