@@ -26,6 +26,19 @@ class ActionModule(object):
 
     def __init__(self, runner):
         self.runner = runner
+        self.inject = None
+
+    def _get_absolute_path(self, path=None):
+        if 'vars' in self.inject:
+            if '_original_file' in self.inject['vars']:
+                # roles
+                path = utils.path_dwim_relative(self.inject['_original_file'], 'files', path, self.runner.basedir)
+            elif 'inventory_dir' in self.inject['vars']:
+                # non-roles
+                abs_dir = os.path.abspath(self.inject['vars']['inventory_dir'])
+                path = os.path.join(abs_dir, path)
+
+        return path
 
     def _process_origin(self, host, path, user):
 
@@ -35,6 +48,9 @@ class ActionModule(object):
             else:
                 return '%s:%s' % (host, path)
         else:
+            if not ':' in path:
+                if not path.startswith('/'):
+                    path = self._get_absolute_path(path=path)
             return path
 
     def _process_remote(self, host, path, user):
@@ -48,10 +64,16 @@ class ActionModule(object):
         else:
             return_data = path
 
+        if not ':' in return_data:
+            if not return_data.startswith('/'):
+                return_data = self._get_absolute_path(path=return_data)
+
         return return_data
 
     def setup(self, module_name, inject):
         ''' Always default to localhost as delegate if None defined '''
+   
+        self.inject = inject
     
         # Store original transport and sudo values.
         self.original_transport = inject.get('ansible_connection', self.runner.transport)
@@ -70,6 +92,8 @@ class ActionModule(object):
         inject, complex_args=None, **kwargs):
 
         ''' generates params and passes them on to the rsync module '''
+
+        self.inject = inject
 
         # load up options
         options = {}
