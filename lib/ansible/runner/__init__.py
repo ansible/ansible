@@ -543,10 +543,12 @@ class Runner(object):
             # fireball, local, etc
             port = self.remote_port
 
+        module_vars = template.template(self.basedir, self.module_vars, host_variables)
+
         inject = {}
         inject = utils.combine_vars(inject, self.default_vars)
         inject = utils.combine_vars(inject, host_variables)
-        inject = utils.combine_vars(inject, self.module_vars)
+        inject = utils.combine_vars(inject, module_vars)
         inject = utils.combine_vars(inject, self.setup_cache[host])
         inject.setdefault('ansible_ssh_user', self.remote_user)
         inject['hostvars'] = HostVars(self.setup_cache, self.inventory)
