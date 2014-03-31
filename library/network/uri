@@ -160,6 +160,14 @@ EXAMPLES = '''
 # access the app in later tasks.
 - action: uri url=https://your.form.based.auth.example.com/dashboard.php
             method=GET return_content=yes HEADER_Cookie="{{login.set_cookie}}"
+            
+# Queue build of a project in Jenkins:
+- action: uri url=http://{{jenkins.host}}/job/{{jenkins.job}}/build?token={{jenkins.token}} 
+          method=GET user={{jenkins.user}} password={{jenkins.password}} force_basic_auth=yes status_code=201
+
+# Call Jenkins from host where you run ansible. Handy if the Henkins host isn't reachable from the target machine
+- local_action: uri url=http://{{jenkins.host}}/job/{{jenkins.job}}/build?token={{jenkins.token}} 
+          method=GET user={{jenkins.user}} password={{jenkins.password}} force_basic_auth=yes status_code=201
 '''
 
 HAS_HTTPLIB2 = True
