@@ -93,6 +93,10 @@ class Play(object):
 
         self._update_vars_files_for_host(None)
 
+        # apply any extra_vars specified on the command line now
+        if type(self.playbook.extra_vars) == dict:
+            self.vars = utils.combine_vars(self.vars, self.playbook.extra_vars)
+
         # template everything to be efficient, but do not pre-mature template
         # tasks/handlers as they may have inventory scope overrides
         _tasks    = ds.pop('tasks', [])
@@ -683,9 +687,6 @@ class Play(object):
 
         else:
             raise errors.AnsibleError("'vars_prompt' section is malformed, see docs")
-
-        if type(self.playbook.extra_vars) == dict:
-            vars = utils.combine_vars(vars, self.playbook.extra_vars)
 
         return vars
 
