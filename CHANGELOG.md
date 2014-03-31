@@ -58,6 +58,7 @@ Other notable changes:
 * s3 module can specify metadata
 * security token additions to ec2 modules
 * setup module code moved into module_utils/, facts now accessible by other modules  
+* synchronize module sets relative dirs based on inventory or role path
 * misc bugfixes and other parameters
 
 ## 1.5.3 "Love Walks In" - March 13, 2014
