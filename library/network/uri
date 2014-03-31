@@ -165,7 +165,7 @@ EXAMPLES = '''
 - action: uri url=http://{{jenkins.host}}/job/{{jenkins.job}}/build?token={{jenkins.token}} 
           method=GET user={{jenkins.user}} password={{jenkins.password}} force_basic_auth=yes status_code=201
 
-# Call Jenkins from host where you run ansible. Handy if the Henkins host isn't reachable from the target machine
+# Call Jenkins from host where you run ansible. Handy if the Jenkins host isn't reachable from the target machine:
 - local_action: uri url=http://{{jenkins.host}}/job/{{jenkins.job}}/build?token={{jenkins.token}} 
           method=GET user={{jenkins.user}} password={{jenkins.password}} force_basic_auth=yes status_code=201
 '''
