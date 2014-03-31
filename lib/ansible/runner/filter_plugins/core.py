@@ -127,6 +127,15 @@ def search(value, pattern='', ignorecase=False):
     ''' Perform a `re.search` returning a boolean '''
     return regex(value, pattern, ignorecase, 'search')
 
+def regex_replace(value='', pattern='', replacement='', ignorecase=False):
+    ''' Perform a `re.sub` returning a string '''
+    if ignorecase:
+        flags = re.I
+    else:
+        flags = 0
+    _re = re.compile(pattern, flags=flags)
+    return _re.sub(replacement, value)
+
 def unique(a):
     return set(a)
 
@@ -196,6 +205,7 @@ class FilterModule(object):
             'match': match,
             'search': search,
             'regex': regex,
+            'regex_replace': regex_replace,
 
             # list
             'unique' : unique,
