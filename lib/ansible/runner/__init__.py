@@ -86,18 +86,18 @@ def _executor_hook(job_queue, result_queue, new_stdin):
             traceback.print_exc()
 
 class HostVars(dict):
-    ''' A special view of setup_cache that adds values from the inventory when needed. '''
+    ''' A special view of vars_cache that adds values from the inventory when needed. '''
 
-    def __init__(self, setup_cache, inventory):
-        self.setup_cache = setup_cache
+    def __init__(self, vars_cache, inventory):
+        self.vars_cache = vars_cache
         self.inventory = inventory
         self.lookup = dict()
-        self.update(setup_cache)
+        self.update(vars_cache)
 
     def __getitem__(self, host):
         if host not in self.lookup:
             result = self.inventory.get_variables(host)
-            result.update(self.setup_cache.get(host, {}))
+            result.update(self.vars_cache.get(host, {}))
             self.lookup[host] = result
         return self.lookup[host]
 
@@ -123,6 +123,7 @@ class Runner(object):
         background=0,                       # async poll every X seconds, else 0 for non-async
         basedir=None,                       # directory of playbook, if applicable
         setup_cache=None,                   # used to share fact data w/ other tasks
+        vars_cache=None,                    # used to store variables about hosts
         transport=C.DEFAULT_TRANSPORT,      # 'ssh', 'paramiko', 'local'
         conditional='True',                 # run only if this fact expression evals to true
         callbacks=None,                     # used for output
@@ -160,6 +161,7 @@ class Runner(object):
         self.check            = check
         self.diff             = diff
         self.setup_cache      = utils.default(setup_cache, lambda: collections.defaultdict(dict))
+        self.vars_cache       = utils.default(vars_cache, lambda: collections.defaultdict(dict))
         self.basedir          = utils.default(basedir, lambda: os.getcwd())
         self.callbacks        = utils.default(callbacks, lambda: DefaultRunnerCallbacks())
         self.generated_jid    = str(random.randint(0, 999999999999))
@@ -559,13 +561,19 @@ class Runner(object):
             # fireball, local, etc
             port = self.remote_port
 
+        module_vars = template.template(self.basedir, self.module_vars, host_variables)
+
+        # merge the VARS and SETUP caches for this host
+        combined_cache = self.setup_cache.copy()
+        combined_cache.get(host, {}).update(self.vars_cache.get(host, {}))
+
         inject = {}
         inject = utils.combine_vars(inject, self.default_vars)
         inject = utils.combine_vars(inject, host_variables)
-        inject = utils.combine_vars(inject, self.module_vars)
-        inject = utils.combine_vars(inject, self.setup_cache[host])
+        inject = utils.combine_vars(inject, module_vars)
+        inject = utils.combine_vars(inject, combined_cache.get(host, {}))
         inject.setdefault('ansible_ssh_user', self.remote_user)
-        inject['hostvars'] = HostVars(self.setup_cache, self.inventory)
+        inject['hostvars'] = HostVars(combined_cache, self.inventory)
         inject['group_names'] = host_variables.get('group_names', [])
         inject['groups']      = self.inventory.groups_list()
         inject['vars']        = self.module_vars

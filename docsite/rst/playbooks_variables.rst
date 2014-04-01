@@ -837,7 +837,10 @@ If multiple variables of the same name are defined in different places, they win
     * -e variables always win
     * then comes "most everything else"
     * then comes variables defined in inventory
+    * then comes facts discovered about a system
     * then "role defaults", which are the most "defaulty" and lose in priority to everything.
+
+.. note:: In versions prior to 1.5.4, facts discovered about a system were in the "most everything else" category above.
 
 That seems a little theoretical.  Let's show some examples and where you would choose to put what based on the kind of 
 control you might want over values.

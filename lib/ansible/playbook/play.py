@@ -700,7 +700,7 @@ class Play(object):
         if host is not None:
             inject = {}
             inject.update(self.playbook.inventory.get_variables(host, vault_password=vault_password))
-            inject.update(self.playbook.SETUP_CACHE[host])
+            inject.update(self.playbook.VARS_CACHE[host])
 
         for filename in self.vars_files:
 
@@ -724,8 +724,9 @@ class Play(object):
                         if host is not None:
                             if self._has_vars_in(filename2) and not self._has_vars_in(filename3):
                                 # this filename has variables in it that were fact specific
-                                # so it needs to be loaded into the per host SETUP_CACHE
-                                self.playbook.SETUP_CACHE[host].update(data)
+                                # so it needs to be loaded into the per host VARS_CACHE
+                                data = utils.combine_vars(inject, data)
+                                self.playbook.VARS_CACHE[host].update(data)
                                 self.playbook.callbacks.on_import_for_host(host, filename4)
                         elif not self._has_vars_in(filename4):
                             # found a non-host specific variable, load into vars and NOT
@@ -757,9 +758,14 @@ class Play(object):
                     if host is not None and self._has_vars_in(filename2) and not self._has_vars_in(filename3):
                         # running a host specific pass and has host specific variables
                         # load into setup cache
-                        self.playbook.SETUP_CACHE[host] = utils.combine_vars(
-                            self.playbook.SETUP_CACHE[host], new_vars)
+                        new_vars = utils.combine_vars(inject, new_vars)
+                        self.playbook.VARS_CACHE[host] = utils.combine_vars(
+                            self.playbook.VARS_CACHE[host], new_vars)
                         self.playbook.callbacks.on_import_for_host(host, filename4)
                     elif host is None:
                         # running a non-host specific pass and we can update the global vars instead
                         self.vars = utils.combine_vars(self.vars, new_vars)
+
+        # finally, update the VARS_CACHE for the host, if it is set
+        if host is not None:
+            self.playbook.VARS_CACHE[host].update(self.playbook.extra_vars)

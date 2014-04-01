@@ -29,7 +29,11 @@ from play import Play
 import StringIO
 import pipes
 
+# the setup cache stores all variables about a host
+# gathered during the setup step, while the vars cache
+# holds all other variables about a host
 SETUP_CACHE = collections.defaultdict(dict)
+VARS_CACHE  = collections.defaultdict(dict)
 
 class PlayBook(object):
     '''
@@ -95,6 +99,7 @@ class PlayBook(object):
         """
 
         self.SETUP_CACHE = SETUP_CACHE
+        self.VARS_CACHE  = VARS_CACHE
 
         arguments = []
         if playbook is None:
@@ -335,6 +340,7 @@ class PlayBook(object):
             default_vars=task.default_vars,
             private_key_file=self.private_key_file,
             setup_cache=self.SETUP_CACHE,
+            vars_cache=self.VARS_CACHE,
             basedir=task.play.basedir,
             conditional=task.when,
             callbacks=self.runner_callbacks,
@@ -426,8 +432,6 @@ class PlayBook(object):
             else:
                 facts = result.get('ansible_facts', {})
                 self.SETUP_CACHE[host].update(facts)
-            # extra vars need to always trump - so update  again following the facts
-            self.SETUP_CACHE[host].update(self.extra_vars)
             if task.register:
                 if 'stdout' in result and 'stdout_lines' not in result:
                     result['stdout_lines'] = result['stdout'].splitlines()
@@ -500,6 +504,7 @@ class PlayBook(object):
             remote_port=play.remote_port,
             private_key_file=self.private_key_file,
             setup_cache=self.SETUP_CACHE,
+            vars_cache=self.VARS_CACHE,
             callbacks=self.runner_callbacks,
             sudo=play.sudo,
             sudo_user=play.sudo_user,
