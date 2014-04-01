@@ -52,7 +52,7 @@ options:
       - The type of the value supplied
     required: false
     default: null
-    choices: [string, boolean, select, multiselect, note, text, password, title]
+    choices: [string, boolean, select, multiselect, note, text, password, title, error]
     aliases: []
   value:
     description:
@@ -119,7 +119,7 @@ def main():
         argument_spec = dict(
            name = dict(required=True, aliases=['pkg'], type='str'),
            question = dict(required=False, aliases=['setting', 'selection'], type='str'),
-           vtype = dict(required=False, type='str', choices=['string', 'boolean', 'select',  'multiselect', 'note', 'text', 'password', 'title']),
+           vtype = dict(required=False, type='str', choices=['string', 'boolean', 'select',  'multiselect', 'note', 'text', 'password', 'title', 'error']),
            value= dict(required=False, type='str'),
            unseen = dict(required=False, type='bool'),
         ),
