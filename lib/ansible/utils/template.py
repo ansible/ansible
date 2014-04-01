@@ -217,7 +217,7 @@ def template_from_file(basedir, path, vars, vault_password=None):
     def my_finalize(thing):
         return thing if thing is not None else ''
 
-    environment = jinja2.Environment(loader=loader, trim_blocks=True, extensions=_get_extensions())
+    environment = jinja2.Environment(loader=loader, trim_blocks=True, extensions=_get_extensions(),comment_start_string='{{#', comment_end_string='#}}')
     environment.filters.update(_get_filters())
     environment.globals['lookup'] = my_lookup
     environment.globals['finalize'] = my_finalize
@@ -309,7 +309,7 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
         def my_finalize(thing):
             return thing if thing is not None else ''
 
-        environment = jinja2.Environment(trim_blocks=True, undefined=StrictUndefined, extensions=_get_extensions(), finalize=my_finalize)
+        environment = jinja2.Environment(trim_blocks=True, undefined=StrictUndefined, extensions=_get_extensions(), finalize=my_finalize, comment_start_string='{{#', comment_end_string='#}}')
         environment.filters.update(_get_filters())
         environment.template_class = J2Template
 
