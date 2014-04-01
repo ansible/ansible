@@ -343,7 +343,7 @@ def main():
     maint_window       = module.params.get('maint_window')
     subnet             = module.params.get('subnet')
     backup_window      = module.params.get('backup_window')
-    backup_retention   = module.params.get('module_retention')
+    backup_retention   = module.params.get('backup_retention')
     region             = module.params.get('region')
     zone               = module.params.get('zone')
     aws_secret_key     = module.params.get('aws_secret_key')
