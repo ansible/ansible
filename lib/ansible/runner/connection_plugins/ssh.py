@@ -258,6 +258,7 @@ class Connection(object):
             sudocmd, prompt, success_key = utils.make_su_cmd(su_user, executable, cmd)
             ssh_cmd.append(sudocmd)
         elif not self.runner.sudo or not sudoable:
+            prompt = None
             if executable:
                 ssh_cmd.append(executable + ' -c ' + pipes.quote(cmd))
             else:
@@ -327,7 +328,7 @@ class Connection(object):
                 elif su:
                     stdin.write(self.runner.su_pass + '\n')
 
-        (returncode, stdout, stderr) = self._communicate(p, stdin, in_data, su=su, sudoable=sudoable)
+        (returncode, stdout, stderr) = self._communicate(p, stdin, in_data, su=su, sudoable=sudoable, prompt=prompt)
 
         if C.HOST_KEY_CHECKING and not_in_host_file:
             # lock around the initial SSH connectivity so the user prompt about whether to add 
