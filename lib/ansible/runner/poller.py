@@ -38,13 +38,13 @@ class AsyncPoller(object):
             if res.get('started', False):
                 self.hosts_to_poll.append(host)
                 jid = res.get('ansible_job_id', None)
-                self.runner.setup_cache[host]['ansible_job_id'] = jid
+                self.runner.vars_cache[host]['ansible_job_id'] = jid
                 self.active = True
             else:
                 skipped = skipped & res.get('skipped', False)
                 self.results['contacted'][host] = res
         for (host, res) in results['dark'].iteritems():
-            self.runner.setup_cache[host]['ansible_job_id'] = ''
+            self.runner.vars_cache[host]['ansible_job_id'] = ''
             self.results['dark'][host] = res
 
         if not skipped:
@@ -77,14 +77,14 @@ class AsyncPoller(object):
                 self.results['contacted'][host] = res
                 poll_results['contacted'][host] = res
                 if res.get('failed', False) or res.get('rc', 0) != 0:
-                    self.runner.callbacks.on_async_failed(host, res, self.runner.setup_cache[host]['ansible_job_id'])
+                    self.runner.callbacks.on_async_failed(host, res, self.runner.vars_cache[host]['ansible_job_id'])
                 else:
-                    self.runner.callbacks.on_async_ok(host, res, self.runner.setup_cache[host]['ansible_job_id'])
+                    self.runner.callbacks.on_async_ok(host, res, self.runner.vars_cache[host]['ansible_job_id'])
         for (host, res) in results['dark'].iteritems():
             self.results['dark'][host] = res
             poll_results['dark'][host] = res
             if host in self.hosts_to_poll:
-                self.runner.callbacks.on_async_failed(host, res, self.runner.setup_cache[host].get('ansible_job_id','XX'))
+                self.runner.callbacks.on_async_failed(host, res, self.runner.vars_cache[host].get('ansible_job_id','XX'))
 
         self.hosts_to_poll = hosts
         if len(hosts)==0:
@@ -106,7 +106,7 @@ class AsyncPoller(object):
 
             for (host, res) in poll_results['polled'].iteritems():
                 if res.get('started'):
-                    self.runner.callbacks.on_async_poll(host, res, self.runner.setup_cache[host]['ansible_job_id'], clock)
+                    self.runner.callbacks.on_async_poll(host, res, self.runner.vars_cache[host]['ansible_job_id'], clock)
 
             clock = clock - poll_interval
 
