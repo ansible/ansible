@@ -383,7 +383,7 @@ def parse_yaml(data, path_hint=None):
                 raise errors.AnsibleError(str(ve))
     else:
         # else this is pretty sure to be a YAML document
-        loaded = yaml.safe_load(data)
+        loaded = yaml.load(data,Loader=yaml.CLoader)
 
     return smush_ds(loaded)
 
