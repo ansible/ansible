@@ -129,10 +129,18 @@ class Facts(object):
         if self.facts['system'] == 'Linux':
             self.get_distribution_facts()
         elif self.facts['system'] == 'AIX':
-            rc, out, err = module.run_command("/usr/sbin/bootinfo -p")
-            data = out.split('\n')
-            self.facts['architecture'] = data[0]
-
+            # Attempt to use getconf to figure out architechture
+            # fall back to bootinfo if needed
+            if module.get_bin_path('getconf'):
+                rc, out, err = module.run_command([module.get_bin_path('getconf'),
+                                                   'MACHINE_ARCHITECTURE'])
+                data = out.split('\n')
+                self.facts['architecture'] = data[0]
+            else:
+                rc, out, err = module.run_command([module.get_bin_path('bootinfo'),
+                                                   '-p'])
+                data = out.split('\n')
+                self.facts['architecture'] = data[0]
 
     def get_local_facts(self):
 
@@ -1833,6 +1841,26 @@ class AIXNetwork(GenericBsdIfconfigNetwork, Network):
     """
     platform = 'AIX'
 
+    def get_default_interfaces(self, route_path):
+        netstat_path = module.get_bin_path('netstat')
+
+        rc, out, err = module.run_command([netstat_path, '-nr'])
+
+        interface = dict(v4 = {}, v6 = {})
+
+        lines = out.split('\n')
+        for line in lines:
+            words = line.split()
+            if len(words) > 1 and words[0] == 'default':
+                if '.' in words[1]:
+                    interface['v4']['gateway'] = words[1]
+                    interface['v4']['interface'] = words[5]
+                elif ':' in words[1]:
+                    interface['v6']['gateway'] = words[1]
+                    interface['v6']['interface'] = words[5]
+
+        return interface['v4'], interface['v6']
+
     # AIX 'ifconfig -a' does not have three words in the interface line
     def get_interfaces_info(self, ifconfig_path):
         interfaces = {}
@@ -1870,6 +1898,14 @@ class AIXNetwork(GenericBsdIfconfigNetwork, Network):
                     self.parse_inet6_line(words, current_if, ips)
                 else:
                     self.parse_unknown_line(words, current_if, ips)
+
+        for interface in interfaces:
+            rc, out, err = module.run_command(['/usr/bin/entstat', interface])
+            for line in out.split('\n'):
+                if line.startswith('Device Type'):
+                    interfaces[interface]['type'] = line.split(' ', 2)[2]
+                elif line.startswith('Hardware Address'):
+                    interfaces[interface]['macaddress'] = line.split(' ', 2)[2]
 
         return interfaces, ips
 
