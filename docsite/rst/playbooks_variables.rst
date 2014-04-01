@@ -208,6 +208,28 @@ To get the symmetric difference of 2 lists (items exclusive to each list)::
 
     {{ list1 | symmetric_difference(list2) }}
 
+.. _version_comparison_filters:
+
+Version Comparison Filters
+--------------------------
+
+.. versionadded:: 1.6
+
+To compare a version number, such as checking if the running Ansible version is greater than or equal to
+1.6, you can use the ``version_compare`` filter::
+
+    {{ ansible_version | version_compare(1.6, operator='ge') }}
+
+If ``ansible_version`` is 1.6 or greater, this filter will return True, otherwise it will return False.
+
+The ``version_compare`` filter can also be used to evaluate the ``ansible_distribution_version``::
+
+    {{ ansible_distribution_version | version_compare(12, '>') }}
+
+The ``version_compare`` filter accepts the following operators::
+
+    <, lt, <=, le, >, gt, >=, ge, ==, =, eq, !=, <>, ne
+
 .. _other_useful_filters:
 
 Other Useful Filters
@@ -685,6 +707,8 @@ period, without the rest of the domain.
 Don't worry about any of this unless you think you need it.  You'll know when you do.
 
 Also available, *inventory_dir* is the pathname of the directory holding Ansible's inventory host file, *inventory_file* is the pathname and the filename pointing to the Ansible's inventory host file.
+
+The running version of Ansible is also available via the *ansible_version* variable.
 
 .. _variable_file_seperation_details:
 

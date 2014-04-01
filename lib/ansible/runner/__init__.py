@@ -34,6 +34,7 @@ import subprocess
 
 import ansible.constants as C
 import ansible.inventory
+from ansible import __version__
 from ansible import utils
 from ansible.utils import template
 from ansible.utils import check_conditional
@@ -556,13 +557,14 @@ class Runner(object):
         inject = utils.combine_vars(inject, module_vars)
         inject = utils.combine_vars(inject, self.setup_cache[host])
         inject.setdefault('ansible_ssh_user', self.remote_user)
-        inject['hostvars'] = HostVars(self.setup_cache, self.inventory)
-        inject['group_names'] = host_variables.get('group_names', [])
-        inject['groups']      = self.inventory.groups_list()
-        inject['vars']        = self.module_vars
-        inject['defaults']    = self.default_vars
-        inject['environment'] = self.environment
-        inject['playbook_dir'] = self.basedir
+        inject['hostvars']        = HostVars(self.setup_cache, self.inventory)
+        inject['group_names']     = host_variables.get('group_names', [])
+        inject['groups']          = self.inventory.groups_list()
+        inject['vars']            = self.module_vars
+        inject['defaults']        = self.default_vars
+        inject['environment']     = self.environment
+        inject['playbook_dir']    = self.basedir
+        inject['ansible_version'] = __version__
 
         if self.inventory.basedir() is not None:
             inject['inventory_dir'] = self.inventory.basedir()
