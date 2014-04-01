@@ -105,7 +105,7 @@ def boilerplate_module(modfile, args, interpreter):
         if not interpreter_type.endswith('_interpreter'):
             interpreter_type = '%s_interpreter' % interpreter_type
         inject[interpreter_type] = interpreter_path
-    (module_data, module_style, shebang) = replacer.modify_module(
+    (module_data, module_style, shebang, module_checkable) = replacer.modify_module(
         modfile, 
         complex_args,
         args,

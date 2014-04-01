@@ -395,7 +395,8 @@ class Runner(object):
         (
         module_style,
         shebang,
-        module_data
+        module_data,
+        module_checkable
         ) = self._configure_module(conn, module_name, args, inject, complex_args)
 
         # a remote tmp path may be necessary and not already created
@@ -422,7 +423,7 @@ class Runner(object):
         cmd = ""
         in_data = None
         if module_style != 'new':
-            if 'CHECKMODE=True' in args:
+            if 'CHECKMODE=True' in args and not module_checkable:
                 # if module isn't using AnsibleModuleCommon infrastructure we can't be certain it knows how to
                 # do --check mode, so to be safe we will not run it.
                 return ReturnData(conn=conn, result=dict(skipped=True, msg="cannot yet run check mode against old-style modules"))
@@ -1053,7 +1054,8 @@ class Runner(object):
         (
         module_style,
         module_shebang,
-        module_data
+        module_data,
+        module_checkable
         ) = self._configure_module(conn, module_name, module_args, inject, complex_args)
         module_remote_path = os.path.join(tmp, module_name)
         
@@ -1073,11 +1075,11 @@ class Runner(object):
 
 
         # insert shared code and arguments into the module
-        (module_data, module_style, module_shebang) = module_replacer.modify_module(
+        (module_data, module_style, module_shebang, module_checkable) = module_replacer.modify_module(
             module_path, complex_args, module_args, inject
         )
 
-        return (module_style, module_shebang, module_data)
+        return (module_style, module_shebang, module_data, module_checkable)
 
 
     # *****************************************************
