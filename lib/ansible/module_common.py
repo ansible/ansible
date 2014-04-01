@@ -30,6 +30,7 @@ REPLACER = "#<<INCLUDE_ANSIBLE_MODULE_COMMON>>"
 REPLACER_ARGS = "\"<<INCLUDE_ANSIBLE_MODULE_ARGS>>\""
 REPLACER_LANG = "\"<<INCLUDE_ANSIBLE_MODULE_LANG>>\""
 REPLACER_COMPLEX = "\"<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>\""
+REPLACER_BASH_HELPER = "#INSERT_BASH_HELPER"
 
 class ModuleReplacer(object):
 
@@ -110,7 +111,10 @@ class ModuleReplacer(object):
                 snippet_name = tokens[2].split()[0]
                 snippet_names.append(snippet_name)
                 output.write(self.slurp(os.path.join(self.snippet_path, snippet_name + ".py")))
-
+            elif line.startswith(REPLACER_BASH_HELPER):
+                output.write(line.replace(REPLACER_BASH_HELPER,'set -- "$@" ',1))
+                output.write("\n")
+                output.write(self.slurp(os.path.join(self.snippet_path, 'bash_helper.sh')))
             else:
                 if self.strip_comments and line.startswith("#") or line == '':
                     pass

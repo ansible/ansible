@@ -347,7 +347,7 @@ and guidelines:
 Shorthand Vs JSON
 `````````````````
 
-To make it easier to write modules in bash and in cases where a JSON
+In cases where a JSON
 module might not be available, it is acceptable for a module to return
 key=value output all on one line, like this.   The Ansible parser
 will know what to do::
@@ -356,6 +356,25 @@ will know what to do::
 
 If you're writing a module in Python or Ruby or whatever, though, returning
 JSON is probably the simplest way to go.
+
+.. _bash_modules:
+
+Bash Modules
+````````````
+.. versionadded:: 1.6
+
+Modules written in bash can use a helper to automatically parse arguments, trap stdout/stderr output
+and format appropriate JSON responses. Include the following in your source::
+
+    #!/bin/bash
+    #INCLUDE_BASH_HELPER --args 'somearg1 somearg2'
+    ... do something with $somearg1 and $somearg2
+    ansible_return failed:false msg="Work completed successfully"
+
+See an example bash module in the checkout under `examples/modules/bash_module
+<https://github.com/ansible/examples/modules/bash_module>`_. The helper is also fully documented
+under `lib/ansible/module_utils/bash_helper.sh
+<https://github.com/ansible/lib/ansible/module_utils/bash_helper.sh>`_.
 
 .. _module_documenting:
 

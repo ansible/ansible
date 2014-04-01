@@ -1,0 +1,43 @@
+#!/bin/bash
+#===================================================================================================
+#
+#                       Sample ansible bash module using the bash helper
+#
+#  This module expects a single argument, 'string='.  Because we're idempotent and also support
+#  check mode, we also expect a CHEKCMODE argument which will be filled in by ansible. We use
+#  ansible_return to format all JSON responses back to ansible; 'name:value' returns an unquoted raw
+#  JSON element (required to return booleans and numbers), name=value formats the value as a JSON
+#  string, and 'name' automatically extracts the 'name' value from environment variables and formats
+#  it as a string. More complex responses are possible (see
+#  lib/ansible/module_utils/bash_helper.sh).
+#
+#  The helper traps all errors, so we don't normally need to check the commands' status. We'll use
+#  '||:' to bypass errors when they're ok, but there are other ways to do this (see the helper doc).
+#
+#===================================================================================================
+
+#--- Insert this tag to tell ansible we also support check mode ---
+#SUPPORTS_CHECK_MODE=True
+
+#--- Insert the bash helper and parse the module's arguments (string and CHECKMODE) into vars. ---
+#INSERT_BASH_HELPER --args "string CHECKMODE"
+
+#--- Check the arguments ---
+if [ -z "$string" ]; then
+    ansible_return failed:true msg="The string= argument may not be empty"
+fi
+
+#--- Get the current string. Use '||:' to continue the script even if the file does not exist ---
+old_string="`cat /etc/public_string ||:`"
+#--- Does the string needs to be changed (we're idempotent)? ---
+if [ "$old_string" != "$string" ]; then
+        #--- If in check mode, don't do anything, just report the change ---
+        if [ "$CHECKMODE" == 'True' ]; then
+            ansible_return changed:true msg="Public string needs to be changed" old_string string
+        fi
+        #--- Otherwise make the change and return ---
+        echo "$string" > /etc/public_string
+        ansible_return changed:true msg="Public string changed" old_string string
+fi
+#--- Otherwise, everything's already good ---
+ansible_return changed:false msg="Public string already OK" string
