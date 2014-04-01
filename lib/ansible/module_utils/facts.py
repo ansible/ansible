@@ -1257,8 +1257,9 @@ class HPUX(Hardware):
                 #adb output. Unfortunatley /dev/kmem doesn't have world-read, so this only works as root.
                 if os.access("/dev/kmem", os.R_OK):
                     rc, out, err = module.run_command("echo 'phys_mem_pages/D' | adb -k /stand/vmunix /dev/kmem | tail -1 | awk '{print $2}'", use_unsafe_shell=True)
-                    data = out
-                    self.facts['memtotal_mb'] = int(data) / 256
+                    if not err:
+                      data = out
+                      self.facts['memtotal_mb'] = int(data) / 256
         else:
             rc, out, err = module.run_command("/usr/contrib/bin/machinfo | grep Memory", use_unsafe_shell=True)
             data = re.search('Memory[\ :=]*([0-9]*).*MB.*',out).groups()[0].strip()
