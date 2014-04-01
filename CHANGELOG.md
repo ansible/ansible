@@ -1,6 +1,11 @@
 Ansible Changes By Release
 ==========================
 
+## 1.5.4 "Love Walks In" - April 1, 2014
+
+- Security fix for safe_eval, which further hardens the checking of the evaluation function.
+- Changing order of variable precendence for system facts, to ensure that inventory variables take precedence over any facts that may be set on a host.
+
 ## 1.5.3 "Love Walks In" - March 13, 2014
 
 - Fix validate_certs and run_command errors from previous release
