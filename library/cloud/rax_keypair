@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -96,7 +96,7 @@ notes:
 
 EXAMPLES = '''
 - name: Create a keypair
-  hosts: local
+  hosts: localhost
   gather_facts: False
   tasks:
     - name: keypair request
@@ -116,17 +116,28 @@ EXAMPLES = '''
         module: copy
         content: "{{ keypair.keypair.private_key }}"
         dest: "{{ inventory_dir }}/{{ keypair.keypair.name }}"
-'''
 
-import sys
+- name: Create a keypair
+  hosts: localhost
+  gather_facts: False
+  tasks:
+    - name: keypair request
+      local_action:
+        module: rax_keypair
+        credentials: ~/.raxpub
+        name: my_keypair
+        public_key: "{{ lookup('file', 'authorized_keys/id_rsa.pub') }}"
+        region: DFW
+      register: keypair
+'''
 
 from types import NoneType
 
 try:
     import pyrax
+    HAS_PYRAX = True
 except ImportError:
-    print("failed=True msg='pyrax required for this module'")
-    sys.exit(1)
+    HAS_PYRAX = False
 
 NON_CALLABLES = (basestring, bool, dict, int, list, NoneType)
 
@@ -144,6 +155,12 @@ def rax_keypair(module, name, public_key, state):
     changed = False
 
     cs = pyrax.cloudservers
+
+    if cs is None:
+        module.fail_json(msg='Failed to instantiate client. This '
+                             'typically indicates an invalid region or an '
+                             'incorrectly capitalized region name.')
+
     keypair = {}
 
     if state == 'present':
@@ -188,6 +205,9 @@ def main():
         argument_spec=argument_spec,
         required_together=rax_required_together(),
     )
+
+    if not HAS_PYRAX:
+        module.fail_json(msg='pyrax is required for this module')
 
     name = module.params.get('name')
     public_key = module.params.get('public_key')
