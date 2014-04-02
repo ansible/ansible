@@ -66,7 +66,9 @@ https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authentic
 Running from a Python Virtual Environment (Optional)
 ++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-There are special considerations when Ansible is installed to a Python virtualenv, rather than the default of installing at a global scope. Ansible assumes, unless otherwise instructed, that the python binary will live at /usr/bin/python.  This is done so via the interpret line in modules, however when instructed using ansible_python_interpreter, Ansible will use this specified path instead to find Python.   **This is a common cause of module failures**, because the user assumes that modules running on 'localhost', or perhaps running via 'local_action' are using the virtualenv Python interpreter.  By setting this line in the inventory, the modules will execute in the virtualenv interpreter and have available the virtualenv packages, specifically pyrax. If using virtualenv, you may wish to modify your localhost inventory definition to find this location as follows:
+Most users will not be using virtualenv, but some users, particularly Python developers sometimes like to.
+
+There are special considerations when Ansible is installed to a Python virtualenv, rather than the default of installing at a global scope. Ansible assumes, unless otherwise instructed, that the python binary will live at /usr/bin/python.  This is done via the interpreter line in modules, however when instructed by setting the inventory variable 'ansible_python_interpreter', Ansible will use this specified path instead to find Python.  This can be a cause of confusion as one may assume that modules running on 'localhost', or perhaps running via 'local_action', are using the virtualenv Python interpreter.  By setting this line in the inventory, the modules will execute in the virtualenv interpreter and have available the virtualenv packages, specifically pyrax. If using virtualenv, you may wish to modify your localhost inventory definition to find this location as follows:
 
 .. code-block:: ini
 
