@@ -2,6 +2,7 @@ Ansible Test System
 ===================
 
 Folders
+=======
 
 unit
 ----
@@ -10,6 +11,8 @@ Unit tests that test small pieces of code not suited for the integration test la
 mock interfaces rather than producing side effects.
 
 Playbook engine code is better suited for integration tests.
+
+Requirements: sudo pip install paramiko PyYAML jinja2 httplib2 passlib
 
 integration
 -----------
