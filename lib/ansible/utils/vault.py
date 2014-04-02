@@ -123,7 +123,7 @@ class VaultLib(object):
 
         # try to unencrypt data
         data = this_cipher.decrypt(data, self.password)
-        if not data:
+        if data is None:
             raise errors.AnsibleError("Decryption failed")
 
         return data            
@@ -210,7 +210,7 @@ class VaultEditor(object):
         this_vault = VaultLib(self.password)
         if this_vault.is_encrypted(tmpdata):
             dec_data = this_vault.decrypt(tmpdata)
-            if not dec_data:
+            if dec_data is None:
                 raise errors.AnsibleError("Decryption failed")
             else:
                 self.write_data(dec_data, self.filename)
