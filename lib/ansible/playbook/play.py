@@ -585,9 +585,9 @@ class Play(object):
                     include_filename = utils.path_dwim(dirname, include_file)
                     data = utils.parse_yaml_from_file(include_filename, vault_password=self.vault_password)
                     if 'role_name' in x and data is not None:
-                        for x in data:
-                            if 'include' in x:
-                                x['role_name'] = new_role
+                        for y in data:
+                            if isinstance(y, dict) and 'include' in y:
+                                y['role_name'] = new_role
                     loaded = self._load_tasks(data, mv, default_vars, included_sudo_vars, list(included_additional_conditions), original_file=include_filename, role_name=new_role)
                     results += loaded
             elif type(x) == dict:
