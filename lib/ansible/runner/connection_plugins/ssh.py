@@ -212,7 +212,7 @@ class Connection(object):
             except IOError, e:
                 hfiles_not_found += 1
                 continue
-            else
+            else:
                 data = host_fh.read()
                 host_fh.close()
                 
