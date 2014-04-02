@@ -44,7 +44,7 @@ options:
   name:
     description:
       - Description of a crontab entry.
-    required: false
+    required: true
     default: null
   user:
     description:
