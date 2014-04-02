@@ -34,6 +34,8 @@ notes:
     - A number of questions have to be answered (depending on the package).
       Use 'debconf-show <package>' on any Debian or derivative with the package
       installed to see questions/settings available.
+    - One some distros passwords will also be reasserted. This is due to
+      debconf-get-selections masking passwords.
 options:
   name:
     description:
