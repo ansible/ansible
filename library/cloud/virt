@@ -108,7 +108,7 @@ VIRT_STATE_NAME_MAP = {
    6 : "crashed"
 }
 
-class VMNotFound(Exception): 
+class VMNotFound(Exception):
     pass
 
 class LibvirtConnection(object):
@@ -196,6 +196,10 @@ class LibvirtConnection(object):
 
     def get_type(self):
         return self.conn.getType()
+
+    def get_xml(self, vmid):
+        vm = self.conn.lookupByName(vmid)
+        return vm.XMLDesc(0)
 
     def get_maxVcpus(self, vmid):
         vm = self.conn.lookupByName(vmid)
@@ -361,14 +365,8 @@ class Virt(object):
         Return an xml describing vm config returned by a libvirt call
         """
 
-        conn = libvirt.openReadOnly(None)
-        if not conn:
-            return (-1,'Failed to open connection to the hypervisor')
-        try:
-            domV = conn.lookupByName(vmid)
-        except:
-            return (-1,'Failed to find the main domain')
-        return domV.XMLDesc(0)
+        self.__get_conn()
+        return self.conn.get_xml(vmid)
 
     def get_maxVcpus(self, vmid):
         """
