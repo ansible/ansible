@@ -6,3 +6,5 @@ include packaging/distutils/setup.py
 recursive-include docs *
 recursive-include library *
 include Makefile
+include VERSION
+include MANIFEST.in
