@@ -59,6 +59,7 @@ options:
         description:
             - url to retrieve key from.
     keyserver:
+        version_added: "1.6"
         required: false
         default: none
         description:
