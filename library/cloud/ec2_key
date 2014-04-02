@@ -70,6 +70,20 @@ options:
     default: null
     aliases: []
     version_added: "1.6"
+  wait:
+    description:
+      - Wait for the specified action to complete before returning.
+    required: false
+    default: false
+    aliases: []
+    version_added: "1.6"
+  wait_timeout:
+    description:
+      - How long before wait gives up, in seconds
+    required: false
+    default: 300
+    aliases: []
+    version_added: "1.6"
 
 requirements: [ "boto" ]
 author: Vincent Viallet
@@ -124,6 +138,8 @@ def main():
             name=dict(required=True),
             key_material=dict(required=False),
             state = dict(default='present', choices=['present', 'absent']),
+            wait = dict(type='bool', default=False),
+            wait_timeout = dict(default=300),
         )
     )
     module = AnsibleModule(
@@ -134,6 +150,8 @@ def main():
     name = module.params['name']
     state = module.params.get('state')
     key_material = module.params.get('key_material')
+    wait = module.params.get('wait')
+    wait_timeout = int(module.params.get('wait_timeout'))
 
     changed = False
 
@@ -148,6 +166,16 @@ def main():
             '''found a match, delete it'''
             try:
                 key.delete()
+                if wait:
+                    start = time.time()
+                    action_complete = False
+                    while (time.time() - start) < wait_timeout:
+                        if not ec2.get_key_pair(name):
+                            action_complete = True
+                            break
+                        time.sleep(1)
+                    if not action_complete:
+                        module.fail_json(msg="timed out while waiting for the key to be removed")
             except Exception, e:
                 module.fail_json(msg="Unable to delete key pair '%s' - %s" % (key, e))
             else:
@@ -178,6 +206,18 @@ def main():
                     retrieve the private key
                     '''
                     key = ec2.create_key_pair(name)
+
+                if wait:
+                    start = time.time()
+                    action_complete = False
+                    while (time.time() - start) < wait_timeout:
+                        if ec2.get_key_pair(name):
+                            action_complete = True
+                            break
+                        time.sleep(1)
+                    if not action_complete:
+                        module.fail_json(msg="timed out while waiting for the key to be created")
+
             changed = True
 
     if key:
