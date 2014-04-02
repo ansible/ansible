@@ -48,10 +48,11 @@ options:
     version_added: "1.2"
   manage_dir:
     description:
-      - Whether this module should manage (create it, change owner and
-        permissions) the directory of the authorized_keys file. Make sure to
+      - Whether this module should manage the directory of the authorized key file.  If
+        set, the module will create the directory, as well as set the owner and permissions
+        of an existing directory. Be sure to
         set C(manage_dir=no) if you are using an alternate directory for
-        authorized_keys set with C(path), since you could lock yourself out of
+        authorized_keys, as set with C(path), since you could lock yourself out of
         SSH access. See the example below.
     required: false
     choices: [ "yes", "no" ]
