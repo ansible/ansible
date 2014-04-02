@@ -107,7 +107,7 @@ def set_selection(module, pkg, question, vtype, value, unseen):
     data = ' '.join([ question, vtype, value ])
 
     setsel = module.get_bin_path('debconf-set-selections', True)
-    cmd = ["echo '%s %s' |" % (pipes.quote(pkg), pipes.quote(data)), setsel]
+    cmd = ["echo %s %s |" % (pipes.quote(pkg), pipes.quote(data)), setsel]
     if unseen:
         cmd.append('-u')
 
