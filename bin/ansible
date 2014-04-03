@@ -61,6 +61,8 @@ class Cli(object):
         parser.add_option('-m', '--module-name', dest='module_name',
             help="module name to execute (default=%s)" % C.DEFAULT_MODULE_NAME,
             default=C.DEFAULT_MODULE_NAME)
+        parser.add_option('--list-groups', dest='listgroups', action='store_true',
+            help='outputs a list of groups; does not execute anything else')
 
         options, args = parser.parse_args()
         self.callbacks.options = options
@@ -147,6 +149,11 @@ class Cli(object):
         if options.listhosts:
             for host in hosts:
                 callbacks.display('    %s' % host)
+            sys.exit(0)
+
+        if options.listgroups:
+            for group in inventory_manager.list_groups():
+                callbacks.display('    %s' % group)
             sys.exit(0)
 
         if ((options.module_name == 'command' or options.module_name == 'shell')
