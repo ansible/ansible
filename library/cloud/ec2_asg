@@ -157,11 +157,18 @@ def create_autoscaling_group(connection, module):
     else:
         as_group = as_groups[0]
         changed = False
-        for attr in ('launch_config_name', 'max_size', 'min_size', 'desired_capacity',
+        for attr in ('launch_config_name', 'max_size', 'min_size',
                      'vpc_zone_identifier'):
-            if getattr(as_group, attr) != module.params.get(attr):
+            if getattr(as_group, attr) != module.params[attr]:
                 changed = True
                 setattr(as_group, attr, module.params.get(attr))
+        # handle desired_capacity separately, so that we can leave the option
+        # unset, and thus do not disrupt the auto scaling group
+        desired_capacity = module.params.get('desired_capacity')
+        if desired_capacity is not None:
+            if as_group.desired_capacity != desired_capacity:
+                changed = True
+                as_group.desired_capacity = desired_capacity
         # handle availability zones separately as the orders can be different
         if sorted(as_group.availability_zones) != sorted(availability_zones):
             changed = True
