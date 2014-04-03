@@ -175,10 +175,16 @@ def create_metric_alarm(connection, module):
         alarm = alarms[0]
         changed = False
 
-        for attr in ('comparison','metric','namespace','statistic','threshold','period','evaluation_periods','unit','description'):
+        for attr in ('comparison','metric','namespace','statistic','threshold','period','evaluation_periods','unit'):
             if getattr(alarm, attr) != module.params.get(attr):
                 changed = True
                 setattr(alarm, attr, module.params.get(attr))
+        # If not set, description would be empty string instead of None
+        description = module.params.get('description') or ''
+        if alarm.description != description:
+            changed = True
+            alarm.description = description
+
         #this is to deal with a current bug where you cannot assign '<=>' to the comparator when modifying an existing alarm
         comparison = alarm.comparison
         comparisons = {'<=' : 'LessThanOrEqualToThreshold', '<' : 'LessThanThreshold', '>=' : 'GreaterThanOrEqualToThreshold', '>' : 'GreaterThanThreshold'}
