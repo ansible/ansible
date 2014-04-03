@@ -151,6 +151,39 @@ def symmetric_difference(a, b):
 def union(a, b):
     return set(a).union(b)
 
+def to_KiB(a):
+    # 1024^1
+    return int(a)/1024.0
+
+def to_KB(a):
+    # 1000^1
+    return int(a)/1000.0
+
+def to_MiB(a):
+    # 1024^2
+    return int(a)/1048576.0
+
+def to_MB(a):
+    # 1000^2
+    return int(a)/1000000.0
+
+def to_GiB(a):
+    # 1024^3
+    return int(a)/1073741824.0
+
+def to_GB(a):
+    # 1000^3
+    return int(a)/1000000000.0
+
+def to_TiB(a):
+    # 1024^4
+    return int(a)/1099511627776.0
+
+def to_TB(a):
+    # 1000^4
+    return int(a)/1000000000000.0
+
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -213,5 +246,15 @@ class FilterModule(object):
             'difference': difference,
             'symmetric_difference': symmetric_difference,
             'union': union,
+
+            # size to human readable
+            'to_KiB': to_KiB,
+            'to_KB': to_KB,
+            'to_MiB': to_MiB,
+            'to_MB': to_MB,
+            'to_GiB': to_GiB,
+            'to_GB': to_GB,
+            'to_TiB': to_TiB,
+            'to_TB': to_TB,
         }
 
