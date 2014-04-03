@@ -149,7 +149,7 @@ def download_key(module, url):
         rsp, info = fetch_url(module, url)
         return rsp.read()
     except Exception:
-        module.fail_json(msg="error getting key id from url", traceback=format_exc())
+        module.fail_json(msg="error getting key id from url: %s" % url, traceback=format_exc())
 
 def import_key(module, keyserver, key_id):
     cmd = "apt-key adv --keyserver %s --recv %s" % (keyserver, key_id)
