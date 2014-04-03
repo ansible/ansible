@@ -63,6 +63,8 @@ Other notable changes:
 * synchronize module sets relative dirs based on inventory or role path
 * misc bugfixes and other parameters
 * the ec2_key module now has wait/wait_timeout parameters
+* added version_compare filter (see docs)
+* added ability for module documentation YAML to utilize shared module snippets for common args
 
 ## 1.5.3 "Love Walks In" - March 13, 2014
 
