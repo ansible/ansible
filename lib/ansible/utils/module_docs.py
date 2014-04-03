@@ -63,17 +63,26 @@ def get_docstring(filename, verbose=False):
                     else:
                         fragment_name, fragment_var = fragment_slug, 'DOCUMENTATION'
 
-                    fragment_class = utils.plugins.fragment_loader.get(fragment_name)
-                    if fragment_class:
+
+                    if fragment_slug != 'doesnotexist':
+                        fragment_class = utils.plugins.fragment_loader.get(fragment_name)
+                        assert fragment_class is not None
+
                         fragment_yaml = getattr(fragment_class, fragment_var, '{}')
                         fragment = yaml.safe_load(fragment_yaml)
+
                         if fragment.has_key('notes'):
                             notes = fragment.pop('notes')
                             if notes:
                                 if not doc.has_key('notes'):
                                     doc['notes'] = []
                                 doc['notes'].extend(notes)
+
+                        if 'options' not in fragment.keys():
+                            raise Exception("missing options in fragment, possibly misformatted?")
+
                         for key, value in fragment.items():
+
                             if not doc.has_key(key):
                                 doc[key] = value
                             else:
