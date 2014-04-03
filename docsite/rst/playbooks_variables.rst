@@ -208,6 +208,32 @@ To get the symmetric difference of 2 lists (items exclusive to each list)::
 
     {{ list1 | symmetric_difference(list2) }}
 
+.. _version_comparison_filters:
+
+Version Comparison Filters
+--------------------------
+
+.. versionadded:: 1.6
+
+To compare a version number, such as checking if the ``ansible_distribution_version``
+version is greater than or equal to '12.04', you can use the ``version_compare`` filter::
+
+The ``version_compare`` filter can also be used to evaluate the ``ansible_distribution_version``::
+
+    {{ ansible_distribution_version | version_compare('12.04', '>=') }}
+
+If ``ansible_distribution_version`` is greater than or equal to 12, this filter will return True, otherwise
+it will return False.
+
+The ``version_compare`` filter accepts the following operators::
+
+    <, lt, <=, le, >, gt, >=, ge, ==, =, eq, !=, <>, ne
+
+This filter also accepts a 3rd parameter, ``strict`` which defines if strict version parsing should
+be used.  The default is ``False``, and if set as ``True`` will use more strict version parsing::
+
+    {{ sample_version_var | version_compare('1.0', operator='lt', strict=True) }}
+
 .. _other_useful_filters:
 
 Other Useful Filters
