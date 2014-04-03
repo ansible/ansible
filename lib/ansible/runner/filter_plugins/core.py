@@ -23,6 +23,7 @@ import types
 import pipes
 import glob
 import re
+import libxml2
 from ansible import errors
 from ansible.utils import md5s
 
@@ -150,6 +151,16 @@ def symmetric_difference(a, b):
 
 def union(a, b):
     return set(a).union(b)
+    
+def xpath(value, path, default=""):
+    doc = libxml2.recoverDoc(value)
+    try:
+        res = doc.xpathEval(path)
+        if len(res) == 0:
+            return default
+        return res[0].getContent()    
+    finally:
+        doc.freeDoc()
 
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
@@ -206,6 +217,9 @@ class FilterModule(object):
             'search': search,
             'regex': regex,
             'regex_replace': regex_replace,
+
+            # xpath
+            'xpath': xpath,
 
             # list
             'unique' : unique,

@@ -115,6 +115,23 @@ class TestFilters(unittest.TestCase):
         a = ansible.runner.filter_plugins.core.search(' ANSIBLE ', 'ansible',
                                                       True)
         assert a == True
+        
+    def test_xpath_should_default_to_empty_string_if_path_not_found_and_default_not_supplied(self):
+        well_formed_xml = '<root></root>'
+        assert ansible.runner.filter_plugins.core.xpath(well_formed_xml, '//child') == ""
+
+    def test_xpath_should_default_to_default_if_path_not_found_and_default_supplied(self):
+        well_formed_xml = '<root></root>'
+        assert ansible.runner.filter_plugins.core.xpath(well_formed_xml, '//child', "default value") == "default value"
+
+    def test_should_find_xpath_in_well_formed_xml(self):
+        well_formed_xml = '<root><child>first child value</child><child>second child value</child><other>other value</other></root>'
+        assert ansible.runner.filter_plugins.core.xpath(well_formed_xml, '//child') == "first child value"
+        assert ansible.runner.filter_plugins.core.xpath(well_formed_xml, '//child[2]') == "second child value"
+
+    def test_should_find_xpath_in_poorly_formed_xml(self):
+        poorly_formed_xml = '<root><bad><child>correct value</child></root>'
+        assert ansible.runner.filter_plugins.core.xpath(poorly_formed_xml, '//child') == "correct value"
 
     def test_regex_replace_case_sensitive(self):
         a = ansible.runner.filter_plugins.core.regex_replace('ansible', '^a.*i(.*)$',

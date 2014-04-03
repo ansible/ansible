@@ -207,6 +207,19 @@ To get the difference of 2 lists (items in 1 that don't exist in 2)::
 To get the symmetric difference of 2 lists (items exclusive to each list)::
 
     {{ list1 | symmetric_difference(list2) }}
+    
+.. _xpath_filter:
+
+Xpath Filter
+-----------------------
+
+To find the value for an element from an xml document using xpath:: 
+
+    {{ xml|xpath(path_to_child) }}
+    
+If the path is not found, the result is empty by default. A default can be supplied::
+
+    {{ xml|xpath(path_to_child, default_value)}}    
 
 .. _other_useful_filters:
 
