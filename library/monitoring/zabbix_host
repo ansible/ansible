@@ -22,14 +22,15 @@
 DOCUMENTATION = '''
 ---
 module: zabbix_host
-short_description: Creates a new host or updates and existing host in Zabbix.
+short_description: Zabbix host creates/updates/deletes.
 description:
    - When the host does not exists, a new host will be created, added to any host groups, and link in any templates.
    - When the host already exists, the host group membership will be updated, along with the template links and interfaces.
+   - Delete a host from Zabbix if the host exists.
 version_added: "1.6"
-author: Tony Minfei Ding
+author: Tony Minfei Ding, Harrison Gu
 requirements:
-    - zabbix-api python module
+    - zabbix-api python module from https://github.com/gnetsman/zabbix_api (the 1.0 version in pip is too old unfortunately)
 options:
     server_url:
         description:
@@ -48,7 +49,7 @@ options:
             - Zabbix user password.
         required: true
         default: null
-    host_names:
+    host_name:
         description:
             - Technical name of the host.
             - If the host has already been added, the host name won't be updated.
@@ -56,7 +57,7 @@ options:
     host_groups:
         description:
             - List of host groups to add the host to.
-        required: true
+        required: false
     link_templates:
         description:
             - List of templates to be linked to the host.
@@ -65,13 +66,21 @@ options:
     status:
         description:
             - Status and function of the host.
-            - Possible values are: 0 - (default) monitored host; 1 - unmonitored host.
+            - Possible values are: enabled and disabled
         required: false
-        default: "0"
+        default: "enabled"
+    state:
+        description:
+            - create/update or delete host.
+            - Possible values are: present and absent. If the host already exists, and the state is "present", just to update the host.
+        required: false
+        default: "present"
     interfaces:
         description:
             - List of interfaces to be created for the host (see example).
-        required: true
+            - Available values are: dns, ip, main, port, type and useip.
+            - Please review at https://www.zabbix.com/documentation/2.0/manual/appendix/api/hostinterface/definitions#host_interface to get more details.
+        required: false
 '''
 
 EXAMPLES = '''
@@ -88,7 +97,8 @@ EXAMPLES = '''
     link_templates:
       - Example template1
       - Example template2
-    status: 1
+    status: enabled
+    state: present
     interfaces:
       - type: 1
         main: 1
@@ -104,10 +114,11 @@ EXAMPLES = '''
         port: 12345
 '''
 
-
 from ansible.module_utils.basic import *
+
 try:
     from zabbix_api import ZabbixAPI
+
     HAS_ZABBIX_API = True
 except ImportError:
     HAS_ZABBIX_API = False
@@ -146,40 +157,53 @@ class Host(object):
 
     def add_host(self, host_name, group_ids, status, interfaces):
         try:
+            if self._module.check_mode:
+                self._module.exit_json(changed=True)
             self._zapi.host.create({'host': host_name, 'interfaces': interfaces, 'groups': group_ids, 'status': status})
         except Exception, e:
             self._module.fail_json(msg="Failed to create host %s: %s" % (host_name, e))
 
     def update_host(self, host_name, group_ids, status, host_id, interfaces, exist_interface_list):
         try:
+            if self._module.check_mode:
+                self._module.exit_json(changed=True)
             self._zapi.host.update({'hostid': host_id, 'groups': group_ids, 'status': status})
             interface_list_copy = exist_interface_list
-            for interface in interfaces:
-                flag = False
-                interface_str = interface
-                for exist_interface in exist_interface_list:
-                    interface_type = interface['type']
-                    exist_interface_type = int(exist_interface['type'])
-                    if interface_type == exist_interface_type:
-                        # update
-                        interface_str['interfaceid'] = exist_interface['interfaceid']
-                        self._zapi.hostinterface.update(interface_str)
-                        flag = True
-                        interface_list_copy.remove(exist_interface)
-                        break
-                if not flag:
-                    # add
-                    interface_str['hostid'] = host_id
-                    self._zapi.hostinterface.create(interface_str)
-            # remove
-            remove_interface_ids = []
-            for remove_interface in interface_list_copy:
-                interface_id = remove_interface['interfaceid']
-                remove_interface_ids.append(interface_id)
-            if len(remove_interface_ids) > 0:
-                self._zapi.hostinterface.delete(remove_interface_ids)
+            if interfaces:
+                for interface in interfaces:
+                    flag = False
+                    interface_str = interface
+                    for exist_interface in exist_interface_list:
+                        interface_type = interface['type']
+                        exist_interface_type = int(exist_interface['type'])
+                        if interface_type == exist_interface_type:
+                            # update
+                            interface_str['interfaceid'] = exist_interface['interfaceid']
+                            self._zapi.hostinterface.update(interface_str)
+                            flag = True
+                            interface_list_copy.remove(exist_interface)
+                            break
+                    if not flag:
+                        # add
+                        interface_str['hostid'] = host_id
+                        self._zapi.hostinterface.create(interface_str)
+                        # remove
+                remove_interface_ids = []
+                for remove_interface in interface_list_copy:
+                    interface_id = remove_interface['interfaceid']
+                    remove_interface_ids.append(interface_id)
+                if len(remove_interface_ids) > 0:
+                    self._zapi.hostinterface.delete(remove_interface_ids)
         except Exception, e:
             self._module.fail_json(msg="Failed to update host %s: %s" % (host_name, e))
+
+    def delete_host(self, host_id, host_name):
+        try:
+            if self._module.check_mode:
+                self._module.exit_json(changed=True)
+            self._zapi.host.delete({'hostid': host_id})
+        except Exception, e:
+            self._module.fail_json(msg="Failed to delete host %s: %s" % (host_name, e))
 
     # link or clear template of the host
     def link_or_clear_template(self, host_name, template_ids_list):
@@ -195,6 +219,8 @@ class Host(object):
         templates_clear_list = list(templates_clear)
         request_str = {'hostid': host_id, 'templates': template_ids_list, 'templates_clear': templates_clear_list}
         try:
+            if self._module.check_mode:
+                self._module.exit_json(changed=True)
             self._zapi.host.update(request_str)
         except Exception, e:
             self._module.fail_json(msg="Failed to link template to host: %s" % e)
@@ -208,6 +234,7 @@ class Host(object):
             host_id = host_list[0]['hostid']
             return host_id
 
+    # get group ids by names        
     def get_group_ids(self, group_names):
         group_ids = []
         if self.check_host_group_exist(group_names):
@@ -233,16 +260,17 @@ def main():
             login_user=dict(required=True),
             login_password=dict(required=True),
             host_name=dict(required=True),
-            host_groups=dict(required=True),
+            host_groups=dict(required=False),
             link_templates=dict(required=False),
-            status=dict(required=False, default="0"),
-            interfaces=dict()
+            status=dict(default="enabled"),
+            state=dict(default="present"),
+            interfaces=dict(required=False)
         ),
-        supports_check_mode=True,
+        supports_check_mode=True
     )
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg="Missing requried zabbix-api module (check docs or install with: pip install zabbix-api)")
+        module.fail_json(msg="Missing requried zabbix-api module, see this module's requirements for which version to install")
 
     server_url = module.params['server_url']
     login_user = module.params['login_user']
@@ -251,11 +279,11 @@ def main():
     host_groups = module.params['host_groups']
     link_templates = module.params['link_templates']
     status = module.params['status']
+    state = module.params['state']
     interfaces = module.params['interfaces']
-    ip = ""
-    for interface in interfaces:
-        if interface['type'] == 1:
-            ip = interface['ip']
+
+    # convert enabled to 0; disabled to 1
+    status = 1 if status == "disabled" else 0
 
     zbx = None
     # login to zabbix
@@ -266,30 +294,62 @@ def main():
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 
     host = Host(module, zbx)
-    template_ids = host.get_template_ids(link_templates)
-    group_ids = host.get_group_ids(host_groups)
+
+    template_ids = []
+    if link_templates:
+        template_ids = host.get_template_ids(link_templates)
+
+    group_ids = []
+    if host_groups:
+        group_ids = host.get_group_ids(host_groups)
+
+    ip = ""
+    if interfaces:
+        for interface in interfaces:
+            if interface['type'] == 1:
+                ip = interface['ip']
+
     # check if host exist
     isHostExist = host.is_host_exist(host_name)
 
     if isHostExist:
         # get host id by host name
         host_id = host.get_host_id(host_name)
-        # get exist interface
-        exist_interface_list = host._zapi.hostinterface.get({'output': 'extend', 'filter': {'hostid': host_id}})
-        # update host
-        if len(exist_interface_list) > len(interfaces):
-            host.link_or_clear_template(host_name, template_ids)
-            host.update_host(host_name, group_ids, status, host_id, interfaces, exist_interface_list)
-        else:
-            host.update_host(host_name, group_ids, status, host_id, interfaces, exist_interface_list)
-            host.link_or_clear_template(host_name, template_ids)
-        module.exit_json(changed=True, result="Successfully updated host %s (%s) and linked with template '%s'" % (host_name, ip, link_templates))
+
+        if state == "absent":
+            # remove host
+            host.delete_host(host_id, host_name)
+            module.exit_json(changed=True, result="Successfully deleted host %s" % host_name)
+        else:  
+            if not group_ids:
+                module.fail_json(msg="Need to specify at least one of groups for updating host '%s'." % host_name)
+
+            # get exist interface
+            exist_interface_list = host._zapi.hostinterface.get({'output': 'extend', 'filter': {'hostid': host_id}})
+
+            # update host
+            interfaces_len = len(interfaces) if interfaces else 0
+            if len(exist_interface_list) > interfaces_len:
+                host.link_or_clear_template(host_name, template_ids)
+                host.update_host(host_name, group_ids, status, host_id, interfaces, exist_interface_list)
+            else:
+                host.update_host(host_name, group_ids, status, host_id, interfaces, exist_interface_list)
+                host.link_or_clear_template(host_name, template_ids)
+            module.exit_json(changed=True, result="Successfully updated host %s (%s) and linked with template '%s'" % (
+                host_name, ip, link_templates))
     else:
+        if not group_ids:
+            module.fail_json(msg="Need to specify at least one of groups for creating host '%s'." % host_name)
+
+        if not interfaces or (interfaces and len(interfaces) == 0):
+            module.fail_json(msg="Need to specify at least one of interfaces for creating host '%s'." % host_name)
+
         # create host
         host.add_host(host_name, group_ids, status, interfaces)
         host.link_or_clear_template(host_name, template_ids)
-        module.exit_json(changed=True, result="Successfully added host %s (%s) and linked with template '%s'" % (host_name, ip, link_templates))
+        module.exit_json(changed=True, result="Successfully added host %s (%s) and linked with template '%s'" % (
+            host_name, ip, link_templates))
 
-# include magic from lib/ansible/module_common.py
-# <<INCLUDE_ANSIBLE_MODULE_COMMON>>
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
 main()
+

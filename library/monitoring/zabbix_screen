@@ -24,13 +24,13 @@ DOCUMENTATION = '''
 module: zabbix_screen
 short_description: Creates a new screen or updates existing screen in Zabbix.
 description:
-   - When the screen does not exists, a new screen will be created, added to any screen items.
-   - When the screen already exists and graphs are changed, the screen items will be updated.
-   - When the graph ids not be changed, the screen items won't be updated if only change the graph_width and graph_height.
+   - When the screen does not exists, a new screen will be created, along with the screen items.
+   - When the screen already exists and the graphs have changed, the screen items will be updated.
+   - When the graph IDs have not changed, the screen items won't be updated unless the graph_width and graph_height have changed.
 version_added: "1.6"
-author: Tony Minfei Ding
+author: Tony Minfei Ding, Harrison Gu
 requirements:
-    - zabbix-api python module
+    - zabbix-api python module from https://github.com/gnetsman/zabbix_api (the 1.0 version in pip is too old unfortunately)
 options:
     server_url:
         description:
@@ -247,7 +247,7 @@ def main():
     )
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg="Missing requried zabbix-api module (check docs or install with: pip install zabbix-api)")
+        module.fail_json(msg="Missing requried zabbix-api module, see this module's requirements for which version to install")
 
     server_url = module.params['server_url']
     login_user = module.params['login_user']
@@ -307,3 +307,4 @@ def main():
 # include magic from lib/ansible/module_common.py
 # <<INCLUDE_ANSIBLE_MODULE_COMMON>>
 main()
+
