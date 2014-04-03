@@ -39,10 +39,16 @@ description:
 options:
   free_form:
     description:
-      - the command module takes a free form command to run
-    required: true
+      - the command module (optionally) takes a free form command to run
+    required: false
     default: null
     aliases: []
+  args:
+    description:
+      - a command to run, defined as a string or a list of strings.
+    required: false
+    default: null
+    aliases: [name]
   creates:
     description:
       - a filename, when it already exists, this step will B(not) be run.
@@ -72,6 +78,8 @@ notes:
        M(command) module is much more secure as it's not affected by the user's
        environment.
     -  " C(creates), C(removes), and C(chdir) can be specified after the command. For instance, if you only want to run a command if a certain file does not exist, use this."
+    -  C(free_form) commands and C(args) are mutally exclusive. You cannot
+       use C(args) when using C(free_form) commands and vice versa.
 author: Michael DeHaan
 '''
 
@@ -84,19 +92,61 @@ EXAMPLES = '''
 '''
 
 def main():
+    # The command module is the one ansible module that optionally takes
+    # non-key=value args. Hence don't copy this one if you are looking to
+    # build your own modules.
 
-    # the command module is the one ansible module that does not take key=value args
-    # hence don't copy this one if you are looking to build others!
-    module = CommandModule(argument_spec=dict())
 
-    shell = module.params['shell']
-    chdir = module.params['chdir']
-    executable = module.params['executable']
-    args  = module.params['args']
-    creates  = module.params['creates']
-    removes  = module.params['removes']
+    dict_mode = True
+    try:
+        args = MODULE_ARGS
+        items = shlex.split(args)
 
-    if args.strip() == '':
+        for x in items:
+            (k, v) = x.split("=",1)
+    except:
+        dict_mode = False
+
+    if dict_mode:
+        module = AnsibleModule(
+            argument_spec = dict(
+                args        = dict(default=None, aliases=['name']),
+                shell       = dict(default=None, type='str'),
+                chdir       = dict(default=None, type='str'),
+                executable  = dict(default=None, type='str'),
+                creates     = dict(default=None, type='str'),
+                removes     = dict(default=None, type='str'),
+            ),
+
+            required_one_of = [['args']],
+            supports_check_mode = True,
+        )
+
+        p = module.params
+
+        shell       = p.get('shell', None);
+        chdir       = p.get('chdir', None);
+        executable  = p.get('executable', None);
+        args        = p.get('args', None);
+        creates     = p.get('creates', None);
+        removes     = p.get('creates', None);
+
+    else:
+        module = CommandModule(argument_spec=dict())
+
+        shell = module.params['shell']
+        chdir = module.params['chdir']
+        executable = module.params['executable']
+        args  = module.params['args']
+        creates  = module.params['creates']
+        removes  = module.params['removes']
+
+    if isinstance(args, list):
+        _args = ''.join(args).strip()
+    else:
+        _args = args
+
+    if _args == '':
         module.fail_json(rc=256, msg="no command given")
 
     if chdir:
@@ -132,8 +182,13 @@ def main():
                 rc=0
             )
 
-    if not shell:
-        args = shlex.split(args)
+    if shell:
+        if isinstance(args, list):
+            args = ' '.join(args).strip()
+    else:
+        if not isinstance(args, list):
+            args = shlex.split(args)
+
     startd = datetime.datetime.now()
 
     rc, out, err = module.run_command(args, executable=executable, use_unsafe_shell=shell)
