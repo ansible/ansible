@@ -27,7 +27,7 @@ description:
 version_added: "0.7"
 author: Dane Summers, njharman@gmail.com
 notes:
-   - Requres I(svn) to be installed on the client.
+   - Requires I(svn) to be installed on the client.
 requirements: []
 options:
   repo:
