@@ -175,6 +175,7 @@ class PlayBook(object):
         self.filename = playbook
         (self.playbook, self.play_basedirs) = self._load_playbook_from_file(playbook, vars)
         ansible.callbacks.load_callback_plugins()
+        ansible.callbacks.set_playbook(self.callbacks, self)
 
     # *****************************************************
 

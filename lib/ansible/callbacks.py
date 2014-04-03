@@ -115,6 +115,12 @@ def log_unflock(runner):
         except OSError:
             pass
 
+def set_playbook(callback, playbook):
+    ''' used to notify callback plugins of playbook context '''
+    callback.playbook = playbook
+    for callback_plugin in callback_plugins:
+        callback_plugin.playbook = playbook
+
 def set_play(callback, play):
     ''' used to notify callback plugins of context '''
     callback.play = play
