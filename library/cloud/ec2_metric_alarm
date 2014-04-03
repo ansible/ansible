@@ -192,13 +192,21 @@ def create_metric_alarm(connection, module):
 
         dim1 = module.params.get('dimensions')
         dim2 = alarm.dimensions
-        
-        for keys in dim1:
-            if not isinstance(dim1[keys], list):
-                dim1[keys] = [dim1[keys]]
-            if dim1[keys] != dim2[keys]:
-                changed=True
-                setattr(alarm, 'dimensions', dim1)        
+        dim_changed = False
+
+        if dim1.keys() != dim2.keys():
+            dim_changed = True
+        else:
+            for key, value in dim1.items():
+                if not isinstance(value, list):
+                    dim1[key] = [value]
+                if dim1[key] != dim2[key]:
+                    dim_changed=True
+                    break
+
+        if dim_changed:
+            changed = True
+            alarm.dimensions = dim1
 
         for attr in ('alarm_actions','insufficient_data_actions','ok_actions'): 
             action = module.params.get(attr) or []
