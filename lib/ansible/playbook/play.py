@@ -688,6 +688,9 @@ class Play(object):
         else:
             raise errors.AnsibleError("'vars_prompt' section is malformed, see docs")
 
+        if type(self.playbook.extra_vars) == dict:
+            vars = utils.combine_vars(vars, self.playbook.extra_vars)
+
         return vars
 
     # *************************************************
@@ -766,7 +769,8 @@ class Play(object):
         if host is not None:
             inject = {}
             inject.update(self.playbook.inventory.get_variables(host, vault_password=vault_password))
-            inject.update(self.playbook.VARS_CACHE[host])
+            inject.update(self.playbook.SETUP_CACHE.get(host, {}))
+            inject.update(self.playbook.VARS_CACHE.get(host, {}))
 
         for filename in self.vars_files:
 
