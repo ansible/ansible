@@ -217,6 +217,12 @@ options:
     required: false
     default: null
     aliases: []
+  ebs_optimized:
+    version_added: "1.6"
+    description:
+      - whether instance is using optimized EBS volumes, see U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSOptimized.html)
+    required: false
+    default: false
   exact_count:
     version_added: "1.5"
     description:
@@ -604,7 +610,8 @@ def get_instance_info(inst):
                      'root_device_type': inst.root_device_type,
                      'root_device_name': inst.root_device_name,
                      'state': inst.state,
-                     'hypervisor': inst.hypervisor}
+                     'hypervisor': inst.hypervisor,
+                     'ebs_optimized': inst.ebs_optimized}
     try:
         instance_info['virtualization_type'] = getattr(inst,'virtualization_type')
     except AttributeError:
@@ -767,6 +774,7 @@ def create_instances(module, ec2, override_count=None):
     private_ip = module.params.get('private_ip')
     instance_profile_name = module.params.get('instance_profile_name')
     volumes = module.params.get('volumes')
+    ebs_optimized = module.params.get('ebs_optimized')
     exact_count = module.params.get('exact_count')
     count_tag = module.params.get('count_tag')
     source_dest_check = module.boolean(module.params.get('source_dest_check'))
@@ -825,6 +833,7 @@ def create_instances(module, ec2, override_count=None):
                       'instance_type': instance_type,
                       'kernel_id': kernel,
                       'ramdisk_id': ramdisk,
+                      'ebs_optimized': ebs_optimized,
                       'user_data': user_data}
 
             if boto_supports_profile_name_arg(ec2):
@@ -1144,6 +1153,7 @@ def main():
             exact_count = dict(type='int', default=None),
             count_tag = dict(),
             volumes = dict(type='list'),
+            ebs_optimized = dict(),
         )
     )
 
