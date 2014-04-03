@@ -31,6 +31,7 @@ import sys
 import pipes
 import jinja2
 import subprocess
+import getpass
 
 import ansible.constants as C
 import ansible.inventory
@@ -929,6 +930,12 @@ class Runner(object):
         # compare connection user to (su|sudo)_user and disable if the same
         if hasattr(conn, 'user'):
             if conn.user == sudo_user or conn.user == su_user:
+                sudoable = False
+                su = False
+        else:
+            # assume connection type is local if no user attribute
+            this_user = getpass.getuser()
+            if this_user == sudo_user or this_user == su_user:
                 sudoable = False
                 su = False
 
