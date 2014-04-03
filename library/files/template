@@ -47,10 +47,6 @@ options:
     required: false
     default: ""
     version_added: "1.2"
-  others:
-    description:
-      - all arguments accepted by the M(file) module also work here, as well as the M(copy) module (except the the 'content' parameter).
-    required: false
 notes:
   - "Since Ansible version 0.9, templates are loaded with C(trim_blocks=True)."
 
@@ -59,6 +55,7 @@ notes:
   which changes the variable interpolation markers to  [% var %] instead of  {{ var }}. This is the best way to prevent evaluation of things that look like, but should not be Jinja2.  raw/endraw in Jinja2 will not work as you expect because templates in Ansible are recursively evaluated."
 
 requirements: []
+extends_documentation_fragment: files.DOCUMENTATION
 author: Michael DeHaan
 '''
 

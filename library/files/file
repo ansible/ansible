@@ -33,6 +33,7 @@ DOCUMENTATION = '''
 module: file
 version_added: "historical"
 short_description: Sets attributes of files
+extends_documentation_fragment: files
 description: 
      - Sets attributes of files, symlinks, and directories, or removes
        files/symlinks/directories. Many other modules support the same options as
@@ -58,24 +59,6 @@ options:
     required: false
     default: file
     choices: [ file, link, directory, hard, touch, absent ]
-  mode:
-    required: false
-    default: null
-    choices: []
-    description:
-      - mode the file or directory should be, such as 0644 as would be fed to I(chmod)
-  owner:
-    required: false
-    default: null
-    choices: []
-    description:
-      - name of the user that should own the file/directory, as would be fed to I(chown)
-  group:
-    required: false
-    default: null
-    choices: []
-    description:
-      - name of the group that should own the file/directory, as would be fed to I(chown)
   src:
     required: false
     default: null
@@ -83,34 +66,6 @@ options:
     description:
       - path of the file to link to (applies only to C(state= link or hard)). Will accept absolute,
         relative and nonexisting (with C(force)) paths. Relative paths are not expanded.
-  seuser:
-    required: false
-    default: null
-    choices: []
-    description:
-      - user part of SELinux file context. Will default to system policy, if
-        applicable. If set to C(_default), it will use the C(user) portion of the
-        policy if available
-  serole:
-    required: false
-    default: null
-    choices: []
-    description:
-      - role part of SELinux file context, C(_default) feature works as for I(seuser).
-  setype:
-    required: false
-    default: null
-    choices: []
-    description:
-      - type part of SELinux file context, C(_default) feature works as for I(seuser).
-  selevel:
-    required: false
-    default: "s0"
-    choices: []
-    description:
-      - level part of the SELinux file context. This is the MLS/MCS attribute,
-        sometimes known as the C(range). C(_default) feature works as for
-        I(seuser).
   recurse:
     required: false
     default: "no"
@@ -118,13 +73,6 @@ options:
     version_added: "1.1"
     description:
       - recursively set the specified file attributes (applies only to state=directory)
-  force:
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
-    description:
-      - 'force the creation of the symlinks when the destination exists and is a file (so, we need to unlink the
-        "path" file and create symlink to the "src" file in place of it).'
 notes:
     - See also M(copy), M(template), M(assemble)
 requirements: [ ]
