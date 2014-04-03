@@ -136,6 +136,11 @@ def regex_replace(value='', pattern='', replacement='', ignorecase=False):
     _re = re.compile(pattern, flags=flags)
     return _re.sub(replacement, value)
 
+def ternary(condiction, true_value, false_value):
+    ''' returns first argument if condition is true, otherwise returns second
+    argument  '''
+    return true_value if condiction else false_value
+
 def unique(a):
     return set(a)
 
@@ -206,6 +211,9 @@ class FilterModule(object):
             'search': search,
             'regex': regex,
             'regex_replace': regex_replace,
+
+            # ternary
+            'ternary': ternary,
 
             # list
             'unique' : unique,
