@@ -131,7 +131,7 @@ def main():
             ec2_secret_key = dict(aliases=['aws_secret_key', 'secret_key'], no_log=True),
             ec2_access_key = dict(aliases=['aws_access_key', 'access_key']),
             wait = dict(type='bool', default='true'),
-            wait_timeout = dict(type='number', default=0),
+            wait_timeout = dict(default=0),
             snapshot_tags = dict(type='dict', default=dict()),
         )
     )
