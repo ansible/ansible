@@ -1,9 +1,12 @@
 def isprintable(instring):
-    #http://stackoverflow.com/a/3637294
-    import string
-    printset = set(string.printable)
-    isprintable = set(instring).issubset(printset)
-    return isprintable
+    if isinstance(instring, str):
+        #http://stackoverflow.com/a/3637294
+        import string
+        printset = set(string.printable)
+        isprintable = set(instring).issubset(printset)
+        return isprintable
+    else:
+        return True
 
 def count_newlines_from_end(str):
     i = len(str)
