@@ -84,6 +84,12 @@ options:
     default: null
     aliases: []
     version_added: "1.6"
+  snapshot_tags:
+    description:
+      - a hash/dictionary of tags to add to the snapshot; '{"key":"value"}' and '{"key":"value","key":"value"}'
+    required: false
+    default: null
+    aliases: []
 
 requirements: [ "boto" ]
 author: Will Thames
