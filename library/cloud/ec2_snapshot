@@ -52,6 +52,27 @@ options:
     required: false
     default: null
     aliases: []
+  profile:
+    description:
+      - uses a boto profile. Only works with boto >= 2.24.0
+    required: false
+    default: null
+    aliases: []
+    version_added: "1.6"
+  security_token:
+    description:
+      - security token to authenticate against AWS
+    required: false
+    default: null
+    aliases: []
+    version_added: "1.6"
+  snapshot_tags:
+    description:
+      - a hash/dictionary of tags to add to the snapshot; '{"key":"value"}' and '{"key":"value","key":"value"}'
+    required: false
+    default: null
+    aliases: []
+    version_added: "1.6"
 
 author: Will Thames
 extends_documentation_fragment: aws
