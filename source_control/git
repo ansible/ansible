@@ -160,7 +160,7 @@ def get_submodule_update_params(module, git_path, cwd):
     params = []
 
     # run a bad submodule command to get valid params    
-    cmd = "%s submodule update -" % (git_path)
+    cmd = "%s submodule update --help" % (git_path)
     rc, stdout, stderr = module.run_command(cmd, cwd=cwd)
     lines = stderr.split('\n')
     update_line = None
