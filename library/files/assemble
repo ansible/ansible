@@ -57,6 +57,18 @@ options:
     required: false
     choices: [ "yes", "no" ]
     default: "no"
+  prefix:
+    description:
+      - A prefix prepended at the start of the assembled file.
+    version_added: "1.5"
+    required: false
+    default: null
+  suffix:
+    description:
+      - A suffix appended at the end of the assembled file.
+    version_added: "1.5"
+    required: false
+    default: null
   delimiter:
     description:
       - A delimiter to separate the file contents.
@@ -92,16 +104,21 @@ EXAMPLES = '''
 
 # When a delimiter is specified, it will be inserted in between each fragment
 - assemble: src=/etc/someapp/fragments dest=/etc/someapp/someapp.conf delimiter='### START FRAGMENT ###'
+
+# Add prefix and suffix for php configuration file
+- assemble: src=/srv/project/php_configuration_fragments dest=/srv/project/configuration.php prefix='<?php ' suffix='?>'
 '''
 
 # ===========================================
 # Support method
 
-def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None):
+def assemble_from_fragments(src_path, prefix=None, suffix=None, delimiter=None, compiled_regexp=None):
     ''' assemble a file from a directory of fragments '''
     tmpfd, temp_path = tempfile.mkstemp()
-    tmp = os.fdopen(tmpfd,'w')
+    tmp = os.fdopen(tmpfd,'w+')
     delimit_me = False
+    if prefix:
+        tmp.write(prefix)
     for f in sorted(os.listdir(src_path)):
         if compiled_regexp and not compiled_regexp.search(f):
             continue
@@ -117,6 +134,8 @@ def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None):
         if os.path.isfile(fragment):
             tmp.write(file(fragment).read())
         delimit_me = True
+    if suffix:
+        tmp.write(suffix)
     tmp.close()
     return temp_path
 
@@ -129,6 +148,8 @@ def main():
         # not checking because of daisy chain to file module
         argument_spec = dict(
             src = dict(required=True),
+            prefix = dict(required=False),
+            suffix = dict(required=False),
             delimiter = dict(required=False),
             dest = dict(required=True),
             backup=dict(default=False, type='bool'),
@@ -144,6 +165,8 @@ def main():
     src       = os.path.expanduser(module.params['src'])
     dest      = os.path.expanduser(module.params['dest'])
     backup    = module.params['backup']
+    prefix    = module.params['prefix']
+    suffix    = module.params['suffix']
     delimiter = module.params['delimiter']
     regexp    = module.params['regexp']
     compiled_regexp = None
@@ -160,7 +183,7 @@ def main():
         except re.error, e:
             module.fail_json(msg="Invalid Regexp (%s) in \"%s\"" % (e, regexp))
 
-    path = assemble_from_fragments(src, delimiter, compiled_regexp)
+    path = assemble_from_fragments(src, prefix, suffix, delimiter, compiled_regexp)
     pathmd5 = module.md5(path)
 
     if os.path.exists(dest):
