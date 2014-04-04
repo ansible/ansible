@@ -177,6 +177,7 @@ def main():
 
     argument_spec = url_argument_spec()
     argument_spec.update(
+        url = dict(required=True),
         dest = dict(required=True),
         sha256sum = dict(default=''),
     )
