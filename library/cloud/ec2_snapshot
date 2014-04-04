@@ -68,7 +68,7 @@ options:
     version_added: "1.6"
   snapshot_tags:
     description:
-      - a hash/dictionary of tags to add to the snapshot; '{"key":"value"}' and '{"key":"value","key":"value"}'
+      - a hash/dictionary of tags to add to the snapshot
     required: false
     default: null
     aliases: []
@@ -91,6 +91,15 @@ EXAMPLES = '''
     instance_id: i-12345678
     device_name: /dev/sdb1
     description: snapshot of /data from DB123 taken 2013/11/28 12:18:32
+
+# Snapshot of volume with tagging
+- local_action: 
+    module: ec2_snapshot 
+    instance_id: i-12345678
+    device_name: /dev/sdb1
+    snapshot_tags:
+        frequency: hourly
+        source: /data
 '''    
 
 import sys
