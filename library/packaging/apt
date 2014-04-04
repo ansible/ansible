@@ -92,7 +92,7 @@ options:
      description:
        - Path to a local .deb package file to install.
      required: false
-     version_added: "1.5"
+     version_added: "1.6"
 requirements: [ python-apt, aptitude ]
 author: Matthew Williams
 notes:
