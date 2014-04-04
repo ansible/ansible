@@ -199,7 +199,7 @@ class J2Template(jinja2.environment.Template):
     def new_context(self, vars=None, shared=False, locals=None):
         return jinja2.runtime.Context(self.environment, vars.add_locals(locals), self.name, self.blocks)
 
-def template_from_file(basedir, path, vars):
+def template_from_file(basedir, path, vars, vault_password=None):
     ''' run a file through the templating engine '''
 
     fail_on_undefined = C.DEFAULT_UNDEFINED_VAR_BEHAVIOR

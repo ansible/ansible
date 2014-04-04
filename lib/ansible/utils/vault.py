@@ -451,7 +451,6 @@ class VaultAES256(object):
         derivedkey = PBKDF2(password, salt, dkLen=(2 * keylength) + ivlength, 
                             count=10000, prf=pbkdf2_prf)
 
-        #import epdb; epdb.st()
         key1 = derivedkey[:keylength]
         key2 = derivedkey[keylength:(keylength * 2)]
         iv = derivedkey[(keylength * 2):(keylength * 2) + ivlength]
