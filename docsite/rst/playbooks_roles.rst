@@ -157,6 +157,14 @@ Now that you have learned about vars_files, tasks, and handlers, what is the bes
 The short answer is to use roles!  Roles are ways of automatically loading certain vars_files, tasks, and
 handlers based on a known file structure.  Grouping content by roles also allows easy sharing of roles with other users.
 
+In a playbook, it would look like this::
+
+    ---
+    - hosts: webservers
+      roles:
+         - common
+         - webservers
+
 Roles are just automation around 'include' directives as described above, and really don't contain much
 additional magic beyond some improvements to search path handling for referenced files.  However, that can be a big thing!
 
@@ -180,14 +188,6 @@ Example project structure::
          handlers/
          vars/
          meta/
-
-In a playbook, it would look like this::
-
-    ---
-    - hosts: webservers
-      roles:
-         - common
-         - webservers
 
 This designates the following behaviors, for each role 'x':
 
