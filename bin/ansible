@@ -19,6 +19,7 @@
 
 ########################################################
 
+import os
 import sys
 
 from ansible.runner import Runner
@@ -75,6 +76,9 @@ class Cli(object):
                          "and su arguments ('-su', '--su-user', and '--ask-su-pass') are "
                          "mutually exclusive")
 
+        if (options.ask_vault_pass and options.vault_password_file):
+            parser.error("--ask-vault-pass and --vault-password-file are mutually exclusive")
+
         return (options, args)
 
     # ----------------------------------------------
@@ -107,13 +111,30 @@ class Cli(object):
         sshpass = None
         sudopass = None
         su_pass = None
+        vault_pass = None
+
         options.ask_pass = options.ask_pass or C.DEFAULT_ASK_PASS
         # Never ask for an SSH password when we run with local connection
         if options.connection == "local":
             options.ask_pass = False
         options.ask_sudo_pass = options.ask_sudo_pass or C.DEFAULT_ASK_SUDO_PASS
         options.ask_su_pass = options.ask_su_pass or C.DEFAULT_ASK_SU_PASS
+        options.ask_vault_pass = options.ask_vault_pass or C.DEFAULT_ASK_VAULT_PASS
+
         (sshpass, sudopass, su_pass, vault_pass) = utils.ask_passwords(ask_pass=options.ask_pass, ask_sudo_pass=options.ask_sudo_pass, ask_su_pass=options.ask_su_pass, ask_vault_pass=options.ask_vault_pass)
+
+        # read vault_pass from a file
+        if options.vault_password_file:
+            this_path = os.path.expanduser(options.vault_password_file)
+            try:
+                f = open(this_path, "rb")
+                tmp_vault_pass=f.read().strip()
+                f.close()
+            except (OSError, IOError), e:
+                raise errors.AnsibleError("Could not read %s: %s" % (this_path, e))
+
+            if not options.ask_vault_pass:
+                vault_pass = tmp_vault_pass
 
         inventory_manager = inventory.Inventory(options.inventory)
         if options.subset:
@@ -136,8 +157,6 @@ class Cli(object):
 
         if options.su_user or options.ask_su_pass:
             options.su = True
-        elif options.sudo_user or options.ask_sudo_pass:
-            options.sudo = True
         options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
         options.su_user = options.su_user or C.DEFAULT_SU_USER
         if options.tree:

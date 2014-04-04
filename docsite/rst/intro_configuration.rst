@@ -8,7 +8,7 @@ The Ansible Configuration File
 Certain settings in Ansible are adjustable via a configuration file.  The stock configuration should be sufficient
 for most users, but there may be reasons you would want to change them.
 
-Changes can be made and used in a configuration file which will be processed processed in the following order::
+Changes can be made and used in a configuration file which will be processed in the following order::
 
     * ANSIBLE_CONFIG (an environment variable)
     * ansible.cfg (in the current directory)
@@ -211,6 +211,16 @@ is very very conservative::
 
    forks=5
 
+.. _gathering:
+
+gathering
+=========
+
+New in 1.6, the 'gathering' setting controls the default policy of facts gathering (variables discovered about remote systems).
+
+The value 'implicit' is the default, meaning facts will be gathered per play unless 'gather_facts: False' is set in the play.  The value 'explicit' is the inverse, facts will not be gathered unless directly requested in the play.
+
+The value 'smart' means each new host that has no facts discovered will be scanned, but if the same host is addressed in multiple plays it will not be contacted again in the playbook run.  This option can be useful for those wishing to save fact gathering time.
 
 hash_behaviour
 ==============
@@ -309,6 +319,13 @@ different locations::
    lookup_plugins = /usr/share/ansible_plugins/lookup_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
+
+.. _module_lang:
+
+module_lang
+===========
+
+This is to set the default language to communicate between the module and the system. By default, the value is 'C'.
 
 .. _module_name:
 
@@ -584,7 +601,7 @@ Accelerate Mode Settings
 ------------------------
 
 Under the [accelerate] header, the following settings are tunable for :doc:`playbooks_acceleration`.  Acceleration is 
-a useful performance feature to use if you cannot enable :ref:`ssh_pipelining` in your environment, but is probably
+a useful performance feature to use if you cannot enable :ref:`pipelining` in your environment, but is probably
 not needed if you can.
 
 .. _accelerate_port:
@@ -622,4 +639,29 @@ This setting controls the timeout for the socket connect call, and should be kep
 
 Note, this value can be set to less than one second, however it is probably not a good idea to do so unless you're on a very fast and reliable LAN. If you're connecting to systems over the internet, it may be necessary to increase this timeout.
 
+.. _accelerate_daemon_timeout:
+
+accelerate_daemon_timeout
+=========================
+
+.. versionadded:: 1.6
+
+This setting controls the timeout for the accelerated daemon, as measured in minutes. The default daemon timeout is 30 minutes::
+
+    accelerate_daemon_timeout = 30
+
+Note, prior to 1.6, the timeout was hard-coded from the time of the daemon's launch. For version 1.6+, the timeout is now based on the last activity to the daemon and is configurable via this option.
+
+.. _accelerate_multi_key:
+
+accelerate_multi_key
+====================
+
+.. versionadded:: 1.6
+
+If enabled, this setting allows multiple private keys to be uploaded to the daemon. Any clients connecting to the daemon must also enable this option::
+
+    accelerate_multi_key = yes
+
+New clients first connect to the target node over SSH to upload the key, which is done via a local socket file, so they must have the same access as the user that launched the daemon originally.
 

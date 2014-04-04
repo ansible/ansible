@@ -52,9 +52,10 @@ def build_option_parser(action):
         sys.exit()
 
     # options for all actions
-    #parser.add_option('-p', '--password', help="encryption key")
-    #parser.add_option('-c', '--cipher', dest='cipher', default="AES", help="cipher to use")
-    parser.add_option('-d', '--debug', dest='debug', action="store_true", help="debug")
+    #parser.add_option('-c', '--cipher', dest='cipher', default="AES256", help="cipher to use")
+    parser.add_option('--debug', dest='debug', action="store_true", help="debug")
+    parser.add_option('--vault-password-file', dest='password_file',
+                    help="vault password file")
 
     # options specific to actions
     if action == "create":
@@ -100,13 +101,24 @@ def get_opt(options, k, defval=""):
 # Command functions
 #-------------------------------------------------------------------------------------
 
+def _read_password(filename):
+    f = open(filename, "rb")
+    data = f.read()
+    f.close
+    data = data.strip()
+    return data
+
 def execute_create(args, options, parser):
 
     if len(args) > 1:
         raise errors.AnsibleError("'create' does not accept more than one filename")        
-    password, new_password = utils.ask_vault_passwords(ask_vault_pass=True, confirm_vault=True)
 
-    cipher = 'AES'
+    if not options.password_file:        
+        password, new_password = utils.ask_vault_passwords(ask_vault_pass=True, confirm_vault=True)
+    else:
+        password = _read_password(options.password_file)
+
+    cipher = 'AES256'
     if hasattr(options, 'cipher'):
         cipher = options.cipher
 
@@ -115,9 +127,12 @@ def execute_create(args, options, parser):
 
 def execute_decrypt(args, options, parser):
 
-    password, new_password = utils.ask_vault_passwords(ask_vault_pass=True)
+    if not options.password_file:        
+        password, new_password = utils.ask_vault_passwords(ask_vault_pass=True)
+    else:
+        password = _read_password(options.password_file)
 
-    cipher = 'AES'
+    cipher = 'AES256'
     if hasattr(options, 'cipher'):
         cipher = options.cipher
 
@@ -132,7 +147,10 @@ def execute_edit(args, options, parser):
     if len(args) > 1:
         raise errors.AnsibleError("create does not accept more than one filename")        
 
-    password, new_password = utils.ask_vault_passwords(ask_vault_pass=True)
+    if not options.password_file:        
+        password, new_password = utils.ask_vault_passwords(ask_vault_pass=True)
+    else:
+        password = _read_password(options.password_file)
 
     cipher = None
 
@@ -142,11 +160,12 @@ def execute_edit(args, options, parser):
 
 def execute_encrypt(args, options, parser):
 
-    if len(args) > 1:
-        raise errors.AnsibleError("'create' does not accept more than one filename")        
-    password, new_password = utils.ask_vault_passwords(ask_vault_pass=True, confirm_vault=True)
+    if not options.password_file:        
+        password, new_password = utils.ask_vault_passwords(ask_vault_pass=True, confirm_vault=True)
+    else:
+        password = _read_password(options.password_file)
 
-    cipher = 'AES'
+    cipher = 'AES256'
     if hasattr(options, 'cipher'):
         cipher = options.cipher
 
@@ -158,7 +177,13 @@ def execute_encrypt(args, options, parser):
 
 def execute_rekey(args, options, parser):
 
-    password, new_password = utils.ask_vault_passwords(ask_vault_pass=True, ask_new_vault_pass=True, confirm_new=True)
+    if not options.password_file:        
+        password, __ = utils.ask_vault_passwords(ask_vault_pass=True)
+    else:
+        password = _read_password(options.password_file)
+
+    __, new_password = utils.ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=True, confirm_new=True)
+
     cipher = None
     for f in args:
         this_editor = VaultEditor(cipher, password, f)

@@ -7,6 +7,8 @@ in Ansible, and are typically used to load variables or templates with informati
 
 .. note:: This is considered an advanced feature, and many users will probably not rely on these features.  
 
+.. note:: Lookups occur on the local computer, not on the remote computer.
+
 .. contents:: Topics
 
 .. _getting_file_contents:
@@ -21,7 +23,9 @@ Contents can be read off the filesystem as follows::
     - hosts: all
       vars:
          contents: "{{ lookup('file', '/etc/foo.txt') }}"
+
       tasks:
+
          - debug: msg="the value of foo.txt is {{ contents }}"
 
 .. _password_lookup:
@@ -29,9 +33,16 @@ Contents can be read off the filesystem as follows::
 The Password Lookup
 ```````````````````
 
-``password`` generates a random plaintext password and store it in
-a file at a given filepath.  Support for crypted save modes (as with vars_prompt) is pending.  If the
-file exists previously, it will retrieve its contents, behaving just like with_file. Usage of variables like "{{ inventory_hostname }}" in the filepath can be used to set
+.. note::
+
+    A great alternative to the password lookup plugin, if you don't need to generate random passwords on a per-host basis, would be to use :doc:`playbooks_vault`.  Read the documentation there and consider using it first, it will be more desirable for most applications.
+
+``password`` generates a random plaintext password and stores it in
+a file at a given filepath.  
+
+(Docs about crypted save modes are pending)
+ 
+If the file exists previously, it will retrieve its contents, behaving just like with_file. Usage of variables like "{{ inventory_hostname }}" in the filepath can be used to set
 up random passwords per host (what simplifies password management in 'host_vars' variables).
 
 Generated passwords contain a random mix of upper and lowercase ASCII letters, the
@@ -121,6 +132,7 @@ template)::
       motd_value: "{{ lookup('file', '/etc/motd') }}"
 
     tasks:
+
       - debug: msg="motd value is {{ motd_value }}"
 
 .. seealso::

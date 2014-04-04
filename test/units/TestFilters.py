@@ -116,6 +116,21 @@ class TestFilters(unittest.TestCase):
                                                       True)
         assert a == True
 
+    def test_regex_replace_case_sensitive(self):
+        a = ansible.runner.filter_plugins.core.regex_replace('ansible', '^a.*i(.*)$',
+                                                      'a\\1')
+        assert a == 'able'
+
+    def test_regex_replace_case_insensitive(self):
+        a = ansible.runner.filter_plugins.core.regex_replace('ansible', '^A.*I(.*)$',
+                                                      'a\\1', True)
+        assert a == 'able'
+
+    def test_regex_replace_no_match(self):
+        a = ansible.runner.filter_plugins.core.regex_replace('ansible', '^b.*i(.*)$',
+                                                      'a\\1')
+        assert a == 'ansible'
+
     #def test_filters(self):
 
         # this test is pretty low level using a playbook, hence I am disabling it for now -- MPD.
@@ -137,3 +152,26 @@ class TestFilters(unittest.TestCase):
         #out = open(dest).read()
         #self.assertEqual(DEST, out)
 
+    def test_version_compare(self):
+        self.assertTrue(ansible.runner.filter_plugins.core.version_compare(0, 1.1, 'lt', False))
+        self.assertTrue(ansible.runner.filter_plugins.core.version_compare(1.1, 1.2, '<'))
+
+        self.assertTrue(ansible.runner.filter_plugins.core.version_compare(1.2, 1.2, '=='))
+        self.assertTrue(ansible.runner.filter_plugins.core.version_compare(1.2, 1.2, '='))
+        self.assertTrue(ansible.runner.filter_plugins.core.version_compare(1.2, 1.2, 'eq'))
+
+
+        self.assertTrue(ansible.runner.filter_plugins.core.version_compare(1.3, 1.2, 'gt'))
+        self.assertTrue(ansible.runner.filter_plugins.core.version_compare(1.3, 1.2, '>'))
+
+        self.assertTrue(ansible.runner.filter_plugins.core.version_compare(1.3, 1.2, 'ne'))
+        self.assertTrue(ansible.runner.filter_plugins.core.version_compare(1.3, 1.2, '!='))
+        self.assertTrue(ansible.runner.filter_plugins.core.version_compare(1.3, 1.2, '<>'))
+
+        self.assertTrue(ansible.runner.filter_plugins.core.version_compare(1.1, 1.1, 'ge'))
+        self.assertTrue(ansible.runner.filter_plugins.core.version_compare(1.2, 1.1, '>='))
+
+        self.assertTrue(ansible.runner.filter_plugins.core.version_compare(1.1, 1.1, 'le'))
+        self.assertTrue(ansible.runner.filter_plugins.core.version_compare(1.0, 1.1, '<='))
+
+        self.assertTrue(ansible.runner.filter_plugins.core.version_compare('12.04', 12, 'ge'))

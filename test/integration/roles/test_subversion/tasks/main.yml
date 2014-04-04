@@ -84,6 +84,16 @@
       - "trunk.stat.isdir"
       - "branches.stat.isdir"
 
+- name: checkout with quotes in username
+  subversion: repo={{ repo }} dest={{ checkout_dir }} username="quoteme'''"
+  register: subverted3
+
+- debug: var=subverted3
+
+- name: checkout with export
+  subversion: repo={{ repo }} dest={{ checkout_dir }} export=True
+  register: subverted4
+
 # FIXME: this needs to be fixed in the code see GitHub 6079
 
 #- name: verify on a reclone things are marked unchanged

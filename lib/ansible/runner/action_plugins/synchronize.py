@@ -26,26 +26,54 @@ class ActionModule(object):
 
     def __init__(self, runner):
         self.runner = runner
+        self.inject = None
+
+    def _get_absolute_path(self, path=None):
+        if 'vars' in self.inject:
+            if '_original_file' in self.inject['vars']:
+                # roles
+                path = utils.path_dwim_relative(self.inject['_original_file'], 'files', path, self.runner.basedir)
+            elif 'inventory_dir' in self.inject['vars']:
+                # non-roles
+                abs_dir = os.path.abspath(self.inject['vars']['inventory_dir'])
+                path = os.path.join(abs_dir, path)
+
+        return path
 
     def _process_origin(self, host, path, user):
 
         if not host in ['127.0.0.1', 'localhost']:
-            return '%s@%s:%s' % (user, host, path)
+            if user:
+                return '%s@%s:%s' % (user, host, path)
+            else:
+                return '%s:%s' % (host, path)
         else:
+            if not ':' in path:
+                if not path.startswith('/'):
+                    path = self._get_absolute_path(path=path)
             return path
 
     def _process_remote(self, host, path, user):
         transport = self.runner.transport
         return_data = None
         if not host in ['127.0.0.1', 'localhost'] or transport != "local":
-            return_data = '%s@%s:%s' % (user, host, path)
+            if user:
+                return_data = '%s@%s:%s' % (user, host, path)
+            else:
+                return_data = '%s:%s' % (host, path)
         else:
             return_data = path
+
+        if not ':' in return_data:
+            if not return_data.startswith('/'):
+                return_data = self._get_absolute_path(path=return_data)
 
         return return_data
 
     def setup(self, module_name, inject):
         ''' Always default to localhost as delegate if None defined '''
+   
+        self.inject = inject
     
         # Store original transport and sudo values.
         self.original_transport = inject.get('ansible_connection', self.runner.transport)
@@ -64,6 +92,8 @@ class ActionModule(object):
         inject, complex_args=None, **kwargs):
 
         ''' generates params and passes them on to the rsync module '''
+
+        self.inject = inject
 
         # load up options
         options = {}
@@ -122,13 +152,14 @@ class ActionModule(object):
         if process_args or use_delegate:
 
             user = None
-            if use_delegate:
-                user = inject['hostvars'][conn.delegate].get('ansible_ssh_user')
+            if utils.boolean(options.get('set_remote_user', 'yes')):
+                if use_delegate:
+                    user = inject['hostvars'][conn.delegate].get('ansible_ssh_user')
 
-            if not use_delegate or not user:
-                user = inject.get('ansible_ssh_user',
-                                self.runner.remote_user)
-
+                if not use_delegate or not user:
+                    user = inject.get('ansible_ssh_user',
+                                    self.runner.remote_user)
+                
             if use_delegate:
                 # FIXME
                 private_key = inject.get('ansible_ssh_private_key_file', self.runner.private_key_file)
@@ -173,6 +204,11 @@ class ActionModule(object):
         if self.runner.noop_on_check(inject):
             module_items += " CHECKMODE=True"
 
-        return self.runner._execute_module(conn, tmp, 'synchronize',
-                module_items, inject=inject)
+        # run the module and store the result
+        result = self.runner._execute_module(conn, tmp, 'synchronize', module_items, inject=inject)
+
+        # reset the sudo property                 
+        self.runner.sudo = self.original_sudo
+
+        return result
 

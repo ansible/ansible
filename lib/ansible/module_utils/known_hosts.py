@@ -1,4 +1,36 @@
-def add_git_host_key(module, url, accept_hostkey=True):
+# This code is part of Ansible, but is an independent component.
+# This particular file snippet, and this file snippet only, is BSD licensed.
+# Modules you write using this snippet, which is embedded dynamically by Ansible
+# still belong to the author of the module, and may assign their own license
+# to the complete work.
+#
+# Copyright (c), Michael DeHaan <michael.dehaan@gmail.com>, 2012-2013
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
+#
+#    * Redistributions of source code must retain the above copyright
+#      notice, this list of conditions and the following disclaimer.
+#    * Redistributions in binary form must reproduce the above copyright notice,
+#      this list of conditions and the following disclaimer in the documentation
+#      and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+import hmac
+from hashlib import sha1
+HASHED_KEY_MAGIC = "|1|"
+
+def add_git_host_key(module, url, accept_hostkey=True, create_dir=True):
 
     """ idempotently add a git url hostkey """
 
@@ -8,7 +40,7 @@ def add_git_host_key(module, url, accept_hostkey=True):
         known_host = check_hostkey(module, fqdn)
         if not known_host:
             if accept_hostkey:
-                rc, out, err = add_host_key(module, fqdn)
+                rc, out, err = add_host_key(module, fqdn, create_dir=create_dir)
                 if rc != 0:
                     module.fail_json(msg="failed to add %s hostkey: %s" % (fqdn, out + err))
             else:
@@ -30,41 +62,94 @@ def get_fqdn(repo_url):
 
     return result
 
-
 def check_hostkey(module, fqdn):
+   return not not_in_host_file(module, fqdn)
 
-    """ use ssh-keygen to check if key is known """
+# this is a variant of code found in connection_plugins/paramiko.py and we should modify
+# the paramiko code to import and use this.
 
-    result = False
-    keygen_cmd = module.get_bin_path('ssh-keygen', True)
-    this_cmd = keygen_cmd + " -H -F " + fqdn
-    rc, out, err = module.run_command(this_cmd)
+def not_in_host_file(self, host):
 
-    if rc == 0 and out != "":
-            result = True
+
+    if 'USER' in os.environ:
+        user_host_file = os.path.expandvars("~${USER}/.ssh/known_hosts")
     else:
-        # Check the main system location
-        this_cmd = keygen_cmd + " -H -f /etc/ssh/ssh_known_hosts -F " + fqdn
-        rc, out, err = module.run_command(this_cmd)
+        user_host_file = "~/.ssh/known_hosts"
+    user_host_file = os.path.expanduser(user_host_file)
 
-        if rc == 0:
-            if out != "":
-                result = True
+    host_file_list = []
+    host_file_list.append(user_host_file)
+    host_file_list.append("/etc/ssh/ssh_known_hosts")
+    host_file_list.append("/etc/ssh/ssh_known_hosts2")
 
-    return result
+    hfiles_not_found = 0
+    for hf in host_file_list:
+        if not os.path.exists(hf):
+            hfiles_not_found += 1
+            continue
 
-def add_host_key(module, fqdn, key_type="rsa"):
+        try:
+            host_fh = open(hf)
+        except IOError, e:
+            hfiles_not_found += 1
+            continue
+        else:
+            data = host_fh.read()
+            host_fh.close()
+
+        for line in data.split("\n"):
+            if line is None or " " not in line:
+                continue
+            tokens = line.split()
+            if tokens[0].find(HASHED_KEY_MAGIC) == 0:
+                # this is a hashed known host entry
+                try:
+                    (kn_salt,kn_host) = tokens[0][len(HASHED_KEY_MAGIC):].split("|",2)
+                    hash = hmac.new(kn_salt.decode('base64'), digestmod=sha1)
+                    hash.update(host)
+                    if hash.digest() == kn_host.decode('base64'):
+                        return False
+                except:
+                    # invalid hashed host key, skip it
+                    continue
+            else:
+                # standard host file entry
+                if host in tokens[0]:
+                    return False
+
+    return True
+
+
+def add_host_key(module, fqdn, key_type="rsa", create_dir=False):
 
     """ use ssh-keyscan to add the hostkey """
 
     result = False
     keyscan_cmd = module.get_bin_path('ssh-keyscan', True)
 
-    if not os.path.exists(os.path.expanduser("~/.ssh/")):
-        module.fail_json(msg="%s does not exist" % os.path.expanduser("~/.ssh/"))
+    if 'USER' in os.environ:
+        user_ssh_dir = os.path.expandvars("~${USER}/.ssh/")
+        user_host_file = os.path.expandvars("~${USER}/.ssh/known_hosts")
+    else:
+        user_ssh_dir = "~/.ssh/"
+        user_host_file = "~/.ssh/known_hosts"
+    user_ssh_dir = os.path.expanduser(user_ssh_dir)
 
-    this_cmd = "%s -t %s %s >> ~/.ssh/known_hosts" % (keyscan_cmd, key_type, fqdn)
+    if not os.path.exists(user_ssh_dir):
+        if create_dir:
+            try:
+                os.makedirs(user_ssh_dir, 0700)
+            except:
+                module.fail_json(msg="failed to create host key directory: %s" % user_ssh_dir)
+        else:
+            module.fail_json(msg="%s does not exist" % user_ssh_dir)
+    elif not os.path.isdir(user_ssh_dir):
+        module.fail_json(msg="%s is not a directory" % user_ssh_dir)
+
+    this_cmd = "%s -t %s %s" % (keyscan_cmd, key_type, fqdn)
+
     rc, out, err = module.run_command(this_cmd)
+    module.append_to_file(user_host_file, out)
 
     return rc, out, err
 

@@ -39,7 +39,8 @@ description:
 options:
   free_form:
     description:
-      - the command module takes a free form command to run
+      - the command module takes a free form command to run.  There is no parameter actually named 'free form'.
+        See the examples!
     required: true
     default: null
     aliases: []
@@ -136,7 +137,7 @@ def main():
         args = shlex.split(args)
     startd = datetime.datetime.now()
 
-    rc, out, err = module.run_command(args, executable=executable)
+    rc, out, err = module.run_command(args, executable=executable, use_unsafe_shell=shell)
 
     endd = datetime.datetime.now()
     delta = endd - startd
@@ -180,7 +181,7 @@ class CommandModule(AnsibleModule):
         params['removes'] = None
         params['shell'] = False
         params['executable'] = None
-        if args.find("#USE_SHELL") != -1:
+        if "#USE_SHELL" in args:
             args = args.replace("#USE_SHELL", "")
             params['shell'] = True
 

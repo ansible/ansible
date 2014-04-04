@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python
 
 # (c) 2013, Paul Durivage <paul.durivage@rackspace.com>
 #
@@ -17,6 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+# This is a DOCUMENTATION stub specific to this module, it extends
+# a documentation fragment located in ansible.utils.module_docs_fragments
 DOCUMENTATION = '''
 ---
 module: rax_files
@@ -25,25 +27,18 @@ description:
   - Manipulate Rackspace Cloud Files Containers
 version_added: "1.5"
 options:
-  api_key:
-    description:
-      - Rackspace API key (overrides I(credentials))
   clear_meta:
     description:
       - Optionally clear existing metadata when applying metadata to existing containers.
         Selecting this option is only appropriate when setting type=meta
-    choices: ["yes", "no"]
+    choices:
+      - "yes"
+      - "no"
     default: "no"
   container:
     description:
       - The container to use for container or metadata operations.
     required: true
-  credentials:
-    description:
-      - File to find the Rackspace credentials in (ignored if I(api_key) and
-        I(username) are provided)
-    default: null
-    aliases: ['creds_file']
   meta:
     description:
       - A hash of items to set as metadata values on a container
@@ -59,6 +54,11 @@ options:
     description:
       - Region to create an instance in
     default: DFW
+  state:
+    description:
+      - Indicate desired state of the resource
+    choices: ['present', 'absent']
+    default: present
   ttl:
     description:
       - In seconds, set a container-wide TTL for all objects cached on CDN edge nodes.
@@ -66,26 +66,18 @@ options:
   type:
     description:
       - Type of object to do work on, i.e. metadata object or a container object
-    choices: ["file", "meta"]
-    default: "file"
-  username:
-    description:
-      - Rackspace username (overrides I(credentials))
+    choices:
+      - file
+      - meta
+    default: file
   web_error:
     description:
        - Sets an object to be presented as the HTTP error page when accessed by the CDN URL
   web_index:
     description:
        - Sets an object to be presented as the HTTP index page when accessed by the CDN URL
-requirements: [ "pyrax" ]
 author: Paul Durivage
-notes:
-  - The following environment variables can be used, C(RAX_USERNAME),
-    C(RAX_API_KEY), C(RAX_CREDS_FILE), C(RAX_CREDENTIALS), C(RAX_REGION).
-  - C(RAX_CREDENTIALS) and C(RAX_CREDS_FILE) points to a credentials file
-    appropriate for pyrax. See U(https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating)
-  - C(RAX_USERNAME) and C(RAX_API_KEY) obviate the use of a credentials file
-  - C(RAX_REGION) defines a Rackspace Public Cloud region (DFW, ORD, LON, ...)
+extends_documentation_fragment: rackspace
 '''
 
 EXAMPLES = '''
@@ -151,9 +143,9 @@ from ansible import __version__
 
 try:
     import pyrax
+    HAS_PYRAX = True
 except ImportError, e:
-    print("failed=True msg='pyrax is required for this module'")
-    sys.exit(1)
+    HAS_PYRAX = False
 
 EXIT_DICT = dict(success=True)
 META_PREFIX = 'x-container-meta-'
@@ -208,7 +200,8 @@ def meta(cf, module, container_, state, meta_, clear_meta):
     module.exit_json(**EXIT_DICT)
 
 
-def container(cf, module, container_, state, meta_, clear_meta, ttl, public, private, web_index, web_error):
+def container(cf, module, container_, state, meta_, clear_meta, ttl, public,
+              private, web_index, web_error):
     if public and private:
         module.fail_json(msg='container cannot be simultaneously '
                              'set to public and private')
@@ -232,6 +225,7 @@ def container(cf, module, container_, state, meta_, clear_meta, ttl, public, pri
             except Exception, e:
                 module.fail_json(msg=e.message)
             else:
+                EXIT_DICT['changed'] = True
                 EXIT_DICT['created'] = True
         else:
             module.fail_json(msg=e.message)
@@ -304,11 +298,9 @@ def container(cf, module, container_, state, meta_, clear_meta, ttl, public, pri
     EXIT_DICT['container'] = c.name
     EXIT_DICT['objs_in_container'] = c.object_count
     EXIT_DICT['total_bytes'] = c.total_bytes
-    
+
     _locals = locals().keys()
-    
-    if ('cont_created' in _locals
-            or 'cont_deleted' in _locals
+    if ('cont_deleted' in _locals
             or 'meta_set' in _locals
             or 'cont_public' in _locals
             or 'cont_private' in _locals
@@ -319,15 +311,23 @@ def container(cf, module, container_, state, meta_, clear_meta, ttl, public, pri
     module.exit_json(**EXIT_DICT)
 
 
-def cloudfiles(module, container_, state, meta_, clear_meta, typ, ttl, public, private, web_index, web_error):
-        """ Dispatch from here to work with metadata or file objects """
-        cf = pyrax.cloudfiles
-        cf.user_agent = USER_AGENT
+def cloudfiles(module, container_, state, meta_, clear_meta, typ, ttl, public,
+               private, web_index, web_error):
+    """ Dispatch from here to work with metadata or file objects """
+    cf = pyrax.cloudfiles
 
-        if typ == "container":
-            container(cf, module, container_, state, meta_, clear_meta, ttl, public, private, web_index, web_error)
-        else:
-            meta(cf, module, container_, state, meta_, clear_meta)
+    if cf is None:
+        module.fail_json(msg='Failed to instantiate client. This '
+                             'typically indicates an invalid region or an '
+                             'incorrectly capitalized region name.')
+
+    cf.user_agent = USER_AGENT
+
+    if typ == "container":
+        container(cf, module, container_, state, meta_, clear_meta, ttl,
+                  public, private, web_index, web_error)
+    else:
+        meta(cf, module, container_, state, meta_, clear_meta)
 
 
 def main():
@@ -335,13 +335,14 @@ def main():
     argument_spec.update(
         dict(
             container=dict(),
-            state=dict(choices=['present', 'absent', 'list'], default='present'),
+            state=dict(choices=['present', 'absent', 'list'],
+                       default='present'),
             meta=dict(type='dict', default=dict()),
-            clear_meta=dict(choices=BOOLEANS, default=False, type='bool'),
+            clear_meta=dict(default=False, type='bool'),
             type=dict(choices=['container', 'meta'], default='container'),
             ttl=dict(type='int'),
-            public=dict(choices=BOOLEANS, default=False, type='bool'),
-            private=dict(choices=BOOLEANS, default=False, type='bool'),
+            public=dict(default=False, type='bool'),
+            private=dict(default=False, type='bool'),
             web_index=dict(),
             web_error=dict()
         )
@@ -351,6 +352,9 @@ def main():
         argument_spec=argument_spec,
         required_together=rax_required_together()
     )
+
+    if not HAS_PYRAX:
+        module.fail_json(msg='pyrax is required for this module')
 
     container_ = module.params.get('container')
     state = module.params.get('state')
@@ -366,10 +370,12 @@ def main():
     if state in ['present', 'absent'] and not container_:
         module.fail_json(msg='please specify a container name')
     if clear_meta and not typ == 'meta':
-        module.fail_json(msg='clear_meta can only be used when setting metadata')
+        module.fail_json(msg='clear_meta can only be used when setting '
+                             'metadata')
 
     setup_rax_module(module, pyrax)
-    cloudfiles(module, container_, state, meta_, clear_meta, typ, ttl, public, private, web_index, web_error)
+    cloudfiles(module, container_, state, meta_, clear_meta, typ, ttl, public,
+               private, web_index, web_error)
 
 
 from ansible.module_utils.basic import *

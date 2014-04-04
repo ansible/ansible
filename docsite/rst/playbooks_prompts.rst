@@ -15,8 +15,10 @@ Here is a most basic example::
     ---
     - hosts: all
       remote_user: root
+
       vars:
         from: "camelot"
+
       vars_prompt:
         name: "what is your name?"
         quest: "what is your quest?"
@@ -27,6 +29,7 @@ provide a default value that can be overridden.  This can be accomplished using
 the default argument::
 
    vars_prompt:
+
      - name: "release_version"
        prompt: "Product release version"
        default: "1.0"
@@ -35,9 +38,11 @@ An alternative form of vars_prompt allows for hiding input from the user, and ma
 some other options, but otherwise works equivalently::
 
    vars_prompt:
+
      - name: "some_password"
        prompt: "Enter password"
        private: yes
+
      - name: "release_version"
        prompt: "Product release version"
        private: no
@@ -46,6 +51,7 @@ If `Passlib <http://pythonhosted.org/passlib/>`_ is installed, vars_prompt can a
 entered value so you can use it, for instance, with the user module to define a password::
 
    vars_prompt:
+
      - name: "my_password2"
        prompt: "Enter password2"
        private: yes

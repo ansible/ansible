@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+# This is a DOCUMENTATION stub specific to this module, it extends
+# a documentation fragment located in ansible.utils.module_docs_fragments
 DOCUMENTATION = '''
 ---
 module: rax
@@ -23,52 +25,6 @@ description:
        waits for it to be 'running'.
 version_added: "1.2"
 options:
-  api_key:
-    description:
-      - Rackspace API key (overrides I(credentials))
-    aliases:
-      - password
-  auth_endpoint:
-    description:
-      - The URI of the authentication service
-    default: https://identity.api.rackspacecloud.com/v2.0/
-    version_added: 1.5
-  credentials:
-    description:
-      - File to find the Rackspace credentials in (ignored if I(api_key) and
-        I(username) are provided)
-    default: null
-    aliases:
-      - creds_file
-  env:
-    description:
-      - Environment as configured in ~/.pyrax.cfg,
-        see U(https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#pyrax-configuration)
-    version_added: 1.5
-  identity_type:
-    description:
-      - Authentication machanism to use, such as rackspace or keystone
-    default: rackspace
-    version_added: 1.5
-  region:
-    description:
-      - Region to create an instance in
-    default: DFW
-  tenant_id:
-    description:
-      - The tenant ID used for authentication
-    version_added: 1.5
-  tenant_name:
-    description:
-      - The tenant name used for authentication
-    version_added: 1.5
-  username:
-    description:
-      - Rackspace username (overrides I(credentials))
-  verify_ssl:
-    description:
-      - Whether or not to require SSL validation of API endpoints
-    version_added: 1.5
   auto_increment:
     description:
       - Whether or not to increment a single number with the name of the
@@ -89,7 +45,9 @@ options:
   disk_config:
     description:
       - Disk partitioning strategy
-    choices: ['auto', 'manual']
+    choices:
+      - auto
+      - manual
     version_added: '1.4'
     default: auto
   exact_count:
@@ -98,6 +56,17 @@ options:
         state=active/present
     default: no
     version_added: 1.4
+  extra_client_args:
+    description:
+      - A hash of key/value pairs to be used when creating the cloudservers
+        client. This is considered an advanced option, use it wisely and
+        with caution.
+    version_added: 1.6
+  extra_create_args:
+    description:
+      - A hash of key/value pairs to be used when creating a new server.
+        This is considered an advanced option, use it wisely and with caution.
+    version_added: 1.6
   files:
     description:
       - Files to insert into the instance. remotefilename:localcontent
@@ -124,7 +93,8 @@ options:
     description:
       - key pair to use on the instance
     default: null
-    aliases: ['keypair']
+    aliases:
+      - keypair
   meta:
     description:
       - A hash of metadata to associate with the instance
@@ -138,31 +108,30 @@ options:
       - The network to attach to the instances. If specified, you must include
         ALL networks including the public and private interfaces. Can be C(id)
         or C(label).
-    default: ['public', 'private']
+    default:
+      - public
+      - private
     version_added: 1.4
   state:
     description:
       - Indicate desired state of the resource
-    choices: ['present', 'absent']
+    choices:
+      - present
+      - absent
     default: present
   wait:
     description:
       - wait for the instance to be in state 'running' before returning
     default: "no"
-    choices: [ "yes", "no" ]
+    choices:
+      - "yes"
+      - "no"
   wait_timeout:
     description:
       - how long before wait gives up, in seconds
     default: 300
-requirements: [ "pyrax" ]
 author: Jesse Keating, Matt Martz
-notes:
-  - The following environment variables can be used, C(RAX_USERNAME),
-    C(RAX_API_KEY), C(RAX_CREDS_FILE), C(RAX_CREDENTIALS), C(RAX_REGION).
-  - C(RAX_CREDENTIALS) and C(RAX_CREDS_FILE) points to a credentials file
-    appropriate for pyrax. See U(https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating)
-  - C(RAX_USERNAME) and C(RAX_API_KEY) obviate the use of a credentials file
-  - C(RAX_REGION) defines a Rackspace Public Cloud region (DFW, ORD, LON, ...)
+extends_documentation_fragment: rackspace.openstack
 '''
 
 EXAMPLES = '''
@@ -206,18 +175,18 @@ EXAMPLES = '''
       register: rax
 '''
 
-import sys
-import time
 import os
 import re
+import time
+
 from uuid import UUID
 from types import NoneType
 
 try:
     import pyrax
+    HAS_PYRAX = True
 except ImportError:
-    print("failed=True msg='pyrax is required for this module'")
-    sys.exit(1)
+    HAS_PYRAX = False
 
 ACTIVE_STATUSES = ('ACTIVE', 'BUILD', 'HARD_REBOOT', 'MIGRATING', 'PASSWORD',
                    'REBOOT', 'REBUILD', 'RESCUE', 'RESIZE', 'REVERT_RESIZE')
@@ -246,7 +215,8 @@ def pyrax_object_to_dict(obj):
 
 
 def create(module, names, flavor, image, meta, key_name, files,
-           wait, wait_timeout, disk_config, group, nics):
+           wait, wait_timeout, disk_config, group, nics,
+           extra_create_args):
 
     cs = pyrax.cloudservers
     changed = False
@@ -266,7 +236,8 @@ def create(module, names, flavor, image, meta, key_name, files,
                                              flavor=flavor, meta=meta,
                                              key_name=key_name,
                                              files=files, nics=nics,
-                                             disk_config=disk_config))
+                                             disk_config=disk_config,
+                                             **extra_create_args))
     except Exception, e:
         module.fail_json(msg='%s' % e.message)
     else:
@@ -405,10 +376,18 @@ def delete(module, instance_ids, wait, wait_timeout):
 def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                  wait, wait_timeout, disk_config, count, group,
                  instance_ids, exact_count, networks, count_offset,
-                 auto_increment):
+                 auto_increment, extra_create_args):
     cs = pyrax.cloudservers
     cnw = pyrax.cloud_networks
+    if not cnw:
+        module.fail_json(msg='Failed to instantiate client. This '
+                             'typically indicates an invalid region or an '
+                             'incorrectly capitalized region name.')
+
     servers = []
+
+    for key, value in meta.items():
+        meta[key] = repr(value)
 
     # Add the group meta key
     if group and 'group' not in meta:
@@ -576,7 +555,7 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                     names = [name] * count
             else:
                 search_opts = {
-                    'name': name,
+                    'name': '^%s$' % name,
                     'image': image,
                     'flavor': flavor
                 }
@@ -602,7 +581,7 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                 names = [name] * (count - len(servers))
 
         create(module, names, flavor, image, meta, key_name, files,
-               wait, wait_timeout, disk_config, group, nics)
+               wait, wait_timeout, disk_config, group, nics, extra_create_args)
 
     elif state == 'absent':
         if instance_ids is None:
@@ -612,7 +591,7 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                     module.fail_json(msg='%s is required for the "rax" '
                                          'module' % arg)
             search_opts = {
-                'name': name,
+                'name': '^%s$' % name,
                 'image': image,
                 'flavor': flavor
             }
@@ -642,11 +621,13 @@ def main():
     argument_spec = rax_argument_spec()
     argument_spec.update(
         dict(
-            auto_increment=dict(choices=BOOLEANS, default=True, type='bool'),
+            auto_increment=dict(default=True, type='bool'),
             count=dict(default=1, type='int'),
             count_offset=dict(default=1, type='int'),
             disk_config=dict(choices=['auto', 'manual']),
-            exact_count=dict(choices=BOOLEANS, default=False, type='bool'),
+            exact_count=dict(default=False, type='bool'),
+            extra_client_args=dict(type='dict', default={}),
+            extra_create_args=dict(type='dict', default={}),
             files=dict(type='dict', default={}),
             flavor=dict(),
             group=dict(),
@@ -658,7 +639,7 @@ def main():
             networks=dict(type='list', default=['public', 'private']),
             service=dict(),
             state=dict(default='present', choices=['present', 'absent']),
-            wait=dict(choices=BOOLEANS, default=False, type='bool'),
+            wait=dict(default=False, type='bool'),
             wait_timeout=dict(default=300),
         )
     )
@@ -667,6 +648,9 @@ def main():
         argument_spec=argument_spec,
         required_together=rax_required_together(),
     )
+
+    if not HAS_PYRAX:
+        module.fail_json(msg='pyrax is required for this module')
 
     service = module.params.get('service')
 
@@ -682,6 +666,8 @@ def main():
     if disk_config:
         disk_config = disk_config.upper()
     exact_count = module.params.get('exact_count', False)
+    extra_client_args = module.params.get('extra_client_args')
+    extra_create_args = module.params.get('extra_create_args')
     files = module.params.get('files')
     flavor = module.params.get('flavor')
     group = module.params.get('group')
@@ -697,10 +683,23 @@ def main():
 
     setup_rax_module(module, pyrax)
 
+    if extra_client_args:
+        pyrax.cloudservers = pyrax.connect_to_cloudservers(
+            region=pyrax.cloudservers.client.region_name,
+            **extra_client_args)
+        client = pyrax.cloudservers.client
+        if 'bypass_url' in extra_client_args:
+            client.management_url = extra_client_args['bypass_url']
+
+    if pyrax.cloudservers is None:
+        module.fail_json(msg='Failed to instantiate client. This '
+                             'typically indicates an invalid region or an '
+                             'incorrectly capitalized region name.')
+
     cloudservers(module, state, name, flavor, image, meta, key_name, files,
                  wait, wait_timeout, disk_config, count, group,
                  instance_ids, exact_count, networks, count_offset,
-                 auto_increment)
+                 auto_increment, extra_create_args)
 
 
 # import module snippets

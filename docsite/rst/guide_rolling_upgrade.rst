@@ -172,7 +172,7 @@ Here's another example, from the same template::
    {% endfor %}
 
 This loops over all of the hosts in the group called ``monitoring``, and adds an ACCEPT line for 
-each monitoring hosts's default IPV4 address to the current machine's iptables configuration, so that Nagios can monitor those hosts.
+each monitoring hosts' default IPV4 address to the current machine's iptables configuration, so that Nagios can monitor those hosts.
 
 You can learn a lot more about Jinja2 and its capabilities `here <http://jinja.pocoo.org/docs/>`_, and you 
 can read more about Ansible variables in general in the :doc:`playbooks_variables` section.
@@ -184,7 +184,7 @@ The Rolling Upgrade
 
 Now you have a fully-deployed site with web servers, a load balancer, and monitoring. How do you update it? This is where Ansible's 
 orchestration features come into play. While some applications use the term 'orchestration' to mean basic ordering or command-blasting, Ansible
-referes to orchestration as 'conducting machines like an orchestra', and has a pretty sophisticated engine for it.  
+refers to orchestration as 'conducting machines like an orchestra', and has a pretty sophisticated engine for it.
 
 Ansible has the capability to do operations on multi-tier applications in a coordinated way, making it easy to orchestrate a sophisticated zero-downtime rolling upgrade of our web application. This is implemented in a separate playbook, called ``rolling_upgrade.yml``.
 
@@ -201,7 +201,7 @@ The next part is the update play. The first part looks like this::
      user: root
      serial: 1
 
-This is just a normal play definition, operating on the ``webservers`` group. The ``serial`` keyword tells Ansible how many servers to operate on at once. If it's not specified, Ansible will paralleize these operations up to the default "forks" limit specified in the configuration file. But for a zero-downtime rolling upgrade, you may not want to operate on that many hosts at once. If you had just a handful of webservers, you may want to set ``serial`` to 1, for one host at a time. If you have 100, maybe you could set ``serial`` to 10, for ten at a time.
+This is just a normal play definition, operating on the ``webservers`` group. The ``serial`` keyword tells Ansible how many servers to operate on at once. If it's not specified, Ansible will parallelize these operations up to the default "forks" limit specified in the configuration file. But for a zero-downtime rolling upgrade, you may not want to operate on that many hosts at once. If you had just a handful of webservers, you may want to set ``serial`` to 1, for one host at a time. If you have 100, maybe you could set ``serial`` to 10, for ten at a time.
 
 Here is the next part of the update play::
 

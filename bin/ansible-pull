@@ -44,8 +44,11 @@ import subprocess
 import sys
 import datetime
 import socket
+import random
+import time
 from ansible import utils
 from ansible.utils import cmd_functions
+from ansible import errors
 
 DEFAULT_REPO_TYPE = 'git'
 DEFAULT_PLAYBOOK = 'local.yml'
@@ -101,6 +104,8 @@ def main(args):
                       help='purge checkout after playbook run')
     parser.add_option('-o', '--only-if-changed', dest='ifchanged', default=False, action='store_true',
                       help='only run the playbook if the repository has been updated')
+    parser.add_option('-s', '--sleep', dest='sleep', default=None,
+                      help='sleep for random interval (between 0 and n number of seconds) before starting. this is a useful way to disperse git requests')
     parser.add_option('-f', '--force', dest='force', default=False,
                       action='store_true',
                       help='run the playbook even if the repository could '
@@ -116,6 +121,8 @@ def main(args):
                       'Defaults to behavior of repository module.')
     parser.add_option('-i', '--inventory-file', dest='inventory',
                       help="location of the inventory host file")
+    parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
+                      help="set additional variables as key=value or YAML/JSON", default=[])
     parser.add_option('-v', '--verbose', default=False, action="callback",
                       callback=increment_debug,
                       help='Pass -vvvv to ansible-playbook')
@@ -123,6 +130,10 @@ def main(args):
                       default=DEFAULT_REPO_TYPE,
                       help='Module name used to check out repository.  '
                       'Default is %s.' % DEFAULT_REPO_TYPE)
+    parser.add_option('--vault-password-file', dest='vault_password_file',
+                    help="vault password file")
+    parser.add_option('-K', '--ask-sudo-pass', default=False, dest='ask_sudo_pass', action='store_true',
+                      help='ask for sudo password')
     options, args = parser.parse_args(args)
 
     hostname = socket.getfqdn()
@@ -159,7 +170,18 @@ def main(args):
             inv_opts, base_opts, options.module_name, repo_opts
             )
 
-    # RUN THE CHECKOUT COMMAND
+    if options.sleep:
+        try:
+            secs = random.randint(0,int(options.sleep));
+        except ValueError:
+            parser.error("%s is not a number." % options.sleep)
+            return 1
+
+        print >>sys.stderr, "Sleeping for %d seconds..." % secs
+        time.sleep(secs);
+
+
+    # RUN THe CHECKOUT COMMAND
     rc, out, err = cmd_functions.run_cmd(cmd, live=True)
 
     if rc != 0:
@@ -178,8 +200,14 @@ def main(args):
         return 1
 
     cmd = 'ansible-playbook %s %s' % (base_opts, playbook)
+    if options.vault_password_file:
+        cmd += " --vault-password-file=%s" % options.vault_password_file
     if options.inventory:
         cmd += ' -i "%s"' % options.inventory
+    for ev in options.extra_vars:
+        cmd += ' -e "%s"' % ev
+    if options.ask_sudo_pass:
+        cmd += ' -K'
     os.chdir(options.dest)
 
     # RUN THE PLAYBOOK COMMAND

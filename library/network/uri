@@ -106,7 +106,7 @@ options:
     required: false
   status_code:
     description:
-      - A valid, numeric, HTTP status code that signifies success of the request.
+      - A valid, numeric, HTTP status code that signifies success of the request. Can also be comma separated list of status codes.
     required: false
     default: 200
   timeout:
@@ -143,23 +143,29 @@ EXAMPLES = '''
   when: 'AWESOME' not in "{{ webpage.content }}"
 
 
-# Create a JIRA issue.
-- action: >
-        uri url=https://your.jira.example.com/rest/api/2/issue/ 
-        method=POST user=your_username password=your_pass 
-        body="{{ lookup('file','issue.json') }}" force_basic_auth=yes 
-        status_code=201 HEADER_Content-Type="application/json"  
+# Create a JIRA issue
 
-- action: > 
-        uri url=https://your.form.based.auth.examle.com/index.php 
-        method=POST body="name=your_username&password=your_password&enter=Sign%20in" 
-        status_code=302 HEADER_Content-Type="application/x-www-form-urlencoded"
-  register: login
+- uri: url=https://your.jira.example.com/rest/api/2/issue/ 
+       method=POST user=your_username password=your_pass 
+       body="{{ lookup('file','issue.json') }}" force_basic_auth=yes 
+       status_code=201 HEADER_Content-Type="application/json"  
 
 # Login to a form based webpage, then use the returned cookie to
-# access the app in later tasks.
-- action: uri url=https://your.form.based.auth.example.com/dashboard.php
-            method=GET return_content=yes HEADER_Cookie="{{login.set_cookie}}"
+# access the app in later tasks
+
+- uri: url=https://your.form.based.auth.examle.com/index.php 
+       method=POST body="name=your_username&password=your_password&enter=Sign%20in" 
+       status_code=302 HEADER_Content-Type="application/x-www-form-urlencoded"
+  register: login
+
+- uri: url=https://your.form.based.auth.example.com/dashboard.php
+       method=GET return_content=yes HEADER_Cookie="{{login.set_cookie}}"
+            
+# Queue build of a project in Jenkins:
+
+- uri: url=http://{{jenkins.host}}/job/{{jenkins.job}}/build?token={{jenkins.token}} 
+       method=GET user={{jenkins.user}} password={{jenkins.password}} force_basic_auth=yes status_code=201
+
 '''
 
 HAS_HTTPLIB2 = True
@@ -335,7 +341,7 @@ def main():
             follow_redirects = dict(required=False, default='safe', choices=['all', 'safe', 'none', 'yes', 'no']),
             creates = dict(required=False, default=None),
             removes = dict(required=False, default=None),
-            status_code = dict(required=False, default=200, type='int'),
+            status_code = dict(required=False, default=[200], type='list'),
             timeout = dict(required=False, default=30, type='int'),
         ),
         check_invalid_arguments=False,
@@ -358,7 +364,7 @@ def main():
     redirects = module.params['follow_redirects']
     creates = module.params['creates']
     removes = module.params['removes']
-    status_code = int(module.params['status_code'])
+    status_code = [int(x) for x in list(module.params['status_code'])]
     socket_timeout = module.params['timeout']
 
     # Grab all the http headers. Need this hack since passing multi-values is currently a bit ugly. (e.g. headers='{"Content-Type":"application/json"}')
@@ -427,7 +433,7 @@ def main():
                 uresp['json'] = js
             except:
                 pass
-    if resp['status'] != status_code:
+    if resp['status'] not in status_code:
         module.fail_json(msg="Status code was not " + str(status_code), content=content, **uresp)
     elif return_content:
         module.exit_json(changed=changed, content=content, **uresp)

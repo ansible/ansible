@@ -46,6 +46,7 @@ BOOLEANS = BOOLEANS_TRUE + BOOLEANS_FALSE
 
 import os
 import re
+import pipes
 import shlex
 import subprocess
 import sys
@@ -54,11 +55,13 @@ import types
 import time
 import shutil
 import stat
+import tempfile
 import traceback
 import grp
 import pwd
 import platform
 import errno
+import tempfile
 
 try:
     import json
@@ -112,7 +115,10 @@ FILE_COMMON_ARGUMENTS=dict(
     backup = dict(),
     force = dict(),
     remote_src = dict(), # used by assemble
+    delimiter = dict(), # used by assemble
+    directory_mode = dict(), # used by copy
 )
+
 
 def get_platform():
     ''' what's the platform?  example: Linux is a platform. '''
@@ -188,7 +194,7 @@ class AnsibleModule(object):
         os.environ['LANG'] = MODULE_LANG
         (self.params, self.args) = self._load_params()
 
-        self._legal_inputs = [ 'CHECKMODE', 'NO_LOG' ]
+        self._legal_inputs = ['CHECKMODE', 'NO_LOG']
         
         self.aliases = self._handle_aliases()
 
@@ -213,6 +219,9 @@ class AnsibleModule(object):
         self._set_defaults(pre=False)
         if not self.no_log:
             self._log_invocation()
+
+        # finally, make sure we're in a sane working dir
+        self._set_cwd()
 
     def load_file_common_arguments(self, params):
         '''
@@ -461,7 +470,7 @@ class AnsibleModule(object):
                 changed = True
         return changed
 
-    def set_file_attributes_if_different(self, file_args, changed):
+    def set_fs_attributes_if_different(self, file_args, changed):
         # set modes owners and context as needed
         changed = self.set_context_if_different(
             file_args['path'], file_args['secontext'], changed
@@ -478,19 +487,10 @@ class AnsibleModule(object):
         return changed
 
     def set_directory_attributes_if_different(self, file_args, changed):
-        changed = self.set_context_if_different(
-            file_args['path'], file_args['secontext'], changed
-        )
-        changed = self.set_owner_if_different(
-            file_args['path'], file_args['owner'], changed
-        )
-        changed = self.set_group_if_different(
-            file_args['path'], file_args['group'], changed
-        )
-        changed = self.set_mode_if_different(
-            file_args['path'], file_args['mode'], changed
-        )
-        return changed
+        return self.set_fs_attributes_if_different(file_args, changed)
+
+    def set_file_attributes_if_different(self, file_args, changed):
+        return self.set_fs_attributes_if_different(file_args, changed)
 
     def add_path_info(self, kwargs):
         '''
@@ -571,8 +571,9 @@ class AnsibleModule(object):
 
     def _check_invalid_arguments(self):
         for (k,v) in self.params.iteritems():
-            if k in ('CHECKMODE', 'NO_LOG'):
-                continue
+            # these should be in legal inputs already
+            #if k in ('CHECKMODE', 'NO_LOG'):
+            #    continue
             if k not in self._legal_inputs:
                 self.fail_json(msg="unsupported parameter for module: %s" % k)
 
@@ -686,6 +687,8 @@ class AnsibleModule(object):
                 if not isinstance(value, list):
                     if isinstance(value, basestring):
                         self.params[k] = value.split(",")
+                    elif isinstance(value, int) or isinstance(value, float):
+                        self.params[k] = [ str(value) ]
                     else:
                         is_invalid = True
             elif wanted == 'dict':
@@ -805,6 +808,12 @@ class AnsibleModule(object):
         else:
             msg = 'Invoked'
 
+        # 6655 - allow for accented characters
+        try:
+            msg = unicode(msg).encode('utf8')
+        except UnicodeDecodeError, e:
+            pass
+
         if (has_journal):
             journal_args = ["MESSAGE=%s %s" % (module, msg)]
             journal_args.append("MODULE=%s" % os.path.basename(__file__))
@@ -815,10 +824,30 @@ class AnsibleModule(object):
             except IOError, e:
                 # fall back to syslog since logging to journal failed
                 syslog.openlog(str(module), 0, syslog.LOG_USER)
-                syslog.syslog(syslog.LOG_NOTICE, unicode(msg).encode('utf8'))
+                syslog.syslog(syslog.LOG_NOTICE, msg) #1
         else:
             syslog.openlog(str(module), 0, syslog.LOG_USER)
-            syslog.syslog(syslog.LOG_NOTICE, unicode(msg).encode('utf8'))
+            syslog.syslog(syslog.LOG_NOTICE, msg) #2
+
+    def _set_cwd(self):
+        try:
+            cwd = os.getcwd()
+            if not os.access(cwd, os.F_OK|os.R_OK):
+                raise
+            return cwd
+        except:
+            # we don't have access to the cwd, probably because of sudo. 
+            # Try and move to a neutral location to prevent errors
+            for cwd in [os.path.expandvars('$HOME'), tempfile.gettempdir()]:
+                try:
+                    if os.access(cwd, os.F_OK|os.R_OK):
+                        os.chdir(cwd)
+                        return cwd
+                except:
+                    pass
+        # we won't error here, as it may *not* be a problem, 
+        # and we don't want to break modules unnecessarily
+        return None    
 
     def get_bin_path(self, arg, required=False, opt_dirs=[]):
         '''
@@ -865,6 +894,9 @@ class AnsibleModule(object):
         for encoding in ("utf-8", "latin-1", "unicode_escape"):
             try:
                 return json.dumps(data, encoding=encoding)
+            # Old systems using simplejson module does not support encoding keyword.
+            except TypeError, e:
+                return json.dumps(data)
             except UnicodeDecodeError, e:
                 continue
         self.fail_json(msg='Invalid unicode encoding encountered')
@@ -944,11 +976,12 @@ class AnsibleModule(object):
         it uses os.rename to ensure this as it is an atomic operation, rest of the function is
         to work around limitations, corner cases and ensure selinux context is saved if possible'''
         context = None
+        dest_stat = None
         if os.path.exists(dest):
             try:
-                st = os.stat(dest)
-                os.chmod(src, st.st_mode & 07777)
-                os.chown(src, st.st_uid, st.st_gid)
+                dest_stat = os.stat(dest)
+                os.chmod(src, dest_stat.st_mode & 07777)
+                os.chown(src, dest_stat.st_uid, dest_stat.st_gid)
             except OSError, e:
                 if e.errno != errno.EPERM:
                     raise
@@ -958,8 +991,10 @@ class AnsibleModule(object):
             if self.selinux_enabled():
                 context = self.selinux_default_context(dest)
 
+        creating = not os.path.exists(dest)
+
         try:
-            # Optimistically try a rename, solves some corner cases and can avoid useless work.
+            # Optimistically try a rename, solves some corner cases and can avoid useless work, throws exception if not atomic.
             os.rename(src, dest)
         except (IOError,OSError), e:
             # only try workarounds for errno 18 (cross device), 1 (not permited) and 13 (permission denied)
@@ -968,31 +1003,40 @@ class AnsibleModule(object):
 
             dest_dir = os.path.dirname(dest)
             dest_file = os.path.basename(dest)
-            tmp_dest = "%s/.%s.%s.%s" % (dest_dir,dest_file,os.getpid(),time.time())
+            tmp_dest = tempfile.NamedTemporaryFile(
+                prefix=".ansible_tmp", dir=dest_dir, suffix=dest_file)
 
             try: # leaves tmp file behind when sudo and  not root
                 if os.getenv("SUDO_USER") and os.getuid() != 0:
                     # cleanup will happen by 'rm' of tempdir
-                    shutil.copy(src, tmp_dest)
+                    # copy2 will preserve some metadata
+                    shutil.copy2(src, tmp_dest.name)
                 else:
-                    shutil.move(src, tmp_dest)
+                    shutil.move(src, tmp_dest.name)
                 if self.selinux_enabled():
-                    self.set_context_if_different(tmp_dest, context, False)
-                os.rename(tmp_dest, dest)
+                    self.set_context_if_different(
+                        tmp_dest.name, context, False)
+                if dest_stat:
+                    os.chown(tmp_dest.name, dest_stat.st_uid, dest_stat.st_gid)
+                os.rename(tmp_dest.name, dest)
             except (shutil.Error, OSError, IOError), e:
-                self.cleanup(tmp_dest)
+                self.cleanup(tmp_dest.name)
                 self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
+
+        if creating and os.getenv("SUDO_USER"):
+            os.chown(dest, os.getuid(), os.getgid())
 
         if self.selinux_enabled():
             # rename might not preserve context
             self.set_context_if_different(dest, context, False)
 
-    def run_command(self, args, check_rc=False, close_fds=False, executable=None, data=None, binary_data=False, path_prefix=None):
+    def run_command(self, args, check_rc=False, close_fds=False, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None, use_unsafe_shell=False):
         '''
         Execute a command, returns rc, stdout, and stderr.
         args is the command to run
         If args is a list, the command will be run with shell=False.
-        Otherwise, the command will be run with shell=True when args is a string.
+        If args is a string and use_unsafe_shell=False it will split args to a list and run with shell=False
+        If args is a string and use_unsafe_shell=True it run with shell=True.
         Other arguments:
         - check_rc (boolean)  Whether to call fail_json in case of
                               non zero RC.  Default is False.
@@ -1001,13 +1045,24 @@ class AnsibleModule(object):
         - executable (string) See documentation for subprocess.Popen().
                               Default is None.
         '''
+
+        shell = False
         if isinstance(args, list):
-            shell = False
-        elif isinstance(args, basestring):
+            if use_unsafe_shell:
+                args = " ".join([pipes.quote(x) for x in args])
+                shell = True
+        elif isinstance(args, basestring) and use_unsafe_shell:
             shell = True
+        elif isinstance(args, basestring):
+            args = shlex.split(args)
         else:
             msg = "Argument 'args' to run_command must be list or string"
             self.fail_json(rc=257, cmd=args, msg=msg)
+
+        # expand things like $HOME and ~
+        if not shell:
+            args = [ os.path.expandvars(os.path.expanduser(x)) for x in args ]
+
         rc = 0
         msg = None
         st_in = None
@@ -1017,40 +1072,84 @@ class AnsibleModule(object):
         if path_prefix:
             env['PATH']="%s:%s" % (path_prefix, env['PATH'])
 
+        # create a printable version of the command for use
+        # in reporting later, which strips out things like
+        # passwords from the args list
+        if isinstance(args, list):
+            clean_args = " ".join(pipes.quote(arg) for arg in args)
+        else:
+            clean_args = args
+
+        # all clean strings should return two match groups, 
+        # where the first is the CLI argument and the second 
+        # is the password/key/phrase that will be hidden
+        clean_re_strings = [
+            # this removes things like --password, --pass, --pass-wd, etc.
+            # optionally followed by an '=' or a space. The password can 
+            # be quoted or not too, though it does not care about quotes
+            # that are not balanced
+            # source: http://blog.stevenlevithan.com/archives/match-quoted-string
+            r'([-]{0,2}pass[-]?(?:word|wd)?[=\s]?)((?:["\'])?(?:[^\s])*(?:\1)?)',
+            # TODO: add more regex checks here
+        ]
+        for re_str in clean_re_strings:
+            r = re.compile(re_str)
+            clean_args = r.sub(r'\1********', clean_args)
+
         if data:
             st_in = subprocess.PIPE
+
+        kwargs = dict(
+            executable=executable,
+            shell=shell,
+            close_fds=close_fds,
+            stdin= st_in,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE 
+        )
+
+        if path_prefix:
+            kwargs['env'] = env
+        if cwd and os.path.isdir(cwd):
+            kwargs['cwd'] = cwd
+
+        # store the pwd
+        prev_dir = os.getcwd()
+
+        # make sure we're in the right working directory
+        if cwd and os.path.isdir(cwd):
+            try:
+                os.chdir(cwd)
+            except (OSError, IOError), e:
+                self.fail_json(rc=e.errno, msg="Could not open %s , %s" % (cwd, str(e)))
+
         try:
-            if path_prefix is not None:
-                cmd = subprocess.Popen(args,
-                                       executable=executable,
-                                       shell=shell,
-                                       close_fds=close_fds,
-                                       stdin=st_in,
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE,
-                                       env=env)
-            else:
-                cmd = subprocess.Popen(args,
-                                       executable=executable,
-                                       shell=shell,
-                                       close_fds=close_fds,
-                                       stdin=st_in,
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE)
-            
+            cmd = subprocess.Popen(args, **kwargs)
+
             if data:
                 if not binary_data:
-                    data += '\\n'
+                    data += '\n'
             out, err = cmd.communicate(input=data)
             rc = cmd.returncode
         except (OSError, IOError), e:
-            self.fail_json(rc=e.errno, msg=str(e), cmd=args)
+            self.fail_json(rc=e.errno, msg=str(e), cmd=clean_args)
         except:
-            self.fail_json(rc=257, msg=traceback.format_exc(), cmd=args)
+            self.fail_json(rc=257, msg=traceback.format_exc(), cmd=clean_args)
+
         if rc != 0 and check_rc:
             msg = err.rstrip()
-            self.fail_json(cmd=args, rc=rc, stdout=out, stderr=err, msg=msg)
+            self.fail_json(cmd=clean_args, rc=rc, stdout=out, stderr=err, msg=msg)
+
+        # reset the pwd
+        os.chdir(prev_dir)
+
         return (rc, out, err)
+
+    def append_to_file(self, filename, str):
+        filename = os.path.expandvars(os.path.expanduser(filename))
+        fh = open(filename, 'a')
+        fh.write(str)
+        fh.close()
 
     def pretty_bytes(self,size):
         ranges = (
@@ -1068,4 +1167,5 @@ class AnsibleModule(object):
                 break
         return '%.2f %s' % (float(size)/ limit, suffix)
 
-
+def get_module_path():
+    return os.path.dirname(os.path.realpath(__file__))

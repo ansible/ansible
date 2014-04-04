@@ -33,7 +33,7 @@ class ActionModule(object):
             module_name = 'command'
             module_args += " #USE_SHELL"
 
-        if tmp.find("tmp") == -1:
+        if "tmp" not in tmp:
             tmp = self.runner._make_tmp_path(conn)
 
         (module_path, is_new_style, shebang) = self.runner._copy_module(conn, tmp, module_name, module_args, inject, complex_args=complex_args)

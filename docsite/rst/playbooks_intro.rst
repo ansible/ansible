@@ -350,7 +350,7 @@ Assuming you load balance your checkout location, ansible-pull scales essentiall
 
 Run ``ansible-pull --help`` for details.
 
-There's also a `clever playbook <https://github.com/ansible/ansible-examples/blob/master/language_features/ansible_pull.yml>`_ available to using ansible in push mode to configure ansible-pull via a crontab!
+There's also a `clever playbook <https://github.com/ansible/ansible-examples/blob/master/language_features/ansible_pull.yml>`_ available to configure ansible-pull via a crontab from push mode.
 
 .. _tips_and_tricks:
 
@@ -370,7 +370,7 @@ package is installed.  Try it!
 To see what hosts would be affected by a playbook before you run it, you
 can do this::
 
-    ansible-playbook playbook.yml --list-hosts.
+    ansible-playbook playbook.yml --list-hosts
 
 .. seealso::
 

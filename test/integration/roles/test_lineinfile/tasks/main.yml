@@ -209,3 +209,21 @@
     that:
     - "result.stat.md5 == 'fef1d487711facfd7aa2c87d788c19d9'"
 
+
+- name: insert a multiple lines at the end of the file
+  lineinfile: dest={{output_dir}}/test.txt state=present line="This is a line\nwith \\\n character" insertafter="EOF"
+  register: result
+
+- name: assert that the multiple lines was inserted
+  assert:
+    that:
+    - "result.changed == true"
+    - "result.msg == 'line added'"
+
+- stat: path={{output_dir}}/test.txt
+  register: result
+
+- name: assert test md5 matches after insert the multiple lines
+  assert:
+    that:
+    - "result.stat.md5 == 'c2510d5bc8fdef8e752b8f8e74c784c2'"

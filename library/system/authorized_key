@@ -48,7 +48,12 @@ options:
     version_added: "1.2"
   manage_dir:
     description:
-      - Whether this module should manage the directory of the authorized_keys file. Make sure to set C(manage_dir=no) if you are using an alternate directory for authorized_keys set with C(path), since you could lock yourself out of SSH access. See the example below.
+      - Whether this module should manage the directory of the authorized key file.  If
+        set, the module will create the directory, as well as set the owner and permissions
+        of an existing directory. Be sure to
+        set C(manage_dir=no) if you are using an alternate directory for
+        authorized_keys, as set with C(path), since you could lock yourself out of
+        SSH access. See the example below.
     required: false
     choices: [ "yes", "no" ]
     default: "yes"
@@ -165,7 +170,7 @@ def keyfile(module, user, write=False, path=None, manage_dir=True):
     uid = user_entry.pw_uid
     gid = user_entry.pw_gid
 
-    if manage_dir in BOOLEANS_TRUE:
+    if manage_dir:
         if not os.path.exists(sshdir):
             os.mkdir(sshdir, 0700)
             if module.selinux_enabled():
@@ -199,33 +204,19 @@ def parseoptions(module, options):
     '''
     options_dict = keydict() #ordered dict
     if options:
-        token_exp = [
-            # matches separator
-            (r',+', False),
-            # matches option with value, e.g. from="x,y"
-            (r'([a-z0-9-]+)="((?:[^"\\]|\\.)*)"', True),
-            # matches single option, e.g. no-agent-forwarding 
-            (r'[a-z0-9-]+', True)
-        ]
-
-        pos = 0
-        while pos < len(options):
-            match = None
-            for pattern, is_valid_option in token_exp:
-                regex = re.compile(pattern, re.IGNORECASE)
-                match = regex.match(options, pos)
-                if match:
-                    text = match.group(0)
-                    if is_valid_option:
-                        if len(match.groups()) == 2:
-                            options_dict[match.group(1)] = match.group(2)
-                        else:
-                            options_dict[text] = None
-                    break
-            if not match:
-                module.fail_json(msg="invalid option string: %s" % options)
-            else:
-                pos = match.end(0)
+        try:
+            # the following regex will split on commas while
+            # ignoring those commas that fall within quotes
+            regex = re.compile(r'''((?:[^,"']|"[^"]*"|'[^']*')+)''')
+            parts = regex.split(options)[1:-1]
+            for part in parts:
+                if "=" in part:
+                    (key, value) = part.split("=", 1)
+                    options_dict[key] = value
+                elif part != ",":
+                    options_dict[part] = None
+        except:
+            module.fail_json(msg="invalid option string: %s" % options)
 
     return options_dict
 
@@ -236,6 +227,7 @@ def parsekey(module, raw_key):
     '''
 
     VALID_SSH2_KEY_TYPES = [
+        'ssh-ed25519',
         'ecdsa-sha2-nistp256',
         'ecdsa-sha2-nistp384',
         'ecdsa-sha2-nistp521', 
@@ -253,7 +245,7 @@ def parsekey(module, raw_key):
 
     # split key safely
     lex = shlex.shlex(raw_key)
-    lex.quotes = ["'", '"']
+    lex.quotes = []
     lex.commenters = '' #keep comment hashes
     lex.whitespace_split = True
     key_parts = list(lex)
@@ -314,7 +306,7 @@ def writekeys(module, filename, keys):
                     option_strings = []
                     for option_key in options.keys():
                         if options[option_key]:
-                            option_strings.append("%s=\"%s\"" % (option_key, options[option_key]))
+                            option_strings.append("%s=%s" % (option_key, options[option_key]))
                         else:
                             option_strings.append("%s" % option_key)
 

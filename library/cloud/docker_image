@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 #
 
 # (c) 2014, Pavel Antonov <antonov@adwz.ru>
@@ -104,6 +104,8 @@ Remove image from local docker storage:
 
 try:
     import sys
+    import re
+    import json
     import docker.client
     from requests.exceptions import *
     from urlparse import urlparse
@@ -122,12 +124,36 @@ class DockerImageManager:
         docker_url = urlparse(module.params.get('docker_url'))
         self.client = docker.Client(base_url=docker_url.geturl(), timeout=module.params.get('timeout'))
         self.changed = False
+        self.log = []
+        self.error_msg = None
+
+    def get_log(self, as_string=True):
+        return "".join(self.log) if as_string else self.log
 
     def build(self):
-        res = self.client.build(self.path, tag=":".join([self.name, self.tag]), nocache=self.nocache, rm=True)
+        stream = self.client.build(self.path, tag=':'.join([self.name, self.tag]), nocache=self.nocache, rm=True, stream=True)
+        success_search = r'Successfully built ([0-9a-f]+)'
+        image_id = None
         self.changed = True
-        return res
 
+        for chunk in stream:
+            if not chunk:
+                continue
+
+            chunk_json = json.loads(chunk)
+
+            if 'error' in chunk_json:
+                self.error_msg = chunk_json['error']
+                return None
+
+            if 'stream' in chunk_json:
+                output = chunk_json['stream']
+                self.log.append(output)
+                match = re.search(success_search, output)
+                if match:
+                    image_id = match.group(1)
+
+        return image_id
 
     def has_changed(self):
         return self.changed
@@ -136,7 +162,13 @@ class DockerImageManager:
         filtered_images = []
         images = self.client.images()
         for i in images:
-            if (not self.name or self.name == i['Repository']) and (not self.tag or self.tag == i['Tag']):
+            # Docker-py version >= 0.3 (Docker API >= 1.8)
+            if 'RepoTags' in i:
+                repotag = '%s:%s' % (getattr(self, 'name', ''), getattr(self, 'tag', 'latest'))
+                if not self.name or repotag in i['RepoTags']:
+                    filtered_images.append(i)
+            # Docker-py version < 0.3 (Docker API < 1.8)
+            elif (not self.name or self.name == i['Repository']) and (not self.tag or self.tag == i['Tag']):
                 filtered_images.append(i)
         return filtered_images
 
@@ -170,25 +202,27 @@ def main():
         failed = False
         image_id = None
         msg = ''
+        do_build = False
 
         # build image if not exists
         if state == "present":
             images = manager.get_images()
             if len(images) == 0:
-                image_id, msg = manager.build()
-                if image_id is None:
-                    failed = True
-
-
+                do_build = True
+        # build image
+        elif state == "build":
+            do_build = True
         # remove image or images
         elif state == "absent":
             manager.remove_images()
 
-        # build image
-        elif state == "build":
-            image_id, msg = manager.build()
-            if image_id is None:
+        if do_build:
+            image_id = manager.build()
+            if image_id:
+                msg = "Image builded: %s" % image_id
+            else:
                 failed = True
+                msg = "Error: %s\nLog:%s" % (manager.error_msg, manager.get_log())
 
         module.exit_json(failed=failed, changed=manager.has_changed(), msg=msg, image_id=image_id)
 

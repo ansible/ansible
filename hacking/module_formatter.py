@@ -185,7 +185,7 @@ def process_module(module, options, env, template, outputname, module_map):
     fname = module_map[module]
 
     # ignore files with extensions
-    if os.path.basename(fname).find(".") != -1:
+    if "." in os.path.basename(fname):
         return
 
     # use ansible core library to parse out doc metadata YAML and plaintext examples

@@ -289,6 +289,12 @@ class User(object):
                 self.module.fail_json(msg="Group %s does not exist" % self.group)
             cmd.append('-g')
             cmd.append(self.group)
+        elif self.group_exists(self.name):
+            # use the -N option (no user group) if a group already
+            # exists with the same name as the user to prevent 
+            # errors from useradd trying to create a group when 
+            # USERGROUPS_ENAB is set in /etc/login.defs.
+            cmd.append('-N')
 
         if self.groups is not None and len(self.groups):
             groups = self.get_groups_set()
@@ -1180,6 +1186,7 @@ class SunOS(User):
                             lines.append(line)
                             continue
                         fields[1] = self.password
+                        fields[2] = str(int(time.time() / 86400))
                         line = ':'.join(fields)
                         lines.append('%s\n' % line)
                     open(self.SHADOWFILE, 'w+').writelines(lines)
@@ -1266,6 +1273,7 @@ class SunOS(User):
                             lines.append(line)
                             continue
                         fields[1] = self.password
+                        fields[2] = str(int(time.time() / 86400))	
                         line = ':'.join(fields)
                         lines.append('%s\n' % line)
                     open(self.SHADOWFILE, 'w+').writelines(lines)

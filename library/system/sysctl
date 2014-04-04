@@ -45,6 +45,11 @@ options:
             - Whether the entry should be present or absent in the sysctl file.
         choices: [ "present", "absent" ]
         default: present
+    ignoreerrors:
+        description:
+            - Use this option to ignore errors about unknown keys.
+        choices: [ "yes", "no" ]
+        default: no
     reload:
         description:
             - If C(yes), performs a I(/sbin/sysctl -p) if the C(sysctl_file) is
@@ -139,9 +144,13 @@ class SysctlModule(object):
         if self.file_values[thisname] is None and self.args['state'] == "present":
             self.changed = True
             self.write_file = True
+        elif self.file_values[thisname] is None and self.args['state'] == "absent":
+            self.changed = False
         elif self.file_values[thisname] != self.args['value']:
             self.changed = True
             self.write_file = True
+
+        # use the sysctl command or not?
         if self.args['sysctl_set']:            
             if self.proc_value is None:
                 self.changed = True
@@ -214,8 +223,12 @@ class SysctlModule(object):
             # freebsd doesn't support -p, so reload the sysctl service
             rc,out,err = self.module.run_command('/etc/rc.d/sysctl reload')
         else:
-            # system supports reloading via the -p flag to sysctl, so we'll use that 
-            rc,out,err = self.module.run_command([self.sysctl_cmd, '-p', self.sysctl_file])
+            # system supports reloading via the -p flag to sysctl, so we'll use that
+            sysctl_args = [self.sysctl_cmd, '-p', self.sysctl_file]
+            if self.args['ignoreerrors']:
+                sysctl_args.insert(1, '-e')
+            
+            rc,out,err = self.module.run_command(sysctl_args)
 
         if rc != 0:            
             self.module.fail_json(msg="Failed to reload sysctl: %s" % str(out) + str(err))
@@ -226,7 +239,16 @@ class SysctlModule(object):
 
     # Get the token value from the sysctl file
     def read_sysctl_file(self):
-        lines = open(self.sysctl_file, "r").readlines()
+
+        lines = []            
+        if os.path.isfile(self.sysctl_file):
+            try:
+                f = open(self.sysctl_file, "r")
+                lines = f.readlines()
+                f.close()
+            except IOError, e:
+                self.module.fail_json(msg="Failed to open %s: %s" % (self.sysctl_file, str(e)))
+
         for line in lines:
             line = line.strip()
             self.file_lines.append(line)
@@ -296,6 +318,7 @@ def main():
             state = dict(default='present', choices=['present', 'absent']),
             reload = dict(default=True, type='bool'),
             sysctl_set = dict(default=False, type='bool'),
+            ignoreerrors = dict(default=False, type='bool'),
             sysctl_file = dict(default='/etc/sysctl.conf')
         ),
         supports_check_mode=True

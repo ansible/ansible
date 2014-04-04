@@ -2,6 +2,7 @@ Ansible Test System
 ===================
 
 Folders
+=======
 
 unit
 ----
@@ -11,12 +12,14 @@ mock interfaces rather than producing side effects.
 
 Playbook engine code is better suited for integration tests.
 
+Requirements: sudo pip install paramiko PyYAML jinja2 httplib2 passlib
+
 integration
 -----------
 
 Integration test layer, constructed using playbooks.
 
-Some tests may require cloud credentials, others will not, and destructive tests are seperated from non-destructive so a subset
+Some tests may require cloud credentials, others will not, and destructive tests are separated from non-destructive so a subset
 can be run on development machines.
 
 learn more

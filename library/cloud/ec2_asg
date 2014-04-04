@@ -1,0 +1,231 @@
+#!/usr/bin/python
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = """
+---
+module: ec2_asg
+short_description: Create or delete AWS Autoscaling Groups
+description:
+  - Can create or delete AWS Autoscaling Groups
+  - Works with the ec2_lc module to manage Launch Configurations
+version_added: "1.6"
+requirements: [ "boto" ]
+author: Gareth Rushgrove
+options:
+  state:
+    description:
+      - register or deregister the instance
+    required: true
+    choices: ['present', 'absent']
+  name:
+    description:
+      - Unique name for group to be created or deleted
+    required: true
+  load_balancers:
+    description:
+      - List of ELB names to use for the group
+    required: false
+  availability_zones:
+    description:
+      - List of availability zone names in which to create the group.
+    required: false
+  launch_config_name:
+    description:
+      - Name of the Launch configuration to use for the group. See the ec2_lc module for managing these.
+    required: false
+  min_size:
+    description:
+      - Minimum number of instances in group
+    required: false
+  max_size:
+    description:
+      - Maximum number of instances in group
+    required: false
+  desired_capacity:
+    description:
+      - Desired number of instances in group
+    required: false
+  aws_secret_key:
+    description:
+      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used.
+    required: false
+    default: None
+    aliases: ['ec2_secret_key', 'secret_key' ]
+  aws_access_key:
+    description:
+      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
+    required: false
+    default: None
+    aliases: ['ec2_access_key', 'access_key' ]
+  region:
+    description:
+      - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
+    required: false
+    aliases: ['aws_region', 'ec2_region']
+  vpc_zone_identifier:
+    description:
+      - List of VPC subnets to use
+    required: false
+    default: None
+"""
+
+EXAMPLES = '''
+- ec2_asg:
+    name: special
+    load_balancers: 'lb1,lb2'
+    availability_zones: 'eu-west-1a,eu-west-1b'
+    launch_config_name: 'lc-1'
+    min_size: 1
+    max_size: 10
+    desired_capacity: 5
+    vpc_zone_identifier: 'subnet-abcd1234,subnet-1a2b3c4d'
+'''
+
+import sys
+import time
+
+from ansible.module_utils.basic import *
+from ansible.module_utils.ec2 import *
+
+try:
+    import boto.ec2.autoscale
+    from boto.ec2.autoscale import AutoScaleConnection, AutoScalingGroup
+    from boto.exception import BotoServerError
+except ImportError:
+    print "failed=True msg='boto required for this module'"
+    sys.exit(1)
+
+
+def enforce_required_arguments(module):
+    ''' As many arguments are not required for autoscale group deletion
+        they cannot be mandatory arguments for the module, so we enforce
+        them here '''
+    missing_args = []
+    for arg in ('min_size', 'max_size', 'launch_config_name', 'availability_zones'):
+        if module.params[arg] is None:
+            missing_args.append(arg)
+    if missing_args:
+        module.fail_json(msg="Missing required arguments for autoscaling group create/update: %s" % ",".join(missing_args))
+
+
+def create_autoscaling_group(connection, module):
+    enforce_required_arguments(module)
+
+    group_name = module.params.get('name')
+    load_balancers = module.params['load_balancers']
+    availability_zones = module.params['availability_zones']
+    launch_config_name = module.params.get('launch_config_name')
+    min_size = module.params['min_size']
+    max_size = module.params['max_size']
+    desired_capacity = module.params.get('desired_capacity')
+    vpc_zone_identifier = module.params.get('vpc_zone_identifier')
+
+    launch_configs = connection.get_all_launch_configurations(names=[launch_config_name])
+
+    as_groups = connection.get_all_groups(names=[group_name])
+
+    if not as_groups:
+        ag = AutoScalingGroup(
+                 group_name=group_name,
+                 load_balancers=load_balancers,
+                 availability_zones=availability_zones,
+                 launch_config=launch_configs[0],
+                 min_size=min_size,
+                 max_size=max_size,
+                 desired_capacity=desired_capacity,
+                 vpc_zone_identifier=vpc_zone_identifier,
+                 connection=connection)
+
+        try:
+            connection.create_auto_scaling_group(ag)
+            module.exit_json(changed=True)
+        except BotoServerError, e:
+            module.fail_json(msg=str(e))
+    else:
+        as_group = as_groups[0]
+        changed = False
+        for attr in ('launch_config_name', 'max_size', 'min_size', 'desired_capacity',
+                     'vpc_zone_identifier', 'availability_zones'):
+            if getattr(as_group, attr) != module.params.get(attr):
+                changed = True
+                setattr(as_group, attr, module.params.get(attr))
+        # handle loadbalancers separately because None != []
+        load_balancers = module.params.get('load_balancers') or []
+        if as_group.load_balancers != load_balancers:
+            changed = True
+            as_group.load_balancers = module.params.get('load_balancers')
+
+        try:
+            if changed:
+                as_group.update()
+            module.exit_json(changed=changed)
+        except BotoServerError, e:
+            module.fail_json(msg=str(e))
+
+
+def delete_autoscaling_group(connection, module):
+    group_name = module.params.get('name')
+    groups = connection.get_all_groups(names=[group_name])
+    if groups:
+        group = groups[0]
+        group.shutdown_instances()
+
+        instances = True
+        while instances:
+            connection.get_all_groups()
+            for group in groups:
+                if group.name == group_name:
+                    if not group.instances:
+                        instances = False
+            time.sleep(10)
+
+        group.delete()
+        module.exit_json(changed=True)
+    else:
+        module.exit_json(changed=False)
+
+
+def main():
+    argument_spec = ec2_argument_spec()
+    argument_spec.update(
+        dict(
+            name=dict(required=True, type='str'),
+            load_balancers=dict(type='list'),
+            availability_zones=dict(type='list'),
+            launch_config_name=dict(type='str'),
+            min_size=dict(type='int'),
+            max_size=dict(type='int'),
+            desired_capacity=dict(type='int'),
+            vpc_zone_identifier=dict(type='str'),
+            state=dict(default='present', choices=['present', 'absent']),
+        )
+    )
+    module = AnsibleModule(argument_spec=argument_spec)
+
+    state = module.params.get('state')
+
+    region, ec2_url, aws_connect_params = get_aws_connection_info(module)
+    try:
+        connection = connect_to_aws(boto.ec2.autoscale, region, **aws_connect_params)
+    except boto.exception.NoAuthHandlerFound, e:
+        module.fail_json(msg=str(e))
+
+    if state == 'present':
+        create_autoscaling_group(connection, module)
+    elif state == 'absent':
+        delete_autoscaling_group(connection, module)
+
+main()
