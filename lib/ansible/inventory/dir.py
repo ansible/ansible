@@ -171,8 +171,15 @@ class InventoryDirectory(object):
                 # same host name but different object, merge
                 self._merge_hosts(grouphosts[host.name], host)
             else:
-                # new membership
+                # new membership, add host to group from self
+                # group from self will also be added again to host.groups, but
+                # as different object
                 group.add_host(self.hosts[host.name])
+                # now remove this the old object for group in host.groups
+                for hostgroup in [g for g in host.groups]:
+                    if hostgroup.name == group.name and hostgroup != self.groups[group.name]:
+                        self.hosts[host.name].groups.remove(hostgroup)
+
 
         # group child membership relation
         for newchild in newgroup.child_groups:
@@ -203,6 +210,18 @@ class InventoryDirectory(object):
         # name
         if host.name != newhost.name:
             raise errors.AnsibleError("Cannot merge host %s with %s" % (host.name, newhost.name))
+
+        # group membership relation
+        for newgroup in newhost.groups:
+            # dict with existing groups:
+            hostgroups = dict([(g.name, g) for g in host.groups])
+            # check if new group is already known as a group
+            if newgroup.name not in hostgroups:
+                if newgroup.name not in self.groups:
+                    # group does not exist yet in self, import him
+                    self.groups[newgroup.name] = newgroup
+                # group now exists but doesn't have host yet
+                self.groups[newgroup.name].add_host(host)
 
         # variables
         host.vars = utils.combine_vars(host.vars, newhost.vars)
