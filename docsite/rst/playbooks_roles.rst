@@ -154,8 +154,8 @@ Roles
 .. versionadded:: 1.2
 
 Now that you have learned about vars_files, tasks, and handlers, what is the best way to organize your playbooks?
-The short answer is to use roles!  Roles are ways of automatically loading certain vars_files, tasks, and
-handlers based on a known file structure.  Grouping content by roles also allows easy sharing of roles with other users.
+The short answer is to use roles!  Roles is a directoty layout convention to automatically load certain vars_files,
+tasks, and handlers.  Grouping content by roles also allows easy sharing of roles with other users.
 
 In a playbook, it would look like this::
 
@@ -165,7 +165,7 @@ In a playbook, it would look like this::
          - common
          - webservers
 
-Roles are just automation around 'include' directives as described above, and really don't contain much
+Roles are just automation around 'include' directives as described previously, and really don't contain much
 additional magic beyond some improvements to search path handling for referenced files.  However, that can be a big thing!
 
 Example project structure::
