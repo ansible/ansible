@@ -17,21 +17,19 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
-# This is a port of the ruby zabbix api found here:
-# http://trac.red-tux.net/browser/ruby/api/zbx_api.rb
 #
 
 DOCUMENTATION = '''
 ---
 module: zabbix_group
-short_description: Zabbix host groups creates/deletes.
+short_description: Zabbix host groups creates/deletes
 description:
-   - Create Zabbix host groups if they don't exist.
-   - Delete the existing host groups in Zabbix.
+   - Create host groups if they don't exist.
+   - Delete existing host groups if they exist.
 version_added: "1.6"
 author: Tony Minfei Ding, Harrison Gu
 requirements:
-    - zabbix-api python module from https://github.com/gnetsman/zabbix_api (the 1.0 version in pip is too old unfortunately)
+    - zabbix-api python module
 options:
     server_url:
         description:
@@ -52,7 +50,7 @@ options:
         default: null
     state:
         description:
-            - create or delete host group.
+            - Create or delete host group.
             - Possible values are: present and absent.
         required: false
         default: "present"
@@ -60,11 +58,13 @@ options:
         description:
             - List of host groups to create or delete.
         required: true
+notes:
+    - Too many concurrent updates to the same group may cause Zabbix to return errors, see examples for a workaround if needed.
 '''
 
 EXAMPLES = '''
 # Base create host groups example
-- name: Create host groups in zabbix
+- name: Create host groups
   local_action:
     module: zabbix_group
     server_url: http://monitor.example.com
@@ -76,7 +76,7 @@ EXAMPLES = '''
       - Example group2
 
 # Limit the Zabbix group creations to one host since Zabbix can return an error when doing concurent updates
-- name: Create host groups in zabbix
+- name: Create host groups
   local_action:
     module: zabbix_group
     server_url: http://monitor.example.com
@@ -92,7 +92,7 @@ EXAMPLES = '''
 from ansible.module_utils.basic import *
 
 try:
-    from zabbix_api import ZabbixAPI
+    from zabbix_api import ZabbixAPI, ZabbixAPISubClass
     from zabbix_api import Already_Exists
 
     HAS_ZABBIX_API = True
@@ -156,7 +156,7 @@ def main():
     )
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg="Missing requried zabbix-api module, see this module's requirements for which version to install")
+        module.fail_json(msg="Missing requried zabbix-api module (check docs or install with: pip install zabbix-api)")
 
     server_url = module.params['server_url']
     login_user = module.params['login_user']
@@ -181,7 +181,7 @@ def main():
         group_ids, group_list = hostGroup.get_group_ids(host_groups)
 
     if state == "absent":
-   		# create host groups 	
+        # delete host groups
         if group_ids:
             delete_group_names = []
             hostGroup.delete_host_group(group_ids)
@@ -190,9 +190,9 @@ def main():
             module.exit_json(changed=True,
                              result="Successfully deleted host group(s): %s." % ",".join(delete_group_names))
         else:
-            module.exit_json(changed=False, result="Not found available host group(s) to delete.")
+            module.exit_json(changed=False, result="No host group(s) to delete.")
     else:
-    	# delete host groups
+        # create host groups
         group_add_list = hostGroup.create_host_group(host_groups)
         if len(group_add_list) > 0:
             module.exit_json(changed=True, result="Successfully created host group(s): %s" % group_add_list)

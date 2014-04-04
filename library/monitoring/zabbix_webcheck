@@ -1,0 +1,271 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2013, Epic Games, Inc.
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+#
+
+DOCUMENTATION = '''
+---
+module: zabbix_webcheck
+short_description: Zabbix web checks creates/deletes
+description:
+   - Creates a web check according to the host and application, the application will also be created if it does not exist.
+version_added: "1.6"
+author: Damon Chencheng Kong
+requirements:
+    - zabbix-api python module
+options:
+    server_url:
+        description:
+            - Url of Zabbix server, with protocol (http or https).
+              C(url) is an alias for C(server_url).
+        required: true
+        default: null
+        aliases: [ "url" ]
+    login_user:
+        description:
+            - Zabbix user name.
+        required: true
+        default: null
+    login_password:
+        description:
+            - Zabbix user password.
+        required: true
+        default: null
+    web_check:
+        description:
+            - List of web check to be created/updated/deleted (see example).
+            - Available values: web_check_name,application_name,host_name,web_check_steps
+            - web_check_agent: User agent string that will be used by the web scenario
+            - Please review the web check documentation for more information on the supported web check properties: https://www.zabbix.com/documentation/2.0/manual/appendix/api/webcheck/definitions
+        required: true
+    state:
+        description:
+            - Create or delete a web check.
+            - Possible values are: present, absent, default create web check.
+        required: false
+        default: "present"
+'''
+
+EXAMPLES = '''
+- name: add a web check
+  local_action:
+    module: zabbix_webcheck
+    server_url: http://monitor.example.com
+    login_user: username
+    login_password: password
+    state: present
+    web_check:
+      web_check_name: example Health Check
+      application_name: example app
+      host_name: example host name
+      web_check_agent: zabbix web check
+      web_check_steps:
+        - step_name: WebSite Check1
+          step_url: http://www.example1.com
+          step_status_codes: 200
+          step_number: 1
+        - step_name: WebSite Check2
+          step_url: http://www.example2.com
+          step_status_codes: 200
+          step_number: 2
+
+- name: delete a web check
+  local_action:
+    module: zabbix_webcheck
+    server_url: http://monitor.example.com
+    login_user: username
+    login_password: password
+    state: absent
+    web_check:
+      web_check_name: "example Health Check"
+'''
+
+import json
+import base64
+import urllib2
+import random
+import time
+
+from ansible.module_utils.basic import *
+
+try:
+    from zabbix_api import ZabbixAPI, ZabbixAPISubClass
+    from zabbix_api import ZabbixAPIException
+    from zabbix_api import Already_Exists
+
+    HAS_ZABBIX_API = True
+except ImportError:
+    HAS_ZABBIX_API = False
+
+
+class ZabbixAPIExtends(ZabbixAPI):
+    webcheck = None
+
+    def __init__(self, server, **kwargs):
+        ZabbixAPI.__init__(self, server, timeout=20)
+        self.webcheck = ZabbixAPISubClass(self, dict({"prefix": "webcheck"}, **kwargs))
+
+
+class WebCheck(object):
+    def __init__(self, module, zbx):
+        self._module = module
+        self._zapi = zbx
+
+    # get host id by host name
+    def get_host_id(self, hostName):
+        try:
+            hostObj = self._zapi.host.get({'output': 'extend', 'filter': {'host': hostName}})
+            hostId = hostObj[0]['hostid']
+        except Exception, e:
+            self._module.fail_json(msg="Failed to get the host %s id: %s." % (hostName, e))
+        return hostId
+
+    # get application id by application name, host id
+    def get_application_id(self, hostId, applicationName):
+        try:
+            applicationObj = self._zapi.application.get(
+                {'output': 'extend', 'filter': {'hostid': hostId, "name": applicationName}})
+            applicationId = applicationObj[0]['applicationid']
+            if not applicationObj:
+                self.create_application(hostId, applicationName)
+                applicationObj = self._zapi.application.get(
+                    {'output': 'extend', 'filter': {'hostid': hostId, "name": applicationName}})
+                applicationId = applicationObj[0]['applicationid']
+        except Exception, e:
+            self._module.fail_json(msg="Failed to get the application %s id: %s." % (applicationName, e))
+        return applicationId
+
+    #get webcheck
+    def get_web_check(self, webCheckName):
+        try:
+            webCheck = self._zapi.webcheck.get({'filter': {'name': webCheckName}})
+        except Exception, e:
+            self._module.fail_json(msg="Failed to get WebCheck %s: %s" % (webCheckName, e))
+        return webCheck
+
+    # get steps
+    def get_steps(self, webCheckSteps):
+        steps = []
+        for webCheckStep in webCheckSteps:
+            step = {"name": webCheckStep['step_name'],
+                    "url": webCheckStep['step_url'],
+                    "status_codes": webCheckStep['step_status_codes'],
+                    "no": webCheckStep['step_number']}
+            steps.append(step)
+        return steps
+
+    # get webcheck params
+    def get_web_check_params(self, hostId, applicationId, webCheckName, webCheckSteps, webCheckAgent):
+        steps = self.get_steps(webCheckSteps)
+        webCheckParams = {"name": webCheckName,
+                          "applicationid": applicationId,
+                          "agent": webCheckAgent,
+                          "hostid": hostId,
+                          "steps": steps}
+        return webCheckParams
+
+    #create application by application name, host id
+    def create_application(self, hostId, applicationName):
+        try:
+            if self._module.check_mode:
+                self._module.exit_json(changed=True)
+            self._zapi.application.create({'hostid': hostId, 'name': applicationName})
+        except Exception, e:
+            self._module.fail_json(msg="Failed to create Application %s: %s" % (applicationName, e))
+
+    # create web check
+    def create_web_check(self, hostId, applicationId, webCheckName, webCheckSteps, webCheckAgent):
+        webCheck = self.get_web_check(webCheckName)
+        if not webCheck:
+            webCheckParams = self.get_web_check_params(hostId, applicationId, webCheckName, webCheckSteps,
+                                                       webCheckAgent)
+            try:
+                if self._module.check_mode:
+                    self._module.exit_json(changed=True)
+                self._zapi.webcheck.create(webCheckParams)
+                self._module.exit_json(changed=True, result="Successfully added WebCheck %s " % webCheckName)
+            except Exception, e:
+                self._module.fail_json(msg="Failed to create WebCheck %s: %s" % (webCheckName, e))
+        else:
+            self._module.exit_json(changed=True, result="WebCheck %s already exists" % webCheckName)
+
+    # delete web check
+    def delete_web_check(self, webCheckName):
+        webCheck = self.get_web_check(webCheckName)
+        if not webCheck:
+            self._module.exit_json(changed=True, result="WebCheck %s does not exist" % webCheckName)
+        else:
+            webCheckId = webCheck[0]['httptestid'];
+            try:
+                if self._module.check_mode:
+                    self._module.exit_json(changed=True)
+                self._zapi.webcheck.delete([webCheckId])
+                self._module.exit_json(changed=True, result="Successfully deleted WebCheck %s " % webCheckName)
+            except Exception, e:
+                self._module.fail_json(msg="Failed to delete WebCheck %s: %s" % (webCheckName, e))
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            server_url=dict(required=True),
+            login_user=dict(required=True),
+            login_password=dict(required=True),
+            state=dict(default="present"),
+            web_check=dict(required=True),
+        ),
+        supports_check_mode=True,
+    )
+
+    if not HAS_ZABBIX_API:
+        module.fail_json(msg="Missing requried zabbix-api module (check docs or install with: pip install zabbix-api)")
+
+    zabbix_server_url = module.params['server_url']
+    zabbix_login_user = module.params['login_user']
+    zabbix_login_password = module.params['login_password']
+    state = module.params['state']
+    zabbix_web_check = module.params['web_check']
+    zabbix_web_check_name = zabbix_web_check['web_check_name']
+
+    # login to zabbix
+    zbx = None
+    try:
+        zbx = ZabbixAPIExtends(zabbix_server_url, timeout=20)
+        zbx.login(zabbix_login_user, zabbix_login_password)
+    except Exception, e:
+        module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
+
+    web_check = WebCheck(module, zbx)
+
+    # create web check
+    if state == 'absent':
+        web_check.delete_web_check(zabbix_web_check_name)
+    else:
+        zabbix_application_name = zabbix_web_check['application_name']
+        zabbix_web_check_steps = zabbix_web_check['web_check_steps']
+        zabbix_host_name = zabbix_web_check['host_name']
+        zabbix_web_check_agent = zabbix_web_check['web_check_agent']
+        hostId = web_check.get_host_id(zabbix_host_name)
+        applicationId = web_check.get_application_id(hostId, zabbix_application_name)
+        web_check.create_web_check(hostId, applicationId, zabbix_web_check_name, zabbix_web_check_steps,
+                                   zabbix_web_check_agent)
+
+# <<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
+

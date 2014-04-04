@@ -22,15 +22,15 @@
 DOCUMENTATION = '''
 ---
 module: zabbix_host
-short_description: Zabbix host creates/updates/deletes.
+short_description: Zabbix host creates/updates/deletes
 description:
-   - When the host does not exists, a new host will be created, added to any host groups, and link in any templates.
+   - When the host does not exists, a new host will be created, added to any host groups and linked to any templates.
    - When the host already exists, the host group membership will be updated, along with the template links and interfaces.
    - Delete a host from Zabbix if the host exists.
 version_added: "1.6"
 author: Tony Minfei Ding, Harrison Gu
 requirements:
-    - zabbix-api python module from https://github.com/gnetsman/zabbix_api (the 1.0 version in pip is too old unfortunately)
+    - zabbix-api python module
 options:
     server_url:
         description:
@@ -79,7 +79,7 @@ options:
         description:
             - List of interfaces to be created for the host (see example).
             - Available values are: dns, ip, main, port, type and useip.
-            - Please review at https://www.zabbix.com/documentation/2.0/manual/appendix/api/hostinterface/definitions#host_interface to get more details.
+            - Please review the interface documentation for more information on the supported properties: https://www.zabbix.com/documentation/2.0/manual/appendix/api/hostinterface/definitions#host_interface
         required: false
 '''
 
@@ -114,15 +114,26 @@ EXAMPLES = '''
         port: 12345
 '''
 
+import logging
 from ansible.module_utils.basic import *
 
 try:
-    from zabbix_api import ZabbixAPI
+    from zabbix_api import ZabbixAPI, ZabbixAPISubClass
 
     HAS_ZABBIX_API = True
 except ImportError:
     HAS_ZABBIX_API = False
 
+
+# Extend the ZabbixAPI
+# Since the zabbix-api python module too old (version 1.0, no higher version so far), it does not support the 'hostinterface' api calls,
+# so we have to inherit the ZabbixAPI class to add 'hostinterface' support.
+class ZabbixAPIExtends(ZabbixAPI):
+    hostinterface = None
+
+    def __init__(self, server, **kwargs):
+        ZabbixAPI.__init__(self, server)
+        self.hostinterface = ZabbixAPISubClass(self, dict({"prefix": "hostinterface"}, **kwargs))
 
 class Host(object):
     def __init__(self, module, zbx):
@@ -270,7 +281,7 @@ def main():
     )
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg="Missing requried zabbix-api module, see this module's requirements for which version to install")
+        module.fail_json(msg="Missing requried zabbix-api module (check docs or install with: pip install zabbix-api)")
 
     server_url = module.params['server_url']
     login_user = module.params['login_user']
@@ -288,7 +299,7 @@ def main():
     zbx = None
     # login to zabbix
     try:
-        zbx = ZabbixAPI(server_url)
+        zbx = ZabbixAPIExtends(server_url)
         zbx.login(login_user, login_password)
     except Exception, e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
@@ -320,9 +331,9 @@ def main():
             # remove host
             host.delete_host(host_id, host_name)
             module.exit_json(changed=True, result="Successfully deleted host %s" % host_name)
-        else:  
+        else:
             if not group_ids:
-                module.fail_json(msg="Need to specify at least one of groups for updating host '%s'." % host_name)
+                module.fail_json(msg="Specify at least one group for updating host '%s'." % host_name)
 
             # get exist interface
             exist_interface_list = host._zapi.hostinterface.get({'output': 'extend', 'filter': {'hostid': host_id}})
@@ -339,10 +350,10 @@ def main():
                 host_name, ip, link_templates))
     else:
         if not group_ids:
-            module.fail_json(msg="Need to specify at least one of groups for creating host '%s'." % host_name)
+            module.fail_json(msg="Specify at least one group for creating host '%s'." % host_name)
 
         if not interfaces or (interfaces and len(interfaces) == 0):
-            module.fail_json(msg="Need to specify at least one of interfaces for creating host '%s'." % host_name)
+            module.fail_json(msg="Specify at least one interface for creating host '%s'." % host_name)
 
         # create host
         host.add_host(host_name, group_ids, status, interfaces)
