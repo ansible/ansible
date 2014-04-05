@@ -48,6 +48,7 @@ options:
         required: false
         default: 27017
     replica_set:
+        version_added: "1.6"
         description:
             - Replica set to connect to (automatically connects to primary for writes)
         required: false
@@ -195,6 +196,15 @@ def main():
     	   client = MongoClient(login_host, int(login_port), replicaset=replica_set)
     	else:
     	   client = MongoClient(login_host, int(login_port))
+
+        # try to authenticate as a target user to check if it already exists
+        try:
+           client[db_name].authenticate(user, password)
+           if state == 'present':
+              module.exit_json(changed=False, user=user)
+        except OperationFailure:
+           if state == 'absent':
+              module.exit_json(changed=False, user=user)
 
         if login_user is None and login_password is None:
             mongocnf_creds = load_mongocnf()
