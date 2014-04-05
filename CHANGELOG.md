@@ -67,6 +67,12 @@ Other notable changes:
 * apt module now accepts "deb" parameter to install local dpkg files
 * regex_replace filter plugin added
 * ... to be filled in from changelogs ...
+* 
+
+## 1.5.4 "Love Walks In" - April 1, 2014
+
+- Security fix for safe_eval, which further hardens the checking of the evaluation function.
+- Changing order of variable precendence for system facts, to ensure that inventory variables take precedence over any facts that may be set on a host.
 
 ## 1.5.3 "Love Walks In" - March 13, 2014
 
