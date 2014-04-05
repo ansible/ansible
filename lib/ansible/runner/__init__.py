@@ -934,7 +934,8 @@ class Runner(object):
         # compare connection user to (su|sudo)_user and disable if the same
         if hasattr(conn, 'user'):
             if (not su and conn.user == sudo_user) or (su and conn.user == su_user):
-                sudoable = False
+                if not C.ALLOW_SUDO_SAME_USER:
+                    sudoable = False
                 su = False
         else:
             # assume connection type is local if no user attribute
