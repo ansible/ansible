@@ -231,6 +231,7 @@ class Facts(object):
             dist = platform.dist()
             self.facts['distribution'] = dist[0].capitalize() or 'NA'
             self.facts['distribution_version'] = dist[1] or 'NA'
+            self.facts['distribution_major_version'] = dist[1].split('.')[0] or 'NA'
             self.facts['distribution_release'] = dist[2] or 'NA'
             # Try to handle the exceptions now ...
             for (path, name) in Facts.OSDIST_DICT.items():
