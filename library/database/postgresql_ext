@@ -10,7 +10,7 @@ description:
     - The function of this module is to allow the installation and removal
       of extensions from a PostgreSQL database. This requires superuser
       privileges within the database.
-version_added: "1.5.2"
+version_added: "1.6"
 options:
   db:
     description:
