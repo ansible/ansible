@@ -27,7 +27,6 @@ import shlex
 import os
 import sys
 import uuid
-from ansible.callbacks import vvv
 
 class Play(object):
 
