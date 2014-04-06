@@ -79,18 +79,21 @@ class NotAvailableError(Exception):
 
 
 def ext_present(cursor, ext):
+    """Check if extension is installed in the database."""
     cursor.execute("""SELECT extname
                         FROM pg_catalog.pg_extension
                         WHERE extname = %s;""", (ext,))
     return cursor.fetchone() is not None
 
 def ext_available(cursor, ext):
+    """Check if extension is available to be installed."""
     cursor.execute("""SELECT name
                         FROM pg_catalog.pg_available_extensions
                         WHERE name = %s;""", (ext,))
     return cursor.fetchone() is not None
 
 def uninstall_ext(cursor, ext):
+    """Uninstall extension from database."""
     if ext_present(cursor, ext):
         cursor.execute("DROP EXTENSION %s;" % ext)
         return True
@@ -98,6 +101,7 @@ def uninstall_ext(cursor, ext):
         return False
 
 def install_ext(cursor, ext):
+    """Install extension in database."""
     if not ext_present(cursor, ext):
         if not ext_available(cursor, ext):
             raise NotAvailableError("Extension '%s' is not available for installation." % ext)
@@ -124,25 +128,24 @@ def main():
     if not psycopg2_present:
         module.fail_json(msg="The python psycopg2 module is required")
 
-    db = module.params["db"]
+    db        = module.params["db"]
     extension = module.params["extension"]
-    state = module.params["state"]
-    changed = False
+    state     = module.params["state"]
+    changed   = False
 
-    params_map = {
-        "login_host": "host",
-        "login_user": "user",
-        "login_password": "password",
-        "port": "port"
-    }
+    params_map = dict(
+        login_host     = "host",
+        login_user     = "user",
+        login_password = "password",
+        port           = "port"
+    )
 
     kw = dict( (params_map[k], v) for (k, v) in module.params.iteritems()
                 if k in params_map and v != '' )
 
     try:
-        conn = psycopg2.connect(database=db, **kw)
-        cursor = conn.cursor(
-                cursor_factory=psycopg2.extras.DictCursor)
+        conn   = psycopg2.connect(database=db, **kw)
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     except Exception, e:
         module.fail_json(msg="Unable to connect to database: %s" % e)
 
@@ -155,8 +158,7 @@ def main():
 
     except Exception, e:
         conn.rollback()
-        module.fail_json(db=db, extension=extension,
-                         msg="Database operation failed: %s" % e)
+        module.fail_json(db=db, extension=extension, msg="Database operation failed: %s" % e)
 
     if module.check_mode:
         conn.rollback()
