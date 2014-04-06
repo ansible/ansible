@@ -95,6 +95,7 @@ def do_ini(module, filename, section=None, option=None, value=None, state='prese
 
     changed = False
     cp = ConfigParser.ConfigParser()
+    cp.optionxform = lambda x: x
 
     try:
         f = open(filename)
