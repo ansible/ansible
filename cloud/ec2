@@ -833,8 +833,10 @@ def create_instances(module, ec2, override_count=None):
                       'instance_type': instance_type,
                       'kernel_id': kernel,
                       'ramdisk_id': ramdisk,
-                      'ebs_optimized': ebs_optimized,
                       'user_data': user_data}
+
+            if ebs_optimized:
+              params['ebs_optimized'] = ebs_optimized
 
             if boto_supports_profile_name_arg(ec2):
                 params['instance_profile_name'] = instance_profile_name
