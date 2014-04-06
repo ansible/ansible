@@ -20,6 +20,7 @@ from ansible import utils
 import os
 import ansible.utils.template as template
 import sys
+from ansible.callbacks import vvv
 
 class Task(object):
 
@@ -117,8 +118,8 @@ class Task(object):
         self.name         = ds.get('name', None)
         self.tags         = [ 'all' ]
         self.register     = ds.get('register', None)
-        self.sudo         = utils.boolean(ds.get('sudo', play.sudo))
-        self.su           = utils.boolean(ds.get('su', play.su))
+        self.sudo         = ds.get('sudo', play.sudo)
+        self.su           = ds.get('su', play.su)
         self.environment  = ds.get('environment', {})
         self.role_name    = role_name
         self.no_log       = utils.boolean(ds.get('no_log', "false"))
@@ -150,10 +151,10 @@ class Task(object):
         self.su_user      = None
         self.su_pass      = None
 
-        if self.sudo:
+        if self.sudo is not None:
             self.sudo_user    = ds.get('sudo_user', play.sudo_user)
             self.sudo_pass    = ds.get('sudo_pass', play.playbook.sudo_pass)
-        elif self.su:
+        elif self.su is not None:
             self.su_user      = ds.get('su_user', play.su_user)
             self.su_pass      = ds.get('su_pass', play.playbook.su_pass)
 
