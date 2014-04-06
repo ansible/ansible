@@ -696,10 +696,6 @@ class Runner(object):
         if self.su_var is not None:
             self.su = template.template(self.basedir, self.su_var, inject)
 
-        vv("TEMPLATED %s" % template.template(self.basedir, self.sudo_var, inject))
-        vv("PARAMETER SUDO %s" % self.sudo)
-        vv("PARAMETER SUDO VAR %s" % self.sudo_var)
-  
         # allow module args to work as a dictionary
         # though it is usually a string
         new_args = ""
