@@ -179,19 +179,14 @@ class Runner(object):
         self.remote_port      = remote_port
         self.private_key_file = private_key_file
         self.background       = background
-        
         self.sudo             = None
         self.sudo_var         = sudo
-
         self.su               = None
         self.su_var           = su
-
         self.sudo_user        = None
         self.sudo_user_var    = sudo_user
-        
         self.su_user          = None
         self.su_user_var      = su_user
-        
         self.sudo_pass        = sudo_pass
         self.is_playbook      = is_playbook
         self.environment      = environment
