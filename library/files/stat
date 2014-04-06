@@ -127,14 +127,15 @@ def main():
     try:
         pw = pwd.getpwuid(st.st_uid)
 
-        d['pw_name']   = pw.pw_name
+        d['pw_name']    = pw.pw_name
     except:
         pass
-        
-    try:
-        d['ismnt']     = os.path.ismount(path)
-    except OSError:
-        pass
+
+    if follow:
+        mntpath         = os.path.realpath(path)
+    else:
+        mntpath         = path 
+    d['ismnt']          = os.path.ismount(mntpath)
 
     module.exit_json(changed=False, stat=d)
 
