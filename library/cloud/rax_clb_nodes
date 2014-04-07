@@ -137,19 +137,18 @@ def _activate_virtualenv(path):
 
 def _get_node(lb, node_id=None, address=None, port=None):
     """Return a matching node"""
-    searches = {
-        'id': node_id,
-        'address': address,
-        'port': port
-    }
-
     for node in getattr(lb, 'nodes', []):
-        try:
-            if all(getattr(node, attr) == value
-                   for (attr, value) in searches.items() if value is not None):
-                return node
-        except AttributeError:
-            continue
+        match_list = []
+        if node_id is not None:
+            match_list.append(getattr(node, 'id', None) == node_id)
+        if address is not None:
+            match_list.append(getattr(node, 'address', None) == address)
+        if port is not None:
+            match_list.append(getattr(node, 'port', None) == port)
+
+        if match_list and all(match_list):
+            return node
+
     return None
 
 
