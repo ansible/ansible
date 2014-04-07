@@ -1,0 +1,326 @@
+#!/usr/bin/python
+
+"""
+Ansible module to install and configure topologies in storm clusters.
+(c) 2014, Steve Gargan <steve.gargan@gmail.com>
+
+This file is part of Ansible
+
+Ansible is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Ansible is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+DOCUMENTATION = '''
+---
+module: storm 
+short_description: Install and control topologies in a storm cluster
+description:
+     - Allows for the installation and control of topologies in a Storm realtime
+       computation cluster. Topologies can be installed and removed with this module
+       and once installed they can be activated, deactivated and rebalanced across
+       the cluster.
+version_added: "1.6"
+notes:
+    - This module requires that the storm comand line tool is available on the
+      target host.
+options:
+  topology:
+    description:
+      - The name of the topology.
+    required: true
+    default: null
+    aliases: ['name']
+  jar:
+    description:
+      - the jar containing the storm topology. required if state=present
+    required: false
+    default: null
+  classname:
+    description:
+      - The name of the main topology class. required if state=present
+    required: false
+    default: null
+  args:
+    description:
+      -  Configuration arguments that should be supplied to the topology 
+         when it is installed.
+    required: false
+    default: null
+  storm_path:
+    description:
+      - path to the storm command line binary. 
+    required: false
+    default: /usr/bin/storm
+  wait:
+    description:
+      - whether ansible should wait for the change in the cluster.
+    required: false
+    default: null
+  timeout:
+    description:
+      - how long ansible should wait for the requested change in the cluster
+        used in conjuntion with wait
+    required: false
+    default: 15
+  workers:
+    description:
+      - requested number of workers that should be allocated to the topology
+        when the topology is rebalanced across the cluster. required if state is
+        'rebalanced'
+    required: false 
+    default: null
+  executors:
+    description:
+      - requested number of executors that should be allocated to the topology
+        when the topology is rebalanced across the cluster. required if state is
+        'rebalanced'
+    required: false
+    default: null
+  state:
+    description:
+      - Changes the state of the topology, installing/removing or activating
+        deactivating as required. if present is requested the topology will be
+        installed if missing. Requesting absent will cause the topology to be 
+        unistalled if present. started and stopped will activate or deactivate 
+        respectively. The rebalanced state will use the workers and executors
+        params, if supplied, to rebalance the topology across the cluster.
+    required: false
+    default: present
+    choices: [absent, present, rebalanced, started, stopped]
+author: Steve Gargan
+
+'''
+
+EXAMPLES = '''
+name: install a topology into a storm cluster waiting for to be active
+storm: topology=demo jar=/tmp/demo-topology.jar classname=org.demo.DemoTopology args=demo wait=True
+
+name: kill the named topology running in a storm cluster
+storm: topology=demo state=absent
+
+name: stop the 'demo' topology running in a storm cluster
+storm: topology=demo state=stopped
+
+name: start the 'demo' topology in the storm cluster
+storm: topology=demo state=started
+
+name: rebalance the 'demo' topology across the cluster
+storm: topology=demo state=rebalanced workers=10
+'''
+
+import os
+import shutil
+import time
+import json
+import time, datetime
+
+class Topology:
+  
+  def __init__(self, name, status, tasks, workers, uptime):
+    self.name = name
+    self.status = status
+    self.tasks = tasks
+    self.workers = workers
+    self.uptime = uptime
+
+  def is_active():
+    return status == 'ACTIVE'
+  
+  def is_killed():
+    return status == 'KILLED'
+
+  def is_inactive():
+    return status == 'INACTIVE'
+
+  def is_rebalancing():
+    return status == 'REBALANCING'
+
+class StormManager:
+  def __init__(self, module):
+    self.module = module
+    self.topology = module.params.get('topology')
+    self.jar = module.params.get('jar')
+    self.classname = module.params.get('classname')
+    self.storm_path = module.params.get('storm_path')
+    self.args = module.params.get('args')
+    self.state = module.params.get('state')
+    self.wait = module.params.get('wait')
+    self.timeout = module.params.get('timeout')
+    self.workers = module.params.get('workers')
+    self.executors = module.params.get('executors')
+
+  def is_running(self):
+    return self.in_state('ACTIVE')
+
+  def in_state(self, state, absent=False):
+    states = self.get_states()
+    present = self.topology in states
+    return (absent and not present) or (present and states[self.topology].status == state)
+
+  def activate(self):
+    rc, out, err = self.execute('activate', self.topology)
+
+    if not rc == 0:
+      self.module.fail_json(msg="failed to activate topology %s, %s" % (self.topology, err))
+  
+    if self.wait:
+      self.wait_for('ACTIVE')
+
+  def deactivate(self):
+    self.execute('deactivate', self.topology)
+    rc, out, err = self.execute('deactivate', self.topology)
+
+    if not rc == 0:
+      self.module.fail_json(msg="failed to deploy topology %s, %s" % (self.topology, err))
+  
+    if self.wait:
+      self.wait_for('INACTIVE')
+
+  def deploy(self):
+    if not self.jar:
+      self.module.fail_json(msg="deploy requires jar param")
+
+    if not self.classname:      
+      self.module.fail_json(msg="deploy requires classname param")
+  
+    rc, out, err = self.execute('jar', self.jar, self.classname, self.args)
+
+    if not rc == 0:
+      self.module.fail_json(msg="failed to deploy topology %s, \n%s" % (self.topology, err))
+  
+    if self.wait:
+      self.wait_for('ACTIVE')
+
+  def kill(self):
+    rc, out, err = self.execute('kill', self.topology)
+
+    if not rc == 0:
+      self.module.fail_json(msg="failed to kill topology %s, %s" % (self.topology, err))
+
+    if self.wait:
+      self.wait_for('killed', true)   
+
+  def rebalance(self):
+    print 'rebalancing'
+    args = [self.topology]
+    if self.workers:
+      args.extend(['-n', self.workers]) 
+    if self.executors:
+      args.extend(['-e', "%s=%s" %(self.topology, self.executors)])
+      
+    rc, out, err = self.execute('rebalance', args)
+
+    if not rc == 0:
+      self.module.fail_json(msg="failed to rebalance topology %s, \n%s" % (self.topology, err))
+  
+    if self.wait:
+      self.wait_for('ACTIVE')
+
+  def wait_for(self, state, absent=False):
+    start = datetime.datetime.now()
+    end = start + datetime.timedelta(seconds=timeout)
+    while datetime.datetime.now() < end:
+      topologies = get_states()
+      if self.in_state(state, absent):
+        break;
+      time.sleep(1)
+    else:
+      self.module.fail_json(msg="timeout exceeded waiting for %s to be %s" % (self.topology, state))
+
+  def get_states(self):
+    rc, out, err = self.execute('list')
+    if rc != 0:
+      self.module.fail_json(msg="Error listing topologies.\n" + err)
+
+    topologies = {}
+    # Topology_name        Status     Num_tasks  Num_workers  Uptime_secs
+    #-------------------------------------------------------------------
+    # demo                 ACTIVE     5          1            342636
+    pattern = re.compile("(\w+)\s+(\w+)\s+(\d+)\s+(\d+)\s+(\d+)")
+    for line in out.split('\n'):
+      m = pattern.match(line)
+      if m:
+        name = m.group(1)
+        if not name == "Topology_name":
+            topologies[name] = Topology(m.group(1), m.group(2), m.group(3)
+                                     , m.group(4), m.group(5))
+    return topologies
+
+  def execute(self, command, *args):
+    cmdline = [self.storm_path, command]
+    for arg in args:
+       self.flatten(cmdline, arg)
+    print cmdline
+    return self.module.run_command(cmdline)
+
+  def flatten(self, dest, src):
+     if dest and src:
+       if isinstance(src, (list, tuple)):
+         dest.extend(src)
+       else:
+         dest.append(src)
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            topology=dict(required=True, aliases=['name']),
+            jar=dict(required=False),
+            classname=dict(required=False),
+            args=dict(required=False),
+            storm_path=dict(default='/usr/bin/storm'),
+            state=dict(choices=['absent', 'present', 'started', 'stopped', 'rebalanced'], default='present'),
+            wait=dict(required=False),
+            timeout=dict(default=15),
+            workers=dict(required=False),
+            executors=dict(required=False)
+        ),
+    )
+
+    storm = StormManager(module)
+
+    state = module.params.get('state')
+    changed = False
+
+    if state == 'present':
+        if not storm.is_running():
+            storm.deploy()
+            changed = True
+
+    if state == 'started':
+        if not storm.is_running():
+            storm.activate()
+            changed = True
+
+    if state == 'stopped':
+        if storm.is_running():
+            storm.deactivate()
+            changed = True
+
+    if state == 'absent':
+        states = storm.get_states()
+        if storm.topology in states:
+            changed = True
+            storm.kill()
+
+    if state == 'rebalanced':
+        states = storm.get_states()
+        if storm.topology in states:
+            changed = True
+            storm.rebalance()
+
+    return module.exit_json(changed=changed)
+
+from ansible.module_utils.basic import *
+main()
+
