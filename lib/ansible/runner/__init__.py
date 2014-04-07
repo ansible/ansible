@@ -873,7 +873,7 @@ class Runner(object):
                 # only run the final checks if the async_status has finished,
                 # or if we're not running an async_status check at all
                 if (module_name == 'async_status' and "finished" in data) or module_name != 'async_status':
-                    if changed_when is not None:
+                    if changed_when is not None and 'skipped' not in data:
                         data['changed'] = utils.check_conditional(changed_when, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars)
                     if failed_when is not None:
                         data['failed_when_result'] = data['failed'] = utils.check_conditional(failed_when, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars)
