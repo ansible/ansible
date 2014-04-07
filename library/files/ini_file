@@ -95,6 +95,7 @@ def do_ini(module, filename, section=None, option=None, value=None, state='prese
 
     changed = False
     cp = ConfigParser.ConfigParser()
+    cp.optionxform = identity
 
     try:
         f = open(filename)
@@ -149,6 +150,19 @@ def do_ini(module, filename, section=None, option=None, value=None, state='prese
             module.fail_json(msg="Can't creat %s" % filename)
 
     return changed
+
+# ==============================================================
+# identity
+
+def identity(arg):
+    """
+    This function simply returns its argument. It serves as a
+    replacement for ConfigParser.optionxform, which by default
+    changes arguments to lower case. The identity function is a
+    better choice than str() or unicode(), because it is
+    encoding-agnostic.
+    """
+    return arg
 
 # ==============================================================
 # main
