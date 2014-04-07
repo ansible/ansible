@@ -198,7 +198,7 @@ options:
     default: null
     aliases: []
   source_dest_check:
-    version_added: "1.5"
+    version_added: "1.6"
     description:
       - Enable or Disable the Source/Destination checks (for NAT instances and Virtual Routers)
     required: false
