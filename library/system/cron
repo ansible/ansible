@@ -353,7 +353,7 @@ class CronTab(object):
             if platform.system() == 'SunOS':
                 return "su %s -c '%s -l'" % (pipes.quote(self.user), pipes.quote(CRONCMD))
             elif platform.system() == 'AIX':
-                return "%s -l %s" % (pipes.quote(CRONCMD), (pipes.quote(self.user))
+                return "%s -l %s" % (pipes.quote(CRONCMD), pipes.quote(self.user))
             else:
                 user = '-u %s' % pipes.quote(self.user)
         return "%s %s %s" % (CRONCMD , user, '-l')
