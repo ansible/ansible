@@ -4,16 +4,14 @@
 
 # When run using source as directed, $0 gets set to bash, so we must use $BASH_SOURCE
 if [ -n "$BASH_SOURCE" ] ; then
-    HACKING_DIR=`dirname $BASH_SOURCE`
-elif [ $(basename $0) = "env-setup" ]; then
-    HACKING_DIR=`dirname $0`
+    HACKING_DIR=$(dirname "$BASH_SOURCE")
+elif [ -n "$KSH_VERSION" ]; then
+    HACKING_DIR=$(dirname "${.sh.file}")
 else
     HACKING_DIR="$PWD/hacking"
 fi
-# The below is an alternative to readlink -fn which doesn't exist on OS X
-# Source: http://stackoverflow.com/a/1678636
-FULL_PATH=`python -c "import os; print(os.path.realpath('$HACKING_DIR'))"`
-ANSIBLE_HOME=`dirname "$FULL_PATH"`
+FULL_PATH=$(cd "$HACKING_DIR" ; pwd)
+ANSIBLE_HOME=$(dirname "$FULL_PATH")
 
 PREFIX_PYTHONPATH="$ANSIBLE_HOME/lib"
 PREFIX_PATH="$ANSIBLE_HOME/bin"
@@ -22,7 +20,7 @@ PREFIX_MANPATH="$ANSIBLE_HOME/docs/man"
 [[ $PYTHONPATH != ${PREFIX_PYTHONPATH}* ]] && export PYTHONPATH=$PREFIX_PYTHONPATH:$PYTHONPATH
 [[ $PATH != ${PREFIX_PATH}* ]] && export PATH=$PREFIX_PATH:$PATH
 unset ANSIBLE_LIBRARY
-export ANSIBLE_LIBRARY="$ANSIBLE_HOME/library:`python $HACKING_DIR/get_library.py`"
+export ANSIBLE_LIBRARY="$ANSIBLE_HOME/library:$(python $HACKING_DIR/get_library.py)"
 [[ $MANPATH != ${PREFIX_MANPATH}* ]] && export MANPATH=$PREFIX_MANPATH:$MANPATH
 
 # Print out values unless -q is set
@@ -42,4 +40,3 @@ if [ $# -eq 0 -o "$1" != "-q" ] ; then
     echo "Done!"
     echo ""
 fi
-
