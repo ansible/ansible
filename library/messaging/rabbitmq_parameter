@@ -52,6 +52,7 @@ options:
       - erlang node name of the rabbit we wish to configure
     required: false
     default: rabbit
+    version_added: "1.2"
   state:
     description:
       - Specify if user is to be added or removed

@@ -55,6 +55,7 @@ options:
       - erlang node name of the rabbit we wish to configure
     required: false
     default: rabbit
+    version_added: "1.2"
   configure_priv:
     description:
       - Regular expression to restrict configure actions on a resource
