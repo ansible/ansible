@@ -347,11 +347,14 @@ class DockerManager:
             self.volumes = {}
             vols = self.module.params.get('volumes')
             for vol in vols:
-                parts = vol.split(":", 2)
+                parts = vol.split(":")
                 # host mount (e.g. /mnt:/tmp, bind mounts host's /tmp to /mnt in the container)
                 if len(parts) == 2:
                     self.volumes[parts[1]] = {}
                     self.binds[parts[0]] = parts[1]
+                elif len(parts) == 3:
+                    self.volumes[parts[1]] = {}
+                    self.binds[parts[0]] = parts[1] + ":" + parts[2]
                 # docker mount (e.g. /www, mounts a docker volume /www on the container at the same location)
                 else:
                     self.volumes[parts[0]] = {}
