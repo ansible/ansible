@@ -347,7 +347,7 @@ class DockerManager:
             self.volumes = {}
             vols = self.module.params.get('volumes')
             for vol in vols:
-                parts = vol.split(":")
+                parts = vol.split(":", 2)
                 # host mount (e.g. /mnt:/tmp, bind mounts host's /tmp to /mnt in the container)
                 if len(parts) == 2:
                     self.volumes[parts[1]] = {}
