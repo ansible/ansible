@@ -80,6 +80,7 @@ options:
         - The name of the network of the port to associate with the floating ip. Necessary when VM multiple networks.
      required: false
      default: None
+     version_added: "1.5"
 requirements: ["novaclient", "quantumclient", "neutronclient", "keystoneclient"]
 '''
 
