@@ -49,6 +49,7 @@ options:
             - options flags to install a package
         required: false
         default: null
+        version_added: "1.4"
 notes:  []
 '''
 EXAMPLES = '''
