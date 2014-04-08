@@ -52,6 +52,7 @@ options:
       - Optional URL to submit the notification to. Use to send notifications to Airbrake-compliant tools like Errbit.
     required: false
     default: "https://airbrake.io/deploys"
+    version_added: "1.5"
   validate_certs:
     description:
       - If C(no), SSL certificates for the target url will not be validated. This should only be used
