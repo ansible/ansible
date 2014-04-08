@@ -83,15 +83,16 @@ def _executor_hook(job_queue, result_queue, new_stdin):
 class HostVars(dict):
     ''' A special view of vars_cache that adds values from the inventory when needed. '''
 
-    def __init__(self, vars_cache, inventory):
+    def __init__(self, vars_cache, inventory, vault_password=None):
         self.vars_cache = vars_cache
         self.inventory = inventory
         self.lookup = dict()
         self.update(vars_cache)
+        self.vault_password = vault_password
 
     def __getitem__(self, host):
         if host not in self.lookup:
-            result = self.inventory.get_variables(host)
+            result = self.inventory.get_variables(host, vault_password=self.vault_password)
             result.update(self.vars_cache.get(host, {}))
             self.lookup[host] = result
         return self.lookup[host]
@@ -563,7 +564,7 @@ class Runner(object):
         inject = utils.combine_vars(inject, module_vars)
         inject = utils.combine_vars(inject, combined_cache.get(host, {}))
         inject.setdefault('ansible_ssh_user', self.remote_user)
-        inject['hostvars'] = HostVars(combined_cache, self.inventory)
+        inject['hostvars'] = HostVars(combined_cache, self.inventory, vault_password=self.vault_pass)
         inject['group_names'] = host_variables.get('group_names', [])
         inject['groups']      = self.inventory.groups_list()
         inject['vars']        = self.module_vars
@@ -872,7 +873,7 @@ class Runner(object):
                 # only run the final checks if the async_status has finished,
                 # or if we're not running an async_status check at all
                 if (module_name == 'async_status' and "finished" in data) or module_name != 'async_status':
-                    if changed_when is not None:
+                    if changed_when is not None and 'skipped' not in data:
                         data['changed'] = utils.check_conditional(changed_when, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars)
                     if failed_when is not None:
                         data['failed_when_result'] = data['failed'] = utils.check_conditional(failed_when, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars)
