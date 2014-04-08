@@ -1,0 +1,252 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2014, Ravi Bhure <ravibhure@gmail.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: haproxy
+short_description: Enable/Diable Haproxy Backend Server.
+description:
+    - Enable/Diable Haproxy Backend Server,
+      using haproxy socket commands - http://haproxy.1wt.eu
+notes:
+    - "enable or disable commands are restricted and can only be issued on sockets configured for level 'admin', "
+    - "Check - http://haproxy.1wt.eu/download/1.4/doc/configuration.txt, "
+    - "Exampe: 'stats socket /var/run/haproxy.sock level admin'"
+options:
+  action:
+    description:
+      - Action to take.
+    required: true
+    default: null
+    choices: [ "enable_server", "disable_server" ]
+  host:
+    description:
+      - Host (backend) to operate in Haproxy.
+    required: true
+    default: null
+  socket:
+    description:
+      - Haproxy socket file name with path.
+    required: false
+    default: /var/run/haproxy.sock
+  frontend:
+    description:
+      - Name of the haproxy frontend pool.
+        Required, else auto-detection applied.
+    required: false
+    default: auto-detected
+
+'''
+
+EXAMPLES = '''
+# disable backend server in 'www' frontend
+- haproxy: action=disable_server host={{ inventory_hostname }} frontend=www
+
+# disable backend server without frontend name (applied to all)
+- haproxy: action=disable_server host={{ inventory_hostname }}
+
+# disable server, provide socket file
+- haproxy: action=disable_server host={{ inventory_hostname }} socket=/var/run/haproxy.sock frontend=www
+
+# enable backend server in 'www' frontend
+- haproxy: action=enable_server host={{ inventory_hostname }} frontend=www
+
+author: Ravi Bhure <ravibhure@gmail.com>
+version_added: "1.0"
+'''
+
+import logging
+import socket
+import re
+
+logger = logging.getLogger(__name__)
+
+DEFAULT_SOCKET_LOCATION="/var/run/haproxy.sock"
+RECV_SIZE = 1024
+
+def main():
+    ACTION_CHOICES = [
+        'enable_server',
+        'disable_server'
+        ]
+
+    # load ansible module object
+    module = AnsibleModule(
+        argument_spec = dict(
+            action = dict(required=True, default=None, choices=ACTION_CHOICES),
+            host=dict(required=True, default=None),
+	    frontend=dict(required=False, default=None),
+            socket = dict(required=False, default=DEFAULT_SOCKET_LOCATION)
+        ),
+    )
+    action = module.params['action']
+    host = module.params['host']
+    frontend = module.params['frontend']
+    socket = module.params['socket']
+
+    ##################################################################
+    # Required args per action:
+    # (enable/disable)_server = (host)
+    #
+    # AnsibleModule will verify most stuff, we need to verify
+    # 'socket' manually.
+
+    ##################################################################
+
+    if action in ['enable_server', 'disable_server']:
+        if not host:
+            module.fail_json(msg='no host specified for action requiring one')
+    ##################################################################
+    if not socket:
+        module.fail_json('unable to locate haproxy.sock')
+
+    ##################################################################
+    supports_check_mode=True,
+    required_one_of=[['action', 'host']]
+
+    ansible_haproxy = HAProxy(module, **module.params)
+    if module.check_mode:
+        module.exit_json(changed=True)
+    else:
+        ansible_haproxy.act()
+    ##################################################################
+
+######################################################################
+class TimeoutException(Exception):
+  pass
+
+class HAProxy(object):
+    """
+    Used for communicating with HAProxy through its local UNIX socket interface.
+    Perform common tasks in Haproxy related to enable server and
+    disable server.
+
+    The complete set of external commands Haproxy handles is documented
+    on their website:
+
+    http://haproxy.1wt.eu/download/1.4/doc/configuration.txt#Unix Socket commands
+    """
+
+    def __init__(self, module, **kwargs):
+        self.module = module
+        self.action = kwargs['action']
+        self.host = kwargs['host']
+        self.frontend = kwargs['frontend']
+        self.socket = kwargs['socket']
+
+        self.command_results = []
+
+    def execute(self, cmd, timeout=200):
+        """
+        Executes a HAProxy command by sending a message to a HAProxy's local
+        UNIX socket and waiting up to 'timeout' milliseconds for the response.
+        """
+
+        buffer = ""
+
+
+        self.client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.client.connect(self.socket)
+        self.client.sendall('%s\n' % cmd)
+        result = ''
+        buf = ''
+        buf = self.client.recv(RECV_SIZE)
+        while buf:
+          result += buf
+          buf = self.client.recv(RECV_SIZE)
+        self.client.close()
+        return result
+
+    def enable_server(self, host, frontend):
+        """
+        Enables backend server for a particular frontend.
+
+        Syntax: enable server <pxname>/<svname>
+        """
+        svname = host
+        if self.frontend is None:
+          output = self.execute('show stat')
+          #sanitize and make a list of lines
+          output = output.lstrip('# ').strip()
+          output = output.split('\n')
+          result = output
+
+          for line in result:
+            if 'FRONTEND' in line:
+              result =  line.split(',')[0]
+	      pxname = result
+	      cmd = "enable server %s/%s" % (pxname, svname)
+	      self.execute(cmd)
+
+	else:
+            pxname = frontend
+	    cmd = "enable server %s/%s" % (pxname, svname)
+	    self.execute(cmd)
+
+    def disable_server(self, host, frontend):
+        """
+        Disable backend server for a particular frontend.
+
+        Syntax: disable server <pxname>/<svname>
+        """
+        svname = host
+        if self.frontend is None:
+          output = self.execute('show stat')
+          #sanitize and make a list of lines
+          output = output.lstrip('# ').strip()
+          output = output.split('\n')
+          result = output
+
+          for line in result:
+            if 'FRONTEND' in line:
+              result =  line.split(',')[0]
+              pxname = result
+              cmd = "disable server %s/%s" % (pxname, svname)
+              self.execute(cmd)
+
+        else:
+            pxname = frontend
+            cmd = "disable server %s/%s" % (pxname, svname)
+            self.execute(cmd)
+
+    def act(self):
+        """
+        Figure out what you want to do from ansible, and then do the
+        needful (at the earliest).
+        """
+        # toggle enable/disbale
+        if self.action == 'enable_server':
+            self.enable_server(self.host, self.frontend)
+
+        elif self.action == 'disable_server':
+            self.disable_server(self.host, self.frontend)
+
+        # wtf?
+        else:
+            self.module.fail_json(msg="unknown action specified: '%s'" % \
+                                      self.action)
+
+        self.module.exit_json(haproxy_commands=self.command_results,
+                              changed=True)
+
+######################################################################
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
