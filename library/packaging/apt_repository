@@ -134,9 +134,9 @@ class SourcesList(object):
         def _cleanup_filename(s):
             return '_'.join(re.sub('[^a-zA-Z0-9]', ' ', s).split())
 
-        # Drop options and protocols.
-        line = re.sub('\[[^\]]+\]', '', line)
-        line = re.sub('\w+://', '', line)
+        # Drop options, protocols, usernames, and passwords.
+        for regex in ['\[[^\]]+\]', '\w+://', '\w+:\w+@']:
+            line = re.sub(regex, '', line)
 
         parts = [part for part in line.split() if part not in VALID_SOURCE_TYPES]
         return '%s.list' % _cleanup_filename(' '.join(parts[:1]))
