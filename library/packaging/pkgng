@@ -54,6 +54,7 @@ options:
               annotation.
               If setting or modifying annotations, a value must be provided.
         required: false
+        version_added: "1.6"
     pkgsite:
         description:
             - for pkgng versions before 1.1.4, specify packagesite to use
