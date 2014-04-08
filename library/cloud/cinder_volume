@@ -1,0 +1,270 @@
+#!/usr/bin/python
+# coding: utf-8 -*-
+
+# (c) 2014, Koert van der Veer <koert@cloudvps.com>
+# (c) 2013, Benno Joy <benno@ansible.com>
+# (c) 2013, John Dewey <john@dewey.ws>
+#
+# This module is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: cinder_volume
+version_added: "1.6"
+short_description: Create/Delete volumes within OpenStack cinder
+description:
+   - Create, Remove or expand volumes within cinder (openstack volume)
+options:
+
+    auth_url:
+        required: False
+        description:
+        - The (v2) authentication endpoint for keystone. If not set either the
+          keystone_endpoint or the OS_AUTH_URL environment variable is used.
+        default: http://127.0.0.1:5000/v2.0
+    login_username:
+        required: False
+        description:
+        - username to authenticate to keystone. If not set, the OS_USERNAME
+          variable is used (if present).
+        default: admin
+    login_user:
+        description:
+        - DEPRECATED. Alias for login_username, for backward compatibility.
+    login_password:
+        required: False
+        description:
+        - password to authenticate to keystone. If not set, the OS_PASSWORD
+          variable is used (if present).
+    login_tenant_name:
+        required: False
+        default: admin
+        description:
+        - The tenant name to authenticate to keystone. If not set, the
+          OS_TENANT_NAME variable is used (if present).
+    token:
+        required: False
+        - Token to use as authentication. If used, you also need to provide
+          an endpoint.
+    login_tenant_id:
+        required: False
+        description:
+        - The tenant id to authenticate to keystone. If not set, the
+          OS_TENANT_ID variable is used (if present).
+    ca_cert:
+        required: False
+        description:
+        - Path to the CA certificates to use to validate certificates.
+    insecure:
+        default: False
+        description:
+        - If set to True, SSL certificates will not be checked.
+    region_name:
+        default: None
+        description:
+        - The region to use when selecting an endpoint from the service catalog
+    endpoint_type:
+        default: publicURL
+        description:
+        - The endpoint type to use when selecting an endpoint from the service
+          catalog
+
+    state:
+        description:
+        - Indicate desired state of the resource
+        choices: ['present', 'absent', 'expanded']
+        default: present
+    name:
+        description:
+        - Name that has to be given to the volume
+        required: true
+        default: None
+    size:
+        description:
+        - Size of the volume to create (in gigabytes)
+        required: false
+        default: None
+    image_id:
+        description:
+        - The id of the image to use as the source for the new volume.
+        required: false
+        default: None
+    image_name:
+        description:
+        - The name of the image to use as the source for the new volume.
+        required: true
+        default: None
+    volume_id:
+        description:
+        - The id of the volume to use as the source for the new volume.
+        required: false
+        default: None
+    volume_name:
+        description:
+        - The name of the volume to use as the source for the new volume.
+        required: true
+        default: None
+    snapshot_id:
+        description:
+        - The id of the snapshot to use as the source for the new volume.
+        required: false
+        default: None
+    snapshot_name:
+        description:
+        - The name of the snapshot to use as the source for the new volume.
+        required: true
+        default: None
+    wait:
+        description:
+        - If the module should wait for the VM to be created.
+        required: false
+        default: 'yes'
+    wait_for:
+        description:
+        - The amount of time the module should wait for the VM to get into active state
+        required: false
+        default: 180
+requirements: ["cinderclient"]
+'''
+
+EXAMPLES = '''
+# Creates a new VM and attaches to a network and passes metadata to the instance
+- cinder_volume:
+    state: present
+    login_username: admin
+    login_password: admin
+    login_tenant_name: admin
+    name: my_volume
+    size: 1
+    wait_for: 200
+'''
+
+
+def create_volume(module, name, size, cinder=None, snapshot_id=None,
+                  image_id=None, volume_id=None):
+    if not cinder:
+        cinder = get_cinder_client(module)
+
+    volume = cinder.volumes.create(size, display_name=name,
+                                   snapshot_id=snapshot_id, imageRef=image_id,
+                                   source_volid=volume_id)
+
+    if module.params['wait']:
+        id = volume.id
+        expire = time.time() + int(module.params['wait_for'])
+        while time.time() < expire:
+            volume = get_volume(module, id=id, cinder=cinder)
+            if volume.status == 'available':
+                return volume
+
+            time.sleep(5)
+
+        module.fail_json(msg="Timed out waiting for volume to become "
+                             "available, please check manually.")
+    return volume
+
+
+def delete_volume(module, volume, cinder=None):
+    if not cinder:
+        cinder = get_cinder_client(module)
+
+    cinder.volumes.delete(volume)
+
+    if module.params['wait']:
+        id = volume.id
+        expire = time.time() + int(module.params['wait_for'])
+        while time.time() < expire:
+            if not get_volume(module, id=id, cinder=cinder, required=False):
+                return
+
+            time.sleep(5)
+
+        module.fail_json(msg="Timed out waiting for volume to get deleted, "
+                             "please check manually")
+
+
+def main():
+    argument_spec = os_argument_spec()
+    argument_spec.update(dict(
+        name=dict(required=True),
+        size=dict(default=None, type='int'),
+        image_id=dict(default=None),
+        image_name=dict(default=None),
+        snapshot_id=dict(default=None),
+        snapshot_name=dict(default=None),
+        volume_id=dict(default=None),
+        volume_name=dict(default=None),
+        wait=dict(default='yes', type='bool'),
+        wait_for=dict(default=180),
+        state=dict(default='present',
+                   choices=['absent', 'present'])
+    ))
+
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True,
+        mutually_exclusive=os_mutually_exclusive() + [
+            ['image_id', 'image_name', 'snapshot_id', 'snapshot_name',
+             'volume_id', 'volume_name'],
+        ]
+    )
+
+    cinder = get_cinder_client(module)
+
+    image_id = None
+    snapshot_id = None
+    volume_id = None
+
+    if module.params['image_id']:
+        image_id = module.params['image_id']
+    elif module.params['image_name']:
+        image_id = get_glance_image(module, module.params['image_name']).id
+    elif module.params['snapshot_id']:
+        snapshot_id = module.params['snapshot_id']
+    elif module.params['snapshot_name']:
+        snapshot_id = get_snapshot(module, module.params['snapshot_name']).id
+    elif module.params['volume_id']:
+        volume_id = module.params['volume_id']
+    elif module.params['volume_name']:
+        volume_id = get_volume(module, module.params['volume_name']).id
+
+    volume = get_volume(module, name=module.params['name'], required=False,
+                        cinder=cinder)
+
+    if module.params['state'] == 'present':
+        if volume:
+            module.exit_json(changed=False)
+        elif module.check_mode:
+            module.exit_json(changed=True)
+        else:
+            size = module.params['size']
+            volume = create_volume(module, module.params['name'], size,
+                                   image_id=image_id, volume_id=volume_id,
+                                   snapshot_id=snapshot_id, cinder=cinder)
+            module.exit_json(changed=True)
+
+    elif module.params['state'] == 'absent':
+        if not volume:
+            module.exit_json(changed=False)
+        elif module.check_mode:
+            module.exit_json(changed=True)
+        else:
+            delete_volume(module, volume, cinder=cinder)
+            module.exit_json(changed=True)
+
+
+from ansible.module_utils.basic import *
+from ansible.module_utils.openstack import *
+if __name__ == '__main__':
+    main()

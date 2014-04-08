@@ -90,125 +90,83 @@ EXAMPLES = '''
                 name=router1"
 '''
 
-_os_keystone = None
-_os_tenant_id = None
 
-def _get_ksclient(module, kwargs):
-    try:
-        kclient = ksclient.Client(username=kwargs.get('login_username'),
-                                 password=kwargs.get('login_password'),
-                                 tenant_name=kwargs.get('login_tenant_name'),
-                                 auth_url=kwargs.get('auth_url'))
-    except Exception, e:
-        module.fail_json(msg = "Error authenticating to the keystone: %s " % e.message)
-    global _os_keystone
-    _os_keystone = kclient
-    return kclient
-
-
-def _get_endpoint(module, ksclient):
-    try:
-        endpoint = ksclient.service_catalog.url_for(service_type='network', endpoint_type='publicURL')
-    except Exception, e:
-        module.fail_json(msg = "Error getting network endpoint: %s" % e.message)
-    return endpoint
-
-def _get_neutron_client(module, kwargs):
-    _ksclient = _get_ksclient(module, kwargs)
-    token = _ksclient.auth_token
-    endpoint = _get_endpoint(module, _ksclient)
-    kwargs = {
-            'token': token,
-            'endpoint_url': endpoint
-    }
-    try:
-        neutron = client.Client('2.0', **kwargs)
-    except Exception, e:
-        module.fail_json(msg = "Error in connecting to neutron: %s " % e.message)
-    return neutron
-
-def _set_tenant_id(module):
-    global _os_tenant_id
-    if not module.params['tenant_name']:
-        login_tenant_name = module.params['login_tenant_name']
-    else:
-        login_tenant_name = module.params['tenant_name']
-
-    for tenant in _os_keystone.tenants.list():
-        if tenant.name == login_tenant_name:
-            _os_tenant_id = tenant.id
-            break
-    if not _os_tenant_id:
-            module.fail_json(msg = "The tenant id cannot be found, please check the paramters")
-
-
-def _get_router_id(module, neutron):
-    kwargs = {
-            'name': module.params['name'],
-            'tenant_id': _os_tenant_id,
-    }
-    try:
-        routers = neutron.list_routers(**kwargs)
-    except Exception, e:
-        module.fail_json(msg = "Error in getting the router list: %s " % e.message)
-    if not routers['routers']:
-        return None
-    return routers['routers'][0]['id']
-
-def _create_router(module, neutron):
+def create_router(module, neutron, tenant_id=None):
     router = {
-            'name': module.params['name'],
-            'tenant_id': _os_tenant_id,
-            'admin_state_up': module.params['admin_state_up'],
+        'name': module.params['name'],
+        'admin_state_up': module.params['admin_state_up'],
     }
+
+    if tenant_id:
+        router['tenant_id'] = tenant_id
+
     try:
         new_router = neutron.create_router(dict(router=router))
     except Exception, e:
-        module.fail_json( msg = "Error in creating router: %s" % e.message)
-    return new_router['router']['id']
+        module.fail_json(msg="Error in creating router: %s" % e.message)
 
-def _delete_router(module, neutron, router_id):
+    return new_router['router']
+
+
+def delete_router(module, neutron, router_id):
     try:
         neutron.delete_router(router_id)
     except:
         module.fail_json("Error in deleting the router")
     return True
 
+
 def main():
+    argument_spec = os_argument_spec()
+    argument_spec.update(dict(
+        name=dict(required=True),
+        tenant_name=dict(default=None),
+        tenant_id=dict(default=None),
+        state=dict(default='present', choices=['absent', 'present']),
+        admin_state_up=dict(type='bool', default=True),
+    ))
+
     module = AnsibleModule(
-        argument_spec                   = dict(
-        login_username                  = dict(default='admin'),
-        login_password                  = dict(required=True),
-        login_tenant_name               = dict(required='True'),
-        auth_url                        = dict(default='http://127.0.0.1:35357/v2.0/'),
-        region_name                     = dict(default=None),
-        name                            = dict(required=True),
-        tenant_name                     = dict(default=None),
-        state                           = dict(default='present', choices=['absent', 'present']),
-        admin_state_up                  = dict(type='bool', default=True),
-        ),
+        argument_spec=argument_spec,
+        supports_check_mode=True,
+        mutually_exclusive=os_mutually_exclusive() + [
+            ['tenant_name', 'tenant_id']
+        ]
     )
 
-    neutron = _get_neutron_client(module, module.params)
-    _set_tenant_id(module)
+    if module.params['tenant_name']:
+        tenant_id = get_tenant_id(module.params['tenant_name'])
+    elif module.params['tenant_id']:
+        tenant_id = module.params['tenant_id']
+    else:
+        tenant_id = None
+
+    neutron = get_neutron_client(module)
+
+    router = get_router(module, module.params["name"], required=False,
+                        neutron=neutron)
 
     if module.params['state'] == 'present':
-        router_id = _get_router_id(module, neutron)
-        if not router_id:
-            router_id = _create_router(module, neutron)
-            module.exit_json(changed=True, result="Created", id=router_id)
+        if router:
+            module.exit_json(changed=False, result="Success", id=router['id'])
+        elif module.check_mode:
+            module.exit_json(changed=True, result="Success")
         else:
-            module.exit_json(changed=False, result="success" , id=router_id)
+            router = create_router(module, neutron, tenant_id)
+            module.exit_json(changed=True, result="Created", id=router['id'])
 
-    else:
-        router_id = _get_router_id(module, neutron)
-        if not router_id:
-            module.exit_json(changed=False, result="success")
+    elif module.params['state'] == 'absent':
+        if not router:
+            module.exit_json(changed=False, result="Success")
+        elif module.check_mode:
+            module.exit_json(changed=True, result="Success")
         else:
-            _delete_router(module, neutron, router_id)
-            module.exit_json(changed=True, result="deleted")
+            delete_router(module, neutron, router['id'])
+            module.exit_json(changed=True, result="Deleted")
 
-# this is magic, see lib/ansible/module.params['common.py
+
 from ansible.module_utils.basic import *
-main()
+from ansible.module_utils.openstack import *
+if __name__ == '__main__':
+    main()
 

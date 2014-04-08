@@ -1,0 +1,226 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2013, John Dewey <john@dewey.ws>
+#
+# This module is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+
+import locale
+import six
+import sys
+
+try:
+    from novaclient.openstack.common import uuidutils
+    from novaclient.openstack.common import strutils
+    from novaclient.v1_1 import security_groups
+    from novaclient.v1_1 import security_group_rules
+    from novaclient import exceptions
+except ImportError:
+    print("failed=True msg='novaclient is required for this module to work'")
+    sys.exit(1)
+
+DOCUMENTATION = '''
+---
+module: security_group
+version_added: "1.6"
+short_description: Maintain nova security groups.
+description:
+  - Manage nova security groups using the python-novaclient library.
+options:
+  name:
+    description:
+      - Name of the security group.
+    required: true
+  description:
+    description:
+      - Description of the security group.
+    required: true
+  rules:
+    description:
+      - List of firewall rules to enforce in this group (see example).
+        Must specify either an IPv4 'cidr' address or 'group' UUID.
+    required: true
+  state:
+    description:
+      - Indicate desired state of the resource.
+    choices: ['present', 'absent']
+    required: false
+    default: 'present'
+
+requirements: ["novaclient"]
+'''
+
+EXAMPLES = '''
+- name: create example group and rules
+  local_action:
+    module: nova_securitygroup
+    name: example
+    description: an example nova group
+    rules:
+      - ip_protocol: tcp
+        from_port: 80
+        to_port: 80
+        cidr: 0.0.0.0/0
+      - ip_protocol: tcp
+        from_port: 3306
+        to_port: 3306
+        group: "{{ group_uuid }}"
+      - ip_protocol: icmp
+        from_port: -1
+        to_port: -1
+        cidr: 0.0.0.0/0
+
+- name: delete rule from example group
+  local_action:
+    module: nova_securitygroup
+    name: example
+    description: an example nova group
+    rules:
+      - ip_protocol: tcp
+        from_port: 80
+        to_port: 80
+        cidr: 0.0.0.0/0
+      - ip_protocol: icmp
+        from_port: -1
+        to_port: -1
+        cidr: 0.0.0.0/0
+        state: absent
+'''
+
+
+def hash_rule(nova, rule):
+    """
+    Normalize the given rule into a string in the format of:
+      protocol-from_port-to_port-group
+    The `group` needs a bit of massaging.
+      1. If an empty dict -- return None.
+      2. If a dict -- lookup group UUID (novaclient only returns the name).
+      3. Return `group` from rules dict.
+
+    :param rule: A novaclient SecurityGroupRule object.
+    """
+    group = rule.get('group')
+    # Oddly novaclient occasionaly returns None as {}.
+    if group is not None and not any(group):
+        group = None
+    elif type(group) == dict:
+        group = nova.security_groups.find(name=group.get('name')).id
+
+    return "%s-%i-%i-%s" % (rule.get('ip_protocol'), rule.get('from_port', -1),
+                            rule.get('to_port', -1), group)
+
+
+def update_rules(nova, security_group, rules, check_mode):
+    # Build a lookup table, so we know what to add and what to delete
+
+    lookup = dict((hash_rule(nova, rule), rule)
+                  for rule in security_group.rules)
+    changed = False
+
+    for rule in rules:
+        existing_rule = lookup.get(hash_rule(nova, rule))
+        if rule.get('state') == 'absent':
+            if not existing_rule:
+                pass
+            elif check_mode:
+                return True
+            else:
+                nova.security_group_rules.delete(existing_rule['id'])
+                changed = True
+        else:
+            if existing_rule:
+                pass
+            elif check_mode:
+                return True
+            else:
+                args = {
+                    'parent_group_id': security_group.id,
+                    'ip_protocol': rule['ip_protocol'],
+                }
+
+                args['from_port'] = rule['from_port']
+                args['to_port'] = rule['to_port']
+                
+                if 'cidr' in rule:
+                    args['cidr'] = rule['cidr']
+                if 'group' in rule:
+                    try:
+                        group = nova.security_groups.find(name=rule['group'])
+                        args['group_id'] = group.id
+                    except:
+                        args['group_id'] = rule['group']
+
+                #print args
+                nova.security_group_rules.create(**args)
+                changed = True
+
+    return changed
+
+
+def main():
+    argument_spec = os_argument_spec()
+    argument_spec.update(dict(
+        name=dict(required=True),
+        description=dict(required=True),
+        rules=dict(),
+        state=dict(default='present', choices=['absent', 'present'])
+    ))
+
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True,
+        mutually_exclusive=os_mutually_exclusive() + [
+            ['image_id', 'image_name'],
+            ['flavor_id', 'flavor_name'],
+        ]
+    )
+
+    nova = get_nova_client(module)
+
+    rules = module.params.get('rules')
+    state = module.params.get('state')
+
+    try:
+        security_group = nova.security_groups.find(name=module.params['name'])
+    except:
+        security_group = None
+
+    if state == 'present':
+        if security_group:
+            changed = update_rules(nova, security_group, rules,
+                                   module.check_mode)
+        elif module.check_mode:
+            changed = True
+        else:
+            security_group = nova.security_groups.create(
+                module.params['name'], module.params['description'])
+            update_rules(nova, security_group, rules, module.check_mode)
+            changed = True
+    elif state == absent:
+        if not security_group:
+            changed = False
+        elif module.check_mode:
+            changed = True
+        else:
+            security_group.delete()
+
+    group_id = security_group.id if security_group else None
+
+    module.exit_json(changed=changed, group_id=group_id)
+
+
+from ansible.module_utils.basic import *
+from ansible.module_utils.openstack import *
+if __name__ == '__main__':
+    main()
