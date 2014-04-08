@@ -98,6 +98,7 @@ options:
         - DNS nameservers for this subnet, comma-separated
      required: false
      default: None
+     version_added: "1.4"
    allocation_pool_start:
      description:
         - From the subnet pool the starting address from which the IP should be allocated
