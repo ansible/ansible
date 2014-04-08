@@ -69,7 +69,7 @@ EXAMPLES = '''
 - haproxy: action=enable_server host={{ inventory_hostname }} frontend=www
 
 author: Ravi Bhure <ravibhure@gmail.com>
-version_added: "1.0"
+version_added: "1.6"
 '''
 
 import logging
@@ -246,7 +246,7 @@ class HAProxy(object):
         self.module.exit_json(haproxy_commands=self.command_results,
                               changed=True)
 
-######################################################################
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# import module snippets
+from ansible.module_utils.basic import *
+
 main()
