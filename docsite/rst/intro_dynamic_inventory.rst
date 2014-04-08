@@ -109,6 +109,9 @@ If you are running Ansible from within EC2, internal DNS names and IP addresses 
 
 The EC2 external inventory provides mappings to instances from several groups:
 
+Global
+  All instances are in group ``ec2``.
+
 Instance ID
   These are groups of one since instance IDs are unique.
   e.g.
