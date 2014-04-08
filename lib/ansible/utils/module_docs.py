@@ -82,7 +82,7 @@ def get_docstring(filename, verbose=False):
                             raise Exception("missing options in fragment, possibly misformatted?")
 
                         for key, value in fragment.items():
-
+                            open("/tmp/awx.log", "a").write("key: %s value: %s\n" % (key, value))
                             if not doc.has_key(key):
                                 doc[key] = value
                             else:
