@@ -465,7 +465,9 @@ def main():
         params["security_groups"] = security_groups.split(',')
 
     if vpc_security_groups:
-        params["vpc_security_groups"] = vpc_security_groups.split(',')
+        params["vpc_security_groups"] = [
+            boto.rds.VPCSecurityGroupMembership(vpc_group=x) if x else None
+            for x in vpc_security_groups.split(',')]
 
     if new_instance_name:
         params["new_instance_id"] = new_instance_name
@@ -618,9 +620,14 @@ def main():
     if resource.status == 'available' and command != 'snapshot':
         d["endpoint"] = resource.endpoint[0]
         d["port"] = resource.endpoint[1]
+        if resource.vpc_security_groups is not None:
+            d["vpc_security_groups"] = ','.join(x.vpc_group for x in resource.vpc_security_groups)
+        else:
+            d["vpc_security_groups"] = None
     else:
         d["endpoint"] = None
         d["port"] = None
+        d["vpc_security_groups"] = None
 
     # ReadReplicaSourceDBInstanceIdentifier may or may not exist
     try:
