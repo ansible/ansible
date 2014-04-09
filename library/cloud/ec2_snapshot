@@ -22,24 +22,6 @@ description:
     - creates an EC2 snapshot from an existing EBS volume
 version_added: "1.5"
 options:
-  ec2_secret_key:
-    description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
-    required: false
-    default: None
-    aliases: ['aws_secret_key', 'secret_key' ]
-  ec2_access_key:
-    description:
-      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
-    required: false
-    default: None
-    aliases: ['aws_access_key', 'access_key' ]
-  ec2_url:
-    description:
-      - Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints).  Must be specified if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used
-    required: false
-    default: null
-    aliases: []
   region:
     description:
       - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
@@ -70,23 +52,9 @@ options:
     required: false
     default: null
     aliases: []
-  profile:
-    description:
-      - uses a boto profile. Only works with boto >= 2.24.0
-    required: false
-    default: null
-    aliases: []
-    version_added: "1.6"
-  security_token:
-    description:
-      - security token to authenticate against AWS
-    required: false
-    default: null
-    aliases: []
-    version_added: "1.6"
 
-requirements: [ "boto" ]
 author: Will Thames
+extends_documentation_fragment: aws
 '''
 
 EXAMPLES = '''
