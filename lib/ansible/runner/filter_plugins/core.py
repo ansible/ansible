@@ -27,6 +27,7 @@ import operator as py_operator
 from ansible import errors
 from ansible.utils import md5s
 from distutils.version import LooseVersion, StrictVersion
+from random import SystemRandom
 
 def to_nice_yaml(*a, **kw):
     '''Make verbose, human readable yaml'''
@@ -180,6 +181,10 @@ def version_compare(value, version, operator='eq', strict=False):
     except Exception, e:
         raise errors.AnsibleFilterError('Version comparison: %s' % e)
 
+def rand(end, start=0, step=1):
+    r = SystemRandom()
+    return r.randrange(start, end, step)
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -245,5 +250,8 @@ class FilterModule(object):
 
             # version comparison
             'version_compare': version_compare,
+
+            # random numbers
+            'random': rand,
         }
 
