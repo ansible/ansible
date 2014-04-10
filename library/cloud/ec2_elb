@@ -25,7 +25,6 @@ description:
     if state=absent is passed as an argument.
   - Will be marked changed when called only if there are ELBs found to operate on.
 version_added: "1.2"
-requirements: [ "boto" ]
 author: John Jarvis
 options:
   state:
@@ -33,29 +32,15 @@ options:
       - register or deregister the instance
     required: true
     choices: ['present', 'absent']
-
   instance_id:
     description:
       - EC2 Instance ID
     required: true
-
   ec2_elbs:
     description:
       - List of ELB names, required for registration. The ec2_elbs fact should be used if there was a previous de-register.
     required: false
     default: None
-  aws_secret_key:
-    description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
-    required: false
-    default: None
-    aliases: ['ec2_secret_key', 'secret_key' ]
-  aws_access_key:
-    description:
-      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
-    required: false
-    default: None
-    aliases: ['ec2_access_key', 'access_key' ]
   region:
     description:
       - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
@@ -88,7 +73,7 @@ options:
     required: false
     default: 0
     version_added: "1.6"
-
+extends_documentation_fragment: aws
 """
 
 EXAMPLES = """
@@ -130,12 +115,11 @@ class ElbManager:
     """Handles EC2 instance ELB registration and de-registration"""
 
     def __init__(self, module, instance_id=None, ec2_elbs=None,
-                 aws_access_key=None, aws_secret_key=None, region=None):
-        self.aws_access_key = aws_access_key
-        self.aws_secret_key = aws_secret_key
+                 region=None, **aws_connect_params):
         self.module = module
         self.instance_id = instance_id
         self.region = region
+        self.aws_connect_params = aws_connect_params
         self.lbs = self._get_instance_lbs(ec2_elbs)
         self.changed = False
 
@@ -270,9 +254,8 @@ class ElbManager:
                   are attached to self.instance_id"""
 
         try:
-            endpoint="elasticloadbalancing.%s.amazonaws.com" % self.region
-            connect_region = RegionInfo(name=self.region, endpoint=endpoint)
-            elb = boto.ec2.elb.ELBConnection(self.aws_access_key, self.aws_secret_key, region=connect_region)
+            elb = connect_to_aws(boto.ec2.elb, self.region, 
+                                 **self.aws_connect_params)
         except boto.exception.NoAuthHandlerFound, e:
             self.module.fail_json(msg=str(e))
 
@@ -291,12 +274,11 @@ class ElbManager:
     def _get_instance(self):
         """Returns a boto.ec2.InstanceObject for self.instance_id"""
         try:
-            endpoint = "ec2.%s.amazonaws.com" % self.region
-            connect_region = RegionInfo(name=self.region, endpoint=endpoint)
-            ec2_conn = boto.ec2.EC2Connection(self.aws_access_key, self.aws_secret_key, region=connect_region)
+            ec2 = connect_to_aws(boto.ec2, self.region, 
+                                 **self.aws_connect_params)
         except boto.exception.NoAuthHandlerFound, e:
             self.module.fail_json(msg=str(e))
-        return ec2_conn.get_only_instances(instance_ids=[self.instance_id])[0]
+        return ec2.get_only_instances(instance_ids=[self.instance_id])[0]
 
 
 def main():
@@ -315,12 +297,12 @@ def main():
         argument_spec=argument_spec,
     )
 
-    # def get_ec2_creds(module):
-    #   return ec2_url, ec2_access_key, ec2_secret_key, region
-    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
+    region, ec2_url, aws_connect_params = get_aws_connection_info(module)
+
+    if not region: 
+        module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
 
     ec2_elbs = module.params['ec2_elbs']
-    region = module.params['region']
     wait = module.params['wait']
     enable_availability_zone = module.params['enable_availability_zone']
     timeout = module.params['wait_timeout']
@@ -329,8 +311,8 @@ def main():
         module.fail_json(msg="ELBs are required for registration")
 
     instance_id = module.params['instance_id']
-    elb_man = ElbManager(module, instance_id, ec2_elbs, aws_access_key,
-                         aws_secret_key, region=region)
+    elb_man = ElbManager(module, instance_id, ec2_elbs, 
+                         region=region, **aws_connect_params)
 
     if ec2_elbs is not None:
         for elb in ec2_elbs:
