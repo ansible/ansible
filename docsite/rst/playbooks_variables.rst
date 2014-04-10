@@ -234,6 +234,27 @@ be used.  The default is ``False``, and if set as ``True`` will use more strict 
 
     {{ sample_version_var | version_compare('1.0', operator='lt', strict=True) }}
 
+.. _random_filter
+
+Random Number Filter
+--------------------------
+
+.. versionadded:: 1.6
+
+To get a random number from 0 to supplied end::
+
+    {{ 59 |random}} * * * * root /script/from/cron
+
+Get a random number from 0 to 100 but in steps of 10::
+
+    {{ 100 |random(step=10) }}  => 70
+
+Get a random number from 1 to 100 but in steps of 10::
+
+    {{ 100 |random(1, 10) }}    => 31
+    {{ 100 |random(start=1, step=10) }}    => 51
+
+
 .. _other_useful_filters:
 
 Other Useful Filters
