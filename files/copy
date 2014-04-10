@@ -84,7 +84,6 @@ options:
     required: false
     version_added: "1.5"
 author: Michael DeHaan
-extends_documentation_fragment: files.DOCUMENTATION
 notes:
    - The "copy" module recursively copy facility does not scale to lots (>hundreds) of files.
      For alternative, see synchronize module, which is a wrapper around rsync.
