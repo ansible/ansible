@@ -130,7 +130,6 @@ class Play(object):
         self.max_fail_pct     = int(ds.get('max_fail_percentage', 100))
         self.su               = ds.get('su', self.playbook.su)
         self.su_user          = ds.get('su_user', self.playbook.su_user)
-        #self.vault_password   = vault_password
 
         # gather_facts is not a simple boolean, as None means  that a 'smart'
         # fact gathering mode will be used, so we need to be careful here as
@@ -763,45 +762,81 @@ class Play(object):
 
     def _update_vars_files_for_host(self, host, vault_password=None):
 
+        def generate_filenames(host, inject, filename):
+
+            """ Render the raw filename into 3 forms """
+
+            filename2 = template(self.basedir, filename, self.vars)
+            filename3 = filename2
+            if host is not None:
+                filename3 = template(self.basedir, filename2, inject)
+            if self._has_vars_in(filename3) and host is not None:
+                # allow play scoped vars and host scoped vars to template the filepath
+                inject.update(self.vars)
+                filename4 = template(self.basedir, filename3, inject)
+                filename4 = utils.path_dwim(self.basedir, filename4)
+            else:    
+                filename4 = utils.path_dwim(self.basedir, filename3)
+            return filename2, filename3, filename4
+
+
+        def update_vars_cache(host, inject, data, filename):
+
+            """ update a host's varscache with new var data """
+
+            data = utils.combine_vars(inject, data)
+            self.playbook.VARS_CACHE[host].update(data)
+            self.playbook.callbacks.on_import_for_host(host, filename4)
+
+        def process_files(filename, filename2, filename3, filename4, host=None):
+
+            """ pseudo-algorithm for deciding where new vars should go """
+
+            data = utils.parse_yaml_from_file(filename4, vault_password=self.vault_password)
+            if data:
+                if type(data) != dict:
+                    raise errors.AnsibleError("%s must be stored as a dictionary/hash" % filename4)
+                if host is not None:
+                    if self._has_vars_in(filename2) and not self._has_vars_in(filename3):
+                        # running a host specific pass and has host specific variables
+                        # load into setup cache
+                        update_vars_cache(host, inject, data, filename4)
+                    elif self._has_vars_in(filename3) and not self._has_vars_in(filename4):
+                        # handle mixed scope variables in filepath
+                        update_vars_cache(host, inject, data, filename4)
+
+                elif not self._has_vars_in(filename4):
+                    # found a non-host specific variable, load into vars and NOT
+                    # the setup cache
+                    if host is not None:
+                        self.vars.update(data)
+                    else:
+                        self.vars = utils.combine_vars(self.vars, data)
+
+        # Enforce that vars_files is always a list
         if type(self.vars_files) != list:
             self.vars_files = [ self.vars_files ]
 
+        # Build an inject if this is a host run started by self.update_vars_files
         if host is not None:
             inject = {}
             inject.update(self.playbook.inventory.get_variables(host, vault_password=vault_password))
             inject.update(self.playbook.SETUP_CACHE.get(host, {}))
             inject.update(self.playbook.VARS_CACHE.get(host, {}))
+        else:
+            inject = None            
 
         for filename in self.vars_files:
-
             if type(filename) == list:
-
-                # loop over all filenames, loading the first one, and failing if # none found
+                # loop over all filenames, loading the first one, and failing if none found
                 found = False
                 sequence = []
                 for real_filename in filename:
-                    filename2 = template(self.basedir, real_filename, self.vars)
-                    filename3 = filename2
-                    if host is not None:
-                        filename3 = template(self.basedir, filename2, inject)
-                    filename4 = utils.path_dwim(self.basedir, filename3)
+                    filename2, filename3, filename4 = generate_filenames(host, inject, real_filename)
                     sequence.append(filename4)
                     if os.path.exists(filename4):
                         found = True
-                        data = utils.parse_yaml_from_file(filename4, vault_password=self.vault_password)
-                        if type(data) != dict:
-                            raise errors.AnsibleError("%s must be stored as a dictionary/hash" % filename4)
-                        if host is not None:
-                            if self._has_vars_in(filename2) and not self._has_vars_in(filename3):
-                                # this filename has variables in it that were fact specific
-                                # so it needs to be loaded into the per host VARS_CACHE
-                                data = utils.combine_vars(inject, data)
-                                self.playbook.VARS_CACHE[host].update(data)
-                                self.playbook.callbacks.on_import_for_host(host, filename4)
-                        elif not self._has_vars_in(filename4):
-                            # found a non-host specific variable, load into vars and NOT
-                            # the setup cache
-                            self.vars.update(data)
+                        process_files(filename, filename2, filename3, filename4, host=host)
                     elif host is not None:
                         self.playbook.callbacks.on_not_import_for_host(host, filename4)
                     if found:
@@ -813,28 +848,10 @@ class Play(object):
 
             else:
                 # just one filename supplied, load it!
-
-                filename2 = template(self.basedir, filename, self.vars)
-                filename3 = filename2
-                if host is not None:
-                    filename3 = template(self.basedir, filename2, inject)
-                filename4 = utils.path_dwim(self.basedir, filename3)
+                filename2, filename3, filename4 = generate_filenames(host, inject, filename)
                 if self._has_vars_in(filename4):
                     continue
-                new_vars = utils.parse_yaml_from_file(filename4, vault_password=self.vault_password)
-                if new_vars:
-                    if type(new_vars) != dict:
-                        raise errors.AnsibleError("%s must be stored as dictionary/hash: %s" % (filename4, type(new_vars)))
-                    if host is not None and self._has_vars_in(filename2) and not self._has_vars_in(filename3):
-                        # running a host specific pass and has host specific variables
-                        # load into setup cache
-                        new_vars = utils.combine_vars(inject, new_vars)
-                        self.playbook.VARS_CACHE[host] = utils.combine_vars(
-                            self.playbook.VARS_CACHE[host], new_vars)
-                        self.playbook.callbacks.on_import_for_host(host, filename4)
-                    elif host is None:
-                        # running a non-host specific pass and we can update the global vars instead
-                        self.vars = utils.combine_vars(self.vars, new_vars)
+                process_files(filename, filename2, filename3, filename4, host=host)
 
         # finally, update the VARS_CACHE for the host, if it is set
         if host is not None:
