@@ -51,6 +51,16 @@ options:
     description:
       - A list of security groups into which instances should be found
     required: false
+  instance_type:
+    description:
+      - The type of the instance to launch
+    required: false
+  instance_monitoring:
+    description:
+      - Whether to enable detailed monitoring on the instances
+    required: false
+    default: 'yes'
+    choices: [ 'yes', 'no' ]
   region:
     description:
       - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
@@ -126,6 +136,7 @@ def create_launch_config(connection, module):
     user_data = module.params.get('user_data')
     volumes = module.params['volumes']
     instance_type = module.params.get('instance_type')
+    instance_monitoring = module.params.get('instance_monitoring')
     bdm = BlockDeviceMapping()
 
     if volumes:
@@ -144,7 +155,9 @@ def create_launch_config(connection, module):
         security_groups=security_groups,
         user_data=user_data,
         block_device_mappings=[bdm],
-        instance_type=instance_type)
+        instance_type=instance_type,
+        instance_monitoring=instance_monitoring,
+    )
 
     launch_configs = connection.get_all_launch_configurations(names=[name])
     changed = False
@@ -159,7 +172,8 @@ def create_launch_config(connection, module):
 
     module.exit_json(changed=changed, name=result.name, created_time=str(result.created_time),
                      image_id=result.image_id, arn=result.launch_configuration_arn,
-                     security_groups=result.security_groups, instance_type=instance_type)
+                     security_groups=result.security_groups, instance_type=instance_type,
+                     instance_monitoring=instance_monitoring)
 
 
 def delete_launch_config(connection, module):
@@ -183,6 +197,7 @@ def main():
             user_data=dict(type='str'),
             volumes=dict(type='list'),
             instance_type=dict(type='str'),
+            instance_monitoring=dict(default='yes', type='bool'),
             state=dict(default='present', choices=['present', 'absent']),
         )
     )
