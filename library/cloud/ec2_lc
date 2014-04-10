@@ -22,7 +22,6 @@ description:
   - Can create or delete AwS Autoscaling Configurations
   - Works with the ec2_asg module to manage Autoscaling Groups
 version_added: "1.6"
-requirements: [ "boto" ]
 author: Gareth Rushgrove
 options:
   state:
@@ -46,18 +45,6 @@ options:
     description:
       - A list of security groups into which instances should be found
     required: false
-  aws_secret_key:
-    description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used.
-    required: false
-    default: None
-    aliases: ['ec2_secret_key', 'secret_key' ]
-  aws_access_key:
-    description:
-      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
-    required: false
-    default: None
-    aliases: ['ec2_access_key', 'access_key' ]
   region:
     description:
       - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
@@ -75,6 +62,7 @@ options:
     required: false
     default: null
     aliases: []
+extends_documentation_fragment: aws
 """
 
 EXAMPLES = '''
