@@ -26,7 +26,7 @@ For more details, see: http://docs.pythonboto.org/en/latest/boto_config_tut.html
 
 When run against a specific host, this script returns the following variables:
  - ec2_ami_launch_index
- - ec2_architecture
+- ec2_architecture
  - ec2_association
  - ec2_attachTime
  - ec2_attachment
@@ -211,6 +211,13 @@ class Ec2Inventory(object):
         else:
             self.regions = configRegions.split(",")
 
+        # Filters
+        self.host_filter = None
+        configFilter = config.get('ec2', 'host_filter')
+        if configFilter:
+            tag, delim, value = configFilter.partition('=')
+            self.host_filter = (tag.strip(), value.strip() or None)
+
         # Destination addresses
         self.destination_variable = config.get('ec2', 'destination_variable')
         self.vpc_destination_variable = config.get('ec2', 'vpc_destination_variable')
@@ -329,6 +336,12 @@ class Ec2Inventory(object):
         # Only want running instances
         if instance.state != 'running':
             return
+
+        # Filter instances based on tag
+        if self.host_filter:
+            tag, value = self.host_filter
+            if instance.tags.get(tag) != value:
+                return
 
         # Select the best destination address
         if instance.subnet_id:
