@@ -67,8 +67,8 @@ options:
   config:
     required: false
     description:
-      - 'The configuration commands for this zone, passed in Python list format, e.g.
-        ["set auto-boot=true", "add net", "set physical=bge0", "set address=10.1.1.1", "end"]
+      - 'The zonecfg configuration commands for this zone, separated by commas, e.g.
+        "set auto-boot=true,add net,set physical=bge0,set address=10.1.1.1,end"
         See the Solaris Systems Administrator guide for a list of all configuration commands
         that can be used.'
     required: false
@@ -83,11 +83,11 @@ options:
 EXAMPLES = '''
 # Create a zone, but don't boot it
 zone: name=zone1 state=present path=/zones/zone1 whole_root=true root_password="Be9oX7OSwWoU."
-      config='["set autoboot=true", "add net", "set physical=bge0", "set address=10.1.1.1", "end"]'
+      config='set autoboot=true, add net, set physical=bge0, set address=10.1.1.1, end'
 
 # Create a zone and boot it
 zone: name=zone1 state=running path=/zones/zone1 whole_root=true root_password="Be9oX7OSwWoU."
-      config='["set autoboot=true", "add net", "set physical=bge0", "set address=10.1.1.1", "end"]'
+      config='set autoboot=true, add net, set physical=bge0, set address=10.1.1.1, end'
 
 # Boot an already created zone
 zone: name=zone1 state=running
@@ -114,7 +114,7 @@ class Zone(object):
         self.ssh_keygen_cmd = self.module.get_bin_path('ssh-keygen', True)
 
     def create(self):
-        if len(self.path) == 0:
+        if not self.path:
             self.module.fail_json(msg='Missing required argument: path')
 
         t = tempfile.NamedTemporaryFile(delete = False)
@@ -126,8 +126,8 @@ class Zone(object):
 
         t.write('set zonepath=%s\n' % self.path)
 
-        if self.config != 'None':
-            for line in eval(self.config):
+        if self.config:
+            for line in self.config:
                 t.write('%s\n' % line)
         t.close()
 
@@ -188,7 +188,7 @@ class Zone(object):
 
     def configure_password(self):
         shadow = '%s/root/etc/shadow' % self.path
-        if self.root_password != 'None':
+        if self.root_password:
             f = open(shadow, 'r')
             lines = f.readlines()
             f.close()
@@ -263,11 +263,11 @@ def main():
         argument_spec     = dict(
             name          = dict(required=True),
             state         = dict(required=True, choices=['running', 'present', 'stopped', 'absent']),
-            path          = dict(required=False),
+            path          = dict(defalt=None),
             whole_root    = dict(default=False, type='bool'),
-            root_password = dict(default='None'),
+            root_password = dict(default=None),
             timeout       = dict(default=600, type='int'),
-            config        = dict(default='None'),
+            config        = dict(default=None, type='list'),
             ),
         supports_check_mode=True
     )
