@@ -31,7 +31,7 @@ options:
     state:
         required: false
         default: "present"
-        choices: [ present, absent ]
+        choices: [ present, absent, probe ]
         description:
             - Whether the module should be present or absent.
     params:
@@ -53,7 +53,7 @@ def main():
     module = AnsibleModule(
         argument_spec={
             'name': {'required': True},
-            'state': {'default': 'present', 'choices': ['present', 'absent']},
+            'state': {'default': 'present', 'choices': ['present', 'absent', 'probe']},
             'params': {'default': ''},
         },
         supports_check_mode=True,
@@ -96,6 +96,13 @@ def main():
             if rc != 0:
                 module.fail_json(msg=err, **args)
             args['changed'] = True
+    elif args['state'] == 'probe':
+        if not present:
+            rc, _, err = module.run_command(['modprobe', args['name'], args['params']])
+            if rc == 0:
+                args['changed'] = True
+            elif rc != 0 and 'No such device' not in err:
+                module.fail_json(msg=err, **args)
     elif args['state'] == 'absent':
         if present:
             rc, _, err = module.run_command(['rmmod', args['name']])
