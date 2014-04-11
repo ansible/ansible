@@ -98,6 +98,12 @@ if __name__ == '__main__':
     try:
       # Delete matching instances
       delete_gce_resources(gce.list_nodes, 'name', opts)
+      # Delete matching snapshots
+      def get_snapshots():
+        for volume in gce.list_volumes():
+          for snapshot in gce.list_volume_snapshots(volume):
+            yield snapshot
+      delete_gce_resources(get_snapshots, 'name', opts)
       # Delete matching disks
       delete_gce_resources(gce.list_volumes, 'name', opts)
     except KeyboardInterrupt, e:

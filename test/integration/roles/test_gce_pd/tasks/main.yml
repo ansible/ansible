@@ -161,3 +161,60 @@
        - 'result.changed'
        - 'result.name == "{{ instance_name }}"'
        - 'result.state == "absent"'
+
+# ============================================================
+- name: test snapshot given (state=present)
+  gce_pd:
+    name: "{{ instance_name }}"
+    snapshot: "{{ instance_name }}-snapshot"
+    service_account_email: "{{ service_account_email }}"
+    pem_file: "{{ pem_file }}"
+    project_id: "{{ project_id }}"
+    state: present
+  register: result
+
+- name: assert image given (state=present)
+  assert:
+    that:
+       - 'result.changed'
+       - 'result.name == "{{ instance_name }}"'
+       - 'result.snapshot == "{{ instance_name }}-snapshot"'
+       - 'result.state == "present"'
+
+# ============================================================
+- name: test snapshot given (state=absent)
+  gce_pd:
+    name: "{{ instance_name }}"
+    snapshot: "{{ instance_name }}-snapshot"
+    service_account_email: "{{ service_account_email }}"
+    pem_file: "{{ pem_file }}"
+    project_id: "{{ project_id }}"
+    state: absent
+  register: result
+
+- name: assert image given (state=absent)
+  assert:
+    that:
+       - 'result.changed'
+       - 'result.name == "{{ instance_name }}"'
+       - 'result.state == "absent"'
+
+# ============================================================
+- name: test both image and snapshot given
+  gce_pd:
+    name: "{{ instance_name }}"
+    image: "debian-7"
+    snapshot: "{{ instance_name }}-snapshot"
+    service_account_email: "{{ service_account_email }}"
+    pem_file: "{{ pem_file }}"
+    project_id: "{{ project_id }}"
+    state: present
+  register: result
+  ignore_errors: true
+
+- name: assert image given (state=present)
+  assert:
+    that:
+       - 'result.failed'
+       - 'result.msg == "Cannot give both image (debian-7) and snapshot ({{ instance_name }}-snapshot)"'
+
