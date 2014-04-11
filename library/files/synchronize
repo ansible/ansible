@@ -133,7 +133,7 @@ options:
     default: yes
   rsync_opts:
     description:
-      - Specify additional rsync options by passing in an array. (added in Ansible 1.6)
+      - Specify additional rsync options by passing in an array.
     default:
     required: false
     version_added: "1.6"
