@@ -62,6 +62,12 @@ options:
     required: false
     default: 10
     aliases: []
+  image:
+    description:
+      - the source image to use for the disk
+    required: false
+    default: null
+    aliases: []
   state:
     description:
       - desired state of the persistent disk
@@ -132,6 +138,7 @@ def main():
             mode = dict(default='READ_ONLY', choices=['READ_WRITE', 'READ_ONLY']),
             name = dict(required=True),
             size_gb = dict(default=10),
+            image = dict(),
             state = dict(default='present'),
             zone = dict(default='us-central1-b'),
             service_account_email = dict(),
@@ -147,6 +154,7 @@ def main():
     mode = module.params.get('mode')
     name = module.params.get('name')
     size_gb = module.params.get('size_gb')
+    image = module.params.get('image')
     state = module.params.get('state')
     zone = module.params.get('zone')
 
@@ -204,8 +212,11 @@ def main():
                     instance_name, zone), changed=False)
 
         if not disk:
+            lc_image = None
+            if image is not None:
+              lc_image = gce.ex_get_image(image)
             try:
-                disk = gce.create_volume(size_gb, name, location=zone)
+                disk = gce.create_volume(size_gb, name, location=zone, image=lc_image)
             except ResourceExistsError:
                 pass
             except QuotaExceededError:
@@ -214,6 +225,7 @@ def main():
             except Exception, e:
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
             json_output['size_gb'] = size_gb
+            json_output['image'] = image
             changed = True
         if inst and not is_attached:
             try:
