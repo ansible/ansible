@@ -28,11 +28,11 @@ It is expected that many Ansible users with a reasonable amount of physical hard
 
 While primarily used to kickoff OS installations and manage DHCP and DNS, Cobbler has a generic
 layer that allows it to represent data for multiple configuration management systems (even at the same time), and has
-been referred to as a 'lightweight CMDB' by some admins.   This particular script will communicate with Cobbler
-using Cobbler's XMLRPC API.
+been referred to as a 'lightweight CMDB' by some admins.
 
 To tie Ansible's inventory to Cobbler (optional), copy `this script <https://raw.github.com/ansible/ansible/devel/plugins/inventory/cobbler.py>`_ to /etc/ansible and `chmod +x` the file.  cobblerd will now need
 to be running when you are using Ansible and you'll need to use Ansible's  ``-i`` command line option (e.g. ``-i /etc/ansible/cobbler.py``).
+This particular script will communicate with Cobbler using Cobbler's XMLRPC API.
 
 First test the script by running ``/etc/ansible/cobbler.py`` directly.   You should see some JSON data output, but it may not have anything in it just yet.
 
