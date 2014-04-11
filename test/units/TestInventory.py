@@ -439,3 +439,55 @@ class TestInventory(unittest.TestCase):
         actual_host_names = [host.name for host in group_greek]
         print "greek : %s " % actual_host_names
         assert actual_host_names == ['zeus', 'morpheus']
+
+    def test_dir_inventory_group_hosts(self):
+        inventory = self.dir_inventory()
+        expected_groups = {'all': ['morpheus', 'thor', 'zeus'],
+                           'major-god': ['thor', 'zeus'],
+                           'minor-god': ['morpheus'],
+                           'norse': ['thor'],
+                           'greek': ['morpheus', 'zeus'],
+                           'ungrouped': []}
+
+        actual_groups = {}
+        for group in inventory.get_groups():
+            actual_groups[group.name] = sorted([h.name for h in group.get_hosts()])
+            print "INVENTORY groups[%s].hosts=%s" % (group.name, actual_groups[group.name])
+            print "EXPECTED  groups[%s].hosts=%s" % (group.name, expected_groups[group.name])
+
+        assert actual_groups == expected_groups
+
+    def test_dir_inventory_groups_for_host(self):
+        inventory = self.dir_inventory()
+        expected_groups_for_host = {'morpheus': ['all', 'greek', 'minor-god'],
+                                    'thor': ['all', 'norse', 'major-god'],
+                                    'zeus': ['all', 'greek', 'major-god']}
+
+        actual_groups_for_host = {}
+        for (host, expected) in expected_groups_for_host.iteritems():
+            groups = inventory.groups_for_host(host)
+            names = sorted([g.name for g in groups])
+            actual_groups_for_host[host] = names
+            print "INVENTORY groups_for_host(%s)=%s" % (host, names)
+            print "EXPECTED  groups_for_host(%s)=%s" % (host, expected)
+
+        assert actual_groups_for_host == expected_groups_for_host
+
+    def test_dir_inventory_groups_list(self):
+        inventory = self.dir_inventory()
+        inventory_groups = inventory.groups_list()
+
+        expected_groups = {'all': ['morpheus', 'thor', 'zeus'],
+                           'major-god': ['thor', 'zeus'],
+                           'minor-god': ['morpheus'],
+                           'norse': ['thor'],
+                           'greek': ['morpheus', 'zeus'],
+                           'ungrouped': []}
+
+        for (name, expected_hosts) in expected_groups.iteritems():
+            inventory_groups[name] = sorted(inventory_groups.get(name, []))
+            print "INVENTORY groups_list['%s']=%s" % (name, inventory_groups[name])
+            print "EXPECTED  groups_list['%s']=%s" % (name, expected_hosts)
+
+        assert inventory_groups == expected_groups
+
