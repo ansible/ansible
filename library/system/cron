@@ -507,6 +507,10 @@ def main():
 
     if cron_file:
         res_args['cron_file'] = cron_file
+        
+        # unlink cron file if empty
+        if len(crontab.lines) == 0:
+            crontab.remove_job_file()
 
     module.exit_json(**res_args)
 
