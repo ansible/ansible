@@ -136,6 +136,7 @@ options:
       - Specify additional rsync options by passing in an array. (added in Ansible 1.6)
     default:
     required: false
+    version_added: "1.6"
 notes:
    - Inspect the verbose output to validate the destination user/host/path
      are what was expected.
