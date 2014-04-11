@@ -26,7 +26,7 @@ For more details, see: http://docs.pythonboto.org/en/latest/boto_config_tut.html
 
 When run against a specific host, this script returns the following variables:
  - ec2_ami_launch_index
-- ec2_architecture
+ - ec2_architecture
  - ec2_association
  - ec2_attachTime
  - ec2_attachment
@@ -344,8 +344,9 @@ class Ec2Inventory(object):
         if instance.state != 'running':
             return
 
-        # Filter instances based on hostvars
         instance_vars = self.get_host_info_dict_from_instance(instance)
+
+        # Filter instances based on hostvars
         if self.host_filter:
             var, value = self.host_filter
             if var not in instance_vars:
