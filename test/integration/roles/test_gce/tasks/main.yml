@@ -95,3 +95,117 @@
        - 'result.name == "{{ instance_name }}"'
        - 'result.state == "absent"'
 
+# ============================================================
+- name: test disks given (expected changed=true)
+  gce:
+    name: "{{ instance_name }}"
+    disks:
+       - "{{ instance_name }}-base"
+       - "{{ instance_name }}-extra"
+    service_account_email: "{{ service_account_email }}"
+    pem_file: "{{ pem_file }}"
+    project_id: "{{ project_id }}"
+    state: present
+  register: result
+
+- name: assert disks given
+  assert:
+    that:
+       - 'result.changed'
+       - 'result.instance_data[0].disks == ["{{ instance_name }}-base", "{{ instance_name }}-extra"]'
+       - 'result.state == "present"'
+
+# ============================================================
+- name: test disks given (expected changed=false)
+  gce:
+    name: "{{ instance_name }}"
+    disks:
+       - "{{ instance_name }}-base"
+       - "{{ instance_name }}-extra"
+    service_account_email: "{{ service_account_email }}"
+    pem_file: "{{ pem_file }}"
+    project_id: "{{ project_id }}"
+    state: present
+  register: result
+
+- name: assert disks given
+  assert:
+    that:
+       - 'not result.changed'
+       - 'result.instance_data[0].disks == ["{{ instance_name }}-base", "{{ instance_name }}-extra"]'
+       - 'result.state == "present"'
+
+# ============================================================
+- name: test disks in the wrong order
+  gce:
+    name: "{{ instance_name }}"
+    disks:
+       - "{{ instance_name }}-extra"
+       - "{{ instance_name }}-base"
+    service_account_email: "{{ service_account_email }}"
+    pem_file: "{{ pem_file }}"
+    project_id: "{{ project_id }}"
+  register: result
+  ignore_errors: true
+
+- name: assert disks in the wrong order
+  assert:
+    that:
+       - 'result.failed'
+       - '{{ result.msg | match("Disk at index 0 does not match:.*") }}'
+
+# ============================================================
+- name: test disks given with name and mode
+  gce:
+    name: "{{ instance_name }}"
+    disks:
+       - { name: "{{ instance_name }}-base", mode: "READ_WRITE" }
+       - { name: "{{ instance_name }}-extra", mode: "READ_ONLY" }
+    service_account_email: "{{ service_account_email }}"
+    pem_file: "{{ pem_file }}"
+    project_id: "{{ project_id }}"
+  register: result
+
+- name: assert disks given
+  assert:
+    that:
+       - 'not result.changed'
+       - 'result.state == "present"'
+
+# ============================================================
+- name: test disks given with name and wrong mode
+  gce:
+    name: "{{ instance_name }}"
+    disks:
+       - { name: "{{ instance_name }}-base", mode: "READ_ONLY" }
+       - "{{ instance_name }}-extra"
+    service_account_email: "{{ service_account_email }}"
+    pem_file: "{{ pem_file }}"
+    project_id: "{{ project_id }}"
+  register: result
+  ignore_errors: true
+
+- name: assert disks given
+  assert:
+    that:
+       - 'result.failed'
+       - '{{ result.msg | match("Disk at index 0 is in the wrong mode:.*") }}'
+
+# ============================================================
+- name: test disks given, state absent (expected changed=true)
+  gce:
+    name: "{{ instance_name }}"
+    disks:
+       - "{{ instance_name }}-base"
+       - "{{ instance_name }}-extra"
+    service_account_email: "{{ service_account_email }}"
+    pem_file: "{{ pem_file }}"
+    project_id: "{{ project_id }}"
+    state: absent
+  register: result
+
+- name: assert disks given, state absent (expected changed=true)
+  assert:
+    that:
+       - 'result.changed'
+       - 'result.state == "absent"'
