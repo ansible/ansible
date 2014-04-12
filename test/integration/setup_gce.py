@@ -1,10 +1,10 @@
 '''
 Create GCE resources for use in integration tests.
 
-Takes a prefix as a command-line argument and creates a persistent disk
-named ${prefix}-base and a snapshot of it named ${prefix}-snapshot.
-prefix will be forced to lowercase, to ensure the names are legal GCE
-resource names.
+Takes a prefix as a command-line argument and creates two persistent disks named
+${prefix}-base and ${prefix}-extra and a snapshot of the base disk named
+${prefix}-snapshot. prefix will be forced to lowercase, to ensure the names are
+legal GCE resource names.
 '''
 
 import sys
@@ -36,5 +36,7 @@ if __name__ == '__main__':
       base_volume = gce.create_volume(
           size=10, name=prefix+'-base', location='us-central1-a')
       gce.create_volume_snapshot(base_volume, name=prefix+'-snapshot')
+      gce.create_volume(
+          size=10, name=prefix+'-extra', location='us-central1-a')
     except KeyboardInterrupt, e:
         print "\nExiting on user command."
