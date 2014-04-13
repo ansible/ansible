@@ -260,6 +260,10 @@ Get a random number from 1 to 100 but in steps of 10::
 Other Useful Filters
 --------------------
 
+To concatenate a list into a string::
+   
+   {{ list | join(" ") }}
+
 To get the last name of a file path, like 'foo.txt' out of '/etc/asdf/foo.txt'::
 
     {{ path | basename }} 
