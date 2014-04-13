@@ -21,6 +21,8 @@ except ImportError:
         "msg='libcloud with GCE support (0.13.3+) required for this module'")
     sys.exit(1)
 
+import gce_credentials
+
 
 def delete_gce_resources(get_func, attr, opts):
     for item in get_func():
@@ -37,39 +39,9 @@ def prompt_and_delete(item, prompt, assumeyes):
         print ("Deleted %s" % item)
 
 def parse_args():
-    default_service_account_email = None
-    default_pem_file = None
-    default_project_id = None
-
-    # Load details from credentials.yml
-    if os.path.isfile('credentials.yml'):
-        credentials = yaml.load(open('credentials.yml', 'r'))
-
-        if default_service_account_email is None:
-            default_service_account_email = credentials['gce_service_account_email']
-        if default_pem_file is None:
-            default_pem_file = credentials['gce_pem_file']
-        if default_project_id is None:
-            default_project_id = credentials['gce_project_id']
-
     parser = optparse.OptionParser(usage="%s [options]" % (sys.argv[0],),
                 description=__doc__)
-    parser.add_option("--service_account_email",
-        action="store", dest="service_account_email",
-        default=default_service_account_email,
-        help="GCE service account email. Default is loaded from credentials.yml.")
-    parser.add_option("--pem_file",
-        action="store", dest="pem_file",
-        default=default_pem_file,
-        help="GCE client key. Default is loaded from credentials.yml.")
-    parser.add_option("--project_id",
-        action="store", dest="project_id",
-        default=default_project_id,
-        help="Google Cloud project ID. Default is loaded from credentials.yml.")
-    parser.add_option("--credentials", "-c",
-        action="store", dest="credential_file",
-        default="credentials.yml",
-        help="YAML file to read cloud credentials (default: %default)")
+    gce_credentials.add_credentials_options(parser)
     parser.add_option("--yes", "-y",
         action="store_true", dest="assumeyes",
         default=False,
@@ -80,10 +52,7 @@ def parse_args():
         help="Regular expression used to find GCE resources (default: %default)")
 
     (opts, args) = parser.parse_args()
-    for required in ['service_account_email', 'pem_file', 'project_id']:
-        if getattr(opts, required) is None:
-            parser.error("Missing required parameter: --%s" % required)
-
+    gce_credentials.check_required(opts, parser)
     return (opts, args)
 
 if __name__ == '__main__':
@@ -91,9 +60,7 @@ if __name__ == '__main__':
     (opts, args) = parse_args()
 
     # Connect to GCE
-    gce_cls = get_driver(Provider.GCE)
-    gce = gce_cls(
-        opts.service_account_email, opts.pem_file, project=opts.project_id)
+    gce = gce_credentials.get_gce_driver(opts)
 
     try:
       # Delete matching instances
