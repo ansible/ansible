@@ -22,6 +22,7 @@ description:
   - Can create or delete AwS Autoscaling Configurations
   - Works with the ec2_asg module to manage Autoscaling Groups
 version_added: "1.6"
+requirements: [ "boto" ]
 author: Gareth Rushgrove
 options:
   state:
@@ -44,6 +45,14 @@ options:
   security_groups:
     description:
       - A list of security groups into which instances should be found
+    required: false
+  use_public_ip:
+    description:
+      - Gives the launched instances a public IP if true
+    required: false
+  instance_profile_name:
+    description:
+      - Assign the launched instances to a particular IAM instance role
     required: false
   region:
     description:
@@ -119,6 +128,8 @@ def create_launch_config(connection, module):
     user_data = module.params.get('user_data')
     volumes = module.params['volumes']
     instance_type = module.params.get('instance_type')
+    use_public_ip = module.params.get('use_public_ip')
+    instance_profile_name = module.params.get('instance_profile_name')
     bdm = BlockDeviceMapping()
 
     if volumes:
@@ -137,7 +148,9 @@ def create_launch_config(connection, module):
         security_groups=security_groups,
         user_data=user_data,
         block_device_mappings=[bdm],
-        instance_type=instance_type)
+        instance_type=instance_type,
+        associate_public_ip_address=use_public_ip,
+        instance_profile_name=instance_profile_name)
 
     launch_configs = connection.get_all_launch_configurations(names=[name])
     changed = False
@@ -176,6 +189,8 @@ def main():
             user_data=dict(type='str'),
             volumes=dict(type='list'),
             instance_type=dict(type='str'),
+            use_public_ip=dict(type='bool'),
+            instance_profile_name=dict(type='str'),
             state=dict(default='present', choices=['present', 'absent']),
         )
     )
