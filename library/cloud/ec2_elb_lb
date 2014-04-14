@@ -548,6 +548,7 @@ def main():
     elb_man = ElbManager(module, name, listeners, purge_listeners, zones, 
                          purge_zones, security_group_ids, health_check, subnets, 
                          region=region, **aws_connect_params)
+                         aws_access_key, aws_secret_key, region=region)
 
     if state == 'present':
         elb_man.ensure_ok()
