@@ -301,6 +301,7 @@ import sys
 from urlparse import urlparse
 try:
     import docker.client
+    import docker.utils
     from requests.exceptions import *
 except ImportError, e:
     HAS_DOCKER_PY = False
@@ -524,16 +525,18 @@ class DockerManager:
                   'command':      self.module.params.get('command'),
                   'ports':        self.exposed_ports,
                   'volumes':      self.volumes,
-                  'volumes_from': self.module.params.get('volumes_from'),
                   'mem_limit':    _human_to_bytes(self.module.params.get('memory_limit')),
                   'environment':  self.env,
-                  'dns':          self.module.params.get('dns'),
                   'hostname':     self.module.params.get('hostname'),
                   'detach':       self.module.params.get('detach'),
                   'name':         self.module.params.get('name'),
                   'stdin_open':   self.module.params.get('stdin_open'),
                   'tty':          self.module.params.get('tty'),
                   }
+
+        if docker.utils.compare_version('1.10', self.client.version()['ApiVersion']) < 0:
+            params['dns'] = self.module.params.get('dns')
+            params['volumes_from'] = self.module.params.get('volumes_from')
 
         def do_create(count, params):
             results = []
@@ -562,6 +565,11 @@ class DockerManager:
             'privileged':   self.module.params.get('privileged'),
             'links': self.links,
         }
+
+        if docker.utils.compare_version('1.10', self.client.version()['ApiVersion']) >= 0:
+            params['dns'] = self.module.params.get('dns')
+            params['volumes_from'] = self.module.params.get('volumes_from')
+
         for i in containers:
             self.client.start(i['Id'], **params)
             self.increment_counter('started')
