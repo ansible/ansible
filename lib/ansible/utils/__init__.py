@@ -590,12 +590,15 @@ def md5(filename):
         return None
     digest = _md5()
     blocksize = 64 * 1024
-    infile = open(filename, 'rb')
-    block = infile.read(blocksize)
-    while block:
-        digest.update(block)
+    try:
+        infile = open(filename, 'rb')
         block = infile.read(blocksize)
-    infile.close()
+        while block:
+            digest.update(block)
+            block = infile.read(blocksize)
+        infile.close()
+    except IOError, e:
+        raise errors.AnsibleError("error while accessing the file %s, error was: %s" % (filename, e))
     return digest.hexdigest()
 
 def default(value, function):
