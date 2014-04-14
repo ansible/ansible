@@ -27,9 +27,10 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import hmac
+from hashlib import sha1
 HASHED_KEY_MAGIC = "|1|"
 
-def add_git_host_key(module, url, accept_hostkey=True):
+def add_git_host_key(module, url, accept_hostkey=True, create_dir=True):
 
     """ idempotently add a git url hostkey """
 
@@ -39,7 +40,7 @@ def add_git_host_key(module, url, accept_hostkey=True):
         known_host = check_hostkey(module, fqdn)
         if not known_host:
             if accept_hostkey:
-                rc, out, err = add_host_key(module, fqdn)
+                rc, out, err = add_host_key(module, fqdn, create_dir=create_dir)
                 if rc != 0:
                     module.fail_json(msg="failed to add %s hostkey: %s" % (fqdn, out + err))
             else:
@@ -86,11 +87,18 @@ def not_in_host_file(self, host):
         if not os.path.exists(hf):
             hfiles_not_found += 1
             continue
-        host_fh = open(hf)
-        data = host_fh.read()
-        host_fh.close()
+
+        try:
+            host_fh = open(hf)
+        except IOError, e:
+            hfiles_not_found += 1
+            continue
+        else:
+            data = host_fh.read()
+            host_fh.close()
+
         for line in data.split("\n"):
-            if line is None or line.find(" ") == -1:
+            if line is None or " " not in line:
                 continue
             tokens = line.split()
             if tokens[0].find(HASHED_KEY_MAGIC) == 0:
@@ -112,7 +120,7 @@ def not_in_host_file(self, host):
     return True
 
 
-def add_host_key(module, fqdn, key_type="rsa"):
+def add_host_key(module, fqdn, key_type="rsa", create_dir=False):
 
     """ use ssh-keyscan to add the hostkey """
 
@@ -128,7 +136,15 @@ def add_host_key(module, fqdn, key_type="rsa"):
     user_ssh_dir = os.path.expanduser(user_ssh_dir)
 
     if not os.path.exists(user_ssh_dir):
-        module.fail_json(msg="%s does not exist" % user_ssh_dir)
+        if create_dir:
+            try:
+                os.makedirs(user_ssh_dir, 0700)
+            except:
+                module.fail_json(msg="failed to create host key directory: %s" % user_ssh_dir)
+        else:
+            module.fail_json(msg="%s does not exist" % user_ssh_dir)
+    elif not os.path.isdir(user_ssh_dir):
+        module.fail_json(msg="%s is not a directory" % user_ssh_dir)
 
     this_cmd = "%s -t %s %s" % (keyscan_cmd, key_type, fqdn)
 

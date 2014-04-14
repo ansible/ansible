@@ -26,6 +26,7 @@ options:
         - The tenant login_user belongs to
      required: false
      default: None
+     version_added: "1.3"
    token:
      description:
         - The token to be uses in case the password is not specified

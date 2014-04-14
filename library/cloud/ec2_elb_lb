@@ -22,7 +22,6 @@ short_description: Creates or destroys Amazon ELB.
   - Returns information about the load balancer.
   - Will be marked changed when called only if state is changed.
 version_added: "1.5"
-requirements: [ "boto" ]
 author: Jim Dalton
 options:
   state:
@@ -62,32 +61,12 @@ options:
       - An associative array of health check configuration settigs (see example)
     require: false
     default: None
-  aws_secret_key:
-    description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
-    required: false
-    default: None
-    aliases: ['ec2_secret_key', 'secret_key']
-  aws_access_key:
-    description:
-      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
-    required: false
-    default: None
-    aliases: ['ec2_access_key', 'access_key']
   region:
     description:
       - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
     required: false
     aliases: ['aws_region', 'ec2_region']
-  validate_certs:
-    description:
-      - When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
-    required: false
-    default: "yes"
-    choices: ["yes", "no"]
-    aliases: []
-    version_added: "1.5"
-
+extends_documentation_fragment: aws
 """
 
 EXAMPLES = """
@@ -190,7 +169,7 @@ class ElbManager(object):
 
     def __init__(self, module, name, listeners=None, purge_listeners=None,
                  zones=None, purge_zones=None, security_group_ids=None, health_check=None,
-                 aws_access_key=None, aws_secret_key=None, region=None):
+                 region=None, **aws_connect_params):
         self.module = module
         self.name = name
         self.listeners = listeners
@@ -200,8 +179,7 @@ class ElbManager(object):
         self.security_group_ids = security_group_ids
         self.health_check = health_check
 
-        self.aws_access_key = aws_access_key
-        self.aws_secret_key = aws_secret_key
+        self.aws_connect_params = aws_connect_params
         self.region = region
 
         self.changed = False
@@ -271,11 +249,8 @@ class ElbManager(object):
 
     def _get_elb_connection(self):
         try:
-            endpoint = "elasticloadbalancing.%s.amazonaws.com" % self.region
-            connect_region = RegionInfo(name=self.region, endpoint=endpoint)
-            return boto.ec2.elb.ELBConnection(self.aws_access_key,
-                                              self.aws_secret_key,
-                                              region=connect_region)
+            return connect_to_aws(boto.ec2.elb, self.region, 
+                                  **self.aws_connect_params)
         except boto.exception.NoAuthHandlerFound, e:
             self.module.fail_json(msg=str(e))
 
@@ -467,11 +442,9 @@ def main():
             state={'required': True, 'choices': ['present', 'absent']},
             name={'required': True},
             listeners={'default': None, 'required': False, 'type': 'list'},
-            purge_listeners={'default': True, 'required': False,
-                             'choices': BOOLEANS, 'type': 'bool'},
+            purge_listeners={'default': True, 'required': False, 'type': 'bool'},
             zones={'default': None, 'required': False, 'type': 'list'},
-            purge_zones={'default': False, 'required': False,
-                         'choices': BOOLEANS, 'type': 'bool'},
+            purge_zones={'default': False, 'required': False, 'type': 'bool'},
             security_group_ids={'default': None, 'required': False, 'type': 'list'},
             health_check={'default': None, 'required': False, 'type': 'dict'},
         )
@@ -481,9 +454,9 @@ def main():
         argument_spec=argument_spec,
     )
 
-    # def get_ec2_creds(module):
-    #   return ec2_url, ec2_access_key, ec2_secret_key, region
-    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
+    region, ec2_url, aws_connect_params = get_aws_connection_info(module)
+    if not region:
+        module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
 
     name = module.params['name']
     state = module.params['state']
@@ -501,8 +474,8 @@ def main():
         module.fail_json(msg="At least one availability zone is required for ELB creation")
 
     elb_man = ElbManager(module, name, listeners, purge_listeners, zones,
-                         purge_zones, security_group_ids, health_check, aws_access_key,
-                         aws_secret_key, region=region)
+                         purge_zones, security_group_ids, health_check, 
+                         region=region, **aws_connect_params)
 
     if state == 'present':
         elb_man.ensure_ok()

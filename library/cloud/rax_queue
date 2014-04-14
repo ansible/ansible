@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+# This is a DOCUMENTATION stub specific to this module, it extends
+# a documentation fragment located in ansible.utils.module_docs_fragments
 DOCUMENTATION = '''
 ---
 module: rax_queue
@@ -22,40 +24,19 @@ description:
      - creates / deletes a Rackspace Public Cloud queue.
 version_added: "1.5"
 options:
-  api_key:
-    description:
-      - Rackspace API key (overrides C(credentials))
-  credentials:
-    description:
-      - File to find the Rackspace credentials in (ignored if C(api_key) and
-        C(username) are provided)
-    default: null
-    aliases: ['creds_file']
   name:
     description:
       - Name to give the queue
     default: null
-  region:
-    description:
-      - Region to create the load balancer in
-    default: DFW
   state:
     description:
       - Indicate desired state of the resource
-    choices: ['present', 'absent']
+    choices:
+      - present
+      - absent
     default: present
-  username:
-    description:
-      - Rackspace username (overrides C(credentials))
-requirements: [ "pyrax" ]
 author: Christopher H. Laco, Matt Martz
-notes:
-  - The following environment variables can be used, C(RAX_USERNAME),
-    C(RAX_API_KEY), C(RAX_CREDS_FILE), C(RAX_CREDENTIALS), C(RAX_REGION).
-  - C(RAX_CREDENTIALS) and C(RAX_CREDS_FILE) points to a credentials file
-    appropriate for pyrax. See U(https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating)
-  - C(RAX_USERNAME) and C(RAX_API_KEY) obviate the use of a credentials file
-  - C(RAX_REGION) defines a Rackspace Public Cloud region (DFW, ORD, LON, ...)
+extends_documentation_fragment: rackspace
 '''
 
 EXAMPLES = '''
@@ -68,22 +49,17 @@ EXAMPLES = '''
       local_action:
         module: rax_queue
         credentials: ~/.raxpub
-        client_id: unique-client-name
         name: my-queue
         region: DFW
         state: present
       register: my_queue
 '''
 
-import sys
-import os
-
-
 try:
     import pyrax
+    HAS_PYRAX = True
 except ImportError:
-    print("failed=True msg='pyrax is required for this module'")
-    sys.exit(1)
+    HAS_PYRAX = False
 
 
 def cloud_queue(module, state, name):
@@ -96,6 +72,10 @@ def cloud_queue(module, state, name):
     instance = {}
 
     cq = pyrax.queues
+    if not cq:
+        module.fail_json(msg='Failed to instantiate client. This '
+                             'typically indicates an invalid region or an '
+                             'incorrectly capitalized region name.')
 
     for queue in cq.list():
         if name != queue.name:
@@ -145,6 +125,9 @@ def main():
         argument_spec=argument_spec,
         required_together=rax_required_together()
     )
+
+    if not HAS_PYRAX:
+        module.fail_json(msg='pyrax is required for this module')
 
     name = module.params.get('name')
     state = module.params.get('state')

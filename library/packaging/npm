@@ -139,6 +139,10 @@ class Npm(object):
             #If path is specified, cd into that path and run the command.
             cwd = None
             if self.path:
+                if not os.path.exists(self.path):
+                    os.makedirs(self.path)
+                if not os.path.isdir(self.path):
+                    self.module.fail_json(msg="path %s is not a directory" % self.path)
                 cwd = self.path
 
             rc, out, err = self.module.run_command(cmd, check_rc=check_rc, cwd=cwd)

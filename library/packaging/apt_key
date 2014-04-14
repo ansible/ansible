@@ -58,6 +58,12 @@ options:
         default: none
         description:
             - url to retrieve key from.
+    keyserver:
+        version_added: "1.6"
+        required: false
+        default: none
+        description:
+            - keyserver to retrieve key from.
     state:
         required: false
         choices: [ absent, present ]
@@ -143,8 +149,12 @@ def download_key(module, url):
         rsp, info = fetch_url(module, url)
         return rsp.read()
     except Exception:
-        module.fail_json(msg="error getting key id from url", traceback=format_exc())
+        module.fail_json(msg="error getting key id from url: %s" % url, traceback=format_exc())
 
+def import_key(module, keyserver, key_id):
+    cmd = "apt-key adv --keyserver %s --recv %s" % (keyserver, key_id)
+    (rc, out, err) = module.run_command(cmd, check_rc=True)
+    return True
 
 def add_key(module, keyfile, keyring, data=None):
     if data is not None:
@@ -179,8 +189,9 @@ def main():
             file=dict(required=False),
             key=dict(required=False),
             keyring=dict(required=False),
-            state=dict(required=False, choices=['present', 'absent'], default='present'),
             validate_certs=dict(default='yes', type='bool'),
+            keyserver=dict(required=False),
+            state=dict(required=False, choices=['present', 'absent'], default='present')
         ),
         supports_check_mode=True
     )
@@ -191,6 +202,7 @@ def main():
     filename        = module.params['file']
     keyring         = module.params['keyring']
     state           = module.params['state']
+    keyserver       = module.params['keyserver']
     changed         = False
 
     if key_id:
@@ -211,7 +223,7 @@ def main():
         if key_id and key_id in keys:
             module.exit_json(changed=False)
         else:
-            if not filename and not data:
+            if not filename and not data and not keyserver:
                 data = download_key(module, url)
             if key_id and key_id in keys:
                 module.exit_json(changed=False)
@@ -220,6 +232,8 @@ def main():
                     module.exit_json(changed=True)
                 if filename:
                     add_key(module, filename, keyring)
+                elif keyserver:
+                    import_key(module, keyserver, key_id)
                 else:
                     add_key(module, "-", keyring, data)
                 changed=False

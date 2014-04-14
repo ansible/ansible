@@ -19,6 +19,7 @@
 # installs ansible and sets it up to run on cron.
 
 import os
+import shlex
 import shutil
 import tempfile
 from io import BytesIO
@@ -122,7 +123,7 @@ class VaultLib(object):
 
         # try to unencrypt data
         data = this_cipher.decrypt(data, self.password)
-        if not data:
+        if data is None:
             raise errors.AnsibleError("Decryption failed")
 
         return data            
@@ -190,8 +191,7 @@ class VaultEditor(object):
             raise errors.AnsibleError("%s exists, please use 'edit' instead" % self.filename)
 
         # drop the user into vim on file
-        EDITOR = os.environ.get('EDITOR','vim')
-        call([EDITOR, self.filename])
+        call(self._editor_shell_command(self.filename))
         tmpdata = self.read_data(self.filename)
         this_vault = VaultLib(self.password)
         this_vault.cipher_name = self.cipher_name
@@ -210,7 +210,7 @@ class VaultEditor(object):
         this_vault = VaultLib(self.password)
         if this_vault.is_encrypted(tmpdata):
             dec_data = this_vault.decrypt(tmpdata)
-            if not dec_data:
+            if dec_data is None:
                 raise errors.AnsibleError("Decryption failed")
             else:
                 self.write_data(dec_data, self.filename)
@@ -230,8 +230,7 @@ class VaultEditor(object):
         self.write_data(dec_data, tmp_path)
 
         # drop the user into vim on the tmp file
-        EDITOR = os.environ.get('EDITOR','vim')
-        call([EDITOR, tmp_path])
+        call(self._editor_shell_command(tmp_path))
         new_data = self.read_data(tmp_path)
 
         # create new vault
@@ -302,6 +301,13 @@ class VaultEditor(object):
         if os.path.isfile(dest):
             os.remove(dest)
         shutil.move(src, dest)
+
+    def _editor_shell_command(self, filename):
+        EDITOR = os.environ.get('EDITOR','vim')
+        editor = shlex.split(EDITOR)
+        editor.append(filename)
+
+        return editor
 
 ########################################
 #               CIPHERS                #
@@ -445,7 +451,6 @@ class VaultAES256(object):
         derivedkey = PBKDF2(password, salt, dkLen=(2 * keylength) + ivlength, 
                             count=10000, prf=pbkdf2_prf)
 
-        #import epdb; epdb.st()
         key1 = derivedkey[:keylength]
         key2 = derivedkey[keylength:(keylength * 2)]
         iv = derivedkey[(keylength * 2):(keylength * 2) + ivlength]

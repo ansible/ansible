@@ -55,6 +55,7 @@ import types
 import time
 import shutil
 import stat
+import tempfile
 import traceback
 import grp
 import pwd
@@ -114,6 +115,8 @@ FILE_COMMON_ARGUMENTS=dict(
     backup = dict(),
     force = dict(),
     remote_src = dict(), # used by assemble
+    delimiter = dict(), # used by assemble
+    directory_mode = dict(), # used by copy
 )
 
 
@@ -684,6 +687,8 @@ class AnsibleModule(object):
                 if not isinstance(value, list):
                     if isinstance(value, basestring):
                         self.params[k] = value.split(",")
+                    elif isinstance(value, int) or isinstance(value, float):
+                        self.params[k] = [ str(value) ]
                     else:
                         is_invalid = True
             elif wanted == 'dict':
@@ -803,6 +808,12 @@ class AnsibleModule(object):
         else:
             msg = 'Invoked'
 
+        # 6655 - allow for accented characters
+        try:
+            msg = unicode(msg).encode('utf8')
+        except UnicodeDecodeError, e:
+            pass
+
         if (has_journal):
             journal_args = ["MESSAGE=%s %s" % (module, msg)]
             journal_args.append("MODULE=%s" % os.path.basename(__file__))
@@ -813,10 +824,10 @@ class AnsibleModule(object):
             except IOError, e:
                 # fall back to syslog since logging to journal failed
                 syslog.openlog(str(module), 0, syslog.LOG_USER)
-                syslog.syslog(syslog.LOG_NOTICE, unicode(msg).encode('utf8'))
+                syslog.syslog(syslog.LOG_NOTICE, msg) #1
         else:
             syslog.openlog(str(module), 0, syslog.LOG_USER)
-            syslog.syslog(syslog.LOG_NOTICE, unicode(msg).encode('utf8'))
+            syslog.syslog(syslog.LOG_NOTICE, msg) #2
 
     def _set_cwd(self):
         try:
@@ -883,6 +894,9 @@ class AnsibleModule(object):
         for encoding in ("utf-8", "latin-1", "unicode_escape"):
             try:
                 return json.dumps(data, encoding=encoding)
+            # Old systems using simplejson module does not support encoding keyword.
+            except TypeError, e:
+                return json.dumps(data)
             except UnicodeDecodeError, e:
                 continue
         self.fail_json(msg='Invalid unicode encoding encountered')
@@ -962,11 +976,12 @@ class AnsibleModule(object):
         it uses os.rename to ensure this as it is an atomic operation, rest of the function is
         to work around limitations, corner cases and ensure selinux context is saved if possible'''
         context = None
+        dest_stat = None
         if os.path.exists(dest):
             try:
-                st = os.stat(dest)
-                os.chmod(src, st.st_mode & 07777)
-                os.chown(src, st.st_uid, st.st_gid)
+                dest_stat = os.stat(dest)
+                os.chmod(src, dest_stat.st_mode & 07777)
+                os.chown(src, dest_stat.st_uid, dest_stat.st_gid)
             except OSError, e:
                 if e.errno != errno.EPERM:
                     raise
@@ -975,6 +990,8 @@ class AnsibleModule(object):
         else:
             if self.selinux_enabled():
                 context = self.selinux_default_context(dest)
+
+        creating = not os.path.exists(dest)
 
         try:
             # Optimistically try a rename, solves some corner cases and can avoid useless work, throws exception if not atomic.
@@ -986,20 +1003,28 @@ class AnsibleModule(object):
 
             dest_dir = os.path.dirname(dest)
             dest_file = os.path.basename(dest)
-            tmp_dest = "%s/.%s.%s.%s" % (dest_dir,dest_file,os.getpid(),time.time())
+            tmp_dest = tempfile.NamedTemporaryFile(
+                prefix=".ansible_tmp", dir=dest_dir, suffix=dest_file)
 
             try: # leaves tmp file behind when sudo and  not root
                 if os.getenv("SUDO_USER") and os.getuid() != 0:
                     # cleanup will happen by 'rm' of tempdir
-                    shutil.copy(src, tmp_dest)
+                    # copy2 will preserve some metadata
+                    shutil.copy2(src, tmp_dest.name)
                 else:
-                    shutil.move(src, tmp_dest)
+                    shutil.move(src, tmp_dest.name)
                 if self.selinux_enabled():
-                    self.set_context_if_different(tmp_dest, context, False)
-                os.rename(tmp_dest, dest)
+                    self.set_context_if_different(
+                        tmp_dest.name, context, False)
+                if dest_stat:
+                    os.chown(tmp_dest.name, dest_stat.st_uid, dest_stat.st_gid)
+                os.rename(tmp_dest.name, dest)
             except (shutil.Error, OSError, IOError), e:
-                self.cleanup(tmp_dest)
+                self.cleanup(tmp_dest.name)
                 self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
+
+        if creating and os.getenv("SUDO_USER"):
+            os.chown(dest, os.getuid(), os.getgid())
 
         if self.selinux_enabled():
             # rename might not preserve context

@@ -26,6 +26,7 @@ import pipes
 import shlex
 import os
 import sys
+import uuid
 
 class Play(object):
 
@@ -92,6 +93,10 @@ class Play(object):
 
         self._update_vars_files_for_host(None)
 
+        # apply any extra_vars specified on the command line now
+        if type(self.playbook.extra_vars) == dict:
+            self.vars = utils.combine_vars(self.vars, self.playbook.extra_vars)
+
         # template everything to be efficient, but do not pre-mature template
         # tasks/handlers as they may have inventory scope overrides
         _tasks    = ds.pop('tasks', [])
@@ -117,7 +122,6 @@ class Play(object):
         self.sudo             = ds.get('sudo', self.playbook.sudo)
         self.sudo_user        = ds.get('sudo_user', self.playbook.sudo_user)
         self.transport        = ds.get('connection', self.playbook.transport)
-        self.gather_facts     = ds.get('gather_facts', None)
         self.remote_port      = self.remote_port
         self.any_errors_fatal = utils.boolean(ds.get('any_errors_fatal', 'false'))
         self.accelerate       = utils.boolean(ds.get('accelerate', 'false'))
@@ -126,7 +130,13 @@ class Play(object):
         self.max_fail_pct     = int(ds.get('max_fail_percentage', 100))
         self.su               = ds.get('su', self.playbook.su)
         self.su_user          = ds.get('su_user', self.playbook.su_user)
-        #self.vault_password   = vault_password
+
+        # gather_facts is not a simple boolean, as None means  that a 'smart'
+        # fact gathering mode will be used, so we need to be careful here as
+        # calling utils.boolean(None) returns False
+        self.gather_facts = ds.get('gather_facts', None)
+        if self.gather_facts:
+            self.gather_facts = utils.boolean(self.gather_facts)
 
         # Fail out if user specifies a sudo param with a su param in a given play
         if (ds.get('sudo') or ds.get('sudo_user')) and (ds.get('su') or ds.get('su_user')):
@@ -357,6 +367,12 @@ class Play(object):
         new_tasks.append(dict(meta='flush_handlers'))
 
         roles = self._build_role_dependencies(roles, [], self.vars)
+
+        # give each role a uuid
+        for idx, val in enumerate(roles):
+            this_uuid = str(uuid.uuid4())
+            roles[idx][-2]['role_uuid'] = this_uuid
+
         role_names = []
 
         for (role,role_path,role_vars,default_vars) in roles:
@@ -568,9 +584,9 @@ class Play(object):
                     include_filename = utils.path_dwim(dirname, include_file)
                     data = utils.parse_yaml_from_file(include_filename, vault_password=self.vault_password)
                     if 'role_name' in x and data is not None:
-                        for x in data:
-                            if 'include' in x:
-                                x['role_name'] = new_role
+                        for y in data:
+                            if isinstance(y, dict) and 'include' in y:
+                                y['role_name'] = new_role
                     loaded = self._load_tasks(data, mv, default_vars, included_sudo_vars, list(included_additional_conditions), original_file=include_filename, role_name=new_role)
                     results += loaded
             elif type(x) == dict:
@@ -719,21 +735,21 @@ class Play(object):
         role_tags = {}
         for task in self._ds['tasks']:
             if 'role_name' in task:
-                this_role = task['role_name']
+                this_role = task['role_name'] + "-" + task['vars']['role_uuid']
 
                 if this_role not in role_tags:
                     role_tags[this_role] = []
 
                 if 'tags' in task['vars']:
                     if isinstance(task['vars']['tags'], basestring):
-                        role_tags[task['role_name']] += shlex.split(task['vars']['tags'])
+                        role_tags[this_role] += shlex.split(task['vars']['tags'])
                     else:
-                        role_tags[task['role_name']] += task['vars']['tags']
+                        role_tags[this_role] += task['vars']['tags']
 
         # apply each role's tags to it's tasks
         for idx, val in enumerate(self._tasks):
-            if hasattr(val, 'role_name'):
-                this_role = val.role_name
+            if getattr(val, 'role_name', None) is not None:
+                this_role = val.role_name + "-" + val.module_vars['role_uuid']
                 if this_role in role_tags:
                     self._tasks[idx].tags = sorted(set(self._tasks[idx].tags + role_tags[this_role]))
 
@@ -746,44 +762,81 @@ class Play(object):
 
     def _update_vars_files_for_host(self, host, vault_password=None):
 
+        def generate_filenames(host, inject, filename):
+
+            """ Render the raw filename into 3 forms """
+
+            filename2 = template(self.basedir, filename, self.vars)
+            filename3 = filename2
+            if host is not None:
+                filename3 = template(self.basedir, filename2, inject)
+            if self._has_vars_in(filename3) and host is not None:
+                # allow play scoped vars and host scoped vars to template the filepath
+                inject.update(self.vars)
+                filename4 = template(self.basedir, filename3, inject)
+                filename4 = utils.path_dwim(self.basedir, filename4)
+            else:    
+                filename4 = utils.path_dwim(self.basedir, filename3)
+            return filename2, filename3, filename4
+
+
+        def update_vars_cache(host, inject, data, filename):
+
+            """ update a host's varscache with new var data """
+
+            data = utils.combine_vars(inject, data)
+            self.playbook.VARS_CACHE[host].update(data)
+            self.playbook.callbacks.on_import_for_host(host, filename4)
+
+        def process_files(filename, filename2, filename3, filename4, host=None):
+
+            """ pseudo-algorithm for deciding where new vars should go """
+
+            data = utils.parse_yaml_from_file(filename4, vault_password=self.vault_password)
+            if data:
+                if type(data) != dict:
+                    raise errors.AnsibleError("%s must be stored as a dictionary/hash" % filename4)
+                if host is not None:
+                    if self._has_vars_in(filename2) and not self._has_vars_in(filename3):
+                        # running a host specific pass and has host specific variables
+                        # load into setup cache
+                        update_vars_cache(host, inject, data, filename4)
+                    elif self._has_vars_in(filename3) and not self._has_vars_in(filename4):
+                        # handle mixed scope variables in filepath
+                        update_vars_cache(host, inject, data, filename4)
+
+                elif not self._has_vars_in(filename4):
+                    # found a non-host specific variable, load into vars and NOT
+                    # the setup cache
+                    if host is not None:
+                        self.vars.update(data)
+                    else:
+                        self.vars = utils.combine_vars(self.vars, data)
+
+        # Enforce that vars_files is always a list
         if type(self.vars_files) != list:
             self.vars_files = [ self.vars_files ]
 
+        # Build an inject if this is a host run started by self.update_vars_files
         if host is not None:
             inject = {}
             inject.update(self.playbook.inventory.get_variables(host, vault_password=vault_password))
-            inject.update(self.playbook.SETUP_CACHE[host])
+            inject.update(self.playbook.SETUP_CACHE.get(host, {}))
+            inject.update(self.playbook.VARS_CACHE.get(host, {}))
+        else:
+            inject = None            
 
         for filename in self.vars_files:
-
             if type(filename) == list:
-
-                # loop over all filenames, loading the first one, and failing if # none found
+                # loop over all filenames, loading the first one, and failing if none found
                 found = False
                 sequence = []
                 for real_filename in filename:
-                    filename2 = template(self.basedir, real_filename, self.vars)
-                    filename3 = filename2
-                    if host is not None:
-                        filename3 = template(self.basedir, filename2, inject)
-                    filename4 = utils.path_dwim(self.basedir, filename3)
+                    filename2, filename3, filename4 = generate_filenames(host, inject, real_filename)
                     sequence.append(filename4)
                     if os.path.exists(filename4):
                         found = True
-                        data = utils.parse_yaml_from_file(filename4, vault_password=self.vault_password)
-                        if type(data) != dict:
-                            raise errors.AnsibleError("%s must be stored as a dictionary/hash" % filename4)
-                        if host is not None:
-                            if self._has_vars_in(filename2) and not self._has_vars_in(filename3):
-                                # this filename has variables in it that were fact specific
-                                # so it needs to be loaded into the per host SETUP_CACHE
-                                data = utils.combine_vars(inject, data)
-                                self.playbook.SETUP_CACHE[host].update(data)
-                                self.playbook.callbacks.on_import_for_host(host, filename4)
-                        elif not self._has_vars_in(filename4):
-                            # found a non-host specific variable, load into vars and NOT
-                            # the setup cache
-                            self.vars.update(data)
+                        process_files(filename, filename2, filename3, filename4, host=host)
                     elif host is not None:
                         self.playbook.callbacks.on_not_import_for_host(host, filename4)
                     if found:
@@ -795,25 +848,11 @@ class Play(object):
 
             else:
                 # just one filename supplied, load it!
-
-                filename2 = template(self.basedir, filename, self.vars)
-                filename3 = filename2
-                if host is not None:
-                    filename3 = template(self.basedir, filename2, inject)
-                filename4 = utils.path_dwim(self.basedir, filename3)
+                filename2, filename3, filename4 = generate_filenames(host, inject, filename)
                 if self._has_vars_in(filename4):
                     continue
-                new_vars = utils.parse_yaml_from_file(filename4, vault_password=self.vault_password)
-                if new_vars:
-                    if type(new_vars) != dict:
-                        raise errors.AnsibleError("%s must be stored as dictionary/hash: %s" % (filename4, type(new_vars)))
-                    if host is not None and self._has_vars_in(filename2) and not self._has_vars_in(filename3):
-                        # running a host specific pass and has host specific variables
-                        # load into setup cache
-                        new_vars = utils.combine_vars(inject, new_vars)
-                        self.playbook.SETUP_CACHE[host] = utils.combine_vars(
-                            self.playbook.SETUP_CACHE[host], new_vars)
-                        self.playbook.callbacks.on_import_for_host(host, filename4)
-                    elif host is None:
-                        # running a non-host specific pass and we can update the global vars instead
-                        self.vars = utils.combine_vars(self.vars, new_vars)
+                process_files(filename, filename2, filename3, filename4, host=host)
+
+        # finally, update the VARS_CACHE for the host, if it is set
+        if host is not None:
+            self.playbook.VARS_CACHE[host].update(self.playbook.extra_vars)

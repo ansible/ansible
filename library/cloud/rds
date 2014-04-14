@@ -131,7 +131,7 @@ options:
     aliases: []
   port:
     description:
-      - Port number that the DB instance uses for connections.  Defaults to 3306 for mysql, 1521 for Oracle, 1443 for SQL Server. Used only when command=create or command=replicate.
+      - Port number that the DB instance uses for connections.  Defaults to 3306 for mysql. Must be changed to 1521 for Oracle, 1443 for SQL Server, 5432 for PostgreSQL. Used only when command=create or command=replicate.
     required: false
     default: null
     aliases: []
@@ -343,7 +343,7 @@ def main():
     maint_window       = module.params.get('maint_window')
     subnet             = module.params.get('subnet')
     backup_window      = module.params.get('backup_window')
-    backup_retention   = module.params.get('module_retention')
+    backup_retention   = module.params.get('backup_retention')
     region             = module.params.get('region')
     zone               = module.params.get('zone')
     aws_secret_key     = module.params.get('aws_secret_key')

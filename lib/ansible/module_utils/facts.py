@@ -108,6 +108,7 @@ class Facts(object):
         self.facts['python_version'] = platform.python_version()
         self.facts['fqdn'] = socket.getfqdn()
         self.facts['hostname'] = platform.node().split('.')[0]
+        self.facts['nodename'] = platform.node()
         self.facts['domain'] = '.'.join(self.facts['fqdn'].split('.')[1:])
         arch_bits = platform.architecture()[0]
         self.facts['userspace_bits'] = arch_bits.replace('bit', '')
@@ -230,6 +231,7 @@ class Facts(object):
             dist = platform.dist()
             self.facts['distribution'] = dist[0].capitalize() or 'NA'
             self.facts['distribution_version'] = dist[1] or 'NA'
+            self.facts['distribution_major_version'] = dist[1].split('.')[0] or 'NA'
             self.facts['distribution_release'] = dist[2] or 'NA'
             # Try to handle the exceptions now ...
             for (path, name) in Facts.OSDIST_DICT.items():
@@ -416,6 +418,7 @@ class Facts(object):
         now = datetime.datetime.now()
         self.facts['date_time']['year'] = now.strftime('%Y')
         self.facts['date_time']['month'] = now.strftime('%m')
+        self.facts['date_time']['weekday'] = now.strftime('%A')
         self.facts['date_time']['day'] = now.strftime('%d')
         self.facts['date_time']['hour'] = now.strftime('%H')
         self.facts['date_time']['minute'] = now.strftime('%M')

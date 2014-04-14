@@ -395,7 +395,8 @@ class ElastiCacheManager(object):
 
         # check vpc security groups
         vpc_security_groups = []
-        for sg in self.data['SecurityGroups']:
+        security_groups = self.data['SecurityGroups'] or []
+        for sg in security_groups:
             vpc_security_groups.append(sg['SecurityGroupId'])
             if set(vpc_security_groups) - set(self.security_group_ids):
                 return True
@@ -489,8 +490,8 @@ def main():
             security_group_ids={'required': False, 'default': [],
                                    'type': 'list'},
             zone={'required': False, 'default': None},
-            wait={'required': False, 'choices': BOOLEANS, 'default': True},
-            hard_modify={'required': False, 'choices': BOOLEANS, 'default': False}
+            wait={'required': False, 'type' : 'bool', 'default': True},
+            hard_modify={'required': False, 'type': 'bool', 'default': False}
         )
     )
 

@@ -110,24 +110,6 @@ options:
       - how long to wait for the spot instance request to be fulfilled
     default: 600
     aliases: []
-  ec2_url:
-    description:
-      - Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints).  Must be specified if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used
-    required: false
-    default: null
-    aliases: []
-  aws_secret_key:
-    description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
-    required: false
-    default: null
-    aliases: [ 'ec2_secret_key', 'secret_key' ]
-  aws_access_key:
-    description:
-      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
-    required: false
-    default: null
-    aliases: [ 'ec2_access_key', 'access_key' ]
   count:
     description:
       - number of instances to launch
@@ -198,7 +180,7 @@ options:
     default: null
     aliases: []
   source_dest_check:
-    version_added: "1.5"
+    version_added: "1.6"
     description:
       - Enable or Disable the Source/Destination checks (for NAT instances and Virtual Routers)
     required: false
@@ -217,6 +199,12 @@ options:
     required: false
     default: null
     aliases: []
+  ebs_optimized:
+    version_added: "1.6"
+    description:
+      - whether instance is using optimized EBS volumes, see U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSOptimized.html)
+    required: false
+    default: false
   exact_count:
     version_added: "1.5"
     description:
@@ -231,31 +219,9 @@ options:
     required: false
     default: null
     aliases: []
-  validate_certs:
-    description:
-      - When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
-    required: false
-    default: "yes"
-    choices: ["yes", "no"]
-    aliases: []
-    version_added: "1.5"
-  profile:
-    description:
-      - uses a boto profile. Only works with boto >= 2.24.0
-    required: false
-    default: null
-    aliases: []
-    version_added: "1.6"
-  security_token:
-    description:
-      - security token to authenticate against AWS
-    required: false
-    default: null
-    aliases: []
-    version_added: "1.6"
 
-requirements: [ "boto" ]
 author: Seth Vidal, Tim Gerla, Lester Wade
+extends_documentation_fragment: aws
 '''
 
 EXAMPLES = '''
@@ -604,7 +570,8 @@ def get_instance_info(inst):
                      'root_device_type': inst.root_device_type,
                      'root_device_name': inst.root_device_name,
                      'state': inst.state,
-                     'hypervisor': inst.hypervisor}
+                     'hypervisor': inst.hypervisor,
+                     'ebs_optimized': inst.ebs_optimized}
     try:
         instance_info['virtualization_type'] = getattr(inst,'virtualization_type')
     except AttributeError:
@@ -767,6 +734,7 @@ def create_instances(module, ec2, override_count=None):
     private_ip = module.params.get('private_ip')
     instance_profile_name = module.params.get('instance_profile_name')
     volumes = module.params.get('volumes')
+    ebs_optimized = module.params.get('ebs_optimized')
     exact_count = module.params.get('exact_count')
     count_tag = module.params.get('count_tag')
     source_dest_check = module.boolean(module.params.get('source_dest_check'))
@@ -826,6 +794,9 @@ def create_instances(module, ec2, override_count=None):
                       'kernel_id': kernel,
                       'ramdisk_id': ramdisk,
                       'user_data': user_data}
+
+            if ebs_optimized:
+              params['ebs_optimized'] = ebs_optimized
 
             if boto_supports_profile_name_arg(ec2):
                 params['instance_profile_name'] = instance_profile_name
@@ -1125,7 +1096,7 @@ def main():
             spot_price = dict(),
             image = dict(),
             kernel = dict(),
-            count = dict(default='1'),
+            count = dict(type='int', default='1'),
             monitoring = dict(type='bool', default=False),
             ramdisk = dict(),
             wait = dict(type='bool', default=False),
@@ -1144,6 +1115,7 @@ def main():
             exact_count = dict(type='int', default=None),
             count_tag = dict(),
             volumes = dict(type='list'),
+            ebs_optimized = dict(),
         )
     )
 

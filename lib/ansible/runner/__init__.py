@@ -31,6 +31,7 @@ import sys
 import pipes
 import jinja2
 import subprocess
+import getpass
 
 import ansible.constants as C
 import ansible.inventory
@@ -80,18 +81,19 @@ def _executor_hook(job_queue, result_queue, new_stdin):
             traceback.print_exc()
 
 class HostVars(dict):
-    ''' A special view of setup_cache that adds values from the inventory when needed. '''
+    ''' A special view of vars_cache that adds values from the inventory when needed. '''
 
-    def __init__(self, setup_cache, inventory):
-        self.setup_cache = setup_cache
+    def __init__(self, vars_cache, inventory, vault_password=None):
+        self.vars_cache = vars_cache
         self.inventory = inventory
         self.lookup = dict()
-        self.update(setup_cache)
+        self.update(vars_cache)
+        self.vault_password = vault_password
 
     def __getitem__(self, host):
         if host not in self.lookup:
-            result = self.inventory.get_variables(host)
-            result.update(self.setup_cache.get(host, {}))
+            result = self.inventory.get_variables(host, vault_password=self.vault_password)
+            result.update(self.vars_cache.get(host, {}))
             self.lookup[host] = result
         return self.lookup[host]
 
@@ -117,6 +119,7 @@ class Runner(object):
         background=0,                       # async poll every X seconds, else 0 for non-async
         basedir=None,                       # directory of playbook, if applicable
         setup_cache=None,                   # used to share fact data w/ other tasks
+        vars_cache=None,                    # used to store variables about hosts
         transport=C.DEFAULT_TRANSPORT,      # 'ssh', 'paramiko', 'local'
         conditional='True',                 # run only if this fact expression evals to true
         callbacks=None,                     # used for output
@@ -154,6 +157,7 @@ class Runner(object):
         self.check            = check
         self.diff             = diff
         self.setup_cache      = utils.default(setup_cache, lambda: collections.defaultdict(dict))
+        self.vars_cache       = utils.default(vars_cache, lambda: collections.defaultdict(dict))
         self.basedir          = utils.default(basedir, lambda: os.getcwd())
         self.callbacks        = utils.default(callbacks, lambda: DefaultRunnerCallbacks())
         self.generated_jid    = str(random.randint(0, 999999999999))
@@ -291,7 +295,7 @@ class Runner(object):
             raise errors.AnsibleError("environment must be a dictionary, received %s" % enviro)
         result = ""
         for (k,v) in enviro.iteritems():
-            result = "%s=%s %s" % (k, pipes.quote(str(v)), result)
+            result = "%s=%s %s" % (k, pipes.quote(unicode(v)), result)
         return result
 
     # *****************************************************
@@ -507,10 +511,15 @@ class Runner(object):
             fileno = None
 
         try:
+            self._new_stdin = new_stdin
             if not new_stdin and fileno is not None:
-                self._new_stdin = os.fdopen(os.dup(fileno))
-            else:
-                self._new_stdin = new_stdin
+                try:
+                    self._new_stdin = os.fdopen(os.dup(fileno))
+                except OSError, e:
+                    # couldn't dupe stdin, most likely because it's
+                    # not a valid file descriptor, so we just rely on
+                    # using the one that was passed in
+                    pass
 
             exec_rc = self._executor_internal(host, new_stdin)
             if type(exec_rc) != ReturnData:
@@ -543,13 +552,19 @@ class Runner(object):
             # fireball, local, etc
             port = self.remote_port
 
+        module_vars = template.template(self.basedir, self.module_vars, host_variables)
+
+        # merge the VARS and SETUP caches for this host
+        combined_cache = self.setup_cache.copy()
+        combined_cache.get(host, {}).update(self.vars_cache.get(host, {}))
+
         inject = {}
         inject = utils.combine_vars(inject, self.default_vars)
         inject = utils.combine_vars(inject, host_variables)
-        inject = utils.combine_vars(inject, self.module_vars)
-        inject = utils.combine_vars(inject, self.setup_cache[host])
+        inject = utils.combine_vars(inject, module_vars)
+        inject = utils.combine_vars(inject, combined_cache.get(host, {}))
         inject.setdefault('ansible_ssh_user', self.remote_user)
-        inject['hostvars'] = HostVars(self.setup_cache, self.inventory)
+        inject['hostvars'] = HostVars(combined_cache, self.inventory, vault_password=self.vault_pass)
         inject['group_names'] = host_variables.get('group_names', [])
         inject['groups']      = self.inventory.groups_list()
         inject['vars']        = self.module_vars
@@ -849,16 +864,19 @@ class Runner(object):
 
             changed_when = self.module_vars.get('changed_when')
             failed_when = self.module_vars.get('failed_when')
-            if changed_when is not None or failed_when is not None:
+            if (changed_when is not None or failed_when is not None) and self.background == 0:
                 register = self.module_vars.get('register')
-                if  register is not None:
+                if register is not None:
                     if 'stdout' in data:
                         data['stdout_lines'] = data['stdout'].splitlines()
                     inject[register] = data
-                if changed_when is not None:
-                    data['changed'] = utils.check_conditional(changed_when, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars)
-                if failed_when is not None:
-                    data['failed_when_result'] = data['failed'] = utils.check_conditional(failed_when, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars)
+                # only run the final checks if the async_status has finished,
+                # or if we're not running an async_status check at all
+                if (module_name == 'async_status' and "finished" in data) or module_name != 'async_status':
+                    if changed_when is not None and 'skipped' not in data:
+                        data['changed'] = utils.check_conditional(changed_when, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars)
+                    if failed_when is not None:
+                        data['failed_when_result'] = data['failed'] = utils.check_conditional(failed_when, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars)
 
             if is_chained:
                 # no callbacks
@@ -913,6 +931,12 @@ class Runner(object):
         # compare connection user to (su|sudo)_user and disable if the same
         if hasattr(conn, 'user'):
             if conn.user == sudo_user or conn.user == su_user:
+                sudoable = False
+                su = False
+        else:
+            # assume connection type is local if no user attribute
+            this_user = getpass.getuser()
+            if this_user == sudo_user or this_user == su_user:
                 sudoable = False
                 su = False
 
@@ -1089,10 +1113,15 @@ class Runner(object):
 
         workers = []
         for i in range(self.forks):
+            new_stdin = None
             if fileno is not None:
-                new_stdin = os.fdopen(os.dup(fileno))
-            else:
-                new_stdin = None
+                try:
+                    new_stdin = os.fdopen(os.dup(fileno))
+                except OSError, e:
+                    # couldn't dupe stdin, most likely because it's
+                    # not a valid file descriptor, so we just rely on
+                    # using the one that was passed in
+                    pass
             prc = multiprocessing.Process(target=_executor_hook,
                 args=(job_queue, result_queue, new_stdin))
             prc.start()

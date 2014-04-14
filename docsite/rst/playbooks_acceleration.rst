@@ -76,4 +76,11 @@ As noted above, accelerated mode also supports running tasks via sudo, however t
 * You must remove requiretty from your sudoers options.
 * Prompting for the sudo password is not yet supported, so the NOPASSWD option is required for sudo'ed commands.
 
+As of Ansible version `1.6`, you can also allow the use of multiple keys for connections from multiple Ansible management nodes. To do so, add the following option
+to your `ansible.cfg` configuration::
+
+    accelerate_multi_key = yes
+
+When enabled, the daemon will open a UNIX socket file (by default `$ANSIBLE_REMOTE_TEMP/.ansible-accelerate/.local.socket`). New connections over SSH can
+use this socket file to upload new keys to the daemon.
 

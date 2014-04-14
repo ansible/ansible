@@ -78,6 +78,8 @@ def main(args):
         help="one-step-at-a-time: confirm each task before running")
     parser.add_option('--start-at-task', dest='start_at',
         help="start the playbook at the task matching this name")
+    parser.add_option('--force-handlers', dest='force_handlers', action='store_true',
+        help="run handlers even if a task fails")
 
     options, args = parser.parse_args(args)
 
@@ -122,7 +124,7 @@ def main(args):
             this_path = os.path.expanduser(options.vault_password_file)
             try:
                 f = open(this_path, "rb")
-                tmp_vault_pass=f.read()
+                tmp_vault_pass=f.read().strip()
                 f.close()
             except (OSError, IOError), e:
                 raise errors.AnsibleError("Could not read %s: %s" % (this_path, e))
@@ -134,7 +136,7 @@ def main(args):
     for extra_vars_opt in options.extra_vars:
         if extra_vars_opt.startswith("@"):
             # Argument is a YAML file (JSON is a subset of YAML)
-            extra_vars = utils.combine_vars(extra_vars, utils.parse_yaml_from_file(extra_vars_opt[1:]))
+            extra_vars = utils.combine_vars(extra_vars, utils.parse_yaml_from_file(extra_vars_opt[1:], vault_password=vault_pass))
         elif extra_vars_opt and extra_vars_opt[0] in '[{':
             # Arguments as YAML
             extra_vars = utils.combine_vars(extra_vars, utils.parse_yaml(extra_vars_opt))
@@ -191,7 +193,8 @@ def main(args):
             su=options.su,
             su_pass=su_pass,
             su_user=options.su_user,
-            vault_password=vault_pass
+            vault_password=vault_pass,
+            force_handlers=options.force_handlers
         )
 
         if options.listhosts or options.listtasks or options.syntax:
@@ -204,11 +207,9 @@ def main(args):
                 play = ansible.playbook.Play(pb, play_ds, play_basedir)
                 label = play.name
                 hosts = pb.inventory.list_hosts(play.hosts)
-                if options.listhosts:
-                    print '  play #%d (%s): host count=%d' % (playnum, label, len(hosts))
-                    for host in hosts:
-                        print '    %s' % host
-                if options.listtasks:
+
+                # Filter all tasks by given tags
+                if pb.only_tags != 'all':
                     if options.subset and not hosts:
                         continue
                     matched_tags, unmatched_tags = play.compare_tags(pb.only_tags)
@@ -222,6 +223,13 @@ def main(args):
 
                     if unknown_tags:
                         continue
+
+                if options.listhosts:
+                    print '  play #%d (%s): host count=%d' % (playnum, label, len(hosts))
+                    for host in hosts:
+                        print '    %s' % host
+
+                if options.listtasks:
                     print '  play #%d (%s):' % (playnum, label)
 
                     for task in play.tasks():

@@ -74,21 +74,21 @@ options:
     choices: ["active", "present", "absent", "deleted"]
     aliases: []
   service_account_email:
-    version_added: 1.5.1
+    version_added: "1.6"
     description:
       - service account email
     required: false
     default: null
     aliases: []
   pem_file:
-    version_added: 1.5.1
+    version_added: "1.6"
     description:
       - path to the pem file associated with the service account email
     required: false
     default: null
     aliases: []
   project_id:
-    version_added: 1.5.1
+    version_added: "1.6"
     description:
       - your GCE project ID
     required: false

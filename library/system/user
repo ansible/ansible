@@ -181,6 +181,9 @@ EXAMPLES = '''
 # Add the user 'johnd' with a specific uid and a primary group of 'admin'
 - user: name=johnd comment="John Doe" uid=1040
 
+# Add the user 'james' with a bash shell, appending the group 'admins' and 'developers' to the user's groups
+- user: name=james shell=/bin/bash groups=admins,developers append=yes
+
 # Remove the user 'johnd'
 - user: name=johnd state=absent remove=yes
 
@@ -1186,6 +1189,7 @@ class SunOS(User):
                             lines.append(line)
                             continue
                         fields[1] = self.password
+                        fields[2] = str(int(time.time() / 86400))
                         line = ':'.join(fields)
                         lines.append('%s\n' % line)
                     open(self.SHADOWFILE, 'w+').writelines(lines)
@@ -1272,6 +1276,7 @@ class SunOS(User):
                             lines.append(line)
                             continue
                         fields[1] = self.password
+                        fields[2] = str(int(time.time() / 86400))	
                         line = ':'.join(fields)
                         lines.append('%s\n' % line)
                     open(self.SHADOWFILE, 'w+').writelines(lines)

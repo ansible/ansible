@@ -23,7 +23,7 @@ The environment can also be stored in a variable, and accessed like so::
     - hosts: all
       remote_user: root
 
-      # here we make a variable named "env" that is a dictionary
+      # here we make a variable named "proxy_env" that is a dictionary
       vars:
         proxy_env:
           http_proxy: http://proxy.example.com:8080

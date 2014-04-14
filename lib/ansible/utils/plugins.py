@@ -240,4 +240,9 @@ filter_loader = PluginLoader(
     'filter_plugins'
 )
 
-
+fragment_loader = PluginLoader(
+    'ModuleDocFragment',
+    'ansible.utils.module_docs_fragments',
+    os.path.join(os.path.dirname(__file__), 'module_docs_fragments'),
+    '',
+)

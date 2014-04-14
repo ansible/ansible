@@ -7,7 +7,6 @@ description:
   - Can create or delete scaling policies for autoscaling groups
   - Referenced autoscaling groups must already exist
 version_added: "1.6"
-requirements: [ "boto" ]
 author: Zacharie Eakin
 options:
   state:
@@ -40,6 +39,7 @@ options:
     description:
       - The minimum period of time between which autoscaling actions can take place
     required: false
+extends_documentation_fragment: aws
 """
 
 EXAMPLES = '''

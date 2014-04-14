@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# (c) 2014, Ahti Kitsik <ak@ahtik.com>
 # (c) 2014, Jarno Keskikangas <jarno.keskikangas@gmail.com>
 # (c) 2013, Aleksey Ovcharenko <aleksey.ovcharenko@gmail.com>
 # (c) 2013, James Martin <jmartin@basho.com>
@@ -27,7 +28,7 @@ short_description: Manage firewall with UFW
 description:
     - Manage firewall with UFW.
 version_added: 1.6
-author: Aleksey Ovcharenko, Jarno Keskikangas
+author: Aleksey Ovcharenko, Jarno Keskikangas, Ahti Kitsik
 notes:
     - See C(man ufw) for more examples.
 requirements:
@@ -38,9 +39,9 @@ options:
       - C(enabled) reloads firewall and enables firewall on boot.
       - C(disabled) unloads firewall and disables firewall on boot.
       - C(reloaded) reloads firewall.
-      - C(reseted) disables and resets firewall to installation defaults.
+      - C(reset) disables and resets firewall to installation defaults.
     required: false
-    choices: ['enabled', 'disabled', 'reloaded', 'reseted']
+    choices: ['enabled', 'disabled', 'reloaded', 'reset']
   policy:
     description:
       - Change the default policy for incoming or outgoing traffic.
@@ -65,12 +66,12 @@ options:
     description:
       - Add firewall rule
     required: false
-    choises: ['allow', 'deny', 'reject', 'limit']
+    choices: ['allow', 'deny', 'reject', 'limit']
   log:
     description:
       - Log new connections matched to this rule
     required: false
-    choises: ['yes', 'no']
+    choices: ['yes', 'no']
   from_ip:
     description:
       - Source IP address.
@@ -111,7 +112,10 @@ options:
 
 EXAMPLES = '''
 # Allow everything and enable UFW
-ufw: state=enable policy=allow logging=on
+ufw: state=enabled policy=allow
+
+# Set logging
+ufw: logging=on
 
 # Sometimes it is desirable to let the sender know when traffic is
 # being denied, rather than simply ignoring it. In these cases, use
@@ -163,9 +167,9 @@ def main():
         argument_spec = dict(
             state     = dict(default=None,  choices=['enabled', 'disabled', 'reloaded', 'reset']),
             default   = dict(default=None,  aliases=['policy'], choices=['allow', 'deny', 'reject']),
-            logging   = dict(default=None,  choises=['on', 'off', 'low', 'medium', 'high', 'full']),
-            direction = dict(default=None,  choises=['in', 'incoming', 'out', 'outgoing']),
-            delete    = dict(default=False, choices=BOOLEANS),
+            logging   = dict(default=None,  choices=['on', 'off', 'low', 'medium', 'high', 'full']),
+            direction = dict(default=None,  choices=['in', 'incoming', 'out', 'outgoing']),
+            delete    = dict(default=False, type='bool'),
             insert    = dict(default=None),
             rule      = dict(default=None,  choices=['allow', 'deny', 'reject', 'limit']),
             interface = dict(default=None,  aliases=['if']),
@@ -178,13 +182,14 @@ def main():
             app       = dict(default=None,  aliases=['name'])
         ),
         supports_check_mode = True,
-        mutually_exclusive = [['app', 'proto']]
+        mutually_exclusive = [['app', 'proto', 'logging']]
     )
 
     cmds = []
 
     def execute(cmd):
         cmd = ' '.join(map(itemgetter(-1), filter(itemgetter(0), cmd)))
+
         cmds.append(cmd)
         (rc, out, err) = module.run_command(cmd)
 
@@ -217,7 +222,7 @@ def main():
             execute(cmd + [['-f'], [states[value]]])
 
         elif command == 'logging':
-            execute(cmd + [[command, value]])
+            execute(cmd + [[command], [value]])
 
         elif command == 'default':
             execute(cmd + [[command], [value], [params['direction']]])

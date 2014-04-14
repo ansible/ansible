@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+# This is a DOCUMENTATION stub specific to this module, it extends
+# a documentation fragment located in ansible.utils.module_docs_fragments
 DOCUMENTATION = '''
 ---
 module: rax_network
@@ -25,20 +27,10 @@ options:
   state:
     description:
      - Indicate desired state of the resource
-    choices: ['present', 'absent']
+    choices:
+      - present
+      - absent
     default: present
-  credentials:
-    description:
-     - File to find the Rackspace credentials in (ignored if C(api_key) and
-       C(username) are provided)
-    default: null
-    aliases: ['creds_file']
-  api_key:
-    description:
-     - Rackspace API key (overrides C(credentials))
-  username:
-    description:
-     - Rackspace username (overrides C(credentials))
   label:
     description:
      - Label (name) to give the network
@@ -47,19 +39,8 @@ options:
     description:
      - cidr of the network being created
     default: null
-  region:
-    description:
-     - Region to create the network in
-    default: DFW
-requirements: [ "pyrax" ]
 author: Christopher H. Laco, Jesse Keating
-notes:
-  - The following environment variables can be used, C(RAX_USERNAME),
-    C(RAX_API_KEY), C(RAX_CREDS), C(RAX_CREDENTIALS), C(RAX_REGION).
-  - C(RAX_CREDENTIALS) and C(RAX_CREDS) points to a credentials file
-    appropriate for pyrax
-  - C(RAX_USERNAME) and C(RAX_API_KEY) obviate the use of a credentials file
-  - C(RAX_REGION) defines a Rackspace Public Cloud region (DFW, ORD, LON, ...)
+extends_documentation_fragment: rackspace.openstack
 '''
 
 EXAMPLES = '''
@@ -76,16 +57,11 @@ EXAMPLES = '''
         state: present
 '''
 
-import sys
-import os
-
 try:
     import pyrax
-    import pyrax.utils
-    from pyrax import exc
+    HAS_PYRAX = True
 except ImportError:
-    print("failed=True msg='pyrax required for this module'")
-    sys.exit(1)
+    HAS_PYRAX = False
 
 
 def cloud_network(module, state, label, cidr):
@@ -97,10 +73,15 @@ def cloud_network(module, state, label, cidr):
     network = None
     networks = []
 
+    if not pyrax.cloud_networks:
+        module.fail_json(msg='Failed to instantiate client. This '
+                             'typically indicates an invalid region or an '
+                             'incorrectly capitalized region name.')
+
     if state == 'present':
         try:
             network = pyrax.cloud_networks.find_network_by_label(label)
-        except exc.NetworkNotFound:
+        except pyrax.exceptions.NetworkNotFound:
             try:
                 network = pyrax.cloud_networks.create(label, cidr=cidr)
                 changed = True
@@ -114,7 +95,7 @@ def cloud_network(module, state, label, cidr):
             network = pyrax.cloud_networks.find_network_by_label(label)
             network.delete()
             changed = True
-        except exc.NetworkNotFound:
+        except pyrax.exceptions.NetworkNotFound:
             pass
         except Exception, e:
             module.fail_json(msg='%s' % e.message)
@@ -143,6 +124,9 @@ def main():
         argument_spec=argument_spec,
         required_together=rax_required_together(),
     )
+
+    if not HAS_PYRAX:
+        module.fail_json(msg='pyrax is required for this module')
 
     state = module.params.get('state')
     label = module.params.get('label')
