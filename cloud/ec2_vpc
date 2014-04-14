@@ -328,7 +328,7 @@ def create_vpc(module, vpc_conn):
 
 
     # Process all subnet properties
-    if not isinstance(subnets, list):
+    if subnets and not isinstance(subnets, list):
         module.fail_json(msg='subnets needs to be a list of cidr blocks')
     
     current_subnets = vpc_conn.get_all_subnets(filters={ 'vpc_id': vpc.id })
@@ -405,7 +405,7 @@ def create_vpc(module, vpc_conn):
     # think of without using painful aws ids.  Hopefully boto will add
     # the replace-route-table API to make this smoother and
     # allow control of the 'main' routing table.
-    if not isinstance(route_tables, list):
+    if route_tables and not isinstance(route_tables, list):
         module.fail_json(msg='route tables need to be a list of dictionaries')
     
 # Work through each route table and update/create to match dictionary array
