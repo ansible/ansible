@@ -22,6 +22,7 @@ description:
   - Can create or delete AWS Autoscaling Groups
   - Works with the ec2_lc module to manage Launch Configurations
 version_added: "1.6"
+requirements: [ "boto" ]
 author: Gareth Rushgrove
 options:
   state:
@@ -109,6 +110,28 @@ def enforce_required_arguments(module):
         module.fail_json(msg="Missing required arguments for autoscaling group create/update: %s" % ",".join(missing_args))
 
 
+def get_info(group):
+    return {
+        'name': group.name,
+        'launch_config': group.launch_config_name,
+        "availability_zones": group.availability_zones,
+        "cooldown": group.cooldown,
+        "default_cooldown": group.default_cooldown,
+        "desired_capacity": group.desired_capacity,
+        "enabled_metrics": group.enabled_metrics,
+        "health_check_period": group.health_check_period,
+        "health_check_type": group.health_check_type,
+        "instance_id": group.instance_id,
+        "launch_config_name": group.launch_config_name,
+        "load_balancers": group.load_balancers,
+        "max_size": group.max_size,
+        "min_size": group.min_size,
+        "placement_group": group.placement_group,
+        "termination_policies": group.termination_policies,
+        "vpc_zone_identifier": group.vpc_zone_identifier,
+    }
+
+
 def create_autoscaling_group(connection, module):
     enforce_required_arguments(module)
 
@@ -139,7 +162,8 @@ def create_autoscaling_group(connection, module):
 
         try:
             connection.create_auto_scaling_group(ag)
-            module.exit_json(changed=True)
+            as_groups = connection.get_all_groups(names=[group_name])
+            module.exit_json(changed=True, group=get_info(as_groups[0]))
         except BotoServerError, e:
             module.fail_json(msg=str(e))
     else:
@@ -159,7 +183,7 @@ def create_autoscaling_group(connection, module):
         try:
             if changed:
                 as_group.update()
-            module.exit_json(changed=changed)
+            module.exit_json(changed=changed, group=get_info(as_group))
         except BotoServerError, e:
             module.fail_json(msg=str(e))
 
