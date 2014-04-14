@@ -31,7 +31,7 @@ class Task(object):
         'local_action', 'transport', 'sudo', 'remote_user', 'sudo_user', 'sudo_pass',
         'items_lookup_plugin', 'items_lookup_terms', 'environment', 'args',
         'any_errors_fatal', 'changed_when', 'failed_when', 'always_run', 'delay', 'retries', 'until',
-        'su', 'su_user', 'su_pass', 'no_log',
+        'su', 'su_user', 'su_pass', 'no_log', 'dynamic_module',
     ]
 
     # to prevent typos and such
@@ -41,7 +41,7 @@ class Task(object):
          'delegate_to', 'local_action', 'transport', 'remote_user', 'sudo', 'sudo_user',
          'sudo_pass', 'when', 'connection', 'environment', 'args',
          'any_errors_fatal', 'changed_when', 'failed_when', 'always_run', 'delay', 'retries', 'until',
-         'su', 'su_user', 'su_pass', 'no_log',
+         'su', 'su_user', 'su_pass', 'no_log', 'dynamic_module',
     ]
 
     def __init__(self, play, ds, module_vars=None, default_vars=None, additional_conditions=None, role_name=None):
@@ -66,20 +66,11 @@ class Task(object):
 
             # code to allow for saying "modulename: args" versus "action: modulename args"
             if x in utils.plugins.module_finder:
+                self.__extract_module_information(ds, x)
 
-                if 'action' in ds:
-                    raise errors.AnsibleError("multiple actions specified in task %s" % (ds.get('name', ds['action'])))
-                if isinstance(ds[x], dict):
-                    if 'args' in ds:
-                        raise errors.AnsibleError("can't combine args: and a dict for %s: in task %s" % (x, ds.get('name', "%s: %s" % (x, ds[x]))))
-                    ds['args'] = ds[x]
-                    ds[x] = ''
-                elif ds[x] is None:
-                    ds[x] = ''
-                if not isinstance(ds[x], basestring):
-                    raise errors.AnsibleError("action specified for task %s has invalid type %s" % (ds.get('name', "%s: %s" % (x, ds[x])), type(ds[x])))
-                ds['action'] = x + " " + ds[x]
-                ds.pop(x)
+            # check to see if it's a dynamically loadable module
+            elif 'dynamic_module' in ds and x != 'dynamic_module' and x not in Task.VALID_KEYS and not x.startswith("with_"):
+                self.__extract_module_information(ds, x)
 
             # code to allow "with_glob" and to reference a lookup plugin named glob
             elif x.startswith("with_"):
@@ -286,3 +277,18 @@ class Task(object):
             new_conditions = additional_conditions
             new_conditions.append(self.when)
             self.when = new_conditions
+            
+    def __extract_module_information(self, ds, x):
+        if 'action' in ds:
+            raise errors.AnsibleError("multiple actions specified in task %s" % (ds.get('name', ds['action'])))
+        if isinstance(ds[x], dict):
+            if 'args' in ds:
+                raise errors.AnsibleError("can't combine args: and a dict for %s: in task %s" % (x, ds.get('name', "%s: %s" % (x, ds[x]))))
+            ds['args'] = ds[x]
+            ds[x] = ''
+        elif ds[x] is None:
+            ds[x] = ''
+        if not isinstance(ds[x], basestring):
+            raise errors.AnsibleError("action specified for task %s has invalid type %s" % (ds.get('name', "%s: %s" % (x, ds[x])), type(ds[x])))
+        ds['action'] = x + " " + ds[x]
+        ds.pop(x)
