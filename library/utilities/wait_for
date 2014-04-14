@@ -73,6 +73,7 @@ options:
     required: false
     description:
       - path to a file or directory on the filesytem that must exist before continuing
+      - checking for directories added in 1.6
   search_regex:
     version_added: "1.4"
     required: false
