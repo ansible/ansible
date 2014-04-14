@@ -291,6 +291,18 @@ doesn't know it is a boolean value::
    - debug: msg=test
      when: some_string_value | bool
 
+To match strings against a regex, use the "match" or "search" filter::
+
+    vars:
+      foo: abcdefg
+
+    tasks:
+        - shell: echo "String '{{ foo }}' matches 'abc'"
+          when: foo | match("abc")
+
+        - shell: echo "String '{{ foo }}' contains 'def'"
+          when: foo | search("def")
+
 To replace text in a string with regex, use the "regex_replace" filter::
 
     # convert "ansible" to "able"    
