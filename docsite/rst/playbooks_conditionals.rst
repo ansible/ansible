@@ -88,6 +88,18 @@ If a required variable has not been set, you can skip or fail using Jinja2's
 This is especially useful in combination with the conditional import of vars
 files (see below).
 
+You can also apply regular expression matching::
+
+    vars:
+      foo: abcdefg
+
+    tasks:
+        - shell: echo "String '{{ foo }}' matches 'abc'"
+          when: foo|match("abc")
+
+        - shell: echo "String '{{ foo }}' contains 'def'"
+          when: foo|search("def")
+
 Note that when combining `when` with `with_items` (see :doc:`playbooks_loops`), be aware that the `when` statement is processed separately for each item. This is by design::
 
     tasks:
