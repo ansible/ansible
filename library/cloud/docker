@@ -566,10 +566,6 @@ class DockerManager:
             'links': self.links,
         }
 
-        if docker.utils.compare_version('1.10', self.client.version()['ApiVersion']) >= 0:
-            params['dns'] = self.module.params.get('dns')
-            params['volumes_from'] = self.module.params.get('volumes_from')
-
         for i in containers:
             self.client.start(i['Id'], **params)
             self.increment_counter('started')
@@ -677,11 +673,11 @@ def main():
 
         # start/stop containers
         if state in [ "running", "present" ]:
-            
+
             # make sure a container with `name` exists, if not create and start it
             if name and "/" + name not in map(lambda x: x.get('Name'), deployed_containers):
                 containers = manager.create_containers(1)
-                if state == "present": #otherwise it get (re)started later anyways.. 
+                if state == "present": #otherwise it get (re)started later anyways..
                   manager.start_containers(containers)
                   running_containers = manager.get_running_containers()
                 deployed_containers = manager.get_deployed_containers()
@@ -690,18 +686,18 @@ def main():
                 # make sure a container with `name` is running
                 if name and "/" + name not in map(lambda x: x.get('Name'), running_containers):
                     manager.start_containers(deployed_containers)
-    
+
                 # start more containers if we don't have enough
                 elif delta > 0:
                     containers = manager.create_containers(delta)
                     manager.start_containers(containers)
-    
+
                 # stop containers if we have too many
                 elif delta < 0:
                     containers_to_stop = running_containers[0:abs(delta)]
                     containers = manager.stop_containers(containers_to_stop)
                     manager.remove_containers(containers_to_stop)
-    
+
                 facts = manager.get_running_containers()
             else:
                 acts = manager.get_deployed_containers()
