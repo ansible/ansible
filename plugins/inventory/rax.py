@@ -168,7 +168,8 @@ def _list(regions):
                 groups[group].append(server.name)
 
             for extra_group in server.metadata.get('groups', '').split(','):
-                groups[extra_group].append(server.name)
+                if extra_group:
+                    groups[extra_group].append(server.name)
 
             # Add host metadata
             for key, value in to_dict(server).items():
