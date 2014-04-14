@@ -139,9 +139,9 @@ class SourcesList(object):
                 s = s[-1]
             return s
 
-        # Drop options and protocols.
-        line = re.sub('\[[^\]]+\]', '', line)
-        line = re.sub('\w+://', '', line)
+        # Drop options, protocols, usernames, and passwords.
+        for regex in ['\[[^\]]+\]', '\w+://', '\w+:\w+@']:
+            line = re.sub(regex, '', line)
 
         # split line into valid keywords
         parts = [part for part in line.split() if part not in VALID_SOURCE_TYPES]
