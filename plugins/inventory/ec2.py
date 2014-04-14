@@ -160,6 +160,7 @@ class Ec2Inventory(object):
             self.index = {}
 
             self.creds = self.aws_creds[i]
+            self.aws_acct = i
 
             # Cache Setup
             self.cache_path_cache = self.cache_dir + "/ansible-%s.cache" % i
@@ -418,6 +419,10 @@ class Ec2Inventory(object):
             route53_names = self.get_instance_route53_names(instance)
             for name in route53_names:
                 self.push(self.inventory, name, dest)
+
+        # If using multiple AWS accounts, group by account
+        if self.aws_acct != "ec2":
+            self.push(self.inventory, self.aws_acct, dest)
 
         # Global Tag: tag all EC2 instances
         self.push(self.inventory, 'ec2', dest)
