@@ -294,14 +294,14 @@ doesn't know it is a boolean value::
 To match strings against a regex, use the "match" or "search" filter::
 
     vars:
-      foo: abcdefg
+      url: "http://example.com/users/foo/resources/bar"
 
     tasks:
-        - shell: echo "String '{{ foo }}' matches 'abc'"
-          when: foo | match("abc")
+        - debug: 'msg="Resource URI: {{ url }}"'
+          when: url | match("http://example.com/users/.*/resources/.*")
 
-        - shell: echo "String '{{ foo }}' contains 'def'"
-          when: foo | search("def")
+        - debug: 'msg="Resource path: {{ url }}"'
+          when: url | search("/users/.*/resources/.*")
 
 To replace text in a string with regex, use the "regex_replace" filter::
 
