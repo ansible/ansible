@@ -47,7 +47,7 @@ Your first commands
 
 Now that you've installed Ansible, it's time to get started with some basics.
 
-Edit (or create) /etc/ansible/hosts and put one or more remote systems in it, for
+Edit (or create) the hosts file located under $ANSIBLE_HOSTS and put one or more remote systems in it, for
 which you have your SSH key in ``authorized_keys``::
 
     192.168.1.50
