@@ -43,6 +43,12 @@ options:
         default: "present"
         description:
             - A source string state.
+    mode:
+        required: false
+        default: 0644
+        description:
+            - The octal mode for newly created files in sources.list.d
+        version_added: "1.6"
     update_cache:
         description:
             - Run the equivalent of C(apt-get update) when a change occurs.  Cache updates are run after making changes.
@@ -217,7 +223,10 @@ class SourcesList(object):
             if sources:
                 d, fn = os.path.split(filename)
                 fd, tmp_path = tempfile.mkstemp(prefix=".%s-" % fn, dir=d)
-                os.chmod(os.path.join(fd, tmp_path), 0644)
+
+                # allow the user to override the default mode
+                this_mode = module.params['mode']
+                module.set_mode_if_different(tmp_path, this_mode, False)
 
                 f = os.fdopen(fd, 'w')
                 for n, valid, enabled, source, comment in sources:
@@ -356,6 +365,7 @@ def main():
         argument_spec=dict(
             repo=dict(required=True),
             state=dict(choices=['present', 'absent'], default='present'),
+            mode=dict(required=False, default=0644),
             update_cache = dict(aliases=['update-cache'], type='bool', default='yes'),
             # this should not be needed, but exists as a failsafe
             install_python_apt=dict(required=False, default="yes", type='bool'),
