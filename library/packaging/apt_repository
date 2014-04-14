@@ -133,12 +133,22 @@ class SourcesList(object):
     def _suggest_filename(self, line):
         def _cleanup_filename(s):
             return '_'.join(re.sub('[^a-zA-Z0-9]', ' ', s).split())
+        def _strip_username_password(s):
+            if '@' in s:
+                s = s.split('@', 1)
+                s = s[-1]
+            return s
 
         # Drop options and protocols.
         line = re.sub('\[[^\]]+\]', '', line)
         line = re.sub('\w+://', '', line)
 
+        # split line into valid keywords
         parts = [part for part in line.split() if part not in VALID_SOURCE_TYPES]
+
+        # Drop usernames and passwords
+        parts[0] = _strip_username_password(parts[0])
+
         return '%s.list' % _cleanup_filename(' '.join(parts[:1]))
 
     def _parse(self, line, raise_if_invalid_or_disabled=False):
@@ -358,6 +368,7 @@ def main():
         install_python_apt(module)
 
     repo = module.params['repo']
+    open("/tmp/awx.log", "a").write("repo: %s\n" % repo)
     state = module.params['state']
     update_cache = module.params['update_cache']
     sourceslist = None
