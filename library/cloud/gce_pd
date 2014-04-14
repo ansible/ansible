@@ -66,12 +66,14 @@ options:
     required: false
     default: null
     aliases: []
+    version_added: "1.6"
   snapshot:
     description:
       - the source snapshot to use for the disk
     required: false
     default: null
     aliases: []
+    version_added: "1.6"
   state:
     description:
       - desired state of the persistent disk
