@@ -368,7 +368,6 @@ def main():
         install_python_apt(module)
 
     repo = module.params['repo']
-    open("/tmp/awx.log", "a").write("repo: %s\n" % repo)
     state = module.params['state']
     update_cache = module.params['update_cache']
     sourceslist = None
