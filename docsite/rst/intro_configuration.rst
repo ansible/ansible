@@ -439,6 +439,10 @@ choose to establish a convention to checkout roles in /opt/mysite/roles like so:
 
     roles_path = /opt/mysite/roles
 
+Additional paths can be provided separated by colon characters, in the same way as other pathstrings::
+
+    roles_path = /opt/mysite/roles:/opt/othersite/roles
+
 Roles will be first searched for in the playbook directory.  Should a role not be found, it will indicate all the possible paths
 that were searched.
 
