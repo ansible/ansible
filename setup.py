@@ -34,6 +34,7 @@ setup(name='ansible',
       packages=[
          'ansible',
          'ansible.utils',
+         'ansible.utils.module_docs_fragments',
          'ansible.inventory',
          'ansible.inventory.vars_plugins',
          'ansible.playbook',
