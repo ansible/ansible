@@ -62,6 +62,12 @@ options:
     required: false
     default: null
     aliases: []
+  spot_price:
+    description:
+      - The spot price you are bidding. Only applies for an autoscaling group with spot instances.
+    required: false
+    default: null
+    aliases: []
 extends_documentation_fragment: aws
 """
 
@@ -119,6 +125,7 @@ def create_launch_config(connection, module):
     user_data = module.params.get('user_data')
     volumes = module.params['volumes']
     instance_type = module.params.get('instance_type')
+    spot_price = module.params.get('spot_price')
     bdm = BlockDeviceMapping()
 
     if volumes:
@@ -137,7 +144,8 @@ def create_launch_config(connection, module):
         security_groups=security_groups,
         user_data=user_data,
         block_device_mappings=[bdm],
-        instance_type=instance_type)
+        instance_type=instance_type,
+        spot_price=spot_price)
 
     launch_configs = connection.get_all_launch_configurations(names=[name])
     changed = False
@@ -176,6 +184,7 @@ def main():
             user_data=dict(type='str'),
             volumes=dict(type='list'),
             instance_type=dict(type='str'),
+            spot_price=dict(type='float'),
             state=dict(default='present', choices=['present', 'absent']),
         )
     )
