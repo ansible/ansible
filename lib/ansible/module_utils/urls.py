@@ -50,6 +50,7 @@ try:
 except:
     HAS_SSL=False
 
+import socket
 import tempfile
 
 
@@ -162,12 +163,20 @@ class SSLValidationHandler(urllib2.BaseHandler):
     def http_request(self, req):
         tmp_ca_cert_path, paths_checked = self.get_ca_certs()
         try:
-            server_cert = ssl.get_server_certificate((self.hostname, self.port), ca_certs=tmp_ca_cert_path)
-        except ssl.SSLError:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            ssl_s = ssl.wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED)
+            ssl_s.connect((self.hostname, self.port))
+            ssl_s.close()
+        except (ssl.SSLError, socket.error), e:
             # fail if we tried all of the certs but none worked
-            self.module.fail_json(msg='Failed to validate the SSL certificate for %s:%s. ' % (self.hostname, self.port) + \
-                                      'Use validate_certs=no or make sure your managed systems have a valid CA certificate installed. ' + \
-                                      'Paths checked for this platform: %s' % ", ".join(paths_checked))
+            if 'connection refused' in str(e).lower():
+                self.module.fail_json(msg='Failed to connect to %s:%s.' % (self.hostname, self.port))
+            else:
+                self.module.fail_json(
+                    msg='Failed to validate the SSL certificate for %s:%s. ' % (self.hostname, self.port) + \
+                    'Use validate_certs=no or make sure your managed systems have a valid CA certificate installed. ' + \
+                    'Paths checked for this platform: %s' % ", ".join(paths_checked)
+                )
         try:
             # cleanup the temp file created, don't worry
             # if it fails for some reason
