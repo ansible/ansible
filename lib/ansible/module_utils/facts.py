@@ -17,11 +17,13 @@
 
 import os
 import array
+import errno
 import fcntl
 import fnmatch
 import glob
 import platform
 import re
+import signal
 import socket
 import struct
 import datetime
@@ -39,6 +41,33 @@ try:
     import json
 except ImportError:
     import simplejson as json
+
+# --------------------------------------------------------------
+# timeout function to make sure some fact gathering 
+# steps do not exceed a time limit
+
+class TimeoutError(Exception):
+    pass
+
+def timeout(seconds=10, error_message=os.strerror(errno.ETIME)):
+    def decorator(func):
+        def _handle_timeout(signum, frame):
+            raise TimeoutError(error_message)
+
+        def wrapper(*args, **kwargs):
+            signal.signal(signal.SIGALRM, _handle_timeout)
+            signal.alarm(seconds)
+            try:
+                result = func(*args, **kwargs)
+            finally:
+                signal.alarm(0)
+            return result
+
+        return wrapper
+
+    return decorator
+
+# --------------------------------------------------------------
 
 class Facts(object):
     """
@@ -498,7 +527,10 @@ class LinuxHardware(Hardware):
         self.get_memory_facts()
         self.get_dmi_facts()
         self.get_device_facts()
-        self.get_mount_facts()
+        try:
+            self.get_mount_facts()
+        except TimeoutError:
+            pass
         return self.facts
 
     def get_memory_facts(self):
@@ -622,6 +654,7 @@ class LinuxHardware(Hardware):
                 else:
                     self.facts[k] = 'NA'
 
+    @timeout(10)
     def get_mount_facts(self):
         self.facts['mounts'] = []
         mtab = get_file_content('/etc/mtab', '')
@@ -919,7 +952,10 @@ class FreeBSDHardware(Hardware):
         self.get_memory_facts()
         self.get_dmi_facts()
         self.get_device_facts()
-        self.get_mount_facts()
+        try:
+            self.get_mount_facts()
+        except TimeoutError:
+            pass
         return self.facts
 
     def get_cpu_facts(self):
@@ -962,6 +998,7 @@ class FreeBSDHardware(Hardware):
         self.facts['swaptotal_mb'] = data[1]
         self.facts['swapfree_mb'] = data[3]
 
+    @timeout(10)
     def get_mount_facts(self):
         self.facts['mounts'] = []
         fstab = get_file_content('/etc/fstab')
@@ -1041,7 +1078,10 @@ class NetBSDHardware(Hardware):
     def populate(self):
         self.get_cpu_facts()
         self.get_memory_facts()
-        self.get_mount_facts()
+        try:
+            self.get_mount_facts()
+        except TimeoutError:
+            pass
         return self.facts
 
     def get_cpu_facts(self):
@@ -1085,6 +1125,7 @@ class NetBSDHardware(Hardware):
                 val = data[1].strip().split(' ')[0]
                 self.facts["%s_mb" % key.lower()] = long(val) / 1024
 
+    @timeout(10)
     def get_mount_facts(self):
         self.facts['mounts'] = []
         fstab = get_file_content('/etc/fstab')
