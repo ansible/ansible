@@ -19,12 +19,20 @@ class FakeRunner(object):
         self.private_key_file = None
         self.check = False
 
-    def _execute_module(self, conn, tmp, module_name, args, inject=None):
+    def _execute_module(self, conn, tmp, module_name, args,
+        async_jid=None, async_module=None, async_limit=None, inject=None, 
+        persist_files=False, complex_args=None, delete_remote_tmp=True):
         self.executed_conn = conn
         self.executed_tmp = tmp
         self.executed_module_name = module_name
         self.executed_args = args
+        self.executed_async_jid = async_jid
+        self.executed_async_module = async_module
+        self.executed_async_limit = async_limit
         self.executed_inject = inject
+        self.executed_persist_files = persist_files
+        self.executed_complex_args = complex_args
+        self.executed_delete_remote_tmp = delete_remote_tmp
 
     def noop_on_check(self, inject):
         return self.check
@@ -60,7 +68,7 @@ class TestSynchronize(unittest.TestCase):
         x.run(conn, "/tmp", "synchronize", "src=/tmp/foo dest=/tmp/bar", inject)
 
         assert runner.executed_inject['delegate_to'] == "127.0.0.1", "was not delegated to 127.0.0.1"
-        assert runner.executed_args == "dest=root@el6.lab.net:/tmp/bar src=/tmp/foo", "wrong args used"
+        assert runner.executed_complex_args == {"dest":"root@el6.lab.net:/tmp/bar", "src":"/tmp/foo"}, "wrong args used"
         assert runner.sudo == None, "sudo was not reset to None" 
 
     def test_synchronize_action_sudo(self):
@@ -86,8 +94,9 @@ class TestSynchronize(unittest.TestCase):
         x.run(conn, "/tmp", "synchronize", "src=/tmp/foo dest=/tmp/bar", inject)
 
         assert runner.executed_inject['delegate_to'] == "127.0.0.1", "was not delegated to 127.0.0.1"
-        assert runner.executed_args == 'dest=root@el6.lab.net:/tmp/bar src=/tmp/foo rsync_path="sudo rsync"', \
-                                        "wrong args used: %s" % runner.executed_args
+        assert runner.executed_complex_args == {'dest':'root@el6.lab.net:/tmp/bar',
+                                                'src':'/tmp/foo',
+                                                'rsync_path':'"sudo rsync"'}, "wrong args used"
         assert runner.sudo == True, "sudo was not reset to True" 
 
 
@@ -117,9 +126,9 @@ class TestSynchronize(unittest.TestCase):
         assert runner.transport == "paramiko", "runner transport was changed"
         assert runner.remote_user == "jtanner", "runner remote_user was changed"
         assert runner.executed_inject['delegate_to'] == "127.0.0.1", "was not delegated to 127.0.0.1"
-        assert "dest_port" not in runner.executed_args, "dest_port should not have been set"
-        assert "src=/tmp/foo" in runner.executed_args, "source was set incorrectly"
-        assert "dest=/tmp/bar" in runner.executed_args, "dest was set incorrectly"
+        assert "dest_port" not in runner.executed_complex_args, "dest_port should not have been set"
+        assert runner.executed_complex_args.get("src") == "/tmp/foo", "source was set incorrectly"
+        assert runner.executed_complex_args.get("dest") == "/tmp/bar", "dest was set incorrectly"
 
 
     def test_synchronize_action_vagrant(self):
@@ -158,7 +167,7 @@ class TestSynchronize(unittest.TestCase):
         assert runner.remote_user == "jtanner", "runner remote_user was changed"
         assert runner.executed_inject['delegate_to'] == "127.0.0.1", "was not delegated to 127.0.0.1"
         assert runner.executed_inject['ansible_ssh_user'] == "vagrant", "runner user was changed"
-        assert "dest_port=2222" in runner.executed_args, "remote port was not set to 2222"
-        assert "src=/tmp/foo" in runner.executed_args, "source was set incorrectly"
-        assert "dest=vagrant@127.0.0.1:/tmp/bar" in runner.executed_args, "dest was set incorrectly"
+        assert runner.executed_complex_args.get("dest_port") == "2222", "remote port was not set to 2222"
+        assert runner.executed_complex_args.get("src") == "/tmp/foo", "source was set incorrectly"
+        assert runner.executed_complex_args.get("dest") == "vagrant@127.0.0.1:/tmp/bar", "dest was set incorrectly"
 
