@@ -21,6 +21,8 @@
 import os
 import time
 
+from ansible.module_utils.basic import FILE_COMMON_DOCSTRINGS
+
 DOCUMENTATION = '''
 ---
 module: copy
@@ -83,11 +85,14 @@ options:
         defaults.
     required: false
     version_added: "1.5"
+  {owner}
+  {group}
+  {mode}
 author: Michael DeHaan
 notes:
    - The "copy" module recursively copy facility does not scale to lots (>hundreds) of files.
      For alternative, see synchronize module, which is a wrapper around rsync.
-'''
+'''.format(**FILE_COMMON_DOCSTRINGS)
 
 EXAMPLES = '''
 # Example from Ansible Playbooks

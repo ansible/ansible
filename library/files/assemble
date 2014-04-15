@@ -24,6 +24,8 @@ import shutil
 import tempfile
 import re
 
+from ansible.module_utils.basic import FILE_COMMON_DOCSTRINGS
+
 DOCUMENTATION = '''
 ---
 module: assemble
@@ -83,8 +85,11 @@ options:
     description:
       - all arguments accepted by the M(file) module also work here
     required: false
+  {owner}
+  {group}
+  {mode}
 author: Stephen Fromm
-'''
+'''.format(**FILE_COMMON_DOCSTRINGS)
 
 EXAMPLES = '''
 # Example from Ansible Playbooks
