@@ -19,6 +19,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from ansible.module_utils.basic import FILE_COMMON_DOCSTRINGS
+
 DOCUMENTATION = '''
 ---
 module: unarchive
@@ -49,6 +51,9 @@ options:
     required: no
     default: null
     version_added: "1.6"
+  {owner}
+  {group}
+  {mode}
 author: Dylan Martin
 todo:
     - detect changed/unchanged for .zip files
@@ -64,7 +69,7 @@ notes:
       are not touched.  This is the same behavior as a normal archive extraction
     - existing files/directories in the destination which are not in the archive
       are ignored for purposes of deciding if the archive should be unpacked or not
-'''
+'''.format(**FILE_COMMON_DOCSTRINGS)
 
 EXAMPLES = '''
 # Example from Ansible Playbooks

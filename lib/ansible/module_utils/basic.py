@@ -119,6 +119,43 @@ FILE_COMMON_ARGUMENTS=dict(
     directory_mode = dict(), # used by copy
 )
 
+FILE_COMMON_DOCSTRINGS=dict(
+    # Prepend option name and append common attributes.
+    (key, '''{}:
+    {}
+    required: false
+    default: null
+    '''.format(key, value.strip())) for (key, value) in dict(
+    mode = '''
+    description:
+      - Change file mode bits.
+    ''',
+    owner = '''
+    description:
+      - Change file owner.
+    ''',
+    group = '''
+    description:
+      - Change file group.
+    ''',
+    seuser = '''
+    description:
+      - SELinux user.
+    ''',
+    serole = '''
+    description:
+      - SELinux role.
+    ''',
+    selevel = '''
+    description:
+      - SELinux level.
+    ''',
+    setype = '''
+    description:
+      - SELinux type.
+    ''',
+).iteritems())
+ 
 
 def get_platform():
     ''' what's the platform?  example: Linux is a platform. '''

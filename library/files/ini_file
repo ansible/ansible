@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+from ansible.module_utils.basic import FILE_COMMON_DOCSTRINGS
 
 DOCUMENTATION = '''
 ---
@@ -64,6 +65,9 @@ options:
      description:
        - all arguments accepted by the M(file) module also work here
      required: false
+  {owner}
+  {group}
+  {mode}
 notes:
    - While it is possible to add an I(option) without specifying a I(value), this makes
      no sense.
@@ -73,7 +77,7 @@ notes:
      M(lineinfile) to add the missing line.
 requirements: [ ConfigParser ]
 author: Jan-Piet Mens
-'''
+'''.format(**FILE_COMMON_DOCSTRINGS)
 
 EXAMPLES = '''
 # Ensure "fav=lemonade is in section "[drinks]" in specified file

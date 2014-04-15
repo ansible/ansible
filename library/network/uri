@@ -29,6 +29,8 @@ try:
 except ImportError:
     import simplejson as json
 
+from ansible.module_utils.basic import FILE_COMMON_DOCSTRINGS
+
 DOCUMENTATION = '''
 ---
 module: uri
@@ -125,11 +127,14 @@ options:
     description:
       - all arguments accepted by the M(file) module also work here
     required: false
+  {owner}
+  {group}
+  {mode}
 
 # informational: requirements for nodes
 requirements: [ urlparse, httplib2 ]
 author: Romeo Theriault
-'''
+'''.format(**FILE_COMMON_DOCSTRINGS)
 
 EXAMPLES = '''
 # Check that you can connect (GET) to a page and it returns a status 200

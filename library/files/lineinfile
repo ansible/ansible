@@ -22,6 +22,8 @@ import re
 import os
 import tempfile
 
+from ansible.module_utils.basic import FILE_COMMON_DOCSTRINGS
+
 DOCUMENTATION = """
 ---
 module: lineinfile
@@ -119,7 +121,10 @@ options:
      description:
        - All arguments accepted by the M(file) module also work here.
      required: false
-"""
+  {owner}
+  {group}
+  {mode}
+""".format(**FILE_COMMON_DOCSTRINGS)
 
 EXAMPLES = r"""
 - lineinfile: dest=/etc/selinux/config regexp=^SELINUX= line=SELINUX=disabled

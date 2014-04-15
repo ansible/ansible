@@ -22,6 +22,8 @@ import re
 import os
 import tempfile
 
+from ansible.module_utils.basic import FILE_COMMON_DOCSTRINGS
+
 DOCUMENTATION = """
 ---
 module: replace
@@ -70,7 +72,10 @@ options:
     description:
       - All arguments accepted by the M(file) module also work here.
     required: false
-"""
+  {owner}
+  {group}
+  {mode}
+""".format(**FILE_COMMON_DOCSTRINGS)
 
 EXAMPLES = r"""
 - replace: dest=/etc/hosts regexp='(\s+)old\.host\.name(\s+.*)?$' replace='\1new.host.name\2' backup=yes

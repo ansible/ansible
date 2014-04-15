@@ -25,6 +25,8 @@ import datetime
 import re
 import tempfile
 
+from ansible.module_utils.basic import FILE_COMMON_DOCSTRINGS
+
 DOCUMENTATION = '''
 ---
 module: get_url
@@ -94,12 +96,15 @@ options:
     description:
       - all arguments accepted by the M(file) module also work here
     required: false
+  {owner}
+  {group}
+  {mode}
 notes:
     - This module doesn't yet support configuration for proxies.
 # informational: requirements for nodes
 requirements: [ urllib2, urlparse ]
 author: Jan-Piet Mens
-'''
+'''.format(**FILE_COMMON_DOCSTRINGS)
 
 EXAMPLES='''
 - name: download foo.conf
