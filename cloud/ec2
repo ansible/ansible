@@ -820,15 +820,13 @@ def create_instances(module, ec2, override_count=None):
                             private_ip_address=private_ip,
                             groups=group_id,
                             associate_public_ip_address=assign_public_ip)
-                        interfaces = boto.ec2.networkinterface.NetworkInterfaceCollection(interface)
-                        params['network_interfaces'] = interfaces
                     else:
                         interface = boto.ec2.networkinterface.NetworkInterfaceSpecification(
                             subnet_id=vpc_subnet_id,
                             groups=group_id,
                             associate_public_ip_address=assign_public_ip)
-                        interfaces = boto.ec2.networkinterface.NetworkInterfaceCollection(interface)
-                        params['network_interfaces'] = interfaces                   
+                    interfaces = boto.ec2.networkinterface.NetworkInterfaceCollection(interface)
+                    params['network_interfaces'] = interfaces                   
             else:
                 params['subnet_id'] = vpc_subnet_id
                 if vpc_subnet_id:
