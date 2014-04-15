@@ -503,7 +503,7 @@ class TestUtils(unittest.TestCase):
         self.assertTrue(isinstance(cmd, tuple))
         self.assertEqual(len(cmd), 3)
         self.assertTrue('-u root' in cmd[0])
-        self.assertTrue('-p "[sudo via ansible, key=' in cmd[0] and cmd[1].startswith('[sudo via ansible, key'))
+        self.assertTrue('-p \\"[sudo via ansible, key=' in cmd[0] and cmd[1].startswith('[sudo via ansible, key'))
         self.assertTrue('echo SUDO-SUCCESS-' in cmd[0] and cmd[2].startswith('SUDO-SUCCESS-'))
         self.assertTrue('sudo -k' in cmd[0])
 
