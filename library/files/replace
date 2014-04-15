@@ -53,6 +53,12 @@ options:
       - The string to replace regexp matches. May contain backreferences
         that will get expanded with the regexp capture groups if the regexp
         matches. If not set, matches are removed entirely.
+  append:
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
+    description:
+      - Append replace text to file end , if no match found for regexp.
   backup:
     required: false
     default: "no"
@@ -116,6 +122,7 @@ def main():
             dest=dict(required=True, aliases=['name', 'destfile']),
             regexp=dict(required=True),
             replace=dict(default='', type='str'),
+            append=dict(default=False, type='bool'),
             backup=dict(default=False, type='bool'),
             validate=dict(default=None, type='str'),
         ),
@@ -139,7 +146,11 @@ def main():
     mre = re.compile(params['regexp'], re.MULTILINE)
     result = re.subn(mre, params['replace'], contents, 0)
 
-    if result[1] > 0:
+    if result[1] == 0 and params['append']:
+        result = contents + params['replace'], 0
+        msg = 'append made'
+        changed = True
+    elif result[1] > 0 and contents != result[0]:
         msg = '%s replacements made' % result[1]
         changed = True
     else:
