@@ -85,8 +85,13 @@ try:
 
     from firewall.client import FirewallClient
     fw = FirewallClient()
+    if not fw.connected:
+        raise Exception('failed to connect to the firewalld daemon')
 except ImportError:
-    print "fail=True msg='firewalld required for this module'"
+    print "failed=True msg='firewalld required for this module'"
+    sys.exit(1)
+except Exception, e:
+    print "failed=True msg='%s'" % str(e)
     sys.exit(1)
 
 ################
