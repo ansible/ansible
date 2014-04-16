@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python
 
 # (c) 2013, Paul Durivage <paul.durivage@rackspace.com>
 #
@@ -17,6 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+# This is a DOCUMENTATION stub specific to this module, it extends
+# a documentation fragment located in ansible.utils.module_docs_fragments
 DOCUMENTATION = '''
 ---
 module: rax_files_objects
@@ -25,26 +27,19 @@ description:
   - Upload, download, and delete objects in Rackspace Cloud Files
 version_added: "1.5"
 options:
-  api_key:
-    description:
-      - Rackspace API key (overrides I(credentials))
-    default: null
   clear_meta:
     description:
       - Optionally clear existing metadata when applying metadata to existing objects.
         Selecting this option is only appropriate when setting type=meta
-    choices: ["yes", "no"]
+    choices:
+      - "yes"
+      - "no"
     default: "no"
   container:
     description:
       - The container to use for file object operations.
     required: true
     default: null
-  credentials:
-    description:
-      - File to find the Rackspace credentials in (ignored if I(api_key) and I(username) are provided)
-    default: null
-    aliases: ['creds_file']
   dest:
     description:
       - The destination of a "get" operation; i.e. a local directory, "/home/user/myfolder".
@@ -64,12 +59,11 @@ options:
       - The method of operation to be performed.  For example, put to upload files
         to Cloud Files, get to download files from Cloud Files or delete to delete
         remote objects in Cloud Files
-    choices: ["get", "put", "delete"]
-    default: "get"
-  region:
-    description:
-      - Region in which to work.  Maps to a Rackspace Cloud region, i.e. DFW, ORD, IAD, SYD, LON
-    default: DFW
+    choices:
+      - get
+      - put
+      - delete
+    default: get
   src:
     description:
       - Source from which to upload files.  Used to specify a remote object as a source for
@@ -81,27 +75,25 @@ options:
       - Used to specify whether to maintain nested directory structure when downloading objects
         from Cloud Files.  Setting to false downloads the contents of a container to a single,
         flat directory
-    choices: ["yes", "no"]
+    choices:
+      - yes
+      - "no"
     default: "yes"
+  state:
+    description:
+      - Indicate desired state of the resource
+    choices: ['present', 'absent']
+    default: present
   type:
     description:
       - Type of object to do work on
       - Metadata object or a file object
-    choices: ["file", "meta"]
-    default: "file"
-  username:
-    description:
-      - Rackspace username (overrides I(credentials))
-    default: null
-requirements: [ "pyrax" ]
+    choices:
+      - file
+      - meta
+    default: file
 author: Paul Durivage
-notes:
-  - The following environment variables can be used, C(RAX_USERNAME), C(RAX_API_KEY),
-    C(RAX_CREDS_FILE), C(RAX_CREDENTIALS), C(RAX_REGION).
-  - C(RAX_CREDENTIALS) and C(RAX_CREDS_FILE) points to a credentials file appropriate
-    for pyrax. See U(https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating)
-  - C(RAX_USERNAME) and C(RAX_API_KEY) obviate the use of a credentials file
-  - C(RAX_REGION) defines a Rackspace Public Cloud region (DFW, ORD, LON, ...)
+extends_documentation_fragment: rackspace
 '''
 
 EXAMPLES = '''
@@ -195,9 +187,9 @@ import os
 
 try:
     import pyrax
-except ImportError, e:
-    print("failed=True msg='pyrax is required for this module'")
-    sys.exit(1)
+    HAS_PYRAX = True
+except ImportError:
+    HAS_PYRAX = False
 
 EXIT_DICT = dict(success=False)
 META_PREFIX = 'x-object-meta-'
@@ -441,7 +433,6 @@ def get_meta(module, cf, container, src, dest):
                 meta_key = k.split(META_PREFIX)[-1]
                 results[obj][meta_key] = v
 
-
     EXIT_DICT['container'] = c.name
     if results:
         EXIT_DICT['meta_results'] = results
@@ -538,28 +529,33 @@ def delete_meta(module, cf, container, src, dest, meta):
 
 def cloudfiles(module, container, src, dest, method, typ, meta, clear_meta,
                structure, expires):
-        """ Dispatch from here to work with metadata or file objects """
-        cf = pyrax.cloudfiles
+    """ Dispatch from here to work with metadata or file objects """
+    cf = pyrax.cloudfiles
 
-        if typ == "file":
-            if method == 'put':
-                upload(module, cf, container, src, dest, meta, expires)
+    if cf is None:
+        module.fail_json(msg='Failed to instantiate client. This '
+                             'typically indicates an invalid region or an '
+                             'incorrectly capitalized region name.')
 
-            elif method == 'get':
-                download(module, cf, container, src, dest, structure)
+    if typ == "file":
+        if method == 'put':
+            upload(module, cf, container, src, dest, meta, expires)
 
-            elif method == 'delete':
-                delete(module, cf, container, src, dest)
+        elif method == 'get':
+            download(module, cf, container, src, dest, structure)
 
-        else:
-            if method == 'get':
-                get_meta(module, cf, container, src, dest)
+        elif method == 'delete':
+            delete(module, cf, container, src, dest)
 
-            if method == 'put':
-                put_meta(module, cf, container, src, dest, meta, clear_meta)
+    else:
+        if method == 'get':
+            get_meta(module, cf, container, src, dest)
 
-            if method == 'delete':
-                delete_meta(module, cf, container, src, dest, meta)
+        if method == 'put':
+            put_meta(module, cf, container, src, dest, meta, clear_meta)
+
+        if method == 'delete':
+            delete_meta(module, cf, container, src, dest, meta)
 
 
 def main():
@@ -572,8 +568,8 @@ def main():
             method=dict(default='get', choices=['put', 'get', 'delete']),
             type=dict(default='file', choices=['file', 'meta']),
             meta=dict(type='dict', default=dict()),
-            clear_meta=dict(choices=BOOLEANS, default=False, type='bool'),
-            structure=dict(choices=BOOLEANS, default=True, type='bool'),
+            clear_meta=dict(default=False, type='bool'),
+            structure=dict(default=True, type='bool'),
             expires=dict(type='int'),
         )
     )
@@ -582,6 +578,9 @@ def main():
         argument_spec=argument_spec,
         required_together=rax_required_together()
     )
+
+    if not HAS_PYRAX:
+        module.fail_json(msg='pyrax is required for this module')
 
     container = module.params.get('container')
     src = module.params.get('src')

@@ -67,6 +67,13 @@ options:
     required: true
     default: null
     aliases: []
+  spot_price:
+    version_added: "1.5"
+    description:
+      - Maximum spot price to bid, If not set a regular on-demand instance is requested. A spot request is made with this maximum bid. When it is filled, the instance is started.
+    required: false
+    default: null
+    aliases: []
   image:
     description:
        - I(emi) (or I(ami)) to use for the instance
@@ -97,24 +104,12 @@ options:
       - how long before wait gives up, in seconds
     default: 300
     aliases: []
-  ec2_url:
+  spot_wait_timeout:
+    version_added: "1.5"
     description:
-      - Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints).  Must be specified if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used
-    required: false
-    default: null
+      - how long to wait for the spot instance request to be fulfilled
+    default: 600
     aliases: []
-  aws_secret_key:
-    description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
-    required: false
-    default: null
-    aliases: [ 'ec2_secret_key', 'secret_key' ]
-  aws_access_key:
-    description:
-      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
-    required: false
-    default: null
-    aliases: [ 'ec2_access_key', 'access_key' ]
   count:
     description:
       - number of instances to launch
@@ -157,7 +152,7 @@ options:
     default: null
     aliases: []
   assign_public_ip:
-    version_added: "1.4"
+    version_added: "1.5"
     description:
       - when provisioning within vpc, assign a public IP address. Boto library must be 2.13.0+
     required: false
@@ -184,6 +179,12 @@ options:
     required: false
     default: null
     aliases: []
+  source_dest_check:
+    version_added: "1.6"
+    description:
+      - Enable or Disable the Source/Destination checks (for NAT instances and Virtual Routers)
+    required: false
+    default: true
   state:
     version_added: "1.3"
     description:
@@ -198,6 +199,12 @@ options:
     required: false
     default: null
     aliases: []
+  ebs_optimized:
+    version_added: "1.6"
+    description:
+      - whether instance is using optimized EBS volumes, see U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSOptimized.html)
+    required: false
+    default: false
   exact_count:
     version_added: "1.5"
     description:
@@ -212,17 +219,9 @@ options:
     required: false
     default: null
     aliases: []
-  validate_certs:
-    description:
-      - When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
-    required: false
-    default: "yes"
-    choices: ["yes", "no"]
-    aliases: []
-    version_added: "1.5"
 
-requirements: [ "boto" ]
 author: Seth Vidal, Tim Gerla, Lester Wade
+extends_documentation_fragment: aws
 '''
 
 EXAMPLES = '''
@@ -253,7 +252,7 @@ EXAMPLES = '''
        db: postgres
     monitoring: yes
 
-# Single instance with additional IOPS volume from snapshot
+# Single instance with additional IOPS volume from snapshot and volume delete on termination
 local_action:
     module: ec2
     key_name: mykey
@@ -268,6 +267,7 @@ local_action:
       device_type: io1
       iops: 1000
       volume_size: 100
+      delete_on_termination: true
     monitoring: yes
 
 # Multiple groups example
@@ -304,6 +304,19 @@ local_action:
 - local_action:
     module: ec2
     key_name: mykey
+    group_id: sg-1dc53f72
+    instance_type: m1.small
+    image: ami-6e649707
+    wait: yes
+    vpc_subnet_id: subnet-29e63245
+    assign_public_ip: yes
+
+# Spot instance example
+- local_action:
+    module: ec2
+    spot_price: 0.24
+    spot_wait_timeout: 600
+    keypair: mykey
     group_id: sg-1dc53f72
     instance_type: m1.small
     image: ami-6e649707
@@ -557,7 +570,8 @@ def get_instance_info(inst):
                      'root_device_type': inst.root_device_type,
                      'root_device_name': inst.root_device_name,
                      'state': inst.state,
-                     'hypervisor': inst.hypervisor}
+                     'hypervisor': inst.hypervisor,
+                     'ebs_optimized': inst.ebs_optimized}
     try:
         instance_info['virtualization_type'] = getattr(inst,'virtualization_type')
     except AttributeError:
@@ -620,6 +634,17 @@ def create_block_device(module, ec2, volume):
                            delete_on_termination=volume.get('delete_on_termination', False),
                            iops=volume.get('iops'))
 
+def boto_supports_param_in_spot_request(ec2, param):
+    """
+    Check if Boto library has a <param> in its request_spot_instances() method. For example, the placement_group parameter wasn't added until 2.3.0.
+
+    ec2: authenticated ec2 connection object
+
+    Returns:
+        True if boto library has the named param as an argument on the request_spot_instances method, else False
+    """
+    method = getattr(ec2, 'request_spot_instances')
+    return param in method.func_code.co_varnames
 
 def enforce_count(module, ec2):
 
@@ -644,7 +669,6 @@ def enforce_count(module, ec2):
 
             for inst in instance_dict_array:
                 instances.append(inst)
-
     elif len(instances) > exact_count:
         changed = True
         to_remove = len(instances) - exact_count
@@ -690,6 +714,7 @@ def create_instances(module, ec2, override_count=None):
     group_id = module.params.get('group_id')
     zone = module.params.get('zone')
     instance_type = module.params.get('instance_type')
+    spot_price = module.params.get('spot_price')
     image = module.params.get('image')
     if override_count:
         count = override_count
@@ -700,6 +725,7 @@ def create_instances(module, ec2, override_count=None):
     ramdisk = module.params.get('ramdisk')
     wait = module.params.get('wait')
     wait_timeout = int(module.params.get('wait_timeout'))
+    spot_wait_timeout = int(module.params.get('spot_wait_timeout'))
     placement_group = module.params.get('placement_group')
     user_data = module.params.get('user_data')
     instance_tags = module.params.get('instance_tags')
@@ -708,8 +734,10 @@ def create_instances(module, ec2, override_count=None):
     private_ip = module.params.get('private_ip')
     instance_profile_name = module.params.get('instance_profile_name')
     volumes = module.params.get('volumes')
+    ebs_optimized = module.params.get('ebs_optimized')
     exact_count = module.params.get('exact_count')
     count_tag = module.params.get('count_tag')
+    source_dest_check = module.boolean(module.params.get('source_dest_check'))
 
     # group_id and group_name are exclusive of each other
     if group_id and group_name:
@@ -760,17 +788,15 @@ def create_instances(module, ec2, override_count=None):
         try:
             params = {'image_id': image,
                       'key_name': key_name,
-                      'client_token': id,
-                      'min_count': count_remaining,
-                      'max_count': count_remaining,
                       'monitoring_enabled': monitoring,
                       'placement': zone,
-                      'placement_group': placement_group,
                       'instance_type': instance_type,
                       'kernel_id': kernel,
                       'ramdisk_id': ramdisk,
-                      'private_ip_address': private_ip,
                       'user_data': user_data}
+
+            if ebs_optimized:
+              params['ebs_optimized'] = ebs_optimized
 
             if boto_supports_profile_name_arg(ec2):
                 params['instance_profile_name'] = instance_profile_name
@@ -788,13 +814,19 @@ def create_instances(module, ec2, override_count=None):
                         msg="assign_public_ip only available with vpc_subnet_id")
 
                 else:
-                    interface = boto.ec2.networkinterface.NetworkInterfaceSpecification(
-                        subnet_id=vpc_subnet_id,
-                        groups=group_id,
-                        associate_public_ip_address=assign_public_ip)
+                    if private_ip:
+                        interface = boto.ec2.networkinterface.NetworkInterfaceSpecification(
+                            subnet_id=vpc_subnet_id,
+                            private_ip_address=private_ip,
+                            groups=group_id,
+                            associate_public_ip_address=assign_public_ip)
+                    else:
+                        interface = boto.ec2.networkinterface.NetworkInterfaceSpecification(
+                            subnet_id=vpc_subnet_id,
+                            groups=group_id,
+                            associate_public_ip_address=assign_public_ip)
                     interfaces = boto.ec2.networkinterface.NetworkInterfaceCollection(interface)
-                    params['network_interfaces'] = interfaces
-
+                    params['network_interfaces'] = interfaces                   
             else:
                 params['subnet_id'] = vpc_subnet_id
                 if vpc_subnet_id:
@@ -814,38 +846,88 @@ def create_instances(module, ec2, override_count=None):
 
                 params['block_device_map'] = bdm
 
-            res = ec2.run_instances(**params)
-        except boto.exception.BotoServerError, e:
-            module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
-
-        instids = [ i.id for i in res.instances ]
-        while True:
-            try:
-                res.connection.get_all_instances(instids)
-                break
-            except boto.exception.EC2ResponseError, e:
-                if "<Code>InvalidInstanceID.NotFound</Code>" in str(e):
-                    # there's a race between start and get an instance
-                    continue
+            # check to see if we're using spot pricing first before starting instances
+            if not spot_price:
+                if assign_public_ip and private_ip:
+                    params.update(dict(
+                      min_count          = count_remaining,
+                      max_count          = count_remaining,
+                      client_token       = id,
+                      placement_group    = placement_group,
+                    ))
                 else:
-                    module.fail_json(msg = str(e))
+                    params.update(dict(
+                      min_count          = count_remaining,
+                      max_count          = count_remaining,
+                      client_token       = id,
+                      placement_group    = placement_group,
+                      private_ip_address = private_ip,
+                    ))
+
+                res = ec2.run_instances(**params)
+                instids = [ i.id for i in res.instances ]
+                while True:
+                    try:
+                        ec2.get_all_instances(instids)
+                        break
+                    except boto.exception.EC2ResponseError as e:
+                        if "<Code>InvalidInstanceID.NotFound</Code>" in str(e):
+                            # there's a race between start and get an instance
+                            continue
+                        else:
+                            module.fail_json(msg = str(e))
+            else:
+                if private_ip:
+                    module.fail_json(
+                        msg='private_ip only available with on-demand (non-spot) instances')
+                if boto_supports_param_in_spot_request(ec2, placement_group):
+                    params['placement_group'] = placement_group
+                elif placement_group :
+                        module.fail_json(
+                            msg="placement_group parameter requires Boto version 2.3.0 or higher.")
+
+                params.update(dict(
+                    count = count_remaining,
+                ))
+                res = ec2.request_spot_instances(spot_price, **params)
+
+                # Now we have to do the intermediate waiting
+                if wait:
+                    spot_req_inst_ids = dict()
+                    spot_wait_timeout = time.time() + spot_wait_timeout
+                    while spot_wait_timeout > time.time():
+                        reqs = ec2.get_all_spot_instance_requests()
+                        for sirb in res:
+                            if sirb.id in spot_req_inst_ids:
+                                continue
+                            for sir in reqs:
+                                if sir.id == sirb.id and sir.instance_id is not None:
+                                    spot_req_inst_ids[sirb.id] = sir.instance_id
+                        if len(spot_req_inst_ids) < count:
+                            time.sleep(5)
+                        else:
+                            break
+                    if spot_wait_timeout <= time.time():
+                        module.fail_json(msg = "wait for spot requests timeout on %s" % time.asctime())
+                    instids = spot_req_inst_ids.values()
+        except boto.exception.BotoServerError, e:
+            module.fail_json(msg = "Instance creation failed => %s: %s" % (e.error_code, e.error_message))
 
         if instance_tags:
             try:
                 ec2.create_tags(instids, instance_tags)
             except boto.exception.EC2ResponseError, e:
-                module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+                module.fail_json(msg = "Instance tagging failed => %s: %s" % (e.error_code, e.error_message))
 
         # wait here until the instances are up
-        this_res = []
         num_running = 0
         wait_timeout = time.time() + wait_timeout
         while wait_timeout > time.time() and num_running < len(instids):
-            res_list = res.connection.get_all_instances(instids)
-            if len(res_list) > 0:
-                this_res = res_list[0]
-                num_running = len([ i for i in this_res.instances if i.state=='running' ])
-            else:
+            res_list = ec2.get_all_instances(instids)
+            num_running = 0
+            for res in res_list:
+                num_running += len([ i for i in res.instances if i.state=='running' ])
+            if len(res_list) <= 0:
                 # got a bad response of some sort, possibly due to 
                 # stale/cached data. Wait a second and then try again
                 time.sleep(1)
@@ -859,8 +941,14 @@ def create_instances(module, ec2, override_count=None):
             # waiting took too long
             module.fail_json(msg = "wait for instances running timeout on %s" % time.asctime())
 
-        for inst in this_res.instances:
-            running_instances.append(inst)
+        #We do this after the loop ends so that we end up with one list
+        for res in res_list:
+            running_instances.extend(res.instances)
+
+        # Enabled by default by Amazon
+        if not source_dest_check:
+            for inst in res.instances:
+                inst.modify_attribute('sourceDestCheck', False)
 
     instance_dict_array = []
     created_instance_ids = []
@@ -1020,13 +1108,15 @@ def main():
             group_id = dict(type='list'),
             zone = dict(aliases=['aws_zone', 'ec2_zone']),
             instance_type = dict(aliases=['type']),
+            spot_price = dict(),
             image = dict(),
             kernel = dict(),
-            count = dict(default='1'),
+            count = dict(type='int', default='1'),
             monitoring = dict(type='bool', default=False),
             ramdisk = dict(),
             wait = dict(type='bool', default=False),
             wait_timeout = dict(default=300),
+            spot_wait_timeout = dict(default=600),
             placement_group = dict(),
             user_data = dict(),
             instance_tags = dict(type='dict'),
@@ -1035,10 +1125,12 @@ def main():
             private_ip = dict(),
             instance_profile_name = dict(),
             instance_ids = dict(type='list'),
+            source_dest_check = dict(type='bool', default=True),
             state = dict(default='present'),
             exact_count = dict(type='int', default=None),
             count_tag = dict(),
             volumes = dict(type='list'),
+            ebs_optimized = dict(),
         )
     )
 

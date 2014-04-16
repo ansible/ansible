@@ -14,7 +14,8 @@ version_added: "0.2"
 options:
   free_form:
     description:
-      - The shell module takes a free form command to run
+      - The shell module takes a free form command to run, as a string.  There's not an actual
+        option named "free form".  See the examples!
     required: true
     default: null
   creates:

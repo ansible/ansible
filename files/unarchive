@@ -43,7 +43,13 @@ options:
     required: false
     choices: [ "yes", "no" ]
     default: "yes"
-author: Dylan Martin 
+  creates:
+    description:
+      - a filename, when it already exists, this step will B(not) be run.
+    required: no
+    default: null
+    version_added: "1.6"
+author: Dylan Martin
 todo:
     - detect changed/unchanged for .zip files
     - handle common unarchive args, like preserve owner/timestamp etc...
@@ -75,17 +81,20 @@ class ZipFile(object):
         self.src = src
         self.dest = dest
         self.module = module
+        self.cmd_path = self.module.get_bin_path('unzip')
 
     def is_unarchived(self):
         return dict(unarchived=False)
 
     def unarchive(self):
-        cmd = 'unzip -o "%s" -d "%s"' % (self.src, self.dest)
+        cmd = '%s -o "%s" -d "%s"' % (self.cmd_path, self.src, self.dest)
         rc, out, err = self.module.run_command(cmd)
         return dict(cmd=cmd, rc=rc, out=out, err=err)
 
     def can_handle_archive(self):
-        cmd = 'unzip -l "%s"' % self.src
+        if not self.cmd_path:
+            return False
+        cmd = '%s -l "%s"' % (self.cmd_path, self.src)
         rc, out, err = self.module.run_command(cmd)
         if rc == 0:
             return True
@@ -99,23 +108,26 @@ class TgzFile(object):
         self.src = src
         self.dest = dest
         self.module = module
+        self.cmd_path = self.module.get_bin_path('tar')
         self.zipflag = 'z'
 
     def is_unarchived(self):
         dirof = os.path.dirname(self.dest)
         destbase = os.path.basename(self.dest)
-        cmd = 'tar -v -C "%s" --diff -%sf "%s"' % (self.dest, self.zipflag, self.src)
+        cmd = '%s -v -C "%s" --diff -%sf "%s"' % (self.cmd_path, self.dest, self.zipflag, self.src)
         rc, out, err = self.module.run_command(cmd)
         unarchived = (rc == 0)
         return dict(unarchived=unarchived, rc=rc, out=out, err=err, cmd=cmd)
 
     def unarchive(self):
-        cmd = 'tar -C "%s" -x%sf "%s"' % (self.dest, self.zipflag, self.src)
+        cmd = '%s -C "%s" -x%sf "%s"' % (self.cmd_path, self.dest, self.zipflag, self.src)
         rc, out, err = self.module.run_command(cmd)
         return dict(cmd=cmd, rc=rc, out=out, err=err)
 
     def can_handle_archive(self):
-        cmd = 'tar -t%sf "%s"' % (self.zipflag, self.src)
+        if not self.cmd_path:
+            return False
+        cmd = '%s -t%sf "%s"' % (self.cmd_path, self.zipflag, self.src)
         rc, out, err = self.module.run_command(cmd)
         if rc == 0:
             if len(out.splitlines(True)) > 0:
@@ -129,6 +141,7 @@ class TarFile(TgzFile):
         self.src = src
         self.dest = dest
         self.module = module
+        self.cmd_path = self.module.get_bin_path('tar')
         self.zipflag = ''
 
 
@@ -138,6 +151,7 @@ class TarBzip(TgzFile):
         self.src = src
         self.dest = dest
         self.module = module
+        self.cmd_path = self.module.get_bin_path('tar')
         self.zipflag = 'j'
 
 
@@ -147,6 +161,7 @@ class TarXz(TgzFile):
         self.src = src
         self.dest = dest
         self.module = module
+        self.cmd_path = self.module.get_bin_path('tar')
         self.zipflag = 'J'
 
 
@@ -157,7 +172,7 @@ def pick_handler(src, dest, module):
         obj = handler(src, dest, module)
         if obj.can_handle_archive():
             return obj
-    raise RuntimeError('Failed to find handler to unarchive "%s"' % src)
+    module.fail_json(msg='Failed to find handler to unarchive. Make sure the required command to extract the file is installed.')
 
 
 def main():
@@ -168,6 +183,7 @@ def main():
             original_basename = dict(required=False), # used to handle 'dest is a directory' via template, a slight hack
             dest              = dict(required=True),
             copy              = dict(default=True, type='bool'),
+            creates           = dict(required=False),
         ),
         add_file_common_args=True,
     )
@@ -175,6 +191,7 @@ def main():
     src    = os.path.expanduser(module.params['src'])
     dest   = os.path.expanduser(module.params['dest'])
     copy   = module.params['copy']
+    creates = module.params['creates']
 
     # did tar file arrive?
     if not os.path.exists(src):
@@ -184,6 +201,20 @@ def main():
             module.fail_json(msg="Source '%s' does not exist" % src)
     if not os.access(src, os.R_OK):
         module.fail_json(msg="Source '%s' not readable" % src)
+
+    if creates:
+        # do not run the command if the line contains creates=filename
+        # and the filename already exists.  This allows idempotence
+        # of command executions.
+        v = os.path.expanduser(creates)
+        if os.path.exists(v):
+            module.exit_json(
+                stdout="skipped, since %s exists" % v,
+                skipped=True,
+                changed=False,
+                stderr=False,
+                rc=0
+            )
 
     # is dest OK to receive tar file?
     if not os.path.exists(os.path.dirname(dest)):

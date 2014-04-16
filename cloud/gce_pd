@@ -76,21 +76,21 @@ options:
     default: "us-central1-b"
     aliases: []
   service_account_email:
-    version_added: 1.5.1
+    version_added: "1.6"
     description:
       - service account email
     required: false
     default: null
     aliases: []
   pem_file:
-    version_added: 1.5.1
+    version_added: "1.6"
     description:
       - path to the pem file associated with the service account email
     required: false
     default: null
     aliases: []
   project_id:
-    version_added: 1.5.1
+    version_added: "1.6"
     description:
       - your GCE project ID
     required: false
@@ -127,10 +127,9 @@ except ImportError:
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            detach_only = dict(choice=BOOLEANS),
+            detach_only = dict(type='bool'),
             instance_name = dict(),
-            mode = dict(default='READ_ONLY',
-                choices=['READ_WRITE', 'READ_ONLY']),
+            mode = dict(default='READ_ONLY', choices=['READ_WRITE', 'READ_ONLY']),
             name = dict(required=True),
             size_gb = dict(default=10),
             state = dict(default='present'),

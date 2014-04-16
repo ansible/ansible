@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, Jan-Piet Mens <jpmens () gmail.com>
+# (c) 2013, 2014, Jan-Piet Mens <jpmens () gmail.com>
 #
 # This file is part of Ansible
 #
@@ -80,7 +80,7 @@ options:
 requirements: [ mosquitto ]
 notes:
  - This module requires a connection to an MQTT broker such as Mosquitto
-   U(http://mosquitto.org) and the C(mosquitto) Python module (U(http://mosquitto.org/python)).
+   U(http://mosquitto.org) and the I(Paho) C(mqtt) Python client (U(https://pypi.python.org/pypi/paho-mqtt)).
 author: Jan-Piet Mens
 '''
 
@@ -97,44 +97,18 @@ EXAMPLES = '''
 # MQTT module support methods.
 #
 
-HAS_MOSQUITTO = True
+HAS_PAHOMQTT = True
 try:
     import socket
-    import mosquitto
+    import paho.mqtt.publish as mqtt
 except ImportError:
-    HAS_MOSQUITTO = False
-import os
-
-def publish(module, topic, payload, server='localhost', port='1883', qos='0',
-        client_id='', retain=False, username=None, password=None):
-    '''Open connection to MQTT broker and publish the topic'''
-
-    mqttc = mosquitto.Mosquitto(client_id, clean_session=True)
-
-    if username is not None and password is not None:
-        mqttc.username_pw_set(username, password)
-
-    rc = mqttc.connect(server, int(port), 5)
-    if rc != 0:
-        module.fail_json(msg="unable to connect to MQTT broker")
-
-    mqttc.publish(topic, payload, int(qos), retain)
-    rc = mqttc.loop()
-    if rc != 0:
-        module.fail_json(msg="unable to send to MQTT broker")
-
-    mqttc.disconnect()
-
+    HAS_PAHOMQTT = False
 
 # ===========================================
 # Main
 #
 
 def main():
-
-    if not HAS_MOSQUITTO:
-        module.fail_json(msg="mosquitto is not installed")
-
 
     module = AnsibleModule(
         argument_spec=dict(
@@ -151,15 +125,18 @@ def main():
         supports_check_mode=True
     )
 
-    server     = module.params["server"]
-    port       = module.params["port"]
-    topic      = module.params["topic"]
-    payload    = module.params["payload"]
-    client_id  = module.params["client_id"]
-    qos        = module.params["qos"]
-    retain     = module.params["retain"]
-    username   = module.params["username"]
-    password   = module.params["password"]
+    if not HAS_PAHOMQTT:
+        module.fail_json(msg="Paho MQTT is not installed")
+
+    server     = module.params.get("server", 'localhost')
+    port       = module.params.get("port", 1883)
+    topic      = module.params.get("topic")
+    payload    = module.params.get("payload")
+    client_id  = module.params.get("client_id", '')
+    qos        = int(module.params.get("qos", 0))
+    retain     = module.params.get("retain")
+    username   = module.params.get("username", None)
+    password   = module.params.get("password", None)
 
     if client_id is None:
         client_id = "%s_%s" % (socket.getfqdn(), os.getpid())
@@ -167,9 +144,18 @@ def main():
     if payload and payload == 'None':
         payload = None
 
+    auth=None
+    if username is not None:
+        auth = { 'username' : username, 'password' : password }
+
     try:
-        publish(module, topic, payload, server, port, qos, client_id, retain,
-                username, password)
+        rc = mqtt.single(topic, payload,
+                    qos=qos,
+                    retain=retain,
+                    client_id=client_id,
+                    hostname=server,
+                    port=port,
+                    auth=auth)
     except Exception, e:
         module.fail_json(msg="unable to publish to MQTT broker %s" % (e))
 
