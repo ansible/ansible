@@ -237,7 +237,7 @@ def find_vpc(module, vpc_conn, vpc_id=None, cidr=None):
             vpc_tags = dict((t.name, t.value) for t in vpc_conn.get_all_tags(filters={'resource-id': vpc.id}))
 
             # If the supplied list of ID Tags match a subset of the VPC Tags, we found our VPC
-            if set(resource_tags.items()).issubset(set(vpc_tags.items())):
+            if resource_tags and set(resource_tags.items()).issubset(set(vpc_tags.items())):
                 found_vpcs.append(vpc)
 
     found_vpc = None
@@ -309,7 +309,7 @@ def create_vpc(module, vpc_conn):
     vpc_spec_tags = module.params.get('resource_tags')
     vpc_tags = dict((t.name, t.value) for t in vpc_conn.get_all_tags(filters={'resource-id': vpc.id}))
 
-    if not set(vpc_spec_tags.items()).issubset(set(vpc_tags.items())):
+    if vpc_spec_tags and not set(vpc_spec_tags.items()).issubset(set(vpc_tags.items())):
         new_tags = {}
 
         for (key, value) in set(vpc_spec_tags.items()): 
