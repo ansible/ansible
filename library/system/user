@@ -466,7 +466,7 @@ class User(object):
         groups = []
         info = self.get_pwd_info()
         for group in grp.getgrall():
-            if self.name in group.gr_mem and not info[3] == group.gr_gid:
+            if self.name in group.gr_mem:
                 groups.append(group[0])
         return groups
 
