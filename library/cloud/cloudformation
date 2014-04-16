@@ -196,7 +196,7 @@ def main():
             template_parameters=dict(required=False, type='dict', default={}),
             state=dict(default='present', choices=['present', 'absent']),
             template=dict(default=None, required=True),
-            disable_rollback=dict(default=False),
+            disable_rollback=dict(default=False, type='bool'),
             tags=dict(default=None)
         )
     )
@@ -250,7 +250,7 @@ def main():
             operation = 'CREATE'
         except Exception, err:
             error_msg = boto_exception(err)
-            if 'AlreadyExistsException' in error_msg:
+            if 'AlreadyExistsException' in error_msg or 'already exists' in error_msg:
                 update = True
             else:
                 module.fail_json(msg=error_msg)

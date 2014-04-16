@@ -23,24 +23,6 @@ options:
     required: false
     choices: ['present', 'absent']
     default: present
-  ec2_url:
-    description:
-      - URL to use to connect to EC2-compatible cloud (by default the module will use EC2 endpoints)
-    required: false
-    default: null
-    aliases: [ EC2_URL ]
-  ec2_access_key:
-    description:
-      - EC2 access key. If not specified then the EC2_ACCESS_KEY environment variable is used.
-    required: false
-    default: null
-    aliases: [ EC2_ACCESS_KEY ]
-  ec2_secret_key:
-    description:
-      - EC2 secret key. If not specified then the EC2_SECRET_KEY environment variable is used.
-    required: false
-    default: null
-    aliases: [ EC2_SECRET_KEY ]
   region:
     description:
       - the EC2 region to use
@@ -53,16 +35,14 @@ options:
     required: false
     default: false
     version_added: "1.4"
-  validate_certs:
+  reuse_existing_ip_allowed:
     description:
-      - When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+      - Reuse an EIP that is not associated to an instance (when available), instead of allocating a new one.
     required: false
-    default: "yes"
-    choices: ["yes", "no"]
-    aliases: []
-    version_added: "1.5"
+    default: false
+    version_added: "1.6"
 
-requirements: [ "boto" ]
+extends_documentation_fragment: aws
 author: Lorin Hochstein <lorin@nimbisservices.com>
 notes:
    - This module will return C(public_ip) on success, which will contain the
@@ -175,13 +155,27 @@ def ip_is_associated_with_instance(ec2, public_ip, instance_id, module):
         return False
 
 
-def allocate_address(ec2, domain, module):
-    """ Allocate a new elastic IP address and return it """
+def allocate_address(ec2, domain, module, reuse_existing_ip_allowed):
+    """ Allocate a new elastic IP address (when needed) and return it """
     # If we're in check mode, nothing else to do
     if module.check_mode:
         module.exit_json(change=True)
 
-    address = ec2.allocate_address(domain=domain)
+    if reuse_existing_ip_allowed:
+      if domain:
+        domain_filter = { 'domain' : domain }
+      else:
+        domain_filter = { 'domain' : 'standard' }
+      all_addresses = ec2.get_all_addresses(filters=domain_filter)
+
+      unassociated_addresses = filter(lambda a: a.instance_id is None, all_addresses)
+      if unassociated_addresses:
+        address = unassociated_addresses[0];
+      else:
+        address = ec2.allocate_address(domain=domain)
+    else:
+      address = ec2.allocate_address(domain=domain)
+
     return address
 
 
@@ -224,7 +218,8 @@ def main():
             public_ip = dict(required=False, aliases= ['ip']),
             state = dict(required=False, default='present',
                          choices=['present', 'absent']),
-            in_vpc = dict(required=False, choices=BOOLEANS, default=False),
+            in_vpc = dict(required=False, type='bool', default=False),
+            reuse_existing_ip_allowed = dict(required=False, type='bool', default=False),
         )
     )
 
@@ -243,18 +238,19 @@ def main():
     state = module.params.get('state')
     in_vpc = module.params.get('in_vpc')
     domain  = "vpc" if in_vpc else None
+    reuse_existing_ip_allowed = module.params.get('reuse_existing_ip_allowed');
 
     if state == 'present':
         if public_ip is None:
             if instance_id is None:
-                address = allocate_address(ec2, domain, module)
+                address = allocate_address(ec2, domain, module, reuse_existing_ip_allowed)
                 module.exit_json(changed=True, public_ip=address.public_ip)
             else:
                 # Determine if the instance is inside a VPC or not
                 instance = find_instance(ec2, instance_id, module)
                 if instance.vpc_id != None:
                     domain = "vpc"
-                address = allocate_address(ec2, domain, module)
+                address = allocate_address(ec2, domain, module, reuse_existing_ip_allowed)
         else:
             address = find_address(ec2, public_ip, module)
         associate_ip_and_instance(ec2, address, instance_id, module)

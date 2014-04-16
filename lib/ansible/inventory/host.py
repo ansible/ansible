@@ -16,6 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import ansible.constants as C
+from ansible import utils
 
 class Host(object):
     ''' a single ansible host '''
@@ -56,7 +57,7 @@ class Host(object):
         results = {}
         groups = self.get_groups()
         for group in sorted(groups, key=lambda g: g.depth):
-            results.update(group.get_variables())
+            results = utils.combine_vars(results, group.get_variables())
         results.update(self.vars)
         results['inventory_hostname'] = self.name
         results['inventory_hostname_short'] = self.name.split('.')[0]

@@ -58,13 +58,14 @@ pkgutil: name=CSWcommon state=present
 # Install a package from a specific repository
 pkgutil: name=CSWnrpe site='ftp://myinternal.repo/opencsw/kiel state=latest'
 '''
+
 import os
+import pipes
 
 def package_installed(module, name):
     cmd = [module.get_bin_path('pkginfo', True)]
     cmd.append('-q')
     cmd.append(name)
-    #rc, out, err = module.run_command(' '.join(cmd), shell=False)
     rc, out, err = module.run_command(' '.join(cmd))
     if rc == 0:
         return True
@@ -73,12 +74,14 @@ def package_installed(module, name):
 
 def package_latest(module, name, site):
     # Only supports one package
+    name = pipes.quote(name)
+    site = pipes.quote(site)
     cmd = [ 'pkgutil', '--single', '-c' ]
     if site is not None:
         cmd += [ '-t', site ]
     cmd.append(name)
     cmd += [ '| tail -1 | grep -v SAME' ]
-    rc, out, err = module.run_command(' '.join(cmd))
+    rc, out, err = module.run_command(' '.join(cmd), use_unsafe_shell=True)
     if rc == 1:
         return True
     else:

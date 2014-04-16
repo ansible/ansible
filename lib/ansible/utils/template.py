@@ -88,8 +88,14 @@ def lookup(name, *args, **kwargs):
     vars = kwargs.get('vars', None)
 
     if instance is not None:
-        ran = instance.run(*args, inject=vars, **kwargs)
-        return ",".join(ran)
+        # safely catch run failures per #5059
+        try:
+            ran = instance.run(*args, inject=vars, **kwargs)
+        except Exception, e:
+            ran = None
+        if ran:
+            ran = ",".join(ran)
+        return ran
     else:
         raise errors.AnsibleError("lookup plugin (%s) not found" % name)
 
@@ -193,7 +199,7 @@ class J2Template(jinja2.environment.Template):
     def new_context(self, vars=None, shared=False, locals=None):
         return jinja2.runtime.Context(self.environment, vars.add_locals(locals), self.name, self.blocks)
 
-def template_from_file(basedir, path, vars):
+def template_from_file(basedir, path, vars, vault_password=None):
     ''' run a file through the templating engine '''
 
     fail_on_undefined = C.DEFAULT_UNDEFINED_VAR_BEHAVIOR
@@ -310,7 +316,13 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
             if os.path.exists(filesdir):
                 basedir = filesdir
 
-        data = data.decode('utf-8')
+        # 6227
+        if isinstance(data, unicode):
+            try:
+                data = data.decode('utf-8')
+            except UnicodeEncodeError, e:
+                pass
+
         try:
             t = environment.from_string(data)
         except Exception, e:
@@ -332,7 +344,10 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
             res = jinja2.utils.concat(rf)
         except TypeError, te:
             if 'StrictUndefined' in str(te):
-                raise errors.AnsibleUndefinedVariable("unable to look up a name or access an attribute in template string")
+                raise errors.AnsibleUndefinedVariable(
+                    "Unable to look up a name or access an attribute in template string. " + \
+                    "Make sure your variable name does not contain invalid characters like '-'."
+                )
             else:
                 raise errors.AnsibleError("an unexpected type error occured. Error was %s" % te)
         return res

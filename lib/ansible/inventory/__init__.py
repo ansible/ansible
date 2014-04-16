@@ -99,12 +99,40 @@ class Inventory(object):
                 self.host_list = os.path.join(self.host_list, "")
                 self.parser = InventoryDirectory(filename=host_list)
                 self.groups = self.parser.groups.values()
-            elif utils.is_executable(host_list):
-                self.parser = InventoryScript(filename=host_list)
-                self.groups = self.parser.groups.values()
             else:
-                self.parser = InventoryParser(filename=host_list)
-                self.groups = self.parser.groups.values()
+                # check to see if the specified file starts with a
+                # shebang (#!/), so if an error is raised by the parser
+                # class we can show a more apropos error
+                shebang_present = False
+                try:
+                    inv_file = open(host_list)
+                    first_line = inv_file.readlines()[0]
+                    inv_file.close()
+                    if first_line.startswith('#!'):
+                        shebang_present = True
+                except:
+                    pass
+
+                if utils.is_executable(host_list):
+                    try:
+                        self.parser = InventoryScript(filename=host_list)
+                        self.groups = self.parser.groups.values()
+                    except:
+                        if not shebang_present:
+                            raise errors.AnsibleError("The file %s is marked as executable, but failed to execute correctly. " % host_list + \
+                                                      "If this is not supposed to be an executable script, correct this with `chmod -x %s`." % host_list)
+                        else:
+                            raise
+                else:
+                    try:
+                        self.parser = InventoryParser(filename=host_list)
+                        self.groups = self.parser.groups.values()
+                    except:
+                        if shebang_present:
+                            raise errors.AnsibleError("The file %s looks like it should be an executable inventory script, but is not marked executable. " % host_list + \
+                                                      "Perhaps you want to correct this with `chmod +x %s`?" % host_list)
+                        else:
+                            raise
 
             utils.plugins.vars_loader.add_directory(self.basedir(), with_subdir=True)
         else:
@@ -208,12 +236,14 @@ class Inventory(object):
         """
 
         # The regex used to match on the range, which can be [x] or [x-y].
-        pattern_re = re.compile("^(.*)\[([0-9]+)(?:(?:-)([0-9]+))?\](.*)$")
+        pattern_re = re.compile("^(.*)\[([-]?[0-9]+)(?:(?:-)([0-9]+))?\](.*)$")
         m = pattern_re.match(pattern)
         if m:
             (target, first, last, rest) = m.groups()
             first = int(first)
             if last:
+                if first < 0:
+                    raise errors.AnsibleError("invalid range: negative indices cannot be used as the first item in a range")
                 last = int(last)
             else:
                 last = first
@@ -245,10 +275,13 @@ class Inventory(object):
             right = 0
         left=int(left)
         right=int(right)
-        if left != right:
-            return hosts[left:right]
-        else:
-            return [ hosts[left] ]
+        try:
+            if left != right:
+                return hosts[left:right]
+            else:
+                return [ hosts[left] ]
+        except IndexError:
+            raise errors.AnsibleError("no hosts matching the pattern '%s' were found" % pat)
 
     def _create_implicit_localhost(self, pattern):
         new_host = Host(pattern)
@@ -363,9 +396,9 @@ class Inventory(object):
         vars_results = [ plugin.run(host, vault_password=vault_password) for plugin in self._vars_plugins ] 
         for updated in vars_results:
             if updated is not None:
-                vars.update(updated)
+                vars = utils.combine_vars(vars, updated)
 
-        vars.update(host.get_variables())
+        vars = utils.combine_vars(vars, host.get_variables())
         if self.parser is not None:
             vars = utils.combine_vars(vars, self.parser.get_host_variables(host))
         return vars

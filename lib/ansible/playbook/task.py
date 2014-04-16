@@ -85,7 +85,7 @@ class Task(object):
             elif x.startswith("with_"):
 
                 if isinstance(ds[x], basestring) and ds[x].lstrip().startswith("{{"):
-                    utils.warning("It is unneccessary to use '{{' in loops, leave variables in loop expressions bare.")
+                    utils.warning("It is unnecessary to use '{{' in loops, leave variables in loop expressions bare.")
 
                 plugin_name = x.replace("with_","")
                 if plugin_name in utils.plugins.lookup_loader:
@@ -97,7 +97,7 @@ class Task(object):
 
             elif x in [ 'changed_when', 'failed_when', 'when']:
                 if isinstance(ds[x], basestring) and ds[x].lstrip().startswith("{{"):
-                    utils.warning("It is unneccessary to use '{{' in conditionals, leave variables in loop expressions bare.")
+                    utils.warning("It is unnecessary to use '{{' in conditionals, leave variables in loop expressions bare.")
             elif x.startswith("when_"):
                 utils.deprecated("The 'when_' conditional has been removed. Switch to using the regular unified 'when' statements as described on docs.ansible.com.","1.5", removed=True)
 
@@ -206,8 +206,12 @@ class Task(object):
         self.changed_when = ds.get('changed_when', None)
         self.failed_when = ds.get('failed_when', None)
 
-        self.async_seconds = int(ds.get('async', 0))  # not async by default
-        self.async_poll_interval = int(ds.get('poll', 10))  # default poll = 10 seconds
+        self.async_seconds = ds.get('async', 0)  # not async by default
+        self.async_seconds = template.template_from_string(play.basedir, self.async_seconds, self.module_vars)
+        self.async_seconds = int(self.async_seconds)
+        self.async_poll_interval = ds.get('poll', 10)  # default poll = 10 seconds
+        self.async_poll_interval = template.template_from_string(play.basedir, self.async_poll_interval, self.module_vars)
+        self.async_poll_interval = int(self.async_poll_interval)
         self.notify = ds.get('notify', [])
         self.first_available_file = ds.get('first_available_file', None)
 
