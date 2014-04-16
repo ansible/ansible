@@ -61,6 +61,8 @@ options:
               except the primary group.
     append:
         required: false
+        default: "no"
+        choices: [ "yes", "no" ]
         description:
             - If C(yes), will only add groups, not set them to just the list
               in I(groups).
