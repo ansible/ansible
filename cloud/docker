@@ -306,6 +306,11 @@ try:
 except ImportError, e:
     HAS_DOCKER_PY = False
 
+try:
+    from docker.errors import APIError as DockerAPIError
+except ImportError:
+    from docker.client import APIError as DockerAPIError
+
 
 def _human_to_bytes(number):
     suffixes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
@@ -730,7 +735,7 @@ def main():
 
         module.exit_json(failed=failed, changed=changed, msg=msg, ansible_facts=_ansible_facts(facts))
 
-    except docker.client.APIError, e:
+    except DockerAPIError, e:
         changed = manager.has_changed()
         module.exit_json(failed=True, changed=changed, msg="Docker API error: " + e.explanation)
 
