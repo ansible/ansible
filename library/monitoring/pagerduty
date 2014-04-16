@@ -142,15 +142,6 @@ def auth_header(user, passwd, token):
     auth = base64.encodestring('%s:%s' % (user, passwd)).replace('\n', '')
     return "Basic %s" % auth
 
-def create_req(url, data, name, user, passwd, token):
-    req = urllib2.Request(url, data)
-    if token:
-        req.add_header("Authorization", "Token token=%s" % token)
-    else:
-        auth = base64.encodestring('%s:%s' % (user, passwd)).replace('\n', '')
-        req.add_header("Authorization", "Basic %s" % auth)
-    return req
-
 def ongoing(module, name, user, passwd, token):
     url = "https://" + name + ".pagerduty.com/api/v1/maintenance_windows/ongoing"
     headers = {"Authorization": auth_header(user, passwd, token)}
@@ -169,7 +160,6 @@ def create(module, name, user, passwd, token, requester_id, service, hours, minu
     end = later.strftime("%Y-%m-%dT%H:%M:%SZ")
 
     url = "https://" + name + ".pagerduty.com/api/v1/maintenance_windows"
-    auth = base64.encodestring('%s:%s' % (user, passwd)).replace('\n', '')
     headers = {
         'Authorization': auth_header(user, passwd, token),
         'Content-Type' : 'application/json',
