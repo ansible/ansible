@@ -76,6 +76,14 @@ options:
     description:
       - (inbox only) Link associated with the message. This will be used to link the message subject in Team Inbox.
     required: false
+  validate_certs:
+    description:
+      - If C(no), SSL certificates will not be validated. This should only be used
+        on personally controlled sites using self-signed certificates.
+    required: false
+    default: 'yes'
+    choices: ['yes', 'no']
+    version_added: 1.5.1
 
 # informational: requirements for nodes
 requirements: [ urllib, urllib2 ]
@@ -96,30 +104,11 @@ EXAMPLES = '''
             tags=tag1,tag2,tag3
 '''
 
-HAS_URLLIB = True
-try:
-    import urllib
-except ImportError:
-    HAS_URLLIB = False
-
-HAS_URLLIB2 = True
-try:
-    import urllib2
-except ImportError:
-    HAS_URLLIB2 = False
-
-
-
 # ===========================================
 # Module execution.
 #
 
 def main():
-
-    if not HAS_URLLIB:
-        module.fail_json(msg="urllib is not installed")
-    if not HAS_URLLIB2:
-        module.fail_json(msg="urllib2 is not installed")
 
     module = AnsibleModule(
         argument_spec=dict(
@@ -135,6 +124,7 @@ def main():
             project=dict(required=False),
             tags=dict(required=False),
             link=dict(required=False),
+            validate_certs = dict(default='yes', type='bool'),
         ),
         supports_check_mode=True
     )
@@ -187,14 +177,16 @@ def main():
         module.exit_json(changed=False)
 
     # Send the data to Flowdock
-    try:
-        response = urllib2.urlopen(url, urllib.urlencode(params))
-    except Exception, e:
-        module.fail_json(msg="unable to send msg: %s" % e)
+    data = urllib.urlencode(params)
+    response, info = fetch_url(module, url, data=data)
+    if info['status'] != 200:
+        module.fail_json(msg="unable to send msg: %s" % info['msg'])
 
-    module.exit_json(changed=False, msg=module.params["msg"])
+    module.exit_json(changed=True, msg=module.params["msg"])
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
+
 main()
 

@@ -95,7 +95,7 @@ EXAMPLES = '''
 - acl: name=/etc/foo.d entity=joe etype=user permissions=rw default=yes state=present
 
 # Same as previous but using entry shorthand
-- acl: name=/etc/foo.d entrty="default:user:joe:rw-" state=present
+- acl: name=/etc/foo.d entry="default:user:joe:rw-" state=present
 
 # Obtain the acl for a specific file
 - acl: name=/etc/foo.conf
@@ -114,6 +114,9 @@ def split_entry(entry):
     except ValueError, e:
         print "wtf?? %s => %s" % (entry,a)
         raise e
+
+    if d:
+        d = True
 
     if t.startswith("u"):
         t = "user"
@@ -215,10 +218,10 @@ def main():
 
     if state in ['present','absent']:
         if  not entry and not etype:
-            module.fail_json(msg="%s requries to have ither either etype and permissions or entry to be set" % state)
+            module.fail_json(msg="%s requires either etype and permissions or just entry be set" % state)
 
     if entry:
-        if etype  or entity  or permissions:
+        if etype or entity or permissions:
             module.fail_json(msg="entry and another incompatible field (entity, etype or permissions) are also set")
         if entry.count(":") not in [2,3]:
             module.fail_json(msg="Invalid entry: '%s', it requires 3 or 4 sections divided by ':'" % entry)
@@ -248,7 +251,6 @@ def main():
                         if not old_permissions == permissions:
                             changed = True
                         break
-                break
         if not matched:
             changed=True
 

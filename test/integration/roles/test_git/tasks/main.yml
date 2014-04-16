@@ -16,11 +16,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- name: set where to extract the repo
-  set_fact: checkout_dir={{ output_dir }}/git
-
-- name: set what repo to use
-  set_fact: repo=https://github.com/jimi-c/test_role
+- name: set role facts
+  set_fact:
+    checkout_dir: '{{ output_dir }}/git'
+    repo_format1: 'https://github.com/jimi-c/test_role'
+    repo_format2: 'git@github.com:jimi-c/test_role.git'
+    repo_format3: 'ssh://git@github.com/jimi-c/test_role.git'
+    known_host_files:
+      - "{{ lookup('env','HOME') }}/.ssh/known_hosts"
+      - '/etc/ssh/ssh_known_hosts'
 
 - name: clean out the output_dir
   shell: rm -rf {{ output_dir }}/*
@@ -28,13 +32,13 @@
 - name: verify that git is installed so this test can continue
   shell: which git
 
+#
+# Test repo=https://github.com/...
+#
+
 - name: initial checkout
-  git: repo={{ repo }} dest={{ checkout_dir }}
+  git: repo={{ repo_format1 }} dest={{ checkout_dir }}
   register: git_result
-
-- debug: var=git_result
-
-- shell: ls ~/ansible_testing/git
 
 - name: verify information about the initial clone
   assert:
@@ -42,13 +46,11 @@
       - "'before' in git_result"
       - "'after' in git_result"
       - "not git_result.before"
-      - "git_result.changed"      
+      - "git_result.changed"
 
 - name: repeated checkout
-  git: repo={{ repo }} dest={{ checkout_dir }}
+  git: repo={{ repo_format1 }} dest={{ checkout_dir }}
   register: git_result2
-
-- debug: var=git_result2
 
 - name: check for tags
   stat: path={{ checkout_dir }}/.git/refs/tags
@@ -74,6 +76,61 @@
     that:
       - "not git_result2.changed"
 
+#
+# Test repo=git@github.com:/...
+# Requires variable: github_ssh_private_key
+#
 
+- name: clear checkout_dir
+  file: state=absent path={{ checkout_dir }}
 
+- name: remove known_host files
+  file: state=absent path={{ item }}
+  with_items: known_host_files
 
+- name: checkout ssh://git@github.com repo without accept_hostkey (expected fail)
+  git: repo={{ repo_format2 }} dest={{ checkout_dir }}
+  register: git_result
+  ignore_errors: true
+
+- assert:
+    that:
+      - 'git_result.failed'
+      - 'git_result.msg == "github.com has an unknown hostkey. Set accept_hostkey to True or manually add the hostkey prior to running the git module"'
+
+- name: checkout git@github.com repo with accept_hostkey (expected pass)
+  git:
+    repo: '{{ repo_format2 }}'
+    dest: '{{ checkout_dir }}'
+    accept_hostkey: true
+    key_file: '{{ github_ssh_private_key }}'
+  register: git_result
+  when: github_ssh_private_key is defined
+
+- assert:
+    that:
+      - 'git_result.changed'
+  when: not git_result|skipped
+
+#
+# Test repo=ssh://git@github.com/...
+# Requires variable: github_ssh_private_key
+#
+
+- name: clear checkout_dir
+  file: state=absent path={{ checkout_dir }}
+
+- name: checkout ssh://git@github.com repo with accept_hostkey (expected pass)
+  git:
+    repo: '{{ repo_format3 }}'
+    dest: '{{ checkout_dir }}'
+    version: 'master'
+    accept_hostkey: false # should already have been accepted
+    key_file: '{{ github_ssh_private_key }}'
+  register: git_result
+  when: github_ssh_private_key is defined
+
+- assert:
+    that:
+      - 'git_result.changed'
+  when: not git_result|skipped

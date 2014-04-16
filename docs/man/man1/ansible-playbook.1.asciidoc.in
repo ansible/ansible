@@ -76,11 +76,11 @@ access, if any.
 
 Desired sudo user (default=root).
 
-*-t*, 'TAGS', *'--tags=*'TAGS'::
+*-t*, 'TAGS', *--tags=*'TAGS'::
 
 Only run plays and tasks tagged with these values.
 
-*'--skip-tags=*'SKIP_TAGS'::
+*--skip-tags=*'SKIP_TAGS'::
 
 Only run plays and tasks whose tags do not match these values.
 

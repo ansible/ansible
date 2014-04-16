@@ -11,7 +11,7 @@
     - "install_result.mode == '0755'"
 
 - include: 'sysv_setup.yml'
-  when: ansible_distribution in ('RHEL', 'CentOS', 'ScientificLinux')
+  when: ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux']
 - include: 'systemd_setup.yml'
   when: ansible_distribution == 'Fedora'
 - include: 'upstart_setup.yml'
@@ -101,7 +101,7 @@
     - "remove_result.state == 'absent'"
 
 - include: 'sysv_cleanup.yml'
-  when: ansible_distribution in ('RHEL', 'CentOS', 'ScientificLinux')
+  when: ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux']
 - include: 'systemd_cleanup.yml'
   when: ansible_distribution == 'Fedora'
 - include: 'upstart_cleanup.yml'

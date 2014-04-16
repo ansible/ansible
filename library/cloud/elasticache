@@ -58,6 +58,12 @@ options:
       - The port number on which each of the cache nodes will accept connections
     required: false
     default: 11211
+  security_group_ids:
+    description:
+      - A list of vpc security group names to associate with this cache cluster. Only use if inside a vpc
+    required: false
+    default: ['default']
+    version_added: "1.6"
   cache_security_groups:
     description:
       - A list of cache security group names to associate with this cache cluster
@@ -152,7 +158,7 @@ class ElastiCacheManager(object):
     EXIST_STATUSES = ['available', 'creating', 'rebooting', 'modifying']
 
     def __init__(self, module, name, engine, cache_engine_version, node_type,
-                 num_nodes, cache_port, cache_security_groups, zone, wait,
+                 num_nodes, cache_port, cache_security_groups, security_group_ids, zone, wait,
                  hard_modify, aws_access_key, aws_secret_key, region):
         self.module = module
         self.name = name
@@ -162,6 +168,7 @@ class ElastiCacheManager(object):
         self.num_nodes = num_nodes
         self.cache_port = cache_port
         self.cache_security_groups = cache_security_groups
+        self.security_group_ids = security_group_ids
         self.zone = zone
         self.wait = wait
         self.hard_modify = hard_modify
@@ -217,6 +224,7 @@ class ElastiCacheManager(object):
                                                       engine=self.engine,
                                                       engine_version=self.cache_engine_version,
                                                       cache_security_group_names=self.cache_security_groups,
+                                                      security_group_ids=self.security_group_ids,
                                                       preferred_availability_zone=self.zone,
                                                       port=self.cache_port)
         except boto.exception.BotoServerError, e:
@@ -291,6 +299,7 @@ class ElastiCacheManager(object):
                                                   num_cache_nodes=self.num_nodes,
                                                   cache_node_ids_to_remove=nodes_to_remove,
                                                   cache_security_group_names=self.cache_security_groups,
+                                                  security_group_ids=self.security_group_ids,
                                                   apply_immediately=True,
                                                   engine_version=self.cache_engine_version)
         except boto.exception.BotoServerError, e:
@@ -377,12 +386,21 @@ class ElastiCacheManager(object):
             if self.data[key] != value:
                 return True
 
-        # Check security groups
+        # Check cache security groups
         cache_security_groups = []
         for sg in self.data['CacheSecurityGroups']:
             cache_security_groups.append(sg['CacheSecurityGroupName'])
             if set(cache_security_groups) - set(self.cache_security_groups):
                 return True
+
+        # check vpc security groups
+        vpc_security_groups = []
+        security_groups = self.data['SecurityGroups'] or []
+        for sg in security_groups:
+            vpc_security_groups.append(sg['SecurityGroupId'])
+            if set(vpc_security_groups) - set(self.security_group_ids):
+                return True
+
         return False
 
     def _requires_destroy_and_create(self):
@@ -469,9 +487,11 @@ def main():
             cache_port={'required': False, 'default': 11211, 'type': 'int'},
             cache_security_groups={'required': False, 'default': ['default'],
                                    'type': 'list'},
+            security_group_ids={'required': False, 'default': [],
+                                   'type': 'list'},
             zone={'required': False, 'default': None},
-            wait={'required': False, 'choices': BOOLEANS, 'default': True},
-            hard_modify={'required': False, 'choices': BOOLEANS, 'default': False}
+            wait={'required': False, 'type' : 'bool', 'default': True},
+            hard_modify={'required': False, 'type': 'bool', 'default': False}
         )
     )
 
@@ -489,6 +509,7 @@ def main():
     num_nodes = module.params['num_nodes']
     cache_port = module.params['cache_port']
     cache_security_groups = module.params['cache_security_groups']
+    security_group_ids = module.params['security_group_ids']
     zone = module.params['zone']
     wait = module.params['wait']
     hard_modify = module.params['hard_modify']
@@ -502,7 +523,8 @@ def main():
     elasticache_manager = ElastiCacheManager(module, name, engine,
                                              cache_engine_version, node_type,
                                              num_nodes, cache_port,
-                                             cache_security_groups, zone, wait,
+                                             cache_security_groups,
+                                             security_group_ids, zone, wait,
                                              hard_modify, aws_access_key,
                                              aws_secret_key, region)
 

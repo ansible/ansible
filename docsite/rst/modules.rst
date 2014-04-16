@@ -17,7 +17,7 @@ handle executing system commands.
 
 Let's review how we execute three different modules from the command line::
 
-    ansible webservers -m service -a "name=httpd state=running"
+    ansible webservers -m service -a "name=httpd state=started"
     ansible webservers -m ping
     ansible webservers -m command -a "/sbin/reboot -t now"
 

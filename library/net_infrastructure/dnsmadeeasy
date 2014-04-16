@@ -73,6 +73,15 @@ options:
     choices: [ 'present', 'absent' ]
     default: null
     
+  validate_certs:
+    description:
+      - If C(no), SSL certificates will not be validated. This should only be used
+        on personally controlled sites using self-signed certificates.
+    required: false
+    default: 'yes'
+    choices: ['yes', 'no']
+    version_added: 1.5.1
+
 notes:
   - The DNS Made Easy service requires that machines interacting with the API have the proper time and timezone set. Be sure you are within a few seconds of actual time by using NTP. 
   - This module returns record(s) in the "result" element when 'state' is set to 'present'. This value can be be registered and used in your playbooks.
@@ -106,30 +115,12 @@ EXAMPLES = '''
 
 IMPORT_ERROR = None
 try:
-    import urllib
-    import urllib2
     import json
     from time import strftime, gmtime
     import hashlib
     import hmac
 except ImportError, e:
     IMPORT_ERROR = str(e)
-
-
-class RequestWithMethod(urllib2.Request):
-
-    """Workaround for using DELETE/PUT/etc with urllib2"""
-
-    def __init__(self, url, method, data=None, headers={}):
-        self._method = method
-        urllib2.Request.__init__(self, url, data, headers)
-
-    def get_method(self):
-        if self._method:
-            return self._method
-        else:
-            return urllib2.Request.get_method(self)
-
 
 class DME2:
 
@@ -138,7 +129,7 @@ class DME2:
 
         self.api = apikey
         self.secret = secret
-        self.baseurl = 'http://api.dnsmadeeasy.com/V2.0/'
+        self.baseurl = 'https://api.dnsmadeeasy.com/V2.0/'
         self.domain = str(domain)
         self.domain_map = None      # ["domain_name"] => ID
         self.record_map = None      # ["record_name"] => ID
@@ -169,21 +160,15 @@ class DME2:
         url = self.baseurl + resource
         if data and not isinstance(data, basestring):
             data = urllib.urlencode(data)
-        request = RequestWithMethod(url, method, data, self._headers())
 
-        try:
-            response = urllib2.urlopen(request)
-        except urllib2.HTTPError, e:
-            self.module.fail_json(
-                msg="%s returned %s, with body: %s" % (url, e.code, e.read()))
-        except Exception, e:
-            self.module.fail_json(
-                msg="Failed contacting: %s : Exception %s" % (url, e.message()))
+        response, info = fetch_url(self.module, url, data=data, method=method, headers=self._headers())
+        if info['status'] not in (200, 201, 204):
+            self.module.fail_json(msg="%s returned %s, with body: %s" % (url, info['status'], info['msg']))
 
         try:
             return json.load(response)
         except Exception, e:
-            return False
+            return {}
 
     def getDomain(self, domain_id):
         if not self.domain_map:
@@ -263,6 +248,7 @@ def main():
                              'A', 'AAAA', 'CNAME', 'HTTPRED', 'MX', 'NS', 'PTR', 'SRV', 'TXT']),
             record_value=dict(required=False),
             record_ttl=dict(required=False, default=1800, type='int'),
+            validate_certs = dict(default='yes', type='bool'),
         ),
         required_together=(
             ['record_value', 'record_ttl', 'record_type']
@@ -282,7 +268,7 @@ def main():
         domain_records = DME.getRecords()
         if not domain_records:
             module.fail_json(
-                msg="The %s domain name is not accessible with this api_key; try using its ID if known." % domain)
+                msg="The requested domain name is not accessible with this api_key; try using its ID if known.")
         module.exit_json(changed=False, result=domain_records)
 
     # Fetch existing record + Build new one
@@ -338,4 +324,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
+
 main()

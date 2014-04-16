@@ -140,16 +140,16 @@ Then you can use the facts inside your template, like this::
 
 .. _programatic_access_to_a_variable:
 
-How do I access a variable name programatically?
-++++++++++++++++++++++++++++++++++++++++++++++++
+How do I access a variable name programmatically?
++++++++++++++++++++++++++++++++++++++++++++++++++
 
 An example may come up where we need to get the ipv4 address of an arbitrary interface, where the interface to be used may be supplied
 via a role parameter or other input.  Variable names can be built by adding strings together, like so::
 
     {{ hostvars[inventory_hostname]['ansible_' + which_interface]['ipv4']['address'] }}
 
-The trick about going through hostvars is neccessary because it's a dictionary of the entire namespace of variables.  'inventory_hostname'
-is a magic variable that indiciates the current host you are looping over in the host loop.
+The trick about going through hostvars is necessary because it's a dictionary of the entire namespace of variables.  'inventory_hostname'
+is a magic variable that indicates the current host you are looping over in the host loop.
 
 .. _first_host_in_a_group:
 
@@ -179,17 +179,7 @@ Notice how we interchanged the bracket syntax for dots -- that can be done anywh
 How do I copy files recursively onto a target host?
 +++++++++++++++++++++++++++++++++++++++++++++++++++
 
-The "copy" module doesn't handle recursive copies of directories. A common solution to do this is to use a local action to call 'rsync' to recursively copy files to the managed servers.
-
-Here is an example::
-
-    ---
-    # ...
-      tasks:
-      - name: recursively copy files from management server to target
-        local_action: command rsync -a /path/to/files $inventory_hostname:/path/to/target/
-
-Note that you'll need passphrase-less SSH or ssh-agent set up to let rsync copy without prompting for a passphrase or password.
+The "copy" module has a recursive parameter, though if you want to do something more efficient for a large number of files, take a look at the "synchronize" module instead, which wraps rsync.  See the module index for info on both of these modules.  
 
 .. _shell_env:
 
@@ -256,7 +246,7 @@ Great question!  Documentation for Ansible is kept in the main project git repos
 How do I keep secret data in my playbook?
 +++++++++++++++++++++++++++++++++++++++++
 
-If you would like to keep secret data in your Ansible content and still share it publically or keep things in source control, see :doc:`playbooks_vault`.
+If you would like to keep secret data in your Ansible content and still share it publicly or keep things in source control, see :doc:`playbooks_vault`.
 
 .. _i_dont_see_my_question:
 

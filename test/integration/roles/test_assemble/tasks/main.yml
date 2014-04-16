@@ -69,3 +69,13 @@
     - "result.state == 'file'"
     - "result.md5sum == '96905702a2ece40de6bf3a94b5062513'"
 
+- name: test assemble with remote_src=False and a delimiter
+  assemble: src="./" dest="{{output_dir}}/assembled5" remote_src=no delimiter="#--- delimiter ---#"
+  register: result
+
+- name: assert the fragments were assembled without remote
+  assert:
+    that:
+    - "result.state == 'file'"
+    - "result.md5sum == '4773eac67aba3f0be745876331c8a450'"
+

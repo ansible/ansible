@@ -22,8 +22,9 @@ module: redis
 short_description: Various redis commands, slave and flush
 description:
    - Unified utility to interact with redis instances.
-     'slave' Sets a redis instance in slave or master mode.
-     'flush' Flushes all the instance or a specified db.
+     'slave' sets a redis instance in slave or master mode.
+     'flush' flushes all the instance or a specified db.
+     'config' (new in 1.6), ensures a configuration setting on an instance.
 version_added: "1.3"
 options:
     command:
@@ -31,7 +32,7 @@ options:
             - The selected redis command
         required: true
         default: null
-        choices: [ "slave", "flush" ]
+        choices: [ "slave", "flush", "config" ]
     login_password:
         description:
             - The password used to authenticate with (usually not used)
@@ -75,6 +76,18 @@ options:
         required: false
         default: all
         choices: [ "all", "db" ]
+    name:
+        version_added: 1.6
+        description:
+            - A redis config key.
+        required: false
+        default: null
+    value:
+        version_added: 1.6
+        description:
+            - A redis config value.
+        required: false
+        default: null
 
 
 notes:
@@ -100,6 +113,12 @@ EXAMPLES = '''
 
 # Flush only one db in a redis instance
 - redis: command=flush db=1 flush_mode=db
+
+# Configure local redis to have 10000 max clients
+- redis: command=config name=maxclients value=10000
+
+# Configure local redis to have lua time limit of 100 ms
+- redis: command=config name=lua-time-limit value=100
 '''
 
 try:
@@ -146,7 +165,7 @@ def flush(client, db=None):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            command=dict(default=None, choices=['slave', 'flush']),
+            command=dict(default=None, choices=['slave', 'flush', 'config']),
             login_password=dict(default=None),
             login_host=dict(default='localhost'),
             login_port=dict(default='6379'),
@@ -155,6 +174,8 @@ def main():
             slave_mode=dict(default='slave', choices=['master', 'slave']),
             db=dict(default=None),
             flush_mode=dict(default='all', choices=['all', 'db']),
+            name=dict(default=None),
+            value=dict(default=None)
         ),
         supports_check_mode = True
     )
@@ -272,7 +293,34 @@ def main():
                 module.exit_json(changed=True, flushed=True, db=db)
             else:  # Flush never fails :)
                 module.fail_json(msg="Unable to flush '%d' database" % db)
+    elif command == 'config':
+        name = module.params['name']
+        value = module.params['value']
 
+        r = redis.StrictRedis(host=login_host,
+                              port=login_port,
+                              password=login_password)
+
+        try:
+            r.ping()
+        except Exception, e:
+            module.fail_json(msg="unable to connect to database: %s" % e)
+
+        
+        try:
+            old_value = r.config_get(name)[name]
+        except Exception, e:
+            module.fail_json(msg="unable to read config: %s" % e)
+        changed = old_value != value
+
+        if module.check_mode or not changed:
+            module.exit_json(changed=changed, name=name, value=value)
+        else:
+            try:
+                r.config_set(name, value)
+            except Exception, e:
+                module.fail_json(msg="unable to write config: %s" % e)
+            module.exit_json(changed=changed, name=name, value=value)
     else:
         module.fail_json(msg='A valid command must be provided')
 

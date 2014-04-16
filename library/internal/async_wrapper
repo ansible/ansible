@@ -72,7 +72,7 @@ if len(sys.argv) < 3:
     })
     sys.exit(1)
 
-jid = sys.argv[1]
+jid = "%s.%d" % (sys.argv[1], os.getpid())
 time_limit = sys.argv[2]
 wrapped_module = sys.argv[3]
 argsfile = sys.argv[4]

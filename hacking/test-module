@@ -93,6 +93,10 @@ def boilerplate_module(modfile, args, interpreter):
         # Argument is a YAML file (JSON is a subset of YAML)
         complex_args = utils.combine_vars(complex_args, utils.parse_yaml_from_file(args[1:]))
         args=''
+    elif args.startswith("{"):
+        # Argument is a YAML document (not a file)
+        complex_args = utils.combine_vars(complex_args, utils.parse_yaml(args))
+        args=''
 
     inject = {}
     if interpreter:

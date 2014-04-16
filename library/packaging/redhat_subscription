@@ -75,39 +75,13 @@ EXAMPLES = '''
 import os
 import re
 import types
-import subprocess
 import ConfigParser
 import shlex
 
 
-class CommandException(Exception):
-    pass
-
-
-def run_command(args):
-    '''
-        Convenience method to run a command, specified as a list of arguments.
-        Returns:
-            * tuple - (stdout, stder, retcode)
-    '''
-
-    # Coerce into a string
-    if isinstance(args, str):
-        args = shlex.split(args)
-
-    # Run desired command
-    proc = subprocess.Popen(args, stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT)
-    (stdout, stderr) = proc.communicate()
-    returncode = proc.poll()
-    if returncode != 0:
-        cmd = ' '.join(args)
-        raise CommandException("Command failed (%s): %s\n%s" % (returncode, cmd, stdout))
-    return (stdout, stderr, returncode)
-
-
-class RegistrationBase (object):
-    def __init__(self, username=None, password=None):
+class RegistrationBase(object):
+    def __init__(self, module, username=None, password=None):
+        self.module = module
         self.username = username
         self.password = password
 
@@ -147,9 +121,10 @@ class RegistrationBase (object):
 
 
 class Rhsm(RegistrationBase):
-    def __init__(self, username=None, password=None):
-        RegistrationBase.__init__(self, username, password)
+    def __init__(self, module, username=None, password=None):
+        RegistrationBase.__init__(self, module, username, password)
         self.config = self._read_config()
+        self.module = module
 
     def _read_config(self, rhsm_conf='/etc/rhsm/rhsm.conf'):
         '''
@@ -199,8 +174,8 @@ class Rhsm(RegistrationBase):
         for k,v in kwargs.items():
             if re.search(r'^(system|rhsm)_', k):
                 args.append('--%s=%s' % (k.replace('_','.'), v))
-
-        run_command(args)
+        
+        self.module.run_command(args, check_rc=True)
 
     @property
     def is_registered(self):
@@ -216,13 +191,11 @@ class Rhsm(RegistrationBase):
                    os.path.isfile('/etc/pki/consumer/key.pem')
 
         args = ['subscription-manager', 'identity']
-        try:
-            (stdout, stderr, retcode) = run_command(args)
-        except CommandException, e:
-            return False
-        else:
-            # Display some debug output
+        rc, stdout, stderr = self.module.run_command(args, check_rc=False)
+        if rc == 0:
             return True
+        else:
+            return False
 
     def register(self, username, password, autosubscribe, activationkey):
         '''
@@ -243,8 +216,7 @@ class Rhsm(RegistrationBase):
             if password:
                 args.extend(['--password', password])
 
-        # Do the needful...
-        run_command(args)
+        rc, stderr, stdout = self.module.run_command(args, check_rc=True)
 
     def unsubscribe(self):
         '''
@@ -253,7 +225,7 @@ class Rhsm(RegistrationBase):
               * Exception - if error occurs while running command
         '''
         args = ['subscription-manager', 'unsubscribe', '--all']
-        run_command(args)
+        rc, stderr, stdout = self.module.run_command(args, check_rc=True)
 
     def unregister(self):
         '''
@@ -262,7 +234,7 @@ class Rhsm(RegistrationBase):
               * Exception - if error occurs while running command
         '''
         args = ['subscription-manager', 'unregister']
-        run_command(args)
+        rc, stderr, stdout = self.module.run_command(args, check_rc=True)
 
     def subscribe(self, regexp):
         '''
@@ -273,7 +245,7 @@ class Rhsm(RegistrationBase):
         '''
 
         # Available pools ready for subscription
-        available_pools = RhsmPools()
+        available_pools = RhsmPools(self.module)
 
         for pool in available_pools.filter(regexp):
             pool.subscribe()
@@ -284,7 +256,8 @@ class RhsmPool(object):
         Convenience class for housing subscription information
     '''
 
-    def __init__(self, **kwargs):
+    def __init__(self, module, **kwargs):
+        self.module = module
         for k,v in kwargs.items():
             setattr(self, k, v)
 
@@ -292,15 +265,20 @@ class RhsmPool(object):
         return str(self.__getattribute__('_name'))
 
     def subscribe(self):
-        (stdout, stderr, retcode) = run_command("subscription-manager subscribe --pool %s" % self.PoolId)
-        return True
+        args = "subscription-manager subscribe --pool %s" % self.PoolId
+        rc, stdout, stderr = self.module.run_command(args, check_rc=True)
+        if rc == 0:
+            return True
+        else:
+            return False
 
 
 class RhsmPools(object):
     """
         This class is used for manipulating pools subscriptions with RHSM
     """
-    def __init__(self):
+    def __init__(self, module):
+        self.module = module
         self.products = self._load_product_list()
 
     def __iter__(self):
@@ -310,7 +288,8 @@ class RhsmPools(object):
         """
             Loads list of all availaible pools for system in data structure
         """
-        (stdout, stderr, retval) = run_command("subscription-manager list --available")
+        args = "subscription-manager list --available"
+        rc, stdout, stderr = self.module.run_command(args, check_rc=True)
 
         products = []
         for line in stdout.split('\n'):
@@ -326,7 +305,7 @@ class RhsmPools(object):
                 value = value.strip()
                 if key in ['ProductName', 'SubscriptionName']:
                     # Remember the name for later processing
-                    products.append(RhsmPool(_name=value, key=value))
+                    products.append(RhsmPool(self.module, _name=value, key=value))
                 elif products:
                     # Associate value with most recently recorded product
                     products[-1].__setattr__(key, value)
@@ -348,7 +327,7 @@ class RhsmPools(object):
 def main():
 
     # Load RHSM configuration from file
-    rhn = Rhsm()
+    rhn = Rhsm(None)
 
     module = AnsibleModule(
                 argument_spec = dict(
@@ -364,6 +343,7 @@ def main():
                 )
             )
 
+    rhn.module = module
     state = module.params['state']
     username = module.params['username']
     password = module.params['password']

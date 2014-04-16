@@ -325,7 +325,7 @@ def main():
         if master_password:
             chm.append("MASTER_PASSWORD='" + master_password + "'")
         if master_port:
-            chm.append("MASTER_PORT='" + master_port + "'")
+            chm.append("MASTER_PORT=" + master_port)
         if master_connect_retry:
             chm.append("MASTER_CONNECT_RETRY='" + master_connect_retry + "'")
         if master_log_file:

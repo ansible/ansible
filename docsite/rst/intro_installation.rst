@@ -204,6 +204,18 @@ You may also wish to install from ports, run:
 
     $ sudo make -C /usr/ports/sysutils/ansible install
 
+.. _from_brew:
+
+Latest Releases Via Homebrew (Mac OSX)
+++++++++++++++++++++++++++++++++++++++
+
+To install on a Mac, make sure you have Homebrew, then run:
+
+.. code-block:: bash
+
+    $ brew update
+    $ brew install ansible
+
 .. _from_pip:
 
 Latest Releases Via Pip

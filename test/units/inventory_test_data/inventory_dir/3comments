@@ -1,5 +1,5 @@
 [major-god] # group with inline comments
-zeus var_a="1#2" # host with inline comments and "#" in the var string
+zeus var_a="3\#4" # host with inline comments and "#" in the var string
 # A comment
 thor
 

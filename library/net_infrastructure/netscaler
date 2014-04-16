@@ -73,6 +73,14 @@ options:
     default: server
     choices: ["server", "service"]
     aliases: []
+  validate_certs:
+    description:
+      - If C(no), SSL certificates for the target url will not be validated. This should only be used
+        on personally controlled sites using self-signed certificates.
+    required: false
+    default: 'yes'
+    choices: ['yes', 'no']
+
 requirements: [ "urllib", "urllib2" ]
 author: Nandor Sivok
 '''
@@ -90,8 +98,6 @@ ansible host -m netscaler -a "nsc_host=nsc.example.com user=apiuser password=api
 
 
 import json
-import urllib
-import urllib2
 import base64
 import socket
 
@@ -100,23 +106,25 @@ class netscaler(object):
 
     _nitro_base_url = '/nitro/v1/'
 
+    def __init__(self, module):
+        self.module = module
+
     def http_request(self, api_endpoint, data_json={}):
         request_url = self._nsc_protocol + '://' + self._nsc_host + self._nitro_base_url + api_endpoint
+
         data_json = urllib.urlencode(data_json)
+        if not len(data_json):
+            data_json = None
 
-        if len(data_json):
-            req = urllib2.Request(request_url, data_json)
-            req.add_header('Content-Type', 'application/x-www-form-urlencoded')
-        else:
-            req = urllib2.Request(request_url)
+        auth = base64.encodestring('%s:%s' % (self._nsc_user, self._nsc_pass)).replace('\n', '').strip()
+        headers = {
+            'Authorization': 'Basic %s' % auth,
+            'Content-Type' : 'application/x-www-form-urlencoded',
+        }
 
-        base64string = base64.encodestring('%s:%s' % (self._nsc_user, self._nsc_pass)).replace('\n', '').strip()
-        req.add_header('Authorization', "Basic %s" % base64string)
+        response, info = fetch_url(self.module, request_url, data=data_json)
 
-        resp = urllib2.urlopen(req)
-        resp = json.load(resp)
-
-        return resp
+        return json.load(response.read())
 
     def prepare_request(self, action):
         resp = self.http_request(
@@ -134,7 +142,7 @@ class netscaler(object):
 
 
 def core(module):
-    n = netscaler()
+    n = netscaler(module)
     n._nsc_host = module.params.get('nsc_host')
     n._nsc_user = module.params.get('user')
     n._nsc_pass = module.params.get('password')
@@ -158,7 +166,8 @@ def main():
             password = dict(required=True),
             action = dict(default='enable', choices=['enable','disable']),
             name = dict(default=socket.gethostname()),
-            type = dict(default='server', choices=['service', 'server'])
+            type = dict(default='server', choices=['service', 'server']),
+            validate_certs=dict(default='yes', type='bool'),
         )
     )
 
@@ -177,4 +186,5 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
 main()

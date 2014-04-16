@@ -1,4 +1,19 @@
-# UNINSTALL
+# UNINSTALL 'python-apt'
+#  The `apt` module has the smarts to auto-install `python-apt`.  To test, we
+#  will first uninstall `python-apt`.
+- name: check python-apt with dpkg
+  shell: dpkg -s python-apt
+  register: dpkg_result
+  ignore_errors: true
+
+- name: uninstall python-apt with apt
+  apt: pkg=python-apt state=absent purge=yes
+  register: apt_result
+  when: dpkg_result|success
+
+# UNINSTALL 'hello'
+#   With 'python-apt' uninstalled, the first call to 'apt' should install
+#   python-apt.
 - name: uninstall hello with apt
   apt: pkg=hello state=absent purge=yes
   register: apt_result
@@ -7,9 +22,6 @@
   shell: dpkg --get-selections | fgrep hello
   failed_when: False
   register: dpkg_result
-
-- debug: var=apt_result
-- debug: var=dpkg_result
 
 - name: verify uninstallation of hello
   assert:

@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+# This is a DOCUMENTATION stub specific to this module, it extends
+# a documentation fragment located in ansible.utils.module_docs_fragments
 DOCUMENTATION = '''
 ---
 module: rax_clb_nodes
@@ -26,21 +28,15 @@ options:
     required: false
     description:
       - IP address or domain name of the node
-  api_key:
-    required: false
-    description:
-      - Rackspace API key (overrides C(credentials))
   condition:
     required: false
-    choices: [ "enabled", "disabled", "draining" ]
+    choices:
+      - enabled
+      - disabled
+      - draining
     description:
       - Condition for the node, which determines its role within the load
         balancer
-  credentials:
-    required: false
-    description:
-      - File to find the Rackspace credentials in (ignored if C(api_key) and
-        C(username) are provided)
   load_balancer_id:
     required: true
     type: integer
@@ -56,35 +52,27 @@ options:
     type: integer
     description:
       - Port number of the load balanced service on the node
-  region:
-    required: false
-    description:
-     - Region to authenticate in
   state:
     required: false
     default: "present"
-    choices: [ "present", "absent" ]
+    choices:
+      - present
+      - absent
     description:
       - Indicate desired state of the node
   type:
     required: false
-    choices: [ "primary", "secondary" ]
+    choices:
+      - primary
+      - secondary
     description:
       - Type of node
-  username:
-    required: false
-    description:
-     - Rackspace username (overrides C(credentials))
-  virtualenv:
-    required: false
-    description:
-      - Path to a virtualenv that should be activated before doing anything.
-        The virtualenv has to already exist. Useful if installing pyrax
-        globally is not an option.
   wait:
     required: false
     default: "no"
-    choices: [ "yes", "no" ]
+    choices:
+      - "yes"
+      - "no"
     description:
       - Wait for the load balancer to become active before returning
   wait_timeout:
@@ -97,11 +85,8 @@ options:
     required: false
     description:
       - Weight of node
-requirements: [ "pyrax" ]
 author: Lukasz Kawczynski
-notes:
-  - "The following environment variables can be used: C(RAX_USERNAME),
-    C(RAX_API_KEY), C(RAX_CREDENTIALS) and C(RAX_REGION)."
+extends_documentation_fragment: rackspace
 '''
 
 EXAMPLES = '''
@@ -136,13 +121,12 @@ EXAMPLES = '''
 '''
 
 import os
-import sys
 
 try:
     import pyrax
+    HAS_PYRAX = True
 except ImportError:
-    print("failed=True msg='pyrax is required for this module'")
-    sys.exit(1)
+    HAS_PYRAX = False
 
 
 def _activate_virtualenv(path):
@@ -151,11 +135,20 @@ def _activate_virtualenv(path):
     execfile(activate_this, dict(__file__=activate_this))
 
 
-def _get_node(lb, node_id):
-    """Return a node with the given `node_id`"""
-    for node in lb.nodes:
-        if node.id == node_id:
+def _get_node(lb, node_id=None, address=None, port=None):
+    """Return a matching node"""
+    for node in getattr(lb, 'nodes', []):
+        match_list = []
+        if node_id is not None:
+            match_list.append(getattr(node, 'id', None) == node_id)
+        if address is not None:
+            match_list.append(getattr(node, 'address', None) == address)
+        if port is not None:
+            match_list.append(getattr(node, 'port', None) == port)
+
+        if match_list and all(match_list):
             return node
+
     return None
 
 
@@ -211,6 +204,9 @@ def main():
         required_together=rax_required_together(),
     )
 
+    if not HAS_PYRAX:
+        module.fail_json(msg='pyrax is required for this module')
+
     address = module.params['address']
     condition = (module.params['condition'] and
                  module.params['condition'].upper())
@@ -234,18 +230,16 @@ def main():
     setup_rax_module(module, pyrax)
 
     if not pyrax.cloud_loadbalancers:
-        module.fail_json(msg='Failed to instantiate load balancer client '
-                             '(possibly incorrect region)')
+        module.fail_json(msg='Failed to instantiate client. This '
+                             'typically indicates an invalid region or an '
+                             'incorrectly capitalized region name.')
 
     try:
         lb = pyrax.cloud_loadbalancers.get(load_balancer_id)
     except pyrax.exc.PyraxException, e:
         module.fail_json(msg='%s' % e.message)
 
-    if node_id:
-        node = _get_node(lb, node_id)
-    else:
-        node = None
+    node = _get_node(lb, node_id, address, port)
 
     result = _node_to_dict(node)
 
@@ -284,21 +278,11 @@ def main():
                 except pyrax.exc.PyraxException, e:
                     module.fail_json(msg='%s' % e.message)
         else:  # Updating an existing node
-            immutable = {
-                'address': address,
-                'port': port,
-            }
-
             mutable = {
                 'condition': condition,
                 'type': typ,
                 'weight': weight,
             }
-
-            for name, value in immutable.items():
-                if value:
-                    module.fail_json(
-                        msg='Attribute %s cannot be modified' % name)
 
             for name, value in mutable.items():
                 if value is None or value == getattr(node, name):

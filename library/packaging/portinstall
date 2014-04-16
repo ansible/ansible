@@ -71,7 +71,7 @@ def query_package(module, name):
     if pkg_info_path:
         pkgng = False
         pkg_glob_path = module.get_bin_path('pkg_glob', True)
-        rc, out, err = module.run_command("%s -e `pkg_glob %s`" % (pkg_info_path, name))
+        rc, out, err = module.run_command("%s -e `pkg_glob %s`" % (pkg_info_path, pipes.quote(name)), use_unsafe_shell=True)
     else:
         pkgng = True
         pkg_info_path = module.get_bin_path('pkg', True)
@@ -128,11 +128,11 @@ def remove_packages(module, packages):
         if not query_package(module, package):
             continue
 
-        rc, out, err = module.run_command("%s `%s %s`" % (pkg_delete_path, pkg_glob_path, package))
+        rc, out, err = module.run_command("%s `%s %s`" % (pkg_delete_path, pkg_glob_path, pipes.quote(package)), use_unsafe_shell=True)
 
         if query_package(module, package):
             name_without_digits = re.sub('[0-9]', '', package)
-            rc, out, err = module.run_command("%s `%s %s`" % (pkg_delete_path, pkg_glob_path, name_without_digits))
+            rc, out, err = module.run_command("%s `%s %s`" % (pkg_delete_path, pkg_glob_path, pipes.quote(name_without_digits)),use_unsafe_shell=True)
             if query_package(module, package):
                 module.fail_json(msg="failed to remove %s: %s" % (package, out))
 

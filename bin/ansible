@@ -128,13 +128,10 @@ class Cli(object):
             this_path = os.path.expanduser(options.vault_password_file)
             try:
                 f = open(this_path, "rb")
-                tmp_vault_pass=f.read()
+                tmp_vault_pass=f.read().strip()
                 f.close()
             except (OSError, IOError), e:
                 raise errors.AnsibleError("Could not read %s: %s" % (this_path, e))
-
-            # get rid of newline chars        
-            tmp_vault_pass = tmp_vault_pass.strip()
 
             if not options.ask_vault_pass:
                 vault_pass = tmp_vault_pass
@@ -160,8 +157,6 @@ class Cli(object):
 
         if options.su_user or options.ask_su_pass:
             options.su = True
-        elif options.sudo_user or options.ask_sudo_pass:
-            options.sudo = True
         options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
         options.su_user = options.su_user or C.DEFAULT_SU_USER
         if options.tree:

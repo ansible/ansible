@@ -1,4 +1,21 @@
+# UNINSTALL 'yum-utils'
+#  The `yum` module has the smarts to auto-install `yum-utils`.  To test, we
+#  will first uninstall `yum-utils`.
+- name: check yum-utils with rpm
+  shell: rpm -q yum-utils
+  register: rpm_result
+  ignore_errors: true
+
+# Don't uninstall yum-utils with the `yum` module, it would be bad.  The `yum`
+# module does some `repoquery` magic after removing a package.  It fails when you
+# remove `yum-utils.
+- name: uninstall yum-utils with shell
+  shell: yum -y remove yum-utils
+  when: rpm_result|success
+
 # UNINSTALL
+#   With 'yum-utils' uninstalled, the first call to 'yum' should install
+#   yum-utils.
 - name: uninstall sos
   yum: name=sos state=removed
   register: yum_result

@@ -98,6 +98,7 @@ options:
         - DNS nameservers for this subnet, comma-separated
      required: false
      default: None
+     version_added: "1.4"
    allocation_pool_start:
      description:
         - From the subnet pool the starting address from which the IP should be allocated
@@ -259,7 +260,7 @@ def main():
             tenant_name             = dict(default=None),
             state                   = dict(default='present', choices=['absent', 'present']),
             ip_version              = dict(default='4', choices=['4', '6']),
-            enable_dhcp             = dict(default='true', choices=BOOLEANS),
+            enable_dhcp             = dict(default='true', type='bool'),
             gateway_ip              = dict(default=None),
             dns_nameservers         = dict(default=None),
             allocation_pool_start   = dict(default=None),

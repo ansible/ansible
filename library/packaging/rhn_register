@@ -58,7 +58,7 @@ EXAMPLES = '''
 
 # Register as user (joe_user) with password (somepass) against a satellite
 # server specified by (server_url).
-- rhn_register:
+- rhn_register: >
     state=present
     username=joe_user
     password=somepass
@@ -72,12 +72,7 @@ EXAMPLES = '''
 '''
 
 import sys
-import os
-import re
 import types
-import subprocess
-import ConfigParser
-import shlex
 import xmlrpclib
 import urlparse
 
@@ -89,72 +84,10 @@ try:
 except ImportError, e:
     module.fail_json(msg="Unable to import up2date_client.  Is 'rhn-client-tools' installed?\n%s" % e)
 
-
-class CommandException(Exception):
-    pass
-
-
-def run_command(args):
-    '''
-        Convenience method to run a command, specified as a list of arguments.
-        Returns:
-            * tuple - (stdout, stder, retcode)
-    '''
-
-    # Coerce into a string
-    if isinstance(args, str):
-        args = shlex.split(args)
-
-    # Run desired command
-    proc = subprocess.Popen(args, stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT)
-    (stdout, stderr) = proc.communicate()
-    returncode = proc.poll()
-    if returncode != 0:
-        cmd = ' '.join(args)
-        raise CommandException("Command failed (%s): %s\n%s" % (returncode, cmd, stdout))
-    return (stdout, stderr, returncode)
-
-
-class RegistrationBase (object):
-    def __init__(self, username=None, password=None):
-        self.username = username
-        self.password = password
-
-    def configure(self):
-        raise NotImplementedError("Must be implemented by a sub-class")
-
-    def enable(self):
-        # Remove any existing redhat.repo
-        redhat_repo = '/etc/yum.repos.d/redhat.repo'
-        if os.path.isfile(redhat_repo):
-            os.unlink(redhat_repo)
-
-    def register(self):
-        raise NotImplementedError("Must be implemented by a sub-class")
-
-    def unregister(self):
-        raise NotImplementedError("Must be implemented by a sub-class")
-
-    def unsubscribe(self):
-        raise NotImplementedError("Must be implemented by a sub-class")
-
-    def update_plugin_conf(self, plugin, enabled=True):
-        plugin_conf = '/etc/yum/pluginconf.d/%s.conf' % plugin
-        if os.path.isfile(plugin_conf):
-            cfg = ConfigParser.ConfigParser()
-            cfg.read([plugin_conf])
-            if enabled:
-                cfg.set('main', 'enabled', 1)
-            else:
-                cfg.set('main', 'enabled', 0)
-            fd = open(plugin_conf, 'rwa+')
-            cfg.write(fd)
-            fd.close()
-
-    def subscribe(self, **kwargs):
-        raise NotImplementedError("Must be implemented by a sub-class")
-
+# INSERT REDHAT SNIPPETS
+from ansible.module_utils.redhat import *
+# INSERT COMMON SNIPPETS
+from ansible.module_utils.basic import *
 
 class Rhn(RegistrationBase):
 
@@ -264,21 +197,26 @@ class Rhn(RegistrationBase):
             Register system to RHN.  If enable_eus=True, extended update
             support will be requested.
         '''
-        register_cmd = "/usr/sbin/rhnreg_ks --username '%s' --password '%s' --force" % (self.username, self.password)
+        register_cmd = "/usr/sbin/rhnreg_ks --username='%s' --password='%s' --force" % (self.username, self.password)
+        if self.module.params.get('server_url', None):
+            register_cmd += " --serverUrl=%s" % self.module.params.get('server_url')
         if enable_eus:
             register_cmd += " --use-eus-channel"
         if activationkey is not None:
             register_cmd += " --activationkey '%s'" % activationkey
         # FIXME - support --profilename
         # FIXME - support --systemorgid
-        run_command(register_cmd)
+        rc, stdout, stderr = self.module.run_command(register_cmd, check_rc=True, use_unsafe_shell=True)
 
     def api(self, method, *args):
         '''
             Convenience RPC wrapper
         '''
         if not hasattr(self, 'server') or self.server is None:
-            url = "https://xmlrpc.%s/rpc/api" % self.hostname
+            if self.hostname != 'rhn.redhat.com':
+                url = "https://%s/rpc/api" % self.hostname
+            else:
+                url = "https://xmlrpc.%s/rpc/api" % self.hostname
             self.server = xmlrpclib.Server(url, verbose=0)
             self.session = self.server.auth.login(self.username, self.password)
 
@@ -309,14 +247,14 @@ class Rhn(RegistrationBase):
             Subscribe to requested yum repositories using 'rhn-channel' command
         '''
         rhn_channel_cmd = "rhn-channel --user='%s' --password='%s'" % (self.username, self.password)
-        (stdout, stderr, rc) = run_command(rhn_channel_cmd + " --available-channels")
+        rc, stdout, stderr = self.module.run_command(rhn_channel_cmd + " --available-channels", check_rc=True)
 
         # Enable requested repoid's
         for wanted_channel in channels:
             # Each inserted repo regexp will be matched. If no match, no success.
             for availaible_channel in stdout.rstrip().split('\n'): # .rstrip() because of \n at the end -> empty string at the end
                 if re.search(wanted_repo, available_channel):
-                    run_command(rhn_channel_cmd + " --add --channel=%s" % available_channel)
+                    rc, stdout, stderr = self.module.run_command(rhn_channel_cmd + " --add --channel=%s" % available_channel, check_rc=True)
 
 def main():
 
@@ -341,6 +279,7 @@ def main():
     rhn.configure(module.params['server_url'])
     activationkey = module.params['activationkey']
     channels = module.params['channels']
+    rhn.module = module
 
     # Ensure system is registered
     if state == 'present':
@@ -359,10 +298,10 @@ def main():
                 rhn.enable()
                 rhn.register(module.params['enable_eus'] == True, activationkey)
                 rhn.subscribe(channels)
-            except CommandException, e:
+            except Exception, e:
                 module.fail_json(msg="Failed to register with '%s': %s" % (rhn.hostname, e))
-            else:
-                module.exit_json(changed=True, msg="System successfully registered to '%s'." % rhn.hostname)
+
+            module.exit_json(changed=True, msg="System successfully registered to '%s'." % rhn.hostname)
 
     # Ensure system is *not* registered
     if state == 'absent':
@@ -371,12 +310,10 @@ def main():
         else:
             try:
                 rhn.unregister()
-            except CommandException, e:
+            except Exception, e:
                 module.fail_json(msg="Failed to unregister: %s" % e)
-            else:
-                module.exit_json(changed=True, msg="System successfully unregistered from %s." % rhn.hostname)
+
+            module.exit_json(changed=True, msg="System successfully unregistered from %s." % rhn.hostname)
 
 
-# import module snippets
-from ansible.module_utils.basic import *
 main()

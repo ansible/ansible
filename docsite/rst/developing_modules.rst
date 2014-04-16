@@ -123,7 +123,7 @@ a lot shorter than this::
     for arg in arguments:
 
         # ignore any arguments without an equals in it
-        if arg.find("=") != -1:
+        if "=" in arg:
 
             (key, value) = arg.split("=")
 

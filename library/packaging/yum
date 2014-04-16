@@ -3,6 +3,7 @@
 
 # (c) 2012, Red Hat, Inc
 # Written by Seth Vidal <skvidal at fedoraproject.org>
+# (c) 2014, Epic Games, Inc.
 #
 # This file is part of Ansible
 #
@@ -108,7 +109,7 @@ EXAMPLES = '''
 - name: remove the Apache package
   yum: name=httpd state=removed
 
-- name: install the latest version of Apche from the testing repo
+- name: install the latest version of Apache from the testing repo
   yum: name=httpd enablerepo=testing state=installed
 
 - name: upgrade all packages
@@ -535,6 +536,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
                     
             if found:
                 continue
+
             # if not - then pass in the spec as what to install
             # we could get here if nothing provides it but that's not
             # the error we're catching here

@@ -18,7 +18,7 @@
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
 try:
-    from novaclient.v1_1 import client
+    from novaclient.v1_1 import client as nova_client
     from novaclient import exceptions
     import time
 except ImportError:

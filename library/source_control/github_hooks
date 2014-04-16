@@ -19,7 +19,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import json
-import urllib2
 import base64
 
 DOCUMENTATION = '''
@@ -51,6 +50,14 @@ options:
       - This tells the githooks module what you want it to do.
     required: true
     choices: [ "create", "cleanall" ]
+  validate_certs:
+    description:
+      - If C(no), SSL certificates for the target repo will not be validated. This should only be used
+        on personally controlled sites using self-signed certificates.
+    required: false
+    default: 'yes'
+    choices: ['yes', 'no']
+
 author: Phillip Gentry, CX Inc
 '''
 
@@ -62,16 +69,19 @@ EXAMPLES = '''
 - local_action: github_hooks action=cleanall user={{ gituser }} oauthkey={{ oauthkey }} repo={{ repo }}
 '''
 
-def list(hookurl, oauthkey, repo, user):
+def list(module, hookurl, oauthkey, repo, user):
     url = "%s/hooks" % repo
     auth = base64.encodestring('%s:%s' % (user, oauthkey)).replace('\n', '')
-    req = urllib2.Request(url)
-    req.add_header("Authorization", "Basic %s" % auth)
-    res = urllib2.urlopen(req)
-    out = res.read()
-    return False, out
+    headers = {
+        'Authorization': 'Basic %s' % auth,
+    }
+    response, info = fetch_url(module, url, headers=headers)
+    if info['status'] != 200:
+        return False, ''
+    else:
+        return False, response.read()
 
-def clean504(hookurl, oauthkey, repo, user):
+def clean504(module, hookurl, oauthkey, repo, user):
     current_hooks = list(hookurl, oauthkey, repo, user)[1]
     decoded = json.loads(current_hooks)
 
@@ -79,11 +89,11 @@ def clean504(hookurl, oauthkey, repo, user):
         if hook['last_response']['code'] == 504:
             # print "Last response was an ERROR for hook:"
             # print hook['id']
-            delete(hookurl, oauthkey, repo, user, hook['id'])
+            delete(module, hookurl, oauthkey, repo, user, hook['id'])
             
     return 0, current_hooks
 
-def cleanall(hookurl, oauthkey, repo, user):
+def cleanall(module, hookurl, oauthkey, repo, user):
     current_hooks = list(hookurl, oauthkey, repo, user)[1]
     decoded = json.loads(current_hooks)
 
@@ -91,11 +101,11 @@ def cleanall(hookurl, oauthkey, repo, user):
         if hook['last_response']['code'] != 200:
             # print "Last response was an ERROR for hook:"
             # print hook['id']
-            delete(hookurl, oauthkey, repo, user, hook['id'])
+            delete(module, hookurl, oauthkey, repo, user, hook['id'])
             
     return 0, current_hooks
 
-def create(hookurl, oauthkey, repo, user):
+def create(module, hookurl, oauthkey, repo, user):
     url = "%s/hooks" % repo
     values = {
         "active": True,
@@ -107,29 +117,23 @@ def create(hookurl, oauthkey, repo, user):
         }
     data = json.dumps(values)
     auth = base64.encodestring('%s:%s' % (user, oauthkey)).replace('\n', '')
-    out='[]'
-    try :
-        req = urllib2.Request(url)
-        req.add_data(data)
-        req.add_header("Authorization", "Basic %s" % auth)
-        res = urllib2.urlopen(req)
-        out = res.read()
-        return 0, out
-    except urllib2.HTTPError, e :
-        if e.code == 422 :
-            return 0, out
+    headers = {
+        'Authorization': 'Basic %s' % auth,
+    }
+    response, info = fetch_url(module, url, data=data, headers=headers)
+    if info['status'] != 200:
+        return 0, '[]'
+    else:
+        return 0, response.read()
 
-def delete(hookurl, oauthkey, repo, user, hookid):
+def delete(module, hookurl, oauthkey, repo, user, hookid):
     url = "%s/hooks/%s" % (repo, hookid)
     auth = base64.encodestring('%s:%s' % (user, oauthkey)).replace('\n', '')
-    req = urllib2.Request(url)
-    req.get_method = lambda: 'DELETE'
-    req.add_header("Authorization", "Basic %s" % auth)
-    # req.add_header('Content-Type', 'application/xml') 
-    # req.add_header('Accept', 'application/xml')
-    res = urllib2.urlopen(req)
-    out = res.read()
-    return out
+    headers = {
+        'Authorization': 'Basic %s' % auth,
+    }
+    response, info = fetch_url(module, url, data=data, headers=headers, method='DELETE')
+    return response.read()
 
 def main():
     module = AnsibleModule(
@@ -139,6 +143,7 @@ def main():
         oauthkey=dict(required=True),
         repo=dict(required=True),
         user=dict(required=True),
+        validate_certs=dict(default='yes', type='bool'),
         )
     )
 
@@ -149,16 +154,16 @@ def main():
     user = module.params['user']
 
     if action == "list":
-        (rc, out) = list(hookurl, oauthkey, repo, user)
+        (rc, out) = list(module, hookurl, oauthkey, repo, user)
 
     if action == "clean504":
-        (rc, out) = clean504(hookurl, oauthkey, repo, user)
+        (rc, out) = clean504(module, hookurl, oauthkey, repo, user)
 
     if action == "cleanall":
-        (rc, out) = cleanall(hookurl, oauthkey, repo, user)
+        (rc, out) = cleanall(module, hookurl, oauthkey, repo, user)
 
     if action == "create":
-        (rc, out) = create(hookurl, oauthkey, repo, user)
+        (rc, out) = create(module, hookurl, oauthkey, repo, user)
 
     if rc != 0:
         module.fail_json(msg="failed", result=out)
@@ -168,4 +173,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
+
 main()

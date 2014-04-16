@@ -82,3 +82,17 @@
   assert:
     that: 
         - "test_val == known_var_value.stdout"
+
+
+# PIPE LOOKUP
+
+# https://github.com/ansible/ansible/issues/6550
+- name: confirm pipe lookup works with a single positional arg
+  debug: msg="{{ lookup('pipe', 'ls') }}"         
+
+# https://github.com/ansible/ansible/issues/6550
+- name: confirm pipe lookup works with multiple positional args
+  debug: msg="{{ lookup('pipe', 'ls /tmp /') }}"         
+
+
+

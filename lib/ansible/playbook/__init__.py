@@ -29,7 +29,11 @@ from play import Play
 import StringIO
 import pipes
 
+# the setup cache stores all variables about a host
+# gathered during the setup step, while the vars cache
+# holds all other variables about a host
 SETUP_CACHE = collections.defaultdict(dict)
+VARS_CACHE  = collections.defaultdict(dict)
 
 class PlayBook(object):
     '''
@@ -73,6 +77,7 @@ class PlayBook(object):
         su_user          = False,
         su_pass          = False,
         vault_password   = False,
+        force_handlers   = False,
     ):
 
         """
@@ -92,9 +97,12 @@ class PlayBook(object):
         sudo:             if not specified per play, requests all plays use sudo mode
         inventory:        can be specified instead of host_list to use a pre-existing inventory object
         check:            don't change anything, just try to detect some potential changes
+        any_errors_fatal: terminate the entire execution immediately when one of the hosts has failed
+        force_handlers:   continue to notify and run handlers even if a task fails 
         """
 
         self.SETUP_CACHE = SETUP_CACHE
+        self.VARS_CACHE  = VARS_CACHE
 
         arguments = []
         if playbook is None:
@@ -140,6 +148,7 @@ class PlayBook(object):
         self.su_user          = su_user
         self.su_pass          = su_pass
         self.vault_password   = vault_password
+        self.force_handlers   = force_handlers
 
         self.callbacks.playbook = self
         self.runner_callbacks.playbook = self
@@ -166,6 +175,7 @@ class PlayBook(object):
         self.filename = playbook
         (self.playbook, self.play_basedirs) = self._load_playbook_from_file(playbook, vars)
         ansible.callbacks.load_callback_plugins()
+        ansible.callbacks.set_playbook(self.callbacks, self)
 
     # *****************************************************
 
@@ -300,7 +310,7 @@ class PlayBook(object):
         # since these likely got killed by async_wrapper
         for host in poller.hosts_to_poll:
             reason = { 'failed' : 1, 'rc' : None, 'msg' : 'timed out' }
-            self.runner_callbacks.on_async_failed(host, reason, poller.jid)
+            self.runner_callbacks.on_async_failed(host, reason, poller.runner.vars_cache[host]['ansible_job_id'])
             results['contacted'][host] = reason
 
         return results
@@ -335,6 +345,7 @@ class PlayBook(object):
             default_vars=task.default_vars,
             private_key_file=self.private_key_file,
             setup_cache=self.SETUP_CACHE,
+            vars_cache=self.VARS_CACHE,
             basedir=task.play.basedir,
             conditional=task.when,
             callbacks=self.runner_callbacks,
@@ -371,7 +382,7 @@ class PlayBook(object):
                 results = self._async_poll(poller, task.async_seconds, task.async_poll_interval)
             else:
                 for (host, res) in results.get('contacted', {}).iteritems():
-                    self.runner_callbacks.on_async_ok(host, res, poller.jid)
+                    self.runner_callbacks.on_async_ok(host, res, poller.runner.vars_cache[host]['ansible_job_id'])
 
         contacted = results.get('contacted',{})
         dark      = results.get('dark', {})
@@ -402,6 +413,10 @@ class PlayBook(object):
             ansible.callbacks.set_task(self.runner_callbacks, None)
             return True
 
+        # template ignore_errors
+        cond = template(play.basedir, task.ignore_errors, task.module_vars, expand_lists=False)
+        task.ignore_errors =  utils.check_conditional(cond , play.basedir, task.module_vars, fail_on_undefined=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR)
+
         # load up an appropriate ansible runner to run the task in parallel
         results = self._run_task_internal(task)
 
@@ -426,8 +441,6 @@ class PlayBook(object):
             else:
                 facts = result.get('ansible_facts', {})
                 self.SETUP_CACHE[host].update(facts)
-            # extra vars need to always trump - so update  again following the facts
-            self.SETUP_CACHE[host].update(self.extra_vars)
             if task.register:
                 if 'stdout' in result and 'stdout_lines' not in result:
                     result['stdout_lines'] = result['stdout'].splitlines()
@@ -475,10 +488,14 @@ class PlayBook(object):
     def _do_setup_step(self, play):
         ''' get facts from the remote system '''
 
-        if play.gather_facts is False:
-            return {}
-
         host_list = self._trim_unavailable_hosts(play._play_hosts)
+
+        if play.gather_facts is None and C.DEFAULT_GATHERING == 'smart':
+            host_list = [h for h in host_list if h not in self.SETUP_CACHE or 'module_setup' not in self.SETUP_CACHE[h]]
+            if len(host_list) == 0:
+                return {}
+        elif play.gather_facts is False or (play.gather_facts is None and C.DEFAULT_GATHERING == 'explicit'):
+            return {}
 
         self.callbacks.on_setup()
         self.inventory.restrict_to(host_list)
@@ -500,6 +517,7 @@ class PlayBook(object):
             remote_port=play.remote_port,
             private_key_file=self.private_key_file,
             setup_cache=self.SETUP_CACHE,
+            vars_cache=self.VARS_CACHE,
             callbacks=self.runner_callbacks,
             sudo=play.sudo,
             sudo_user=play.sudo_user,
@@ -560,7 +578,7 @@ class PlayBook(object):
 
     def _run_play(self, play):
         ''' run a list of tasks for a given pattern, in order '''
-
+        
         self.callbacks.on_play_start(play.name)
         # Get the hosts for this play
         play._play_hosts = self.inventory.list_hosts(play.hosts)
@@ -589,6 +607,7 @@ class PlayBook(object):
                         play_hosts.append(all_hosts.pop())
                 serialized_batch.append(play_hosts)
 
+        task_errors = False
         for on_hosts in serialized_batch:
 
             # restrict the play to just the hosts we have in our on_hosts block that are
@@ -599,41 +618,12 @@ class PlayBook(object):
             for task in play.tasks():
 
                 if task.meta is not None:
-
-                    # meta tasks are an internalism and are not valid for end-user playbook usage
-                    # here a meta task is a placeholder that signals handlers should be run
-
+                    # meta tasks can force handlers to run mid-play
                     if task.meta == 'flush_handlers':
-                        fired_names = {}
-                        for handler in play.handlers():
-                            if len(handler.notified_by) > 0:
-                                self.inventory.restrict_to(handler.notified_by)
+                        self.run_handlers(play)
 
-                                # Resolve the variables first
-                                handler_name = template(play.basedir, handler.name, handler.module_vars)
-                                if handler_name not in fired_names:
-                                    self._run_task(play, handler, True)
-                                # prevent duplicate handler includes from running more than once
-                                fired_names[handler_name] = 1
-
-                                host_list = self._trim_unavailable_hosts(play._play_hosts)
-                                if handler.any_errors_fatal and len(host_list) < hosts_count:
-                                    play.max_fail_pct = 0
-                                if (hosts_count - len(host_list)) > int((play.max_fail_pct)/100.0 * hosts_count):
-                                    host_list = None
-                                if not host_list:
-                                    self.callbacks.on_no_hosts_remaining()
-                                    return False
-
-                                self.inventory.lift_restriction()
-                                new_list = handler.notified_by[:]
-                                for host in handler.notified_by:
-                                    if host in on_hosts:
-                                        while host in new_list:
-                                            new_list.remove(host)
-                                handler.notified_by = new_list
-
-                        continue
+                    # skip calling the handler till the play is finished
+                    continue
 
                 # only run the task if the requested tags match
                 should_run = False
@@ -666,15 +656,74 @@ class PlayBook(object):
                     play.max_fail_pct = 0
 
                 # If threshold for max nodes failed is exceeded , bail out.
-                if (hosts_count - len(host_list)) > int((play.max_fail_pct)/100.0 * hosts_count):
-                    host_list = None
+                if play.serial > 0:
+                    # if serial is set, we need to shorten the size of host_count
+                    play_count = len(play._play_hosts)
+                    if (play_count - len(host_list)) > int((play.max_fail_pct)/100.0 * play_count):
+                        host_list = None
+                else:
+                    if (hosts_count - len(host_list)) > int((play.max_fail_pct)/100.0 * hosts_count):
+                        host_list = None
 
                 # if no hosts remain, drop out
                 if not host_list:
-                    self.callbacks.on_no_hosts_remaining()
-                    return False
+                    if self.force_handlers:
+                        task_errors = True
+                        break
+                    else:
+                        self.callbacks.on_no_hosts_remaining()
+                        return False
 
+            # lift restrictions after each play finishes
             self.inventory.lift_also_restriction()
+
+            if task_errors and not self.force_handlers:
+                # if there were failed tasks and handler execution
+                # is not forced, quit the play with an error
+                return False
+            else:
+                # no errors, go ahead and execute all handlers
+                if not self.run_handlers(play):
+                    return False
 
         return True
 
+
+    def run_handlers(self, play):
+        on_hosts = play._play_hosts
+        hosts_count = len(on_hosts)
+        for task in play.tasks():
+            if task.meta is not None:
+
+                fired_names = {}
+                for handler in play.handlers():
+                    if len(handler.notified_by) > 0:
+                        self.inventory.restrict_to(handler.notified_by)
+
+                        # Resolve the variables first
+                        handler_name = template(play.basedir, handler.name, handler.module_vars)
+                        if handler_name not in fired_names:
+                            self._run_task(play, handler, True)
+                        # prevent duplicate handler includes from running more than once
+                        fired_names[handler_name] = 1
+
+                        host_list = self._trim_unavailable_hosts(play._play_hosts)
+                        if handler.any_errors_fatal and len(host_list) < hosts_count:
+                            play.max_fail_pct = 0
+                        if (hosts_count - len(host_list)) > int((play.max_fail_pct)/100.0 * hosts_count):
+                            host_list = None
+                        if not host_list and not self.force_handlers:
+                            self.callbacks.on_no_hosts_remaining()
+                            return False
+
+                        self.inventory.lift_restriction()
+                        new_list = handler.notified_by[:]
+                        for host in handler.notified_by:
+                            if host in on_hosts:
+                                while host in new_list:
+                                    new_list.remove(host)
+                        handler.notified_by = new_list
+
+                continue
+
+        return True

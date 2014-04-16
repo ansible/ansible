@@ -1,0 +1,169 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+#
+# (C) Seth Edwards, 2014
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+
+import base64
+
+DOCUMENTATION = '''
+---
+module: librato_annotation
+short_description: create an annotation in librato
+description:
+    - Create an annotation event on the given annotation stream :name. If the annotation stream does not exist, it will be created automatically
+version_added: "1.6"
+author: Seth Edwards
+requirements:
+    - urllib2
+    - base64
+options:
+    user:
+        description:
+           - Librato account username
+        required: true
+    api_key:
+        description:
+           - Librato account api key
+        required: true
+    name:
+        description:
+            - The annotation stream name
+            - If the annotation stream does not exist, it will be created automatically
+        required: false
+    title:
+        description:
+            - The title of an annotation is a string and may contain spaces
+            - The title should be a short, high-level summary of the annotation e.g. v45 Deployment
+        required: true
+    source:
+        description:
+            - A string which describes the originating source of an annotation when that annotation is tracked across multiple members of a population
+        required: false
+    description:
+        description:
+            - The description contains extra meta-data about a particular annotation
+            - The description should contain specifics on the individual annotation e.g. Deployed 9b562b2 shipped new feature foo!
+        required: false
+    start_time:
+        description:
+            - The unix timestamp indicating the the time at which the event referenced by this annotation started
+        required: false
+    end_time:
+        description:
+            - The unix timestamp indicating the the time at which the event referenced by this annotation ended
+            - For events that have a duration, this is a useful way to annotate the duration of the event
+        required: false
+    links:
+        description:
+            - See examples
+        required: true
+'''
+
+EXAMPLES = '''
+# Create a simple annotation event with a source
+- librato_annotation:
+    user: user@example.com
+    api_key: XXXXXXXXXXXXXXXXX
+    title: 'App Config Change'
+    source: 'foo.bar'
+    description: 'This is a detailed description of the config change'
+
+# Create an annotation that includes a link
+- librato_annotation:
+    user: user@example.com
+    api_key: XXXXXXXXXXXXXXXXXX
+    name: 'code.deploy'
+    title: 'app code deploy'
+    description: 'this is a detailed description of a deployment'
+    links:
+      - { rel: 'example', href: 'http://www.example.com/deploy' }
+
+# Create an annotation with a start_time and end_time
+- librato_annotation:
+    user: user@example.com
+    api_key: XXXXXXXXXXXXXXXXXX
+    name: 'maintenance'
+    title: 'Maintenance window'
+    description: 'This is a detailed description of maintenance'
+    start_time: 1395940006
+    end_time: 1395954406
+'''
+
+
+try:
+    import urllib2
+    HAS_URLLIB2 = True
+except ImportError:
+    HAS_URLLIB2 = False
+
+def post_annotation(module):
+    user = module.params['user']
+    api_key = module.params['api_key']
+    name = module.params['name']
+    title = module.params['title']
+
+    url = 'https://metrics-api.librato.com/v1/annotations/%s' % name
+    params = {}
+    params['title'] = title
+
+    if module.params['source'] != None:
+        params['source'] = module.params['source']
+    if module.params['description'] != None:
+        params['description'] = module.params['description']
+    if module.params['start_time'] != None:
+        params['start_time'] = module.params['start_time']
+    if module.params['end_time'] != None:
+        params['end_time'] = module.params['end_time']
+    if module.params['links'] != None:
+        params['links'] = module.params['links']
+
+    json_body = module.jsonify(params)
+
+    headers = {}
+    headers['Content-Type'] = 'application/json'
+    headers['Authorization'] = b"Basic " + base64.b64encode(user + b":" + api_key).strip()
+    req = urllib2.Request(url, json_body, headers)
+    try:
+        response = urllib2.urlopen(req)
+    except urllib2.HTTPError as e:
+        module.fail_json(msg="Request Failed", reason=e.reason)
+    response = response.read()
+    module.exit_json(changed=True, annotation=response)
+
+def main():
+
+  module = AnsibleModule(
+      argument_spec = dict(
+        user         = dict(required=True),
+        api_key      = dict(required=True),
+        name         = dict(required=False),
+        title        = dict(required=True),
+        source       = dict(required=False),
+        description  = dict(required=False),
+        start_time   = dict(required=False, default=None, type='int'),
+        end_time     = dict(require=False, default=None, type='int'),
+        links        = dict(type='list')
+        )
+      )
+
+  post_annotation(module)
+
+from ansible.module_utils.basic import *
+main()

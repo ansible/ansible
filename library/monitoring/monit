@@ -47,6 +47,7 @@ EXAMPLES = '''
 - monit: name=httpd state=started
 '''
 
+import pipes
 
 def main():
     arg_spec = dict(
@@ -67,7 +68,7 @@ def main():
         rc, out, err = module.run_command('%s reload' % MONIT)
         module.exit_json(changed=True, name=name, state=state)
     
-    rc, out, err = module.run_command('%s summary | grep "Process \'%s\'"' % (MONIT, name))
+    rc, out, err = module.run_command('%s summary | grep "Process \'%s\'"' % (MONIT, pipes.quote(name)), use_unsafe_shell=True)
     present = name in out
 
     if not present and not state == 'present':
@@ -78,7 +79,7 @@ def main():
             if module.check_mode:
                 module.exit_json(changed=True)
             module.run_command('%s reload' % MONIT, check_rc=True)
-            rc, out, err = module.run_command('%s summary | grep %s' % (MONIT, name))
+            rc, out, err = module.run_command('%s summary | grep %s' % (MONIT, pipes.quote(name)), use_unsafe_shell=True)
             if name in out:
                 module.exit_json(changed=True, name=name, state=state)
             else:
@@ -86,7 +87,7 @@ def main():
 
         module.exit_json(changed=False, name=name, state=state)
 
-    rc, out, err = module.run_command('%s summary | grep %s' % (MONIT, name))
+    rc, out, err = module.run_command('%s summary | grep %s' % (MONIT, pipes.quote(name)), use_unsafe_shell=True)
     running = 'running' in out.lower()
 
     if running and (state == 'started' or state == 'monitored'):
@@ -99,7 +100,7 @@ def main():
         if module.check_mode:
             module.exit_json(changed=True)
         module.run_command('%s stop %s' % (MONIT, name))
-        rc, out, err = module.run_command('%s summary | grep %s' % (MONIT, name))
+        rc, out, err = module.run_command('%s summary | grep %s' % (MONIT, pipes.quote(name)), use_unsafe_shell=True)
         if 'not monitored' in out.lower() or 'stop pending' in out.lower():
             module.exit_json(changed=True, name=name, state=state)
         module.fail_json(msg=out)
@@ -108,7 +109,8 @@ def main():
         if module.check_mode:
             module.exit_json(changed=True)
         module.run_command('%s unmonitor %s' % (MONIT, name))
-        rc, out, err = module.run_command('%s summary | grep %s' % (MONIT, name))
+        # FIXME: DRY FOLKS!
+        rc, out, err = module.run_command('%s summary | grep %s' % (MONIT, pipes.quote(name)), use_unsafe_shell=True)
         if 'not monitored' in out.lower():
             module.exit_json(changed=True, name=name, state=state)
         module.fail_json(msg=out)

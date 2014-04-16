@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 #
 
 # (c) 2014, Pavel Antonov <antonov@adwz.ru>
@@ -137,6 +137,9 @@ class DockerImageManager:
         self.changed = True
 
         for chunk in stream:
+            if not chunk:
+                continue
+
             chunk_json = json.loads(chunk)
 
             if 'error' in chunk_json:

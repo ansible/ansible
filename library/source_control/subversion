@@ -27,7 +27,7 @@ description:
 version_added: "0.7"
 author: Dane Summers, njharman@gmail.com
 notes:
-   - Requres I(svn) to be installed on the client.
+   - Requires I(svn) to be installed on the client.
 requirements: []
 options:
   repo:
@@ -70,11 +70,20 @@ options:
     description:
       - Path to svn executable to use. If not supplied,
         the normal mechanism for resolving binary paths will be used.
+  export:
+    required: false
+    default: False
+    version_added: "1.6"
+    description:
+      - If True, do export instead of checkout/update.
 '''
 
 EXAMPLES = '''
 # Checkout subversion repository to specified folder.
 - subversion: repo=svn+ssh://an.example.org/path/to/repo dest=/src/checkout
+
+# Export subversion directory to folder
+- subversion: repo=svn+ssh://an.example.org/path/to/repo dest=/src/export export=True
 '''
 
 import re
@@ -110,6 +119,10 @@ class Subversion(object):
     def checkout(self):
         '''Creates new svn working directory if it does not already exist.'''
         self._exec(["checkout", "-r", self.revision, self.repo, self.dest])
+		
+    def export(self, force=False):
+        '''Export svn repo to directory'''
+        self._exec(["export", "-r", self.revision, self.repo, self.dest])
 
     def switch(self):
         '''Change working directory's repo.'''
@@ -163,6 +176,7 @@ def main():
             username=dict(required=False),
             password=dict(required=False),
             executable=dict(default=None),
+            export=dict(default=False, required=False),
         ),
         supports_check_mode=True
     )
@@ -174,6 +188,7 @@ def main():
     username = module.params['username']
     password = module.params['password']
     svn_path = module.params['executable'] or module.get_bin_path('svn', True)
+    export = module.params['export']
 
     os.environ['LANG'] = 'C'
     svn = Subversion(module, dest, repo, revision, username, password, svn_path)
@@ -183,7 +198,10 @@ def main():
         local_mods = False
         if module.check_mode:
             module.exit_json(changed=True)
-        svn.checkout()
+        if not export:
+            svn.checkout()
+        else:
+            svn.export()
     elif os.path.exists("%s/.svn" % (dest, )):
         # Order matters. Need to get local mods before switch to avoid false
         # positives. Need to switch before revert to ensure we are reverting to

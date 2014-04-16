@@ -236,9 +236,10 @@ class TestInventory(unittest.TestCase):
         print vars
 
         expected = dict(
-            a='1', b='2', c='3', d='10002', e='10003', f='10004 != 10005',
+            a=1, b=2, c=3, d=10002, e=10003, f='10004 != 10005',
             g='  g  ', h='  h  ', i="'  i  \"", j='"  j',
-            rga='1', rgb='2', rgc='3',
+            k=[ 'k1', 'k2' ],
+            rga=1, rgb=2, rgc=3,
             inventory_hostname='rtp_a', inventory_hostname_short='rtp_a',
             group_names=[ 'eastcoast', 'nc', 'redundantgroup', 'redundantgroup2', 'redundantgroup3', 'rtp', 'us' ]
         )
@@ -417,15 +418,24 @@ class TestInventory(unittest.TestCase):
         auth = inventory.get_variables('neptun')['auth']
         assert auth == 'YWRtaW46YWRtaW4='
 
-    # test disabled as needs to be updated to model desired behavior
-    #
-    #def test_dir_inventory(self):
-    #    inventory = self.dir_inventory()
-    #    vars = inventory.get_variables('zeus')
-    #
-    #   print "VARS=%s" % vars
-    #
-    #    assert vars == {'inventory_hostname': 'zeus',
-    #                    'inventory_hostname_short': 'zeus',
-    #                    'group_names': ['greek', 'major-god', 'ungrouped'],
-    #                    'var_a': '1#2'}
+    def test_dir_inventory(self):
+        inventory = self.dir_inventory()
+
+        host_vars = inventory.get_variables('zeus')
+
+        expected_vars = {'inventory_hostname': 'zeus',
+                         'inventory_hostname_short': 'zeus',
+                         'group_names': ['greek', 'major-god', 'ungrouped'],
+                         'var_a': '3#4'}
+
+        print "HOST     VARS=%s" % host_vars
+        print "EXPECTED VARS=%s" % expected_vars
+
+        assert host_vars == expected_vars
+
+    def test_dir_inventory_multiple_groups(self):
+        inventory = self.dir_inventory()
+        group_greek = inventory.get_hosts('greek')
+        actual_host_names = [host.name for host in group_greek]
+        print "greek : %s " % actual_host_names
+        assert actual_host_names == ['zeus', 'morpheus']

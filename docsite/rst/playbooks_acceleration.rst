@@ -8,7 +8,7 @@ You Might Not Need This!
 
 Are you running Ansible 1.5 or later?  If so, you may not need accelerate mode due to a new feature called "SSH pipelining" and should read the :ref:`pipelining` section of the documentation.
 
-For users on 1.5 and later, accelerate mode only makes sense if you are (A) are managing from an Enterprise Linux 6 or earlier host
+For users on 1.5 and later, accelerate mode only makes sense if you (A) are managing from an Enterprise Linux 6 or earlier host
    and still are on paramiko, or (B) can't enable TTYs with sudo as described in the pipelining docs.
 
 If you can use pipelining, Ansible will reduce the amount of files transferred over the wire, 
@@ -76,4 +76,11 @@ As noted above, accelerated mode also supports running tasks via sudo, however t
 * You must remove requiretty from your sudoers options.
 * Prompting for the sudo password is not yet supported, so the NOPASSWD option is required for sudo'ed commands.
 
+As of Ansible version `1.6`, you can also allow the use of multiple keys for connections from multiple Ansible management nodes. To do so, add the following option
+to your `ansible.cfg` configuration::
+
+    accelerate_multi_key = yes
+
+When enabled, the daemon will open a UNIX socket file (by default `$ANSIBLE_REMOTE_TEMP/.ansible-accelerate/.local.socket`). New connections over SSH can
+use this socket file to upload new keys to the daemon.
 

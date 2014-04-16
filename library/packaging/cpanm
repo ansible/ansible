@@ -25,7 +25,7 @@ module: cpanm
 short_description: Manages Perl library dependencies.
 description:
   - Manage Perl library dependencies.
-version_added: "1.0"
+version_added: "1.6"
 options:
   name:
     description:
@@ -72,14 +72,17 @@ author: Franck Cuny
 def _is_package_installed(module, name, locallib, cpanm):
     cmd = ""
     if locallib:
-        cmd = "PERL5LIB={locallib}/lib/perl5".format(locallib=locallib)
-    cmd = "{cmd} perl -M{name} -e '1'".format(cmd=cmd, name=name)
+        os.environ["PERL5LIB"] = "%s/lib/perl5" % locallib
+    cmd = "%s perl -M%s -e '1'" % (cmd, name)
     res, stdout, stderr = module.run_command(cmd, check_rc=False)
-    installed = True if res == 0 else False
-    return installed
-
+    if res == 0:
+       return True
+    else: 
+       return False
 
 def _build_cmd_line(name, from_path, notest, locallib, mirror, cpanm):
+    # this code should use "%s" like everything else and just return early but not fixing all of it now.
+    # don't copy stuff like this
     if from_path:
         cmd = "{cpanm} {path}".format(cpanm=cpanm, path=from_path)
     else:
@@ -111,21 +114,20 @@ def main():
         required_one_of=[['name', 'from_path']],
     )
 
-    cpanm = module.get_bin_path('cpanm', True)
-
-    name = module.params['name']
+    cpanm     = module.get_bin_path('cpanm', True)
+    name      = module.params['name']
     from_path = module.params['from_path']
-    notest = module.boolean(module.params.get('notest', False))
-    locallib = module.params['locallib']
-    mirror = module.params['mirror']
+    notest    = module.boolean(module.params.get('notest', False))
+    locallib  = module.params['locallib']
+    mirror    = module.params['mirror']
 
-    changed = False
+    changed   = False
 
     installed = _is_package_installed(module, name, locallib, cpanm)
 
     if not installed:
         out_cpanm = err_cpanm = ''
-        cmd = _build_cmd_line(name, from_path, notest, locallib, mirror, cpanm)
+        cmd       = _build_cmd_line(name, from_path, notest, locallib, mirror, cpanm)
 
         rc_cpanm, out_cpanm, err_cpanm = module.run_command(cmd, check_rc=False)
 
@@ -136,7 +138,6 @@ def main():
             changed = True
 
     module.exit_json(changed=changed, binary=cpanm, name=name)
-
 
 # import module snippets
 from ansible.module_utils.basic import *
