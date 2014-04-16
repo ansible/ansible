@@ -884,7 +884,7 @@ class Runner(object):
                 # no callbacks
                 return result
             if 'skipped' in data:
-                self.callbacks.on_skipped(host)
+                self.callbacks.on_skipped(host, inject.get('item',None))
             elif not result.is_successful():
                 ignore_errors = self.module_vars.get('ignore_errors', False)
                 self.callbacks.on_failed(host, data, ignore_errors)
