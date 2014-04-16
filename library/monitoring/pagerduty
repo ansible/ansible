@@ -167,9 +167,11 @@ def create(module, name, user, passwd, token, requester_id, service, hours, minu
     request_data = {'maintenance_window': {'start_time': start, 'end_time': end, 'description': desc, 'service_ids': [service]}}
     if requester_id:
         request_data['requester_id'] = requester_id
+    else:
+        if token:
+            module.fail_json(msg="requester_id is required when using a token")
 
     data = json.dumps(request_data)
-
     response, info = fetch_url(module, url, data=data, headers=headers, method='POST')
     if info['status'] != 200:
         module.fail_json(msg="failed to create the window: %s" % info['msg'])
