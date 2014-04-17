@@ -144,7 +144,7 @@ def _get_cmd_options(module, cmd):
     words = stdout.strip().split()
     cmd_options = [ x for x in words if x.startswith('--') ]
     return cmd_options
-    
+
 
 def _get_full_name(name, version=None):
     if version is None:
@@ -215,6 +215,7 @@ def main():
             extra_args=dict(default=None, required=False),
             chdir=dict(default=None, required=False),
             executable=dict(default=None, required=False),
+            python=dict(default=None, required=False),
         ),
         required_one_of=[['name', 'requirements']],
         mutually_exclusive=[['name', 'requirements']],
@@ -227,6 +228,7 @@ def main():
     requirements = module.params['requirements']
     extra_args = module.params['extra_args']
     chdir = module.params['chdir']
+    python = module.params['python']
 
     if state == 'latest' and version is not None:
         module.fail_json(msg='version is incompatible with state=latest')
@@ -245,14 +247,16 @@ def main():
         if not os.path.exists(os.path.join(env, 'bin', 'activate')):
             if module.check_mode:
                 module.exit_json(changed=True)
+            cmd = virtualenv
             if module.params['virtualenv_site_packages']:
-                cmd = '%s --system-site-packages %s' % (virtualenv, env)
+                cmd += ' --system-site-packages'
             else:
                 cmd_opts = _get_cmd_options(module, virtualenv)
                 if '--no-site-packages' in cmd_opts:
-                    cmd = '%s --no-site-packages %s' % (virtualenv, env)
-                else:
-                    cmd = '%s %s' % (virtualenv, env)
+                    cmd += ' --no-site-packages'
+            if python:
+                cmd += ' --python=%s' % python
+            cmd += ' %s' % env
             this_dir = tempfile.gettempdir()
             if chdir:
                 this_dir = os.path.join(this_dir, chdir)
@@ -265,7 +269,7 @@ def main():
     pip = _get_pip(module, env, module.params['executable'])
 
     cmd = '%s %s' % (pip, state_map[state])
-    
+
     # If there's a virtualenv we want things we install to be able to use other
     # installations that exist as binaries within this virtualenv. Example: we 
     # install cython and then gevent -- gevent needs to use the cython binary, 
