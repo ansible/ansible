@@ -460,7 +460,7 @@ class TestInventory(unittest.TestCase):
     def test_dir_inventory_groups_for_host(self):
         inventory = self.dir_inventory()
         expected_groups_for_host = {'morpheus': ['all', 'greek', 'minor-god'],
-                                    'thor': ['all', 'norse', 'major-god'],
+                                    'thor': ['all', 'major-god', 'norse'],
                                     'zeus': ['all', 'greek', 'major-god']}
 
         actual_groups_for_host = {}
