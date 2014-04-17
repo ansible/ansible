@@ -23,6 +23,7 @@ import datetime
 import time
 import sys
 import re
+import os
 
 DOCUMENTATION = '''
 ---
@@ -71,7 +72,8 @@ options:
     version_added: "1.4"
     required: false
     description:
-      - path to a file on the filesytem that must exist before continuing
+      - path to a file or directory on the filesytem that must exist before continuing
+      - checking for directories added in 1.6
   search_regex:
     version_added: "1.4"
     required: false
@@ -147,12 +149,10 @@ def main():
 
         while datetime.datetime.now() < end:
             if path:
-                try:
-                    f = open(path)
-                    f.close()
+                if os.path.exists(path):
                     time.sleep(1)
                     pass
-                except IOError:
+                else:
                     break
             elif port:
                 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -176,19 +176,16 @@ def main():
         end = start + datetime.timedelta(seconds=timeout)
         while datetime.datetime.now() < end:
             if path:
-                try:
-                    f = open(path)
-                    try:
-                        if search_regex:
-                            if re.search(search_regex, f.read(), re.MULTILINE):
-                                break
-                            else:
-                                time.sleep(1)
-                        else:
+                if os.path.exists(path):
+                    if search_regex and os.path.isfile(path):
+                        if re.search(search_regex, open(path).read(), re.MULTILINE):
                             break
-                    finally:
-                        f.close()
-                except IOError:
+                        else:
+                            time.sleep(1)
+                            pass
+                    else:
+                         break
+                else:
                     time.sleep(1)
                     pass
             elif port:
