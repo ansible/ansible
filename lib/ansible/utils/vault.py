@@ -246,6 +246,23 @@ class VaultEditor(object):
         # shuffle tmp file into place
         self.shuffle_files(tmp_path, self.filename)
 
+    def view_file(self):
+
+        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2 or not HAS_HASH:
+            raise errors.AnsibleError(CRYPTO_UPGRADE)
+
+        # decrypt to tmpfile
+        tmpdata = self.read_data(self.filename)
+        this_vault = VaultLib(self.password)
+        dec_data = this_vault.decrypt(tmpdata)
+        _, tmp_path = tempfile.mkstemp()
+        self.write_data(dec_data, tmp_path)
+
+        # drop the user into vim on the tmp file
+        call(self._pager_shell_command(tmp_path))
+        os.remove(tmp_path)
+
+
     def encrypt_file(self):
 
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2 or not HAS_HASH:
@@ -308,6 +325,13 @@ class VaultEditor(object):
         editor.append(filename)
 
         return editor
+
+    def _pager_shell_command(self, filename):
+        PAGER = os.environ.get('PAGER','less')
+        pager = shlex.split(PAGER)
+        pager.append(filename)
+
+        return pager
 
 ########################################
 #               CIPHERS                #
