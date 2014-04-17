@@ -258,7 +258,7 @@ class VaultEditor(object):
         _, tmp_path = tempfile.mkstemp()
         self.write_data(dec_data, tmp_path)
 
-        # drop the user into vim on the tmp file
+        # drop the user into pager on the tmp file
         call(self._pager_shell_command(tmp_path))
         os.remove(tmp_path)
 

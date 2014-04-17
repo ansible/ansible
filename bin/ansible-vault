@@ -147,7 +147,7 @@ def execute_decrypt(args, options, parser):
 def execute_edit(args, options, parser):
 
     if len(args) > 1:
-        raise errors.AnsibleError("create does not accept more than one filename")        
+        raise errors.AnsibleError("edit does not accept more than one filename")        
 
     if not options.password_file:        
         password, new_password = utils.ask_vault_passwords(ask_vault_pass=True)
