@@ -429,7 +429,7 @@ def submodule_update(git_path, module, dest):
         module.fail_json(msg="Failed to init/update submodules: %s" % out + err)
     return (rc, out, err)
 
-def switch_version(git_path, module, dest, remote, version):
+def switch_version(git_path, module, dest, remote, version, recursive):
     ''' once pulled, switch to a particular SHA, tag, or branch '''
     cmd = ''
     if version != 'HEAD':
@@ -455,8 +455,11 @@ def switch_version(git_path, module, dest, remote, version):
             module.fail_json(msg="Failed to checkout %s" % (version))
         else:
             module.fail_json(msg="Failed to checkout branch %s" % (branch))
-    (rc, out2, err2) = submodule_update(git_path, module, dest)
-    return (rc, out1 + out2, err1 + err2)
+    if recursive:
+        (rc, out2, err2) = submodule_update(git_path, module, dest)
+        out1 += out2
+        err1 += err1
+    return (rc, out1, err1)
 
 # ===========================================
 
@@ -565,7 +568,7 @@ def main():
     # switch to version specified regardless of whether
     # we cloned or pulled
     if not bare:
-        switch_version(git_path, module, dest, remote, version)
+        switch_version(git_path, module, dest, remote, version, recursive)
 
     # determine if we changed anything
     after = get_version(module, git_path, dest)
