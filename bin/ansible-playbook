@@ -77,7 +77,7 @@ def main(args):
     #    help="password for vault encrypted files")
     parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
         help="set additional variables as key=value or YAML/JSON", default=[])
-    parser.add_option('-t', '--tags', dest='tags', default='all',
+    parser.add_option('-t', '--tags', dest='tags',
         help="only run plays and tasks tagged with these values")
     parser.add_option('--skip-tags', dest='skip_tags',
         help="only run plays and tasks whose tags do not match these values")
@@ -146,7 +146,9 @@ def main(args):
             # Arguments as Key-value
             extra_vars = utils.combine_vars(extra_vars, utils.parse_kv(extra_vars_opt))
 
-    only_tags = options.tags.split(",")
+    only_tags = options.tags
+    if options.tags is not None:
+        only_tags = options.tags.split(",")
     skip_tags = options.skip_tags
     if options.skip_tags is not None:
         skip_tags = options.skip_tags.split(",")
@@ -210,28 +212,10 @@ def main(args):
             print 'playbook: %s' % playbook
             print ''
             playnum = 0
-            for (play_ds, play_basedir) in zip(pb.playbook, pb.play_basedirs):
+            for playnum, play in enumerate(pb.plays_to_run()):
                 playnum += 1
-                play = ansible.playbook.Play(pb, play_ds, play_basedir,
-                                              vault_password=pb.vault_password)
                 label = play.name
                 hosts = pb.inventory.list_hosts(play.hosts)
-
-                # Filter all tasks by given tags
-                if pb.only_tags != 'all':
-                    if options.subset and not hosts:
-                        continue
-                    matched_tags, unmatched_tags = play.compare_tags(pb.only_tags)
-
-                    # Remove skipped tasks
-                    matched_tags = matched_tags - set(pb.skip_tags)
-
-                    unmatched_tags.discard('all')
-                    unknown_tags = ((set(pb.only_tags) | set(pb.skip_tags)) -
-                                    (matched_tags | unmatched_tags))
-
-                    if unknown_tags:
-                        continue
 
                 if options.listhosts:
                     print '  play #%d (%s): host count=%d' % (playnum, label, len(hosts))
@@ -240,15 +224,11 @@ def main(args):
 
                 if options.listtasks:
                     print '  play #%d (%s):' % (playnum, label)
-
-                    for task in play.tasks():
-                        if (set(task.tags).intersection(pb.only_tags) and not
-                            set(task.tags).intersection(pb.skip_tags)):
-                            if getattr(task, 'name', None) is not None:
-                                # meta tasks have no names
-                                print '    %s' % task.name
-                if options.listhosts or options.listtasks:
-                    print ''
+                    for task in pb.tasks_to_run_in_play(play):
+                        if getattr(task, 'name', None) is not None:
+                            # meta tasks have no names
+                            print '    %s' % task.name
+                print ''
             continue
 
         if options.syntax:

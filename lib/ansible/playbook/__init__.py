@@ -122,7 +122,7 @@ class PlayBook(object):
         if extra_vars is None:
             extra_vars = {}
         if only_tags is None:
-            only_tags = [ 'all' ]
+            only_tags = []
         if skip_tags is None:
             skip_tags = []
 
@@ -301,33 +301,23 @@ class PlayBook(object):
 
     # *****************************************************
 
-    def run(self):
-        ''' run all patterns in the playbook '''
+    def plays_to_run(self):
+        ''' return plays to be run, after tag restrictions '''
         plays = []
         matched_tags_all = set()
         unmatched_tags_all = set()
 
-        # loop through all patterns and run them
-        self.callbacks.on_start()
         for (play_ds, play_basedir) in zip(self.playbook, self.play_basedirs):
             play = Play(self, play_ds, play_basedir, vault_password=self.vault_password)
             assert play is not None
+            if self.tasks_to_run_in_play(play):
+              plays.append(play)
 
             matched_tags, unmatched_tags = play.compare_tags(self.only_tags)
             matched_tags_all = matched_tags_all | matched_tags
             unmatched_tags_all = unmatched_tags_all | unmatched_tags
 
-            # Remove tasks we wish to skip
-            matched_tags = matched_tags - set(self.skip_tags)
-
-            # if we have matched_tags, the play must be run.
-            # if the play contains no tasks, assume we just want to gather facts
-            # in this case there are actually 3 meta tasks (handler flushes) not 0
-            # tasks, so that's why there's a check against 3
-            if (len(matched_tags) > 0 or len(play.tasks()) == 3):
-                plays.append(play)
-
-        # if the playbook is invoked with --tags or --skip-tags that don't
+        # If the playbook is invoked with --tags or --skip-tags that don't
         # exist at all in the playbooks then we need to raise an error so that
         # the user can correct the arguments.
         unknown_tags = ((set(self.only_tags) | set(self.skip_tags)) -
@@ -341,7 +331,17 @@ class PlayBook(object):
             unmatched = ','.join(sorted(unmatched_tags_all))
             raise errors.AnsibleError(msg % (unknown, unmatched))
 
-        for play in plays:
+        return plays
+
+# *****************************************************
+
+    def run(self):
+        ''' run all patterns in the playbook '''
+
+        # loop through all patterns and run them
+        self.callbacks.on_start()
+
+        for play in self.plays_to_run():
             ansible.callbacks.set_play(self.callbacks, play)
             ansible.callbacks.set_play(self.runner_callbacks, play)
             if not self._run_play(play):
@@ -659,6 +659,38 @@ class PlayBook(object):
 
     # *****************************************************
 
+    def tasks_to_run_in_play(self, play):
+        ''' return tasks in the given play to be run, after tag restrictions '''
+        tasks = []
+        for task in play.tasks():
+            # flushes are always run
+            if task.meta == 'flush_handlers':
+                tasks.append(task)
+                continue
+
+            # check for tags that we need to skip
+            if any(x in task.tags for x in self.skip_tags):
+                continue
+
+            # 'all' tag is specified.
+            if 'all' in task.tags:
+                tasks.append(task)
+                continue
+
+            # no tags specified, run all tasks.
+            if not self.only_tags:
+                tasks.append(task)
+                continue
+
+            # limit to only the tasks specified
+            if any(x in task.tags for x in self.only_tags):
+                tasks.append(task)
+                continue
+
+        return tasks
+
+    # *****************************************************
+
     def _run_play(self, play):
         ''' run a list of tasks for a given pattern, in order '''
 
@@ -711,7 +743,7 @@ class PlayBook(object):
             play._play_hosts = self._trim_unavailable_hosts(on_hosts)
             self.inventory.also_restrict_to(on_hosts)
 
-            for task in play.tasks():
+            for task in self.tasks_to_run_in_play(play):
 
                 if task.meta is not None:
                     # meta tasks can force handlers to run mid-play
@@ -721,27 +753,11 @@ class PlayBook(object):
                     # skip calling the handler till the play is finished
                     continue
 
-                # only run the task if the requested tags match
-                should_run = False
-                for x in self.only_tags:
-
-                    for y in task.tags:
-                        if x == y:
-                            should_run = True
-                            break
-
-                # Check for tags that we need to skip
-                if should_run:
-                    if any(x in task.tags for x in self.skip_tags):
-                        should_run = False
-
-                if should_run:
-
-                    if not self._run_task(play, task, False):
-                        # whether no hosts matched is fatal or not depends if it was on the initial step.
-                        # if we got exactly no hosts on the first step (setup!) then the host group
-                        # just didn't match anything and that's ok
-                        return False
+                if not self._run_task(play, task, False):
+                    # whether no hosts matched is fatal or not depends if it was on the initial step.
+                    # if we got exactly no hosts on the first step (setup!) then the host group
+                    # just didn't match anything and that's ok
+                    return False
 
                 # Get a new list of what hosts are left as available, the ones that
                 # did not go fail/dark during the task

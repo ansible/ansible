@@ -656,20 +656,6 @@ class Play(object):
 
     # *************************************************
 
-    def _is_valid_tag(self, tag_list):
-        """
-        Check to see if the list of tags passed in is in the list of tags
-        we only want (playbook.only_tags), or if it is not in the list of
-        tags we don't want (playbook.skip_tags).
-        """
-        matched_skip_tags = set(tag_list) & set(self.playbook.skip_tags)
-        matched_only_tags = set(tag_list) & set(self.playbook.only_tags)
-        if len(matched_skip_tags) > 0 or (self.playbook.only_tags != ['all'] and len(matched_only_tags) == 0):
-            return False
-        return True
-
-    # *************************************************
-
     def tasks(self):
         ''' return task objects for this play '''
         return self._tasks
