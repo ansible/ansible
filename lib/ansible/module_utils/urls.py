@@ -220,13 +220,18 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     handlers = []
     info = dict(url=url)
 
+    distribution = get_distribution()
     # Get validate_certs from the module params
     validate_certs = module.params.get('validate_certs', True)
 
     parsed = urlparse.urlparse(url)
     if parsed[0] == 'https':
         if not HAS_SSL and validate_certs:
-            module.fail_json(msg='SSL validation is not available in your version of python. You can use validate_certs=no, however this is unsafe and not recommended')
+            if distribution == 'Redhat':
+                module.fail_json(msg='SSL validation is not available in your version of python. You can use validate_certs=no, however this is unsafe and not recommended. You can also install python-ssl from EPEL')
+            else:
+                module.fail_json(msg='SSL validation is not available in your version of python. You can use validate_certs=no, however this is unsafe and not recommended')
+
         elif validate_certs:
             # do the cert validation
             netloc = parsed[1]
