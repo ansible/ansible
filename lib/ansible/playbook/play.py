@@ -350,19 +350,12 @@ class Play(object):
         if type(roles) != list:
             raise errors.AnsibleError("value of 'roles:' must be a list")
 
+        new_pre_tasks = []
         new_tasks = []
+        new_post_tasks = []
         new_handlers = []
         new_vars_files = []
         defaults_files = []
-
-        pre_tasks = ds.get('pre_tasks', None)
-        if type(pre_tasks) != list:
-            pre_tasks = []
-        for x in pre_tasks:
-            new_tasks.append(x)
-
-        # flush handlers after pre_tasks
-        new_tasks.append(dict(meta='flush_handlers'))
 
         roles = self._build_role_dependencies(roles, [], self.vars)
 
@@ -381,13 +374,17 @@ class Play(object):
                 if k in role_vars:
                     special_vars[k] = role_vars[k]
 
-            task_basepath     = utils.path_dwim(self.basedir, os.path.join(role_path, 'tasks'))
-            handler_basepath  = utils.path_dwim(self.basedir, os.path.join(role_path, 'handlers'))
-            vars_basepath     = utils.path_dwim(self.basedir, os.path.join(role_path, 'vars'))
-            meta_basepath     = utils.path_dwim(self.basedir, os.path.join(role_path, 'meta'))
-            defaults_basepath = utils.path_dwim(self.basedir, os.path.join(role_path, 'defaults'))
+            pre_task_basepath  = utils.path_dwim(self.basedir, os.path.join(role_path, 'pre_tasks'))
+            task_basepath      = utils.path_dwim(self.basedir, os.path.join(role_path, 'tasks'))
+            post_task_basepath = utils.path_dwim(self.basedir, os.path.join(role_path, 'post_tasks'))
+            handler_basepath   = utils.path_dwim(self.basedir, os.path.join(role_path, 'handlers'))
+            vars_basepath      = utils.path_dwim(self.basedir, os.path.join(role_path, 'vars'))
+            meta_basepath      = utils.path_dwim(self.basedir, os.path.join(role_path, 'meta'))
+            defaults_basepath  = utils.path_dwim(self.basedir, os.path.join(role_path, 'defaults'))
 
+            pre_task  = self._resolve_main(pre_task_basepath)
             task      = self._resolve_main(task_basepath)
+            post_task = self._resolve_main(post_task_basepath)
             handler   = self._resolve_main(handler_basepath)
             vars_file = self._resolve_main(vars_basepath)
             meta_file = self._resolve_main(meta_basepath)
@@ -396,8 +393,8 @@ class Play(object):
             library   = utils.path_dwim(self.basedir, os.path.join(role_path, 'library'))
 
             missing = lambda f: not os.path.isfile(f)
-            if missing(task) and missing(handler) and missing(vars_file) and missing(defaults_file) and missing(meta_file) and missing(library):
-                raise errors.AnsibleError("found role at %s, but cannot find %s or %s or %s or %s or %s or %s" % (role_path, task, handler, vars_file, defaults_file, meta_file, library))
+            if missing(pre_task) and missing(task) and missing(post_task) and missing(handler) and missing(vars_file) and missing(defaults_file) and missing(meta_file) and missing(library):
+                raise errors.AnsibleError("found role at %s, but cannot find %s or %s or %s or %s or %s or %s or %s or %s" % (role_path, pre_task, task, post_task, handler, vars_file, defaults_file, meta_file, library))
 
             if isinstance(role, dict):
                 role_name = role['role']
@@ -405,12 +402,24 @@ class Play(object):
                 role_name = role
 
             role_names.append(role_name)
+            if os.path.isfile(pre_task):
+                nt = dict(include=pipes.quote(pre_task), vars=role_vars, default_vars=default_vars, role_name=role_name)
+                for k in special_keys:
+                    if k in special_vars:
+                        nt[k] = special_vars[k]
+                new_pre_tasks.append(nt)
             if os.path.isfile(task):
                 nt = dict(include=pipes.quote(task), vars=role_vars, default_vars=default_vars, role_name=role_name)
                 for k in special_keys:
                     if k in special_vars:
                         nt[k] = special_vars[k]
                 new_tasks.append(nt)
+            if os.path.isfile(post_task):
+                nt = dict(include=pipes.quote(post_task), vars=role_vars, default_vars=default_vars, role_name=role_name)
+                for k in special_keys:
+                    if k in special_vars:
+                        nt[k] = special_vars[k]
+                new_post_tasks.append(nt)
             if os.path.isfile(handler):
                 nt = dict(include=pipes.quote(handler), vars=role_vars, role_name=role_name)
                 for k in special_keys:
@@ -424,13 +433,18 @@ class Play(object):
             if os.path.isdir(library):
                 utils.plugins.module_finder.add_directory(library)
 
+        pre_tasks  = ds.get('pre_tasks', None)
         tasks      = ds.get('tasks', None)
         post_tasks = ds.get('post_tasks', None)
         handlers   = ds.get('handlers', None)
         vars_files = ds.get('vars_files', None)
 
+        if type(pre_tasks) != list:
+            pre_tasks = []
         if type(tasks) != list:
             tasks = []
+        if type(post_tasks) != list:
+            post_tasks = []
         if type(handlers) != list:
             handlers = []
         if type(vars_files) != list:
@@ -438,17 +452,22 @@ class Play(object):
         if type(post_tasks) != list:
             post_tasks = []
 
+        new_pre_tasks.extend(pre_tasks)
+        # flush handlers after pre_tasks + role pre_tasks
+        new_pre_tasks.append(dict(meta='flush_handlers'))
+
         new_tasks.extend(tasks)
         # flush handlers after tasks + role tasks
         new_tasks.append(dict(meta='flush_handlers'))
-        new_tasks.extend(post_tasks)
-        # flush handlers after post tasks
-        new_tasks.append(dict(meta='flush_handlers'))
+
+        new_post_tasks.extend(post_tasks)
+        # flush handlers after post_tasks and role post_tasks
+        new_post_tasks.append(dict(meta='flush_handlers'))
 
         new_handlers.extend(handlers)
         new_vars_files.extend(vars_files)
 
-        ds['tasks'] = new_tasks
+        ds['tasks'] = new_pre_tasks + new_tasks + new_post_tasks
         ds['handlers'] = new_handlers
         ds['vars_files'] = new_vars_files
         ds['role_names'] = role_names
