@@ -540,6 +540,12 @@ def main():
                             found = 1
                     if found == 0:
                         time.sleep(5)
+
+                # The name of the database has now changed, so we have
+                # to force result to contain the new instance, otherwise
+                # the call below to get_current_resource will fail since it
+                # will be looking for the old instance name.
+                result.id = new_instance_name
             else:
                 # Wait for a few seconds since it takes a while for AWS
                 # to change the instance from 'available' to 'modifying'
