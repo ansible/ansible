@@ -191,12 +191,14 @@ class VaultEditor(object):
             raise errors.AnsibleError("%s exists, please use 'edit' instead" % self.filename)
 
         # drop the user into vim on file
+        old_umask = os.umask(0077)
         call(self._editor_shell_command(self.filename))
         tmpdata = self.read_data(self.filename)
         this_vault = VaultLib(self.password)
         this_vault.cipher_name = self.cipher_name
         enc_data = this_vault.encrypt(tmpdata)
         self.write_data(enc_data, self.filename)
+        os.umask(old_umask)
 
     def decrypt_file(self):
 
@@ -222,6 +224,9 @@ class VaultEditor(object):
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2 or not HAS_HASH:
             raise errors.AnsibleError(CRYPTO_UPGRADE)
 
+        # make sure the umask is set to a sane value
+        old_mask = os.umask(0077)
+
         # decrypt to tmpfile
         tmpdata = self.read_data(self.filename)
         this_vault = VaultLib(self.password)
@@ -245,6 +250,9 @@ class VaultEditor(object):
 
         # shuffle tmp file into place
         self.shuffle_files(tmp_path, self.filename)
+
+        # and restore the old umask
+        os.umask(old_mask)
 
     def encrypt_file(self):
 
