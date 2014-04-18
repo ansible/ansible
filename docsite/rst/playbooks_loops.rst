@@ -133,14 +133,14 @@ Looping over Subelements
 ````````````````````````
 
 Suppose you want to do something like loop over a list of users, creating them, and allowing them to login by a certain set of
-SSH keys. 
+SSH keys.
 
 How might that be accomplished?  Let's assume you had the following defined and loaded in via "vars_files" or maybe a "group_vars/all" file::
 
     ---
     users:
       - name: alice
-        authorized: 
+        authorized:
           - /tmp/alice/onekey.pub
           - /tmp/alice/twokey.pub
       - name: bob
@@ -161,6 +161,56 @@ Subelements walks a list of hashes (aka dictionaries) and then traverses a list 
 records.
 
 The authorized_key pattern is exactly where it comes up most.
+
+Another common case is when performing actions on the basis of outputs from cloud provisioners like ec2::
+
+    - local_action:
+        module: ec2
+        key_name: my_key
+        instance_type: m1.small
+        image: ami-d3b5aea7
+        wait: yes
+        group: {{ item }}
+        count: 3
+        with_items: my_groups
+        register: ec2
+
+The ``results`` of the task above produces list of dictionaries which contain further lists::
+
+    "results": [
+        {
+            "invocation": {
+                "module_args": "",
+                "module_name": "ec2"
+            },
+            "item": "a",
+            "tagged_instances": [
+                {
+                    "ami_launch_index": "0",
+                    "architecture": "x86_64",
+                    "dns_name": "ec2-82-34-54-54.eu-west-1.compute.amazonaws.com",
+                    "hypervisor": "xen",
+                    "id": "i-fdzdfdad",
+                    "image_id": "ami-d3b5aea7",
+                    "instance_type": "m1.small",
+                    "kernel": "aki-71665e05",
+                    "ami_launch_index_time": "2010-01-18T11:33:12.000Z",
+                    "placement": "eu-west-1a",
+                }
+            ]
+        }
+    ]
+
+In the example above, you may want to iterate over the ``tagged_instances`` as a list and assign elastic IPs, which you can do using::
+
+    - ec2_eip:
+        instance_id: "{{ item.1.id }}"
+        region: eu-west-1a
+        state: present
+      with_subelements:
+        - ec2.results
+        - tagged_instances
+
 
 .. _looping_over_integer_sequences:
 
@@ -212,7 +262,7 @@ for those), it can somewhat be used as a poor man's loadbalancer in a MacGyver l
          - "press the red button"
          - "do nothing"
 
-One of the provided strings will be selected at random.  
+One of the provided strings will be selected at random.
 
 At a more basic level, they can be used to add chaos and excitement to otherwise predictable automation environments.
 
@@ -224,14 +274,14 @@ Do-Until Loops
 .. versionadded: 1.4
 
 Sometimes you would want to retry a task until a certain condition is met.  Here's an example::
-   
+
     - action: shell /usr/bin/foo
       register: result
       until: result.stdout.find("all systems go") != -1
       retries: 5
       delay: 10
 
-The above example run the shell module recursively till the module's result has "all systems go" in it's stdout or the task has 
+The above example run the shell module recursively till the module's result has "all systems go" in it's stdout or the task has
 been retried for 5 times with a delay of 10 seconds. The default value for "retries" is 3 and "delay" is 5.
 
 The task returns the results returned by the last task run. The results of individual retries can be viewed by -vv option.
@@ -333,7 +383,7 @@ a really crazy hypothetical datastructure::
 As you can see the formatting of packages in these lists is all over the place.  How can we install all of the packages in both lists?::
 
     - name: flattened loop demo
-      yum: name={{ item }} state=installed 
+      yum: name={{ item }} state=installed
       with_flattened:
          - packages_base
          - packages_apps
