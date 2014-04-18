@@ -1,6 +1,11 @@
 Ansible Changes By Release
 ==========================
 
+## 1.5.5 "Love Walks In" - April 18, 2014
+
+- Security fix for vault, to ensure the umask is set to a restrictive mode before creating/editing vault files.
+- Backported apt_repository security fixes relating to filename/mode upon sources list file creation.
+
 ## 1.5.4 "Love Walks In" - April 1, 2014
 
 - Security fix for safe_eval, which further hardens the checking of the evaluation function.
