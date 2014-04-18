@@ -555,6 +555,7 @@ class Runner(object):
         # merge the VARS and SETUP caches for this host
         combined_cache = self.setup_cache.copy()
         combined_cache.get(host, {}).update(self.vars_cache.get(host, {}))
+        hostvars = HostVars(combined_cache, self.inventory, vault_password=self.vault_pass)
 
         # use combined_cache and host_variables to template the module_vars
         module_vars_inject = utils.combine_vars(combined_cache.get(host, {}), host_variables)
@@ -566,7 +567,7 @@ class Runner(object):
         inject = utils.combine_vars(inject, module_vars)
         inject = utils.combine_vars(inject, combined_cache.get(host, {}))
         inject.setdefault('ansible_ssh_user', self.remote_user)
-        inject['hostvars'] = HostVars(combined_cache, self.inventory, vault_password=self.vault_pass)
+        inject['hostvars']    = hostvars
         inject['group_names'] = host_variables.get('group_names', [])
         inject['groups']      = self.inventory.groups_list()
         inject['vars']        = self.module_vars
