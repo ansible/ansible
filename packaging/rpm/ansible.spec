@@ -105,6 +105,12 @@ rm -rf %{buildroot}
 * Thu Mar 14 2014 Michael DeHaan <michael@ansible.com> - 1.6-0
 * (PENDING)
 
+* Fri Apr 18 2014 Michael DeHaan <michael@ansible.com> - 1.5.5
+- Release 1.5.5
+
+* Tue Apr 01 2014 Michael DeHaan <michael@ansible.com> - 1.5.4
+- Release 1.5.4
+
 * Thu Mar 13 2014 Michael DeHaan <michael@ansible.com> - 1.5.3
 - Release 1.5.3
 

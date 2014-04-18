@@ -13,7 +13,6 @@ Major features/changes:
   - daemon lifetime is now based on the time from the last activity, not the time from the daemon's launch.
 * ansible-playbook now accepts --force-handlers to run handlers even if tasks result in failures
 
-
 New Modules:
 
 * files: replace
@@ -68,6 +67,11 @@ Other notable changes:
 * regex_replace filter plugin added
 * ... to be filled in from changelogs ...
 * 
+
+## 1.5.5 "Love Walks In" - April 18, 2014
+
+- Security fix for vault, to ensure the umask is set to a restrictive mode before creating/editing vault files.
+- Backported apt_repository security fixes relating to filename/mode upon sources list file creation.
 
 ## 1.5.4 "Love Walks In" - April 1, 2014
 
