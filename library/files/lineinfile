@@ -101,24 +101,25 @@ options:
         if it does not already exist. By default it will fail if the file
         is missing.
   backup:
-     required: false
-     default: "no"
-     choices: [ "yes", "no" ]
-     description:
-       - Create a backup file including the timestamp information so you can
-         get the original file back if you somehow clobbered it incorrectly.
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
+    description:
+      - Create a backup file including the timestamp information so you can
+        get the original file back if you somehow clobbered it incorrectly.
   validate:
-     required: false
-     description:
-       - validation to run before copying into place. The command is passed 
-         securely so shell features like expansion and pipes won't work.
-     required: false
-     default: None
-     version_added: "1.4"
+    required: false
+    description:
+      - The validation command to run before copying into place. The path to the file to
+        validate is passed in via '%s' which must be present as in the visudo example below.
+        The command is passed securely so shell features like expansion and pipes won't work.
+    required: false
+    default: None
+    version_added: "1.4"
   others:
-     description:
-       - All arguments accepted by the M(file) module also work here.
-     required: false
+    description:
+      - All arguments accepted by the M(file) module also work here.
+    required: false
 """
 
 EXAMPLES = r"""
