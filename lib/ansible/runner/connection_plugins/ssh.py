@@ -59,7 +59,8 @@ class Connection(object):
         self.common_args = []
         extra_args = C.ANSIBLE_SSH_ARGS
         if extra_args is not None:
-            self.common_args += shlex.split(extra_args)
+            # make sure there is no empty string added as this can produce weird errors
+            self.common_args += [x.strip() for x in shlex.split(extra_args) if x.strip()]
         else:
             self.common_args += ["-o", "ControlMaster=auto",
                                  "-o", "ControlPersist=60s",
