@@ -350,6 +350,31 @@ class AnsibleModule(object):
         gid = st.st_gid
         return (uid, gid)
 
+    def find_mount_point(self, path):
+        path = os.path.abspath(os.path.expanduser(os.path.expandvars(path)))
+        while not os.path.ismount(path):
+            path = os.path.dirname(path)
+        return path
+
+    def is_nfs_path(self, path):
+        """
+        Returns a tuple containing (True, selinux_context) if the given path
+        is on a NFS mount point, otherwise the return will be (False, None).
+        """
+        try:
+            f = open('/proc/mounts', 'r')
+            mount_data = f.readlines()
+            f.close()
+        except:
+            return (False, None)
+        path_mount_point = self.find_mount_point(path)
+        for line in mount_data:
+            (device, mount_point, fstype, options, rest) = line.split(' ', 4)
+            if path_mount_point == mount_point and 'nfs' in fstype:
+                nfs_context = self.selinux_context(path_mount_point)
+                return (True, nfs_context)
+        return (False, None)
+
     def set_default_selinux_context(self, path, changed):
         if not HAVE_SELINUX or not self.selinux_enabled():
             return changed
@@ -365,12 +390,16 @@ class AnsibleModule(object):
         # Iterate over the current context instead of the
         # argument context, which may have selevel.
 
-        for i in range(len(cur_context)):
-            if len(context) > i:
-                if context[i] is not None and context[i] != cur_context[i]:
-                    new_context[i] = context[i]
-                if context[i] is None:
-                    new_context[i] = cur_context[i]
+        (is_nfs, nfs_context) = self.is_nfs_path(path)
+        if is_nfs:
+            new_context = nfs_context
+        else:
+            for i in range(len(cur_context)):
+                if len(context) > i:
+                    if context[i] is not None and context[i] != cur_context[i]:
+                        new_context[i] = context[i]
+                    if context[i] is None:
+                        new_context[i] = cur_context[i]
 
         if cur_context != new_context:
             try:
