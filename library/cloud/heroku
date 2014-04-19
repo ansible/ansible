@@ -1,0 +1,273 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: heroku
+short_description: Administrate Heroku dynos
+description:
+    - Spin up or down dynos, put an app into maintenance mode, or set the size of dynos
+version_added: "1.6"
+options:
+  api_token:
+    description:
+      - Heroku API key. Obtained from the "Accounts" page, or from the >
+        Heroku Toolbelt with `heroku api:token`
+    required: true
+  app_name:
+    description:
+      - Name of the app to work with
+    required: true
+  type:
+    description:
+      - Type of dyno to modify. Must already be declared for this app.
+    default: web
+  dyno_quantity:
+    description:
+      - Set number of active dynos to this amount.
+  dyno_size:
+    description:
+      - Set dynos to this size
+    choices: [ '1X', '2X' ]
+  maintenance:
+    description:
+      - A boolean determining whether maintenance mode is on or off
+requirements: [ requests, json ]
+author: Josh Kuhn <deontologician@gmail.com>
+'''
+
+EXAMPLES = '''
+
+- name: Put app into maintenance mode
+  heroku:
+    api_token: api_token
+    app_name: my_app
+    maintenance: on
+
+- name: Spin down all dynos for my_app
+  heroku:
+    api_token: api_token
+    app_name: my_app
+    dyno_quantity: 0
+
+- name: Ensure all worker dynos are 2x size
+  heroku:
+    api_token: api_token
+    app_name: my_app
+    type: worker
+    dyno_size: 2X
+
+'''
+
+import base64
+
+try:
+    import requests
+except ImportError:
+    requests = None
+
+try:
+    import json
+except ImportError:
+    json = None
+
+import ansible
+
+class HerokuAPI(object):
+    '''Handles boilerplate for interacting with Heroku api.'''
+
+    API_ROOT = 'https://api.heroku.com/apps'
+
+    def __init__(self, app_name, token):
+        self.app_name = app_name
+        self.session = requests.Session()
+        self.session.auth = ('', token)
+        self.session.headers.update(
+            {'Accept': 'application/vnd.heroku+json; version=3'})
+        self.session.verify = True  # Ensure certificate verification
+        self.session.headers['User-Agent'] = \
+            'Ansible/%(version)s %(old_ua)s' % {
+                'version': ansible.__version__,
+                'old_ua': self.session.headers['User-Agent']
+            }
+        self.app_root = self.API_ROOT + '/' + app_name
+
+    def request_if_match(
+            self, method, resource, etag, **kwargs):
+        '''Request wrapper that tells the server to fail if the resource's
+        etag has changed since we fetched it. This helps avoid
+        accidental concurrent modifications.
+        '''
+        headers = kwargs.pop('headers', {})
+        headers['If-Match'] = etag
+        return self.request(method, resource, headers=headers, **kwargs)
+
+    def request(self, method, resource, **kwargs):
+        '''Wrapper for session request that handles prefixing the url
+        with the app root.
+
+        resource needs to begin with a slash, like '/dynos'
+
+        '''
+        if 'data' in kwargs:
+            kwargs['data'] = json.dumps(kwargs['data'])
+        response = self.session.request(
+            method, self.app_root + resource, **kwargs)
+        result = dict(
+            headers=dict(response.headers),
+            data=response.json(),
+            status=response.status_code,
+            etag=response.headers.get('Etag'),
+            url=response.request.url,
+            failed=not response.ok,
+        )
+        if not response.ok:
+            result['msg'] = result['data']['message']
+        return result
+            
+    def check_maintenance(self, desired_maint_state):
+        '''Checks if the maintenance state of the app needs to change.'''
+        result = self.request('GET', '/')
+
+        if not result['failed']:
+            current_maint_state = result['data']['maintenance']
+            if desired_maint_state == current_maint_state:
+                result['changed'] = False
+                if current_maint_state:
+                    result['msg'] = 'Maintenance mode already enabled.'
+                else:
+                    result['msg'] = 'Maintenance mode already disabled.'
+            else:
+                result['changed'] = True
+                result['msg'] = 'Maintenance state needs to change.'
+        return result
+
+    def set_maintenance(self, desired_maint_state, etag):
+        '''Sets maintenance mode on or off'''
+        result = self.request_if_match(
+            'PATCH', '/',
+            etag,
+            data={'maintenance': desired_maint_state},
+        )
+        if not result['failed']:
+            if result['data']['maintenance']:
+                result['msg'] = 'Maintenance mode enabled'
+            else:
+                result['msg'] = 'Maintenance mode disabled'
+        return result
+
+    def check_dynos(self, type_, dyno_size, dyno_quantity):
+        result = self.request('GET', '/formation/' + type_)
+        result['changed'] = False
+        data = result['data']
+        curr_size, curr_quantity = data['size'], data['quantity']
+        if (curr_size, curr_quantity) != (dyno_size, dyno_quantity):
+            result['res'] = (curr_size, dyno_size, curr_quantity, dyno_quantity)
+            result['changed'] = True
+        if not result['failed']:
+            if curr_size != dyno_size:
+                result['msg'] = type_ + ' dyno size needs to change'
+            elif curr_quantity != dyno_quantity:
+                result['msg'] = type_ + ' dyno quantity needs to change'
+            else:
+                result['msg'] = \
+                    type_ + ' dyno size and quantity already set'
+        return result
+
+    def set_dynos(self, type_, dyno_size, dyno_quantity, etag):
+        result = self.request_if_match(
+            'PATCH',
+            '/formation/' + type_,
+            etag,
+            data={'size': dyno_size, 'quantity': dyno_quantity},
+        )
+        if not result['failed']:
+            data = result['data']
+            if data['size'] != dyno_size:
+                result['failed'] = True
+                result['msg'] = 'Dyno size failed to change!'
+            elif data['quantity'] != dyno_quantity:
+                result['failed'] = True
+                result['msg'] = 'Dyno quantity failed to change!'
+            else:
+                result['msg'] = 'Set to %s %s dynos of size %s' % (
+                    dyno_quantity,
+                    type_,
+                    dyno_size,
+                )
+        return result
+            
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            api_token=dict(required=True, no_log=True),
+            app_name=dict(required=True),
+            type=dict(default='web'),
+            dyno_quantity=dict(required=False, type='int'),
+            dyno_size=dict(
+                required=False, choices=['1X', '2X']),
+            maintenance=dict(
+                dict(required=False, type='bool')),
+        ),
+        required_one_of=(
+            ['maintenance', 'dyno_size', 'dyno_quantity'],
+        ),
+        mutually_exclusive=(
+            ['maintenance', 'dyno_size'],
+            ['maintenance', 'dyno_quantity'],
+            ['maintenance', 'type'],
+        ),
+        supports_check_mode=True,
+    )
+
+    if not requests:
+        module.fail_json(msg="The requests module is required")
+    elif not json:
+        module.fail_json(msg="The json module is required")
+
+    desired_maint_state = module.boolean(module.params.get('maintenance'))
+    dyno_size = module.params.get('dyno_size')
+    dyno_quantity = module.params.get('dyno_quantity')
+    type_ = module.params.get('type')
+    check_mode = module.check_mode
+
+    heroku_api = HerokuAPI(
+        app_name=module.params['app_name'],
+        token=module.params['api_token'],
+    )
+
+    response = dict(changed=False, failed=False, msg='Nothing happened')
+
+    if desired_maint_state is not None:
+        response.update(heroku_api.check_maintenance(desired_maint_state))
+        if not module.check_mode and response['changed']:
+            response.update(heroku_api.set_maintenance(
+                desired_maint_state, response['etag']))
+    elif dyno_quantity is not None:
+        response = heroku_api.check_dynos(type_, dyno_size, dyno_quantity)
+        if not module.check_mode and response['changed']:
+            response.update(
+                heroku_api.set_dynos(
+                    type_, dyno_size, dyno_quantity, response['etag']))
+
+    module.exit_json(**response)
+
+from ansible.module_utils.basic import *
+main()
