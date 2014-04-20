@@ -37,6 +37,11 @@ options:
      - To keep sanity on the Linode Web Console, name is prepended with LinodeID_
     default: null
     type: string
+  display_group:
+    description:
+     - Display group to assign to the instance
+    default: ansible
+    type: string
   linode_id:
     description:
      - Unique ID of a linode server
@@ -207,8 +212,8 @@ def getInstanceDetails(api, server):
                                         'ip_id': ip['IPADDRESSID']})
     return instance
 
-def linodeServers(module, api, state, name, plan, distribution, datacenter, linode_id, 
-                  payment_term, password, ssh_pub_key, swap, wait, wait_timeout):
+def linodeServers(module, api, state, name, plan, display_group, distribution, datacenter,
+                  linode_id, payment_term, password, ssh_pub_key, swap, wait, wait_timeout):
     instances = []
     changed = False
     new_server = False   
@@ -249,7 +254,8 @@ def linodeServers(module, api, state, name, plan, distribution, datacenter, lino
                                         PaymentTerm=payment_term)
                 linode_id = res['LinodeID']
                 # Update linode Label to match name
-                api.linode_update(LinodeId=linode_id, Label='%s_%s' % (linode_id, name))
+                api.linode_update(LinodeId=linode_id, Label='%s_%s' % (linode_id, name),
+                                  lpm_displayGroup=display_group)
                 # Save server
                 servers = api.linode_list(LinodeId=linode_id)
             except Exception, e:
@@ -439,6 +445,7 @@ def main():
             api_key = dict(),
             name = dict(type='str'),
             plan = dict(type='int'),
+            display_group = dict(type='str', default='ansible'),
             distribution = dict(type='int'),
             datacenter = dict(type='int'),
             linode_id = dict(type='int', aliases=['lid']),
@@ -455,6 +462,7 @@ def main():
     api_key = module.params.get('api_key')
     name = module.params.get('name')
     plan = module.params.get('plan')
+    display_group = module.params.get('display_group')
     distribution = module.params.get('distribution')
     datacenter = module.params.get('datacenter')
     linode_id = module.params.get('linode_id')
@@ -479,8 +487,8 @@ def main():
     except Exception, e:
         module.fail_json(msg = '%s' % e.value[0]['ERRORMESSAGE'])
 
-    linodeServers(module, api, state, name, plan, distribution, datacenter, linode_id, 
-                 payment_term, password, ssh_pub_key, swap, wait, wait_timeout)
+    linodeServers(module, api, state, name, plan, display_group, distribution, datacenter,
+                  linode_id, payment_term, password, ssh_pub_key, swap, wait, wait_timeout)
 
 # import module snippets
 from ansible.module_utils.basic import *
