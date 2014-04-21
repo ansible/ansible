@@ -49,7 +49,7 @@ except ImportError:
 class TimeoutError(Exception):
     pass
 
-def timeout(seconds=10, error_message=os.strerror(errno.ETIME)):
+def timeout(seconds=10, error_message="Timer expired"):
     def decorator(func):
         def _handle_timeout(signum, frame):
             raise TimeoutError(error_message)
