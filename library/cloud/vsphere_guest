@@ -1,0 +1,328 @@
+#!/usr/bin/python2
+
+# -*- coding: utf-8 -*-
+
+# TODO:
+# Ability to set CPU/Memory reservations
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
+DOCUMENTATION = '''
+---
+module: vsphere_client
+short_description: Creates a virtual guest on vsphere.
+description:
+     - Communicates with vsphere, creating a new virtual guest OS based on
+       the specifications you specify to the module.
+version_added: "1.1"
+options:
+  vcenter_hostname:
+    description:
+      - The hostname of the vcenter server the module will connect to, to create the guest.
+    required: true
+    default: null
+    aliases: []
+  user:
+    description:
+      - username of the user to connect to vcenter as.
+    required: true
+    default: null
+  password:
+    description:
+      - password of the user to connect to vcenter as.
+    required: true
+    default: null
+  resource_pool:
+    description:
+      - The name of the resource_pool to create the VM in.
+    required: false
+    default: None
+  cluster:
+    description:
+      - The name of the cluster to create the VM in. By default this is derived from the host you tell the module to build the guest on.
+    required: false
+    default: None
+  datacenter:
+    description:
+      - The name of the datacenter to create the VM in.
+    required: true
+    default: null
+  datastore:
+    description:
+      - The datastore to store the VMs config files in. (Hard-disk locations are specified separately.)
+    required: true
+    default: null
+  esxi_hostname:
+    description:
+      - The hostname of the esxi host you want the VM to be created on.
+    required: true
+    default: null
+  power_on:
+    description:
+      - Whether or not to power on the VM after creation.
+    required: false
+    default: no
+    choices: [yes, no]
+  vm_name:
+    description:
+      - The name you want to call the VM.
+    required: true
+    default: null
+  vm_memory_mb:
+    description:
+      - How much memory in MB to give the VM.
+    required: false
+    default: 1024
+  vm_num_cpus:
+    description:
+      - How many vCPUs to give the VM.
+    required: false
+    default: 1
+  vm_scsi:
+    description:
+      - The type of scsi controller to add to the VM.
+    required: false
+    default: "paravirtual"
+    choices: [paravirtual, lsi, lsi_sas, bus_logic]
+  vm_disk:
+    description:
+      - A key, value list of disks and their sizes and which datastore to keep it in.
+    required: false
+    default: null
+  vm_nic:
+    description:
+      - A key, value list of nics, their types and what network to put them on.
+    required: false
+    default: null
+    choices: [vmxnet3, vmxnet2, vmxnet, e1000, e1000e, pcnet32]
+  vm_notes:
+    description:
+      - Any notes that you want to show up in the VMs Annotations field.
+    required: false
+    default: null
+  vm_cdrom:
+    description:
+      - A path, including datastore, to an ISO you want the CDROM device on the VM to have.
+    required: false
+    default: null
+  vm_extra_config:
+    description:
+      - A key, value pair of any extra values you want set or changed in the vmx file of the VM. Useful to set advanced options on the VM.
+    required: false
+    default: null
+  guestosid:
+    description:
+      - "A vmware guest needs to have a specific OS identifier set on it
+        during creation. You can find your os guestosid at the following URL:
+      http://www.vmware.com/support/developer/vc-sdk/visdk41pubs/ApiReference/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html"
+    required: true
+    default: null
+# informational: requirements for nodes
+requirements: [ pysphere ]
+author: Romeo Theriault
+'''
+
+
+def power_state(vm, state, force):
+
+    power_status = vm.get_status()
+
+    check_status = ' '.join(state.split("_")).upper()
+
+    # Need Force
+    if not force and power_status in [
+        'SUSPENDED', 'POWERING ON',
+        'RESETTING', 'BLOCKED ON MSG'
+    ]:
+
+        return "VM is in %s power state. Force is required!" % power_status
+
+    # State is already true
+    if power_status == check_status:
+        return False
+
+    else:
+        try:
+            if state == 'powered_off':
+                vm.power_off(sync_run=True)
+
+            elif state == 'powered_on':
+                vm.power_on(sync_run=True)
+
+            elif state == 'restarted':
+                if power_status in ('POWERED ON', 'POWERING ON', 'RESETTING'):
+                    vm.reset(sync_run=False)
+                else:
+                    return "Cannot restart VM in the current state %s" \
+                        % power_status
+            return True
+
+        except Exception, e:
+            return e
+
+    return False
+
+
+def gather_facts(vm):
+    """
+    Gather facts for VM directly from vsphere.
+    """
+    vm.get_properties()
+    facts = {
+        'module_hw': True,
+        'hw_name': vm.properties.name,
+        'hw_guest_full_name':  vm.properties.config.guestFullName,
+        'hw_guest_id': vm.properties.config.guestId,
+        'hw_product_uuid': vm.properties.config.uuid,
+        'hw_processor_count': vm.properties.config.hardware.numCPU,
+        'hw_memtotal_mb': vm.properties.config.hardware.memoryMB,
+    }
+
+    ifidx = 0
+    for entry in vm.properties.config.hardware.device:
+
+        if not hasattr(entry, 'macAddress'):
+            continue
+
+        factname = 'hw_eth' + str(ifidx)
+        facts[factname] = {
+            'addresstype': entry.addressType,
+            'label': entry.deviceInfo.label,
+            'macaddress': entry.macAddress,
+            'macaddress_dash': entry.macAddress.replace(':', '-'),
+            'summary': entry.deviceInfo.summary,
+        }
+
+        ifidx += 1
+
+    return facts
+
+
+def main():
+
+    vm = None
+
+    module = AnsibleModule(
+        argument_spec=dict(
+            vcenter_hostname=dict(required=True, type='str'),
+            username=dict(required=True, type='str'),
+            password=dict(required=True, type='str'),
+            state=dict(
+                required=False,
+                choices=[
+                    'powered_on',
+                    'powered_off',
+                    'present',
+                    'absent',
+                    'restarted',
+                    'reconfigured'
+                ],
+                default='present'),
+            vmware_guest_facts=dict(required=False, choices=BOOLEANS),
+            guest=dict(required=True, type='str'),
+            guest_config=dict(required=False, type='dict', default={}),
+            force=dict(required=False, choices=BOOLEANS, default=False),
+
+        ),
+        supports_check_mode=False,
+        mutually_exclusive=[['state', 'vmware_guest_facts']],
+        required_together=[
+            ['state', 'force'],
+            ['state', 'guest_config']
+        ],
+    )
+
+    try:
+        from pysphere import VIServer, VIProperty, MORTypes
+        from pysphere.resources import VimService_services as VI
+        from pysphere.vi_task import VITask
+        from pysphere import VIException, VIApiException, FaultTypes
+    except ImportError, e:
+        module.fail_json(msg='pysphere module required')
+
+    vcenter_hostname = module.params['vcenter_hostname']
+    username = module.params['username']
+    password = module.params['password']
+    vmware_guest_facts = module.params['vmware_guest_facts']
+    state = module.params['state']
+    guest = module.params['guest']
+    force = module.params['force']
+    guest_config = module.params['guest_config']
+
+    # CONNECT TO THE SERVER
+    viserver = VIServer()
+    try:
+        viserver.connect(vcenter_hostname, username, password)
+    except VIApiException, err:
+        module.fail_json(msg="Cannot connect to %s: %s" %
+                         (vcenter_hostname, err))
+
+    # Check if the VM exists before continuing
+    try:
+        vm = viserver.get_vm_by_name(guest)
+
+        # Run for facts only
+        if vmware_guest_facts:
+            try:
+                module.exit_json(ansible_facts=gather_facts(vm))
+            except Exception, e:
+                module.fail_json(
+                    msg="Fact gather failed with exception %s" % e)
+
+        # Power Changes
+        elif state in ['powered_on', 'powered_off', 'restarted']:
+            state_result = power_state(vm, state, force)
+
+            # Failure
+            if isinstance(state_result, basestring):
+                module.fail_json(msg=state_result)
+            else:
+                module.exit_json(changed=state_result)
+
+        # Just check if there
+        elif state == 'present' and not len(guest_config):
+            module.exit_json(changed=False)
+
+        # Fail on reconfig without params
+        elif state == 'reconfigured':
+            if not len(guest_config):
+                module.fail_json(
+                    msg="guest_config is required to reconfigure a VM")
+            # do it
+            else:
+                pass
+
+    # VM doesn't exist
+    except Exception:
+
+        # Fail for fact gather task
+        if vmware_guest_facts:
+            module.fail_json(
+                msg="No such VM %s. Fact gathering requires an existing vm"
+                    % guest)
+        if state not in ['absent', 'present']:
+            module.fail_json(
+                msg="No such VM %s. States [powered_on, powered_off, "
+                "restarted, reconfigured] required an existing VM" % guest)
+        elif state == 'absent':
+            module.exit_json(changed=False, msg="vm %s not present" % guest)
+
+        # Create the VM
+        elif state == 'present':
+            pass
+
+    if vm:
+        # If the vm already exists, lets get some info from it, pass back the
+        # vm's vmware_guest_facts and then exit.
+        viserver.disconnect()
+    module.exit_json(
+        changed=False,
+        vcenter=vcenter_hostname)
+
+
+# this is magic, see lib/ansible/module_common.py
+#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+main()
