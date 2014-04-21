@@ -43,7 +43,7 @@ except ImportError:
     import simplejson as json
 
 # --------------------------------------------------------------
-# timeout function to make sure some fact gathering 
+# timeout function to make sure some fact gathering
 # steps do not exceed a time limit
 
 class TimeoutError(Exception):
@@ -1751,8 +1751,11 @@ class GenericBsdIfconfigNetwork(Network):
         device = words[0][0:-1]
         current_if = {'device': device, 'ipv4': [], 'ipv6': [], 'type': 'unknown'}
         current_if['flags']  = self.get_options(words[1])
-        current_if['metric'] = words[3]
-        current_if['mtu'] = words[5]
+        if len(words) == 4:
+            current_if['mtu'] = words[3]
+        else:
+            current_if['metric'] = words[3]
+            current_if['mtu'] = words[5]
         current_if['macaddress'] = 'unknown'    # will be overwritten later
         return current_if
 
