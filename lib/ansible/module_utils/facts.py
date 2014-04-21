@@ -1721,7 +1721,9 @@ class GenericBsdIfconfigNetwork(Network):
             if line:
                 words = line.split()
 
-                if re.match('^\S', line) and len(words) > 3:
+                if words[0] == 'pass':
+                    continue
+                elif re.match('^\S', line) and len(words) > 3:
                     current_if = self.parse_interface_line(words)
                     interfaces[ current_if['device'] ] = current_if
                 elif words[0].startswith('options='):
