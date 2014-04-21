@@ -50,6 +50,9 @@ EXAMPLES = '''
 
 - shell: /usr/bin/uptime
   register: result
+
 - debug: var=result
 
+- name: Display all variables/facts known for a host
+  debug: var=hostvars[inventory_hostname]
 '''
