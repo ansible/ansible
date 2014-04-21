@@ -1748,8 +1748,9 @@ class GenericBsdIfconfigNetwork(Network):
     def parse_interface_line(self, words):
         device = words[0][0:-1]
         current_if = {'device': device, 'ipv4': [], 'ipv6': [], 'type': 'unknown'}
-        current_if['flags'] = self.get_options(words[1])
-        current_if['mtu'] = words[3]
+        current_if['flags']  = self.get_options(words[1])
+        current_if['metric'] = words[3]
+        current_if['mtu'] = words[5]
         current_if['macaddress'] = 'unknown'    # will be overwritten later
         return current_if
 
