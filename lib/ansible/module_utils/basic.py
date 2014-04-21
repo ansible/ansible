@@ -828,8 +828,8 @@ class AnsibleModule(object):
         module = 'ansible-%s' % os.path.basename(__file__)
         msg = ''
         for arg in log_args:
-            if isinstance(log_args[arg], unicode):
-                msg = msg + arg + '=' + log_args[arg] + ' '
+            if isinstance(log_args[arg], basestring):
+                msg = msg + arg + '=' + log_args[arg].decode('utf-8') + ' '
             else:
                 msg = msg + arg + '=' + str(log_args[arg]) + ' '
         if msg:
@@ -839,7 +839,7 @@ class AnsibleModule(object):
 
         # 6655 - allow for accented characters
         try:
-            msg = unicode(msg).encode('utf8')
+            msg = msg.encode('utf8')
         except UnicodeDecodeError, e:
             pass
 
