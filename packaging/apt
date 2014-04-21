@@ -436,7 +436,7 @@ def main():
             global apt, apt_pkg
             import apt
             import apt_pkg
-        except:
+        except ImportError:
             module.fail_json(msg="Could not import python modules: apt, apt_pkg. Please install python-apt package.")
 
     global APTITUDE_CMD
