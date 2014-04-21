@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, Epic Games, Inc.
+# (c) 2013-2014, Epic Games, Inc.
 #
 # This file is part of Ansible
 #
@@ -75,6 +75,10 @@ options:
             - Possible values are: present and absent. If the host already exists, and the state is "present", just to update the host.
         required: false
         default: "present"
+    timeout:
+        description:
+            - The timeout of API request(seconds).
+        default: 10
     interfaces:
         description:
             - List of interfaces to be created for the host (see example).
@@ -131,8 +135,8 @@ except ImportError:
 class ZabbixAPIExtends(ZabbixAPI):
     hostinterface = None
 
-    def __init__(self, server, **kwargs):
-        ZabbixAPI.__init__(self, server)
+    def __init__(self, server, timeout, **kwargs):
+        ZabbixAPI.__init__(self, server, timeout=timeout)
         self.hostinterface = ZabbixAPISubClass(self, dict({"prefix": "hostinterface"}, **kwargs))
 
 class Host(object):
@@ -275,6 +279,7 @@ def main():
             link_templates=dict(required=False),
             status=dict(default="enabled"),
             state=dict(default="present"),
+            timeout=dict(default=10),
             interfaces=dict(required=False)
         ),
         supports_check_mode=True
@@ -291,6 +296,7 @@ def main():
     link_templates = module.params['link_templates']
     status = module.params['status']
     state = module.params['state']
+    timeout = module.params['timeout']
     interfaces = module.params['interfaces']
 
     # convert enabled to 0; disabled to 1
@@ -299,7 +305,7 @@ def main():
     zbx = None
     # login to zabbix
     try:
-        zbx = ZabbixAPIExtends(server_url)
+        zbx = ZabbixAPIExtends(server_url, timeout=timeout)
         zbx.login(login_user, login_password)
     except Exception, e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)

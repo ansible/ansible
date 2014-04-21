@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, Epic Games, Inc.
+# (c) 2013-2014, Epic Games, Inc.
 #
 # This file is part of Ansible
 #
@@ -54,6 +54,10 @@ options:
             - Possible values are: present and absent.
         required: false
         default: "present"
+    timeout:
+        description:
+            - The timeout of API request(seconds).
+        default: 10
     host_groups:
         description:
             - List of host groups to create or delete.
@@ -150,7 +154,8 @@ def main():
             login_user=dict(required=True),
             login_password=dict(required=True),
             host_groups=dict(required=True),
-            state=dict(default="present")
+            state=dict(default="present"),
+            timeout=dict(default=10)
         ),
         supports_check_mode=True
     )
@@ -163,12 +168,13 @@ def main():
     login_password = module.params['login_password']
     host_groups = module.params['host_groups']
     state = module.params['state']
+    timeout = module.params['timeout']
 
     zbx = None
 
     # login to zabbix
     try:
-        zbx = ZabbixAPI(server_url)
+        zbx = ZabbixAPI(server_url, timeout=timeout)
         zbx.login(login_user, login_password)
     except Exception, e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)

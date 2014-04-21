@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, Epic Games, Inc.
+# (c) 2013-2014, Epic Games, Inc.
 #
 # This file is part of Ansible
 #
@@ -22,11 +22,13 @@
 DOCUMENTATION = '''
 ---
 module: zabbix_webcheck
-short_description: Zabbix web checks creates/deletes
+short_description: Zabbix web checks creates/updates/deletes
 description:
    - Creates a web check according to the host and application, the application will also be created if it does not exist.
+   - When the webcheck already exists and scenario steps are changed, the webcheck will be updated and the steps will be replaced.
+   - Delete webcheck from Zabbix if the webcheck exists.
 version_added: "1.6"
-author: Damon Chencheng Kong
+author: Damon Chencheng Kong, Harrison Gu
 requirements:
     - zabbix-api python module
 options:
@@ -47,23 +49,28 @@ options:
             - Zabbix user password.
         required: true
         default: null
+    timeout:
+        description:
+            - The timeout of API request(seconds).
+        default: 10
     web_check:
         description:
             - List of web check to be created/updated/deleted (see example).
-            - Available values: web_check_name,application_name,host_name,web_check_steps
-            - web_check_agent: User agent string that will be used by the web scenario
+            - If the webcheck has already been added, the web_check_name won't be updated.
+            - Available values: web_check_name(required), application_name(required), host_name(required), agent, authentication, delay, http_password, http_user, macros, nextcheck, status and web_check_steps(required)
+            - Available scenario step(web_check_steps) values are: name(required), number(required), url(required), posts, required, status_codes and timeout
             - Please review the web check documentation for more information on the supported web check properties: https://www.zabbix.com/documentation/2.0/manual/appendix/api/webcheck/definitions
         required: true
     state:
         description:
-            - Create or delete a web check.
+            - Create/update/delete a web check.
             - Possible values are: present, absent, default create web check.
         required: false
         default: "present"
 '''
 
 EXAMPLES = '''
-- name: add a web check
+- name: create or update(if exists) a web check
   local_action:
     module: zabbix_webcheck
     server_url: http://monitor.example.com
@@ -76,14 +83,14 @@ EXAMPLES = '''
       host_name: example host name
       web_check_agent: zabbix web check
       web_check_steps:
-        - step_name: WebSite Check1
-          step_url: http://www.example1.com
-          step_status_codes: 200
-          step_number: 1
-        - step_name: WebSite Check2
-          step_url: http://www.example2.com
-          step_status_codes: 200
-          step_number: 2
+        - name: WebSite Check1
+          url: http://www.example1.com
+          number: 1
+          status_codes: 200
+        - name: WebSite Check2
+          url: http://www.example2.com
+          number: 2
+          status_codes: 200
 
 - name: delete a web check
   local_action:
@@ -117,8 +124,8 @@ except ImportError:
 class ZabbixAPIExtends(ZabbixAPI):
     webcheck = None
 
-    def __init__(self, server, **kwargs):
-        ZabbixAPI.__init__(self, server, timeout=20)
+    def __init__(self, server, timeout, **kwargs):
+        ZabbixAPI.__init__(self, server, timeout=timeout)
         self.webcheck = ZabbixAPISubClass(self, dict({"prefix": "webcheck"}, **kwargs))
 
 
@@ -127,98 +134,171 @@ class WebCheck(object):
         self._module = module
         self._zapi = zbx
 
+        self._web_scenario_optional_properties_list = ['agent', 'authentication', 'delay', 'http_password',
+                                                       'http_user', 'macros', 'status']
+        self._scenario_step_optional_properties_list = ['posts', 'required', 'status_codes', 'timeout']
+
     # get host id by host name
-    def get_host_id(self, hostName):
+    def get_host_id(self, host_name):
         try:
-            hostObj = self._zapi.host.get({'output': 'extend', 'filter': {'host': hostName}})
-            hostId = hostObj[0]['hostid']
+            host_list = self._zapi.host.get({'output': 'extend', 'filter': {'host': host_name}})
+            if len(host_list) < 1:
+                self._module.fail_json(msg="Host not found: %s" % host_name)
+            else:
+                host_id = host_list[0]['hostid']
+                return host_id
         except Exception, e:
-            self._module.fail_json(msg="Failed to get the host %s id: %s." % (hostName, e))
-        return hostId
+            self._module.fail_json(msg="Failed to get the host %s id: %s." % (host_name, e))
 
     # get application id by application name, host id
-    def get_application_id(self, hostId, applicationName):
+    def get_application_id(self, host_id, application_name):
+        application_id = None
         try:
-            applicationObj = self._zapi.application.get(
-                {'output': 'extend', 'filter': {'hostid': hostId, "name": applicationName}})
-            applicationId = applicationObj[0]['applicationid']
-            if not applicationObj:
-                self.create_application(hostId, applicationName)
-                applicationObj = self._zapi.application.get(
-                    {'output': 'extend', 'filter': {'hostid': hostId, "name": applicationName}})
-                applicationId = applicationObj[0]['applicationid']
+            application_list = self._zapi.application.get(
+                {'output': 'extend', 'filter': {'hostid': host_id, "name": application_name}})
+            if len(application_list) < 1:
+                applicationids = self.create_application(host_id, application_name)
+                if len(applicationids) > 0:
+                    application_id = applicationids['applicationids'][0]
+            else:
+                application_id = application_list[0]['applicationid']
+            return application_id
         except Exception, e:
-            self._module.fail_json(msg="Failed to get the application %s id: %s." % (applicationName, e))
-        return applicationId
+            self._module.fail_json(msg="Failed to get the application '%s' id: %s." % (application_name, e))
 
     #get webcheck
-    def get_web_check(self, webCheckName):
+    def get_web_check(self, web_check_name, host_id):
         try:
-            webCheck = self._zapi.webcheck.get({'filter': {'name': webCheckName}})
+            web_check_list = self._zapi.webcheck.get(
+                {"output": "extend", "selectSteps": "extend", 'hostids': [host_id], 'filter': {'name': web_check_name}})
+            if len(web_check_list) > 0:
+                return web_check_list[0]
+            return None
         except Exception, e:
-            self._module.fail_json(msg="Failed to get WebCheck %s: %s" % (webCheckName, e))
-        return webCheck
+            self._module.fail_json(msg="Failed to get WebCheck %s: %s" % (web_check_name, e))
 
     # get steps
-    def get_steps(self, webCheckSteps):
+    def get_steps(self, web_check_steps):
         steps = []
-        for webCheckStep in webCheckSteps:
-            step = {"name": webCheckStep['step_name'],
-                    "url": webCheckStep['step_url'],
-                    "status_codes": webCheckStep['step_status_codes'],
-                    "no": webCheckStep['step_number']}
-            steps.append(step)
+        (name, url, no) = (None, None, None)
+        for web_check_step in web_check_steps:
+            if "name" in web_check_step and web_check_step["name"]:
+                name = web_check_step["name"]
+            else:
+                self._module.fail_json(msg="The \"name\" property in scenario steps is required and not null.")
+
+            if "url" in web_check_step and web_check_step["url"]:
+                url = web_check_step["url"]
+            else:
+                self._module.fail_json(msg="The \"url\" property in scenario steps is required and not null.")
+
+            if "number" in web_check_step and web_check_step["number"]:
+                no = web_check_step["number"]
+            else:
+                self._module.fail_json(msg="The \"no\" property in scenario steps is required and not null.")
+
+            optional_step_properties = dict()
+            for step_optional_property in self._scenario_step_optional_properties_list:
+                value = self.get_value_by_key(web_check_step, step_optional_property)
+                if value is not None:
+                    optional_step_properties[step_optional_property] = value
+
+            step = {"name": name,
+                    "url": url,
+                    "no": no}
+            steps.append(dict(step, **optional_step_properties))
         return steps
 
+    def get_replace_steps(self, old_webcheck_steps, new_webcheck_steps, httptestid):
+        relace_webcheck_steps = []
+
+        if new_webcheck_steps:
+            for new_webcheck_step in new_webcheck_steps:
+                flag = False
+                for old_webcheck_step in old_webcheck_steps:
+                    new_webcheck_step_url = new_webcheck_step['url']
+                    old_webcheck_step_url = old_webcheck_step['url']
+                    if new_webcheck_step_url == old_webcheck_step_url:
+                        # update
+                        new_webcheck_step['webstepid'] = old_webcheck_step['webstepid']
+                        new_webcheck_step['httptestid'] = httptestid
+                        relace_webcheck_steps.append(new_webcheck_step)
+                        flag = True
+                        break
+                if not flag:
+                    # add
+                    new_webcheck_step['httptestid'] = httptestid
+                    relace_webcheck_steps.append(new_webcheck_step)
+        return relace_webcheck_steps
+
     # get webcheck params
-    def get_web_check_params(self, hostId, applicationId, webCheckName, webCheckSteps, webCheckAgent):
-        steps = self.get_steps(webCheckSteps)
-        webCheckParams = {"name": webCheckName,
-                          "applicationid": applicationId,
-                          "agent": webCheckAgent,
-                          "hostid": hostId,
-                          "steps": steps}
-        return webCheckParams
+    def get_web_check_params(self, web_check_name, host_id, application_id, web_check_steps, optional_scenario_values,
+                             web_check_obj=None, httptestid=None):
+        steps = self.get_steps(web_check_steps)
+        if httptestid:
+            old_steps = list(web_check_obj['steps'].values())
+            steps = self.get_replace_steps(old_steps, steps, httptestid)
+
+        web_check_params = {"name": web_check_name,
+                            "applicationid": application_id,
+                            "hostid": host_id,
+                            "steps": steps}
+        if httptestid:
+            web_check_params['httptestid'] = httptestid
+        return dict(web_check_params, **optional_scenario_values)
 
     #create application by application name, host id
     def create_application(self, hostId, applicationName):
         try:
             if self._module.check_mode:
                 self._module.exit_json(changed=True)
-            self._zapi.application.create({'hostid': hostId, 'name': applicationName})
+            return self._zapi.application.create({'hostid': hostId, 'name': applicationName})
         except Exception, e:
-            self._module.fail_json(msg="Failed to create Application %s: %s" % (applicationName, e))
+            self._module.fail_json(msg="Failed to create Application '%s': %s" % (applicationName, e))
 
     # create web check
-    def create_web_check(self, hostId, applicationId, webCheckName, webCheckSteps, webCheckAgent):
-        webCheck = self.get_web_check(webCheckName)
-        if not webCheck:
-            webCheckParams = self.get_web_check_params(hostId, applicationId, webCheckName, webCheckSteps,
-                                                       webCheckAgent)
-            try:
-                if self._module.check_mode:
-                    self._module.exit_json(changed=True)
-                self._zapi.webcheck.create(webCheckParams)
-                self._module.exit_json(changed=True, result="Successfully added WebCheck %s " % webCheckName)
-            except Exception, e:
-                self._module.fail_json(msg="Failed to create WebCheck %s: %s" % (webCheckName, e))
-        else:
-            self._module.exit_json(changed=True, result="WebCheck %s already exists" % webCheckName)
+    def create_web_check(self, web_check_name, host_id, application_id, web_check_steps, scenario_optional_properties):
+        web_check_params = self.get_web_check_params(web_check_name, host_id, application_id, web_check_steps,
+                                                     scenario_optional_properties)
+        try:
+            if self._module.check_mode:
+                self._module.exit_json(changed=True)
+            self._zapi.webcheck.create(web_check_params)
+            self._module.exit_json(changed=True, result="Successfully added WebCheck %s " % web_check_name)
+        except Exception, e:
+            self._module.fail_json(msg="Failed to create WebCheck %s: %s" % (web_check_name, e))
+
+    # update web check
+    def update_web_check(self, web_check_obj, web_check_name, host_id, application_id, web_check_steps,
+                         scenario_optional_properties):
+        httptestid = web_check_obj['httptestid']
+        web_check_params = self.get_web_check_params(web_check_name, host_id, application_id, web_check_steps,
+                                                     scenario_optional_properties, web_check_obj, httptestid)
+        try:
+            if self._module.check_mode:
+                self._module.exit_json(changed=True)
+            self._zapi.webcheck.update(web_check_params)
+            self._module.exit_json(changed=True, result="Successfully updated WebCheck %s " % web_check_params)
+        except Exception, e:
+            self._module.fail_json(msg="Failed to updated WebCheck %s: %s" % (web_check_params, e))
 
     # delete web check
-    def delete_web_check(self, webCheckName):
-        webCheck = self.get_web_check(webCheckName)
-        if not webCheck:
-            self._module.exit_json(changed=True, result="WebCheck %s does not exist" % webCheckName)
-        else:
-            webCheckId = webCheck[0]['httptestid'];
-            try:
-                if self._module.check_mode:
-                    self._module.exit_json(changed=True)
-                self._zapi.webcheck.delete([webCheckId])
-                self._module.exit_json(changed=True, result="Successfully deleted WebCheck %s " % webCheckName)
-            except Exception, e:
-                self._module.fail_json(msg="Failed to delete WebCheck %s: %s" % (webCheckName, e))
+    def delete_web_check(self, webCheckObj):
+        webCheckId = webCheckObj['httptestid']
+        webCheckName = webCheckObj['name']
+        try:
+            if self._module.check_mode:
+                self._module.exit_json(changed=True)
+            self._zapi.webcheck.delete([webCheckId])
+            self._module.exit_json(changed=True, result="Successfully deleted WebCheck %s " % webCheckName)
+        except Exception, e:
+            self._module.fail_json(msg="Failed to delete WebCheck %s: %s" % (webCheckName, e))
+
+    def get_value_by_key(self, dict_obj, key):
+        if key in dict_obj:
+            value = dict_obj[key]
+            return value
+        return None
 
 
 def main():
@@ -228,44 +308,77 @@ def main():
             login_user=dict(required=True),
             login_password=dict(required=True),
             state=dict(default="present"),
+            timeout=dict(default=10),
             web_check=dict(required=True),
-        ),
+            ),
         supports_check_mode=True,
-    )
+        )
 
     if not HAS_ZABBIX_API:
         module.fail_json(msg="Missing requried zabbix-api module (check docs or install with: pip install zabbix-api)")
 
-    zabbix_server_url = module.params['server_url']
-    zabbix_login_user = module.params['login_user']
-    zabbix_login_password = module.params['login_password']
+    server_url = module.params['server_url']
+    login_user = module.params['login_user']
+    login_password = module.params['login_password']
     state = module.params['state']
-    zabbix_web_check = module.params['web_check']
-    zabbix_web_check_name = zabbix_web_check['web_check_name']
+    timeout = module.params['timeout']
+    web_check = module.params['web_check']
+
+    web_check_name = ''
+    if 'web_check_name' in web_check:
+        web_check_name = web_check['web_check_name']
+    else:
+        module.fail_json(msg="The \"web_check_name\" property is required and not null.")
 
     # login to zabbix
     zbx = None
     try:
-        zbx = ZabbixAPIExtends(zabbix_server_url, timeout=20)
-        zbx.login(zabbix_login_user, zabbix_login_password)
+        zbx = ZabbixAPIExtends(server_url, timeout=timeout)
+        zbx.login(login_user, login_password)
     except Exception, e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 
-    web_check = WebCheck(module, zbx)
+    # new a WebCheck class object
+    web_check_class_obj = WebCheck(module, zbx)
 
-    # create web check
+    host_name = web_check_class_obj.get_value_by_key(web_check, "host_name")
+    if not host_name:
+        module.fail_json(msg="The \"host_name\" property is required.")
+    host_id = web_check_class_obj.get_host_id(host_name)
+
+    # get webcheck object by name
+    web_check_obj = web_check_class_obj.get_web_check(web_check_name, host_id)
+
     if state == 'absent':
-        web_check.delete_web_check(zabbix_web_check_name)
+        if not web_check_obj:
+            module.fail_json(changed=False, msg="WebCheck %s does not exist" % web_check_name)
+        else:
+            # delete a webcheck
+            web_check_class_obj.delete_web_check(web_check_obj)
     else:
-        zabbix_application_name = zabbix_web_check['application_name']
-        zabbix_web_check_steps = zabbix_web_check['web_check_steps']
-        zabbix_host_name = zabbix_web_check['host_name']
-        zabbix_web_check_agent = zabbix_web_check['web_check_agent']
-        hostId = web_check.get_host_id(zabbix_host_name)
-        applicationId = web_check.get_application_id(hostId, zabbix_application_name)
-        web_check.create_web_check(hostId, applicationId, zabbix_web_check_name, zabbix_web_check_steps,
-                                   zabbix_web_check_agent)
+        application_name = web_check_class_obj.get_value_by_key(web_check, "application_name")
+        if not application_name:
+            module.fail_json(msg="The \"application_name\" property is required.")
+
+        host_id = web_check_class_obj.get_host_id(host_name)
+        application_id = web_check_class_obj.get_application_id(host_id, application_name)
+
+        web_check_steps = web_check_class_obj.get_value_by_key(web_check, "web_check_steps")
+
+        scenario_optional_properties = dict()
+        for optional_property in web_check_class_obj._web_scenario_optional_properties_list:
+            value = web_check_class_obj.get_value_by_key(web_check, optional_property)
+            if value is not None:
+                scenario_optional_properties[optional_property] = value
+
+        if not web_check_obj:
+            # create webcheck
+            web_check_class_obj.create_web_check(web_check_name, host_id, application_id, web_check_steps,
+                                                 scenario_optional_properties)
+        else:
+            # update webcheck
+            web_check_class_obj.update_web_check(web_check_obj, web_check_name, host_id, application_id,
+                                                 web_check_steps, scenario_optional_properties)
 
 # <<INCLUDE_ANSIBLE_MODULE_COMMON>>
 main()
-
