@@ -68,7 +68,7 @@ class Task(object):
             if x in utils.plugins.module_finder:
 
                 if 'action' in ds:
-                    raise errors.AnsibleError("multiple actions specified in task %s" % (ds.get('name', ds['action'])))
+                    raise errors.AnsibleError("multiple actions specified in task: '%s' and '%s'" % (x, ds.get('name', ds['action'])))
                 if isinstance(ds[x], dict):
                     if 'args' in ds:
                         raise errors.AnsibleError("can't combine args: and a dict for %s: in task %s" % (x, ds.get('name', "%s: %s" % (x, ds[x]))))
