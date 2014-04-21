@@ -57,6 +57,13 @@ options:
         description:
             - Path to bzr executable to use. If not supplied,
               the normal mechanism for resolving binary paths will be used.
+    stacked:
+        required: false
+        default: "no"
+        choices: [ 'yes', 'no' ]
+        description:
+            - Create a stacked branch referring to the source branch.
+              (see the documentation of Bazaar)
 '''
 
 EXAMPLES = '''
@@ -87,17 +94,19 @@ class Bzr(object):
         revno = stdout.strip()
         return revno
 
-    def clone(self):
+    def clone(self, stacked=False):
         '''makes a new bzr branch if it does not already exist'''
         dest_dirname = os.path.dirname(self.dest)
         try:
             os.makedirs(dest_dirname)
         except:
             pass
+        args_list = ["branch"]
+        if stacked:
+            args_list.append('--stacked')
         if self.version.lower() != 'head':
-            args_list = ["branch", "-r", self.version, self.parent, self.dest]
-        else:
-            args_list = ["branch", self.parent, self.dest]
+            args_list.extend(["-r", self.version])
+        args_list.extend([self.parent, self.dest])
         return self._command(args_list, check_rc=True, cwd=dest_dirname)
 
     def has_local_mods(self):
@@ -146,6 +155,7 @@ def main():
             name=dict(required=True, aliases=['parent']),
             version=dict(default='head'),
             force=dict(default='yes', type='bool'),
+            stacked=dict(default='no', type='bool'),
             executable=dict(default=None),
         )
     )
@@ -154,6 +164,7 @@ def main():
     parent  = module.params['name']
     version = module.params['version']
     force   = module.params['force']
+    stacked = module.params['stacked']
     bzr_path = module.params['executable'] or module.get_bin_path('bzr', True)
 
     bzrconfig = os.path.join(dest, '.bzr', 'branch', 'branch.conf')
@@ -167,7 +178,7 @@ def main():
     before = None
     local_mods = False
     if not os.path.exists(bzrconfig):
-        (rc, out, err) = bzr.clone()
+        (rc, out, err) = bzr.clone(stacked)
 
     else:
         # else do a pull
