@@ -709,7 +709,7 @@ def main():
     
                 facts = manager.get_running_containers()
             else:
-                acts = manager.get_deployed_containers()
+                facts = manager.get_deployed_containers()
 
         # stop and remove containers
         elif state == "absent":
