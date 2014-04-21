@@ -10,7 +10,7 @@ import os
 
 
 def random_string(length):
-    return ''.join(random.choice(string.ascii_uppercase) for x in range(6))
+    return ''.join(random.choice(string.ascii_uppercase) for x in range(length))
 
 p = ConfigParser.ConfigParser()
 p.read(os.path.join(os.path.dirname(__file__), 'ansible.cfg'))
