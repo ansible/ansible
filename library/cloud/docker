@@ -184,7 +184,7 @@ options:
     aliases: []
     version_added: "1.6"
 author: Cove Schneider, Joshua Conner, Pavel Antonov
-requirements: [ "docker-py >= 0.3.0" ]
+requirements: [ "docker-py >= 0.3.0", "docker >= 0.10.0" ]
 '''
 
 EXAMPLES = '''
