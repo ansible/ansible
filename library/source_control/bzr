@@ -61,6 +61,7 @@ options:
         required: false
         default: "no"
         choices: [ 'yes', 'no' ]
+        version_added: "1.6"
         description:
             - Create a stacked branch referring to the source branch.
               (see the documentation of Bazaar)
