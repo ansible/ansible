@@ -72,7 +72,12 @@ options:
     required: false
     default: None
     aliases: []
-    version_added: "1.6"    
+    version_added: "1.6"  
+  purge_subnets:
+    description:
+      - Purge existing subnet on ELB that are not found in subnets
+    required: false
+    default: false  
   validate_certs:
     description:
       - When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
@@ -189,6 +194,7 @@ EXAMPLES = """
     security_group_ids: 'sg-123456, sg-67890'
     region: us-west-2
     subnets: 'subnet-123456, subnet-67890'
+    purge_subnets: yes
     listeners:
       - protocol: http
         load_balancer_port: 80
@@ -213,7 +219,7 @@ class ElbManager(object):
 
     def __init__(self, module, name, listeners=None, purge_listeners=None,
                  zones=None, purge_zones=None, security_group_ids=None, 
-                 health_check=None, subnets=None,
+                 health_check=None, subnets=None, purge_subnets=None,
                  region=None, **aws_connect_params):
 
         self.module = module
@@ -225,6 +231,7 @@ class ElbManager(object):
         self.security_group_ids = security_group_ids
         self.health_check = health_check
         self.subnets = subnets
+        self.purge_subnets = purge_subnets
 
         self.aws_connect_params = aws_connect_params
         self.region = region
@@ -434,8 +441,12 @@ class ElbManager(object):
     def _set_subnets(self):
         """Determine which subnets need to be attached or detached on the ELB"""
         if self.subnets:
-            subnets_to_detach = list(set(self.elb.subnets) - set(self.subnets))
-            subnets_to_attach = list(set(self.subnets) - set(self.elb.subnets))
+            if self.purge_subnets:
+                subnets_to_detach = list(set(self.elb.subnets) - set(self.subnets))
+                subnets_to_attach = list(set(self.subnets) - set(self.elb.subnets))
+            else:
+                subnets_to_detach = None
+                subnets_to_attach = list(set(self.subnets) - set(self.elb.subnets))
 
             if subnets_to_attach:
                 self._attach_subnets(subnets_to_attach)
@@ -517,7 +528,8 @@ def main():
             purge_zones={'default': False, 'required': False, 'type': 'bool'},
             security_group_ids={'default': None, 'required': False, 'type': 'list'},
             health_check={'default': None, 'required': False, 'type': 'dict'},
-            subnets={'default': None, 'required': False, 'type': 'list'}
+            subnets={'default': None, 'required': False, 'type': 'list'},
+            purge_subnets={'default': False, 'required': False, 'type': 'bool'}
         )
     )
 
@@ -538,6 +550,7 @@ def main():
     security_group_ids = module.params['security_group_ids']
     health_check = module.params['health_check']
     subnets = module.params['subnets']
+    purge_subnets = module.params['purge_subnets']
 
     if state == 'present' and not listeners:
         module.fail_json(msg="At least one port is required for ELB creation")
@@ -546,7 +559,8 @@ def main():
         module.fail_json(msg="At least one availability zone or subnet is required for ELB creation")
 
     elb_man = ElbManager(module, name, listeners, purge_listeners, zones, 
-                         purge_zones, security_group_ids, health_check, subnets, 
+                         purge_zones, security_group_ids, health_check, 
+                         subnets, purge_subnets, 
                          region=region, **aws_connect_params)
 
     if state == 'present':
