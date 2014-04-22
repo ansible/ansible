@@ -128,6 +128,14 @@ options:
         description:
             - if C(no), repository will be cloned without the --recursive
               option, skipping sub-modules.
+
+    git_dir:
+        required: false
+        default: null
+        description:
+            - Absolute path of where to store the repository files.  If not
+              supplied, the normal mechanism of storing files in a .git dir
+              inside the work tree will be used.
 notes:
     - "If the task seems to be hanging, first verify remote host is in C(known_hosts).
       SSH will prompt user to authorize the first contact with a remote host.  To avoid this prompt, 
@@ -236,9 +244,11 @@ def get_version(module, git_path, dest, ref="HEAD"):
     sha = stdout.rstrip('\n')
     return sha
 
-def clone(git_path, module, repo, dest, remote, depth, version, bare,
+def clone(git_path, module, repo, dest, git_dir, remote, depth, version, bare,
           reference, recursive):
     ''' makes a new git repo if it does not already exist '''
+    if git_dir:
+        dest = git_dir
     dest_dirname = os.path.dirname(dest)
     try:
         os.makedirs(dest_dirname)
@@ -249,7 +259,7 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
         cmd.append('--bare')
     else:
         cmd.extend([ '--origin', remote ])
-        if recursive:
+        if recursive and not git_dir:
             cmd.extend([ '--recursive' ])
         if is_remote_branch(git_path, module, dest, repo, version) \
         or is_remote_tag(git_path, module, dest, repo, version):
@@ -263,6 +273,11 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
     if bare:
         if remote != 'origin':
             module.run_command([git_path, 'remote', 'add', remote, repo], check_rc=True, cwd=dest)
+    if git_dir:
+        try:
+            os.makedirs(os.environ['GIT_WORK_TREE'])
+        except:
+            pass
   
 def has_local_mods(module, git_path, dest, bare):
     if bare:
@@ -376,7 +391,7 @@ def get_head_branch(git_path, module, dest, remote, bare=False):
     if bare:
         repo_path = dest
     else:
-        repo_path = os.path.join(dest, '.git')
+        repo_path = os.environ.get('GIT_DIR', os.path.join(dest, '.git'))
     # Check if the .git is a file. If it is a file, it means that we are in a submodule structure.
     if os.path.isfile(repo_path):
         try:
@@ -426,6 +441,7 @@ def submodule_update(git_path, module, dest):
     # skip submodule commands if .gitmodules is not present
     if not os.path.exists(os.path.join(dest, '.gitmodules')):
         return (0, '', '')
+    git_work_tree = os.environ.pop('GIT_WORK_TREE', None)
     cmd = [ git_path, 'submodule', 'sync' ]
     (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=dest)
     if 'remote' in params:
@@ -435,6 +451,8 @@ def submodule_update(git_path, module, dest):
     (rc, out, err) = module.run_command(cmd, cwd=dest)
     if rc != 0:
         module.fail_json(msg="Failed to init/update submodules: %s" % out + err)
+    if git_work_tree:
+        os.environ['GIT_WORK_TREE'] = git_work_tree
     return (rc, out, err)
 
 def switch_version(git_path, module, dest, remote, version, recursive):
@@ -475,6 +493,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             dest=dict(required=True),
+            git_dir=dict(default=None, required=False),
             repo=dict(required=True, aliases=['name']),
             version=dict(default='HEAD'),
             remote=dict(default='origin'),
@@ -493,6 +512,7 @@ def main():
     )
 
     dest      = os.path.abspath(os.path.expanduser(module.params['dest']))
+    git_dir   = module.params['git_dir']
     repo      = module.params['repo']
     version   = module.params['version']
     remote    = module.params['remote']
@@ -505,6 +525,9 @@ def main():
     
     key_file   = module.params['key_file']
     ssh_opts   = module.params['ssh_opts']
+
+    if bare and git_dir:
+        module.fail_json(rc=256, msg='git_dir and bare cannot be defined at the same time')
 
     # create a wrapper script and export
     # GIT_SSH=<path> as an environment variable
@@ -526,6 +549,10 @@ def main():
 
     if bare:
         gitconfig = os.path.join(dest, 'config')
+    elif git_dir:
+        os.environ['GIT_DIR'] = git_dir
+        os.environ['GIT_WORK_TREE'] = dest
+        gitconfig = os.path.join(git_dir, 'config')
     else:
         gitconfig = os.path.join(dest, '.git', 'config')
 
@@ -539,7 +566,7 @@ def main():
         if module.check_mode:
             remote_head = get_remote_head(git_path, module, dest, version, repo, bare)
             module.exit_json(changed=True, before=before, after=remote_head)
-        clone(git_path, module, repo, dest, remote, depth, version, bare,
+        clone(git_path, module, repo, dest, git_dir, remote, depth, version, bare,
               reference, recursive)
     elif not update:
         # Just return having found a repo already in the dest path
