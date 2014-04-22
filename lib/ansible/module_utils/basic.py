@@ -192,6 +192,7 @@ class AnsibleModule(object):
                     self.argument_spec[k] = v
 
         os.environ['LANG'] = MODULE_LANG
+        os.environ['LC_CTYPE'] = MODULE_LANG
         (self.params, self.args) = self._load_params()
 
         self._legal_inputs = ['CHECKMODE', 'NO_LOG']
