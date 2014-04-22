@@ -201,9 +201,79 @@ def gather_facts(vm):
     return facts
 
 
+class DefaultVMConfig(object):
+
+    def __init__(self, check_dict, interface_dict):
+        self.check_dict, self.interface_dict = check_dict, interface_dict
+        self.set_current, self.set_past = set(
+            check_dict.keys()), set(interface_dict.keys())
+        self.intersect = self.set_current.intersection(self.set_past)
+        self.recursive_missing = None
+
+    def shallow_diff(self):
+        return self.set_past - self.intersect
+
+    def recursive_diff(self):
+
+        if not self.recursive_missing:
+            self.recursive_missing = []
+            for key, value in self.interface_dict.items():
+                if isinstance(value, dict):
+                    for k, v in value.items():
+                        if k in self.check_dict[key]:
+                            if not isinstance(self.check_dict[key][k], v):
+                                self.recursive_missing.append((k, v))
+                        else:
+                            self.recursive_missing.append((k, v))
+
+        return self.recursive_missing
+
+
+def config_check(name, passed, default, module):
+
+    diff = DefaultVMConfig(passed, default)
+    if len(diff.shallow_diff()):
+        module.fail_json(
+            msg="Missing required key/pair [%s]. %s must contain %s" %
+                (', '.join(diff.shallow_diff()), name, default))
+
+    if diff.recursive_diff():
+        module.fail_json(
+            msg="Config mismatch for %s on %s" %
+                (name, diff.recursive_diff()))
+
+    return True
+
+
 def main():
 
     vm = None
+
+    proto_vm_hardware = {
+        'memory_mb': int,
+        'num_cpus': int
+    }
+
+    proto_vm_disk = {
+        'disk1': {
+            'size_gb': int,
+            'type': basestring
+        }
+    }
+
+    proto_vm_nic = {
+        'nic1': {
+            'type': basestring,
+            'network': basestring,
+            'network_type': basestring
+        }
+    }
+
+    proto_esxi = {
+        'datastore': basestring,
+        'datacenter': basestring,
+        'hostname': basestring
+    }
 
     module = AnsibleModule(
         argument_spec=dict(
@@ -223,15 +293,34 @@ def main():
                 default='present'),
             vmware_guest_facts=dict(required=False, choices=BOOLEANS),
             guest=dict(required=True, type='str'),
-            guest_config=dict(required=False, type='dict', default={}),
+            vm_disk=dict(required=False, type='dict', default={}),
+            vm_boot_state=dict(
+                required=False,
+                choices=[
+                    'powered_on',
+                    'powered_off',
+                ],
+                default='powered_on'),
+            vm_nic=dict(required=False, type='dict', default={}),
+            vm_hardware=dict(required=False, type='dict', default={}),
+            vm_extra_config=dict(required=False, type='dict', default={}),
             force=dict(required=False, choices=BOOLEANS, default=False),
+            esxi=dict(required=False, type='dict', default={}),
+
 
         ),
         supports_check_mode=False,
         mutually_exclusive=[['state', 'vmware_guest_facts']],
         required_together=[
             ['state', 'force'],
-            ['state', 'guest_config']
+            [
+                'state',
+                'vm_disk',
+                'vm_boot_state',
+                'vm_nic',
+                'vm_hardware',
+                'esxi'
+            ]
         ],
     )
 
@@ -250,7 +339,12 @@ def main():
     state = module.params['state']
     guest = module.params['guest']
     force = module.params['force']
-    guest_config = module.params['guest_config']
+    vm_disk = module.params['vm_disk']
+    vm_boot_state = module.params['vm_boot_state']
+    vm_nic = module.params['vm_nic']
+    vm_hardware = module.params['vm_hardware']
+    vm_extra_config = module.params['vm_extra_config']
+    esxi = module.params['esxi']
 
     # CONNECT TO THE SERVER
     viserver = VIServer()
@@ -283,17 +377,12 @@ def main():
                 module.exit_json(changed=state_result)
 
         # Just check if there
-        elif state == 'present' and not len(guest_config):
+        elif state == 'present':
             module.exit_json(changed=False)
 
         # Fail on reconfig without params
         elif state == 'reconfigured':
-            if not len(guest_config):
-                module.fail_json(
-                    msg="guest_config is required to reconfigure a VM")
-            # do it
-            else:
-                pass
+            pass
 
     # VM doesn't exist
     except Exception:
@@ -312,7 +401,12 @@ def main():
 
         # Create the VM
         elif state == 'present':
-            pass
+
+            # Check the guest_config
+            config_check("vm_disk", vm_disk, proto_vm_disk, module)
+            config_check("vm_nic", vm_nic, proto_vm_nic, module)
+            config_check("vm_hardware", vm_hardware, proto_vm_hardware, module)
+            config_check("esxi", esxi, proto_esxi, module)
 
     if vm:
         # If the vm already exists, lets get some info from it, pass back the
