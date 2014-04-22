@@ -181,9 +181,20 @@ def version_compare(value, version, operator='eq', strict=False):
     except Exception, e:
         raise errors.AnsibleFilterError('Version comparison: %s' % e)
 
-def rand(end, start=0, step=1):
+def rand(end, start=None, step=None):
     r = SystemRandom()
-    return r.randrange(start, end, step)
+    if isinstance(end, (int, long)):
+        if not start:
+            start = 0
+        if not step:
+            step = 1
+        return r.randrange(start, end, step)
+    elif hasattr(end, '__iter__'):
+        if start or step:
+            raise errors.AnsibleFilterError('start and step can only be used with integer values')
+        return r.choice(end)
+    else:
+        raise errors.AnsibleFilterError('random can only be used on sequences and integers')
 
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''

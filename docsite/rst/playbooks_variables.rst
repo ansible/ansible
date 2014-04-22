@@ -241,6 +241,13 @@ Random Number Filter
 
 .. versionadded:: 1.6
 
+This filter can be used similar to the default jinja2 random filter (returning a random item from a sequence of
+items), but can also generate a random number based on a range.
+
+To get a random item from a list::
+
+    {{ ['a','b','c']|random }} => 'c'
+
 To get a random number from 0 to supplied end::
 
     {{ 59 |random}} * * * * root /script/from/cron
