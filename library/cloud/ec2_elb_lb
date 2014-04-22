@@ -120,7 +120,6 @@ EXAMPLES = """
     name: "test-vpc"
     state: present
     subnets: 
-    zones:
       - subnet-abcd1234
       - subnet-1a2b3c4d
     listeners:
