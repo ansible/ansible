@@ -1751,9 +1751,14 @@ class GenericBsdIfconfigNetwork(Network):
         device = words[0][0:-1]
         current_if = {'device': device, 'ipv4': [], 'ipv6': [], 'type': 'unknown'}
         current_if['flags']  = self.get_options(words[1])
-        current_if['metric'] = words[3]
-        current_if['mtu'] = words[5]
         current_if['macaddress'] = 'unknown'    # will be overwritten later
+
+        if len(words) >= 5 : # Newer FreeBSD versions
+            current_if['metric'] = words[3]
+            current_if['mtu'] = words[5]
+        else:
+            current_if['mtu'] = words[3]
+
         return current_if
 
     def parse_options_line(self, words, current_if, ips):
