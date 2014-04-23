@@ -58,7 +58,7 @@ options:
             - List of web check to be created/updated/deleted (see example).
             - If the webcheck has already been added, the web_check_name won't be updated.
             - Available values: web_check_name(required), application_name(required), host_name(required), agent, authentication, delay, http_password, http_user, macros, nextcheck, status and web_check_steps(required)
-            - Available scenario step(web_check_steps) values are: name(required), number(required), url(required), posts, required, status_codes and timeout
+            - Available scenario step(steps) values are: name(required), number(required), url(required), posts, required, status_codes and timeout
             - Please review the web check documentation for more information on the supported web check properties: https://www.zabbix.com/documentation/2.0/manual/appendix/api/webcheck/definitions
         required: true
     state:
@@ -81,8 +81,8 @@ EXAMPLES = '''
       web_check_name: example Health Check
       application_name: example app
       host_name: example host name
-      web_check_agent: zabbix web check
-      web_check_steps:
+      agent: zabbix web check
+      steps:
         - name: WebSite Check1
           url: http://www.example1.com
           number: 1
@@ -310,9 +310,9 @@ def main():
             state=dict(default="present"),
             timeout=dict(default=10),
             web_check=dict(required=True),
-            ),
+        ),
         supports_check_mode=True,
-        )
+    )
 
     if not HAS_ZABBIX_API:
         module.fail_json(msg="Missing requried zabbix-api module (check docs or install with: pip install zabbix-api)")
@@ -351,7 +351,7 @@ def main():
 
     if state == 'absent':
         if not web_check_obj:
-            module.fail_json(changed=False, msg="WebCheck %s does not exist" % web_check_name)
+            module.exit_json(changed=False, msg="WebCheck %s does not exist" % web_check_name)
         else:
             # delete a webcheck
             web_check_class_obj.delete_web_check(web_check_obj)
@@ -363,7 +363,7 @@ def main():
         host_id = web_check_class_obj.get_host_id(host_name)
         application_id = web_check_class_obj.get_application_id(host_id, application_name)
 
-        web_check_steps = web_check_class_obj.get_value_by_key(web_check, "web_check_steps")
+        web_check_steps = web_check_class_obj.get_value_by_key(web_check, "steps")
 
         scenario_optional_properties = dict()
         for optional_property in web_check_class_obj._web_scenario_optional_properties_list:

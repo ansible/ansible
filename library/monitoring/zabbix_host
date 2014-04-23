@@ -264,7 +264,7 @@ class Host(object):
         template_ids = []
         template_list = self._zapi.template.get({'output': 'extend', 'hostids': host_id})
         for template in template_list:
-            template_ids.append(template['hostid'])
+            template_ids.append(template['templateid'])
         return template_ids
 
 
