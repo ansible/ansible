@@ -113,12 +113,13 @@ class ActionModule(object):
 
         sudoable = True
         # set file permissions, more permisive when the copy is done as a different user
-        if self.runner.sudo and self.runner.sudo_user != 'root':
+        if ((self.runner.sudo and self.runner.sudo_user != 'root') or
+                (self.runner.su and self.runner.su_user != 'root')):
             cmd_args_chmod = "chmod a+rx %s" % tmp_src
             sudoable = False
         else:
             cmd_args_chmod = "chmod +rx %s" % tmp_src
-        self.runner._low_level_exec_command(conn, cmd_args_chmod, tmp, sudoable=sudoable)
+        self.runner._low_level_exec_command(conn, cmd_args_chmod, tmp, sudoable=sudoable, su=self.runner.su)
 
         # add preparation steps to one ssh roundtrip executing the script
         env_string = self.runner._compute_environment_string(inject)
