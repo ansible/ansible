@@ -249,6 +249,7 @@ def main():
                               module.params['login_password'],
                               module.params['login_tenant_name'],
                               module.params['auth_url'],
+                              region_name=module.params['region_name'],
                               service_type='compute')
     try:
         nova.authenticate()
