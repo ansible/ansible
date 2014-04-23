@@ -489,8 +489,7 @@ class DockerManager:
         return inspect
 
     def get_deployed_containers(self):
-        # determine which images/commands are running already
-        containers = self.client.containers(all=True)
+        """determine which images/commands are running already"""
         image = self.module.params.get('image')
         command = self.module.params.get('command')
         if command:
@@ -504,13 +503,18 @@ class DockerManager:
         # docker will give us back the full image name including a tag in the container list if one exists.
         image, tag = self.get_split_image_tag(image)
 
-        for i in containers:
+        for i in self.client.containers(all=True):
             running_image, running_tag = self.get_split_image_tag(i['Image'])
             running_command = i['Command'].strip()
 
-            if (name and name in i['Names']) or \
-                    (not name and running_image == image and (not tag or tag == running_tag) and
-                    (not command or running_command == command)):
+            name_matches = (name and name in i['Names'])
+            image_matches = (running_image == image)
+            tag_matches = (not tag or running_tag == tag)
+            # if a container has an entrypoint, `command` will actually equal
+            # '{} {}'.format(entrypoint, command)
+            command_matches = (not command or running_command.endswith(command))
+
+            if name_matches or (image_matches and tag_matches and command_matches):
                 details = self.client.inspect_container(i['Id'])
                 details = _docker_id_quirk(details)
                 deployed.append(details)
