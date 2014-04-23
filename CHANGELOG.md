@@ -65,6 +65,8 @@ Other notable changes:
 * added ability for module documentation YAML to utilize shared module snippets for common args
 * apt module now accepts "deb" parameter to install local dpkg files
 * regex_replace filter plugin added
+* added an inventory script for Docker
+* added an inventory script for Abiquo
 * ... to be filled in from changelogs ...
 * 
 
