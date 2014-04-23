@@ -210,6 +210,7 @@ def main():
             _ = int(key_id, 16)
             if key_id.startswith('0x'):
                 key_id = key_id[2:]
+            key_id = key_id.upper()
         except ValueError:
             module.fail_json(msg="Invalid key_id", id=key_id)
 
