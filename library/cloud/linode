@@ -42,6 +42,7 @@ options:
      - Display group to assign to the instance
     default: ansible
     type: string
+    version_added: "1.6"
   linode_id:
     description:
      - Unique ID of a linode server
