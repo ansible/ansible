@@ -47,7 +47,7 @@ author: Michael DeHaan
 EXAMPLES = '''
 - file: path=/etc/foo.conf owner=foo group=foo mode=0644
 - file: src=/file/to/link/to dest=/path/to/symlink owner=foo group=foo state=link
-- file: path=/tmp/{{ item.path }} dest={{ item.dest }} state=link
+- file: src=/tmp/{{ item.path }} dest={{ item.dest }} state=link
   with_items:
     - { path: 'x', dest: 'y' }
     - { path: 'z', dest: 'k' }
