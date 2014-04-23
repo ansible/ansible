@@ -200,6 +200,8 @@ def url_argument_spec():
         http_agent = dict(default='ansible-httpget'),
         use_proxy = dict(default='yes', type='bool'),
         validate_certs = dict(default='yes', type='bool'),
+        url_username = dict(required=False),
+        url_password = dict(required=False),
     )
 
 
@@ -247,15 +249,22 @@ def fetch_url(module, url, data=None, headers=None, method=None,
             ssl_handler = SSLValidationHandler(module, hostname, port)
             handlers.append(ssl_handler)
 
-    if parsed[0] != 'ftp' and '@' in parsed[1]:
-        credentials, netloc = parsed[1].split('@', 1)
-        if ':' in credentials:
-            username, password = credentials.split(':', 1)
-        else:
-            username = credentials
-            password = ''
-        parsed = list(parsed)
-        parsed[1] = netloc
+    if parsed[0] != 'ftp':
+        url_username = module.params.get('url_username', '')
+        if url_username:
+            username = url_username
+            password = module.params.get('url_password', '')
+            netloc = parsed[1]
+        elif '@' in parsed[1]:
+            credentials, netloc = parsed[1].split('@', 1)
+            if ':' in credentials:
+                username, password = credentials.split(':', 1)
+            else:
+                username = credentials
+                password = ''
+
+            parsed = list(parsed)
+            parsed[1] = netloc
 
         passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
         # this creates a password manager
