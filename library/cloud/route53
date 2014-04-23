@@ -340,12 +340,19 @@ def main():
         decoded_name = rset.name.replace(r'\052', '*')
         decoded_name = rset.name.replace(r'\100', '@')
 
-        if rset.type == type_in and decoded_name == record_in:
+        if rset.type == type_in and decoded_name == record_in and value_in in rset.resource_records:
             found_record = True
             record['zone'] = zone_in
             record['type'] = rset.type
             record['record'] = decoded_name
             record['ttl'] = rset.ttl
+            record['alias_dns_name'] = rset.alias_dns_name
+            record['alias_evaluate_target_health'] = rset.alias_evaluate_target_health
+            record['alias_hosted_zone_id'] = rset.alias_hosted_zone_id
+            record['health_check'] = rset.health_check
+            record['identifier'] = rset.identifier
+            record['region'] = rset.region
+            record['weight'] = rset.weight   
             record['value'] = ','.join(sorted(rset.resource_records))
             record['values'] = sorted(rset.resource_records)
             if value_list == sorted(rset.resource_records) and record['ttl'] == ttl_in and command_in == 'create':
