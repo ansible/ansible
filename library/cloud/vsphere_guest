@@ -291,19 +291,43 @@ def vmdisk_id(vm, current_datastore_name):
     return id_list
 
 
-def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name, guest, vm_extra_config, vm_hardware, vm_disk, vm_nic, state):
-    module.fail_json(msg=vm.properties.config)
+def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name, guest, vm_extra_config, vm_hardware, vm_disk, vm_nic, state, force):
     spec = None
     changed = False
     changes = {}
     request = VI.ReconfigVM_TaskRequestMsg()
+    shutdown = False
 
+    memoryHotAddEnabled = bool(vm.properties.config.memoryHotAddEnabled)
+    cpuHotAddEnabled = bool(vm.properties.config.cpuHotAddEnabled)
+    cpuHotRemoveEnabled = bool(vm.properties.config.cpuHotRemoveEnabled)
 
+    # Change Memory
     if vm_hardware['memory_mb']:
+
         if vm_hardware['memory_mb'] != vm.properties.config.hardware.memoryMB:
             spec = spec_singleton(spec, request, vm)
 
-            shutdown = True
+            if vm.is_powered_on():
+                if force:
+                    # No hot add but force
+                    if not memoryHotAddEnabled:
+                        shutdown = True
+                    elif vm_hardware['memory_mb'] < vm.properties.config.hardware.memoryMB:
+                        shutdown = True
+                else:
+                    # Fail on no hot add and no force
+                    if not memoryHotAddEnabled:
+                        module.fail_json(
+                            msg="memoryHotAdd is not enabled. force is "
+                            "required for shutdown")
+
+                    # Fail on no force and memory shrink
+                    elif vm_hardware['memory_mb'] < vm.properties.config.hardware.memoryMB:
+                        module.fail_json(
+                            msg="Cannot lower memory on a live VM. force is "
+                            "required for shutdown")
+
             # set the new RAM size
             spec.set_element_memoryMB(vm_hardware['memory_mb'])
             changes['memory'] = vm_hardware['memory_mb']
@@ -313,9 +337,29 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
         if vm_hardware['num_cpus'] != vm.properties.config.hardware.numCPU:
             spec = spec_singleton(spec, request, vm)
 
-            shutdown = True
+            if vm.is_powered_on():
+                if force:
+                    # No hot add but force
+                    if not cpuHotAddEnabled:
+                        shutdown = True
+                    elif vm_hardware['num_cpus'] < vm.properties.config.hardware.numCPU:
+                        if not cpuHotRemoveEnabled:
+                            shutdown = True
+                else:
+                    # Fail on no hot add and no force
+                    if not cpuHotAddEnabled:
+                        module.fail_json(
+                            msg="cpuHotAdd is not enabled. force is "
+                            "required for shutdown")
+
+                    # Fail on no force and cpu shrink without hot remove
+                    elif vm_hardware['num_cpus'] < vm.properties.config.hardware.numCPU:
+                        if not cpuHotRemoveEnabled:
+                            module.fail_json(
+                                msg="Cannot lower CPU on a live VM without "
+                                "cpuHotRemove. force is required for shutdown")
+
             spec.set_element_numCPUs(vm_hardware['num_cpus'])
-            spec.set_element_numCoresPerSocket(vm_hardware['num_cpus'])
 
             changes['cpu'] = vm_hardware['num_cpus']
 
@@ -350,7 +394,7 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
                 module.fail_json(
                     msg='Failed to power on vm %s : %s' % (guest, e)
                 )
-    # ====( Done )====#
+
     vsphere_client.disconnect()
     if changed:
         module.exit_json(changed=True, changes=changes)
@@ -593,6 +637,50 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
         # Power on the VM if it was requested
         power_state(vm, state, True)
 
+        vsphere_client.disconnect()
+        module.exit_json(
+            ansible_facts=gather_facts(vm),
+            changed=True,
+            changes="Created VM %s" % guest)
+
+
+def delete_vm(vsphere_client, module, guest, vm, force):
+    try:
+
+        if vm.is_powered_on():
+            if force:
+                try:
+                    vm.power_off(sync_run=True)
+                    vm.get_status()
+
+                except Exception, e:
+                    module.fail_json(
+                        msg='Failed to shutdown vm %s: %s' % (guest, e))
+            else:
+                module.fail_json(
+                    msg='You must use either shut the vm down first or '
+                    'use force ')
+
+        # Invoke Destroy_Task
+        request = VI.Destroy_TaskRequestMsg()
+        _this = request.new__this(vm._mor)
+        _this.set_attribute_type(vm._mor.get_attribute_type())
+        request.set_element__this(_this)
+        ret = vsphere_client._proxy.Destroy_Task(request)._returnval
+        task = VITask(ret, vsphere_client)
+
+        # Wait for the task to finish
+        status = task.wait_for_state(
+            [task.STATE_SUCCESS, task.STATE_ERROR])
+        if status == task.STATE_ERROR:
+            vsphere_client.disconnect()
+            module.fail_json(msg="Error removing vm: %s %s" %
+                             task.get_error_message())
+        module.exit_json(changed=True, changes="VM %s deleted" % guest)
+    except Exception, e:
+        module.fail_json(
+            msg='Failed to delete vm %s : %s' % (guest, e))
+
 
 def power_state(vm, state, force):
     """
@@ -829,7 +917,10 @@ def main():
     # Check if the VM exists before continuing
     try:
         vm = viserver.get_vm_by_name(guest)
+    except Exception:
+        pass
 
+    if vm:
         # Run for facts only
         if vmware_guest_facts:
             try:
@@ -866,11 +957,19 @@ def main():
                 vm_hardware=vm_hardware,
                 vm_disk=vm_disk,
                 vm_nic=vm_nic,
-                state=state
+                state=state,
+                force=force
             )
+        elif state == 'absent':
+            delete_vm(
+                vsphere_client=viserver,
+                module=module,
+                guest=guest,
+                vm=vm,
+                force=force)
 
     # VM doesn't exist
-    except Exception:
+    else:
 
         # Fail for fact gather task
         if vmware_guest_facts:
@@ -906,10 +1005,8 @@ def main():
                 vm_nic=vm_nic,
                 state=state
             )
-    if vm:
-        # If the vm already exists, lets get some info from it, pass back the
-        # vm's vmware_guest_facts and then exit.
-        viserver.disconnect()
+
+    viserver.disconnect()
     module.exit_json(
         changed=False,
         vcenter=vcenter_hostname)
