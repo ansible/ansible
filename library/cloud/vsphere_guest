@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python
 
 # -*- coding: utf-8 -*-
 
@@ -273,17 +273,92 @@ def find_dvswitch_uuid(module, s, nfmor, portgroupKey):
     return dvswitch_uuid
 
 
-def create_vm(vsphere_client,
-              module,
-              esxi,
-              resource_pool,
-              cluster_name,
-              guest,
-              vm_extra_config,
-              vm_hardware,
-              vm_disk,
-              vm_nic,
-              state):
+def spec_singleton(spec, request, vm):
+
+    if not spec:
+        _this = request.new__this(vm._mor)
+        _this.set_attribute_type(vm._mor.get_attribute_type())
+        request.set_element__this(_this)
+        spec = request.new_spec()
+    return spec
+
+
+def vmdisk_id(vm, current_datastore_name):
+    id_list = []
+    for vm_disk in vm._disks:
+        if current_datastore_name in vm_disk['descriptor']:
+            id_list.append(vm_disk['device']['key'])
+    return id_list
+
+
+def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name, guest, vm_extra_config, vm_hardware, vm_disk, vm_nic, state):
+    module.fail_json(msg=vm.properties.config)
+    spec = None
+    changed = False
+    changes = {}
+    request = VI.ReconfigVM_TaskRequestMsg()
+
+
+    if vm_hardware['memory_mb']:
+        if vm_hardware['memory_mb'] != vm.properties.config.hardware.memoryMB:
+            spec = spec_singleton(spec, request, vm)
+
+            shutdown = True
+            # set the new RAM size
+            spec.set_element_memoryMB(vm_hardware['memory_mb'])
+            changes['memory'] = vm_hardware['memory_mb']
+
+    # ====( Config Memory )====#
+    if vm_hardware['num_cpus']:
+        if vm_hardware['num_cpus'] != vm.properties.config.hardware.numCPU:
+            spec = spec_singleton(spec, request, vm)
+
+            shutdown = True
+            spec.set_element_numCPUs(vm_hardware['num_cpus'])
+            spec.set_element_numCoresPerSocket(vm_hardware['num_cpus'])
+
+            changes['cpu'] = vm_hardware['num_cpus']
+
+    if len(changes):
+
+        if shutdown and vm.is_powered_on():
+            try:
+                vm.power_off(sync_run=True)
+                vm.get_status()
+
+            except Exception, e:
+                module.fail_json(
+                    msg='Failed to shutdown vm %s: %s' % (guest, e)
+                )
+
+        request.set_element_spec(spec)
+        ret = vsphere_client._proxy.ReconfigVM_Task(request)._returnval
+
+        # Wait for the task to finish
+        task = VITask(ret, vsphere_client)
+        status = task.wait_for_state([task.STATE_SUCCESS, task.STATE_ERROR])
+        if status == task.STATE_SUCCESS:
+            changed = True
+        elif status == task.STATE_ERROR:
+            module.fail_json(
+                msg="Error reconfiguring vm: %s" % task.get_error_message())
+
+        if vm.is_powered_off():
+            try:
+                vm.power_on(sync_run=True)
+            except Exception, e:
+                module.fail_json(
+                    msg='Failed to power on vm %s : %s' % (guest, e)
+                )
+    # ====( Done )====#
+    vsphere_client.disconnect()
+    if changed:
+        module.exit_json(changed=True, changes=changes)
+
+    module.exit_json(changed=False)
+
+
+def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, vm_extra_config, vm_hardware, vm_disk, vm_nic, state):
 
     datacenter = esxi['datacenter']
     esxi_hostname = esxi['hostname']
@@ -779,7 +854,20 @@ def main():
 
         # Fail on reconfig without params
         elif state == 'reconfigured':
-            pass
+            reconfigure_vm(
+                vsphere_client=viserver,
+                vm=vm,
+                module=module,
+                esxi=esxi,
+                resource_pool=resource_pool,
+                cluster_name=cluster,
+                guest=guest,
+                vm_extra_config=vm_extra_config,
+                vm_hardware=vm_hardware,
+                vm_disk=vm_disk,
+                vm_nic=vm_nic,
+                state=state
+            )
 
     # VM doesn't exist
     except Exception:
