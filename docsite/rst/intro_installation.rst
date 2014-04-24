@@ -228,7 +228,7 @@ your version of Python, you can get pip by::
 
 Then install Ansible with::
 
-   $ sudo pip install ansible
+   $ sudo CFLAGS=-Qunused-arguments CPPFLAGS=-Qunused-arguments pip install ansible
 
 Readers that use virtualenv can also install Ansible under virtualenv, though we'd recommend to not worry about it and just install Ansible globally.  Do not use easy_install to install ansible directly.
 
