@@ -69,6 +69,8 @@ Other notable changes:
 * regex_replace filter plugin added
 * added an inventory script for Docker
 * added an inventory script for Abiquo
+* the get_url module now accepts url_username and url_password as parameters, so sites which require
+  authentication no longer need to have them embedded in the url
 * ... to be filled in from changelogs ...
 * 
 
