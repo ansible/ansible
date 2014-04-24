@@ -250,9 +250,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
             handlers.append(ssl_handler)
 
     if parsed[0] != 'ftp':
-        url_username = module.params.get('url_username', '')
-        if url_username:
-            username = url_username
+        username = module.params.get('url_username', '')
+        if username:
             password = module.params.get('url_password', '')
             netloc = parsed[1]
         elif '@' in parsed[1]:
@@ -266,19 +265,22 @@ def fetch_url(module, url, data=None, headers=None, method=None,
             parsed = list(parsed)
             parsed[1] = netloc
 
-        passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
-        # this creates a password manager
-        passman.add_password(None, netloc, username, password)
-        # because we have put None at the start it will always
-        # use this username/password combination for  urls
-        # for which `theurl` is a super-url
+            # reconstruct url without credentials
+            url = urlparse.urlunparse(parsed)
 
-        authhandler = urllib2.HTTPBasicAuthHandler(passman)
-        # create the AuthHandler
-        handlers.append(authhandler)
+        if username:
+            passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
 
-        #reconstruct url without credentials
-        url = urlparse.urlunparse(parsed)
+            # this creates a password manager
+            passman.add_password(None, netloc, username, password)
+
+            # because we have put None at the start it will always
+            # use this username/password combination for  urls
+            # for which `theurl` is a super-url
+            authhandler = urllib2.HTTPBasicAuthHandler(passman)
+
+            # create the AuthHandler
+            handlers.append(authhandler)
 
     if not use_proxy:
         proxyhandler = urllib2.ProxyHandler({})
