@@ -21,6 +21,7 @@ import os.path
 import pipes
 import shutil
 import tempfile
+import base64
 from ansible import utils
 from ansible.runner.return_data import ReturnData
 
