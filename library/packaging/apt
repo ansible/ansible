@@ -137,13 +137,11 @@ EXAMPLES = '''
 # Pass options to dpkg on run
 - apt: upgrade=dist update_cache=yes dpkg_options='force-confold,force-confdef'
 
-<<<<<<< HEAD
 # Install the build deps for package "foo"
 - apt: pkg=foo build_dep=yes
-=======
+
 # Install a .deb package
 - apt: deb=/tmp/mypackage.deb
->>>>>>> devel
 '''
 
 
