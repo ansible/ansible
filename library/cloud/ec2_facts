@@ -127,6 +127,7 @@ class Ec2Metadata(object):
         for (key, value) in data.items():
             if ':' in key or '-' in key:
                 newkey = key.replace(':','_').replace('-','_')
+                del data[key]
                 data[newkey] = value
 
     def add_ec2_region(self, data):
