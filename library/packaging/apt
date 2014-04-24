@@ -84,7 +84,7 @@ options:
     choices: [ "yes", "safe", "full", "dist"]
   build_dep:
     description:
-      - Instead, install the build dependancies for the named pkg (equivalent to 'apt-get build-dep foo')
+      - Instead, install the build dependencies for the named pkg (equivalent to 'apt-get build-dep foo')
     required: false
     default: "no"
     choices: [ "yes", "no" ]
