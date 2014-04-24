@@ -33,6 +33,12 @@ options:
     description:
       - Unique name for configuration
     required: true
+  instance_type:
+    description:
+      - instance type to use for the instance
+    required: true
+    default: null
+    aliases: []
   image_id:
     description:
       - The AMI unique identifier to be used for the group
