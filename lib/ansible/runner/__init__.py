@@ -933,13 +933,13 @@ class Runner(object):
 
         # compare connection user to (su|sudo)_user and disable if the same
         if hasattr(conn, 'user'):
-            if conn.user == sudo_user or conn.user == su_user:
+            if (not su and conn.user == sudo_user) or (su and conn.user == su_user):
                 sudoable = False
                 su = False
         else:
             # assume connection type is local if no user attribute
             this_user = getpass.getuser()
-            if this_user == sudo_user or this_user == su_user:
+            if (not su and this_user == sudo_user) or (su and this_user == su_user):
                 sudoable = False
                 su = False
 
