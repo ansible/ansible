@@ -11,7 +11,8 @@ Major features/changes:
 * Accelerate improvements:
   - multiple users can connect with different keys, when `accelerate_multi_key = yes` is specified in the ansible.cfg.
   - daemon lifetime is now based on the time from the last activity, not the time from the daemon's launch.
-* ansible-playbook now accepts --force-handlers to run handlers even if tasks result in failures
+* ansible-playbook now accepts --force-handlers to run handlers even if tasks result in failures.
+* Added VMWare support with the vsphere_guest module.
 
 New Modules:
 
@@ -48,6 +49,7 @@ New Modules:
 * cloud: ec2_asg (configure autoscaling groups)
 * cloud: ec2_scaling_policy
 * cloud: ec2_metric_alarm
+* cloud: vsphere_guest
 
 Other notable changes:
 
