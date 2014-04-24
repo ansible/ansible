@@ -40,7 +40,7 @@ options:
   availability_zones:
     description:
       - List of availability zone names in which to create the group.
-    required: false
+    required: true
   launch_config_name:
     description:
       - Name of the Launch configuration to use for the group. See the ec2_lc module for managing these.
