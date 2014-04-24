@@ -13,11 +13,11 @@ requirements:
 options:
     state:
         description:
-            - 'started' will create a new maintenance window using
-            the service and desc fields. 'stopped' will end all
-            maintenance windows that match the desc and service.
-            Use 'ongoing' to retreive a JSON list of ongoing
-            maintenance windows.
+            - started will create a new maintenance window using
+              the service and desc fields. 'stopped' will end all
+              maintenance windows that match the desc and service.
+              Use 'ongoing' to retreive a JSON list of ongoing
+              maintenance windows.
         required: true
         default: null
         choices: [ "started", "stopped", ongoing" ]
@@ -46,7 +46,7 @@ options:
     token:
         description:
             - Pagerduty API token, generated on the pagerduty site.
-            Can be used instead of password.
+              Can be used instead of password.
         required: false
         default: null
         choices: []
@@ -68,7 +68,7 @@ options:
     minutes:
         description:
             - Length of maintenance window in minutes. This is added to
-            hours. Set hours to '0' if you'd like only minutes.
+              hours. Set hours to '0' if you'd like only minutes.
         required: false
         default: 0
         choices: []
@@ -124,11 +124,11 @@ global pd_url
 pd_url = "pagerduty.com/api/v1"
 
 
-def create_req(url, data, name, user, passwd, token):
+def create_req(url, data, name, user, passwd=None, token=None):
     req = urllib2.Request(url, data)
     if token:
         req.add_header("Authorization", "Token token=%s" % token)
-    else:
+    elif passwd:
         auth = base64.encodestring('%s:%s' % (user, passwd)).replace('\n', '')
         req.add_header("Authorization", "Basic %s" % auth)
 
@@ -137,7 +137,7 @@ def create_req(url, data, name, user, passwd, token):
 
 
 def service_lookup(name, user, passwd, token, service):
-    url = "https://{0}.{1}/services" .format(name, pd_url)
+    url = "https://%s.%s/services" % (name, pd_url)
     req = create_req(url, None, name, user, passwd, token)
     res = urllib2.urlopen(req)
     out = json.load(res)
@@ -151,10 +151,10 @@ def service_lookup(name, user, passwd, token, service):
     return None
 
 
-def user_lookup(name, user, passwd, token):
+def user_lookup(name, user, passwd=None, token=None):
     user_encoded = urllib.quote(user)
-    url = "https://{0}.{1}/users/?query={2}" \
-        .format(name, pd_url, user_encoded)
+    url = "https://%s.%s/users/?query=%s" \
+        % (name, pd_url, user_encoded)
     req = create_req(url, None, name, user, passwd, token)
 
     res = urllib2.urlopen(req)
@@ -165,20 +165,20 @@ def user_lookup(name, user, passwd, token):
             return out['users'][0]['id']
 
 
-def maint_lookup(name, user, passwd, token, service, desc):
+def maint_lookup(name, user, service, desc, passwd=None, token=None):
     # if given a description, look for that specific window
     if desc:
         desc_encoded = urllib.quote(desc)
 
-        url = "https://{0}.{1}/maintenance_windows/?query={2}&filter=ongoing" \
-            .format(name, pd_url, desc_encoded)
+        url = "https://%s.%s/maintenance_windows/?query=%s&filter=ongoing" \
+            % (name, pd_url, desc_encoded)
     # otherwise look up maintenance windows for the service
     else:
         service_id_encoded = urllib.quote(service_id)
         # url encode 'service_ids[]'
-        service_id_encoded = "service_ids%5B%5D={0}" .format(service_id_encoded)
-        url = "https://{0}.{1}/maintenance_windows/?{2}&filter=ongoing" \
-            .format(name, pd_url, service_id_encoded)
+        service_id_encoded = "service_ids%5B%5D=%s" % service_id_encoded
+        url = "https://%s.%s/maintenance_windows/?%s&filter=ongoing" \
+            % (name, pd_url, service_id_encoded)
 
     req = create_req(url, None, name, user, passwd, token)
 
@@ -193,9 +193,9 @@ def maint_lookup(name, user, passwd, token, service, desc):
     return maint_ids
 
 
-def ongoing(name, user, passwd, token):
-    url = "https://{0}.{1}/maintenance_windows/ongoing" \
-        .format(name, pd_url)
+def ongoing(name, user, passwd=None, token=None):
+    url = "https://%s.%s/maintenance_windows/ongoing" \
+        % (name, pd_url)
     req = create_req(url, None, name, user, passwd, token)
     try:
         res = urllib2.urlopen(req)
@@ -203,22 +203,22 @@ def ongoing(name, user, passwd, token):
     except urllib2.HTTPError, e:
         success = False
         changed = False
-        out = "Pagerduty API {0}: {1}" .format(e.code, e.reason)
+        out = "Pagerduty API - %s: %s" % (e.code, e.reason)
         return success, changed, out
 
     return True, False, out
 
 
 def create(
-        name, user, passwd, token, requester_id,
-        service, hours, minutes, desc):
+        name, user, requester_id, service,
+        hours, minutes, desc, passwd=None, token=None):
 
     now = datetime.datetime.utcnow()
     later = now + datetime.timedelta(hours=int(hours), minutes=int(minutes))
     start = now.strftime("%Y-%m-%dT%H:%M:%SZ")
     end = later.strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    url = "https://{0}.{1}/maintenance_windows" .format(name, pd_url)
+    url = "https://%s.%s/maintenance_windows" % (name, pd_url)
     request_data = {
         'maintenance_window': {
             'start_time': start,
@@ -239,21 +239,21 @@ def create(
     except urllib2.HTTPError, e:
         success = False
         changed = False
-        out = "Pagerduty API {0}: {1}" .format(e.code, e.reason)
+        out = "Pagerduty API %s: %s" % (e.code, e.reason)
         return success, changed, out
 
     return True, True, out
 
 
-def delete(name, user, passwd, token, service, desc):
+def delete(name, user, service, desc, passwd=None, token=None):
     changed = False
     success = False
-    maint_ids = maint_lookup(name, user, passwd, token, service, desc)
+    maint_ids = maint_lookup(name, user, service, desc, passwd, token)
     # try:
     if len(maint_ids) > 0:
         for window in maint_ids:
-            url = "https://{0}.{1}/maintenance_windows/{2}" \
-                .format(name, pd_url, window)
+            url = "https://%s.%s/maintenance_windows/%s" \
+                % (name, pd_url, window)
             req = create_req(url, None, name, user, passwd, token)
             req.get_method = lambda: 'DELETE'
             try:
@@ -261,7 +261,7 @@ def delete(name, user, passwd, token, service, desc):
             except urllib2.HTTPError, e:
                 success = False
                 changed = False
-                out = "Pagerduty API {0}: {1}" .format(e.code, e.reason)
+                out = "Pagerduty API - %s: %s" % (e.code, e.reason)
                 return success, changed, out
         changed = True
         success = True
@@ -277,19 +277,21 @@ def delete(name, user, passwd, token, service, desc):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(required=True, choices=[
+            state=dict(required=True, type='str', choices=[
                 'started',
                 'ongoing',
                 'stopped']),
-            name=dict(required=True),
-            user=dict(required=True),
-            passwd=dict(required=False),
-            token=dict(required=False),
-            service=dict(required=False),
-            hours=dict(default='1', required=False),
-            minutes=dict(default='0', required=False),
-            desc=dict(default='Created by Ansible', required=False)
-        )
+            name=dict(required=True, type='str'),
+            user=dict(required=True, type='str'),
+            passwd=dict(required=False, type='str'),
+            token=dict(required=False, type='str'),
+            service=dict(required=False, type='str'),
+            hours=dict(default='1', type='int', required=False),
+            minutes=dict(default='0', type='int', required=False),
+            desc=dict(default='Created by Ansible', type='str', required=False)
+        ),
+        supports_check_mode=False,
+        mutually_exclusive=[['passwd'], ['token']]
     )
 
     state = module.params['state']
@@ -303,8 +305,8 @@ def main():
     token = module.params['token']
     desc = module.params['desc']
 
-    if not token and not (user or passwd):
-        module.fail_json(msg="neither user and passwd nor token specified")
+    if not token and not passwd:
+        module.fail_json(msg="neither passwd nor token specified")
 
     if state == "started":
         if not service:
@@ -312,8 +314,9 @@ def main():
         user_id = user_lookup(name, user, passwd, token)
         service_id = service_lookup(name, user, passwd, token, service)
         (success, changed, out) = create(
-            name, user, passwd, token,
-            user_id, service_id, hours, minutes, desc)
+            name, user, user_id, service_id,
+            hours, minutes, desc, passwd, token
+        )
 
     if state == "stopped":
         if not service:
@@ -322,7 +325,7 @@ def main():
         service_id = service_lookup(name, user, passwd, token, service)
         if service_id is not None:
             (success, changed, out) = delete(
-                name, user, passwd, token, service_id, desc
+                name, user, service_id, desc, passwd, token
             )
         else:
             module.fail_json(msg="failed", result="service not found")
