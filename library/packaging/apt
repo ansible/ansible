@@ -440,8 +440,10 @@ def build_dep(m, pkgspec, cache, force=False,
     if len(packages) == 0:
         m.exit_json(changed=False)
     else:
+        for (k,v) in APT_ENV_VARS.iteritems():
+            os.environ[k] = v
         apt_cmd_path = m.get_bin_path(APT_GET_CMD, required=True)
-        cmd = '%s %s -y %s %s %s build-dep %s' % (APT_ENVVARS, apt_cmd_path, dpkg_options, force_yes, check_arg, packages)
+        cmd = '%s -y %s %s %s build-dep %s' % (apt_cmd_path, dpkg_options, force_yes, check_arg, packages)
         rc, out, err = m.run_command(cmd)
         if rc:
             m.fail_json(msg="'%s' failed: %s" % (cmd, err), stdout=out)
