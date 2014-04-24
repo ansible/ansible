@@ -201,7 +201,6 @@ def ongoing(name, user, passwd, token):
         res = urllib2.urlopen(req)
         out = res.read()
     except urllib2.HTTPError, e:
-        # if res.get_code() > 200:
         success = False
         changed = False
         out = "Pagerduty API {0}: {1}" .format(e.code, e.reason)
@@ -238,7 +237,6 @@ def create(
         res = urllib2.urlopen(req)
         out = res.read()
     except urllib2.HTTPError, e:
-    # if res.get_code() > 200:
         success = False
         changed = False
         out = "Pagerduty API {0}: {1}" .format(e.code, e.reason)
@@ -272,8 +270,6 @@ def delete(name, user, passwd, token, service, desc):
         out = "no maintenance windows found"
         changed = False
         success = True
-    # except:
-    #     out = "unable to delete maintenance window"
 
     return success, changed, out
 
