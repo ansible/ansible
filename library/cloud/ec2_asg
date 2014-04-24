@@ -39,7 +39,7 @@ options:
     required: false
   availability_zones:
     description:
-      - List of availability zone names in which to create the group.  Required if vpc_zone_identifier is not set.
+      - List of availability zone names in which to create the group.  Defaults to all the availability zones in the region if vpc_zone_identifier is not set.
     required: false
   launch_config_name:
     description:
