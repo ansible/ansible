@@ -11,6 +11,7 @@ import boto
 import optparse
 import yaml
 import os.path
+import boto.ec2.elb
 
 def delete_aws_resources(get_func, attr, opts):
     for item in get_func():
@@ -113,12 +114,18 @@ if __name__ == '__main__':
     aws = boto.connect_ec2(aws_access_key_id=opts.ec2_access_key,
             aws_secret_access_key=opts.ec2_secret_key)
 
+    elb = boto.connect_elb(aws_access_key_id=opts.ec2_access_key,
+            aws_secret_access_key=opts.ec2_secret_key)
+
     try:
         # Delete matching keys
         delete_aws_resources(aws.get_all_key_pairs, 'name', opts)
 
         # Delete matching groups
         delete_aws_resources(aws.get_all_security_groups, 'name', opts)
+
+        # Delete ELBs
+        delete_aws_resources(elb.get_all_load_balancers, 'name', opts)
 
         # Delete recorded EIPs
         delete_aws_eips(aws.get_all_addresses, 'public_ip', opts)
