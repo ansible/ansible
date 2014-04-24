@@ -128,7 +128,7 @@ class ElbManager:
         to report it out-of-service"""
 
         for lb in self.lbs:
-            initial_state = self._get_instance_health(lb) if wait else None
+            initial_state = self._get_instance_health(lb) 
             if initial_state is None:
                 # The instance isn't registered with this ELB so just 
                 # return unchanged
