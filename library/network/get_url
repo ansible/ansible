@@ -90,6 +90,18 @@ options:
     required: false
     default: 'yes'
     choices: ['yes', 'no']
+  url_username:
+    description:
+      - The username for use in HTTP basic authentication. This parameter can be used
+        without C(url_password) for sites that allow empty passwords.
+    required: false
+    version_added: '1.6'
+  url_password:
+    description:
+      - The password for use in HTTP basic authentication. If the C(url_username)
+        parameter is not specified, the C(url_password) parameter will not be used.
+    required: false
+    version_added: '1.6'
   others:
     description:
       - all arguments accepted by the M(file) module also work here
