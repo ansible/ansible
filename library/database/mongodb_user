@@ -2,6 +2,7 @@
 
 # (c) 2012, Elliott Foster <elliott@fourkitchens.com>
 # Sponsored by Four Kitchens http://fourkitchens.com.
+# (c) 2014, Epic Games, Inc.
 #
 # This file is part of Ansible
 #
@@ -46,6 +47,12 @@ options:
             - The port to connect to
         required: false
         default: 27017
+    replica_set:
+        version_added: "1.6"
+        description:
+            - Replica set to connect to (automatically connects to primary for writes)
+        required: false
+        default: null
     database:
         description:
             - The name of the database to add/remove the user from
@@ -92,12 +99,17 @@ EXAMPLES = '''
 - mongodb_user: database=burgers name=ben password=12345 roles='read' state=present
 - mongodb_user: database=burgers name=jim password=12345 roles='readWrite,dbAdmin,userAdmin' state=present
 - mongodb_user: database=burgers name=joe password=12345 roles='readWriteAnyDatabase' state=present
+
+# add a user to database in a replica set, the primary server is automatically discovered and written to
+- mongodb_user: database=burgers name=bob replica_set=blecher password=12345 roles='readWriteAnyDatabase' state=present
 '''
 
 import ConfigParser
+from distutils.version import LooseVersion
 try:
     from pymongo.errors import ConnectionFailure
     from pymongo.errors import OperationFailure
+    from pymongo import version as PyMongoVersion
     from pymongo import MongoClient
 except ImportError:
     try:  # for older PyMongo 2.2
@@ -114,34 +126,25 @@ else:
 #
 
 def user_add(module, client, db_name, user, password, roles):
-    try:
-        db = client[db_name]
-        if roles is None:
-            db.add_user(user, password, False)
-        else:
-            try:
-                db.add_user(user, password, None, roles=roles)
-            except:
-                module.fail_json(msg='"problem adding user; you must be on mongodb 2.4+ and pymongo 2.5+ to use the roles param"')
-    except OperationFailure:
-        return False
-
-    return True
+    db = client[db_name]
+    if roles is None:
+        db.add_user(user, password, False)
+    else:
+        try:
+            db.add_user(user, password, None, roles=roles)
+        except OperationFailure, e:
+            err_msg = str(e)
+            if LooseVersion(PyMongoVersion) <= LooseVersion('2.5'):
+                err_msg = err_msg + ' (Note: you must be on mongodb 2.4+ and pymongo 2.5+ to use the roles param)'
+            module.fail_json(msg=err_msg)
 
 def user_remove(client, db_name, user):
-    try:
-        db = client[db_name]
-        db.remove_user(user)
-    except OperationFailure:
-        return False
-
-    return True
+    db = client[db_name]
+    db.remove_user(user)
 
 def load_mongocnf():
     config = ConfigParser.RawConfigParser()
     mongocnf = os.path.expanduser('~/.mongodb.cnf')
-    if not os.path.exists(mongocnf):
-        return False
 
     try:
         config.readfp(open(mongocnf))
@@ -165,6 +168,7 @@ def main():
             login_password=dict(default=None),
             login_host=dict(default='localhost'),
             login_port=dict(default='27017'),
+            replica_set=dict(default=None),
             database=dict(required=True, aliases=['db']),
             user=dict(required=True, aliases=['name']),
             password=dict(aliases=['pass']),
@@ -180,6 +184,7 @@ def main():
     login_password = module.params['login_password']
     login_host = module.params['login_host']
     login_port = module.params['login_port']
+    replica_set = module.params['replica_set']
     db_name = module.params['database']
     user = module.params['user']
     password = module.params['password']
@@ -187,7 +192,20 @@ def main():
     state = module.params['state']
 
     try:
-        client = MongoClient(login_host, int(login_port))
+    	if replica_set:
+    	   client = MongoClient(login_host, int(login_port), replicaset=replica_set)
+    	else:
+    	   client = MongoClient(login_host, int(login_port))
+
+        # try to authenticate as a target user to check if it already exists
+        try:
+           client[db_name].authenticate(user, password)
+           if state == 'present':
+              module.exit_json(changed=False, user=user)
+        except OperationFailure:
+           if state == 'absent':
+              module.exit_json(changed=False, user=user)
+
         if login_user is None and login_password is None:
             mongocnf_creds = load_mongocnf()
             if mongocnf_creds is not False:
@@ -199,17 +217,23 @@ def main():
         if login_user is not None and login_password is not None:
             client.admin.authenticate(login_user, login_password)
 
-    except ConnectionFailure as e:
-        module.fail_json(msg='unable to connect to database, check login_user and login_password are correct')
+    except ConnectionFailure, e:
+        module.fail_json(msg='unable to connect to database: %s' % str(e))
 
     if state == 'present':
         if password is None:
             module.fail_json(msg='password parameter required when adding a user')
-        if user_add(module, client, db_name, user, password, roles) is not True:
-            module.fail_json(msg='Unable to add or update user, check login_user and login_password are correct and that this user has access to the admin collection')
+
+        try:
+            user_add(module, client, db_name, user, password, roles)
+        except OperationFailure, e:
+            module.fail_json(msg='Unable to add or update user: %s' % str(e))
+
     elif state == 'absent':
-        if user_remove(client, db_name, user) is not True:
-            module.fail_json(msg='Unable to remove user, check login_user and login_password are correct and that this user has access to the admin collection')
+        try:
+            user_remove(client, db_name, user)
+        except OperationFailure, e:
+            module.fail_json(msg='Unable to remove user: %s' % str(e))
 
     module.exit_json(changed=True, user=user)
 

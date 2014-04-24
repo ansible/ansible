@@ -1,16 +1,18 @@
 Homepage and documentation source for Ansible
 =============================================
 
-This project hosts the source behind [ansibleworks.com/docs](http://www.ansibleworks.com/docs/)
+This project hosts the source behind [docs.ansible.com](http://docs.ansible.com/)
 
 Contributions to the documentation are welcome.  To make changes, submit a pull request
 that changes the reStructuredText files in the "rst/" directory only, and Michael can
-do a docs build and push the static files. If you wish to verify output from the markup
-such as link references, you may [install Sphinx] and build the documentation by running
-`make viewdocs` from the `ansible/docsite` directory.  To include module documentation
-you'll need to run `make webdocs` at the top level of the repository.  The generated
-html files are in docsite/htmlout/ and really won't be formatted right until up
-on ansibleworks.com.
+do a docs build and push the static files. 
+
+If you wish to verify output from the markup
+such as link references, you may install sphinx and build the documentation by running
+`make viewdocs` from the `ansible/docsite` directory.  
+
+To include module documentation you'll need to run `make webdocs` at the top level of the repository.  The generated
+html files are in docsite/htmlout/.
 
 If you do not want to learn the reStructuredText format, you can also [file issues] about
 documentation problems on the Ansible GitHub project.
@@ -19,7 +21,9 @@ Note that module documentation can actually be [generated from a DOCUMENTATION d
 in the modules directory, so corrections to modules written as such need to be made
 in the module source, rather than in docsite source.
 
-[install Sphinx]: http://sphinx-doc.org/install.html
+To install sphinx and the required theme, install pip and then "pip install sphinx sphinx_rtd_theme"
+
 [file issues]: https://github.com/ansible/ansible/issues
-[module-docs]: http://www.ansibleworks.com/docs/developing_modules.html#documenting-your-module
+[module-docs]: http://docs.ansible.com/developing_modules.html#documenting-your-module
+
 

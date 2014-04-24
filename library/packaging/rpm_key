@@ -1,25 +1,23 @@
-#!/usr/bin/python2
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-"""
-Ansible module to import third party repo keys to your rpm db
-(c) 2013, Héctor Acosta <hector.acosta@gazzang.com>
-
-This file is part of Ansible
-
-Ansible is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Ansible is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-"""
+# Ansible module to import third party repo keys to your rpm db
+# (c) 2013, Héctor Acosta <hector.acosta@gazzang.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 DOCUMENTATION = '''
 ---
@@ -42,6 +40,14 @@ options:
       choices: [present, absent]
       description:
           - Wheather the key will be imported or removed from the rpm db.
+    validate_certs:
+      description:
+          - If C(no) and the C(key) is a url starting with https, SSL certificates will not be validated. This should only be used
+            on personally controlled sites using self-signed certificates.
+      required: false
+      default: 'yes'
+      choices: ['yes', 'no']
+
 '''
 
 EXAMPLES = '''
@@ -57,7 +63,6 @@ EXAMPLES = '''
 import syslog
 import os.path
 import re
-import urllib2
 import tempfile
 
 # Attempt to download at most 8192 bytes.
@@ -116,8 +121,8 @@ class RpmKey:
     def fetch_key(self, url, maxbytes=MAXBYTES):
         """Downloads a key from url, returns a valid path to a gpg key"""
         try:
-            fd = urllib2.urlopen(url)
-            key = fd.read(maxbytes)
+            rsp, info = fetch_url(self.module, url)
+            key = rsp.read(maxbytes)
             if not is_pubkey(key):
                 self.module.fail_json(msg="Not a public key: %s" % url)
             tmpfd, tmpname = tempfile.mkstemp()
@@ -131,7 +136,9 @@ class RpmKey:
     def normalize_keyid(self, keyid):
         """Ensure a keyid doesn't have a leading 0x, has leading or trailing whitespace, and make sure is lowercase"""
         ret = keyid.strip().lower()
-        if ret.startswith(('0x', '0X')):
+        if ret.startswith('0x'):
+            return ret[2:]
+        elif ret.startswith('0X'):
             return ret[2:]
         else:
             return ret
@@ -141,9 +148,9 @@ class RpmKey:
         stdout, stderr = self.execute_command([gpg, '--no-tty', '--batch', '--with-colons', '--fixed-list-mode', '--list-packets', keyfile])
         for line in stdout.splitlines():
             line = line.strip()
-            if line.startswith('keyid:'):
+            if line.startswith(':signature packet:'):
                 # We want just the last 8 characters of the keyid
-                keyid = line.split(':')[1].strip()[8:]
+                keyid = line.split()[-1].strip()[8:]
                 return keyid
         self.json_fail(msg="Unexpected gpg output")
 
@@ -161,7 +168,7 @@ class RpmKey:
         return stdout, stderr
 
     def is_key_imported(self, keyid):
-        stdout, stderr = self.execute_command([self.rpm, '-q', 'gpg-pubkey'])
+        stdout, stderr = self.execute_command([self.rpm, '-qa', 'gpg-pubkey'])
         for line in stdout.splitlines():
             line = line.strip()
             if not line:
@@ -187,7 +194,8 @@ def main():
     module = AnsibleModule(
             argument_spec = dict(
                 state=dict(default='present', choices=['present', 'absent'], type='str'),
-                key=dict(required=True, type='str')
+                key=dict(required=True, type='str'),
+                validate_certs=dict(default='yes', type='bool'),
                 ),
             supports_check_mode=True
             )
@@ -198,4 +206,5 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
 main()

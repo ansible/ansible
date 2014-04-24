@@ -44,7 +44,6 @@ options:
   name:
     description:
       - Description of a crontab entry.
-    required: false
     default: null
   user:
     description:
@@ -145,6 +144,7 @@ import os
 import re
 import tempfile
 import platform
+import pipes
 
 CRONCMD = "/usr/bin/crontab"
 
@@ -190,7 +190,8 @@ class CronTab(object):
             except:
                 raise CronTabError("Unexpected error:", sys.exc_info()[0])
         else:
-            (rc, out, err) = self.module.run_command(self._read_user_execute())
+            # using safely quoted shell for now, but this really should be two non-shell calls instead.  FIXME
+            (rc, out, err) = self.module.run_command(self._read_user_execute(), use_unsafe_shell=True)
 
             if rc != 0 and rc != 1: # 1 can mean that there are no jobs.
                 raise CronTabError("Unable to read crontab")
@@ -235,8 +236,8 @@ class CronTab(object):
 
         # Add the entire crontab back to the user crontab
         if not self.cron_file:
-            # os.system(self._write_execute(path))
-            (rc, out, err) = self.module.run_command(self._write_execute(path))
+            # quoting shell args for now but really this should be two non-shell calls.  FIXME
+            (rc, out, err) = self.module.run_command(self._write_execute(path), use_unsafe_shell=True)
             os.unlink(path)
 
             if rc != 0:
@@ -350,9 +351,11 @@ class CronTab(object):
         user = ''
         if self.user:
             if platform.system() == 'SunOS':
-                return "su '%s' -c '%s -l'" % (self.user, CRONCMD)
+                return "su %s -c '%s -l'" % (pipes.quote(self.user), pipes.quote(CRONCMD))
+            elif platform.system() == 'AIX':
+                return "%s -l %s" % (pipes.quote(CRONCMD), pipes.quote(self.user))
             else:
-                user = '-u %s' % self.user
+                user = '-u %s' % pipes.quote(self.user)
         return "%s %s %s" % (CRONCMD , user, '-l')
 
     def _write_execute(self, path):
@@ -361,11 +364,11 @@ class CronTab(object):
         """
         user = ''
         if self.user:
-            if platform.system() == 'SunOS':
-                return "chown %s %s ; su '%s' -c '%s %s'" % (self.user, path, self.user, CRONCMD, path)
+            if platform.system() in [ 'SunOS', 'AIX' ]:
+                return "chown %s %s ; su '%s' -c '%s %s'" % (pipes.quote(self.user), pipes.quote(path), pipes.quote(self.user), CRONCMD, pipes.quote(path))
             else:
-                user = '-u %s' % self.user
-        return "%s %s %s" % (CRONCMD , user, path)
+                user = '-u %s' % pipes.quote(self.user)
+        return "%s %s %s" % (CRONCMD , user, pipes.quote(path))
 
 
 

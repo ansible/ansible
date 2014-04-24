@@ -34,11 +34,13 @@ description:
      - The M(command) module takes the command name followed by a list of space-delimited arguments.
      - The given command will be executed on all selected nodes. It will not be
        processed through the shell, so variables like C($HOME) and operations
-       like C("<"), C(">"), C("|"), and C("&") will not work.
+       like C("<"), C(">"), C("|"), and C("&") will not work (use the M(shell)
+       module if you need these features).
 options:
   free_form:
     description:
-      - the command module takes a free form command to run
+      - the command module takes a free form command to run.  There is no parameter actually named 'free form'.
+        See the examples!
     required: true
     default: null
     aliases: []
@@ -135,7 +137,7 @@ def main():
         args = shlex.split(args)
     startd = datetime.datetime.now()
 
-    rc, out, err = module.run_command(args, executable=executable)
+    rc, out, err = module.run_command(args, executable=executable, use_unsafe_shell=shell)
 
     endd = datetime.datetime.now()
     delta = endd - startd
@@ -179,11 +181,11 @@ class CommandModule(AnsibleModule):
         params['removes'] = None
         params['shell'] = False
         params['executable'] = None
-        if args.find("#USE_SHELL") != -1:
+        if "#USE_SHELL" in args:
             args = args.replace("#USE_SHELL", "")
             params['shell'] = True
 
-        r = re.compile(r'(^|\s)(creates|removes|chdir|executable)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)')
+        r = re.compile(r'(^|\s)(creates|removes|chdir|executable|NO_LOG)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)')
         for m in r.finditer(args):
             v = m.group(4).replace("\\", "")
             if m.group(2) == "creates":
@@ -202,6 +204,8 @@ class CommandModule(AnsibleModule):
                 if not (os.path.exists(v)):
                     self.fail_json(rc=258, msg="cannot use executable '%s': file does not exist" % v)
                 params['executable'] = v
+            elif m.group(2) == "NO_LOG":
+                params['NO_LOG'] = self.boolean(v)
         args = r.sub("", args)
         params['args'] = args
         return (params, params['args'])

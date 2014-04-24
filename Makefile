@@ -20,7 +20,7 @@ OS = $(shell uname -s)
 # Manpages are currently built with asciidoc -- would like to move to markdown
 # This doesn't evaluate until it's called. The -D argument is the
 # directory of the target file ($@), kinda like `dirname`.
-MANPAGES := docs/man/man1/ansible.1 docs/man/man1/ansible-playbook.1 docs/man/man1/ansible-pull.1 docs/man/man1/ansible-doc.1
+MANPAGES := docs/man/man1/ansible.1 docs/man/man1/ansible-playbook.1 docs/man/man1/ansible-pull.1 docs/man/man1/ansible-doc.1 docs/man/man1/ansible-galaxy.1 docs/man/man1/ansible-vault.1
 ifneq ($(shell which a2x 2>/dev/null),)
 ASCII2MAN = a2x -D $(dir $@) -d manpage -f manpage $<
 ASCII2HTMLMAN = a2x -D docs/html/man/ -d manpage -f xhtml
@@ -55,17 +55,14 @@ ifeq ($(OFFICIAL),)
 endif
 RPMNVR = "$(NAME)-$(VERSION)-$(RPMRELEASE)$(RPMDIST)"
 
-NOSETESTS := nosetests
+NOSETESTS ?= nosetests
 
 ########################################################
 
 all: clean python
 
 tests:
-	PYTHONPATH=./lib ANSIBLE_LIBRARY=./library  $(NOSETESTS) -d -v
-
-# To force a rebuild of the docs run 'touch VERSION && make docs'
-docs: $(MANPAGES) modulepages
+	PYTHONPATH=./lib ANSIBLE_LIBRARY=./library  $(NOSETESTS) -d -w test/units -v
 
 authors:
 	sh hacking/authors.sh
@@ -127,7 +124,7 @@ install:
 sdist: clean docs
 	$(PYTHON) setup.py sdist -t MANIFEST.in
 
-rpmcommon: sdist
+rpmcommon: $(MANPAGES) sdist
 	@mkdir -p rpm-build
 	@cp dist/*.gz rpm-build/
 	@sed -e 's#^Version:.*#Version: $(VERSION)#' -e 's#^Release:.*#Release: $(RPMRELEASE)%{?dist}#' $(RPMSPEC) >rpm-build/$(NAME).spec
@@ -172,11 +169,7 @@ deb: debian
 
 # for arch or gentoo, read instructions in the appropriate 'packaging' subdirectory directory
 
-modulepages:
-	PYTHONPATH=./lib $(PYTHON) hacking/module_formatter.py -A $(VERSION) -t man -o docs/man/man3/ --module-dir=library --template-dir=hacking/templates # --verbose
-
-# because this requires Sphinx it is not run as part of every build, those building the RPM and so on can ignore this
-
-webdocs:
+webdocs: $(MANPAGES)
 	(cd docsite/; make docs)
 
+docs: $(MANPAGES)

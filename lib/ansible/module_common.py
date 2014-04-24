@@ -1,4 +1,4 @@
-# (c) 2013, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2013-2014, Michael DeHaan <michael.dehaan@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -95,7 +95,7 @@ class ModuleReplacer(object):
 
         for line in lines:
 
-            if line.find(REPLACER) != -1:
+            if REPLACER in line:
                 output.write(self.slurp(os.path.join(self.snippet_path, "basic.py")))
                 snippet_names.append('basic')
             elif line.startswith('from ansible.module_utils.'):
@@ -103,7 +103,7 @@ class ModuleReplacer(object):
                 import_error = False
                 if len(tokens) != 3:
                     import_error = True
-                if line.find(" import *") == -1:
+                if " import *" not in line:
                     import_error = True
                 if import_error:
                     raise errors.AnsibleError("error importing module in %s, expecting format like 'from ansible.module_utils.basic import *'" % module_path)
@@ -136,7 +136,10 @@ class ModuleReplacer(object):
             complex_args_json = utils.jsonify(complex_args)
             # We force conversion of module_args to str because module_common calls shlex.split,
             # a standard library function that incorrectly handles Unicode input before Python 2.7.3.
-            encoded_args = repr(module_args.encode('utf-8'))
+            try:
+                encoded_args = repr(module_args.encode('utf-8'))
+            except UnicodeDecodeError:
+                encoded_args = repr(module_args)
             encoded_lang = repr(C.DEFAULT_MODULE_LANG)
             encoded_complex = repr(complex_args_json)
 

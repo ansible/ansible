@@ -33,9 +33,11 @@ description:
        are not immediately available after their init scripts return - 
        which is true of certain Java application servers. It is also 
        useful when starting guests with the M(virt) module and
-       needing to pause until they are ready. This module can 
-       also be used to wait for a file to be available on the filesystem
-       or with a regex match a string to be present in a file.
+       needing to pause until they are ready. 
+     - This module can also be used to wait for a regex match a string to be present in a file.
+     - In 1.6 and later, this module can 
+       also be used to wait for a file to be available or absent on the 
+       filesystem.
 version_added: "0.7"
 options:
   host:
@@ -60,10 +62,10 @@ options:
     required: false
   state:
     description:
-      - either C(present), C(started), or C(stopped) 
+      - either C(present), C(started), or C(stopped), C(absent)
       - When checking a port C(started) will ensure the port is open, C(stopped) will check that it is closed
-      - When checking for a file or a search string C(present) or C(started) will ensure that the file or string is present before continuing
-    choices: [ "present", "started", "stopped" ]
+      - When checking for a file or a search string C(present) or C(started) will ensure that the file or string is present before continuing, C(absent) will check that file is absent or removed
+    choices: [ "present", "started", "stopped", "absent" ]
     default: "started"
   path:
     version_added: "1.4"
@@ -78,19 +80,25 @@ options:
    
 notes: []
 requirements: []
-author: Jeroen Hoekx, John Jarvis
+author: Jeroen Hoekx, John Jarvis, Andrii Radyk
 '''
 
 EXAMPLES = '''
 
 # wait 300 seconds for port 8000 to become open on the host, don't start checking for 10 seconds
-- wait_for: port=8000 delay=10"
+- wait_for: port=8000 delay=10
 
 # wait until the file /tmp/foo is present before continuing
 - wait_for: path=/tmp/foo
 
 # wait until the string "completed" is in the file /tmp/foo before continuing
 - wait_for: path=/tmp/foo search_regex=completed
+
+# wait until the lock file is removed
+- wait_for: path=/var/lock/file.lock state=absent 
+
+# wait until the process is finished and pid was destroyed
+- wait_for: path=/proc/3466/status state=absent
 
 '''
 
@@ -105,7 +113,7 @@ def main():
             port=dict(default=None),
             path=dict(default=None),
             search_regex=dict(default=None),
-            state=dict(default='started', choices=['started', 'stopped', 'present']),
+            state=dict(default='started', choices=['started', 'stopped', 'present', 'absent']),
         ),
     )
 
@@ -133,23 +141,35 @@ def main():
     if delay:
         time.sleep(delay)
 
-    if state == 'stopped':
+    if state in [ 'stopped', 'absent' ]:
         ### first wait for the stop condition
         end = start + datetime.timedelta(seconds=timeout)
 
         while datetime.datetime.now() < end:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(connect_timeout)
-            try:
-                s.connect( (host, port) )
-                s.shutdown(socket.SHUT_RDWR)
-                s.close()
-                time.sleep(1)
-            except:
-                break
+            if path:
+                try:
+                    f = open(path)
+                    f.close()
+                    time.sleep(1)
+                    pass
+                except IOError:
+                    break
+            elif port:
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.settimeout(connect_timeout)
+                try:
+                    s.connect( (host, port) )
+                    s.shutdown(socket.SHUT_RDWR)
+                    s.close()
+                    time.sleep(1)
+                except:
+                    break
         else:
             elapsed = datetime.datetime.now() - start
-            module.fail_json(msg="Timeout when waiting for %s:%s to stop." % (host, port), elapsed=elapsed.seconds)
+            if port:
+                module.fail_json(msg="Timeout when waiting for %s:%s to stop." % (host, port), elapsed=elapsed.seconds)
+            elif path:
+                module.fail_json(msg="Timeout when waiting for %s to be absent." % (path), elapsed=elapsed.seconds)
 
     elif state in ['started', 'present']:
         ### wait for start condition

@@ -49,6 +49,11 @@ options:
       - Name of the role to set as owner of the database
     required: false
     default: null
+  port:
+    description:
+      - Database port to connect to.
+    required: false
+    default: 5432
   template:
     description:
       - Template used to create the database
@@ -192,6 +197,23 @@ def db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
         else:
             return False
 
+def db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
+    if not db_exists(cursor, db):
+       return False
+    else:
+        db_info = get_db_info(cursor, db)
+        if (encoding and 
+            get_encoding_id(cursor, encoding) != db_info['encoding_id']):
+            return False
+        elif lc_collate and lc_collate != db_info['lc_collate']:
+            return False
+        elif lc_ctype and lc_ctype != db_info['lc_ctype']:
+            return False
+        elif owner and owner != db_info['owner']:
+            return False
+        else:
+            return True
+
 # ===========================================
 # Module execution.
 #
@@ -254,7 +276,12 @@ def main():
 
     try:
         if module.check_mode:
-            module.exit_json(changed=True,db=db)
+            if state == "absent":
+                changed = not db_exists(cursor, db)
+            elif state == "present":
+                changed = not db_matches(cursor, db, owner, template, encoding,
+                                         lc_collate, lc_ctype)
+            module.exit_json(changed=changed,db=db)
 
         if state == "absent":
             changed = db_delete(cursor, db)

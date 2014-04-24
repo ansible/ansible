@@ -32,6 +32,8 @@ import pwd
 import ast
 import traceback
 
+from ansible.utils.string_functions import count_newlines_from_end
+
 class Globals(object):
 
     FILTERS = None
@@ -86,223 +88,16 @@ def lookup(name, *args, **kwargs):
     vars = kwargs.get('vars', None)
 
     if instance is not None:
-        ran = instance.run(*args, inject=vars, **kwargs)
-        return ",".join(ran)
+        # safely catch run failures per #5059
+        try:
+            ran = instance.run(*args, inject=vars, **kwargs)
+        except Exception, e:
+            ran = None
+        if ran:
+            ran = ",".join(ran)
+        return ran
     else:
         raise errors.AnsibleError("lookup plugin (%s) not found" % name)
-
-def _legacy_varFindLimitSpace(basedir, vars, space, part, lookup_fatal, depth, expand_lists):
-    ''' limits the search space of space to part
-
-    basically does space.get(part, None), but with
-    templating for part and a few more things
-    '''
-
-    # Previous part couldn't be found, nothing to limit to
-    if space is None:
-        return space
-    # A part with escaped .s in it is compounded by { and }, remove them
-    if len(part) > 0 and part[0] == '{' and part[-1] == '}':
-        part = part[1:-1]
-    # Template part to resolve variables within (${var$var2})
-    part = legacy_varReplace(basedir, part, vars, lookup_fatal=lookup_fatal, depth=depth + 1, expand_lists=expand_lists)
-
-    # Now find it
-    if part in space:
-        space = space[part]
-    elif "[" in part:
-        m = _LISTRE.search(part)
-        if not m:
-            return None
-        else:
-            try:
-                space = space[m.group(1)][int(m.group(2))]
-            except (KeyError, IndexError):
-                return None
-    else:
-        return None
-
-    # if space is a string, check if it's a reference to another variable
-    if isinstance(space, basestring):
-        space = template(basedir, space, vars, lookup_fatal=lookup_fatal, depth=depth + 1, expand_lists=expand_lists)
-
-    return space
-
-def _legacy_varFind(basedir, text, vars, lookup_fatal, depth, expand_lists):
-    ''' Searches for a variable in text and finds its replacement in vars
-
-    The variables can have two formats;
-    - simple, $ followed by alphanumerics and/or underscores
-    - complex, ${ followed by alphanumerics, underscores, periods, braces and brackets, ended by a }
-
-    Examples:
-    - $variable: simple variable that will have vars['variable'] as its replacement
-    - ${variable.complex}: complex variable that will have vars['variable']['complex'] as its replacement
-    - $variable.complex: simple variable, identical to the first, .complex ignored
-
-    Complex variables are broken into parts by separating on periods, except if enclosed in {}.
-    ${variable.{fully.qualified.domain}} would be parsed as two parts, variable and fully.qualified.domain,
-    whereas ${variable.fully.qualified.domain} would be parsed as four parts.
-
-    Returns a dict(replacement=<value in vars>, start=<index into text where the variable stated>,
-        end=<index into text where the variable ends>)
-    or None if no variable could be found in text. If replacement is None, it should be replaced with the
-    original data in the caller.
-    '''
-
-    # short circuit this whole function if we have specified we don't want
-    # legacy var replacement
-    if C.DEFAULT_LEGACY_PLAYBOOK_VARIABLES == False:
-        return None
-
-    start = text.find("$")
-    if start == -1:
-        return None
-    # $ as last character
-    if start + 1 == len(text):
-        return None
-    # Escaped var
-    if start > 0 and text[start - 1] == '\\':
-        return {'replacement': '$', 'start': start - 1, 'end': start + 1}
-
-    var_start = start + 1
-    if text[var_start] == '{':
-        is_complex = True
-        brace_level = 1
-        var_start += 1
-    else:
-        is_complex = False
-        brace_level = 1
-
-    # is_lookup is true for $FILE(...) and friends
-    is_lookup = False
-    lookup_plugin_name = None
-    end = var_start
-
-    # part_start is an index of where the current part started
-    part_start = var_start
-    space = vars
-
-    while end < len(text) and (((is_lookup or is_complex) and brace_level > 0) or (not is_complex and not is_lookup)):
-
-        if text[end].isalnum() or text[end] == '_':
-            pass
-        elif not is_complex and not is_lookup and text[end] == '(' and text[part_start:end].isupper():
-            is_lookup = True
-            lookup_plugin_name = text[part_start:end]
-            part_start = end + 1
-        elif is_lookup and text[end] == '(':
-            brace_level += 1
-        elif is_lookup and text[end] == ')':
-            brace_level -= 1
-        elif is_lookup:
-            # lookups are allowed arbitrary contents
-            pass
-        elif is_complex and text[end] == '{':
-            brace_level += 1
-        elif is_complex and text[end] == '}':
-            brace_level -= 1
-        elif is_complex and text[end] in ('$', '[', ']', '-'):
-            pass
-        elif is_complex and text[end] == '.':
-            if brace_level == 1:
-                space = _legacy_varFindLimitSpace(basedir, vars, space, text[part_start:end], lookup_fatal, depth, expand_lists)
-                part_start = end + 1
-        else:
-            # This breaks out of the loop on non-variable name characters
-            break
-        end += 1
-
-    var_end = end
-
-    # Handle "This has $ in it"
-    if var_end == part_start:
-        return {'replacement': None, 'start': start, 'end': end}
-
-    # Handle lookup plugins
-    if is_lookup:
-        # When basedir is None, handle lookup plugins later
-        if basedir is None:
-            return {'replacement': None, 'start': start, 'end': end}
-        var_end -= 1
-        from ansible import utils
-        args = text[part_start:var_end]
-        if lookup_plugin_name == 'LOOKUP':
-            lookup_plugin_name, args = args.split(",", 1)
-            args = args.strip()
-        # args have to be templated
-        args = legacy_varReplace(basedir, args, vars, lookup_fatal, depth + 1, True)
-        if isinstance(args, basestring) and args.find('$') != -1:
-            # unable to evaluate something like $FILE($item) at this point, try to evaluate later
-            return None
-
-
-        instance = utils.plugins.lookup_loader.get(lookup_plugin_name.lower(), basedir=basedir)
-        if instance is not None:
-            try:
-                replacement = instance.run(args, inject=vars)
-                if expand_lists:
-                    replacement = ",".join([unicode(x) for x in replacement])
-            except:
-                if not lookup_fatal:
-                    replacement = None
-                else:
-                    raise
-
-        else:
-            replacement = None
-        return dict(replacement=replacement, start=start, end=end)
-
-    if is_complex:
-        var_end -= 1
-        if text[var_end] != '}' or brace_level != 0:
-            return None
-    space = _legacy_varFindLimitSpace(basedir, vars, space, text[part_start:var_end], lookup_fatal, depth, expand_lists)
-    return dict(replacement=space, start=start, end=end)
-
-def legacy_varReplace(basedir, raw, vars, lookup_fatal=True, depth=0, expand_lists=False):
-    ''' Perform variable replacement of $variables in string raw using vars dictionary '''
-    # this code originally from yum
-
-    orig = raw
-
-    if not isinstance(raw, unicode):
-        raw = raw.decode("utf-8")
-
-    if (depth > 20):
-        raise errors.AnsibleError("template recursion depth exceeded")
-
-    done = [] # Completed chunks to return
-
-    while raw:
-        m = _legacy_varFind(basedir, raw, vars, lookup_fatal, depth, expand_lists)
-        if not m:
-            done.append(raw)
-            break
-
-        # Determine replacement value (if unknown variable then preserve
-        # original)
-
-        replacement = m['replacement']
-        if expand_lists and isinstance(replacement, (list, tuple)):
-            replacement = ",".join([str(x) for x in replacement])
-        if isinstance(replacement, (str, unicode)):
-            replacement = legacy_varReplace(basedir, replacement, vars, lookup_fatal, depth=depth+1, expand_lists=expand_lists)
-        if replacement is None:
-            replacement = raw[m['start']:m['end']]
-
-        start, end = m['start'], m['end']
-        done.append(raw[:start])          # Keep stuff leading up to token
-        done.append(unicode(replacement)) # Append replacement value
-        raw = raw[end:]                   # Continue with remainder of string
-
-    result = ''.join(done)
-
-    if (not '\$' in orig) and (result != orig):
-        from ansible import utils
-        # above check against \$ as templating will remove the backslash
-        utils.deprecated("Legacy variable substitution, such as using ${foo} or $foo instead of {{ foo }} is currently valid but will be phased out and has been out of favor since version 1.2. This is the last of legacy features on our deprecation list. You may continue to use this if you have specific needs for now","1.6")
-    return result
 
 def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=True, convert_bare=False, fail_on_undefined=False, filter_fatal=True):
     ''' templates a data structure by traversing it and substituting for other data structures '''
@@ -323,21 +118,7 @@ def template(basedir, varname, vars, lookup_fatal=True, depth=0, expand_lists=Tr
                     if eval_results[1] is None:
                         varname = eval_results[0]
 
-            if not '$' in varname:
-                return varname
-    
-            m = _legacy_varFind(basedir, varname, vars, lookup_fatal, depth, expand_lists)
-            if not m:
-                return varname
-            if m['start'] == 0 and m['end'] == len(varname):
-                if m['replacement'] is not None:
-                    Flags.LEGACY_TEMPLATE_WARNING = True
-                    return template(basedir, m['replacement'], vars, lookup_fatal, depth, expand_lists)
-                else:
-                    return varname
-            else:
-                Flags.LEGACY_TEMPLATE_WARNING = True
-                return legacy_varReplace(basedir, varname, vars, lookup_fatal, depth, expand_lists)
+            return varname
     
         elif isinstance(varname, (list, tuple)):
             return [template(basedir, v, vars, lookup_fatal, depth, expand_lists, fail_on_undefined=fail_on_undefined) for v in varname]
@@ -418,7 +199,7 @@ class J2Template(jinja2.environment.Template):
     def new_context(self, vars=None, shared=False, locals=None):
         return jinja2.runtime.Context(self.environment, vars.add_locals(locals), self.name, self.blocks)
 
-def template_from_file(basedir, path, vars):
+def template_from_file(basedir, path, vars, vault_password=None):
     ''' run a file through the templating engine '''
 
     fail_on_undefined = C.DEFAULT_UNDEFINED_VAR_BEHAVIOR
@@ -430,10 +211,13 @@ def template_from_file(basedir, path, vars):
     def my_lookup(*args, **kwargs):
         kwargs['vars'] = vars
         return lookup(*args, basedir=basedir, **kwargs)
+    def my_finalize(thing):
+        return thing if thing is not None else ''
 
     environment = jinja2.Environment(loader=loader, trim_blocks=True, extensions=_get_extensions())
     environment.filters.update(_get_filters())
     environment.globals['lookup'] = my_lookup
+    environment.globals['finalize'] = my_finalize
     if fail_on_undefined:
         environment.undefined = StrictUndefined
 
@@ -495,9 +279,22 @@ def template_from_file(basedir, path, vars):
     except jinja2.exceptions.UndefinedError, e:
         raise errors.AnsibleUndefinedVariable("One or more undefined variables: %s" % str(e))
 
-    if data.endswith('\n') and not res.endswith('\n'):
-        res = res + '\n'
-    return template(basedir, res, vars)
+    # The low level calls above do not preserve the newline
+    # characters at the end of the input data, so we use the
+    # calculate the difference in newlines and append them 
+    # to the resulting output for parity
+    res_newlines  = count_newlines_from_end(res)
+    data_newlines = count_newlines_from_end(data)
+    if data_newlines > res_newlines:
+        res += '\n' * (data_newlines - res_newlines)
+
+    if isinstance(res, unicode):
+        # do not try to re-template a unicode string
+        result = res
+    else:
+        result = template(basedir, res, vars)
+
+    return result
 
 def template_from_string(basedir, data, vars, fail_on_undefined=False):
     ''' run a string through the (Jinja2) templating engine '''
@@ -505,7 +302,11 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
     try:
         if type(data) == str:
             data = unicode(data, 'utf-8')
-        environment = jinja2.Environment(trim_blocks=True, undefined=StrictUndefined, extensions=_get_extensions())
+
+        def my_finalize(thing):
+            return thing if thing is not None else ''
+
+        environment = jinja2.Environment(trim_blocks=True, undefined=StrictUndefined, extensions=_get_extensions(), finalize=my_finalize)
         environment.filters.update(_get_filters())
         environment.template_class = J2Template
 
@@ -515,10 +316,13 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
             if os.path.exists(filesdir):
                 basedir = filesdir
 
-        # TODO: may need some way of using lookup plugins here seeing we aren't calling
-        # the legacy engine, lookup() as a function, perhaps?
+        # 6227
+        if isinstance(data, unicode):
+            try:
+                data = data.decode('utf-8')
+            except UnicodeEncodeError, e:
+                pass
 
-        data = data.decode('utf-8')
         try:
             t = environment.from_string(data)
         except Exception, e:
@@ -532,6 +336,7 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
             return lookup(*args, basedir=basedir, **kwargs)
 
         t.globals['lookup'] = my_lookup
+        t.globals['finalize'] = my_finalize
         jvars =_jinja2_vars(basedir, vars, t.globals, fail_on_undefined)
         new_context = t.new_context(jvars, shared=True)
         rf = t.root_render_func(new_context)
@@ -539,7 +344,12 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
             res = jinja2.utils.concat(rf)
         except TypeError, te:
             if 'StrictUndefined' in str(te):
-                raise errors.AnsibleUndefinedVariable("unable to look up a name or access an attribute in template string")
+                raise errors.AnsibleUndefinedVariable(
+                    "Unable to look up a name or access an attribute in template string. " + \
+                    "Make sure your variable name does not contain invalid characters like '-'."
+                )
+            else:
+                raise errors.AnsibleError("an unexpected type error occured. Error was %s" % te)
         return res
     except (jinja2.exceptions.UndefinedError, errors.AnsibleUndefinedVariable):
         if fail_on_undefined:

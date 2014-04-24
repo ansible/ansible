@@ -1,8 +1,7 @@
 Playbook Roles and Include Statements
 =====================================
 
-.. contents::
-   :depth: 2
+.. contents:: Topics
 
 Introduction
 ````````````
@@ -18,8 +17,8 @@ See :doc:`playbooks` if you need a review of these concepts.
 Playbooks can also include plays from other playbook files.  When that is done, the plays will be inserted into the playbook to form
 a longer list of plays.
 
-When you start to think about it -- tasks, handlers, variables, and so -- begin to form larger concepts.  You start to think about modeling
-what something is, rather than how to make something look like something.  It's no longer "apply this handful of THINGS" to these hosts, you say "these hosts are a dbservers" or "these hosts are webservers".  In programming, we might call that 'encapsulating' how things work.  For instance,
+When you start to think about it -- tasks, handlers, variables, and so on -- begin to form larger concepts.  You start to think about modeling
+what something is, rather than how to make something look like something.  It's no longer "apply this handful of THINGS to these hosts", you say "these hosts are dbservers" or "these hosts are webservers".  In programming, we might call that "encapsulating" how things work.  For instance,
 you can drive a car without knowing how the engine works.
 
 Roles in Ansible build on the idea of include files and combine them to form clean, reusable abstractions -- they allow you to focus
@@ -43,15 +42,18 @@ A task include file simply contains a flat list of tasks, like so::
 
     ---
     # possibly saved as tasks/foo.yml
+
     - name: placeholder foo
       command: /bin/foo
+
     - name: placeholder bar
       command: /bin/bar
 
 Include directives look like this, and can be mixed in with regular tasks in a playbook::
 
    tasks:
-    - include: tasks/foo.yml
+
+     - include: tasks/foo.yml
 
 You can also pass variables into includes.  We call this a 'parameterized include'.
 
@@ -121,7 +123,9 @@ For example::
     - name: this is a play at the top level of a file
       hosts: all
       remote_user: root
+
       tasks:
+
       - name: say hi
         tags: foo
         shell: echo "hi..."
@@ -194,6 +198,7 @@ This designates the following behaviors, for each role 'x':
 - Any copy tasks can reference files in roles/x/files/ without having to path them relatively or absolutely
 - Any script tasks can reference scripts in roles/x/files/ without having to path them relatively or absolutely
 - Any template tasks can reference files in roles/x/templates/ without having to path them relatively or absolutely
+- Any include tasks can reference files in roles/x/tasks/ without having to path them relatively or absolutely
    
 In Ansible 1.4 and later you can configure a roles_path to search for roles.  Use this to check all of your common roles out to one location, and share
 them easily between multiple playbook projects.  See :doc:`intro_configuration` for details about how to set this up in ansible.cfg.
@@ -211,6 +216,7 @@ the roles are evaluated first.
 Also, should you wish to parameterize roles, by adding variables, you can do so, like this::
 
     ---
+
     - hosts: webservers
       roles:
         - common
@@ -220,6 +226,7 @@ Also, should you wish to parameterize roles, by adding variables, you can do so,
 While it's probably not something you should do often, you can also conditionally apply roles like so::
 
     ---
+
     - hosts: webservers
       roles:
         - { role: some_role, when: "ansible_os_family == 'RedHat'" }
@@ -230,6 +237,7 @@ the documentation.
 Finally, you may wish to assign tags to the roles you specify. You can do so inline:::
 
     ---
+
     - hosts: webservers
       roles:
         - { role: foo, tags: ["bar", "baz"] }
@@ -240,13 +248,18 @@ If the play still has a 'tasks' section, those tasks are executed after roles ar
 If you want to define certain tasks to happen before AND after roles are applied, you can do this::
 
     ---
+
     - hosts: webservers
+
       pre_tasks:
         - shell: echo 'hello'
+
       roles:
         - { role: some_role }
+
       tasks:
         - shell: echo 'still busy'
+
       post_tasks:
         - shell: echo 'goodbye'
 
@@ -319,6 +332,15 @@ The resulting order of execution would be as follows::
 
 .. note::
    Variable inheritance and scope are detailed in the :doc:`playbooks_variables`.
+
+Ansible Galaxy
+``````````````
+
+`Ansible Galaxy <http://galaxy.ansible.com>`_, is a free site for finding, downloading, rating, and reviewing all kinds of community developed Ansible roles and can be a great way to get a jumpstart on your automation projects.
+
+You can sign up with social auth, and the download client 'ansible-galaxy' is included in Ansible 1.4.2 and later.
+
+Read the "About" page on the Galaxy site for more information.
 
 .. seealso::
 

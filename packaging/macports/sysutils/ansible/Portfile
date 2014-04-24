@@ -11,8 +11,8 @@ supported_archs noarch
 
 maintainers     nomaintainer
 
-homepage        http://ansibleworks.com/
-description     SSH-based configuration management and deployment system
+homepage        http://ansible.com/
+description     Radically simple IT automation
 long_description \
     Ansible is a radically simple model-driven configuration \
     management, multi-node deployment, and orchestration \

@@ -1,0 +1,134 @@
+# test code for the copy module and action plugin
+# (c) 2014, Michael DeHaan <michael.dehaan@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: record the output directory
+  set_fact: output_file={{output_dir}}/foo.txt
+
+- name: initiate a basic copy, and also test the mode
+  copy: src=foo.txt dest={{output_file}} mode=0444
+  register: copy_result
+
+- name: check the mode of the output file
+  file: name={{output_file}} state=file
+  register: file_result_check
+
+- name: assert the mode is correct
+  assert:
+    that:
+      - "file_result_check.mode == '0444'"
+
+- name: assert basic copy worked
+  assert: 
+    that: 
+      - "'changed' in copy_result"
+      - "'dest' in copy_result"
+      - "'group' in copy_result"
+      - "'gid' in copy_result"
+      - "'md5sum' in copy_result"
+      - "'owner' in copy_result"
+      - "'size' in copy_result"
+      - "'src' in copy_result"
+      - "'state' in copy_result"
+      - "'uid' in copy_result"
+
+- name: verify that the file was marked as changed
+  assert:
+    that:
+      - "copy_result.changed == true"
+
+- name: verify that the file md5sum is correct
+  assert: 
+    that: 
+      - "copy_result.md5sum == 'c47397529fe81ab62ba3f85e9f4c71f2'"
+
+- name: check the stat results of the file
+  stat: path={{output_file}}
+  register: stat_results
+
+- debug: var=stat_results
+
+- name: assert the stat results are correct
+  assert: 
+    that:
+      - "stat_results.stat.exists == true"
+      - "stat_results.stat.isblk == false"
+      - "stat_results.stat.isfifo == false"
+      - "stat_results.stat.isreg == true"
+      - "stat_results.stat.issock == false"
+      - "stat_results.stat.md5 == 'c47397529fe81ab62ba3f85e9f4c71f2'"
+
+- name: overwrite the file via same means
+  copy: src=foo.txt dest={{output_file}}
+  register: copy_result2
+
+- name: assert that the file was not changed
+  assert: 
+    that: 
+      - "not copy_result2|changed"
+
+- name: overwrite the file using the content system
+  copy: content="modified" dest={{output_file}}
+  register: copy_result3
+
+- name: assert that the file has changed
+  assert: 
+     that: 
+       - "copy_result3|changed"
+
+# test recursive copy
+
+- name: set the output subdirectory
+  set_fact: output_subdir={{output_dir}}/sub
+
+- name: make an output subdirectory
+  file: name={{output_subdir}} state=directory
+
+- name: test recursive copy to directory
+  copy: src=subdir dest={{output_subdir}}
+  register: recursive_copy_result
+
+- debug: var=recursive_copy_result
+
+- name: check that a file in a directory was transferred
+  stat: path={{output_dir}}/sub/subdir/bar.txt
+  register: stat_bar
+
+- name: check that a file in a deeper directory was transferred
+  stat: path={{output_dir}}/sub/subdir/subdir2/baz.txt 
+  register: stat_bar2
+
+- name: assert recursive copy things
+  assert:
+    that:
+      - "stat_bar.stat.exists"
+      - "stat_bar2.stat.exists"
+
+# errors on this aren't presently ignored so this test is commented out.  But it would be nice to fix.
+#
+
+- name: overwrite the file again using the content system, also passing along file params
+  copy: content="modified" dest={{output_file}} 
+  register: copy_result4
+  
+#- name: assert invalid copy input location fails
+#  copy: src=invalid_file_location_does_not_exist dest={{output_dir}}/file.txt
+#  ignore_errors: True
+#  register: failed_copy
+
+
+

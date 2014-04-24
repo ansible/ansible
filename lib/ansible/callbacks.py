@@ -1,4 +1,4 @@
-# (C) 2012-2013, Michael DeHaan, <michael.dehaan@gmail.com>
+# (C) 2012-2014, Michael DeHaan, <michael.dehaan@gmail.com>
 
 # This file is part of Ansible
 #
@@ -74,12 +74,19 @@ def get_cowsay_info():
 cowsay, noncow = get_cowsay_info()
 
 def log_lockfile():
+    # create the path for the lockfile and open it
     tempdir = tempfile.gettempdir()
     uid = os.getuid()
     path = os.path.join(tempdir, ".ansible-lock.%s" % uid)
-    return path
-
-LOG_LOCK = open(log_lockfile(), 'w')
+    lockfile = open(path, 'w')
+    # use fcntl to set FD_CLOEXEC on the file descriptor, 
+    # so that we don't leak the file descriptor later
+    lockfile_fd = lockfile.fileno()
+    old_flags = fcntl.fcntl(lockfile_fd, fcntl.F_GETFD)
+    fcntl.fcntl(lockfile_fd, fcntl.F_SETFD, old_flags | fcntl.FD_CLOEXEC)
+    return lockfile
+    
+LOG_LOCK = log_lockfile()
 
 def log_flock(runner):
     if runner is not None:
@@ -108,6 +115,12 @@ def log_unflock(runner):
         except OSError:
             pass
 
+def set_playbook(callback, playbook):
+    ''' used to notify callback plugins of playbook context '''
+    callback.playbook = playbook
+    for callback_plugin in callback_plugins:
+        callback_plugin.playbook = playbook
+
 def set_play(callback, play):
     ''' used to notify callback plugins of context '''
     callback.play = play
@@ -128,9 +141,15 @@ def display(msg, color=None, stderr=False, screen_only=False, log_only=False, ru
         msg2 = stringc(msg, color)
     if not log_only:
         if not stderr:
-            print msg2
+            try:
+                print msg2
+            except UnicodeEncodeError:
+                print msg2.encode('utf-8')
         else:
-            print >>sys.stderr, msg2
+            try:
+                print >>sys.stderr, msg2
+            except UnicodeEncodeError:
+                print >>sys.stderr, msg2.encode('utf-8')
     if constants.DEFAULT_LOG_PATH != '':
         while msg.startswith("\n"):
             msg = msg.replace("\n","")
@@ -166,6 +185,7 @@ def vvvv(msg, host=None):
     return verbose(msg, host=host, caplevel=3)
 
 def verbose(msg, host=None, caplevel=2):
+    msg = utils.sanitize_output(msg)
     if utils.VERBOSITY > caplevel:
         if host is None:
             display(msg, color='blue')
@@ -236,7 +256,7 @@ def regular_generic_msg(hostname, result, oneline, caption):
 
 def banner_cowsay(msg):
 
-    if msg.find(": [") != -1:
+    if ": [" in msg:
         msg = msg.replace("[","")
         if msg.endswith("]"):
             msg = msg[:-1]

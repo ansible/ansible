@@ -23,7 +23,7 @@ DOCUMENTATION = '''
 ---
 module: gem
 short_description: Manage Ruby gems
-description: 
+description:
   - Manage installation and uninstallation of Ruby gems.
 version_added: "1.1"
 options:
@@ -32,10 +32,11 @@ options:
       - The name of the gem to be managed.
     required: true
   state:
-    description: 
+    description:
       - The desired state of the gem. C(latest) ensures that the latest version is installed.
-    required: true
+    required: false
     choices: [present, absent, latest]
+    default: present
   gem_source:
     description:
       - The path to a local gem used as installation source.
@@ -66,6 +67,12 @@ options:
     description:
       - Version of the gem to be installed/removed.
     required: false
+  pre_release:
+    description:
+      - Allow installation of pre-release versions of the gem.
+    required: false
+    default: "no"
+    version_added: "1.6"
 author: Johan Wiren
 '''
 
@@ -89,7 +96,7 @@ def get_rubygems_path(module):
         return module.get_bin_path('gem', True)
 
 def get_rubygems_version(module):
-    cmd = [get_rubygems_path(module), '--version']
+    cmd = [ get_rubygems_path(module), '--version' ]
     (rc, out, err) = module.run_command(cmd, check_rc=True)
 
     match = re.match(r'^(\d+)\.(\d+)\.(\d+)', out)
@@ -143,6 +150,7 @@ def uninstall(module):
         cmd.extend([ '--version', module.params['version'] ])
     else:
         cmd.append('--all')
+        cmd.append('--executable')
     cmd.append(module.params['name'])
     module.run_command(cmd, check_rc=True)
 
@@ -172,6 +180,8 @@ def install(module):
         cmd.append('--user-install')
     else:
         cmd.append('--no-user-install')
+    if module.params['pre_release']:
+        cmd.append('--pre')
     cmd.append('--no-rdoc')
     cmd.append('--no-ri')
     cmd.append(module.params['gem_source'])
@@ -186,8 +196,9 @@ def main():
             include_dependencies = dict(required=False, default=True, type='bool'),
             name                 = dict(required=True, type='str'),
             repository           = dict(required=False, aliases=['source'], type='str'),
-            state                = dict(required=False, choices=['present','absent','latest'], type='str'),
+            state                = dict(required=False, default='present', choices=['present','absent','latest'], type='str'),
             user_install         = dict(required=False, default=True, type='bool'),
+            pre_release           = dict(required=False, default=False, type='bool'),
             version              = dict(required=False, type='str'),
         ),
         supports_check_mode = True,

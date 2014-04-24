@@ -1,20 +1,19 @@
 Python API
 ==========
 
+.. contents:: Topics
+
 There are several interesting ways to use Ansible from an API perspective.   You can use
 the Ansible python API to control nodes, you can extend Ansible to respond to various python events, you can
 write various plugins, and you can plug in inventory data from external data sources.  This document
 covers the Runner and Playbook API at a basic level.
 
 If you are looking to use Ansible programmatically from something other than Python, trigger events asynchronously, 
-or have access control and logging demands, take a look at `AnsibleWorks AWX <http://ansibleworks.com/ansibleworks-awx>`_ 
+or have access control and logging demands, take a look at :doc:`tower` 
 as it has a very nice REST API that provides all of these things at a higher level.
 
 Ansible is written in its own API so you have a considerable amount of power across the board.  
 This chapter discusses the Python API.
-
-.. contents:: `Table of contents`
-   :depth: 2
 
 .. _python_api:
 
@@ -38,7 +37,7 @@ It's pretty simple::
 
 The run method returns results per host, grouped by whether they
 could be contacted or not.  Return types are module specific, as
-expressed in the 'ansible-modules' documentation.::
+expressed in the :doc:`modules` documentation.::
 
     {
         "dark" : {

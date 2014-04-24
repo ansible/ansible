@@ -1,0 +1,81 @@
+# UNINSTALL 'python-apt'
+#  The `apt` module has the smarts to auto-install `python-apt`.  To test, we
+#  will first uninstall `python-apt`.
+- name: check python-apt with dpkg
+  shell: dpkg -s python-apt
+  register: dpkg_result
+  ignore_errors: true
+
+- name: uninstall python-apt with apt
+  apt: pkg=python-apt state=absent purge=yes
+  register: apt_result
+  when: dpkg_result|success
+
+# UNINSTALL 'hello'
+#   With 'python-apt' uninstalled, the first call to 'apt' should install
+#   python-apt.
+- name: uninstall hello with apt
+  apt: pkg=hello state=absent purge=yes
+  register: apt_result
+
+- name: check hello with dpkg
+  shell: dpkg --get-selections | fgrep hello
+  failed_when: False
+  register: dpkg_result
+
+- name: verify uninstallation of hello
+  assert:
+    that:
+        - "'changed' in apt_result"
+        - "dpkg_result.rc == 1"
+
+# UNINSTALL AGAIN
+- name: uninstall hello with apt
+  apt: pkg=hello state=absent purge=yes
+  register: apt_result
+
+- name: verify no change on re-uninstall
+  assert:
+    that:
+        - "not apt_result.changed"
+
+# INSTALL
+- name: install hello with apt
+  apt: name=hello state=present
+  register: apt_result
+
+- name: check hello with dpkg
+  shell: dpkg --get-selections | fgrep hello
+  failed_when: False
+  register: dpkg_result
+
+- debug: var=apt_result
+- debug: var=dpkg_result
+
+- name: verify installation of hello
+  assert:
+    that:
+        - "apt_result.changed"
+        - "dpkg_result.rc == 0"
+
+- name: verify apt module outputs
+  assert:
+    that:
+        - "'invocation' in apt_result"
+        - "'changed' in apt_result"
+        - "'item' in apt_result"
+        - "'stderr' in apt_result"
+        - "'stdout' in apt_result"
+        - "'stdout_lines' in apt_result"
+
+# INSTALL AGAIN
+- name: install hello with apt
+  apt: name=hello state=present
+  register: apt_result
+
+- name: verify no change on re-install
+  assert:
+    that:
+        - "not apt_result.changed"
+
+

@@ -19,6 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import tempfile
 import os.path
 
 DOCUMENTATION = '''
@@ -134,7 +135,6 @@ def main():
     name = module.params['name']
     env = module.params['virtualenv']
     executable = module.params['executable']
-    easy_install = _get_easy_install(module, env, executable)
     site_packages = module.params['virtualenv_site_packages']
     virtualenv_command = module.params['virtualenv_command']
 
@@ -151,11 +151,14 @@ def main():
             command = '%s %s' % (virtualenv, env)
             if site_packages:
                 command += ' --system-site-packages'
-            rc_venv, out_venv, err_venv = module.run_command(command)
+            cwd = tempfile.gettempdir()
+            rc_venv, out_venv, err_venv = module.run_command(command, cwd=cwd)
 
             rc += rc_venv
             out += out_venv
             err += err_venv
+
+    easy_install = _get_easy_install(module, env, executable)
 
     cmd = None
     changed = False

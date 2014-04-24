@@ -114,6 +114,9 @@ EXAMPLES = """
 # Create database user with name 'bob' and password '12345' with all database privileges
 - mysql_user: name=bob password=12345 priv=*.*:ALL state=present
 
+# Creates database user 'bob' and password '12345' with all database privileges and 'WITH GRANT OPTION'
+- mysql_user: name=bob password=12345 priv=*.*:ALL,GRANT state=present
+
 # Ensure no user named 'sally' exists, also passing in the auth credentials.
 - mysql_user: login_user=root login_password=123456 name=sally state=absent
 
@@ -256,7 +259,7 @@ def privileges_unpack(priv):
     output = {}
     for item in priv.split('/'):
         pieces = item.split(':')
-        if pieces[0].find('.') != -1:
+        if '.' in pieces[0]:
             pieces[0] = pieces[0].split('.')
             for idx, piece in enumerate(pieces):
                 if pieces[0][idx] != "*":

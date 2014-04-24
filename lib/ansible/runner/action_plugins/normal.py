@@ -45,6 +45,9 @@ class ActionModule(object):
             # python modules for now
             module_args += " CHECKMODE=True"
 
+        if self.runner.no_log:
+            module_args += " NO_LOG=True"
+
         # shell and command are the same module
         if module_name == 'shell':
             module_name = 'command'

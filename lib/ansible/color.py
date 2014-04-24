@@ -1,4 +1,4 @@
-# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import sys
 import constants
 
@@ -37,7 +36,7 @@ else:
         # curses returns an error (e.g. could not find terminal)
         ANSIBLE_COLOR=False
 
-if os.getenv("ANSIBLE_FORCE_COLOR") is not None:
+if constants.ANSIBLE_FORCE_COLOR:
         ANSIBLE_COLOR=True
 
 # --- begin "pretty"

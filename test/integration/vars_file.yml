@@ -1,0 +1,5 @@
+# this file is here to support testing vars_files in the blending tests only.
+# in general define test data in the individual role:
+#    roles/role_name/vars/main.yml
+
+vars_file_var: 321

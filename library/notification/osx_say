@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, Michael DeHaan <michael@ansibleworks.com>
+# (c) 2013, Michael DeHaan <michael@ansible.com>
 #
 # This file is part of Ansible
 #
@@ -43,8 +43,6 @@ author: Michael DeHaan
 EXAMPLES = '''
 - local_action: osx_say msg="{{inventory_hostname}} is all done" voice=Zarvox
 '''
-
-import subprocess
 
 DEFAULT_VOICE='Trinoids'
 

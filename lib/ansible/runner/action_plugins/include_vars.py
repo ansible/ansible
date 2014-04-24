@@ -1,4 +1,4 @@
-# (c) 2013, Benno Joy <benno@ansibleworks.com>
+# (c) 2013-2014, Benno Joy <benno@ansible.com>
 #
 # This file is part of Ansible
 #
@@ -23,7 +23,7 @@ from ansible.runner.return_data import ReturnData
 
 class ActionModule(object):
 
-    NEEDS_TMPPATH = False
+    TRANSFERS_FILES = False
 
     def __init__(self, runner):
         self.runner = runner
@@ -43,7 +43,7 @@ class ActionModule(object):
             source = utils.path_dwim(self.runner.basedir, source)
 
         if os.path.exists(source):
-            data = utils.parse_yaml_from_file(source)
+            data = utils.parse_yaml_from_file(source, vault_password=self.runner.vault_pass)
             if type(data) != dict:
                 raise errors.AnsibleError("%s must be stored as a dictionary/hash" % source)
             result = dict(ansible_facts=data)

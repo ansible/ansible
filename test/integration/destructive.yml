@@ -1,0 +1,9 @@
+- hosts: testhost
+  gather_facts: True
+  roles:
+    - { role: test_service, tags: test_service }
+    - { role: test_pip, tags: test_pip }
+    - { role: test_gem, tags: test_gem }
+    - { role: test_yum, tags: test_yum }
+    - { role: test_apt, tags: test_apt }
+    - { role: test_apt_repository, tags: test_apt_repository }

@@ -23,9 +23,9 @@ DOCUMENTATION = '''
 ---
 module: unarchive
 version_added: 1.4
-short_description: Copies archive to remote locations and unpacks them
+short_description: Copies an archive to a remote location and unpack it
 description:
-     - The M(unarchive) module copies an archive file on the local box to remote locations and unpacks them.
+     - The M(unarchive) module copies an archive file from the local machine to a remote and unpacks it.
 options:
   src:
     description:
@@ -37,15 +37,27 @@ options:
       - Remote absolute path where the archive should be unpacked
     required: true
     default: null
-author: Dylan Martin 
+  copy:
+    description:
+      - Should the file be copied from the local to the remote machine?
+    required: false
+    choices: [ "yes", "no" ]
+    default: "yes"
+  creates:
+    description:
+      - a filename, when it already exists, this step will B(not) be run.
+    required: no
+    default: null
+    version_added: "1.6"
+author: Dylan Martin
 todo:
     - detect changed/unchanged for .zip files
     - handle common unarchive args, like preserve owner/timestamp etc...
 notes:
-    - requires tar/unzip command on host
-    - can handle gzip, bzip2 and xz compressed as well as uncompressed tar files
+    - requires C(tar)/C(unzip) command on target host
+    - can handle I(gzip), I(bzip2) and I(xz) compressed as well as uncompressed tar files
     - detects type of archive automatically
-    - uses tar's --diff arg to calculate if changed or not.  If this arg is not
+    - uses tar's C(--diff arg) to calculate if changed or not. If this C(arg) is not
       supported, it will always unpack the archive
     - does not detect if a .zip file is different from destination - always unzips
     - existing files/directories in the destination which are not in the archive
@@ -59,92 +71,109 @@ EXAMPLES = '''
 - unarchive: src=foo.tgz dest=/var/lib/foo
 '''
 
-
 import os
+
+
 # class to handle .zip files
-class _zipfile(object):
+class ZipFile(object):
     
-    def __init__(self,src,dest,module):
+    def __init__(self, src, dest, module):
         self.src = src
         self.dest = dest
         self.module = module
+        self.cmd_path = self.module.get_bin_path('unzip')
 
     def is_unarchived(self):
-        return dict(bool = False)
+        return dict(unarchived=False)
 
     def unarchive(self):
-        cmd = 'unzip -o "%s" -d "%s"'  % (self.src,self.dest)
+        cmd = '%s -o "%s" -d "%s"' % (self.cmd_path, self.src, self.dest)
         rc, out, err = self.module.run_command(cmd)
-        return dict(cmd = cmd, rc=rc, out=out, err=err)
+        return dict(cmd=cmd, rc=rc, out=out, err=err)
 
     def can_handle_archive(self):
-        cmd = 'unzip -l "%s"' % (self.src)
+        if not self.cmd_path:
+            return False
+        cmd = '%s -l "%s"' % (self.cmd_path, self.src)
         rc, out, err = self.module.run_command(cmd)
         if rc == 0:
             return True
         return False
 
+
 # class to handle gzipped tar files
-class _tgzfile(object):
+class TgzFile(object):
     
-    def __init__(self,src,dest,module):
+    def __init__(self, src, dest, module):
         self.src = src
         self.dest = dest
         self.module = module
+        self.cmd_path = self.module.get_bin_path('tar')
         self.zipflag = 'z'
 
     def is_unarchived(self):
         dirof = os.path.dirname(self.dest)
         destbase = os.path.basename(self.dest)
-        cmd = 'tar -v -C "%s" --diff -%sf "%s"'  % (self.dest, self.zipflag,self.src)
+        cmd = '%s -v -C "%s" --diff -%sf "%s"' % (self.cmd_path, self.dest, self.zipflag, self.src)
         rc, out, err = self.module.run_command(cmd)
-        bool = (rc == 0)
-        return dict( bool = bool, rc = rc , out = out, err = err, cmd = cmd)
+        unarchived = (rc == 0)
+        return dict(unarchived=unarchived, rc=rc, out=out, err=err, cmd=cmd)
 
     def unarchive(self):
-        cmd = 'tar -C "%s" -x%sf "%s"' % (self.dest,self.zipflag,self.src)
+        cmd = '%s -C "%s" -x%sf "%s"' % (self.cmd_path, self.dest, self.zipflag, self.src)
         rc, out, err = self.module.run_command(cmd)
-        return dict(cmd = cmd, rc=rc, out=out, err=err)
+        return dict(cmd=cmd, rc=rc, out=out, err=err)
 
     def can_handle_archive(self):
-        cmd = 'tar -t%sf "%s"' % (self.zipflag,self.src)
+        if not self.cmd_path:
+            return False
+        cmd = '%s -t%sf "%s"' % (self.cmd_path, self.zipflag, self.src)
         rc, out, err = self.module.run_command(cmd)
         if rc == 0:
-            return True
+            if len(out.splitlines(True)) > 0:
+                return True
         return False
 
+
 # class to handle tar files that aren't compressed
-class _tarfile(_tgzfile):
-    def __init__(self,src,dest,module):
+class TarFile(TgzFile):
+    def __init__(self, src, dest, module):
         self.src = src
         self.dest = dest
         self.module = module
+        self.cmd_path = self.module.get_bin_path('tar')
         self.zipflag = ''
 
+
 # class to handle bzip2 compressed tar files
-class _tarbzip(_tgzfile):
-    def __init__(self,src,dest,module):
+class TarBzip(TgzFile):
+    def __init__(self, src, dest, module):
         self.src = src
         self.dest = dest
         self.module = module
+        self.cmd_path = self.module.get_bin_path('tar')
         self.zipflag = 'j'
 
+
 # class to handle xz compressed tar files
-class _tarxz(_tgzfile):
-    def __init__(self,src,dest,module):
+class TarXz(TgzFile):
+    def __init__(self, src, dest, module):
         self.src = src
         self.dest = dest
         self.module = module
+        self.cmd_path = self.module.get_bin_path('tar')
         self.zipflag = 'J'
 
+
 # try handlers in order and return the one that works or bail if none work
-def pick_handler(src,dest,module):
-    handlers = [_tgzfile, _zipfile, _tarfile, _tarbzip, _tarxz]
+def pick_handler(src, dest, module):
+    handlers = [TgzFile, ZipFile, TarFile, TarBzip, TarXz]
     for handler in handlers:
-        obj = handler(src,dest,module)
+        obj = handler(src, dest, module)
         if obj.can_handle_archive():
             return obj
-    raise RuntimeError('Failed to find handler to unarchive "%s"' % src)
+    module.fail_json(msg='Failed to find handler to unarchive. Make sure the required command to extract the file is installed.')
+
 
 def main():
     module = AnsibleModule(
@@ -153,40 +182,59 @@ def main():
             src               = dict(required=True),
             original_basename = dict(required=False), # used to handle 'dest is a directory' via template, a slight hack
             dest              = dict(required=True),
+            copy              = dict(default=True, type='bool'),
+            creates           = dict(required=False),
         ),
         add_file_common_args=True,
     )
 
     src    = os.path.expanduser(module.params['src'])
     dest   = os.path.expanduser(module.params['dest'])
+    copy   = module.params['copy']
+    creates = module.params['creates']
 
     # did tar file arrive?
     if not os.path.exists(src):
-        module.fail_json(msg="Source '%s' failed to transfer" % (src))
+        if copy:
+            module.fail_json(msg="Source '%s' failed to transfer" % src)
+        else:
+            module.fail_json(msg="Source '%s' does not exist" % src)
     if not os.access(src, os.R_OK):
-        module.fail_json(msg="Source '%s' not readable" % (src))
+        module.fail_json(msg="Source '%s' not readable" % src)
 
-    # is dest OK to recieve tar file?
+    if creates:
+        # do not run the command if the line contains creates=filename
+        # and the filename already exists.  This allows idempotence
+        # of command executions.
+        v = os.path.expanduser(creates)
+        if os.path.exists(v):
+            module.exit_json(
+                stdout="skipped, since %s exists" % v,
+                skipped=True,
+                changed=False,
+                stderr=False,
+                rc=0
+            )
+
+    # is dest OK to receive tar file?
     if not os.path.exists(os.path.dirname(dest)):
         module.fail_json(msg="Destination directory '%s' does not exist" % (os.path.dirname(dest)))
     if not os.access(os.path.dirname(dest), os.W_OK):
         module.fail_json(msg="Destination '%s' not writable" % (os.path.dirname(dest)))
 
-    handler = pick_handler(src,dest,module)
+    handler = pick_handler(src, dest, module)
 
-    res_args = dict( handler=handler.__class__.__name__, dest = dest, src = src )
+    res_args = dict(handler=handler.__class__.__name__, dest=dest, src=src)
 
     # do we need to do unpack?
-    namelist = ['bool','rc','out','err','cmd']
     res_args['check_results'] = handler.is_unarchived()
-    if res_args['check_results']['bool']:
+    if res_args['check_results']['unarchived']:
         res_args['changed'] = False
         module.exit_json(**res_args)
 
     # do the unpack
     try:
         results = handler.unarchive()
-        #results = (src,dest,module)
     except IOError:
         module.fail_json(msg="failed to unpack %s to %s" % (src, dest))
 

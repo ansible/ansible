@@ -1,0 +1,59 @@
+# test code for the async keyword
+# (c) 2014, James Tanner <tanner.jc@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: run a 2 second loop
+  shell: for i in $(seq 1 2); do echo $i ; sleep 1; done;
+  async: 10
+  poll: 1
+  register: async_result
+
+
+- debug: var=async_result
+
+- name: validate async returns
+  assert:
+    that:
+        - "'ansible_job_id' in async_result"
+        - "'changed' in async_result"
+        - "'cmd' in async_result"
+        - "'delta' in async_result"
+        - "'end' in async_result"
+        - "'finished' in async_result"
+        - "'invocation' in async_result"
+        - "'item' in async_result"
+        - "'rc' in async_result"
+        - "'start' in async_result"
+        - "'stderr' in async_result"
+        - "'stdout' in async_result"
+        - "'stdout_lines' in async_result"
+        - "async_result.rc == 0"
+
+- name: test async without polling
+  command: sleep 5
+  async: 30
+  poll: 0
+  register: async_result
+
+- debug: var=async_result
+
+- name: validate async without polling returns
+  assert:
+    that:
+        - "'ansible_job_id' in async_result"
+        - "'started' in async_result"
+        - "'finished' not in async_result"

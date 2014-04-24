@@ -59,7 +59,7 @@ options:
     default: "no"
   delimiter:
     description:
-      - A delimiter to seperate the file contents.
+      - A delimiter to separate the file contents.
     version_added: "1.4"
     required: false
     default: null
@@ -102,15 +102,38 @@ def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None):
     tmpfd, temp_path = tempfile.mkstemp()
     tmp = os.fdopen(tmpfd,'w')
     delimit_me = False
+    add_newline = False
+
     for f in sorted(os.listdir(src_path)):
         if compiled_regexp and not compiled_regexp.search(f):
             continue
         fragment = "%s/%s" % (src_path, f)
-        if delimit_me and delimiter:
-            tmp.write(delimiter)
-        if os.path.isfile(fragment):
-            tmp.write(file(fragment).read())
+        if not os.path.isfile(fragment):
+            continue
+        fragment_content = file(fragment).read()
+
+        # always put a newline between fragments if the previous fragment didn't end with a newline.
+        if add_newline:
+            tmp.write('\n')
+
+        # delimiters should only appear between fragments
+        if delimit_me:
+            if delimiter:
+                # un-escape anything like newlines
+                delimiter = delimiter.decode('unicode-escape')
+                tmp.write(delimiter)
+                # always make sure there's a newline after the
+                # delimiter, so lines don't run together
+                if delimiter[-1] != '\n':
+                    tmp.write('\n')
+
+        tmp.write(fragment_content)
         delimit_me = True
+        if fragment_content.endswith('\n'):
+            add_newline = False
+        else:
+            add_newline = True
+
     tmp.close()
     return temp_path
 
@@ -171,7 +194,7 @@ def main():
     file_args = module.load_file_common_arguments(module.params)
     changed = module.set_file_attributes_if_different(file_args, changed)
     # Mission complete
-    module.exit_json(src=src, dest=dest, md5sum=destmd5, changed=changed, msg="OK")
+    module.exit_json(src=src, dest=dest, md5sum=pathmd5, changed=changed, msg="OK")
 
 # import module snippets
 from ansible.module_utils.basic import *

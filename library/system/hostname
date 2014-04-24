@@ -146,6 +146,12 @@ class DebianStrategy(GenericStrategy):
     HOSTNAME_FILE = '/etc/hostname'
 
     def get_permanent_hostname(self):
+        if not os.path.isfile(self.HOSTNAME_FILE):
+            try:
+                open(self.HOSTNAME_FILE, "a").write("")
+            except IOError, err:
+                self.module.fail_json(msg="failed to write file: %s" % 
+                    str(err))
         try:
             f = open(self.HOSTNAME_FILE)
             try:
@@ -250,6 +256,11 @@ class AmazonLinuxHostname(Hostname):
     distribution = 'Amazon'
     strategy_class = RedHatStrategy
 
+class ScientificLinuxHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Scientific'
+    strategy_class = RedHatStrategy
+    
 # ===========================================
 
 class FedoraStrategy(GenericStrategy):
@@ -274,8 +285,8 @@ class FedoraStrategy(GenericStrategy):
                 (rc, out, err))
 
     def get_permanent_hostname(self):
-        cmd = 'hostnamectl status | awk \'/^ *Static hostname:/{printf("%s", $3)}\''
-        rc, out, err = self.module.run_command(cmd)
+        cmd = 'hostnamectl --static status'
+        rc, out, err = self.module.run_command(cmd, use_unsafe_shell=True)
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
                 (rc, out, err))

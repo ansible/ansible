@@ -23,24 +23,6 @@ options:
     required: false
     choices: ['present', 'absent']
     default: present
-  ec2_url:
-    description:
-      - URL to use to connect to EC2-compatible cloud (by default the module will use EC2 endpoints)
-    required: false
-    default: null
-    aliases: [ EC2_URL ]
-  ec2_access_key:
-    description:
-      - EC2 access key. If not specified then the EC2_ACCESS_KEY environment variable is used.
-    required: false
-    default: null
-    aliases: [ EC2_ACCESS_KEY ]
-  ec2_secret_key:
-    description:
-      - EC2 secret key. If not specified then the EC2_SECRET_KEY environment variable is used.
-    required: false
-    default: null
-    aliases: [ EC2_SECRET_KEY ]
   region:
     description:
       - the EC2 region to use
@@ -53,7 +35,14 @@ options:
     required: false
     default: false
     version_added: "1.4"
-requirements: [ "boto" ]
+  reuse_existing_ip_allowed:
+    description:
+      - Reuse an EIP that is not associated to an instance (when available), instead of allocating a new one.
+    required: false
+    default: false
+    version_added: "1.6"
+
+extends_documentation_fragment: aws
 author: Lorin Hochstein <lorin@nimbisservices.com>
 notes:
    - This module will return C(public_ip) on success, which will contain the
@@ -100,38 +89,6 @@ except ImportError:
     boto_found = False
 else:
     boto_found = True
-
-
-def connect(ec2_url, ec2_access_key, ec2_secret_key, region, module):
-
-    """ Return an ec2 connection"""
-    # allow environment variables to be used if ansible vars aren't set
-    if not ec2_url and 'EC2_URL' in os.environ:
-        ec2_url = os.environ['EC2_URL']
-    if not ec2_secret_key and 'EC2_SECRET_KEY' in os.environ:
-        ec2_secret_key = os.environ['EC2_SECRET_KEY']
-    if not ec2_access_key and 'EC2_ACCESS_KEY' in os.environ:
-        ec2_access_key = os.environ['EC2_ACCESS_KEY']
-
-    # If we have a region specified, connect to its endpoint.
-    if region:
-        try:
-            ec2 = boto.ec2.connect_to_region(region,
-                                        aws_access_key_id=ec2_access_key,
-                                        aws_secret_access_key=ec2_secret_key)
-        except boto.exception.NoAuthHandlerFound, e:
-            module.fail_json(msg = str(" %s %s %s " % (region, ec2_access_key,
-                                                       ec2_secret_key)))
-    # Otherwise, no region so we fallback to the old connection method
-    else:
-        try:
-            if ec2_url: # if we have an URL set, connect to the specified endpoint
-                ec2 = boto.connect_ec2_endpoint(ec2_url, ec2_access_key, ec2_secret_key)
-            else: # otherwise it's Amazon.
-                ec2 = boto.connect_ec2(ec2_access_key, ec2_secret_key)
-        except boto.exception.NoAuthHandlerFound, e:
-            module.fail_json(msg = str(e))
-    return ec2
 
 
 def associate_ip_and_instance(ec2, address, instance_id, module):
@@ -198,13 +155,27 @@ def ip_is_associated_with_instance(ec2, public_ip, instance_id, module):
         return False
 
 
-def allocate_address(ec2, domain, module):
-    """ Allocate a new elastic IP address and return it """
+def allocate_address(ec2, domain, module, reuse_existing_ip_allowed):
+    """ Allocate a new elastic IP address (when needed) and return it """
     # If we're in check mode, nothing else to do
     if module.check_mode:
         module.exit_json(change=True)
 
-    address = ec2.allocate_address(domain=domain)
+    if reuse_existing_ip_allowed:
+      if domain:
+        domain_filter = { 'domain' : domain }
+      else:
+        domain_filter = { 'domain' : 'standard' }
+      all_addresses = ec2.get_all_addresses(filters=domain_filter)
+
+      unassociated_addresses = filter(lambda a: a.instance_id is None, all_addresses)
+      if unassociated_addresses:
+        address = unassociated_addresses[0];
+      else:
+        address = ec2.allocate_address(domain=domain)
+    else:
+      address = ec2.allocate_address(domain=domain)
+
     return address
 
 
@@ -241,49 +212,45 @@ def find_instance(ec2, instance_id, module):
     
 
 def main():
-    module = AnsibleModule(
-        argument_spec = dict(
+    argument_spec = ec2_argument_spec()
+    argument_spec.update(dict(
             instance_id = dict(required=False),
             public_ip = dict(required=False, aliases= ['ip']),
             state = dict(required=False, default='present',
                          choices=['present', 'absent']),
-            ec2_url = dict(required=False, aliases=['EC2_URL']),
-            ec2_secret_key = dict(required=False, aliases=['EC2_SECRET_KEY'], no_log=True),
-            ec2_access_key = dict(required=False, aliases=['EC2_ACCESS_KEY']),
-            region = dict(required=False, aliases=['ec2_region']),
-            in_vpc = dict(required=False, choices=BOOLEANS, default=False),
-        ),
+            in_vpc = dict(required=False, type='bool', default=False),
+            reuse_existing_ip_allowed = dict(required=False, type='bool', default=False),
+        )
+    )
+
+    module = AnsibleModule(
+        argument_spec=argument_spec,
         supports_check_mode=True
     )
 
     if not boto_found:
         module.fail_json(msg="boto is required")
 
-    ec2_url, ec2_access_key, ec2_secret_key, region = get_ec2_creds(module)
-
-    ec2 = connect(ec2_url,
-                  ec2_access_key,
-                  ec2_secret_key,
-                  region,
-                  module)
+    ec2 = ec2_connect(module)
 
     instance_id = module.params.get('instance_id')
     public_ip = module.params.get('public_ip')
     state = module.params.get('state')
     in_vpc = module.params.get('in_vpc')
     domain  = "vpc" if in_vpc else None
+    reuse_existing_ip_allowed = module.params.get('reuse_existing_ip_allowed');
 
     if state == 'present':
         if public_ip is None:
             if instance_id is None:
-                address = allocate_address(ec2, domain, module)
+                address = allocate_address(ec2, domain, module, reuse_existing_ip_allowed)
                 module.exit_json(changed=True, public_ip=address.public_ip)
             else:
                 # Determine if the instance is inside a VPC or not
                 instance = find_instance(ec2, instance_id, module)
                 if instance.vpc_id != None:
                     domain = "vpc"
-                address = allocate_address(ec2, domain, module)
+                address = allocate_address(ec2, domain, module, reuse_existing_ip_allowed)
         else:
             address = find_address(ec2, public_ip, module)
         associate_ip_and_instance(ec2, address, instance_id, module)

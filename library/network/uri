@@ -68,7 +68,7 @@ options:
     description:
       - The HTTP method of the request or response.
     required: false
-    choices: [ "GET", "POST", "PUT", "HEAD", "DELETE", "OPTIONS" ]
+    choices: [ "GET", "POST", "PUT", "HEAD", "DELETE", "OPTIONS", "PATCH" ]
     default: "GET"
   return_content:
     description:
@@ -87,10 +87,15 @@ options:
     default: "no"
   follow_redirects:
     description:
-      - Whether or not the URI module should follow all redirects.
+      - Whether or not the URI module should follow redirects. C(all) will follow all redirects.
+        C(safe) will follow only "safe" redirects, where "safe" means that the client is only 
+        doing a GET or HEAD on the URI to which it is being redirected. C(none) will not follow
+        any redirects. Note that C(yes) and C(no) choices are accepted for backwards compatibility, 
+        where C(yes) is the equivalent of C(all) and C(no) is the equivalent of C(safe). C(yes) and C(no)
+        are deprecated and will be removed in some future version of Ansible.
     required: false
-    choices: [ "yes", "no" ]
-    default: "no"
+    choices: [ "all", "safe", "none" ]
+    default: "safe"
   creates:
     description:
       - a filename, when it already exists, this step will not be run.
@@ -101,7 +106,7 @@ options:
     required: false
   status_code:
     description:
-      - A valid, numeric, HTTP status code that signifies success of the request.
+      - A valid, numeric, HTTP status code that signifies success of the request. Can also be comma separated list of status codes.
     required: false
     default: 200
   timeout:
@@ -138,23 +143,29 @@ EXAMPLES = '''
   when: 'AWESOME' not in "{{ webpage.content }}"
 
 
-# Create a JIRA issue.
-- action: >
-        uri url=https://your.jira.example.com/rest/api/2/issue/ 
-        method=POST user=your_username password=your_pass 
-        body="{{ lookup('file','issue.json') }}" force_basic_auth=yes 
-        status_code=201 HEADER_Content-Type="application/json"  
+# Create a JIRA issue
 
-- action: > 
-        uri url=https://your.form.based.auth.examle.com/index.php 
-        method=POST body="name=your_username&password=your_password&enter=Sign%20in" 
-        status_code=302 HEADER_Content-Type="application/x-www-form-urlencoded"
-  register: login
+- uri: url=https://your.jira.example.com/rest/api/2/issue/ 
+       method=POST user=your_username password=your_pass 
+       body="{{ lookup('file','issue.json') }}" force_basic_auth=yes 
+       status_code=201 HEADER_Content-Type="application/json"  
 
 # Login to a form based webpage, then use the returned cookie to
-# access the app in later tasks.
-- action: uri url=https://your.form.based.auth.example.com/dashboard.php
-            method=GET return_content=yes HEADER_Cookie="{{login.set_cookie}}"
+# access the app in later tasks
+
+- uri: url=https://your.form.based.auth.examle.com/index.php 
+       method=POST body="name=your_username&password=your_password&enter=Sign%20in" 
+       status_code=302 HEADER_Content-Type="application/x-www-form-urlencoded"
+  register: login
+
+- uri: url=https://your.form.based.auth.example.com/dashboard.php
+       method=GET return_content=yes HEADER_Cookie="{{login.set_cookie}}"
+            
+# Queue build of a project in Jenkins:
+
+- uri: url=http://{{jenkins.host}}/job/{{jenkins.job}}/build?token={{jenkins.token}} 
+       method=GET user={{jenkins.user}} password={{jenkins.password}} force_basic_auth=yes status_code=201
+
 '''
 
 HAS_HTTPLIB2 = True
@@ -231,9 +242,21 @@ def uri(module, url, dest, user, password, body, method, headers, redirects, soc
     # To debug
     #httplib2.debug = 4
 
+    # Handle Redirects         
+    if redirects == "all" or redirects == "yes":
+        follow_redirects = True
+        follow_all_redirects = True
+    elif redirects == "none":
+        follow_redirects = False
+        follow_all_redirects = False
+    else:
+        follow_redirects = True
+        follow_all_redirects = False
+
     # Create a Http object and set some default options.
     h = httplib2.Http(disable_ssl_certificate_validation=True, timeout=socket_timeout)
-    h.follow_all_redirects = redirects
+    h.follow_all_redirects = follow_all_redirects
+    h.follow_redirects = follow_redirects
     h.forward_authorization_headers = True
 
     # If they have a username or password verify they have both, then add them to the request
@@ -272,7 +295,7 @@ def uri(module, url, dest, user, password, body, method, headers, redirects, soc
             headers['If-Modified-Since'] = tstamp
 
     # do safe redirects now, including 307
-    h.follow_redirects=True
+    h.follow_redirects=follow_redirects
 
     # Make the request, or try to :)
     try: 
@@ -280,7 +303,10 @@ def uri(module, url, dest, user, password, body, method, headers, redirects, soc
         r['redirected'] = redirected
         r.update(resp_redir)
         r.update(resp)
-        return r, content, dest
+        try:
+            return r, unicode(content.decode('unicode_escape')), dest
+        except:
+            return r, content, dest
     except httplib2.RedirectMissingLocation:
         module.fail_json(msg="A 3xx redirect response code was provided but no Location: header was provided to point to the new location.")
     except httplib2.RedirectLimit:
@@ -309,13 +335,13 @@ def main():
             user = dict(required=False, default=None),
             password = dict(required=False, default=None),
             body = dict(required=False, default=None),
-            method = dict(required=False, default='GET', choices=['GET', 'POST', 'PUT', 'HEAD', 'DELETE', 'OPTIONS']),
+            method = dict(required=False, default='GET', choices=['GET', 'POST', 'PUT', 'HEAD', 'DELETE', 'OPTIONS', 'PATCH']),
             return_content = dict(required=False, default='no', type='bool'),
             force_basic_auth = dict(required=False, default='no', type='bool'),
-            follow_redirects = dict(required=False, default='no', type='bool'),
+            follow_redirects = dict(required=False, default='safe', choices=['all', 'safe', 'none', 'yes', 'no']),
             creates = dict(required=False, default=None),
             removes = dict(required=False, default=None),
-            status_code = dict(required=False, default=200, type='int'),
+            status_code = dict(required=False, default=[200], type='list'),
             timeout = dict(required=False, default=30, type='int'),
         ),
         check_invalid_arguments=False,
@@ -335,10 +361,10 @@ def main():
     dest = module.params['dest']
     return_content = module.params['return_content']
     force_basic_auth = module.params['force_basic_auth']
-    follow_redirects = module.params['follow_redirects']
+    redirects = module.params['follow_redirects']
     creates = module.params['creates']
     removes = module.params['removes']
-    status_code = int(module.params['status_code'])
+    status_code = [int(x) for x in list(module.params['status_code'])]
     socket_timeout = module.params['timeout']
 
     # Grab all the http headers. Need this hack since passing multi-values is currently a bit ugly. (e.g. headers='{"Content-Type":"application/json"}')
@@ -372,11 +398,6 @@ def main():
     if force_basic_auth:
         dict_headers["Authorization"] = "Basic {0}".format(base64.b64encode("{0}:{1}".format(user, password))) 
 
-    # Redirects         
-    if follow_redirects:
-        redirects = True        
-    else:
-        redirects = False
 
     # Make the request
     resp, content, dest = uri(module, url, dest, user, password, body, method, dict_headers, redirects, socket_timeout)
@@ -412,7 +433,7 @@ def main():
                 uresp['json'] = js
             except:
                 pass
-    if resp['status'] != status_code:
+    if resp['status'] not in status_code:
         module.fail_json(msg="Status code was not " + str(status_code), content=content, **uresp)
     elif return_content:
         module.exit_json(changed=changed, content=content, **uresp)

@@ -26,6 +26,7 @@ options:
         - The tenant login_user belongs to
      required: false
      default: None
+     version_added: "1.3"
    token:
      description:
         - The token to be uses in case the password is not specified
@@ -332,7 +333,7 @@ def main():
         d = dispatch(keystone, user, password, tenant, tenant_description,
                      email, role, state, endpoint, token, login_user,
                      login_password, check_mode)
-    except Exception as e:
+    except Exception, e:
         if check_mode:
             # If we have a failure in check mode
             module.exit_json(changed=True,

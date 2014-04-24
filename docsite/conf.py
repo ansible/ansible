@@ -16,16 +16,20 @@
 import sys
 import os
 
+# pip install sphinx_rtd_theme
+#import sphinx_rtd_theme
+#html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+
 # If your extensions are in another directory, add it here. If the directory
 # is relative to the documentation root, use os.path.abspath to make it
 # absolute, like shown here.
 #sys.path.append(os.path.abspath('some/directory'))
-
+#
 sys.path.insert(0, os.path.join('ansible', 'lib'))
 sys.path.append(os.path.abspath('_themes'))
 
 VERSION='0.01'
-AUTHOR='AnsibleWorks'
+AUTHOR='Ansible, Inc'
 
 
 # General configuration
@@ -50,8 +54,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General substitutions.
-project = 'Ansible 1.2 Documentation'
-copyright = "2013 AnsibleWorks"
+project = 'Ansible Documentation'
+copyright = "2013 Ansible, Inc"
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
@@ -101,17 +105,17 @@ pygments_style = 'sphinx'
 # -----------------------
 
 html_theme_path = ['_themes']
-html_theme = 'aworks'
+html_theme = 'srtd'
 html_short_title = 'Ansible Documentation'
 
 # The style sheet to use for HTML and HTML Help pages. A file of that name
 # must exist either in Sphinx' static/ path, or in one of the custom paths
 # given in html_static_path.
-html_style = 'default.css'
+#html_style = 'solar.css'
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-html_title = 'Ansible 1.2 Documentation'
+html_title = 'Ansible Documentation'
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 #html_short_title = None

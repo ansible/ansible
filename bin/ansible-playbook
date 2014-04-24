@@ -62,6 +62,8 @@ def main(args):
         check_opts=True,
         diff_opts=True
     )
+    #parser.add_option('--vault-password', dest="vault_password",
+    #    help="password for vault encrypted files")
     parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
         help="set additional variables as key=value or YAML/JSON", default=[])
     parser.add_option('-t', '--tags', dest='tags', default='all',
@@ -76,12 +78,24 @@ def main(args):
         help="one-step-at-a-time: confirm each task before running")
     parser.add_option('--start-at-task', dest='start_at',
         help="start the playbook at the task matching this name")
+    parser.add_option('--force-handlers', dest='force_handlers', action='store_true',
+        help="run handlers even if a task fails")
 
     options, args = parser.parse_args(args)
 
     if len(args) == 0:
         parser.print_help(file=sys.stderr)
         return 1
+
+    # su and sudo command line arguments need to be mutually exclusive
+    if (options.su or options.su_user or options.ask_su_pass) and \
+                (options.sudo or options.sudo_user or options.ask_sudo_pass):
+            parser.error("Sudo arguments ('--sudo', '--sudo-user', and '--ask-sudo-pass') "
+                         "and su arguments ('-su', '--su-user', and '--ask-su-pass') are "
+                         "mutually exclusive")
+
+    if (options.ask_vault_pass and options.vault_password_file):
+            parser.error("--ask-vault-pass and --vault-password-file are mutually exclusive")
 
     inventory = ansible.inventory.Inventory(options.inventory)
     inventory.subset(options.subset)
@@ -90,20 +104,39 @@ def main(args):
 
     sshpass = None
     sudopass = None
+    su_pass = None
+    vault_pass = None
+
     if not options.listhosts and not options.syntax and not options.listtasks:
         options.ask_pass = options.ask_pass or C.DEFAULT_ASK_PASS
+        options.ask_vault_pass = options.ask_vault_pass or C.DEFAULT_ASK_VAULT_PASS
         # Never ask for an SSH password when we run with local connection
         if options.connection == "local":
             options.ask_pass = False
         options.ask_sudo_pass = options.ask_sudo_pass or C.DEFAULT_ASK_SUDO_PASS
-        (sshpass, sudopass) = utils.ask_passwords(ask_pass=options.ask_pass, ask_sudo_pass=options.ask_sudo_pass)
+        options.ask_su_pass = options.ask_su_pass or C.DEFAULT_ASK_SU_PASS
+        options.ask_vault_pass = options.ask_vault_pass or C.DEFAULT_ASK_VAULT_PASS
+        (sshpass, sudopass, su_pass, vault_pass) = utils.ask_passwords(ask_pass=options.ask_pass, ask_sudo_pass=options.ask_sudo_pass, ask_su_pass=options.ask_su_pass, ask_vault_pass=options.ask_vault_pass)
         options.sudo_user = options.sudo_user or C.DEFAULT_SUDO_USER
+        options.su_user = options.su_user or C.DEFAULT_SU_USER
+
+        if options.vault_password_file:
+            this_path = os.path.expanduser(options.vault_password_file)
+            try:
+                f = open(this_path, "rb")
+                tmp_vault_pass=f.read().strip()
+                f.close()
+            except (OSError, IOError), e:
+                raise errors.AnsibleError("Could not read %s: %s" % (this_path, e))
+
+            if not options.ask_vault_pass:
+                vault_pass = tmp_vault_pass
 
     extra_vars = {}
     for extra_vars_opt in options.extra_vars:
         if extra_vars_opt.startswith("@"):
             # Argument is a YAML file (JSON is a subset of YAML)
-            extra_vars = utils.combine_vars(extra_vars, utils.parse_yaml_from_file(extra_vars_opt[1:]))
+            extra_vars = utils.combine_vars(extra_vars, utils.parse_yaml_from_file(extra_vars_opt[1:], vault_password=vault_pass))
         elif extra_vars_opt and extra_vars_opt[0] in '[{':
             # Arguments as YAML
             extra_vars = utils.combine_vars(extra_vars, utils.parse_yaml(extra_vars_opt))
@@ -156,7 +189,12 @@ def main(args):
             only_tags=only_tags,
             skip_tags=skip_tags,
             check=options.check,
-            diff=options.diff
+            diff=options.diff,
+            su=options.su,
+            su_pass=su_pass,
+            su_user=options.su_user,
+            vault_password=vault_pass,
+            force_handlers=options.force_handlers
         )
 
         if options.listhosts or options.listtasks or options.syntax:
@@ -168,12 +206,12 @@ def main(args):
                 playnum += 1
                 play = ansible.playbook.Play(pb, play_ds, play_basedir)
                 label = play.name
-                if options.listhosts:
-                    hosts = pb.inventory.list_hosts(play.hosts)
-                    print '  play #%d (%s): host count=%d' % (playnum, label, len(hosts))
-                    for host in hosts:
-                        print '    %s' % host
-                if options.listtasks:
+                hosts = pb.inventory.list_hosts(play.hosts)
+
+                # Filter all tasks by given tags
+                if pb.only_tags != 'all':
+                    if options.subset and not hosts:
+                        continue
                     matched_tags, unmatched_tags = play.compare_tags(pb.only_tags)
 
                     # Remove skipped tasks
@@ -185,6 +223,13 @@ def main(args):
 
                     if unknown_tags:
                         continue
+
+                if options.listhosts:
+                    print '  play #%d (%s): host count=%d' % (playnum, label, len(hosts))
+                    for host in hosts:
+                        print '    %s' % host
+
+                if options.listtasks:
                     print '  play #%d (%s):' % (playnum, label)
 
                     for task in play.tasks():
@@ -269,5 +314,8 @@ if __name__ == "__main__":
         sys.exit(main(sys.argv[1:]))
     except errors.AnsibleError, e:
         display("ERROR: %s" % e, color='red', stderr=True)
+        sys.exit(1)
+    except KeyboardInterrupt, ke:
+        display("ERROR: interrupted", color='red', stderr=True)
         sys.exit(1)
 

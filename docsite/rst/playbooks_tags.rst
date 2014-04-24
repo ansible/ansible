@@ -1,9 +1,6 @@
 Tags
 ====
 
-.. contents::
-   :depth: 2
-
 If you have a large playbook it may become useful to be able to run a 
 specific part of the configuration without running the whole playbook.  
 
@@ -27,6 +24,10 @@ Example::
 If you wanted to just run the "configuration" and "packages" part of a very long playbook, you could do this::
 
     ansible-playbook example.yml --tags "configuration,packages"
+    
+On the other hand, if you want to run a playbook *without* certain tasks, you could do this::
+
+    ansible-playbook example.yml --skip-tags "notification"
 
 You may also apply tags to roles::
 

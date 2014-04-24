@@ -1,0 +1,98 @@
+# test code for lookup plugins
+# (c) 2014, James Tanner <tanner.jc@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# FILE LOOKUP
+
+- name: make a new file to read
+  copy: dest={{output_dir}}/foo.txt mode=0644 content="bar"
+
+- name: load the file as a fact
+  set_fact: 
+    foo: "{{ lookup('file', output_dir + '/foo.txt' ) }}"
+
+- debug: var=foo
+
+- name: verify file lookup 
+  assert: 
+    that:
+        - "foo == 'bar'"
+
+
+# PASSWORD LOOKUP
+
+- name: remove previous password files
+  file: dest={{output_dir}}/password state=absent
+
+- name: create a password file
+  set_fact: 
+    newpass: "{{ lookup('password', output_dir + '/password length=8') }}"
+
+- name: get password length
+  shell: wc -c {{output_dir}}/password | awk '{print $1}'
+  register: wc_result
+
+- debug: var=wc_result.stdout
+
+- name: read password
+  shell: cat {{output_dir}}/password
+  register: cat_result
+
+- debug: var=cat_result.stdout
+
+- name: verify password
+  assert:
+    that:
+        - "wc_result.stdout == '9'"
+        - "cat_result.stdout == newpass"
+
+# ENV LOOKUP        
+
+- name: get first environment var name
+  shell: env | head -n1 | cut -d\= -f1
+  register: known_var_name
+
+- name: get first environment var value
+  shell: echo {{ '$' + known_var_name.stdout }}
+  register: known_var_value 
+
+- name: use env lookup to get known var
+  set_fact: 
+    test_val: "{{ lookup('env', known_var_name.stdout) }}"
+
+- debug: var=known_var_name.stdout
+- debug: var=known_var_value.stdout
+- debug: var=test_val  
+
+- name: compare values
+  assert:
+    that: 
+        - "test_val == known_var_value.stdout"
+
+
+# PIPE LOOKUP
+
+# https://github.com/ansible/ansible/issues/6550
+- name: confirm pipe lookup works with a single positional arg
+  debug: msg="{{ lookup('pipe', 'ls') }}"         
+
+# https://github.com/ansible/ansible/issues/6550
+- name: confirm pipe lookup works with multiple positional args
+  debug: msg="{{ lookup('pipe', 'ls /tmp /') }}"         
+
+
+

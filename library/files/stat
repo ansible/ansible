@@ -34,6 +34,12 @@ options:
     required: false
     default: no
     aliases: []
+  get_md5:
+    description:
+      - Whether to return the md5 sum of the file
+    required: false
+    default: yes
+    aliases: []
 author: Bruce Pennypacker
 '''
 
@@ -51,6 +57,9 @@ EXAMPLES = '''
   register: p
 - debug: msg="Path exists and is a directory"
   when: p.stat.isdir is defined and p.stat.isdir == true
+
+# Don't do md5 checksum
+- stat: path=/path/to/myhugefile get_md5=no
 '''
 
 import os
@@ -62,13 +71,16 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             path = dict(required=True),
-            follow = dict(default='no', type='bool')
-        )
+            follow = dict(default='no', type='bool'),
+            get_md5 = dict(default='yes', type='bool')
+        ),
+        supports_check_mode = True
     )
 
     path = module.params.get('path')
     path = os.path.expanduser(path)
     follow = module.params.get('follow')
+    get_md5 = module.params.get('get_md5')
 
     try:
         if follow:
@@ -79,7 +91,7 @@ def main():
         if e.errno == errno.ENOENT:
             d = { 'exists' : False }
             module.exit_json(changed=False, stat=d)
-       
+
         module.fail_json(msg = e.strerror)
 
     mode = st.st_mode
@@ -87,7 +99,7 @@ def main():
     # back to ansible
     d = {
         'exists'   : True,
-        'mode'     : S_IMODE(mode),
+        'mode'    : "%04o" % S_IMODE(mode),
         'isdir'    : S_ISDIR(mode),
         'ischr'    : S_ISCHR(mode),
         'isblk'    : S_ISBLK(mode),
@@ -120,8 +132,9 @@ def main():
     if S_ISLNK(mode):
         d['lnk_source'] = os.path.realpath(path)
 
-    if S_ISREG(mode):
-        d['md5']        = module.md5(path)
+    if S_ISREG(mode) and get_md5 and os.access(path,os.R_OK):
+        d['md5']       = module.md5(path)
+
 
     try:
         pw = pwd.getpwuid(st.st_uid)
@@ -129,7 +142,7 @@ def main():
         d['pw_name']   = pw.pw_name
     except:
         pass
-        
+
 
     module.exit_json(changed=False, stat=d)
 

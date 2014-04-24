@@ -1,8 +1,7 @@
 Patterns
 ++++++++
 
-.. contents::
-   :depth: 2
+.. contents:: Topics
 
 Patterns in Ansible are how we decide which hosts to manage.  This can mean what hosts to communicate with, but in terms
 of :doc:`playbooks` it actually means what hosts to apply a particular configuration or IT process to.
@@ -73,7 +72,7 @@ Most people don't specify patterns as regular expressions, but you can.  Just st
 
     ~(web|db).*\.example\.com
 
-While we're jumping a bit ahead, additionally, you can add an exclusion criteria just by supplying the "--limit" flag to /usr/bin/ansible or /usr/bin/ansible-playbook::
+While we're jumping a bit ahead, additionally, you can add an exclusion criteria just by supplying the ``--limit`` flag to /usr/bin/ansible or /usr/bin/ansible-playbook::
 
     ansible-playbook site.yml --limit datacenter2
 

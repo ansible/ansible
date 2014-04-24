@@ -22,24 +22,6 @@ short_description: create or destroy an image in ec2, return imageid
 description:
      - Creates or deletes ec2 images. This module has a dependency on python-boto >= 2.5
 options:
-  ec2_url:
-    description:
-      - Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints).  Must be specified if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used
-    required: false
-    default: null
-    aliases: []
-  aws_secret_key:
-    description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
-    required: false
-    default: null
-    aliases: [ 'ec2_secret_key', 'secret_key' ]
-  aws_access_key:
-    description:
-      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
-    required: false
-    default: null
-    aliases: ['ec2_access_key', 'access_key' ]
   instance_id:
     description:
       - instance id of the image to create
@@ -102,8 +84,8 @@ options:
     default: null
     aliases: []
 
-requirements: [ "boto" ]
 author: Evan Duffield <eduffield@iacquire.com>
+extends_documentation_fragment: aws
 '''
 
 # Thank you to iAcquire for sponsoring development of this module.
@@ -156,15 +138,6 @@ EXAMPLES = '''
 import sys
 import time
 
-AWS_REGIONS = ['ap-northeast-1',
-               'ap-southeast-1',
-               'ap-southeast-2',
-               'eu-west-1',
-               'sa-east-1',
-               'us-east-1',
-               'us-west-1',
-               'us-west-2']
-
 try:
     import boto
     import boto.ec2
@@ -200,17 +173,17 @@ def create_image(module, ec2):
     # Wait until the image is recognized. EC2 API has eventual consistency,
     # such that a successful CreateImage API call doesn't guarantee the success
     # of subsequent DescribeImages API call using the new image id returned.
-    for i in range(30):
+    for i in range(wait_timeout):
         try:
             img = ec2.get_image(image_id)
             break
-        except boto.exception.EC2ResponseError as e:
-            if e.error_code == 'InvalidAMIID.NotFound':
+        except boto.exception.EC2ResponseError, e:
+            if 'InvalidAMIID.NotFound' in e.error_code and wait:
                 time.sleep(1)
             else:
-                raise
+                module.fail_json(msg="Error while trying to find the new image. Using wait=yes and/or a longer wait_timeout may help.")
     else:
-        module.fail_json(msg = "timed out waiting for image to be recognized")
+        module.fail_json(msg="timed out waiting for image to be recognized")
 
     # wait here until the image is created
     wait_timeout = time.time() + wait_timeout
@@ -222,7 +195,6 @@ def create_image(module, ec2):
         module.fail_json(msg = "timed out waiting for image to be created")
 
     module.exit_json(msg="AMI creation operation complete", image_id=image_id, state=img.state, changed=True)
-    sys.exit(0)
 
 
 def deregister_image(module, ec2):
@@ -261,11 +233,8 @@ def deregister_image(module, ec2):
     sys.exit(0)
 
 def main():
-    module = AnsibleModule(
-        argument_spec = dict(
-            ec2_url = dict(),
-            ec2_secret_key = dict(aliases=['aws_secret_key', 'secret_key'], no_log=True),
-            ec2_access_key = dict(aliases=['aws_access_key', 'access_key']),
+    argument_spec = ec2_argument_spec()
+    argument_spec.update(dict(
             instance_id = dict(),
             image_id = dict(),
             delete_snapshot = dict(),
@@ -275,28 +244,11 @@ def main():
             description = dict(default=""),
             no_reboot = dict(default=False, type="bool"),
             state = dict(default='present'),
-            region = dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS)
         )
     )
+    module = AnsibleModule(argument_spec=argument_spec)
 
-    # def get_ec2_creds(module):
-    #   return ec2_url, ec2_access_key, ec2_secret_key, region
-    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
-
-    # If we have a region specified, connect to its endpoint.
-    if region:
-        try:
-            ec2 = boto.ec2.connect_to_region(region, aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key)
-        except boto.exception.NoAuthHandlerFound, e:
-            module.fail_json(msg = str(e))
-    # If we specified an ec2_url then try connecting to it
-    elif ec2_url:
-        try:
-            ec2 = boto.connect_ec2_endpoint(ec2_url, aws_access_key, aws_secret_key)
-        except boto.exception.NoAuthHandlerFound, e:
-            module.fail_json(msg = str(e))
-    else:
-        module.fail_json(msg="Either region or ec2_url must be specified")
+    ec2 = ec2_connect(module)
 
     if module.params.get('state') == 'absent':
         if not module.params.get('image_id'):

@@ -43,6 +43,30 @@ options:
             - What version of the repository to check out.  This can be the
               full 40-character I(SHA-1) hash, the literal string C(HEAD), a
               branch name, or a tag name.
+    accept_hostkey:
+        required: false
+        default: "no"
+        choices: [ "yes", "no" ]
+        version_added: "1.5"
+        description:
+            - if C(yes), adds the hostkey for the repo url if not already 
+              added. If ssh_args contains "-o StrictHostKeyChecking=no", 
+              this parameter is ignored.
+    ssh_opts:
+        required: false
+        default: None
+        version_added: "1.5"
+        description:
+            - Creates a wrapper script and exports the path as GIT_SSH
+              which git then automatically uses to override ssh arguments.
+              An example value could be "-o StrictHostKeyChecking=no"
+    key_file:
+        requird: false
+        default: None
+        version_added: "1.5"
+        description:
+            - Uses the same wrapper method as ssh_opts to pass 
+              "-i <key_file>" to the ssh arguments used by git
     reference:
         required: false
         default: null
@@ -95,11 +119,20 @@ options:
         description:
             - if C(yes), repository will be created as a bare repo, otherwise
               it will be a standard repo with a workspace.
+
+    recursive:
+        required: false
+        default: "yes"
+        choices: [ "yes", "no" ]
+        version_added: "1.6"
+        description:
+            - if C(no), repository will be cloned without the --recursive
+              option, skipping sub-modules.
 notes:
     - "If the task seems to be hanging, first verify remote host is in C(known_hosts).
       SSH will prompt user to authorize the first contact with a remote host.  To avoid this prompt, 
       one solution is to add the remote host public key in C(/etc/ssh/ssh_known_hosts) before calling 
-      the git module, with the following command: ssh-keyscan remote_host.com >> /etc/ssh/ssh_known_hosts."
+      the git module, with the following command: ssh-keyscan -H remote_host.com >> /etc/ssh/ssh_known_hosts."
 '''
 
 EXAMPLES = '''
@@ -118,26 +151,98 @@ EXAMPLES = '''
 import re
 import tempfile
 
-def get_version(git_path, dest, ref="HEAD"):
+def get_submodule_update_params(module, git_path, cwd):
+
+    #or: git submodule [--quiet] update [--init] [-N|--no-fetch] 
+    #[-f|--force] [--rebase] [--reference <repository>] [--merge] 
+    #[--recursive] [--] [<path>...]
+
+    params = []
+
+    # run a bad submodule command to get valid params    
+    cmd = "%s submodule update --help" % (git_path)
+    rc, stdout, stderr = module.run_command(cmd, cwd=cwd)
+    lines = stderr.split('\n')
+    update_line = None
+    for line in lines:
+        if 'git submodule [--quiet] update ' in line:
+            update_line = line
+    if update_line:
+        update_line = update_line.replace('[','')
+        update_line = update_line.replace(']','')
+        update_line = update_line.replace('|',' ')
+        parts = shlex.split(update_line)
+        for part in parts:    
+            if part.startswith('--'):
+                part = part.replace('--', '')
+                params.append(part)
+
+    return params
+
+def write_ssh_wrapper():
+    module_dir = get_module_path()
+    fd, wrapper_path = tempfile.mkstemp(prefix=module_dir + '/')
+    fh = os.fdopen(fd, 'w+b')
+    template = """#!/bin/sh
+if [ -z "$GIT_SSH_OPTS" ]; then
+    BASEOPTS=""
+else
+    BASEOPTS=$GIT_SSH_OPTS
+fi
+
+if [ -z "$GIT_KEY" ]; then
+    ssh $BASEOPTS "$@"
+else
+    ssh -i "$GIT_KEY" $BASEOPTS "$@"
+fi
+"""
+    fh.write(template)
+    fh.close()
+    st = os.stat(wrapper_path)
+    os.chmod(wrapper_path, st.st_mode | stat.S_IEXEC)
+    return wrapper_path
+
+def set_git_ssh(ssh_wrapper, key_file, ssh_opts):
+
+    if os.environ.get("GIT_SSH"):
+        del os.environ["GIT_SSH"]
+    os.environ["GIT_SSH"] = ssh_wrapper
+
+    if os.environ.get("GIT_KEY"):
+        del os.environ["GIT_KEY"]
+
+    if key_file:
+        os.environ["GIT_KEY"] = key_file    
+
+    if os.environ.get("GIT_SSH_OPTS"):
+        del os.environ["GIT_SSH_OPTS"]
+
+    if ssh_opts:
+        os.environ["GIT_SSH_OPTS"] = ssh_opts
+
+def get_version(module, git_path, dest, ref="HEAD"):
     ''' samples the version of the git repo '''
-    os.chdir(dest)
+
     cmd = "%s rev-parse %s" % (git_path, ref)
-    sha = os.popen(cmd).read().rstrip("\n")
+    rc, stdout, stderr = module.run_command(cmd, cwd=dest)
+    sha = stdout.rstrip('\n')
     return sha
 
-def clone(git_path, module, repo, dest, remote, depth, version, bare, reference):
+def clone(git_path, module, repo, dest, remote, depth, version, bare,
+          reference, recursive):
     ''' makes a new git repo if it does not already exist '''
     dest_dirname = os.path.dirname(dest)
     try:
         os.makedirs(dest_dirname)
     except:
         pass
-    os.chdir(dest_dirname)
     cmd = [ git_path, 'clone' ]
     if bare:
         cmd.append('--bare')
     else:
-        cmd.extend([ '--origin', remote, '--recursive' ])
+        cmd.extend([ '--origin', remote ])
+        if recursive:
+            cmd.extend([ '--recursive' ])
         if is_remote_branch(git_path, module, dest, repo, version) \
         or is_remote_tag(git_path, module, dest, repo, version):
             cmd.extend([ '--branch', version ])
@@ -146,19 +251,20 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare, reference)
     if reference:
         cmd.extend([ '--reference', str(reference) ])
     cmd.extend([ repo, dest ])
-    module.run_command(cmd, check_rc=True)
+    module.run_command(cmd, check_rc=True, cwd=dest_dirname)
     if bare:
-        os.chdir(dest)
         if remote != 'origin':
-            module.run_command([git_path, 'remote', 'add', remote, repo], check_rc=True)
+            module.run_command([git_path, 'remote', 'add', remote, repo], check_rc=True, cwd=dest)
   
-def has_local_mods(git_path, dest, bare):
+def has_local_mods(module, git_path, dest, bare):
     if bare:
         return False
-    os.chdir(dest)
-    cmd = "%s status -s" % (git_path,)
-    lines = os.popen(cmd).read().splitlines()
+
+    cmd = "%s status -s" % (git_path)
+    rc, stdout, stderr = module.run_command(cmd, cwd=dest)
+    lines = stdout.splitlines()
     lines = filter(lambda c: not re.search('^\\?\\?.*$', c), lines)
+
     return len(lines) > 0
 
 def reset(git_path, module, dest):
@@ -167,16 +273,16 @@ def reset(git_path, module, dest):
     Discards any changes to tracked files in working
     tree since that commit.
     '''
-    os.chdir(dest)
     cmd = "%s reset --hard HEAD" % (git_path,)
-    return module.run_command(cmd, check_rc=True)
+    return module.run_command(cmd, check_rc=True, cwd=dest)
 
 def get_remote_head(git_path, module, dest, version, remote, bare):
     cloning = False
+    cwd = None
     if remote == module.params['repo']:
         cloning = True
     else:
-        os.chdir(dest)
+        cwd = dest
     if version == 'HEAD':
         if cloning:
             # cloning the repo, just get the remote's HEAD version
@@ -192,7 +298,7 @@ def get_remote_head(git_path, module, dest, version, remote, bare):
         # appears to be a sha1.  return as-is since it appears
         # cannot check for a specific sha1 on remote
         return version
-    (rc, out, err) = module.run_command(cmd, check_rc=True)
+    (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=cwd)
     if len(out) < 1:
         module.fail_json(msg="Could not determine remote revision for %s" % version)
     rev = out.split()[0]
@@ -200,26 +306,35 @@ def get_remote_head(git_path, module, dest, version, remote, bare):
 
 def is_remote_tag(git_path, module, dest, remote, version):
     cmd = '%s ls-remote %s -t refs/tags/%s' % (git_path, remote, version)
-    (rc, out, err) = module.run_command(cmd, check_rc=True)
+    (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=dest)
     if version in out:
         return True
     else:
         return False
 
 def get_branches(git_path, module, dest):
-    os.chdir(dest)
     branches = []
     cmd = '%s branch -a' % (git_path,)
-    (rc, out, err) = module.run_command(cmd)
+    (rc, out, err) = module.run_command(cmd, cwd=dest)
     if rc != 0:
         module.fail_json(msg="Could not determine branch data - received %s" % out)
     for line in out.split('\n'):
         branches.append(line.strip())
     return branches
 
+def get_tags(git_path, module, dest):
+    tags = []
+    cmd = '%s tag' % (git_path,)
+    (rc, out, err) = module.run_command(cmd, cwd=dest)
+    if rc != 0:
+        module.fail_json(msg="Could not determine tag data - received %s" % out)
+    for line in out.split('\n'):
+        tags.append(line.strip())
+    return tags
+
 def is_remote_branch(git_path, module, dest, remote, version):
     cmd = '%s ls-remote %s -h refs/heads/%s' % (git_path, remote, version)
-    (rc, out, err) = module.run_command(cmd, check_rc=True)
+    (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=dest)
     if version in out:
         return True
     else:
@@ -278,18 +393,17 @@ def get_head_branch(git_path, module, dest, remote, bare=False):
 
 def fetch(git_path, module, repo, dest, version, remote, bare):
     ''' updates repo from remote sources '''
-    os.chdir(dest)
     if bare:
-        (rc, out1, err1) = module.run_command([git_path, 'fetch', remote, '+refs/heads/*:refs/heads/*'])
+        (rc, out1, err1) = module.run_command([git_path, 'fetch', remote, '+refs/heads/*:refs/heads/*'], cwd=dest)
     else:
-        (rc, out1, err1) = module.run_command("%s fetch %s" % (git_path, remote))
+        (rc, out1, err1) = module.run_command("%s fetch %s" % (git_path, remote), cwd=dest)
     if rc != 0:
         module.fail_json(msg="Failed to download remote objects and refs")
 
     if bare:
-        (rc, out2, err2) = module.run_command([git_path, 'fetch', remote, '+refs/tags/*:refs/tags/*'])
+        (rc, out2, err2) = module.run_command([git_path, 'fetch', remote, '+refs/tags/*:refs/tags/*'], cwd=dest)
     else:
-        (rc, out2, err2) = module.run_command("%s fetch --tags %s" % (git_path, remote))
+        (rc, out2, err2) = module.run_command("%s fetch --tags %s" % (git_path, remote), cwd=dest)
     if rc != 0:
         module.fail_json(msg="Failed to download remote objects and refs")
     (rc, out3, err3) = submodule_update(git_path, module, dest)
@@ -297,28 +411,33 @@ def fetch(git_path, module, repo, dest, version, remote, bare):
 
 def submodule_update(git_path, module, dest):
     ''' init and update any submodules '''
-    os.chdir(dest)
+
+    # get the valid submodule params
+    params = get_submodule_update_params(module, git_path, dest)
+
     # skip submodule commands if .gitmodules is not present
     if not os.path.exists(os.path.join(dest, '.gitmodules')):
         return (0, '', '')
     cmd = [ git_path, 'submodule', 'sync' ]
-    (rc, out, err) = module.run_command(cmd, check_rc=True)
-    cmd = [ git_path, 'submodule', 'update', '--init', '--recursive' ]
-    (rc, out, err) = module.run_command(cmd)
+    (rc, out, err) = module.run_command(cmd, check_rc=True, cwd=dest)
+    if 'remote' in params:
+        cmd = [ git_path, 'submodule', 'update', '--init', '--recursive' ,'--remote' ]
+    else:
+        cmd = [ git_path, 'submodule', 'update', '--init', '--recursive' ]
+    (rc, out, err) = module.run_command(cmd, cwd=dest)
     if rc != 0:
-        module.fail_json(msg="Failed to init/update submodules")
+        module.fail_json(msg="Failed to init/update submodules: %s" % out + err)
     return (rc, out, err)
 
 def switch_version(git_path, module, dest, remote, version):
     ''' once pulled, switch to a particular SHA, tag, or branch '''
-    os.chdir(dest)
     cmd = ''
     if version != 'HEAD':
         if is_remote_branch(git_path, module, dest, remote, version):
             if not is_local_branch(git_path, module, dest, version):
                 cmd = "%s checkout --track -b %s %s/%s" % (git_path, version, remote, version)
             else:
-                (rc, out, err) = module.run_command("%s checkout --force %s" % (git_path, version))
+                (rc, out, err) = module.run_command("%s checkout --force %s" % (git_path, version), cwd=dest)
                 if rc != 0:
                     module.fail_json(msg="Failed to checkout branch %s" % version)
                 cmd = "%s reset --hard %s/%s" % (git_path, remote, version)
@@ -326,11 +445,11 @@ def switch_version(git_path, module, dest, remote, version):
             cmd = "%s checkout --force %s" % (git_path, version)
     else:
         branch = get_head_branch(git_path, module, dest, remote)
-        (rc, out, err) = module.run_command("%s checkout --force %s" % (git_path, branch))
+        (rc, out, err) = module.run_command("%s checkout --force %s" % (git_path, branch), cwd=dest)
         if rc != 0:
             module.fail_json(msg="Failed to checkout branch %s" % branch)
         cmd = "%s reset --hard %s" % (git_path, remote)
-    (rc, out1, err1) = module.run_command(cmd)
+    (rc, out1, err1) = module.run_command(cmd, cwd=dest)
     if rc != 0:
         if version != 'HEAD':
             module.fail_json(msg="Failed to checkout %s" % (version))
@@ -352,8 +471,12 @@ def main():
             force=dict(default='yes', type='bool'),
             depth=dict(default=None, type='int'),
             update=dict(default='yes', type='bool'),
+            accept_hostkey=dict(default='no', type='bool'),
+            key_file=dict(default=None, required=False),
+            ssh_opts=dict(default=None, required=False),
             executable=dict(default=None),
             bare=dict(default='no', type='bool'),
+            recursive=dict(default='yes', type='bool'),
         ),
         supports_check_mode=True
     )
@@ -368,6 +491,26 @@ def main():
     bare      = module.params['bare']
     reference = module.params['reference']
     git_path  = module.params['executable'] or module.get_bin_path('git', True)
+    
+    key_file   = module.params['key_file']
+    ssh_opts   = module.params['ssh_opts']
+
+    # create a wrapper script and export
+    # GIT_SSH=<path> as an environment variable
+    # for git to use the wrapper script
+    ssh_wrapper = None
+    if key_file or ssh_opts:
+        ssh_wrapper = write_ssh_wrapper()
+        set_git_ssh(ssh_wrapper, key_file, ssh_opts)
+
+    # add the git repo's hostkey 
+    if module.params['ssh_opts'] is not None:
+        if not "-o StrictHostKeyChecking=no" in module.params['ssh_opts']:
+            add_git_host_key(module, repo, accept_hostkey=module.params['accept_hostkey'])
+    else:            
+        add_git_host_key(module, repo, accept_hostkey=module.params['accept_hostkey'])
+
+    recursive = module.params['recursive']
 
     if bare:
         gitconfig = os.path.join(dest, 'config')
@@ -384,17 +527,18 @@ def main():
         if module.check_mode:
             remote_head = get_remote_head(git_path, module, dest, version, repo, bare)
             module.exit_json(changed=True, before=before, after=remote_head)
-        clone(git_path, module, repo, dest, remote, depth, version, bare, reference)
+        clone(git_path, module, repo, dest, remote, depth, version, bare,
+              reference, recursive)
     elif not update:
         # Just return having found a repo already in the dest path
         # this does no checking that the repo is the actual repo
         # requested.
-        before = get_version(git_path, dest)
+        before = get_version(module, git_path, dest)
         module.exit_json(changed=False, before=before, after=before)
     else:
         # else do a pull
-        local_mods = has_local_mods(git_path, dest, bare)
-        before = get_version(git_path, dest)
+        local_mods = has_local_mods(module, git_path, dest, bare)
+        before = get_version(module, git_path, dest)
         if local_mods:
             # failure should happen regardless of check mode
             if not force:
@@ -408,6 +552,10 @@ def main():
             if local_mods:
                 module.exit_json(changed=True, before=before, after=remote_head,
                     msg="Local modifications exist")
+            elif is_remote_tag(git_path, module, dest, repo, version):
+                # if the remote is a tag and we have the tag locally, exit early
+                if version in get_tags(git_path, module, dest):
+                    module.exit_json(changed=False, before=before, after=remote_head)
             else:
                 module.exit_json(changed=False, before=before, after=remote_head)
         if module.check_mode:
@@ -420,14 +568,20 @@ def main():
         switch_version(git_path, module, dest, remote, version)
 
     # determine if we changed anything
-    after = get_version(git_path, dest)
+    after = get_version(module, git_path, dest)
     changed = False
 
     if before != after or local_mods:
         changed = True
 
+    # cleanup the wrapper script
+    if ssh_wrapper:
+        os.remove(ssh_wrapper) 
+
     module.exit_json(changed=changed, before=before, after=after)
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.known_hosts import *
+
 main()

@@ -1,0 +1,12 @@
+- name: install the systemd unit file
+  copy: src=ansible.systemd dest=/usr/lib/systemd/system/ansible_test.service
+  register: install_systemd_result
+
+- name: assert that the systemd unit file was installed
+  assert:
+    that:
+    - "install_systemd_result.dest == '/usr/lib/systemd/system/ansible_test.service'"
+    - "install_systemd_result.state == 'file'"
+    - "install_systemd_result.mode == '0644'"
+    - "install_systemd_result.md5sum == 'f634df77d9160ab05bad4ed49d82a0d0'"
+

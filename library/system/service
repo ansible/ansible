@@ -37,8 +37,8 @@ options:
         description:
           - C(started)/C(stopped) are idempotent actions that will not run
             commands unless necessary.  C(restarted) will always bounce the
-            service.  C(reloaded) will always reload. At least one of state
-            and enabled are required.
+            service.  C(reloaded) will always reload. B(At least one of state
+            and enabled are required.)
     sleep:
         required: false
         version_added: "1.3"
@@ -59,8 +59,8 @@ options:
         required: false
         choices: [ "yes", "no" ]
         description:
-        - Whether the service should start on boot. At least one of state and
-          enabled are required.
+        - Whether the service should start on boot. B(At least one of state and
+          enabled are required.)
 
     runlevel:
         required: false
@@ -207,7 +207,9 @@ class Service(object):
                 os._exit(0)
 
             # Start the command
-            p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, preexec_fn=lambda: os.close(pipe[1]))
+            if isinstance(cmd, basestring):
+                cmd = shlex.split(cmd)
+            p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, preexec_fn=lambda: os.close(pipe[1]))
             stdout = ""
             stderr = ""
             fds = [p.stdout, p.stderr]
@@ -325,7 +327,7 @@ class Service(object):
             if len(rcarray) >= 1 and '=' in rcarray[0]:
                 (key, value) = rcarray[0].split("=", 1)
                 if key == self.rcconf_key:
-                    if value == self.rcconf_value:
+                    if value.upper() == self.rcconf_value:
                         # Since the proper entry already exists we can stop iterating.
                         changed = False
                         break
@@ -410,11 +412,13 @@ class LinuxService(Service):
             # adjust the service name to account for template service unit files
             index = name.find('@')
             if index != -1:
-                name = name[:index+1]
+                template_name = name[:index+1]
+            else:
+                template_name = name
 
             self.__systemd_unit = None
             for line in out.splitlines():
-                if line.startswith(name):
+                if line.startswith(template_name):
                     self.__systemd_unit = name
                     return True
             return False
@@ -431,10 +435,10 @@ class LinuxService(Service):
             if check_systemd(self.name):
                 # service is managed by systemd
                 self.enable_cmd = location['systemctl']
-            elif os.path.exists("/etc/init/%s.conf" % self.name):
+            elif location['initctl'] and os.path.exists("/etc/init/%s.conf" % self.name):
                 # service is managed by upstart
                 self.enable_cmd = location['initctl']
-            elif os.path.exists("/etc/init.d/%s" % self.name):
+            elif location['update-rc.d'] and os.path.exists("/etc/init.d/%s" % self.name):
                 # service is managed by with SysV init scripts, but with update-rc.d
                 self.enable_cmd = location['update-rc.d']
             else:
@@ -473,7 +477,34 @@ class LinuxService(Service):
         if location.get('initctl', None):
             self.svc_initctl = location['initctl']
 
+    def get_systemd_status_dict(self):
+        (rc, out, err) = self.execute_command("%s show %s" % (self.enable_cmd, self.__systemd_unit,))
+        if rc != 0:
+            self.module.fail_json('failure %d running systemctl show for %r: %s' % (self.__systemd_unit, rc, err))
+        return dict(line.split('=', 1) for line in out.splitlines())
+
+    def get_systemd_service_status(self):
+        d = self.get_systemd_status_dict()
+        if d.get('ActiveState') == 'active':
+            # run-once services (for which a single successful exit indicates
+            # that they are running as designed) should not be restarted here.
+            # Thus, we are not checking d['SubState'].
+            self.running = True
+            self.crashed = False
+        elif d.get('ActiveState') == 'failed':
+            self.running = False
+            self.crashed = True
+        elif d.get('ActiveState') is None:
+            self.module.fail_json(msg='No ActiveState value in systemctl show output for %r' % (self.__systemd_unit,))
+        else:
+            self.running = False
+            self.crashed = False
+        return self.running
+
     def get_service_status(self):
+        if self.svc_cmd and self.svc_cmd.endswith('systemctl'):
+            return self.get_systemd_service_status()
+
         self.action = "status"
         rc, status_stdout, status_stderr = self.service_control()
 
@@ -481,9 +512,9 @@ class LinuxService(Service):
         if self.svc_initctl and self.running is None:
             # check the job status by upstart response
             initctl_rc, initctl_status_stdout, initctl_status_stderr = self.execute_command("%s status %s" % (self.svc_initctl, self.name))
-            if initctl_status_stdout.find("stop/waiting") != -1:
+            if "stop/waiting" in initctl_status_stdout:
                 self.running = False
-            elif initctl_status_stdout.find("start/running") != -1:
+            elif "start/running" in initctl_status_stdout:
                 self.running = True
 
         if self.svc_cmd and self.svc_cmd.endswith("rc-service") and self.running is None:
@@ -523,7 +554,7 @@ class LinuxService(Service):
 
         # if the job status is still not known check it by special conditions
         if self.running is None:
-            if self.name == 'iptables' and status_stdout.find("ACCEPT") != -1:
+            if self.name == 'iptables' and "ACCEPT" in status_stdout:
                 # iptables status command output is lame
                 # TODO: lookup if we can use a return code for this instead?
                 self.running = True
@@ -534,7 +565,7 @@ class LinuxService(Service):
     def service_enable(self):
 
         if self.enable_cmd is None:
-            self.module.fail_json(msg='service name not recognized')
+            self.module.fail_json(msg='cannot detect command to enable service %s, typo or init system potentially unknown' % self.name)
 
         # FIXME: we use chkconfig or systemctl
         # to decide whether to run the command here but need something
@@ -577,7 +608,7 @@ class LinuxService(Service):
                 self.execute_command("%s --add %s" % (self.enable_cmd, self.name))
                 (rc, out, err) = self.execute_command("%s --list %s" % (self.enable_cmd, self.name))
             if not self.name in out:
-                self.module.fail_json(msg="unknown service name")
+                self.module.fail_json(msg="service %s does not support chkconfig" % self.name)
             state = out.split()[-1]
             if self.enable and ( "3:on" in out and "5:on" in out ):
                 return
@@ -585,9 +616,7 @@ class LinuxService(Service):
                 return
 
         if self.enable_cmd.endswith("systemctl"):
-            (rc, out, err) = self.execute_command("%s show %s" % (self.enable_cmd, self.__systemd_unit))
-
-            d = dict(line.split('=', 1) for line in out.splitlines())
+            d = self.get_systemd_status_dict()
             if "UnitFileState" in d:
                 if self.enable and d["UnitFileState"] == "enabled":
                     return
@@ -629,16 +658,16 @@ class LinuxService(Service):
                 if line.startswith('rename'):
                     self.changed = True
                     break
-                elif self.enable and line.find('do not exist') != -1:
+                elif self.enable and 'do not exist' in line:
                     self.changed = True
                     break
-                elif not self.enable and line.find('already exist') != -1:
+                elif not self.enable and 'already exist' in line:
                     self.changed = True
                     break
 
             # Debian compatibility
             for line in err.splitlines():
-                if self.enable and line.find('no runlevel symlinks to modify') != -1:
+                if self.enable and 'no runlevel symlinks to modify' in line:
                     self.changed = True
                     break
 
@@ -649,7 +678,7 @@ class LinuxService(Service):
                 return
 
             if self.enable:
-                # make sure the init.d symlinks are created 
+                # make sure the init.d symlinks are created
                 # otherwise enable might not work
                 (rc, out, err) = self.execute_command("%s %s defaults" \
                                                       % (self.enable_cmd, self.name))
@@ -658,7 +687,8 @@ class LinuxService(Service):
 
                 return self.execute_command("%s %s enable" % (self.enable_cmd, self.name))
             else:
-                return self.execute_command("%s -f %s remove" % (self.enable_cmd, self.name))
+                return self.execute_command("%s %s disable" % (self.enable_cmd,
+                                                               self.name))
 
         # we change argument depending on real binary used:
         # - update-rc.d and systemctl wants enable/disable
@@ -784,7 +814,7 @@ class FreeBsdService(Service):
         else:
             self.rcconf_value = "NO"
 
-        rcfiles = [ '/etc/rc.conf','/usr/local/etc/rc.conf' ]
+        rcfiles = [ '/etc/rc.conf','/etc/rc.conf.local', '/usr/local/etc/rc.conf' ]
         for rcfile in rcfiles:
             if os.path.isfile(rcfile):
                 self.rcconf_file = rcfile
@@ -979,10 +1009,10 @@ class SunOSService(Service):
         #    enabled   true
         #    enabled   false
         for line in stdout.split("\n"):
-            if line.find("enabled") == 0:
-                if line.find("true") != -1:
+            if line.startswith("enabled"):
+                if "true" in line:
                     enabled = True
-                if line.find("temporary") != -1:
+                if "temporary" in line:
                     temporary = True
 
         startup_enabled = (enabled and not temporary) or (not enabled and temporary)
@@ -1174,7 +1204,7 @@ def main():
     (rc, out, err) = service.modify_service_state()
 
     if rc != 0:
-        if err and err.find("is already") != -1:
+        if err and "is already" in err:
             # upstart got confused, one such possibility is MySQL on Ubuntu 12.04
             # where status may report it has no start/stop links and we could
             # not get accurate status

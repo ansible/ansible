@@ -74,14 +74,17 @@ options:
     description:
      - Will skip over out-of-order missing migrations, you can only use this parameter with I(migrate)
     required: false
+    version_added: "1.3"
   merge:
     description:
      - Will run out-of-order or missing migrations as they are not rollback migrations, you can only use this parameter with 'migrate' command
     required: false
+    version_added: "1.3"
   link:
     description:
      - Will create links to the files instead of copying them, you can only use this parameter with 'collectstatic' command
     required: false
+    version_added: "1.3"
 notes:
    - I(virtualenv) (U(http://www.virtualenv.org)) must be installed on the remote host if the virtualenv parameter is specified.
    - This module will create a virtualenv if the virtualenv parameter is specified and a virtualenv does not already exist at the given location.
@@ -129,12 +132,11 @@ def _ensure_virtualenv(module):
     if venv_param is None:
         return
 
-    virtualenv = module.get_bin_path('virtualenv', True)
-
     vbin = os.path.join(os.path.expanduser(venv_param), 'bin')
     activate = os.path.join(vbin, 'activate')
 
     if not os.path.exists(activate):
+        virtualenv = module.get_bin_path('virtualenv', True)
         vcmd = '%s %s' % (virtualenv, venv_param)
         vcmd = [virtualenv, venv_param]
         rc, out_venv, err_venv = module.run_command(vcmd)
@@ -204,13 +206,13 @@ def main():
             apps        = dict(default=None, required=False),
             cache_table = dict(default=None, required=False),
             database    = dict(default=None, required=False),
-            failfast    = dict(default='no', required=False, choices=BOOLEANS, aliases=['fail_fast']),
+            failfast    = dict(default='no', required=False, type='bool', aliases=['fail_fast']),
             fixtures    = dict(default=None, required=False),
             liveserver  = dict(default=None, required=False, aliases=['live_server']),
             testrunner  = dict(default=None, required=False, aliases=['test_runner']),
-            skip        = dict(default=None, required=False, choices=BOOLEANS),
-            merge       = dict(default=None, required=False, choices=BOOLEANS),
-            link        = dict(default=None, required=False, choices=BOOLEANS),
+            skip        = dict(default=None, required=False, type='bool'),
+            merge       = dict(default=None, required=False, type='bool'),
+            link        = dict(default=None, required=False, type='bool'),
         ),
     )
 
@@ -233,7 +235,6 @@ def main():
 
     _ensure_virtualenv(module)
 
-    os.chdir(app_path)
     cmd = "python manage.py %s" % (command, )
 
     if command in noinput_commands:
@@ -252,7 +253,7 @@ def main():
         if module.params[param]:
             cmd = '%s %s' % (cmd, module.params[param])
 
-    rc, out, err = module.run_command(cmd)
+    rc, out, err = module.run_command(cmd, cwd=app_path)
     if rc != 0:
         if command == 'createcachetable' and 'table' in err and 'already exists' in err:
             out = 'Already exists.'

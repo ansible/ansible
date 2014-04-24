@@ -29,18 +29,18 @@ version_added: "0.0.2"
 options:
   pkg:
     description:
-      - A package name or package specifier with version, like C(foo) or C(foo=1.0). Shell like wildcards (fnmatch) like apt* are also supported.
+      - A package name, like C(foo), or package specifier with version, like C(foo=1.0). Wildcards (fnmatch) like apt* are also supported.
     required: false
     default: null
   state:
     description:
-      - Indicates the desired package state
+      - Indicates the desired package state. C(latest) ensures that the latest version is installed.
     required: false
     default: present
     choices: [ "latest", "absent", "present" ]
   update_cache:
     description:
-      - Run the equivalent of C(apt-get update) before the operation. Can be run as part of the package installation or as a separate step
+      - Run the equivalent of C(apt-get update) before the operation. Can be run as part of the package installation or as a separate step.
     required: false
     default: no
     choices: [ "yes", "no" ]
@@ -62,7 +62,7 @@ options:
     default: null
   install_recommends:
     description:
-      - Corresponds to the C(--no-install-recommends) option for I(apt), default behavior works as apt's default behavior, C(no) does not install recommended packages. Suggested packages are never installed.
+      - Corresponds to the C(--no-install-recommends) option for I(apt). Default behavior (C(yes)) replicates apt's default behavior; C(no) does not install recommended packages. Suggested packages are never installed.
     required: false
     default: yes
     choices: [ "yes", "no" ]
@@ -94,6 +94,11 @@ options:
       - Options should be supplied as comma separated list
     required: false
     default: 'force-confdef,force-confold'
+  deb:
+     description:
+       - Path to a local .deb package file to install.
+     required: false
+     version_added: "1.6"
 requirements: [ python-apt, aptitude ]
 author: Matthew Williams
 notes:
@@ -132,8 +137,13 @@ EXAMPLES = '''
 # Pass options to dpkg on run
 - apt: upgrade=dist update_cache=yes dpkg_options='force-confold,force-confdef'
 
+<<<<<<< HEAD
 # Install the build deps for package "foo"
 - apt: pkg=foo build_dep=yes
+=======
+# Install a .deb package
+- apt: deb=/tmp/mypackage.deb
+>>>>>>> devel
 '''
 
 
@@ -147,7 +157,11 @@ import datetime
 import fnmatch
 
 # APT related constants
-APT_ENVVARS = "DEBIAN_FRONTEND=noninteractive DEBIAN_PRIORITY=critical"
+APT_ENV_VARS = dict(
+  DEBIAN_FRONTEND = 'noninteractive',
+  DEBIAN_PRIORITY = 'critical'
+)
+
 DPKG_OPTIONS = 'force-confdef,force-confold'
 APT_GET_ZERO = "0 upgraded, 0 newly installed"
 APTITUDE_ZERO = "0 packages upgraded, 0 newly installed"
@@ -157,8 +171,9 @@ APT_UPDATE_SUCCESS_STAMP_PATH = "/var/lib/apt/periodic/update-success-stamp"
 HAS_PYTHON_APT = True
 try:
     import apt
+    import apt.debfile
     import apt_pkg
-except:
+except ImportError:
     HAS_PYTHON_APT = False
 
 def package_split(pkgspec):
@@ -191,7 +206,7 @@ def package_status(m, pkgname, version, cache, state):
         has_files = False  # older python-apt cannot be used to determine non-purged
 
     try:
-        package_is_installed = ll_pkg.current_state == apt_pkg.CURSTATE_INSTALLED 
+        package_is_installed = ll_pkg.current_state == apt_pkg.CURSTATE_INSTALLED
     except AttributeError: # python-apt 0.7.X has very weak low-level object
         try:
             # might not be necessary as python-apt post-0.7.X should have current_state property
@@ -200,7 +215,7 @@ def package_status(m, pkgname, version, cache, state):
             # assume older version of python-apt is installed
             package_is_installed = pkg.isInstalled
 
-    if version:
+    if version and package_is_installed:
         try:
             installed_version = pkg.installed.version
         except AttributeError:
@@ -269,7 +284,10 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         else:
             check_arg = ''
 
-        cmd = "%s %s -y %s %s %s install %s" % (APT_ENVVARS, APT_GET_CMD, dpkg_options, force_yes, check_arg, packages)
+        for (k,v) in APT_ENV_VARS.iteritems():
+            os.environ[k] = v
+
+        cmd = "%s -y %s %s %s install %s" % (APT_GET_CMD, dpkg_options, force_yes, check_arg, packages)
 
         if default_release:
             cmd += " -t '%s'" % (default_release,)
@@ -278,11 +296,56 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
 
         rc, out, err = m.run_command(cmd)
         if rc:
-            m.fail_json(msg="'apt-get install %s' failed: %s" % (packages, err), stdout=out, stderr=err)
+            return (False, dict(msg="'apt-get install %s' failed: %s" % (packages, err), stdout=out, stderr=err))
         else:
-            m.exit_json(changed=True, stdout=out, stderr=err)
+            return (True, dict(changed=True, stdout=out, stderr=err))
     else:
+        return (True, dict(changed=False))
+
+def install_deb(m, debfile, cache, force, install_recommends, dpkg_options):
+    changed=False
+    pkg = apt.debfile.DebPackage(debfile)
+
+    # Check if it's already installed
+    if pkg.compare_to_version_in_cache() == pkg.VERSION_SAME:
         m.exit_json(changed=False)
+
+    # Check if package is installable
+    if not pkg.check():
+        m.fail_json(msg=pkg._failure_string)
+
+    (success, retvals) = install(m=m, pkgspec=pkg.missing_deps,
+                                 cache=cache,
+                                 install_recommends=install_recommends,
+                                 dpkg_options=expand_dpkg_options(dpkg_options))
+    if not success:
+        m.fail_json(**retvals)
+    changed = retvals['changed']
+
+
+    options = ' '.join(["--%s"% x for x in dpkg_options.split(",")])
+
+    if m.check_mode:
+        options += " --simulate"
+    if force:
+        options += " --force-yes"
+
+
+    cmd = "dpkg %s -i %s" % (options, debfile)
+    rc, out, err = m.run_command(cmd)
+
+    if "stdout" in retvals:
+        stdout = retvals["stdout"] + out
+    else:
+        stdout = out
+    if "stderr" in retvals:
+        stderr = retvals["stderr"] + err
+    else:
+        stderr = err
+    if rc == 0:
+        m.exit_json(changed=True, stdout=stdout, stderr=stderr)
+    else:
+        m.fail_json(msg="%s failed" % cmd, stdout=stdout, stderr=stderr)
 
 def remove(m, pkgspec, cache, purge=False,
            dpkg_options=expand_dpkg_options(DPKG_OPTIONS)):
@@ -301,7 +364,11 @@ def remove(m, pkgspec, cache, purge=False,
             purge = '--purge'
         else:
             purge = ''
-        cmd = "%s %s -q -y %s %s remove %s" % (APT_ENVVARS, APT_GET_CMD, dpkg_options, purge, packages)
+
+        for (k,v) in APT_ENV_VARS.iteritems():
+            os.environ[k] = v
+
+        cmd = "%s -q -y %s %s remove %s" % (APT_GET_CMD, dpkg_options, purge, packages)
 
         if m.check_mode:
             m.exit_json(changed=True)
@@ -333,12 +400,19 @@ def upgrade(m, mode="yes", force=False,
         upgrade_command = "safe-upgrade"
 
     if force:
-        force_yes = '--force-yes'
+        if apt_cmd == APT_GET_CMD:
+            force_yes = '--force-yes'
+        else:
+            force_yes = ''
     else:
         force_yes = ''
 
     apt_cmd_path = m.get_bin_path(apt_cmd, required=True)
-    cmd = '%s %s -y %s %s %s %s' % (APT_ENVVARS, apt_cmd_path, dpkg_options,
+
+    for (k,v) in APT_ENV_VARS.iteritems():
+        os.environ[k] = v
+
+    cmd = '%s -y %s %s %s %s' % (apt_cmd_path, dpkg_options,
                                     force_yes, check_arg, upgrade_command)
     rc, out, err = m.run_command(cmd)
     if rc:
@@ -385,6 +459,7 @@ def main():
             cache_valid_time = dict(type='int'),
             purge = dict(default=False, type='bool'),
             package = dict(default=None, aliases=['pkg', 'name']),
+            deb = dict(default=None),
             default_release = dict(default=None, aliases=['default-release']),
             install_recommends = dict(default='yes', aliases=['install-recommends'], type='bool'),
             force = dict(default='no', type='bool'),
@@ -392,18 +467,18 @@ def main():
             build_dep = dict(default='no', type='bool'),
             dpkg_options = dict(default=DPKG_OPTIONS)
         ),
-        mutually_exclusive = [['package', 'upgrade']],
-        required_one_of = [['package', 'upgrade', 'update_cache', 'build_dep']],
+        mutually_exclusive = [['package', 'upgrade', 'deb']],
+        required_one_of = [['package', 'upgrade', 'update_cache', 'build_dep', 'deb']],
         supports_check_mode = True
     )
 
     if not HAS_PYTHON_APT:
         try:
-            module.run_command('apt-get update && apt-get install python-apt -y -q')
+            module.run_command('apt-get update && apt-get install python-apt -y -q', use_unsafe_shell=True, check_rc=True)
             global apt, apt_pkg
             import apt
             import apt_pkg
-        except:
+        except ImportError:
             module.fail_json(msg="Could not import python modules: apt, apt_pkg. Please install python-apt package.")
 
     global APTITUDE_CMD
@@ -421,7 +496,10 @@ def main():
     try:
         cache = apt.Cache()
         if p['default_release']:
-            apt_pkg.config['APT::Default-Release'] = p['default_release']
+            try:
+                apt_pkg.config['APT::Default-Release'] = p['default_release']
+            except AttributeError:
+                apt_pkg.Config['APT::Default-Release'] = p['default_release']
             # reopen cache w/ modified config
             cache.open(progress=None)
 
@@ -455,13 +533,20 @@ def main():
             if cache_valid is not True:
                 cache.update()
                 cache.open(progress=None)
-            if not p['package'] and not p['upgrade']:
+            if not p['package'] and not p['upgrade'] and not p['deb']:
                 module.exit_json(changed=False)
 
         force_yes = p['force']
 
         if p['upgrade']:
             upgrade(module, p['upgrade'], force_yes, dpkg_options)
+
+        if p['deb']:
+            if p['state'] != "installed":
+                module.fail_json(msg="deb only supports state=installed")
+            install_deb(module, p['deb'], cache,
+                        install_recommends=install_recommends,
+                        force=force_yes, dpkg_options=p['dpkg_options'])
 
         packages = p['package'].split(',')
         latest = p['state'] == 'latest'
@@ -475,14 +560,24 @@ def main():
             build_dep(module, packages, cache, force=force_yes, dpkg_options=dpkg_options)
 
         if p['state'] == 'latest':
-            install(module, packages, cache, upgrade=True,
+            result = install(module, packages, cache, upgrade=True,
                     default_release=p['default_release'],
                     install_recommends=install_recommends,
                     force=force_yes, dpkg_options=dpkg_options)
+            (success, retvals) = result
+            if success:
+                module.exit_json(**retvals)
+            else:
+                module.fail_json(**retvals)
         elif p['state'] in [ 'installed', 'present' ]:
-            install(module, packages, cache, default_release=p['default_release'],
+            result = install(module, packages, cache, default_release=p['default_release'],
                       install_recommends=install_recommends,force=force_yes,
                       dpkg_options=dpkg_options)
+            (success, retvals) = result
+            if success:
+                module.exit_json(**retvals)
+            else:
+                module.fail_json(**retvals)
         elif p['state'] in [ 'removed', 'absent' ]:
             remove(module, packages, cache, p['purge'], dpkg_options)
 

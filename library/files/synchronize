@@ -16,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import subprocess
-
 DOCUMENTATION = '''
 ---
 module: synchronize
@@ -41,7 +39,7 @@ options:
     version_added: "1.5"
   mode:
     description:
-      - Specify the direction of the synchroniztion. In push mode the localhost or delgate is the  source; In pull mode the remote host in context is the source.
+      - Specify the direction of the synchroniztion. In push mode the localhost or delegate is the source; In pull mode the remote host in context is the source.
     required: false
     choices: [ 'push', 'pull' ]
     default: 'push'
@@ -51,9 +49,23 @@ options:
     choices: [ 'yes', 'no' ]
     default: 'yes'
     required: false
+  checksum:
+    description:
+      - Skip based on checksum, rather than mod-time & size; Note that that "archive" option is still enabled by default - the "checksum" option will not disable it.
+    choices: [ 'yes', 'no' ]
+    default: 'no'
+    required: false
+    version_added: "1.6"
+  existing_only:
+    description:
+      - Skip creating new files on receiver.
+    choices: [ 'yes', 'no' ]
+    default: 'no'
+    required: false
+    version_added: "1.5"
   delete:
     description:
-      - Delete files that don't exist (after transfer, not before) in the C(src) path.
+      - Delete files that don't exist (after transfer, not before) in the C(src) path. This option requires C(recursive=yes).
     choices: [ 'yes', 'no' ]
     default: 'no'
     required: false
@@ -74,6 +86,12 @@ options:
       - Copy symlinks as symlinks.
     choices: [ 'yes', 'no' ]
     default: the value of the archive option
+    required: false
+  copy_links:
+    description:
+      - Copy symlinks as the item that they point to (the referent) is copied, rather than the symlink.
+    choices: [ 'yes', 'no' ]
+    default: 'no'
     required: false
   perms:
     description:
@@ -108,12 +126,27 @@ options:
       - Specify a --timeout for the rsync command in seconds. 
     default: 10 
     required: false
+  set_remote_user:
+    description:
+      - put user@ for the remote paths. If you have a custom ssh config to define the remote user for a host
+        that does not match the inventory user, you should set this parameter to "no".
+    default: yes
+  rsync_opts:
+    description:
+      - Specify additional rsync options by passing in an array.
+    default:
+    required: false
+    version_added: "1.6"
 notes:
    - Inspect the verbose output to validate the destination user/host/path
      are what was expected.
    - The remote user for the dest path will always be the remote_user, not
      the sudo_user. 
    - Expect that dest=~/x will be ~<remote_user>/x even if using sudo.
+   - To exclude files and directories from being synchronized, you may add 
+     C(.rsync-filter) files to the source directory.
+     
+     
 author: Timothy Appnel
 '''
 
@@ -126,6 +159,9 @@ synchronize: src=some/relative/path dest=/some/absolute/path archive=no
 
 # Synchronization with --archive options enabled except for --recursive
 synchronize: src=some/relative/path dest=/some/absolute/path recursive=no
+
+# Synchronization with --archive options enabled except for --times, with --checksum option enabled
+synchronize: src=some/relative/path dest=/some/absolute/path checksum=yes times=no
 
 # Synchronization without --archive options enabled except use --links
 synchronize: src=some/relative/path dest=/some/absolute/path archive=no links=yes
@@ -147,6 +183,14 @@ synchronize: src=some/relative/path dest=/some/absolute/path delete=yes
 
 # Synchronize using an alternate rsync command
 synchronize: src=some/relative/path dest=/some/absolute/path rsync_path="sudo rsync"
+
+# Example .rsync-filter file in the source directory
+- var       # exclude any path whose last part is 'var'
+- /var      # exclude any path starting with 'var' starting at the source directory
++ /var/conf # include /var/conf even though it was previously excluded
+
+# Synchronize passing in extra rsync options
+synchronize: src=/tmp/helloworld dest=/var/www/helloword rsync_opts=--no-motd,--exclude=.git 
 '''
 
 
@@ -160,14 +204,19 @@ def main():
             private_key = dict(default=None),
             rsync_path = dict(default=None),
             archive = dict(default='yes', type='bool'),
+            checksum = dict(default='no', type='bool'),
+            existing_only = dict(default='no', type='bool'),
             dirs  = dict(default='no', type='bool'),
             recursive = dict(type='bool'),
             links = dict(type='bool'),
+            copy_links = dict(type='bool'),
             perms = dict(type='bool'),
             times = dict(type='bool'),
             owner = dict(type='bool'),
             group = dict(type='bool'),
-            rsync_timeout = dict(type='int', default=10)
+            set_remote_user = dict(default='yes', type='bool'),
+            rsync_timeout = dict(type='int', default=10),
+            rsync_opts = dict(type='list')
         ),
         supports_check_mode = True
     )
@@ -181,26 +230,36 @@ def main():
     rsync = module.params.get('local_rsync_path', 'rsync')
     rsync_timeout = module.params.get('rsync_timeout', 'rsync_timeout')
     archive = module.params['archive']
+    checksum = module.params['checksum']
+    existing_only = module.params['existing_only']
     dirs = module.params['dirs']
     # the default of these params depends on the value of archive
     recursive = module.params['recursive']
     links = module.params['links']
+    copy_links = module.params['copy_links']
     perms = module.params['perms']
     times = module.params['times']
     owner = module.params['owner']
     group = module.params['group']
+    rsync_opts = module.params['rsync_opts']
 
-    cmd = '%s --delay-updates --compress --timeout=%s' % (rsync, rsync_timeout)
+    cmd = '%s --delay-updates -FF --compress --timeout=%s' % (rsync, rsync_timeout)
     if module.check_mode:
         cmd = cmd + ' --dry-run'
     if delete:
         cmd = cmd + ' --delete-after'
+    if existing_only:
+        cmd = cmd + ' --existing'
+    if checksum:
+        cmd = cmd + ' --checksum'
     if archive:
         cmd = cmd + ' --archive'
         if recursive is False:
             cmd = cmd + ' --no-recursive'
         if links is False:
             cmd = cmd + ' --no-links'
+        if copy_links is True:
+            cmd = cmd + ' --copy-links'
         if perms is False:
             cmd = cmd + ' --no-perms'
         if times is False:
@@ -214,6 +273,8 @@ def main():
             cmd = cmd + ' --recursive'
         if links is True:
             cmd = cmd + ' --links'
+        if copy_links is True:
+            cmd = cmd + ' --copy-links'
         if perms is True:
             cmd = cmd + ' --perms'
         if times is True:
@@ -238,8 +299,17 @@ def main():
 
     if rsync_path:
         cmd = cmd + " --rsync-path '%s'" %(rsync_path)
+    if rsync_opts:
+        cmd = cmd + " " +  " ".join(rsync_opts)
     changed_marker = '<<CHANGED>>'
     cmd = cmd + " --out-format='" + changed_marker + "%i %n%L'"
+
+    # expand the paths
+    if '@' not in source:
+        source = os.path.expanduser(source) 
+    if '@' not in dest:
+        dest = os.path.expanduser(dest) 
+
     cmd = ' '.join([cmd, source, dest])
     cmdstr = cmd
     (rc, out, err) = module.run_command(cmd)
@@ -247,8 +317,12 @@ def main():
         return module.fail_json(msg=err, rc=rc, cmd=cmdstr)
     else:
         changed = changed_marker in out
-        return module.exit_json(changed=changed, msg=out.replace(changed_marker,''),
-                                rc=rc, cmd=cmdstr)
+        out_clean=out.replace(changed_marker,'')
+        out_lines=out_clean.split('\n')
+        while '' in out_lines: 
+            out_lines.remove('')
+        return module.exit_json(changed=changed, msg=out_clean,
+                                rc=rc, cmd=cmdstr, stdout_lines=out_lines)
 
 # import module snippets
 from ansible.module_utils.basic import *

@@ -30,7 +30,7 @@ options:
   name:
     description:
       - The name of a node.js library to install
-    requires: false
+    required: false
   path:
     description:
       - The base path where to install the node.js libraries
@@ -54,7 +54,13 @@ options:
     description:
       - Install dependencies in production mode, excluding devDependencies
     required: false
+    choices: [ "yes", "no" ]
     default: no
+  registry:
+    description:
+      - The registry to install modules from.
+    required: false
+    version_added: "1.6"
   state:
     description:
       - The state of the node.js library
@@ -75,6 +81,9 @@ description: Install "coffee-script" node.js package globally.
 
 description: Remove the globally package "coffee-script".
 - npm: name=coffee-script global=yes state=absent
+
+description: Install "coffee-script" node.js package from custom registry.
+- npm: name=coffee-script registry=http://registry.mysite.com
 
 description: Install packages based on package.json.
 - npm: path=/app/location
@@ -100,8 +109,9 @@ class Npm(object):
         self.name = kwargs['name']
         self.version = kwargs['version']
         self.path = kwargs['path']
+        self.registry = kwargs['registry']
         self.production = kwargs['production']
-        
+
         if kwargs['executable']:
             self.executable = kwargs['executable']
         else:
@@ -119,15 +129,23 @@ class Npm(object):
             if self.glbl:
                 cmd.append('--global')
             if self.production:
-                cmd.append('--production')                
+                cmd.append('--production')
             if self.name:
                 cmd.append(self.name_version)
+            if self.registry:
+                cmd.append('--registry')
+                cmd.append(self.registry)
 
             #If path is specified, cd into that path and run the command.
+            cwd = None
             if self.path:
-                os.chdir(self.path)
+                if not os.path.exists(self.path):
+                    os.makedirs(self.path)
+                if not os.path.isdir(self.path):
+                    self.module.fail_json(msg="path %s is not a directory" % self.path)
+                cwd = self.path
 
-            rc, out, err = self.module.run_command(cmd, check_rc=check_rc)
+            rc, out, err = self.module.run_command(cmd, check_rc=check_rc, cwd=cwd)
             return out
         return ''
 
@@ -140,6 +158,8 @@ class Npm(object):
         if 'dependencies' in data:
             for dep in data['dependencies']:
                 if 'missing' in data['dependencies'][dep] and data['dependencies'][dep]['missing']:
+                    missing.append(dep)
+                elif 'invalid' in data['dependencies'][dep] and data['dependencies'][dep]['invalid']:
                     missing.append(dep)
                 else:
                     installed.append(dep)
@@ -178,9 +198,10 @@ def main():
         version=dict(default=None),
         production=dict(default='no', type='bool'),
         executable=dict(default=None),
+        registry=dict(default=None),
         state=dict(default='present', choices=['present', 'absent', 'latest'])
     )
-    arg_spec['global']=dict(default='no', type='bool')
+    arg_spec['global'] = dict(default='no', type='bool')
     module = AnsibleModule(
         argument_spec=arg_spec,
         supports_check_mode=True
@@ -192,6 +213,7 @@ def main():
     glbl = module.params['global']
     production = module.params['production']
     executable = module.params['executable']
+    registry = module.params['registry']
     state = module.params['state']
 
     if not path and not glbl:
@@ -200,7 +222,7 @@ def main():
         module.fail_json(msg='uninstalling a package is only available for named packages')
 
     npm = Npm(module, name=name, path=path, version=version, glbl=glbl, production=production, \
-              executable=executable)
+              executable=executable, registry=registry)
 
     changed = False
     if state == 'present':
@@ -214,7 +236,6 @@ def main():
         if len(missing) or len(outdated):
             changed = True
             npm.install()
-            npm.update()
     else: #absent
         installed, missing = npm.list()
         if name in installed:

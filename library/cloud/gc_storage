@@ -83,7 +83,7 @@ options:
 
 requirements: [ "boto 2.9+" ]
 
-author: benno@ansibleworks.com Note. Most of the code has been taken from the S3 module.
+author: benno@ansible.com Note. Most of the code has been taken from the S3 module.
 
 '''
 
@@ -152,11 +152,12 @@ def key_check(module, gs, bucket, obj):
 def keysum(module, gs, bucket, obj):
     bucket = gs.lookup(bucket)
     key_check = bucket.get_key(obj)
-    if key_check:
-        md5_remote = key_check.etag[1:-1]
-        etag_multipart = md5_remote.find('-')!=-1 #Check for multipart, etag is not md5
-        if etag_multipart is True:
-            module.fail_json(msg="Files uploaded with multipart of gs are not supported with checksum, unable to compute checksum.")
+    if not key_check:
+        return None
+    md5_remote = key_check.etag[1:-1]
+    etag_multipart = '-' in md5_remote # Check for multipart, etag is not md5
+    if etag_multipart is True:
+        module.fail_json(msg="Files uploaded with multipart of gs are not supported with checksum, unable to compute checksum.")
     return md5_remote
 
 def bucket_check(module, gs, bucket):

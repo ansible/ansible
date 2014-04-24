@@ -73,6 +73,14 @@ options:
     default: None
     aliases: []
     choices: ['kv']
+  validate_certs:
+    description:
+      - If C(no), SSL certificates will not be validated. This should only be used
+        on personally controlled sites using self-signed certificates.
+    required: false
+    default: 'yes'
+    choices: ['yes', 'no']
+    version_added: 1.5.1
 '''
 
 EXAMPLES = '''
@@ -97,7 +105,7 @@ except ImportError:
 
 
 def ring_check(module, riak_admin_bin):
-    cmd = '%s ringready 2> /dev/null' % riak_admin_bin
+    cmd = '%s ringready' % riak_admin_bin
     rc, out, err = module.run_command(cmd)
     if rc == 0 and 'TRUE All nodes agree on the ring' in out:
         return True
@@ -116,8 +124,8 @@ def main():
         wait_for_handoffs=dict(default=False, type='int'),
         wait_for_ring=dict(default=False, type='int'),
         wait_for_service=dict(
-            required=False, default=None, choices=['kv'])
-        )
+            required=False, default=None, choices=['kv']),
+        validate_certs = dict(default='yes', type='bool'))
     )
 
 
@@ -128,6 +136,7 @@ def main():
     wait_for_handoffs = module.params.get('wait_for_handoffs')
     wait_for_ring = module.params.get('wait_for_ring')
     wait_for_service = module.params.get('wait_for_service')
+    validate_certs =  module.params.get('validate_certs')
 
 
     #make sure riak commands are on the path
@@ -138,24 +147,13 @@ def main():
     while True:
         if time.time() > timeout:
             module.fail_json(msg='Timeout, could not fetch Riak stats.')
-        try:
-            if sys.version_info<(2,6,0):
-                stats_raw = urllib2.urlopen(
-                    'http://%s/stats' % (http_conn), None).read()
-            else:
-                stats_raw = urllib2.urlopen(
-                    'http://%s/stats' % (http_conn), None, 5).read()
+        (response, info) = fetch_url(module, 'http://%s/stats' % (http_conn), force=True, timeout=5)
+        if info['status'] == 200:
+            stats_raw = response.read()
             break
-        except urllib2.HTTPError, e:
-            time.sleep(5)
-        except urllib2.URLError, e:
-            time.sleep(5)
-        except socket.timeout:
-            time.sleep(5)
-        except Exception, e:
-            module.fail_json(msg='Could not fetch Riak stats: %s' % e)
+        time.sleep(5)
 
-# here we attempt to load those stats,
+    # here we attempt to load those stats,
     try:
         stats = json.loads(stats_raw)
     except:
@@ -164,8 +162,9 @@ def main():
     node_name = stats['nodename']
     nodes = stats['ring_members']
     ring_size = stats['ring_creation_size']
-    version = stats['riak_core_version']
-
+    rc, out, err = module.run_command([riak_bin, 'version'] )
+    version = out.strip()
+    
     result = dict(node_name=node_name,
               nodes=nodes,
               ring_size=ring_size,
@@ -222,7 +221,7 @@ def main():
     if wait_for_handoffs:
         timeout = time.time() + wait_for_handoffs
         while True:
-            cmd = '%s transfers 2> /dev/null' % riak_admin_bin
+            cmd = '%s transfers' % riak_admin_bin
             rc, out, err = module.run_command(cmd)
             if 'No transfers active' in out:
                 result['handoffs'] = 'No transfers active.'
@@ -232,7 +231,7 @@ def main():
                 module.fail_json(msg='Timeout waiting for handoffs.')
 
     if wait_for_service:
-        cmd = '%s wait_for_service riak_%s %s' % ( riak_admin_bin, wait_for_service, node_name)
+        cmd = [riak_admin_bin, 'wait_for_service', 'riak_%s' % wait_for_service, node_name ]
         rc, out, err = module.run_command(cmd)
         result['service'] = out
 
@@ -251,5 +250,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
 
 main()

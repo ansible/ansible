@@ -1,8 +1,8 @@
 Conditionals
 ============
 
-.. contents::
-   :depth: 2
+.. contents:: Topics
+
 
 Often the result of a play may depend on the value of a variable, fact (something learned about the remote system), 
 or previous task result.  In some cases, the values of variables may depend on other variables.  
@@ -21,7 +21,7 @@ Sometimes you will want to skip a particular step on a particular host.  This co
 as simple as not installing a certain package if the operating system is a particular version,
 or it could be something like performing some cleanup steps if a filesystem is getting full.
 
-This is easy to do in Ansible, with the `when` clause, which contains a Jinja2 expression (see `playbooks_variables`).
+This is easy to do in Ansible, with the `when` clause, which contains a Jinja2 expression (see :doc:`playbooks_variables`).
 It's actually pretty simple::
 
     tasks:
@@ -82,7 +82,7 @@ If a required variable has not been set, you can skip or fail using Jinja2's
         - shell: echo "I've got '{{ foo }}' and am not afraid to use it!"
           when: foo is defined
 
-        - fail: msg="Bailing out: this play requires 'bar'"
+        - fail: msg="Bailing out. this play requires 'bar'"
           when: bar is not defined
 
 This is especially useful in combination with the conditional import of vars
@@ -125,7 +125,7 @@ Or with a role::
          - { role: debian_stock_config, when: ansible_os_family == 'Debian' }
 
 You will note a lot of 'skipped' output by default in Ansible when using this approach on systems that don't match the criteria.
-Read up on the 'group_by' module in the `modules` docs for a more streamlined way to accomplish the same thing.
+Read up on the 'group_by' module in the :doc:`modules` docs for a more streamlined way to accomplish the same thing.
 
 Conditional Imports
 ```````````````````
@@ -193,10 +193,10 @@ The following example shows how to template out a configuration file that was ve
     - name: template a file
       template: src={{ item }} dest=/etc/myapp/foo.conf
       with_first_found:
-        files: 
+        - files: 
            - {{ ansible_distribution }}.conf
            - default.conf
-        paths:
+          paths:
            - search_location_one/somedir/
            - /opt/other_location/somedir/
 

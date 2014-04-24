@@ -110,6 +110,27 @@ options:
     default: "present"
     choices: ["active", "present", "absent", "deleted"]
     aliases: []
+  service_account_email:
+    version_added: "1.6"
+    description:
+      - service account email
+    required: false
+    default: null
+    aliases: []
+  pem_file:
+    version_added: "1.6"
+    description:
+      - path to the pem file associated with the service account email
+    required: false
+    default: null
+    aliases: []
+  project_id:
+    version_added: "1.6"
+    description:
+      - your GCE project ID
+    required: false
+    default: null
+    aliases: []
 
 requirements: [ "libcloud" ]
 author: Eric Johnson <erjohnso@google.com>
@@ -129,41 +150,20 @@ EXAMPLES = '''
 
 import sys
 
-USER_AGENT_PRODUCT="Ansible-gce_lb"
-USER_AGENT_VERSION="v1beta15"
 
-try:                                                                            
+try:
     from libcloud.compute.types import Provider
     from libcloud.compute.providers import get_driver
     from libcloud.loadbalancer.types import Provider as Provider_lb
     from libcloud.loadbalancer.providers import get_driver as get_driver_lb
     from libcloud.common.google import GoogleBaseError, QuotaExceededError, \
             ResourceExistsError, ResourceNotFoundError
-    _ = Provider.GCE                                                            
-except ImportError:                                                             
+    _ = Provider.GCE
+except ImportError:
     print("failed=True " + \
             "msg='libcloud with GCE support required for this module.'")
-    sys.exit(1)                                                                 
-                                                                                
-# Load in the libcloud secrets file                                             
-try:                                                                            
-    import secrets                                                              
-except ImportError:                                                             
-    secrets = None                                                              
-ARGS = getattr(secrets, 'GCE_PARAMS', ())                                       
-KWARGS = getattr(secrets, 'GCE_KEYWORD_PARAMS', {})                             
-
-if not ARGS or not 'project' in KWARGS:
-    print("failed=True msg='Missing GCE connection " + \
-            "parameters in libcloud secrets file.'")
     sys.exit(1)
 
-def unexpected_error_msg(error):
-    """Format error string based on passed in error."""
-    msg='Unexpected response: HTTP return_code['
-    msg+='%s], API error code[%s] and message: %s' % (
-            error.http_code, error.code, str(error.value))
-    return msg
 
 def main():
     module = AnsibleModule(
@@ -183,8 +183,13 @@ def main():
             port_range = dict(),
             members = dict(type='list'),
             state = dict(default='present'),
+            service_account_email = dict(),
+            pem_file = dict(),
+            project_id = dict(),
         )
     )
+
+    gce = gce_connect(module)
 
     httphealthcheck_name = module.params.get('httphealthcheck_name')
     httphealthcheck_port = module.params.get('httphealthcheck_port')
@@ -205,13 +210,10 @@ def main():
     state = module.params.get('state')
 
     try:
-        gce = get_driver(Provider.GCE)(*ARGS, **KWARGS)
-        gce.connection.user_agent_append("%s/%s" % (
-                USER_AGENT_PRODUCT, USER_AGENT_VERSION))
         gcelb = get_driver_lb(Provider_lb.GCE)(gce_driver=gce)
         gcelb.connection.user_agent_append("%s/%s" % (
                 USER_AGENT_PRODUCT, USER_AGENT_VERSION))
-    except Exception as e:
+    except Exception, e:
         module.fail_json(msg=unexpected_error_msg(e), changed=False)
 
     changed = False
@@ -237,7 +239,7 @@ def main():
                 changed = True
             except ResourceExistsError:
                 hc = gce.ex_get_healthcheck(httphealthcheck_name)
-            except Exception as e:
+            except Exception, e:
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
 
             if hc is not None:
@@ -281,7 +283,7 @@ def main():
                 changed = True
             except ResourceExistsError:
                 lb = gcelb.get_balancer(name)
-            except Exception as e:
+            except Exception, e:
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
 
             if lb is not None:
@@ -307,7 +309,7 @@ def main():
                 changed = True
             except ResourceNotFoundError:
                 pass
-            except Exception as e:
+            except Exception, e:
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
 
         # destroy the health check if specified
@@ -319,7 +321,7 @@ def main():
                 changed = True
             except ResourceNotFoundError:
                 pass
-            except Exception as e:
+            except Exception, e:
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
 
 
@@ -329,5 +331,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.gce import *
 
 main()

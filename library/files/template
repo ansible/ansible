@@ -16,7 +16,9 @@ description:
        template file and the owner uid, C(template_host) contains the node name of 
        the template's machine, C(template_uid) the owner, C(template_path) the
        absolute path of the template, C(template_fullpath) is the absolute path of the 
-       template, and C(template_run_date) is the date that the template was rendered."
+       template, and C(template_run_date) is the date that the template was rendered. Note that including
+       a string that uses a date in the template will result in the template being marked 'changed'
+       each time."
 options:
   src:
     description:
@@ -38,18 +40,20 @@ options:
     default: "no"
   validate:
     description:
-      - validation to run before copying into place
+      - The validation command to run before copying into place. 
+      - The path to the file to validate is passed in via '%s' which must be present as in the visudo example below.
+      - validation to run before copying into place. The command is passed 
+        securely so shell features like expansion and pipes won't work.
     required: false
     default: ""
     version_added: "1.2"
-  others:
-    description:
-      - all arguments accepted by the M(file) module also work here
-    required: false
 notes:
-  - Since Ansible version 0.9, templates are loaded with C(trim_blocks=True).
-  - 'You can override jinja2 settings by adding a special header to template file. 
-    i.e. C(#jinja2: trim_blocks: False)'
+  - "Since Ansible version 0.9, templates are loaded with C(trim_blocks=True)."
+
+  - "Also, you can override jinja2 settings by adding a special header to template file.
+  i.e. C(#jinja2:variable_start_string:'[%' , variable_end_string:'%]')
+  which changes the variable interpolation markers to  [% var %] instead of  {{ var }}. This is the best way to prevent evaluation of things that look like, but should not be Jinja2.  raw/endraw in Jinja2 will not work as you expect because templates in Ansible are recursively evaluated."
+
 requirements: []
 author: Michael DeHaan
 '''
@@ -58,6 +62,6 @@ EXAMPLES = '''
 # Example from Ansible Playbooks
 - template: src=/mytemplates/foo.j2 dest=/etc/file.conf owner=bin group=wheel mode=0644
 
-# Copy a new "sudoers file into place, after passing validation with visudo
-- action: template src=/mine/sudoers dest=/etc/sudoers validate='visudo -cf %s'
+# Copy a new "sudoers" file into place, after passing validation with visudo
+- template: src=/mine/sudoers dest=/etc/sudoers validate='visudo -cf %s'
 '''

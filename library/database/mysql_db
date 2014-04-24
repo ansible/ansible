@@ -76,7 +76,8 @@ options:
     default: null
   target:
     description:
-      - Where to dump/get the C(.sql) file
+      - Location, on the remote host, of the dump file to read from or write to. Uncompressed SQL
+        files (C(.sql)) as well as bzip2 (C(.bz2)) and gzip (C(.gz)) compressed files are supported.
     required: false
 notes:
    - Requires the MySQLdb Python package on the remote host. For Ubuntu, this
@@ -92,10 +93,15 @@ author: Mark Theunissen
 EXAMPLES = '''
 # Create a new database with name 'bobdata'
 - mysql_db: name=bobdata state=present
+
+# Copy database dump file to remote host and restore it to database 'my_db'
+- copy: src=dump.sql.bz2 dest=/tmp
+- mysql_db: name=my_db state=import target=/tmp/dump.sql.bz2
 '''
 
 import ConfigParser
 import os
+import pipes
 try:
     import MySQLdb
 except ImportError:
@@ -116,38 +122,38 @@ def db_delete(cursor, db):
     cursor.execute(query)
     return True
 
-def db_dump(module, host, user, password, db_name, target, socket=None):
+def db_dump(module, host, user, password, db_name, target, port, socket=None):
     cmd = module.get_bin_path('mysqldump', True)
-    cmd += " --quick --user=%s --password=%s" %(user, password)
+    cmd += " --quick --user=%s --password=%s" % (pipes.quote(user), pipes.quote(password))
     if socket is not None:
-        cmd += " --socket=%s" % socket
+        cmd += " --socket=%s" % pipes.quote(socket)
     else:
-        cmd += " --host=%s" % host
-    cmd += " %s" % db_name
+        cmd += " --host=%s --port=%s" % (pipes.quote(host), pipes.quote(port))
+    cmd += " %s" % pipes.quote(db_name)
     if os.path.splitext(target)[-1] == '.gz':
-        cmd = cmd + ' | gzip > ' + target
+        cmd = cmd + ' | gzip > ' + pipes.quote(target)
     elif os.path.splitext(target)[-1] == '.bz2':
-        cmd = cmd + ' | bzip2 > ' + target
+        cmd = cmd + ' | bzip2 > ' + pipes.quote(target)
     else:
-        cmd += " > %s" % target
-    rc, stdout, stderr = module.run_command(cmd)
+        cmd += " > %s" % pipes.quote(target)
+    rc, stdout, stderr = module.run_command(cmd, use_unsafe_shell=True)
     return rc, stdout, stderr
 
-def db_import(module, host, user, password, db_name, target, socket=None):
+def db_import(module, host, user, password, db_name, target, port, socket=None):
     cmd = module.get_bin_path('mysql', True)
-    cmd += " --user=%s --password=%s" %(user, password)
+    cmd += " --user=%s --password=%s" % (pipes.quote(user), pipes.quote(password))
     if socket is not None:
-        cmd += " --socket=%s" % socket
+        cmd += " --socket=%s" % pipes.quote(socket)
     else:
-        cmd += " --host=%s" % host
-    cmd += " -D %s" % db_name
+        cmd += " --host=%s --port=%s" % (pipes.quote(host), pipes.quote(port))
+    cmd += " -D %s" % pipes.quote(db_name)
     if os.path.splitext(target)[-1] == '.gz':
-        cmd = 'gunzip < ' + target + ' | ' + cmd
+        cmd = 'gunzip < ' + pipes.quote(target) + ' | ' + cmd
     elif os.path.splitext(target)[-1] == '.bz2':
-        cmd = 'bunzip2 < ' + target + ' | ' + cmd
+        cmd = 'bunzip2 < ' + pipes.quote(target) + ' | ' + cmd
     else:
-        cmd += " < %s" % target
-    rc, stdout, stderr = module.run_command(cmd)
+        cmd += " < %s" % pipes.quote(target)
+    rc, stdout, stderr = module.run_command(cmd, use_unsafe_shell=True)
     return rc, stdout, stderr
 
 def db_create(cursor, db, encoding, collation):
@@ -282,6 +288,7 @@ def main():
         elif state == "dump":
             rc, stdout, stderr = db_dump(module, login_host, login_user, 
                                         login_password, db, target, 
+                                        port=module.params['login_port'],
                                         socket=module.params['login_unix_socket'])
             if rc != 0:
                 module.fail_json(msg="%s" % stderr)
@@ -290,6 +297,7 @@ def main():
         elif state == "import":
             rc, stdout, stderr = db_import(module, login_host, login_user, 
                                         login_password, db, target, 
+                                        port=module.params['login_port'],
                                         socket=module.params['login_unix_socket'])
             if rc != 0:
                 module.fail_json(msg="%s" % stderr)

@@ -39,7 +39,7 @@ options:
     default: 6667
   nick:
     description:
-      - Nickname
+      - Nickname. May be shortened, depending on server's NICKLEN setting.
     required: false
     default: ansible
   msg:
@@ -49,10 +49,10 @@ options:
     default: null
   color:
     description:
-      - Text color for the message. Default is black.
+      - Text color for the message. ("none" is a valid option in 1.6 or later, in 1.6 and prior, the default color is black, not "none"). 
     required: false
-    default: black
-    choices: [ "yellow", "red", "green", "blue", "black" ]
+    default: "none"
+    choices: [ "none", "yellow", "red", "green", "blue", "black" ]
   channel:
     description:
       - Channel name
@@ -61,10 +61,16 @@ options:
     description:
       - Server password
     required: false
+  timeout:
+    description:
+      - Timeout to use while waiting for successful registration and join
+        messages, this is to prevent an endless loop
+    default: 30
+    version_added: 1.5
 
 # informational: requirements for nodes
 requirements: [ socket ]
-author: Jan-Piet Mens
+author: Jan-Piet Mens, Matt Martz
 '''
 
 EXAMPLES = '''
@@ -81,73 +87,102 @@ EXAMPLES = '''
 # IRC module support methods.
 #
 
-from time import sleep
+import re
 import socket
 
+from time import sleep
+
+
 def send_msg(channel, msg, server='localhost', port='6667',
-        nick="ansible", color='black', passwd=False):
+             nick="ansible", color='none', passwd=False, timeout=30):
     '''send message to IRC'''
 
     colornumbers = {
-        'black'  : "01",
-        'red'    : "04",
-        'green'  : "09",
-        'yellow' : "08",
-        'blue'   : "12",
+        'black': "01",
+        'red': "04",
+        'green': "09",
+        'yellow': "08",
+        'blue': "12",
     }
 
     try:
         colornumber = colornumbers[color]
+        colortext = "\x03" + colornumber
     except:
-        colornumber = "01"  # black
+        colortext = ""
 
-    message = "\x03" + colornumber + msg
+    message = colortext + msg
 
-    irc = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
-    irc.connect( ( server, int(port) ) )
+    irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    irc.connect((server, int(port)))
     if passwd:
-        irc.send( 'PASS %s\r\n' % passwd )
-    irc.send( 'NICK %s\r\n' % nick )
-    irc.send( 'USER %s %s %s :ansible IRC\r\n' % (nick, nick, nick))
-    time.sleep(1)
-    irc.send( 'JOIN %s\r\n' % channel )
-    irc.send( 'PRIVMSG %s :%s\r\n' % (channel, message))
-    time.sleep(1)
-    irc.send( 'PART %s\r\n' % channel)
-    irc.send( 'QUIT\r\n' )
-    time.sleep(1)
+        irc.send('PASS %s\r\n' % passwd)
+    irc.send('NICK %s\r\n' % nick)
+    irc.send('USER %s %s %s :ansible IRC\r\n' % (nick, nick, nick))
+    motd = ''
+    start = time.time()
+    while 1:
+        motd += irc.recv(1024)
+        # The server might send back a shorter nick than we specified (due to NICKLEN),
+        #  so grab that and use it from now on (assuming we find the 00[1-4] response).
+        match = re.search('^:\S+ 00[1-4] (?P<nick>\S+) :', motd, flags=re.M)
+        if match:
+            nick = match.group('nick')
+            break
+        elif time.time() - start > timeout:
+            raise Exception('Timeout waiting for IRC server welcome response')
+        sleep(0.5)
+
+    irc.send('JOIN %s\r\n' % channel)
+    join = ''
+    start = time.time()
+    while 1:
+        join += irc.recv(1024)
+        if re.search('^:\S+ 366 %s %s :' % (nick, channel), join, flags=re.M):
+            break
+        elif time.time() - start > timeout:
+            raise Exception('Timeout waiting for IRC JOIN response')
+        sleep(0.5)
+
+    irc.send('PRIVMSG %s :%s\r\n' % (channel, message))
+    sleep(1)
+    irc.send('PART %s\r\n' % channel)
+    irc.send('QUIT\r\n')
+    sleep(1)
     irc.close()
 
 # ===========================================
 # Main
 #
 
-def main():
 
+def main():
     module = AnsibleModule(
         argument_spec=dict(
-            server = dict(default='localhost'),
-            port = dict(default = 6667),
-            nick = dict(default = 'ansible'),
-            msg = dict(required = True),
-            color = dict(default="black", choices=["yellow", "red", "green",
-                                                  "blue", "black"]),
-            channel = dict(required = True),
-            passwd = dict()
+            server=dict(default='localhost'),
+            port=dict(default=6667),
+            nick=dict(default='ansible'),
+            msg=dict(required=True),
+            color=dict(default="none", choices=["yellow", "red", "green",
+                                                 "blue", "black", "none"]),
+            channel=dict(required=True),
+            passwd=dict(),
+            timeout=dict(type='int', default=30)
         ),
         supports_check_mode=True
     )
 
-    server  = module.params["server"]
-    port    = module.params["port"]
-    nick    = module.params["nick"]
-    msg     = module.params["msg"]
-    color   = module.params["color"]
+    server = module.params["server"]
+    port = module.params["port"]
+    nick = module.params["nick"]
+    msg = module.params["msg"]
+    color = module.params["color"]
     channel = module.params["channel"]
-    passwd  = module.params["passwd"]
+    passwd = module.params["passwd"]
+    timeout = module.params["timeout"]
 
     try:
-        send_msg(channel, msg, server, port, nick, color, passwd)
+        send_msg(channel, msg, server, port, nick, color, passwd, timeout)
     except Exception, e:
         module.fail_json(msg="unable to send to IRC: %s" % e)
 

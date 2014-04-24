@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #coding: utf-8 -*-
 
-# (c) 2013, Benno Joy <benno@ansibleworks.com>
+# (c) 2013, Benno Joy <benno@ansible.com>
 #
 # This module is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,10 +17,13 @@
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
 try:
-    from quantumclient.quantum import client
+    try:
+        from neutronclient.neutron import client
+    except ImportError:
+        from quantumclient.quantum import client
     from keystoneclient.v2_0 import client as ksclient
 except ImportError:
-    print("failed=True msg='quantumclient and keystone client are required'")
+    print("failed=True msg='quantumclient (or neutronclient) and keystone client are required'")
 DOCUMENTATION = '''
 ---
 module: quantum_router_interface
@@ -81,7 +84,7 @@ EXAMPLES = '''
 # Attach tenant1's subnet to the external router
 - quantum_router_interface: state=present login_username=admin
                             login_password=admin
-                            login_tenant_name=admin 
+                            login_tenant_name=admin
                             tenant_name=tenant1
                             router_name=external_route
                             subnet_name=t1subnet
@@ -97,21 +100,21 @@ def _get_ksclient(module, kwargs):
                                  password=kwargs.get('login_password'),
                                  tenant_name=kwargs.get('login_tenant_name'),
                                  auth_url=kwargs.get('auth_url'))
-    except Exception as e:   
+    except Exception, e:
         module.fail_json(msg = "Error authenticating to the keystone: %s " % e.message)
-    global _os_keystone 
+    global _os_keystone
     _os_keystone = kclient
-    return kclient 
- 
+    return kclient
+
 
 def _get_endpoint(module, ksclient):
     try:
         endpoint = ksclient.service_catalog.url_for(service_type='network', endpoint_type='publicURL')
-    except Exception as e:
-        module.fail_json(msg = "Error getting endpoint for glance: %s" % e.message)
+    except Exception, e:
+        module.fail_json(msg = "Error getting network endpoint: %s" % e.message)
     return endpoint
 
-def _get_quantum_client(module, kwargs):
+def _get_neutron_client(module, kwargs):
     _ksclient = _get_ksclient(module, kwargs)
     token = _ksclient.auth_token
     endpoint = _get_endpoint(module, _ksclient)
@@ -120,10 +123,10 @@ def _get_quantum_client(module, kwargs):
             'endpoint_url': endpoint
     }
     try:
-        quantum = client.Client('2.0', **kwargs)
-    except Exception as e:
-        module.fail_json(msg = "Error in connecting to quantum: %s " % e.message)
-    return quantum
+        neutron = client.Client('2.0', **kwargs)
+    except Exception, e:
+        module.fail_json(msg = "Error in connecting to neutron: %s " % e.message)
+    return neutron
 
 def _set_tenant_id(module):
     global _os_tenant_id
@@ -140,41 +143,41 @@ def _set_tenant_id(module):
         module.fail_json(msg = "The tenant id cannot be found, please check the paramters")
 
 
-def _get_router_id(module, quantum):
+def _get_router_id(module, neutron):
     kwargs = {
         'name': module.params['router_name'],
     }
     try:
-        routers = quantum.list_routers(**kwargs)
-    except Exception as e:
+        routers = neutron.list_routers(**kwargs)
+    except Exception, e:
         module.fail_json(msg = "Error in getting the router list: %s " % e.message)
     if not routers['routers']:
         return None
     return routers['routers'][0]['id']
 
 
-def _get_subnet_id(module, quantum):
+def _get_subnet_id(module, neutron):
     subnet_id = None
     kwargs = {
             'tenant_id': _os_tenant_id,
             'name': module.params['subnet_name'],
     }
     try:
-        subnets = quantum.list_subnets(**kwargs)
-    except Exception as e:
+        subnets = neutron.list_subnets(**kwargs)
+    except Exception, e:
         module.fail_json( msg = " Error in getting the subnet list:%s " % e.message)
     if not subnets['subnets']:
         return None
     return subnets['subnets'][0]['id']
-                
-def _get_port_id(quantum, module, router_id, subnet_id):
+
+def _get_port_id(neutron, module, router_id, subnet_id):
     kwargs = {
             'tenant_id': _os_tenant_id,
             'device_id': router_id,
     }
     try:
-        ports = quantum.list_ports(**kwargs)
-    except Exception as e:
+        ports = neutron.list_ports(**kwargs)
+    except Exception, e:
         module.fail_json( msg = "Error in listing ports: %s" % e.message)
     if not ports['ports']:
         return None
@@ -184,26 +187,26 @@ def _get_port_id(quantum, module, router_id, subnet_id):
                 return port['id']
     return None
 
-def _add_interface_router(quantum, module, router_id, subnet_id):
+def _add_interface_router(neutron, module, router_id, subnet_id):
     kwargs = {
         'subnet_id': subnet_id
     }
     try:
-        quantum.add_interface_router(router_id, kwargs)
-    except Exception as e:
+        neutron.add_interface_router(router_id, kwargs)
+    except Exception, e:
         module.fail_json(msg = "Error in adding interface to router: %s" % e.message)
     return True
-                
-def  _remove_interface_router(quantum, module, router_id, subnet_id):
+
+def  _remove_interface_router(neutron, module, router_id, subnet_id):
     kwargs = {
         'subnet_id': subnet_id
     }
     try:
-        quantum.remove_interface_router(router_id, kwargs)
-    except Exception as e:
+        neutron.remove_interface_router(router_id, kwargs)
+    except Exception, e:
         module.fail_json(msg="Error in removing interface from router: %s" % e.message)
     return True
-        
+
 def main():
     module = AnsibleModule(
         argument_spec                   = dict(
@@ -218,32 +221,32 @@ def main():
             state                           = dict(default='present', choices=['absent', 'present']),
         ),
     )
-                
-    quantum = _get_quantum_client(module, module.params)
+
+    neutron = _get_neutron_client(module, module.params)
     _set_tenant_id(module)
 
-    router_id = _get_router_id(module, quantum)
+    router_id = _get_router_id(module, neutron)
     if not router_id:
         module.fail_json(msg="failed to get the router id, please check the router name")
 
-    subnet_id = _get_subnet_id(module, quantum) 
+    subnet_id = _get_subnet_id(module, neutron)
     if not subnet_id:
         module.fail_json(msg="failed to get the subnet id, please check the subnet name")
-                
+
     if module.params['state'] == 'present':
-        port_id = _get_port_id(quantum, module, router_id, subnet_id)
+        port_id = _get_port_id(neutron, module, router_id, subnet_id)
         if not port_id:
-            _add_interface_router(quantum, module, router_id, subnet_id)
+            _add_interface_router(neutron, module, router_id, subnet_id)
             module.exit_json(changed=True, result="created", id=port_id)
         module.exit_json(changed=False, result="success", id=port_id)
 
     if module.params['state'] == 'absent':
-        port_id = _get_port_id(quantum, module, router_id, subnet_id)
+        port_id = _get_port_id(neutron, module, router_id, subnet_id)
         if not port_id:
             module.exit_json(changed = False, result = "Success")
-        _remove_interface_router(quantum, module, router_id, subnet_id)
+        _remove_interface_router(neutron, module, router_id, subnet_id)
         module.exit_json(changed=True, result="Deleted")
-                        
+
 # this is magic, see lib/ansible/module.params['common.py
 from ansible.module_utils.basic import *
 main()

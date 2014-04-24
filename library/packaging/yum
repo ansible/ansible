@@ -3,6 +3,7 @@
 
 # (c) 2012, Red Hat, Inc
 # Written by Seth Vidal <skvidal at fedoraproject.org>
+# (c) 2014, Epic Games, Inc.
 #
 # This file is part of Ansible
 #
@@ -25,13 +26,20 @@ import traceback
 import os
 import yum
 
+try:
+    from yum.misc import find_unfinished_transactions, find_ts_remaining
+    from rpmUtils.miscutils import splitFilename
+    transaction_helpers = True
+except:
+    transaction_helpers = False
+
 DOCUMENTATION = '''
 ---
 module: yum
 version_added: historical
 short_description: Manages packages with the I(yum) package manager
 description:
-     - Will install, upgrade, remove, and list packages with the I(yum) package manager.
+     - Installs, upgrade, removes, and lists packages and groups with the I(yum) package manager.
 options:
   name:
     description:
@@ -41,7 +49,7 @@ options:
     aliases: []
   list:
     description:
-      - Various non-idempotent commands for usage with C(/usr/bin/ansible) and I(not) playbooks. See examples.
+      - Various (non-idempotent) commands for usage with C(/usr/bin/ansible) and I(not) playbooks. See examples.
     required: false
     default: null
   state:
@@ -87,6 +95,7 @@ options:
     default: "no"
     choices: ["yes", "no"]
     aliases: []
+
 notes: []
 # informational: requirements for nodes
 requirements: [ yum, rpm ]
@@ -94,13 +103,26 @@ author: Seth Vidal
 '''
 
 EXAMPLES = '''
-- yum: name=httpd state=latest
-- yum: name=httpd state=removed
-- yum: name=httpd enablerepo=testing state=installed
-- yum: name=* state=latest
-- yum: name=http://nginx.org/packages/centos/6/noarch/RPMS/nginx-release-centos-6-0.el6.ngx.noarch.rpm state=present
-- yum: name=/usr/local/src/nginx-release-centos-6-0.el6.ngx.noarch.rpm state=present
-- yum: name="@Development tools" state=present
+- name: install the latest version of Apache
+  yum: name=httpd state=latest
+
+- name: remove the Apache package
+  yum: name=httpd state=removed
+
+- name: install the latest version of Apache from the testing repo
+  yum: name=httpd enablerepo=testing state=installed
+
+- name: upgrade all packages
+  yum: name=* state=latest
+
+- name: install the nginx rpm from a remote repo
+  yum: name=http://nginx.org/packages/centos/6/noarch/RPMS/nginx-release-centos-6-0.el6.ngx.noarch.rpm state=present
+
+- name: install nginx rpm from a local file
+  yum: name=/usr/local/src/nginx-release-centos-6-0.el6.ngx.noarch.rpm state=present
+
+- name: install the 'Development tools' package group
+  yum: name="@Development tools" state=present
 '''
 
 def_qf = "%{name}-%{version}-%{release}.%{arch}"
@@ -133,6 +155,17 @@ def yum_base(conf_file=None, cachedir=False):
             my.conf.cache = 0 
 
     return my
+
+def install_yum_utils(module):
+
+    if not module.check_mode:    
+        yum_path = module.get_bin_path('yum')
+        if yum_path:
+            rc, so, se = module.run_command('%s -y install yum-utils' % yum_path) 
+            if rc == 0:
+                this_path = module.get_bin_path('repoquery')
+                global repoquery
+                repoquery = this_path
 
 def po_to_nevra(po):
 
@@ -203,13 +236,13 @@ def is_available(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=[], dis_
 
     else:
         myrepoq = list(repoq)
+                 
+        for repoid in dis_repos:
+            r_cmd = ['--disablerepo', repoid]
+            myrepoq.extend(r_cmd)
 
         for repoid in en_repos:
             r_cmd = ['--enablerepo', repoid]
-            myrepoq.extend(r_cmd)
-    
-        for repoid in dis_repos:
-            r_cmd = ['--disablerepo', repoid]
             myrepoq.extend(r_cmd)
 
         cmd = myrepoq + ["--qf", qf, pkgspec]
@@ -253,14 +286,13 @@ def is_update(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=[], dis_rep
 
     else:
         myrepoq = list(repoq)
-        for repoid in en_repos:
-            r_cmd = ['--enablerepo', repoid]
-            myrepoq.extend(r_cmd)
-    
         for repoid in dis_repos:
             r_cmd = ['--disablerepo', repoid]
             myrepoq.extend(r_cmd)
 
+        for repoid in en_repos:
+            r_cmd = ['--enablerepo', repoid]
+            myrepoq.extend(r_cmd)
 
         cmd = myrepoq + ["--pkgnarrow=updates", "--qf", qf, pkgspec]
         rc,out,err = module.run_command(cmd)
@@ -299,12 +331,12 @@ def what_provides(module, repoq, req_spec, conf_file,  qf=def_qf, en_repos=[], d
 
     else:
         myrepoq = list(repoq)
-        for repoid in en_repos:
-            r_cmd = ['--enablerepo', repoid]
-            myrepoq.extend(r_cmd)
-    
         for repoid in dis_repos:
             r_cmd = ['--disablerepo', repoid]
+            myrepoq.extend(r_cmd)
+
+        for repoid in en_repos:
+            r_cmd = ['--enablerepo', repoid]
             myrepoq.extend(r_cmd)
 
         cmd = myrepoq + ["--qf", qf, "--whatprovides", req_spec]
@@ -321,6 +353,45 @@ def what_provides(module, repoq, req_spec, conf_file,  qf=def_qf, en_repos=[], d
             module.fail_json(msg='Error from repoquery: %s: %s' % (cmd, err + err2))
 
     return []
+
+def transaction_exists(pkglist):
+    """ 
+    checks the package list to see if any packages are 
+    involved in an incomplete transaction 
+    """
+
+    conflicts = []
+    if not transaction_helpers:
+        return conflicts
+
+    # first, we create a list of the package 'nvreas'
+    # so we can compare the pieces later more easily
+    pkglist_nvreas = []
+    for pkg in pkglist:
+        pkglist_nvreas.append(splitFilename(pkg))
+
+    # next, we build the list of packages that are
+    # contained within an unfinished transaction
+    unfinished_transactions = find_unfinished_transactions()
+    for trans in unfinished_transactions:
+        steps = find_ts_remaining(trans)
+        for step in steps:
+            # the action is install/erase/etc., but we only
+            # care about the package spec contained in the step
+            (action, step_spec) = step
+            (n,v,r,e,a) = splitFilename(step_spec)
+            # and see if that spec is in the list of packages
+            # requested for installation/updating
+            for pkg in pkglist_nvreas:
+                # if the name and arch match, we're going to assume
+                # this package is part of a pending transaction
+                # the label is just for display purposes
+                label = "%s-%s" % (n,a)
+                if n == pkg[0] and a == pkg[4]:
+                    if label not in conflicts:
+                        conflicts.append("%s-%s" % (n,a))
+                    break
+    return conflicts
 
 def local_nvra(module, path):
     """return nvra of a local rpm passed in"""
@@ -436,6 +507,13 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
                 res['msg'] += "No Package matching '%s' found available, installed or updated" % spec
                 module.fail_json(**res)
 
+            # if any of the packages are involved in a transaction, fail now
+            # so that we don't hang on the yum operation later
+            conflicts = transaction_exists(pkglist)
+            if len(conflicts) > 0:
+                res['msg'] += "The following packages have pending transactions: %s" % ", ".join(conflicts)
+                module.fail_json(**res)
+
             # if any of them are installed
             # then nothing to do
 
@@ -458,6 +536,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
                     
             if found:
                 continue
+
             # if not - then pass in the spec as what to install
             # we could get here if nothing provides it but that's not
             # the error we're catching here
@@ -472,7 +551,11 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
 
         rc, out, err = module.run_command(cmd)
 
-        if (rc != 0 and 'Nothing to do' in err) or 'Nothing to do' in out:
+        # Fail on invalid urls:
+        if (rc == 1 and '://' in spec and ('No package %s available.' % spec in out or 'Cannot open: %s. Skipping.' % spec in err)):
+            err = 'Package at %s could not be installed' % spec
+            module.fail_json(changed=False,msg=err,rc=1)
+        elif (rc != 0 and 'Nothing to do' in err) or 'Nothing to do' in out:
             # avoid failing in the 'Nothing To Do' case
             # this may happen with an URL spec.
             # for an already installed group,
@@ -597,6 +680,13 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
                 res['results'].append("All packages providing %s are up to date" % spec)
                 continue
 
+            # if any of the packages are involved in a transaction, fail now
+            # so that we don't hang on the yum operation later
+            conflicts = transaction_exists(pkglist)
+            if len(conflicts) > 0:
+                res['msg'] += "The following packages have pending transactions: %s" % ", ".join(conflicts)
+                module.fail_json(**res)
+
             pkg = spec
         if not cmd:
             cmd = yum_basecmd + [basecmd, pkg]
@@ -646,13 +736,13 @@ def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo,
         dis_repos = disablerepo.split(',')
     if enablerepo:
         en_repos = enablerepo.split(',')
+           
+    for repoid in dis_repos:
+        r_cmd = ['--disablerepo=%s' % repoid]
+        yum_basecmd.extend(r_cmd)
 
     for repoid in en_repos:
-        r_cmd = ['--enablerepo', repoid]
-        yum_basecmd.extend(r_cmd)
-        
-    for repoid in dis_repos:
-        r_cmd = ['--disablerepo', repoid]
+        r_cmd = ['--enablerepo=%s' % repoid]
         yum_basecmd.extend(r_cmd)
 
     if state in ['installed', 'present', 'latest']:
@@ -713,13 +803,18 @@ def main():
             list=dict(),
             conf_file=dict(default=None),
             disable_gpg_check=dict(required=False, default="no", type='bool'),
+            # this should not be needed, but exists as a failsafe
+            install_repoquery=dict(required=False, default="yes", type='bool'),
         ),
         required_one_of = [['name','list']],
         mutually_exclusive = [['name','list']],
         supports_check_mode = True
     )
 
+    # this should not be needed, but exists as a failsafe
     params = module.params
+    if params['install_repoquery'] and not repoquery and not module.check_mode:
+        install_yum_utils(module)
 
     if params['list']:
         if not repoquery:

@@ -73,6 +73,27 @@ options:
     default: "present"
     choices: ["active", "present", "absent", "deleted"]
     aliases: []
+  service_account_email:
+    version_added: "1.6"
+    description:
+      - service account email
+    required: false
+    default: null
+    aliases: []
+  pem_file:
+    version_added: "1.6"
+    description:
+      - path to the pem file associated with the service account email
+    required: false
+    default: null
+    aliases: []
+  project_id:
+    version_added: "1.6"
+    description:
+      - your GCE project ID
+    required: false
+    default: null
+    aliases: []
 
 requirements: [ "libcloud" ]
 author: Eric Johnson <erjohnso@google.com>
@@ -96,39 +117,17 @@ EXAMPLES = '''
 
 import sys
 
-USER_AGENT_PRODUCT="Ansible-gce_net"
-USER_AGENT_VERSION="v1beta15"
-
-try:                                                                            
-    from libcloud.compute.types import Provider                                 
-    from libcloud.compute.providers import get_driver                           
+try:
+    from libcloud.compute.types import Provider
+    from libcloud.compute.providers import get_driver
     from libcloud.common.google import GoogleBaseError, QuotaExceededError, \
             ResourceExistsError, ResourceNotFoundError
-    _ = Provider.GCE                                                            
-except ImportError:                                                             
+    _ = Provider.GCE
+except ImportError:
     print("failed=True " + \
             "msg='libcloud with GCE support required for this module.'")
-    sys.exit(1)                                                                 
-                                                                                
-# Load in the libcloud secrets file                                             
-try:                                                                            
-    import secrets                                                              
-except ImportError:                                                             
-    secrets = None                                                              
-ARGS = getattr(secrets, 'GCE_PARAMS', ())                                       
-KWARGS = getattr(secrets, 'GCE_KEYWORD_PARAMS', {})                             
-
-if not ARGS or not 'project' in KWARGS:
-    print("failed=True msg='Missing GCE connection " + \
-            "parameters in libcloud secrets file.'")
     sys.exit(1)
 
-def unexpected_error_msg(error):
-    """Format error string based on passed in error."""
-    msg='Unexpected response: HTTP return_code['
-    msg+='%s], API error code[%s] and message: %s' % (
-            error.http_code, error.code, str(error.value))
-    return msg
 
 def format_allowed(allowed):
     """Format the 'allowed' value so that it is GCE compatible."""
@@ -159,8 +158,13 @@ def main():
             src_range = dict(),
             src_tags = dict(type='list'),
             state = dict(default='present'),
+            service_account_email = dict(),
+            pem_file = dict(),
+            project_id = dict(),
         )
     )
+
+    gce = gce_connect(module)
 
     allowed = module.params.get('allowed')
     ipv4_range = module.params.get('ipv4_range')
@@ -169,13 +173,6 @@ def main():
     src_range = module.params.get('src_range')
     src_tags = module.params.get('src_tags')
     state = module.params.get('state')
-
-    try:
-        gce = get_driver(Provider.GCE)(*ARGS, **KWARGS)
-        gce.connection.user_agent_append("%s/%s" % (
-                USER_AGENT_PRODUCT, USER_AGENT_VERSION))
-    except Exception as e:
-        module.fail_json(msg=unexpected_error_msg(e), changed=False)
 
     changed = False
     json_output = {'state': state}
@@ -188,7 +185,7 @@ def main():
             json_output['ipv4_range'] = network.cidr
         except ResourceNotFoundError:
             pass
-        except Exception as e:
+        except Exception, e:
             module.fail_json(msg=unexpected_error_msg(e), changed=False)
 
         # user wants to create a new network that doesn't yet exist
@@ -202,7 +199,7 @@ def main():
                 json_output['name'] = name
                 json_output['ipv4_range'] = ipv4_range
                 changed = True
-            except Exception as e:
+            except Exception, e:
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
 
         if fwname:
@@ -224,7 +221,7 @@ def main():
                 changed = True
             except ResourceExistsError:
                 pass
-            except Exception as e:
+            except Exception, e:
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
 
             json_output['fwname'] = fwname
@@ -240,7 +237,7 @@ def main():
                 fw = gce.ex_get_firewall(fwname)
             except ResourceNotFoundError:
                 pass
-            except Exception as e:
+            except Exception, e:
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
             if fw:
                 gce.ex_destroy_firewall(fw)
@@ -254,7 +251,7 @@ def main():
             except ResourceNotFoundError:
 #                json_output['d2'] = 'not found network name %s' % name
                 pass
-            except Exception as e:
+            except Exception, e:
 #                json_output['d3'] = 'error with %s' % name
                 module.fail_json(msg=unexpected_error_msg(e), changed=False)
             if network:
@@ -269,5 +266,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.gce import *
 
 main()

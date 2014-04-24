@@ -16,8 +16,9 @@ options:
     required: true
   service:
     description:
-      - Name of the service (displayed in the message)
-    required: true
+      - Name of the service (displayed as the "user" in the message)
+    required: false
+    default: ansible
   message:
     description:
       - Message content
@@ -30,6 +31,14 @@ options:
     description:
       -  Icon for the service 
     required: false
+  validate_certs:
+    description:
+      - If C(no), SSL certificates will not be validated. This should only be used
+        on personally controlled sites using self-signed certificates.
+    required: false
+    default: 'yes'
+    choices: ['yes', 'no']
+    version_added: 1.5.1
 author: Jonas Pfenniger <zimbatm@zimbatm.com>
 '''
 
@@ -39,8 +48,6 @@ EXAMPLES = '''
     service=my-app
     message=deployed {{ target }}
 '''
-
-import urllib
 
 BASE_URL = 'https://grove.io/api/notice/%s/'
 
@@ -56,7 +63,10 @@ def do_notify_grove(module, channel_token, service, message, url=None, icon_url=
     if icon_url is not None:
         my_data['icon_url'] = icon_url
 
-    urllib.urlopen(my_url, urllib.urlencode(my_data))
+    data = urllib.urlencode(my_data)
+    response, info = fetch_url(module, my_url, data=data)
+    if info['status'] != 200:
+        module.fail_json(msg="failed to send notification: %s" % info['msg'])
 
 # ==============================================================
 # main
@@ -66,9 +76,10 @@ def main():
         argument_spec = dict(
             channel_token = dict(type='str', required=True),
             message = dict(type='str', required=True),
-            service = dict(type='str', required=True),
+            service = dict(type='str', default='ansible'),
             url = dict(type='str', default=None),
             icon_url = dict(type='str', default=None),
+            validate_certs = dict(default='yes', type='bool'),
         )
     )
 

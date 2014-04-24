@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+# This is a DOCUMENTATION stub specific to this module, it extends
+# a documentation fragment located in ansible.utils.module_docs_fragments
 DOCUMENTATION = '''
 ---
 module: rax_clb
@@ -25,17 +27,13 @@ options:
   algorithm:
     description:
       - algorithm for the balancer being created
-    choices: ['RANDOM', 'LEAST_CONNECTIONS', 'ROUND_ROBIN', 'WEIGHTED_LEAST_CONNECTIONS', 'WEIGHTED_ROUND_ROBIN']
+    choices:
+      - RANDOM
+      - LEAST_CONNECTIONS
+      - ROUND_ROBIN
+      - WEIGHTED_LEAST_CONNECTIONS
+      - WEIGHTED_ROUND_ROBIN
     default: LEAST_CONNECTIONS
-  api_key:
-    description:
-      - Rackspace API key (overrides C(credentials))
-  credentials:
-    description:
-      - File to find the Rackspace credentials in (ignored if C(api_key) and
-        C(username) are provided)
-    default: null
-    aliases: ['creds_file']
   meta:
     description:
       - A hash of metadata to associate with the instance
@@ -51,16 +49,32 @@ options:
   protocol:
     description:
       - Protocol for the balancer being created
-    choices: ['DNS_TCP', 'DNS_UDP' ,'FTP', 'HTTP', 'HTTPS', 'IMAPS', 'IMAPv4', 'LDAP', 'LDAPS', 'MYSQL', 'POP3', 'POP3S', 'SMTP', 'TCP', 'TCP_CLIENT_FIRST', 'UDP', 'UDP_STREAM', 'SFTP']
+    choices:
+      - DNS_TCP
+      - DNS_UDP
+      - FTP
+      - HTTP
+      - HTTPS
+      - IMAPS
+      - IMAPv4
+      - LDAP
+      - LDAPS
+      - MYSQL
+      - POP3
+      - POP3S
+      - SMTP
+      - TCP
+      - TCP_CLIENT_FIRST
+      - UDP
+      - UDP_STREAM
+      - SFTP
     default: HTTP
-  region:
-    description:
-      - Region to create the load balancer in
-    default: DFW
   state:
     description:
       - Indicate desired state of the resource
-    choices: ['present', 'absent']
+    choices:
+      - present
+      - absent
     default: present
   timeout:
     description:
@@ -69,29 +83,28 @@ options:
   type:
     description:
       - type of interface for the balancer being created
-    choices: ['PUBLIC', 'SERVICENET']
+    choices:
+      - PUBLIC
+      - SERVICENET
     default: PUBLIC
-  username:
+  vip_id:
     description:
-      - Rackspace username (overrides C(credentials))
+      - Virtual IP ID to use when creating the load balancer for purposes of
+        sharing an IP with another load balancer of another protocol
+    version_added: 1.5
   wait:
     description:
       - wait for the balancer to be in state 'running' before returning
     default: "no"
-    choices: [ "yes", "no" ]
+    choices:
+      - "yes"
+      - "no"
   wait_timeout:
     description:
       - how long before wait gives up, in seconds
     default: 300
-requirements: [ "pyrax" ]
 author: Christopher H. Laco, Matt Martz
-notes:
-  - The following environment variables can be used, C(RAX_USERNAME),
-    C(RAX_API_KEY), C(RAX_CREDS_FILE), C(RAX_CREDENTIALS), C(RAX_REGION).
-  - C(RAX_CREDENTIALS) and C(RAX_CREDS_FILE) points to a credentials file
-    appropriate for pyrax. See U(https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating)
-  - C(RAX_USERNAME) and C(RAX_API_KEY) obviate the use of a credentials file
-  - C(RAX_REGION) defines a Rackspace Public Cloud region (DFW, ORD, LON, ...)
+extends_documentation_fragment: rackspace
 '''
 
 EXAMPLES = '''
@@ -117,16 +130,13 @@ EXAMPLES = '''
       register: my_lb
 '''
 
-import sys
-import os
-
 from types import NoneType
 
 try:
     import pyrax
+    HAS_PYRAX = True
 except ImportError:
-    print("failed=True msg='pyrax required for this module'")
-    sys.exit(1)
+    HAS_PYRAX = False
 
 NON_CALLABLES = (basestring, bool, dict, int, list, NoneType)
 ALGORITHMS = ['RANDOM', 'LEAST_CONNECTIONS', 'ROUND_ROBIN',
@@ -134,6 +144,12 @@ ALGORITHMS = ['RANDOM', 'LEAST_CONNECTIONS', 'ROUND_ROBIN',
 PROTOCOLS = ['DNS_TCP', 'DNS_UDP', 'FTP', 'HTTP', 'HTTPS', 'IMAPS', 'IMAPv4',
              'LDAP', 'LDAPS', 'MYSQL', 'POP3', 'POP3S', 'SMTP', 'TCP',
              'TCP_CLIENT_FIRST', 'UDP', 'UDP_STREAM', 'SFTP']
+
+
+def node_to_dict(obj):
+    node = obj.to_dict()
+    node['id'] = obj.id
+    return node
 
 
 def to_dict(obj):
@@ -151,7 +167,7 @@ def to_dict(obj):
         elif key == 'nodes':
             instance[key] = []
             for node in value:
-                instance[key].append(node.to_dict())
+                instance[key].append(node_to_dict(node))
         elif (isinstance(value, NON_CALLABLES) and
                 not key.startswith('_')):
             instance[key] = value
@@ -160,7 +176,7 @@ def to_dict(obj):
 
 
 def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
-                        vip_type, timeout, wait, wait_timeout):
+                        vip_type, timeout, wait, wait_timeout, vip_id):
     for arg in (state, name, port, protocol, vip_type):
         if not arg:
             module.fail_json(msg='%s is required for rax_clb' % arg)
@@ -172,6 +188,10 @@ def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
     balancers = []
 
     clb = pyrax.cloud_loadbalancers
+    if not clb:
+        module.fail_json(msg='Failed to instantiate client. This '
+                             'typically indicates an invalid region or an '
+                             'incorrectly capitalized region name.')
 
     for balancer in clb.list():
         if name != balancer.name and name != balancer.id:
@@ -189,7 +209,7 @@ def cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
 
         if not balancers:
             try:
-                virtual_ips = [clb.VirtualIP(type=vip_type)]
+                virtual_ips = [clb.VirtualIP(type=vip_type, id=vip_id)]
                 balancer = clb.create(name, metadata=metadata, port=port,
                                       algorithm=algorithm, protocol=protocol,
                                       timeout=timeout, virtual_ips=virtual_ips)
@@ -279,6 +299,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent']),
             timeout=dict(type='int', default=30),
             type=dict(choices=['PUBLIC', 'SERVICENET'], default='PUBLIC'),
+            vip_id=dict(),
             wait=dict(type='bool'),
             wait_timeout=dict(default=300),
         )
@@ -289,6 +310,9 @@ def main():
         required_together=rax_required_together(),
     )
 
+    if not HAS_PYRAX:
+        module.fail_json(msg='pyrax is required for this module')
+
     algorithm = module.params.get('algorithm')
     meta = module.params.get('meta')
     name = module.params.get('name')
@@ -296,6 +320,7 @@ def main():
     protocol = module.params.get('protocol')
     state = module.params.get('state')
     timeout = int(module.params.get('timeout'))
+    vip_id = module.params.get('vip_id')
     vip_type = module.params.get('type')
     wait = module.params.get('wait')
     wait_timeout = int(module.params.get('wait_timeout'))
@@ -303,7 +328,7 @@ def main():
     setup_rax_module(module, pyrax)
 
     cloud_load_balancer(module, state, name, meta, algorithm, port, protocol,
-                        vip_type, timeout, wait, wait_timeout)
+                        vip_type, timeout, wait, wait_timeout, vip_id)
 
 
 # import module snippets

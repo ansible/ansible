@@ -70,15 +70,6 @@ options:
         C(virtualenv2), C(~/bin/virtualenv), C(/usr/local/bin/virtualenv).
     required: false
     default: virtualenv
-  use_mirrors:
-    description:
-      - Whether to use mirrors when installing python libraries.  If using
-        an older version of pip (< 1.0), you should set this to no because
-        older versions of pip do not support I(--use-mirrors).
-    required: false
-    default: "yes"
-    choices: [ "yes", "no" ]
-    version_added: "1.0"
   state:
     description:
       - The state of module
@@ -119,7 +110,7 @@ EXAMPLES = '''
 # Install (Bottle) python package on version 0.11.
 - pip: name=bottle version=0.11
 
-# Install (MyApp) using one of the remote protocols (bzr+,hg+,git+,svn+) or tarballs (zip, gz, bz2) (pip) supports. You do not have to supply '-e' option in extra_args. For these source names, (use_mirrors) is ignored and not applicable.
+# Install (MyApp) using one of the remote protocols (bzr+,hg+,git+,svn+). You do not have to supply '-e' option in extra_args.
 - pip: name='svn+http://myrepo/svn/MyApp#egg=MyApp'
 
 # Install (Bottle) into the specified (virtualenv), inheriting none of the globally installed modules
@@ -147,9 +138,8 @@ EXAMPLES = '''
 def _get_cmd_options(module, cmd):
     thiscmd = cmd + " --help"
     rc, stdout, stderr = module.run_command(thiscmd)
-    #import epdb; epdb.serve()
     if rc != 0:
-        module.fail_json(msg="Could not get --help output from %s" % virtualenv)
+        module.fail_json(msg="Could not get output from %s: %s" % (thiscmd, stdout + stderr))
 
     words = stdout.strip().split()
     cmd_options = [ x for x in words if x.startswith('--') ]
@@ -176,7 +166,8 @@ def _get_pip(module, env=None, executable=None):
         if os.path.isabs(executable):
             pip = executable
         else:
-            candidate_pip_basenames.insert(0, executable)
+            # If you define your own executable that executable should be the only candidate.
+            candidate_pip_basenames = [executable]
     if pip is None:
         if env is None:
             opt_dirs = []
@@ -234,7 +225,6 @@ def main():
     name = module.params['name']
     version = module.params['version']
     requirements = module.params['requirements']
-    use_mirrors = module.params['use_mirrors']
     extra_args = module.params['extra_args']
     chdir = module.params['chdir']
 
@@ -263,10 +253,10 @@ def main():
                     cmd = '%s --no-site-packages %s' % (virtualenv, env)
                 else:
                     cmd = '%s %s' % (virtualenv, env)
-            os.chdir(tempfile.gettempdir())
+            this_dir = tempfile.gettempdir()
             if chdir:
-                os.chdir(chdir)
-            rc, out_venv, err_venv = module.run_command(cmd)
+                this_dir = os.path.join(this_dir, chdir)
+            rc, out_venv, err_venv = module.run_command(cmd, cwd=this_dir)
             out += out_venv
             err += err_venv
             if rc != 0:
@@ -286,27 +276,11 @@ def main():
     if env:
         path_prefix="/".join(pip.split('/')[:-1])
 
-    if extra_args:
-        cmd += ' %s' % extra_args
+    # Automatically apply -e option to extra_args when source is a VCS url. VCS
+    # includes those beginning with svn+, git+, hg+ or bzr+
     if name:
-        # pip can accept a path to a local project or a VCS url beginning
-        # with svn+, git+, hg+, or bz+ and these sources usually do not qualify
-        # --use-mirrors. Furthermore, the -e option is applied only when
-        # source is a VCS url. Therefore, we will have branch cases for each
-        # type of sources.
-        #
-        # is_vcs includes those begin with svn+, git+, hg+ or bzr+
-        # is_tar ends with .zip, .tar.gz, or .tar.bz2
-        is_vcs = False
-        is_tar = False
-        is_local_path = False
-        if name.endswith('.tar.gz') or name.endswith('.tar.bz2') or name.endswith('.zip'):
-            is_tar = True
-        elif name.startswith('svn+') or name.startswith('git+') or \
+        if name.startswith('svn+') or name.startswith('git+') or \
                 name.startswith('hg+') or name.startswith('bzr+'):
-            is_vcs = True
-        # If is_vcs=True, we must add -e option (we assume users won't add that to extra_args).
-        if is_vcs:
             args_list = []  # used if extra_args is not used at all
             if extra_args:
                 args_list = extra_args.split(' ')
@@ -315,22 +289,20 @@ def main():
                 # Ok, we will reconstruct the option string
                 extra_args = ' '.join(args_list)
 
-        if name.startswith('.') or name.startswith('/'):
-            is_local_path = True
-        # for tarball or vcs source, applying --use-mirrors doesn't really make sense
-        is_package = is_vcs or is_tar or is_local_path       # just a shortcut for bool
-        if not is_package and state != 'absent' and use_mirrors:
-            cmd += ' --use-mirrors'
+    if extra_args:
+        cmd += ' %s' % extra_args
+    if name:
         cmd += ' %s' % _get_full_name(name, version)
     elif requirements:
         cmd += ' -r %s' % requirements
 
     if module.check_mode:
         module.exit_json(changed=True)
-    os.chdir(tempfile.gettempdir())
+    this_dir = tempfile.gettempdir()
     if chdir:
-        os.chdir(chdir)
-    rc, out_pip, err_pip = module.run_command(cmd, path_prefix=path_prefix)
+        this_dir = os.path.join(this_dir, chdir)
+
+    rc, out_pip, err_pip = module.run_command(cmd, path_prefix=path_prefix, cwd=this_dir)
     out += out_pip
     err += err_pip
     if rc == 1 and state == 'absent' and 'not installed' in out_pip:

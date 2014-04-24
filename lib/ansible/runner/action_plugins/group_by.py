@@ -28,7 +28,7 @@ class ActionModule(object):
 
     ### We need to be able to modify the inventory
     BYPASS_HOST_LOOP = True
-    NEEDS_TMPPATH = False
+    TRANSFERS_FILES = False
 
     def __init__(self, runner):
         self.runner = runner
@@ -83,7 +83,8 @@ class ActionModule(object):
                 inv_group = ansible.inventory.Group(name=group)
                 inventory.add_group(inv_group)
             for host in hosts:
-                del self.runner.inventory._vars_per_host[host]
+                if host in self.runner.inventory._vars_per_host:
+                    del self.runner.inventory._vars_per_host[host]
                 inv_host = inventory.get_host(host)
                 if not inv_host:
                     inv_host = ansible.inventory.Host(name=host)

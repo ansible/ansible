@@ -1,4 +1,4 @@
-# (c) 2013, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2013-2014, Michael DeHaan <michael.dehaan@gmail.com>
 #           Stephen Fromm <sfromm@gmail.com>
 #           Brian Coca  <briancoca+dev@gmail.com>
 #
@@ -26,21 +26,48 @@ from ansible.runner.return_data import ReturnData
 
 class ActionModule(object):
 
+    TRANSFERS_FILES = True
+
     def __init__(self, runner):
         self.runner = runner
 
-    def _assemble_from_fragments(self, src_path, delimiter=None):
+    def _assemble_from_fragments(self, src_path, delimiter=None, compiled_regexp=None):
         ''' assemble a file from a directory of fragments '''
         tmpfd, temp_path = tempfile.mkstemp()
         tmp = os.fdopen(tmpfd,'w')
         delimit_me = False
+        add_newline = False
+
         for f in sorted(os.listdir(src_path)):
+            if compiled_regexp and not compiled_regexp.search(f):
+                continue
             fragment = "%s/%s" % (src_path, f)
-            if delimit_me and delimiter:
-                tmp.write(delimiter)
-            if os.path.isfile(fragment):
-                tmp.write(file(fragment).read())
+            if not os.path.isfile(fragment):
+                continue
+            fragment_content = file(fragment).read()
+
+            # always put a newline between fragments if the previous fragment didn't end with a newline.
+            if add_newline:
+                tmp.write('\n')
+
+            # delimiters should only appear between fragments
+            if delimit_me:
+                if delimiter:
+                    # un-escape anything like newlines
+                    delimiter = delimiter.decode('unicode-escape')
+                    tmp.write(delimiter)
+                    # always make sure there's a newline after the
+                    # delimiter, so lines don't run together
+                    if delimiter[-1] != '\n':
+                        tmp.write('\n')
+
+            tmp.write(fragment_content)
             delimit_me = True
+            if fragment_content.endswith('\n'):
+                add_newline = False
+            else:
+                add_newline = True
+
         tmp.close()
         return temp_path
 
@@ -50,12 +77,14 @@ class ActionModule(object):
         options  = {}
         if complex_args:
             options.update(complex_args)
+
         options.update(utils.parse_kv(module_args))
 
         src = options.get('src', None)
         dest = options.get('dest', None)
         delimiter = options.get('delimiter', None)
-        remote_src = options.get('remote_src', True)
+        remote_src = utils.boolean(options.get('remote_src', 'yes'))
+
 
         if src is None or dest is None:
             result = dict(failed=True, msg="src and dest are required")
@@ -63,6 +92,11 @@ class ActionModule(object):
 
         if remote_src:
             return self.runner._execute_module(conn, tmp, 'assemble', module_args, inject=inject, complex_args=complex_args)
+        elif '_original_file' in inject:
+            src = utils.path_dwim_relative(inject['_original_file'], 'files', src, self.runner.basedir)
+        else:
+            # the source is local, so expand it here
+            src = os.path.expanduser(src)
 
         # Does all work assembling the file
         path = self._assemble_from_fragments(src, delimiter)

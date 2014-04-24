@@ -1,0 +1,187 @@
+# Test code for the file module.
+# (c) 2014, Richard Isaacson <richard.c.isaacson@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- set_fact: output_file={{output_dir}}/foo.txt
+
+- name: prep with a basic copy
+  copy: src=foo.txt dest={{output_file}}
+
+- name: verify that we are checking a file and it is present
+  file: path={{output_file}} state=file
+  register: file_result
+
+- name: verify that the file was marked as changed
+  assert:
+    that:
+      - "file_result.changed == false"
+      - "file_result.state == 'file'"
+
+- name: verify that we are checking an absent file
+  file: path={{output_dir}}/bar.txt state=absent
+  register: file2_result
+
+- name: verify that the file was marked as changed
+  assert:
+    that:
+      - "file2_result.changed == false"
+      - "file2_result.state == 'absent'"
+
+- name: verify we can touch a file
+  file: path={{output_dir}}/baz.txt state=touch
+  register: file3_result
+
+- name: verify that the file was marked as changed
+  assert:
+    that:
+      - "file3_result.changed == true"
+      - "file3_result.state == 'file'"
+      - "file3_result.mode == '0644'"
+
+- name: change file mode
+  file: path={{output_dir}}/baz.txt mode=0600
+  register: file4_result
+
+- name: verify that the file was marked as changed
+  assert:
+    that:
+      - "file4_result.changed == true"
+      - "file4_result.mode == '0600'"
+
+- name: change ownership and group
+  file: path={{output_dir}}/baz.txt owner=1234 group=1234
+
+- name: create soft link to file
+  file: src={{output_file}} dest={{output_dir}}/soft.txt state=link
+  register: file5_result
+
+- name: verify that the file was marked as changed
+  assert:
+    that:
+      - "file5_result.changed == true"
+
+- name: create hard link to file
+  file: src={{output_file}} dest={{output_dir}}/hard.txt state=hard
+  register: file6_result
+
+- name: verify that the file was marked as changed
+  assert:
+    that:
+      - "file6_result.changed == true"
+
+- name: create a directory
+  file: path={{output_dir}}/foobar state=directory
+  register: file7_result
+
+- name: verify that the file was marked as changed
+  assert:
+    that:
+      - "file7_result.changed == true"
+      - "file7_result.state == 'directory'"
+
+- name: determine if selinux is installed
+  shell: which getenforce || exit 0
+  register: selinux_installed
+
+- name: determine if selinux is enabled
+  shell: getenforce
+  register: selinux_enabled
+  when: selinux_installed.stdout != ""
+  ignore_errors: true
+
+- name: decide to include or not include selinux tests
+  include: selinux_tests.yml
+  when: selinux_installed.stdout != "" and selinux_enabled.stdout != "Disabled"
+
+- name: remote directory foobar
+  file: path={{output_dir}}/foobar state=absent
+
+- name: remove file foo.txt
+  file: path={{output_dir}}/foo.txt state=absent
+
+- name: remove file bar.txt
+  file: path={{output_dir}}/foo.txt state=absent
+
+- name: remove file baz.txt
+  file: path={{output_dir}}/foo.txt state=absent
+
+- name: copy directory structure over
+  copy: src=foobar dest={{output_dir}}
+
+- name: Change ownership of a directory with recurse=no(default)
+  file: path={{output_dir}}/foobar owner=1234
+
+- name: verify that the permission of the directory was set
+  file: path={{output_dir}}/foobar state=directory
+  register: file8_result
+
+- name: assert that the directory has changed to have owner 1234
+  assert:
+    that:
+      - "file8_result.uid == 1234"
+
+- name: verify that the permission of a file under the directory was not set
+  file: path={{output_dir}}/foobar/fileA state=file
+  register: file9_result
+
+- name: assert the file owner has not changed to 1234
+  assert:
+    that:
+      - "file9_result.uid != 1234"
+
+- name: change the ownership of a directory with recurse=yes
+  file: path={{output_dir}}/foobar owner=1235 recurse=yes
+
+- name: verify that the permission of the directory was set
+  file: path={{output_dir}}/foobar state=directory
+  register: file10_result
+
+- name: assert that the directory has changed to have owner 1235
+  assert:
+    that:
+      - "file10_result.uid == 1235"
+
+- name: verify that the permission of a file under the directory was not set
+  file: path={{output_dir}}/foobar/fileA state=file
+  register: file11_result
+
+- name: assert that the file has changed to have owner 1235
+  assert:
+    that:
+      - "file11_result.uid == 1235"
+
+- name: fail to create soft link to non existant file
+  file: src=/noneexistant dest={{output_dir}}/soft2.txt state=link force=no
+  register: file12_result
+  ignore_errors: true
+
+- name: verify that link was not created
+  assert:
+    that:
+      - "file12_result.failed == true"
+
+- name: force creation soft link to non existant
+  file: src=/noneexistant dest={{output_dir}}/soft2.txt state=link force=yes
+  register: file13_result
+
+- name: verify that link was created
+  assert:
+    that:
+      - "file13_result.changed == true"
+
+- name: remote directory foobar
+  file: path={{output_dir}}/foobar state=absent

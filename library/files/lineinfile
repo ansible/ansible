@@ -58,8 +58,8 @@ options:
     required: false
     description:
       - Required for C(state=present). The line to insert/replace into the
-        file. If backrefs is set, may contain backreferences that will get
-        expanded with the regexp capture groups if the regexp matches. The
+        file. If C(backrefs) is set, may contain backreferences that will get
+        expanded with the C(regexp) capture groups if the regexp matches. The
         backreferences should be double escaped (see examples).
   backrefs:
     required: false
@@ -68,11 +68,11 @@ options:
     version_added: "1.1"
     description:
       - Used with C(state=present). If set, line can contain backreferences
-        (both positional and named) that will get populated if the regexp
+        (both positional and named) that will get populated if the C(regexp)
         matches. This flag changes the operation of the module slightly;
-        insertbefore and insertafter will be ignored, and if the regexp
+        C(insertbefore) and C(insertafter) will be ignored, and if the C(regexp)
         doesn't match anywhere in the file, the file will be left unchanged.
-        If the regexp does match, the last matching line will be replaced by
+        If the C(regexp) does match, the last matching line will be replaced by
         the expanded line parameter.
   insertafter:
     required: false
@@ -81,7 +81,7 @@ options:
       - Used with C(state=present). If specified, the line will be inserted
         after the specified regular expression. A special value is
         available; C(EOF) for inserting the line at the end of the file.
-        May not be used with backrefs.
+        May not be used with C(backrefs).
     choices: [ 'EOF', '*regex*' ]
   insertbefore:
     required: false
@@ -90,7 +90,7 @@ options:
       - Used with C(state=present). If specified, the line will be inserted
         before the specified regular expression. A value is available;
         C(BOF) for inserting the line at the beginning of the file.
-        May not be used with backrefs.
+        May not be used with C(backrefs).
     choices: [ 'BOF', '*regex*' ]
   create:
     required: false
@@ -110,7 +110,8 @@ options:
   validate:
      required: false
      description:
-       - validation to run before copying into place
+       - validation to run before copying into place. The command is passed 
+         securely so shell features like expansion and pipes won't work.
      required: false
      default: None
      version_added: "1.4"
@@ -137,7 +138,7 @@ EXAMPLES = r"""
 # Fully quoted because of the ': ' on the line. See the Gotchas in the YAML docs.
 - lineinfile: "dest=/etc/sudoers state=present regexp='^%wheel' line='%wheel ALL=(ALL) NOPASSWD: ALL'"
 
-- lineinfile: dest=/opt/jboss-as/bin/standalone.conf regexp='^(.*)Xms(\d+)m(.*)$' line='\1Xms${xms}m\3' backrefs=yes
+- lineinfile: dest=/opt/jboss-as/bin/standalone.conf regexp='^(.*)Xms(\d+)m(.*)$' line='\\1Xms${xms}m\\3' backrefs=yes
 
 # Validate a the sudoers file before saving
 - lineinfile: dest=/etc/sudoers state=present regexp='^%ADMIN ALL\=' line='%ADMIN ALL=(ALL) NOPASSWD:ALL' validate='visudo -cf %s'
@@ -260,13 +261,14 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         msg = 'line added'
         changed = True
 
+    backupdest = ""
     if changed and not module.check_mode:
         if backup and os.path.exists(dest):
-            module.backup_local(dest)
+            backupdest = module.backup_local(dest)
         write_changes(module, lines, dest)
 
     msg, changed = check_file_attrs(module, changed, msg)
-    module.exit_json(changed=changed, msg=msg)
+    module.exit_json(changed=changed, msg=msg, backup=backupdest)
 
 
 def absent(module, dest, regexp, line, backup):
@@ -294,16 +296,17 @@ def absent(module, dest, regexp, line, backup):
 
     lines = filter(matcher, lines)
     changed = len(found) > 0
+    backupdest = ""
     if changed and not module.check_mode:
         if backup:
-            module.backup_local(dest)
+            backupdest = module.backup_local(dest)
         write_changes(module, lines, dest)
 
     if changed:
         msg = "%s line(s) removed" % len(found)
 
     msg, changed = check_file_attrs(module, changed, msg)
-    module.exit_json(changed=changed, found=len(found), msg=msg)
+    module.exit_json(changed=changed, found=len(found), msg=msg, backup=backupdest)
 
 
 def main():
@@ -348,7 +351,11 @@ def main():
         if ins_bef is None and ins_aft is None:
             ins_aft = 'EOF'
 
-        present(module, dest, params['regexp'], params['line'],
+        # Replace the newline character with an actual newline. Don't replace
+		# escaped \\n, hence sub and not str.replace.
+        line = re.sub(r'\n', os.linesep, params['line'])
+
+        present(module, dest, params['regexp'], line,
                 ins_aft, ins_bef, create, backup, backrefs)
     else:
         if params['regexp'] is None and params.get('line', None) is None:

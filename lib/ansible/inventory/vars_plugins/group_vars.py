@@ -1,4 +1,4 @@
-# (c) 2012-2013, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -23,7 +23,7 @@ from ansible import errors
 from ansible import utils
 import ansible.constants as C
 
-def _load_vars(basepath, results):
+def _load_vars(basepath, results, vault_password=None):
     """
     Load variables from any potential yaml filename combinations of basepath,
     returning result.
@@ -35,7 +35,7 @@ def _load_vars(basepath, results):
     found_paths = []
 
     for path in paths_to_check:
-        found, results = _load_vars_from_path(path, results)
+        found, results = _load_vars_from_path(path, results, vault_password=vault_password)
         if found:
             found_paths.append(path)
 
@@ -49,7 +49,7 @@ def _load_vars(basepath, results):
 
     return results
 
-def _load_vars_from_path(path, results):
+def _load_vars_from_path(path, results, vault_password=None):
     """
     Robustly access the file at path and load variables, carefully reporting
     errors in a friendly/informative way.
@@ -73,7 +73,7 @@ def _load_vars_from_path(path, results):
     # symbolic link
     if stat.S_ISLNK(pathstat.st_mode):
         try:
-            target = os.readlink(path)
+            target = os.path.realpath(path)
         except os.error, err2:
             raise errors.AnsibleError("The symbolic link at %s "
                 "is not readable: %s.  Please check its permissions."
@@ -86,11 +86,11 @@ def _load_vars_from_path(path, results):
     if stat.S_ISDIR(pathstat.st_mode):
 
         # support organizing variables across multiple files in a directory
-        return True, _load_vars_from_folder(path, results)
+        return True, _load_vars_from_folder(path, results, vault_password=vault_password)
 
     # regular file
     elif stat.S_ISREG(pathstat.st_mode):
-        data = utils.parse_yaml_from_file(path)
+        data = utils.parse_yaml_from_file(path, vault_password=vault_password)
         if type(data) != dict:
             raise errors.AnsibleError(
                 "%s must be stored as a dictionary/hash" % path)
@@ -105,7 +105,7 @@ def _load_vars_from_path(path, results):
         raise errors.AnsibleError("Expected a variable file or directory "
             "but found a non-file object at path %s" % (path, ))
 
-def _load_vars_from_folder(folder_path, results):
+def _load_vars_from_folder(folder_path, results, vault_password=None):
     """
     Load all variables within a folder recursively.
     """
@@ -123,9 +123,10 @@ def _load_vars_from_folder(folder_path, results):
     # filesystem lists them.
     names.sort() 
 
-    paths = [os.path.join(folder_path, name) for name in names]
+    # do not parse hidden files or dirs, e.g. .svn/
+    paths = [os.path.join(folder_path, name) for name in names if not name.startswith('.')]
     for path in paths:
-        _found, results = _load_vars_from_path(path, results)
+        _found, results = _load_vars_from_path(path, results, vault_password=vault_password)
     return results
 
             
@@ -143,7 +144,7 @@ class VarsModule(object):
 
         self.inventory = inventory
 
-    def run(self, host):
+    def run(self, host, vault_password=None):
 
         """ main body of the plugin, does actual loading """
 
@@ -183,11 +184,11 @@ class VarsModule(object):
             # load vars in dir/group_vars/name_of_group
             for group in groups:
                 base_path = os.path.join(basedir, "group_vars/%s" % group)
-                results = _load_vars(base_path, results)
+                results = _load_vars(base_path, results, vault_password=vault_password)
 
             # same for hostvars in dir/host_vars/name_of_host
             base_path = os.path.join(basedir, "host_vars/%s" % host.name)
-            results = _load_vars(base_path, results)
+            results = _load_vars(base_path, results, vault_password=vault_password)
 
         # all done, results is a dictionary of variables for this particular host.
         return results
