@@ -191,6 +191,7 @@ class Connection(object):
                 msg += ": %s" % str(e)
             raise errors.AnsibleConnectionFailed(msg)
 
+        stdout = ""
         if not (self.runner.sudo and sudoable) and not (self.runner.su and su):
             if executable:
                 quoted_command = executable + ' -c ' + pipes.quote(cmd)
@@ -230,10 +231,12 @@ class Connection(object):
                             chan.sendall(self.runner.sudo_pass + '\n')
                         elif su:
                             chan.sendall(self.runner.su_pass + '\n')
+                    else:
+                        stdout = sudo_output
             except socket.timeout:
                 raise errors.AnsibleError('ssh timed out waiting for sudo.\n' + sudo_output)
 
-        stdout = ''.join(chan.makefile('rb', bufsize))
+        stdout = stdout + ( ''.join(chan.makefile('rb', bufsize)) )
         stderr = ''.join(chan.makefile_stderr('rb', bufsize))
         return (chan.recv_exit_status(), '', stdout, stderr)
 
