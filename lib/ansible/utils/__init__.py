@@ -464,32 +464,33 @@ Could be written as:
 
     return msg
 
-def process_yaml_error(exc, data, path=None):
+def process_yaml_error(exc, data, path=None, show_content=True):
     if hasattr(exc, 'problem_mark'):
         mark = exc.problem_mark
-        if mark.line -1 >= 0:
-            before_probline = data.split("\n")[mark.line-1]
-        else:
-            before_probline = ''
-        probline = data.split("\n")[mark.line]
-        arrow = " " * mark.column + "^"
-        msg = """Syntax Error while loading YAML script, %s
+        if show_content:
+            if mark.line -1 >= 0:
+                before_probline = data.split("\n")[mark.line-1]
+            else:
+                before_probline = ''
+            probline = data.split("\n")[mark.line]
+            arrow = " " * mark.column + "^"
+            msg = """Syntax Error while loading YAML script, %s
 Note: The error may actually appear before this position: line %s, column %s
 
 %s
 %s
 %s""" % (path, mark.line + 1, mark.column + 1, before_probline, probline, arrow)
 
-        unquoted_var = None
-        if '{{' in probline and '}}' in probline:
-            if '"{{' not in probline or "'{{" not in probline:
-                unquoted_var = True
+            unquoted_var = None
+            if '{{' in probline and '}}' in probline:
+                if '"{{' not in probline or "'{{" not in probline:
+                    unquoted_var = True
 
-        msg = process_common_errors(msg, probline, mark.column)
-        if not unquoted_var:
             msg = process_common_errors(msg, probline, mark.column)
-        else:
-            msg = msg + """
+            if not unquoted_var:
+                msg = process_common_errors(msg, probline, mark.column)
+            else:
+                msg = msg + """
 We could be wrong, but this one looks like it might be an issue with
 missing quotes.  Always quote template expression brackets when they 
 start a value. For instance:            
@@ -503,7 +504,15 @@ Should be written as:
       - "{{ foo }}"      
 
 """
-            msg = process_common_errors(msg, probline, mark.column)
+                msg = process_common_errors(msg, probline, mark.column)
+        else:
+            # most likely displaying a file with sensitive content,
+            # so don't show any of the actual lines of yaml just the
+            # line number itself
+            msg = """Syntax error while loading YAML script, %s
+The error appears to have been on line %s, column %s, but may actually
+be before there depending on the exact syntax problem.
+""" % (path, mark.line + 1, mark.column + 1)
 
     else:
         # No problem markers means we have to throw a generic
@@ -519,6 +528,7 @@ def parse_yaml_from_file(path, vault_password=None):
     ''' convert a yaml file to a data structure '''
 
     data = None
+    show_content = True
 
     try:
         data = open(path).read()
@@ -528,11 +538,12 @@ def parse_yaml_from_file(path, vault_password=None):
     vault = VaultLib(password=vault_password)
     if vault.is_encrypted(data):
         data = vault.decrypt(data)
+        show_content = False
 
     try:
         return parse_yaml(data, path_hint=path)
     except yaml.YAMLError, exc:
-        process_yaml_error(exc, data, path)
+        process_yaml_error(exc, data, path, show_content)
 
 def parse_kv(args):
     ''' convert a string of key/value items to a dict '''
