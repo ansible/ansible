@@ -51,23 +51,20 @@ A task include file simply contains a flat list of tasks, like so::
 
 Include directives look like this, and can be mixed in with regular tasks in a playbook::
 
-   tasks:
-
      - include: tasks/foo.yml
 
 You can also pass variables into includes.  We call this a 'parameterized include'.
 
 For instance, if deploying multiple wordpress instances, I could
 contain all of my wordpress tasks in a single wordpress.yml file, and use it like so::
-
-   tasks:
+     
+     ---
      - include: wordpress.yml user=timmy
      - include: wordpress.yml user=alice
      - include: wordpress.yml user=bob
 
 If you are running Ansible 1.4 and later, include syntax is streamlined to match roles, and also allows passing list and dictionary parameters::
    
-    tasks:
      - { include: wordpress.yml, user: timmy, ssh_keys: [ 'keys/one.txt', 'keys/two.txt' ] }
 
 Using either syntax, variables passed in can then be used in the included files.  We've already covered them a bit in :doc:`playbooks_variables`.
@@ -80,8 +77,6 @@ the vars section are also available for use here as well.)
 
 Starting in 1.0, variables can also be passed to include files using an alternative syntax,
 which also supports structured variables::
-
-    tasks:
 
       - include: wordpress.yml
         vars:
