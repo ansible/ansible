@@ -181,33 +181,36 @@ class WebCheck(object):
     def get_steps(self, web_check_steps):
         steps = []
         (name, url, no) = (None, None, None)
-        for web_check_step in web_check_steps:
-            if "name" in web_check_step and web_check_step["name"]:
-                name = web_check_step["name"]
-            else:
-                self._module.fail_json(msg="The \"name\" property in scenario steps is required and not null.")
+        if web_check_steps:
+            for web_check_step in web_check_steps:
+                if "name" in web_check_step and web_check_step["name"]:
+                    name = web_check_step["name"]
+                else:
+                    self._module.fail_json(msg="The \"name\" property in scenario steps is required and not null.")
 
-            if "url" in web_check_step and web_check_step["url"]:
-                url = web_check_step["url"]
-            else:
-                self._module.fail_json(msg="The \"url\" property in scenario steps is required and not null.")
+                if "url" in web_check_step and web_check_step["url"]:
+                    url = web_check_step["url"]
+                else:
+                    self._module.fail_json(msg="The \"url\" property in scenario steps is required and not null.")
 
-            if "number" in web_check_step and web_check_step["number"]:
-                no = web_check_step["number"]
-            else:
-                self._module.fail_json(msg="The \"no\" property in scenario steps is required and not null.")
+                if "number" in web_check_step and web_check_step["number"]:
+                    no = web_check_step["number"]
+                else:
+                    self._module.fail_json(msg="The \"no\" property in scenario steps is required and not null.")
 
-            optional_step_properties = dict()
-            for step_optional_property in self._scenario_step_optional_properties_list:
-                value = self.get_value_by_key(web_check_step, step_optional_property)
-                if value is not None:
-                    optional_step_properties[step_optional_property] = value
+                optional_step_properties = dict()
+                for step_optional_property in self._scenario_step_optional_properties_list:
+                    value = self.get_value_by_key(web_check_step, step_optional_property)
+                    if value is not None:
+                        optional_step_properties[step_optional_property] = value
 
-            step = {"name": name,
-                    "url": url,
-                    "no": no}
-            steps.append(dict(step, **optional_step_properties))
-        return steps
+                step = {"name": name,
+                        "url": url,
+                        "no": no}
+                steps.append(dict(step, **optional_step_properties))
+            return steps
+        else:
+            self._module.fail_json(msg="The \"steps\" property in scenario is required and not null.")
 
     def get_replace_steps(self, old_webcheck_steps, new_webcheck_steps, httptestid):
         relace_webcheck_steps = []
@@ -236,9 +239,9 @@ class WebCheck(object):
                              web_check_obj=None, httptestid=None):
         steps = self.get_steps(web_check_steps)
         if httptestid:
-            old_steps = list(web_check_obj['steps'].values())
-            steps = self.get_replace_steps(old_steps, steps, httptestid)
-
+            if web_check_obj['steps']:
+                old_steps = list(web_check_obj['steps'].values())
+                steps = self.get_replace_steps(old_steps, steps, httptestid)
         web_check_params = {"name": web_check_name,
                             "applicationid": application_id,
                             "hostid": host_id,
