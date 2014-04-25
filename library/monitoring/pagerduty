@@ -80,6 +80,14 @@ options:
         default: Created by Ansible
         choices: []
         aliases: []
+    validate_certs:
+        description:
+            - If C(no), SSL certificates will not be validated. This should only be used
+              on personally controlled sites using self-signed certificates.
+        required: false
+        default: 'yes'
+        choices: ['yes', 'no']
+        version_added: 1.5.1
 notes:
     - Token and password are interchangable; use one or the other for authentication.
 
@@ -124,7 +132,7 @@ global pd_url
 pd_url = "pagerduty.com/api/v1"
 
 
-def create_req(url, data, name, user, passwd=None, token=None):
+def format_req(url, data, name, user, passwd=None, token=None):
     req = urllib2.Request(url, data)
     if token:
         req.add_header("Authorization", "Token token=%s" % token)
@@ -138,7 +146,7 @@ def create_req(url, data, name, user, passwd=None, token=None):
 
 def service_lookup(name, user, passwd, token, service):
     url = "https://%s.%s/services" % (name, pd_url)
-    req = create_req(url, None, name, user, passwd, token)
+    req = format_req(url, None, name, user, passwd, token)
     res = urllib2.urlopen(req)
     out = json.load(res)
 
@@ -155,7 +163,7 @@ def user_lookup(name, user, passwd=None, token=None):
     user_encoded = urllib.quote(user)
     url = "https://%s.%s/users/?query=%s" \
         % (name, pd_url, user_encoded)
-    req = create_req(url, None, name, user, passwd, token)
+    req = format_req(url, None, name, user, passwd, token)
 
     res = urllib2.urlopen(req)
     out = json.load(res)
@@ -180,7 +188,7 @@ def maint_lookup(name, user, service, desc, passwd=None, token=None):
         url = "https://%s.%s/maintenance_windows/?%s&filter=ongoing" \
             % (name, pd_url, service_id_encoded)
 
-    req = create_req(url, None, name, user, passwd, token)
+    req = format_req(url, None, name, user, passwd, token)
 
     res = urllib2.urlopen(req)
     out = json.load(res)
@@ -196,7 +204,7 @@ def maint_lookup(name, user, service, desc, passwd=None, token=None):
 def ongoing(name, user, passwd=None, token=None):
     url = "https://%s.%s/maintenance_windows/ongoing" \
         % (name, pd_url)
-    req = create_req(url, None, name, user, passwd, token)
+    req = format_req(url, None, name, user, passwd, token)
     try:
         res = urllib2.urlopen(req)
         out = res.read()
@@ -232,7 +240,7 @@ def create(
 
     data = json.dumps(request_data)
 
-    req = create_req(url, data, name, user, passwd, token)
+    req = format_req(url, data, name, user, passwd, token)
     try:
         res = urllib2.urlopen(req)
         out = res.read()
@@ -254,7 +262,7 @@ def delete(name, user, service, desc, passwd=None, token=None):
         for window in maint_ids:
             url = "https://%s.%s/maintenance_windows/%s" \
                 % (name, pd_url, window)
-            req = create_req(url, None, name, user, passwd, token)
+            req = format_req(url, None, name, user, passwd, token)
             req.get_method = lambda: 'DELETE'
             try:
                 urllib2.urlopen(req)
@@ -288,7 +296,8 @@ def main():
             service=dict(required=False, type='str'),
             hours=dict(default='1', type='int', required=False),
             minutes=dict(default='0', type='int', required=False),
-            desc=dict(default='Created by Ansible', type='str', required=False)
+            desc=dict(default='Created by Ansible', type='str', required=False),
+            validate_certs=dict(default='yes', type='bool')
         ),
         supports_check_mode=False,
         mutually_exclusive=[['passwd'], ['token']]
