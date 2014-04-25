@@ -31,7 +31,7 @@ options:
         aliases: []
     user:
         description:
-            - PagerDuty user name or email.
+            - PagerDuty user's name, email, or ID.
         required: true
         default: null
         choices: []
@@ -53,7 +53,7 @@ options:
         aliases: []
     service:
         description:
-            - PagerDuty service name.
+            - PagerDuty service's name or ID.
         required: false
         default: null
         choices: []
@@ -145,6 +145,7 @@ def format_req(url, data, name, user, passwd=None, token=None):
 
 
 def service_lookup(name, user, passwd, token, service):
+    out = None
     url = "https://%s.%s/services" % (name, pd_url)
     req = format_req(url, None, name, user, passwd, token)
     res = urllib2.urlopen(req)
@@ -153,24 +154,38 @@ def service_lookup(name, user, passwd, token, service):
     # PD doesn't allow filtering at the API level for services, so we have to
     # search through the results to obtain the id:
     for pd_service in out['services']:
-        if pd_service['name'] == service:
+        if pd_service['name'] == service or pd_service['id'] == service:
             return pd_service['id']
 
     return None
 
 
 def user_lookup(name, user, passwd=None, token=None):
+    out = None
     user_encoded = urllib.quote(user)
     url = "https://%s.%s/users/?query=%s" \
         % (name, pd_url, user_encoded)
     req = format_req(url, None, name, user, passwd, token)
 
     res = urllib2.urlopen(req)
-    out = json.load(res)
+    data = json.load(res)
 
-    if out['total'] > 0:
-        if out['users'][0]['email'] == user:
-            return out['users'][0]['id']
+    if data['total'] > 0:
+        if data['users'][0]['email'] == user:
+            out = data['users'][0]['id']
+    # lookup by ID if name/email fails
+    else:
+        url = "https://%s.%s/users/%s" \
+            % (name, pd_url, user_encoded)
+        req = format_req(url, None, name, user, passwd, token)
+        try:
+            res = urllib2.urlopen(req)
+            data = json.load(res)
+            out = data['user']['id']
+        except urllib2.HTTPError, e:
+            out = "Pagerduty API - %s %s" % (e.code, e.reason)
+
+    return out
 
 
 def maint_lookup(name, user, service, desc, passwd=None, token=None):
@@ -211,7 +226,7 @@ def ongoing(name, user, passwd=None, token=None):
     except urllib2.HTTPError, e:
         success = False
         changed = False
-        out = "Pagerduty API - %s: %s" % (e.code, e.reason)
+        out = "Pagerduty API - %s %s" % (e.code, e.reason)
         return success, changed, out
 
     return True, False, out
@@ -247,7 +262,7 @@ def create(
     except urllib2.HTTPError, e:
         success = False
         changed = False
-        out = "Pagerduty API %s: %s" % (e.code, e.reason)
+        out = "Pagerduty API %s %s" % (e.code, e.reason)
         return success, changed, out
 
     return True, True, out
@@ -269,7 +284,7 @@ def delete(name, user, service, desc, passwd=None, token=None):
             except urllib2.HTTPError, e:
                 success = False
                 changed = False
-                out = "Pagerduty API - %s: %s" % (e.code, e.reason)
+                out = "Pagerduty API - %s %s" % (e.code, e.reason)
                 return success, changed, out
         changed = True
         success = True
@@ -317,27 +332,27 @@ def main():
     if not token and not passwd:
         module.fail_json(msg="neither passwd nor token specified")
 
-    if state == "started":
+    if state == "started" or state == "stopped":
         if not service:
             module.fail_json(msg="service not specified")
         user_id = user_lookup(name, user, passwd, token)
+        if user_id is None or user_id.find("Pagerduty API") != -1:
+            msg = "user not found | %s" % user_id
+            module.fail_json(msg=msg)
         service_id = service_lookup(name, user, passwd, token, service)
+        if service_id is None:
+            module.fail_json(msg="failed", result="service not found")
+
+    if state == "started":
         (success, changed, out) = create(
             name, user, user_id, service_id,
             hours, minutes, desc, passwd, token
         )
 
     if state == "stopped":
-        if not service:
-            module.fail_json(msg="service not specified")
-        user_id = user_lookup(name, user, passwd, token)
-        service_id = service_lookup(name, user, passwd, token, service)
-        if service_id is not None:
-            (success, changed, out) = delete(
-                name, user, service_id, desc, passwd, token
-            )
-        else:
-            module.fail_json(msg="failed", result="service not found")
+        (success, changed, out) = delete(
+            name, user, service_id, desc, passwd, token
+        )
 
     if state == "ongoing":
         (success, changed, out) = ongoing(name, user, passwd, token)
