@@ -54,6 +54,7 @@ options:
               annotation.
               If setting or modifying annotations, a value must be provided.
         required: false
+        version_added: "1.6"
     pkgsite:
         description:
             - for pkgng versions before 1.1.4, specify packagesite to use
@@ -148,7 +149,7 @@ def install_packages(module, pkgng_path, packages, cached, pkgsite):
         else:
             pkgsite = "-r %s" % (pkgsite)
 
-    if not module.check_mode and cached == "no":
+    if not module.check_mode and not cached:
         if old_pkgng:
             rc, out, err = module.run_command("%s %s update" % (pkgsite, pkgng_path))
         else:

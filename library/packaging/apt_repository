@@ -43,9 +43,15 @@ options:
         default: "present"
         description:
             - A source string state.
+    mode:
+        required: false
+        default: 0644
+        description:
+            - The octal mode for newly created files in sources.list.d
+        version_added: "1.6"
     update_cache:
         description:
-            - Run the equivalent of C(apt-get update) if has changed.
+            - Run the equivalent of C(apt-get update) when a change occurs.  Cache updates are run after making changes.
         required: false
         default: "yes"
         choices: [ "yes", "no" ]
@@ -133,12 +139,22 @@ class SourcesList(object):
     def _suggest_filename(self, line):
         def _cleanup_filename(s):
             return '_'.join(re.sub('[^a-zA-Z0-9]', ' ', s).split())
+        def _strip_username_password(s):
+            if '@' in s:
+                s = s.split('@', 1)
+                s = s[-1]
+            return s
 
         # Drop options and protocols.
         line = re.sub('\[[^\]]+\]', '', line)
         line = re.sub('\w+://', '', line)
 
+        # split line into valid keywords
         parts = [part for part in line.split() if part not in VALID_SOURCE_TYPES]
+
+        # Drop usernames and passwords
+        parts[0] = _strip_username_password(parts[0])
+
         return '%s.list' % _cleanup_filename(' '.join(parts[:1]))
 
     def _parse(self, line, raise_if_invalid_or_disabled=False):
@@ -207,7 +223,10 @@ class SourcesList(object):
             if sources:
                 d, fn = os.path.split(filename)
                 fd, tmp_path = tempfile.mkstemp(prefix=".%s-" % fn, dir=d)
-                os.chmod(os.path.join(fd, tmp_path), 0644)
+
+                # allow the user to override the default mode
+                this_mode = module.params['mode']
+                module.set_mode_if_different(tmp_path, this_mode, False)
 
                 f = os.fdopen(fd, 'w')
                 for n, valid, enabled, source, comment in sources:
@@ -346,6 +365,7 @@ def main():
         argument_spec=dict(
             repo=dict(required=True),
             state=dict(choices=['present', 'absent'], default='present'),
+            mode=dict(required=False, default=0644),
             update_cache = dict(aliases=['update-cache'], type='bool', default='yes'),
             # this should not be needed, but exists as a failsafe
             install_python_apt=dict(required=False, default="yes", type='bool'),

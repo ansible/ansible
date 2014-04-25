@@ -22,24 +22,6 @@ description:
     - creates an EBS volume and optionally attaches it to an instance.  If both an instance ID and a device name is given and the instance has a device at the device name, then no volume is created and no attachment is made.  This module has a dependency on python-boto.
 version_added: "1.1"
 options:
-  aws_secret_key:
-    description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
-    required: false
-    default: None
-    aliases: ['ec2_secret_key', 'secret_key' ]
-  aws_access_key:
-    description:
-      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
-    required: false
-    default: None
-    aliases: ['ec2_access_key', 'access_key' ]
-  ec2_url:
-    description:
-      - Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints).  Must be specified if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used
-    required: false
-    default: null
-    aliases: []
   instance:
     description:
       - instance ID if you wish to attach the volume. 
@@ -96,6 +78,7 @@ options:
       - snapshot ID on which to base the volume
     required: false
     default: null
+    version_added: "1.5"
   validate_certs:
     description:
       - When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
@@ -104,20 +87,6 @@ options:
     choices: ["yes", "no"]
     aliases: []
     version_added: "1.5"
-  profile:
-    description:
-      - uses a boto profile. Only works with boto >= 2.24.0
-    required: false
-    default: null
-    aliases: []
-    version_added: "1.6"
-  security_token:
-    description:
-      - security token to authenticate against AWS
-    required: false
-    default: null
-    aliases: []
-    version_added: "1.6"
   state:
     description: 
       - whether to ensure the volume is present or absent
@@ -125,8 +94,8 @@ options:
     default: present
     choices: ['absent', 'present']
     version_added: "1.6"
-requirements: [ "boto" ]
 author: Lester Wade
+extends_documentation_fragment: aws
 '''
 
 EXAMPLES = '''

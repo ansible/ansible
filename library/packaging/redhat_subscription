@@ -327,7 +327,7 @@ class RhsmPools(object):
 def main():
 
     # Load RHSM configuration from file
-    rhn = Rhsm(AnsibleModule())
+    rhn = Rhsm(None)
 
     module = AnsibleModule(
                 argument_spec = dict(

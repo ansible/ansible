@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+# This is a DOCUMENTATION stub specific to this module, it extends
+# a documentation fragment located in ansible.utils.module_docs_fragments
 DOCUMENTATION = '''
 ---
 module: rax_cbs_attachments
@@ -22,46 +24,6 @@ description:
      - Manipulate Rackspace Cloud Block Storage Volume Attachments
 version_added: 1.6
 options:
-  api_key:
-    description:
-      - Rackspace API key (overrides I(credentials))
-    aliases:
-      - password
-  auth_endpoint:
-    description:
-      - The URI of the authentication service
-    default: https://identity.api.rackspacecloud.com/v2.0/
-  credentials:
-    description:
-      - File to find the Rackspace credentials in (ignored if I(api_key) and
-        I(username) are provided)
-    default: null
-    aliases:
-      - creds_file
-  env:
-    description:
-      - Environment as configured in ~/.pyrax.cfg,
-        see U(https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#pyrax-configuration)
-  identity_type:
-    description:
-      - Authentication machanism to use, such as rackspace or keystone
-    default: rackspace
-  region:
-    description:
-      - Region to create an instance in
-    default: DFW
-  tenant_id:
-    description:
-      - The tenant ID used for authentication
-  tenant_name:
-    description:
-      - The tenant name used for authentication
-  username:
-    description:
-      - Rackspace username (overrides I(credentials))
-  verify_ssl:
-    description:
-      - Whether or not to require SSL validation of API endpoints
   device:
     description:
       - The device path to attach the volume to, e.g. /dev/xvde
@@ -96,16 +58,8 @@ options:
     description:
       - how long before wait gives up, in seconds
     default: 300
-requirements:
-  - pyrax
 author: Christopher H. Laco, Matt Martz
-notes:
-  - The following environment variables can be used, C(RAX_USERNAME),
-    C(RAX_API_KEY), C(RAX_CREDS_FILE), C(RAX_CREDENTIALS), C(RAX_REGION).
-  - C(RAX_CREDENTIALS) and C(RAX_CREDS_FILE) points to a credentials file
-    appropriate for pyrax. See U(https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating)
-  - C(RAX_USERNAME) and C(RAX_API_KEY) obviate the use of a credentials file
-  - C(RAX_REGION) defines a Rackspace Public Cloud region (DFW, ORD, LON, ...)
+extends_documentation_fragment: rackspace.openstack
 '''
 
 EXAMPLES = '''

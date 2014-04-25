@@ -115,6 +115,8 @@ FILE_COMMON_ARGUMENTS=dict(
     backup = dict(),
     force = dict(),
     remote_src = dict(), # used by assemble
+    delimiter = dict(), # used by assemble
+    directory_mode = dict(), # used by copy
 )
 
 
@@ -190,6 +192,7 @@ class AnsibleModule(object):
                     self.argument_spec[k] = v
 
         os.environ['LANG'] = MODULE_LANG
+        os.environ['LC_CTYPE'] = MODULE_LANG
         (self.params, self.args) = self._load_params()
 
         self._legal_inputs = ['CHECKMODE', 'NO_LOG']
@@ -348,6 +351,31 @@ class AnsibleModule(object):
         gid = st.st_gid
         return (uid, gid)
 
+    def find_mount_point(self, path):
+        path = os.path.abspath(os.path.expanduser(os.path.expandvars(path)))
+        while not os.path.ismount(path):
+            path = os.path.dirname(path)
+        return path
+
+    def is_nfs_path(self, path):
+        """
+        Returns a tuple containing (True, selinux_context) if the given path
+        is on a NFS mount point, otherwise the return will be (False, None).
+        """
+        try:
+            f = open('/proc/mounts', 'r')
+            mount_data = f.readlines()
+            f.close()
+        except:
+            return (False, None)
+        path_mount_point = self.find_mount_point(path)
+        for line in mount_data:
+            (device, mount_point, fstype, options, rest) = line.split(' ', 4)
+            if path_mount_point == mount_point and 'nfs' in fstype:
+                nfs_context = self.selinux_context(path_mount_point)
+                return (True, nfs_context)
+        return (False, None)
+
     def set_default_selinux_context(self, path, changed):
         if not HAVE_SELINUX or not self.selinux_enabled():
             return changed
@@ -363,12 +391,16 @@ class AnsibleModule(object):
         # Iterate over the current context instead of the
         # argument context, which may have selevel.
 
-        for i in range(len(cur_context)):
-            if len(context) > i:
-                if context[i] is not None and context[i] != cur_context[i]:
-                    new_context[i] = context[i]
-                if context[i] is None:
-                    new_context[i] = cur_context[i]
+        (is_nfs, nfs_context) = self.is_nfs_path(path)
+        if is_nfs:
+            new_context = nfs_context
+        else:
+            for i in range(len(cur_context)):
+                if len(context) > i:
+                    if context[i] is not None and context[i] != cur_context[i]:
+                        new_context[i] = context[i]
+                    if context[i] is None:
+                        new_context[i] = cur_context[i]
 
         if cur_context != new_context:
             try:
@@ -797,8 +829,8 @@ class AnsibleModule(object):
         module = 'ansible-%s' % os.path.basename(__file__)
         msg = ''
         for arg in log_args:
-            if isinstance(log_args[arg], unicode):
-                msg = msg + arg + '=' + log_args[arg] + ' '
+            if isinstance(log_args[arg], basestring):
+                msg = msg + arg + '=' + log_args[arg].decode('utf-8') + ' '
             else:
                 msg = msg + arg + '=' + str(log_args[arg]) + ' '
         if msg:
@@ -808,7 +840,7 @@ class AnsibleModule(object):
 
         # 6655 - allow for accented characters
         try:
-            msg = unicode(msg).encode('utf8')
+            msg = msg.encode('utf8')
         except UnicodeDecodeError, e:
             pass
 
@@ -1052,7 +1084,7 @@ class AnsibleModule(object):
         elif isinstance(args, basestring) and use_unsafe_shell:
             shell = True
         elif isinstance(args, basestring):
-            args = shlex.split(args)
+            args = shlex.split(args.encode('utf-8'))
         else:
             msg = "Argument 'args' to run_command must be list or string"
             self.fail_json(rc=257, cmd=args, msg=msg)

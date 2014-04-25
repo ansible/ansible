@@ -37,8 +37,8 @@ options:
         description:
           - C(started)/C(stopped) are idempotent actions that will not run
             commands unless necessary.  C(restarted) will always bounce the
-            service.  C(reloaded) will always reload. At least one of state
-            and enabled are required.
+            service.  C(reloaded) will always reload. B(At least one of state
+            and enabled are required.)
     sleep:
         required: false
         version_added: "1.3"
@@ -59,8 +59,8 @@ options:
         required: false
         choices: [ "yes", "no" ]
         description:
-        - Whether the service should start on boot. At least one of state and
-          enabled are required.
+        - Whether the service should start on boot. B(At least one of state and
+          enabled are required.)
 
     runlevel:
         required: false
@@ -565,7 +565,7 @@ class LinuxService(Service):
     def service_enable(self):
 
         if self.enable_cmd is None:
-            self.module.fail_json(msg='unknown init system, cannot enable service')
+            self.module.fail_json(msg='cannot detect command to enable service %s, typo or init system potentially unknown' % self.name)
 
         # FIXME: we use chkconfig or systemctl
         # to decide whether to run the command here but need something

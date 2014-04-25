@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+# This is a DOCUMENTATION stub specific to this module, it extends
+# a documentation fragment located in ansible.utils.module_docs_fragments
 DOCUMENTATION = '''
 ---
 module: rax
@@ -23,52 +25,6 @@ description:
        waits for it to be 'running'.
 version_added: "1.2"
 options:
-  api_key:
-    description:
-      - Rackspace API key (overrides I(credentials))
-    aliases:
-      - password
-  auth_endpoint:
-    description:
-      - The URI of the authentication service
-    default: https://identity.api.rackspacecloud.com/v2.0/
-    version_added: 1.5
-  credentials:
-    description:
-      - File to find the Rackspace credentials in (ignored if I(api_key) and
-        I(username) are provided)
-    default: null
-    aliases:
-      - creds_file
-  env:
-    description:
-      - Environment as configured in ~/.pyrax.cfg,
-        see U(https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#pyrax-configuration)
-    version_added: 1.5
-  identity_type:
-    description:
-      - Authentication machanism to use, such as rackspace or keystone
-    default: rackspace
-    version_added: 1.5
-  region:
-    description:
-      - Region to create an instance in
-    default: DFW
-  tenant_id:
-    description:
-      - The tenant ID used for authentication
-    version_added: 1.5
-  tenant_name:
-    description:
-      - The tenant name used for authentication
-    version_added: 1.5
-  username:
-    description:
-      - Rackspace username (overrides I(credentials))
-  verify_ssl:
-    description:
-      - Whether or not to require SSL validation of API endpoints
-    version_added: 1.5
   auto_increment:
     description:
       - Whether or not to increment a single number with the name of the
@@ -89,7 +45,9 @@ options:
   disk_config:
     description:
       - Disk partitioning strategy
-    choices: ['auto', 'manual']
+    choices:
+      - auto
+      - manual
     version_added: '1.4'
     default: auto
   exact_count:
@@ -135,7 +93,8 @@ options:
     description:
       - key pair to use on the instance
     default: null
-    aliases: ['keypair']
+    aliases:
+      - keypair
   meta:
     description:
       - A hash of metadata to associate with the instance
@@ -149,31 +108,30 @@ options:
       - The network to attach to the instances. If specified, you must include
         ALL networks including the public and private interfaces. Can be C(id)
         or C(label).
-    default: ['public', 'private']
+    default:
+      - public
+      - private
     version_added: 1.4
   state:
     description:
       - Indicate desired state of the resource
-    choices: ['present', 'absent']
+    choices:
+      - present
+      - absent
     default: present
   wait:
     description:
       - wait for the instance to be in state 'running' before returning
     default: "no"
-    choices: [ "yes", "no" ]
+    choices:
+      - "yes"
+      - "no"
   wait_timeout:
     description:
       - how long before wait gives up, in seconds
     default: 300
-requirements: [ "pyrax" ]
 author: Jesse Keating, Matt Martz
-notes:
-  - The following environment variables can be used, C(RAX_USERNAME),
-    C(RAX_API_KEY), C(RAX_CREDS_FILE), C(RAX_CREDENTIALS), C(RAX_REGION).
-  - C(RAX_CREDENTIALS) and C(RAX_CREDS_FILE) points to a credentials file
-    appropriate for pyrax. See U(https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating)
-  - C(RAX_USERNAME) and C(RAX_API_KEY) obviate the use of a credentials file
-  - C(RAX_REGION) defines a Rackspace Public Cloud region (DFW, ORD, LON, ...)
+extends_documentation_fragment: rackspace.openstack
 '''
 
 EXAMPLES = '''
@@ -217,18 +175,18 @@ EXAMPLES = '''
       register: rax
 '''
 
-import sys
-import time
 import os
 import re
+import time
+
 from uuid import UUID
 from types import NoneType
 
 try:
     import pyrax
+    HAS_PYRAX = True
 except ImportError:
-    print("failed=True msg='pyrax is required for this module'")
-    sys.exit(1)
+    HAS_PYRAX = False
 
 ACTIVE_STATUSES = ('ACTIVE', 'BUILD', 'HARD_REBOOT', 'MIGRATING', 'PASSWORD',
                    'REBOOT', 'REBUILD', 'RESCUE', 'RESIZE', 'REVERT_RESIZE')
@@ -421,7 +379,15 @@ def cloudservers(module, state, name, flavor, image, meta, key_name, files,
                  auto_increment, extra_create_args):
     cs = pyrax.cloudservers
     cnw = pyrax.cloud_networks
+    if not cnw:
+        module.fail_json(msg='Failed to instantiate client. This '
+                             'typically indicates an invalid region or an '
+                             'incorrectly capitalized region name.')
+
     servers = []
+
+    for key, value in meta.items():
+        meta[key] = repr(value)
 
     # Add the group meta key
     if group and 'group' not in meta:
@@ -683,6 +649,9 @@ def main():
         required_together=rax_required_together(),
     )
 
+    if not HAS_PYRAX:
+        module.fail_json(msg='pyrax is required for this module')
+
     service = module.params.get('service')
 
     if service is not None:
@@ -714,11 +683,6 @@ def main():
 
     setup_rax_module(module, pyrax)
 
-    if pyrax.cloudservers is None:
-        module.fail_json(msg='Failed to instantiate client. This '
-                             'typically indicates an invalid region or an '
-                             'incorrectly capitalized region name.')
-
     if extra_client_args:
         pyrax.cloudservers = pyrax.connect_to_cloudservers(
             region=pyrax.cloudservers.client.region_name,
@@ -726,6 +690,11 @@ def main():
         client = pyrax.cloudservers.client
         if 'bypass_url' in extra_client_args:
             client.management_url = extra_client_args['bypass_url']
+
+    if pyrax.cloudservers is None:
+        module.fail_json(msg='Failed to instantiate client. This '
+                             'typically indicates an invalid region or an '
+                             'incorrectly capitalized region name.')
 
     cloudservers(module, state, name, flavor, image, meta, key_name, files,
                  wait, wait_timeout, disk_config, count, group,

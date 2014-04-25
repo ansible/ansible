@@ -198,14 +198,12 @@ class ActionModule(object):
         if rsync_path:
             options['rsync_path'] = '"' + rsync_path + '"'
 
-        module_items = ' '.join(['%s=%s' % (k, v) for (k,
-                v) in options.items()])
-
+        module_args = ""
         if self.runner.noop_on_check(inject):
-            module_items += " CHECKMODE=True"
+            module_args = "CHECKMODE=True"
 
         # run the module and store the result
-        result = self.runner._execute_module(conn, tmp, 'synchronize', module_items, inject=inject)
+        result = self.runner._execute_module(conn, tmp, 'synchronize', module_args, complex_args=options, inject=inject)
 
         # reset the sudo property                 
         self.runner.sudo = self.original_sudo

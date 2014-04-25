@@ -27,7 +27,7 @@ description:
 version_added: "0.7"
 author: Dane Summers, njharman@gmail.com
 notes:
-   - Requres I(svn) to be installed on the client.
+   - Requires I(svn) to be installed on the client.
 requirements: []
 options:
   repo:
@@ -73,7 +73,7 @@ options:
   export:
     required: false
     default: False
-    version_added: "1.5"
+    version_added: "1.6"
     description:
       - If True, do export instead of checkout/update.
 '''

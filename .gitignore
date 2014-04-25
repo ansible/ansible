@@ -44,3 +44,8 @@ credentials.yml
 results.xml
 coverage.xml
 /test/units/cover-html
+# Development
+/test/develop
+venv
+Vagrantfile
+.vagrant

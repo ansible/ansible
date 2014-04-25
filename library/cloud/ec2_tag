@@ -33,7 +33,7 @@ options:
       - Whether the tags should be present or absent on the resource. Use list to interrogate the tags of an instance.
     required: false
     default: present
-    choices: ['present', 'absent']
+    choices: ['present', 'absent', 'list']
     aliases: []
   region:
     description:
@@ -41,49 +41,9 @@ options:
     required: false
     default: null
     aliases: ['aws_region', 'ec2_region']
-  aws_secret_key:
-    description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
-    required: false
-    default: None
-    aliases: ['ec2_secret_key', 'secret_key' ]
-  aws_access_key:
-    description:
-      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
-    required: false
-    default: None
-    aliases: ['ec2_access_key', 'access_key' ]
-  ec2_url:
-    description:
-      - Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints).  Must be specified if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
-    required: false
-    default: null
-    aliases: []
-  validate_certs:
-    description:
-      - When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
-    required: false
-    default: "yes"
-    choices: ["yes", "no"]
-    aliases: []
-    version_added: "1.5"
-  profile:
-    description:
-      - uses a boto profile. Only works with boto >= 2.24.0
-    required: false
-    default: null
-    aliases: []
-    version_added: "1.6"
-  security_token:
-    description:
-      - security token to authenticate against AWS
-    required: false
-    default: null
-    aliases: []
-    version_added: "1.6"
 
-requirements: [ "boto" ]
 author: Lester Wade
+extends_documentation_fragment: aws
 '''
 
 EXAMPLES = '''

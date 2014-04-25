@@ -29,7 +29,11 @@ from play import Play
 import StringIO
 import pipes
 
+# the setup cache stores all variables about a host
+# gathered during the setup step, while the vars cache
+# holds all other variables about a host
 SETUP_CACHE = collections.defaultdict(dict)
+VARS_CACHE  = collections.defaultdict(dict)
 
 class PlayBook(object):
     '''
@@ -98,6 +102,7 @@ class PlayBook(object):
         """
 
         self.SETUP_CACHE = SETUP_CACHE
+        self.VARS_CACHE  = VARS_CACHE
 
         arguments = []
         if playbook is None:
@@ -170,6 +175,7 @@ class PlayBook(object):
         self.filename = playbook
         (self.playbook, self.play_basedirs) = self._load_playbook_from_file(playbook, vars)
         ansible.callbacks.load_callback_plugins()
+        ansible.callbacks.set_playbook(self.callbacks, self)
 
     # *****************************************************
 
@@ -304,7 +310,7 @@ class PlayBook(object):
         # since these likely got killed by async_wrapper
         for host in poller.hosts_to_poll:
             reason = { 'failed' : 1, 'rc' : None, 'msg' : 'timed out' }
-            self.runner_callbacks.on_async_failed(host, reason, poller.runner.setup_cache[host]['ansible_job_id'])
+            self.runner_callbacks.on_async_failed(host, reason, poller.runner.vars_cache[host]['ansible_job_id'])
             results['contacted'][host] = reason
 
         return results
@@ -339,6 +345,7 @@ class PlayBook(object):
             default_vars=task.default_vars,
             private_key_file=self.private_key_file,
             setup_cache=self.SETUP_CACHE,
+            vars_cache=self.VARS_CACHE,
             basedir=task.play.basedir,
             conditional=task.when,
             callbacks=self.runner_callbacks,
@@ -375,7 +382,7 @@ class PlayBook(object):
                 results = self._async_poll(poller, task.async_seconds, task.async_poll_interval)
             else:
                 for (host, res) in results.get('contacted', {}).iteritems():
-                    self.runner_callbacks.on_async_ok(host, res, poller.runner.setup_cache[host]['ansible_job_id'])
+                    self.runner_callbacks.on_async_ok(host, res, poller.runner.vars_cache[host]['ansible_job_id'])
 
         contacted = results.get('contacted',{})
         dark      = results.get('dark', {})
@@ -434,8 +441,6 @@ class PlayBook(object):
             else:
                 facts = result.get('ansible_facts', {})
                 self.SETUP_CACHE[host].update(facts)
-            # extra vars need to always trump - so update  again following the facts
-            self.SETUP_CACHE[host].update(self.extra_vars)
             if task.register:
                 if 'stdout' in result and 'stdout_lines' not in result:
                     result['stdout_lines'] = result['stdout'].splitlines()
@@ -512,6 +517,7 @@ class PlayBook(object):
             remote_port=play.remote_port,
             private_key_file=self.private_key_file,
             setup_cache=self.SETUP_CACHE,
+            vars_cache=self.VARS_CACHE,
             callbacks=self.runner_callbacks,
             sudo=play.sudo,
             sudo_user=play.sudo_user,

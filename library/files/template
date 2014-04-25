@@ -47,10 +47,6 @@ options:
     required: false
     default: ""
     version_added: "1.2"
-  others:
-    description:
-      - all arguments accepted by the M(file) module also work here, as well as the M(copy) module (except the the 'content' parameter).
-    required: false
 notes:
   - "Since Ansible version 0.9, templates are loaded with C(trim_blocks=True)."
 

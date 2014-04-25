@@ -34,6 +34,7 @@ notes:
     - A number of questions have to be answered (depending on the package).
       Use 'debconf-show <package>' on any Debian or derivative with the package
       installed to see questions/settings available.
+requirements: [ debconf, debconf-utils ]
 options:
   name:
     description:
@@ -72,10 +73,10 @@ author: Brian Coca
 
 EXAMPLES = '''
 # Set default locale to fr_FR.UTF-8
-debconf: name=locales question='locales/default_environment_locale' value=fr_FR.UTF-8
+debconf: name=locales question='locales/default_environment_locale' value=fr_FR.UTF-8 vtype='select'
 
 # set to generate locales:
-debconf: name=locales question='locales/locales_to_be_generated'  value='en_US.UTF-8 UTF-8, fr_FR.UTF-8 UTF-8'
+debconf: name=locales question='locales/locales_to_be_generated'  value='en_US.UTF-8 UTF-8, fr_FR.UTF-8 UTF-8' vtype='multiselect'
 
 # Accept oracle license
 debconf: name='oracle-java7-installer' question='shared/accepted-oracle-license-v1-1' value='true' vtype='select'
@@ -107,7 +108,7 @@ def set_selection(module, pkg, question, vtype, value, unseen):
     data = ' '.join([ question, vtype, value ])
 
     setsel = module.get_bin_path('debconf-set-selections', True)
-    cmd = ["echo '%s %s' |" % (pipes.quote(pkg), pipes.quote(data)), setsel]
+    cmd = ["echo %s %s |" % (pipes.quote(pkg), pipes.quote(data)), setsel]
     if unseen:
         cmd.append('-u')
 
@@ -127,10 +128,10 @@ def main():
         supports_check_mode=True,
     )
 
-    #TODO: enable passing array of optionas and/or debconf file from get-selections dump
+    #TODO: enable passing array of options and/or debconf file from get-selections dump
     pkg      = module.params["name"]
     question = module.params["question"]
-    vtype     = module.params["vtype"]
+    vtype    = module.params["vtype"]
     value    = module.params["value"]
     unseen   = module.params["unseen"]
 
@@ -142,7 +143,7 @@ def main():
 
     if question is not None:
         if vtype is None or value is None:
-            module.fail_json(msg="when supliying a question you must supply a valide vtype and value")
+            module.fail_json(msg="when supplying a question you must supply a valid vtype and value")
 
         if not question in prev or prev[question] != value:
             changed = True

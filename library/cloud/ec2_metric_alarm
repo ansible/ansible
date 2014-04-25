@@ -21,7 +21,6 @@ description:
  - Can create or delete AWS metric alarms
  - Metrics you wish to alarm on must already exist
 version_added: "1.6"
-requirements: [ "boto" ]
 author: Zacharie Eakin
 options:
     state:
@@ -91,6 +90,7 @@ options:
         description:
           - A list of the names of action(s) to take when the alarm is in the 'ok' status
         required: false
+extends_documentation_fragment: aws
 """
 
 EXAMPLES = '''

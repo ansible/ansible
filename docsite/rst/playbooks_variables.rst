@@ -208,10 +208,68 @@ To get the symmetric difference of 2 lists (items exclusive to each list)::
 
     {{ list1 | symmetric_difference(list2) }}
 
+.. _version_comparison_filters:
+
+Version Comparison Filters
+--------------------------
+
+.. versionadded:: 1.6
+
+To compare a version number, such as checking if the ``ansible_distribution_version``
+version is greater than or equal to '12.04', you can use the ``version_compare`` filter::
+
+The ``version_compare`` filter can also be used to evaluate the ``ansible_distribution_version``::
+
+    {{ ansible_distribution_version | version_compare('12.04', '>=') }}
+
+If ``ansible_distribution_version`` is greater than or equal to 12, this filter will return True, otherwise
+it will return False.
+
+The ``version_compare`` filter accepts the following operators::
+
+    <, lt, <=, le, >, gt, >=, ge, ==, =, eq, !=, <>, ne
+
+This filter also accepts a 3rd parameter, ``strict`` which defines if strict version parsing should
+be used.  The default is ``False``, and if set as ``True`` will use more strict version parsing::
+
+    {{ sample_version_var | version_compare('1.0', operator='lt', strict=True) }}
+
+.. _random_filter
+
+Random Number Filter
+--------------------------
+
+.. versionadded:: 1.6
+
+This filter can be used similar to the default jinja2 random filter (returning a random item from a sequence of
+items), but can also generate a random number based on a range.
+
+To get a random item from a list::
+
+    {{ ['a','b','c']|random }} => 'c'
+
+To get a random number from 0 to supplied end::
+
+    {{ 59 |random}} * * * * root /script/from/cron
+
+Get a random number from 0 to 100 but in steps of 10::
+
+    {{ 100 |random(step=10) }}  => 70
+
+Get a random number from 1 to 100 but in steps of 10::
+
+    {{ 100 |random(1, 10) }}    => 31
+    {{ 100 |random(start=1, step=10) }}    => 51
+
+
 .. _other_useful_filters:
 
 Other Useful Filters
 --------------------
+
+To concatenate a list into a string::
+   
+   {{ list | join(" ") }}
 
 To get the last name of a file path, like 'foo.txt' out of '/etc/asdf/foo.txt'::
 
@@ -845,7 +903,10 @@ If multiple variables of the same name are defined in different places, they win
     * -e variables always win
     * then comes "most everything else"
     * then comes variables defined in inventory
+    * then comes facts discovered about a system
     * then "role defaults", which are the most "defaulty" and lose in priority to everything.
+
+.. note:: In versions prior to 1.5.4, facts discovered about a system were in the "most everything else" category above.
 
 That seems a little theoretical.  Let's show some examples and where you would choose to put what based on the kind of 
 control you might want over values.

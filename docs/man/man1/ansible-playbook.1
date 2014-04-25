@@ -91,6 +91,66 @@ Prompt for the password to use for playbook plays that request sudo access, if a
 Desired sudo user (default=root)\&.
 .RE
 .PP
+\fB\-S\fR, \fB\-\-su\fR
+.RS 4
+run operations with su\&.
+.RE
+.PP
+\fB\-\-ask\-su\-pass\fR
+.RS 4
+Prompt for the password to use for playbook plays that request su access, if any\&.
+.RE
+.PP
+\fB\-R\fR, \fISU_USER\fR, \fB\-\-sudo\-user=\fR\fISU_USER\fR
+.RS 4
+Desired su user (default=root)\&.
+.RE
+.PP
+\fB\-\-ask\-vault\-pass\fR
+.RS 4
+Ask for vault password\&.
+.RE
+.PP
+\fB\-\-vault\-password\-file=\fR\fIVAULT_PASSWORD_FILE\fR
+.RS 4
+Vault password file\&.
+.RE
+.PP
+\fB\-\-force\-handlers\fR
+.RS 4
+Run play handlers even if a task fails\&.
+.RE
+.PP
+\fB\-\-list\-hosts\fR
+.RS 4
+Outputs a list of matching hosts without executing anything else\&.
+.RE
+.PP
+\fB\-\-list\-tasks\fR
+.RS 4
+List all tasks that would be executed\&.
+.RE
+.PP
+\fB\-\-start\-at\-task=\fR\fISTART_AT\fR
+.RS 4
+Start the playbook at the task matching this name\&.
+.RE
+.PP
+\fB\-\-step\fR
+.RS 4
+one-step-at-a-time: confirm each task before running\&.
+.RE
+.PP
+\fB\-\-syntax\-check\fR
+.RS 4
+Perform a syntax check on the playbook, but do not execute it\&.
+.RE
+.PP
+\fB\-\-private\-key\fR
+.RS 4
+Use this file to authenticate the connection\&.
+.RE
+.PP
 \fB\-t\fR, \fITAGS\fR, \fB\fI\-\-tags=\fR\fR\fB\*(AqTAGS\fR
 .RS 4
 Only run plays and tasks tagged with these values\&.
@@ -147,6 +207,13 @@ is mostly useful for crontab or kickstarts\&.
 .RS 4
 Further limits the selected host/group patterns\&.
 .RE
+
+.PP
+\fB\-\-version\fR
+.RS 4
+Show program's version number and exit\&.
+.RE
+
 .SH "ENVIRONMENT"
 .sp
 The following environment variables may be specified\&.

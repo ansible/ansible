@@ -28,11 +28,11 @@ It is expected that many Ansible users with a reasonable amount of physical hard
 
 While primarily used to kickoff OS installations and manage DHCP and DNS, Cobbler has a generic
 layer that allows it to represent data for multiple configuration management systems (even at the same time), and has
-been referred to as a 'lightweight CMDB' by some admins.   This particular script will communicate with Cobbler
-using Cobbler's XMLRPC API.
+been referred to as a 'lightweight CMDB' by some admins.
 
 To tie Ansible's inventory to Cobbler (optional), copy `this script <https://raw.github.com/ansible/ansible/devel/plugins/inventory/cobbler.py>`_ to /etc/ansible and `chmod +x` the file.  cobblerd will now need
 to be running when you are using Ansible and you'll need to use Ansible's  ``-i`` command line option (e.g. ``-i /etc/ansible/cobbler.py``).
+This particular script will communicate with Cobbler using Cobbler's XMLRPC API.
 
 First test the script by running ``/etc/ansible/cobbler.py`` directly.   You should see some JSON data output, but it may not have anything in it just yet.
 
@@ -108,6 +108,9 @@ At their heart, inventory files are simply a mapping from some name to a destina
 If you are running Ansible from within EC2, internal DNS names and IP addresses may make more sense than public DNS names. In this case, you can modify the ``destination_variable`` in ``ec2.ini`` to be the private DNS name of an instance. This is particularly important when running Ansible within a private subnet inside a VPC, where the only way to access an instance is via its private IP address. For VPC instances, `vpc_destination_variable` in ``ec2.ini`` provides a means of using which ever `boto.ec2.instance variable <http://docs.pythonboto.org/en/latest/ref/ec2.html#module-boto.ec2.instance>`_ makes the most sense for your use case.
 
 The EC2 external inventory provides mappings to instances from several groups:
+
+Global
+  All instances are in group ``ec2``.
 
 Instance ID
   These are groups of one since instance IDs are unique.

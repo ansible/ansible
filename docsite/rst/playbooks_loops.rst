@@ -109,6 +109,8 @@ be used like this::
         - copy: src={{ item }} dest=/etc/fooapp/ owner=root mode=600
           with_fileglob:
             - /playbooks/files/fooapp/*
+            
+.. note:: When using a relative path with ``with_fileglob`` in a role, Ansible resolves the path relative to the `roles/<rolename>/files` directory.
 
 Looping over Parallel Sets of Data
 ``````````````````````````````````

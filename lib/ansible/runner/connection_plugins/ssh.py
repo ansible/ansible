@@ -59,7 +59,8 @@ class Connection(object):
         self.common_args = []
         extra_args = C.ANSIBLE_SSH_ARGS
         if extra_args is not None:
-            self.common_args += shlex.split(extra_args)
+            # make sure there is no empty string added as this can produce weird errors
+            self.common_args += [x.strip() for x in shlex.split(extra_args) if x.strip()]
         else:
             self.common_args += ["-o", "ControlMaster=auto",
                                  "-o", "ControlPersist=60s",
@@ -151,6 +152,7 @@ class Connection(object):
                 stdin.close()
             except:
                 raise errors.AnsibleError('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
+        # Read stdout/stderr from process
         while True:
             rfd, wfd, efd = select.select(rpipes, [], rpipes, 1)
 
@@ -161,7 +163,7 @@ class Connection(object):
                 if stdout.endswith("%s\r\n%s" % (incorrect_password, prompt)):
                     raise errors.AnsibleError('Incorrect sudo password')
 
-            if self.runner.su and su and self.runner.sudo_pass:
+            if self.runner.su and su and self.runner.su_pass:
                 incorrect_password = gettext.dgettext(
                     "su", "Sorry")
                 if stdout.endswith("%s\r\n%s" % (incorrect_password, prompt)):
@@ -177,17 +179,22 @@ class Connection(object):
                 stderr += dat
                 if dat == '':
                     rpipes.remove(p.stderr)
-            # only break out if we've emptied the pipes, or there is nothing to
-            # read from and the process has finished.
+            # only break out if no pipes are left to read or
+            # the pipes are completely read and
+            # the process is terminated
             if (not rpipes or not rfd) and p.poll() is not None:
                 break
-            # Calling wait while there are still pipes to read can cause a lock
+            # No pipes are left to read but process is not yet terminated
+            # Only then it is safe to wait for the process to be finished
+            # NOTE: Actually p.poll() is always None here if rpipes is empty
             elif not rpipes and p.poll() == None:
                 p.wait()
-                # the process has finished and the pipes are empty,
-                # if we loop and do the select it waits all the timeout
+                # The process is terminated. Since no pipes to read from are
+                # left, there is no need to call select() again.
                 break
-        stdin.close() # close stdin after we read from stdout (see also issue #848)
+        # close stdin after process is terminated and stdout/stderr are read
+        # completely (see also issue #848)
+        stdin.close()
         return (p.returncode, stdout, stderr)
 
     def not_in_host_file(self, host):
@@ -258,6 +265,7 @@ class Connection(object):
             sudocmd, prompt, success_key = utils.make_su_cmd(su_user, executable, cmd)
             ssh_cmd.append(sudocmd)
         elif not self.runner.sudo or not sudoable:
+            prompt = None
             if executable:
                 ssh_cmd.append(executable + ' -c ' + pipes.quote(cmd))
             else:
@@ -327,7 +335,7 @@ class Connection(object):
                 elif su:
                     stdin.write(self.runner.su_pass + '\n')
 
-        (returncode, stdout, stderr) = self._communicate(p, stdin, in_data, su=su, sudoable=sudoable)
+        (returncode, stdout, stderr) = self._communicate(p, stdin, in_data, su=su, sudoable=sudoable, prompt=prompt)
 
         if C.HOST_KEY_CHECKING and not_in_host_file:
             # lock around the initial SSH connectivity so the user prompt about whether to add 
@@ -342,8 +350,8 @@ class Connection(object):
                 raise errors.AnsibleError('Using a SSH password instead of a key is not possible because Host Key checking is enabled and sshpass does not support this.  Please add this host\'s fingerprint to your known_hosts file to manage this host.')
 
         if p.returncode != 0 and controlpersisterror:
-            raise errors.AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" (or ansible_ssh_args in the config file) before running again')
-        if p.returncode == 255 and in_data:
+            raise errors.AnsibleError('using -c ssh on certain older ssh versions may not support ControlPersist, set ANSIBLE_SSH_ARGS="" (or ssh_args in [ssh_connection] section of the config file) before running again')
+        if p.returncode == 255 and (in_data or self.runner.module_name == 'raw'):
             raise errors.AnsibleError('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
 
         return (p.returncode, '', stdout, stderr)
