@@ -41,7 +41,7 @@ If you do, note that variables will come from all of the groups they are a membe
 If you are using paramiko and have hosts that run on non-standard SSH ports,
 you can put the port number after the hostname with a colon. Ports listed in your SSH config file won't be used,
 so it is important that you set them if things are not running on the default port.
-(If you're using OpenSSH however, any port numbers specified here will take precedence over those listed in the SSH config file)::
+If you're using OpenSSH, any port numbers specified here will take precedence over those listed in the SSH config file::
 
     badwolf.example.com:5309
 
