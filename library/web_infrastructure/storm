@@ -208,7 +208,7 @@ class StormManager:
       self.module.fail_json(msg="failed to kill topology %s, %s" % (self.topology, err))
 
     if self.wait:
-      self.wait_for('killed', true)
+      self.wait_for('KILLED', True)
 
   def rebalance(self):
     args = [self.topology]
@@ -227,9 +227,9 @@ class StormManager:
 
   def wait_for(self, state, absent=False):
     start = datetime.datetime.now()
-    end = start + datetime.timedelta(seconds=timeout)
+    end = start + datetime.timedelta(seconds=self.timeout)
     while datetime.datetime.now() < end:
-      topologies = get_states()
+      topologies = self.get_states()
       if self.in_state(state, absent):
         break;
       time.sleep(1)
@@ -306,10 +306,11 @@ def main():
             changed = True
 
     if state == 'absent':
-        states = storm.get_states()
-        if storm.topology in states:
-            changed = True
-            storm.kill()
+        if storm.is_running():
+            states = storm.get_states()
+            if storm.topology in states:
+                changed = True
+                storm.kill()
 
     if state == 'rebalanced':
         states = storm.get_states()
