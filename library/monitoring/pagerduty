@@ -13,11 +13,12 @@ requirements:
 options:
     state:
         description:
-            - started will create a new maintenance window using
+            - 'started' will create a new maintenance window using
               the service and desc fields. 'stopped' will end all
-              maintenance windows that match the desc and service.
+              maintenance windows that match 'desc' and 'service'.
               Use 'ongoing' to retreive a JSON list of ongoing
-              maintenance windows.
+              maintenance windows. 'running' has been deprecated
+              and aliases to 'started.'
         required: true
         default: null
         choices: [ "started", "stopped", ongoing" ]
@@ -272,7 +273,6 @@ def delete(name, user, service, desc, passwd=None, token=None):
     changed = False
     success = False
     maint_ids = maint_lookup(name, user, service, desc, passwd, token)
-    # try:
     if len(maint_ids) > 0:
         for window in maint_ids:
             url = "https://%s.%s/maintenance_windows/%s" \
@@ -302,6 +302,7 @@ def main():
         argument_spec=dict(
             state=dict(required=True, type='str', choices=[
                 'started',
+                'running',
                 'ongoing',
                 'stopped']),
             name=dict(required=True, type='str'),
@@ -328,6 +329,10 @@ def main():
     minutes = module.params['minutes']
     token = module.params['token']
     desc = module.params['desc']
+
+    # support for deprecated 'running' status
+    if state == "running":
+        state = "started"
 
     if not token and not passwd:
         module.fail_json(msg="neither passwd nor token specified")
