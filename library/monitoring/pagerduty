@@ -21,7 +21,7 @@ options:
               and aliases to 'started.'
         required: true
         default: null
-        choices: [ "started", "stopped", ongoing" ]
+        choices: [ "started", "stopped", "ongoing" ]
         aliases: []
     name:
         description:
