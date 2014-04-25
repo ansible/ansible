@@ -163,7 +163,7 @@ def create_autoscaling_group(connection, module):
         try:
             connection.create_auto_scaling_group(ag)
             as_groups = connection.get_all_groups(names=[group_name])
-            module.exit_json(changed=True, group=get_info(as_groups[0]))
+            module.exit_json(changed=True, **get_info(as_groups[0]))
         except BotoServerError, e:
             module.fail_json(msg=str(e))
     else:
@@ -183,7 +183,7 @@ def create_autoscaling_group(connection, module):
         try:
             if changed:
                 as_group.update()
-            module.exit_json(changed=changed, group=get_info(as_group))
+            module.exit_json(changed=changed, **get_info(as_group))
         except BotoServerError, e:
             module.fail_json(msg=str(e))
 
