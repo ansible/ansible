@@ -74,6 +74,37 @@ EXAMPLES = '''
           policy: "{{ lookup('file', 'access_s3_file.json') }}"
         - name: policy_name2
           policy: "{{ lookup('file', 'access_policy2_file.json') }}"
+
+- ec2_iam_role:
+    state: present
+    name: some-role
+    instance_profile_name: some-role-permissions
+    trust_policy:
+      Version: "2012-10-17"
+      Statement:
+        - Effect: "Allow"
+          Principal:
+            Service: "ec2.amazonaws.com"
+          Action: "sts:AssumeRole"
+    access_policies:
+        - name: s3
+          policy:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "s3:*"
+                Resource":
+                  - "*"
+        - name: ses
+          policy:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "ses:*"
+                Resource":
+                  - "*"
 '''
 
 import collections
@@ -166,6 +197,12 @@ def create_role(connection, module):
     if not trust_policy:
         module.fail_json(msg='trust_policy parameter is required for creating roles. %s' % module.params)
 
+    if isinstance(trust_policy, str):
+        try:
+            trust_policy = json.loads(trust_policy)
+        except:
+            module.fail_json(msg='trust_policy must be valid JSON.')
+
     access_policies = module.params['access_policies']
     if not access_policies:
         module.fail_json(msg='access_policies parameter is required for creating roles.')
@@ -199,6 +236,11 @@ def create_role(connection, module):
 
         # Upsert the policies that are listed
         for access_policy in access_policies:
+            if isinstance(access_policy, str):
+                try:
+                    access_policy = json.loads(access_policy)
+                except:
+                    module.fail_json(msg='access_policies must be valid JSON.')
             access_policy_name = access_policy['name']
             new_role_policy_names.append(access_policy_name)
 
