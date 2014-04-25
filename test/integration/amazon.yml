@@ -7,7 +7,7 @@
     #- { role: test_ec2_vol, tags: test_ec2_vol }
     #- { role: test_ec2_tag, tags: test_ec2_tag }
     #- { role: test_ec2_facts, tags: test_ec2_facts }
-    #- { role: test_ec2_elb_lb, tags: test_ec2_elb_lb }
+    - { role: test_ec2_elb_lb, tags: test_ec2_elb_lb }
     #- { role: test_ec2_eip, tags: test_ec2_eip }
     #- { role: test_ec2_elb, tags: test_ec2_elb }
     #- { role: test_ec2_ami, tags: test_ec2_ami }

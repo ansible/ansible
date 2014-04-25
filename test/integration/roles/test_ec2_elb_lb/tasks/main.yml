@@ -41,11 +41,9 @@
       - protocol: http
         load_balancer_port: 80
         instance_port: 80
-      - protocol: https
-        load_balancer_port: 443
-        instance_protocol: http
-        instance_port: 80
-        ssl_certificate_id: "{{ elb_lb_cert }}"
+      - protocol: http
+        load_balancer_port: 8080
+        instance_port: 8080
     health_check:
         ping_protocol: http
         ping_port: 80
@@ -68,15 +66,9 @@
       - 'info.elb.health_check.target == "HTTP:80/index.html"'
       - 'info.elb.health_check.timeout == 5'
       - 'info.elb.health_check.unhealthy_threshold == 2'
-      - 'info.elb.listeners[0][0] == 80'
-      - 'info.elb.listeners[0][1] == 80'
-      - 'info.elb.listeners[0][2] == "HTTP"'
-      - 'info.elb.listeners[0][3] == "HTTP"'
-      - 'info.elb.listeners[1][0] == 443'
-      - 'info.elb.listeners[1][1] == 80'
-      - 'info.elb.listeners[1][2] == "HTTPS"'
-      - 'info.elb.listeners[1][3] == "HTTP"'
-      - 'info.elb.listeners[1][4] == "{{ elb_lb_cert }}"'
+      - '[80, 80, "HTTP", "HTTP"] in info.elb.listeners'
+      - '[8080, 8080, "HTTP", "HTTP"] in info.elb.listeners'
+
 # ============================================================
 
 # check ports, would be cool, but we are at the mercy of AWS
@@ -113,11 +105,6 @@
       - protocol: http
         load_balancer_port: 80
         instance_port: 80
-      - protocol: https
-        load_balancer_port: 443
-        instance_protocol: http
-        instance_port: 80
-        ssl_certificate_id: "{{ elb_lb_cert }}"
     purge_zones: yes
     health_check:
         ping_protocol: http
@@ -157,11 +144,6 @@
       - protocol: http
         load_balancer_port: 80
         instance_port: 80
-      - protocol: https
-        load_balancer_port: 443
-        instance_protocol: http
-        instance_port: 80
-        ssl_certificate_id: "{{ elb_lb_cert }}"
     purge_zones: yes
   register: info
 
@@ -170,9 +152,9 @@
       - '"failed" not in info'
       - 'info.changed'
       - 'info.elb.status == "ok"'
-      - 'info.elb.zones[0] == "us-east-1b"'
-      - 'info.elb.zones[1] == "us-east-1c"'
-      - 'info.elb.zones[2] == "us-east-1d"'
+      - '"us-east-1b" in info.elb.zones'
+      - '"us-east-1c" in info.elb.zones'
+      - '"us-east-1d" in info.elb.zones'
 
 
 # ============================================================
@@ -202,9 +184,8 @@
       - '"failed" not in info'
       - 'info.elb.status == "ok"'
       - 'info.changed'
-      - 'info.elb.listeners[0][0] == 80'
-      - 'info.elb.listeners[0][1] == 81'
-      - 'len(info.elb.listeners) == 1'
+      - '[80, 81, "HTTP", "HTTP"] in info.elb.listeners'
+      - 'info.elb.listeners|length == 1'
 
 
 
@@ -225,14 +206,9 @@
       - us-east-1d
     listeners:
       - protocol: http
-        load_balancer_port: 80
-        instance_port: 81
-      - protocol: https
-        load_balancer_port: 443
-        instance_protocol: http
-        instance_port: 80
-        ssl_certificate_id: "{{ elb_lb_cert }}"
-    purge_listeners: yes
+        load_balancer_port: 8081
+        instance_port: 8081
+    purge_listeners: no
   register: info
 
 - assert:
@@ -240,16 +216,9 @@
       - '"failed" not in info'
       - 'info.elb.status == "ok"'
       - 'info.changed'
-      - 'info.elb.listeners[0][0] == 80'
-      - 'info.elb.listeners[0][1] == 80'
-      - 'info.elb.listeners[0][2] == "HTTP"'
-      - 'info.elb.listeners[0][3] == "HTTP"'
-      - 'info.elb.listeners[1][0] == 443'
-      - 'info.elb.listeners[1][1] == 80'
-      - 'info.elb.listeners[1][2] == "HTTPS"'
-      - 'info.elb.listeners[1][3] == "HTTP"'
-      - 'info.elb.listeners[1][4] == "{{ elb_lb_cert }}"'
-      - 'len(info.elb.listeners) == 2'
+      - '[80, 81, "HTTP", "HTTP"] in info.elb.listeners'
+      - '[8081, 8081, "HTTP", "HTTP"] in info.elb.listeners'
+      - 'info.elb.listeners|length == 2'
 
 
 # ============================================================
@@ -419,3 +388,21 @@
     that:
        - 'result.failed'
        - '"No handler was ready to authenticate. 1 handlers were checked." in result.msg'
+
+# ============================================================
+- name: remove the test load balancer completely
+  ec2_elb_lb:
+    name: "{{ tag_prefix }}"
+    region: "{{ ec2_region }}"
+    state: absent
+    ec2_access_key: "{{ ec2_access_key }}"
+    ec2_secret_key: "{{ ec2_secret_key }}"
+  register: result
+
+- name: assert the load balancer was removed
+  assert:
+    that:
+       - 'result.changed'
+       - 'result.elb.name == "{{tag_prefix}}"'
+       - 'result.elb.status == "deleted"'
+
