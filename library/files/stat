@@ -79,6 +79,7 @@ def main():
 
     path = module.params.get('path')
     path = os.path.expanduser(path)
+    path = os.path.expandvars(path)
     follow = module.params.get('follow')
     get_md5 = module.params.get('get_md5')
 
