@@ -110,8 +110,7 @@ def _read_password(filename):
 
 def execute_create(args, options, parser):
 
-    if len(args) > 1:
-        raise errors.AnsibleError("'create' does not accept more than one filename")        
+    _validate_files(args, True)
 
     if not options.password_file:        
         password, new_password = utils.ask_vault_passwords(ask_vault_pass=True, confirm_vault=True)
@@ -126,6 +125,8 @@ def execute_create(args, options, parser):
     this_editor.create_file()
 
 def execute_decrypt(args, options, parser):
+
+    _validate_files(args, False)
 
     if not options.password_file:        
         password, new_password = utils.ask_vault_passwords(ask_vault_pass=True)
@@ -143,9 +144,8 @@ def execute_decrypt(args, options, parser):
     print "Decryption successful"
 
 def execute_edit(args, options, parser):
-
-    if len(args) > 1:
-        raise errors.AnsibleError("create does not accept more than one filename")        
+    
+    _validate_files(args, True)
 
     if not options.password_file:        
         password, new_password = utils.ask_vault_passwords(ask_vault_pass=True)
@@ -159,6 +159,8 @@ def execute_edit(args, options, parser):
         this_editor.edit_file()
 
 def execute_encrypt(args, options, parser):
+
+    _validate_files(args, False)
 
     if not options.password_file:        
         password, new_password = utils.ask_vault_passwords(ask_vault_pass=True, confirm_vault=True)
@@ -177,6 +179,8 @@ def execute_encrypt(args, options, parser):
 
 def execute_rekey(args, options, parser):
 
+    _validate_files(args, False)
+
     if not options.password_file:        
         password, __ = utils.ask_vault_passwords(ask_vault_pass=True)
     else:
@@ -190,6 +194,13 @@ def execute_rekey(args, options, parser):
         this_editor.rekey_file(new_password)
 
     print "Rekey successful"
+
+def _validate_files(args, single_file):
+    if len(args) > 1 and single_file:
+        raise errors.AnsibleError("create does not accept more than one filename")
+    
+    if len(args) == 0:
+        raise errors.AnsibleError("You must pass in a filename")
 
 #-------------------------------------------------------------------------------------
 # MAIN
