@@ -70,12 +70,6 @@ options:
     default: "yes"
     aliases: [ "thirsty" ]
   validate:
-    description:
-      - The validation command to run before copying into place.  The path to the file to
-        validate is passed in via '%s' which must be present as in the visudo example below.
-        The command is passed securely so shell features like expansion and pipes won't work.
-    required: false
-    default: ""
     version_added: "1.2"
   directory_mode:
     description:
@@ -87,6 +81,7 @@ author: Michael DeHaan
 notes:
    - The "copy" module recursively copy facility does not scale to lots (>hundreds) of files.
      For alternative, see synchronize module, which is a wrapper around rsync.
+extends_documentation_fragment: validate
 '''
 
 EXAMPLES = '''
