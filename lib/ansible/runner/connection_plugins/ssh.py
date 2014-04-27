@@ -93,8 +93,7 @@ class Connection(object):
             self.common_args += ["-o", "KbdInteractiveAuthentication=no",
                                  "-o", "PreferredAuthentications=gssapi-with-mic,gssapi-keyex,hostbased,publickey",
                                  "-o", "PasswordAuthentication=no"]
-        if self.user != pwd.getpwuid(os.geteuid())[0]:
-            self.common_args += ["-o", "User="+self.user]
+        self.common_args += ["-o", "User="+self.user]
         self.common_args += ["-o", "ConnectTimeout=%d" % self.runner.timeout]
 
         return self
