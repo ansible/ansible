@@ -93,5 +93,70 @@ This is likely something you may wish to do if using Ansible from a continuous i
 
 (The `--vault-password-file` option can also be used with the :ref:`ansible-pull` command if you wish, though this would require distributing the keys to your nodes, so understand the implications -- vault is more intended for push mode).
 
+.. _gpg_support:
 
+Enable GPG support
+``````````````````
 
+By default ansible-vault operates in a pre-shared key mode implementing the AES256 cipher to provide encryption for file contents. Using GPG over AES256 allows an encrypted file to be shared among a number of users while not needing to share passwords.
+
+The default cipher can be changed via settings in `ansible.cfg`. You MUST also specify a list of trusted public key ids to use for encryption::
+
+    [vault]
+    cipher = GPG
+    gpg_recipients = 895276B5 C5864A29
+
+To migrate files from AES256 to GPG cipher type you will first need to use `ansible-vault decrypt`, then modify your `ansible.cfg` and finally run `ansible-vault encrypt`.
+
+Compatability
+^^^^^^^^^^^^^
+
+When using `ansible-vault` with GPG you must have the following packages installed::
+
+    # RHEL 6 (via EPEL) and Fedora
+    gnupg
+    python-gnupg
+
+Alternatively the `gnupg wrapper <http://pythonhosted.org/python-gnupg/>`_ can be installed via pip::
+
+    pip install python-gnupg
+
+Using the gpg-agent
+^^^^^^^^^^^^^^^^^^^
+
+If you wish to leverage the systems gpg-agent for password caching you can uncomment the gpg_noprompt directive with `ansible.cfg`::
+
+    [vault]
+    cipher = GPG
+    gpg_recipients = 895276B5 C5864A29
+    gpg_noprompt = True
+
+When gpg_noprompt is set the builtin ansible-vault passphrase prompt is surpressed. Be aware that without a workaround this will lead to a deadlock due to upstream issues in the python-gnupg wrapper. To resolve this you can add the following to you .bashrc (or similar) to load the keys into the gpg-agent prior to ansible-vault requiring them.
+
+Firstly create an blank document which will be decrypted first::
+
+    touch /path/to/ansible-vault-gpg
+    gpg -e -a -r [YOUR KEY ID] /path/to/ansible-vault-gpg
+
+Secondly install the shell functions to ensure calls which require decryption are first checked against our test file::
+
+    function ansible-vault() {
+    gpg --batch -d /path/to/ansible-vault-gpg.asc >/dev/null 2>&1
+    rc=$?
+    if [ $rc -eq 0 ]; then
+    /path/to/bin/ansible-vault "$@"
+    else
+    echo "Failed to decrypt test file, check your system GPG and gpg-agent"
+    fi
+    }
+    function ansible-playbook() {
+    gpg --batch -d /path/to/ansible-vault-gpg.asc >/dev/null 2>&1
+    rc=$?
+    if [ $rc -eq 0 ]; then
+    /path/to/bin/ansible-playbook "$@"
+    else
+    echo "Failed to decrypt test file, check your system GPG and gpg-agent"
+    fi
+    }
+
+The end result here is that on first use your shell will correctly trigger the askpass program and unlock your private key via gpg-agent. When the subsequent request from to decrypt arrives from ansible-vault your decryption will occur without a passphrase prompt.

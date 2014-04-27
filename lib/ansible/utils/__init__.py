@@ -853,8 +853,11 @@ def ask_passwords(ask_pass=False, ask_sudo_pass=False, ask_su_pass=False, ask_va
     if ask_su_pass:
         su_pass = getpass.getpass(prompt=su_prompt)
 
-    if ask_vault_pass:
+    if ask_vault_pass and C.VAULT_GPG_NOPROMPT == False:
         vault_pass = getpass.getpass(prompt="Vault password: ")
+    else:
+        # We use gpg-agent to provide decryption passphrase
+        vault_pass = False
 
     return (sshpass, sudopass, su_pass, vault_pass)
 

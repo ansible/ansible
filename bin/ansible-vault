@@ -14,16 +14,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-# ansible-pull is a script that runs ansible in local mode
-# after checking out a playbooks directory from source repo.  There is an
-# example playbook to bootstrap this script in the examples/ dir which
-# installs ansible and sets it up to run on cron.
 
 import os
 import sys
 import traceback
 
+import ansible.constants as C
 from ansible import utils
 from ansible import errors
 from ansible.utils.vault import VaultEditor
@@ -52,7 +48,6 @@ def build_option_parser(action):
         sys.exit()
 
     # options for all actions
-    #parser.add_option('-c', '--cipher', dest='cipher', default="AES256", help="cipher to use")
     parser.add_option('--debug', dest='debug', action="store_true", help="debug")
     parser.add_option('--vault-password-file', dest='password_file',
                     help="vault password file")
@@ -113,28 +108,32 @@ def execute_create(args, options, parser):
     if len(args) > 1:
         raise errors.AnsibleError("'create' does not accept more than one filename")        
 
-    if not options.password_file:        
-        password, new_password = utils.ask_vault_passwords(ask_vault_pass=True, confirm_vault=True)
+    cipher = C.VAULT_CIPHER
+    if cipher == "GPG":
+        # We do not use passwords directly in GPG
+        password = False
     else:
-        password = _read_password(options.password_file)
-
-    cipher = 'AES256'
-    if hasattr(options, 'cipher'):
-        cipher = options.cipher
+        if not options.password_file:        
+            password, new_password = utils.ask_vault_passwords(ask_vault_pass=True, confirm_vault=True)
+        else:
+            password = _read_password(options.password_file)
 
     this_editor = VaultEditor(cipher, password, args[0])
     this_editor.create_file()
 
 def execute_decrypt(args, options, parser):
 
-    if not options.password_file:        
-        password, new_password = utils.ask_vault_passwords(ask_vault_pass=True)
-    else:
-        password = _read_password(options.password_file)
+    cipher = C.VAULT_CIPHER
+    gpg_noprompt = C.VAULT_GPG_NOPROMPT
 
-    cipher = 'AES256'
-    if hasattr(options, 'cipher'):
-        cipher = options.cipher
+    if cipher == "GPG" and gpg_noprompt == True :
+        # Use gpg-agent to provide decryption
+        password = False
+    else:
+        if not options.password_file:        
+            password, new_password = utils.ask_vault_passwords(ask_vault_pass=True, confirm_vault=False)
+        else:
+            password = _read_password(options.password_file)
 
     for f in args:
         this_editor = VaultEditor(cipher, password, f)
@@ -147,12 +146,17 @@ def execute_edit(args, options, parser):
     if len(args) > 1:
         raise errors.AnsibleError("create does not accept more than one filename")        
 
-    if not options.password_file:        
-        password, new_password = utils.ask_vault_passwords(ask_vault_pass=True)
-    else:
-        password = _read_password(options.password_file)
+    cipher = C.VAULT_CIPHER
+    gpg_noprompt = C.VAULT_GPG_NOPROMPT
 
-    cipher = None
+    if cipher == "GPG" and gpg_noprompt == True :
+        # Use gpg-agent to provide decryption
+        password = False
+    else:
+        if not options.password_file:        
+            password, new_password = utils.ask_vault_passwords(ask_vault_pass=True, confirm_vault=False)
+        else:
+            password = _read_password(options.password_file)
 
     for f in args:
         this_editor = VaultEditor(cipher, password, f)
@@ -160,14 +164,19 @@ def execute_edit(args, options, parser):
 
 def execute_encrypt(args, options, parser):
 
-    if not options.password_file:        
-        password, new_password = utils.ask_vault_passwords(ask_vault_pass=True, confirm_vault=True)
-    else:
-        password = _read_password(options.password_file)
+    if len(args) > 1:
+        raise errors.AnsibleError("'create' does not accept more than one filename")        
 
-    cipher = 'AES256'
-    if hasattr(options, 'cipher'):
-        cipher = options.cipher
+    cipher = C.VAULT_CIPHER
+
+    if cipher == "GPG":
+        # We do not use passwords to encrypt via GPG
+        password = False
+    else:
+        if not options.password_file:        
+            password, new_password = utils.ask_vault_passwords(ask_vault_pass=True, confirm_vault=True)
+        else:
+            password = _read_password(options.password_file)
 
     for f in args:
         this_editor = VaultEditor(cipher, password, f)
@@ -177,14 +186,24 @@ def execute_encrypt(args, options, parser):
 
 def execute_rekey(args, options, parser):
 
-    if not options.password_file:        
-        password, __ = utils.ask_vault_passwords(ask_vault_pass=True)
+    cipher = C.VAULT_CIPHER
+    gpg_noprompt = C.VAULT_GPG_NOPROMPT
+
+    if cipher == "GPG" and gpg_noprompt == True :
+        # Use gpg-agent to provide decryption
+        password = False
+        new_password = False
+    elif cipher == "GPG" and not gpg_noprompt:
+        # We need to get the users password for their private key
+        password, new_password = utils.ask_vault_passwords(ask_vault_pass=True, confirm_vault=False)
+        new_password = False # There is no new password, we are not changing the users private key.
     else:
-        password = _read_password(options.password_file)
+        if not options.password_file:        
+            password, new_password = utils.ask_vault_passwords(ask_vault_pass=True, confirm_vault=True)
+        else:
+            password = _read_password(options.password_file)
+        __, new_password = utils.ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=True, confirm_new=True)
 
-    __, new_password = utils.ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=True, confirm_new=True)
-
-    cipher = None
     for f in args:
         this_editor = VaultEditor(cipher, password, f)
         this_editor.rekey_file(new_password)

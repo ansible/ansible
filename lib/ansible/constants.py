@@ -26,7 +26,7 @@ def mk_boolean(value):
     if value is None:
         return False
     val = str(value)
-    if val.lower() in [ "true", "t", "y", "1", "yes" ]:
+    if val.lower() in ["true", "t", "y", "1", "yes"]:
         return True
     else:
         return False
@@ -94,7 +94,7 @@ else:
 
 # check all of these extensions when looking for yaml files for things like
 # group variables -- really anything we can load
-YAML_FILENAME_EXTENSIONS = [ "", ".yml", ".yaml", ".json" ]
+YAML_FILENAME_EXTENSIONS = ["", ".yml", ".yaml", ".json"]
 
 # sections in config file
 DEFAULTS='defaults'
@@ -171,6 +171,16 @@ PARAMIKO_PTY                   = get_config(p, 'paramiko_connection', 'pty', 'AN
 
 # characters included in auto-generated passwords
 DEFAULT_PASSWORD_CHARS = ascii_letters + digits + ".,:-_"
+
+# VAULT
+VAULT_CIPHER                   = get_config(p, 'vault', 'cipher', 'VAULT_CIPHER', 'AES256')
+VAULT_GPG_RECIPIENTS           = get_config(p, 'vault', 'gpg_recipients', 'VAULT_RECIPIENTS', '')
+VAULT_GPG_ALWAYS_TRUST         = get_config(p, 'vault', 'gpg_always_trust', 'VAULT_GPG_ALWAYS_TRUST', False, boolean=True)
+VAULT_GPG_DEBUG                = get_config(p, 'vault', 'gpg_debug', 'VAULT_GPG_DEBUG', False, boolean=True)
+VAULT_GPG_NOPROMPT             = get_config(p, 'vault', 'gpg_noprompt', 'VAULT_GPG_NOPROMPT', False, boolean=True)
+VAULT_GPG_HOMEDIR              = get_config(p, 'vault', 'gpg_homedir', 'VAULT_GPG_HOMEDIR', False, boolean=True)
+VAULT_GPG_PUB_KEYRING          = get_config(p, 'vault', 'gpg_pub_keyring', 'VAULT_GPG_PUB_KEYRING', False, boolean=True)
+VAULT_GPG_PRIV_KEYRING         = get_config(p, 'vault', 'gpg_priv_keyring', 'VAULT_GPG_PRIV_KEYRING', False, boolean=True)
 
 # non-configurable things
 DEFAULT_SUDO_PASS         = None
