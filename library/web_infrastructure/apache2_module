@@ -41,7 +41,7 @@ EXAMPLES = '''
 - apache2_module: state=present name=wsgi
 
 # disables the Apache2 module "wsgi"
-- apache2_module: state=absent name wsgi
+- apache2_module: state=absent name=wsgi
 '''
 
 def _module_is_enabled(module):
