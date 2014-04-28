@@ -621,13 +621,14 @@ class PlayBook(object):
     def _run_play(self, play):
         ''' run a list of tasks for a given pattern, in order '''
         
-        self.callbacks.on_play_start(play.name)
         # Get the hosts for this play
         play._play_hosts = self.inventory.list_hosts(play.hosts)
         # if no hosts matches this play, drop out
         if not play._play_hosts:
             self.callbacks.on_no_hosts_matched()
             return True
+
+        self.callbacks.on_play_start(play.name)
 
         # get facts from system
         self._do_setup_step(play)
