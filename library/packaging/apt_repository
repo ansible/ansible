@@ -55,6 +55,13 @@ options:
         required: false
         default: "yes"
         choices: [ "yes", "no" ]
+    validate_certs:
+        description:
+            - If C(no), SSL certificates for the target repo will not be validated. This should only be used
+              on personally controlled sites using self-signed certificates.
+        required: false
+        default: 'yes'
+        choices: ['yes', 'no']
 author: Alexander Saltanov
 version_added: "0.7"
 requirements: [ python-apt ]
@@ -377,6 +384,7 @@ def main():
             update_cache = dict(aliases=['update-cache'], type='bool', default='yes'),
             # this should not be needed, but exists as a failsafe
             install_python_apt=dict(required=False, default="yes", type='bool'),
+            validate_certs = dict(default='yes', type='bool'),
         ),
         supports_check_mode=True,
     )
