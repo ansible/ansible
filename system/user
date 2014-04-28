@@ -336,8 +336,14 @@ class User(object):
 
     def _check_usermod_append(self):
         # check if this version of usermod can append groups
+        usermod_path = self.module.get_bin_path('usermod', True)
 
-        cmd = [self.module.get_bin_path('usermod', True)]
+        # for some reason, usermod --help cannot be used by non root
+        # on RH/Fedora, due to lack of execute bit for others
+        if not os.access(usermod_path, os.X_OK):
+            return False
+
+        cmd = [usermod_path]
         cmd.append('--help')
         rc, data1, data2 = self.execute_command(cmd)
         helpout = data1 + data2
