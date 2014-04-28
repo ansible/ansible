@@ -63,7 +63,7 @@ options:
     choices: [ "present", "absent" ]
   cron_file:
     description:
-      - If specified, uses this file in cron.d instead of an individual user's crontab.
+      - If specified, uses this file in cron.d instead of an individual user's crontab. A path begining with '/' will be treated an an absolute path.
     required: false
     default: null
   backup:
@@ -168,7 +168,9 @@ class CronTab(object):
         # select whether we dump additional debug info through syslog
         self.syslogging = False
 
-        if cron_file:
+        if cron_file and cron_file.startswith('/')
+            self.cron_file = cron_file
+        elif cron_file:
             self.cron_file = '/etc/cron.d/%s' % cron_file
         else:
             self.cron_file = None
