@@ -124,7 +124,7 @@ options:
   rsync_timeout:
     description:
       - Specify a --timeout for the rsync command in seconds. 
-    default: 10 
+    default: 0
     required: false
   set_remote_user:
     description:
@@ -215,7 +215,7 @@ def main():
             owner = dict(type='bool'),
             group = dict(type='bool'),
             set_remote_user = dict(default='yes', type='bool'),
-            rsync_timeout = dict(type='int', default=10),
+            rsync_timeout = dict(type='int', default=0),
             rsync_opts = dict(type='list')
         ),
         supports_check_mode = True
@@ -243,7 +243,9 @@ def main():
     group = module.params['group']
     rsync_opts = module.params['rsync_opts']
 
-    cmd = '%s --delay-updates -FF --compress --timeout=%s' % (rsync, rsync_timeout)
+    cmd = '%s --delay-updates -FF --compress' % rsync
+    if rsync_timeout:
+        cmd = cmd + ' --timeout=%s' % rsync_timeout
     if module.check_mode:
         cmd = cmd + ' --dry-run'
     if delete:
