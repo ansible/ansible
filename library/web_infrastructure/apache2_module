@@ -46,8 +46,8 @@ EXAMPLES = '''
 
 def _module_is_enabled(module):
     name = module.params['name']
-    a2enmod_binary = module.get_bin_path("a2enmod")
-    result, stdout, stderr = module.run_command("%s -q %s" % (a2enmod_binary, name))
+    a2query_binary = module.get_bin_path("a2query")
+    result, stdout, stderr = module.run_command("%s -m %s" % (a2query_binary, name))
     return result == 0
 
 def _module_is_disabled(module):
