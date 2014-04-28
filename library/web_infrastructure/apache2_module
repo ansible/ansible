@@ -59,7 +59,8 @@ def _disable_module(module):
     if _module_is_disabled(module):
         module.exit_json(changed = False, result = "Success")
 
-    result, stdout, stderr  = module.run_command("a2dismod %s" % name)
+    a2dismod_binary = module.get_bin_path("a2dismod")
+    result, stdout, stderr  = module.run_command("%s %s" % (a2dismod_binary, name))
     if result != 0: 
         module.fail_json(msg="Failed to disable module %s: %s" % (name, stdout))
 
