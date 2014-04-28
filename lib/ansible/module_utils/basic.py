@@ -1056,6 +1056,11 @@ class AnsibleModule(object):
         if creating and os.getenv("SUDO_USER"):
             os.chown(dest, os.getuid(), os.getgid())
 
+        if creating:
+            umask = os.umask(0)
+            os.umask(umask)
+            os.chmod(dest, 0666 ^ umask)
+
         if self.selinux_enabled():
             # rename might not preserve context
             self.set_context_if_different(dest, context, False)
