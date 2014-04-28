@@ -405,11 +405,25 @@ local_action:
   tasks:
     - name: Stop the sanbox instances
       local_action:
-      module: ec2
-      instance_ids: '{{ instance_ids }}'
-      region: '{{ region }}'
-      state: stopped
-      wait: True
+        module: ec2
+        instance_ids: '{{ instance_ids }}'
+        region: '{{ region }}'
+        state: stopped
+        wait: True
+
+#
+# Start stopped instances specified by tag
+#
+- name: Start up extra power instances
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Start instances named "ExtraPower"
+      local_action:
+        module: ec2
+        instance_tags:
+          Name: ExtraPower
+        state: running
 
 #
 # Enforce that 5 instances with a tag "foo" are running
