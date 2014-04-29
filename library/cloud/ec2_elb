@@ -128,19 +128,21 @@ class ElbManager:
         to report it out-of-service"""
 
         for lb in self.lbs:
-            initial_state = self._get_instance_health(lb) if wait else None
-
-            if initial_state and initial_state.state == 'InService':
-                lb.deregister_instances([self.instance_id])
-            else:
+            initial_state = self._get_instance_health(lb) 
+            if initial_state is None:
+                # The instance isn't registered with this ELB so just 
+                # return unchanged
                 return
+
+            lb.deregister_instances([self.instance_id])
+
+            # The ELB is changing state in some way. Either an instance that's
+            # InService is moving to OutOfService, or an instance that's
+            # already OutOfService is being deregistered.
+            self.changed = True
 
             if wait:
                 self._await_elb_instance_state(lb, 'OutOfService', initial_state, timeout)
-            else:
-                # We cannot assume no change was made if we don't wait
-                # to find out
-                self.changed = True
 
     def register(self, wait, enable_availability_zone, timeout):
         """Register the instance for all ELBs and wait for the ELB
