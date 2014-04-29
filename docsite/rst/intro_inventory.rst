@@ -144,7 +144,7 @@ Splitting Out Host and Group Specific Data
 
 The preferred practice in Ansible is actually not to store variables in the main inventory file.
 
-In addition to the storing variables directly in the INI file, host
+In addition to storing variables directly in the INI file, host
 and group variables can be stored in individual files relative to the
 inventory file.  
 

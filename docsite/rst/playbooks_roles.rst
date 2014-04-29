@@ -210,7 +210,7 @@ If any files are not present, they are just ignored.  So it's ok to not have a '
 for instance.
 
 Note, you are still allowed to list tasks, vars_files, and handlers "loose" in playbooks without using roles,
-but roles are a good organizational feature and are highly recommended.  if there are loose things in the playbook,
+but roles are a good organizational feature and are highly recommended.  If there are loose things in the playbook,
 the roles are evaluated first.
 
 Also, should you wish to parameterize roles, by adding variables, you can do so, like this::
@@ -371,7 +371,7 @@ to github whenever possible via a pull request.
 Ansible Galaxy
 ``````````````
 
-`Ansible Galaxy <http://galaxy.ansible.com>`_, is a free site for finding, downloading, rating, and reviewing all kinds of community developed Ansible roles and can be a great way to get a jumpstart on your automation projects.
+`Ansible Galaxy <http://galaxy.ansible.com>`_ is a free site for finding, downloading, rating, and reviewing all kinds of community developed Ansible roles and can be a great way to get a jumpstart on your automation projects.
 
 You can sign up with social auth, and the download client 'ansible-galaxy' is included in Ansible 1.4.2 and later.
 
