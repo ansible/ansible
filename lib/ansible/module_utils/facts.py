@@ -303,7 +303,9 @@ class Facts(object):
                         self.facts['distribution_release'] = ora_prefix + data
                     elif name == 'SuSE':
                         data = get_file_content(path).splitlines()
-                        self.facts['distribution_release'] = data[2].split('=')[1].strip()
+                        for line in data:
+                            if '=' in line:
+                            	self.facts['distribution_release'] = line.split('=')[1].strip()
                     elif name == 'Debian':
                         data = get_file_content(path).split('\n')[0]
                         release = re.search("PRETTY_NAME.+ \(?([^ ]+?)\)?\"", data)
