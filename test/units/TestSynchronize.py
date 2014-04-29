@@ -133,7 +133,7 @@ class TestSynchronize(unittest.TestCase):
 
     def test_synchronize_action_vagrant(self):
 
-        """ Verify the action plugin accomodates the common 
+        """ Verify the action plugin accommodates the common
             scenarios for vagrant boxes. """
 
         runner = FakeRunner()

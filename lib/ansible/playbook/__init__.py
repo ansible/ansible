@@ -93,7 +93,7 @@ class PlayBook(object):
         transport:        how to connect to hosts that don't specify a transport (local, paramiko, etc)
         callbacks         output callbacks for the playbook
         runner_callbacks: more callbacks, this time for the runner API
-        stats:            holds aggregrate data about events occuring to each host
+        stats:            holds aggregrate data about events occurring to each host
         sudo:             if not specified per play, requests all plays use sudo mode
         inventory:        can be specified instead of host_list to use a pre-existing inventory object
         check:            don't change anything, just try to detect some potential changes
@@ -195,7 +195,7 @@ class PlayBook(object):
         utils.plugins.push_basedir(basedir)
         for play in playbook_data:
             if type(play) != dict:
-                raise errors.AnsibleError("parse error: each play in a playbook must be a YAML dictionary (hash), recieved: %s" % play)
+                raise errors.AnsibleError("parse error: each play in a playbook must be a YAML dictionary (hash), received: %s" % play)
 
             if 'include' in play:
                 # a playbook (list of plays) decided to include some other list of plays
