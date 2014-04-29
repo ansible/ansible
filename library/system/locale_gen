@@ -57,7 +57,7 @@ def apply_change(targetState, name, encoding):
     """Create or remove locale.
     
     Keyword arguments:
-    targetState -- Desired state, eiter present or absent.
+    targetState -- Desired state, either present or absent.
     name -- Name including encoding such as de_CH.UTF-8.
     encoding -- Encoding such as UTF-8.
     """
@@ -76,7 +76,7 @@ def apply_change_ubuntu(targetState, name, encoding):
     """Create or remove locale.
     
     Keyword arguments:
-    targetState -- Desired state, eiter present or absent.
+    targetState -- Desired state, either present or absent.
     name -- Name including encoding such as de_CH.UTF-8.
     encoding -- Encoding such as UTF-8.
     """

@@ -193,7 +193,7 @@ if __name__ == '__main__':
                         )
     except Exception, e:
         client = None
-        #print >> STDERR "Unable to login (only cache avilable): %s", str(e)
+        #print >> STDERR "Unable to login (only cache available): %s", str(e)
 
     # acitually do the work
     if hostname is None:

@@ -63,11 +63,11 @@
 
 # now remove it to test uninstallation of a package we are sure is installed
 
-- name: now uninstall so we can see that a change occured
+- name: now uninstall so we can see that a change occurred
   pip: name={{ pip_test_package }} state=absent
   register: absent2  
 
-- name: assert a change occured on uninstallation
+- name: assert a change occurred on uninstallation
   assert:
     that:
       - "absent2.changed"

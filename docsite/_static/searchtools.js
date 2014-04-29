@@ -13,7 +13,7 @@
  * helper function to return a node containing the
  * search summary for a given text. keywords is a list
  * of stemmed words, hlwords is the list of normal, unstemmed
- * words. the first one is used to find the occurance, the
+ * words. the first one is used to find the occurrence, the
  * latter for highlighting it.
  */
 

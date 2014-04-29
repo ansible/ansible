@@ -443,7 +443,7 @@ def main():
             if bucketrtn is True:
                 module.exit_json(msg="Bucket already exists.", changed=False)
             else:
-                module.exit_json(msg="Bucket created succesfully", changed=create_bucket(module, s3, bucket))
+                module.exit_json(msg="Bucket created successfully", changed=create_bucket(module, s3, bucket))
         if bucket and obj:
             bucketrtn = bucket_check(module, s3, bucket)
             if obj.endswith('/'):

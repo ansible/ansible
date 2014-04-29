@@ -139,7 +139,7 @@ def _set_tenant_id(module):
             _os_tenant_id = tenant.id
             break
     if not _os_tenant_id:
-            module.fail_json(msg = "The tenant id cannot be found, please check the paramters")
+            module.fail_json(msg = "The tenant id cannot be found, please check the parameters")
 
 
 def _get_router_id(module, neutron):

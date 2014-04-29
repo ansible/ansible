@@ -198,7 +198,7 @@ def main():
             pass
         mode = module.params['slave_mode']
 
-        #Check if we ahve all the data
+        #Check if we have all the data
         if mode == "slave":  # Only need data if we want to be slave
             if not master_host:
                 module.fail_json(
@@ -235,7 +235,7 @@ def main():
         else:
             # Do the stuff
             # (Check Check_mode before commands so the commands aren't evaluated
-            # if not necesary)
+            # if not necessary)
             if mode == "slave":
                 if module.check_mode or\
                    set_slave_mode(r, master_host, master_port):
@@ -281,7 +281,7 @@ def main():
 
         # Do the stuff
         # (Check Check_mode before commands so the commands aren't evaluated
-        # if not necesary)
+        # if not necessary)
         if mode == "all":
             if module.check_mode or flush(r):
                 module.exit_json(changed=True, flushed=True)

@@ -165,7 +165,7 @@ def main():
     res = {}
 
     if key is None and state in ['present','absent']:
-        module.fail_json(msg="%s needs a key paramter" % state)
+        module.fail_json(msg="%s needs a key parameter" % state)
 
     # All xattr must begin in user namespace
     if key is not None and not re.match('^user\.',key):

@@ -112,7 +112,7 @@
 #
 #
 #
-# The Docker inventory plugin provides several enviroment variables that
+# The Docker inventory plugin provides several environment variables that
 # may be overridden here.  This configuration file always takes precedence
 # over environment variables.
 #

@@ -196,7 +196,7 @@ def setup():
                 write_stderr(e)
                 sys.exit(1)
 
-    # Enviroment Variables
+    # Environment Variables
     env_base_url = os.environ.get('DOCKER_HOST')
     env_version = os.environ.get('DOCKER_VERSION')
     env_timeout = os.environ.get('DOCKER_TIMEOUT')

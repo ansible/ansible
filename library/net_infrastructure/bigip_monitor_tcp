@@ -101,7 +101,7 @@ options:
         default: none
     port:
         description: 
-            - port address part op the ipport definition. Tyhe default API
+            - port address part op the ipport definition. The default API
               setting is 0.
         required: false
         default: none

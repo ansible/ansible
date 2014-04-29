@@ -234,7 +234,7 @@ class AristaVlan(object):
     def get(self):
         """ This method will return a dictionary with the attributes of the
             VLAN resource identified in vlan_id.   The VLAN resource has the 
-            following stucture:
+            following structure:
             
               {
                 "vlan_id": <vlan_id>,
