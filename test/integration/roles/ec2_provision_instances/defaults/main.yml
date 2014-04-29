@@ -1,0 +1,3 @@
+---
+# defaults file for ec2_provision_isntances
+count: 1
