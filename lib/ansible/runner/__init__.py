@@ -789,7 +789,7 @@ class Runner(object):
             if actual_transport == 'accelerate':
                 # for accelerate, we stuff both ports into a single
                 # variable so that we don't have to mangle other function
-                # calls just to accomodate this one case
+                # calls just to accommodate this one case
                 actual_port = [actual_port, self.accelerate_port]
             elif actual_port is not None:
                 actual_port = int(template.template(self.basedir, actual_port, inject))

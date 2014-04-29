@@ -349,7 +349,7 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
                     "Make sure your variable name does not contain invalid characters like '-'."
                 )
             else:
-                raise errors.AnsibleError("an unexpected type error occured. Error was %s" % te)
+                raise errors.AnsibleError("an unexpected type error occurred. Error was %s" % te)
         return res
     except (jinja2.exceptions.UndefinedError, errors.AnsibleUndefinedVariable):
         if fail_on_undefined:

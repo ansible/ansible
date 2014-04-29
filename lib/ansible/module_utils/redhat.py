@@ -241,7 +241,7 @@ class RhsmPools(object):
 
     def _load_product_list(self):
         """
-            Loads list of all availaible pools for system in data structure
+            Loads list of all available pools for system in data structure
         """
         args = "subscription-manager list --available"
         rc, stdout, stderr = self.module.run_command(args, check_rc=True)

@@ -7,7 +7,7 @@ short_description: Runs a local script on a remote node after transferring it
 description:
      - "The M(script) module takes the script name followed by a list of
        space-delimited arguments. "
-     - "The local script at path will be transfered to the remote node and then executed. "
+     - "The local script at path will be transferred to the remote node and then executed. "
      - "The given script will be processed through the shell environment on the remote node. "
      - "This module does not require python on the remote system, much like
        the M(raw) module. "

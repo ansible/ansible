@@ -338,7 +338,7 @@ and guidelines:
 
 * In the event of failure, a key of 'failed' should be included, along with a string explanation in 'msg'.  Modules that raise tracebacks (stacktraces) are generally considered 'poor' modules, though Ansible can deal with these returns and will automatically convert anything unparseable into a failed result.  If you are using the AnsibleModule common Python code, the 'failed' element will be included for you automatically when you call 'fail_json'.
 
-* Return codes from modules are not actually not signficant, but continue on with 0=success and non-zero=failure for reasons of future proofing.
+* Return codes from modules are not actually not significant, but continue on with 0=success and non-zero=failure for reasons of future proofing.
 
 * As results from many hosts will be aggregated at once, modules should return only relevant output.  Returning the entire contents of a log file is generally bad form.
 
