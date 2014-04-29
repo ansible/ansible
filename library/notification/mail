@@ -157,7 +157,7 @@ def main():
             charset = dict(default='us-ascii')
         )
     )
-    
+
     username = module.params.get('username')
     password = module.params.get('password')
     host = module.params.get('host')
@@ -178,7 +178,7 @@ def main():
         body = subject
 
     try:
-        smtp = smtplib.SMTP_SSL(host, port=int(port))
+        smtp = smtplib.SMTP(host, port=int(port))
     except Exception, e:
         module.fail_json(rc=1, msg='Failed to send mail to server %s on port %s: %s' % (host, port, e))
 
