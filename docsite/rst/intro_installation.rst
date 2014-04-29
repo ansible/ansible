@@ -230,6 +230,10 @@ Then install Ansible with::
 
    $ sudo pip install ansible
 
+If you are installing on OS X Mavericks, you may encounter some noise from your compiler.  A workaround is to do the following::
+
+   $ sudo CFLAGS=-Qunused-arguments CPPFLAGS=-Qunused-arguments pip install ansible
+
 Readers that use virtualenv can also install Ansible under virtualenv, though we'd recommend to not worry about it and just install Ansible globally.  Do not use easy_install to install ansible directly.
 
 .. _tagged_releases:
