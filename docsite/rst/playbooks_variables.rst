@@ -608,6 +608,7 @@ Local Facts (Facts.d)
 .. versionadded:: 1.3
 
 As discussed in the playbooks chapter, Ansible facts are a way of getting data about remote systems for use in playbook variables.
+
 Usually these are discovered automatically by the 'setup' module in Ansible. Users can also write custom facts modules, as described
 in the API guide.  However, what if you want to have a simple way to provide system or user
 provided data for use in Ansible variables, without writing a fact module?  
@@ -647,6 +648,21 @@ And this data can be accessed in a template/playbook as::
 
 The local namespace prevents any user supplied fact from overriding system facts
 or variables defined elsewhere in the playbook.
+
+If you have a playbook that is copying over a custom fact and then running it, making an explicit call to re-run the setup module
+can allow that fact to be used during that particular play.  Otherwise, it will be available in the next play that gathers fact information.
+Here is an example of what that might look like::
+
+  - hosts: webservers
+    tasks: 
+      - name: create directory for ansible custom facts
+        file: state=directory recurse=yes path=/etc/ansible/facts.d
+      - name: install custom impi fact
+        copy: src=ipmi.fact dest=/etc/ansible/facts.d
+      - name: re-read facts after adding custom fact
+        setup: filter=ansible_local
+
+In this pattern however, you could also write a fact module as well, and may wish to consider this as an option.
 
 .. _registered_variables:
 
