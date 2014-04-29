@@ -62,3 +62,14 @@
   register: sync_result
 
 - debug: var=sync_result
+- assert:
+    that:
+        - "'changed' in sync_result"
+        - "sync_result.changed == true"
+        - "'cmd' in sync_result"
+        - "'rsync' in sync_result.cmd"
+        - "'rsync_path' in sync_result.cmd"
+        - "'msg' in sync_result"
+        - "sync_result.msg.startswith('>f+')"
+        - "sync_result.msg.endswith('+ foo.txt\n')"
+
