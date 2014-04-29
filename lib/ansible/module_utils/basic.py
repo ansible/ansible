@@ -665,39 +665,6 @@ class AnsibleModule(object):
             else:
                 self.fail_json(msg="internal error: do not know how to interpret argument_spec")
 
-    def safe_eval(self, str, locals=None, include_exceptions=False):
-
-        # do not allow method calls to modules
-        if not isinstance(str, basestring):
-            # already templated to a datastructure, perhaps?
-            if include_exceptions:
-                return (str, None)
-            return str
-        if re.search(r'\w\.\w+\(', str):
-            if include_exceptions:
-                return (str, None)
-            return str
-        # do not allow imports
-        if re.search(r'import \w+', str):
-            if include_exceptions:
-                return (str, None)
-            return str
-        try:
-            result = None
-            if not locals:
-                result = eval(str)
-            else:
-                result = eval(str, None, locals)
-            if include_exceptions:
-                return (result, None)
-            else:
-                return result
-        except Exception, e:
-            if include_exceptions:
-                return (str, e)
-            return str
-
-
     def _check_argument_types(self):
         ''' ensure all arguments have the requested type '''
         for (k, v) in self.argument_spec.iteritems():
