@@ -234,8 +234,8 @@ def add_scsi_controller(module, s, config, devices, type="paravirtual", bus_num=
             msg="Error adding scsi controller to vm spec. No scsi controller"
             " type of: %s" % (type))
 
-    scsi_ctrl.set_element_busNumber(bus_num)
-    scsi_ctrl.set_element_key(disk_ctrl_key)
+    scsi_ctrl.set_element_busNumber(int(bus_num))
+    scsi_ctrl.set_element_key(int(disk_ctrl_key))
     scsi_ctrl.set_element_sharedBus("noSharing")
     scsi_ctrl_spec.set_element_device(scsi_ctrl)
     # Add the scsi controller to the VM spec.
@@ -259,10 +259,10 @@ def add_disk(module, s, config_target, config, devices, datastore, type="thin", 
     if type != "thick":
         disk_backing.set_element_thinProvisioned(1)
     disk_ctlr.set_element_key(key)
-    disk_ctlr.set_element_controllerKey(disk_ctrl_key)
-    disk_ctlr.set_element_unitNumber(disk_number)
+    disk_ctlr.set_element_controllerKey(int(disk_ctrl_key))
+    disk_ctlr.set_element_unitNumber(int(disk_number))
     disk_ctlr.set_element_backing(disk_backing)
-    disk_ctlr.set_element_capacityInKB(size)
+    disk_ctlr.set_element_capacityInKB(int(size))
     disk_spec.set_element_device(disk_ctlr)
     devices.append(disk_spec)
 
@@ -520,7 +520,7 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
                             "required for shutdown")
 
             # set the new RAM size
-            spec.set_element_memoryMB(vm_hardware['memory_mb'])
+            spec.set_element_memoryMB(int(vm_hardware['memory_mb']))
             changes['memory'] = vm_hardware['memory_mb']
 
     # ====( Config Memory )====#
@@ -550,7 +550,7 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
                                 msg="Cannot lower CPU on a live VM without "
                                 "cpuHotRemove. force is required for shutdown")
 
-            spec.set_element_numCPUs(vm_hardware['num_cpus'])
+            spec.set_element_numCPUs(int(vm_hardware['num_cpus']))
 
             changes['cpu'] = vm_hardware['num_cpus']
 
@@ -704,8 +704,8 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
     config.set_element_name(guest)
     if vm_extra_config['notes'] is not None:
         config.set_element_annotation(vm_extra_config['notes'])
-    config.set_element_memoryMB(vm_hardware['memory_mb'])
-    config.set_element_numCPUs(vm_hardware['num_cpus'])
+    config.set_element_memoryMB(int(vm_hardware['memory_mb']))
+    config.set_element_numCPUs(int(vm_hardware['num_cpus']))
     config.set_element_guestId(vm_hardware['osid'])
     devices = []
 
