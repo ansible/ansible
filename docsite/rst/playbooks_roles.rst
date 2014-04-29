@@ -333,6 +333,41 @@ The resulting order of execution would be as follows::
 .. note::
    Variable inheritance and scope are detailed in the :doc:`playbooks_variables`.
 
+Embedding Modules In Roles
+``````````````````````````
+
+This is an advanced topic that should not be relevant for most users.
+
+If you write a custom module (see :doc:`developing_modules`) you may wish to distribute it as part of a role.  Generally speaking, Ansible as a project is very interested
+in taking high-quality modules into ansible core for inclusion, so this shouldn't be the norm, but it's quite easy to do.
+
+An good example for this is if you worked at a company called AcmeWidgets, and wrote an internal module that helped configure your internal software, and you wanted other
+people in your organization to easily use this module -- but you didn't want to tell everyone how to configure their Ansible library path.
+
+Alongside the 'tasks' and 'handlers' structure of of a role, add a directory named 'library'.  In this 'library' directory, then include the module directly inside of it. 
+
+Assuming you had this::
+
+    roles/
+       my_custom_modules/
+           library/
+              module1
+              module2
+
+The module will be usable in the role itself, as well as any roles that are called *after* this role, as follows::
+
+
+    - hosts: webservers
+      roles:
+        - my_custom_modules
+        - some_other_role_using_my_custom_modules
+        - yet_another_role_using_my_custom_modules
+
+This can also be used, with some limitations, to modify modules in Ansible's core distribution, such as to use development versions of modules before they are released
+in production releases.  This is not always advisable as API signatures may change in core components, however, and is not always guaranteed to work.  It can be a handy
+way of carrying a patch against a core module, however, should you have good reason for this.  Naturally the project prefers that contributions be directed back
+to github whenever possible via a pull request.
+
 Ansible Galaxy
 ``````````````
 
