@@ -298,6 +298,18 @@ doesn't know it is a boolean value::
    - debug: msg=test
      when: some_string_value | bool
 
+To match strings against a regex, use the "match" or "search" filter::
+
+    vars:
+      url: "http://example.com/users/foo/resources/bar"
+
+    tasks:
+        - debug: 'msg="Resource URI: {{ url }}"'
+          when: url | match("http://example.com/users/.*/resources/.*")
+
+        - debug: 'msg="Resource path: {{ url }}"'
+          when: url | search("/users/.*/resources/.*")
+
 To replace text in a string with regex, use the "regex_replace" filter::
 
     # convert "ansible" to "able"    
