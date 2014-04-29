@@ -240,6 +240,10 @@ class ActionModule(object):
                 # we pass dest only to make sure it includes trailing slash in case of recursive copy
                 module_args_tmp = "%s src=%s dest=%s original_basename=%s" % (module_args,
                                   pipes.quote(tmp_src), pipes.quote(dest), pipes.quote(source_rel))
+
+                if self.runner.no_log:
+                    module_args_tmp = "%s NO_LOG=True" % module_args_tmp
+
                 module_return = self.runner._execute_module(conn, tmp_path, 'copy', module_args_tmp, inject=inject, complex_args=complex_args, delete_remote_tmp=delete_remote_tmp)
                 module_executed = True
 
