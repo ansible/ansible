@@ -1020,8 +1020,14 @@ class AnsibleModule(object):
                 self.cleanup(tmp_dest.name)
                 self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
 
-        if creating and os.getenv("SUDO_USER"):
-            os.chown(dest, os.getuid(), os.getgid())
+        if creating:
+            # make sure the file has the correct permissions
+            # based on the current value of umask
+            umask = os.umask(0)
+            os.umask(umask)
+            os.chmod(dest, 0666 ^ umask)
+            if os.getenv("SUDO_USER"):
+                os.chown(dest, os.getuid(), os.getgid())
 
         if self.selinux_enabled():
             # rename might not preserve context
