@@ -94,4 +94,25 @@ This is likely something you may wish to do if using Ansible from a continuous i
 (The `--vault-password-file` option can also be used with the :ref:`ansible-pull` command if you wish, though this would require distributing the keys to your nodes, so understand the implications -- vault is more intended for push mode).
 
 
+.. _excluding_vault_plays_without_entering_password:
+
+Excluding Vault Playbooks Without Entering a Password
+`````````````````````````````````````````````````
+
+If a vault variables file is used only for a small subset of the plays in an environment, including the playbook with the vault variables file in the site.yaml requires entering the vault password every time site.yaml is run, even if the playbook containing the vault variables is excluded using tags or when statements. This is true if the playbook uses vars_files or a rile with encrypted roles/xxx/vars/main.yaml.
+To allow a vault variables file to be excluded and not enter the vault password, use the include_vars task with a when clause.
+
+
+    - name: Optionally included vault variables
+      include_vars:  vault.yaml
+      when:  usevault is defined
+   -  name:  Optionally included playbook
+      include:  sensitive_playbook.yaml
+      when:  usevault is defined
+      
+To include the sensitive_playbook
+    ansible-playbook site.yaml -e "usevault=True" --ask-vault-password
+    
+To exclude the sensitive_playbook and not enter the password
+    ansible-playbook site.yaml
 
