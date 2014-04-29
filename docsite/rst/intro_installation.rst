@@ -228,7 +228,7 @@ your version of Python, you can get pip by::
 
 Then install Ansible with::
 
-   $ sudo pip install ansible
+   $ sudo CFLAGS=-Qunused-arguments CPPFLAGS=-Qunused-arguments pip install ansible
 
 If you are installing on OS X Mavericks, you may encounter some noise from your compiler.  A workaround is to do the following::
 
