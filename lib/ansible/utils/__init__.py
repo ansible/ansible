@@ -44,6 +44,7 @@ import getpass
 import sys
 import textwrap
 import json
+import warnings
 
 #import vault
 from vault import VaultLib
@@ -75,9 +76,20 @@ except:
 
 KEYCZAR_AVAILABLE=False
 try:
-    import keyczar.errors as key_errors
-    from keyczar.keys import AesKey
-    KEYCZAR_AVAILABLE=True
+    from Crypto.pct_warnings import PowmInsecureWarning
+    with warnings.catch_warnings(record=True) as warning_handler:
+        warnings.simplefilter("error", PowmInsecureWarning)
+        try:
+            import keyczar.errors as key_errors
+            from keyczar.keys import AesKey
+        except PowmInsecureWarning:
+            display("The version of gmp you have installed has a known issue regarding timing vulnerabilities when used with pycrypto. " + \
+                    "If possible, you should update it (ie. yum update gmp).", color="purple", stderr=True)
+            warnings.resetwarnings()
+            warnings.simplefilter("ignore")
+            import keyczar.errors as key_errors
+            from keyczar.keys import AesKey
+        KEYCZAR_AVAILABLE=True
 except ImportError:
     pass
 
