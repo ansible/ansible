@@ -304,11 +304,13 @@ To match strings against a regex, use the "match" or "search" filter::
       url: "http://example.com/users/foo/resources/bar"
 
     tasks:
-        - debug: 'msg="Resource URI: {{ url }}"'
+        - shell: "msg='matched pattern 1'"
           when: url | match("http://example.com/users/.*/resources/.*")
 
-        - debug: 'msg="Resource path: {{ url }}"'
+        - debug: "msg='matched pattern 2'"
           when: url | search("/users/.*/resources/.*")
+
+'match' will require a complete match in the string, while 'search' will require a match inside of the string.
 
 To replace text in a string with regex, use the "regex_replace" filter::
 
