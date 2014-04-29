@@ -27,7 +27,7 @@ description:
   - Manages I(apt) packages (such as for Debian/Ubuntu).
 version_added: "0.0.2"
 options:
-  pkg:
+  name:
     description:
       - A package name, like C(foo), or package specifier with version, like C(foo=1.0). Wildcards (fnmatch) like apt* are also supported.
     required: false
@@ -102,22 +102,22 @@ notes:
 
 EXAMPLES = '''
 # Update repositories cache and install "foo" package
-- apt: pkg=foo update_cache=yes
+- apt: name=foo update_cache=yes
 
 # Remove "foo" package
-- apt: pkg=foo state=absent
+- apt: name=foo state=absent
 
 # Install the package "foo"
-- apt: pkg=foo state=present
+- apt: name=foo state=present
 
 # Install the version '1.00' of package "foo"
-- apt: pkg=foo=1.00 state=present
+- apt: name=foo=1.00 state=present
 
 # Update the repository cache and update package "nginx" to latest version using default release squeeze-backport
-- apt: pkg=nginx state=latest default_release=squeeze-backports update_cache=yes
+- apt: name=nginx state=latest default_release=squeeze-backports update_cache=yes
 
 # Install latest version of "openjdk-6-jdk" ignoring "install-recommends"
-- apt: pkg=openjdk-6-jdk state=latest install_recommends=no
+- apt: name=openjdk-6-jdk state=latest install_recommends=no
 
 # Update all packages to the latest version
 - apt: upgrade=dist
