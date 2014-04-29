@@ -193,6 +193,7 @@ synchronize: src=some/relative/path dest=/some/absolute/path rsync_path="sudo rs
 synchronize: src=/tmp/helloworld dest=/var/www/helloword rsync_opts=--no-motd,--exclude=.git 
 '''
 
+import ansible.constants as C
 
 def main():
     module = AnsibleModule(
@@ -291,11 +292,11 @@ def main():
         private_key = '-i '+ private_key 
 
     if dest_port != 22:
-        cmd += " --rsh '%s %s -o %s -o Port=%s'" % ('ssh', private_key,
-                'StrictHostKeyChecking=no', dest_port)
+        cmd += " --rsh '%s %s -o %s %s -o Port=%s '" % ('ssh', private_key,
+                'StrictHostKeyChecking=no', C.ANSIBLE_SSH_ARGS, dest_port)
     else:
-        cmd += " --rsh '%s %s -o %s'" % ('ssh', private_key,
-                'StrictHostKeyChecking=no')  # need ssh param
+        cmd += " --rsh '%s %s -o %s %s'" % ('ssh', private_key,
+                'StrictHostKeyChecking=no', C.ANSIBLE_SSH_ARGS)  # need ssh param
 
     if rsync_path:
         cmd = cmd + " --rsync-path '%s'" %(rsync_path)
