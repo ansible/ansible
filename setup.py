@@ -8,15 +8,10 @@ sys.path.insert(0, os.path.abspath('lib'))
 from ansible import __version__, __author__
 try:
     from setuptools import setup
-    raise ImportError
 except ImportError:
-    print('''
-ansible now needs setuptools in order to build.
-
-Some scripts now need setuptools installed in order to run.
-          ''')
-    raise
-
+    print "Ansible now needs setuptools in order to build. " + \
+          "Install it using your package manager (usually python-setuptools) or via pip (pip install setuptools)."
+    sys.exit(1)
 
 # find library modules
 from ansible.constants import DEFAULT_MODULE_PATH
