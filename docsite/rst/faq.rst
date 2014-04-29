@@ -218,6 +218,10 @@ password hashing library is installed.
 Once the library is ready, SHA512 password values can then be generated as follows::
 
     python -c "from passlib.hash import sha512_crypt; print sha512_crypt.encrypt('<password>')"
+    
+To add a salt to the crypted password replace salt with your requested salt.  See the crypt manual for changing the encryption function, it is currently set to SHA-512 via the $6::
+
+    python -c "import crypt, getpass, pwd; print crypt.crypt('password', '\$6\$salt\$')"
 
 .. _commercial_support:
 
