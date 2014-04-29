@@ -56,3 +56,9 @@
         - "sync_result.results|length == 2"
         - "sync_result.results[0].msg.endswith('+ foo.txt\n')"
         - "sync_result.results[1].msg.endswith('+ bar.txt\n')"
+
+- name: synchronize files using rsync_path (issue#7182)
+  synchronize: src={{output_dir}}/foo.txt dest={{output_dir}}/foo.rsync_path rsync_path="sudo rsync"
+  register: sync_result
+
+- debug: var=sync_result
