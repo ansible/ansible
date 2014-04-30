@@ -44,7 +44,6 @@ import getpass
 import sys
 import textwrap
 import json
-import warnings
 
 #import vault
 from vault import VaultLib
@@ -83,8 +82,11 @@ try:
             import keyczar.errors as key_errors
             from keyczar.keys import AesKey
         except PowmInsecureWarning:
-            display("The version of gmp you have installed has a known issue regarding timing vulnerabilities when used with pycrypto. " + \
-                    "If possible, you should update it (ie. yum update gmp).", color="purple", stderr=True)
+            system_warning(
+                "The version of gmp you have installed has a known issue regarding " + \
+                "timing vulnerabilities when used with pycrypto. " + \
+                "If possible, you should update it (ie. yum update gmp)."
+            )
             warnings.resetwarnings()
             warnings.simplefilter("ignore")
             import keyczar.errors as key_errors
@@ -1154,6 +1156,10 @@ def warning(msg):
     if new_msg not in warns:
         display(new_msg, color='bright purple', stderr=True)
         warns[new_msg] = 1
+
+def system_warning(msg):
+    if C.SYSTEM_WARNINGS:
+        warning(msg)
 
 def combine_vars(a, b):
 

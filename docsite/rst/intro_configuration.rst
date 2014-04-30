@@ -477,6 +477,19 @@ playbook.  The default is the most logical: 'root'::
 
    sudo_user=root
 
+.. _system_warnings:
+
+system_warnings
+===============
+
+.. versionadded:: 1.6
+
+Allows disabling of warnings related to potential issues on the system running ansible itself (not on the managed hosts)::
+
+   system_warnings = True
+
+These may include warnings about 3rd party packages or other conditions that should be resolved if possible.
+
 .. _timeout:
 
 timeout
