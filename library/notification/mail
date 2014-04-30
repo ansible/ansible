@@ -69,15 +69,6 @@ options:
       - The body of the email being sent.
     default: $subject
     required: false
-  username:
-    description:
-      - If the SMTP requires username
-    default: null
-    required: false
-  password:
-      - If the SMTP requires password
-    default: null
-    required: false
   host:
     description:
       - The mail server
@@ -89,11 +80,6 @@ options:
     default: '25'
     required: false
     version_added: "1.0"
-  ssl:
-    description:
-      - Where SSL is required from the beginning of the connection.
-    default: null
-    required: false  
   attach:
     description:
       - A space-separated list of pathnames of files to attach to the message.
@@ -193,10 +179,17 @@ def main():
         body = subject
 
     try:
-        if ssl is not None:
+        if port == '465':
             smtp = smtplib.SMTP_SSL(host, port=int(port))
+        elif port == '25' or port is None:
+            smtp = smtplib.SMTP(host)
         else:
             smtp = smtplib.SMTP(host, port=int(port))
+            smtp.ehlo()
+        if smtp.has_extn('STARTTLS') and port is not '465':
+            smtp.starttls()
+            smtp.ehlo()
+        smtp.login(username, password)
     except Exception, e:
         module.fail_json(rc=1, msg='Failed to send mail to server %s on port %s: %s' % (host, port, e))
 
