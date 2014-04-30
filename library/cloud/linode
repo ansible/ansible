@@ -80,7 +80,7 @@ options:
     type: integer
   private_networking:
     description:
-     - "Bool, add an additional, private network interface to droplet for inter-droplet communication"
+     - "Bool, add an additional, private network interface to instance for inter-node communication"
     default: "no"
     choices: [ "yes", "no" ]
   wait:
