@@ -154,6 +154,7 @@ class SSLValidationHandler(urllib2.BaseHandler):
                         try:
                             cert_file = open(full_path, 'r')
                             os.write(tmp_fd, cert_file.read())
+                            os.write(tmp_fd, '\n')
                             cert_file.close()
                         except:
                             pass
