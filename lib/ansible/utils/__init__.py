@@ -25,8 +25,9 @@ import optparse
 import operator
 from ansible import errors
 from ansible import __version__
-from ansible.utils.plugins import *
 from ansible.utils import template
+from ansible.utils.display_functions import *
+from ansible.utils.plugins import *
 from ansible.callbacks import display
 import ansible.constants as C
 import ast
@@ -42,17 +43,12 @@ import warnings
 import traceback
 import getpass
 import sys
-import textwrap
 import json
 
 #import vault
 from vault import VaultLib
 
 VERBOSITY=0
-
-# list of all deprecation messages to prevent duplicate display
-deprecations = {}
-warns = {}
 
 MAX_FILE_SIZE_FOR_DIFF=1*1024*1024
 
@@ -75,7 +71,12 @@ except:
 
 KEYCZAR_AVAILABLE=False
 try:
-    from Crypto.pct_warnings import PowmInsecureWarning
+    try:
+        # some versions of pycrypto may not have this?
+        from Crypto.pct_warnings import PowmInsecureWarning
+    except ImportError:
+        PowmInsecureWarning = RuntimeWarning
+
     with warnings.catch_warnings(record=True) as warning_handler:
         warnings.simplefilter("error", PowmInsecureWarning)
         try:
@@ -1126,40 +1127,6 @@ def listify_lookup_plugin_terms(terms, basedir, inject):
             terms = [ terms ]
 
     return terms
-
-def deprecated(msg, version, removed=False):
-    ''' used to print out a deprecation message.'''
-
-    if not removed and not C.DEPRECATION_WARNINGS:
-        return
-
-    if not removed:
-        if version:
-            new_msg = "\n[DEPRECATION WARNING]: %s. This feature will be removed in version %s." % (msg, version)
-        else:
-            new_msg = "\n[DEPRECATION WARNING]: %s. This feature will be removed in a future release." % (msg)
-        new_msg = new_msg + " Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.\n\n"
-    else:
-        raise errors.AnsibleError("[DEPRECATED]: %s.  Please update your playbooks." % msg)
-
-    wrapped = textwrap.wrap(new_msg, 79)
-    new_msg = "\n".join(wrapped) + "\n"
-
-    if new_msg not in deprecations:
-        display(new_msg, color='purple', stderr=True)
-        deprecations[new_msg] = 1
-
-def warning(msg):
-    new_msg = "\n[WARNING]: %s" % msg
-    wrapped = textwrap.wrap(new_msg, 79)
-    new_msg = "\n".join(wrapped) + "\n"
-    if new_msg not in warns:
-        display(new_msg, color='bright purple', stderr=True)
-        warns[new_msg] = 1
-
-def system_warning(msg):
-    if C.SYSTEM_WARNINGS:
-        warning(msg)
 
 def combine_vars(a, b):
 
