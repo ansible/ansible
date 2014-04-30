@@ -76,8 +76,8 @@ or using a deployment object:
 - bigpanda: state=finished
   args: deployment
 
-If outside servers aren't reachable from your machine, use local_action:
-- local_action: bigpanda component=myapp version=1.3 token={{ bigpanda_token }} state=started
+If outside servers aren't reachable from your machine, use local_action and pass the hostname:
+- local_action: bigpanda component=myapp version=1.3 hosts={{ansible_hostname}} token={{ bigpanda_token }} state=started
   register: deployment
 ...
 - local_action: bigpanda state=finished
