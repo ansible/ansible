@@ -1,0 +1,60 @@
+#!/usr/bin/python
+
+DOCUMENTATION = '''
+---
+module: dpkg_selections
+short_description: Dpkg package selection states
+description:
+    - Change dpkg package state via --get-selections and --set-selections.
+version_added: "1.6"
+author: Brian Brazil <brian.brazil@boxever.com>
+options:
+    name:
+        description:
+            - Name of the package
+        required: true
+    state:
+        description:
+            - The selection state to set the package to.
+        choices: [ 'install', 'hold', 'deinstall', 'purge' ]
+        required: true
+notes:
+    - This module won't cause any packages to be installed/removed/purged, use the C(apt) module for that.
+'''
+EXAMPLES = '''
+# Prevent python from being upgraded.
+- dpkg_selections: name=python state=hold
+'''
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            name = dict(required=True),
+            state = dict(choices=['install', 'hold', 'deinstall', 'purge'])
+        ),
+        supports_check_mode=True,
+    )
+
+    dpkg = module.get_bin_path('dpkg', True)
+
+    name = module.params['name']
+    state = module.params['state']
+
+    # Get current settings.
+    rc, out, err = module.run_command([dpkg, '--get-selections', name], check_rc=True)
+    if not out:
+        current = 'not present'
+    else:
+        current = out.split()[1]
+
+    changed = current != state
+
+    if module.check_mode or not changed:
+      module.exit_json(changed=changed, before=current, after=state)
+
+    module.run_command([dpkg, '--set-selections'], data="%s %s" % (name, state), check_rc=True)
+    module.exit_json(changed=changed, before=current, after=state)
+
+
+from ansible.module_utils.basic import *
+main()
