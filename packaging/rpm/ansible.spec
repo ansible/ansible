@@ -132,7 +132,7 @@ rm -rf %{buildroot}
 * Fri Feb 28 2014 Michael DeHaan <michael@ansible.com> - 1.5.0
 - Release 1.5.0
 
-* Thu Feb 28 2014 Michael DeHaan <michael.dehaan@gmail.com> - 1.5-0
+* Fri Feb 28 2014 Michael DeHaan <michael.dehaan@gmail.com> - 1.5-0
 * Release 1.5
 
 * Wed Feb 12 2014 Michael DeHaan <michael.dehaan@gmail.com> - 1.4.5
@@ -156,7 +156,7 @@ rm -rf %{buildroot}
 * Fri Sep 13 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.3-0
 * Release 1.3.0
 
-* Thu Jul 05 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.2-2
+* Fri Jul 05 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.2-2
 * Release 1.2.2
 
 * Thu Jul 04 2013 Michael DeHaan <michael.dehaan@gmail.com> - 1.2-1
@@ -177,7 +177,7 @@ rm -rf %{buildroot}
 * Fri Oct 19 2012 Michael DeHaan <michael.dehaan@gmail.com> - 0.8-0
 - Release of 0.8
 
-* Thu Aug 6 2012 Michael DeHaan <michael.dehaan@gmail.com> - 0.7-0
+* Mon Aug 6 2012 Michael DeHaan <michael.dehaan@gmail.com> - 0.7-0
 - Release of 0.7
 
 * Mon Aug 6 2012 Michael DeHaan <michael.dehaan@gmail.com> - 0.6-0
