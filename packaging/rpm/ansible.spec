@@ -20,6 +20,7 @@ BuildArch: noarch
 # RHEL <=5
 %if 0%{?rhel} && 0%{?rhel} <= 5
 BuildRequires: python26-devel
+BuildRequires: python26-setuptools
 Requires: python26-PyYAML
 Requires: python26-paramiko
 Requires: python26-jinja2
@@ -36,6 +37,7 @@ Requires: python-crypto2.6
 # RHEL > 5
 %if 0%{?rhel} && 0%{?rhel} > 5
 BuildRequires: python2-devel
+BuildRequires: python-setuptools
 Requires: PyYAML
 Requires: python-paramiko
 Requires: python-jinja2
@@ -47,6 +49,7 @@ Requires: python-setuptools
 # FEDORA > 17
 %if 0%{?fedora} >= 18
 BuildRequires: python-devel
+BuildRequires: python-setuptools
 Requires: PyYAML
 Requires: python-paramiko
 Requires: python-jinja2
