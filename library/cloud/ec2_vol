@@ -278,15 +278,15 @@ def attach_volume(module, ec2, volume, instance):
     # Use password data attribute to tell whether the instance is Windows or Linux
     if device_name is None and instance:
         try:
-            if not ec2.get_password_data(inst.id):
+            if not ec2.get_password_data(instance.id):
                 device_name = '/dev/sdf'
-                attach = volume.attach(inst.id, device_name)
+                attach = volume.attach(instance.id, device_name)
                 while volume.attachment_state() != 'attached':
                     time.sleep(3)
                     volume.update()
             else:
                 device_name = '/dev/xvdf'
-                attach = volume.attach(inst.id, device_name)
+                attach = volume.attach(instance.id, device_name)
                 while volume.attachment_state() != 'attached':
                     time.sleep(3)
                     volume.update()
