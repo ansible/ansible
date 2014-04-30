@@ -122,7 +122,7 @@ install:
 	$(PYTHON) setup.py install
 
 sdist: clean docs
-	$(PYTHON) setup.py sdist -t MANIFEST.in
+	$(PYTHON) setup.py sdist
 
 rpmcommon: $(MANPAGES) sdist
 	@mkdir -p rpm-build
