@@ -240,7 +240,12 @@ class WebCheck(object):
         steps = self.get_steps(web_check_steps)
         if httptestid:
             if web_check_obj['steps']:
-                old_steps = list(web_check_obj['steps'].values())
+                if type(web_check_obj['steps']) is list:
+                    old_steps = web_check_obj['steps']
+                elif type(web_check_obj['steps']) is dict:
+                    old_steps = list(web_check_obj['steps'].values())
+                else:
+                    old_steps = None
                 steps = self.get_replace_steps(old_steps, steps, httptestid)
         web_check_params = {"name": web_check_name,
                             "applicationid": application_id,
