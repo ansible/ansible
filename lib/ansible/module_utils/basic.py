@@ -30,7 +30,6 @@
 # == BEGIN DYNAMICALLY INSERTED CODE ==
 
 MODULE_ARGS = "<<INCLUDE_ANSIBLE_MODULE_ARGS>>"
-MODULE_LANG = "<<INCLUDE_ANSIBLE_MODULE_LANG>>"
 MODULE_COMPLEX_ARGS = "<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>"
 
 BOOLEANS_TRUE = ['yes', 'on', '1', 'true', 1]
@@ -191,8 +190,6 @@ class AnsibleModule(object):
                 if k not in self.argument_spec:
                     self.argument_spec[k] = v
 
-        os.environ['LANG'] = MODULE_LANG
-        os.environ['LC_CTYPE'] = MODULE_LANG
         (self.params, self.args) = self._load_params()
 
         self._legal_inputs = ['CHECKMODE', 'NO_LOG']
