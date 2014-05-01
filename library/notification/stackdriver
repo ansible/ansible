@@ -79,10 +79,9 @@ EXAMPLES = '''
 # Stackdriver module specific support methods.
 #
 try:
-  import urllib, urllib2, json
+  import json
 except ImportError:
-  module.fail_json(msg="json, urllib, and urllib2 are required")
-
+  import simplejson as json
 
 def send_deploy_event(module, key, revision_id, deployed_by='Ansible', deployed_to=None, repository=None):
     """Send a deploy event to Stackdriver"""
