@@ -287,15 +287,21 @@ class Runner(object):
     def _compute_environment_string(self, inject=None):
         ''' what environment variables to use when running the command? '''
 
-        if not self.environment:
-            return ""
-        enviro = template.template(self.basedir, self.environment, inject, convert_bare=True)
-        enviro = utils.safe_eval(enviro)
-        if type(enviro) != dict:
-            raise errors.AnsibleError("environment must be a dictionary, received %s" % enviro)
+        default_environment = collections.OrderedDict([
+            ('LANG', C.DEFAULT_MODULE_LANG),
+            ('LC_CTYPE', C.DEFAULT_MODULE_LANG),
+        ])
+
+        if self.environment:
+            enviro = template.template(self.basedir, self.environment, inject, convert_bare=True)
+            enviro = utils.safe_eval(enviro)
+            if type(enviro) != dict:
+                raise errors.AnsibleError("environment must be a dictionary, received %s" % enviro)
+            default_environment.update(enviro)
+
         result = ""
-        for (k,v) in enviro.iteritems():
-            result = "%s=%s %s" % (k, pipes.quote(unicode(v)), result)
+        for (k,v) in default_environment.iteritems():
+            result = "%s %s=%s" % (result, k, pipes.quote(unicode(v)))
         return result
 
     # *****************************************************
