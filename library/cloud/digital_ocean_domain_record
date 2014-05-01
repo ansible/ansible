@@ -1,0 +1,204 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+DOCUMENTATION = '''
+---
+module: digital_ocean_domain_record
+short_description: Create/update/delete a DNS record in DigitalOcean
+description:
+     - Create/update/delete an individual DNS record in DigitalOcean.
+version_added: "1.6"
+options:
+  state:
+    description:
+     - Indicate desired state of the target.
+    default: 'present'
+    choices: ['present', 'absent']
+  client_id:
+    description:
+      - Digital Ocean manager id.
+  api_key:
+    description:
+      - Digital Ocean api key.
+  domain:
+    description:
+      - String, the domain name for which to create/modify/delete a record.
+    required: true
+  name:
+    description:
+      - String, subdomain name, required for 'A', 'CNAME', 'TXT' and 'SRV' records.
+    required: false
+    default: '@'
+  record_type:
+    description:
+      - String, the type of record you would like to create.
+    required: true
+    choices: ['A', 'CNAME', 'NS', 'TXT', 'MX', 'SRV']
+  priority:
+    description:
+      - Integer, required for 'SRV' and 'MX' records.
+    required: false
+  data:
+    description:
+      - String, the value of the record.
+    required: true
+  port:
+    description:
+      - Integer, required for 'SRV' records.
+    required: false
+  weight:
+    description:
+      - Integer, required for 'SRV' records.
+    required: false
+
+requirements: [ python-digitalocean ]
+
+notes:
+  - Two environment variables can be used, DO_CLIENT_ID and DO_API_KEY.
+  - Caution: This module uses the 'domain', 'name', 'record_type' and 'priority' fields to determine record uniqeness. If you are using multiple records with the same values for these fields (such as round-robin load balancing), you should use this module with caution, or not at all for those records.
+'''
+
+
+EXAMPLES = '''
+# Create an 'A' record
+
+- digital_ocean_domain_record: >
+      state=present
+      domain=example.com
+      name=www
+      record_type=A
+      data=1.2.3.4
+
+# Create a 'CNAME' record
+
+- digital_ocean_domain_record: >
+      state=present
+      domain=example.com
+      name=ftp
+      record_type=CNAME
+      data=www
+
+'''
+
+import json
+import os
+import sys
+import time
+
+try:
+    import digitalocean
+except ImportError as e:
+    print "failed=True msg='python-digitalocean required for this module'"
+    sys.exit(1)
+
+def core(module):
+    try:
+        client_id = module.params['client_id'] or os.environ['DO_CLIENT_ID']
+        api_key = module.params['api_key'] or os.environ['DO_API_KEY']
+    except KeyError, e:
+        module.fail_json(msg='Unable to load %s' % e.message)
+
+    state = module.params['state']
+
+    if state in ('present'):
+        domain = digitalocean.Domain(id=module.params['domain'],
+                                     client_id=client_id,
+                                     api_key=api_key)
+        for record in domain.get_records():
+            if (record.record_type == module.params['record_type']
+                    and record.name == module.params['name']
+                    and record.priority == module.params['priority']):
+                # Update an existing record
+                if (record.data != module.params['data']
+                        or record.port != module.params['port']
+                        or record.weight != module.params['weight']):
+                    # Some attributes changed
+                    record.data = module.params['data']
+                    record.port = module.params['port']
+                    record.weight = module.params['weight']
+                    try:
+                        record.save()
+                    except AttributeError:
+                        data = { "record_type": record.record_type,
+                                 "data": record.data,
+                                 "name": record.name,
+                                 "priority": record.priority,
+                                 "port": record.port,
+                                 "weight": record.weight }
+                        record._Record__call_api("/edit/", data)
+                    module.exit_json(changed=True, record=json.dumps(record.__dict__), operation='edit')
+                else:
+                    # No attribute changes
+                    module.exit_json(changed=False, record=json.dumps(record.__dict__))
+                break
+        else:
+            # Create new record
+            record = digitalocean.Record(domain_id=module.params['domain'],
+                                         client_id=client_id,
+                                         api_key=api_key)
+            record.record_type = module.params['record_type']
+            record.data = module.params['data']
+            record.name = module.params['name']
+            record.priority = module.params['priority']
+            record.port = module.params['port']
+            record.weight = module.params['weight']
+            record.create()
+            module.exit_json(changed=True, record=json.dumps(record.__dict__), operation='create')
+
+    elif state in ('absent'):
+        domain = digitalocean.Domain(id=module.params['domain'],
+                                     client_id=client_id,
+                                     api_key=api_key)
+        for record in domain.get_records():
+            if (record.record_type == module.params['record_type']
+                    and record.name == module.params['name']
+                    and record.priority == module.params['priority']):
+                # Delete the record
+                record.destroy()
+                module.exit_json(changed=True, operation='destroy')
+                break
+        else:
+            module.exit_json(changed=False)
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec = dict(
+            state = dict(choices=['present', 'absent'], default='present'),
+            client_id = dict(aliases=['CLIENT_ID'], no_log=True),
+            api_key = dict(aliases=['API_KEY'], no_log=True),
+            domain = dict(type='str'),
+            name = dict(type='str'),
+            record_type = dict(choices=['A', 'CNAME', 'NS', 'TXT', 'MX', 'SRV'], default='present'),
+            priority = dict(type='int'),
+            data = dict(type='str'),
+            port = dict(type='int'),
+            weight = dict(type='int'),
+        ),
+    )
+
+#    try:
+    core(module)
+#    except TimeoutError as e:
+#        module.fail_json(msg=str(e), id=e.id)
+#    except (DoError, Exception) as e:
+#        module.fail_json(msg=str(e))
+
+# import module snippets
+from ansible.module_utils.basic import *
+
+main()
