@@ -33,7 +33,7 @@ options:
     default: "Ansible"
   deployed_to:
     description:
-      - The environment code was deployed to. (ie: development, staging, production)
+      - "The environment code was deployed to. (ie: development, staging, production)"
     required: false
     default: null
   repository:
