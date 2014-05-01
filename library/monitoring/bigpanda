@@ -12,6 +12,7 @@ options:
     description:
       - "The name of the component being deployed. Ex: billing"
     required: true
+    alias: name
   version:
     description:
       - The deployment version.
@@ -30,6 +31,7 @@ options:
       - Name of affected host name. Can be a list.
     required: false
     default: machine's hostname
+    alias: host
   env:
     description:
       - The airbrake environment name, typically 'production', 'staging', etc.
@@ -93,11 +95,11 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            component=dict(required=True),
+            component=dict(required=True, aliases=['name']),
             version=dict(required=True),
             token=dict(required=True),
             state=dict(required=True, choices=['started', 'finished', 'failed']),
-            hosts=dict(required=False, default=[socket.gethostname()]),
+            hosts=dict(required=False, default=[socket.gethostname()], aliases=['host']),
             env=dict(required=False),
             owner=dict(required=False),
             description=dict(required=False),
