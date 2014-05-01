@@ -342,8 +342,12 @@ def enforce_state(module, params):
     key_options = params.get("key_options", None)
     clear_keys  = params.get("clear_keys")
 
-    # extract indivial keys into an array, skipping blank lines and comments
-    key = [s for s in key.splitlines() if s and not s.startswith('#')]
+    # an array of passed SSH keys
+    keys = []
+    # 'key' is a string of all keys separated by a comma
+    for split_key in key.split(','):
+        # extract indivial keys into an array, skipping blank lines and comments
+        keys += [s for s in split_key.splitlines() if s and not s.startswith('#')]
 
 
     # check current state -- just get the filename, don't create file
@@ -356,7 +360,7 @@ def enforce_state(module, params):
     parsed_new_keys = {}
 
     # Check our new keys, if any of them exist we'll continue.
-    for new_key in key:
+    for new_key in keys:
         parsed_new_key = parsekey(module, new_key)
         if key_options is not None:
             parsed_options = parseoptions(module, key_options)

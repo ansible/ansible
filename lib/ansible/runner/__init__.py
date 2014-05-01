@@ -600,7 +600,7 @@ class Runner(object):
             if type(items) != list:
                 raise errors.AnsibleError("lookup plugins have to return a list: %r" % items)
 
-            if len(items) and utils.is_list_of_strings(items) and self.module_name in [ 'apt', 'yum', 'pkgng' ]:
+            if len(items) and utils.is_list_of_strings(items) and self.module_name in [ 'apt', 'yum', 'pkgng', 'authorized_key' ]:
                 # hack for apt, yum, and pkgng so that with_items maps back into a single module call
                 use_these_items = []
                 for x in items:
