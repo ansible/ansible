@@ -131,7 +131,6 @@ EXAMPLES = '''
 import os
 import sys
 import smtplib
-#from ssl import SSLError
 import ssl
 
 try:
