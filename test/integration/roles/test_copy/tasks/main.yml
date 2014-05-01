@@ -99,7 +99,7 @@
   file: name={{output_subdir}} state=directory
 
 - name: test recursive copy to directory
-  copy: src=subdir dest={{output_subdir}}
+  copy: src=subdir dest={{output_subdir}} directory_mode=0700
   register: recursive_copy_result
 
 - debug: var=recursive_copy_result
@@ -112,11 +112,32 @@
   stat: path={{output_dir}}/sub/subdir/subdir2/baz.txt 
   register: stat_bar2
 
+- name: check that a file in a directory whose parent contains a directory alone was transferred
+  stat: path={{output_dir}}/sub/subdir/subdir2/subdir3/subdir4/qux.txt
+  register: stat_bar3
+
 - name: assert recursive copy things
   assert:
     that:
       - "stat_bar.stat.exists"
       - "stat_bar2.stat.exists"
+      - "stat_bar3.stat.exists"
+
+- name: stat the recursively copied directories
+  stat: path={{output_dir}}/sub/{{item}}
+  register: dir_stats
+  with_items:
+    - "subdir"
+    - "subdir/subdir2"
+    - "subdir/subdir2/subdir3"
+    - "subdir/subdir2/subdir3/subdir4"
+
+- name: assert recursive copied directories mode
+  assert:
+    that:
+      - "{{item.stat.mode}} == 0700"
+  with_items: dir_stats.results
+
 
 # errors on this aren't presently ignored so this test is commented out.  But it would be nice to fix.
 #
