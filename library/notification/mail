@@ -71,11 +71,11 @@ options:
     required: false
   username:
     description:
-      - If the SMTP requires username
+      - If SMTP requires username
     default: null
     required: false
   password:
-      - If the SMTP requires password
+      - If SMTP requires password
     default: null
     required: false
   host:
@@ -89,11 +89,6 @@ options:
     default: '25'
     required: false
     version_added: "1.0"
-  ssl:
-    description:
-      - Where SSL is required from the beginning of the connection.
-    default: null
-    required: false 
   attach:
     description:
       - A space-separated list of pathnames of files to attach to the message.
@@ -136,6 +131,8 @@ EXAMPLES = '''
 import os
 import sys
 import smtplib
+#from ssl import SSLError
+import ssl
 
 try:
     from email import encoders
@@ -160,7 +157,6 @@ def main():
             password = dict(default=None),
             host = dict(default='localhost'),
             port = dict(default='25'),
-            ssl = dict(default=None),
             sender = dict(default='root', aliases=['from']),
             to = dict(default='root', aliases=['recipients']),
             cc = dict(default=None),
@@ -177,7 +173,6 @@ def main():
     password = module.params.get('password')
     host = module.params.get('host')
     port = module.params.get('port')
-    ssl = module.params.get('ssl')
     sender = module.params.get('sender')
     recipients = module.params.get('to')
     copies = module.params.get('cc')
@@ -193,20 +188,17 @@ def main():
         body = subject
 
     try:
-        if port == '465':
-            smtp = smtplib.SMTP_SSL(host, port=int(port))
-        elif port == '25' or port is None:
-            smtp = smtplib.SMTP(host)
-        else:
-            smtp = smtplib.SMTP(host, port=int(port))
-            smtp.ehlo()
-        if smtp.has_extn('STARTTLS') and port is not '465':
+        smtp = smtplib.SMTP_SSL(host, port=int(port))
+    except (smtplib.SMTPException, ssl.SSLError):
+        smtp = smtplib.SMTP(host, port=int(port))
+    smtp.ehlo()
+    if username and password:
+        if smtp.has_extn('STARTTLS'):
             smtp.starttls()
-            smtp.ehlo()
-        smtp.login(username, password)
-    except Exception, e:
-        module.fail_json(rc=1, msg='Failed to send mail to server %s on port %s: %s' % (host, port, e))
-
+        try:
+            smtp.login(username, password)
+        except smtplib.SMTPAuthenticationError:
+            module.fail_json(msg="Authentication to %s:%s failed, please check your username and/or password" % (host, port))
 
     msg = MIMEMultipart()
     msg['Subject'] = subject
@@ -268,8 +260,6 @@ def main():
     composed = msg.as_string()
 
     try:
-        if username is not None:
-            smtp.login(username, password)
         smtp.sendmail(sender_addr, set(addr_list), composed)
     except Exception, e:
         module.fail_json(rc=1, msg='Failed to send mail to %s: %s' % (", ".join(addr_list), e))
