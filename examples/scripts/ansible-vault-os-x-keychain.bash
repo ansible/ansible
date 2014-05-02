@@ -11,24 +11,15 @@
 #   av edit group_vars/encrypted_vars.yml
 #
 # The above command will fetch the ansible_vault password from the Keychain,
-# store it in a temporary file, use it to decrypt the file and allow me to edit
-# it, then safely removes the temporary copy of the password.
+# and provides it via an anonymous fifo when decrypting the file
 #
 # This bash script could be extended to make the password host-specific, but
 # for my purposes it's enough in its current form.
-
-tmpfile=$(mktemp -t vault)
-
-ensure_tmpfile_gets_removed() {
-  rm -f $tmpfile
-}
-
-trap ensure_tmpfile_gets_removed EXIT
-
-echo $(security find-generic-password -a ansible_vault -w) > $tmpfile
 
 command="$1"
 shift
 args=$@
 
-ansible-vault $command $args --vault-password-file $tmpfile
+passphrase=$(security find-generic-password -a ansible_vault -w)
+
+ansible-vault $command $args --vault-password-file <(echo $passphrase)
