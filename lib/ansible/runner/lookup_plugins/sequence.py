@@ -151,7 +151,7 @@ class LookupModule(object):
             )
         elif self.count is not None:
             # convert count to end
-            self.end = self.start + self.count * self.stride - 1
+            self.end = self.start + self.count * self.stride
             del self.count
         if self.end < self.start:
             raise AnsibleError("can't count backwards")
@@ -159,7 +159,7 @@ class LookupModule(object):
             raise AnsibleError("bad formatting string: %s" % self.format)
 
     def generate_sequence(self):
-        numbers = xrange(self.start, self.end + 1, self.stride)
+        numbers = xrange(self.start, self.end, self.stride)
 
         for i in numbers:
             try:
