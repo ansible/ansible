@@ -66,10 +66,44 @@ options:
     default: "present"
   key_options:
     description:
-      - A string of ssh key options to be prepended to the key in the authorized_keys file
+      - A string of ssh key options to be prepended to the key in the authorized_keys file. This option
+        takes precedence over the individual SSH key options such as command, from, etc.
     required: false
     default: null
     version_added: "1.4"
+  command:
+    description:
+      - Command to execute when this key is used for authentication
+    required: false
+    default: null
+  environment:
+    description:
+      - Variables to be added to the environment when this key is used, in NAME=value form
+    required: false
+    default: null
+  from:
+    description:
+      - Comma-separated list of remote host patterns from which this key can be used
+    required: false
+    default: null
+  no_agent_forwarding:
+    description:
+      - Boolean value which forbids authentication agent forwarding when this key is used
+    required: false
+    choices: [ "yes", "no" ]
+    default: null
+  no_port_forwarding:
+    description:
+      - Boolean value which forbids TCP forwarding when this key is used
+    required: false
+    choices: [ "yes", "no" ]
+    default: null
+  no_X11_forwarding:
+    description:
+      - Boolean value which forbids X11 forwarding when this key is used
+    required: false
+    choices: [ "yes", "no" ]
+    default: null
 description:
     - "Adds or removes authorized keys for particular user accounts"
 author: Brad Olson
@@ -97,6 +131,12 @@ EXAMPLES = '''
 - authorized_key: user=charlie
                   key="{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
                   key_options='no-port-forwarding,host="10.0.1.1"'
+
+# Using individual key options:
+- authorized_key: user=murphy
+                  key="{{ lookup('file', '/home/murphy/.ssh/id_rsa.pub') }}"
+                  no_port_forwarding=yes no_pty=yes
+                  from="10.0.0.0/8,*.example.com"
 '''
 
 # Makes sure the public key line is present or absent in the user's .ssh/authorized_keys.
@@ -321,17 +361,38 @@ def writekeys(module, filename, keys):
     f.close()
     module.atomic_move(tmp_path, filename)
 
+def _format_key_option(option, value):
+    if option.startswith('_'):
+        option = option[1:]
+
+    option = option.replace('_', '-')
+
+    if value is None or value is False:
+        return None
+    elif value is True:
+        return option
+    else:
+        return '%s="%s"' % (option, value)
+
 def enforce_state(module, params):
     """
     Add or remove key.
     """
 
-    user        = params["user"]
-    key         = params["key"]
-    path        = params.get("path", None)
-    manage_dir  = params.get("manage_dir", True)
-    state       = params.get("state", "present")
-    key_options = params.get("key_options", None)
+    user                = params["user"]
+    key                 = params["key"]
+    path                = params.get("path", None)
+    manage_dir          = params.get("manage_dir", True)
+    state               = params.get("state", "present")
+    key_options         = params.get("key_options", None)
+    _from               = params.get("from", None)
+    command             = params.get("command", None)
+    environment         = params.get("environment", None)
+    permitopen          = params.get("permitopen", None)
+    no_pty              = params.get("no_pty", None)
+    no_agent_forwarding = params.get("no_agent_forwarding", None)
+    no_port_forwarding  = params.get("no_port_forwarding", None)
+    no_X11_forwarding   = params.get("no_X11_forwarding", None)
 
     # extract indivial keys into an array, skipping blank lines and comments
     key = [s for s in key.splitlines() if s and not s.startswith('#')]
@@ -342,12 +403,30 @@ def enforce_state(module, params):
     params["keyfile"] = keyfile(module, user, do_write, path, manage_dir)
     existing_keys = readkeys(module, params["keyfile"])
 
+    parsed_options = None
+
+    if key_options is not None:
+        parsed_options = parseoptions(module, key_options)
+    else:
+        options = ('_from', 'command', 'environment', 'permitopen', 'no_pty',
+                   'no_agent_forwarding', 'no_port_forwarding',
+                   'no_X11_forwarding')
+        option_list = [_format_key_option(option, locals()[option])
+                       for option in options]
+        option_string =  ','.join(filter(None, option_list))
+        parsed_options = parseoptions(module, option_string)
+
     # Check our new keys, if any of them exist we'll continue.
     for new_key in key:
         parsed_new_key = parsekey(module, new_key)
-        if key_options is not None:
-            parsed_options = parseoptions(module, key_options)
-            parsed_new_key = (parsed_new_key[0], parsed_new_key[1], parsed_options, parsed_new_key[3])
+
+        if parsed_options is not None:
+            parsed_new_key = (
+                parsed_new_key[0],
+                parsed_new_key[1],
+                parsed_options,
+                parsed_new_key[3]
+            )
 
         if not parsed_new_key:
             module.fail_json(msg="invalid key specified: %s" % new_key)
@@ -401,15 +480,23 @@ def enforce_state(module, params):
 def main():
 
     module = AnsibleModule(
-        argument_spec = dict(
-           user        = dict(required=True, type='str'),
-           key         = dict(required=True, type='str'),
-           path        = dict(required=False, type='str'),
-           manage_dir  = dict(required=False, type='bool', default=True),
-           state       = dict(default='present', choices=['absent','present']),
-           key_options = dict(required=False, type='str'),
-           unique      = dict(default=False, type='bool'),
-        ),
+        argument_spec = {
+           'user': dict(required=True, type='str'),
+           'key': dict(required=True, type='str'),
+           'path': dict(required=False, type='str'),
+           'manage_dir': dict(required=False, type='bool', default=True),
+           'state': dict(default='present', choices=['absent','present']),
+           'key_options': dict(required=False, type='str'),
+           'unique': dict(default=False, type='bool'),
+           'from': dict(required=False, type='str'),
+           'command': dict(required=False, type='str'),
+           'environment': dict(required=False, type='str'),
+           'permitopen': dict(required=False, type='str'),
+           'no_pty': dict(required=False, type='bool'),
+           'no_agent_forwarding': dict(required=False, type='bool'),
+           'no_port_forwarding': dict(required=False, type='bool'),
+           'no_X11_forwarding': dict(required=False, type='bool')
+        },
         supports_check_mode=True
     )
 
