@@ -117,6 +117,15 @@ def main():
         if not tags:
             module.fail_json(msg="tags argument is required when state is present")
         if set(tags.items()).issubset(set(tagdict.items())):
+            dictupdate = {}
+            for (key, value) in set(tags.items()):
+                if (key, value) not in set(tagdict.items()):
+                        dictupdate[key] = value
+            if dictupdate:
+                tagger = ec2.delete_tags(resource, dictupdate)
+                tagger = ec2.create_tags(resource, dictupdate)
+                module.exit_json(msg="Tags %s updated for resource %s." % (dictupdate,resource), changed=True)
+
             module.exit_json(msg="Tags already exists in %s." %resource, changed=False)
         else:
             for (key, value) in set(tags.items()): 
