@@ -42,7 +42,7 @@ if constants.ANSIBLE_FORCE_COLOR:
 # --- begin "pretty"
 #
 # pretty - A miniature library that provides a Python print and stdout
-# wrapper that makes colored terminal text easier to use (eg. without
+# wrapper that makes colored terminal text easier to use (e.g. without
 # having to mess around with ANSI escape sequences). This code is public
 # domain - there is no license except that you must leave this header.
 #

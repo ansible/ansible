@@ -28,7 +28,7 @@ formatting hint when the range is expanded. e.g. [001:010] is to be
 expanded into 001, 002 ...009, 010.
 
 Note that when beg is specified with left zero padding, then the length of
-end must be the same as that of beg, else a exception is raised.
+end must be the same as that of beg, else an exception is raised.
 '''
 import string
 
@@ -37,7 +37,7 @@ from ansible import errors
 def detect_range(line = None):
     '''
     A helper function that checks a given host line to see if it contains
-    a range pattern descibed in the docstring above.
+    a range pattern described in the docstring above.
 
     Returnes True if the given line contains a pattern, else False.
     '''
@@ -102,7 +102,7 @@ def expand_hostname_range(line = None):
             if i_beg > i_end:
                 raise errors.AnsibleError("host range format incorrectly specified!")
             seq = string.ascii_letters[i_beg:i_end+1]
-        except ValueError:  # not a alpha range
+        except ValueError:  # not an alpha range
             seq = range(int(beg), int(end)+1, int(step))
 
         for rseq in seq:

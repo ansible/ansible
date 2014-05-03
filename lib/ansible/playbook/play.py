@@ -368,7 +368,7 @@ class Play(object):
 
         roles = self._build_role_dependencies(roles, [], self.vars)
 
-        # give each role a uuid
+        # give each role an uuid
         for idx, val in enumerate(roles):
             this_uuid = str(uuid.uuid4())
             roles[idx][-2]['role_uuid'] = this_uuid
@@ -746,7 +746,7 @@ class Play(object):
                     else:
                         role_tags[this_role] += task['vars']['tags']
 
-        # apply each role's tags to it's tasks
+        # apply each role's tags to its tasks
         for idx, val in enumerate(self._tasks):
             if getattr(val, 'role_name', None) is not None:
                 this_role = val.role_name + "-" + val.module_vars['role_uuid']
