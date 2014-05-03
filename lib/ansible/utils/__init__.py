@@ -86,7 +86,7 @@ try:
             system_warning(
                 "The version of gmp you have installed has a known issue regarding " + \
                 "timing vulnerabilities when used with pycrypto. " + \
-                "If possible, you should update it (ie. yum update gmp)."
+                "If possible, you should update it (i.e. yum update gmp)."
             )
             warnings.resetwarnings()
             warnings.simplefilter("ignore")
@@ -643,7 +643,7 @@ def _gitinfo():
         if os.path.isfile(repo_path):
             try:
                 gitdir = yaml.safe_load(open(repo_path)).get('gitdir')
-                # There is a posibility the .git file to have an absolute path.
+                # There is a possibility the .git file to have an absolute path.
                 if os.path.isabs(gitdir):
                     repo_path = gitdir
                 else:

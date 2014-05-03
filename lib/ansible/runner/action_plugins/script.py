@@ -112,7 +112,7 @@ class ActionModule(object):
         conn.put_file(source, tmp_src)
 
         sudoable = True
-        # set file permissions, more permisive when the copy is done as a different user
+        # set file permissions, more permissive when the copy is done as a different user
         if ((self.runner.sudo and self.runner.sudo_user != 'root') or
                 (self.runner.su and self.runner.su_user != 'root')):
             cmd_args_chmod = "chmod a+rx %s" % tmp_src
