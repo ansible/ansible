@@ -580,12 +580,12 @@ and less information has to be shared with remote hosts.
 Orchestration in the Rackspace Cloud
 ++++++++++++++++++++++++++++++++++++
 
-Ansible is a powerful orchestration tool, and rax modules allow you the opportunity to orchestrate complex tasks, deployments, and configurations.  The key here is to automate provisioning of infrastructure, like any other pice of software in an environment.  Complex deployments might have previously required manaul manipulation of load balancers, or manual provisioning of servers.  Utilizing the rax modules included with Ansible, one can make the deployment of additioanl nodes contingent on the current number of running nodes, or the configuration of a clustered applicaiton dependent on the number of nodes with common metadata.  One could automate the following scenarios, for example:
+Ansible is a powerful orchestration tool, and rax modules allow you the opportunity to orchestrate complex tasks, deployments, and configurations.  The key here is to automate provisioning of infrastructure, like any other pice of software in an environment.  Complex deployments might have previously required manaul manipulation of load balancers, or manual provisioning of servers.  Utilizing the rax modules included with Ansible, one can make the deployment of additioanl nodes contingent on the current number of running nodes, or the configuration of a clustered application dependent on the number of nodes with common metadata.  One could automate the following scenarios, for example:
 
 * Servers that are removed from a Cloud Load Balancer one-by-one, updated, verified, and returned to the load balancer pool
 * Expansion of an already-online environment, where nodes are provisioned, bootstrapped, configured, and software installed
 * A procedure where app log files are uploaded to a central location, like Cloud Files, before a node is decommissioned
-* Servers and load balancers that have DNS receords created and destroyed on creation and decomissioning, respectively
+* Servers and load balancers that have DNS receords created and destroyed on creation and decommissioning, respectively
 
 
 

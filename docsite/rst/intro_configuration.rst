@@ -22,7 +22,7 @@ Prior to 1.5 the order was::
     * .ansible.cfg (in the home directory)
     * /etc/ansible/ansible.cfg
 
-Ansible will process the above list and use the first file found. Settings in files are not merged together.
+Ansible will process the above list and use the first file found. Settings in files are not merged.
 
 .. _getting_the_latest_configuration:
 
@@ -228,7 +228,7 @@ hash_behaviour
 Ansible by default will override variables in specific precedence orders, as described in :doc:`playbooks_variables`.  When a variable
 of higher precedence wins, it will replace the other value.
 
-Some users prefer that variables that are hashes (aka 'dictionaries' in Python terms) are merged together.  This setting is called 'merge'. This is not the default behavior and it does not affect variables whose values are scalars (integers, strings) or
+Some users prefer that variables that are hashes (aka 'dictionaries' in Python terms) are merged.  This setting is called 'merge'. This is not the default behavior and it does not affect variables whose values are scalars (integers, strings) or
 arrays.  We generally recommend not using this setting unless you think you have an absolute need for it, and playbooks in the
 official examples repos do not use this setting::
 

@@ -13,7 +13,7 @@ provisioner for these virtual machines, and the two tools work together well.
 
 This guide will describe how to use Vagrant and Ansible together.
 
-If you're not familar with Vagrant, you should visit `the documentation
+If you're not familiar with Vagrant, you should visit `the documentation
 <http://docs.vagrantup.com/v2/>`_.
 
 This guide assumes that you already have Ansible installed and working.

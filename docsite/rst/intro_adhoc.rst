@@ -123,7 +123,7 @@ File Transfer
 
 Here's another use case for the `/usr/bin/ansible` command line.  Ansible can SCP lots of files to multiple machines in parallel.
 
-To transfer a file directly to many different servers::
+To transfer a file directly to many servers::
 
     $ ansible atlanta -m copy -a "src=/etc/hosts dest=/tmp/hosts"
 

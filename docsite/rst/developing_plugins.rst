@@ -96,7 +96,7 @@ Development
 +++++++++++
 
 More information will come later, though see the source of any of the existing callbacks and you should be able to get started quickly.
-They should be reasonably self explanatory.
+They should be reasonably self-explanatory.
 
 .. _distributing_plugins:
 
