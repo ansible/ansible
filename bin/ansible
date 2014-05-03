@@ -63,6 +63,8 @@ class Cli(object):
             default=C.DEFAULT_MODULE_NAME)
 
         options, args = parser.parse_args()
+        if options.ask_sudo_pass:
+            options.sudo = True
         self.callbacks.options = options
 
         if len(args) == 0 or len(args) > 1:
