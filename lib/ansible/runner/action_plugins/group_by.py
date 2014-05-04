@@ -41,7 +41,7 @@ class ActionModule(object):
         args = {}
         if complex_args:
             args.update(complex_args)
-        args.update(parse_kv(self.runner.module_args))
+        args.update(parse_kv(module_args))
         if not 'key' in args:
             raise ae("'key' is a required argument.")
 
