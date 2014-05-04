@@ -46,15 +46,16 @@ class ActionModule(object):
         if complex_args:
             options.update(complex_args)
         options.update(utils.parse_kv(module_args))
-        source  = os.path.expanduser(options.get('src', None))
-        dest    = os.path.expanduser(options.get('dest', None))
+        source  = options.get('src', None)
+        dest    = options.get('dest', None)
         copy    = utils.boolean(options.get('copy', 'yes'))
 
         if source is None or dest is None:
             result = dict(failed=True, msg="src (or content) and dest are required")
             return ReturnData(conn=conn, result=result)
 
-        source = template.template(self.runner.basedir, source, inject)
+        dest = os.path.expanduser(dest)
+        source = template.template(self.runner.basedir, os.path.expanduser(source), inject)
         if copy:
             if '_original_file' in inject:
                 source = utils.path_dwim_relative(inject['_original_file'], 'files', source, self.runner.basedir)
