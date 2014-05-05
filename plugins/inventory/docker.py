@@ -299,7 +299,7 @@ def list_groups():
 
             try:
                 port = client.port(container, ssh_port)[0]
-            except (IndexError, AttributeError):
+            except (IndexError, AttributeError, TypeError):
                 port = dict()
 
             try:
