@@ -81,6 +81,14 @@ options:
      required: false
      default: None
      version_added: "1.5"
+   insecure:
+     description:
+       - Allow Neutron client to continue when server SSL certificate can not be validated
+     required: false
+     default: False
+     version_added: "1.6"
+
+
 requirements: ["novaclient", "quantumclient", "neutronclient", "keystoneclient"]
 '''
 
@@ -96,7 +104,8 @@ def _get_ksclient(module, kwargs):
         kclient = ksclient.Client(username=kwargs.get('login_username'),
                                  password=kwargs.get('login_password'),
                                  tenant_name=kwargs.get('login_tenant_name'),
-                                 auth_url=kwargs.get('auth_url'))
+                                 auth_url=kwargs.get('auth_url'),
+                                 insecure=module.params['insecure'])
     except Exception, e:
         module.fail_json(msg = "Error authenticating to the keystone: %s " % e.message)
     global _os_keystone
@@ -117,7 +126,8 @@ def _get_neutron_client(module, kwargs):
     endpoint = _get_endpoint(module, _ksclient)
     kwargs = {
             'token': token,
-            'endpoint_url': endpoint
+            'endpoint_url': endpoint,
+            'insecure':     module.params['insecure']
     }
     try:
         neutron = client.Client('2.0', **kwargs)
@@ -225,6 +235,7 @@ def main():
             instance_name                   = dict(required=True),
             state                           = dict(default='present', choices=['absent', 'present']),
             internal_network_name           = dict(default=None),
+            insecure                        = dict(default=False, type='bool')
         ),
     )
 
