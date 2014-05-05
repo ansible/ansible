@@ -103,6 +103,16 @@ options:
         - Whether the state should be marked as up or down
      required: false
      default: true
+   insecure:
+     description:
+       - Allow Neutron client to continue when a valid SSL certificate is not used by the server
+     required: false
+     default: False
+   exclude_vars:
+     description:
+       - A comma delimeted list of variable names not to send to neutron when creating network
+    required: false
+    default: none
 requirements: ["quantumclient", "neutronclient", "keystoneclient"]
 
 '''
