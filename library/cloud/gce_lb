@@ -88,7 +88,6 @@ options:
     description:
       - the GCE region where the load-balancer is defined
     required: false
-    choices: ["us-central1", "us-central2", "europe-west1"]
   external_ip:
     description:
       - the external static IPv4 (or auto-assigned) address for the LB
