@@ -225,8 +225,8 @@ def _create_network(module, neutron):
         network.pop('provider:physical_network', None)
         network.pop('provider:segmentation_id', None)
 
-    for item in network:
-        if item in module.params['exclude_vars']:
+    if module.params['exclude_vars'] is not None:
+        for item in module.params['exclude_vars']:
             network.pop(item,None)
 
     try:
