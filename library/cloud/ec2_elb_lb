@@ -204,32 +204,37 @@ class ElbManager(object):
             self._delete_elb()
 
     def get_info(self):
-        if not self.elb:
+        try:
+            check_elb = self.elb_conn.get_all_load_balancers(self.name)[0]
+        except:
+            check_elb = None
+
+        if not check_elb:
             info = {
                 'name': self.name,
                 'status': self.status
             }
         else:
             info = {
-                'name': self.elb.name,
-                'dns_name': self.elb.dns_name,
-                'zones': self.elb.availability_zones,
-                'security_group_ids': self.elb.security_groups,
+                'name': check_elb.name,
+                'dns_name': check_elb.dns_name,
+                'zones': check_elb.availability_zones,
+                'security_group_ids': check_elb.security_groups,
                 'status': self.status
             }
 
-            if self.elb.health_check:
+            if check_elb.health_check:
                 info['health_check'] = {
-                    'target': self.elb.health_check.target,
-                    'interval': self.elb.health_check.interval,
-                    'timeout': self.elb.health_check.timeout,
-                    'healthy_threshold': self.elb.health_check.healthy_threshold,
-                    'unhealthy_threshold': self.elb.health_check.unhealthy_threshold,
+                    'target': check_elb.health_check.target,
+                    'interval': check_elb.health_check.interval,
+                    'timeout': check_elb.health_check.timeout,
+                    'healthy_threshold': check_elb.health_check.healthy_threshold,
+                    'unhealthy_threshold': check_elb.health_check.unhealthy_threshold,
                 }
 
-            if self.elb.listeners:
+            if check_elb.listeners:
                 info['listeners'] = [l.get_complex_tuple()
-                                     for l in self.elb.listeners]
+                                     for l in check_elb.listeners]
             elif self.status == 'created':
                 # When creating a new ELB, listeners don't show in the
                 # immediately returned result, so just include the
@@ -366,11 +371,23 @@ class ElbManager(object):
         return tuple(listener_list)
 
     def _enable_zones(self, zones):
-        self.elb_conn.enable_availability_zones(self.name, zones)
+        try:
+            self.elb.enable_zones(zones)
+        except boto.exception.BotoServerError, e:
+            if "Invalid Availability Zone" in e.error_message:
+                self.module.fail_json(msg=e.error_message)
+            else:
+                self.module.fail_json(msg="an unknown server error occurred, please try again later")
         self.changed = True
 
     def _disable_zones(self, zones):
-        self.elb_conn.disable_availability_zones(self.name, zones)
+        try:
+            self.elb.disable_zones(zones)
+        except boto.exception.BotoServerError, e:
+            if "Invalid Availability Zone" in e.error_message:
+                self.module.fail_json(msg=e.error_message)
+            else:
+                self.module.fail_json(msg="an unknown server error occurred, please try again later")
         self.changed = True
 
     def _set_zones(self):
