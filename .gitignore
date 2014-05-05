@@ -49,3 +49,4 @@ coverage.xml
 venv
 Vagrantfile
 .vagrant
+ansible.egg-info/
