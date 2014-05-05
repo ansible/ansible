@@ -3,25 +3,23 @@ Variables
 
 .. contents:: Topics
 
-While automation exists to make it easier to make things repeatable, all of your systems are likely not exactly alike.
+While automation exists to make it easier to make things repeatable, your systems are probably not exactly alike.
 
-All of your systems are likely not the same.  On some systems you may want to set some behavior
-or configuration that is slightly different from others. 
+On some systems you may want to set some behavior or configuration that is slightly different from others. 
 
-Also, some of the observed behavior or state 
-of remote systems might need to influence how you configure those systems.  (Such as you might need to find out the IP
-address of a system and even use it as a configuration value on another system).
+Also, some of the observed behavior or state of remote systems might need to influence how you configure those systems.  
+(Such as you might need to find out the IP address of a system and even use it as a configuration value on another system).
 
-You might have some templates for configuration files that are mostly the same, but slightly different
-based on those variables.  
+You might have templates for configuration files that are mostly the same, but slightly different based on those variables.  
 
 Variables in Ansible are how we deal with differences between systems.  
 
-Once understanding variables you'll also want to dig into :doc:`playbooks_conditionals` and :doc:`playbooks_loops`.
-Useful things like the "group_by" module
-and the "when" conditional can also be used with variables, and to help manage differences between systems.
+Once you understand variables, you'll also want to dig into :doc:`playbooks_conditionals` and :doc:`playbooks_loops`.
+Useful things like the "group_by" module and the "when" conditional can also be used with variables, and to help manage 
+differences between systems.
 
-It's highly recommended that you consult the ansible-examples github repository to see a lot of examples of variables put to use.
+It's highly recommended that you consult the ansible-examples github repository to see a lot of examples of variables put 
+to use.
 
 .. _valid_variable_names:
 
@@ -81,9 +79,8 @@ Using Variables: About Jinja2
 
 It's nice enough to know about how to define variables, but how do you use them?
 
-Ansible allows you to
-reference variables in your playbooks using the Jinja2 templating system.  While you can do a lot of complex
-things in Jinja, only the basics are things you really need to learn at first.
+Ansible allows you to reference variables in your playbooks using the Jinja2 templating system.  While you can do a 
+lot of complex things in Jinja, only the basics are things you really need to learn at first.
 
 For instance, in a simple template, you can do something like::
 
