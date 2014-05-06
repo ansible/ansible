@@ -76,7 +76,6 @@ options:
         the expanded line parameter.
   insertafter:
     required: false
-    default: EOF
     description:
       - Used with C(state=present). If specified, the line will be inserted
         after the specified regular expression. A special value is
@@ -345,18 +344,12 @@ def main():
         if params.get('line', None) is None:
             module.fail_json(msg='line= is required with state=present')
 
-        # Deal with the insertafter default value manually, to avoid errors
-        # because of the mutually_exclusive mechanism.
-        ins_bef, ins_aft = params['insertbefore'], params['insertafter']
-        if ins_bef is None and ins_aft is None:
-            ins_aft = 'EOF'
-
         # Replace the newline character with an actual newline. Don't replace
 		# escaped \\n, hence sub and not str.replace.
         line = re.sub(r'\n', os.linesep, params['line'])
 
         present(module, dest, params['regexp'], line,
-                ins_aft, ins_bef, create, backup, backrefs)
+                params['insertafter'], params['insertbefore'], create, backup, backrefs)
     else:
         if params['regexp'] is None and params.get('line', None) is None:
             module.fail_json(msg='one of line= or regexp= is required with state=absent')
