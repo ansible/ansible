@@ -231,6 +231,10 @@ class Ec2Inventory(object):
         self.cache_path_index = cache_dir + "/ansible-ec2.index"
         self.cache_max_age = config.getint('ec2', 'cache_max_age')
 
+        if config.has_option('ec2', 'treat_csv_in_tags_as_multiple'):
+            self.explode_csv = config.getboolean('ec2', 'treat_csv_in_tags_as_multiple')
+        else:
+            self.explode_csv = False
 
 
     def parse_cli_args(self):
@@ -371,7 +375,7 @@ class Ec2Inventory(object):
 
         # Inventory: Group by tag keys
         for k, v in instance.tags.iteritems():
-            if ',' in v:
+            if self.explode_csv and ',' in v:
                 v = v.split(',')
                 for value in v:
                     key = self.to_safe("tag_" + k + "=" + value)
@@ -520,7 +524,7 @@ class Ec2Inventory(object):
                 instance_vars['ec2_placement'] = value.zone
             elif key == 'ec2_tags':
                 for k, v in value.iteritems():
-                    if ',' in v:
+                    if self.explode_csv and ',' in v:
                         v = v.split(',')
 
                     key = self.to_safe('ec2_tag_' + k)
