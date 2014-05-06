@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #coding: utf-8 -*-
 
-# (c) 2013, Christian Berendt <berendt@b1-systems.de>
+# (c) 2013-2014, Christian Berendt <berendt@b1-systems.de>
 #
 # This module is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -44,39 +44,31 @@ EXAMPLES = '''
 - apache2_module: state=absent name=wsgi
 '''
 
-def _module_is_enabled(module):
-    name = module.params['name']
-    a2enmod_binary = module.get_bin_path("a2enmod")
-    result, stdout, stderr = module.run_command("%s -q %s" % (a2enmod_binary, name))
-    return result == 0
-
-def _module_is_disabled(module):
-    return _module_is_enabled(module) == False
+import re
 
 def _disable_module(module):
     name = module.params['name']
+    a2dismod_binary = module.get_bin_path("a2dismod")
+    result, stdout, stderr = module.run_command("%s %s" % (a2dismod_binary, name))
 
-    if _module_is_disabled(module):
+    if re.match(r'.*already disabled.*', stdout):
         module.exit_json(changed = False, result = "Success")
-
-    result, stdout, stderr  = module.run_command("a2dismod %s" % name)
-    if result != 0: 
+    elif result != 0: 
         module.fail_json(msg="Failed to disable module %s: %s" % (name, stdout))
-
-    module.exit_json(changed = True, result = "Disabled")
+    else:
+        module.exit_json(changed = True, result = "Disabled")
 
 def _enable_module(module):
     name = module.params['name']
-
-    if _module_is_enabled(module):
-        module.exit_json(changed = False, result = "Success")
-
     a2enmod_binary = module.get_bin_path("a2enmod")
     result, stdout, stderr = module.run_command("%s %s" % (a2enmod_binary, name))
-    if result != 0: 
-        module.fail_json(msg="Failed to enable module %s: %s" % (name, stdout))
 
-    module.exit_json(changed = True, result = "Enabled")
+    if re.match(r'.*already enabled.*', stdout):
+        module.exit_json(changed = False, result = "Success")
+    elif result != 0: 
+        module.fail_json(msg="Failed to enable module %s: %s" % (name, stdout))
+    else:
+        module.exit_json(changed = True, result = "Enabled")
 
 def main():
     module = AnsibleModule(
@@ -95,4 +87,3 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 main()
-
