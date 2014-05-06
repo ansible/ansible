@@ -43,8 +43,14 @@ options:
     default: true
   zones:
     description:
-      - List of availability zones to enable on this ELB
+      - List of availability zones to enable on this ELB (mutually exclusive with vpc_subnet_ids)
     required: false
+  purge_vpc_subnet_ids:
+    description:
+      - Purge existing VPC subnets on ELB that are not found in vpc_subnet_ids
+    required: false
+    default: false
+    version_added: "1.6"
   purge_zones:
     description:
       - Purge existing availability zones on ELB that are not found in zones
@@ -67,6 +73,13 @@ options:
     required: false
     aliases: ['aws_region', 'ec2_region']
 extends_documentation_fragment: aws
+  vpc_subnet_ids:
+    description:
+      - The VPC subnets to connect to (mutually exclusive with zones)
+    required: false
+    default: None
+    aliases: []
+    version_added: "1.6"
 """
 
 EXAMPLES = """
@@ -168,13 +181,16 @@ class ElbManager(object):
     """Handles ELB creation and destruction"""
 
     def __init__(self, module, name, listeners=None, purge_listeners=None,
-                 zones=None, purge_zones=None, security_group_ids=None, health_check=None,
+                 vpc_subnet_ids=None, zones=None, purge_vpc_subnet_ids=None,
+                 purge_zones=None, security_group_ids=None, health_check=None,
                  region=None, **aws_connect_params):
         self.module = module
         self.name = name
         self.listeners = listeners
         self.purge_listeners = purge_listeners
+        self.vpc_subnet_ids = vpc_subnet_ids
         self.zones = zones
+        self.purge_vpc_subnet_ids = purge_vpc_subnet_ids
         self.purge_zones = purge_zones
         self.security_group_ids = security_group_ids
         self.health_check = health_check
@@ -193,7 +209,10 @@ class ElbManager(object):
             # Zones and listeners will be added at creation
             self._create_elb()
         else:
-            self._set_zones()
+            if self.vpc_subnet_ids:
+              self._set_vpc_subnet_ids()
+            if self.zones:
+              self._set_zones()
             self._set_security_groups()
             self._set_elb_listeners()
         self._set_health_check()
@@ -213,6 +232,7 @@ class ElbManager(object):
             info = {
                 'name': self.elb.name,
                 'dns_name': self.elb.dns_name,
+                'vpc_subnet_ids': self.elb.subnets,
                 'zones': self.elb.availability_zones,
                 'security_group_ids': self.elb.security_groups,
                 'status': self.status
@@ -249,7 +269,7 @@ class ElbManager(object):
 
     def _get_elb_connection(self):
         try:
-            return connect_to_aws(boto.ec2.elb, self.region, 
+            return connect_to_aws(boto.ec2.elb, self.region,
                                   **self.aws_connect_params)
         except boto.exception.NoAuthHandlerFound, e:
             self.module.fail_json(msg=str(e))
@@ -264,6 +284,7 @@ class ElbManager(object):
     def _create_elb(self):
         listeners = [self._listener_as_tuple(l) for l in self.listeners]
         self.elb = self.elb_conn.create_load_balancer(name=self.name,
+                                                      subnets=self.vpc_subnet_ids,
                                                       zones=self.zones,
                                                       security_groups=self.security_group_ids,
                                                       complex_listeners=listeners)
@@ -365,13 +386,38 @@ class ElbManager(object):
 
         return tuple(listener_list)
 
+    def _enable_vpc_subnet_ids(self, vpc_subnet_ids):
+        self.elb_conn.detach_lb_from_subnets(self.name, vpc_subnet_ids)
+        self.changed = True
+
     def _enable_zones(self, zones):
         self.elb_conn.enable_availability_zones(self.name, zones)
+        self.changed = True
+
+    def _disable_vpc_subnet_ids(self, vpc_subnet_ids):
+        self.elb_conn.attach_lb_to_subnets(self.name, vpc_subnet_ids)
         self.changed = True
 
     def _disable_zones(self, zones):
         self.elb_conn.disable_availability_zones(self.name, zones)
         self.changed = True
+
+    def _set_vpc_subnet_ids(self):
+        """Determine which vpc_subnet_ids need to be enabled or disabled on the ELB"""
+        if self.purge_vpc_subnet_ids:
+            vpc_subnet_ids_to_disable = list(set(self.elb.subnets) -
+                                             set(self.vpc_subnet_ids))
+            vpc_subnet_ids_to_enable = list(set(self.vpc_subnet_ids) -
+                                            set(self.elb.subnets))
+        else:
+            vpc_subnet_ids_to_disable = None
+            vpc_subnet_ids_to_enable = list(set(self.vpc_subnet_ids) -
+                                            set(self.elb.subnets))
+        if vpc_subnet_ids_to_enable:
+            self._enable_vpc_subnet_ids(vpc_subnet_ids_to_enable)
+        # N.B. This must come second, in case it would have removed all vpc_subnet_ids
+        if vpc_subnet_ids_to_disable:
+            self._disable_vpc_subnet_ids(vpc_subnet_ids_to_disable)
 
     def _set_zones(self):
         """Determine which zones need to be enabled or disabled on the ELB"""
@@ -443,7 +489,9 @@ def main():
             name={'required': True},
             listeners={'default': None, 'required': False, 'type': 'list'},
             purge_listeners={'default': True, 'required': False, 'type': 'bool'},
+            vpc_subnet_ids={'default': None, 'required': False, 'type': 'list'},
             zones={'default': None, 'required': False, 'type': 'list'},
+            purge_vpc_subnet_ids={'default': False, 'required': False, 'type': 'bool'},
             purge_zones={'default': False, 'required': False, 'type': 'bool'},
             security_group_ids={'default': None, 'required': False, 'type': 'list'},
             health_check={'default': None, 'required': False, 'type': 'dict'},
@@ -462,7 +510,9 @@ def main():
     state = module.params['state']
     listeners = module.params['listeners']
     purge_listeners = module.params['purge_listeners']
+    vpc_subnet_ids = module.params['vpc_subnet_ids']
     zones = module.params['zones']
+    purge_vpc_subnet_ids = module.params['purge_vpc_subnet_ids']
     purge_zones = module.params['purge_zones']
     security_group_ids = module.params['security_group_ids']
     health_check = module.params['health_check']
@@ -470,11 +520,15 @@ def main():
     if state == 'present' and not listeners:
         module.fail_json(msg="At least one port is required for ELB creation")
 
-    if state == 'present' and not zones:
-        module.fail_json(msg="At least one availability zone is required for ELB creation")
+    if state == 'present' and not (vpc_subnet_ids or zones):
+        module.fail_json(msg="At least one subnet or availability zone is required for ELB creation")
 
-    elb_man = ElbManager(module, name, listeners, purge_listeners, zones,
-                         purge_zones, security_group_ids, health_check, 
+    if vpc_subnet_ids and zones:
+        module.fail_json(msg="An ELB can not have zones and vpc_subnet_ids")
+
+    elb_man = ElbManager(module, name, listeners, purge_listeners,
+                         vpc_subnet_ids, zones, purge_vpc_subnet_ids,
+                         purge_zones, security_group_ids, health_check,
                          region=region, **aws_connect_params)
 
     if state == 'present':
