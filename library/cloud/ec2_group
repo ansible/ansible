@@ -44,6 +44,13 @@ options:
     required: false
     default: 'present'
     aliases: []
+  create_group_only:
+    version_added: "1.6"
+    description:
+      - Only create a group, do not add any rules to it.
+    required: false
+    default: false
+    aliases: []
 
 extends_documentation_fragment: aws
 
@@ -90,6 +97,27 @@ EXAMPLES = '''
         group_name: example-other
         # description to use if example-other needs to be created
         group_desc: other example EC2 group
+
+- name: group with circular depdendencies
+  local_action:
+    module: ec2_group
+    name: example_1
+    description: another example EC2 group
+    vpc_id: 123
+    region: ap-southeast-1a
+    create_group_only: true
+  register: ec2_group_example_1
+
+- name: rules for example1
+  local_action:
+    module: ec2_group
+    name: example_1
+    description: another example EC2 group
+    vpc_id: 123
+    region: ap-southeast-1a
+    rules:
+      - proto: all
+        group_id: "{{ ec2_group_example_1.group_id }}"
 '''
 
 try:
@@ -163,6 +191,7 @@ def main():
             rules=dict(),
             rules_egress=dict(),
             state = dict(default='present', choices=['present', 'absent']),
+            create_group_only = dict(default=False, choices=[True, False]),
         )
     )
     module = AnsibleModule(
@@ -176,6 +205,7 @@ def main():
     rules = module.params['rules']
     rules_egress = module.params['rules_egress']
     state = module.params.get('state')
+    create_group_only = module.params.get('create_group_only')
 
     changed = False
 
@@ -236,7 +266,7 @@ def main():
         module.fail_json(msg="Unsupported state requested: %s" % state)
 
     # create a lookup for all existing rules on the group
-    if group:
+    if group and not create_group_only:
 
         # Manage ingress rules
         groupRules = {}
@@ -314,7 +344,7 @@ def main():
                                 cidr_ip=ip)
                     changed = True
         elif vpc_id and not module.check_mode:
-            # when using a vpc, but no egress rules are specified, 
+            # when using a vpc, but no egress rules are specified,
             # we add in a default allow all out rule, which was the
             # default behavior before egress rules were added
             if 'out--1-None-None-None-0.0.0.0/0' not in groupRules:
