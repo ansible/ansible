@@ -1,7 +1,7 @@
 Ansible Changes By Release
 ==========================
 
-## 1.6 "And the Cradle Will Rock" - Active Development
+## 1.6 "And the Cradle Will Rock"
 
 Major features/changes:
 
