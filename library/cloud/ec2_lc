@@ -24,6 +24,13 @@ description:
 version_added: "1.6"
 author: Gareth Rushgrove
 options:
+  assign_public_ip:
+    description:
+      - associate a public IP with instances
+      required: false
+      choices: ['true', 'false']
+      default: 'true'
+    aliases: []
   state:
     description:
       - register or deregister the instance
@@ -59,6 +66,12 @@ options:
   volumes:
     description:
       - a list of volume dicts, each containing device name and optionally ephemeral id or snapshot id. Size and type (and number of iops for io device type) must be specified for a new volume or a root volume, and may be passed for a snapshot volume. For any volume, a volume size less than 1 will be interpreted as a request not to create the volume.
+    required: false
+    default: null
+    aliases: []
+  spot_price:
+    description:
+      - use spot pricing with the given max price
     required: false
     default: null
     aliases: []
@@ -119,6 +132,7 @@ def create_block_device(module, volume):
 
 
 def create_launch_config(connection, module):
+    assign_public_ip = module.params.get('assign_public_ip')
     name = module.params.get('name')
     image_id = module.params.get('image_id')
     key_name = module.params.get('key_name')
@@ -138,6 +152,7 @@ def create_launch_config(connection, module):
                 bdm[volume['device_name']] = create_block_device(module, volume)
 
     lc = LaunchConfiguration(
+        associate_public_ip_address=assign_public_ip,
         name=name,
         image_id=image_id,
         key_name=key_name,
@@ -176,10 +191,12 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
+            assign_public_ip=dict(type='bool', default=True),
             name=dict(required=True, type='str'),
             image_id=dict(type='str'),
             key_name=dict(type='str'),
             security_groups=dict(type='list'),
+            spot_price=dict(type='int', default=None),
             user_data=dict(type='str'),
             volumes=dict(type='list'),
             instance_type=dict(type='str'),
