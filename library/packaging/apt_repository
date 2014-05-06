@@ -83,10 +83,11 @@ import tempfile
 try:
     import apt
     import apt_pkg
-    import aptsources.distro
-    distro = aptsources.distro.get_distro()
+    import aptsources.distro as aptsources_distro
+    distro = aptsources_distro.get_distro()
     HAVE_PYTHON_APT = True
 except ImportError:
+    distro = None
     HAVE_PYTHON_APT = False
 
 
@@ -97,11 +98,16 @@ def install_python_apt(module):
     if not module.check_mode:
         apt_get_path = module.get_bin_path('apt-get')
         if apt_get_path:
-            rc, so, se = module.run_command('%s update && %s install python-apt -y -q' % (apt_get_path, apt_get_path))
+            rc, so, se = module.run_command('%s update && %s install python-apt -y -q' % (apt_get_path, apt_get_path), use_unsafe_shell=True)
             if rc == 0:
-                global apt, apt_pkg
+                global apt, apt_pkg, aptsources_distro, distro, HAVE_PYTHON_APT
                 import apt
                 import apt_pkg
+                import aptsources.distro as aptsources_distro
+                distro = aptsources_distro.get_distro()
+                HAVE_PYTHON_APT = True
+            else:
+                module.fail_json(msg="Failed to auto-install python-apt. Error was: '%s'" % se.strip())
 
 class InvalidSource(Exception):
     pass
@@ -382,14 +388,16 @@ def main():
     update_cache = module.params['update_cache']
     sourceslist = None
 
-    if isinstance(distro, aptsources.distro.UbuntuDistribution):
-        sourceslist = UbuntuSourcesList(module,
-                                        add_ppa_signing_keys_callback=get_add_ppa_signing_key_callback(module))
-    elif isinstance(distro, aptsources.distro.DebianDistribution) or \
-            isinstance(distro, aptsources.distro.Distribution):
-        sourceslist = SourcesList()
+    if HAVE_PYTHON_APT:
+        if isinstance(distro, aptsources_distro.UbuntuDistribution):
+            sourceslist = UbuntuSourcesList(module,
+                add_ppa_signing_keys_callback=get_add_ppa_signing_key_callback(module))
+        elif HAVE_PYTHON_APT and \
+            isinstance(distro, aptsources_distro.DebianDistribution) or isinstance(distro, aptsources_distro.Distribution):
+            sourceslist = SourcesList()
     else:
-        module.fail_json(msg='Module apt_repository supports only Debian and Ubuntu.')
+        module.fail_json(msg='Module apt_repository supports only Debian and Ubuntu. ' + \
+                             'You may be seeing this because python-apt is not installed, but you requested that it not be auto-installed')
 
     sources_before = sourceslist.dump()
 
