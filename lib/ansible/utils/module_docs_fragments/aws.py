@@ -21,6 +21,15 @@ class ModuleDocFragment(object):
     # AWS only documentation fragment
     DOCUMENTATION = """
 options:
+  region:
+    description:
+      - The AWS region to use.  Must be specified if ec2_url is not used. If not specified then the value of the EC2_REGION environment variable, if any, is used.
+    required: false
+    default: null
+    choices: ['ap-northeast-1', 'ap-southeast-1', 'ap-southeast-2', 'eu-west-1', 'sa-east-1', 'us-east-1', 'us-west-1', 'us-west-2']
+
+    aliases: [ 'aws_region', 'ec2_region' ]
+    version_added: "1.2"
   ec2_url:
     description:
       - Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints).  Must be specified if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used

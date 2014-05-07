@@ -61,11 +61,6 @@ options:
       - An associative array of health check configuration settigs (see example)
     require: false
     default: None
-  region:
-    description:
-      - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
-    required: false
-    aliases: ['aws_region', 'ec2_region']
 extends_documentation_fragment: aws
 """
 
