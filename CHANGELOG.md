@@ -1,7 +1,14 @@
 Ansible Changes By Release
 ==========================
 
-## 1.6 "And the Cradle Will Rock"
+## 1.6.1 "And the Cradle Will Rock" - May 7, 2014
+
+- Fixed a bug in group_by, where systems were being grouped incorrectly.
+- Fixed a bug where file descriptors may leak to a child process when using accelerate.
+- Fixed a bug in apt_repository triggered when python-apt not being installed/available.
+- Fixed a bug in the apache2_module module, where modules were not being disabled correctly.
+
+## 1.6 "And the Cradle Will Rock" - May 5, 2014
 
 Major features/changes:
 
