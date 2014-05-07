@@ -73,14 +73,6 @@ options:
     required: false
     default: null
     version_added: "1.5"
-  validate_certs:
-    description:
-      - When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
-    required: false
-    default: "yes"
-    choices: ["yes", "no"]
-    aliases: []
-    version_added: "1.5"
   state:
     description: 
       - whether to ensure the volume is present or absent
