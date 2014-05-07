@@ -27,7 +27,7 @@ short_description: a wrapper to the unix getent utility
 description:
      - Runs getent against one of it's various databases and returns information into
        the host's facts
-version_added: "1.6"
+version_added: "1.7"
 options:
     database:
         required: True
