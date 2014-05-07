@@ -14,7 +14,7 @@ else
 CREDENTIALS_ARG =
 endif
 
-all: non_destructive destructive check_mode test_hash test_handlers
+all: non_destructive destructive check_mode test_hash test_handlers test_group_by
 
 non_destructive:
 	ansible-playbook non_destructive.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
@@ -24,6 +24,9 @@ destructive:
 
 check_mode:
 	ansible-playbook check_mode.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v --check $(TEST_FLAGS)
+
+test_group_by:
+	ansible-playbook test_group_by.yml -i inventory.group_by -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
 test_handlers:
 	ansible-playbook test_handlers.yml -i inventory.handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
