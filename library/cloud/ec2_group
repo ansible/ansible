@@ -31,12 +31,6 @@ options:
       - List of firewall outbound rules to enforce in this group (see example).
     required: false
     version_added: "1.6"
-  region:
-    description:
-      - the EC2 region to use
-    required: false
-    default: null
-    aliases: []
   state:
     version_added: "1.4"
     description:

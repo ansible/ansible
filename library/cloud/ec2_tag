@@ -35,12 +35,6 @@ options:
     default: present
     choices: ['present', 'absent', 'list']
     aliases: []
-  region:
-    description:
-      - region in which the resource exists. 
-    required: false
-    default: null
-    aliases: ['aws_region', 'ec2_region']
 
 author: Lester Wade
 extends_documentation_fragment: aws
