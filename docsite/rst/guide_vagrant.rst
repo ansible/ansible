@@ -93,8 +93,8 @@ Sometimes you may want to run Ansible manually against the machines. This is
 pretty easy to do.
 
 Vagrant automatically creates an inventory file for each Vagrant machine in
-the same directory called ``vagrant_ansible_inventory_machinename``. It
-configures the inventory file according to the SSH tunnel that Vagrant
+the same directory located under ``.vagrant/provisioners/ansible/inventory/vagrant_ansible_inventory``.
+It configures the inventory file according to the SSH tunnel that Vagrant
 automatically creates, and executes ``ansible-playbook`` with the correct
 username and SSH key options to allow access. A typical automatically-created
 inventory file may look something like this:
@@ -114,7 +114,7 @@ Here is an example:
 
 .. code-block:: bash
    
-    $ ansible-playbook -i vagrant_ansible_inventory_machinename --private-key=~/.vagrant.d/insecure_private_key -u vagrant playbook.yml
+    $ ansible-playbook -i .vagrant/provisioners/ansible/inventory/vagrant_ansible_inventory --private-key=~/.vagrant.d/insecure_private_key -u vagrant playbook.yml
 
 .. seealso::
 
