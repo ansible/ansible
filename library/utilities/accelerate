@@ -479,7 +479,7 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
         if executable:
             use_unsafe_shell = True
 
-        rc, stdout, stderr = self.server.module.run_command(data['cmd'], executable=executable, use_unsafe_shell=use_unsafe_shell)
+        rc, stdout, stderr = self.server.module.run_command(data['cmd'], executable=executable, use_unsafe_shell=use_unsafe_shell, close_fds=True)
         if stdout is None:
             stdout = ''
         if stderr is None:
