@@ -158,7 +158,7 @@ EXAMPLES = '''
     register: ec2_vol
 
 # Remove a volume
-- location: action
+- local_action:
     module: ec2_vol
     id: vol-XXXXXXXX
     state: absent
