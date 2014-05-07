@@ -30,7 +30,7 @@ options:
   state:
     description:
       - If C(directory), all immediate subdirectories will be created if they
-        do not exist, since 1.6 they will be created with the supplied permissions.
+        do not exist, since 1.7 they will be created with the supplied permissions.
         If C(file), the file will NOT be created if it does not exist, see the M(copy)
         or M(template) module if you want that behavior.  If C(link), the symbolic
         link will be created or changed. Use C(hard) for hardlinks. If C(absent),
