@@ -17,23 +17,29 @@
 DOCUMENTATION = '''
 ---
 module: ec2_tag 
-short_description: create and remove tag(s) to ec2 resources.
+short_description: create, remove and search tag(s) on ec2 resources.
 description:
-    - Creates, removes and lists tags from any EC2 resource.  The resource is referenced by its resource id (e.g. an instance being i-XXXXXXX). It is designed to be used with complex args (tags), see the examples.  This module has a dependency on python-boto.
+    - Creates, removes, lists and searches for tags on any EC2 resource.  When creating, removing or listing tags, the resource is referenced by its resource id (e.g. an instance being i-XXXXXXX). It is designed to be used with complex args (tags), see the examples.  This module has a dependency on python-boto.
 version_added: "1.3"
 options:
   resource:
     description:
       - The EC2 resource id. 
     required: true
-    default: null 
+    default: null
+    aliases: []
+  resource_type:
+    description:
+      - This option is only used when state is search. If specified, searches are constrained to only resources of the specified type.  The valid types are listed under "resource-type" in the I(Supported Filters) section at U(http://docs.aws.amazon.com/AWSEC2/latest/CommandLineReference/ApiReference-cmd-DescribeTags.html).
+    required: false
+    default: null
     aliases: []
   state:
     description:
-      - Whether the tags should be present or absent on the resource. Use list to interrogate the tags of an instance.
+      - Whether the tags should be present or absent on the resource. Use list to interrogate the tags of an instance.  You can also use search to find a list of resources that have all of the specified tags. When state is search, if items have been found, found_items returns True.
     required: false
     default: present
-    choices: ['present', 'absent', 'list']
+    choices: ['present', 'absent', 'list', 'search']
     aliases: []
   region:
     description:
@@ -69,6 +75,20 @@ tasks:
     tags:
       Name: webserver
       env: prod
+
+# Example to find and list EBS volumes with specific tags
+tasks:
+- name: find registry volumes in prod
+  ec2_tag: state=search resource_type='volume' region=eu-west-1
+  register: registry_vols
+  args:
+    tags:
+      env:      prod
+      registry: ''
+
+- name: list volumes
+  debug: var=registry_vols.results
+  when:  registry_vols.found_items
 '''
 
 # Note: this module needs to be made idempotent. Possible solution is to use resource tags with the volumes.
@@ -88,16 +108,21 @@ except ImportError:
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            resource = dict(required=True),
+            resource = dict(),
+            resource_type = dict(),
             tags = dict(),
-            state = dict(default='present', choices=['present', 'absent', 'list']),
+            state = dict(default='present', choices=['present', 'absent', 'list','search']),
         )
     )
     module = AnsibleModule(argument_spec=argument_spec)
 
     resource = module.params.get('resource')
+    resource_type = module.params.get('resource_type')
     tags = module.params.get('tags')
     state = module.params.get('state')
+
+    if state != 'search' and not resource:
+        module.fail_json(msg="resource argument is required when state is not search")
   
     ec2 = ec2_connect(module)
     
@@ -105,6 +130,7 @@ def main():
     # Need to expand the gettags return format and compare with "tags" and then tag or detag as appropriate.
     filters = {'resource-id' : resource}
     gettags = ec2.get_all_tags(filters=filters)
+
    
     dictadd = {}
     dictremove = {}
@@ -143,6 +169,35 @@ def main():
 
     if state == 'list':
         module.exit_json(changed=False, **tagdict)
+
+    if state == 'search':
+        if resource:
+            module.fail_json(msg='resource argument not used when state is set to search.')
+        if not tags:
+            module.fail_json(msg="tags argument is required when state is search")
+
+        all_matches = []
+        sfilters = [ {'key': i[0], 'value': i[1]} for i in tags.items() ]
+
+        if resource_type:
+            sfilters.append( {'resource-type': resource_type} )
+
+        for fltr in sfilters:
+            all_matches.append(
+                [ (r.res_id, r.res_type) for r in ec2.get_all_tags(fltr) ])
+        resources = list(frozenset.intersection(*map(frozenset, all_matches)))
+
+        if not resources:
+            module.exit_json(results=[], found_items=False, changed=False)
+
+        if resource_type:
+            results = [ i[0] for i in resources ]
+        else:
+            results = { e:[] for e in set(map(lambda r: r[1], resources)) }
+            map(lambda r: results[r[1]].append(r[0]), resources)
+
+        module.exit_json(results=results, found_items=True, changed=False)
+
     sys.exit(0)
 
 # import module snippets
