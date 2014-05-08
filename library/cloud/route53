@@ -223,7 +223,7 @@ def main():
         # Due to a bug in either AWS or Boto, "special" characters are returned as octals, preventing round
         # tripping of things like * and @.
         decoded_name = rset.name.replace(r'\052', '*')
-        decoded_name = rset.name.replace(r'\100', '@')
+        decoded_name = decoded_name.replace(r'\100', '@')
 
         if rset.type == type_in and decoded_name == record_in:
             found_record = True
