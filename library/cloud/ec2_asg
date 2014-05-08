@@ -122,7 +122,7 @@ def create_autoscaling_group(connection, module):
     vpc_zone_identifier = module.params.get('vpc_zone_identifier')
 
     launch_configs = connection.get_all_launch_configurations(names=[launch_config_name])
-    
+
     as_groups = connection.get_all_groups(names=[group_name])
 
     if not vpc_zone_identifier and not availability_zones:
@@ -147,7 +147,8 @@ def create_autoscaling_group(connection, module):
 
         try:
             connection.create_auto_scaling_group(ag)
-            module.exit_json(changed=True)
+            changed=True
+            as_groups = connection.get_all_groups(names=[group_name])
         except BotoServerError, e:
             module.fail_json(msg=str(e))
     else:
@@ -167,9 +168,25 @@ def create_autoscaling_group(connection, module):
         try:
             if changed:
                 as_group.update()
-            module.exit_json(changed=changed)
         except BotoServerError, e:
             module.fail_json(msg=str(e))
+    result = as_groups[0]
+    module.exit_json(changed=changed, name=result.name,
+        autoscaling_group_arn=result.autoscaling_group_arn,
+        availability_zones=result.availability_zones,
+        created_time=str(result.created_time),
+        default_cooldown=result.default_cooldown,
+        health_check_period=result.health_check_period,
+        health_check_type=result.health_check_type,
+        instance_id=result.instance_id,
+        instances=[instance.instance_id for instance in result.instances],
+        launch_config_name=result.launch_config_name,
+        load_balancers=result.load_balancers,
+        min_size=result.min_size, max_size=result.max_size,
+        placement_group=result.placement_group,
+        tags=result.tags,
+        termination_policies=result.termination_policies,
+        vpc_zone_identifier=result.vpc_zone_identifier)
 
 
 def delete_autoscaling_group(connection, module):
