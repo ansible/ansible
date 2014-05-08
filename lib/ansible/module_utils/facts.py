@@ -17,11 +17,13 @@
 
 import os
 import array
+import errno
 import fcntl
 import fnmatch
 import glob
 import platform
 import re
+import signal
 import socket
 import struct
 import datetime
@@ -39,6 +41,33 @@ try:
     import json
 except ImportError:
     import simplejson as json
+
+# --------------------------------------------------------------
+# timeout function to make sure some fact gathering 
+# steps do not exceed a time limit
+
+class TimeoutError(Exception):
+    pass
+
+def timeout(seconds=10, error_message="Timer expired"):
+    def decorator(func):
+        def _handle_timeout(signum, frame):
+            raise TimeoutError(error_message)
+
+        def wrapper(*args, **kwargs):
+            signal.signal(signal.SIGALRM, _handle_timeout)
+            signal.alarm(seconds)
+            try:
+                result = func(*args, **kwargs)
+            finally:
+                signal.alarm(0)
+            return result
+
+        return wrapper
+
+    return decorator
+
+# --------------------------------------------------------------
 
 class Facts(object):
     """
@@ -274,7 +303,9 @@ class Facts(object):
                         self.facts['distribution_release'] = ora_prefix + data
                     elif name == 'SuSE':
                         data = get_file_content(path).splitlines()
-                        self.facts['distribution_release'] = data[2].split('=')[1].strip()
+                        for line in data:
+                            if '=' in line:
+                            	self.facts['distribution_release'] = line.split('=')[1].strip()
                     elif name == 'Debian':
                         data = get_file_content(path).split('\n')[0]
                         release = re.search("PRETTY_NAME.+ \(?([^ ]+?)\)?\"", data)
@@ -498,7 +529,10 @@ class LinuxHardware(Hardware):
         self.get_memory_facts()
         self.get_dmi_facts()
         self.get_device_facts()
-        self.get_mount_facts()
+        try:
+            self.get_mount_facts()
+        except TimeoutError:
+            pass
         return self.facts
 
     def get_memory_facts(self):
@@ -622,6 +656,7 @@ class LinuxHardware(Hardware):
                 else:
                     self.facts[k] = 'NA'
 
+    @timeout(10)
     def get_mount_facts(self):
         self.facts['mounts'] = []
         mtab = get_file_content('/etc/mtab', '')
@@ -919,7 +954,10 @@ class FreeBSDHardware(Hardware):
         self.get_memory_facts()
         self.get_dmi_facts()
         self.get_device_facts()
-        self.get_mount_facts()
+        try:
+            self.get_mount_facts()
+        except TimeoutError:
+            pass
         return self.facts
 
     def get_cpu_facts(self):
@@ -962,6 +1000,7 @@ class FreeBSDHardware(Hardware):
         self.facts['swaptotal_mb'] = data[1]
         self.facts['swapfree_mb'] = data[3]
 
+    @timeout(10)
     def get_mount_facts(self):
         self.facts['mounts'] = []
         fstab = get_file_content('/etc/fstab')
@@ -1041,7 +1080,10 @@ class NetBSDHardware(Hardware):
     def populate(self):
         self.get_cpu_facts()
         self.get_memory_facts()
-        self.get_mount_facts()
+        try:
+            self.get_mount_facts()
+        except TimeoutError:
+            pass
         return self.facts
 
     def get_cpu_facts(self):
@@ -1085,6 +1127,7 @@ class NetBSDHardware(Hardware):
                 val = data[1].strip().split(' ')[0]
                 self.facts["%s_mb" % key.lower()] = long(val) / 1024
 
+    @timeout(10)
     def get_mount_facts(self):
         self.facts['mounts'] = []
         fstab = get_file_content('/etc/fstab')
@@ -1680,7 +1723,9 @@ class GenericBsdIfconfigNetwork(Network):
             if line:
                 words = line.split()
 
-                if re.match('^\S', line) and len(words) > 3:
+                if words[0] == 'pass':
+                    continue
+                elif re.match('^\S', line) and len(words) > 3:
                     current_if = self.parse_interface_line(words)
                     interfaces[ current_if['device'] ] = current_if
                 elif words[0].startswith('options='):
@@ -1707,9 +1752,15 @@ class GenericBsdIfconfigNetwork(Network):
     def parse_interface_line(self, words):
         device = words[0][0:-1]
         current_if = {'device': device, 'ipv4': [], 'ipv6': [], 'type': 'unknown'}
-        current_if['flags'] = self.get_options(words[1])
-        current_if['mtu'] = words[3]
+        current_if['flags']  = self.get_options(words[1])
         current_if['macaddress'] = 'unknown'    # will be overwritten later
+
+        if len(words) >= 5 : # Newer FreeBSD versions
+            current_if['metric'] = words[3]
+            current_if['mtu'] = words[5]
+        else:
+            current_if['mtu'] = words[3]
+
         return current_if
 
     def parse_options_line(self, words, current_if, ips):

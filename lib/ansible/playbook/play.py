@@ -505,7 +505,7 @@ class Play(object):
             included_additional_conditions = list(old_conditions)
 
             if not isinstance(x, dict):
-                raise errors.AnsibleError("expecting dict; got: %s" % x)
+                raise errors.AnsibleError("expecting dict; got: %s, error in %s" % (x, original_file))
 
             # evaluate sudo vars for current and child tasks 
             included_sudo_vars = {}
@@ -855,4 +855,5 @@ class Play(object):
 
         # finally, update the VARS_CACHE for the host, if it is set
         if host is not None:
+            self.playbook.VARS_CACHE[host].update(self.vars)
             self.playbook.VARS_CACHE[host].update(self.playbook.extra_vars)

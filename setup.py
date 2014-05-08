@@ -6,7 +6,12 @@ from glob import glob
 
 sys.path.insert(0, os.path.abspath('lib'))
 from ansible import __version__, __author__
-from distutils.core import setup
+try:
+    from setuptools import setup
+except ImportError:
+    print "Ansible now needs setuptools in order to build. " + \
+          "Install it using your package manager (usually python-setuptools) or via pip (pip install setuptools)."
+    sys.exit(1)
 
 # find library modules
 from ansible.constants import DEFAULT_MODULE_PATH
@@ -29,11 +34,12 @@ setup(name='ansible',
       author_email='michael@ansible.com',
       url='http://ansible.com/',
       license='GPLv3',
-      install_requires=['paramiko', 'jinja2', "PyYAML"],
+      install_requires=['paramiko', 'jinja2', "PyYAML", 'setuptools', 'pycrypto >= 2.6'],
       package_dir={ 'ansible': 'lib/ansible' },
       packages=[
          'ansible',
          'ansible.utils',
+         'ansible.utils.module_docs_fragments',
          'ansible.inventory',
          'ansible.inventory.vars_plugins',
          'ansible.playbook',

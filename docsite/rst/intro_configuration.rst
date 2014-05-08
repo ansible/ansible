@@ -22,7 +22,7 @@ Prior to 1.5 the order was::
     * .ansible.cfg (in the home directory)
     * /etc/ansible/ansible.cfg
 
-Ansible will process the above list and use the first file found. Settings in files are not merged together.
+Ansible will process the above list and use the first file found. Settings in files are not merged.
 
 .. _getting_the_latest_configuration:
 
@@ -228,7 +228,7 @@ hash_behaviour
 Ansible by default will override variables in specific precedence orders, as described in :doc:`playbooks_variables`.  When a variable
 of higher precedence wins, it will replace the other value.
 
-Some users prefer that variables that are hashes (aka 'dictionaries' in Python terms) are merged together.  This setting is called 'merge'. This is not the default behavior and it does not affect variables whose values are scalars (integers, strings) or
+Some users prefer that variables that are hashes (aka 'dictionaries' in Python terms) are merged.  This setting is called 'merge'. This is not the default behavior and it does not affect variables whose values are scalars (integers, strings) or
 arrays.  We generally recommend not using this setting unless you think you have an absolute need for it, and playbooks in the
 official examples repos do not use this setting::
 
@@ -476,6 +476,19 @@ This is the default user to sudo to if ``--sudo-user`` is not specified or 'sudo
 playbook.  The default is the most logical: 'root'::
 
    sudo_user=root
+
+.. _system_warnings:
+
+system_warnings
+===============
+
+.. versionadded:: 1.6
+
+Allows disabling of warnings related to potential issues on the system running ansible itself (not on the managed hosts)::
+
+   system_warnings = True
+
+These may include warnings about 3rd party packages or other conditions that should be resolved if possible.
 
 .. _timeout:
 

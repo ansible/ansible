@@ -5,6 +5,19 @@
     test_ppa_spec: 'deb http://ppa.launchpad.net/menulibre-dev/devel/ubuntu {{ansible_distribution_release}} main'
     test_ppa_key: 'A7AD98A1' # http://keyserver.ubuntu.com:11371/pks/lookup?search=0xD06AAF4C11DAB86DF421421EFE6B20ECA7AD98A1&op=index
 
+# UNINSTALL 'python-apt'
+#  The `apt_repository` module has the smarts to auto-install `python-apt`.  To
+# test, we will first uninstall `python-apt`.
+- name: check python-apt with dpkg
+  shell: dpkg -s python-apt
+  register: dpkg_result
+  ignore_errors: true
+
+- name: uninstall python-apt with apt
+  apt: pkg=python-apt state=absent purge=yes
+  register: apt_result
+  when: dpkg_result|success
+
 #
 # TEST: apt_repository: repo=<name>
 #

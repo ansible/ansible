@@ -204,6 +204,18 @@ You may also wish to install from ports, run:
 
     $ sudo make -C /usr/ports/sysutils/ansible install
 
+.. _from_brew:
+
+Latest Releases Via Homebrew (Mac OSX)
+++++++++++++++++++++++++++++++++++++++
+
+To install on a Mac, make sure you have Homebrew, then run:
+
+.. code-block:: bash
+
+    $ brew update
+    $ brew install ansible
+
 .. _from_pip:
 
 Latest Releases Via Pip
@@ -217,6 +229,10 @@ your version of Python, you can get pip by::
 Then install Ansible with::
 
    $ sudo pip install ansible
+
+If you are installing on OS X Mavericks, you may encounter some noise from your compiler.  A workaround is to do the following::
+
+   $ sudo CFLAGS=-Qunused-arguments CPPFLAGS=-Qunused-arguments pip install ansible
 
 Readers that use virtualenv can also install Ansible under virtualenv, though we'd recommend to not worry about it and just install Ansible globally.  Do not use easy_install to install ansible directly.
 

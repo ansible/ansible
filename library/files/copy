@@ -111,7 +111,7 @@ def split_pre_existing_dir(dirname):
         (pre_existing_dir, new_directory_list) = split_pre_existing_dir(head)
     else:
         return (head, [ tail ])
-    new_directory_list.insert(0, tail)
+    new_directory_list.append(tail)
     return (pre_existing_dir, new_directory_list)
 
 

@@ -18,6 +18,9 @@
 
 #######################################################
 
+#__requires__ = ['ansible']
+#import pkg_resources
+
 import sys
 import os
 import stat

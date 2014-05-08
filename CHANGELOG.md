@@ -1,7 +1,11 @@
 Ansible Changes By Release
 ==========================
 
-## 1.6 "And the Cradle Will Rock" - Active Development
+## 1.7 "Summer Nights" - Active Development
+
+Pending!
+
+## 1.6 "And the Cradle Will Rock" - May 5, 2014
 
 Major features/changes:
 
@@ -11,8 +15,8 @@ Major features/changes:
 * Accelerate improvements:
   - multiple users can connect with different keys, when `accelerate_multi_key = yes` is specified in the ansible.cfg.
   - daemon lifetime is now based on the time from the last activity, not the time from the daemon's launch.
-* ansible-playbook now accepts --force-handlers to run handlers even if tasks result in failures
-
+* ansible-playbook now accepts --force-handlers to run handlers even if tasks result in failures.
+* Added VMWare support with the vsphere_guest module.
 
 New Modules:
 
@@ -49,6 +53,7 @@ New Modules:
 * cloud: ec2_asg (configure autoscaling groups)
 * cloud: ec2_scaling_policy
 * cloud: ec2_metric_alarm
+* cloud: vsphere_guest
 
 Other notable changes:
 
@@ -66,8 +71,17 @@ Other notable changes:
 * added ability for module documentation YAML to utilize shared module snippets for common args
 * apt module now accepts "deb" parameter to install local dpkg files
 * regex_replace filter plugin added
+* added an inventory script for Docker
+* added an inventory script for Abiquo
+* the get_url module now accepts url_username and url_password as parameters, so sites which require
+  authentication no longer need to have them embedded in the url
 * ... to be filled in from changelogs ...
 * 
+
+## 1.5.5 "Love Walks In" - April 18, 2014
+
+- Security fix for vault, to ensure the umask is set to a restrictive mode before creating/editing vault files.
+- Backported apt_repository security fixes relating to filename/mode upon sources list file creation.
 
 ## 1.5.4 "Love Walks In" - April 1, 2014
 

@@ -149,7 +149,7 @@ def install_packages(module, pkgng_path, packages, cached, pkgsite):
         else:
             pkgsite = "-r %s" % (pkgsite)
 
-    if not module.check_mode and cached == "no":
+    if not module.check_mode and not cached:
         if old_pkgng:
             rc, out, err = module.run_command("%s %s update" % (pkgsite, pkgng_path))
         else:

@@ -38,10 +38,12 @@ class ActionModule(object):
         # the group_by module does not need to pay attention to check mode.
         # it always runs.
 
+        # module_args and complex_args have already been templated for the first host.
+        # Use them here only to check that a key argument is provided.
         args = {}
         if complex_args:
             args.update(complex_args)
-        args.update(parse_kv(self.runner.module_args))
+        args.update(parse_kv(module_args))
         if not 'key' in args:
             raise ae("'key' is a required argument.")
 
@@ -68,7 +70,16 @@ class ActionModule(object):
                     break
             if next_host:
                 continue
-            group_name = template.template(self.runner.basedir, args['key'], data)
+
+            # Template original module_args and complex_args from runner for each host.
+            host_module_args = template.template(self.runner.basedir, self.runner.module_args, data)
+            host_complex_args = template.template(self.runner.basedir, self.runner.complex_args, data)
+            host_args  = {}
+            if host_complex_args:
+                host_args.update(host_complex_args)
+            host_args.update(parse_kv(host_module_args))
+
+            group_name = host_args['key']
             group_name = group_name.replace(' ','-')
             if group_name not in groups:
                 groups[group_name] = []

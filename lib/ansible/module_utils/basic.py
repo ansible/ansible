@@ -30,7 +30,6 @@
 # == BEGIN DYNAMICALLY INSERTED CODE ==
 
 MODULE_ARGS = "<<INCLUDE_ANSIBLE_MODULE_ARGS>>"
-MODULE_LANG = "<<INCLUDE_ANSIBLE_MODULE_LANG>>"
 MODULE_COMPLEX_ARGS = "<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>"
 
 BOOLEANS_TRUE = ['yes', 'on', '1', 'true', 1]
@@ -191,7 +190,6 @@ class AnsibleModule(object):
                 if k not in self.argument_spec:
                     self.argument_spec[k] = v
 
-        os.environ['LANG'] = MODULE_LANG
         (self.params, self.args) = self._load_params()
 
         self._legal_inputs = ['CHECKMODE', 'NO_LOG']
@@ -350,6 +348,31 @@ class AnsibleModule(object):
         gid = st.st_gid
         return (uid, gid)
 
+    def find_mount_point(self, path):
+        path = os.path.abspath(os.path.expanduser(os.path.expandvars(path)))
+        while not os.path.ismount(path):
+            path = os.path.dirname(path)
+        return path
+
+    def is_nfs_path(self, path):
+        """
+        Returns a tuple containing (True, selinux_context) if the given path
+        is on a NFS mount point, otherwise the return will be (False, None).
+        """
+        try:
+            f = open('/proc/mounts', 'r')
+            mount_data = f.readlines()
+            f.close()
+        except:
+            return (False, None)
+        path_mount_point = self.find_mount_point(path)
+        for line in mount_data:
+            (device, mount_point, fstype, options, rest) = line.split(' ', 4)
+            if path_mount_point == mount_point and 'nfs' in fstype:
+                nfs_context = self.selinux_context(path_mount_point)
+                return (True, nfs_context)
+        return (False, None)
+
     def set_default_selinux_context(self, path, changed):
         if not HAVE_SELINUX or not self.selinux_enabled():
             return changed
@@ -365,12 +388,16 @@ class AnsibleModule(object):
         # Iterate over the current context instead of the
         # argument context, which may have selevel.
 
-        for i in range(len(cur_context)):
-            if len(context) > i:
-                if context[i] is not None and context[i] != cur_context[i]:
-                    new_context[i] = context[i]
-                if context[i] is None:
-                    new_context[i] = cur_context[i]
+        (is_nfs, nfs_context) = self.is_nfs_path(path)
+        if is_nfs:
+            new_context = nfs_context
+        else:
+            for i in range(len(cur_context)):
+                if len(context) > i:
+                    if context[i] is not None and context[i] != cur_context[i]:
+                        new_context[i] = context[i]
+                    if context[i] is None:
+                        new_context[i] = cur_context[i]
 
         if cur_context != new_context:
             try:
@@ -635,39 +662,6 @@ class AnsibleModule(object):
             else:
                 self.fail_json(msg="internal error: do not know how to interpret argument_spec")
 
-    def safe_eval(self, str, locals=None, include_exceptions=False):
-
-        # do not allow method calls to modules
-        if not isinstance(str, basestring):
-            # already templated to a datastructure, perhaps?
-            if include_exceptions:
-                return (str, None)
-            return str
-        if re.search(r'\w\.\w+\(', str):
-            if include_exceptions:
-                return (str, None)
-            return str
-        # do not allow imports
-        if re.search(r'import \w+', str):
-            if include_exceptions:
-                return (str, None)
-            return str
-        try:
-            result = None
-            if not locals:
-                result = eval(str)
-            else:
-                result = eval(str, None, locals)
-            if include_exceptions:
-                return (result, None)
-            else:
-                return result
-        except Exception, e:
-            if include_exceptions:
-                return (str, e)
-            return str
-
-
     def _check_argument_types(self):
         ''' ensure all arguments have the requested type '''
         for (k, v) in self.argument_spec.iteritems():
@@ -799,8 +793,8 @@ class AnsibleModule(object):
         module = 'ansible-%s' % os.path.basename(__file__)
         msg = ''
         for arg in log_args:
-            if isinstance(log_args[arg], unicode):
-                msg = msg + arg + '=' + log_args[arg] + ' '
+            if isinstance(log_args[arg], basestring):
+                msg = msg + arg + '=' + log_args[arg].decode('utf-8') + ' '
             else:
                 msg = msg + arg + '=' + str(log_args[arg]) + ' '
         if msg:
@@ -810,7 +804,7 @@ class AnsibleModule(object):
 
         # 6655 - allow for accented characters
         try:
-            msg = unicode(msg).encode('utf8')
+            msg = msg.encode('utf8')
         except UnicodeDecodeError, e:
             pass
 
@@ -1023,8 +1017,14 @@ class AnsibleModule(object):
                 self.cleanup(tmp_dest.name)
                 self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
 
-        if creating and os.getenv("SUDO_USER"):
-            os.chown(dest, os.getuid(), os.getgid())
+        if creating:
+            # make sure the file has the correct permissions
+            # based on the current value of umask
+            umask = os.umask(0)
+            os.umask(umask)
+            os.chmod(dest, 0666 ^ umask)
+            if os.getenv("SUDO_USER"):
+                os.chown(dest, os.getuid(), os.getgid())
 
         if self.selinux_enabled():
             # rename might not preserve context
@@ -1054,7 +1054,7 @@ class AnsibleModule(object):
         elif isinstance(args, basestring) and use_unsafe_shell:
             shell = True
         elif isinstance(args, basestring):
-            args = shlex.split(args)
+            args = shlex.split(args.encode('utf-8'))
         else:
             msg = "Argument 'args' to run_command must be list or string"
             self.fail_json(rc=257, cmd=args, msg=msg)

@@ -50,6 +50,7 @@ try:
 except:
     HAS_SSL=False
 
+import socket
 import tempfile
 
 
@@ -153,6 +154,7 @@ class SSLValidationHandler(urllib2.BaseHandler):
                         try:
                             cert_file = open(full_path, 'r')
                             os.write(tmp_fd, cert_file.read())
+                            os.write(tmp_fd, '\n')
                             cert_file.close()
                         except:
                             pass
@@ -162,12 +164,20 @@ class SSLValidationHandler(urllib2.BaseHandler):
     def http_request(self, req):
         tmp_ca_cert_path, paths_checked = self.get_ca_certs()
         try:
-            server_cert = ssl.get_server_certificate((self.hostname, self.port), ca_certs=tmp_ca_cert_path)
-        except ssl.SSLError:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            ssl_s = ssl.wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED)
+            ssl_s.connect((self.hostname, self.port))
+            ssl_s.close()
+        except (ssl.SSLError, socket.error), e:
             # fail if we tried all of the certs but none worked
-            self.module.fail_json(msg='Failed to validate the SSL certificate for %s:%s. ' % (self.hostname, self.port) + \
-                                      'Use validate_certs=no or make sure your managed systems have a valid CA certificate installed. ' + \
-                                      'Paths checked for this platform: %s' % ", ".join(paths_checked))
+            if 'connection refused' in str(e).lower():
+                self.module.fail_json(msg='Failed to connect to %s:%s.' % (self.hostname, self.port))
+            else:
+                self.module.fail_json(
+                    msg='Failed to validate the SSL certificate for %s:%s. ' % (self.hostname, self.port) + \
+                    'Use validate_certs=no or make sure your managed systems have a valid CA certificate installed. ' + \
+                    'Paths checked for this platform: %s' % ", ".join(paths_checked)
+                )
         try:
             # cleanup the temp file created, don't worry
             # if it fails for some reason
@@ -191,6 +201,8 @@ def url_argument_spec():
         http_agent = dict(default='ansible-httpget'),
         use_proxy = dict(default='yes', type='bool'),
         validate_certs = dict(default='yes', type='bool'),
+        url_username = dict(required=False),
+        url_password = dict(required=False),
     )
 
 
@@ -211,13 +223,18 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     handlers = []
     info = dict(url=url)
 
+    distribution = get_distribution()
     # Get validate_certs from the module params
     validate_certs = module.params.get('validate_certs', True)
 
     parsed = urlparse.urlparse(url)
     if parsed[0] == 'https':
         if not HAS_SSL and validate_certs:
-            module.fail_json(msg='SSL validation is not available in your version of python. You can use validate_certs=no, however this is unsafe and not recommended')
+            if distribution == 'Redhat':
+                module.fail_json(msg='SSL validation is not available in your version of python. You can use validate_certs=no, however this is unsafe and not recommended. You can also install python-ssl from EPEL')
+            else:
+                module.fail_json(msg='SSL validation is not available in your version of python. You can use validate_certs=no, however this is unsafe and not recommended')
+
         elif validate_certs:
             # do the cert validation
             netloc = parsed[1]
@@ -233,29 +250,38 @@ def fetch_url(module, url, data=None, headers=None, method=None,
             ssl_handler = SSLValidationHandler(module, hostname, port)
             handlers.append(ssl_handler)
 
-    if parsed[0] != 'ftp' and '@' in parsed[1]:
-        credentials, netloc = parsed[1].split('@', 1)
-        if ':' in credentials:
-            username, password = credentials.split(':', 1)
-        else:
-            username = credentials
-            password = ''
-        parsed = list(parsed)
-        parsed[1] = netloc
+    if parsed[0] != 'ftp':
+        username = module.params.get('url_username', '')
+        if username:
+            password = module.params.get('url_password', '')
+            netloc = parsed[1]
+        elif '@' in parsed[1]:
+            credentials, netloc = parsed[1].split('@', 1)
+            if ':' in credentials:
+                username, password = credentials.split(':', 1)
+            else:
+                username = credentials
+                password = ''
 
-        passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
-        # this creates a password manager
-        passman.add_password(None, netloc, username, password)
-        # because we have put None at the start it will always
-        # use this username/password combination for  urls
-        # for which `theurl` is a super-url
+            parsed = list(parsed)
+            parsed[1] = netloc
 
-        authhandler = urllib2.HTTPBasicAuthHandler(passman)
-        # create the AuthHandler
-        handlers.append(authhandler)
+            # reconstruct url without credentials
+            url = urlparse.urlunparse(parsed)
 
-        #reconstruct url without credentials
-        url = urlparse.urlunparse(parsed)
+        if username:
+            passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
+
+            # this creates a password manager
+            passman.add_password(None, netloc, username, password)
+
+            # because we have put None at the start it will always
+            # use this username/password combination for  urls
+            # for which `theurl` is a super-url
+            authhandler = urllib2.HTTPBasicAuthHandler(passman)
+
+            # create the AuthHandler
+            handlers.append(authhandler)
 
     if not use_proxy:
         proxyhandler = urllib2.ProxyHandler({})

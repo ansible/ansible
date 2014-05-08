@@ -125,7 +125,7 @@ options:
     aliases: []
   vpc_security_groups:
     description:
-      - Comma separated list of one or more vpc security groups. Used only when command=create or command=modify.
+      - Comma separated list of one or more vpc security group ids. Also requires `subnet` to be specified. Used only when command=create or command=modify.
     required: false
     default: null
     aliases: []

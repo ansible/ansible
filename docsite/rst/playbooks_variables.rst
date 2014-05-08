@@ -241,6 +241,13 @@ Random Number Filter
 
 .. versionadded:: 1.6
 
+This filter can be used similar to the default jinja2 random filter (returning a random item from a sequence of
+items), but can also generate a random number based on a range.
+
+To get a random item from a list::
+
+    {{ ['a','b','c']|random }} => 'c'
+
 To get a random number from 0 to supplied end::
 
     {{ 59 |random}} * * * * root /script/from/cron
@@ -290,6 +297,20 @@ doesn't know it is a boolean value::
 
    - debug: msg=test
      when: some_string_value | bool
+
+To match strings against a regex, use the "match" or "search" filter::
+
+    vars:
+      url: "http://example.com/users/foo/resources/bar"
+
+    tasks:
+        - shell: "msg='matched pattern 1'"
+          when: url | match("http://example.com/users/.*/resources/.*")
+
+        - debug: "msg='matched pattern 2'"
+          when: url | search("/users/.*/resources/.*")
+
+'match' will require a complete match in the string, while 'search' will require a match inside of the string.
 
 To replace text in a string with regex, use the "regex_replace" filter::
 
@@ -601,6 +622,7 @@ Local Facts (Facts.d)
 .. versionadded:: 1.3
 
 As discussed in the playbooks chapter, Ansible facts are a way of getting data about remote systems for use in playbook variables.
+
 Usually these are discovered automatically by the 'setup' module in Ansible. Users can also write custom facts modules, as described
 in the API guide.  However, what if you want to have a simple way to provide system or user
 provided data for use in Ansible variables, without writing a fact module?  
@@ -640,6 +662,21 @@ And this data can be accessed in a template/playbook as::
 
 The local namespace prevents any user supplied fact from overriding system facts
 or variables defined elsewhere in the playbook.
+
+If you have a playbook that is copying over a custom fact and then running it, making an explicit call to re-run the setup module
+can allow that fact to be used during that particular play.  Otherwise, it will be available in the next play that gathers fact information.
+Here is an example of what that might look like::
+
+  - hosts: webservers
+    tasks: 
+      - name: create directory for ansible custom facts
+        file: state=directory recurse=yes path=/etc/ansible/facts.d
+      - name: install custom impi fact
+        copy: src=ipmi.fact dest=/etc/ansible/facts.d
+      - name: re-read facts after adding custom fact
+        setup: filter=ansible_local
+
+In this pattern however, you could also write a fact module as well, and may wish to consider this as an option.
 
 .. _registered_variables:
 

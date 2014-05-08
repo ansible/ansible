@@ -39,7 +39,7 @@ options:
     required: false
   availability_zones:
     description:
-      - List of availability zone names in which to create the group.
+      - List of availability zone names in which to create the group.  Defaults to all the availability zones in the region if vpc_zone_identifier is not set.
     required: false
   launch_config_name:
     description:
@@ -102,7 +102,7 @@ def enforce_required_arguments(module):
         they cannot be mandatory arguments for the module, so we enforce
         them here '''
     missing_args = []
-    for arg in ('min_size', 'max_size', 'launch_config_name', 'availability_zones'):
+    for arg in ('min_size', 'max_size', 'launch_config_name'):
         if module.params[arg] is None:
             missing_args.append(arg)
     if missing_args:
@@ -122,8 +122,16 @@ def create_autoscaling_group(connection, module):
     vpc_zone_identifier = module.params.get('vpc_zone_identifier')
 
     launch_configs = connection.get_all_launch_configurations(names=[launch_config_name])
-
+    
     as_groups = connection.get_all_groups(names=[group_name])
+
+    if not vpc_zone_identifier and not availability_zones:
+        region, ec2_url, aws_connect_params = get_aws_connection_info(module)
+        try:
+            ec2_connection = connect_to_aws(boto.ec2, region, **aws_connect_params)
+        except boto.exception.NoAuthHandlerFound, e:
+            module.fail_json(msg=str(e))
+        module.params['availability_zones'] = [zone.name for zone in ec2_connection.get_all_zones()]
 
     if not as_groups:
         ag = AutoScalingGroup(

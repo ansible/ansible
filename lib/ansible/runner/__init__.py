@@ -287,14 +287,20 @@ class Runner(object):
     def _compute_environment_string(self, inject=None):
         ''' what environment variables to use when running the command? '''
 
-        if not self.environment:
-            return ""
-        enviro = template.template(self.basedir, self.environment, inject, convert_bare=True)
-        enviro = utils.safe_eval(enviro)
-        if type(enviro) != dict:
-            raise errors.AnsibleError("environment must be a dictionary, received %s" % enviro)
+        default_environment = dict(
+            LANG     = C.DEFAULT_MODULE_LANG,
+            LC_CTYPE = C.DEFAULT_MODULE_LANG,
+        )
+
+        if self.environment:
+            enviro = template.template(self.basedir, self.environment, inject, convert_bare=True)
+            enviro = utils.safe_eval(enviro)
+            if type(enviro) != dict:
+                raise errors.AnsibleError("environment must be a dictionary, received %s" % enviro)
+            default_environment.update(enviro)
+
         result = ""
-        for (k,v) in enviro.iteritems():
+        for (k,v) in default_environment.iteritems():
             result = "%s=%s %s" % (k, pipes.quote(unicode(v)), result)
         return result
 
@@ -345,6 +351,12 @@ class Runner(object):
                                         self.private_key_file)
         delegate['transport'] = this_info.get('ansible_connection', self.transport)
         delegate['sudo_pass'] = this_info.get('ansible_sudo_pass', self.sudo_pass)
+
+        # Last chance to get private_key_file from global variables.
+        # this is usefull if delegated host is not defined in the inventory
+        if delegate['private_key_file'] is None:
+            delegate['private_key_file'] = remote_inject.get(
+                'ansible_ssh_private_key_file', None)
 
         if delegate['private_key_file'] is not None:
             delegate['private_key_file'] = os.path.expanduser(delegate['private_key_file'])
@@ -552,11 +564,14 @@ class Runner(object):
             # fireball, local, etc
             port = self.remote_port
 
-        module_vars = template.template(self.basedir, self.module_vars, host_variables)
-
         # merge the VARS and SETUP caches for this host
         combined_cache = self.setup_cache.copy()
         combined_cache.get(host, {}).update(self.vars_cache.get(host, {}))
+        hostvars = HostVars(combined_cache, self.inventory, vault_password=self.vault_pass)
+
+        # use combined_cache and host_variables to template the module_vars
+        module_vars_inject = utils.combine_vars(combined_cache.get(host, {}), host_variables)
+        module_vars = template.template(self.basedir, self.module_vars, module_vars_inject)
 
         inject = {}
         inject = utils.combine_vars(inject, self.default_vars)
@@ -564,7 +579,7 @@ class Runner(object):
         inject = utils.combine_vars(inject, module_vars)
         inject = utils.combine_vars(inject, combined_cache.get(host, {}))
         inject.setdefault('ansible_ssh_user', self.remote_user)
-        inject['hostvars'] = HostVars(combined_cache, self.inventory, vault_password=self.vault_pass)
+        inject['hostvars']    = hostvars
         inject['group_names'] = host_variables.get('group_names', [])
         inject['groups']      = self.inventory.groups_list()
         inject['vars']        = self.module_vars
@@ -882,7 +897,7 @@ class Runner(object):
                 # no callbacks
                 return result
             if 'skipped' in data:
-                self.callbacks.on_skipped(host)
+                self.callbacks.on_skipped(host, inject.get('item',None))
             elif not result.is_successful():
                 ignore_errors = self.module_vars.get('ignore_errors', False)
                 self.callbacks.on_failed(host, data, ignore_errors)
@@ -930,13 +945,13 @@ class Runner(object):
 
         # compare connection user to (su|sudo)_user and disable if the same
         if hasattr(conn, 'user'):
-            if conn.user == sudo_user or conn.user == su_user:
+            if (not su and conn.user == sudo_user) or (su and conn.user == su_user):
                 sudoable = False
                 su = False
         else:
             # assume connection type is local if no user attribute
             this_user = getpass.getuser()
-            if this_user == sudo_user or this_user == su_user:
+            if (not su and this_user == sudo_user) or (su and this_user == su_user):
                 sudoable = False
                 su = False
 

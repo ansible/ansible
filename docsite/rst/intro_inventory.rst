@@ -39,8 +39,10 @@ It is ok to put systems in more than one group, for instance a server could be b
 If you do, note that variables will come from all of the groups they are a member of, and variable precedence is detailed in a later chapter.
 
 If you have hosts that run on non-standard SSH ports you can put the port number
-after the hostname with a colon.  Ports listed in your SSH config file won't be used,
-so it is important that you set them if things are not running on the default port::
+after the hostname with a colon.  Ports listed in your SSH config file won't be used with the paramiko
+connection but will be used with the openssh connection.
+
+To make things explicit, it is suggested that you set them if things are not running on the default port::
 
     badwolf.example.com:5309
 
@@ -142,7 +144,7 @@ Splitting Out Host and Group Specific Data
 
 The preferred practice in Ansible is actually not to store variables in the main inventory file.
 
-In addition to the storing variables directly in the INI file, host
+In addition to storing variables directly in the INI file, host
 and group variables can be stored in individual files relative to the
 inventory file.  
 

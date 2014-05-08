@@ -43,6 +43,12 @@ options:
         default: "present"
         description:
             - A source string state.
+    mode:
+        required: false
+        default: 0644
+        description:
+            - The octal mode for newly created files in sources.list.d
+        version_added: "1.6"
     update_cache:
         description:
             - Run the equivalent of C(apt-get update) when a change occurs.  Cache updates are run after making changes.
@@ -77,10 +83,11 @@ import tempfile
 try:
     import apt
     import apt_pkg
-    import aptsources.distro
-    distro = aptsources.distro.get_distro()
+    import aptsources.distro as aptsources_distro
+    distro = aptsources_distro.get_distro()
     HAVE_PYTHON_APT = True
 except ImportError:
+    distro = None
     HAVE_PYTHON_APT = False
 
 
@@ -91,11 +98,16 @@ def install_python_apt(module):
     if not module.check_mode:
         apt_get_path = module.get_bin_path('apt-get')
         if apt_get_path:
-            rc, so, se = module.run_command('%s update && %s install python-apt -y -q' % (apt_get_path, apt_get_path))
+            rc, so, se = module.run_command('%s update && %s install python-apt -y -q' % (apt_get_path, apt_get_path), use_unsafe_shell=True)
             if rc == 0:
-                global apt, apt_pkg
+                global apt, apt_pkg, aptsources_distro, distro, HAVE_PYTHON_APT
                 import apt
                 import apt_pkg
+                import aptsources.distro as aptsources_distro
+                distro = aptsources_distro.get_distro()
+                HAVE_PYTHON_APT = True
+            else:
+                module.fail_json(msg="Failed to auto-install python-apt. Error was: '%s'" % se.strip())
 
 class InvalidSource(Exception):
     pass
@@ -217,7 +229,10 @@ class SourcesList(object):
             if sources:
                 d, fn = os.path.split(filename)
                 fd, tmp_path = tempfile.mkstemp(prefix=".%s-" % fn, dir=d)
-                os.chmod(os.path.join(fd, tmp_path), 0644)
+
+                # allow the user to override the default mode
+                this_mode = module.params['mode']
+                module.set_mode_if_different(tmp_path, this_mode, False)
 
                 f = os.fdopen(fd, 'w')
                 for n, valid, enabled, source, comment in sources:
@@ -356,6 +371,7 @@ def main():
         argument_spec=dict(
             repo=dict(required=True),
             state=dict(choices=['present', 'absent'], default='present'),
+            mode=dict(required=False, default=0644),
             update_cache = dict(aliases=['update-cache'], type='bool', default='yes'),
             # this should not be needed, but exists as a failsafe
             install_python_apt=dict(required=False, default="yes", type='bool'),
@@ -368,19 +384,20 @@ def main():
         install_python_apt(module)
 
     repo = module.params['repo']
-    open("/tmp/awx.log", "a").write("repo: %s\n" % repo)
     state = module.params['state']
     update_cache = module.params['update_cache']
     sourceslist = None
 
-    if isinstance(distro, aptsources.distro.UbuntuDistribution):
-        sourceslist = UbuntuSourcesList(module,
-                                        add_ppa_signing_keys_callback=get_add_ppa_signing_key_callback(module))
-    elif isinstance(distro, aptsources.distro.DebianDistribution) or \
-            isinstance(distro, aptsources.distro.Distribution):
-        sourceslist = SourcesList()
+    if HAVE_PYTHON_APT:
+        if isinstance(distro, aptsources_distro.UbuntuDistribution):
+            sourceslist = UbuntuSourcesList(module,
+                add_ppa_signing_keys_callback=get_add_ppa_signing_key_callback(module))
+        elif HAVE_PYTHON_APT and \
+            isinstance(distro, aptsources_distro.DebianDistribution) or isinstance(distro, aptsources_distro.Distribution):
+            sourceslist = SourcesList()
     else:
-        module.fail_json(msg='Module apt_repository supports only Debian and Ubuntu.')
+        module.fail_json(msg='Module apt_repository supports only Debian and Ubuntu. ' + \
+                             'You may be seeing this because python-apt is not installed, but you requested that it not be auto-installed')
 
     sources_before = sourceslist.dump()
 
