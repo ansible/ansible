@@ -139,7 +139,7 @@ def main():
     mre = re.compile(params['regexp'], re.MULTILINE)
     result = re.subn(mre, params['replace'], contents, 0)
 
-    if result[1] > 0:
+    if result[1] > 0 and contents != result[0]:
         msg = '%s replacements made' % result[1]
         changed = True
     else:
