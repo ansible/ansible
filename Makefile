@@ -50,7 +50,7 @@ RPMSPECDIR= packaging/rpm
 RPMSPEC = $(RPMSPECDIR)/ansible.spec
 RPMDIST = $(shell rpm --eval '%{?dist}')
 RPMRELEASE = 1
-ifeq ($(OFFICIAL),)
+ifneq ($(OFFICIAL),yes)
     RPMRELEASE = 0.git$(DATE)
 endif
 RPMNVR = "$(NAME)-$(VERSION)-$(RPMRELEASE)$(RPMDIST)"
