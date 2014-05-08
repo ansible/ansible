@@ -66,6 +66,8 @@ def main():
         if module.check_mode:
             module.exit_json(changed=True)
         rc, out, err = module.run_command('%s reload' % MONIT)
+        if rc != 0:
+            module.fail_json(msg='monit reload failed', stdout=out, stderr=err)
         module.exit_json(changed=True, name=name, state=state)
     
     rc, out, err = module.run_command('%s summary | grep "Process \'%s\'"' % (MONIT, pipes.quote(name)), use_unsafe_shell=True)
