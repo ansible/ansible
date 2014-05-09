@@ -175,7 +175,7 @@ options:
   instance_ids:
     version_added: "1.3"
     description:
-      - list of instance ids, currently only used when state='absent'
+      - list of instance ids, currently used for states: absent, running, stopped
     required: false
     default: null
     aliases: []
@@ -1025,7 +1025,7 @@ def terminate_instances(module, ec2, instance_ids):
     return (changed, instance_dict_array, terminated_instance_ids)
 
 
-def startstop_instances(module, ec2, instance_ids):
+def startstop_instances(module, ec2, instance_ids, state):
     """
     Starts or stops a list of existing instances
 
@@ -1033,9 +1033,10 @@ def startstop_instances(module, ec2, instance_ids):
     ec2: authenticated ec2 connection object
     instance_ids: The list of instances to start in the form of
       [ {id: <inst-id>}, ..]
+    state: Intended state ("running" or "stopped")
 
     Returns a dictionary of instance information
-    about the instances started.
+    about the instances started/stopped.
 
     If the instance was not able to change state,
     "changed" will be set to False.
@@ -1050,18 +1051,15 @@ def startstop_instances(module, ec2, instance_ids):
     if not isinstance(instance_ids, list) or len(instance_ids) < 1:
         module.fail_json(msg='instance_ids should be a list of instances, aborting')
 
-    dest_state = module.params.get('state')
-    dest_state_ec2 = 'stopped' if dest_state == 'stopped' else 'running'
-
     # Check that our instances are not in the state we want to take them to
     # and change them to our desired state
     running_instances_array = []
     for res in ec2.get_all_instances(instance_ids):
         for inst in res.instances:
-           if not inst.state == dest_state_ec2:
+           if inst.state != state:
                instance_dict_array.append(get_instance_info(inst))
                try:
-                   if dest_state == 'running':
+                   if state == 'running':
                        inst.start()
                    else:
                        inst.stop()
@@ -1070,21 +1068,14 @@ def startstop_instances(module, ec2, instance_ids):
                changed = True
 
     ## Wait for all the instances to finish starting or stopping
-    instids = [ i.id for i in res.instances ]
-    this_res = []
-    num_running = 0
     wait_timeout = time.time() + wait_timeout
-    while wait_timeout > time.time() and num_running < len(instids):
-        res_list = res.connection.get_all_instances(instids)
-        if len(res_list) > 0:
-            this_res = res_list[0]
-            num_running = len([ i for i in this_res.instances if i.state == dest_state_ec2 ])
-        else:
-            # got a bad response of some sort, possibly due to 
-            # stale/cached data. Wait a second and then try again
-            time.sleep(1)
-            continue
-        if wait and num_running < len(instids):
+    while wait and wait_timeout > time.time():
+        matched_instances = []
+        for res in ec2.get_all_instances(instance_ids):
+            for i in res.instances:
+                if i.state == state:
+                    matched_instances.append(i)
+        if len(matched_instances) < len(instance_ids):
             time.sleep(5)
         else:
             break
@@ -1093,10 +1084,7 @@ def startstop_instances(module, ec2, instance_ids):
         # waiting took too long
         module.fail_json(msg = "wait for instances running timeout on %s" % time.asctime())
 
-    for inst in this_res.instances:
-        running_instances_array.append(inst.id)
-
-    return (changed, instance_dict_array, running_instances_array)
+    return (changed, instance_dict_array, instance_ids)
 
 
 def main():
@@ -1147,21 +1135,23 @@ def main():
 
     tagged_instances = [] 
 
-    if module.params.get('state') == 'absent':
+    state = module.params.get('state')
+
+    if state == 'absent':
         instance_ids = module.params.get('instance_ids')
         if not isinstance(instance_ids, list):
             module.fail_json(msg='termination_list needs to be a list of instances to terminate')
 
         (changed, instance_dict_array, new_instance_ids) = terminate_instances(module, ec2, instance_ids)
 
-    elif module.params.get('state') == 'running' or module.params.get('state') == 'stopped':
+    elif state in ('running', 'stopped'):
         instance_ids = module.params.get('instance_ids')
         if not isinstance(instance_ids, list):
             module.fail_json(msg='running list needs to be a list of instances to run: %s' % instance_ids)
 
-        (changed, instance_dict_array, new_instance_ids) = startstop_instances(module, ec2, instance_ids)
+        (changed, instance_dict_array, new_instance_ids) = startstop_instances(module, ec2, instance_ids, state)
 
-    elif module.params.get('state') == 'present':
+    elif state == 'present':
         # Changed is always set to true when provisioning new instances
         if not module.params.get('image'):
             module.fail_json(msg='image parameter is required for new instance')
